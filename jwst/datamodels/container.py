@@ -1,7 +1,8 @@
 import copy
 from collections import OrderedDict
 from collections.abc import Sequence
-import os.path as op
+import json
+import os
 import re
 import logging
 
@@ -18,8 +19,6 @@ from stdatamodels.jwst.datamodels.util import is_association
 __doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
-
-RECOGNIZED_MEMBER_FIELDS = ['group_id']
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -130,17 +129,29 @@ to supply custom catalogs.
 
         super().__init__(init=None, **kwargs)
 
-        self._models = []
+        # if True, keep models open and in memory
+        self._in_memory = True
+
+        # _models will be the same length as _members
+        # and possibly contain:
+        # - None: if the model is not loaded
+        # - DataModel: if the model is in-memory
+        self._models = None
+        self._members = None
+
         self._iscopy = iscopy
-        self.asn_table = {}
+
         self.asn_table_name = None
         self.asn_pool_name = None
 
         self._memmap = kwargs.get("memmap", False)
 
+        # if None, assume an empty list of models
         if init is None:
             init = []
+
         if isinstance(init, list):
+            # might be a list of filenames or a list of models
             self._models = []
             for item in init:
                 if isinstance(item, str):
@@ -150,6 +161,10 @@ to supply custom catalogs.
                 else:
                     raise TypeError("list must contain items that can be opened "
                                     "with jwst.datamodels.open()")
+
+            # generate a fake association table
+            asn_data = _models_to_association(self._models)
+            self._from_asn(asn_data)
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
@@ -158,23 +173,35 @@ to supply custom catalogs.
             self._instance = instance
             self._ctx = self
             self._models = init._models
+            self._members = init._members
+            self.asn_table_name = init.asn_table_name
+            self.asn_pool_name = init.asn_pool_name
             self._iscopy = True
         elif is_association(init):
             self._from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         elif isinstance(init, str):
-            init_from_asn = self._read_asn(init)
-            self._from_asn(init_from_asn, asn_file_path=init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
+            # assume an input json association file
+            # TODO it looks like associations can also be yaml? is this used?
+            with open(init) as fp:
+                asn_data = json.load(fp)
+            self._from_asn(asn_data, asn_file_path=init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         else:
             raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
 
     def __len__(self):
+        # TODO encapsulate these so they are always the same length
+        if len(self._models) != len(self._members):
+            raise Exception()
         return len(self._models)
 
     def __getitem__(self, index):
         m = self._models[index]
-        if not isinstance(m, JwstDataModel):
-            m = datamodel_open(m, memmap=self._memmap)
+        if m is None:
+            m = self._load_member(index)
+            # if _in_memory is True, save the model for later use
+            if self._in_memory:
+                self._models[index] = m
         return m
 
     #def __setitem__(self, index, model):
@@ -184,10 +211,8 @@ to supply custom catalogs.
     #    del self._models[index]
 
     def __iter__(self):
-        for model in self._models:
-            if not isinstance(model, JwstDataModel):
-                model = datamodel_open(model, memmap=self._memmap)
-            yield model
+        for i in range(len(self)):
+            yield self[i]
 
     #def insert(self, index, model):
     #    self._models.insert(index, model)
@@ -219,28 +244,10 @@ to supply custom catalogs.
                 result._models.append(m.copy())
             else:
                 result._models.append(m)
+        result._members = copy.deepcopy(self._members)
+        result.asn_table_name = self.asn_table_name
+        result.asn_pool_name = self.asn_pool_name
         return result
-
-    @staticmethod
-    def _read_asn(filepath):
-        """
-        Load fits files from a JWST association file.
-
-        Parameters
-        ----------
-        filepath : str
-            The path to an association file.
-        """
-        # Prevent circular import:
-        from ..associations import AssociationNotValidError, load_asn
-
-        filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
-        try:
-            with open(filepath) as asn_file:
-                asn_data = load_asn(asn_file)
-        except AssociationNotValidError as e:
-            raise IOError("Cannot read ASN file.") from e
-        return asn_data
 
     def _from_asn(self, asn_data, asn_file_path=None, asn_exptypes=None, asn_n_members=None):
         """
@@ -261,49 +268,42 @@ to supply custom catalogs.
         asn_n_members : int
             Open only the first N qualifying members.
         """
+        # TODO should we copy asn_data? there are places below where it's modified
+
         # match the asn_exptypes to the exptype in the association and retain
         # only those file that match, as a list, if asn_exptypes is set to none
         # grab all the files
         if asn_exptypes:
-            infiles = []
+            members = []
             logger.debug('Filtering datasets based on allowed exptypes {}:'
                          .format(asn_exptypes))
             for member in asn_data['products'][0]['members']:
                 if any([x for x in asn_exptypes if re.match(member['exptype'],
                                                                  x, re.IGNORECASE)]):
-                    infiles.append(member)
+                    members.append(member)
                     logger.debug('Files accepted for processing {}:'.format(member['expname']))
         else:
-            infiles = [member for member
+            members = [member for member
                        in asn_data['products'][0]['members']]
 
         if asn_file_path:
-            asn_dir = op.dirname(asn_file_path)
+            asn_dir = os.path.dirname(asn_file_path)
         else:
             asn_dir = ''
 
         # Only handle the specified number of members.
         if asn_n_members:
-            sublist = infiles[:asn_n_members]
-        else:
-            sublist = infiles
-        try:
-            for member in sublist:
-                filepath = op.join(asn_dir, member['expname'])
-                m = datamodel_open(filepath, memmap=self._memmap)
-                # overwrite the metadata for this model
-                # with the `exptype` in the association
-                m.meta.asn.exptype = member['exptype']
-                for attr, val in member.items():
-                    # also overwrite:
-                    # - group_id
-                    if attr in RECOGNIZED_MEMBER_FIELDS:
-                        setattr(m.meta, attr, val)
-                self._models.append(m)
+            members = members[:asn_n_members]
 
-        except IOError:
-            self.close()
-            raise
+        # add a "group_id" (if not already defined in the association)
+        for (i, member) in enumerate(members):
+            filename = os.path.join(asn_dir, member["expname"])
+            member['_filename'] = filename
+            if "group_id" not in member:
+                try:
+                    member["group_id"] = _file_to_group_id(filename)
+                except (TypeError, AttributeError):
+                    member["group_id"] = 'exposure{0:04d}'.format(i + 1)
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
@@ -312,18 +312,34 @@ to supply custom catalogs.
             self.meta.asn_table._instance, asn_data
         )
 
+        self._members = members
+        # if we have no models, set them as None to signify they're not loaded
+        if not self._models:
+            self._models = [None] * len(members)
+
         if asn_file_path is not None:
-            self.asn_table_name = op.basename(asn_file_path)
+            self.asn_table_name = os.path.basename(asn_file_path)
+            # TODO why is pool only set if asn_file_path is not None?
             self.asn_pool_name = asn_data['asn_pool']
-            # FIXME another iteration through models just to overwrite
-            # - meta.asn.table_name
-            # - meta.asn.pool_name
-            for model in self:
-                try:
-                    model.meta.asn.table_name = self.asn_table_name
-                    model.meta.asn.pool_name = self.asn_pool_name
-                except AttributeError:
-                    pass
+
+    def _load_member(self, index):
+        member = self._members[index]
+        model = datamodel_open(member['_filename'], memmap=self._memmap)
+
+        # TODO when model is opened, overwrite:
+        # - exptype to meta.asn.exptype
+        # - asn_table_name to meta.asn.table_name (if no AttributeError)
+        # - asn_pool_name to meta.asn_pool_name (same if no AttributeError)
+        # - group_id to meta.group_id
+        model.meta.asn.exptype = member['exptype']
+        model.meta.group_id = member['group_id']
+        try:
+            # TODO when do these fail? should they fail together?
+            model.meta.asn.table_name = self.asn_table_name
+            model.meta.asn.pool_name = self.asn_pool_name
+        except AttributeError:
+            pass
+        return model
 
     def save(self,
              path=None,
@@ -369,12 +385,12 @@ to supply custom catalogs.
             if len(self) <= 1:
                 idx = None
             if save_model_func is None:
-                outpath, filename = op.split(
+                outpath, filename = os.path.split(
                     path(model.meta.filename, idx=idx)
                 )
                 if dir_path:
                     outpath = dir_path
-                save_path = op.join(outpath, filename)
+                save_path = os.path.join(outpath, filename)
                 try:
                     output_paths.append(
                         model.save(save_path, **kwargs)
@@ -409,59 +425,25 @@ to supply custom catalogs.
         If a model already has ``model.meta.group_id`` set, that value will be
         used for grouping.
         """
-        unique_exposure_parameters = [
-            'program_number',
-            'observation_number',
-            'visit_number',
-            'visit_group',
-            'sequence_id',
-            'activity_id',
-            'exposure_number'
-        ]
+        group_dict = {}
+        for (i, member) in enumerate(self._members):
+            group_id = member['group_id']
+            if group_id not in group_dict:
+                group_dict[group_id] = []
+            group_dict[group_id].append(self[i])
 
-        group_dict = OrderedDict()
-        for i, model in enumerate(self._models):
-            params = []
-
-            if (hasattr(model.meta, 'group_id') and
-                        model.meta.group_id not in [None, '']):
-                group_id = model.meta.group_id
-
-            else:
-                for param in unique_exposure_parameters:
-                    params.append(getattr(model.meta.observation, param))
-                try:
-                    group_id = (
-                        'jw' + '_'.join(
-                            [
-                                ''.join(params[:3]),
-                                ''.join(params[3:6]),
-                                params[6],
-                            ]
-                        )
-                    )
-                    model.meta.group_id = group_id
-                except TypeError:
-                    model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
-
-                group_id = model.meta.group_id
-
-            if group_id in group_dict:
-                group_dict[group_id].append(model)
-            else:
-                group_dict[group_id] = [model]
-
-        return group_dict.values()
+        return list(group_dict.values())
 
     @property
     def group_names(self):
         """
         Return list of names for the JwstDataModel groups by exposure.
         """
-        result = []
-        for group in self.models_grouped:
-            result.append(group[0].meta.group_id)
-        return result
+        group_ids = {}  # dictionary as an ordered set
+        for member in self._members:
+            if member['group_id'] not in group_ids:
+                group_ids[member['group_id']] = None
+        return list(group_ids.keys())
 
     def close(self):
         """Close all datamodels."""
@@ -480,8 +462,6 @@ to supply custom catalogs.
         -------
         str
         """
-        # Eventually ModelContainer will also be used for Roman, but this
-        # will work for now:
         return "jwst"
 
     def get_crds_parameters(self):
@@ -505,14 +485,139 @@ to supply custom catalogs.
         -------
         stdatamodels.JwstDataModel
         """
-        for exposure in self.meta.asn_table.products[0].members:
-            if exposure.exptype.upper() == "SCIENCE":
-                first_exposure = exposure.expname
-                break
-        else:
-            first_exposure = self.meta.asn_table.products[0].members[0].expname
+        for (i, member) in enumerate(self._members):
+            if member['exptype'].upper() == "SCIENCE":
+                return self[i]
+        return self[0]
 
-        return datamodel_open(first_exposure)
+
+def _attrs_to_group_id(
+        program_number,
+        observation_number,
+        visit_number,
+        visit_group,
+        sequence_id,
+        activity_id,
+        exposure_number,
+    ):
+    return (
+        f"jw_{program_number}{observation_number}{visit_number}"
+        f"_{visit_group}{sequence_id}{activity_id}"
+        f"_{exposure_number}"
+    )
+
+
+def _file_to_group_id(filename):
+    """
+    Compute a "group_id" without loading the file
+    as a DataModel
+    """
+    # use astropy.io.fits directly to read header keywords
+    # avoiding the DataModel overhead
+    # TODO look up attribute to keyword in core schema
+    with fits.open(filename) as ff:
+        header = ff["PRIMARY"].header
+        program_number = header["PROGRAM"]
+        observation_number = header["OBSERVTN"]
+        visit_number = header["VISIT"]
+        visit_group = header["VISITGRP"]
+        sequence_id = header["SEQ_ID"]
+        activity_id = header["ACT_ID"]
+        exposure_number = header["EXPOSURE"]
+
+    return _attrs_to_group_id(
+        program_number,
+        observation_number,
+        visit_number,
+        visit_group,
+        sequence_id,
+        activity_id,
+        exposure_number,
+    )
+
+
+def _model_to_group_id(model):
+    """
+    Compute a "group_id" from a model
+    """
+    return _attrs_to_group_id(
+        model.meta.exposure.program_number,
+        model.meta.exposure.observation_number,
+        model.meta.exposure.visit_number,
+        model.meta.exposure.visit_group,
+        model.meta.exposure.sequence_id,
+        model.meta.exposure.activity_id,
+        model.meta.exposure.exposure_number,
+    )
+
+
+def _models_to_association(models, meta=None, member_meta=None):
+    """
+    Create an association table from a list of models
+    What type of association? What's required?
+
+    Both lvl2 and lvl3 require:
+        - asn_id [string] special naming convention (maybe default to None?)
+        - asn_pool [string] special naming? (maybe default to 'undetermined' or None?)
+        - products [list]
+            - name (optional) [string] (is this actually optional? calwebb3_image3 at least catches errors when it's missing)
+            - members [list] each item a dict
+                - expname [string] filename
+                - exptype [string] science, background, ...
+    """
+    if meta is None:
+        meta = {}
+    if member_meta is None:
+        member_meta = [{}] * len(models)
+
+    if len(member_meta) != len(models):
+        raise ValueError(f"len(member_meta)[{len(member_meta)}] != len(models)[{len(models)}]")
+
+    asn_table = {
+        "asn_id": None,
+        "asn_pool": None,
+    }
+    asn_table |= meta
+
+    # for each model generate:
+    # - expname (filename)
+    # - exptype (probably all science...)
+    # - group_id (see above)
+    # use this to populate members filenames
+    members = []
+    for (i, model) in enumerate(models):
+        member = {
+            "exptype": "science",
+        }
+
+        member |= member_meta[i]
+
+        if "expname" not in member:
+            member["expname"] = model.meta.filename
+
+        if "group_id" not in member:
+            try:
+                member["group_id"] = model.meta.group_id
+            except AttributeError:
+                try:
+                    member["group_id"] = _model_to_group_id(model)
+                except (TypeError, AttributeError):
+                    member["group_id"] = 'exposure{0:04d}'.format(i + 1)
+
+        members.append(member)
+
+    # add members to table as first product
+    asn_table["products"] = [{"members": members}]
+
+    return asn_table
+
+
+def _patch_asn_with_group_id(asn_table):
+    """
+    Add "group_id" entries for each member entry in an
+    association table (if no "group_id" exists)
+    """
+    pass
 
 
 def make_file_with_index(file_path, idx):
@@ -532,8 +637,8 @@ def make_file_with_index(file_path, idx):
         Path with index appended
     """
     # Decompose path
-    path_head, path_tail = op.split(file_path)
-    base, ext = op.splitext(path_tail)
+    path_head, path_tail = os.path.split(file_path)
+    base, ext = os.path.splitext(path_tail)
     if idx is not None:
         base = base + str(idx)
-    return op.join(path_head, base + ext)
+    return os.path.join(path_head, base + ext)
