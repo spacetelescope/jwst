@@ -244,6 +244,7 @@ class TweakRegStep(Step):
             self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
             self.skip = True
             for model in images:
+                # TODO why isn't this check earlier, before catalog computation?
                 model.meta.cal_step.tweakreg = "SKIPPED"
                 # Remove the attached catalogs
                 del model.catalog
@@ -258,10 +259,13 @@ class TweakRegStep(Step):
             imcats = list(map(self._imodel2wcsim, g))
             # Remove the attached catalogs
             for model in g:
+                # TODO why is this computed above in this case?
                 del model.catalog
             self.log.info("* Images in GROUP '{}':".format(group_name))
             for im in imcats:
+                # TODO doesn't ModelContainer set group_id?
                 im.meta['group_id'] = group_name
+                # TODO why meta['name'] here but meta.filename above?
                 self.log.info("     {}".format(im.meta['name']))
 
             self.log.info('')
@@ -364,6 +368,8 @@ class TweakRegStep(Step):
                         return images
 
         if align_to_abs_refcat:
+            # TODO split process into 2 functions abs_refcat and non
+            # as much of the method is conditional on this one option
             # Get catalog of GAIA sources for the field
             #
             # NOTE:  If desired, the pipeline can write out the reference
@@ -386,6 +392,9 @@ class TweakRegStep(Step):
             gaia_cat_name = self.abs_refcat.upper()
 
             if gaia_cat_name in SINGLE_GROUP_REFCAT:
+                # TODO this passes `images` which is used only for:
+                # - wcs calculation using resample_utils
+                # - decimalyear of first image observation date
                 ref_cat = amutils.create_astrometric_catalog(
                     images,
                     gaia_cat_name,
@@ -486,7 +495,6 @@ class TweakRegStep(Step):
                     )
 
         return images
-    
 
     def _write_catalog(self, image_model, catalog, filename):
         '''
@@ -534,7 +542,6 @@ class TweakRegStep(Step):
         image_model.meta.tweakreg_catalog = catalog_filename
 
         return image_model
-
 
     def _is_wcs_correction_small(self, wcs, twcs):
         """Check that the newly tweaked wcs hasn't gone off the rails"""
