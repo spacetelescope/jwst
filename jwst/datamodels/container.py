@@ -181,13 +181,23 @@ to supply custom catalogs.
             self._from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         elif isinstance(init, str):
             # assume an input json association file
-            # TODO it looks like associations can also be yaml? is this used?
-            with open(init) as fp:
-                asn_data = json.load(fp)
+            from ..associations import AssociationNotValidError, load_asn
+
+            filepath = os.path.abspath(os.path.expanduser(os.path.expandvars(init)))
+            try:
+                with open(filepath) as asn_file:
+                    asn_data = load_asn(asn_file)
+            except AssociationNotValidError as e:
+                raise IOError("Cannot read ASN file.") from e
+
             self._from_asn(asn_data, asn_file_path=init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         else:
             raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
+
+        # FIXME stpipe reaches into _models[0], make sure it's loaded
+        if asn_n_members == 1 and self._models:
+            self._models[0] = self[0]
 
     def __len__(self):
         # TODO encapsulate these so they are always the same length
@@ -297,12 +307,17 @@ to supply custom catalogs.
 
         # add a "group_id" (if not already defined in the association)
         for (i, member) in enumerate(members):
-            filename = os.path.join(asn_dir, member["expname"])
-            member['_filename'] = filename
-            if "group_id" not in member:
+            if member["expname"] is None:
+                if self._models is None or self._models[i] is None:
+                    raise Exception()
+                member['_filename'] = None
+            else:
+                filename = os.path.join(asn_dir, member["expname"])
+                member['_filename'] = filename
+            if member.get("group_id") is None:
                 try:
                     member["group_id"] = _file_to_group_id(filename)
-                except (TypeError, AttributeError):
+                except (TypeError, AttributeError, KeyError):
                     member["group_id"] = 'exposure{0:04d}'.format(i + 1)
 
         # Pull the whole association table into meta.asn_table
@@ -447,7 +462,7 @@ to supply custom catalogs.
 
     def close(self):
         """Close all datamodels."""
-        if not self._iscopy:
+        if not self._iscopy and self._models is not None:
             for model in self._models:
                 if isinstance(model, JwstDataModel):
                     model.close()
@@ -501,7 +516,7 @@ def _attrs_to_group_id(
         exposure_number,
     ):
     return (
-        f"jw_{program_number}{observation_number}{visit_number}"
+        f"jw{program_number}{observation_number}{visit_number}"
         f"_{visit_group}{sequence_id}{activity_id}"
         f"_{exposure_number}"
     )
