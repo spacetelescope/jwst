@@ -254,7 +254,7 @@ class OutlierDetection:
         log.info("Computing median")
 
         # For each model, compute the bad-pixel threshold from the weight arrays
-        for (i, resampled) in enumerate(resampled_models._models):
+        for (i, resampled) in enumerate(resampled_models):
             # FIXME why does datamode_open on a model 0 out wht?
             # m = datamodel_open(resampled)
             weight = resampled.wht.copy()
@@ -285,7 +285,7 @@ class OutlierDetection:
             if i == 0:
                 n_rows, n_cols = resampled.data.shape
                 # FIXME this is all data in memory, at once
-                filtered_data = np.empty((len(resampled_models._models), n_rows, n_cols), resampled.data.dtype)
+                filtered_data = np.empty((len(resampled_models), n_rows, n_cols), resampled.data.dtype)
             filtered_data[i][:] = resampled.data
             filtered_data[i][badmask] = np.nan
 
