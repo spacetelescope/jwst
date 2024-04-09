@@ -1485,7 +1485,7 @@ class _BaseOverlap:
 
             # Integrate
             integrand = fct_f_k(x_grid) * x_grid
-            bin_val.append(np.trapz(integrand, x_grid))
+            bin_val.append(np.trapezoid(integrand, x_grid))
 
         # Convert to array and return with the pixel centers.
         return pix_center, np.array(bin_val)
