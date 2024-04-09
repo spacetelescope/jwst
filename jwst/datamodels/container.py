@@ -278,7 +278,8 @@ to supply custom catalogs.
         asn_n_members : int
             Open only the first N qualifying members.
         """
-        # TODO should we copy asn_data? there are places below where it's modified
+        # copy asn_data so it can be modified below
+        asn_data = copy.deepcopy(asn_data)
 
         # match the asn_exptypes to the exptype in the association and retain
         # only those file that match, as a list, if asn_exptypes is set to none
@@ -341,7 +342,7 @@ to supply custom catalogs.
         member = self._members[index]
         model = datamodel_open(member['_filename'], memmap=self._memmap)
 
-        # TODO when model is opened, overwrite:
+        # when model is opened, overwrite:
         # - exptype to meta.asn.exptype
         # - asn_table_name to meta.asn.table_name (if no AttributeError)
         # - asn_pool_name to meta.asn_pool_name (same if no AttributeError)
@@ -627,14 +628,6 @@ def _models_to_association(models, meta=None, member_meta=None):
     asn_table["products"] = [{"members": members}]
 
     return asn_table
-
-
-def _patch_asn_with_group_id(asn_table):
-    """
-    Add "group_id" entries for each member entry in an
-    association table (if no "group_id" exists)
-    """
-    pass
 
 
 def make_file_with_index(file_path, idx):
