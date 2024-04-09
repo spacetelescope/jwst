@@ -556,13 +556,13 @@ def _model_to_group_id(model):
     Compute a "group_id" from a model
     """
     return _attrs_to_group_id(
-        model.meta.exposure.program_number,
-        model.meta.exposure.observation_number,
-        model.meta.exposure.visit_number,
-        model.meta.exposure.visit_group,
-        model.meta.exposure.sequence_id,
-        model.meta.exposure.activity_id,
-        model.meta.exposure.exposure_number,
+        model.meta.observation.program_number,
+        model.meta.observation.observation_number,
+        model.meta.observation.visit_number,
+        model.meta.observation.visit_group,
+        model.meta.observation.sequence_id,
+        model.meta.observation.activity_id,
+        model.meta.observation.exposure_number,
     )
 
 
@@ -614,6 +614,8 @@ def _models_to_association(models, meta=None, member_meta=None):
             try:
                 member["group_id"] = model.meta.group_id
             except AttributeError:
+                member["group_id"] = None
+            if member["group_id"] is None:
                 try:
                     member["group_id"] = _model_to_group_id(model)
                 except (TypeError, AttributeError):
