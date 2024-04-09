@@ -17,11 +17,12 @@ def test_default_input_with_container(mk_tmp_dirs):
     """Test default input name from a ModelContainer"""
 
     model_path = t_path('data/flat.fits')
-    with ModelContainer([model_path]) as container:
-        step = StepWithModel()
-        step.run(container)
+    with datamodels.open(model_path) as model:
+        with ModelContainer([model]) as container:
+            step = StepWithModel()
+            step.run(container)
 
-        assert step._input_filename is None
+            assert step._input_filename is None
 
 
 def test_default_input_with_full_model():

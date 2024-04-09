@@ -317,16 +317,9 @@ class OutlierDetection:
             # apply blot to re-create model.data from median image
             blotted_median.data = gwcs_blot(median_model, model, interp=interp,
                                             sinscl=sinscl)
+            blot_models.append(blotted_median)
 
-            model_path = self.make_output_path(basepath=model.meta.filename, suffix='blot')
-            blotted_median.save(model_path)
-            log.info(f"Saved model in {model_path}")
-
-            # Append model name to the list so it is not passed in memory
-            blot_models.append(model_path)
-
-        # modelcontainer is needed here as blot_models is a list of filenames
-        return ModelContainer(blot_models)
+        return blot_models
 
     def detect_outliers(self, blot_models):
         """Flag DQ array for cosmic rays in input images.
@@ -353,10 +346,7 @@ class OutlierDetection:
         """
         log.info("Flagging outliers")
         for image, blot in zip(self.input_models, blot_models):
-            blot = datamodel_open(blot)
             flag_cr(image, blot, **self.outlierpars)
-            blot.close()
-            del blot
 
         if self.converted:
             # Make sure actual input gets updated with new results

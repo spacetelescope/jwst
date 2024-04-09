@@ -203,16 +203,11 @@ def test_outlier_step(we_three_sci, tmp_cwd):
 def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
     """Test whole step with an outlier including saving intermediate and results files"""
 
-    for model in we_three_sci:
-        model.save(model.meta.filename)
-    filenames = [model.meta.filename for model in we_three_sci]
     # Drop a CR on the science array
-    with datamodels.open(filenames[0]) as dm0:
-        dm0.data[12, 12] += 1
-        dm0.write(dm0.meta.filename)
+    we_three_sci[0].data[12, 12] += 1
 
     # Initialize inputs for the test based on filenames only
-    container = ModelContainer(filenames)
+    container = ModelContainer(we_three_sci)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True

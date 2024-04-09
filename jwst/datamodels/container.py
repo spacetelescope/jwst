@@ -130,7 +130,7 @@ to supply custom catalogs.
         super().__init__(init=None, **kwargs)
 
         # if True, keep models open and in memory
-        self._in_memory = True
+        self._in_memory = kwargs.get("in_memory", True)
 
         # _models will be the same length as _members
         # and possibly contain:
@@ -154,13 +154,18 @@ to supply custom catalogs.
             # might be a list of filenames or a list of models
             self._models = []
             for item in init:
-                if isinstance(item, str):
-                    self._models.append(datamodel_open(item, memmap=self._memmap))
-                elif isinstance(item, JwstDataModel):
+                #if isinstance(item, str):
+                #    self._models.append(datamodel_open(item, memmap=self._memmap))
+                if isinstance(item, JwstDataModel):
                     self._models.append(item)
                 else:
                     raise TypeError("list must contain items that can be opened "
                                     "with jwst.datamodels.open()")
+
+            # since these models are already in memory...
+            self._in_memory = True
+            # don't close them when the container closes
+            self._iscopy = True
 
             # generate a fake association table
             asn_data = _models_to_association(self._models)
@@ -171,12 +176,13 @@ to supply custom catalogs.
             self._shape = init._shape
             self._asdf = AsdfFile(instance)
             self._instance = instance
-            self._ctx = self
+            # TODO what if some models were not loaded?
             self._models = init._models
             self._members = init._members
             self.asn_table_name = init.asn_table_name
             self.asn_pool_name = init.asn_pool_name
             self._iscopy = True
+            self._inmemory = init._in_memory
         elif is_association(init):
             self._from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         elif isinstance(init, str):
@@ -246,11 +252,15 @@ to supply custom catalogs.
         instance = copy.deepcopy(self._instance, memo=memo)
         result._asdf = AsdfFile(instance)
         result._instance = instance
+        # TODO shouldn't result._iscopy be True?
         result._iscopy = self._iscopy
+        result._in_memory = self._in_memory
         result._schema = self._schema
-        result._ctx = result
+        # TODO is there a cleaner way to copy the models?
         for m in self._models:
             if isinstance(m, JwstDataModel):
+                # if the model is copied here, it will get a new FileReference
+                # and result._iscopy should be False...
                 result._models.append(m.copy())
             else:
                 result._models.append(m)
