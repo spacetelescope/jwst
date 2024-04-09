@@ -34,8 +34,6 @@ class SourceModelContainer(ModelContainer):
             super(SourceModelContainer, self).__init__(init, **kwargs)
             self._multiexposure = init._multiexposure
         elif isinstance(init, MultiExposureModel):
-            super(SourceModelContainer, self).__init__(init=None, **kwargs)
-
             # Convert each exposure to an actual SlitModel.
             # Note that the model is not instantiated
             # since a copy is not desired.
@@ -44,7 +42,7 @@ class SourceModelContainer(ModelContainer):
                 model = SlitModel()
                 model._instance.update(exposure._instance)
                 models.append(model)
-            self._models = models
+            super(SourceModelContainer, self).__init__(init=models, **kwargs)
             self._multiexposure = init
 
     @property
