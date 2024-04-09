@@ -7,6 +7,44 @@ from ..lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
 
 
+def interpolate_fluxes(lams, flxs, extrapolate_sed):
+    '''
+    Parameters
+    ----------
+    lams : float array
+        Array of wavelengths corresponding to the fluxes (flxs) for each pixel.
+        One wavelength per direct image, so can be a single value.
+    flxs : float array
+        Array of fluxes (flam) for the pixels contained in x0, y0. If a single
+        direct image is in use, this will be a single value.
+    extrapolate_sed : bool
+        Whether to allow for the SED of the object to be extrapolated when it does not fully cover the
+        needed wavelength range. Default if False.
+
+    Returns
+    -------
+    flux : function
+        Function that returns the flux at a given wavelength. If only one direct image is in use, this
+        function will always return the same value
+    '''
+
+    if len(lams) > 1:
+        # If we have direct image flux values from more than one filter (lambda),
+        # we have the option to extrapolate the fluxes outside the
+        # wavelength range of the direct images
+        if extrapolate_sed is False:
+            return interp1d(lams, flxs, fill_value=0., bounds_error=False)
+        else:
+            return interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
+    else:
+        # If we only have flux from one lambda, just use that
+        # single flux value at all wavelengths
+        def flux(x):
+            return flxs[0]
+        return flux
+
+
+
 def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
                     sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
                     oversample_factor=2, extrapolate_sed=False, xoffset=0,
@@ -84,20 +122,8 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     sky_to_imgxy = grism_wcs.get_transform('world', 'detector')
     imgxy_to_grismxy = grism_wcs.get_transform('detector', 'grism_detector')
 
-    # Setup function for retrieving flux values at each dispersed wavelength
-    if len(lams) > 1:
-        # If we have direct image flux values from more than one filter (lambda),
-        # we have the option to extrapolate the fluxes outside the
-        # wavelength range of the direct images
-        if extrapolate_sed is False:
-            flux = interp1d(lams, flxs, fill_value=0., bounds_error=False)
-        else:
-            flux = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
-    else:
-        # If we only have flux from one lambda, just use that
-        # single flux value at all wavelengths
-        def flux(x):
-            return flxs[0]
+    # Set up function for retrieving flux values at each dispersed wavelength
+    flux = interpolate_fluxes(lams, flxs, extrapolate_sed)
 
     # Get x/y positions in the grism image corresponding to wmin and wmax:
     # Start with RA/Dec of the input pixel position in segmentation map,
@@ -116,11 +142,11 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
 
     # Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
     # whichever is smaller, divided by oversampling requested
-    input_dlam = np.median(lams[1:] - lams[:-1])
-    if input_dlam < dw:
-        dlam = input_dlam / oversample_factor
+    if len(lams) > 1:
+        input_dlam = np.median(lams[1:] - lams[:-1])
+        if input_dlam < dw:
+            dlam = input_dlam / oversample_factor
     else:
-        # this value gets used when we only have 1 direct image wavelength
         dlam = dw / oversample_factor
 
     # Create list of wavelengths on which to compute dispersed pixels

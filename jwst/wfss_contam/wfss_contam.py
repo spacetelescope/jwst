@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def _determine_multiprocessing_ncores(max_cores):
+def _determine_multiprocessing_ncores(max_cores, num_cores):
 
     """Determine the number of cores to use for multiprocessing.
 
@@ -20,6 +20,8 @@ def _determine_multiprocessing_ncores(max_cores):
     ----------
     max_cores : string
         See docstring of contam_corr
+    num_cores : int
+        Number of cores available on the machine
 
     Returns
     -------
@@ -30,7 +32,6 @@ def _determine_multiprocessing_ncores(max_cores):
     if max_cores == 'none':
         ncpus = 1
     else:
-        num_cores = multiprocessing.cpu_count()
         if max_cores == 'quarter':
             ncpus = num_cores // 4 or 1
         elif max_cores == 'half':
@@ -65,7 +66,9 @@ def contam_corr(input_model, waverange, photom, max_cores, brightest_n=None):
     brightest_n : int
         Number of sources to simulate. If None, then all sources in the
         input model will be simulated. Requires loading the source catalog
-        file if not None.
+        file if not None. Note runtime scales non-linearly with this number
+        because brightest (and therefore typically largest) sources are
+        simulated first.
 
     Returns
     -------
@@ -78,7 +81,8 @@ def contam_corr(input_model, waverange, photom, max_cores, brightest_n=None):
 
     """
 
-    ncpus = _determine_multiprocessing_ncores(max_cores)
+    num_cores = multiprocessing.cpu_count()
+    ncpus = _determine_multiprocessing_ncores(max_cores, num_cores)
 
     # Initialize output model
     output_model = input_model.copy()
@@ -133,7 +137,7 @@ def contam_corr(input_model, waverange, photom, max_cores, brightest_n=None):
     good_slits = [slit for slit in output_model.slits if slit.source_id in obs.IDs]
     output_model = datamodels.MultiSlitModel()
     output_model.slits.extend(good_slits)
-    log.info(f"Simulating only the first {brightest_n} sources")
+    log.info(f"Simulating only the brightest {brightest_n} sources")
 
 
     simul_all = None
@@ -158,8 +162,6 @@ def contam_corr(input_model, waverange, photom, max_cores, brightest_n=None):
     simul_model = datamodels.ImageModel(data=simul_all)
     simul_model.update(input_model, only="PRIMARY")
 
-    # save the simulation multislitmodel
-    obs.simul_slits.save("simulated_slits.fits", overwrite=True)
     simul_slit_sids = np.array(obs.simul_slits_sid)
     simul_slit_orders = np.array(obs.simul_slits_order)
 
@@ -215,7 +217,7 @@ def contam_corr(input_model, waverange, photom, max_cores, brightest_n=None):
     # Set the step status to COMPLETE
     output_model.meta.cal_step.wfss_contam = 'COMPLETE'
 
-    return output_model, simul_model, contam_model
+    return output_model, simul_model, contam_model, obs.simul_slits
 
 
 def copy_slit_info(input_slit, output_slit):

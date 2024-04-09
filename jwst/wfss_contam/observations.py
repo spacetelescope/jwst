@@ -1,7 +1,6 @@
 import time
 import numpy as np
 import multiprocessing as mp
-import concurrent.futures
 
 from scipy import sparse
 
@@ -52,17 +51,48 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
         box_size = (int(data.shape[0]/5), int(data.shape[1]/5))
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
-    bkg = Background2D(data, (500, 500), filter_size=filter_size,
+    bkg = Background2D(data, box_size, filter_size=filter_size,
                    sigma_clip=sigma_clip, bkg_estimator=bkg_estimator, 
                    exclude_percentile=exclude_percentile)
 
     return data - bkg.background
 
 
+def _select_ids(ID, all_IDs):
+    '''
+    Select the source IDs to be processed based on the input ID parameter.
+
+    Parameters
+    ----------
+    ID : int or list-like
+        ID(s) of source to process. If None, all sources processed.
+    all_IDs : np.ndarray
+        Array of all source IDs in the segmentation map
+
+    Returns
+    -------
+    selected_IDs : list
+        List of selected source IDs
+    '''
+    if ID is None:
+        log.info(f"Loading all {len(all_IDs)} sources from segmentation map")
+        return all_IDs
+        
+    elif isinstance(ID, int):
+        log.info(f"Loading single source {ID} from segmentation map")
+        return [ID]
+    
+    elif isinstance(ID, list) or isinstance(ID, np.ndarray):
+        log.info(f"Loading {len(ID)} of {len(all_IDs)} selected sources from segmentation map")
+        return list(ID)
+    else:
+        raise ValueError("ID must be an integer or a list of integers")
+
+
 class Observation:
     """This class defines an actual observation. It is tied to a single grism image."""
 
-    def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=0,
+    def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=None,
                  sed_file=None, extrapolate_sed=False,
                  boundaries=[], offsets=[0, 0], renormalize=True, max_cpu=1):
 
@@ -99,9 +129,10 @@ class Observation:
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
         self.ID = ID
-        self.IDs = []
         self.dir_image_names = direct_images
         self.seg = segmap_model.data
+        all_ids = np.array(list(set(np.ravel(self.seg))))
+        self.IDs = _select_ids(ID, all_ids)
         self.filter = filter
         self.sed_file = sed_file   # should always be NONE for baseline pipeline (use flat SED)
         self.cache = False
@@ -114,9 +145,9 @@ class Observation:
         if len(boundaries) == 0:
             log.debug("No boundaries passed.")
             self.xstart = 0
-            self.xend = self.xstart + self.dims[0] - 1
+            self.xend = self.xstart + self.seg.shape[0] - 1
             self.ystart = 0
-            self.yend = self.ystart + self.dims[1] - 1
+            self.yend = self.ystart + self.seg.shape[1] - 1
         else:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
         self.dims = (self.yend - self.ystart + 1, self.xend - self.xstart + 1)
@@ -136,26 +167,10 @@ class Observation:
         self.simul_slits_sid = []
 
     def create_pixel_list(self):
-        # Create a list of pixels to be dispersed, grouped per object ID.
-
-        if self.ID == 0:
-            # When ID=0, all sources in the segmentation map are processed.
-            # This creates a huge list of all x,y pixel indices that have non-zero values
-            # in the seg map, sorted by those indices belonging to a particular source ID.
-            all_IDs = np.array(list(set(np.ravel(self.seg))))
-            all_IDs = all_IDs[all_IDs > 0]
-            self.IDs = all_IDs
-            log.info(f"Loading {len(all_IDs)} sources from segmentation map")
-        elif isinstance(self.ID, int):
-            # Process only the given source ID
-            log.info(f"Loading source {self.ID} from segmentation map")
-            self.IDs = [self.ID]
-        elif isinstance(self.ID, (list, np.array)):
-            # Process only the given list of source IDs
-            log.info(f"Loading {len(self.ID)} of {len(list(set(np.ravel(self.seg))))} selected sources from segmentation map")
-            self.IDs = self.ID
-        else:
-            raise ValueError("ID must be an integer or a list of integers")
+        '''
+        Create a list of pixels to be dispersed, grouped per object ID.
+        When ID is None, all sources in the segmentation map are processed.
+        '''
 
         self.xs = []
         self.ys = []
@@ -257,10 +272,7 @@ class Observation:
             ctx = mp.get_context("forkserver")
             with ctx.Pool(self.max_cpu) as mypool:
                 disperse_chunk_output = mypool.starmap(self.disperse_chunk, pool_args)
-            #with concurrent.futures.ProcessPoolExecutor(max_workers=self.max_cpu) as executor:
-            #    these_futures = [executor.submit(self.disperse_chunk, *args) for args in pool_args]
-            #    concurrent.futures.wait(these_futures)
-            #    disperse_chunk_output = [future.result() for future in these_futures]
+
         else:
             disperse_chunk_output = []
             for i in range(len(self.IDs)):
@@ -363,6 +375,8 @@ class Observation:
                       wmin, wmax, sens_waves, sens_resp,
                       seg_wcs, grism_wcs, i, dims[::-1], 2,
                       extrapolate_sed, xoffset, yoffset)
+            if i == 0:
+                print(pars_i)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in scalar divide")
                 warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
