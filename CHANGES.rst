@@ -1,6 +1,11 @@
 1.14.1 (unreleased)
 ===================
 
+ami
+---
+
+- Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
+
 associations
 ------------
 
@@ -15,6 +20,11 @@ documentation
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
+
+extract_1d
+----------
+
+- Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
 pipeline
 --------
