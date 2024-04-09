@@ -37,16 +37,11 @@ def container():
                     m.meta.observation.exposure_number = '1'
                     m.meta.instrument.name = 'NIRCAM'
                     m.meta.instrument.channel = 'SHORT'
-            yield c
-
-
-def reset_group_id(container):
-    """Remove group_id from all models in container"""
-    for m in container:
-        try:
-            del m.meta.group_id
-        except AttributeError:
-            pass
+                    m.meta.group_id = None
+                # as we modify the in-memory models above we make a
+                # new ModelContainer with these models to return from the
+                # fixture so the modifications will result in a new grouping
+                yield ModelContainer([m for m in c])
 
 
 def test_modelcontainer_iteration(container):
@@ -67,18 +62,22 @@ def test_modelcontainer_group1(container):
 
 def test_modelcontainer_group2(container):
     container[0].meta.observation.exposure_number = '2'
-    for group in container.models_grouped:
+    container[0].meta.group_id = '2'
+    # since we've modified the in-memory model, make a new container
+    c = ModelContainer([m for m in container])
+    for group in c.models_grouped:
         assert len(group) == 1
         for model in group:
             pass
-    container[0].meta.observation.exposure_number = '1'
 
 
 def test_modelcontainer_group_names(container):
     assert len(container.group_names) == 1
-    reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
-    assert len(container.group_names) == 2
+    container[0].meta.group_id = '2'
+    # since we've modified the in-memory model, make a new container
+    c = ModelContainer([m for m in container])
+    assert len(c.group_names) == 2
 
 
 def test_modelcontainer_error_from_asn(tmp_path):
