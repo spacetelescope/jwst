@@ -124,8 +124,7 @@ to supply custom catalogs.
     """
     schema_url = None
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None,
-                 iscopy=False, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
 
         super().__init__(init=None, **kwargs)
 
@@ -139,7 +138,7 @@ to supply custom catalogs.
         self._models = None
         self._members = None
 
-        self._iscopy = iscopy
+        self._close_models_on_close = True
 
         self.asn_table_name = None
         self.asn_pool_name = None
@@ -151,11 +150,8 @@ to supply custom catalogs.
             init = []
 
         if isinstance(init, list):
-            # might be a list of filenames or a list of models
             self._models = []
             for item in init:
-                #if isinstance(item, str):
-                #    self._models.append(datamodel_open(item, memmap=self._memmap))
                 if isinstance(item, JwstDataModel):
                     self._models.append(item)
                 else:
@@ -165,7 +161,7 @@ to supply custom catalogs.
             # since these models are already in memory...
             self._in_memory = True
             # don't close them when the container closes
-            self._iscopy = True
+            self._close_models_on_close = False
 
             # generate a fake association table
             asn_data = _models_to_association(self._models)
@@ -181,7 +177,7 @@ to supply custom catalogs.
             self._members = init._members
             self.asn_table_name = init.asn_table_name
             self.asn_pool_name = init.asn_pool_name
-            self._iscopy = True
+            self._close_models_on_close = False
             self._inmemory = init._in_memory
         elif is_association(init):
             self._from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
@@ -252,18 +248,13 @@ to supply custom catalogs.
         instance = copy.deepcopy(self._instance, memo=memo)
         result._asdf = AsdfFile(instance)
         result._instance = instance
-        # TODO shouldn't result._iscopy be True?
-        result._iscopy = self._iscopy
         result._in_memory = self._in_memory
         result._schema = self._schema
-        # TODO is there a cleaner way to copy the models?
-        for m in self._models:
-            if isinstance(m, JwstDataModel):
-                # if the model is copied here, it will get a new FileReference
-                # and result._iscopy should be False...
-                result._models.append(m.copy())
-            else:
-                result._models.append(m)
+        result._models = []
+        for m in self:
+            result._models.append(m.copy())
+        # since we copied the models above, close the copies on close
+        result._close_models_on_close = True
         result._members = copy.deepcopy(self._members)
         result.asn_table_name = self.asn_table_name
         result.asn_pool_name = self.asn_pool_name
@@ -473,10 +464,9 @@ to supply custom catalogs.
 
     def close(self):
         """Close all datamodels."""
-        if not self._iscopy and self._models is not None:
+        if self._close_models_on_close and self._models is not None:
             for model in self._models:
-                if isinstance(model, JwstDataModel):
-                    model.close()
+                model.close()
 
     @property
     def crds_observatory(self):
