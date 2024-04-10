@@ -1,6 +1,10 @@
 1.14.1 (unreleased)
 ===================
 
+ami
+---
+
+- Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
 associations
 ------------
@@ -11,13 +15,22 @@ associations
 - Match NIRSpec imprint observations to science exposures on mosaic tile location
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
 
-
 documentation
 -------------
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
 
+extract_1d
+----------
+
+- Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
+
+general
+-------
+
+- Removed deprecated stdatamodels model types ``DrizProductModel``, 
+  ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 pipeline
 --------
@@ -32,12 +45,10 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
-  
- residual_fringe
+residual_fringe
 ---------------
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
-
 
 tweakreg
 --------
