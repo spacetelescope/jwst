@@ -615,7 +615,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
             from linearfit import linearfit
 
             # dependent variables
-            M = np.mat(flatimg)
+            M = np.asmatrix(flatimg)
 
             # photon noise
             noise = np.sqrt(np.abs(flatimg))
@@ -625,9 +625,9 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
             # uniform weight
             wy = weights
-            S = np.mat(np.diag(wy))
+            S = np.asmatrix(np.diag(wy))
             # matrix of independent variables
-            C = np.mat(flatmodeltransp)
+            C = np.asmatrix(flatmodeltransp)
 
             # initialize object
             result = linearfit.LinearFit(M, S, C)
