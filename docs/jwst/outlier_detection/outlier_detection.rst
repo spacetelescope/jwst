@@ -58,7 +58,7 @@ Specifically, this routine performs the following operations:
      should be used when resampling to create the output mosaic.  Any pixel with a
      DQ value not included in this value (or list of values) will be ignored when
      resampling.
-   * Resampled images will be written out to disk as `_outlier_i2d.fits` by default.
+   * Resampled images will be written out to disk as `_<asn_id>_outlier_i2d.fits` by default.
    * **If resampling is turned off** through the use of the ``resample_data`` parameter,
      a copy of the unrectified input images (as a ModelContainer)
      will be used for subsequent processing.
