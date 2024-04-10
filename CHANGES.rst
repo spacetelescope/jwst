@@ -342,9 +342,6 @@ resample
   ``world_to_pixel_values``) for reproject, which also fixed a bug, and
   removed support for astropy model [#8172]
 
-- Added sleep + check of output files that are median combined to fix intermittent
-  corruption of these files in operations [#8305]
-
 - Replace use of ``check_memory_allocation``. [#8324]
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
