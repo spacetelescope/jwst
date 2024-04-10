@@ -84,6 +84,7 @@ class PixelReplaceStep(Step):
 
             if isinstance(input_model, datamodels.ModelContainer):  # calspec3 case for IFU data
                 output_model = input_model.copy()
+                
                 # Setup output path naming if associations are involved.
                 asn_id = None
                 try:
@@ -114,6 +115,9 @@ class PixelReplaceStep(Step):
                         replacement.replace()
                         self.record_step_status(replacement.output, 'pixel_replace', success=True)
                         output_model[i] = replacement.output
+                        o_path_name = self.make_output_path(basepath=output_model[i].meta.filename)
+                        print(o_path_name)
+                        output_model[i].meta.filename = o_path_name
                 return output_model
             else:  # a single input model. calspec2 case
                 replacement = PixelReplacement(result, **pars)
