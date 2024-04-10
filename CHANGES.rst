@@ -45,6 +45,11 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
+residual_fringe
+---------------
+
+- Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
+
 tweakreg
 --------
 
