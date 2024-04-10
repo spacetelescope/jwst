@@ -26,6 +26,12 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+general
+-------
+
+- Removed deprecated stdatamodels model types ``DrizProductModel``, 
+  ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
+
 pipeline
 --------
 
