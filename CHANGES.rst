@@ -45,6 +45,12 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
+resample
+--------
+
+- Remove sleep in median combination added in 8305 as it did not address
+  the issue in operation [#8419]
+
 residual_fringe
 ---------------
 
