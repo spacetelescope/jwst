@@ -44,6 +44,33 @@ def interpolate_fluxes(lams, flxs, extrapolate_sed):
         return flux
 
 
+def determine_wl_spacing(dw, lams, oversample_factor):
+    '''
+    Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
+    whichever is smaller, divided by oversampling requested
+
+    Parameters
+    ----------
+    dw : float
+        The natural wavelength scale of the grism image
+    lams : float array
+        Array of wavelengths corresponding to the fluxes (flxs) for each pixel.
+        One wavelength per direct image, so can be a single value.
+    oversample_factor : int
+        The amount of oversampling
+
+    Returns
+    -------
+    dlam : float
+        The wavelength spacing to use for the dispersed pixels
+    '''
+    # 
+    if len(lams) > 1:
+        input_dlam = np.median(lams[1:] - lams[:-1])
+        if input_dlam < dw:
+            return input_dlam / oversample_factor
+    return dw / oversample_factor
+
 
 def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
                     sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
@@ -137,19 +164,9 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     dxw = xwmax - xwmin
     dyw = ywmax - ywmin
 
-    # Compute the delta-wave per pixel
-    dw = np.abs((wmax - wmin) / (dyw - dxw))
-
-    # Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
-    # whichever is smaller, divided by oversampling requested
-    if len(lams) > 1:
-        input_dlam = np.median(lams[1:] - lams[:-1])
-        if input_dlam < dw:
-            dlam = input_dlam / oversample_factor
-    else:
-        dlam = dw / oversample_factor
-
     # Create list of wavelengths on which to compute dispersed pixels
+    dw = np.abs((wmax - wmin) / (dyw - dxw))
+    dlam = determine_wl_spacing(dw, lams, oversample_factor)
     lambdas = np.arange(wmin, wmax + dlam, dlam)
     n_lam = len(lambdas)
 

@@ -247,16 +247,16 @@ class Observation:
         # Loop over all source ID's from segmentation map
         pool_args = []
         for i in range(len(self.IDs)):
-            if self.cache:
-                self.cached_object[i] = {}
-                self.cached_object[i]['x'] = []
-                self.cached_object[i]['y'] = []
-                self.cached_object[i]['f'] = []
-                self.cached_object[i]['w'] = []
-                self.cached_object[i]['minx'] = []
-                self.cached_object[i]['maxx'] = []
-                self.cached_object[i]['miny'] = []
-                self.cached_object[i]['maxy'] = []
+            #if self.cache:
+            #    self.cached_object[i] = {}
+            #    self.cached_object[i]['x'] = []
+            #    self.cached_object[i]['y'] = []
+            #    self.cached_object[i]['f'] = []
+            #    self.cached_object[i]['w'] = []
+            #    self.cached_object[i]['minx'] = []
+            #    self.cached_object[i]['maxx'] = []
+            #    self.cached_object[i]['miny'] = []
+            #    self.cached_object[i]['maxy'] = []
 
             disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp,
                                    self.IDs[i], self.xs[i], self.ys[i], 
@@ -429,6 +429,7 @@ class Observation:
             return (this_object, thisobj_bounds, sid, order)
         return (this_object, None, sid, order)
     
+    
     @staticmethod
     def construct_slitmodel_for_chunk(chunk_data, bounds, sid, order):
         '''
@@ -450,8 +451,8 @@ class Observation:
         '''
         if bounds is None:
             return None
+        
         [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
-
         slit = datamodels.SlitModel()
         slit.source_id = sid
         slit.name = f"source_{sid}"
