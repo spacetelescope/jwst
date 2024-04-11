@@ -1,6 +1,5 @@
 import logging
 import os
-import time
 
 import numpy as np
 from drizzle import util
@@ -290,18 +289,9 @@ class ResampleData:
 
             if not self.in_memory:
                 # Write out model to disk, then return filename
-                # This sometimes causes problems in operations because
-                # the output file isn't always fully written before the
-                # execution continues
                 output_name = output_model.meta.filename
-                sleep_min = 1.0
-                sleep_max = 40.0
-                status = self.write_with_dimension_check(output_model, output_name,
-                                                         min_wait_time=sleep_min, 
-                                                         max_wait_time=sleep_max)
-                if status:
-                    log.warning(f"Wait time of {sleep_max}s exceeded.")
-                    log.warning("Continuing with possibly corrupted i2d file")
+                output_model.save(output_name)
+                log.info(f"Saved model in {output_name}")
                 self.output_models.append(output_name)
             else:
                 self.output_models.append(output_model.copy())
@@ -309,60 +299,6 @@ class ResampleData:
             output_model.wht *= 0.
 
         return self.output_models
-
-    def write_with_dimension_check(self, output_model, output_name, min_wait_time=1.0, max_wait_time=40.0):
-        """Write a datamodel to disk after waiting for a short interval, then read back the datamodel
-        and check if the dimensions match those of the model that was written.  If not, delete the
-        output file, write the datamodel to disk, double the wait time, and check the dimensions
-        again.  Keep iterating like this until either the datamodel data dimensions match, or the wait
-        wait time exceeds ``max_wait_time`` seconds.
-        
-        Parameters
-        ----------
-        
-        output_model : JWST datamodel
-            The datamodel that is being written to disk
-            
-        output_name : string
-            The name of the file to be written to
-            
-        min_wait_time : float
-            Initial wait time between writing the file to disk and then reading it back
-        compare, in seconds
-        
-        max_wait_time : float
-            If the wait time exceeds this, in seconds, exit with a warning
-
-        Returns
-        -------
-
-        status : int
-            Integer status value, 0 = good, 1 = max_wait_time exceeded, so file may be corrupted
-
-        """
-        status = 0
-        filesavedOK = False
-        wait_time = min_wait_time
-        while not filesavedOK:
-            output_model.save(output_name)
-            if wait_time > max_wait_time:
-                log.info(f"Saved model in {output_name}")
-                status = 1
-                break
-            log.info(f"Sleeping for {wait_time}s and reading back saved data")
-            time.sleep(wait_time)
-            readback_model = datamodels.open(output_name)
-            if output_model.data.shape == readback_model.data.shape:
-                log.info("Shape of read back model data matches that of input model")
-                filesavedOK = True
-                log.info(f"Saved model in {output_name}")
-            else:
-                log.info("Shapes of data in datamodel before and after saving don't match")
-                log.info("Removing output file and re-writing")
-                os.remove(output_name)
-                wait_time = wait_time * 2.0
-        return status
-
 
     def resample_many_to_one(self):
         """Resample and coadd many inputs to a single output.
