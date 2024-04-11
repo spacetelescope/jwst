@@ -24,6 +24,9 @@ documentation
 extract_1d
 ----------
 
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
+  the F277W filter with warning. [#8275]
+
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
 general
