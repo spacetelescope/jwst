@@ -210,11 +210,16 @@ class OutlierDetection:
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
-        median_model_output_path = self.make_output_path(
-            basepath=median_model.meta.filename.replace(self.resample_suffix, '.fits'),
-            suffix='median')
-        median_model.save(median_model_output_path)
-        log.info(f"Saved model in {median_model_output_path}")
+        if pars['save_intermediate_results']:
+            if self.outlierpars.get('asn_id', None) is None:
+                suffix_to_remove = self.resample_suffix
+            else:
+                suffix_to_remove = f"_{self.outlierpars['asn_id']}{self.resample_suffix}"
+            median_model_output_path = self.make_output_path(
+                basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
+                suffix='median')
+            median_model.save(median_model_output_path)
+            log.info(f"Saved model in {median_model_output_path}")
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified

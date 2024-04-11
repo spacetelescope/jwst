@@ -18,12 +18,10 @@ from ..lib import reffile_utils
 import logging
 import copy
 import warnings
-import multiprocessing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-multiprocessing.set_start_method('forkserver', force=True)
 
 
 __all__ = ["RampFitStep"]
