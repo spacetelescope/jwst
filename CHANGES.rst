@@ -41,6 +41,11 @@ jump
 - Added __main__ to the Jump class to avoid memory leak when running
   multiprocessing. [#8422]
 
+outlier_detection
+-----------------
+
+- Add association id to ``outlier_i2d`` intermediate filenames. [#8418]
+
 pipeline
 --------
 
