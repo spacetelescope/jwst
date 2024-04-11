@@ -10,7 +10,7 @@ from jwst.stpipe import Step
 def test_residual_fringe_cal(rtdata, fitsdiff_default_kwargs):
     """Run residual fringe correction on MIRI IFUShort """
 
-    input_file = 'MIRM108-SHORT-6021192005_1_495_MIRIFUSHORT_cal.fits'
+    input_file = 'jw01523001001_03101_00001_mirifushort_cal.fits'
     rtdata.get_data(f"miri/mrs/{input_file}")
 
     args = [

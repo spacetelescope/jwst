@@ -1,11 +1,19 @@
 1.14.1 (unreleased)
 ===================
 
+ami
+---
+
+- Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
+
 associations
 ------------
 
 - Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations 
   where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
+
+- Match NIRSpec imprint observations to science exposures on mosaic tile location
+  and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
 
 documentation
 -------------
@@ -19,6 +27,14 @@ extract_1d
 - Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
   the F277W filter with warning. [#8275]
 
+- Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
+
+general
+-------
+
+- Removed deprecated stdatamodels model types ``DrizProductModel``, 
+  ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
+
 pipeline
 --------
 
@@ -31,6 +47,11 @@ ramp_fitting
 - Changed the data type for several variables in ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
+
+residual_fringe
+---------------
+
+- Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
 
 tweakreg
 --------
