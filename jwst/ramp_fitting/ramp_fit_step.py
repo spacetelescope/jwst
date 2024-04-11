@@ -526,3 +526,7 @@ class RampFitStep(Step):
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
         return out_model, int_model
+
+
+if __name__ == '__main__':
+    RampFitStep().process()

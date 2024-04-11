@@ -48,6 +48,9 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
+- Added __main__ to the class to avoid memory leak when running
+  multiprocessing. []
+
 residual_fringe
 ---------------
 
