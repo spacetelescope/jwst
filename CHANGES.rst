@@ -21,9 +21,6 @@ documentation
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
 
-- Added __main__ to the Jump class to avoid memory leak when running
-  multiprocessing. [#8422]
-
 extract_1d
 ----------
 
@@ -37,6 +34,12 @@ general
 
 - Removed deprecated stdatamodels model types ``DrizProductModel``, 
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
+
+jump
+----
+
+- Added __main__ to the Jump class to avoid memory leak when running
+  multiprocessing. [#8422]
 
 pipeline
 --------
