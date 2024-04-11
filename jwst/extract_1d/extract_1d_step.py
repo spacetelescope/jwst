@@ -398,11 +398,9 @@ class Extract1dStep(Step):
                 if input_model.meta.instrument.filter == 'CLEAR':
                     self.log.info('Exposure is through the GR700XD + CLEAR (science).')
                     soss_filter = 'CLEAR'
-                elif input_model.meta.instrument.filter == 'F277W':
-                    self.log.info('Exposure is through the GR700XD + F277W (calibration).')
-                    soss_filter = 'F277W'
                 else:
-                    self.log.error('The SOSS extraction is implemented for the CLEAR or F277W filters only.')
+                    self.log.error('The SOSS extraction is implemented for the CLEAR filter only.'
+                                   f'Requested filter is {input_model.meta.instrument.filter}.')
                     self.log.error('extract_1d will be skipped.')
                     input_model.meta.cal_step.extract_1d = 'SKIPPED'
                     return input_model
