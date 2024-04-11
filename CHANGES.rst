@@ -49,7 +49,7 @@ ramp_fitting
   overflow/wraparound problems. [#8377]
 
 - Added __main__ to the class to avoid memory leak when running
-  multiprocessing. []
+  multiprocessing. [#8421]
 
 residual_fringe
 ---------------
