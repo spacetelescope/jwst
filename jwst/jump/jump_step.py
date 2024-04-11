@@ -142,3 +142,7 @@ class JumpStep(Step):
         result.meta.cal_step.jump = 'COMPLETE'
 
         return result
+
+
+if __name__ == '__main__':
+    JumpStep().process()
