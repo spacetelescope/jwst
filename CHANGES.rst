@@ -35,6 +35,11 @@ general
 - Removed deprecated stdatamodels model types ``DrizProductModel``, 
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
+outlier_detection
+-----------------
+
+- Add association id to ``outlier_i2d`` intermediate filenames. [#8418]
+
 pipeline
 --------
 
