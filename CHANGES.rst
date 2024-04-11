@@ -22,7 +22,7 @@ documentation
   [#8399]
 
 - Added __main__ to the Jump class to avoid memory leak when running
-  multiprocessing. []
+  multiprocessing. [#8422]
 
 extract_1d
 ----------
