@@ -18,12 +18,10 @@ from ..lib import reffile_utils
 import logging
 import copy
 import warnings
-import multiprocessing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-multiprocessing.set_start_method('forkserver', force=True)
 
 
 __all__ = ["RampFitStep"]
@@ -221,7 +219,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
     imshape = (nrows, ncols)
     cubeshape = (ngroups,) + imshape
 
-    segs_4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.uint8)
+    segs_4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.uint16)
     var_r4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     var_r3 = np.zeros((nint,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     s_inv_var_r3 = np.zeros((nint,) + imshape, dtype=np.float32)
@@ -317,7 +315,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
     imshape = (asize2, asize1)
     gdq_2d = gdq_sect[:, :, :].reshape((ngroups, npix))
     segs = np.zeros((ngroups, npix), dtype=np.int32)
-    sr_index = np.zeros(npix, dtype=np.uint8)
+    sr_index = np.zeros(npix, dtype=np.uint16)
 
     i_read = 0
     while i_read < ngroups:
@@ -341,7 +339,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
         i_read += 1
 
-    segs = segs.astype(np.uint8)
+    segs = segs.astype(np.uint16)
     segs_beg_3 = segs.reshape(ngroups, imshape[0], imshape[1])
     segs_beg_3 = utils.remove_bad_singles(segs_beg_3)
 
@@ -365,11 +363,11 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
     # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be
     #   checked for and handled later
-    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
-    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-    # overwrite where segs>1
-    den_r3[wh_seg_pos] = 1. / (segs_beg_3[wh_seg_pos] ** 3. - segs_beg_3[wh_seg_pos])
-    warnings.resetwarnings()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+        # overwrite where segs>1
+        den_r3[wh_seg_pos] = 1. / (segs_beg_3[wh_seg_pos] ** 3. - segs_beg_3[wh_seg_pos])
 
     # calculate max_seg for this integ and data section
     max_seg = (np.count_nonzero(segs_beg_3, axis=0)).max()
@@ -445,7 +443,6 @@ class RampFitStep(Step):
             # Before the ramp_fit() call, copy the input model ("_W" for weighting)
             # for later reconstruction of the fitting array tuples.
             input_model_W = copy.copy(input_model)
-
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.

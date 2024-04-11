@@ -11,105 +11,51 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-default_emi_freqs = {
-    "Hz390": 390.625,
-    "Hz390_sub128": 390.625,
-    "Hz10": 10.039216,
-    "Hz10_slow_MIRIMAGE": 10.039216,
-    "Hz10_slow_MIRIFULONG": 10.039216,
-    "Hz10_slow_MIRIFUSHORT": 10.039216
-}
-
-default_subarray_cases = {
-
-    # 390Hz out-of-phase - these all need 390hz correction
+subarray_clocks = {
 
     "SLITLESSPRISM": {
         "rowclocks": 28,
-        "frameclocks": 15904,
-        "freqs":  {"FAST": ["Hz390", "Hz10"],
-                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 15904},
 
     "MASKLYOT": {
         "rowclocks": 90,
-        "frameclocks": 32400,
-        "freqs":  {"FAST": ["Hz390", "Hz10"],
-                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 32400},
 
     "SUB64": {
         "rowclocks": 28,
-        "frameclocks": 8512,
-        "freqs":  {"FAST": ["Hz390", "Hz10"],
-                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 8512},
 
     "SUB128": {
         "rowclocks": 44,
-        "frameclocks": 11904,
-        "freqs":  {"FAST": ["Hz390_sub128", "Hz10"],
-                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 11904},
 
     "MASK1140": {
         "rowclocks": 82,
-        "frameclocks": 23968,
-        "freqs":  {"FAST": ["Hz390", "Hz10"],
-                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 23968},
 
     "MASK1550": {
         "rowclocks": 82,
-        "frameclocks": 23968,
-        "freqs":  {"FAST": ["Hz390", "Hz10"],
-                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 23968},
 
     "MASK1065": {
         "rowclocks": 82,
-        "frameclocks": 23968,
-        "freqs":  {"FAST": ["Hz390", "Hz10"],
-                   "SLOW":  {"MIRIMAGE" : ["Hz390", "Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz390", "Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz390", "Hz10_slow_MIRIFUSHORT"]}}},
-
-    # 390Hz already in-phase for these, but may need corr for other
-    # frequencies (e.g. 10Hz heater noise)
+        "frameclocks": 23968},
 
     "FULL_FAST": {
         "rowclocks": 271,
-        "frameclocks": 277504,
-        "freqs": {"FAST" : ["Hz10"]}},
+        "frameclocks": 277504},
 
     "FULL_SLOW": {
         "rowclocks": 2333,
-        "frameclocks": 2388992,
-        "freqs": {"SLOW":  {"MIRIMAGE" : ["Hz10_slow_MIRIMAGE"],
-                              "MIRIFULONG" : ["Hz10_slow_MIRIFULONG"],
-                              "MIRIFUSHORT" : ["Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 2388992},
 
     "BRIGHTSKY": {
         "rowclocks": 162,
-        "frameclocks": 86528,
-        "freqs": {"FAST" : ["Hz10"],
-                  "SLOW": {"MIRIMAGE" : ["Hz10_slow_MIRIMAGE"],
-                            "MIRIFULONG" : ["Hz10_slow_MIRIFULONG"],
-                            "MIRIFUSHORT" : ["Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 86528},
 
     "SUB256": {
         "rowclocks": 96,
-        "frameclocks": 29952,
-        "freqs": {"FAST" : ["Hz10"],
-                  "SLOW": {"MIRIMAGE" : ["Hz10_slow_MIRIMAGE"],
-                            "MIRIFULONG" : ["Hz10_slow_MIRIFULONG"],
-                            "MIRIFUSHORT" : ["Hz10_slow_MIRIFUSHORT"]}}},
+        "frameclocks": 29952},
 }
 
 
@@ -146,8 +92,10 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     nints_to_phase = pars['nints_to_phase']
     nbins = pars['nbins']
     scale_reference = pars['scale_reference']
+    onthefly_corr_freq = pars['onthefly_corr_freq']
 
-    output_model = apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
+    output_model = apply_emicorr(input_model, emicorr_model,
+                        onthefly_corr_freq, save_onthefly_reffile,
                         save_intermediate_results=save_intermediate_results,
                         user_supplied_reffile=user_supplied_reffile,
                         nints_to_phase=nints_to_phase,
@@ -158,7 +106,8 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     return output_model
 
 
-def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
+def apply_emicorr(input_model, emicorr_model,
+        onthefly_corr_freq, save_onthefly_reffile,
         save_intermediate_results=False, user_supplied_reffile=None,
         nints_to_phase=None, nbins_all=None, scale_reference=True):
     """
@@ -194,6 +143,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
 
     emicorr_model : `~jwst.datamodels.EmiModel`
          ImageModel of emi
+
+    onthefly_corr_freq : float
+        Frequency number to do correction with on-the-fly reference file
 
     save_onthefly_reffile : str or None
         Full path and root name of on-the-fly reference file
@@ -238,12 +190,20 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
                 freqs_numbers.append(freq)
                 reference_wave_list.append(ref_wave)
     else:
-        log.info('Using default subarray case corrections.')
-        subname, rowclocks, frameclocks, freqs2correct = get_subarcase(default_subarray_cases, subarray, readpatt, detector)
-        if freqs2correct is not None:
-            for fnme in freqs2correct:
-                freq = get_frequency_info(default_emi_freqs, fnme)
-                freqs_numbers.append(freq)
+        # if we got here, the user requested to do correction with on-the-fly reference file
+        subname = subarray
+        if subname == 'FULL':
+            if 'FAST' in readpatt.upper():
+                subname += '_FAST'
+            elif 'SLOW' in readpatt.upper():
+                subname += '_SLOW'
+        if subname in subarray_clocks:
+            rowclocks = subarray_clocks[subname]['rowclocks']
+            frameclocks = subarray_clocks[subname]['frameclocks']
+            freqs_numbers = onthefly_corr_freq
+            freqs2correct = [repr(freq) for freq in onthefly_corr_freq]
+        else:
+            subname, rowclocks, frameclocks, freqs2correct = None, None, None, None
 
     log.info('With configuration: Subarray={}, Read_pattern={}, Detector={}'.format(subarray, readpatt, detector))
     if rowclocks is None or len(freqs_numbers) == 0:
@@ -379,7 +339,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
             phaseall[ninti, ...] = phase_this_int - phase_this_int.astype('ulonglong')
 
             # add a frame time to account for the extra frame reset between MIRI integrations
-            start_time += frameclocks
+            if readpatt.upper() == 'FASTR1' or readpatt.upper() == 'SLOWR1':
+                start_time += frameclocks
 
         # use phaseall vs dd_all
 
@@ -433,7 +394,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         # These two methods give the same integer-reference_wave-element resolution results.
         if emicorr_model is not None:
             log.info('Using reference file to measure phase shift')
-            reference_wave = reference_wave_list[fi]
+            reference_wave = np.array(reference_wave_list[fi])
             reference_wave_size = np.size(reference_wave)
             rebinned_pa = rebin(pa, [reference_wave_size])
             cc = np.zeros(reference_wave_size)
@@ -480,7 +441,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile,
         output_model.data = corr_data
 
     if save_intermediate_results and save_onthefly_reffile is not None:
-        if readpatt == 'FAST':
+        if 'FAST' in readpatt:
             freqs_dict = {readpatt: freqs2correct}
         else:
             freqs_dict = {readpatt: {detector: freqs2correct} }
@@ -606,56 +567,41 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
 
     frequencies : list
         List of frequencies to correct according to subarray name
-
-    freqs_names : list
-        List of frequency names to use
     """
     subname, rowclocks, frameclocks, frequencies = None, None, None, None
 
-    # make sure the readpattern is defined as expected
-    readpatt = readpatt.upper()
-    if "SLOW" in readpatt:
-        readpatt = "SLOW"
-    elif "FAST" in readpatt:
-        readpatt = "FAST"
-    else:
+    # make sure the readpattern is defined as expected to read data from reference file
+    readpatt, no_slow_match_readpatt, no_fast_match_readpatt = readpatt.upper(), False, False
+    if "SLOW" not in readpatt:
+        no_slow_match_readpatt = True
+    if "FAST" not in readpatt:
+        no_fast_match_readpatt = True
+    if no_slow_match_readpatt and no_fast_match_readpatt:
+        log.info('Read pattern {} does not include expected string FAST or SLOW'.format(readpatt))
         return subname, rowclocks, frameclocks, frequencies
 
     # search and return the specific values for the configuration
-    if isinstance(subarray_cases, dict):
-        for subname in subarray_cases:
-            if subarray == 'FULL':
-                subarray = subarray + '_' + readpatt
-            if subarray != subname:
-                continue
-            rowclocks = subarray_cases[subname]["rowclocks"]
-            frameclocks = subarray_cases[subname]["frameclocks"]
-            if readpatt == "SLOW":
-                frequencies = subarray_cases[subname]["freqs"]["SLOW"][detector]
-            else:
-                frequencies = subarray_cases[subname]["freqs"]["FAST"]
-            break
-    else:
-        frequencies = []
-        mdl_dict = subarray_cases.to_flat_dict()
-        for subname in subarray_cases.subarray_cases:
-            subname = subname.split(sep='.')[0]
-            if subarray not in subname:
-                continue
-            log.debug('Found subarray case {}!'.format(subname))
-            for item, val in mdl_dict.items():
-                if subname in item:
-                    if 'FULL' in item and readpatt not in item:
-                        continue
-                    if "rowclocks" in item:
-                        rowclocks = val
-                    elif "frameclocks" in item:
-                        frameclocks = val
-                    else:
-                        if readpatt == "SLOW" and "SLOW" in item and detector in item:
-                            frequencies.append(val)
-                        elif readpatt == "FAST"  and "FAST" in item:
-                            frequencies.append(val)
+    frequencies = []
+    mdl_dict = subarray_cases.to_flat_dict()
+    for subname in subarray_cases.subarray_cases:
+        subname = subname.split(sep='.')[0]
+        dataconfig = subarray
+        if 'FULL' in dataconfig:
+            dataconfig = subarray + '_' + readpatt.replace('R1', '')
+        if dataconfig != subname:
+            continue
+        log.debug('Found subarray case {}!'.format(subname))
+        for item, val in mdl_dict.items():
+            if subname in item:
+                if "rowclocks" in item:
+                    rowclocks = val
+                elif "frameclocks" in item:
+                    frameclocks = val
+                else:
+                    if "SLOW" in readpatt and "SLOW" in item and detector in item:
+                        frequencies.append(val)
+                    elif "FAST" in readpatt  and "FAST" in item:
+                        frequencies.append(val)
             if subname is not None and rowclocks is not None and frameclocks is not None and frequencies is not None:
                 break
     return subname, rowclocks, frameclocks, frequencies

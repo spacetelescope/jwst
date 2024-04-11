@@ -155,9 +155,9 @@ def reproject(wcs1, wcs2):
         for axis in sky:
             flat_sky.append(axis.flatten())
         # Filter out RuntimeWarnings due to computed NaNs in the WCS
-        warnings.simplefilter("ignore")
-        det = backward_transform(*tuple(flat_sky))
-        warnings.resetwarnings()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            det = backward_transform(*tuple(flat_sky))
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
@@ -182,7 +182,10 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
             inv_variance = 1.0
         result = inv_variance * dqmask
     elif weight_type == 'exptime':
-        exptime = model.meta.exposure.exposure_time
+        if _check_for_tmeasure(model):
+            exptime = model.meta.exposure.measurement_time
+        else:
+            exptime = model.meta.exposure.exposure_time
         result = exptime * dqmask
     else:
         result = np.ones(model.data.shape, dtype=model.data.dtype) * dqmask
@@ -306,3 +309,18 @@ def _resample_range(data_shape, bbox=None):
         ymax = min(data_shape[0] - 1, int(y2 + 0.5))
 
     return xmin, xmax, ymin, ymax
+
+
+def _check_for_tmeasure(model):
+    '''
+    Check if the measurement_time keyword is present in the datamodel
+    for use in exptime weighting. If not, revert to using exposure_time.
+    '''
+    try:
+        tmeasure = model.meta.exposure.measurement_time
+        if tmeasure is not None:
+            return 1
+        else:
+            return 0
+    except AttributeError:
+        return 0

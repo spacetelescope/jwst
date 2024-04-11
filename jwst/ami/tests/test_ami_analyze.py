@@ -10,7 +10,7 @@ import pytest
 
 from stdatamodels.jwst import datamodels
 
-from jwst.ami import utils, leastsqnrm, hexee, webb_psf
+from jwst.ami import utils, leastsqnrm, hexee
 from jwst.ami.leastsqnrm import hexpb, ffc, ffs, closure_amplitudes
 from jwst.ami.leastsqnrm import closurephase, redundant_cps
 from jwst.ami.leastsqnrm import populate_symmamparray
@@ -1005,46 +1005,6 @@ def test_analyticnrm2_phasor():
     )
 
     assert_allclose(result, true_result, atol=1e-7)
-
-
-# ---------------------------------------------------------------
-# webb_psf module test:
-#
-
-
-def test_webb_psf():
-    """Test of PSF() in the webb_psf module:
-    Create a Throughput datamodel, having a dummy filter bandpass data
-    that peaks at 1.0 at the center and decreases in the wings.
-    """
-    min_wl = 5000.0  # lowest wavelength
-    max_wl = 100000.0  # highest wavelength
-
-    nelem = 28
-
-    wavelength = np.linspace(min_wl, max_wl, nelem, endpoint=True, dtype=np.float32)
-    throughput = create_throughput(nelem)
-    dtype = np.dtype([('wavelength', '<f4'), ('throughput', '<f4')])
-
-    filt_tab = np.array(list(zip(wavelength, throughput)), dtype=dtype)
-    filter_model = datamodels.ThroughputModel(filter_table=filt_tab)
-
-    bindown = 4
-
-    band = webb_psf.get_webbpsf_filter(filter_model, specbin=bindown)
-    true_band = np.array(
-        [
-            [4.05621603e-01, 1.37962969e-06],
-            [8.10614496e-01, 2.78703703e-06],
-            [9.50576201e-01, 4.19444444e-06],
-            [9.74027127e-01, 5.60185185e-06],
-            [9.01925057e-01, 7.00925932e-06],
-            [6.51473783e-01, 8.41666679e-06],
-        ]
-    )
-
-    assert_allclose(band, true_band, atol=1e-7)
-
 
 # ---------------------------------------------------------------
 # utility functions:

@@ -2,17 +2,21 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
+import warnings
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run calwebb_coron3 on coronographic data."""
     rtdata = rtdata_module
     rtdata.get_asn("nircam/coron/jw01386-c1020_20220909t073458_coron3_002a_asn.json")
 
     # Run the calwebb_coron3 pipeline on the association
     args = ["calwebb_coron3", rtdata.input]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # warning is explicitly raised by the pipeline
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="var_rnoise array not available")
+        Step.from_cmdline(args)
 
     return rtdata
 

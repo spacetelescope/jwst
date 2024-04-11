@@ -10,7 +10,7 @@ from jwst.stpipe import Step
 
 
 @pytest.mark.bigdata
-def test_nirspec_image2(_jail, rtdata, fitsdiff_default_kwargs):
+def test_nirspec_image2(rtdata, fitsdiff_default_kwargs):
     rtdata.get_data("nirspec/imaging/jw84600010001_02102_00001_nrs2_rate.fits")
 
     args = ["calwebb_image2", rtdata.input]

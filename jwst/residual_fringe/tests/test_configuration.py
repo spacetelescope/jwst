@@ -25,7 +25,7 @@ def miri_image():
     return image
 
 
-def test_call_residual_fringe(_jail,  miri_image):
+def test_call_residual_fringe(tmp_cwd,  miri_image):
     """ test defaults of step are set up and user input are defined correctly """
 
     # testing the ignore_regions_min
@@ -42,7 +42,7 @@ def test_call_residual_fringe(_jail,  miri_image):
         step.run(miri_image)
 
 
-def test_fringe_flat_applied(_jail, miri_image):
+def test_fringe_flat_applied(tmp_cwd, miri_image):
 
     miri_image.meta.cal_step.fringe = 'SKIP'
     residual_fringe_reference_file = None

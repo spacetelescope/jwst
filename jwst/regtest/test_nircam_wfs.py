@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipelines(jail, rtdata_module):
+def run_pipelines(rtdata_module):
     """Run the calwebb_wfs-image2 and calwebb_wfs-image3 pipelines
        on NIRCam WFS&C images. The calwebb_wfs-image3 pipeline is
        run twice: once with default params and a second time with

@@ -47,9 +47,9 @@ def distortion_model():
     return dist
 
 
-def test_distortion_schema(distortion_model, tmpdir):
+def test_distortion_schema(distortion_model, tmp_path):
     """Make sure DistortionModel roundtrips"""
-    path = str(tmpdir.join("test_dist.asdf"))
+    path = tmp_path / "test_dist.asdf"
     dist = distortion_model
     dist.save(path)
 

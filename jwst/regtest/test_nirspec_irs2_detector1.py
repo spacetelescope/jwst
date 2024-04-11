@@ -9,7 +9,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_detector1pipeline(rtdata_module, jail):
+def run_detector1pipeline(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRSpec data with IRS2 readout mode."""
     rtdata = rtdata_module
     rtdata.get_data("nirspec/irs2/jw0010010_11010_nrs1_chimera_uncal.fits")

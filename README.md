@@ -9,16 +9,14 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-**JWST requires a C compiler for dependencies and is currently limited to Python 3.9, 3.10 or 3.11.**
+> [!IMPORTANT]
+> JWST requires a C compiler for dependencies and is currently limited to Python 3.10, 3.11, or 3.12.
 
-**Until Python 3.12 is supported, fresh conda environments will require setting the
-  Python version to one of the three supported versions.**
+> [!NOTE]
+> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
-**Linux and MacOS platforms are tested and supported.  Windows is not currently supported.**
-
-**If installing on MacOS Mojave 10.14, you must install
-  into an environment with python 3.9. Installation will fail on python 3.10 due
-  to lack of a stable build for dependency ``opencv-python``.**
+> [!WARNING]
+> Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 ## Installation
 
@@ -218,6 +216,7 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
+| 1.14.0              | B10.2rc1  |          | 1215         | 2024-03-29 |             | First release candidate for B10.2             |
 | 1.13.4              |           |          | 1185         | 2024-01-25 |             | PyPI-only release for external users          |
 | 1.13.3              | B10.1     | 2023.4.0 | 1181         | 2024-01-05 |             | Final release candidate for B10.1             |
 | 1.13.2              | B10.1rc3  | 2023.4.0 | 1181         | 2023-12-21 |             | Third release candidate for B10.1             |

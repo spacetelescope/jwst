@@ -40,7 +40,25 @@ def exp_to_source(inputs):
             log.debug(f'Copying source {slit.source_id}')
             result_slit = result[str(slit.source_id)]
             result_slit.exposures.append(slit)
+            # store values for later use (after merge_tree)
+            # these values are incorrectly getting overwritten by
+            # the top model.
+            slit_bunit = slit.meta.bunit_data
+            slit_bunit_err = slit.meta.bunit_err
+            slit_model = slit.meta.model_type
+            slit_wcsinfo = slit.meta.wcsinfo.instance
+            # exposure.meta.bunit_data and bunit_err does not exist
+            # before calling merge_tree save these values
+            # Before merge_tree the slits have a model_type of SlitModel.
+            # After merge_tree it is overwritten with MultiSlitModel.
+            # store the model type to undo overwriting of modeltype.
+
             merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
+
+            result_slit.exposures[-1].meta.bunit_data = slit_bunit
+            result_slit.exposures[-1].meta.bunit_err = slit_bunit_err
+            result_slit.exposures[-1].meta.model_type = slit_model
+            result_slit.exposures[-1].meta.wcsinfo = slit_wcsinfo
 
             if result_slit.meta.instrument.name is None:
                 result_slit.update(exposure)

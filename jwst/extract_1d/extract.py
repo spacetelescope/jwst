@@ -3501,6 +3501,15 @@ def extract_one_slit(
     extract_model.log_extraction_parameters()
     extract_model.assign_polynomial_limits()
 
+    # store the extraction values we want to save in dictionary.
+    # define all the values to be None. If they are not valid for a mode
+    # they will not be written to fits header.
+    extraction_values = {}
+    extraction_values['xstart'] = None
+    extraction_values['xstop'] = None
+    extraction_values['ystart'] = None
+    extraction_values['ystop'] = None
+
     # Log the extraction limits being used
     if integ < 1:
         if extract_model.src_coeff is not None:
@@ -3510,16 +3519,28 @@ def extract_one_slit(
                 log.info("Using extraction limits: "
                          f"xstart={extract_model.xstart}, "
                          f"xstop={extract_model.xstop}, and src_coeff")
+                extraction_values['xstart'] = extract_model.xstart + 1
+                extraction_values['xstop'] = extract_model.xstop + 1
             else:
                 # Only print ystart/ystop, because xstart/xstop are not used
                 log.info("Using extraction limits: "
                          f"ystart={extract_model.ystart}, "
                          f"ystop={extract_model.ystop}, and src_coeff")
+                extraction_values['ystart'] = extract_model.ystart + 1
+                extraction_values['ystop'] = extract_model.ystop + 1
         else:
             # No src_coeff, so print all xstart/xstop and ystart/ystop values
             log.info("Using extraction limits: "
                      f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
                      f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
+            if extract_model.xstart is not None:
+                extraction_values['xstart'] = extract_model.xstart + 1
+            if extract_model.xstop is not None:
+                extraction_values['xstop'] = extract_model.xstop + 1
+            if extract_model.ystart is not None:
+                extraction_values['ystart'] = extract_model.ystart + 1
+            if extract_model.ystop is not None:
+                extraction_values['ystop'] = extract_model.ystop + 1
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
@@ -3529,7 +3550,8 @@ def extract_one_slit(
                               wl_array)
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset)
+            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset,
+            extraction_values)
 
 
 def replace_bad_values(
@@ -3758,7 +3780,7 @@ def create_extraction(extract_ref_dict,
         try:
             ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, \
                 f_var_flat, background, b_var_poisson, b_var_rnoise, \
-                b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                b_var_flat, npixels, dq, prev_offset, extraction_values = extract_one_slit(
                     input_model,
                     slit,
                     integ,
@@ -3851,6 +3873,11 @@ def create_extraction(extract_ref_dict,
         spec.slit_dec = dec
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params['dispaxis']
+        spec.extraction_xstart = extraction_values['xstart']
+        spec.extraction_xstop = extraction_values['xstop']
+        spec.extraction_ystart = extraction_values['ystart']
+        spec.extraction_ystop = extraction_values['ystop']
+
         copy_keyword_info(meta_source, slitname, spec)
 
         if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:

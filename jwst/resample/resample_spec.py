@@ -80,6 +80,8 @@ class ResampleSpecData(ResampleData):
         self.input_pixscale0 = None  # computed pixel scale of the first image (deg)
         self._recalc_pscale_ratio = pscale is not None
 
+        self.asn_id = kwargs.get('asn_id', None)
+
         # Define output WCS based on all inputs, including a reference WCS
         if output_wcs is None:
             if resample_utils.is_sky_like(
@@ -361,9 +363,9 @@ class ResampleSpecData(ResampleData):
 
             # Compute the wavelength array, trimming NaNs from the ends
             # In many cases, a whole slice is NaNs, so ignore those warnings
-            warnings.simplefilter("ignore")
-            wavelength_array = np.nanmedian(lam, axis=spectral_axis)
-            warnings.resetwarnings()
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
+                wavelength_array = np.nanmedian(lam, axis=spectral_axis)
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
             # We need to estimate the spatial sampling to use for the output WCS.
@@ -401,10 +403,10 @@ class ResampleSpecData(ResampleData):
                 native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
                 undist2sky1 = tan | native2celestial
                 # Filter out RuntimeWarnings due to computed NaNs in the WCS
-                warnings.simplefilter("ignore")
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning) #was ignore. need to make more specific
                 # at this center of slit find x,y tangent projection - x_tan, y_tan
                 x_tan, y_tan = undist2sky1.inverse(ra, dec)
-                warnings.resetwarnings()
 
                 # pull out data from center
                 if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
@@ -593,10 +595,10 @@ class ResampleSpecData(ResampleData):
 
         # Compute the wavelength array, trimming NaNs from the ends
         # In many cases, a whole slice is NaNs, so ignore those warnings
-        warnings.simplefilter("ignore")
-        wavelength_array = np.nanmedian(lam, axis=spectral_axis)
-        warnings.resetwarnings()
-        wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            wavelength_array = np.nanmedian(lam, axis=spectral_axis)
+            wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
         # Find the center ra and dec for this slit at central wavelength
         lam_center_index = int((bbox[spectral_axis][1] -

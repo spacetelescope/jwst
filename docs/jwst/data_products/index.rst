@@ -12,5 +12,6 @@ Data Products Information
    common_features.rst
    science_products.rst
    nonscience_products.rst
+   msa_metadata.rst
    guidestar_products.rst
    migrating.rst

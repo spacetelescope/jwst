@@ -161,7 +161,7 @@ class ApCorrBase(abc.ABC):
             correction = self.apcorr_func(row['npixels'], row['wavelength'])
 
             for col in cols_to_correct:
-                row[col] *= correction
+                row[col] *= correction.item()
 
 
 class ApCorrPhase(ApCorrBase):
@@ -246,7 +246,7 @@ class ApCorrPhase(ApCorrBase):
 
             for col in cols_to_correct:
                 if correction:
-                    row[col] *= correction
+                    row[col] *= correction.item()
 
 
 class ApCorrRadial(ApCorrBase):

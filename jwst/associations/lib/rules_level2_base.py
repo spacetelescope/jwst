@@ -213,9 +213,9 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'expname': Utility.rename_to_level2a(
                     item['filename'],
                     use_integrations=(self.is_item_coron(item) |
-                                      # NIS_AMI currently uses rate files;
-                                      # uncomment the next line to switch to rateints
-                                      # self.is_item_ami(item) |
+                                      # NIS_AMI used to use rate files;
+                                      # updated to use rateints
+                                      self.is_item_ami(item) |
                                       self.is_item_tso(item)),
                 ),
                 'exptype': self.get_exposure_type(item),
@@ -560,10 +560,7 @@ class Utility():
                 finalized_asns.append(asn)
 
         # Having duplicate Level 2 associations is expected.
-        # Suppress warnings.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            lv2_asns = prune(lv2_asns)
+        lv2_asns = prune(lv2_asns)
 
         # Ensure sequencing is correct.
         Utility_Level3.resequence(lv2_asns)
@@ -777,11 +774,7 @@ class Constraint_Imprint(Constraint):
                 DMSAttrConstraint(
                     name='imprint',
                     sources=['is_imprt']
-                ),
-                DMSAttrConstraint(
-                    name='mosaic_tile',
-                    sources=['mostilno'],
-                ),
+                )
             ],
             reprocess_on_match=True,
             work_over=ListCategory.EXISTING,

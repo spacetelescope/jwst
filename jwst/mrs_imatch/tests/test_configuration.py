@@ -57,7 +57,7 @@ def miri_dither_ch12():
     return input_models
 
 
-def test_imatch_background_subtracted(_jail, miri_dither_ch12):
+def test_imatch_background_subtracted(tmp_cwd, miri_dither_ch12):
     """ Test if data is already background subtracted - raise error"""
 
     all_models = ModelContainer(miri_dither_ch12)
@@ -73,7 +73,7 @@ def test_imatch_background_subtracted(_jail, miri_dither_ch12):
         step.run(new_container)
 
 
-def test_imatch_background_reset(_jail, miri_dither_ch12):
+def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):
     """ Test if background polynomial is already determined - reset it"""
 
     all_models = ModelContainer(miri_dither_ch12)
@@ -107,7 +107,7 @@ def test_imatch_background_reset(_jail, miri_dither_ch12):
         assert test == 0
 
 
-def test_find_channel_index(_jail, miri_dither_ch12):
+def test_find_channel_index(tmp_cwd, miri_dither_ch12):
     """ Test if correct channel index is returned """
 
     # channel 1 - model only has 1 background polynomial

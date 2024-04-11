@@ -48,7 +48,7 @@ class GWCSDrizzle:
         kernel : str, optional
             The name of the kernel used to combine the inputs. The choice of
             kernel controls the distribution of flux over the kernel. The kernel
-            names are: "square", "gaussian", "point", "tophat", "turbo", "lanczos2",
+            names are: "square", "gaussian", "point", "turbo", "lanczos2",
             and "lanczos3". The square kernel is the default.
 
         fillval : str, optional
@@ -61,8 +61,6 @@ class GWCSDrizzle:
         self.outsci = None
         self.outwht = None
         self.outcon = None
-
-        self.outexptime = 0.0
         self.uniqid = 0
 
         if wt_scl is None:
@@ -79,7 +77,7 @@ class GWCSDrizzle:
 
         out_units = "cps"
 
-        self.outexptime = product.meta.resample.product_exposure_time or 0.0
+        self.outexptime = product.meta.exposure.measurement_time or 0.0
 
         self.outsci = product.data
         if outwcs:
@@ -323,7 +321,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     kernel: str, optional
         The name of the kernel used to combine the input. The choice of
         kernel controls the distribution of flux over the kernel. The kernel
-        names are: "square", "gaussian", "point", "tophat", "turbo", "lanczos2",
+        names are: "square", "gaussian", "point", "turbo", "lanczos2",
         and "lanczos3". The square kernel is the default.
 
     fillval: str, optional

@@ -5,7 +5,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_tso_spec2(jail, rtdata_module):
+def run_tso_spec2(rtdata_module):
     """Run stage 2 pipeline on NIRISS SOSS data."""
     rtdata = rtdata_module
 
@@ -28,7 +28,7 @@ def run_tso_spec2(jail, rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
+def run_tso_spec3(rtdata_module, run_tso_spec2):
     """Run stage 3 pipeline on NIRISS SOSS data."""
     rtdata = rtdata_module
     # Get the level3 association json file (though not its members) and run
@@ -41,7 +41,7 @@ def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
 
 
 @pytest.fixture(scope="module")
-def run_atoca_extras(jail, rtdata_module):
+def run_atoca_extras(rtdata_module):
     """Run stage 2 pipeline on NIRISS SOSS data using enhanced modes via parameter settings."""
     rtdata = rtdata_module
 
@@ -127,7 +127,7 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
 
 
 @pytest.fixture(scope='module')
-def run_extract1d_spsolve_failure(jail, rtdata_module):
+def run_extract1d_spsolve_failure(rtdata_module):
     """
     Test coverage for fix to error thrown when spsolve fails to find
     a good solution in ATOCA and needs to be replaced with a least-
@@ -145,7 +145,7 @@ def run_extract1d_spsolve_failure(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_extract1d_null_order2(jail, rtdata_module):
+def run_extract1d_null_order2(rtdata_module):
     """
     Test coverage for fix to error thrown when all of the pixels
     in order 2 are flagged as bad. Ensure graceful handling of the
