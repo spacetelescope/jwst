@@ -9,7 +9,6 @@ from stdatamodels.jwst import datamodels
 from .disperse import dispersed_pixel
 
 import logging
-import warnings
 
 from photutils.background import Background2D, MedianBackground
 from astropy.stats import SigmaClip
@@ -247,36 +246,29 @@ class Observation:
         # Loop over all source ID's from segmentation map
         pool_args = []
         for i in range(len(self.IDs)):
-            #if self.cache:
-            #    self.cached_object[i] = {}
-            #    self.cached_object[i]['x'] = []
-            #    self.cached_object[i]['y'] = []
-            #    self.cached_object[i]['f'] = []
-            #    self.cached_object[i]['w'] = []
-            #    self.cached_object[i]['minx'] = []
-            #    self.cached_object[i]['maxx'] = []
-            #    self.cached_object[i]['miny'] = []
-            #    self.cached_object[i]['maxy'] = []
 
-            disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp,
-                                   self.IDs[i], self.xs[i], self.ys[i], 
-                                   self.fluxes, 
-                                   self.seg_wcs, self.grism_wcs, self.dims, 
-                                   self.extrapolate_sed, self.xoffset, self.yoffset]
+            if self.cache:
+                self.cached_object[i] = {}
+                self.cached_object[i]['x'] = []
+                self.cached_object[i]['y'] = []
+                self.cached_object[i]['f'] = []
+                self.cached_object[i]['w'] = []
+                self.cached_object[i]['minx'] = []
+                self.cached_object[i]['maxx'] = []
+                self.cached_object[i]['miny'] = []
+                self.cached_object[i]['maxy'] = []
+
+            disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp,]
             pool_args.append(disperse_chunk_args)
 
-        # call disperse_chunk with optional multiprocessing
         t0 = time.time()
         if self.max_cpu > 1:
+            # put this log message here to avoid printing it for every chunk
             log.info(f"Using multiprocessing with {self.max_cpu} cores to compute dispersion")
-            ctx = mp.get_context("forkserver")
-            with ctx.Pool(self.max_cpu) as mypool:
-                disperse_chunk_output = mypool.starmap(self.disperse_chunk, pool_args)
 
-        else:
-            disperse_chunk_output = []
-            for i in range(len(self.IDs)):
-                disperse_chunk_output.append(self.disperse_chunk(*pool_args[i]))
+        disperse_chunk_output = []
+        for i in range(len(self.IDs)):
+            disperse_chunk_output.append(self.disperse_chunk(*pool_args[i]))
         t1 = time.time()
         log.info(f"Wall clock time for disperse_chunk order {order}: {(t1-t0):.1f} sec")
         
@@ -290,19 +282,17 @@ class Observation:
                 self.simul_slits_order.append(this_order)
                 self.simul_slits_sid.append(this_sid)
 
-    @staticmethod
-    def disperse_chunk(c, order, wmin, wmax, sens_waves, sens_resp, sid, xs, ys, fluxes_dict, seg_wcs, grism_wcs, dims, extrapolate_sed, xoffset, yoffset):
+
+    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
         """
         Method that computes dispersion for a single source.
         To be called after create_pixel_list().
-        Static method to enable parallelization
-
         Parameters
         ----------
         c : int
-            Chunk (source) number to process. used to index the fluxes dict
+            Chunk (source) number to process
         order : int
-            Spectral order to process
+            Spectral order number to process
         wmin : float
             Minimum wavelength for dispersed spectra
         wmax : float
@@ -310,80 +300,72 @@ class Observation:
         sens_waves : float array
             Wavelength array from photom reference file
         sens_resp : float array
-            Response (flux calibration) array from photom reference file        
-        sid : int
-            Source ID
-        xs : np.ndarray
-            X-coordinates of the the central pixel of the group of pixels 
-            surrounding the direct image pixel index
-        ys : np.ndarray
-            Y-coordinates of the the central pixel of the group of pixels
-            surrounding the direct image pixel index
-        fluxes_dict : dict
-            Dictionary of fluxes for each direct image.
-            fluxes_dict{"lams"} is the array of wavelengths previously stored in flux list
-            and correspond to the central wavelengths of the filters used in
-            the input direct image(s). For the simple case of 1 combined direct image,
-            this contains a single value (e.g. 4.44 for F444W).
-            fluxes_dict{"fluxes"} is the array of pixel values from the direct image(s).
-            For the simple case of 1 combined direct image, this contains a
-            a single value (just like "lams").
-        seg_wcs : gwcs object
-            WCS object from segmentation map
-        grism_wcs : gwcs object
-            WCS object from grism image
-        dims : tuple
-            Dimensions of the grism image
-        extrapolate_sed : bool
-            Flag indicating whether to extrapolate wavelength range of SED
-        xoffset : int
-            Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to full frame)
-        yoffset : int
-            Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to full frame)
+            Response (flux calibration) array from photom reference file
 
         Returns
         -------
         this_object : np.ndarray
-            Dispersed model of segmentation map source
-        bounds : list
-            The bounds of the object
+            2D array of dispersed pixel values for the source
+        thisobj_bounds : list
+            [minx, maxx, miny, maxy] bounds of the object
         sid : int
-            The source ID
+            Source ID
         order : int
-            The spectral order number
+            Spectral order number
         """
-        log.info(f"Dispersing source {sid}, order {order}")
+
+        sid = int(self.IDs[c])
+        self.order = order
+        self.wmin = wmin
+        self.wmax = wmax
+        self.sens_waves = sens_waves
+        self.sens_resp = sens_resp
+        log.info(f"Dispersing source {sid}, order {self.order}")
+        pars = []  # initialize params for this object
 
         # Loop over all pixels in list for object "c"
-        log.debug(f"source {sid} contains {len(xs)} pixels")
-        all_res = []
-        for i in range(len(xs)):
-            # Here "i" indexes the pixel list for the segment
-            # being processed, as opposed to the ID number of the segment
-
+        log.debug(f"source contains {len(self.xs[c])} pixels")
+        for i in range(len(self.xs[c])):
+            # Here "i" is just an index into the pixel list for the object
+            # being processed, as opposed to the ID number of the object itself
+            # xc, yc are the coordinates of the central pixel of the group
+            # of pixels surrounding the direct image pixel index
             width = 1.0
             height = 1.0
-            xc = xs[i] + 0.5 * width
-            yc = ys[i] + 0.5 * height
-
+            xc = self.xs[c][i] + 0.5 * width
+            yc = self.ys[c][i] + 0.5 * height
+            # "lams" is the array of wavelengths previously stored in flux list
+            # and correspond to the central wavelengths of the filters used in
+            # the input direct image(s). For the simple case of 1 combined direct image,
+            # this contains a single value (e.g. 4.44 for F444W).
+            # "fluxes" is the array of pixel values from the direct image(s).
+            # For the simple case of 1 combined direct image, this contains a
+            # a single value (just like "lams").
             fluxes, lams = map(np.array, zip(*[
-                (fluxes_dict[lm][c][i], lm) for lm in sorted(fluxes_dict.keys())
-                if fluxes_dict[lm][c][i] != 0
+                (self.fluxes[lm][c][i], lm) for lm in sorted(self.fluxes.keys())
+                if self.fluxes[lm][c][i] != 0
             ]))
+            pars_i = [xc, yc, width, height, lams, fluxes, self.order,
+                      self.wmin, self.wmax, self.sens_waves, self.sens_resp,
+                      self.seg_wcs, self.grism_wcs, i, self.dims[::-1], 2,
+                      self.extrapolate_sed, self.xoffset, self.yoffset]
+            pars.append(pars_i)
+            #if i == 0:
+            #    print([type(arg) for arg in pars_i]) #all these need to be pickle-able
 
-            pars_i = (xc, yc, width, height, lams, fluxes, order,
-                      wmin, wmax, sens_waves, sens_resp,
-                      seg_wcs, grism_wcs, i, dims[::-1], 2,
-                      extrapolate_sed, xoffset, yoffset)
-            if i == 0:
-                print(pars_i)
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in scalar divide")
-                warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
-                all_res.append(dispersed_pixel(*pars_i))
+        # pass parameters into dispersed_pixel, either using multiprocessing or not
+        time1 = time.time()
+        if self.max_cpu > 1:
+            ctx = mp.get_context("forkserver")
+            with ctx.Pool(self.max_cpu) as mypool:
+                all_res = mypool.starmap(dispersed_pixel, pars)
+        else:
+            all_res = []
+            for i in range(len(pars)):
+                all_res.append(dispersed_pixel(*pars[i]))
 
         # Initialize blank image for this source
-        this_object = np.zeros(dims, float)
+        this_object = np.zeros(self.dims, float)
         nres = 0
         bounds = []
         for pp in all_res:
@@ -403,21 +385,23 @@ class Observation:
             maxy = int(max(y))
             a = sparse.coo_matrix((f, (y - miny, x - minx)),
                                   shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
-            bounds.append([minx, maxx, miny, maxy])
-
+            
             # Accumulate results into simulated images
             this_object[miny:maxy + 1, minx:maxx + 1] += a
+            bounds.append([minx, maxx, miny, maxy])
 
-            #if self.cache:
-            #    self.cached_object[c]['x'].append(x)
-            #    self.cached_object[c]['y'].append(y)
-            #    self.cached_object[c]['f'].append(f)
-            #    self.cached_object[c]['w'].append(w)
-            #    self.cached_object[c]['minx'].append(minx)
-            #    self.cached_object[c]['maxx'].append(maxx)
-            #    self.cached_object[c]['miny'].append(miny)
-            #    self.cached_object[c]['maxy'].append(maxy)
+            if self.cache:
+                self.cached_object[c]['x'].append(x)
+                self.cached_object[c]['y'].append(y)
+                self.cached_object[c]['f'].append(f)
+                self.cached_object[c]['w'].append(w)
+                self.cached_object[c]['minx'].append(minx)
+                self.cached_object[c]['maxx'].append(maxx)
+                self.cached_object[c]['miny'].append(miny)
+                self.cached_object[c]['maxy'].append(maxy)
 
+        time2 = time.time()
+        log.debug(f"Elapsed time {time2-time1} sec")
         # figure out global bounds of object
         if len(bounds) > 0:
             bounds = np.array(bounds)

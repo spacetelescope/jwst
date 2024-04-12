@@ -4,6 +4,7 @@ import numpy as np
 
 from stdatamodels.jwst import datamodels
 from astropy.table import Table
+import copy
 
 from .observations import Observation
 from .sens1d import get_photom_data
@@ -39,13 +40,115 @@ def _determine_multiprocessing_ncores(max_cores, num_cores):
         elif max_cores == 'all':
             ncpus = num_cores
         else:
-            ncpus = 1
+            raise ValueError(f"Invalid value for max_cores: {max_cores}")
         log.debug(f"Found {num_cores} cores; using {ncpus}")
 
     return ncpus
 
 
-def contam_corr(input_model, waverange, photom, max_cores, brightest_n=None):
+def _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders):
+    """
+    Parameters
+    ----------
+    slit : `~jwst.datamodels.SlitModel`
+        Source slit model
+    simul_slit_sids : list
+        List of source IDs for simulated slits
+    simul_slit_orders : list
+        List of spectral orders for simulated slits
+
+    Returns
+    -------
+    good_idx : int
+        Index of the matching simulated slit in the list of simulated slits
+    """
+
+        # Retrieve simulated slit for this source only
+    sid = slit.source_id
+    order = slit.meta.wcsinfo.spectral_order
+    good = (simul_slit_sids == sid) * (simul_slit_orders == order)
+    if not any(good):
+        return -1
+    return np.where(good)[0][0]
+
+
+def _cut_frame_to_match_slit(contam, slit):
+    
+    """Cut out the contamination image to match the extent of the source slit.
+
+    Parameters
+    ----------
+    contam : 2D array
+        Contamination image for the full grism exposure
+    slit : `~jwst.datamodels.SlitModel`
+        Source slit model
+
+    Returns
+    -------
+    cutout : 2D array
+        Contamination image cutout that matches the extent of the source slit
+
+    """
+    x1 = slit.xstart
+    y1 = slit.ystart
+    cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
+
+    return cutout
+
+
+def build_common_slit(slit0, slit1):
+    '''
+    put data from the two slits into a common backplane
+    so outputs have the same dimensions
+    and alignment is based on slit.xstart, slit.ystart
+
+    Parameters
+    ----------
+    slit0 : SlitModel
+        First slit model
+    slit1 : SlitModel
+        Second slit model
+
+    Returns
+    -------
+    slit0 : SlitModel
+        First slit model with data updated to common backplane
+    slit1 : SlitModel
+        Second slit model with data updated to common backplane
+    '''
+        
+    data0 = slit0.data
+    data1 = slit1.data
+
+    shape = (max(data0.shape[0], data1.shape[0]), max(data0.shape[1], data1.shape[1]))
+    xmin = min(slit0.xstart, slit1.xstart)
+    ymin = min(slit0.ystart, slit1.ystart)
+    shape = max(slit0.xsize + slit0.xstart - xmin, 
+                slit1.xsize + slit1.xstart - xmin), \
+                max(slit0.ysize + slit0.ystart - ymin, 
+                    slit1.ysize + slit1.ystart - ymin)
+    x0 = slit0.xstart - xmin
+    y0 = slit0.ystart - ymin
+    x1 = slit1.xstart - xmin
+    y1 = slit1.ystart - ymin
+
+    backplane0 = np.zeros(shape).T
+    backplane0[y0:y0+data0.shape[0], x0:x0+data0.shape[1]] = data0
+    backplane1 = np.zeros(shape).T
+    backplane1[y1:y1+data1.shape[0], x1:x1+data1.shape[1]] = data1
+
+    slit0.data = backplane0
+    slit1.data = backplane1
+    for slit in [slit0, slit1]:
+        slit.xstart = xmin
+        slit.ystart = ymin
+        slit.xsize = shape[0]
+        slit.ysize = shape[1]
+    
+    return slit0, slit1
+
+
+def contam_corr(input_model, waverange, photom, max_cores="none", brightest_n=None):
     """
     The main WFSS contamination correction function
 
@@ -172,76 +275,28 @@ def contam_corr(input_model, waverange, photom, max_cores, brightest_n=None):
     slits = []
     for slit in output_model.slits:
 
-        # Retrieve simulated slit for this source only
-        sid = slit.source_id
-        order = slit.meta.wcsinfo.spectral_order
-        good = (simul_slit_sids == sid) * (simul_slit_orders == order)
-        if not any(good):
-            log.warning(f"Source {sid} order {order} requested by input slit model \
-                        but not found in simulated slits")
+        good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
+        if good_idx == -1:
+            log.warning(f"Source {slit.source_id} order {order} requested by input slit model \
+                    but not found in simulated slits")
             continue
-        else:
-            print('Subtracting contamination for source', sid, 'order', order)
-        good_idx = np.where(good)[0][0]
         this_simul = obs.simul_slits.slits[good_idx]
 
-        # cut out this source's contamination from the full simulated image
-        fullframe_sim = np.zeros(obs.dims)
-        y0 = this_simul.ystart 
-        x0 = this_simul.xstart 
-        fullframe_sim[y0:y0 + this_simul.ysize, x0:x0 + this_simul.xsize] = this_simul.data
-        contam = simul_all - fullframe_sim
+        # Subtract source slit to make contamination image
+        # Simulated slits are sometimes different in shape than input data slits by a few pixels
+        this_simul, slit = build_common_slit(this_simul, slit)
+        simul_all_cut = _cut_frame_to_match_slit(simul_all, slit)
+        contam_cut = simul_all_cut - this_simul.data
+        contam_slit = copy.copy(slit)
+        contam_slit.data = contam_cut
+        slits.append(contam_slit)
 
-        # Create a cutout of the contam image that matches the extent
-        # of the source slit
-        x1 = slit.xstart - 1
-        y1 = slit.ystart - 1
-        cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
-        new_slit = datamodels.SlitModel(data=cutout)
-        # TO DO:
-        # not sure if the slit metadata is getting transferred properly
-        copy_slit_info(slit, new_slit) 
-        slits.append(new_slit)
-
-        # Subtract the cutout from the source slit
-        slit.data -= cutout
+        # Subtract the contamination from the source slit
+        slit.data -= contam_cut
 
     # Save the contamination estimates for all slits
     contam_model.slits.extend(slits)
-    print('number of slits in contam model', len(contam_model.slits))
-    print('number of slits in output model', len(output_model.slits))
-    print('number of slits in simul model', len(obs.simul_slits.slits))
 
-    # at what point does the output model get updated with the contamination-corrected data?
-
-    # Set the step status to COMPLETE
     output_model.meta.cal_step.wfss_contam = 'COMPLETE'
 
     return output_model, simul_model, contam_model, obs.simul_slits
-
-
-def copy_slit_info(input_slit, output_slit):
-
-    """Copy meta info from one slit to another.
-
-    Parameters
-    ----------
-    input_slit : SlitModel
-        Input slit model from which slit-specific info will be copied
-
-    output_slit : SlitModel
-        Output slit model to which slit-specific info will be copied
-
-    """
-    output_slit.name = input_slit.name
-    output_slit.xstart = input_slit.xstart
-    output_slit.ystart = input_slit.ystart
-    output_slit.xsize = input_slit.xsize
-    output_slit.ysize = input_slit.ysize
-    output_slit.source_id = input_slit.source_id
-    output_slit.source_type = input_slit.source_type
-    output_slit.source_xpos = input_slit.source_xpos
-    output_slit.source_ypos = input_slit.source_ypos
-    output_slit.meta.wcsinfo.spectral_order = input_slit.meta.wcsinfo.spectral_order
-    output_slit.meta.wcsinfo.dispersion_direction = input_slit.meta.wcsinfo.dispersion_direction
-    output_slit.meta.wcs = input_slit.meta.wcs

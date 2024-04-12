@@ -53,8 +53,8 @@ def segmentation_map(direct_image):
 
     # turn this into a jwst datamodel
     model = SegmentationMapModel(data=segm.data)
-    asdf_file = asdf.open(os.path.join(data_path, "segmentation_wcs.asdf"))
-    wcsobj = asdf_file.tree['wcs']
+    with asdf.open(os.path.join(data_path, "segmentation_wcs.asdf")) as asdf_file:
+        wcsobj = asdf_file.tree['wcs']
     model.meta.wcs = wcsobj
 
     return model
@@ -62,8 +62,8 @@ def segmentation_map(direct_image):
 
 @pytest.fixture(scope='module')
 def grism_wcs():
-    asdf_file = asdf.open(os.path.join(data_path, "grism_wcs.asdf"))
-    wcsobj = asdf_file.tree['wcs']
+    with asdf.open(os.path.join(data_path, "grism_wcs.asdf")) as asdf_file:
+        wcsobj = asdf_file.tree['wcs']
     return wcsobj
 
 
@@ -119,8 +119,6 @@ def test_create_pixel_list(observation, segmentation_map):
 
 def test_disperse_chunk(observation):
     '''
-    disperse_chunk is a static method so need to give it lots of observation attributes as input
-
     Note: it's not obvious how to get a trivial flux example from first principles
     even setting all input fluxes in dict to 1, because transforms change
     pixel areas in nontrivial ways. seems a bad idea to write a test that 
@@ -142,12 +140,7 @@ def test_disperse_chunk(observation):
     # set all fluxes to unity to try to make a trivial example
     obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
 
-    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp,
-                       obs.IDs[i], obs.xs[i], obs.ys[i], 
-                       obs.fluxes, 
-                       obs.seg_wcs, obs.grism_wcs, obs.dims, 
-                       obs.extrapolate_sed, obs.xoffset, obs.yoffset]
-
+    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
     (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
 
     #trivial bookkeeping
@@ -180,11 +173,7 @@ def test_disperse_chunk_null(observation):
     obs.xoffset = 2200
     obs.yoffset = 1000
 
-    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp,
-                       obs.IDs[i], obs.xs[i], obs.ys[i], 
-                       obs.fluxes, 
-                       obs.seg_wcs, obs.grism_wcs, obs.dims, 
-                       obs.extrapolate_sed, obs.xoffset, obs.yoffset]
+    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
 
     (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
 
