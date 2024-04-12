@@ -6,6 +6,13 @@ ami
 
 - Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
+assign_wcs
+----------
+
+- Change MIRI LRS WCS code to handle the tilted trace via a centroid shift as a function
+  of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
+  to ensure that iso-lambda is along pixel rows after this change. [#8411]
+
 associations
 ------------
 
