@@ -1,10 +1,11 @@
 import copy
 from collections import OrderedDict
-from collections.abc import Sequence
+from collections.abc import MutableMapping, Sequence
 import json
+import logging
 import os
 import re
-import logging
+import tempfile
 
 import numpy as np
 
@@ -23,6 +24,48 @@ __all__ = ['ModelContainer']
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+
+class _OnDiskModelStore(MutableMapping):
+    def __init__(self, memmap=False, directory=None):
+        self._memmap = memmap
+        if directory is None:
+            # when tem
+            self._tempdir = tempfile.TemporaryDirectory()
+            # TODO should I make this a path?
+            self._dir = self._tempdir.name
+        else:
+            self._dir = directory
+        self._filenames = {}
+
+    def __getitem__(self, key):
+        if key not in self._filenames:
+            raise KeyError(f"{key} is not in {self}")
+        return datamodel_open(self._filenames[key], memmap=self._memmap)
+
+    def __setitem__(self, key, value):
+        if key in self._filenames:
+            fn = self._filenames[key]
+        else:
+            model_filename = value.meta.filename
+            if model_filename is None:
+                model_filename = "model.fits"
+            subdir = os.path.join(self._dir, f"{key}")
+            os.makedirs(subdir)
+            fn = os.path.join(subdir, model_filename)
+            self._filenames[key] = fn
+
+        # save the model to the temporary location
+        value.save(fn)
+
+    def __delitem__(self, key):
+        del self._filenames[key]
+
+    def __iter__(self):
+        return iter(self._filenames)
+
+    def __len__(self):
+        return len(self._filenames)
 
 
 class ModelContainer(JwstDataModel, Sequence):
@@ -44,10 +87,6 @@ class ModelContainer(JwstDataModel, Sequence):
         - list: a list of DataModels of any type
 
         - None: initializes an empty `ModelContainer` instance
-
-    iscopy : bool
-        Presume this model is a copy. Members will not be closed
-        when the model is closed/garbage-collected.
 
     Examples
     --------
@@ -128,14 +167,20 @@ to supply custom catalogs.
 
         super().__init__(init=None, **kwargs)
 
-        # if True, keep models open and in memory
-        self._in_memory = kwargs.get("in_memory", True)
+        # if True, do not keep models open, and write them
+        # to disk (when updated)
+        self._on_disk = kwargs.get("on_disk", False)
+
+        self._memmap = kwargs.get("memmap", False)
 
         # _models will be the same length as _members
         # and possibly contain:
         # - None: if the model is not loaded
         # - DataModel: if the model is in-memory
-        self._models = None
+        if self._on_disk:
+            self._models = _OnDiskModelStore(memmap=self._memmap, directory=kwargs.get("tempdir"))
+        else:
+            self._models = {}
         self._members = None
 
         self._close_models_on_close = True
@@ -143,28 +188,33 @@ to supply custom catalogs.
         self.asn_table_name = None
         self.asn_pool_name = None
 
-        self._memmap = kwargs.get("memmap", False)
-
         # if None, assume an empty list of models
         if init is None:
             init = []
 
         if isinstance(init, list):
-            self._models = []
-            for item in init:
-                if isinstance(item, JwstDataModel):
-                    self._models.append(item)
-                else:
-                    raise TypeError("list must contain items that can be opened "
-                                    "with jwst.datamodels.open()")
-
             # since these models are already in memory...
-            self._in_memory = True
-            # don't close them when the container closes
+            if self._on_disk:
+                msg = (
+                    "A ModelContainer created from a list of models "
+                    "cannot use the on_disk option"
+                )
+                raise ValueError(msg)
+
+            if not all((isinstance(item, JwstDataModel) for item in init)):
+                raise TypeError("list must contain all JwstDataModel instances")
+
+            # don't close models when the container closes
             self._close_models_on_close = False
 
+            # add the models to the store
+            for (i, model) in enumerate(init):
+                self._models[i] = model
+
             # generate a fake association table
-            asn_data = _models_to_association(self._models)
+            asn_data = _models_to_association(init)
+
+            # load the fake association
             self._from_asn(asn_data)
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
@@ -172,13 +222,14 @@ to supply custom catalogs.
             self._shape = init._shape
             self._asdf = AsdfFile(instance)
             self._instance = instance
+            self._on_disk = init._on_disk
             # TODO what if some models were not loaded?
+            # should we copy here? what about if on_disk?
             self._models = init._models
             self._members = init._members
             self.asn_table_name = init.asn_table_name
             self.asn_pool_name = init.asn_pool_name
             self._close_models_on_close = False
-            self._inmemory = init._in_memory
         elif is_association(init):
             self._from_asn(init, asn_exptypes=asn_exptypes, asn_n_members=asn_n_members)
         elif isinstance(init, str):
@@ -201,58 +252,43 @@ to supply custom catalogs.
         if asn_n_members == 1 and self._models:
             self._models[0] = self[0]
 
+    def __setitem__(self, index, model):
+        self._models[index] = model
+
     def __len__(self):
-        # TODO encapsulate these so they are always the same length
-        if len(self._models) != len(self._members):
-            raise Exception()
-        return len(self._models)
+        return len(self._members)
 
     def __getitem__(self, index):
-        m = self._models[index]
-        if m is None:
-            m = self._load_member(index)
-            # if _in_memory is True, save the model for later use
-            if self._in_memory:
-                self._models[index] = m
+        # if model is in the store, use it
+        if index in self._models:
+            return self._models[index]
+
+        # if not, load it from the member list
+        m = self._load_member(index)
+        if not self._on_disk:
+            # if not keeping the models "on_disk" save the open model
+            # to the models list for later use
+            self._models[index] = m
         return m
-
-    #def __setitem__(self, index, model):
-    #    self._models[index] = model
-
-    #def __delitem__(self, index):
-    #    del self._models[index]
 
     def __iter__(self):
         for i in range(len(self)):
             yield self[i]
 
-    #def insert(self, index, model):
-    #    self._models.insert(index, model)
-
-    #def append(self, model):
-    #    self._models.append(model)
-
-    #def extend(self, model):
-    #    self._models.extend(model)
-
-    #def pop(self, index=-1):
-    #    self._models.pop(index)
-
     def copy(self, memo=None):
         """
         Returns a deep copy of the models in this model container.
         """
+        # TODO what should on_disk containers do?
         result = self.__class__(init=None,
                                 pass_invalid_values=self._pass_invalid_values,
                                 strict_validation=self._strict_validation)
         instance = copy.deepcopy(self._instance, memo=memo)
         result._asdf = AsdfFile(instance)
         result._instance = instance
-        result._in_memory = self._in_memory
+        result._on_disk = self._on_disk
         result._schema = self._schema
-        result._models = []
-        for m in self:
-            result._models.append(m.copy())
+        result._models = copy.deepcopy(self._models)
         # since we copied the models above, close the copies on close
         result._close_models_on_close = True
         result._members = copy.deepcopy(self._members)
@@ -309,13 +345,9 @@ to supply custom catalogs.
 
         # add a "group_id" (if not already defined in the association)
         for (i, member) in enumerate(members):
-            if member["expname"] is None:
-                if self._models is None or self._models[i] is None:
-                    raise Exception()
-                member['_filename'] = None
-            else:
-                filename = os.path.join(asn_dir, member["expname"])
-                member['_filename'] = filename
+            filename = os.path.join(asn_dir, member["expname"])
+            # compute the filename, to use later to load the model
+            member['_filename'] = filename
             if member.get("group_id") is None:
                 try:
                     member["group_id"] = _file_to_group_id(filename)
@@ -330,9 +362,6 @@ to supply custom catalogs.
         )
 
         self._members = members
-        # if we have no models, set them as None to signify they're not loaded
-        if not self._models:
-            self._models = [None] * len(members)
 
         if asn_file_path is not None:
             self.asn_table_name = os.path.basename(asn_file_path)
@@ -452,6 +481,17 @@ to supply custom catalogs.
         return list(group_dict.values())
 
     @property
+    def grouped_indices(self):
+        # TODO WIP replacement for group_names and models_grouped
+        group_dict = {}
+        for (i, member) in enumerate(self._members):
+            group_id = member['group_id']
+            if group_id not in group_dict:
+                group_dict[group_id] = []
+            group_dict[group_id].append(i)
+        return group_dict
+
+    @property
     def group_names(self):
         """
         Return list of names for the JwstDataModel groups by exposure.
@@ -464,9 +504,9 @@ to supply custom catalogs.
 
     def close(self):
         """Close all datamodels."""
-        if self._close_models_on_close and self._models is not None:
-            for model in self._models:
-                model.close()
+        if self._close_models_on_close and not self._on_disk:
+            for index in self._models:
+                self._models[index].close()
 
     @property
     def crds_observatory(self):
