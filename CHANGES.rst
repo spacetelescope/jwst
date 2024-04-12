@@ -47,6 +47,9 @@ outlier_detection
 
 - Add association id to ``outlier_i2d`` intermediate filenames. [#8418]
 
+- Pass the ``weight_type`` parameter to all resampling function calls so that
+  the default weighting can be overridden by the input step parameter. [#8290]
+
 pipeline
 --------
 
