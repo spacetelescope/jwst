@@ -774,11 +774,7 @@ class Constraint_Imprint(Constraint):
                 DMSAttrConstraint(
                     name='imprint',
                     sources=['is_imprt']
-                ),
-                DMSAttrConstraint(
-                    name='mosaic_tile',
-                    sources=['mostilno'],
-                ),
+                )
             ],
             reprocess_on_match=True,
             work_over=ListCategory.EXISTING,
