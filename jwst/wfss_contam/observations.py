@@ -1,6 +1,7 @@
 import time
+import multiprocessing
 import numpy as np
-import multiprocessing as mp
+import multiprocessing
 
 from scipy import sparse
 
@@ -356,7 +357,7 @@ class Observation:
         # pass parameters into dispersed_pixel, either using multiprocessing or not
         time1 = time.time()
         if self.max_cpu > 1:
-            ctx = mp.get_context("forkserver")
+            ctx = multiprocessing.get_context("forkserver")
             with ctx.Pool(self.max_cpu) as mypool:
                 all_res = mypool.starmap(dispersed_pixel, pars)
         else:

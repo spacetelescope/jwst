@@ -93,6 +93,8 @@ class ResampleData:
         crval = kwargs.get('crval', None)
         rotation = kwargs.get('rotation', None)
 
+        self.asn_id = kwargs.get('asn_id', None)
+
         if pscale is not None:
             log.info(f'Output pixel scale: {pscale} arcsec.')
             pscale /= 3600.0
@@ -225,7 +227,10 @@ class ResampleData:
             output_type = exposure[0].meta.filename[indx:]
             output_root = '_'.join(exposure[0].meta.filename.replace(
                 output_type, '').split('_')[:-1])
-            output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
+            if self.asn_id is not None:
+                output_model.meta.filename = f'{output_root}_{self.asn_id}_outlier_i2d{output_type}'
+            else:
+                output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
