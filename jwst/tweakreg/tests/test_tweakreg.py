@@ -82,11 +82,10 @@ def test_write_catalog(dummy_source_catalog, tmp_cwd):
     '''
 
     OUTDIR = 'outdir'
-    model = ImageModel()
     step = tweakreg_step.TweakRegStep()
     os.mkdir(OUTDIR)
     step.output_dir = OUTDIR
     expected_outfile = os.path.join(OUTDIR, 'catalog.ecsv')
-    step._write_catalog(model, dummy_source_catalog, 'catalog.ecsv')
+    step._write_catalog(dummy_source_catalog, 'catalog.ecsv')
 
     assert os.path.exists(expected_outfile)
