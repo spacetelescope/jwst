@@ -102,7 +102,8 @@ class OutlierDetectionStep(Step):
 
             # Setup outlier detection parameters
             pars = {
-                'weight_type': self.weight_type,
+                'weight_type': self.weight_type,  # for calling the resample step
+                'wht_type': self.weight_type,  # for calling the resample class directly
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,
