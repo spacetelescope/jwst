@@ -345,7 +345,12 @@ to supply custom catalogs.
 
         # add a "group_id" (if not already defined in the association)
         for (i, member) in enumerate(members):
-            filename = os.path.join(asn_dir, member["expname"])
+            if member["expname"] is None:
+                # when created from models, it's possible the member will
+                # not have an expname
+                filename = None
+            else:
+                filename = os.path.join(asn_dir, member["expname"])
             # compute the filename, to use later to load the model
             member['_filename'] = filename
             if member.get("group_id") is None:
