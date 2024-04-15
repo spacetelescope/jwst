@@ -1414,8 +1414,8 @@ def degrees_per_pixel(datamodel):
         log.debug("Used CD matrix for pixel scales")
         return np.linalg.norm(dxsky, ord=2), np.linalg.norm(dysky, ord=2)
     elif "cdelt1" in wcsinfo and "cdelt2" in wcsinfo:
-        return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
         log.debug("Used CDELT[12] for pixel scales")
+        return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
     else:
         log.warning(
             "WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix"

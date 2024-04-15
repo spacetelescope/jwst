@@ -1,13 +1,92 @@
 1.14.1 (unreleased)
 ===================
 
+ami
+---
+
+- Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
+
+assign_wcs
+----------
+
+- Change MIRI LRS WCS code to handle the tilted trace via a centroid shift as a function
+  of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
+  to ensure that iso-lambda is along pixel rows after this change. [#8411]
+
+associations
+------------
+
+- Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations 
+  where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
+
+- Match NIRSpec imprint observations to science exposures on mosaic tile location
+  and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
+
+documentation
+-------------
+
+- Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
+  [#8399]
+
+extract_1d
+----------
+
+- Added a hook to bypass the ``extract_1d`` step for NIRISS SOSS data in
+  the F277W filter with warning. [#8275]
+
+- Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
+
 flat_field
 ----------
 
 - Update the flatfield code for NIRSpec IFU data to ensure that SCI=ERR=NaN and
   DQ has the DO_NOT_USE flag set outside the footprint of the IFU slices [#8385]
 
-1.14.0 (2024-03-25)
+general
+-------
+
+- Removed deprecated stdatamodels model types ``DrizProductModel``, 
+  ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
+
+outlier_detection
+-----------------
+
+- Add association id to ``outlier_i2d`` intermediate filenames. [#8418]
+
+- Pass the ``weight_type`` parameter to all resampling function calls so that
+  the default weighting can be overridden by the input step parameter. [#8290]
+
+pipeline
+--------
+
+- Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
+  that was causing them not to respect the ``output_file`` parameter. [#8368]
+
+ramp_fitting
+------------
+
+- Changed the data type for several variables in ramp_fitting
+  to use uint16 instead of uint8, in order to avoid potential
+  overflow/wraparound problems. [#8377]
+
+resample
+--------
+
+- Remove sleep in median combination added in 8305 as it did not address
+  the issue in operation [#8419]
+
+residual_fringe
+---------------
+
+- Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
+
+tweakreg
+--------
+
+- Output source catalog file now respects ``output_dir`` parameter. [#8386]
+
+
+1.14.0 (2024-03-29)
 ===================
 
 ami
@@ -27,7 +106,6 @@ ami
 - Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
 
 - Disable ``AmiAverage`` step. [#7862]
-
 
 associations
 ------------
@@ -105,7 +183,6 @@ documentation
 - Updated ``outlier_detection`` for IFU data to explain the method more clearly. [#8360]
 
 - Adds documentation on the 1-D residual fringe correction for MIRI MRS data that is done in ``extract_1d``. [#8371]
-
 
 emicorr
 -------

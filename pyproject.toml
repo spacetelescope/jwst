@@ -38,7 +38,7 @@ dependencies = [
     "stdatamodels>=1.10.1,<1.11.0",
     "stpipe>=0.5.2,<0.6.0",
     "stsci.image>=2.3.5",
-    "stsci.imagestats>=1.6.3",
+    "stsci.imagestats>=1.6.3,<1.7.0",
     "synphot>=1.2",
     "tweakwcs>=0.8.6",
     "asdf-astropy>=0.3.0",
@@ -223,9 +223,6 @@ norecursedirs = [
     "build",
     "venv",
 ]
-asdf_schema_tests_enabled = true
-asdf_schema_validate_default = false
-asdf_schema_root = "jwst/transforms/resources/schemas jwst/datamodels/schemas"
 junit_family = "xunit2"
 inputs_root = "jwst-pipeline"
 results_root = "jwst-pipeline-results"

@@ -87,6 +87,11 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': True,
     },
+    'jw01192_o008_pool.csv': {
+        'args': ['-i', 'o008'],
+        'xfail': None,
+        'slow': False,
+    },
     'jw01194_20230115t113819_pool': {
         'args': [],
         'xfail': None,
