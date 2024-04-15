@@ -249,7 +249,7 @@ to supply custom catalogs.
                             'an ASN file'.format(init))
 
         # FIXME stpipe reaches into _models[0], make sure it's loaded
-        if asn_n_members == 1 and self._models:
+        if asn_n_members == 1:
             self._models[0] = self[0]
 
     def __setitem__(self, index, model):
@@ -666,6 +666,10 @@ def _models_to_association(models, meta=None, member_meta=None):
                     member["group_id"] = _model_to_group_id(model)
                 except (TypeError, AttributeError):
                     member["group_id"] = 'exposure{0:04d}'.format(i + 1)
+
+                # since we computed the group_id here (becuase meta.group_id
+                # was blank) assign the group_id to this model
+                model.meta.group_id = member["group_id"]
 
         members.append(member)
 
