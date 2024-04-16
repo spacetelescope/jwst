@@ -22,6 +22,11 @@ associations
 - Match NIRSpec imprint observations to science exposures on mosaic tile location
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
 
+dark_current
+------------  
+
+- Add log info message when specifying an average_dark_current for noise calculations.
+
 documentation
 -------------
 
