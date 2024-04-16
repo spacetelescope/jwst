@@ -192,7 +192,7 @@ class TweakRegStep(Step):
         # Build the catalog and correcotr for each input images
         for (model_index, image_model) in enumerate(images):
             if use_custom_catalogs and image_model.meta.filename in catdict:
-                # TODO this modifies the input_model
+                # FIXME this modifies the input_model
                 image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
                 # use user-supplied catalog:
                 self.log.info("Using user-provided input catalog "
@@ -232,7 +232,7 @@ class TweakRegStep(Step):
 
             # save catalog (if requested)
             if save_catalog:
-                # TODO this modifies the input_model
+                # FIXME this modifies the input_model
                 image_model.meta.tweakreg_catalog = self._write_catalog(catalog, filename)
 
             # Temporarily attach catalog to the image model so that it follows
