@@ -147,8 +147,26 @@ def test_skipped():
     outw = WavecorrStep.call(outs)
 
     source_pos = (0.004938526981283373, -0.02795306204991911)
-    assert_allclose((outw.slits[ind].source_xpos, outw.slits[ind].source_ypos), source_pos)
+    assert_allclose((outw.slits[ind].source_xpos, outw.slits[ind].source_ypos),source_pos)
 
+    # Test that no correction transform is returned (a skip criterion)
+    # if the corrected wavelengths are not monotonically increasing
+    
+    # This case is not expected with real data, test with simple case 
+    # of flipped wavelength solutions, which produces a monotonically 
+    # decreasing wavelengths
+    lam = np.tile(np.flip(np.arange(0.6, 5.5, 0.01)*1e-6), (22, 1))
+    disp = np.tile(np.full(lam.shape[-1], -0.01)*1e-6, (22, 1))
+
+    ref_name = outw.meta.ref_file.wavecorr.name
+    reffile = datamodels.WaveCorrModel(
+        WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+    source_xpos = 0.1
+    aperture_name = 'S200A1'
+    
+    transform = wavecorr.calculate_wavelength_correction_transform(
+        lam, disp, reffile, source_xpos, aperture_name)
+    assert transform is None
 
 def test_wavecorr_fs():
     hdul = create_nirspec_fs_file(grating="PRISM", filter="CLEAR")
@@ -199,7 +217,7 @@ def test_wavecorr_fs():
     dispersion = wavecorr.compute_dispersion(slit.meta.wcs, x, y)
     assert_allclose(dispersion[~np.isnan(dispersion)], 1e-8, atol=1.04e-8)
 
-    # Check that the slit wcs has been updated to provide corrected wavelengths
+    # Check that the slit wavelengths are consistent with the slit wcs
     corrected_wavelength = wavecorr.compute_wavelength(slit.meta.wcs, x, y)
     assert_allclose(slit.wavelength, corrected_wavelength)
 

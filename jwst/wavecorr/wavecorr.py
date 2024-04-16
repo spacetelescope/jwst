@@ -30,6 +30,8 @@ Both ways give the same result, the current code uses the first one.
 import logging
 import numpy as np
 from gwcs import wcstools
+from gwcs import coordinate_frames as cf
+from astropy import units as u
 from astropy.modeling import tabular
 from astropy.modeling.mappings import Identity
 
@@ -91,16 +93,27 @@ def do_correction(input_model, wavecorr_file):
                         input_model.meta.cal_step.wavecorr = 'SKIPPED'
                         break
                     if _is_point_source(slit, exp_type):
-                        apply_zero_point_correction(slit, wavecorr_file)
-                        output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                        completed = apply_zero_point_correction(slit, wavecorr_file)
+                        if completed:
+                            output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                        else:
+                            log.warning(f'Corrections are not invertible for slit {slit.name}')
+                            log.warning('Skipping wavecorr correction')
+                            output_model.meta.cal_step.wavecorr = 'SKIPPED'
+
                         break
 
         # For MOS work on all slits containing a point source
         else:
             for slit in output_model.slits:
                 if _is_point_source(slit, exp_type):
-                    apply_zero_point_correction(slit, wavecorr_file)
-                    output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                    completed = apply_zero_point_correction(slit, wavecorr_file)
+                    if completed:
+                        output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                    else:
+                        log.warning(f'Corrections are not invertible for slit {slit.name}')
+                        log.warning('Skipping wavecorr correction')
+                        output_model.meta.cal_step.wavecorr = 'SKIPPED'
 
     return output_model
 
@@ -114,6 +127,11 @@ def apply_zero_point_correction(slit, reffile):
         Slit data to be corrected.
     reffile : str
         The ``wavecorr`` reference file.
+        
+    Returns
+    -------
+    completed : bool
+        A flag to report whether the zero-point correction was added or skipped.
     """
     log.info(f'slit name {slit.name}')
     slit_wcs = slit.meta.wcs
@@ -132,16 +150,33 @@ def apply_zero_point_correction(slit, reffile):
     lam = slit.wavelength.copy() * 1e-6
     dispersion = compute_dispersion(slit.meta.wcs)
 
-    wave2wavecorr = calculate_wavelength_correction_transform(lam, dispersion, 
-                                                              reffile, source_xpos, 
+    wave2wavecorr = calculate_wavelength_correction_transform(lam,
+                                                              dispersion,
+                                                              reffile,
+                                                              source_xpos,
                                                               aperture_name)
     
-    # Insert the new transform into the slit wcs object
-    wave2wavecorr = Identity(2) & wave2wavecorr
-    slit_wcs.insert_transform('slit_frame', transform=wave2wavecorr, after=False)
-    
-    # Update the stored wavelengths for the slit
-    slit.wavelength = compute_wavelength(slit_wcs)
+    if wave2wavecorr is None: # Should not occur for real data
+        completed = False
+        return completed
+    else:        
+        # Make a new frame to insert into the slit wcs object
+        slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), 
+                                  unit=("", ""), axes_names=('x_slit', 'y_slit'))
+        spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                                axes_names=('wavelength',))
+        wcorr_frame = cf.CompositeFrame(
+            [slit_spatial, spec], name='wcorr_frame')
+        
+        # Insert the new transform into the slit wcs object
+        wave2wavecorr = Identity(2) & wave2wavecorr
+        slit_wcs.insert_frame('slit_frame', wave2wavecorr, wcorr_frame)
+        
+        # Update the stored wavelengths for the slit
+        slit.wavelength = compute_wavelength(slit_wcs)
+        
+        completed = True
+        return completed
     
 
 def calculate_wavelength_correction_transform(lam, dispersion, freference, 
@@ -164,9 +199,10 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
         
     Returns
     -------
-    model : `~astropy.modeling.tabular.Tabular1D`
+    model : `~astropy.modeling.tabular.Tabular1D`or None
         A model which takes wavelength inputs and returns zero-point
-        corrected wavelengths.
+        corrected wavelengths.  Returns None if an invertible model
+        cannot be generated.
     """
     # Open the zero point reference model
     with datamodels.WaveCorrModel(freference) as wavecorr:
@@ -198,13 +234,21 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
     pixel_corrections = offset_model(lam_mean, source_xpos)
     lam_corrected = lam_mean + (pixel_corrections * disp_mean)
     
-    # Build a look up table to transform between corrected and uncorrected wavelengths
-    wave2wavecorr = tabular.Tabular1D(points=lam_mean, lookup_table=lam_corrected, 
-                                      bounds_error=False, fill_value=None, name='wave2wavecorr')
-    wave2wavecorr.inverse = tabular.Tabular1D(points=lam_corrected, lookup_table=lam_mean, 
-                                              bounds_error=False, fill_value=None)
+    # Check to make sure that the corrected wavelengths are monotonically increasing
+    if np.all(np.diff(lam_corrected) > 0):
+        # monotonically increasing        
+        # Build a look up table to transform between corrected and uncorrected wavelengths
+        wave2wavecorr = tabular.Tabular1D(points=lam_mean, 
+                                          lookup_table=lam_corrected, 
+                                          bounds_error=False, 
+                                          fill_value=None, 
+                                          name='wave2wavecorr')
     
-    return wave2wavecorr
+        return wave2wavecorr
+    
+    else:
+        # output wavelengths are not monotonically increasing
+        return None
 
 
 def compute_dispersion(wcs, xpix=None, ypix=None):
