@@ -53,7 +53,7 @@ class SourceModelContainer(ModelContainer):
         container.
         """
         # Reapply models back to the exposures
-        for exposure, model in zip(self._multiexposure.exposures, self._models):
+        for exposure, model in zip(self._multiexposure.exposures, self):
             exposure._instance.update(model._instance)
 
         return self._multiexposure
