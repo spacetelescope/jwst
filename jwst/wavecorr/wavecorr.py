@@ -166,7 +166,7 @@ def apply_zero_point_correction(slit, reffile):
         spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                                 axes_names=('wavelength',))
         wcorr_frame = cf.CompositeFrame(
-            [slit_spatial, spec], name='wcorr_frame')
+            [slit_spatial, spec], name='wavecorr_frame')
         
         # Insert the new transform into the slit wcs object
         wave2wavecorr = Identity(2) & wave2wavecorr

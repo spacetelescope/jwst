@@ -149,10 +149,10 @@ def test_skipped():
     source_pos = (0.004938526981283373, -0.02795306204991911)
     assert_allclose((outw.slits[ind].source_xpos, outw.slits[ind].source_ypos),source_pos)
 
-    # Test that no correction transform is returned (a skip criterion)
-    # if the corrected wavelengths are not monotonically increasing
-    
-    # This case is not expected with real data, test with simple case 
+    # Test if the corrected wavelengths are not monotonically increasing
+
+    # This case is not expected with real data, test that no correction 
+    # transform is returned (a skip criterion) with simple case 
     # of flipped wavelength solutions, which produces a monotonically 
     # decreasing wavelengths
     lam = np.tile(np.flip(np.arange(0.6, 5.5, 0.01)*1e-6), (22, 1))
