@@ -26,6 +26,7 @@ dark_current
 ------------  
 
 - Add log info message when specifying an average_dark_current for noise calculations.
+  [#8425]
 
 documentation
 -------------
