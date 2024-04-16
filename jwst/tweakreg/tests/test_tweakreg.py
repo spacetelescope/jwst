@@ -21,6 +21,7 @@ def dummy_source_catalog():
     return catalog
 
 
+@pytest.mark.skip(reason="test will need to be refactored as _is_wcs_correction_small is gone in favor of comparing skycoords")
 @pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
 def test_is_wcs_correction_small(offset, is_good):
     path = os.path.join(os.path.dirname(__file__), "mosaic_long_i2d_gwcs.asdf")
@@ -51,11 +52,10 @@ def test_write_catalog(dummy_source_catalog, tmp_cwd):
     '''
 
     OUTDIR = 'outdir'
-    model = ImageModel()
     step = tweakreg_step.TweakRegStep()
     os.mkdir(OUTDIR)
     step.output_dir = OUTDIR
     expected_outfile = os.path.join(OUTDIR, 'catalog.ecsv')
-    step._write_catalog(model, dummy_source_catalog, 'catalog.ecsv')
+    step._write_catalog(dummy_source_catalog, 'catalog.ecsv')
 
     assert os.path.exists(expected_outfile)
