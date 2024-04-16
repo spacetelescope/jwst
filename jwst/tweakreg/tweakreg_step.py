@@ -6,9 +6,10 @@ JWST pipeline step for image alignment.
 """
 from os import path
 
-from astropy.table import Table
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.table import Table
+from astropy.time import Time
 from tweakwcs.imalign import align_wcs
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.matchutils import XYXYMatch
@@ -18,9 +19,10 @@ from stdatamodels.jwst.datamodels.util import is_association
 from jwst.datamodels import ModelContainer
 
 # LOCAL
+from ..resample import resample_utils
 from ..stpipe import Step
 from ..assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
-from . import astrometric_utils as amutils
+from .astrometric_utils import create_astrometric_catalog
 from . tweakreg_catalog import make_tweakreg_catalog
 
 
@@ -128,9 +130,8 @@ class TweakRegStep(Step):
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
 
-        # group models (to be used below)
-        # TODO rename to something more descriptive
-        grp_img = list(images.models_grouped)
+        # determine number of groups (used below)
+        n_groups = len(images.group_names)
 
         use_custom_catalogs = self.use_custom_catalogs
 
@@ -168,11 +169,11 @@ class TweakRegStep(Step):
 
             # since we're not aligning to a reference catalog, check if we
             # are saving catalogs, if not, and we have 1 group, skip
-            if not self.save_catalogs and len(grp_img) == 1:
-                self.log.info("* Images in GROUP 1:")
-                for im in grp_img[0]:
-                    self.log.info("     {}".format(im.meta.filename))
-                self.log.info('')
+            if not self.save_catalogs and n_groups == 1:
+                #self.log.info("* Images in GROUP 1:")
+                #for im in model_groups[0]:
+                #    self.log.info("     {}".format(im.meta.filename))
+                #self.log.info('')
 
                 # we need at least two exposures to perform image alignment
                 self.log.warning("At least two exposures are required for image "
@@ -185,9 +186,10 @@ class TweakRegStep(Step):
 
         # === start processing images ===
 
-        # Build the catalogs for input images
-        # TODO rename to correctors?
-        imcats = [None] * len(images)
+        # pre-allocate a few lists
+        correctors = [None] * len(images)
+
+        # Build the catalog and correcotr for each input images
         for (model_index, image_model) in enumerate(images):
             if use_custom_catalogs and image_model.meta.filename in catdict:
                 # TODO this modifies the input_model
@@ -238,15 +240,28 @@ class TweakRegStep(Step):
             #image_model.catalog = catalog
 
             # construct the corrector since the model is open (and already has a group_id)
-            imcats[model_index] = _construct_wcs_corrector(image_model, catalog)
+            correctors[model_index] = _construct_wcs_corrector(image_model, catalog)
+
+        # If we're going to (later) align to an absolute catalog
+        # combine the input wcs objects here (to later be used to compute
+        # the fiducial and search radius).
+        # This is done prior to 'local' matching to be consistent with the
+        # old code.
+        if align_to_abs_refcat:
+            # FIXME should this be after 'local' alignment?
+            combined_wcs = wcs_from_footprints(
+                None,
+                refmodel=images[0],
+                wcslist=[corrector.wcs for corrector in correctors],
+            )
 
         self.log.info('')
         self.log.info("Number of image groups to be aligned: {:d}."
-                      .format(len(grp_img)))
+                      .format(n_groups))
         #self.log.info("Image groups:")
 
         # if we have >1 group of images, align them to each other
-        if len(grp_img) > 1:
+        if n_groups > 1:
             # TODO rename this
             local_align_failed = False
 
@@ -260,13 +275,15 @@ class TweakRegStep(Step):
                 yoffset=self.yoffset
             )
 
+            # FIXME can we make these error specific to avoid needing to check
+            # the error message?
             try:
-                # FIXME `align_wcs` checks that all items in `imcats` are
+                # FIXME `align_wcs` checks that all items in `correctors` are
                 # instances of `WCSCorrector` it them makes a new list
                 # with the catalogs. `align_wcs` changes would be needed to
-                # avoid loading all `imcats` into memory
+                # avoid loading all `correctors` into memory
                 align_wcs(
-                    imcats,
+                    correctors,
                     refcat=None,
                     enforce_user_order=self.enforce_user_order,
                     expand_refcat=self.expand_refcat,
@@ -318,9 +335,9 @@ class TweakRegStep(Step):
                 else:
                     max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
                                     self.tolerance) * u.arcsec
-                for imcat in imcats:
-                    aligned_skycoord = _wcs_to_skycoord(imcat.wcs)
-                    original_skycoord = imcat.meta['original_skycoord']
+                for corrector in correctors:
+                    aligned_skycoord = _wcs_to_skycoord(corrector.wcs)
+                    original_skycoord = corrector.meta['original_skycoord']
                     separation = original_skycoord.separation(aligned_skycoord)
                     if not (separation < max_corr).all():
                         # Large corrections are typically a result of source
@@ -336,9 +353,8 @@ class TweakRegStep(Step):
                                 model.meta.cal_step.tweakreg = "SKIPPED"
                             return images
 
-        # FIXME BJG continue from here...
         if align_to_abs_refcat:
-            # now, align things to the reference catatlog
+            # now, align things to the reference catalog
             # this can occur after alignment between groups (only if >1 group)
 
             # Get catalog of GAIA sources for the field
@@ -363,13 +379,14 @@ class TweakRegStep(Step):
             gaia_cat_name = self.abs_refcat.upper()
 
             if gaia_cat_name in SINGLE_GROUP_REFCAT:
-                # TODO this passes `images` which is used only for:
-                # - wcs calculation using resample_utils
-                # - decimalyear of first image observation date
-                ref_cat = amutils.create_astrometric_catalog(
-                    images,
+                epoch = Time(images[0].meta.observation.date).decimalyear
+                # FIXME should this be using the wcs from the 'local' alignment?
+                ref_cat = create_astrometric_catalog(
+                    None,
                     gaia_cat_name,
-                    output=output_name
+                    existing_wcs=combined_wcs,
+                    output=output_name,
+                    epoch=epoch,
                 )
 
             elif path.isfile(self.abs_refcat):
@@ -408,15 +425,15 @@ class TweakRegStep(Step):
                 # easy to recognize when alignment to GAIA was being performed
                 # as opposed to the group_id values used for relative alignment
                 # earlier in this step.
-                for imcat in imcats:
-                    imcat.meta['group_id'] = 987654
-                    if ('fit_info' in imcat.meta and
-                            'REFERENCE' in imcat.meta['fit_info']['status']):
-                        del imcat.meta['fit_info']
+                for corrector in correctors:
+                    corrector.meta['group_id'] = 987654
+                    if ('fit_info' in corrector.meta and
+                            'REFERENCE' in corrector.meta['fit_info']['status']):
+                        del corrector.meta['fit_info']
 
                 # Perform fit
                 align_wcs(
-                    imcats,
+                    correctors,
                     refcat=ref_cat,
                     enforce_user_order=True,
                     expand_refcat=False,
@@ -427,12 +444,14 @@ class TweakRegStep(Step):
                     sigma=(self.abs_sigma, 'rmse')
                 )
 
-        for (image_model, imcat) in zip(images, imcats):
+        # one final pass through all the models to update them based
+        # on the results of this step
+        for (image_model, corrector) in zip(images, correctors):
             image_model.meta.cal_step.tweakreg = 'COMPLETE'
 
             # retrieve fit status and update wcs if fit is successful:
-            if ('fit_info' in imcat.meta and
-                    'SUCCESS' in imcat.meta['fit_info']['status']):
+            if ('fit_info' in corrector.meta and
+                    'SUCCESS' in corrector.meta['fit_info']['status']):
 
                 # Update/create the WCS .name attribute with information
                 # on this astrometric fit as the only record that it was
@@ -445,9 +464,9 @@ class TweakRegStep(Step):
                     #       translated to the FITS WCSNAME keyword
                     #       IF that is what gets recorded in the archive
                     #       for end-user searches.
-                    imcat.wcs.name = "FIT-LVL3-{}".format(self.abs_refcat)
+                    corrector.wcs.name = "FIT-LVL3-{}".format(self.abs_refcat)
 
-                image_model.meta.wcs = imcat.wcs
+                image_model.meta.wcs = corrector.wcs
                 update_s_region_imaging(image_model)
 
                 # Also update FITS representation in input exposures for
@@ -509,60 +528,6 @@ class TweakRegStep(Step):
                       .format(catalog_filename))
         return catalog_filename
 
-    def _is_wcs_correction_small(self, wcs, twcs):
-        """Check that the newly tweaked wcs hasn't gone off the rails"""
-        if self.use2dhist:
-            max_corr = 2 * (self.searchrad + self.tolerance) * u.arcsec
-        else:
-            max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
-                            self.tolerance) * u.arcsec
-
-        ra, dec = wcs.footprint(axis_type="spatial").T
-        tra, tdec = twcs.footprint(axis_type="spatial").T
-        skycoord = SkyCoord(ra=ra, dec=dec, unit="deg")
-        tskycoord = SkyCoord(ra=tra, dec=tdec, unit="deg")
-
-        separation = skycoord.separation(tskycoord)
-
-        return (separation < max_corr).all()
-
-    def _imodel2wcsim(self, image_model):
-
-        # make sure that we have a catalog:
-        if hasattr(image_model, 'catalog'):
-            catalog = image_model.catalog
-        else:
-            raise NotImplementedError()
-        #    catalog = image_model.meta.tweakreg_catalog
-
-        model_name = path.splitext(image_model.meta.filename)[0].strip('_- ')
-
-        if isinstance(catalog, Table):
-            if not catalog.meta.get('name', None):
-                catalog.meta['name'] = model_name
-
-        else:
-            raise NotImplementedError()
-        #     try:
-        #         cat_name = str(catalog)
-        #         catalog = Table.read(catalog, format='ascii.ecsv')
-        #         catalog.meta['name'] = cat_name
-        #     except IOError:
-        #         self.log.error("Cannot read catalog {}".format(catalog))
-
-        # create WCSImageCatalog object:
-        refang = image_model.meta.wcsinfo.instance
-        im = JWSTWCSCorrector(
-            wcs=image_model.meta.wcs,
-            wcsinfo={'roll_ref': refang['roll_ref'],
-                     'v2_ref': refang['v2_ref'],
-                     'v3_ref': refang['v3_ref']},
-            meta={'image_model': image_model, 'catalog': catalog,
-                  'name': model_name}
-        )
-
-        return im
-
     def _find_sources(self, image_model):
         # source finding
         starfinder_kwargs = {
@@ -592,34 +557,6 @@ class TweakRegStep(Step):
             bkg_boxsize=self.bkg_boxsize,
             starfinder_kwargs=starfinder_kwargs,
         )
-
-
-def _common_name(group, all_group_names=None):
-    file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
-                  for im in group]
-
-    cn = path.commonprefix(file_names)
-
-    if all_group_names is None:
-        if not cn:
-            return 'Unnamed Group'
-    else:
-        if not cn or cn in all_group_names:
-            # find the smallest group number to make "Group #..." unique
-            max_id = 1
-            if not cn:
-                cn = "Group #"
-            for name in all_group_names:
-                try:
-                    cid = int(name.lstrip(cn))
-                    if cid >= max_id:
-                        max_id = cid + 1
-                except ValueError:
-                    pass
-            cn = f"{cn}{max_id}"
-        all_group_names.append(cn)
-
-    return cn
 
 
 def _parse_catfile(catfile):
@@ -663,6 +600,7 @@ def _parse_catfile(catfile):
                 raise ValueError("'catfile' can contain at most two columns.")
 
     return catdict
+
 
 def _rename_catalog_columns(catalog):
     for axis in ['x', 'y']:
