@@ -283,7 +283,7 @@ class TweakRegStep(Step):
             # Remove the attached catalogs
             for model in g:
                 del model.catalog
-            self.log.info(f"* Images in GROUP '{model.meta['group_id']}':")
+            self.log.info(f"* Images in GROUP '{imcats[0].meta['group_id']}':")
             for im in imcats:
                 self.log.info(f"     {im.meta['name']}")
 
@@ -300,7 +300,7 @@ class TweakRegStep(Step):
                     # Remove the attached catalogs
                     for model in g:
                         del model.catalog
-                    self.log.info(f"* Images in GROUP '{model.meta['group_id']}':")
+                    self.log.info(f"* Images in GROUP '{wcsimlist[0].meta['group_id']}':")
                     for im in wcsimlist:
                         self.log.info(f"     {im.meta['name']}")
                     imcats.extend(wcsimlist)
