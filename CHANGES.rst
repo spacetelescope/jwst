@@ -16,7 +16,7 @@ assign_wcs
 associations
 ------------
 
-- Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations 
+- Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations
   where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
 
 - Match NIRSpec imprint observations to science exposures on mosaic tile location
@@ -39,7 +39,7 @@ extract_1d
 general
 -------
 
-- Removed deprecated stdatamodels model types ``DrizProductModel``, 
+- Removed deprecated stdatamodels model types ``DrizProductModel``,
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 outlier_detection
@@ -79,6 +79,8 @@ tweakreg
 
 - Output source catalog file now respects ``output_dir`` parameter. [#8386]
 
+- Improved how a image group name is determined. [#8426]
+
 
 1.14.0 (2024-03-29)
 ===================
@@ -94,7 +96,7 @@ ami
 - Additional optional input arguments for greater user processing flexibility.
   See documentation for details. [#7862]
 
-- Bad pixel correction applied to data using new NRM reference file to calculate 
+- Bad pixel correction applied to data using new NRM reference file to calculate
   complex visibility support (M. Ireland method implemented by J. Kammerer). [#7862]
 
 - Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
@@ -129,7 +131,7 @@ charge_migration
   as DO_NOT_USE.  This group, and all subsequent groups, are then flagged as
   CHARGELOSS and DO_NOT_USE.  The four nearest pixel neighbor are then flagged
   in the same group. [#8336]
-  
+
 - Added warning handler for expected NaN and inf clipping in the
   ``sigma_clip`` function. [#8320]
 
@@ -415,7 +417,7 @@ tweakreg
 
 - Fixed a bug that caused failures instead of warnings when no GAIA sources
   were found within the bounding box of the input image. [#8334]
-  
+
 - Suppress AstropyUserWarnings regarding NaNs in the input data. [#8320]
 
 wfs_combine

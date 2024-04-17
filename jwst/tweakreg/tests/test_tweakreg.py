@@ -41,20 +41,21 @@ def test_is_wcs_correction_small(offset, is_good):
 @pytest.mark.parametrize(
     "groups, all_group_names, common_name",
     [
-        ([['abc1_cal.fits', 'abc2_cal.fits']], [], ['abc']),
+        ([['abc1_cal.fits', 'abc2_cal.fits']], {}, ['abc #1']),
         (
             [
                 ['abc1_cal.fits', 'abc2_cal.fits'],
                 ['abc1_cal.fits', 'abc2_cal.fits'],
                 ['abc1_cal.fits', 'abc2_cal.fits'],
                 ['def1_cal.fits', 'def2_cal.fits'],
+                ['cba1_cal.fits', 'cba2_cal.fits'],
             ],
-            [],
-            ["abc", "abc1", "abc2", "def"],
+            {'cba': 1},
+            ["abc #1", "abc #2", "abc #3", "def #1", "cba #2"],
         ),
-        ([['cba1_cal.fits', 'abc2_cal.fits']], [], ['Group #1']),
-        ([['cba1_cal.fits', 'abc2_cal.fits']], ['Group #1'], ['Group #2']),
-        ([['cba1_cal.fits', 'abc2_cal.fits']], None, ['Unnamed Group']),
+        ([['cba1_cal.fits', 'abc2_cal.fits']], {}, ['Group #1']),
+        ([['cba1_cal.fits', 'abc2_cal.fits']], {'Group': 1}, ['Group #2']),
+        ([['cba1_cal.fits', 'abc2_cal.fits']], None, ['Group #1']),
     ]
 )
 def test_common_name(groups, all_group_names, common_name):
@@ -67,6 +68,22 @@ def test_common_name(groups, all_group_names, common_name):
 
         cn = tweakreg_step._common_name(group, all_group_names)
         assert cn == cn_truth
+
+
+def test_common_name_special():
+    all_group_names = {}
+    group = []
+    cn = tweakreg_step._common_name(group, all_group_names)
+    assert cn == 'Group #1'
+
+    group = []
+    all_group_names = {'abc': 1, 'abc #2': 1}
+    for fname in ['abc1', 'abc2']:
+        model = ImageModel()
+        model.meta.filename = fname
+        group.append(model)
+    cn = tweakreg_step._common_name(group, all_group_names)
+    assert len(cn.rsplit('_', 1)[1]) == 6
 
 
 def test_expected_failure_bad_starfinder():

@@ -5,6 +5,7 @@ JWST pipeline step for image alignment.
 
 """
 from os import path
+import uuid
 
 from astropy.table import Table
 from astropy import units as u
@@ -109,6 +110,7 @@ class TweakRegStep(Step):
     reference_file_types = []
 
     def process(self, input):
+        _common_name.gid = 0
         use_custom_catalogs = self.use_custom_catalogs
 
         if use_custom_catalogs:
@@ -294,8 +296,8 @@ class TweakRegStep(Step):
         elif len(grp_img) > 1:
             # create a list of WCS-Catalog-Images Info and/or their Groups:
             imcats = []
-            all_group_names = []
-            for g in grp_img:
+            all_group_names = {}
+            for k, g in enumerate(grp_img):
                 if len(g) == 0:
                     raise AssertionError("Logical error in the pipeline code.")
                 else:
@@ -511,7 +513,7 @@ class TweakRegStep(Step):
                     )
 
         return images
-    
+
 
     def _write_catalog(self, image_model, catalog, filename):
         '''
@@ -614,31 +616,35 @@ class TweakRegStep(Step):
 
 
 def _common_name(group, all_group_names=None):
-    file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
-                  for im in group]
+    file_names = [
+        path.splitext(im.meta.filename)[0].strip('_- ') for im in group
+    ]
 
     cn = path.commonprefix(file_names)
 
     if all_group_names is None:
-        if not cn:
-            return 'Unnamed Group'
+        if cn:
+            return cn
+        else:
+            _common_name.gid += 1
+            return f"Group #{_common_name.gid}"
     else:
-        if not cn or cn in all_group_names:
-            # find the smallest group number to make "Group #..." unique
-            max_id = 1
-            if not cn:
-                cn = "Group #"
-            for name in all_group_names:
-                try:
-                    cid = int(name.lstrip(cn))
-                    if cid >= max_id:
-                        max_id = cid + 1
-                except ValueError:
-                    pass
-            cn = f"{cn}{max_id}"
-        all_group_names.append(cn)
+        if not cn:
+            cn = "Group"
 
-    return cn
+        grp_no = all_group_names.get(cn, 0) + 1
+        grp_id = f"{cn} #{grp_no}"
+        if grp_id in all_group_names:
+            # just try some shortened uuid until it is unique:
+            while grp_id in all_group_names:
+                grp_id = f"{cn}_{str(uuid.uuid4())[-6:]}"
+            all_group_names[grp_id] = 0
+        else:
+            all_group_names[cn] = grp_no
+        return grp_id
+
+
+_common_name.gid = 0
 
 
 def _parse_catfile(catfile):
