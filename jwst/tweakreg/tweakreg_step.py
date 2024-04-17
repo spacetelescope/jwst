@@ -279,7 +279,6 @@ class TweakRegStep(Step):
             g = grp_img[0]
             if len(g) == 0:
                 raise AssertionError("Logical error in the pipeline code.")
-            group_name = g[0].meta.group_id
             imcats = list(map(self._imodel2wcsim, g))
             # Remove the attached catalogs
             for model in g:
