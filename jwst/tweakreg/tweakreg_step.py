@@ -5,7 +5,6 @@ JWST pipeline step for image alignment.
 
 """
 from os import path
-import uuid
 
 from astropy.table import Table
 from astropy import units as u
@@ -110,7 +109,6 @@ class TweakRegStep(Step):
     reference_file_types = []
 
     def process(self, input):
-        _common_name.gid = 0
         use_custom_catalogs = self.use_custom_catalogs
 
         if use_custom_catalogs:
