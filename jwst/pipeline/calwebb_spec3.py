@@ -238,6 +238,7 @@ class Spec3Pipeline(Pipeline):
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 result = self.outlier_detection(result)
+                # interpolate pixels that are nanned before resampling 
                 result = self.pixel_replace(result)
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None

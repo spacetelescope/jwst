@@ -3,7 +3,6 @@
 from ..stpipe import Step
 from .. import datamodels
 from .pixel_replace import PixelReplacement
-from jwst.datamodels import ModelContainer
 
 __all__ = ["PixelReplaceStep"]
 
@@ -82,9 +81,11 @@ class PixelReplaceStep(Step):
                 'n_adjacent_cols': self.n_adjacent_cols,
             }
 
-            if isinstance(input_model, datamodels.ModelContainer):  # calspec3 case for IFU data
-                output_model = input_model.copy()
-                
+            #___________________
+            # calewbb_spec3 case
+            #___________________
+            if isinstance(input_model, datamodels.ModelContainer):
+                output_model = input_model.copy()                
                 # Setup output path naming if associations are involved.
                 asn_id = None
                 try:
@@ -103,23 +104,47 @@ class PixelReplaceStep(Step):
                         asn_id=asn_id
                     )
 
+                # Check models to confirm they are the correct type
                 for i, model in enumerate(input_model):
-                    if not isinstance(model, datamodels.IFUImageModel):
+                    run_pixel_replace = True
+                    # for each spectrum - NRS_FIXEDSLIT, WFSS
+                    if isinstance(model, datamodels.MultiSlitModel):
+                        self.log.debug('Input is a MultiSlitModel.')
+                        # NRS_BRIGHTOBJ provides a SlitModel
+                    elif isinstance(model, datamodels.SlitModel):
+                        self.log.debug('Input is a SlitModel.')
+                        # MIRI_LRS-FIXEDSLIT comes in ImageModel - any others?
+                    elif isinstance(model, datamodels.ImageModel):
+                        self.log.debug('Input is an ImageModel.')
+                    elif isinstance(model, datamodels.IFUImageModel):
+                        self.log.debug('Input is an IFUImageModel.')
+                        # SOSS & LRS-SLITLESS have CubeModel, along with IFU modes WIP
+                    elif isinstance(model, datamodels.CubeModel):
+                        # It's a 3-D multi-integration model
+                        self.log.debug('Input is a CubeModel for a multiple integration file.')
+                    else:
                         self.log.error(f'Input is of type {str(type(input_model))} for which')
                         self.log.error('pixel_replace does not have an algorithm.\n')
                         self.log.error('Pixel replacement will be skipped.')
                         output_model[i].meta.cal_step.pixel_replace = 'SKIPPED'
-                    else:
-                        self.log.debug('Input is an IFUImageModel.')
+                        run_pixel_replace = False
+
+                    # all checks on model have passed. Now run pixel replacement
+                    if run_pixel_replace:
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
                         self.record_step_status(replacement.output, 'pixel_replace', success=True)
                         output_model[i] = replacement.output
-                        o_path_name = self.make_output_path(basepath=output_model[i].meta.filename)
-                        print(o_path_name)
-                        output_model[i].meta.filename = o_path_name
+                        output_path_name = self.make_output_path(basepath=output_model[i].meta.filename)
+                        if self.save_results:
+                            output_model[i].meta.filename = output_path_name
+                            print(output_path_name)
+
                 return output_model
-            else:  # a single input model. calspec2 case
+            #________________________________________
+            # calewbb_spec2 case - single input model
+            #________________________________________
+            else:
                 replacement = PixelReplacement(result, **pars)
                 replacement.replace()
                 self.record_step_status(replacement.output, 'pixel_replace', success=True)
