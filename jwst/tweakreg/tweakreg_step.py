@@ -189,7 +189,7 @@ class TweakRegStep(Step):
                 # use user-supplied catalog:
                 self.log.info("Using user-provided input catalog "
                               f"'{image_model.meta.tweakreg_catalog}'")
-                catalog = _read_user_catalog(
+                catalog = Table.read(
                     image_model.meta.tweakreg_catalog,
                 )
                 save_catalog = False
@@ -642,11 +642,6 @@ def _rename_catalog_columns(catalog):
                     "columns 'x' and 'y' or 'xcentroid' and "
                     "'ycentroid'."
                 )
-    return catalog
-
-
-def _read_user_catalog(filename):
-    catalog = Table.read(filename)
     return catalog
 
 
