@@ -147,14 +147,15 @@ class TweakRegStep(Step):
                     )
                     use_custom_catalogs = False
             # else, load from association
-            elif hasattr(images.meta, "asn_table"):
+            elif hasattr(images.meta, "asn_table") and getattr(images, "asn_file_path", None) is not None:
                 catdict = {}
+                asn_dir = path.dirname(images.asn_file_path)
                 for member in images.meta.asn_table.products[0].members:
-                    if "tweakreg_catalog" in member:
-                        catdict[member.expname] = member.tweakreg_catalog
-            else:
-                # no custom catalogs were found, so don't check
-                use_custom_catalogs = False
+                    if hasattr(member, "tweakreg_catalog"):
+                        if member.tweakreg_catalog is None or not member.tweakreg_catalog.strip():
+                            catdict[member.expname] = None
+                        else:
+                            catdict[member.expname] = path.join(asn_dir, member.tweakreg_catalog)
 
         if self.abs_refcat is not None and self.abs_refcat.strip():
             align_to_abs_refcat = True
@@ -183,7 +184,12 @@ class TweakRegStep(Step):
 
         # Build the catalog and corrector for each input images
         for (model_index, image_model) in enumerate(images):
-            if use_custom_catalogs and image_model.meta.filename in catdict:
+            # now that the model is open, check it's metadata for a custom catalog
+            # only if it's not listed in the catdict
+            if use_custom_catalogs and image_model.meta.filename not in catdict:
+                if (image_model.meta.tweakreg_catalog is not None and image_model.meta.tweakreg_catalog.strip()):
+                    catdict[image_model.meta.filename] = image_model.meta.tweakreg_catalog
+            if use_custom_catalogs and catdict.get(image_model.meta.filename, None) is not None:
                 # FIXME this modifies the input_model
                 image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
                 # use user-supplied catalog:
@@ -623,6 +629,7 @@ def _parse_catfile(catfile):
             if len(catalog) == 1:
                 catdict[data_model] = path.join(catfile_dir, catalog[0])
             elif len(catalog) == 0:
+                # set this to None so it's custom catalog is skipped
                 catdict[data_model] = None
             else:
                 raise ValueError("'catfile' can contain at most two columns.")
