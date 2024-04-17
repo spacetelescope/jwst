@@ -12,7 +12,7 @@ from photutils.segmentation import SourceFinder
 from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
 from jwst.wfss_contam.disperse import dispersed_pixel
 from jwst.wfss_contam.tests import data
-from jwst.datamodels import SegmentationMapModel, ImageModel
+from jwst.datamodels import SegmentationMapModel, ImageModel, MultiSlitModel
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 DIR_IMAGE = "direct_image.fits"
@@ -181,6 +181,37 @@ def test_disperse_chunk_null(observation):
     assert np.all(chunk == 0)
 
 
+def test_disperse_all(observation):
+
+    obs = observation
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_resp = np.ones(100)
+
+    # manually change x,y offset because took transform from a real direct image, with different
+    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
+    obs.xoffset = 2200
+    obs.yoffset = 1000
+
+    # shorten pixel list to make this test take less time
+    obs.xs = obs.xs[:3]
+    obs.ys = obs.ys[:3]
+    obs.fluxes[2.0] = obs.fluxes[2.0][:3]
+    obs.disperse_all(order, wmin, wmax, sens_waves, sens_resp, cache=False)
+
+    # test simulated image. should be mostly but not all zeros
+    assert obs.simulated_image.shape == obs.dims
+    assert not np.allclose(obs.simulated_image, 0.0)
+    assert np.median(obs.simulated_image) == 0.0
+
+    # test simulated slits and their associated metadata
+    # only the second of the two obs IDs is in the simulated image
+    assert obs.simul_slits_order == [order,]*1
+    assert obs.simul_slits_sid == obs.IDs[-1:]
+    assert type(obs.simul_slits) == MultiSlitModel
+
+
 def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     '''
     Coverage for bug where wavelength oversampling led to double-counted fluxes
@@ -221,3 +252,37 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
                 yoffset=yoffset)
 
     assert np.isclose(np.sum(counts_1), np.sum(counts_3), rtol=1e-2)
+
+
+def test_construct_slitmodel_for_chunk(observation):
+    '''
+    test that the chunk is constructed correctly
+    '''
+    obs = observation
+    i = 1
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_resp = np.ones(100)
+
+    # manually change x,y offset because took transform from a real direct image, with different
+    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
+    obs.xoffset = 2200
+    obs.yoffset = 1000
+
+    # set all fluxes to unity to try to make a trivial example
+    obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
+
+    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
+    (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
+
+    slit = obs.construct_slitmodel_for_chunk(chunk, chunk_bounds, sid, order_out)
+
+    # check that the metadata is correct
+    assert slit.xstart == chunk_bounds[0]
+    assert slit.xsize == chunk_bounds[1] - chunk_bounds[0] + 1
+    assert slit.ystart == chunk_bounds[2]
+    assert slit.ysize == chunk_bounds[3] - chunk_bounds[2] + 1
+    assert slit.source_id == sid
+    assert slit.meta.wcsinfo.spectral_order == order_out
+    assert np.allclose(slit.data, chunk[chunk_bounds[2]:chunk_bounds[3]+1, chunk_bounds[0]:chunk_bounds[1]+1])

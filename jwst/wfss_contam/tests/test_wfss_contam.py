@@ -1,5 +1,5 @@
 import pytest
-from jwst.wfss_contam.wfss_contam import _determine_multiprocessing_ncores, _cut_frame_to_match_slit, build_common_slit
+from jwst.wfss_contam.wfss_contam import determine_multiprocessing_ncores, _cut_frame_to_match_slit, _find_matching_simul_slit, build_common_slit
 from jwst.datamodels import SlitModel
 import numpy as np
 
@@ -9,9 +9,11 @@ import numpy as np
                           ("quarter", 4, 1), 
                           ("half", 4, 2), 
                           ("all", 4, 4), 
-                          ("none", 1, 1),])
+                          ("none", 1, 1),
+                          (None, 1, 1,),
+                          (3, 5, 3)])
 def test_determine_multiprocessing_ncores(max_cores, num_cores, expected):
-    assert _determine_multiprocessing_ncores(max_cores, num_cores) == expected  
+    assert determine_multiprocessing_ncores(max_cores, num_cores) == expected  
 
 
 @pytest.fixture(scope="module")
@@ -25,6 +27,8 @@ def slit0():
     slit.ystart = 3
     slit.xsize = 3
     slit.ysize = 5
+    slit.meta.wcsinfo.spectral_order = 1
+    slit.source_id = 1
     return slit
 
 
@@ -37,6 +41,20 @@ def slit1():
     slit.ysize = 4
     return slit
 
+
+def test_find_matching_simul_slit(slit0):
+    sids = [0, 1, 1]
+    orders = [1, 1, 2]
+    idx = _find_matching_simul_slit(slit0, sids, orders)
+    assert idx == 1
+
+
+def test_find_matching_simul_slit_no_match(slit0):
+    sids = [0, 1, 1]
+    orders = [1, 2, 2]
+    idx = _find_matching_simul_slit(slit0, sids, orders)
+    assert idx == -1
+    
 
 def test_cut_frame_to_match_slit(slit0, contam):
     cut_contam = _cut_frame_to_match_slit(contam, slit0)

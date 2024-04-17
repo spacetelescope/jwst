@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+from typing import Union
 import numpy as np
 
 from stdatamodels.jwst import datamodels
@@ -13,14 +14,19 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def _determine_multiprocessing_ncores(max_cores, num_cores):
+def determine_multiprocessing_ncores(max_cores: Union[str, int], num_cores) -> int:
 
     """Determine the number of cores to use for multiprocessing.
 
     Parameters
     ----------
-    max_cores : string
-        See docstring of contam_corr
+    max_cores : string or int
+        Number of cores to use for multiprocessing. If set to 'none'
+        (the default), then no multiprocessing will be done. The other
+        allowable string values are 'quarter', 'half', and 'all', which indicate
+        the fraction of cores to use for multi-proc. The total number of
+        cores includes the SMT cores (Hyper Threading for Intel).
+        If an integer is provided, it will be the exact number of cores used.
     num_cores : int
         Number of cores available on the machine
 
@@ -28,25 +34,31 @@ def _determine_multiprocessing_ncores(max_cores, num_cores):
     -------
     ncpus : int
         Number of cores to use for multiprocessing
-
     """
-    if max_cores == 'none':
-        ncpus = 1
-    else:
-        if max_cores == 'quarter':
-            ncpus = num_cores // 4 or 1
-        elif max_cores == 'half':
-            ncpus = num_cores // 2 or 1
-        elif max_cores == 'all':
-            ncpus = num_cores
-        else:
+    match max_cores:
+        case 'none':
+            return 1
+        case None:
+            return 1
+        case 'quarter':
+            return num_cores // 4 or 1
+        case 'half':
+            return num_cores // 2 or 1
+        case 'all':
+            return num_cores
+        case int():
+            if max_cores <= num_cores and max_cores > 0:
+                return max_cores
+            log.warning(f"Requested {max_cores} cores exceeds the number of cores available on this machine ({num_cores}). Using all available cores.")
+            return max_cores
+        case _:
             raise ValueError(f"Invalid value for max_cores: {max_cores}")
-        log.debug(f"Found {num_cores} cores; using {ncpus}")
-
-    return ncpus
 
 
-def _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders):
+def _find_matching_simul_slit(slit: datamodels.SlitModel,
+                              simul_slit_sids: list[int],
+                              simul_slit_orders: list[int],
+                              ) -> int:
     """
     Parameters
     ----------
@@ -66,13 +78,13 @@ def _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders):
         # Retrieve simulated slit for this source only
     sid = slit.source_id
     order = slit.meta.wcsinfo.spectral_order
-    good = (simul_slit_sids == sid) * (simul_slit_orders == order)
+    good = (np.array(simul_slit_sids) == sid) * (np.array(simul_slit_orders) == order)
     if not any(good):
         return -1
     return np.where(good)[0][0]
 
 
-def _cut_frame_to_match_slit(contam, slit):
+def _cut_frame_to_match_slit(contam: np.ndarray, slit: datamodels.SlitModel) -> np.ndarray:
     
     """Cut out the contamination image to match the extent of the source slit.
 
@@ -96,7 +108,9 @@ def _cut_frame_to_match_slit(contam, slit):
     return cutout
 
 
-def build_common_slit(slit0, slit1):
+def build_common_slit(slit0: datamodels.SlitModel,
+                      slit1: datamodels.SlitModel,
+                      ) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
     '''
     put data from the two slits into a common backplane
     so outputs have the same dimensions
@@ -148,7 +162,12 @@ def build_common_slit(slit0, slit1):
     return slit0, slit1
 
 
-def contam_corr(input_model, waverange, photom, max_cores="none", brightest_n=None):
+def contam_corr(input_model: datamodels.MultiSlitModel, 
+                waverange: datamodels.WavelengthrangeModel, 
+                photom: datamodels.NrcWfssPhotomModel | datamodels.NisWfssPhotomModel,
+                max_cores: str | int = "none", 
+                brightest_n: int = None,
+                ) -> tuple[datamodels.MultiSlitModel, datamodels.ImageModel, datamodels.MultiSlitModel, datamodels.MultiSlitModel]:
     """
     The main WFSS contamination correction function
 
@@ -160,12 +179,13 @@ def contam_corr(input_model, waverange, photom, max_cores="none", brightest_n=No
         Wavelength range reference file model
     photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
         Photom (flux cal) reference file model    
-    max_cores : string
+    max_cores : string or int
         Number of cores to use for multiprocessing. If set to 'none'
         (the default), then no multiprocessing will be done. The other
-        allowable values are 'quarter', 'half', and 'all', which indicate
+        allowable string values are 'quarter', 'half', and 'all', which indicate
         the fraction of cores to use for multi-proc. The total number of
         cores includes the SMT cores (Hyper Threading for Intel).
+        If an integer is provided, it will be the exact number of cores used.
     brightest_n : int
         Number of sources to simulate. If None, then all sources in the
         input model will be simulated. Requires loading the source catalog
@@ -185,7 +205,7 @@ def contam_corr(input_model, waverange, photom, max_cores="none", brightest_n=No
     """
 
     num_cores = multiprocessing.cpu_count()
-    ncpus = _determine_multiprocessing_ncores(max_cores, num_cores)
+    ncpus = determine_multiprocessing_ncores(max_cores, num_cores)
 
     # Initialize output model
     output_model = input_model.copy()

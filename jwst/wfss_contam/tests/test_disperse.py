@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from jwst.wfss_contam.disperse import interpolate_fluxes, determine_wl_spacing
+from jwst.wfss_contam.disperse import flux_interpolator_injector, determine_wl_spacing
 
 '''
 Note that main disperse.py call is tested in test_observations.py because 
@@ -13,7 +13,7 @@ it requires all the fixtures defined there.
                           ([1, 3], [1, 3], True, 4)])
 def test_interpolate_fluxes(lams, flxs, extrapolate_sed, expected_outside_bounds):
 
-    flux_interpf = interpolate_fluxes(lams, flxs, extrapolate_sed)
+    flux_interpf = flux_interpolator_injector(lams, flxs, extrapolate_sed)
     assert flux_interpf(2.0) == 2.0
     assert flux_interpf(4.0) == expected_outside_bounds
 

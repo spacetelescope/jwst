@@ -5,6 +5,8 @@ import multiprocessing as mp
 from scipy import sparse
 
 from stdatamodels.jwst import datamodels
+from astropy.wcs import WCS
+from typing import Sequence
 
 from .disperse import dispersed_pixel
 
@@ -17,7 +19,12 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclude_percentile=30.0):
+def background_subtract(data: np.ndarray, 
+                        box_size: tuple = None, 
+                        filter_size: tuple = (3,3), 
+                        sigma: float = 3.0, 
+                        exclude_percentile: float = 30.0,
+                        ) -> np.ndarray:
     """
     Simple astropy background subtraction
 
@@ -57,7 +64,7 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
     return data - bkg.background
 
 
-def _select_ids(ID, all_IDs):
+def _select_ids(ID: int, all_IDs: list[int]) -> list[int]:
     '''
     Select the source IDs to be processed based on the input ID parameter.
 
@@ -91,9 +98,19 @@ def _select_ids(ID, all_IDs):
 class Observation:
     """This class defines an actual observation. It is tied to a single grism image."""
 
-    def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=None,
-                 sed_file=None, extrapolate_sed=False,
-                 boundaries=[], offsets=[0, 0], renormalize=True, max_cpu=1):
+    def __init__(self,
+                 direct_images: list[str], 
+                 segmap_model: datamodels.SegmentationMapModel, 
+                 grism_wcs: WCS, 
+                 filter: str,
+                 ID: int = None,
+                 sed_file: str = None, 
+                 extrapolate_sed: bool = False,
+                 boundaries: Sequence = [], 
+                 offsets: Sequence = [0, 0], 
+                 renormalize: bool = True, 
+                 max_cpu: int = 1,
+                 ) -> None:
 
         """
         Initialize all data and metadata for a given observation. Creates lists of
@@ -217,7 +234,13 @@ class Observation:
                     for i in range(len(self.IDs)):
                         self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
-    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
+    def disperse_all(self,
+                     order: int,
+                     wmin: float,
+                     wmax: float,
+                     sens_waves: np.ndarray,
+                     sens_resp:np.ndarray, 
+                     cache=False):
         """
         Compute dispersed pixel values for all sources identified in
         the segmentation map.
@@ -283,7 +306,14 @@ class Observation:
                 self.simul_slits_sid.append(this_sid)
 
 
-    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
+    def disperse_chunk(self,
+                       c: int, 
+                       order: int,
+                       wmin: float,
+                       wmax: float,
+                       sens_waves: np.ndarray,
+                       sens_resp: np.ndarray,
+                       ) -> tuple[np.ndarray, list, int, int]:
         """
         Method that computes dispersion for a single source.
         To be called after create_pixel_list().
@@ -415,7 +445,11 @@ class Observation:
     
     
     @staticmethod
-    def construct_slitmodel_for_chunk(chunk_data, bounds, sid, order):
+    def construct_slitmodel_for_chunk(chunk_data: np.ndarray, 
+                                      bounds: list,
+                                      sid: int,
+                                      order: int,
+                                      ) -> datamodels.SlitModel:
         '''
         Parameters
         ----------
@@ -450,53 +484,67 @@ class Observation:
         return slit
 
 
-    def disperse_all_from_cache(self, trans=None):
-        if not self.cache:
-            return
 
-        self.simulated_image = np.zeros(self.dims, float)
+# class ObservationFromCache:
+#     '''
+#     this isn't how it should work. If we're going to use a cache, we should
+#     be checking if a pixel is in the cache before dispersing it. Then load it if it's there,
+#     otherwise calculate it. The functions below need to be refactored.
+#     '''
 
-        for i in range(len(self.IDs)):
-            this_object = self.disperse_chunk_from_cache(i, trans=trans)
+#     def __init__(self, cache, dims):
+#         self.cache = cache
+#         self.dims = dims
+#         self.simulated_image = np.zeros(self.dims, float)
+#         self.cached_object = {}
 
-        return this_object
+#     def disperse_all_from_cache(self, trans=None):
+#         if not self.cache:
+#             return
 
-    def disperse_chunk_from_cache(self, c, trans=None):
-        """Method that handles the dispersion. To be called after create_pixel_list()"""
+#         self.simulated_image = np.zeros(self.dims, float)
 
-        if not self.cache:
-            return
+#         for i in range(len(self.IDs)):
+#             this_object = self.disperse_chunk_from_cache(i, trans=trans)
 
-        time1 = time.time()
+#         return this_object
 
-        # Initialize blank image for this object
-        this_object = np.zeros(self.dims, float)
+#     def disperse_chunk_from_cache(self, c, trans=None):
+#         """Method that handles the dispersion. To be called after create_pixel_list()"""
 
-        if trans is not None:
-            log.debug("Applying a transmission function...")
+#         if not self.cache:
+#             return
 
-        for i in range(len(self.cached_object[c]['x'])):
-            x = self.cached_object[c]['x'][i]
-            y = self.cached_object[c]['y'][i]
-            f = self.cached_object[c]['f'][i] * 1.
-            w = self.cached_object[c]['w'][i]
+#         time1 = time.time()
 
-            if trans is not None:
-                f *= trans(w)
+#         # Initialize blank image for this object
+#         this_object = np.zeros(self.dims, float)
 
-            minx = self.cached_object[c]['minx'][i]
-            maxx = self.cached_object[c]['maxx'][i]
-            miny = self.cached_object[c]['miny'][i]
-            maxy = self.cached_object[c]['maxy'][i]
+#         if trans is not None:
+#             log.debug("Applying a transmission function...")
 
-            a = sparse.coo_matrix((f, (y - miny, x - minx)),
-                                  shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+#         for i in range(len(self.cached_object[c]['x'])):
+#             x = self.cached_object[c]['x'][i]
+#             y = self.cached_object[c]['y'][i]
+#             f = self.cached_object[c]['f'][i] * 1.
+#             w = self.cached_object[c]['w'][i]
 
-            # Accumulate the results into the simulated images
-            self.simulated_image[miny:maxy + 1, minx:maxx + 1] += a
-            this_object[miny:maxy + 1, minx:maxx + 1] += a
+#             if trans is not None:
+#                 f *= trans(w)
 
-        time2 = time.time()
-        log.debug(f"Elapsed time {time2-time1} sec")
+#             minx = self.cached_object[c]['minx'][i]
+#             maxx = self.cached_object[c]['maxx'][i]
+#             miny = self.cached_object[c]['miny'][i]
+#             maxy = self.cached_object[c]['maxy'][i]
 
-        return this_object
+#             a = sparse.coo_matrix((f, (y - miny, x - minx)),
+#                                   shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+
+#             # Accumulate the results into the simulated images
+#             self.simulated_image[miny:maxy + 1, minx:maxx + 1] += a
+#             this_object[miny:maxy + 1, minx:maxx + 1] += a
+
+#         time2 = time.time()
+#         log.debug(f"Elapsed time {time2-time1} sec")
+
+#         return this_object

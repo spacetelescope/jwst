@@ -25,7 +25,9 @@ class WfssContamStep(Step):
 
     reference_file_types = ['photom', 'wavelengthrange']
 
-    def process(self, input_model, *args, **kwargs):
+    def process(self, 
+                input_model: str | datamodels.MultiSlitModel, 
+                ) -> datamodels.MultiSlitModel:
 
         with datamodels.open(input_model) as dm:
 

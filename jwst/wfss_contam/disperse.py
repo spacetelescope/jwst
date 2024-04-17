@@ -1,4 +1,6 @@
 import numpy as np
+from typing import Callable, Sequence
+from astropy.wcs import WCS
 
 from scipy.interpolate import interp1d
 import warnings
@@ -7,7 +9,10 @@ from ..lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
 
 
-def interpolate_fluxes(lams, flxs, extrapolate_sed):
+def flux_interpolator_injector(lams: np.ndarray, 
+                       flxs: np.ndarray, 
+                       extrapolate_sed: bool,
+                       ) -> Callable[[float], float]:
     '''
     Parameters
     ----------
@@ -44,7 +49,10 @@ def interpolate_fluxes(lams, flxs, extrapolate_sed):
         return flux
 
 
-def determine_wl_spacing(dw, lams, oversample_factor):
+def determine_wl_spacing(dw: float,
+                         lams: np.ndarray, 
+                         oversample_factor: int,
+                         ) -> float:
     '''
     Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
     whichever is smaller, divided by oversampling requested
@@ -72,10 +80,26 @@ def determine_wl_spacing(dw, lams, oversample_factor):
     return dw / oversample_factor
 
 
-def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
-                    oversample_factor=2, extrapolate_sed=False, xoffset=0,
-                    yoffset=0):
+def dispersed_pixel(x0: np.ndarray, 
+                    y0: np.ndarray,
+                    width: float,
+                    height: float,
+                    lams: np.ndarray,
+                    flxs: np.ndarray,
+                    order: int,
+                    wmin: float,
+                    wmax: float,
+                    sens_waves: np.ndarray,
+                    sens_resp: np.ndarray,
+                    seg_wcs: WCS, 
+                    grism_wcs: WCS, 
+                    ID: int,
+                    naxis: Sequence[int],
+                    oversample_factor: int = 2,
+                    extrapolate_sed: bool = False,
+                    xoffset: float = 0,
+                    yoffset: float = 0,
+                    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]:
     """
     This function take a list of pixels and disperses them using the information contained
     in the grism image WCS object and returns a list of dispersed pixels and fluxes.
@@ -150,7 +174,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     imgxy_to_grismxy = grism_wcs.get_transform('detector', 'grism_detector')
 
     # Set up function for retrieving flux values at each dispersed wavelength
-    flux = interpolate_fluxes(lams, flxs, extrapolate_sed)
+    flux_interpolator = flux_interpolator_injector(lams, flxs, extrapolate_sed)
 
     # Get x/y positions in the grism image corresponding to wmin and wmax:
     # Start with RA/Dec of the input pixel position in segmentation map,
@@ -205,11 +229,11 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # values are naturally in units of physical fluxes, so we divide out
     # the sensitivity (flux calibration) values to convert to units of
     # countrate (DN/s).
-    # flux(lams) is either single-valued (for a single direct image) 
+    # flux_interpolator(lams) is either single-valued (for a single direct image) 
     # or an array of the same length as lams (for multiple direct images in different filters)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        counts = flux(lams) * areas / (sens * oversample_factor)
+        counts = flux_interpolator(lams) * areas / (sens * oversample_factor)
     counts[no_cal] = 0.  # set to zero where no flux cal info available
 
     return xs, ys, areas, lams, counts, ID
