@@ -4,11 +4,14 @@ import os
 import asdf
 from astropy.modeling.models import Shift
 from astropy.table import Table
+import numpy as np
 import pytest
 
 from jwst.tweakreg import tweakreg_step
 from jwst.tweakreg import tweakreg_catalog
+from jwst.tweakreg.utils import _wcsinfo_from_wcs_transform
 from stdatamodels.jwst.datamodels import ImageModel
+from jwst.datamodels import ModelContainer
 
 
 @pytest.fixture
@@ -94,3 +97,82 @@ def test_write_catalog(dummy_source_catalog, tmp_cwd):
     step._write_catalog(dummy_source_catalog, 'catalog.ecsv')
 
     assert os.path.exists(expected_outfile)
+
+
+@pytest.fixture()
+def example_wcs():
+    path = os.path.join(
+        os.path.dirname(__file__),
+        "data",
+        "nrcb1-wcs.asdf")
+    with asdf.open(path, lazy_load=False) as af:
+        return af.tree["wcs"]
+
+
+@pytest.fixture()
+def example_input(example_wcs):
+    m0 = ImageModel((512, 512))
+
+    # add a wcs and wcsinfo
+    m0.meta.wcs = example_wcs
+    m0.meta.wcsinfo = _wcsinfo_from_wcs_transform(example_wcs)
+
+    # and a few 'sources'
+    m0.data[:] = 0.001
+    n_sources = 21  # a few more than default minobj
+    rng = np.random.default_rng(26)
+    xs = rng.choice(50, n_sources, replace=False) * 8 + 10
+    ys = rng.choice(50, n_sources, replace=False) * 8 + 10
+    for y, x in zip(ys, xs):
+        m0.data[y-1:y+2, x-1:x+2] = [
+            [0.1, 0.6, 0.1],
+            [0.6, 0.8, 0.6],
+            [0.1, 0.6, 0.1],
+        ]
+
+    m1 = m0.copy()
+    # give each a unique filename
+    m0.meta.filename = 'some_file_0'
+    m1.meta.filename = 'some_file_1'
+    c = ModelContainer([m0, m1])
+    return c
+
+
+def test_run_tweakreg(example_input):
+    # shift 9 pixels
+    example_input[1].data = np.roll(example_input[1].data, 9, axis=0)
+
+    # assign images to different groups (so they are aligned to each other)
+    example_input[0].meta.group_id = 'a'
+    example_input[1].meta.group_id = 'b'
+    step = tweakreg_step.TweakRegStep()
+    result = step(example_input)
+
+    # check that step completed
+    for model in result:
+        assert model.meta.cal_step.tweakreg == 'COMPLETE'
+
+    # and that the wcses are different
+    abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
+    assert abs_delta > 1E-5
+
+
+def test_abs_refcat():
+    pass
+
+
+def test_custom_catalog():
+    """
+    Options:
+        if use_custom_catalogs is False, don't use a catalog
+        if use_custom_catalogs is True...
+            if catfile is defined...
+                if catfile loads -> use_custom_catalogs (ignore asn table)
+                if catfile fails to load -> warn and disable custom catalogs
+            if catfile is not defined...
+                if input doesn't have an asn table -> disable custom catalogs
+                if input has an asn table...
+                    if member has a tweakreg_catalog use it
+                    if member doesn't have a tweakreg_catalog don't use a custom catalog
+    """
+    pass
