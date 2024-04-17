@@ -284,9 +284,8 @@ class TweakRegStep(Step):
             # Remove the attached catalogs
             for model in g:
                 del model.catalog
-            self.log.info(f"* Images in GROUP '{group_name}':")
+            self.log.info(f"* Images in GROUP '{model.meta['group_id']}':")
             for im in imcats:
-                im.meta['group_id'] = group_name
                 self.log.info(f"     {im.meta['name']}")
 
             self.log.info('')
@@ -298,14 +297,12 @@ class TweakRegStep(Step):
                 if len(g) == 0:
                     raise AssertionError("Logical error in the pipeline code.")
                 else:
-                    group_name = g[0].meta.group_id
                     wcsimlist = list(map(self._imodel2wcsim, g))
                     # Remove the attached catalogs
                     for model in g:
                         del model.catalog
-                    self.log.info(f"* Images in GROUP '{group_name}':")
+                    self.log.info(f"* Images in GROUP '{model.meta['group_id']}':")
                     for im in wcsimlist:
-                        im.meta['group_id'] = group_name
                         self.log.info(f"     {im.meta['name']}")
                     imcats.extend(wcsimlist)
 
@@ -603,8 +600,12 @@ class TweakRegStep(Step):
             wcsinfo={'roll_ref': refang['roll_ref'],
                      'v2_ref': refang['v2_ref'],
                      'v3_ref': refang['v3_ref']},
-            meta={'image_model': image_model, 'catalog': catalog,
-                  'name': model_name}
+            meta={
+                'image_model': image_model,
+                'catalog': catalog,
+                'name': model_name,
+                'group_id': image_model.meta.group_id,
+            }
         )
 
         return im
