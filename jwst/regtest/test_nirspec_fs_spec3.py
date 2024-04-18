@@ -1,5 +1,7 @@
 from astropy.io.fits.diff import FITSDiff
 import pytest
+import numpy as np
+from gwcs import wcstools
 
 from jwst.stpipe import Step
 from stdatamodels.jwst import datamodels
