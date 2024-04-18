@@ -14,6 +14,7 @@ from stdatamodels.jwst.datamodels import ImageModel
 from jwst.datamodels import ModelContainer
 
 
+BKG_LEVEL = 0.001
 N_EXAMPLE_SOURCES = 21
 N_CUSTOM_SOURCES = 15
 
@@ -132,7 +133,7 @@ def example_input(example_wcs):
     m0.meta.wcsinfo = _wcsinfo_from_wcs_transform(example_wcs)
 
     # and a few 'sources'
-    m0.data[:] = 0.001
+    m0.data[:] = BKG_LEVEL
     n_sources = N_EXAMPLE_SOURCES  # a few more than default minobj
     rng = np.random.default_rng(26)
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
@@ -152,13 +153,17 @@ def example_input(example_wcs):
     return c
 
 
-def test_tweakreg_step(example_input):
+@pytest.mark.parametrize("with_shift", [True, False])
+def test_tweakreg_step(example_input, with_shift):
     """
     A simplified unit test for basic operation of the TweakRegStep
+    when run with or without a small shift in the input image sources
     """
-    # shift 9 pixels so that the sources in one of the 2 images
-    # appear at different locations (resulting in a correct wcs update)
-    example_input[1].data = np.roll(example_input[1].data, 9, axis=0)
+    if with_shift:
+        # shift 9 pixels so that the sources in one of the 2 images
+        # appear at different locations (resulting in a correct wcs update)
+        example_input[1].data[:-9] = example_input[1].data[9:]
+        example_input[1].data[-9:] = BKG_LEVEL
 
     # assign images to different groups (so they are aligned to each other)
     example_input[0].meta.group_id = 'a'
@@ -177,7 +182,10 @@ def test_tweakreg_step(example_input):
     # and that the wcses differ by a small amount due to the shift above
     # by projecting one point through each wcs and comparing the difference
     abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
-    assert abs_delta > 1E-5
+    if with_shift:
+        assert abs_delta > 1E-5
+    else:
+        assert abs_delta < 1E-12
 
 
 @pytest.fixture()
