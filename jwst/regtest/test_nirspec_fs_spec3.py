@@ -2,6 +2,7 @@ from astropy.io.fits.diff import FITSDiff
 import pytest
 
 from jwst.stpipe import Step
+from stdatamodels.jwst import datamodels
 
 
 @pytest.fixture(scope="module")
@@ -42,3 +43,21 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+    if "s2d" in output:
+        # Compare the calculated wavelengths
+        tolerance = 1e-03
+        dmt = datamodels.open(rtdata.truth)
+        dmr = datamodels.open(rtdata.output)
+        if isinstance(dmt, datamodels.MultiSlitModel):
+            w = slit.meta.wcs
+            x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
+            _, _, wave = w(x, y)
+            wlr = dmr.slits[slit_idx].wavelength
+            assert np.all(np.isclose(wave, wlr, atol=tolerance))
+        else:
+            w = dmt.meta.wcs
+            x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
+            _, _, wave = w(x, y)
+            wlr = dmr.wavelength
+            assert np.all(np.isclose(wave, wlr, atol=tolerance))
