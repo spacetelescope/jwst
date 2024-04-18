@@ -257,13 +257,7 @@ class TweakRegStep(Step):
                 yoffset=self.yoffset
             )
 
-            # FIXME can we make these error specific to avoid needing to check
-            # the error message?
             try:
-                # FIXME `align_wcs` checks that all items in `correctors` are
-                # instances of `WCSCorrector` it them makes a new list
-                # with the catalogs. `align_wcs` changes would be needed to
-                # avoid loading all `correctors` into memory
                 align_wcs(
                     correctors,
                     refcat=None,
