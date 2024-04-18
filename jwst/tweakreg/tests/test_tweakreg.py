@@ -153,20 +153,29 @@ def example_input(example_wcs):
 
 
 def test_tweakreg_step(example_input):
-    # shift 9 pixels
+    """
+    A simplified unit test for basic operation of the TweakRegStep
+    """
+    # shift 9 pixels so that the sources in one of the 2 images
+    # appear at different locations (resulting in a correct wcs update)
     example_input[1].data = np.roll(example_input[1].data, 9, axis=0)
 
     # assign images to different groups (so they are aligned to each other)
     example_input[0].meta.group_id = 'a'
     example_input[1].meta.group_id = 'b'
+
+    # make the step with default arguments
     step = tweakreg_step.TweakRegStep()
+
+    # run the step on the example input modified above
     result = step(example_input)
 
     # check that step completed
     for model in result:
         assert model.meta.cal_step.tweakreg == 'COMPLETE'
 
-    # and that the wcses are different
+    # and that the wcses differ by a small amount due to the shift above
+    # by projecting one point through each wcs and comparing the difference
     abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
     assert abs_delta > 1E-5
 
