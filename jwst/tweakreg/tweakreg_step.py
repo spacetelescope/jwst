@@ -304,30 +304,15 @@ class TweakRegStep(Step):
                 else:
                     raise e
 
-            if not local_align_failed:
-                # check for a small wcs correction, it should be small
-                if self.use2dhist:
-                    max_corr = 2 * (self.searchrad + self.tolerance) * u.arcsec
+            if not local_align_failed and not self._is_wcs_correction_small(correctors):
+                if align_to_abs_refcat:
+                    self.log.warning("Skipping relative alignment (stage 1)...")
                 else:
-                    max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
-                                    self.tolerance) * u.arcsec
-                for corrector in correctors:
-                    aligned_skycoord = _wcs_to_skycoord(corrector.wcs)
-                    original_skycoord = corrector.meta['original_skycoord']
-                    separation = original_skycoord.separation(aligned_skycoord)
-                    if not (separation < max_corr).all():
-                        # Large corrections are typically a result of source
-                        # mis-matching or poorly-conditioned fit. Skip such models.
-                        self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
-
-                        if align_to_abs_refcat:
-                            self.log.warning("Skipping relative alignment (stage 1)...")
-                        else:
-                            self.log.warning("Skipping 'TweakRegStep'...")
-                            self.skip = True
-                            for model in images:
-                                model.meta.cal_step.tweakreg = "SKIPPED"
-                            return images
+                    self.log.warning("Skipping 'TweakRegStep'...")
+                    self.skip = True
+                    for model in images:
+                        model.meta.cal_step.tweakreg = "SKIPPED"
+                    return images
 
         if align_to_abs_refcat:
             # now, align things to the reference catalog
@@ -585,6 +570,24 @@ class TweakRegStep(Step):
             bkg_boxsize=self.bkg_boxsize,
             starfinder_kwargs=starfinder_kwargs,
         )
+
+    def _is_wcs_correction_small(self, correctors):
+        # check for a small wcs correction, it should be small
+        if self.use2dhist:
+            max_corr = 2 * (self.searchrad + self.tolerance) * u.arcsec
+        else:
+            max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
+                            self.tolerance) * u.arcsec
+        for corrector in correctors:
+            aligned_skycoord = _wcs_to_skycoord(corrector.wcs)
+            original_skycoord = corrector.meta['original_skycoord']
+            separation = original_skycoord.separation(aligned_skycoord)
+            if not (separation < max_corr).all():
+                # Large corrections are typically a result of source
+                # mis-matching or poorly-conditioned fit. Skip such models.
+                self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
+                return False
+        return True
 
 
 def _parse_catfile(catfile):

@@ -63,7 +63,6 @@ def test_rename_catalog_columns_inplace(dummy_source_catalog):
     assert 'y' in catalog.colnames
 
 
-@pytest.mark.skip(reason="test will need to be refactored as _is_wcs_correction_small is gone in favor of comparing skycoords")
 @pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
 def test_is_wcs_correction_small(offset, is_good):
     path = os.path.join(os.path.dirname(__file__), "mosaic_long_i2d_gwcs.asdf")
@@ -78,7 +77,18 @@ def test_is_wcs_correction_small(offset, is_good):
 
     step = tweakreg_step.TweakRegStep()
 
-    assert step._is_wcs_correction_small(wcs, twcs) == is_good
+    class FakeCorrector:
+        def __init__(self, wcs, original_skycoord):
+            self.wcs = wcs
+            self._original_skycoord = original_skycoord
+
+        @property
+        def meta(self):
+            return {'original_skycoord': self._original_skycoord}
+
+    correctors = [FakeCorrector(twcs, tweakreg_step._wcs_to_skycoord(wcs))]
+
+    assert step._is_wcs_correction_small(correctors) == is_good
 
 
 def test_expected_failure_bad_starfinder():
