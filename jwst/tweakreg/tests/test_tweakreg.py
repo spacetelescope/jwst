@@ -198,46 +198,29 @@ def custom_catalog_path(tmp_path):
 
 @pytest.mark.parametrize(
     "catfile",
-    ["skip", "valid", "invalid", "empty"],
-    ids=["catfile_skip", "catfile_valid", "catfile_invalid", "catfile_empty"],
+    ["no_catfile", "valid_catfile", "invalid_catfile", "empty_catfile_row"],
 )
 @pytest.mark.parametrize(
     "asn",
-    ["skip", "valid", "empty"],
-    ids=["asn_skip", "asn_valid", "asn_empty"],
+    ["no_cat_in_asn", "cat_in_asn", "empty_asn_entry"],
 )
 @pytest.mark.parametrize(
     "meta",
-    ["skip", "valid", "empty"],
-    ids=["meta_skip", "meta_valid", "meta_empty"],
+    ["no_meta", "cat_in_meta", "empty_meta"],
 )
 @pytest.mark.parametrize("custom", [True, False])
 @pytest.mark.slow
 def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, custom, monkeypatch):
     """
-    Options:
-        if use_custom_catalogs is False, don't use a catalog
-        if use_custom_catalogs is True...
-            if catfile is defined...
-                if catfile loads -> use_custom_catalogs (ignore asn table, but not model.tweakreg_catalog?)
-                if catfile fails to load -> warn and disable custom catalogs
-            if catfile is not defined...
-                if input doesn't have an asn table...
-                    if model has tweakreg_catalog, use it
-                if input has an asn table...
-                    if member has a tweakreg_catalog use it
-                    if not, use meta.tweakreg_catalog
-                    if member doesn't have a tweakreg_catalog don't use a custom catalog
-
-    If the entry in either catfile or asn is "", don't use a custom catalog.
-
-    Inputs:
-        use_custom_catalogs: True/False
-        catfile: missing, non-valid file (load attempted), valid file
-        asn_file/table: with tweakreg_catalog, without tweakreg_catalog
-        model.meta.tweakreg_catalog (per model)
-
-    Could run step with save_catalog to generate a catalog... or just make a fake one
+    Test that TweakRegStep uses a custom catalog provided by the user
+    when the correct set of options are provided. The combinations here can be confusing
+    and this test attempts to test all likely combinations of:
+        - a catalog in a `catfile`
+        - a catalog in the asn
+        - a catalog in the metadata
+    combined with step options:
+        - `use_custom_catalogs` (True/False)
+        - a "valid" file passed as `catfile`
     """
     example_input[0].meta.group_id = 'a'
     example_input[1].meta.group_id = 'b'
@@ -245,9 +228,9 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     # this worked because if use_custom_catalogs was true but
     # catfile was blank tweakreg still uses custom catalogs
     # which in this case is defined in model.meta.tweakreg_catalog
-    if meta == "valid":
+    if meta == "cat_in_meta":
         example_input[0].meta.tweakreg_catalog = str(custom_catalog_path)
-    elif meta == "empty":
+    elif meta == "empty_meta":
         example_input[0].meta.tweakreg_catalog = ""
 
     # write out the ModelContainer and association (so the association table will be loaded)
@@ -262,9 +245,9 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
         ],
     }
 
-    if asn == "empty":
+    if asn == "empty_asn_entry":
         asn_data['products'][0]['members'][0]['tweakreg_catalog'] = ''
-    elif asn == "valid":
+    elif asn == "cat_in_asn":
         asn_data['products'][0]['members'][0]['tweakreg_catalog'] = str(custom_catalog_path.name)
 
     import json
@@ -273,53 +256,32 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
         json.dump(asn_data, f)
 
     # write out a catfile
-    if catfile != "skip":
+    if catfile != "no_catfile":
         catfile_path = custom_catalog_path.parent / 'catfile.txt'
         with open(catfile_path, 'w') as f:
-            if catfile == "valid":
+            if catfile == "valid_catfile":
                 f.write(f"{example_input[0].meta.filename} {custom_catalog_path.name}")
-            elif catfile == "empty":
+            elif catfile == "empty_catfile_row":
                 f.write(f"{example_input[0].meta.filename}")
-            elif catfile == "invalid":
+            elif catfile == "invalid_catfile":
                 pass
 
     # figure out how many sources to expect for the model in group 'a' 
-    n_sources = N_EXAMPLE_SOURCES
-    custom_number = N_CUSTOM_SOURCES
-    if not custom:
-        # if use_custom_catalog is False, the custom catalog shouldn't be used
-        n_custom_sources = n_sources
-    else:
-        if catfile == "valid":
+    n_custom_sources = N_EXAMPLE_SOURCES
+    if custom:
+        if catfile == "valid_catfile":
             # for a 'valid' catfile, expect the custom number
-            n_custom_sources = custom_number
-        elif catfile == "invalid":
-            # for an 'invalid' catfile, use_custom_catalog should become disabled
-            n_custom_sources = n_sources
-        elif catfile == "empty":
-            # for a catfile with an 'empty' entry, no custom catalog should be used
-            n_custom_sources = n_sources
-        else:  # catfile == "skip"
-            assert catfile == "skip"  # sanity check
+            n_custom_sources = N_CUSTOM_SOURCES
+        elif catfile == "no_catfile":
             # since catfile is not defined, now look at asn_
-            if asn == "valid":
+            if asn == "cat_in_asn":
                 # for a 'valid' asn entry, expect the custom number
-                n_custom_sources = custom_number
-            elif asn == "empty":
-                # for a 'empty' asn entry, no custom catalog should be used
-                n_custom_sources = n_sources
-            else:  # asn == "skip"
-                assert asn == "skip"  # sanity check
-                if meta == "valid":
-                    n_custom_sources = custom_number
-                elif meta == "empty":
-                    n_custom_sources = n_sources
-                else:  # meta == "skip"
-                    assert meta == "skip"
-                    n_custom_sources = n_sources
+                n_custom_sources = N_CUSTOM_SOURCES
+            elif asn == "no_cat_in_asn" and meta == "cat_in_meta":
+                n_custom_sources = N_CUSTOM_SOURCES
 
     kwargs = {'use_custom_catalogs': custom}
-    if catfile != "skip":
+    if catfile != "no_catfile":
         kwargs["catfile"] = str(catfile_path)
     step = tweakreg_step.TweakRegStep(**kwargs)
 
@@ -329,7 +291,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
         if model.meta.group_id == 'a':
             assert len(catalog) == n_custom_sources
         elif model.meta.group_id == 'b':
-            assert len(catalog) == n_sources
+            assert len(catalog) == N_EXAMPLE_SOURCES
         _seen.append(model)
         if len(_seen) == 2:
             raise ValueError("done testing")
