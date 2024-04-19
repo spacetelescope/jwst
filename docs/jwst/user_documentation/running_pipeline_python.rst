@@ -571,8 +571,8 @@ for the ``ramp_fitting`` and ``wfss_contam`` steps. These parameters can be
 set to `quarter`, `half`, `all`, or `none`, which is the default value.
 
 The following example turns on a step's multiprocessing option. Notice only
-one of the steps has multiprocessing turned on. We do not recommend to
-simultaneously enable both steps to do multiprocessing, as this may likely
+one of the steps has multiprocessing turned on. We do not recommend
+simultaneously enabling both steps to do multiprocessing, as this may likely
 lead to running out of system memory.
 
 
