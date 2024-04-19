@@ -44,6 +44,9 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+- Fix a crash in ``extract_1d`` for background regions for which both lower
+  and upper limits are outside the valid area for some data range. [#8433]
+
 flat_field
 ----------
 
