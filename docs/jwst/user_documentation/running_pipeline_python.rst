@@ -537,9 +537,9 @@ Multiprocessing
 ===============
 
 Multiprocessing is supported to speed up certain computationally-intensive steps
-in the pipeline, including :ref:`jump_step <jump_step>`,
-:ref:`ramp_fitting_step <ramp_fitting_step>`, and
-:ref:`wfss_contam_step <wfss_contam_step>`. The examples below show how
+in the pipeline, including the :ref:`jump detection <jump_step>`,
+:ref:`ramp fitting <ramp_fitting_step>`, and
+:ref:`WFSS contamination correction <wfss_contam_step>` steps. The examples below show how
 multiprocessing can be enabled for these steps, as well as how to set up
 multiprocessing to simultaneously run the entire pipeline on multiple observations.
 
