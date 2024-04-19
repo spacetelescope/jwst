@@ -697,11 +697,8 @@ def _extract_colpix(image_data, x, j, limits):
         ii2 = min(ns, int(math.floor(i2 + 0.5)))
 
         # special case: ii1 == ii2:
+        # skip the interval, no data in between
         if ii1 == ii2:
-            v = image_data[ii1, x]
-            val[k] = v
-            wht[k] = i2 - i1
-            k += 1
             continue
 
         # bounds in different pixels:
