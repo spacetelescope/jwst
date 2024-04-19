@@ -44,7 +44,6 @@ def test_save_step_default(mk_tmp_dirs):
     ]
 
     step = Step.from_cmdline(args)
-    step.closeout()
 
     fname = 'flat_stepwithmodel.fits'
     assert path.isfile(fname)
@@ -63,7 +62,6 @@ def test_save_step_withoutput(mk_tmp_dirs):
     ]
 
     step = Step.from_cmdline(args)
-    step.closeout()
 
     output_path, output_ext = path.splitext(output_file)
     assert path.isfile(output_path + '_stepwithmodel' + output_ext)
@@ -83,7 +81,6 @@ def test_save_step_withoutputsuffix(mk_tmp_dirs):
     ]
 
     step = Step.from_cmdline(args)
-    step.closeout()
 
     assert path.isfile(actual_output_file)
 
@@ -99,7 +96,6 @@ def test_save_step_withdir(mk_tmp_dirs):
     ]
 
     step = Step.from_cmdline(args)
-    step.closeout()
 
     output_fn_path = path.join(
         tmp_data_path,
@@ -121,7 +117,6 @@ def test_save_step_withdir_environment(mk_tmp_dirs):
     ]
 
     step = Step.from_cmdline(args)
-    step.closeout()
 
     output_fn_path = path.join(
         tmp_data_path,
@@ -144,7 +139,6 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
     ]
 
     step = Step.from_cmdline(args)
-    step.closeout()
 
     output_path, output_ext = path.splitext(output_file)
     output_fn_path = path.join(
@@ -199,8 +193,6 @@ def test_save_container_withfile(mk_tmp_dirs):
 
     assert path.isfile('tscwf_0_stepwithcontainer.fits')
     assert path.isfile('tscwf_1_stepwithcontainer.fits')
-
-    step.closeout()
 
 
 def test_save_pipeline_default(mk_tmp_dirs):

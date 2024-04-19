@@ -120,8 +120,6 @@ def test_saving_pars(tmp_path):
         config = StepConfig.from_asdf(af)
         assert config.parameters == original_config.parameters
 
-    step.closeout()
-
 
 @pytest.mark.parametrize(
     'step_obj, expected',
