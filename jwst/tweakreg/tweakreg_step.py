@@ -279,35 +279,30 @@ class TweakRegStep(Step):
             g = grp_img[0]
             if len(g) == 0:
                 raise AssertionError("Logical error in the pipeline code.")
-            group_name = _common_name(g)
             imcats = list(map(self._imodel2wcsim, g))
             # Remove the attached catalogs
             for model in g:
                 del model.catalog
-            self.log.info("* Images in GROUP '{}':".format(group_name))
+            self.log.info(f"* Images in GROUP '{imcats[0].meta['group_id']}':")
             for im in imcats:
-                im.meta['group_id'] = group_name
-                self.log.info("     {}".format(im.meta['name']))
+                self.log.info(f"     {im.meta['name']}")
 
             self.log.info('')
 
         elif len(grp_img) > 1:
             # create a list of WCS-Catalog-Images Info and/or their Groups:
             imcats = []
-            all_group_names = []
             for g in grp_img:
                 if len(g) == 0:
                     raise AssertionError("Logical error in the pipeline code.")
                 else:
-                    group_name = _common_name(g, all_group_names)
                     wcsimlist = list(map(self._imodel2wcsim, g))
                     # Remove the attached catalogs
                     for model in g:
                         del model.catalog
-                    self.log.info("* Images in GROUP '{}':".format(group_name))
+                    self.log.info(f"* Images in GROUP '{wcsimlist[0].meta['group_id']}':")
                     for im in wcsimlist:
-                        im.meta['group_id'] = group_name
-                        self.log.info("     {}".format(im.meta['name']))
+                        self.log.info(f"     {im.meta['name']}")
                     imcats.extend(wcsimlist)
 
             self.log.info('')
@@ -511,7 +506,6 @@ class TweakRegStep(Step):
                     )
 
         return images
-    
 
     def _write_catalog(self, image_model, catalog, filename):
         '''
@@ -560,7 +554,6 @@ class TweakRegStep(Step):
 
         return image_model
 
-
     def _is_wcs_correction_small(self, wcs, twcs):
         """Check that the newly tweaked wcs hasn't gone off the rails"""
         if self.use2dhist:
@@ -606,39 +599,15 @@ class TweakRegStep(Step):
             wcsinfo={'roll_ref': refang['roll_ref'],
                      'v2_ref': refang['v2_ref'],
                      'v3_ref': refang['v3_ref']},
-            meta={'image_model': image_model, 'catalog': catalog,
-                  'name': model_name}
+            meta={
+                'image_model': image_model,
+                'catalog': catalog,
+                'name': model_name,
+                'group_id': image_model.meta.group_id,
+            }
         )
 
         return im
-
-
-def _common_name(group, all_group_names=None):
-    file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
-                  for im in group]
-
-    cn = path.commonprefix(file_names)
-
-    if all_group_names is None:
-        if not cn:
-            return 'Unnamed Group'
-    else:
-        if not cn or cn in all_group_names:
-            # find the smallest group number to make "Group #..." unique
-            max_id = 1
-            if not cn:
-                cn = "Group #"
-            for name in all_group_names:
-                try:
-                    cid = int(name.lstrip(cn))
-                    if cid >= max_id:
-                        max_id = cid + 1
-                except ValueError:
-                    pass
-            cn = f"{cn}{max_id}"
-        all_group_names.append(cn)
-
-    return cn
 
 
 def _parse_catfile(catfile):
