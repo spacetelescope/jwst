@@ -38,37 +38,6 @@ def test_is_wcs_correction_small(offset, is_good):
     assert step._is_wcs_correction_small(wcs, twcs) == is_good
 
 
-@pytest.mark.parametrize(
-    "groups, all_group_names, common_name",
-    [
-        ([['abc1_cal.fits', 'abc2_cal.fits']], [], ['abc']),
-        (
-            [
-                ['abc1_cal.fits', 'abc2_cal.fits'],
-                ['abc1_cal.fits', 'abc2_cal.fits'],
-                ['abc1_cal.fits', 'abc2_cal.fits'],
-                ['def1_cal.fits', 'def2_cal.fits'],
-            ],
-            [],
-            ["abc", "abc1", "abc2", "def"],
-        ),
-        ([['cba1_cal.fits', 'abc2_cal.fits']], [], ['Group #1']),
-        ([['cba1_cal.fits', 'abc2_cal.fits']], ['Group #1'], ['Group #2']),
-        ([['cba1_cal.fits', 'abc2_cal.fits']], None, ['Unnamed Group']),
-    ]
-)
-def test_common_name(groups, all_group_names, common_name):
-    for g, cn_truth in zip(groups, common_name):
-        group = []
-        for fname in g:
-            model = ImageModel()
-            model.meta.filename = fname
-            group.append(model)
-
-        cn = tweakreg_step._common_name(group, all_group_names)
-        assert cn == cn_truth
-
-
 def test_expected_failure_bad_starfinder():
 
     model = ImageModel()
