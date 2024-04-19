@@ -566,9 +566,10 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
 support this are the :ref:`jump <jump_step>`,
 :ref:`ramp_fitting <ramp_fitting_step>`,
 and :ref:`wfss_contam <wfss_contam_step>` steps. To enable multiprocessing, the
-optional parameters are `max_cores` for the ``jump`` step, and `maximum_cores`
-for the ``ramp_fitting`` and ``wfss_contam`` steps. These parameters can be
-set to `quarter`, `half`, `all`, or `none`, which is the default value.
+optional parameter is `maximum_cores` for the ``jump``, ``ramp_fitting``, and
+``wfss_contam`` steps. This parameter can be set to a numerical value given
+as a string or it can be set to the words `quarter`, `half`, `all`,
+or `none`, which is the default value.
 
 The following example turns on a step's multiprocessing option. Notice only
 one of the steps has multiprocessing turned on. We do not recommend
@@ -607,7 +608,7 @@ worker. This is to avoid a known memory leak.
 
     # SampleScript2
 
-    import os
+    import os, sys
     import traceback
     import configparser
     import multiprocessing
@@ -672,15 +673,13 @@ worker. This is to avoid a known memory leak.
         print('* Using ', cores2use, ' cores for multiprocessing.')
 
         # set the pool and run multiprocess
-        p = multiprocessing.Pool(cores2use)
-        p.starmap(run_det1, zip(files_to_run, outptd))
-        p.close()
-        p.join()
+        with multiprocessing.Pool(cores2use) as pool:
+            pool.starmap(run_det1, zip(files_to_run, outptd))
+
+        print('\n * Finished multiprocessing! \n')
 
     if __name__ == '__main__':
-        multiprocessing.freeze_support()
-        main()
-        print('\n * Finished multiprocessing! \n')
+        sys.exit(main())
 
 
 .. warning::
@@ -688,7 +687,8 @@ worker. This is to avoid a known memory leak.
     multiprocessing while also enabling this option in a step, we
     strongly recommend not to do this. This scenario would be the same as
     `SampleScript2` except with adding and calling the parameter dictionary
-    `parameter_dict` in `SampleScript1`. However, it will likely
-    crash if both multiprocessing options are set to use all the cores or even
-    less. We recommend not enabling step multiprocessing for parallel pipeline
+    `parameter_dict` in `SampleScript1`. However, Python will crash
+    if both multiprocessing options are set to use all the cores or even
+    less, because it is not permitted that a worker has children processes.
+    We recommend not enabling step multiprocessing for parallel pipeline
     runs to avoid potentially running out of memory.
