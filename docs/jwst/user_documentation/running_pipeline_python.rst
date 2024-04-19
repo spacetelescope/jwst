@@ -563,9 +563,9 @@ undefined. Hence, Python will crash unless the multiprocess code in enclosed in 
 There are a couple of scenarios to use multiprocessing with the pipeline:
 
 1.  Multiprocessing within a pipeline step. At the moment, the steps that
-support this are the :ref:`jump_step <jump_step>`,
-:ref:`ramp_fitting_step <ramp_fitting_step>`,
-and :ref:`wfss_contam_step <wfss_contam_step>`. To enable multiprocessing the
+support this are the :ref:`jump <jump_step>`,
+:ref:`ramp_fitting <ramp_fitting_step>`,
+and :ref:`wfss_contam <wfss_contam_step>` steps. To enable multiprocessing, the
 optional parameters are `max_cores` for the ``jump`` step, and `maximum_cores`
 for the ``ramp_fitting`` and ``wfss_contam`` steps. These parameters can be
 set to `quarter`, `half`, `all`, or `none`, which is the default value.
