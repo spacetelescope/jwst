@@ -105,7 +105,7 @@ def test_saving_pars(tmp_path):
     """Save the step parameters from the commandline"""
     cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
     saved_path = os.path.join(tmp_path, 'savepars.asdf')
-    step = Step.from_cmdline([
+    Step.from_cmdline([
         cfg_path,
         '--save-parameters',
         str(saved_path)
