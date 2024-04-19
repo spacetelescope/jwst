@@ -1627,9 +1627,9 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
     """
     any_updated = False
     exposure_type = output_model.meta.exposure.type
-    flat = np.ones_like(output_model.data)
+    flat = np.ones_like(output_model.data) * np.nan
     flat_dq = np.zeros_like(output_model.dq)
-    flat_err = np.zeros_like(output_model.data)
+    flat_err = np.zeros_like(output_model.data) * np.nan
 
     try:
         list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
@@ -1725,6 +1725,13 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         del nan_flag, good_flag
 
         any_updated = True
+
+    # Ensure consistency between NaN-valued pixels and the DO_NOT_USE flag
+    indx = np.where((flat_dq & dqflags.pixel['DO_NOT_USE']) != 0)
+    flat[indx] = np.nan
+    flat_err[indx] = np.nan
+    indx = np.where(~ np.isfinite(flat))
+    flat_dq[indx] = flat_dq[indx] | dqflags.pixel['DO_NOT_USE']
 
     # That's all folks
     return flat, flat_dq, flat_err, any_updated
