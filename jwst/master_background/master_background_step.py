@@ -139,6 +139,8 @@ class MasterBackgroundStep(Step):
                         exptime_key='exposure_time',
                     )
 
+                    print('************************************************')
+                    print(master_background.spec[0].spec_table['WAVELENGTH'])
                     background_data.close()
 
                     result = ModelContainer()
