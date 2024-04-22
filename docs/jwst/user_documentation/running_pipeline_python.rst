@@ -543,21 +543,12 @@ in the pipeline, including the :ref:`jump detection <jump_step>`,
 multiprocessing can be enabled for these steps, as well as how to set up
 multiprocessing to simultaneously run the entire pipeline on multiple observations.
 
-Python's multiprocessing module explicitly imports and executes a script's
-`__main__` with each and every worker. If `__main__` is not present the behavior is
-undefined. Hence, Python will crash unless the multiprocess code in enclosed in a
-`__main__` block like this:
-
+Since the pipeline uses multiprocessing it is critical that any code using the pipeline adhere to the guidelines described in the `python multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#multiprocessing-programming>`_. The pipeline uses the `forkserver` start method internally and it is recommended that any multiprocessing scripts that use the pipline use the same start. As detailed in the `python documentation <https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods>`_ this will require that code be "protected" with a ``if __name__ == '__main__':`` check as follows
 
 ::
 
-    import sys
-
-    def main():
-        [code used in multiprocessing]
-
     if __name__ = '__main__':
-        sys.exit(main())
+        [code used in multiprocessing]
 
 
 There are a couple of scenarios to use multiprocessing with the pipeline:
