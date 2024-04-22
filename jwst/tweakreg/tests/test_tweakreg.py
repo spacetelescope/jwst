@@ -1,4 +1,5 @@
 from copy import deepcopy
+import json
 import os
 
 import asdf
@@ -31,6 +32,11 @@ def dummy_source_catalog():
 
 @pytest.mark.parametrize("inplace", [True, False])
 def test_rename_catalog_columns(dummy_source_catalog, inplace):
+    """
+    Test that a catalog with 'xcentroid' and 'ycentroid' columns
+    passed to _renamed_catalog_columns successfully renames those columns
+    to 'x' and 'y' (and does so "inplace" modifying the input catalog)
+    """
     renamed_catalog = tweakreg_step._rename_catalog_columns(dummy_source_catalog)
 
     # if testing inplace, check the input catalog
@@ -47,6 +53,11 @@ def test_rename_catalog_columns(dummy_source_catalog, inplace):
 
 @pytest.mark.parametrize("missing", ["x", "y", "xcentroid", "ycentroid"])
 def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
+    """
+    Test that passing a catalog that is missing either "x" or "y"
+    (or "xcentroid" and "ycentroid" which is renamed to "x" or "y")
+    results in an exception indicating that a required column is missing
+    """
     # if the column we want to remove is not in the table, first run
     # rename to rename columns this should add the column we want to remove
     if missing not in dummy_source_catalog.colnames:
@@ -58,6 +69,16 @@ def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
 
 @pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
 def test_is_wcs_correction_small(offset, is_good):
+    """
+    Test that the _is_wcs_correction_small method returns True for a small
+    wcs correction and False for a "large" wcs correction. The values in this
+    test are selected based on the current step default parameters:
+        - use2dhist
+        - searchrad
+        - tolerance
+    Changes to the defaults for these parameters will likely require updating the
+    values uses for parametrizing this test.
+    """
     path = os.path.join(os.path.dirname(__file__), "mosaic_long_i2d_gwcs.asdf")
     with asdf.open(path) as af:
         wcs = af.tree["wcs"]
@@ -250,7 +271,6 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     elif asn == "cat_in_asn":
         asn_data['products'][0]['members'][0]['tweakreg_catalog'] = str(custom_catalog_path.name)
 
-    import json
     asn_path = custom_catalog_path.parent / 'example_input.json'
     with open(asn_path, 'w') as f:
         json.dump(asn_data, f)
