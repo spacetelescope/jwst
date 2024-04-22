@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import copy
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
@@ -31,8 +32,6 @@ class WfssContamStep(Step):
 
         with datamodels.open(input_model) as dm:
 
-            max_cores = self.maximum_cores
-
             # Get the wavelengthrange ref file
             waverange_ref = self.get_reference_file(dm, 'wavelengthrange')
             self.log.info(f'Using WAVELENGTHRANGE reference file {waverange_ref}')
@@ -46,7 +45,7 @@ class WfssContamStep(Step):
             result, simul, contam, simul_slits = wfss_contam.contam_corr(dm,
                                                             waverange_model,
                                                             photom_model,
-                                                            max_cores,
+                                                            self.maximum_cores,
                                                             brightest_n=self.brightest_n)
 
             # Save intermediate results, if requested
@@ -60,4 +59,8 @@ class WfssContamStep(Step):
                 self.log.info(f'Contamination estimates saved to "{contam_path}"')
 
         # Return the corrected data
+
+        print(input_model.info())
+        print(result.info())
+
         return result

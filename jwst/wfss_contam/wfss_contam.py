@@ -1,6 +1,6 @@
 import logging
 import multiprocessing
-from typing import Union
+from typing import Protocol, Union
 import numpy as np
 
 from stdatamodels.jwst import datamodels
@@ -55,6 +55,10 @@ def determine_multiprocessing_ncores(max_cores: Union[str, int], num_cores) -> i
             raise ValueError(f"Invalid value for max_cores: {max_cores}")
 
 
+class UnmatchedSlitIDError(Exception):
+    pass
+
+
 def _find_matching_simul_slit(slit: datamodels.SlitModel,
                               simul_slit_sids: list[int],
                               simul_slit_orders: list[int],
@@ -80,7 +84,8 @@ def _find_matching_simul_slit(slit: datamodels.SlitModel,
     order = slit.meta.wcsinfo.spectral_order
     good = (np.array(simul_slit_sids) == sid) * (np.array(simul_slit_orders) == order)
     if not any(good):
-        return -1
+        raise UnmatchedSlitIDError(f"Source ID {sid} order {order} requested by input slit model \
+                but not found in simulated slits. Setting contamination correction to zero for that slit.")
     return np.where(good)[0][0]
 
 
@@ -108,58 +113,116 @@ def _cut_frame_to_match_slit(contam: np.ndarray, slit: datamodels.SlitModel) -> 
     return cutout
 
 
-def build_common_slit(slit0: datamodels.SlitModel,
-                      slit1: datamodels.SlitModel,
-                      ) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
+class SlitOverlapError(Exception):
+    pass
+
+class CommonSlit(Protocol):
     '''
-    put data from the two slits into a common backplane
-    so outputs have the same dimensions
-    and alignment is based on slit.xstart, slit.ystart
-
-    Parameters
-    ----------
-    slit0 : SlitModel
-        First slit model
-    slit1 : SlitModel
-        Second slit model
-
-    Returns
-    -------
-    slit0 : SlitModel
-        First slit model with data updated to common backplane
-    slit1 : SlitModel
-        Second slit model with data updated to common backplane
+    class protocol for two slits that represent the same source and order, e.g. data and model
     '''
-        
-    data0 = slit0.data
-    data1 = slit1.data
-
-    shape = (max(data0.shape[0], data1.shape[0]), max(data0.shape[1], data1.shape[1]))
-    xmin = min(slit0.xstart, slit1.xstart)
-    ymin = min(slit0.ystart, slit1.ystart)
-    shape = max(slit0.xsize + slit0.xstart - xmin, 
-                slit1.xsize + slit1.xstart - xmin), \
-                max(slit0.ysize + slit0.ystart - ymin, 
-                    slit1.ysize + slit1.ystart - ymin)
-    x0 = slit0.xstart - xmin
-    y0 = slit0.ystart - ymin
-    x1 = slit1.xstart - xmin
-    y1 = slit1.ystart - ymin
-
-    backplane0 = np.zeros(shape).T
-    backplane0[y0:y0+data0.shape[0], x0:x0+data0.shape[1]] = data0
-    backplane1 = np.zeros(shape).T
-    backplane1[y1:y1+data1.shape[0], x1:x1+data1.shape[1]] = data1
-
-    slit0.data = backplane0
-    slit1.data = backplane1
-    for slit in [slit0, slit1]:
-        slit.xstart = xmin
-        slit.ystart = ymin
-        slit.xsize = shape[0]
-        slit.ysize = shape[1]
+    slit0: datamodels.SlitModel
+    slit1: datamodels.SlitModel
     
-    return slit0, slit1
+    def match_backplane(self) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
+        ...
+
+
+class CommonSlitPreferFirst(CommonSlit):
+    '''
+    Treat slit0 as the reference slit, and match attributes of slit1 to it
+    '''
+    def __init__(self, slit0: datamodels.SlitModel, slit1: datamodels.SlitModel):
+        self.slit0 = slit0
+        self.slit1 = slit1
+
+    def match_backplane(self) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
+
+        data0 = self.slit0.data
+        data1 = self.slit1.data
+
+        x1 = self.slit1.xstart - self.slit0.xstart
+        y1 = self.slit1.ystart - self.slit0.ystart
+        backplane1 = np.zeros_like(data0)
+        
+        i0 = max([y1,0])
+        i1 = min([y1+data1.shape[0], data0.shape[0], data1.shape[0]])
+        j0 = max([x1,0])
+        j1 = min([x1+data1.shape[1], data0.shape[1], data1.shape[1]])
+        if i0 >= i1 or j0 >= j1:
+            raise SlitOverlapError(f"No overlap region between data and model for slit {self.slit0.sid}, \
+                                    order {self.slit0.meta.spectral_order}. \
+                                    Setting contamination correction to zero for that slit.")
+
+        breakpoint()
+        backplane1[i0:i1, j0:j1] = data1[i0:i1, j0:j1]
+
+        self.slit1.data = backplane1
+        self.slit1.xstart = self.slit0.xstart
+        self.slit1.ystart = self.slit0.ystart
+        self.slit1.xsize = self.slit0.xsize
+        self.slit1.ysize = self.slit0.ysize
+        
+        return self.slit0, self.slit1
+
+
+class CommonSlitEncompass(CommonSlit):
+    '''
+    Encompass the data from both slits in a common backplane
+    '''
+    def __init__(self, slit0: datamodels.SlitModel, slit1: datamodels.SlitModel):
+        self.slit0 = slit0
+        self.slit1 = slit1
+    
+    def match_backplane(self) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
+        '''
+        put data from the two slits into a common backplane
+        so outputs have the same dimensions
+        and alignment is based on slit.xstart, slit.ystart
+
+        Parameters
+        ----------
+        slit0 : SlitModel
+            First slit model
+        slit1 : SlitModel
+            Second slit model
+
+        Returns
+        -------
+        slit0 : SlitModel
+            First slit model with data updated to common backplane
+        slit1 : SlitModel
+            Second slit model with data updated to common backplane
+        '''
+            
+        data0 = self.slit0.data
+        data1 = self.slit1.data
+
+        shape = (max(data0.shape[0], data1.shape[0]), max(data0.shape[1], data1.shape[1]))
+        xmin = min(self.slit0.xstart, self.slit1.xstart)
+        ymin = min(self.slit0.ystart, self.slit1.ystart)
+        shape = max(self.slit0.xsize + self.slit0.xstart - xmin, 
+                    self.slit1.xsize + self.slit1.xstart - xmin), \
+                    max(self.slit0.ysize + self.slit0.ystart - ymin, 
+                        self.slit1.ysize + self.slit1.ystart - ymin)
+        x0 = self.slit0.xstart - xmin
+        y0 = self.slit0.ystart - ymin
+        x1 = self.slit1.xstart - xmin
+        y1 = self.slit1.ystart - ymin
+
+        backplane0 = np.zeros(shape).T
+        backplane0[y0:y0+data0.shape[0], x0:x0+data0.shape[1]] = data0
+        backplane1 = np.zeros(shape).T
+        backplane1[y1:y1+data1.shape[0], x1:x1+data1.shape[1]] = data1
+
+        self.slit0.data = backplane0
+        self.slit1.data = backplane1
+        for slit in [self.slit0, self.slit1]:
+            slit.xstart = xmin
+            slit.ystart = ymin
+            slit.xsize = shape[0]
+            slit.ysize = shape[1]
+        
+        return self.slit0, self.slit1
 
 
 def contam_corr(input_model: datamodels.MultiSlitModel, 
@@ -259,6 +322,7 @@ def contam_corr(input_model: datamodels.MultiSlitModel,
     
     good_slits = [slit for slit in output_model.slits if slit.source_id in obs.IDs]
     output_model = datamodels.MultiSlitModel()
+    output_model.update(input_model)
     output_model.slits.extend(good_slits)
     log.info(f"Simulating only the brightest {brightest_n} sources")
 
@@ -295,18 +359,17 @@ def contam_corr(input_model: datamodels.MultiSlitModel,
     slits = []
     for slit in output_model.slits:
 
-        good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
-        if good_idx == -1:
-            log.warning(f"Source {slit.source_id} order {order} requested by input slit model \
-                    but not found in simulated slits")
-            continue
-        this_simul = obs.simul_slits.slits[good_idx]
+        try:
+            good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
+            this_simul = obs.simul_slits.slits[good_idx]
+            slit, this_simul = CommonSlitPreferFirst(slit, this_simul).match_backplane()
+            simul_all_cut = _cut_frame_to_match_slit(simul_all, slit)
+            contam_cut = simul_all_cut - this_simul.data
 
-        # Subtract source slit to make contamination image
-        # Simulated slits are sometimes different in shape than input data slits by a few pixels
-        this_simul, slit = build_common_slit(this_simul, slit)
-        simul_all_cut = _cut_frame_to_match_slit(simul_all, slit)
-        contam_cut = simul_all_cut - this_simul.data
+        except (UnmatchedSlitIDError, SlitOverlapError) as e:
+            log.warning(e)
+            contam_cut = np.zeros_like(slit.data)     
+        
         contam_slit = copy.copy(slit)
         contam_slit.data = contam_cut
         slits.append(contam_slit)

@@ -1,3 +1,4 @@
+from functools import partial
 import numpy as np
 from typing import Callable, Sequence
 from astropy.wcs import WCS
@@ -7,6 +8,25 @@ import warnings
 
 from ..lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
+
+
+def flat_lam(fluxes: np.ndarray, lams: np.ndarray) -> np.ndarray:
+    '''
+    Parameters
+    ----------
+    x : float
+        x-coordinate of the pixel.
+    lams : float array
+        Array of wavelengths corresponding to the fluxes (flxs) for each pixel.
+        One wavelength per direct image, so can be a single value.
+
+    Returns
+    -------
+    lams : float array
+        Array of wavelengths corresponding to the fluxes (flxs) for each pixel.
+        One wavelength per direct image, so can be a single value.
+    '''
+    return fluxes[0]
 
 
 def flux_interpolator_injector(lams: np.ndarray, 
@@ -34,7 +54,7 @@ def flux_interpolator_injector(lams: np.ndarray,
     '''
 
     if len(lams) > 1:
-        # If we have direct image flux values from more than one filter (lambda),
+        # If we have direct image flux values from more than one filter (lams),
         # we have the option to extrapolate the fluxes outside the
         # wavelength range of the direct images
         if extrapolate_sed is False:
@@ -42,11 +62,9 @@ def flux_interpolator_injector(lams: np.ndarray,
         else:
             return interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
     else:
-        # If we only have flux from one lambda, just use that
+        # If we only have flux from one wavelength, just use that
         # single flux value at all wavelengths
-        def flux(x):
-            return flxs[0]
-        return flux
+        return partial(flat_lam, flxs)
 
 
 def determine_wl_spacing(dw: float,

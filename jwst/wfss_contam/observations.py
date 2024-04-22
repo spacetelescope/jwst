@@ -1,3 +1,4 @@
+import copy
 import time
 import numpy as np
 import multiprocessing as mp
@@ -17,6 +18,15 @@ from astropy.stats import SigmaClip
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+def disperse_multiprocess(pars, max_cpu):
+
+    pars = copy.deepcopy(pars)
+    ctx = mp.get_context("forkserver")
+    with ctx.Pool(max_cpu) as mypool:
+        all_res = mypool.starmap(dispersed_pixel, pars)
+
+    return all_res
 
 
 def background_subtract(data: np.ndarray, 
@@ -386,9 +396,7 @@ class Observation:
         # pass parameters into dispersed_pixel, either using multiprocessing or not
         time1 = time.time()
         if self.max_cpu > 1:
-            ctx = mp.get_context("forkserver")
-            with ctx.Pool(self.max_cpu) as mypool:
-                all_res = mypool.starmap(dispersed_pixel, pars)
+            all_res = disperse_multiprocess(pars, self.max_cpu)
         else:
             all_res = []
             for i in range(len(pars)):

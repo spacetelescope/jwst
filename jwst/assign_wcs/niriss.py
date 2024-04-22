@@ -398,11 +398,11 @@ def wfss(input_model, reference_files):
     # Get the disperser parameters which are defined as a model for each
     # spectral order
     with NIRISSGrismModel(reference_files['specwcs']) as f:
-        dispx = f.dispx
-        dispy = f.dispy
-        displ = f.displ
-        invdispl = f.invdispl
-        orders = f.orders
+        dispx = f.dispx.instance
+        dispy = f.dispy.instance
+        displ = f.displ.instance
+        invdispl = f.invdispl.instance
+        orders = f.orders.instance
         fwcpos_ref = f.fwcpos_ref
 
     # This is the actual rotation from the input model
