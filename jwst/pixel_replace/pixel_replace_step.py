@@ -105,7 +105,7 @@ class PixelReplaceStep(Step):
                     )
 
                 # Check models to confirm they are the correct type
-                for i, model in enumerate(input_model):
+                for i, model in enumerate(output_model):
                     run_pixel_replace = True
                     # for each spectrum - NRS_FIXEDSLIT, WFSS
                     if isinstance(model, datamodels.MultiSlitModel):
@@ -126,7 +126,7 @@ class PixelReplaceStep(Step):
                         self.log.error(f'Input is of type {str(type(input_model))} for which')
                         self.log.error('pixel_replace does not have an algorithm.\n')
                         self.log.error('Pixel replacement will be skipped.')
-                        output_model[i].meta.cal_step.pixel_replace = 'SKIPPED'
+                        model.meta.cal_step.pixel_replace = 'SKIPPED'
                         run_pixel_replace = False
 
                     # all checks on model have passed. Now run pixel replacement
@@ -134,10 +134,10 @@ class PixelReplaceStep(Step):
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
                         self.record_step_status(replacement.output, 'pixel_replace', success=True)
-                        output_model[i] = replacement.output
-                        output_path_name = self.make_output_path(basepath=output_model[i].meta.filename)
+                        model = replacement.output
+                        output_path_name = self.make_output_path(basepath=model.meta.filename, suffix='pixel_replace')
                         if self.save_results:
-                            output_model[i].meta.filename = output_path_name
+                            model.meta.filename = output_path_name
                             print(output_path_name)
 
                 return output_model
