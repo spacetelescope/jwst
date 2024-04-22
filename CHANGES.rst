@@ -27,6 +27,8 @@ documentation
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
+  
+- Added documentation for multiprocessing. [#8408]
 
 extract_1d
 ----------
