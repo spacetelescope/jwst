@@ -41,7 +41,7 @@ def test_rename_catalog_columns(dummy_source_catalog, inplace):
 
     assert 'xcentroid' not in catalog.colnames
     assert 'ycentroid' not in catalog.colnames
-    assert 'y' in catalog.colnames
+    assert 'x' in catalog.colnames
     assert 'y' in catalog.colnames
 
 
@@ -54,14 +54,6 @@ def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
     dummy_source_catalog.remove_column(missing)
     with pytest.raises(ValueError, match="catalogs must contain"):
         tweakreg_step._rename_catalog_columns(dummy_source_catalog)
-
-
-def test_rename_catalog_columns_inplace(dummy_source_catalog):
-    catalog = tweakreg_step._rename_catalog_columns(dummy_source_catalog)
-    assert 'xcentroid' not in catalog.colnames
-    assert 'ycentroid' not in catalog.colnames
-    assert 'y' in catalog.colnames
-    assert 'y' in catalog.colnames
 
 
 @pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
