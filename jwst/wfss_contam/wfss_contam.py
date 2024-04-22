@@ -149,11 +149,10 @@ class CommonSlitPreferFirst(CommonSlit):
         j0 = max([x1,0])
         j1 = min([x1+data1.shape[1], data0.shape[1], data1.shape[1]])
         if i0 >= i1 or j0 >= j1:
-            raise SlitOverlapError(f"No overlap region between data and model for slit {self.slit0.sid}, \
-                                    order {self.slit0.meta.spectral_order}. \
+            raise SlitOverlapError(f"No overlap region between data and model for slit {self.slit0.source_id}, \
+                                    order {self.slit0.meta.wcsinfo.spectral_order}. \
                                     Setting contamination correction to zero for that slit.")
 
-        breakpoint()
         backplane1[i0:i1, j0:j1] = data1[i0:i1, j0:j1]
 
         self.slit1.data = backplane1

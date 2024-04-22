@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import copy
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
@@ -57,10 +56,5 @@ class WfssContamStep(Step):
             if self.save_contam_images:
                 contam_path = self.save_model(contam, suffix="contam", force=True)
                 self.log.info(f'Contamination estimates saved to "{contam_path}"')
-
-        # Return the corrected data
-
-        print(input_model.info())
-        print(result.info())
 
         return result
