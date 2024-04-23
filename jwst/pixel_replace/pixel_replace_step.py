@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from functools import partial
 
 from ..stpipe import Step
 from .. import datamodels
@@ -89,7 +90,7 @@ class PixelReplaceStep(Step):
                 # Setup output path naming if associations are involved.
                 asn_id = None
                 try:
-                    asn_id = self.input_model.meta.asn_table.asn_id
+                    asn_id = input_model.meta.asn_table.asn_id
                 except (AttributeError, KeyError):
                     pass
                 if asn_id is None:
@@ -134,11 +135,6 @@ class PixelReplaceStep(Step):
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
                         self.record_step_status(replacement.output, 'pixel_replace', success=True)
-                        model = replacement.output
-                        output_path_name = self.make_output_path(basepath=model.meta.filename, suffix='pixel_replace')
-                        if self.save_results:
-                            model.meta.filename = output_path_name
-                            print(output_path_name)
 
                 return output_model
             #________________________________________

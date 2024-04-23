@@ -99,6 +99,7 @@ class Spec3Pipeline(Pipeline):
         self.spectral_leak.save_results = self.save_results
         self.pixel_replace.suffix = 'pixel_replace'
         self.pixel_replace.save_results = self.save_results
+        self.pixel_replace.output_use_model = True
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
