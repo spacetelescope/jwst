@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from collections import defaultdict
+from functools import wraps
 import os.path as op
 import numpy as np
 
@@ -100,6 +101,13 @@ class Spec3Pipeline(Pipeline):
         self.pixel_replace.suffix = 'pixel_replace'
         self.pixel_replace.save_results = self.save_results
         self.pixel_replace.output_use_model = True
+
+        # Overriding the Step.save_model method for the following steps.
+        # These steps save intermediate files, resulting in meta.filename
+        # being modified. This can affect the filenames of subsequent
+        # steps.
+        self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
+        self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -323,3 +331,26 @@ class Spec3Pipeline(Pipeline):
         slit_name = "-".join(slit_names)  # append slit names using a dash separator
 
         return slit_name
+
+
+# #########
+# Utilities
+# #########
+def invariant_filename(save_model_func):
+    """Restore meta.filename after save_model"""
+
+    @wraps(save_model_func)
+    def save_model(model, **kwargs):
+        try:
+            filename = model.meta.filename
+        except AttributeError:
+            filename = None
+
+        result = save_model_func(model, **kwargs)
+
+        if filename:
+            model.meta.filename = filename
+
+        return result
+
+    return save_model
