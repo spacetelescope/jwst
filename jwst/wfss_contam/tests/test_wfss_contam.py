@@ -11,7 +11,8 @@ import numpy as np
                           ("all", 4, 4), 
                           ("none", 1, 1),
                           (None, 1, 1,),
-                          (3, 5, 3)])
+                          (3, 5, 3),
+                          (100, 5, 5)])
 def test_determine_multiprocessing_ncores(max_cores, num_cores, expected):
     assert determine_multiprocessing_ncores(max_cores, num_cores) == expected  
 

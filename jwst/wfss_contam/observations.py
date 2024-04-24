@@ -1,4 +1,3 @@
-import copy
 import time
 import numpy as np
 import multiprocessing as mp
@@ -21,7 +20,6 @@ log.setLevel(logging.DEBUG)
 
 def disperse_multiprocess(pars, max_cpu):
 
-    pars = copy.deepcopy(pars)
     ctx = mp.get_context("forkserver")
     with ctx.Pool(max_cpu) as mypool:
         all_res = mypool.starmap(dispersed_pixel, pars)

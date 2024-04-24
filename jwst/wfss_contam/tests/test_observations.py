@@ -91,6 +91,11 @@ def test_select_ids(ID, expected):
     assert isinstance(_select_ids(ID, all_ids), list)
 
 
+def test_select_ids_expected_raises():
+    with pytest.raises(ValueError):
+        _select_ids("all", [1, 2, 3])
+
+
 def test_background_subtract(direct_image_with_gradient):
 
     data = direct_image_with_gradient.data
