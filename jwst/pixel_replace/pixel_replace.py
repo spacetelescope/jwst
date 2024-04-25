@@ -117,7 +117,6 @@ class PixelReplacement:
 
                             n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
                             log.info(f"Input MRS frame had {n_replaced} pixels replaced in IFU slice {i+1}.")
-
                             trace_model.close()
 
                     n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)

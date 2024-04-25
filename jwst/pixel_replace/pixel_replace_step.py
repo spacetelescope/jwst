@@ -99,12 +99,10 @@ class PixelReplaceStep(Step):
                     _make_output_path = self.search_attr(
                         '_make_output_path', parent_first=True
                     )
-
                     self._make_output_path = partial(
-                        _make_output_path,
-                        asn_id=asn_id
+                        _make_output_path#,
+                        #asn_id=asn_id
                     )
-
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
                     run_pixel_replace = True
@@ -134,6 +132,7 @@ class PixelReplaceStep(Step):
                     if run_pixel_replace:
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
+                        model = replacement.output
                         self.record_step_status(replacement.output, 'pixel_replace', success=True)
 
                 return output_model
@@ -144,4 +143,5 @@ class PixelReplaceStep(Step):
                 replacement = PixelReplacement(result, **pars)
                 replacement.replace()
                 self.record_step_status(replacement.output, 'pixel_replace', success=True)
-                return replacement.output
+                result = replacement.output
+                return result
