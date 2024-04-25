@@ -163,10 +163,9 @@ class OutlierDetectionStep(Step):
                 return self.input_models
 
             self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
-            reffiles = {}
 
             # Set up outlier detection, then do detection
-            step = detection_step(self.input_models, reffiles=reffiles, asn_id=asn_id, **pars)
+            step = detection_step(self.input_models, asn_id=asn_id, **pars)
             step.do_detection()
 
             state = 'COMPLETE'
