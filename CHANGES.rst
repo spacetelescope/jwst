@@ -58,6 +58,9 @@ general
 
 - Increase minimum required scipy. [#8441]
 
+  - Update scipy requirement to exclude 1.13.0 to avoid a numerical issue
+  with leastsq on arm64. [#8440]
+
 outlier_detection
 -----------------
 
