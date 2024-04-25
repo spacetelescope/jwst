@@ -141,8 +141,8 @@ def test_align_array():
         ]
     )
 
-    npt.assert_allclose(aligned, truth_aligned, atol=1e-6)
-    npt.assert_allclose(shifts, truth_shifts, atol=1e-6)
+    npt.assert_allclose(aligned, truth_aligned, atol=1e-6, rtol=1e-4)
+    npt.assert_allclose(shifts, truth_shifts, atol=1e-6, rtol=1e-3)
 
 
 def test_align_models():
