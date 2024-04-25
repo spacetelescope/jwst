@@ -676,9 +676,14 @@ def _extract_colpix(image_data, x, j, limits):
     # compute number of data points:
     ns = image_data.shape[0] - 1
     ns12 = ns + 0.5
-
-    npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) -
-                   max(0, int(math.floor(x[0] + 0.5))) + 1, intervals))
+    npts = 0
+    for interval in intervals:
+        if interval[0] == interval[1]:
+            # no data between limits
+            continue
+        maxval = min(ns, int(math.floor(interval[1] + 0.5)))
+        minval = max(0, int(math.floor(interval[0] + 0.5)))
+        npts += maxval - minval + 1
     if npts == 0:
         return [], [], []
 
@@ -690,6 +695,8 @@ def _extract_colpix(image_data, x, j, limits):
     # populate data and weights:
     k = 0
     for i in intervals:
+        if i[0] == i[1]:
+            continue
         i1 = i[0] if i[0] >= -0.5 else -0.5
         i2 = i[1] if i[1] <= ns12 else ns12
 
@@ -698,8 +705,12 @@ def _extract_colpix(image_data, x, j, limits):
         ii2 = min(ns, int(math.floor(i2 + 0.5)))
 
         # special case: ii1 == ii2:
-        # skip the interval, no data in between
+        # take the value at the pixel
         if ii1 == ii2:
+            v = image_data[ii1, x]
+            val[k] = v
+            wht[k] = i2 - i1
+            k += 1
             continue
 
         # bounds in different pixels:
