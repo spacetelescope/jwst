@@ -679,7 +679,8 @@ def _extract_colpix(image_data, x, j, limits):
 
     npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) -
                    max(0, int(math.floor(x[0] + 0.5))) + 1, intervals))
-    npts = max(npts, 1)
+    if npts == 0:
+        return [], [], []
 
     # pre-allocate data arrays:
     y = np.empty(npts, dtype=np.float64)
