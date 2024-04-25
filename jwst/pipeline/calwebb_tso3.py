@@ -116,7 +116,6 @@ class Tso3Pipeline(Pipeline):
 
             else:
                 self.log.info("Performing scaled outlier detection on input images ...")
-                self.outlier_detection.scale_detection = True
                 cube = self.outlier_detection(cube)
 
         # Save crfints products

@@ -67,7 +67,6 @@ class OutlierDetectionStep(Step):
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
-        scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
         in_memory = boolean(default=False)
