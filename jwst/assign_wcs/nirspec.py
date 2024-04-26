@@ -555,8 +555,6 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     For example, something like:
         (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan, 1, 'N'),
 
-       column
-
     Parameters
     ----------
     msa_file : str
@@ -596,32 +594,14 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         log.error(message)
         raise MSAFileError(message)
 
-    # Get the configuration header from the _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
-    msa_conf = msa_file[('SHUTTER_INFO', 1)]
-    msa_source = msa_file[("SOURCE_INFO", 1)].data
+    # Get the shutter and source info tables from the _msa.fits file.
+    msa_conf = msa_file[('SHUTTER_INFO', 1)]  # EXTNAME = 'SHUTTER_INFO'
+    msa_source = msa_file[("SOURCE_INFO", 1)].data  # EXTNAME = 'SOURCE_INFO'
 
     # First we are going to filter the msa_file data on the msa_metadata_id
     # and dither_point_index.
     msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id
                 and x['dither_point_index'] == dither_position]
-
-    # Get all source_ids for slitlets with sources.
-    # These should not be used when assigning source_id to background slitlets.
-    source_ids = set([x[5] for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id
-                      and x['dither_point_index'] == dither_position])
-    # All BKG shutters in the msa metafile have a source_id value of 0.
-    # Remove it from the list of source ids.
-    if 0 in source_ids:
-        source_ids.remove(0)
-    if source_ids:
-        max_source_id = max(source_ids) + 1
-    else:
-        max_source_id = 0
-
-    # define a counter for "all background" slitlets.
-    # It will be used to assign a "source_id".
-    bkg_counter = 0
-
     log.debug(f'msa_data with msa_metadata_id = {msa_metadata_id}   {msa_data}')
     log.info(f'Retrieving open MSA slitlets for msa_metadata_id = {msa_metadata_id} '
              f'and dither_index = {dither_position}')
@@ -629,25 +609,20 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     # Get the unique slitlet_ids
     slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
 
-    # SDP may assign a value of "-1" to ``slitlet_id`` - these need to be ignored.
-    # JP-436
-    if -1 in slitlet_ids_unique:
-        slitlet_ids_unique.remove(-1)
-
     # add a margin to the slit y limits
     margin = 0.5
 
     # Now lets look at each unique slitlet id
     for slitlet_id in slitlet_ids_unique:
-        # Get the rows for the current slitlet_id
+        # Get the rows of shutter info for the current slitlet_id
         slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
         open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
         # How many shutters in the slitlet are labeled as "main" or "primary"?
         n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
 
-        # In the next part we need to calculate, find, determine 5 things:
-        #    quadrant,  xcen, ycen,  ymin, ymax
+        # In the next part we need to calculate, find, or determine 5 things for each slit:
+        #    quadrant, xcen, ycen, ymin, ymax
 
         # There are no main shutters: all are background
         if n_main_shutter == 0:
@@ -664,11 +639,18 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
             source_xpos = 0.0
             source_ypos = 0.0
-            source_id = _get_bkg_source_id(bkg_counter, max_source_id)
+            source_id = slitlet_id
             log.info(f'Slitlet_id {slitlet_id} is background only; assigned source_id = {source_id}')
-            bkg_counter += 1
 
-        # There is 1 main shutter: phew, that makes it easier.
+            # Hardwire the source info for background slits, because there's
+            # no source info for them in the msa_file
+            source_name = "background_{}".format(slitlet_id)
+            source_alias = "bkg_{}".format(slitlet_id)
+            stellarity = 0.0
+            source_ra = 0.0
+            source_dec = 0.0
+
+        # There is 1 main shutter: this is a normal slit
         elif n_main_shutter == 1:
             xcen, ycen, quadrant, source_xpos, source_ypos = [
                 (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
@@ -687,6 +669,30 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
                 if slitlets_sid[i]['primary_source'] == 'Y':
                     source_id = slitlets_sid[i]['source_id']
 
+            # Normal slits with a source assigned have a source_id > 0
+            if source_id > 0:
+                shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
+                # Get source info for this normal slitlet
+                try:
+                    source_name, source_alias, stellarity, source_ra, source_dec = [
+                        (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
+                        for s in msa_source if s['source_id'] == source_id][0]
+                except IndexError:
+                    log.warning("Could not retrieve source info from MSA file")
+
+            # Slits with source_id < 0 are "virtual" slits, with no source assigned
+            else:
+                source_id = slitlet_id
+                log.info(f'Slitlet_id {slitlet_id} is virtual; assigned source_id = {source_id}')
+                # Hardwire the source info for this virtual slit, because there's none in the MSA file
+                source_xpos = 0.0
+                source_ypos = 0.0
+                source_name = "virtual_{}".format(slitlet_id)
+                source_alias = "vrt_{}".format(slitlet_id)
+                stellarity = 0.0
+                source_ra = 0.0
+                source_dec = 0.0
+
         # More than 1 main shutter: Not allowed!
         else:
             message = ("For slitlet_id = {}, metadata_id = {}, "
@@ -696,20 +702,6 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             log.warning(message)
             msa_file.close()
             raise MSAFileError(message)
-
-        # subtract 1 because shutter numbers in the MSA reference file are 1-based.
-        shutter_id = xcen + (ycen - 1) * 365
-        try:
-            source_name, source_alias, stellarity, source_ra, source_dec = [
-                (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
-                for s in msa_source if s['source_id'] == source_id][0]
-        except IndexError:
-            # all background shutters
-            source_name = "background_{}".format(slitlet_id)
-            source_alias = "bkg_{}".format(slitlet_id)
-            stellarity = 0.0
-            source_ra = 0.0
-            source_dec = 0.0
 
         # Create the output list of tuples that contain the required
         # data for further computations

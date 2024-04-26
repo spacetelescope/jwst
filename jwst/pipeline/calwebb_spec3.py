@@ -212,11 +212,26 @@ class Spec3Pipeline(Pipeline):
                 source_id, result = source
                 if result[0].meta.exposure.type == "NRS_FIXEDSLIT":
                     slit_name = self._create_nrsfs_slit_name(result)
+                    srcid = f's{source_id.lower()}'
                     self.output_file = format_product(
-                        output_file, source_id=source_id.lower(), slit_name=slit_name)
+                        output_file, source_id=srcid, slit_name=slit_name)
+                elif result[0].meta.exposure.type == "NRS_MSASPEC":
+                    self.log.debug(f" result[0].name = {result[0].name.lower()}")
+                    source_name = result[0].source_name
+                    self.log.debug(f" result[0].source_name = {source_name}")
+                    if "back" in source_name:
+                        self.log.debug(" background slit")
+                        srcid = f'b{source_id:>09s}'
+                    elif "virt" in source_name:
+                        self.log.debug(" virtual slit")
+                        srcid = f'v{source_id:>09s}'
+                    else:
+                        srcid = f's{source_id:>09s}'
+                    self.output_file = format_product(output_file, source_id=srcid)
+                    self.log.debug(f" output_file = {self.output_file}")
                 else:
-                    self.output_file = format_product(
-                        output_file, source_id=source_id.lower())
+                    srcid = f's{source_id.lower()}'
+                    self.output_file = format_product(output_file, source_id=srcid)
             else:
                 result = source
 
