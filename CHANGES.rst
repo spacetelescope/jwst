@@ -98,7 +98,7 @@ tweakreg
 - Improved how a image group name is determined. [#8426]
 
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
-  step to have a value compatible with the ``abs_tolerance`` parameter. [#8443]
+  step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
 
 1.14.0 (2024-03-29)
