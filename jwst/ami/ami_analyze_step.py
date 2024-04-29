@@ -73,7 +73,7 @@ class AmiAnalyzeStep(Step):
             raise ValueError("Oversample value must be an odd integer.")
 
         # Open the input data model. Can be 2D or 3D image
-        with datamodels.open(input) as input_model:
+        with datamodels.DataModel(input) as input_model:
             # Get the name of the filter throughput reference file to use
             throughput_reffile = self.get_reference_file(input_model, 'throughput')
             self.log.info(f'Using filter throughput reference file {throughput_reffile}')
