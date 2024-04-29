@@ -56,6 +56,8 @@ general
 - Removed deprecated stdatamodels model types ``DrizProductModel``,
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
+- Increase minimum required scipy. [#8441]
+
 outlier_detection
 -----------------
 
