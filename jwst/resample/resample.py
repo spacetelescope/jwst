@@ -400,9 +400,9 @@ class ResampleData:
         """Resample variance arrays from self.input_models to the output_model.
 
         Variance images from each input model are resampled individually and
-        added to a weighted sum. If weight_type is ivm, the inverse of the
+        added to a weighted sum. If weight_type is 'ivm', the inverse of the
         resampled read noise variance is used as the weight for all the variance
-        components. If weight_type is exptime, the exposure time is used.
+        components. If weight_type is 'exptime', the exposure time is used.
 
         The output_model is modified in place.
         """
@@ -490,8 +490,14 @@ class ResampleData:
                                / total_weight_flat_var / total_weight_flat_var)
             setattr(output_model, "var_flat", output_variance)
 
-    def _resample_one_variance_array_as_err(self, name, input_model, output_model):
-        """Resample one variance image from an input model."""
+    def _resample_one_variance_array(self, name, input_model, output_model):
+        """Resample one variance image from an input model.
+
+        The error image is passed to drizzle instead of the variance, to
+        better match kernel overlap and user weights to the data, in the
+        pixel averaging process. The drizzled error image is squared before
+        returning.
+        """
         variance = getattr(input_model, name)
         if variance is None or variance.size == 0:
             log.debug(
@@ -511,7 +517,6 @@ class ResampleData:
         inwht = resample_utils.build_driz_weight(
             input_model,
             weight_type=self.weight_type,  # weights match science
-            #weight_type=None,  # uniform weights
             good_bits=self.good_bits
         )
 
@@ -545,61 +550,6 @@ class ResampleData:
             ymax=ymax
         )
         return resampled_error ** 2
-
-    def _resample_one_variance_array(self, name, input_model, output_model):
-        """Resample one variance image from an input model."""
-        variance = getattr(input_model, name)
-        if variance is None or variance.size == 0:
-            log.debug(
-                f"No data for '{name}' for model "
-                f"{repr(input_model.meta.filename)}. Skipping ..."
-            )
-            return
-
-        elif variance.shape != input_model.data.shape:
-            log.warning(
-                f"Data shape mismatch for '{name}' for model "
-                f"{repr(input_model.meta.filename)}. Skipping ..."
-            )
-            return
-
-        # Make input weight map
-        inwht = resample_utils.build_driz_weight(
-            input_model,
-            weight_type=None,  # uniform weights
-            good_bits=self.good_bits
-        )
-
-        resampled_variance = np.zeros_like(output_model.data)
-        outwht = np.zeros_like(output_model.data)
-        outcon = np.zeros_like(output_model.con)
-
-        xmin, xmax, ymin, ymax = resample_utils._resample_range(
-            variance.shape,
-            input_model.meta.wcs.bounding_box
-        )
-
-        iscale = input_model.meta.iscale
-
-        # Resample the error array. Fill "unpopulated" pixels with NaNs.
-        self.drizzle_arrays(
-            variance,
-            inwht,
-            input_model.meta.wcs,
-            output_model.meta.wcs,
-            resampled_variance,
-            outwht,
-            outcon,
-            iscale=iscale**2,
-            pixfrac=self.pixfrac,
-            kernel=self.kernel,
-            fillval=np.nan,
-            xmin=xmin,
-            xmax=xmax,
-            ymin=ymin,
-            ymax=ymax
-        )
-        return resampled_variance
 
     def update_exposure_times(self, output_model):
         """Modify exposure time metadata in-place"""
