@@ -683,7 +683,8 @@ def _extract_colpix(image_data, x, j, limits):
             continue
         maxval = min(ns, int(math.floor(interval[1] + 0.5)))
         minval = max(0, int(math.floor(interval[0] + 0.5)))
-        npts += maxval - minval + 1
+        if maxval - minval + 1 > 0:
+            npts += maxval - minval + 1
     if npts == 0:
         return [], [], []
 
