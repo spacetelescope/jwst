@@ -82,7 +82,10 @@ in the output data model or the ``'ERR'`` extension of the FITS file.
 It is expected that the output errors computed in this way will
 generally overestimate the true error on the resampled data.  The magnitude
 of the overestimation depends on the details of the pixel weights
-and error images.
+and error images.  Note, however, that drizzling error images produces
+a much better estimate of the output error than directly drizzling
+the variance images, since the kernel overlap weights do not need to be
+squared for combining error values.
 
 
 Context Image
