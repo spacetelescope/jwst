@@ -70,7 +70,7 @@ photom
 ------
 
 - Ensure that NaNs in MRS photom files are not replaced with ones by
-  pipeline code for consistency with other modes []
+  pipeline code for consistency with other modes [#8453]
 
 pipeline
 --------
