@@ -173,6 +173,8 @@ class TweakRegStep(Step):
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
 
+        rel_outcomes = set()
+
         # Build the catalogs for input images
         for image_model in images:
             if use_custom_catalogs and image_model.meta.tweakreg_catalog:
@@ -365,6 +367,7 @@ class TweakRegStep(Step):
 
             for imcat in imcats:
                 model = imcat.meta['image_model']
+                rel_outcomes.add(model.meta.cal_step.tweakreg)
                 if model.meta.cal_step.tweakreg == "SKIPPED":
                     continue
                 wcs = model.meta.wcs
@@ -390,6 +393,7 @@ class TweakRegStep(Step):
             #        catalog as a separate product with a name based on
             #        whatever convention is determined by the JWST Cal Working
             #        Group.
+
             if self.save_abs_catalog:
                 if self.output_dir is None:
                     output_name = 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower())
@@ -397,6 +401,11 @@ class TweakRegStep(Step):
                     output_name = path.join(self.output_dir, 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower()))
             else:
                 output_name = None
+
+            rel_ok = (
+                len(rel_outcomes) > 1 or
+                (rel_outcomes and rel_outcomes.pop() != "SKIPPED")
+            )
 
             # initial shift to be used with absolute astrometry
             self.abs_xoffset = 0
@@ -455,17 +464,58 @@ class TweakRegStep(Step):
                         del imcat.meta['fit_info']
 
                 # Perform fit
-                align_wcs(
-                    imcats,
-                    refcat=ref_cat,
-                    enforce_user_order=True,
-                    expand_refcat=False,
-                    minobj=self.abs_minobj,
-                    match=xyxymatch_gaia,
-                    fitgeom=self.abs_fitgeometry,
-                    nclip=self.abs_nclip,
-                    sigma=(self.abs_sigma, 'rmse')
-                )
+                try:
+                    align_wcs(
+                        imcats,
+                        refcat=ref_cat,
+                        enforce_user_order=True,
+                        expand_refcat=False,
+                        minobj=self.abs_minobj,
+                        match=xyxymatch_gaia,
+                        fitgeom=self.abs_fitgeometry,
+                        nclip=self.abs_nclip,
+                        sigma=(self.abs_sigma, 'rmse')
+                    )
+                except ValueError as e:
+                    msg = e.args[0]
+                    if (msg == "Too few input images (or groups of images) with "
+                            "non-empty catalogs."):
+                        # we need at least two exposures to perform image alignment
+                        self.log.warning(msg)
+                        self.log.warning(
+                            "At least one exposure is required to align images "
+                            "to an absolute reference catalog. Alignment to an "
+                            "absolute reference catalog will not be performed."
+                        )
+                        if not rel_ok:
+                            self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
+                            for model in images:
+                                model.meta.cal_step.tweakreg = "SKIPPED"
+                            self.skip = True
+                            return images
+                    else:
+                        raise e
+
+                except RuntimeError as e:
+                    msg = e.args[0]
+                    if msg.startswith("Number of output coordinates exceeded allocation"):
+                        # we need at least two exposures to perform image alignment
+                        self.log.error(msg)
+                        self.log.error(
+                            "Multiple sources within specified tolerance "
+                            "matched to a single reference source. Try to "
+                            "adjust 'tolerance' and/or 'separation' parameters."
+                            "Alignment to an absolute reference catalog will "
+                            "not be performed."
+                        )
+                        if not rel_ok:
+                            self.log.warning("Skipping 'TweakRegStep'...")
+                            self.skip = True
+                            for model in images:
+                                model.meta.cal_step.tweakreg = "SKIPPED"
+                            return images
+                    else:
+                        raise e
 
         for imcat in imcats:
             image_model = imcat.meta['image_model']

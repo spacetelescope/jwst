@@ -142,11 +142,14 @@ tweakreg
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
   step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
+- Improve error handling in the absolute alignment. [#8450]
+
 wfss_contam
 -----------
 
 - Fixed flux scaling issue in model contamination image by adding background
   subtraction and re-scaling fluxes to respect wavelength oversampling. [#8416]
+
 
 1.14.0 (2024-03-29)
 ===================
