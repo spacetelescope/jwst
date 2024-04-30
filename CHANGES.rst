@@ -215,6 +215,12 @@ tweakreg
 - Change code default to use IRAF StarFinder instead of
   DAO StarFinder [#8487]
 
+wavecorr
+--------
+
+- Changed the NIRSpec wavelength correction algorithm to include it in slit WCS
+  models and resampling.  Fixed the sign of the wavelength corrections. [#8376]
+
 wfss_contam
 -----------
 
