@@ -37,9 +37,7 @@ class Tso3Pipeline(Pipeline):
 
     class_alias = "calwebb_tso3"
 
-    spec = """
-        scale_detection = boolean(default=False)
-    """
+    spec = ""
 
     # Define alias to steps
     step_defs = {'outlier_detection':
@@ -87,37 +85,39 @@ class Tso3Pipeline(Pipeline):
                 self.log.warning('Input data are 2D; skipping outlier_detection')
                 break
 
+            # FIXME OutlierDetectionStep can accept a cube input and will
+            # unpack it as a container which looks almost identical to the below
+            # code. There are some differences:
+            # - the inputs here are SlitModels
+            # - outlier detection will generate drizzle weight during the unpack
+            #   the below code does not
+            # - the code below takes a "bitwise or" whereas outlier detection
+            #   assigns over the dq array (I think this is the same as I expect
+            #   outlier detection to only add dq flags).
+
             # Perform regular outlier detection
-            if not self.scale_detection:
 
-                # Convert CubeModel into ModelContainer of 2-D DataModels to
-                # use as input to outlier detection step
-                input_2dmodels = ModelContainer()
-                for i in range(cube.data.shape[0]):
-                    # convert each plane of data cube into its own array
-                    image = datamodels.ImageModel(data=cube.data[i],
-                                                  err=cube.err[i], dq=cube.dq[i])
-                    image.update(cube)
-                    image.meta.wcs = cube.meta.wcs
-                    input_2dmodels.append(image)
+            input_2dmodels = ModelContainer()
+            for i in range(cube.data.shape[0]):
+                # convert each plane of data cube into its own array
+                image = datamodels.ImageModel(data=cube.data[i],
+                                              err=cube.err[i], dq=cube.dq[i])
+                image.update(cube)
+                image.meta.wcs = cube.meta.wcs
+                input_2dmodels.append(image)
 
-                self.log.info("Performing outlier detection on input images ...")
-                input_2dmodels = self.outlier_detection(input_2dmodels)
+            self.log.info("Performing outlier detection on input images ...")
+            input_2dmodels = self.outlier_detection(input_2dmodels)
 
-                # Transfer updated DQ values to original input observation
-                for i in range(cube.data.shape[0]):
-                    # Update DQ arrays with those from outlier_detection step
-                    cube.dq[i] = np.bitwise_or(cube.dq[i], input_2dmodels[i].dq)
+            # Transfer updated DQ values to original input observation
+            for i in range(cube.data.shape[0]):
+                # Update DQ arrays with those from outlier_detection step
+                cube.dq[i] = np.bitwise_or(cube.dq[i], input_2dmodels[i].dq)
 
-                cube.meta.cal_step.outlier_detection = \
-                    input_2dmodels[0].meta.cal_step.outlier_detection
+            cube.meta.cal_step.outlier_detection = \
+                input_2dmodels[0].meta.cal_step.outlier_detection
 
-                del input_2dmodels
-
-            else:
-                self.log.info("Performing scaled outlier detection on input images ...")
-                self.outlier_detection.scale_detection = True
-                cube = self.outlier_detection(cube)
+            del input_2dmodels
 
         # Save crfints products
         if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
