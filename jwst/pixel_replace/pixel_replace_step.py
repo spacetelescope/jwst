@@ -100,8 +100,8 @@ class PixelReplaceStep(Step):
                         '_make_output_path', parent_first=True
                     )
                     self._make_output_path = partial(
-                        _make_output_path#,
-                        #asn_id=asn_id
+                        _make_output_path,
+                        asn_id=asn_id
                     )
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
