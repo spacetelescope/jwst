@@ -46,9 +46,10 @@ def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwa
         dmr = datamodels.open(rtdata.output)
         names = [s.name for s in dmt.slits]
         for name in names:
-            w = slit.meta.wcs
+            st_idx = [(s.wcs, s.wavelength) for s in dmt.slits if s.name==name]
+            w = dmt.slits[st_idx].meta.wcs
             x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
             _, _, wave = w(x, y)
-            slit_idx = [(s.wcs, s.wavelength) for s in dmt.slits if s.name==name]
-            wlr = dmr.slits[slit_idx].wavelength
+            sr_idx = [(s.wcs, s.wavelength) for s in dmr.slits if s.name==name]
+            wlr = dmr.slits[sr_idx].wavelength
             assert np.all(np.isclose(wave, wlr, atol=1e-03))
