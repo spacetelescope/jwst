@@ -66,6 +66,12 @@ outlier_detection
 - Pass the ``weight_type`` parameter to all resampling function calls so that
   the default weighting can be overridden by the input step parameter. [#8290]
 
+photom
+------
+
+- Ensure that NaNs in MRS photom files are not replaced with ones by
+  pipeline code for consistency with other modes []
+
 pipeline
 --------
 
