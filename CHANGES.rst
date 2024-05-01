@@ -16,6 +16,10 @@ assign_wcs
 associations
 ------------
 
+- fix issue where initializing ``matplotlib`` logging with ``usetex=True``
+  would cause the log message passed to the multiline logging handler to be ``bytes``
+  instead of the expected ``str`` [#7616]
+
 - Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations
   where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
 
