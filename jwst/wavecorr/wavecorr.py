@@ -118,9 +118,16 @@ def apply_zero_point_correction(slit, reffile):
 
     # Get the source position in the slit and set the aperture name
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-        # pass lam = 2 microns
-        # needed for wavecorr with fixed slits
-        source_xpos = get_source_xpos(slit, slit_wcs, lam=2)
+        # Check for fixed slits defined via MSA files in
+        # MOS/FS combination processing: they will have a non-empty
+        # shutter state and should not have their source position
+        # overridden
+        if slit.shutter_state == "":
+            # pass lam = 2 microns
+            # needed for wavecorr with fixed slits
+            source_xpos = get_source_xpos(slit, slit_wcs, lam=2)
+        else:
+            source_xpos = slit.source_xpos
         aperture_name = slit.name
     else:
         source_xpos = slit.source_xpos

@@ -664,9 +664,10 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         #    quadrant,  xcen, ycen,  ymin, ymax
 
         # First check for a fixed slit
+        # TODO: check on how to handle 'primary' column
         shutter_id = None
-        if all(is_fs) and len(slitlets_sid) == 1 and n_main_shutter == 1:
-            # One fixed slit open for the source, and it is marked 'primary'
+        if all(is_fs) and len(slitlets_sid) == 1:  # and n_main_shutter == 1:
+            # One fixed slit open for the source   #, and it is marked 'primary'
             slitlet = slitlets_sid[0]
             slit_name = slitlet['fixed_slit']
             log.debug(f'Found fixed slit {slit_name}')

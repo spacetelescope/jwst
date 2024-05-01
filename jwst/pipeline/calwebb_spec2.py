@@ -517,13 +517,49 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
         calibrated = self.master_background_mos(calibrated)
-        calibrated = self.wavecorr(calibrated)
-        calibrated = self.flat_field(calibrated)
-        calibrated = self.pathloss(calibrated)
-        calibrated = self.barshadow(calibrated)
-        calibrated = self.photom(calibrated)
 
-        return calibrated
+        # Split the datamodel into 2 pieces: one with MOS slits and
+        # the other with FS slits
+        calib_mos = datamodels.MultiSlitModel()
+        calib_fss = datamodels.MultiSlitModel()
+        primary_fs = None
+        for slit in calibrated.slits:
+            if slit.quadrant == 5:
+                # Take the primary fixed slit from the first
+                # one encountered
+                if primary_fs is None:
+                    primary_fs = slit.name
+                slit.meta.exposure.type = "NRS_FIXEDSLIT"
+                calib_fss.slits.append(slit)
+            else:
+                calib_mos.slits.append(slit)
+
+        # First process MOS slits through all remaining steps
+        calib_mos.update(calibrated)
+        if len(calib_mos.slits) > 0:
+            calib_mos = self.wavecorr(calib_mos)
+            calib_mos = self.flat_field(calib_mos)
+            calib_mos = self.pathloss(calib_mos)
+            calib_mos = self.barshadow(calib_mos)
+            calib_mos = self.photom(calib_mos)
+
+        # Now repeat for FS slits
+        if len(calib_fss.slits) > 0:
+            calib_fss.update(calibrated)
+            calib_fss.meta.exposure.type = "NRS_FIXEDSLIT"
+            calib_fss.meta.instrument.fixed_slit = primary_fs
+
+            calib_fss = self.wavecorr(calib_fss)
+            calib_fss = self.flat_field(calib_fss)
+            calib_fss = self.pathloss(calib_fss)
+            calib_fss = self.barshadow(calib_fss)
+            calib_fss = self.photom(calib_fss)
+
+            # Append the FS results to the MOS results
+            for slit in calib_fss.slits:
+                calib_mos.slits.append(slit)
+
+        return calib_mos
 
     def _process_niriss_soss(self, data):
         """Process SOSS
