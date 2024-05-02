@@ -48,7 +48,6 @@ class PixelReplaceStep(Step):
             it will be a model containing data arrays with estimated fluxes
             for any bad pixels, now flagged as TO-BE-DETERMINED (DQ bit 7?).
         """
-
         with datamodels.open(input) as input_model:
             # Make copy of input to prevent overwriting
             result = input_model.copy()
@@ -82,11 +81,11 @@ class PixelReplaceStep(Step):
                 'n_adjacent_cols': self.n_adjacent_cols,
             }
 
-            #___________________
+            # ___________________
             # calewbb_spec3 case
-            #___________________
+            # ___________________
             if isinstance(input_model, datamodels.ModelContainer):
-                output_model = input_model.copy()                
+                output_model = input_model.copy()
                 # Setup output path naming if associations are involved.
                 asn_id = None
                 try:
@@ -136,9 +135,9 @@ class PixelReplaceStep(Step):
                         self.record_step_status(replacement.output, 'pixel_replace', success=True)
 
                 return output_model
-            #________________________________________
+            # ________________________________________
             # calewbb_spec2 case - single input model
-            #________________________________________
+            # ________________________________________
             else:
                 replacement = PixelReplacement(result, **pars)
                 replacement.replace()

@@ -51,7 +51,7 @@ class Spec2Pipeline(Pipeline):
     assign_wcs, NIRSpec MSA bad shutter flagging, nsclean, background subtraction,
     NIRSpec MSA imprint subtraction, 2-D subwindow extraction, flat field,
     source type decision, straylight, fringe, residual_fringe, pathloss,
-    barshadow,  photom, resample_spec, cube_build, and extract_1d.
+    barshadow,  photom, pixel_replace, resample_spec, cube_build, and extract_1d.
     """
 
     class_alias = "calwebb_spec2"
@@ -110,7 +110,7 @@ class Spec2Pipeline(Pipeline):
         asn = self.load_as_level2_asn(data)
         if len(asn['products']) > 1 and self.output_file is not None:
             self.log.warning('Multiple products in input association. Output file name will be ignored.')
-            self.output_file = None        
+            self.output_file = None
 
         # Each exposure is a product in the association.
         # Process each exposure.  Delay reporting failures until the end.
@@ -141,7 +141,7 @@ class Spec2Pipeline(Pipeline):
             else:
                 if result is not None:
                     results.append(result)
-            self.output_file = None #handles multiple products in the association
+            self.output_file = None  # handles multiple products in the association
 
         if len(failures) > 0 and self.fail_on_exception:
             raise RuntimeError('\n'.join(failures))
@@ -217,9 +217,7 @@ class Spec2Pipeline(Pipeline):
 
             # Decide on what steps can actually be accomplished based on the
             # provided input.
-
             self._step_verification(exp_type, science, members_by_type, multi_int)
-
             # Start processing the individual steps.
             # `assign_wcs` is the critical step. Without it, processing cannot proceed.
             assign_wcs_exception = None
@@ -313,6 +311,9 @@ class Spec2Pipeline(Pipeline):
             resampled = self.cube_build(resampled)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], suffix='s3d')
+        elif exp_type in ['MIR_LRS-SLITLESS']:
+            resampled = calibrated.copy()
+            resampled = self.pixel_replace(resampled)
         else:
             resampled = calibrated
 
