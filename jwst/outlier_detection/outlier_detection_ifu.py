@@ -53,7 +53,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
     """
 
-    def __init__(self, input_models, reffiles=None, **pars):
+    def __init__(self, input_models, **pars):
         """Initialize class for IFU data processing.
 
         Parameters
@@ -62,11 +62,8 @@ class OutlierDetectionIFU(OutlierDetection):
             list of data models as ModelContainer or ASN file,
             one data model for each input 2-D ImageModel
 
-        reffiles : dict of `~stdatamodels.jwst.datamodels.JwstDataModel`
-            Dictionary of datamodels.  Keys are reffile_types.
-
         """
-        OutlierDetection.__init__(self, input_models, reffiles=reffiles, **pars)
+        OutlierDetection.__init__(self, input_models, **pars)
 
     def create_optional_results_model(self, opt_info):
         """

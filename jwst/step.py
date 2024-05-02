@@ -35,8 +35,6 @@ from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
 from .nsclean.nsclean_step import NSCleanStep
 from .outlier_detection.outlier_detection_step import OutlierDetectionStep
-from .outlier_detection.outlier_detection_scaled_step import OutlierDetectionScaledStep
-from .outlier_detection.outlier_detection_stack_step import OutlierDetectionStackStep
 from .pathloss.pathloss_step import PathLossStep
 from .persistence.persistence_step import PersistenceStep
 from .photom.photom_step import PhotomStep
@@ -100,8 +98,6 @@ __all__ = [
     "MSAFlagOpenStep",
     "NSCleanStep",
     "OutlierDetectionStep",
-    "OutlierDetectionScaledStep",
-    "OutlierDetectionStackStep",
     "PathLossStep",
     "PersistenceStep",
     "PhotomStep",

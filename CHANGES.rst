@@ -66,11 +66,18 @@ outlier_detection
 - Pass the ``weight_type`` parameter to all resampling function calls so that
   the default weighting can be overridden by the input step parameter. [#8290]
 
+- Remove unused ``OutlierDetectionScaledStep``,
+  ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
+  and ``scale_detection`` (an unused argument). [#8438]
+
 pipeline
 --------
 
 - Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
   that was causing them not to respect the ``output_file`` parameter. [#8368]
+
+- Removed unused ``scale_detection`` argument from ``calwebb_tso3``
+  pipeline. [#8438]
 
 ramp_fitting
 ------------
