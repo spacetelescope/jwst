@@ -68,7 +68,7 @@ class PixelReplaceStep(Step):
                 # It's a 3-D multi-integration model
                 self.log.debug('Input is a CubeModel for a multiple integration file.')
             elif isinstance(input_model, datamodels.ModelContainer):
-                self.log.debug('Input is an ModelContainer.')
+                self.log.debug('Input is a ModelContainer.')
             else:
                 self.log.error(f'Input is of type {str(type(input_model))} for which')
                 self.log.error('pixel_replace does not have an algorithm.\n')
