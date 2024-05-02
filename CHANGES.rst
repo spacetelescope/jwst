@@ -23,7 +23,7 @@ associations
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
 
 dark_current
-------------  
+------------
 
 - Add log info message when specifying an average_dark_current for noise calculations.
   [#8425]
@@ -33,7 +33,7 @@ documentation
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
-  
+
 - Added documentation for multiprocessing. [#8408]
 
 extract_1d
@@ -103,6 +103,9 @@ tweakreg
 - Output source catalog file now respects ``output_dir`` parameter. [#8386]
 
 - Improved how a image group name is determined. [#8426]
+
+- Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
+  step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
 
 1.14.0 (2024-03-29)
