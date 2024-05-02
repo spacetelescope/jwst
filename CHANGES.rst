@@ -44,6 +44,8 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+- Add ``ifu_covar_scale`` parameter to help correct for IFU cube covariance. [#8457]
+
 flat_field
 ----------
 

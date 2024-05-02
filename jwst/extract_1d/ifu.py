@@ -245,19 +245,19 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         b_var_poisson *= 0
 
     # Deal with covariance in the IFU cube by multiplying 1d spectra errors by a scaling factor
-    log.info("Applying ERR covariance prefactor of %g", extract_params['ifu_autocen'])
-    error *= extract_params['ifu_autocen']
-    sb_error *= extract_params['ifu_autocen']
-    berror *= extract_params['ifu_autocen']
-    f_var_poisson *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    f_var_rnoise *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    f_var_flat *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    sb_var_poisson *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    sb_var_rnoise *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    sb_var_flat *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    b_var_poisson *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    b_var_rnoise *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
-    b_var_flat *= extract_params['ifu_autocen'] * extract_params['ifu_autocen']
+    log.info("Applying ERR covariance prefactor of %g", extract_params['ifu_covar_scale'])
+    error *= extract_params['ifu_covar_scale']
+    sb_error *= extract_params['ifu_covar_scale']
+    berror *= extract_params['ifu_covar_scale']
+    f_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    f_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    f_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    sb_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    sb_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    sb_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    b_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    b_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    b_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
 
     otab = np.array(
         list(
