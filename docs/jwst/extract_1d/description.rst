@@ -297,7 +297,13 @@ is used to set the resampling value. The default value is 10.
 
 For IFU cubes the error information is contained entirely in the ERR array, and is not broken out into the
 VAR_POISSON, VAR_RNOISE, and VAR_FLAT arrays.  As such, ``extract_1d`` only propagates this
-non-differentiated error term.  Note that while covariance is also extremely important for IFU data cubes
+non-differentiated error term.  Since covariance is also extremely important for IFU data cubes
+(see discussion by Law et al. 2023; AJ, 166, 45) the optional parameter ``ifu_covar_scale``
+will multiply all ERR arrays in the extracted spectra by a constant prefactor to account
+for this covariance.  As discussed by Law et al. 2023, this prefactor provides
+a reasonable first-order correction for the vast majority of use cases.  Values for the prefactor
+are provided in the ``extract_1d`` parameter reference files for MIRI and NIRSpec.
+
 (as the IFUs themselves are significantly undersampled) this term is not presently computed or taken
 into account in the ``extract_1d`` step.  As such, the error estimates should be taken as a rough
 approximation that will be characterized and improved as flight data become available. 
