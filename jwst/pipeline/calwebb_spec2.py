@@ -353,9 +353,45 @@ class Spec2Pipeline(Pipeline):
             else:
                 self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
         elif exp_type == 'NRS_MSASPEC':
-            # check for fixed slits mixed in with MSA spectra
-            x1d = resampled.copy()
-            x1d = self.extract_1d(x1d)
+            # Check for fixed slits mixed in with MSA spectra
+            resamp_mos = datamodels.MultiSlitModel()
+            resamp_fss = datamodels.MultiSlitModel()
+            for slit in resampled.slits:
+                # Quadrant information is not preserved through resampling,
+                # but MSA slits have numbers for names, so use that to
+                # distinguish MSA from FS
+                try:
+                    msa_name = int(slit.name)
+                except ValueError:
+                    msa_name = None
+                if msa_name is None:
+                    slit.meta.exposure.type = "NRS_FIXEDSLIT"
+                    resamp_fss.slits.append(slit)
+                else:
+                    slit.meta.exposure.type = "NRS_MSASPEC"
+                    resamp_mos.slits.append(slit)
+            resamp_mos.update(resampled)
+            resamp_fss.update(resampled)
+
+            # Extract the MOS slits
+            x1d = None
+            if len(resamp_mos.slits) > 0:
+                self.log.info(f'Extracting {len(resamp_mos.slits)} MSA slitlets')
+                x1d = self.extract_1d(resamp_mos)
+
+            # Extract the FS slits
+            if len(resamp_fss.slits) > 0:
+                self.log.info(f'Extracting {len(resamp_fss.slits)} fixed slits')
+                resamp_fss.meta.exposure.type = "NRS_FIXEDSLIT"
+                x1d_fss = self.extract_1d(resamp_fss)
+                if x1d is None:
+                    x1d = x1d_fss
+                    x1d.meta.exposure.type = "NRS_MSASPEC"
+                else:
+                    for spec in x1d_fss.spec:
+                        x1d.spec.append(spec)
+            resamp_mos.close()
+            resamp_fss.close()
         else:
             x1d = resampled.copy()
             x1d = self.extract_1d(x1d)
