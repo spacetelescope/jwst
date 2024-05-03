@@ -60,38 +60,41 @@ def do_correction(input_model, wavecorr_file):
 
     output_model = input_model.copy()
 
-    # Get the primary slit for a FS exposure
-    if exp_type == 'NRS_FIXEDSLIT':
-        primary_slit = input_model.meta.instrument.fixed_slit
-        if primary_slit is None or primary_slit == 'NONE':
-            log.warning('Primary slit name not found in input')
-            log.warning('Skipping wavecorr correction')
-            input_model.meta.cal_step.wavecorr = 'SKIPPED'
-            return input_model
-
     # For BRIGHTOBJ, operate on the single SlitModel
     if isinstance(input_model, datamodels.SlitModel):
         if _is_point_source(input_model, exp_type):
             apply_zero_point_correction(output_model, wavecorr_file)
     else:
-        # For FS only work on the primary slit
+        # For FS only work on point source slits with
+        # position information
+        corrected = False
         if exp_type == 'NRS_FIXEDSLIT':
+            primary_slit = input_model.meta.instrument.fixed_slit
             for slit in output_model.slits:
-                if slit.name == primary_slit:
-                    if not hasattr(slit.meta, "dither"):
-                        log.warning('meta.dither is not populated for the primary slit')
-                        log.warning('Skipping wavecorr correction')
-                        input_model.meta.cal_step.wavecorr = 'SKIPPED'
-                        break
-                    if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
-                        log.warning('dither.x(y)_offset values are None for primary slit')
-                        log.warning('Skipping wavecorr correction')
-                        input_model.meta.cal_step.wavecorr = 'SKIPPED'
-                        break
-                    if _is_point_source(slit, exp_type):
-                        apply_zero_point_correction(slit, wavecorr_file)
-                        output_model.meta.cal_step.wavecorr = 'COMPLETE'
-                        break
+                if _is_point_source(slit, exp_type):
+                    # If fixed slit was not defined via MSA file,
+                    # it must have dither information to find the
+                    # source position, and it must be the primary slit
+                    if not _is_msa_fixed_slit(slit):
+                        if slit.name != primary_slit:
+                            log.warning(f'Skipping wavecorr correction for '
+                                        f'non-primary slit {slit.name}')
+                            continue
+                        if not hasattr(slit.meta, "dither"):
+                            log.warning('meta.dither is not populated for the primary slit')
+                            log.warning('Skipping wavecorr correction')
+                            continue
+                        if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
+                            log.warning('dither.x(y)_offset values are None for primary slit')
+                            log.warning('Skipping wavecorr correction')
+                            input_model.meta.cal_step.wavecorr = 'SKIPPED'
+                            continue
+                    apply_zero_point_correction(slit, wavecorr_file)
+                    corrected = True
+            if corrected:
+                output_model.meta.cal_step.wavecorr = 'COMPLETE'
+            else:
+                output_model.meta.cal_step.wavecorr = 'SKIPPED'
 
         # For MOS work on all slits containing a point source
         else:
@@ -119,15 +122,14 @@ def apply_zero_point_correction(slit, reffile):
     # Get the source position in the slit and set the aperture name
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         # Check for fixed slits defined via MSA files in
-        # MOS/FS combination processing: they will have a non-empty
-        # shutter state and should not have their source position
-        # overridden
-        if slit.shutter_state == "":
-            # pass lam = 2 microns
-            # needed for wavecorr with fixed slits
-            source_xpos = get_source_xpos(slit, slit_wcs, lam=2)
-        else:
+        # MOS/FS combination processing: they should not have their
+        # source position overridden by dither keywords
+        if _is_msa_fixed_slit(slit):
+            # get the planned source position
             source_xpos = slit.source_xpos
+        else:
+            # get the source position from the dither offsets
+            source_xpos = get_source_xpos(slit)
         aperture_name = slit.name
     else:
         source_xpos = slit.source_xpos
@@ -225,6 +227,26 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     return (lamright - lamleft) * 10 ** -6
 
 
+def _is_msa_fixed_slit(slit):
+    """
+    Determine if a fixed slit source was defined via a MSA file.
+
+    Parameters
+    ----------
+    slit : `~stdatamodels.jwst.transforms.models.Slit`
+        A slit object.
+    """
+    # Fixed slits defined via MSA files in  MOS/FS combination
+    # processing will have a non-empty shutter state
+    # TODO: determine if there's a better test
+    if (not hasattr(slit, 'shutter_state')
+            or slit.shutter_state is None
+            or slit.shutter_state == ""):
+        return False
+    else:
+        return True
+
+
 def _is_point_source(slit, exp_type):
     """
     Determine if a source is a point source.
@@ -259,7 +281,7 @@ def _is_point_source(slit, exp_type):
     return result
 
 
-def get_source_xpos(slit, slit_wcs, lam):
+def get_source_xpos(slit):
     """
     Compute the source position within the slit for a NIRSpec fixed slit.
 
@@ -267,10 +289,6 @@ def get_source_xpos(slit, slit_wcs, lam):
     ----------
     slit : `~jwst.datamodels.SlitModel`
         The slit object.
-    slit_wcs : `~gwcs.wcs.WCS`
-        The WCS object for this slit.
-    lam : float
-        Wavelength in microns.
 
     Returns
     -------

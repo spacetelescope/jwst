@@ -51,6 +51,6 @@ def test_fs_correction():
                                  photom_point=ph_ps, photom_uniform=ph_un)
 
     corrected = input.data * (ff_un / ff_ps) * (pl_un / pl_ps) * (ph_ps / ph_un)
-    result = correct_nrs_fs_bkg(input, primary_slit=True)
+    result = correct_nrs_fs_bkg(input)
 
     assert np.allclose(corrected, result.data, rtol=1.e-7)

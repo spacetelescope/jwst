@@ -162,7 +162,7 @@ def test_wavecorr_fs():
     assert_allclose(result.slits[0].source_xpos, 0.127111, atol=1e-6)
 
     slit = result.slits[0]
-    source_xpos = wavecorr.get_source_xpos(slit, slit.meta.wcs, lam=2)
+    source_xpos = wavecorr.get_source_xpos(slit)
     assert_allclose(result.slits[0].source_xpos, source_xpos, atol=1e-6)
 
     mean_correction = np.abs(src_result.slits[0].wavelength - result.slits[0].wavelength)

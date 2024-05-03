@@ -270,6 +270,8 @@ class Spec2Pipeline(Pipeline):
         # srctype and wavecorr before flat_field.
         if exp_type in GRISM_TYPES:
             calibrated = self._process_grism(calibrated)
+        elif exp_type == 'NRS_MSASPEC':
+            calibrated = self._process_nirspec_msa_slits(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == 'NIS_SOSS':
@@ -350,6 +352,10 @@ class Spec2Pipeline(Pipeline):
                 x1d = self.photom(x1d)
             else:
                 self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
+        elif exp_type == 'NRS_MSASPEC':
+            # check for fixed slits mixed in with MSA spectra
+            x1d = resampled.copy()
+            x1d = self.extract_1d(x1d)
         else:
             x1d = resampled.copy()
             x1d = self.extract_1d(x1d)
@@ -509,10 +515,40 @@ class Spec2Pipeline(Pipeline):
         return calibrated
 
     def _process_nirspec_slits(self, data):
-        """Process NIRSpec
+        """Process NIRSpec slits.
 
-        NIRSpec MOS and FS need srctype and wavecorr before flat_field.
-        Also have to deal with master background operations.
+        This function handles FS, BOTS, and calibration modes.
+        MOS mode is handled separately, in order to do master
+        background subtraction and process fixed slits defined in
+        MSA files.
+
+        Note that NIRSpec MOS and FS need srctype and wavecorr before
+        flat_field.
+        """
+        calibrated = self.extract_2d(data)
+        calibrated = self.srctype(calibrated)
+        calibrated = self.master_background_mos(calibrated)
+        calibrated = self.wavecorr(calibrated)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
+        calibrated = self.pixel_replace(calibrated)
+
+        return calibrated
+
+    def _process_nirspec_msa_slits(self, data):
+        """Process NIRSpec MSA slits.
+
+        The NRS_MSASPEC exposure type may contain fixed slit definitions
+        in addition to standard MSA slitlets.  These are handled
+        separately internally to this function, in order to pull the
+        correct reference files and perform the right algorithms for
+        each slit type.  Processed slits are recombined into a single
+        model with EXP_TYPE=NRS_MSASPEC on return.
+
+        Note that NIRSpec MOS and FS need srctype and wavecorr before
+        flat_field. Also have to deal with master background operations.
         """
         calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
@@ -558,6 +594,14 @@ class Spec2Pipeline(Pipeline):
             # Append the FS results to the MOS results
             for slit in calib_fss.slits:
                 calib_mos.slits.append(slit)
+
+            if len(calib_mos.slits) == len(calib_fss.slits):
+                # update the MOS model with step completion status from the
+                # FS model, since there were no MOS slits to run
+                steps = ['wavecorr', 'flat_field', 'pathloss', 'barshadow', 'photom']
+                for step in steps:
+                    setattr(calib_mos.meta.cal_step, step,
+                            getattr(calib_fss.meta.cal_step, step))
 
         return calib_mos
 
