@@ -41,7 +41,7 @@ class OutlierDetectionSpec(OutlierDetection):
 
     default_suffix = 's2d'
 
-    def __init__(self, input_models, reffiles=None, **pars):
+    def __init__(self, input_models, **pars):
         """Initialize class with input_models.
 
         Parameters
@@ -50,17 +50,13 @@ class OutlierDetectionSpec(OutlierDetection):
             list of data models as ModelContainer or ASN file,
             one data model for each input image
 
-        reffiles : dict of `stdatamodels.jwst.datamodels.JwstDataModel`
-            Dictionary of datamodels.  Keys are reffile_types.
-
         pars : dict, optional
             Optional user-specified parameters to modify how
             outlier_detection will operate.  Valid parameters include:
             - resample_suffix
 
         """
-        OutlierDetection.__init__(self, input_models,
-                                  reffiles=reffiles, **pars)
+        OutlierDetection.__init__(self, input_models, **pars)
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
@@ -88,7 +84,7 @@ class OutlierDetectionSpec(OutlierDetection):
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = resample_utils.build_driz_weight(
                     self.input_models[i],
-                    weight_type='ivm',
+                    weight_type=pars['weight_type'],
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection

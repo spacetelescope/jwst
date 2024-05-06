@@ -13,6 +13,7 @@ on:
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,9 +42,8 @@ jobs:
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_contexts.outputs.jwst }}
       envs: |
-        - linux: py39-oldestdeps-xdist-cov
+        - linux: py310-oldestdeps-xdist-cov
           pytest-results-summary: true
-        - linux: py39-xdist
         - linux: py310-xdist
         - linux: py311-xdist
           pytest-results-summary: true

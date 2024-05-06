@@ -36,7 +36,7 @@ def run_detector1_with_average_dark_current(rtdata_module):
     estimate of the average dark current for inclusion in ramp_fitting
     poisson variance estimation."""
     rtdata = rtdata_module
-    rtdata.get_data("miri/image/jw01024001001_04101_00002_mirimage_uncal.fits")
+    rtdata.get_data("miri/image/jw01024002001_02101_00001_mirimage_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
     args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
@@ -100,8 +100,8 @@ def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_d
     """Regression test of detector1 pipeline performed on MIRI imaging data with a specified
     average dark current."""
     rtdata = rtdata_module
-    rtdata.input = "jw01024001001_04101_00002_mirimage_uncal.fits"
-    output = f"jw01024001001_04101_00002_mirimage_{suffix}.fits"
+    rtdata.input = "jw01024002001_02101_00001_mirimage_uncal.fits"
+    output = f"jw01024002001_02101_00001_mirimage_{suffix}.fits"
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_miri_image_stages/{output}")

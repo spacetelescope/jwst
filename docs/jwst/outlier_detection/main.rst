@@ -1,8 +1,8 @@
 Description
 ===========
 
-:Classes: `jwst.outlier_detection.OutlierDetectionStep`, `jwst.outlier_detection.OutlierDetectionScaledStep`, `jwst.outlier_detection.OutlierDetectionStackStep`
-:Aliases: outlier_detection, outlier_detection_scaled, outlier_detection_stack
+:Classes: `jwst.outlier_detection.OutlierDetectionStep`
+:Aliases: outlier_detection
 
 Processing multiple datasets together allows for the identification of bad pixels
 or cosmic-rays that remain in each of the input images, many times at levels which

@@ -36,7 +36,7 @@ logger.addHandler(logging.NullHandler())
 # have to exist. Used by `find_suffixes` to
 # add to the result it produces.
 SUFFIXES_TO_ADD = [
-    'ami', 'amiavg', 'aminorm',
+    'ami', 'amiavg', 'aminorm', 'ami-oi', 'aminorm-oi',
     'blot', 'bsub', 'bsubints',
     'c1d', 'cal', 'calints', 'cat', 'crf', 'crfints',
     'dark',
@@ -52,7 +52,15 @@ SUFFIXES_TO_ADD = [
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step', 'step', 'systemcall']
+SUFFIXES_TO_DISCARD = [
+    'ami_average',
+    'engdblogstep',
+    'functionwrapper',
+    'pipeline',
+    'rscd_step',
+    'step',
+    'systemcall',
+]
 
 
 # Calculated suffixes.
@@ -70,7 +78,6 @@ _calculated_suffixes = {
  'guider_cds',
  'gain_scale',
  'background',
- 'outlier_detection_stack',
  'resetstep',
  'imprintstep',
  'extract1dstep',
@@ -96,7 +103,6 @@ _calculated_suffixes = {
  'whtlt',
  'assignmtwcsstep',
  'engdblog',
- 'outlierdetectionstackstep',
  'align_refs',
  'master_background',
  'tso3pipeline',
@@ -134,7 +140,7 @@ _calculated_suffixes = {
  'wfsscontamstep',
  'straylightstep',
  'spectral_leak',
- 'spectralleakstep',    
+ 'spectralleakstep',
  'rscdstep',
  'barshadowstep',
  'msaflagopenstep',
@@ -164,8 +170,6 @@ _calculated_suffixes = {
  'ramp_fit',
  'firstframe',
  'srctype',
- 'outlierdetectionscaledstep',
- 'outlier_detection_scaled',
  'straylight',
  'spec2nrslamp',
  'pathloss',

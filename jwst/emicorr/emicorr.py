@@ -585,13 +585,14 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
     mdl_dict = subarray_cases.to_flat_dict()
     for subname in subarray_cases.subarray_cases:
         subname = subname.split(sep='.')[0]
-        if subarray not in subname:
+        dataconfig = subarray
+        if 'FULL' in dataconfig:
+            dataconfig = subarray + '_' + readpatt.replace('R1', '')
+        if dataconfig != subname:
             continue
         log.debug('Found subarray case {}!'.format(subname))
         for item, val in mdl_dict.items():
             if subname in item:
-                if 'FULL' in item and readpatt not in item:
-                    continue
                 if "rowclocks" in item:
                     rowclocks = val
                 elif "frameclocks" in item:
@@ -601,8 +602,8 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
                         frequencies.append(val)
                     elif "FAST" in readpatt  and "FAST" in item:
                         frequencies.append(val)
-        if subname is not None and rowclocks is not None and frameclocks is not None and frequencies is not None:
-            break
+            if subname is not None and rowclocks is not None and frameclocks is not None and frequencies is not None:
+                break
     return subname, rowclocks, frameclocks, frequencies
 
 

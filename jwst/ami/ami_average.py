@@ -11,8 +11,6 @@ log.setLevel(logging.DEBUG)
 
 def average_LG(lg_products):
     """
-    Short Summary
-    -------------
     Averages the LG results for a set of AMI exposures
 
     Parameters

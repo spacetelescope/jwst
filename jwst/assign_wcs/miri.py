@@ -289,57 +289,29 @@ def lrs_distortion(input_model, reference_files):
 
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
-    # as a simple rotation using a linear fit to this relation provided by the CDP.
+    # as a simple x shift using a linear fit to this relation provided by the CDP.
+    # First convert the values in CDP table to subarray x/y
+    xcen_subarray = xcen + zero_point[0]
+    ycen_subarray = ycen + zero_point[1]
 
-    z = np.polyfit(xcen, ycen, 1)
-    slope = 1. / z[0]
-    traceangle = np.arctan(slope) * 180. / np.pi  # trace angle in degrees
-    rot = models.Rotation2D(traceangle)  # Rotation model
-
-    # Now include this rotation in our overall transform
-    # First shift to a frame relative to the trace zeropoint, then apply the rotation
-    # to correct for the curved trace.  End in a rotated frame relative to zero at the reference point
-    # and where yrot is aligned with the spectral trace)
-    xysubtoxyrot = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | rot
-
-    # Next shift back to the subarray frame, and then map to v2v3
-    xyrottov2v3 = models.Shift(zero_point[0]) & models.Shift(zero_point[1]) | det_to_v2v3
-
-    # The two models together
-    xysubtov2v3 = xysubtoxyrot | xyrottov2v3
-
-    # Work out the spectral component of the transform
-    # First compute the reference trace in the rotated-Y frame
-    xcenrot, ycenrot = rot(xcen, ycen)
-    # The input table of wavelengths isn't perfect, and the delta-wavelength
-    # steps show some unphysical behaviour
-    # Therefore fit with a spline for the ycenrot->wavelength transform
-    # Reverse vectors so that yinv is increasing (needed for spline fitting function)
-    yrev = ycenrot[::-1]
-    wrev = wavetab[::-1]
+    # Fit for X shift as a function of Y
     # Spline fit with enforced smoothness
-    spl = UnivariateSpline(yrev, wrev, s=0.002)
-    # Evaluate the fit at the rotated-y reference points
-    wavereference = spl(yrev)
-    # wavereference now contains the wavelengths corresponding to regularly-sampled ycenrot, create the model
-    wavemodel = models.Tabular1D(lookup_table=wavereference, points=yrev, name='waveref',
+    spl = UnivariateSpline(ycen_subarray[::-1], xcen_subarray[::-1] - zero_point[0], s=0.002)
+    # Evaluate the fit at the y reference points
+    xshiftref = spl(ycen_subarray)
+    # This function will give slit dX as a function of Y subarray pixel value
+    dxmodel = models.Tabular1D(lookup_table=xshiftref, points=ycen_subarray, name='xshiftref',
                                  bounds_error=False, fill_value=np.nan)
 
-    # Now construct the inverse spectral transform.
-    # First we need to create a spline going from wavereference -> ycenrot
-    spl2 = UnivariateSpline(wavereference[::-1], ycenrot, s=0.002)
-    # Make a uniform grid of wavelength points from min to max, sampled according
-    # to the minimum delta in the input table
-    dw = np.amin(np.absolute(np.diff(wavereference)))
-    wmin = np.amin(wavereference)
-    wmax = np.amax(wavereference)
-    wgrid = np.arange(wmin, wmax, dw)
-    # Evaluate the rotated y locations of the grid
-    ygrid = spl2(wgrid)
-    # ygrid now contains the rotated y pixel locations corresponding to
-    # regularly-sampled wavelengths, create the model
-    wavemodel.inverse = models.Tabular1D(lookup_table=ygrid, points=wgrid, name='waverefinv',
-                                         bounds_error=False, fill_value=np.nan)
+    # Fit for the wavelength as a function of Y
+    # Reverse the vectors so that yinv is increasing (needed for spline fitting function)
+    # Spline fit with enforced smoothness
+    spl = UnivariateSpline(ycen_subarray[::-1], wavetab[::-1], s=0.002)
+    # Evaluate the fit at the y reference points
+    wavereference = spl(ycen_subarray)
+    # This model will now give the wavelength corresponding to a given Y subarray pixel value
+    wavemodel = models.Tabular1D(lookup_table=wavereference, points=ycen_subarray, name='waveref',
+                                 bounds_error=False, fill_value=np.nan)
 
     # Wavelength barycentric correction
     try:
@@ -352,23 +324,40 @@ def lrs_distortion(input_model, reference_files):
             wavemodel = wavemodel | velocity_corr
             log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
+    # What is the effective slit X as a function of subarray x,y?
+    xmodel = models.Mapping([0], n_inputs=2) - (models.Mapping([1], n_inputs=2) | dxmodel)
+    # What is the effective Y as a function of subarray x,y?
+    ymodel = models.Mapping([1], n_inputs=2)
+    # What is the effective XY as a function of subarray x,y?
+    xymodel = models.Mapping((0, 1, 0, 1)) | xmodel & ymodel
+    # Define a shift by the reference point and immediately back again
+    # This doesn't do anything effectively, but it stores the reference point for later use in pathloss
+    reftransform = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | models.Shift(+zero_point[0]) & models.Shift(+zero_point[1])
+    # Put the transforms together
+    xytov2v3 = reftransform | xymodel | det_to_v2v3
+
     # Construct the full distortion model (xsub,ysub -> v2,v3,wavelength)
-    lrs_wav_model = xysubtoxyrot | models.Mapping([1], n_inputs=2) | wavemodel
-    dettotel = models.Mapping((0, 1, 0, 1)) | xysubtov2v3 & lrs_wav_model
+    lrs_wav_model = models.Mapping([1], n_inputs=2) | wavemodel
+    dettotel = models.Mapping((0, 1, 0, 1)) | xytov2v3 & lrs_wav_model
 
     # Construct the inverse distortion model (v2,v3,wavelength -> xsub,ysub)
-    # Transform to get xrot from v2,v3
-    v2v3toxrot = subarray_dist.inverse | xysubtoxyrot | models.Mapping([0], n_inputs=2)
-    # wavemodel.inverse gives yrot from wavelength
-    # v2,v3,lambda -> xrot,yrot
-    xform1 = v2v3toxrot & wavemodel.inverse
-    dettotel.inverse = xform1 | xysubtoxyrot.inverse
+    # Go from v2,v3 to slit-x
+    v2v3_to_xdet = det_to_v2v3.inverse | models.Mapping([0], n_inputs=2)
+    # Go from lambda to real y
+    lam_to_y = wavemodel.inverse
+    # Go from slit-x and real y to real-x
+    backwards = models.Mapping([0], n_inputs=2) + (models.Mapping([1], n_inputs=2) | dxmodel)
+    # Go from v2,v3,lam to real x
+    aa = v2v3_to_xdet & lam_to_y | backwards
+    # Go from v2,v3,lam to real y
+    bb = models.Mapping([2], n_inputs=3) | lam_to_y
+    # Go from v2,v3,lam, to real x,y
+    dettotel.inverse = models.Mapping((0, 1, 2, 0, 1, 2)) | aa & bb
 
     # Bounding box is the subarray bounding box, because we're assuming subarray coordinates passed in
     dettotel.bounding_box = bb_sub[::-1]
 
     return dettotel
-
 
 def ifu(input_model, reference_files):
     """

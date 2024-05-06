@@ -93,6 +93,7 @@ class DarkCurrentStep(Step):
         """
         if self.average_dark_current is not None:
             input_model.average_dark_current[:, :] = self.average_dark_current
+            self.log.info('Using Poisson noise from average dark current %s e-/sec', self.average_dark_current)
         else:
             # First prioritize a 2D average_dark_current, if defined in dark.
             # If not present, apply scalar to datamodel array, if scalar is present.

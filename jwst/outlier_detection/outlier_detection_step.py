@@ -67,7 +67,6 @@ class OutlierDetectionStep(Step):
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
-        scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
         in_memory = boolean(default=False)
@@ -102,7 +101,8 @@ class OutlierDetectionStep(Step):
 
             # Setup outlier detection parameters
             pars = {
-                'weight_type': self.weight_type,
+                'weight_type': self.weight_type,  # for calling the resample step
+                'wht_type': self.weight_type,  # for calling the resample class directly
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,
@@ -162,10 +162,9 @@ class OutlierDetectionStep(Step):
                 return self.input_models
 
             self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
-            reffiles = {}
 
             # Set up outlier detection, then do detection
-            step = detection_step(self.input_models, reffiles=reffiles, **pars)
+            step = detection_step(self.input_models, asn_id=asn_id, **pars)
             step.do_detection()
 
             state = 'COMPLETE'
@@ -177,8 +176,11 @@ class OutlierDetectionStep(Step):
                     if not self.save_intermediate_results:
                         #  Remove unwanted files
                         crf_path = self.make_output_path(basepath=model.meta.filename)
-                        suffix = model.meta.filename.split(sep='_')[-1]
-                        outlr_file = model.meta.filename.replace(suffix, 'outlier_i2d.fits')
+                        if asn_id is None:
+                            suffix = model.meta.filename.split(sep='_')[-1]
+                            outlr_file = model.meta.filename.replace(suffix, 'outlier_i2d.fits')
+                        else:
+                            outlr_file = crf_path.replace('crf', 'outlier_i2d')
                         blot_path = crf_path.replace('crf', 'blot')
                         median_path = blot_path.replace('blot', 'median')
 

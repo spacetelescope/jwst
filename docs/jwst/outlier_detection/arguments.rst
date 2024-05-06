@@ -70,10 +70,6 @@ that control the behavior of the processing:
   that should be considered 'good' when building the weight mask. See
   DQ flag :ref:`dq_parameter_specification` for details.
 
-``--scale_detection`` (bool, default=False)
-  Specifies whether or not to rescale the individual input images
-  to match total signal when doing comparisons.
-
 ``--allowed_memory`` (float, default=None)
   Specifies the fractional amount of
   free memory to allow when creating the resampled image. If ``None``, the

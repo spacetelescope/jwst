@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -13,7 +13,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -33,13 +32,14 @@ dependencies = [
     "pyparsing>=2.2.1",
     "requests>=2.22",
     "scikit-image>=0.19",
-    "scipy>=1.6.0",
+    "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
-    "stcal>=1.6.0,<1.7.0",
-    "stdatamodels>=1.10.0,<1.11.0",
-    "stpipe>=0.5.0,<0.6.0",
+    "stcal>=1.7.0,<1.8.0",
+    "stdatamodels>=1.10.1,<1.11.0",
+    "stpipe>=0.5.2,<0.6.0",
     "stsci.image>=2.3.5",
-    "stsci.imagestats>=1.6.3",
+    "stsci.imagestats>=1.6.3,<1.7.0",
+    "synphot>=1.2",
     "tweakwcs>=0.8.6",
     "asdf-astropy>=0.3.0",
     "wiimatch>=0.2.1",
@@ -223,9 +223,6 @@ norecursedirs = [
     "build",
     "venv",
 ]
-asdf_schema_tests_enabled = true
-asdf_schema_validate_default = false
-asdf_schema_root = "jwst/transforms/resources/schemas jwst/datamodels/schemas"
 junit_family = "xunit2"
 inputs_root = "jwst-pipeline"
 results_root = "jwst-pipeline-results"
@@ -286,12 +283,12 @@ exclude = [
     ".eggs",
     "build",
 ]
-ignore = [
+lint.ignore = [
     "E741",
 ]
 line-length = 130
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
     "E402",
 ]
