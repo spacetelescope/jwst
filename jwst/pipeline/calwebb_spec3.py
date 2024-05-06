@@ -223,7 +223,7 @@ class Spec3Pipeline(Pipeline):
             # also the slit name (for NIRSpec fixed-slit only).
             if isinstance(source, tuple):
                 source_id, result = source
-                if result[0].meta.exposure.type == "NRS_FIXEDSLIT":
+                if exptype == "NRS_FIXEDSLIT":
                     slit_name = self._create_nrsfs_slit_name(result)
                     self.output_file = format_product(
                         output_file, source_id=source_id.lower(), slit_name=slit_name)
