@@ -96,6 +96,11 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+resample_spec
+-------------
+
+- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
 residual_fringe
 ---------------
 
