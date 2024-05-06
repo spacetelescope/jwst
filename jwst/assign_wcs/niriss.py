@@ -16,7 +16,7 @@ from stdatamodels.jwst.transforms.models import (NirissSOSSModel,
 
 from .util import (not_implemented_mode, subarray_transform,
                    velocity_correction, bounding_box_from_subarray,
-                   transform_bbox_from_shape)
+                   transform_bbox_from_shape, wl_order_identity)
 from . import pointing
 from ..lib.reffile_utils import find_row
 
@@ -312,6 +312,10 @@ def imaging_distortion(input_model, reference_files):
         distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
     else:
         distortion.bounding_box = bbox
+
+    distortion.inputs = ('x', 'y')
+    distortion.outputs = ('v2', 'v3')
+    distortion.name = "imaging_distortion"
     return distortion
 
 
@@ -471,7 +475,7 @@ def wfss(input_model, reference_files):
     world = image_pipeline.pop()[0]
     world.name = 'sky'
     for cframe, trans in image_pipeline:
-        trans = trans & (Identity(2))
+        trans = trans & (wl_order_identity())
         name = cframe.name
         cframe.name = name + 'spatial'
         spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=name)

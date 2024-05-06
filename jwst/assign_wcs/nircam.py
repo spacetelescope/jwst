@@ -14,7 +14,8 @@ from stdatamodels.jwst.transforms.models import (NIRCAMForwardRowGrismDispersion
 
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform, velocity_correction,
-                   transform_bbox_from_shape, bounding_box_from_subarray)
+                   transform_bbox_from_shape, bounding_box_from_subarray,
+                   wl_order_identity)
 from ..lib.reffile_utils import find_row
 
 
@@ -150,6 +151,10 @@ def imaging_distortion(input_model, reference_files):
         transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
     else:
         transform.bounding_box = bbox
+
+    transform.name = "imaging_distortion"
+    transform.inputs = ('x', 'y')
+    transform.outputs = ('v2', 'v3')
     return transform
 
 
@@ -259,40 +264,46 @@ def tsgrism(input_model, reference_files):
     setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
     setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
 
+    #wl_order_identity() = Identity(2)
+    #wl_order_identity().inputs = ('wavelength', 'order')
+    #wl_order_identity().outputs = ('wavelength', 'order')
+
     # x, y, order in goes to transform to full array location and order
     # get the shift to full frame coordinates
     sub_trans = subarray_transform(input_model)
     if sub_trans is not None:
         sub2direct = (sub_trans & Identity(1) | Mapping((0, 1, 0, 1, 2)) |
-                      (Identity(2) & xcenter & ycenter & Identity(1)) |
+                      (wl_order_identity() & xcenter & ycenter & Identity(1)) |
                       det2det)
     else:
         sub2direct = (Mapping((0, 1, 0, 1, 2)) |
-                      (Identity(2) & xcenter & ycenter & Identity(1)) |
+                      (wl_order_identity() & xcenter & ycenter & Identity(1)) |
                       det2det)
+    sub2direct.name = "grism2image"
+    sub2direct.inputs = ('x', 'y', 'order')
 
     # take us from full frame detector to v2v3
-    distortion = imaging_distortion(input_model, reference_files) & Identity(2)
+    distortion = imaging_distortion(input_model, reference_files) & wl_order_identity()
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
         v3_ref=input_model.meta.wcsinfo.v3_ref
-    ) & Identity(2)
+    ) & wl_order_identity()
 
     # v2v3 to the sky
     # remap the tel2sky inverse as well since we can feed it the values of
     # crval1, crval2 which correspond to crpix1, crpix2. This leaves
     # us with a calling structure:
     #  (x, y, order) <-> (wavelength, order)
-    tel2sky = pointing.v23tosky(input_model) & Identity(2)
+    tel2sky = pointing.v23tosky(input_model) & wl_order_identity()
     t2skyinverse = tel2sky.inverse
-    newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
+    newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & wl_order_identity() | t2skyinverse
     tel2sky.inverse = newinverse
 
     pipeline = [(frames['grism_detector'], sub2direct),
-                (frames['direct_image'], distortion),
+                (frames['detector'], distortion),
                 (frames['v2v3'], va_corr),
                 (frames['v2v3vacorr'], tel2sky),
                 (frames['world'], None)]
@@ -431,7 +442,7 @@ def wfss(input_model, reference_files):
     world = image_pipeline.pop()[0]
     world.name = 'sky'
     for cframe, trans in image_pipeline:
-        trans = trans & (Identity(2))
+        trans = trans & (wl_order_identity())
         name = cframe.name
         cframe.name = name + 'spatial'
         spatial_and_spectral = cf.CompositeFrame([cframe, spec],
@@ -456,7 +467,7 @@ def create_coord_frames():
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
     frames = {'grism_detector': gdetector,
-              'direct_image': cf.CompositeFrame([detector, spec], name='direct_image'),
+              'detector': cf.CompositeFrame([detector, spec], name='detector'),
               'v2v3': cf.CompositeFrame([v2v3_spatial, spec], name='v2v3'),
               'v2v3vacorr': cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr'),
               'world': cf.CompositeFrame([sky_frame, spec], name='world')

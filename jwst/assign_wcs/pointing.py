@@ -27,6 +27,8 @@ def _v23tosky(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, wrap_v2_at=180, wrap_lo
     m = ((Scale(1 / 3600) & Scale(1 / 3600)) | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
          | rot | CartesianToSpherical(wrap_lon_at=wrap_lon_at))
     m.name = 'v23tosky'
+    m.inputs = ('v2', 'v3')
+    m.outputs = ('ra', 'dec')
     return m
 
 
@@ -274,13 +276,21 @@ def dva_corr_model(va_scale, v2_ref, v3_ref):
         then `astropy.modeling.models.Identity` will be returned.
 
     """
+
     if va_scale is None or va_scale == 1:
-        return Identity(2)
+        va_corr = Identity(2)
+        va_corr.name = 'DVA_Correction'
+        va_corr.inputs = ('v2', 'v3')
+        va_corr.outputs = ('v2', 'v3')
+        return va_corr
 
     if va_scale <= 0:
         raise ValueError("'Velocity aberration scale must be a positive number.")
 
     va_corr = Scale(va_scale, name='dva_scale_v2') & Scale(va_scale, name='dva_scale_v3')
+    va_corr.name = 'DVA_Correction'
+    va_corr.inputs = ('v2', 'v3')
+    va_corr.outputs = ('v2', 'v3')
 
     if v2_ref is None:
         v2_ref = 0
@@ -289,6 +299,7 @@ def dva_corr_model(va_scale, v2_ref, v3_ref):
         v3_ref = 0
 
     if v2_ref == 0 and v3_ref == 0:
+
         return va_corr
 
     # NOTE: it is assumed that v2, v3 angles and va scale are small enough
@@ -298,5 +309,4 @@ def dva_corr_model(va_scale, v2_ref, v3_ref):
     v3_shift = (1 - va_scale) * v3_ref
 
     va_corr |= Shift(v2_shift, name='dva_v2_shift') & Shift(v3_shift, name='dva_v3_shift')
-    va_corr.name = 'DVA_Correction'
     return va_corr

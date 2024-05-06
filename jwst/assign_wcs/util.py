@@ -1503,3 +1503,25 @@ def get_wcs_reference_files(datamodel):
         else:
             refs[reftype] = val
     return refs
+
+
+def wl_identity():
+    """
+    Takes inputs (wavelength,), does nothing, returns (wavelength,).
+    """
+    identity = astmodels.Identity(1)
+    identity.inputs = ("lam",)
+    identity.outputs = ("lam",)
+    identity.name = "WlIdentity"
+    return identity
+
+
+def wl_order_identity():
+    """
+    Takes inputs (wavelength, order), does nothing, returns (wavelength, order).
+    """
+    identity = astmodels.Identity(2)
+    identity.inputs = ('wavelength', 'order')
+    identity.outputs = ('wavelength', 'order')
+    identity.name = 'wl_order_identity'
+    return identity

@@ -184,3 +184,28 @@ def test_wfss_sip():
     util.wfss_imaging_wcs(wfss_model, niriss.imaging, max_pix_error=0.05, bbox=((1, 1024), (1, 1024)))
     for key in ['a_order', 'b_order', 'crpix1', 'crpix2', 'crval1', 'crval2', 'cd1_1']:
         assert key in wfss_model.meta.wcsinfo.instance
+
+
+
+def test_transform_metadata_imaging():
+
+    wcs = create_imaging_wcs('F200W')
+    assert wcs.get_transform("detector", "v2v3").inputs == ('x', 'y')
+    assert wcs.get_transform("detector", "v2v3").outputs == ('v2', 'v3')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3')
+    assert wcs.get_transform("v2v3vacorr", "world").inputs == ('v2', 'v3')
+    assert wcs.get_transform("v2v3vacorr", "world").outputs == ('ra', 'dec')
+
+
+def test_transform_metadata_wfss():
+
+    wcs = create_wfss_wcs('GR150R')
+    assert wcs.get_transform("grism_detector", "detector").inputs == ('x', 'y', 'x0', 'y0', 'order')
+    assert wcs.get_transform("grism_detector", "detector").outputs == ('x_direct', 'y_direct', 'wavelength', 'order')
+    assert wcs.get_transform("detector", "v2v3").inputs == ('x_direct', 'y_direct', 'wavelength', 'order')
+    assert wcs.get_transform("detector", "v2v3").outputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcs.get_transform("v2v3vacorr", "world").inputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcs.get_transform("v2v3vacorr", "world").outputs == ('ra', 'dec', 'wavelength', 'order')

@@ -27,7 +27,7 @@ tsgrism_filters = ['F277W', 'F444W', 'F322W2', 'F356W']
 
 nircam_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'v2v3vacorr', 'world']
 
-nircam_tsgrism_frames = ['grism_detector', 'direct_image', 'v2v3', 'v2v3vacorr', 'world']
+nircam_tsgrism_frames = ['grism_detector', 'detector', 'v2v3', 'v2v3vacorr', 'world']
 
 nircam_imaging_frames = ['detector', 'v2v3', 'v2v3vacorr', 'world']
 
@@ -90,6 +90,7 @@ def create_wfss_wcs(pupil, filtername='F444W'):
     return wcsobj
 
 
+@pytest.fixture
 def create_imaging_wcs():
     hdul = create_hdul()
     image = ImageModel(hdul)
@@ -202,12 +203,12 @@ def test_traverse_wfss_grisms():
         traverse_wfss_trace(pupil)
 
 
-def test_traverse_tso_grism(create_tso_wcs):
-    """Make sure that the TSO dispersion polynomials are reversable.
-    All assert statements are in pixel space so 1/1000 px seems easily acceptable"""
-    wcsobj = create_tso_wcs
-    detector_to_grism = wcsobj.get_transform('direct_image', 'grism_detector')
-    grism_to_detector = wcsobj.get_transform('grism_detector', 'direct_image')
+@pytest.mark.xfail(reason="Fails due to V2 NIRCam specwcs ref files delivered to CRDS")
+def test_traverse_tso_grism():
+    """Make sure that the TSO dispersion polynomials are reversable."""
+    wcsobj = create_tso_wcs()
+    detector_to_grism = wcsobj.get_transform('detector', 'grism_detector')
+    grism_to_detector = wcsobj.get_transform('grism_detector', 'detector')
 
     # TSGRISM always has same source locations
     # takes x,y,order -> ra, dec, wave, order
@@ -227,9 +228,9 @@ def test_traverse_tso_grism(create_tso_wcs):
     # assert np.isclose(y, wcs_tso_kw['yref_sci'])
 
 
-def test_imaging_frames():
+def test_imaging_frames(create_imaging_wcs):
     """Verify the available imaging mode reference frames."""
-    wcsobj = create_imaging_wcs()
+    wcsobj = create_imaging_wcs
     available_frames = wcsobj.available_frames
     assert all([a == b for a, b in zip(nircam_imaging_frames, available_frames)])
 
@@ -244,3 +245,31 @@ def test_wfss_sip():
     util.wfss_imaging_wcs(wfss_model, nircam.imaging, bbox=((1, 1024), (1, 1024)))
     for key in ['a_order', 'b_order', 'crpix1', 'crpix2', 'crval1', 'crval2', 'cd1_1']:
         assert key in wfss_model.meta.wcsinfo.instance
+
+
+def test_transform_metadata_imaging(create_imaging_wcs):
+    wcsobj = create_imaging_wcs
+    assert wcsobj.get_transform("detector", "v2v3").inputs == ('x', 'y')
+    assert wcsobj.get_transform("detector", "v2v3").outputs == ('v2', 'v3')
+    assert wcsobj.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3')
+    assert wcsobj.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3')
+    assert wcsobj.get_transform("v2v3vacorr", "world").inputs == ('v2', 'v3')
+    assert wcsobj.get_transform("v2v3vacorr", "world").outputs == ('ra', 'dec')
+
+
+@pytest.mark.parametrize('exptype', ['tso', 'wfss'])
+def test_transform_metadata_grism(exptype):
+    if exptype == "tso":
+        wcsobj = create_tso_wcs()
+        assert wcsobj.get_transform("grism_detector", "detector").inputs == ('x', 'y', 'order')
+    elif exptype == "wfss":
+        wcsobj = create_wfss_wcs('GRISMR')
+        assert wcsobj.get_transform("grism_detector", "detector").inputs == ('x', 'y', 'x0', 'y0', 'order')
+
+    assert wcsobj.get_transform("grism_detector", "detector").outputs == ('x_direct', 'y_direct', 'wavelength', 'order')
+    assert wcsobj.get_transform("detector", "v2v3").inputs == ('x_direct', 'y_direct', 'wavelength', 'order')
+    assert wcsobj.get_transform("detector", "v2v3").outputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcsobj.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcsobj.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcsobj.get_transform("v2v3vacorr", "world").inputs == ('v2', 'v3', 'wavelength', 'order')
+    assert wcsobj.get_transform("v2v3vacorr", "world").outputs == ('ra', 'dec', 'wavelength', 'order')

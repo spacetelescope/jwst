@@ -2,6 +2,7 @@ import os.path
 import logging
 import numpy as np
 from astropy.modeling import models
+from astropy.modeling.models import Identity
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.io import fits
@@ -18,7 +19,8 @@ from stdatamodels.jwst.transforms.models import (MIRI_AB2Slice, IdealToV2V3)
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform,
                    velocity_correction, transform_bbox_from_shape,
-                   bounding_box_from_subarray)
+                   bounding_box_from_subarray,
+                   wl_identity)
 
 
 log = logging.getLogger(__name__)
@@ -151,6 +153,9 @@ def imaging_distortion(input_model, reference_files):
         distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
     else:
         distortion.bounding_box = bbox
+    distortion.inputs = ("x", "y")
+    distortion.outputs = ("v2", "v3")
+    distortion.name = "imaging_distortion"
     return distortion
 
 
@@ -195,14 +200,14 @@ def lrs(input_model, reference_files):
     # Create the transforms
     dettotel = lrs_distortion(input_model, reference_files)
     v2v3tosky = pointing.v23tosky(input_model)
-    teltosky = v2v3tosky & models.Identity(1)
+    teltosky = v2v3tosky & wl_identity()
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
         v3_ref=input_model.meta.wcsinfo.v3_ref
-    ) & models.Identity(1)
+    ) & wl_identity()
 
     # Put the transforms together into a single pipeline
     pipeline = [(detector, dettotel),
@@ -357,6 +362,10 @@ def lrs_distortion(input_model, reference_files):
     # Bounding box is the subarray bounding box, because we're assuming subarray coordinates passed in
     dettotel.bounding_box = bb_sub[::-1]
 
+    dettotel.name = "lrs_distortion"
+    dettotel.inputs = ("x", "y")
+    dettotel.outputs = ("v2", "v3", "lam")
+
     return dettotel
 
 def ifu(input_model, reference_files):
@@ -399,9 +408,9 @@ def ifu(input_model, reference_files):
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
         v3_ref=input_model.meta.wcsinfo.v3_ref
-    ) & models.Identity(1)
+    ) & wl_identity()
 
-    tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
+    tel2sky = pointing.v23tosky(input_model) & wl_identity()
 
     # Put the transforms together into a single transform
     det2abl.bounding_box = transform_bbox_from_shape(input_model.data.shape)
@@ -473,20 +482,25 @@ def detector_to_abl(input_model, reference_files):
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
         wr = dict(zip(f.waverange_selector, f.wavelengthrange))
 
+    det_labels = ('x', 'y')
+    abl_labels = ('alpha', 'beta', 'lam')
     ch_dict = {}
     for c in channel:
         cb = c + band
         mapper = MIRI_AB2Slice(bzero[cb], bdel[cb], c)
-        lm = selector.LabelMapper(inputs=('alpha', 'beta', 'lam'),
+        lm = selector.LabelMapper(inputs=abl_labels,
                                   mapper=mapper, inputs_mapping=models.Mapping((1,), n_inputs=3))
         ch_dict[tuple(wr[cb])] = lm
 
-    alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
+    alpha_beta_mapper = selector.LabelMapperRange(abl_labels, ch_dict,
                                                   models.Mapping((2,)))
     label_mapper.inverse = alpha_beta_mapper
 
-    det2alpha_beta = selector.RegionsSelector(('x', 'y'), ('alpha', 'beta', 'lam'),
+    det2alpha_beta = selector.RegionsSelector(det_labels, abl_labels,
                                               label_mapper=label_mapper, selector=transforms)
+    det2alpha_beta.name = "detector_to_alpha_beta"
+    det2alpha_beta.inputs = det_labels
+    det2alpha_beta.outputs = abl_labels
     return det2alpha_beta
 
 
@@ -536,13 +550,17 @@ def abl_to_v2v3l(input_model, reference_files):
         v23c = v23_spatial & ident1
         sel[ch] = v23c
 
-    wave_range_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), dict_mapper,
+    abl_labels = ('alpha', 'beta', 'lam')
+    v2v3_labels = ('v2', 'v3', 'lam')
+    wave_range_mapper = selector.LabelMapperRange(abl_labels, dict_mapper,
                                                   inputs_mapping=models.Mapping([2, ]))
     wave_range_mapper.inverse = wave_range_mapper.copy()
-    abl2v2v3l = selector.RegionsSelector(('alpha', 'beta', 'lam'), ('v2', 'v3', 'lam'),
+    abl2v2v3l = selector.RegionsSelector(abl_labels, v2v3_labels,
                                          label_mapper=wave_range_mapper,
                                          selector=sel)
-
+    abl2v2v3l.name = "alpha_beta_to_v2v3"
+    abl2v2v3l.inputs = abl_labels
+    abl2v2v3l.outputs = v2v3_labels
     return abl2v2v3l
 
 

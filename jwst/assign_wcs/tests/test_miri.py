@@ -11,6 +11,7 @@ from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
 
+import pytest
 from stdatamodels.jwst.datamodels import ImageModel, CubeModel
 
 from jwst.assign_wcs import miri
@@ -43,6 +44,27 @@ def create_hdul(detector, channel, band):
     phdu.header['time-obs'] = '8:59:37'
     phdu.header['date-obs'] = '2017-09-05'
     phdu.header['exp_type'] = 'MIR_MRS'
+    scihdu = fits.ImageHDU()
+    scihdu.header['EXTNAME'] = "SCI"
+    scihdu.header.update(wcs_kw)
+    hdul.append(phdu)
+    hdul.append(scihdu)
+    return hdul
+
+
+@pytest.fixture
+def create_hdul_lrs():
+    hdul = fits.HDUList()
+    phdu = fits.PrimaryHDU()
+    phdu.header['telescop'] = "JWST"
+    phdu.header['filename'] = "test"
+    phdu.header['instrume'] = 'MIRI'
+    phdu.header['detector'] = 'MIRIMAGE'
+    phdu.header['CHANNEL'] = '34'
+    phdu.header['BAND'] = 'SHORT'
+    phdu.header['time-obs'] = '8:59:37'
+    phdu.header['date-obs'] = '2017-09-05'
+    phdu.header['exp_type'] = 'MIR_LRS-FIXEDSLIT'
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"
     scihdu.header.update(wcs_kw)
@@ -162,6 +184,31 @@ def test_mrs_tso_bounding_box():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
     cube = create_datamodel_cube(hdul, data_shape=(3, 40, 50))
     assert_allclose(cube.meta.wcs.bounding_box, ((-.5, 49.5), (-.5, 39.5)))
+
+
+def test_transform_metadata_mrs():
+    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
+    wcs = create_datamodel(hdul).meta.wcs
+
+    assert wcs.get_transform("detector", "alpha_beta").inputs == ('x', 'y')
+    assert wcs.get_transform("detector", "alpha_beta").outputs == ('alpha', 'beta', 'lam')
+    assert wcs.get_transform("alpha_beta", "v2v3").inputs == ('alpha', 'beta', 'lam')
+    assert wcs.get_transform("alpha_beta", "v2v3").outputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3vacorr", "world").inputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3vacorr", "world").outputs == ('ra', 'dec', 'lam')
+
+
+def test_transform_metadata_lrs(create_hdul_lrs):
+    wcs = create_datamodel(create_hdul_lrs).meta.wcs
+
+    assert wcs.get_transform("detector", "v2v3").inputs == ('x', 'y')
+    assert wcs.get_transform("detector", "v2v3").outputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3vacorr", "world").inputs == ('v2', 'v3', 'lam')
+    assert wcs.get_transform("v2v3vacorr", "world").outputs == ('ra', 'dec', 'lam')
 
 
 # MRS test reference data
