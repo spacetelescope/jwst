@@ -59,6 +59,9 @@ flat_field
 - Update the flatfield code for NIRSpec IFU data to ensure that SCI=ERR=NaN and
   DQ has the DO_NOT_USE flag set outside the footprint of the IFU slices [#8385]
 
+- Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
+  DO_NOT_USE flag is set in the DQ array. [#8463]
+
 general
 -------
 
