@@ -652,25 +652,27 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         # How many shutters in the slitlet are labeled as "main" or "primary"?
         n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
 
-        # Check for fixed slit
-        try:
-            # TODO: confirm default value for true MSA slitlets
-            is_fs = [x['fixed_slit'] != 'NONE' for x in slitlets_sid]
-        except (IndexError, ValueError, KeyError):
-            # May be old-style MSA file without a fixed_slit column
-            is_fs = [False] * len(slitlets_sid)
+        # Check for fixed slit sources defined in the MSA file
+        is_fs = [False] * len(slitlets_sid)
+        for i, slitlet in enumerate(slitlets_sid):
+            try:
+                if (slitlet['fixed_slit'] in FIXED_SLIT_NUMS.keys()
+                        and slitlet['fixed_slit'] != 'NONE'):
+                    is_fs[i] = True
+            except (IndexError, ValueError, KeyError):
+                # May be old-style MSA file without a fixed_slit column
+                pass
 
         # In the next part we need to calculate, find, determine 5 things:
         #    quadrant,  xcen, ycen,  ymin, ymax
 
         # First check for a fixed slit
-        # TODO: check on how to handle 'primary' column
         shutter_id = None
-        if all(is_fs) and len(slitlets_sid) == 1:  # and n_main_shutter == 1:
-            # One fixed slit open for the source   #, and it is marked 'primary'
+        if all(is_fs) and len(slitlets_sid) == 1 and n_main_shutter == 1:
+            # One fixed slit open for the source and it is marked 'primary'
             slitlet = slitlets_sid[0]
             slit_name = slitlet['fixed_slit']
-            log.debug(f'Found fixed slit {slit_name}')
+            log.debug(f'Found fixed slit {slit_name} with primary target')
 
             # use standard number for fixed slit shutter id
             slitlet_id = slit_name
@@ -683,22 +685,20 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             ymax = yhigh
 
             # source position and id
-            # TODO: check if source position is offset by 0.5
             source_id = slitlet['source_id']
             source_xpos = slitlet['estimated_source_in_shutter_x']
             source_ypos = slitlet['estimated_source_in_shutter_y']
 
         elif any(is_fs):
-            # Unsupported fixed slit configuration
-            message = ("For slitlet_id = {}, metadata_id = {}, "
-                       "dither_index = {}".format(
-                slitlet_id, msa_metadata_id, dither_position))
-            log.warning(message)
-            message = ("MSA configuration file has an unsupported "
-                       "fixed slit configuration")
-            log.warning(message)
-            msa_file.close()
-            raise MSAFileError(message)
+            # Ignore any fixed slit configuration not recognized
+            # as a primary source
+            message = (f"For slitlet_id = {slitlet_id}, "
+                       f"metadata_id = {msa_metadata_id}, "
+                       f"dither_index = {dither_position}, "
+                       f"ignoring non-primary fixed slit "
+                       f"{slitlets_sid[0]['fixed_slit']}")
+            log.debug(message)
+            continue
 
         # Now check for regular MSA slitlets
         elif n_main_shutter == 0:
