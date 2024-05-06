@@ -548,19 +548,13 @@ class Spec2Pipeline(Pipeline):
         """
         calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
-        calibrated = self.master_background_mos(calibrated)
 
         # Split the datamodel into 2 pieces: one with MOS slits and
         # the other with FS slits
         calib_mos = datamodels.MultiSlitModel()
         calib_fss = datamodels.MultiSlitModel()
-        primary_fs = None
         for slit in calibrated.slits:
             if slit.quadrant == 5:
-                # Take the primary fixed slit from the first
-                # one encountered
-                if primary_fs is None:
-                    primary_fs = slit.name
                 slit.meta.exposure.type = "NRS_FIXEDSLIT"
                 calib_fss.slits.append(slit)
             else:
@@ -569,6 +563,7 @@ class Spec2Pipeline(Pipeline):
         # First process MOS slits through all remaining steps
         calib_mos.update(calibrated)
         if len(calib_mos.slits) > 0:
+            calib_mos = self.master_background_mos(calib_mos)
             calib_mos = self.wavecorr(calib_mos)
             calib_mos = self.flat_field(calib_mos)
             calib_mos = self.pathloss(calib_mos)
@@ -579,7 +574,6 @@ class Spec2Pipeline(Pipeline):
         if len(calib_fss.slits) > 0:
             calib_fss.update(calibrated)
             calib_fss.meta.exposure.type = "NRS_FIXEDSLIT"
-            calib_fss.meta.instrument.fixed_slit = primary_fs
 
             calib_fss = self.wavecorr(calib_fss)
             calib_fss = self.flat_field(calib_fss)

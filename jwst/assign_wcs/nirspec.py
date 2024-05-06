@@ -668,8 +668,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
         # First check for a fixed slit
         shutter_id = None
-        if all(is_fs) and len(slitlets_sid) == 1 and n_main_shutter == 1:
-            # One fixed slit open for the source and it is marked 'primary'
+        if all(is_fs) and len(slitlets_sid) == 1:
+            # One fixed slit open for the source
             slitlet = slitlets_sid[0]
             slit_name = slitlet['fixed_slit']
             log.debug(f'Found fixed slit {slit_name} with primary target')
@@ -685,20 +685,31 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             ymax = yhigh
 
             # source position and id
-            source_id = slitlet['source_id']
-            source_xpos = slitlet['estimated_source_in_shutter_x']
-            source_ypos = slitlet['estimated_source_in_shutter_y']
+            if n_main_shutter == 1:
+                # source is marked primary
+                source_id = slitlet['source_id']
+                source_xpos = slitlet['estimated_source_in_shutter_x']
+                source_ypos = slitlet['estimated_source_in_shutter_y']
+            else:
+                # source is background only
+                source_id = _get_bkg_source_id(bkg_counter, max_source_id)
+                source_xpos = 0.5
+                source_ypos = 0.5
+                log.info(f'Slitlet_id {slitlet_id} is background only; '
+                         f'assigned source_id = {source_id}')
+                bkg_counter += 1
 
         elif any(is_fs):
-            # Ignore any fixed slit configuration not recognized
-            # as a primary source
-            message = (f"For slitlet_id = {slitlet_id}, "
-                       f"metadata_id = {msa_metadata_id}, "
-                       f"dither_index = {dither_position}, "
-                       f"ignoring non-primary fixed slit "
-                       f"{slitlets_sid[0]['fixed_slit']}")
-            log.debug(message)
-            continue
+            # Unsupported fixed slit configuration
+            message = ("For slitlet_id = {}, metadata_id = {}, "
+                       "dither_index = {}".format(
+                slitlet_id, msa_metadata_id, dither_position))
+            log.warning(message)
+            message = ("MSA configuration file has an unsupported "
+                       "fixed slit configuration")
+            log.warning(message)
+            msa_file.close()
+            raise MSAFileError(message)
 
         # Now check for regular MSA slitlets
         elif n_main_shutter == 0:
