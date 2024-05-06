@@ -131,7 +131,8 @@ def test_traverse_wfss_grisms():
         traverse_wfss_trace(f)
 
 
-def test_filter_rotation(theta=[-0.1, 0, 0.5, 20]):
+# 1.585 is 10x the angular repeatability of the niriss pupil wheel
+def test_filter_rotation(theta=[-0.1, 0, 0.5, 1.585]):
     """Make sure that the filter rotation is reversable."""
     for f in niriss_grisms:
         wcsobj = create_wfss_wcs(f)
