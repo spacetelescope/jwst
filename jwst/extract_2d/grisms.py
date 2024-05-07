@@ -136,8 +136,7 @@ def extract_tso_object(input_model,
 
         # Create the order bounding box
         distortion = subwcs.get_transform("v2v3", "direct_image")
-        source_xpos, _ = compute_tso_offset_center(input_model, distortion)
-        #source_xpos = source_xpos - 1 # remove FITS 1-indexed offset
+        source_xpos, _ = compute_tso_offset_center(input_model, distortion) # 1-indexing already handled
         source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove FITS 1-indexed offset
         transform = input_model.meta.wcs.get_transform('direct_image', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
@@ -590,9 +589,10 @@ def compute_tso_wavelength_array(slit):
 def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel) -> tuple[float, float]:
     """
     In the case that an Offset Special Requirement is requested in the APT,
-    the source is no longer at the pointing reference.
-    The dither.x_offset and dither.y_offset values encode the offset,
-    and it needs to be translated from Ideal to detector coordinates.
+    the source is no longer at the aperture reference point.
+    The dither.x_offset and dither.y_offset values encode the offset
+    in units of arcseconds. They need to be translated from Ideal to 
+    detector coordinates and into pixel units.
 
     Parameters
     ----------
@@ -605,6 +605,11 @@ def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel
     -------
     xc, yc : tuple
         The x and y center of the image in direct image coordinates
+
+    Notes
+    -----
+    The wavelength is not used for the distortion calculation between
+    v2v3 and direct image coordinates, so this can be hardcoded to NaN.
     """
 
     idltov23 = IdealToV2V3(input_model.meta.wcsinfo.v3yangle,
@@ -612,7 +617,7 @@ def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel
                 input_model.meta.wcsinfo.v3_ref,
                 input_model.meta.wcsinfo.vparity)
     v2_offset, v3_offset = idltov23(input_model.meta.dither.x_offset, input_model.meta.dither.y_offset)
-    wavelength = float(input_model.meta.instrument.filter[1:4])/100 
+    wavelength = np.nan
     xc, yc, _, _ = distortion(v2_offset, v3_offset, wavelength, 1)
 
     return xc, yc

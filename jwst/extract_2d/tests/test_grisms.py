@@ -98,7 +98,7 @@ def create_hdul(detector='NRCALONG', channel='LONG', module='A',
     phdu.header['SUBSIZE2'] = 2048
     phdu.header['SUBSTRT1'] = 1
     phdu.header['SUBSTRT2'] = 1
-    phdu.header['XOFFSET'] = 5.0 #random offset for testing
+    phdu.header['XOFFSET'] = 5.0  # random offset for testing
     phdu.header['YOFFSET'] = 1.45
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"
