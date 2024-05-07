@@ -1,0 +1,1180 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.5.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: The ASDF Developers, homepage: 'http://github.com/asdf-format/asdf',
+  name: asdf, version: 3.1.1.dev2+g15e830d}
+history:
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/astronomy/gwcs/extensions/gwcs-1.2.0
+    software: !core/software-1.0.0 {name: gwcs, version: 0.21.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/astronomy/coordinates/extensions/coordinates-1.0.0
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.5.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/core/extensions/core-1.5.0
+    software: !core/software-1.0.0 {name: asdf, version: 3.1.1.dev2+g15e830d}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/transform/extensions/transform-1.5.0
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.5.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf_astropy._manifest.CompoundManifestExtension
+    extension_uri: asdf://astropy.org/core/extensions/core-1.5.0
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.5.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://stsci.edu/jwst_pipeline/extensions/jwst_transforms-1.0.0
+    software: !core/software-1.0.0 {name: stdatamodels, version: 1.10.1}
+wcs: !<tag:stsci.edu:gwcs/wcs-1.2.0>
+  name: ''
+  pixel_shape: null
+  steps:
+  - !<tag:stsci.edu:gwcs/step-1.1.0>
+    frame: !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+      axes_names: [x_grism, y_grism]
+      axes_order: [0, 1]
+      axis_physical_types: ['custom:x_grism', 'custom:y_grism']
+      name: grism_detector
+      unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
+    transform: !transform/compose-1.2.0
+      bounding_box: !transform/property/bounding_box-1.0.0
+        ignore: []
+        intervals:
+          x0: [-0.5, 319.5]
+          x1: [-0.5, 340.5]
+        order: C
+      forward:
+      - !transform/compose-1.2.0
+        forward:
+        - !transform/remap_axes-1.3.0
+          inputs: [x0, x1]
+          mapping: [0, 1, 0, 0, 0]
+          outputs: [x0, x1, x2, x3, x4]
+        - !transform/concatenate-1.2.0
+          forward:
+          - !transform/concatenate-1.2.0
+            forward:
+            - !transform/concatenate-1.2.0
+              forward:
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/shift-1.2.0
+                  inputs: [x]
+                  offset: 122.0
+                  outputs: [y]
+                - !transform/shift-1.2.0
+                  inputs: [x]
+                  offset: 1031.0
+                  outputs: [y]
+                inputs: [x0, x1]
+                outputs: [y0, y1]
+              - !transform/constant-1.4.0
+                dimensions: 1
+                inputs: [x]
+                inverse: !transform/constant-1.4.0
+                  dimensions: 1
+                  inputs: [x]
+                  outputs: [y]
+                  value: 482.26565028841355
+                outputs: [y]
+                value: 482.26565028841355
+              inputs: [x0, x1, x]
+              outputs: [y0, y1, y]
+            - !transform/constant-1.4.0
+              dimensions: 1
+              inputs: [x]
+              inverse: !transform/constant-1.4.0
+                dimensions: 1
+                inputs: [x]
+                outputs: [y]
+                value: 1205.025009833007
+              outputs: [y]
+              value: 1205.025009833007
+            inputs: [x00, x10, x0, x1]
+            outputs: [y00, y10, y0, y1]
+          - !transform/constant-1.4.0
+            dimensions: 1
+            inputs: [x]
+            inverse: !transform/constant-1.4.0
+              dimensions: 1
+              inputs: [x]
+              outputs: [y]
+              value: 1.0
+            outputs: [y]
+            value: 1.0
+          inputs: [x00, x10, x0, x1, x]
+          outputs: [y00, y10, y0, y1, y]
+        inputs: [x0, x1]
+        outputs: [y00, y10, y0, y1, y]
+      - !transform/compose-1.2.0
+        forward:
+        - !transform/compose-1.2.0
+          forward:
+          - !<tag:stsci.edu:jwst_pipeline/niriss_grism_dispersion-1.0.0>
+            inputs: [x, y, x0, y0, order]
+            inverse: !<tag:stsci.edu:jwst_pipeline/niriss_grism_dispersion-1.0.0>
+              inputs: [x, y, wavelength, order]
+              lmodels:
+              - !transform/polynomial-1.2.0
+                coefficients: !core/ndarray-1.0.0
+                  source: 35
+                  datatype: float64
+                  byteorder: little
+                  shape: [2]
+                domain: [-1, 1]
+                inputs: [x]
+                outputs: [y]
+                window: [-1, 1]
+              - !transform/polynomial-1.2.0
+                coefficients: !core/ndarray-1.0.0
+                  source: 36
+                  datatype: float64
+                  byteorder: little
+                  shape: [2]
+                domain: [-1, 1]
+                inputs: [x]
+                outputs: [y]
+                window: [-1, 1]
+              - !transform/polynomial-1.2.0
+                coefficients: !core/ndarray-1.0.0
+                  source: 37
+                  datatype: float64
+                  byteorder: little
+                  shape: [2]
+                domain: [-1, 1]
+                inputs: [x]
+                outputs: [y]
+                window: [-1, 1]
+              - !transform/polynomial-1.2.0
+                coefficients: !core/ndarray-1.0.0
+                  source: 38
+                  datatype: float64
+                  byteorder: little
+                  shape: [2]
+                domain: [-1, 1]
+                inputs: [x]
+                outputs: [y]
+                window: [-1, 1]
+              - !transform/polynomial-1.2.0
+                coefficients: !core/ndarray-1.0.0
+                  source: 39
+                  datatype: float64
+                  byteorder: little
+                  shape: [2]
+                domain: [-1, 1]
+                inputs: [x]
+                outputs: [y]
+                window: [-1, 1]
+              model_type: NIRISSBackwardGrismDispersion
+              name: niriss_backward_grism_dispersion
+              orders: [1, 2, 3, -1, 0]
+              outputs: [x, y, x0, y0, order]
+              theta: 0.006000000000653927
+              xmodels:
+              - - &id001 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 0
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id002 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 1
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id003 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 2
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id004 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 3
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id005 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 4
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id006 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 5
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id007 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 6
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id008 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 7
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id009 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 8
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id010 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 9
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id011 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 10
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id012 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 11
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id013 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 12
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id014 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 13
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id015 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 14
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              ymodels:
+              - - &id016 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 15
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id017 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 16
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id018 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 17
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id019 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 18
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id020 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 19
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id021 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 20
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id022 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 21
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id023 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 22
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id024 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 23
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id025 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 24
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id026 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 25
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id027 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 26
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+              - - &id028 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 27
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id029 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 28
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - &id030 !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 29
+                    datatype: float64
+                    byteorder: little
+                    shape: [3, 3]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+            lmodels:
+            - !transform/polynomial-1.2.0
+              coefficients: !core/ndarray-1.0.0
+                source: 30
+                datatype: float64
+                byteorder: little
+                shape: [2]
+              domain: [-1, 1]
+              inputs: [x]
+              outputs: [y]
+              window: [-1, 1]
+            - !transform/polynomial-1.2.0
+              coefficients: !core/ndarray-1.0.0
+                source: 31
+                datatype: float64
+                byteorder: little
+                shape: [2]
+              domain: [-1, 1]
+              inputs: [x]
+              outputs: [y]
+              window: [-1, 1]
+            - !transform/polynomial-1.2.0
+              coefficients: !core/ndarray-1.0.0
+                source: 32
+                datatype: float64
+                byteorder: little
+                shape: [2]
+              domain: [-1, 1]
+              inputs: [x]
+              outputs: [y]
+              window: [-1, 1]
+            - !transform/polynomial-1.2.0
+              coefficients: !core/ndarray-1.0.0
+                source: 33
+                datatype: float64
+                byteorder: little
+                shape: [2]
+              domain: [-1, 1]
+              inputs: [x]
+              outputs: [y]
+              window: [-1, 1]
+            - !transform/polynomial-1.2.0
+              coefficients: !core/ndarray-1.0.0
+                source: 34
+                datatype: float64
+                byteorder: little
+                shape: [2]
+              domain: [-1, 1]
+              inputs: [x]
+              outputs: [y]
+              window: [-1, 1]
+            model_type: NIRISSForwardRowGrismDispersion
+            name: niriss_forward_row_grism_dispersion
+            orders: [1, 2, 3, -1, 0]
+            outputs: [x, y, wavelength, order]
+            theta: -0.006000000000653927
+            xmodels:
+            - - *id001
+              - *id002
+              - *id003
+            - - *id004
+              - *id005
+              - *id006
+            - - *id007
+              - *id008
+              - *id009
+            - - *id010
+              - *id011
+              - *id012
+            - - *id013
+              - *id014
+              - *id015
+            ymodels:
+            - - *id016
+              - *id017
+              - *id018
+            - - *id019
+              - *id020
+              - *id021
+            - - *id022
+              - *id023
+              - *id024
+            - - *id025
+              - *id026
+              - *id027
+            - - *id028
+              - *id029
+              - *id030
+          - !transform/remap_axes-1.3.0
+            inputs: [x0, x1, x2, x3]
+            mapping: [0, 1, 2, 3]
+            outputs: [x0, x1, x2, x3]
+          inputs: [x, y, x0, y0, order]
+          outputs: [x0, x1, x2, x3]
+        - !transform/concatenate-1.2.0
+          forward:
+          - !transform/concatenate-1.2.0
+            forward:
+            - !transform/identity-1.2.0
+              inputs: [x0, x1]
+              n_dims: 2
+              outputs: [x0, x1]
+            - !transform/multiply-1.2.0
+              forward:
+              - !transform/identity-1.2.0
+                inputs: [x0]
+                outputs: [x0]
+              - !transform/constant-1.4.0
+                dimensions: 1
+                inputs: [x]
+                name: velocity_correction
+                outputs: [y]
+                value: 0.99999381609348
+              inputs: [x0]
+              inverse: !transform/divide-1.2.0
+                forward:
+                - !transform/identity-1.2.0
+                  inputs: [x0]
+                  outputs: [x0]
+                - !transform/constant-1.4.0
+                  dimensions: 1
+                  inputs: [x]
+                  name: inv_vel_correction
+                  outputs: [y]
+                  value: 0.99999381609348
+                inputs: [x0]
+                outputs: [x0]
+              outputs: [x0]
+            inputs: [x00, x10, x01]
+            outputs: [x00, x10, x01]
+          - !transform/identity-1.2.0
+            inputs: [x0]
+            outputs: [x0]
+          inputs: [x00, x10, x01, x0]
+          outputs: [x00, x10, x01, x0]
+        inputs: [x, y, x0, y0, order]
+        outputs: [x00, x10, x01, x0]
+      inputs: [x0, x1]
+      outputs: [x00, x10, x01, x0]
+  - !<tag:stsci.edu:gwcs/step-1.1.0>
+    frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+      frames:
+      - !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+        axes_names: [x, y]
+        axes_order: [0, 1]
+        axis_physical_types: ['custom:x', 'custom:y']
+        name: detectorspatial
+        unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
+      - &id033 !<tag:stsci.edu:gwcs/spectral_frame-1.0.0>
+        axes_names: [wavelength]
+        axes_order: [2]
+        axis_physical_types: [em.wl]
+        name: spectral
+        unit: [!unit/unit-1.0.0 um]
+      name: detector
+    transform: !transform/concatenate-1.2.0
+      forward:
+      - !transform/compose-1.2.0
+        bounding_box: !transform/property/bounding_box-1.0.0
+          ignore: []
+          intervals:
+            x0: [-0.5, 2047.5]
+            x1: [-0.5, 2047.5]
+          order: C
+        forward:
+        - !transform/concatenate-1.2.0
+          forward:
+          - !transform/shift-1.2.0
+            inputs: [x]
+            offset: 2.119
+            outputs: [y]
+          - !transform/shift-1.2.0
+            inputs: [x]
+            offset: -1.0476
+            outputs: [y]
+          inputs: [x0, x1]
+          outputs: [y0, y1]
+        - !transform/compose-1.2.0
+          forward:
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/shift-1.2.0
+                          inputs: [x]
+                          offset: -1023.5
+                          outputs: [y]
+                        - !transform/shift-1.2.0
+                          inputs: [x]
+                          offset: -1023.5
+                          outputs: [y]
+                        inputs: [x0, x1]
+                        outputs: [y0, y1]
+                      - &id031 !transform/remap_axes-1.3.0
+                        inputs: [x0, x1]
+                        inverse: !transform/identity-1.2.0
+                          inputs: [x0, x1]
+                          n_dims: 2
+                          outputs: [x0, x1]
+                        mapping: [0, 1, 0, 1]
+                        outputs: [x0, x1, x2, x3]
+                      inputs: [x0, x1]
+                      outputs: [x0, x1, x2, x3]
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/polynomial-1.2.0
+                        coefficients: !core/ndarray-1.0.0
+                          source: 40
+                          datatype: float64
+                          byteorder: little
+                          shape: [6, 6]
+                        domain:
+                        - [-1, 1]
+                        - [-1, 1]
+                        inputs: [x, y]
+                        outputs: [z]
+                        window:
+                        - [-1, 1]
+                        - [-1, 1]
+                      - !transform/polynomial-1.2.0
+                        coefficients: !core/ndarray-1.0.0
+                          source: 41
+                          datatype: float64
+                          byteorder: little
+                          shape: [6, 6]
+                        domain:
+                        - [-1, 1]
+                        - [-1, 1]
+                        inputs: [x, y]
+                        outputs: [z]
+                        window:
+                        - [-1, 1]
+                        - [-1, 1]
+                      inputs: [x0, y0, x1, y1]
+                      inverse: !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 42
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - [-1, 1]
+                          - [-1, 1]
+                          inputs: [x, y]
+                          outputs: [z]
+                          window:
+                          - [-1, 1]
+                          - [-1, 1]
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 43
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - [-1, 1]
+                          - [-1, 1]
+                          inputs: [x, y]
+                          outputs: [z]
+                          window:
+                          - [-1, 1]
+                          - [-1, 1]
+                        inputs: [x0, y0, x1, y1]
+                        outputs: [z0, z1]
+                      outputs: [z0, z1]
+                    inputs: [x0, x1]
+                    outputs: [z0, z1]
+                  - &id032 !transform/identity-1.2.0
+                    inputs: [x0, x1]
+                    inverse: !transform/remap_axes-1.3.0
+                      inputs: [x0, x1]
+                      mapping: [0, 1, 0, 1]
+                      outputs: [x0, x1, x2, x3]
+                    n_dims: 2
+                    outputs: [x0, x1]
+                  inputs: [x0, x1]
+                  outputs: [x0, x1]
+                - *id031
+                inputs: [x0, x1]
+                outputs: [x0, x1, x2, x3]
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 44
+                    datatype: float64
+                    byteorder: little
+                    shape: [2, 2]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                - !transform/polynomial-1.2.0
+                  coefficients: !core/ndarray-1.0.0
+                    source: 45
+                    datatype: float64
+                    byteorder: little
+                    shape: [2, 2]
+                  domain:
+                  - [-1, 1]
+                  - [-1, 1]
+                  inputs: [x, y]
+                  outputs: [z]
+                  window:
+                  - [-1, 1]
+                  - [-1, 1]
+                inputs: [x0, y0, x1, y1]
+                inverse: !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/polynomial-1.2.0
+                    coefficients: !core/ndarray-1.0.0
+                      source: 46
+                      datatype: float64
+                      byteorder: little
+                      shape: [2, 2]
+                    domain:
+                    - [-1, 1]
+                    - [-1, 1]
+                    inputs: [x, y]
+                    outputs: [z]
+                    window:
+                    - [-1, 1]
+                    - [-1, 1]
+                  - !transform/polynomial-1.2.0
+                    coefficients: !core/ndarray-1.0.0
+                      source: 47
+                      datatype: float64
+                      byteorder: little
+                      shape: [2, 2]
+                    domain:
+                    - [-1, 1]
+                    - [-1, 1]
+                    inputs: [x, y]
+                    outputs: [z]
+                    window:
+                    - [-1, 1]
+                    - [-1, 1]
+                  inputs: [x0, y0, x1, y1]
+                  outputs: [z0, z1]
+                outputs: [z0, z1]
+              inputs: [x0, x1]
+              outputs: [z0, z1]
+            - *id032
+            inputs: [x0, x1]
+            outputs: [x0, x1]
+          - !transform/concatenate-1.2.0
+            forward:
+            - !transform/shift-1.2.0
+              inputs: [x]
+              offset: -291.141
+              outputs: [y]
+            - !transform/shift-1.2.0
+              inputs: [x]
+              offset: -698.015
+              outputs: [y]
+            inputs: [x0, x1]
+            outputs: [y0, y1]
+          inputs: [x0, x1]
+          outputs: [y0, y1]
+        inputs: [x0, x1]
+        outputs: [y0, y1]
+      - !transform/identity-1.2.0
+        inputs: [x0, x1]
+        n_dims: 2
+        outputs: [x0, x1]
+      inputs: [x00, x10, x01, x11]
+      outputs: [y0, y1, x0, x1]
+  - !<tag:stsci.edu:gwcs/step-1.1.0>
+    frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+      frames:
+      - !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+        axes_names: [v2, v3]
+        axes_order: [0, 1]
+        axis_physical_types: ['custom:v2', 'custom:v3']
+        name: v2v3spatial
+        unit: [!unit/unit-1.0.0 arcsec, !unit/unit-1.0.0 arcsec]
+      - *id033
+      name: v2v3
+    transform: !transform/concatenate-1.2.0
+      forward:
+      - !transform/compose-1.2.0
+        forward:
+        - !transform/concatenate-1.2.0
+          forward:
+          - !transform/scale-1.2.0
+            factor: 0.9999939001894596
+            inputs: [x]
+            name: dva_scale_v2
+            outputs: [y]
+          - !transform/scale-1.2.0
+            factor: 0.9999939001894596
+            inputs: [x]
+            name: dva_scale_v3
+            outputs: [y]
+          inputs: [x0, x1]
+          outputs: [y0, y1]
+        - !transform/concatenate-1.2.0
+          forward:
+          - !transform/shift-1.2.0
+            inputs: [x]
+            name: dva_v2_shift
+            offset: -0.0017759049405570732
+            outputs: [y]
+          - !transform/shift-1.2.0
+            inputs: [x]
+            name: dva_v3_shift
+            offset: -0.004257759254392014
+            outputs: [y]
+          inputs: [x0, x1]
+          outputs: [y0, y1]
+        inputs: [x0, x1]
+        name: DVA_Correction
+        outputs: [y0, y1]
+      - !transform/identity-1.2.0
+        inputs: [x0, x1]
+        n_dims: 2
+        outputs: [x0, x1]
+      inputs: [x00, x10, x01, x11]
+      outputs: [y0, y1, x0, x1]
+  - !<tag:stsci.edu:gwcs/step-1.1.0>
+    frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+      frames:
+      - !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+        axes_names: [v2, v3]
+        axes_order: [0, 1]
+        axis_physical_types: ['custom:v2', 'custom:v3']
+        name: v2v3vacorrspatial
+        unit: [!unit/unit-1.0.0 arcsec, !unit/unit-1.0.0 arcsec]
+      - *id033
+      name: v2v3vacorr
+    transform: !transform/concatenate-1.2.0
+      forward:
+      - !transform/compose-1.2.0
+        forward:
+        - !transform/compose-1.2.0
+          forward:
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/concatenate-1.2.0
+              forward:
+              - !transform/scale-1.2.0
+                factor: 0.0002777777777777778
+                inputs: [x]
+                outputs: [y]
+              - !transform/scale-1.2.0
+                factor: 0.0002777777777777778
+                inputs: [x]
+                outputs: [y]
+              inputs: [x0, x1]
+              outputs: [y0, y1]
+            - !<tag:stsci.edu:gwcs/spherical_cartesian-1.1.0>
+              inputs: [lon, lat]
+              outputs: [x, y, z]
+              transform_type: spherical_to_cartesian
+              wrap_lon_at: 180
+            inputs: [x0, x1]
+            outputs: [x, y, z]
+          - !transform/rotate_sequence_3d-1.0.0
+            angles: [-0.0808725, 0.19389305555555555, 196.1037680531535, 65.83768326569226,
+              -260.82488865179715]
+            axes_order: zyxyz
+            inputs: [x, y, z]
+            outputs: [x, y, z]
+            rotation_type: cartesian
+          inputs: [x0, x1]
+          outputs: [x, y, z]
+        - !<tag:stsci.edu:gwcs/spherical_cartesian-1.1.0>
+          inputs: [x, y, z]
+          outputs: [lon, lat]
+          transform_type: cartesian_to_spherical
+          wrap_lon_at: 360
+        inputs: [x0, x1]
+        name: v23tosky
+        outputs: [lon, lat]
+      - !transform/identity-1.2.0
+        inputs: [x0, x1]
+        n_dims: 2
+        outputs: [x0, x1]
+      inputs: [x00, x10, x01, x11]
+      outputs: [lon, lat, x0, x1]
+  - !<tag:stsci.edu:gwcs/step-1.1.0>
+    frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+      frames:
+      - !<tag:stsci.edu:gwcs/celestial_frame-1.0.0>
+        axes_names: [lon, lat]
+        axes_order: [0, 1]
+        axis_physical_types: [pos.eq.ra, pos.eq.dec]
+        name: sky
+        reference_frame: !<tag:astropy.org:astropy/coordinates/frames/icrs-1.1.0>
+          frame_attributes: {}
+        unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
+      - *id033
+      name: world
+    transform: null
+...
+”BLK 0               H       H       H∞_œnH»¬ÿ‰¢Ld–ÓcŸ=yåO@ÕÓuµâQ?*úüŒ˛åöæ,U—Õpfø=)–c{Ôå>        uF.ÏZµ>                ”BLK 0               H       H       HÔ.ˆ+ï`1ÀõXMV‰ÒüOjMt¿´ûø¯¶sø·ˇ+Üiñß> ≥D«rr?“‡”bæì•>        J˝ÖπÚ≈æ                ”BLK 0               H       H       HóÏÍZƒ¨Fûıı$}OëX
+7œ«Î“?=Ó	AÔŒH?VßÆS toæuf%'ø∑\øtƒƒqÒÛ°æ        ‹ôÀòÁZ≤>                ”BLK 0               H       H       Hx∏"˘¸~q'o‡F˚—'k‘C4⁄V¿<ù±Ã˜‹-ø•Êì™•;©æﬁQTüÎc?Mébî∂á>        òÍ˛º∑†øæ                ”BLK 0               H       H       H˘8ﬁ0‡$z›ó˛YxJπ™SD˙ÌÎ@PÑ¿sÎjxƒ ø’û∞⁄l¶>Eap˝V}ø+éÕˇ¿ß√æ        »â∏
+	€>                ”BLK 0               H       H       H“è9Ê˘◊8ÛVÿIÄ„iòk—¥-˛ø«Skn@‹q?Á,∞z√æDÓ¯L.z?≠Gà√Â:¨æ        Â˘¯#œæ                ”BLK 0               H       H       HÄ≤`‘l^vÕCq`rÚÛëàc]‹FÁj¿àî∞„ë?°áÁa;›æo¿BAÑ∫øû2Ê∫æ        ‘£º]éö?                ”BLK 0               H       H       H˙–Ç£ﬂÔá#Ù`®xú#—ÛDãlÁ˚˜ê¿ç≤·]Ï≥ø¨_≥2Òè¯>ûY∑Ê3≈“?Û“tπUÈ>        “º¨ÿs"ø                ”BLK 0               H       H       HûÙÓ∞√˜y≠À≥ﬂy∏Èœ~§ZQ@Åó◊¯™?hº$∫]¢æ~Ï‰¬7 øâcƒß÷Îæ        [\ø∂ÄD?                ”BLK 0               H       H       HO8,ÚµnƒHÍÔ&äO3f˜‰a°ów@J_˝°VÊO?)√Mˇ¬¶™>®√Qå”s?Q"â»ósóæ        q≤PòT3Ωæ                ”BLK 0               H       H       Håkh.øé	)Ω†]AÛﬁ›$Åï⁄t@P0Jm5-ë?i°6mΩ€æ}â¬x9ùøÎµˇ≤	VÆ>        
+$~±◊öÎ>                ”BLK 0               H       H       H/¢Ål{˝k≤˜5“ï˚yè4∏≠-‹¿cªV3càø∞òÒ31U‘>&JJìµñ?%ø"Q∞>        °„°2∞\Áæ                ”BLK 0               H       H       Hp§zÛ©°kœÏcñPtY\è¬ı∏ä—¿R∑ÈS∑p?jXNu†Î>ûu¿æ•çøXYë$˘æ        !ó—æ∑I?                ”BLK 0               H       H       H êπÍQ4NfΩı˘R∏ÖÎ y¿W—›}ß,è?T	!∞
+Ö?€∆]1·≠ø©)¨î≠üø        Ï˝¶≠ö≤&?                ”BLK 0               H       H       HæÖR•çÑq3:IWw7F5öôôô˝KÚ@C¡R~Œå?Æ∂6ep?Q⁄∆Æø∫'µø        L«¶Ÿ_'?                ”BLK 0               H       H       HÅè–Myå0gî∂?òn…SX©†¢j¯øy¯ıoøü–æJ¯Ñ„L>eˇY(¿rÂ>ÁXËﬁæ        «7 Æ˙X4æ                ”BLK 0               H       H       Hæ,ΩΩdÉÎ†˝3.DM“P¶Ô5«Û?ñ@îªú‘Ú>πŒhy£&æÏTUÖ±ÒæÄ£ËdÏ #æ        ±‰G AˆD>                ”BLK 0               H       H       H^õlÄ∆·Hî.âíÌ\í2À¯˜êøMﬂWy
+≤…æ √˜EYÓ=”qıì≥¥€>H9ïãe» >        íÃ”h£1æ                ”BLK 0               H       H       HéÍ$ƒè—AR”#k‡´ÏQ∏ÖÎ¡?Ñ»∆v ƒºk’∂ˇÀ≠<‘xS-≥¡º~R√ﬁÚ<        # eÈ6 <                ”BLK 0               H       H       HÛÍ6∞HÓ8€iXGÚæ˙íïR∫»yΩëÂYèYŸ<·ì∆ﬁQÄºdfïBö’<¢07~§!º        pó‰nfº                ”BLK 0               H       H       H0°î˝X„x£èÁèá©ll?ÈÓ:o=ïÉKx©∞Œºπcrñ©
+<∑%√∑é1 ºÄI¯”]<        Ä“Ü≤è<                ”BLK 0               H       H       Hx¡ß¨Â°?ßØ È¶(‹Û¸i# @NÁ<Ÿ^º?8¯ÎÚ‚]æ–¸∏ùÄ-øÈÀd”Eæ        á–t¯KP|>                ”BLK 0               H       H       HeN®SZÅ“ò‰GG§-ùTo+Ω6{¿Ë≈ƒ 2øôÇ‰|ilw>G‚ê…∞E?îÑ˘‘?”i>        '
+	(XÕïæ                ”BLK 0               H       H       HÙ’⁄-ó≠ç&?÷¥¬äÕÖ“r˚@Õ—?üOÊ‹;ú(?thƒoäìoæÆ6	:o>øäÅ¢%ûhæ        B≈ÚÉè>                ”BLK 0               H       H       H¸8§=°w¿/§ŒDÇÀ"ß•gzâ±,¿avN?‰æH•A@˛@æﬂµÇï%ø¨ÁE8îV$>        ◊GΩfq˙Q>                ”BLK 0               H       H       H˘áx”ÚÿØ¸¡óy»Ê€‡DÙk´
+¿Ç8⁄&øajOnq>åiâI2?◊£ÊëØ9æ        ôñÓ≥≤lÅæ                ”BLK 0               H       H       H˜+OKV/Î£˜_ÑÒsì %ﬂ∂ ~◊•?ﬂ.
+ÍÛK?S|ùiæ¢Y$vÅ,ø 3◊¨NIæ        ò^›ÃQì}>                ”BLK 0               H       H       HãµbX"øƒ¡ÊÏ\éM†#R∏ÖÎQ¿9Ål§ÅC‰Ωs-ÿ £4=b!à|jF⁄=P.|≈ißº        DΩP®∆$Ω                ”BLK 0               H       H       HXÖ*	Ì´0ßÂdÚÏ`∏”Pfò7%æ÷πd±æhÚÎßÓU=J∆CÎ‘˙=˘∏€-¥«º        ÛáÏµ6EΩ                ”BLK 0               H       H       HïGæ˛R¡–«nÏæÿè‰í÷Î£X6p%æ%–’Øö!æ˛„ºH$ÖU=5¯∑Ö…d˚=z˚‚Ò/ˇ«º         üRæ©EΩ                ”BLK 0                             _ìƒóVÀ±Ü˙˛ì+L+      Ë?ÕÃÃÃÃÃ¯?”BLK 0                             _ìƒóVÀ±Ü˙˛ì+L+      Ë?ÕÃÃÃÃÃ¯?”BLK 0                             _ìƒóVÀ±Ü˙˛ì+L+      Ë?ÕÃÃÃÃÃ¯?”BLK 0                             _ìƒóVÀ±Ü˙˛ì+L+      Ë?ÕÃÃÃÃÃ¯?”BLK 0                             _ìƒóVÀ±Ü˙˛ì+L+      Ë?ÕÃÃÃÃÃ¯?”BLK 0                             
+„∫‹"ZﬁU `‡ZÈc˜ﬁ{ÔΩ˜ﬁø•îRJ)•‰?”BLK 0                             
+„∫‹"ZﬁU `‡ZÈc˜ﬁ{ÔΩ˜ﬁø•îRJ)•‰?”BLK 0                             
+„∫‹"ZﬁU `‡ZÈc˜ﬁ{ÔΩ˜ﬁø•îRJ)•‰?”BLK 0                             
+„∫‹"ZﬁU `‡ZÈc˜ﬁ{ÔΩ˜ﬁø•îRJ)•‰?”BLK 0                             
+„∫‹"ZﬁU `‡ZÈc˜ﬁ{ÔΩ˜ﬁø•îRJ)•‰?”BLK 0                             Åèån•é∂^‰∑ﬂâªÓ        Hf«q«±;åÖº¶ﬂ{ÁΩ˙Õ@ìïΩ∆•z∂––<ÍûÛpë/<∏rP$‡∏∞?´©∞K>&jI·N†Ω≥09 FuΩ?ÿ´’0<Q<        $ˇ†¢!Qæ G≥_§I©ΩRñçÒæ@ºˇÍã0∆j<                ÖùF4∆h°Ω1‡7Bí≈<Æä,ùâ∂rº                        h∆∂…ˆÎº˚¶∆niÇP<                                Ü±ë1(¥8º                                        ”BLK 0                             „ÅRÃØÆ…ñˆöêè2‚Ò±        ñQ+=,Ÿ∞?Lò‡"Lr>o*\õTv‹Ω˙.Ñá€s&ΩÀ^÷qá<mÏƒÌÓà3øq@	kﬁ)aæåRAúØ®£Ω0V›àÏ
+=Ê+.Æ"˘4º        ®%?@n>ä‰ì2+±ΩSãÆΩAß¿)≥B<                ›œ1∫[p=jÚ˚À–¢Èº%»W˙jE`<                        ÿº„‰˙Ÿƒº5˘?U®Çº                                ıkî*ˇ=º                                        ”BLK 0                             œ“	í‘1|ê˛˛k1L                úÜœêülÇ>.%jG˝Hë>ﬂX
+˙æYù√◊f¶ΩπëT-û.@Í·IB¯øèÍ<qÅò>Cêé5´R>œñã~  Ω        \,”<Al?˝îY∂•>ÒˆW	<->°∞iŒ^‰Ω                v\sddù>^K©⁄_
+æ	Æ√d"Ï=                        ˘√±yN·&>“Áøzj|»Ω                                v:£ë≤=                                        ”BLK 0                             \”fÔ∆pÜ≤πMOck+Ño        ç(>UΩc.@“¿™RÉ0ø D^5’÷>@S¡¸ªkb>nºã=ôJæÁ9$°˙“±?øèÃ”º?º‚ˇ–f¢>&wRƒù∞Cæd¨ˇvb'û=        ∫A¸∫]L*øÃ6UåÆ´>ËƒõëôX>Pˆ7]lÆΩΩ                =iÅ˘¯ƒjæq.Ë!Æ◊&>T‘ÑÕDÿΩ                        N%•ï‘ˇ=o√ˆòü†q=                                e≈z[∂=                                        ”BLK 0                                ∆Ô⁄ÍÖ∫b"I◊,Å%Ñ        ‹Çòx“Ñ?ëÅÍ`õˇÔø        ”BLK 0                                Ø< 6Y÷_zõ’ª)J±&        ëÅÍ`õˇÔ?‹Çòx“Ñ?        ”BLK 0                                ∆Ô⁄ÍÖ∫b"I◊,Å%Ñ        ‹Çòx“Ñ?ëÅÍ`õˇÔø        ”BLK 0                                Ø< 6Y÷_zõ’ª)J±&        ëÅÍ`õˇÔ?‹Çòx“Ñ?        #ASDF BLOCK INDEX
+%YAML 1.1
+---
+- 38436
+- 38562
+- 38688
+- 38814
+- 38940
+- 39066
+- 39192
+- 39318
+- 39444
+- 39570
+- 39696
+- 39822
+- 39948
+- 40074
+- 40200
+- 40326
+- 40452
+- 40578
+- 40704
+- 40830
+- 40956
+- 41082
+- 41208
+- 41334
+- 41460
+- 41586
+- 41712
+- 41838
+- 41964
+- 42090
+- 42216
+- 42286
+- 42356
+- 42426
+- 42496
+- 42566
+- 42636
+- 42706
+- 42776
+- 42846
+- 42916
+- 43258
+- 43600
+- 43942
+- 44284
+- 44370
+- 44456
+- 44542
+...
