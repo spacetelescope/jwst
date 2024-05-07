@@ -117,7 +117,6 @@ def apply_zero_point_correction(slit, reffile):
         The ``wavecorr`` reference file.
     """
     log.info(f'slit name {slit.name}')
-    slit_wcs = slit.meta.wcs
 
     # Get the source position in the slit and set the aperture name
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
