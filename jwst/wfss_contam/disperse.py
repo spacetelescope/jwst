@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 from scipy.interpolate import interp1d
 
@@ -115,9 +116,10 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
 
     # Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
     # whichever is smaller, divided by oversampling requested
-    input_dlam = np.median(lams[1:] - lams[:-1])
-    if input_dlam < dw:
-        dlam = input_dlam / oversample_factor
+    if len(lams) > 1:
+        input_dlam = np.median(lams[1:] - lams[:-1])
+        if input_dlam < dw:
+            dlam = input_dlam / oversample_factor
     else:
         # this value gets used when we only have 1 direct image wavelength
         dlam = dw / oversample_factor
@@ -161,7 +163,9 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     # values are naturally in units of physical fluxes, so we divide out
     # the sensitivity (flux calibration) values to convert to units of
     # countrate (DN/s).
-    counts = flux(lams) * areas / sens
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
+        counts = flux(lams) * areas / (sens * oversample_factor)
     counts[no_cal] = 0.  # set to zero where no flux cal info available
 
     return xs, ys, areas, lams, counts, ID
