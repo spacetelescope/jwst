@@ -16,17 +16,25 @@ assign_wcs
 associations
 ------------
 
-- Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations 
+- Ensure NRS IFU exposures don't make a spec2 association for grating/filter combinations
   where the nrs2 detector isn't illuminated.  Remove dupes in mkpool. [#8395]
 
 - Match NIRSpec imprint observations to science exposures on mosaic tile location
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
+
+dark_current
+------------
+
+- Add log info message when specifying an average_dark_current for noise calculations.
+  [#8425]
 
 documentation
 -------------
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
+
+- Added documentation for multiprocessing. [#8408]
 
 extract_1d
 ----------
@@ -36,11 +44,19 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+flat_field
+----------
+
+- Update the flatfield code for NIRSpec IFU data to ensure that SCI=ERR=NaN and
+  DQ has the DO_NOT_USE flag set outside the footprint of the IFU slices [#8385]
+
 general
 -------
 
-- Removed deprecated stdatamodels model types ``DrizProductModel``, 
+- Removed deprecated stdatamodels model types ``DrizProductModel``,
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
+
+- Increase minimum required scipy. [#8441]
 
 outlier_detection
 -----------------
@@ -50,11 +66,18 @@ outlier_detection
 - Pass the ``weight_type`` parameter to all resampling function calls so that
   the default weighting can be overridden by the input step parameter. [#8290]
 
+- Remove unused ``OutlierDetectionScaledStep``,
+  ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
+  and ``scale_detection`` (an unused argument). [#8438]
+
 pipeline
 --------
 
 - Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
   that was causing them not to respect the ``output_file`` parameter. [#8368]
+
+- Removed unused ``scale_detection`` argument from ``calwebb_tso3``
+  pipeline. [#8438]
 
 ramp_fitting
 ------------
@@ -69,6 +92,11 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+resample_spec
+-------------
+
+- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
 residual_fringe
 ---------------
 
@@ -78,6 +106,11 @@ tweakreg
 --------
 
 - Output source catalog file now respects ``output_dir`` parameter. [#8386]
+
+- Improved how a image group name is determined. [#8426]
+
+- Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
+  step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
 
 1.14.0 (2024-03-29)
@@ -94,7 +127,7 @@ ami
 - Additional optional input arguments for greater user processing flexibility.
   See documentation for details. [#7862]
 
-- Bad pixel correction applied to data using new NRM reference file to calculate 
+- Bad pixel correction applied to data using new NRM reference file to calculate
   complex visibility support (M. Ireland method implemented by J. Kammerer). [#7862]
 
 - Make ``AmiAnalyze`` and ``AmiNormalize`` output conform to the OIFITS standard. [#7862]
@@ -129,7 +162,7 @@ charge_migration
   as DO_NOT_USE.  This group, and all subsequent groups, are then flagged as
   CHARGELOSS and DO_NOT_USE.  The four nearest pixel neighbor are then flagged
   in the same group. [#8336]
-  
+
 - Added warning handler for expected NaN and inf clipping in the
   ``sigma_clip`` function. [#8320]
 
@@ -415,7 +448,7 @@ tweakreg
 
 - Fixed a bug that caused failures instead of warnings when no GAIA sources
   were found within the bounding box of the input image. [#8334]
-  
+
 - Suppress AstropyUserWarnings regarding NaNs in the input data. [#8320]
 
 wfs_combine

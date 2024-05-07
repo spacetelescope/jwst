@@ -67,8 +67,6 @@ def get_steps():
         ("jwst.step.MSAFlagOpenStep", 'msa_flagging', False),
         ("jwst.step.NSCleanStep", 'nsclean', False),
         ("jwst.step.OutlierDetectionStep", 'outlier_detection', False),
-        ("jwst.step.OutlierDetectionScaledStep", 'outlier_detection_scaled', False),
-        ("jwst.step.OutlierDetectionStackStep", 'outlier_detection_stack', False),
         ("jwst.step.PathLossStep", 'pathloss', False),
         ("jwst.step.PersistenceStep", 'persistence', False),
         ("jwst.step.PhotomStep", 'photom', False),
