@@ -70,6 +70,10 @@ outlier_detection
   ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
   and ``scale_detection`` (an unused argument). [#8438]
 
+- Intermediate output files are now correctly removed after the step has
+  finished, unless save_intermediate_results is True. This PR also addressed
+  the _i2d files not being saved in the specified output directory. [#8464]
+
 pipeline
 --------
 
