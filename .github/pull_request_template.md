@@ -17,3 +17,4 @@ This PR addresses ...
 - [ ] ran regression tests, post a link to the Jenkins job below.
       [How to run regression tests on a PR](https://github.com/spacetelescope/jwst/wiki/Running-Regression-Tests-Against-PR-Branches)
 - [ ] Make sure the JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
+- [ ] All comments are resolved
