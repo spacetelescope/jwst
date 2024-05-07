@@ -95,6 +95,11 @@ resample
 - Update variance handling to propagate resampled variance components with
   weights that match the science `weight_type`. [#8437]
 
+resample_spec
+-------------
+
+- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
 residual_fringe
 ---------------
 
