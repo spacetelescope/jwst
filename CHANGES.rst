@@ -40,6 +40,8 @@ documentation
 
 - Added documentation for multiprocessing. [#8408]
 
+- Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
+
 extract_1d
 ----------
 
