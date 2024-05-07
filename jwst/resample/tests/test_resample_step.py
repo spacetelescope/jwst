@@ -457,8 +457,10 @@ def test_wcs_keywords(nircam_rate):
     assert result.meta.wcsinfo.vparity is None
 
 
-@pytest.mark.parametrize("n_images", [1, 2, 3, 9])
-def test_resample_variance(nircam_rate, n_images):
+@pytest.mark.parametrize("n_images,weight_type",
+                         [(1, 'ivm'), (2, 'ivm'), (3, 'ivm'), (9, 'ivm'),
+                          (1, 'exptime'), (2, 'exptime'), (3, 'exptime'), (9, 'exptime')])
+def test_resample_variance(nircam_rate, n_images, weight_type):
     """Test that resampled variance and error arrays are computed properly"""
     err = 0.02429
     var_rnoise = 0.00034
@@ -474,7 +476,7 @@ def test_resample_variance(nircam_rate, n_images):
     for n in range(n_images):
         c.append(im.copy())
 
-    result = ResampleStep.call(c, blendheaders=False)
+    result = ResampleStep.call(c, blendheaders=False, weight_type=weight_type)
 
     # Verify that the combined uncertainty goes as 1 / sqrt(N)
     assert_allclose(result.err[5:-5, 5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
@@ -493,7 +495,13 @@ def test_resample_undefined_variance(nircam_rate, shape):
     c = ModelContainer([im])
 
     with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
-        ResampleStep.call(c, blendheaders=False)
+        result = ResampleStep.call(c, blendheaders=False)
+
+    # no valid variance - output error and variance are all NaN
+    assert_allclose(result.err, np.nan)
+    assert_allclose(result.var_rnoise, np.nan)
+    assert_allclose(result.var_poisson, np.nan)
+    assert_allclose(result.var_flat, np.nan)
 
 
 @pytest.mark.parametrize('ratio', [0.7, 1.2])

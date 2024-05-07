@@ -96,6 +96,9 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+- Update variance handling to propagate resampled variance components with
+  weights that match the science `weight_type`. [#8437]
+
 resample_spec
 -------------
 
