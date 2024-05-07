@@ -190,7 +190,7 @@ def test_transform_metadata_mrs():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
     wcs = create_datamodel(hdul).meta.wcs
 
-    assert wcs.get_transform("detector", "alpha_beta").inputs == ('x', 'y')
+    assert wcs.get_transform("detector", "alpha_beta").inputs == ('x_direct', 'y_direct')
     assert wcs.get_transform("detector", "alpha_beta").outputs == ('alpha', 'beta', 'lam')
     assert wcs.get_transform("alpha_beta", "v2v3").inputs == ('alpha', 'beta', 'lam')
     assert wcs.get_transform("alpha_beta", "v2v3").outputs == ('v2', 'v3', 'lam')
@@ -203,7 +203,7 @@ def test_transform_metadata_mrs():
 def test_transform_metadata_lrs(create_hdul_lrs):
     wcs = create_datamodel(create_hdul_lrs).meta.wcs
 
-    assert wcs.get_transform("detector", "v2v3").inputs == ('x', 'y')
+    assert wcs.get_transform("detector", "v2v3").inputs == ('x_direct', 'y_direct')
     assert wcs.get_transform("detector", "v2v3").outputs == ('v2', 'v3', 'lam')
     assert wcs.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3', 'lam')
     assert wcs.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3', 'lam')

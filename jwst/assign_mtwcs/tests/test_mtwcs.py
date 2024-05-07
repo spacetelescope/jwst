@@ -20,8 +20,3 @@ def test_mt_multislit():
     assert result[0].slits[0].meta.wcs.output_frame.name == 'moving_target'
     assert len(result[1].slits) == 1
     assert result[1].slits[0].meta.wcs.output_frame.name == 'moving_target'
-
-    # test wcs transform metadata
-    wcs = result[0].slits[0].meta.wcs
-    print(wcs.available_frames)
-    breakpoint()

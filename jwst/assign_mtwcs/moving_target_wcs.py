@@ -10,9 +10,10 @@ location of the target.
 import logging
 from copy import deepcopy
 import numpy as np
-from astropy.modeling.models import Shift, Identity
+from astropy.modeling.models import Shift
 from gwcs import WCS
 from gwcs import coordinate_frames as cf
+from jwst.assign_wcs.util import wl_identity
 
 from stdatamodels.jwst import datamodels
 
@@ -99,7 +100,7 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
     if isinstance(mt, cf.CelestialFrame):
         transform_to_mt = Shift(rdel) & Shift(ddel)
     elif isinstance(mt, cf.CompositeFrame):
-        transform_to_mt = Shift(rdel) & Shift(ddel) & Identity(1)
+        transform_to_mt = Shift(rdel) & Shift(ddel) & wl_identity()
     else:
         raise ValueError("Unrecognized coordinate frame.")
 

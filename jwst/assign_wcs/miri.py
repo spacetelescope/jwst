@@ -363,7 +363,7 @@ def lrs_distortion(input_model, reference_files):
     dettotel.bounding_box = bb_sub[::-1]
 
     dettotel.name = "lrs_distortion"
-    dettotel.inputs = ("x", "y")
+    dettotel.inputs = ("x_direct", "y_direct")
     dettotel.outputs = ("v2", "v3", "lam")
 
     return dettotel
@@ -482,7 +482,7 @@ def detector_to_abl(input_model, reference_files):
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
         wr = dict(zip(f.waverange_selector, f.wavelengthrange))
 
-    det_labels = ('x', 'y')
+    det_labels = ('x_direct', 'y_direct')
     abl_labels = ('alpha', 'beta', 'lam')
     ch_dict = {}
     for c in channel:

@@ -190,7 +190,7 @@ def test_wfss_sip():
 def test_transform_metadata_imaging():
 
     wcs = create_imaging_wcs('F200W')
-    assert wcs.get_transform("detector", "v2v3").inputs == ('x', 'y')
+    assert wcs.get_transform("detector", "v2v3").inputs == ('x_direct', 'y_direct')
     assert wcs.get_transform("detector", "v2v3").outputs == ('v2', 'v3')
     assert wcs.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3')
     assert wcs.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3')
@@ -201,7 +201,7 @@ def test_transform_metadata_imaging():
 def test_transform_metadata_wfss():
 
     wcs = create_wfss_wcs('GR150R')
-    assert wcs.get_transform("grism_detector", "detector").inputs == ('x', 'y', 'x0', 'y0', 'order')
+    assert wcs.get_transform("grism_detector", "detector").inputs == ('x_grism', 'y_grism', 'x0', 'y0', 'order')
     assert wcs.get_transform("grism_detector", "detector").outputs == ('x_direct', 'y_direct', 'wavelength', 'order')
     assert wcs.get_transform("detector", "v2v3").inputs == ('x_direct', 'y_direct', 'wavelength', 'order')
     assert wcs.get_transform("detector", "v2v3").outputs == ('v2', 'v3', 'wavelength', 'order')

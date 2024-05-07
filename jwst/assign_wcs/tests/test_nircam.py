@@ -249,7 +249,7 @@ def test_wfss_sip():
 
 def test_transform_metadata_imaging(create_imaging_wcs):
     wcsobj = create_imaging_wcs
-    assert wcsobj.get_transform("detector", "v2v3").inputs == ('x', 'y')
+    assert wcsobj.get_transform("detector", "v2v3").inputs == ('x_direct', 'y_direct')
     assert wcsobj.get_transform("detector", "v2v3").outputs == ('v2', 'v3')
     assert wcsobj.get_transform("v2v3", "v2v3vacorr").inputs == ('v2', 'v3')
     assert wcsobj.get_transform("v2v3", "v2v3vacorr").outputs == ('v2', 'v3')
@@ -261,10 +261,10 @@ def test_transform_metadata_imaging(create_imaging_wcs):
 def test_transform_metadata_grism(exptype):
     if exptype == "tso":
         wcsobj = create_tso_wcs()
-        assert wcsobj.get_transform("grism_detector", "detector").inputs == ('x', 'y', 'order')
+        assert wcsobj.get_transform("grism_detector", "detector").inputs == ('x_grism', 'y_grism', 'order')
     elif exptype == "wfss":
         wcsobj = create_wfss_wcs('GRISMR')
-        assert wcsobj.get_transform("grism_detector", "detector").inputs == ('x', 'y', 'x0', 'y0', 'order')
+        assert wcsobj.get_transform("grism_detector", "detector").inputs == ('x_grism', 'y_grism', 'x0', 'y0', 'order')
 
     assert wcsobj.get_transform("grism_detector", "detector").outputs == ('x_direct', 'y_direct', 'wavelength', 'order')
     assert wcsobj.get_transform("detector", "v2v3").inputs == ('x_direct', 'y_direct', 'wavelength', 'order')
