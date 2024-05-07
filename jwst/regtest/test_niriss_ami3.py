@@ -17,6 +17,19 @@ def run_pipeline(rtdata_module):
     return rtdata
 
 
+@pytest.fixture(scope="module")
+def run_step_with_cal(rtdata_module):
+    rtdata = rtdata_module
+    # run step?
+    rtdata.get_data("niriss/ami/jw04478001001_03102_00001_nis_cal.fits")
+    args = [
+        'ami_analyze',
+        rtdata.input,
+    ]
+    Step.from_cmdline(args)
+    return rtdata
+
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize("obs, suffix", [("012", "ami-oi"), ("015", "psf-ami-oi")])
 def test_niriss_ami3_exp(run_pipeline, obs, suffix, fitsdiff_default_kwargs):
@@ -45,3 +58,15 @@ def test_niriss_ami3_product(run_pipeline, fitsdiff_default_kwargs):
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ("ami-oi", "amimulti-oi", "amilg"))
+def test_niriss_ami3_cal(run_step_with_cal, suffix, fitsdiff_default_kwargs):
+    rtdata = run_step_with_cal
+
+    output = f"jw04478001001_03102_00001_nis_{suffix}.fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_niriss_ami3/" + output)
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
