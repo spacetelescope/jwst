@@ -121,6 +121,7 @@ class OutlierDetectionStep(Step):
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
                 'make_output_path': self.make_output_path,
+                'mk_output_list': True
             }
 
             # Add logic here to select which version of OutlierDetection
@@ -137,6 +138,7 @@ class OutlierDetectionStep(Step):
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
+                pars['mk_output_list'] = False
             elif exptype in IMAGE_MODES:
                 # imaging with resampling
                 detection_step = outlier_registry['imaging']
@@ -147,6 +149,7 @@ class OutlierDetectionStep(Step):
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']
+                pars['mk_output_list'] = False
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")
@@ -165,7 +168,10 @@ class OutlierDetectionStep(Step):
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, asn_id=asn_id, **pars)
-            step.do_detection()
+            if pars['mk_output_list']:
+                intermediate_files = step.do_detection()
+            else:
+                step.do_detection()
 
             state = 'COMPLETE'
             if self.input_container:
@@ -173,18 +179,9 @@ class OutlierDetectionStep(Step):
                     self.log.debug("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
-                    if not self.save_intermediate_results:
+                    if not self.save_intermediate_results and pars['mk_output_list']:
                         #  Remove unwanted files
-                        crf_path = self.make_output_path(basepath=model.meta.filename)
-                        if asn_id is None:
-                            suffix = model.meta.filename.split(sep='_')[-1]
-                            outlr_file = model.meta.filename.replace(suffix, 'outlier_i2d.fits')
-                        else:
-                            outlr_file = crf_path.replace('crf', 'outlier_i2d')
-                        blot_path = crf_path.replace('crf', 'blot')
-                        median_path = blot_path.replace('blot', 'median')
-
-                        for fle in [outlr_file, blot_path, median_path]:
+                        for fle in intermediate_files:
                             if os.path.isfile(fle):
                                 os.remove(fle)
                                 self.log.debug(f"    {fle}")

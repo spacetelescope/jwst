@@ -58,6 +58,9 @@ class OutlierDetectionSpec(OutlierDetection):
         """
         OutlierDetection.__init__(self, input_models, **pars)
 
+        # Set up the list of all intermediate output files
+        self.output_list = []
+
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
         self._convert_inputs()
@@ -70,7 +73,11 @@ class OutlierDetectionSpec(OutlierDetection):
             #  each group of exposures
             resamp = resample_spec.ResampleSpecData(self.input_models, single=True,
                                                     blendheaders=False, **pars)
-            drizzled_models = resamp.do_drizzle()
+            if pars['mk_output_list']:
+                output_list, drizzled_models = resamp.do_drizzle()
+                self.output_list.extend(output_list)
+            else:
+                drizzled_models = resamp.do_drizzle()
             if save_intermediate_results:
                 for model in drizzled_models:
                     model.meta.filename = self.make_output_path(
@@ -103,6 +110,7 @@ class OutlierDetectionSpec(OutlierDetection):
             log.info("Writing out MEDIAN image to: {}".format(
                      median_model.meta.filename))
             median_model.save(median_model.meta.filename)
+            self.output_list.append(median_model.meta.filename)
 
         if pars['resample_data'] is True:
             # Blot the median image back to recreate each input image specified
@@ -110,9 +118,9 @@ class OutlierDetectionSpec(OutlierDetection):
             blot_models = self.blot_median(median_model)
             if save_intermediate_results:
                 log.info("Writing out BLOT images...")
-                blot_models.save(
-                    partial(self.make_output_path, suffix='blot')
-                )
+                blot_file = partial(self.make_output_path, suffix='blot')
+                blot_models.save(blot_file)
+                self.output_list.append(blot_file)
         else:
             # Median image will serve as blot image
             blot_models = ModelContainer()
@@ -126,3 +134,6 @@ class OutlierDetectionSpec(OutlierDetection):
         # clean-up (just to be explicit about being finished
         #  with these results)
         del median_model, blot_models
+
+        if pars['mk_output_list']:
+            return self.output_list

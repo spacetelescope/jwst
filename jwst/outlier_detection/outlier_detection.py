@@ -3,6 +3,7 @@
 from functools import partial
 import logging
 import warnings
+import os
 
 import numpy as np
 from astropy.stats import sigma_clip
@@ -81,6 +82,9 @@ class OutlierDetection:
             partial(Step._make_output_path, None)
         )
 
+        # Set up the list of all intermediate output files
+        self.output_list = []
+
     def _convert_inputs(self):
         """Convert input into datamodel required for processing.
 
@@ -140,9 +144,16 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            resamp = resample.ResampleData(self.input_models, single=True,
+            output_path = self.make_output_path(basepath=self.input_models[0].meta.filename,
+                            suffix='')
+            output_path = os.path.dirname(output_path)
+            resamp = resample.ResampleData(self.input_models, output=output_path, single=True,
                                            blendheaders=False, **pars)
-            drizzled_models = resamp.do_drizzle()
+            if pars['mk_output_list']:
+                output_list, drizzled_models = resamp.do_drizzle()
+                self.output_list.extend(output_list)
+            else:
+                drizzled_models = resamp.do_drizzle()
 
         else:
             # for non-dithered data, the resampled image is just the original image
@@ -170,6 +181,7 @@ class OutlierDetection:
                 basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
                 suffix='median')
             median_model.save(median_model_output_path)
+            self.output_list.append(median_model_output_path)
             log.info(f"Saved model in {median_model_output_path}")
 
         if pars['resample_data']:
@@ -190,6 +202,9 @@ class OutlierDetection:
         # clean-up (just to be explicit about being finished with
         # these results)
         del median_model, blot_models
+
+        if pars['mk_output_list']:
+            return self.output_list
 
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.
@@ -292,6 +307,7 @@ class OutlierDetection:
 
             model_path = self.make_output_path(basepath=model.meta.filename, suffix='blot')
             blotted_median.save(model_path)
+            self.output_list.append(model_path)
             log.info(f"Saved model in {model_path}")
 
             # Append model name to the ModelContainer so it is not passed in memory
