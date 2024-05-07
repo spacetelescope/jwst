@@ -9,6 +9,8 @@ Closes #
 This PR addresses ...
 
 **Checklist for PR authors**
+Please check off the items in this list as they are completed. Please
+skip or [strikethrough](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#styling-text) any irrelevant items.
 - [ ] added entry in `CHANGES.rst` within the relevant release section
 - [ ] updated or added relevant tests
 - [ ] updated relevant documentation
@@ -16,5 +18,5 @@ This PR addresses ...
 - [ ] added relevant label(s)
 - [ ] ran regression tests, post a link to the Jenkins job below.
       [How to run regression tests on a PR](https://github.com/spacetelescope/jwst/wiki/Running-Regression-Tests-Against-PR-Branches)
-- [ ] Make sure the JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
 - [ ] All comments are resolved
+- [ ] Make sure the JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
