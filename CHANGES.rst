@@ -44,6 +44,10 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+- Fix a crash in ``extract_1d`` encountered when multiple background or source
+  regions are specified and the lower and upper limits for one of them are
+  outside the valid area for some data range. [#8433]
+
 flat_field
 ----------
 
@@ -95,6 +99,9 @@ resample
 
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
+
+- Update variance handling to propagate resampled variance components with
+  weights that match the science `weight_type`. [#8437]
 
 resample_spec
 -------------
