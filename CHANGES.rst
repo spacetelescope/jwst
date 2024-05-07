@@ -80,6 +80,12 @@ outlier_detection
   finished, unless save_intermediate_results is True. This PR also addressed
   the _i2d files not being saved in the specified output directory. [#8464]
 
+photom
+------
+
+- Ensure that NaNs in MRS photom files are not replaced with ones by
+  pipeline code for consistency with other modes [#8453]
+
 pipeline
 --------
 
