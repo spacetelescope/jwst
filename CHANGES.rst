@@ -6,6 +6,8 @@ ami
 
 - Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
+- Allow ``ami_analyze`` to run on ``cal`` files. [#8451]
+
 assign_wcs
 ----------
 
