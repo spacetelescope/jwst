@@ -441,12 +441,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
 
         # Make sure all DO_NOT_USE pixels are set to NaN,
         # including those flagged by this step
-        dnu = np.where(slit.dq & dqflags.pixel['DO_NOT_USE'])
-        slit.data[dnu] = np.nan
-        slit.err[dnu] = np.nan
-        slit.var_poisson[dnu] = np.nan
-        slit.var_rnoise[dnu] = np.nan
-        slit.var_flat[dnu] = np.nan
+        slit.data[np.where(slit.dq & dqflags.pixel['DO_NOT_USE'])] = np.nan
 
         any_updated = True
 
