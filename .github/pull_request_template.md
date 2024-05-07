@@ -8,7 +8,7 @@ Closes #
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
 
-**Checklist for maintainers**
+**Checklist for PR authors**
 - [ ] added entry in `CHANGES.rst` within the relevant release section
 - [ ] updated or added relevant tests
 - [ ] updated relevant documentation
