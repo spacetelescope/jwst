@@ -6,6 +6,8 @@ ami
 
 - Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
+- Allow ``ami_analyze`` to run on ``cal`` files. [#8451]
+
 assign_wcs
 ----------
 
@@ -23,7 +25,7 @@ associations
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
 
 dark_current
-------------  
+------------
 
 - Add log info message when specifying an average_dark_current for noise calculations.
   [#8425]
@@ -33,7 +35,7 @@ documentation
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
-  
+
 - Added documentation for multiprocessing. [#8408]
 
 extract_1d
@@ -43,6 +45,10 @@ extract_1d
   the F277W filter with warning. [#8275]
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
+
+- Fix a crash in ``extract_1d`` encountered when multiple background or source
+  regions are specified and the lower and upper limits for one of them are
+  outside the valid area for some data range. [#8433]
 
 flat_field
 ----------
@@ -66,6 +72,10 @@ outlier_detection
 - Pass the ``weight_type`` parameter to all resampling function calls so that
   the default weighting can be overridden by the input step parameter. [#8290]
 
+- Remove unused ``OutlierDetectionScaledStep``,
+  ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
+  and ``scale_detection`` (an unused argument). [#8438]
+
 photom
 ------
 
@@ -77,6 +87,9 @@ pipeline
 
 - Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
   that was causing them not to respect the ``output_file`` parameter. [#8368]
+
+- Removed unused ``scale_detection`` argument from ``calwebb_tso3``
+  pipeline. [#8438]
 
 ramp_fitting
 ------------
@@ -91,6 +104,14 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+- Update variance handling to propagate resampled variance components with
+  weights that match the science `weight_type`. [#8437]
+
+resample_spec
+-------------
+
+- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
 residual_fringe
 ---------------
 
@@ -103,6 +124,14 @@ tweakreg
 
 - Improved how a image group name is determined. [#8426]
 
+- Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
+  step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
+
+wfss_contam
+-----------
+
+- Fixed flux scaling issue in model contamination image by adding background
+  subtraction and re-scaling fluxes to respect wavelength oversampling. [#8416]
 
 1.14.0 (2024-03-29)
 ===================

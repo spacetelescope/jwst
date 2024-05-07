@@ -52,7 +52,7 @@ class OutlierDetection:
 
     default_suffix = 'i2d'
 
-    def __init__(self, input_models, reffiles=None, **pars):
+    def __init__(self, input_models, **pars):
         """
         Initialize the class with input ModelContainers.
 
@@ -69,11 +69,8 @@ class OutlierDetection:
 
         """
         self.inputs = input_models
-        self.reffiles = reffiles
 
         self.outlierpars = {}
-        if 'outlierpars' in reffiles:
-            self._get_outlier_pars()
         self.outlierpars.update(pars)
         # Insure that self.input_models always refers to a ModelContainer
         # representation of the inputs
@@ -117,52 +114,6 @@ class OutlierDetection:
                                               good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
-
-    def _get_outlier_pars(self):
-        """Extract outlier detection parameters from reference file."""
-        # start by interpreting input data models to define selection criteria
-        input_dm = self.input_models[0]
-        filtname = input_dm.meta.instrument.filter
-        if hasattr(self.input_models, 'group_names'):
-            num_groups = len(self.input_models.group_names)
-        else:
-            num_groups = 1
-
-        ref_model = datamodels.OutlierParsModel(self.reffiles['outlierpars'])
-
-        # look for row that applies to this set of input data models
-        # NOTE:
-        #  This logic could be replaced by a method added to the DrizParsModel
-        #  object to select the correct row based on a set of selection
-        #  parameters
-        row = None
-        outlierpars = ref_model.outlierpars_table
-
-        # flag to support wild-card rows in outlierpars table
-        filter_match = False
-        for n, filt, num in zip(range(1, outlierpars.numimages.shape[0] + 1),
-                                outlierpars.filter, outlierpars.numimages):
-            # only remember this row if no exact match has already been made
-            # for the filter. This allows the wild-card row to be anywhere in
-            # the table; since it may be placed at beginning or end of table.
-
-            if filt == "ANY" and not filter_match and num_groups >= num:
-                row = n
-            # always go for an exact match if present, though...
-            if filtname == filt and num_groups >= num:
-                row = n
-                filter_match = True
-
-        # With presence of wild-card rows, code should never trigger this logic
-        if row is None:
-            log.error("No row found in %s that matches input data.",
-                      self.reffiles)
-            raise ValueError
-
-        # read in values from that row for each parameter
-        for kw in list(self.outlierpars.keys()):
-            self.outlierpars[kw] = \
-                ref_model['outlierpars_table.{0}'.format(kw)]
 
     def build_suffix(self, **pars):
         """Build suffix.
