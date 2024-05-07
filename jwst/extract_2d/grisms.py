@@ -137,7 +137,7 @@ def extract_tso_object(input_model,
         # Create the order bounding box
         distortion = subwcs.get_transform("v2v3", "direct_image")
         source_xpos, _ = compute_tso_offset_center(input_model, distortion)
-        source_xpos = source_xpos - 1 # remove FITS 1-indexed offset
+        #source_xpos = source_xpos - 1 # remove FITS 1-indexed offset
         source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove FITS 1-indexed offset
         transform = input_model.meta.wcs.get_transform('direct_image', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
