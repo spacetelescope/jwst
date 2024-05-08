@@ -576,6 +576,7 @@ class Spec2Pipeline(Pipeline):
             calib_mos = self.pathloss(calib_mos)
             calib_mos = self.barshadow(calib_mos)
             calib_mos = self.photom(calib_mos)
+            calib_mos = self.pixel_replace(calib_mos)
 
         # Now repeat for FS slits
         if len(calib_fss.slits) > 0:
@@ -584,7 +585,8 @@ class Spec2Pipeline(Pipeline):
 
             # Run each step with an alternate suffix,
             # to avoid overwriting previous products if save_results=True
-            fs_steps = ['wavecorr', 'flat_field', 'pathloss', 'barshadow', 'photom']
+            fs_steps = ['wavecorr', 'flat_field', 'pathloss', 'barshadow',
+                        'photom', 'pixel_replace']
             for step_name in fs_steps:
                 # Set suffix
                 step = getattr(self, step_name)
