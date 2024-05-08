@@ -204,10 +204,10 @@ class OutlierDetection:
         del median_model, blot_models
         self.output_list.extend(blot_files)
         if not pars['save_intermediate_results']:
-            for fle in self.output_list:
-                if os.path.isfile(fle):
-                    os.remove(fle)
-                    log.debug(f"    {fle}")
+            for file in self.output_list:
+                if os.path.isfile(file):
+                    os.remove(file)
+                    log.debug(f"    {file}")
 
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.

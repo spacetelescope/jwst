@@ -132,7 +132,7 @@ class OutlierDetectionSpec(OutlierDetection):
         del median_model, blot_models
         if not pars['save_intermediate_results']:
             self.output_list.extend(blot_files)
-            for fle in self.output_list:
+            for file in self.output_list:
                 if os.path.isfile(fle):
-                    os.remove(fle)
-                    log.debug(f"    {fle}")
+                    os.remove(file)
+                    log.debug(f"    {file}")
