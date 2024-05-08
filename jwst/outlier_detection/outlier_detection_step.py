@@ -119,7 +119,6 @@ class OutlierDetectionStep(Step):
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
                 'make_output_path': self.make_output_path,
-                'mk_output_list': True
             }
 
             # Add logic here to select which version of OutlierDetection
@@ -136,7 +135,6 @@ class OutlierDetectionStep(Step):
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
-                pars['mk_output_list'] = False
             elif exptype in IMAGE_MODES:
                 # imaging with resampling
                 detection_step = outlier_registry['imaging']
@@ -147,7 +145,6 @@ class OutlierDetectionStep(Step):
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']
-                pars['mk_output_list'] = False
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")

@@ -4,7 +4,7 @@ from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 
 from ..resample import resample_spec, resample_utils
-from .outlier_detection import OutlierDetection
+from .outlier_detection import OutlierDetection, _remove_file
 
 import os
 import logging
@@ -72,11 +72,7 @@ class OutlierDetectionSpec(OutlierDetection):
             #  each group of exposures
             resamp = resample_spec.ResampleSpecData(self.input_models, single=True,
                                                     blendheaders=False, **pars)
-            if pars['mk_output_list']:
-                output_list, drizzled_models = resamp.do_drizzle()
-                self.output_list.extend(output_list)
-            else:
-                drizzled_models = resamp.do_drizzle()
+            drizzled_models = resamp.do_drizzle()
             if save_intermediate_results:
                 for model in drizzled_models:
                     model.meta.filename = self.make_output_path(
@@ -109,17 +105,22 @@ class OutlierDetectionSpec(OutlierDetection):
             log.info("Writing out MEDIAN image to: {}".format(
                      median_model.meta.filename))
             median_model.save(median_model.meta.filename)
+        else:
+            # since we're not saving intermediate results if the drizzled models
+            # were written to disk, remove them
+            if not pars['in_memory']:
+                for fn in drizzled_models._models:
+                    _remove_file(fn)
 
         if pars['resample_data'] is True:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
-            blot_models, blot_files = self.blot_median(median_model)
+            blot_models = self.blot_median(median_model)
         else:
             # Median image will serve as blot image
             blot_models = ModelContainer()
             for i in range(len(self.input_models)):
                 blot_models.append(median_model)
-            blot_files = []
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
@@ -127,10 +128,7 @@ class OutlierDetectionSpec(OutlierDetection):
 
         # clean-up (just to be explicit about being finished
         #  with these results)
-        del median_model, blot_models
         if not pars['save_intermediate_results']:
-            self.output_list.extend(blot_files)
-            for file in self.output_list:
-                if os.path.isfile(file):
-                    os.remove(file)
-                    log.debug(f"    {file}")
+            for fn in blot_models._models:
+                _remove_file(fn)
+        del median_model, blot_models

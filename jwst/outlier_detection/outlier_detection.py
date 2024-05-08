@@ -82,9 +82,6 @@ class OutlierDetection:
             partial(Step._make_output_path, None)
         )
 
-        # Set up the list of all intermediate output files
-        self.output_list = []
-
     def _convert_inputs(self):
         """Convert input into datamodel required for processing.
 
@@ -149,11 +146,7 @@ class OutlierDetection:
             output_path = os.path.dirname(output_path)
             resamp = resample.ResampleData(self.input_models, output=output_path, single=True,
                                            blendheaders=False, **pars)
-            if pars['mk_output_list']:
-                output_list, drizzled_models = resamp.do_drizzle()
-                self.output_list.extend(output_list)
-            else:
-                drizzled_models = resamp.do_drizzle()
+            drizzled_models = resamp.do_drizzle()
 
         else:
             # for non-dithered data, the resampled image is just the original image
@@ -182,18 +175,23 @@ class OutlierDetection:
                 suffix='median')
             median_model.save(median_model_output_path)
             log.info(f"Saved model in {median_model_output_path}")
+        else:
+            # since we're not saving intermediate results if the drizzled models
+            # were written to disk, remove them
+            if not pars['in_memory']:
+                for fn in drizzled_models._models:
+                    _remove_file(fn)
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
-            blot_models, blot_files = self.blot_median(median_model)
+            blot_models = self.blot_median(median_model)
 
         else:
             # Median image will serve as blot image
             blot_models = ModelContainer(open_models=False)
             for i in range(len(self.input_models)):
                 blot_models.append(median_model)
-            blot_files = []
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
@@ -201,13 +199,10 @@ class OutlierDetection:
 
         # clean-up (just to be explicit about being finished with
         # these results)
+        if not pars['save_intermediate_results'] and not pars['in_memory']:
+            for fn in blot_models._models:
+                _remove_file(fn)
         del median_model, blot_models
-        self.output_list.extend(blot_files)
-        if not pars['save_intermediate_results']:
-            for file in self.output_list:
-                if os.path.isfile(file):
-                    os.remove(file)
-                    log.debug(f"    {file}")
 
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.
@@ -295,7 +290,6 @@ class OutlierDetection:
 
         # Initialize container for output blot images
         blot_models = ModelContainer(open_models=False)
-        blot_files = []
 
         log.info("Blotting median")
         for model in self.input_models:
@@ -311,13 +305,12 @@ class OutlierDetection:
 
             model_path = self.make_output_path(basepath=model.meta.filename, suffix='blot')
             blotted_median.save(model_path)
-            blot_files.append(model_path)
             log.info(f"Saved model in {model_path}")
 
             # Append model name to the ModelContainer so it is not passed in memory
             blot_models.append(model_path)
 
-        return blot_models, blot_files
+        return blot_models
 
     def detect_outliers(self, blot_models):
         """Flag DQ array for cosmic rays in input images.
@@ -353,6 +346,12 @@ class OutlierDetection:
             # Make sure actual input gets updated with new results
             for i in range(len(self.input_models)):
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
+
+
+def _remove_file(fn):
+    if isinstance(fn, str) and os.path.isfile(fn):
+        os.remove(fn)
+        log.debug(f"    {fn}")
 
 
 def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
