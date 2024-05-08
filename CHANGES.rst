@@ -6,6 +6,8 @@ ami
 
 - Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
+- Allow ``ami_analyze`` to run on ``cal`` files. [#8451]
+
 assign_wcs
 ----------
 
@@ -47,6 +49,10 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+- Fix a crash in ``extract_1d`` encountered when multiple background or source
+  regions are specified and the lower and upper limits for one of them are
+  outside the valid area for some data range. [#8433]
+
 flat_field
 ----------
 
@@ -73,6 +79,12 @@ outlier_detection
   ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
   and ``scale_detection`` (an unused argument). [#8438]
 
+photom
+------
+
+- Ensure that NaNs in MRS photom files are not replaced with ones by
+  pipeline code for consistency with other modes [#8453]
+
 pipeline
 --------
 
@@ -95,6 +107,9 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+- Update variance handling to propagate resampled variance components with
+  weights that match the science `weight_type`. [#8437]
+
 resample_spec
 -------------
 
@@ -115,6 +130,11 @@ tweakreg
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
   step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
+wfss_contam
+-----------
+
+- Fixed flux scaling issue in model contamination image by adding background
+  subtraction and re-scaling fluxes to respect wavelength oversampling. [#8416]
 
 1.14.0 (2024-03-29)
 ===================

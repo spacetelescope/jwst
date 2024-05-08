@@ -182,7 +182,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
             inv_variance = 1.0
         result = inv_variance * dqmask
     elif weight_type == 'exptime':
-        if _check_for_tmeasure(model):
+        if check_for_tmeasure(model):
             exptime = model.meta.exposure.measurement_time
         else:
             exptime = model.meta.exposure.exposure_time
@@ -311,7 +311,7 @@ def _resample_range(data_shape, bbox=None):
     return xmin, xmax, ymin, ymax
 
 
-def _check_for_tmeasure(model):
+def check_for_tmeasure(model):
     '''
     Check if the measurement_time keyword is present in the datamodel
     for use in exptime weighting. If not, revert to using exposure_time.
