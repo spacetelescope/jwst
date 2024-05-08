@@ -133,6 +133,6 @@ class OutlierDetectionSpec(OutlierDetection):
         if not pars['save_intermediate_results']:
             self.output_list.extend(blot_files)
             for file in self.output_list:
-                if os.path.isfile(fle):
+                if os.path.isfile(file):
                     os.remove(file)
                     log.debug(f"    {file}")
