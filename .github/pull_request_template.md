@@ -8,9 +8,7 @@ Closes #
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
 
-**Checklist for PR authors**
-Please check off the items in this list as they are completed. Please
-skip or [strikethrough](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#styling-text) any irrelevant items.
+**Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
 - [ ] added entry in `CHANGES.rst` within the relevant release section
 - [ ] updated or added relevant tests
 - [ ] updated relevant documentation
