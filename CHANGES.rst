@@ -15,6 +15,9 @@ assign_wcs
   of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
   to ensure that iso-lambda is along pixel rows after this change. [#8411]
 
+- Move the assigned source position for dedicated NIRSpec MOS background slits from the
+  lower left corner of the slit to the middle of the slit. [#8461]
+
 associations
 ------------
 
