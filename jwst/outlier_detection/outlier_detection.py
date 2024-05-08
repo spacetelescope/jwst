@@ -181,19 +181,19 @@ class OutlierDetection:
                 basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
                 suffix='median')
             median_model.save(median_model_output_path)
-            self.output_list.append(median_model_output_path)
             log.info(f"Saved model in {median_model_output_path}")
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
-            blot_models = self.blot_median(median_model)
+            blot_models, blot_files = self.blot_median(median_model)
 
         else:
             # Median image will serve as blot image
             blot_models = ModelContainer(open_models=False)
             for i in range(len(self.input_models)):
                 blot_models.append(median_model)
+            blot_files = []
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
@@ -202,9 +202,12 @@ class OutlierDetection:
         # clean-up (just to be explicit about being finished with
         # these results)
         del median_model, blot_models
-
-        if pars['mk_output_list']:
-            return self.output_list
+        self.output_list.extend(blot_files)
+        if not pars['save_intermediate_results']:
+            for fle in self.output_list:
+                if os.path.isfile(fle):
+                    os.remove(fle)
+                    log.debug(f"    {fle}")
 
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.
@@ -292,6 +295,7 @@ class OutlierDetection:
 
         # Initialize container for output blot images
         blot_models = ModelContainer(open_models=False)
+        blot_files = []
 
         log.info("Blotting median")
         for model in self.input_models:
@@ -307,13 +311,13 @@ class OutlierDetection:
 
             model_path = self.make_output_path(basepath=model.meta.filename, suffix='blot')
             blotted_median.save(model_path)
-            self.output_list.append(model_path)
+            blot_files.append(model_path)
             log.info(f"Saved model in {model_path}")
 
             # Append model name to the ModelContainer so it is not passed in memory
             blot_models.append(model_path)
 
-        return blot_models
+        return blot_models, blot_files
 
     def detect_outliers(self, blot_models):
         """Flag DQ array for cosmic rays in input images.

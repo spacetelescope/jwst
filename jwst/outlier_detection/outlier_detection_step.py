@@ -1,6 +1,4 @@
 """Public common step definition for OutlierDetection processing."""
-import os
-
 from functools import partial
 
 from stdatamodels.jwst import datamodels
@@ -168,10 +166,7 @@ class OutlierDetectionStep(Step):
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, asn_id=asn_id, **pars)
-            if pars['mk_output_list']:
-                intermediate_files = step.do_detection()
-            else:
-                step.do_detection()
+            step.do_detection()
 
             state = 'COMPLETE'
             if self.input_container:
@@ -179,12 +174,6 @@ class OutlierDetectionStep(Step):
                     self.log.debug("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
-                    if not self.save_intermediate_results and pars['mk_output_list']:
-                        #  Remove unwanted files
-                        for fle in intermediate_files:
-                            if os.path.isfile(fle):
-                                os.remove(fle)
-                                self.log.debug(f"    {fle}")
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
             return self.input_models

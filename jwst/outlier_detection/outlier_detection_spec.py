@@ -8,6 +8,7 @@ from jwst.datamodels import ModelContainer
 from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection
 
+import os
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -110,22 +111,17 @@ class OutlierDetectionSpec(OutlierDetection):
             log.info("Writing out MEDIAN image to: {}".format(
                      median_model.meta.filename))
             median_model.save(median_model.meta.filename)
-            self.output_list.append(median_model.meta.filename)
 
         if pars['resample_data'] is True:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
-            blot_models = self.blot_median(median_model)
-            if save_intermediate_results:
-                log.info("Writing out BLOT images...")
-                blot_file = partial(self.make_output_path, suffix='blot')
-                blot_models.save(blot_file)
-                self.output_list.append(blot_file)
+            blot_models, blot_files = self.blot_median(median_model)
         else:
             # Median image will serve as blot image
             blot_models = ModelContainer()
             for i in range(len(self.input_models)):
                 blot_models.append(median_model)
+            blot_files = []
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
@@ -134,6 +130,9 @@ class OutlierDetectionSpec(OutlierDetection):
         # clean-up (just to be explicit about being finished
         #  with these results)
         del median_model, blot_models
-
-        if pars['mk_output_list']:
-            return self.output_list
+        if not pars['save_intermediate_results']:
+            self.output_list.extend(blot_files)
+            for fle in self.output_list:
+                if os.path.isfile(fle):
+                    os.remove(fle)
+                    log.debug(f"    {fle}")
