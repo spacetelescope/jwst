@@ -1,6 +1,4 @@
 """Class definition for performing outlier detection on spectra."""
-from functools import partial
-
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
