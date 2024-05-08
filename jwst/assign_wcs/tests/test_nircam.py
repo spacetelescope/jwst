@@ -8,7 +8,7 @@ of the results is verified by the team based on the specwcs reference
 file.
 
 """
-from numpy.testing import assert_allclose
+import numpy as np
 import pytest
 
 
@@ -99,6 +99,7 @@ def create_imaging_wcs():
     return wcsobj
 
 
+@pytest.fixture
 def create_tso_wcs(filtername=tsgrism_filters[0], subarray="SUBGRISM256"):
     """Help create tsgrism GWCS object."""
     hdul = create_hdul(exptype='NRC_TSGRISM', pupil='GRISMR',
@@ -159,16 +160,20 @@ def test_nircam_wfss_available_frames():
         assert all([a == b for a, b in zip(nircam_wfss_frames, available_frames)])
 
 
-def test_nircam_tso_available_frames():
+def test_nircam_tso_available_frames(create_tso_wcs):
     """Make sure that the expected GWCS reference frames for TSO are created."""
-    wcsobj = create_tso_wcs()
+    wcsobj = create_tso_wcs
     available_frames = wcsobj.available_frames
     assert all([a == b for a, b in zip(nircam_tsgrism_frames, available_frames)])
 
 
 @pytest.mark.parametrize('key', ['xref_sci', 'yref_sci'])
 def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
-    with pytest.raises(ValueError):
+    '''
+    TypeError for xref_sci because computing dither offset is attempted, get float - NoneType
+    ValueError for yref_sci because computing dither offset is not attempted
+    '''
+    with pytest.raises((TypeError, ValueError)):
         nircam.tsgrism(*tsgrism_inputs(missing_key=key))
 
 
@@ -197,25 +202,29 @@ def test_traverse_wfss_grisms():
         traverse_wfss_trace(pupil)
 
 
-@pytest.mark.xfail(reason="Fails due to V2 NIRCam specwcs ref files delivered to CRDS")
-def test_traverse_tso_grism():
-    """Make sure that the TSO dispersion polynomials are reversable."""
-    wcsobj = create_tso_wcs()
+def test_traverse_tso_grism(create_tso_wcs):
+    """Make sure that the TSO dispersion polynomials are reversable.
+    All assert statements are in pixel space so 1/1000 px seems easily acceptable"""
+    wcsobj = create_tso_wcs
     detector_to_grism = wcsobj.get_transform('direct_image', 'grism_detector')
     grism_to_detector = wcsobj.get_transform('grism_detector', 'direct_image')
 
     # TSGRISM always has same source locations
     # takes x,y,order -> ra, dec, wave, order
-    xin, yin, order = (100, 100, 1)
-
+    xin, yin, order = (100, 35, 1)
     x0, y0, lam, orderdet = grism_to_detector(xin, yin, order)
     x, y, orderdet = detector_to_grism(x0, y0, lam, order)
 
-    assert x0 == wcs_tso_kw['xref_sci']
-    assert y0 == wcs_tso_kw['yref_sci']
+    assert np.isclose(x0, wcs_tso_kw['xref_sci'], atol = 1e-3)
+    assert np.isclose(y0, wcs_tso_kw['yref_sci'], atol = 1e-3)
     assert order == orderdet
-    assert_allclose(x, xin)
-    assert y == wcs_tso_kw['yref_sci']
+    assert np.isclose(x, xin, atol=1e-3)
+
+    # this roundtrip fails to account for the ~22.5 pixel shift from target acquisition
+    # to science position; grism shifts spectrum wrt direct image by that amount.
+    # as of 29 April 2024, how to properly store this in the header and propagate
+    # it through assign_wcs is being discussed
+    # assert np.isclose(y, wcs_tso_kw['yref_sci'])
 
 
 def test_imaging_frames():

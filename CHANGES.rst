@@ -15,6 +15,8 @@ assign_wcs
   of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
   to ensure that iso-lambda is along pixel rows after this change. [#8411]
 
+- Fixed test for NIRCam TSGRISM mode. [#8449]
+
 - Move the assigned source position for dedicated NIRSpec MOS background slits from the
   lower left corner of the slit to the middle of the slit. [#8461]
 
@@ -41,6 +43,8 @@ documentation
 
 - Added documentation for multiprocessing. [#8408]
 
+- Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
+
 extract_1d
 ----------
 
@@ -52,6 +56,11 @@ extract_1d
 - Fix a crash in ``extract_1d`` encountered when multiple background or source
   regions are specified and the lower and upper limits for one of them are
   outside the valid area for some data range. [#8433]
+
+extract_2d
+----------
+
+- Added handling for NIRCam GRISM time series pointing offsets. [#8449]
 
 flat_field
 ----------
