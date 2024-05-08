@@ -60,6 +60,13 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     # make sure NaNs are only at do_not_use pixels
     assert np.all(unflatted.dq[is_nan] & dm.dqflags.pixel['DO_NOT_USE'])
 
+    # make sure NaNs at science pixels are also NaN in error and var arrays
+    assert np.all(np.isnan(unflatted.err[is_nan]))
+    assert np.all(np.isnan(unflatted.var_poisson[is_nan]))
+    assert np.all(np.isnan(unflatted.var_rnoise[is_nan]))
+    assert np.all(np.isnan(unflatted.var_flat[is_nan]))
+
+
 @pytest.mark.slow
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):

@@ -442,7 +442,12 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
 
         # Make sure all DO_NOT_USE pixels are set to NaN,
         # including those flagged by this step
-        slit.data[np.where(slit.dq & dqflags.pixel['DO_NOT_USE'])] = np.nan
+        dnu = np.where(slit.dq & dqflags.pixel['DO_NOT_USE'])
+        slit.data[dnu] = np.nan
+        slit.err[dnu] = np.nan
+        slit.var_poisson[dnu] = np.nan
+        slit.var_rnoise[dnu] = np.nan
+        slit.var_flat[dnu] = np.nan
 
         any_updated = True
 
@@ -521,7 +526,12 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
 
     # Make sure all DO_NOT_USE pixels are set to NaN,
     # including those flagged by this step
-    output_model.data[np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])] = np.nan
+    dnu = np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])
+    output_model.data[dnu] = np.nan
+    output_model.err[dnu] = np.nan
+    output_model.var_poisson[dnu] = np.nan
+    output_model.var_rnoise[dnu] = np.nan
+    output_model.var_flat[dnu] = np.nan
 
     output_model.meta.cal_step.flat_field = 'COMPLETE'
 
@@ -591,7 +601,12 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
 
         # Make sure all DO_NOT_USE pixels are set to NaN,
         # including those flagged by this step
-        output_model.data[np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])] = np.nan
+        dnu = np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])
+        output_model.data[dnu] = np.nan
+        output_model.err[dnu] = np.nan
+        output_model.var_poisson[dnu] = np.nan
+        output_model.var_rnoise[dnu] = np.nan
+        output_model.var_flat[dnu] = np.nan
 
         output_model.meta.cal_step.flat_field = 'COMPLETE'
 
