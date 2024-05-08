@@ -17,6 +17,9 @@ assign_wcs
 
 - Fixed test for NIRCam TSGRISM mode. [#8449]
 
+- Move the assigned source position for dedicated NIRSpec MOS background slits from the
+  lower left corner of the slit to the middle of the slit. [#8461]
+
 associations
 ------------
 
@@ -84,6 +87,12 @@ outlier_detection
 - Remove unused ``OutlierDetectionScaledStep``,
   ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
   and ``scale_detection`` (an unused argument). [#8438]
+
+photom
+------
+
+- Ensure that NaNs in MRS photom files are not replaced with ones by
+  pipeline code for consistency with other modes [#8453]
 
 pipeline
 --------
