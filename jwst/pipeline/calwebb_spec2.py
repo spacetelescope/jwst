@@ -352,6 +352,13 @@ class Spec2Pipeline(Pipeline):
                 x1d = self.photom(x1d)
             else:
                 self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
+        elif exp_type == 'NRS_MSASPEC':
+            # Special handling for MSA spectra, to handle mixed-in
+            # fixed slits separately
+            if not self.extract_1d.skip:
+                x1d = self._extract_nirspec_msa_slits(resampled)
+            else:
+                x1d = resampled.copy()
         else:
             x1d = resampled.copy()
             x1d = self.extract_1d(x1d)
@@ -575,11 +582,20 @@ class Spec2Pipeline(Pipeline):
             calib_fss.update(calibrated)
             calib_fss.meta.exposure.type = "NRS_FIXEDSLIT"
 
-            calib_fss = self.wavecorr(calib_fss)
-            calib_fss = self.flat_field(calib_fss)
-            calib_fss = self.pathloss(calib_fss)
-            calib_fss = self.barshadow(calib_fss)
-            calib_fss = self.photom(calib_fss)
+            # Run each step with an alternate suffix,
+            # to avoid overwriting previous products if save_results=True
+            fs_steps = ['wavecorr', 'flat_field', 'pathloss', 'barshadow', 'photom']
+            for step_name in fs_steps:
+                # Set suffix
+                step = getattr(self, step_name)
+                current_suffix = step.suffix
+                step.suffix = f'{current_suffix}_fs'
+
+                # Run step
+                calib_fss = step(calib_fss)
+
+                # Reset suffix
+                step.suffix = current_suffix
 
             # Append the FS results to the MOS results
             for slit in calib_fss.slits:
@@ -588,8 +604,7 @@ class Spec2Pipeline(Pipeline):
             if len(calib_mos.slits) == len(calib_fss.slits):
                 # update the MOS model with step completion status from the
                 # FS model, since there were no MOS slits to run
-                steps = ['wavecorr', 'flat_field', 'pathloss', 'barshadow', 'photom']
-                for step in steps:
+                for step in fs_steps:
                     setattr(calib_mos.meta.cal_step, step,
                             getattr(calib_fss.meta.cal_step, step))
 
@@ -622,3 +637,56 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
 
         return calibrated
+
+    def _extract_nirspec_msa_slits(self, resampled):
+        """Extract NIRSpec MSA slits with separate handling for FS slits."""
+
+        # Check for fixed slits mixed in with MSA spectra:
+        # they need separate reference files
+        resamp_mos = datamodels.MultiSlitModel()
+        resamp_fss = datamodels.MultiSlitModel()
+        for slit in resampled.slits:
+            # Quadrant information is not preserved through resampling,
+            # but MSA slits have numbers for names, so use that to
+            # distinguish MSA from FS
+            try:
+                msa_name = int(slit.name)
+            except ValueError:
+                msa_name = None
+            if msa_name is None:
+                slit.meta.exposure.type = "NRS_FIXEDSLIT"
+                resamp_fss.slits.append(slit)
+            else:
+                slit.meta.exposure.type = "NRS_MSASPEC"
+                resamp_mos.slits.append(slit)
+        resamp_mos.update(resampled)
+        resamp_fss.update(resampled)
+
+        # Extract the MOS slits
+        x1d = None
+        save_x1d = self.extract_1d.save_results
+        self.extract_1d.save_results = False
+        if len(resamp_mos.slits) > 0:
+            self.log.info(f'Extracting {len(resamp_mos.slits)} MSA slitlets')
+            x1d = self.extract_1d(resamp_mos)
+
+        # Extract the FS slits
+        if len(resamp_fss.slits) > 0:
+            self.log.info(f'Extracting {len(resamp_fss.slits)} fixed slits')
+            resamp_fss.meta.exposure.type = "NRS_FIXEDSLIT"
+            x1d_fss = self.extract_1d(resamp_fss)
+            if x1d is None:
+                x1d = x1d_fss
+                x1d.meta.exposure.type = "NRS_MSASPEC"
+            else:
+                for spec in x1d_fss.spec:
+                    x1d.spec.append(spec)
+
+        # save the composite model
+        if save_x1d:
+            self.save_model(x1d, suffix='x1d')
+
+        resamp_mos.close()
+        resamp_fss.close()
+
+        return x1d
