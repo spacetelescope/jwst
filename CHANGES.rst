@@ -57,10 +57,14 @@ extract_1d
   regions are specified and the lower and upper limits for one of them are
   outside the valid area for some data range. [#8433]
 
+- Correct the output slit name for non-primary slit extractions in the
+  spec3 pipeline, for NIRSpec fixed slit mode. [#8470]
+
 extract_2d
 ----------
 
 - Added handling for NIRCam GRISM time series pointing offsets. [#8449]
+
 
 flat_field
 ----------
