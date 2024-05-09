@@ -288,22 +288,22 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] \
            and not isinstance(calibrated, datamodels.CubeModel):
 
-            # Call the resample_spec step for 2D slit data
+            # Call pixel replace, followed by resample_spec  for 2D slit data
             resampled = calibrated.copy()
             resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
 
         elif is_nrs_slit_linelamp(calibrated):
 
-            # Call resample_spec for NRS 2D line lamp slit data
+            # Call pixel_replace followed by resample_spec for NRS 2D line lamp slit data
             resampled = calibrated.copy()
             resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
 
         elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):
 
-            # Call the cube_build step for IFU data;
-            # always create a single cube containing multiple
+            # First call pixel_replace then call cube_build step for IFU data.
+            # For cube_build always create a single cube containing multiple
             # wavelength bands
 
             resampled = calibrated.copy()

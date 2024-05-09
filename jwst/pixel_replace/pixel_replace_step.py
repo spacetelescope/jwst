@@ -52,21 +52,10 @@ class PixelReplaceStep(Step):
             # Make copy of input to prevent overwriting
             result = input_model.copy()
             # If more than one 2d spectrum exists in input, call replacement
-            # for each spectrum - NRS_FIXEDSLIT, WFSS
-            if isinstance(input_model, datamodels.MultiSlitModel):
-                self.log.debug('Input is a MultiSlitModel.')
-            # NRS_BRIGHTOBJ provides a SlitModel
-            elif isinstance(input_model, datamodels.SlitModel):
-                self.log.debug('Input is a SlitModel.')
-            # MIRI_LRS-FIXEDSLIT comes in ImageModel - any others?
-            elif isinstance(input_model, datamodels.ImageModel):
-                self.log.debug('Input is an ImageModel.')
-            elif isinstance(input_model, datamodels.IFUImageModel):
-                self.log.debug('Input is an IFUImageModel.')
-            # SOSS & LRS-SLITLESS have CubeModel, along with IFU modes WIP
-            elif isinstance(input_model, datamodels.CubeModel):
-                # It's a 3-D multi-integration model
-                self.log.debug('Input is a CubeModel for a multiple integration file.')
+
+            if input_model.meta.model_type in ['MultiSlitModel', 'SlitModel',
+                                               'ImageModel', 'IFUImageModel', 'CubeModel']:
+                self.log.debug('Input is a {input_model.meta.model_type}.')
             elif isinstance(input_model, datamodels.ModelContainer):
                 self.log.debug('Input is a ModelContainer.')
             else:
@@ -105,23 +94,11 @@ class PixelReplaceStep(Step):
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
                     run_pixel_replace = True
-                    # for each spectrum - NRS_FIXEDSLIT, WFSS
-                    if isinstance(model, datamodels.MultiSlitModel):
-                        self.log.debug('Input is a MultiSlitModel.')
-                        # NRS_BRIGHTOBJ provides a SlitModel
-                    elif isinstance(model, datamodels.SlitModel):
-                        self.log.debug('Input is a SlitModel.')
-                        # MIRI_LRS-FIXEDSLIT comes in ImageModel - any others?
-                    elif isinstance(model, datamodels.ImageModel):
-                        self.log.debug('Input is an ImageModel.')
-                    elif isinstance(model, datamodels.IFUImageModel):
-                        self.log.debug('Input is an IFUImageModel.')
-                        # SOSS & LRS-SLITLESS have CubeModel, along with IFU modes WIP
-                    elif isinstance(model, datamodels.CubeModel):
-                        # It's a 3-D multi-integration model
-                        self.log.debug('Input is a CubeModel for a multiple integration file.')
+                    if model.meta.model_type in ['MultiSlitModel', 'SlitModel',
+                                                 'ImageModel', 'IFUImageModel', 'CubeModel']:
+                        self.log.debug('Input is a {model.meta.model_type}.')
                     else:
-                        self.log.error(f'Input is of type {str(type(input_model))} for which')
+                        self.log.error(f'Input is of type {model.meta.model_type} for which')
                         self.log.error('pixel_replace does not have an algorithm.\n')
                         self.log.error('Pixel replacement will be skipped.')
                         model.meta.cal_step.pixel_replace = 'SKIPPED'

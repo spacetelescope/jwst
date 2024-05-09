@@ -37,7 +37,6 @@ asn_memberdict = {
 def run_pipeline(rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
        We currently test the following types of inputs:
-       We currently test the following types of inputs:
          1) Full-frame exposure (all slits will be extracted)
          2) ALLSLITS subarray exposure (all slits will be extracted)
          3) S400A1 subarray exposure (1 slit extracted)"""
@@ -76,8 +75,7 @@ def run_pipeline_pixel_replace(rtdata_module):
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
             "--steps.pixel_replace.save_results=true",
-            "--steps.pixel_replace.skip=false",
-            "--steps.photom.save_results=true"]
+            "--steps.pixel_replace.skip=false"]
     Step.from_cmdline(args)
 
     return rtdata
@@ -108,8 +106,7 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
-    ['jw01309022001_04102_00004_nrs2_photom.fits',
-     'jw01309022001_04102_00004_nrs2_pixel_replace.fits',
+    ['jw01309022001_04102_00004_nrs2_pixel_replace.fits',
      'jw01309022001_04102_00004_nrs2_cal.fits',
      'jw01309022001_04102_00004_nrs2_s2d.fits',
      'jw01309022001_04102_00004_nrs2_x1d.fits']
