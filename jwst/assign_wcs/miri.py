@@ -202,7 +202,6 @@ def lrs(input_model, reference_files):
     world = cf.CompositeFrame(name="world", frames=[icrs, spec])
 
     # Create the transforms
-    #dettotel = lrs_distortion(input_model, reference_files)
     dettoabl = lrs_xytoabl(input_model, reference_files)
     abltov2v3l = lrs_abltov2v3l(input_model, reference_files)
     v2v3tosky = pointing.v23tosky(input_model)
@@ -215,6 +214,7 @@ def lrs(input_model, reference_files):
         v3_ref=input_model.meta.wcsinfo.v3_ref
     ) & models.Identity(1)
 
+    # Put the transforms together into a single pipeline
     pipeline = [(detector, dettoabl),
                 (miri_focal, abltov2v3l),
                 (v2v3, va_corr),
