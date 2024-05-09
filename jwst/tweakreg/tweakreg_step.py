@@ -5,6 +5,7 @@ JWST pipeline step for image alignment.
 
 """
 from os import path
+import math
 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -21,6 +22,9 @@ from ..stpipe import Step
 from ..assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging, wcs_from_footprints
 from .astrometric_utils import create_astrometric_catalog
 from .tweakreg_catalog import make_tweakreg_catalog
+
+
+_SQRT2 = math.sqrt(2.0)
 
 
 def _oxford_or_str_join(str_list):
