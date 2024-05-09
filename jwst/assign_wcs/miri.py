@@ -394,7 +394,6 @@ def lrs_abltov2v3l(input_model, reference_files):
     ref = fits.open(reference_files['specwcs'])
 
     with ref:
-        lrsdata = np.array([d for d in ref[1].data])
         # Get the zero point from the reference data.
         # The zero_point is X, Y  (which should be COLUMN, ROW)
         # These are 1-indexed in CDP-7 (i.e., SIAF convention) so must be converted to 0-indexed
