@@ -1,0 +1,27 @@
+name: run regression tests
+
+on:
+  pull_request:
+    # types: 
+    #   - review_requested
+    branches:
+      - master
+  schedule:
+    # Nightly runs at 12am Midnight
+    - cron: "0 0 * * *"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --request POST https://api.github.com/repos/spacetelescope/RegressionTests/actions/workflows/jwst.yml/dispatches \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type:application/json" \
+            -H "User-Agent: SpaceTelescopeGithubBot" \
+            -H "Authorization: Bearer ${{ secrets.REGTEST_API_TOKEN }}" \
+            --data '{ "ref": "main", "inputs": { "git_repository": "${{ github.event.pull_request.head.repo }}", "git_ref": "${{ github.event.pull_request.head.ref }}", "package": "romancal"}}'
+
+
+
