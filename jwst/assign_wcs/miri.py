@@ -291,18 +291,6 @@ def lrs_xytoabl(input_model, reference_files):
         bb_sub = ((input_model.meta.subarray.xstart - 1 + 4 - 0.5, input_model.meta.subarray.xsize - 1 + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
 
-    # Find the ROW of the zero point
-    #row_zero_point = zero_point[1]
-
-    # The inputs to the "detector_to_v2v3" transform are
-    # - the indices in x spanning the entire image row
-    # - y is the y-value of the zero point
-    # This is equivalent of making a vector of x, y locations for
-    # every pixel in the reference row
-    #const1d = models.Const1D(row_zero_point)
-    #const1d.inverse = models.Const1D(row_zero_point)
-    #det_to_v2v3 = models.Identity(1) & const1d | subarray_dist
-
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
     # as a simple x shift using a linear fit to this relation provided by the CDP.
@@ -422,34 +410,27 @@ def lrs_abltov2v3l(input_model, reference_files):
     v2_off, v3_off = subarray_dist(zero_point[0] + 1, zero_point[1])
     pscale = np.sqrt(np.power(v2_cen - v2_off, 2) + np.power(v3_cen - v3_off,2))
 
-    # Find the ROW of the zero point
-    row_zero_point = zero_point[1]
-
-    # The inputs to the "detector_to_v2v3" transform are
-    # - the indices in x spanning the entire image row
-    # - y is the y-value of the zero point
-    # This is equivalent of making a vector of x, y locations for
-    # every pixel in the reference row
-    const1d = models.Const1D(row_zero_point)
-    const1d.inverse = models.Const1D(row_zero_point)
-    det_to_v2v3 = models.Identity(1) & const1d | subarray_dist
-
     # Go from alpha to slit-X
     slitxmodel = models.Polynomial1D(1, c0=0, c1=1 / pscale) | models.Shift(zero_point[0])
-    # Slit-Y is just the row_zero_point, so go from alpha,beta to slit-X, slit-Y
-    ab_to_v2v3 = slitxmodel & const1d | subarray_dist
+    # Go from beta to slit-Y (row_zero_point plus some offset)
+    # Beta should always be zero unless using in a pseudo-ifu mode
+    slitymodel = models.Polynomial1D(1, c0=0, c1=1 / pscale) | models.Shift(zero_point[1])
+    # Go from alpha-beta to slit xy, and onward to v2v3
+    ab_to_v2v3 = slitxmodel & slitymodel | subarray_dist
     # Put it together to pass through wavelength
     abl_to_v2v3l = models.Mapping((0, 1, 2)) | ab_to_v2v3 & models.Identity(1)
 
     # Define the inverse transform
     # Go from slit X to alpha
     alphamodel = models.Shift(-zero_point[0]) | models.Polynomial1D(1, c0=0, c1=pscale)
-    # Go from v2,v3 to slit-x
-    v2v3_to_xdet = det_to_v2v3.inverse | models.Mapping([0], n_inputs=2)
-    # Go from v2,v3 to alpha
-    aa = v2v3_to_xdet | alphamodel
+    # Go from slit Y to beta
+    betamodel = models.Shift(-zero_point[1]) | models.Polynomial1D(1, c0=0, c1=pscale)
+    # Go from v2,v3 to slit-x,slit-y
+    v2v3_to_xydet = subarray_dist.inverse
+    # Go from v2,v3 to alpha, beta
+    aa = v2v3_to_xydet | alphamodel & betamodel
     # Go from v2,v3,lambda to alpha,beta,lambda
-    abl_to_v2v3l.inverse = models.Mapping((0,1,0,2)) | aa & models.Const1D(0) & models.Identity(1)
+    abl_to_v2v3l.inverse = models.Mapping((0,1,2)) | aa & models.Identity(1)
 
     return abl_to_v2v3l
 
