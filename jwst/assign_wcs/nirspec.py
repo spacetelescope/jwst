@@ -682,13 +682,13 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
             # Slits with source_id < 0 are "virtual" slits, with no source assigned
             else:
-                source_id = slitlet_id
+                source_id = abs(source_id)
                 log.info(f'Slitlet_id {slitlet_id} is virtual; assigned source_id = {source_id}')
                 # Hardwire the source info for this virtual slit, because there's none in the MSA file
-                source_xpos = 0.0
-                source_ypos = 0.0
-                source_name = "virtual_{}".format(slitlet_id)
-                source_alias = "vrt_{}".format(slitlet_id)
+                source_xpos = 0.5
+                source_ypos = 0.5
+                source_name = "virtual_{}".format(source_id)
+                source_alias = "vrt_{}".format(source_id)
                 stellarity = 0.0
                 source_ra = 0.0
                 source_dec = 0.0

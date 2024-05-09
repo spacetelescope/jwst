@@ -37,8 +37,9 @@ def exp_to_source(inputs):
         log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
 
         for slit in exposure.slits:
-            log.debug(f'Copying source {slit.source_id}')
-            result_slit = result[str(slit.source_id)]
+            #log.debug(f'Copying source {slit.source_id}')
+            log.debug(f'Copying source {slit.source_name}')
+            result_slit = result[str(slit.source_name)]
             result_slit.exposures.append(slit)
             # store values for later use (after merge_tree)
             # these values are incorrectly getting overwritten by
