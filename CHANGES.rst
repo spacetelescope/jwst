@@ -6,12 +6,19 @@ ami
 
 - Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
+- Allow ``ami_analyze`` to run on ``cal`` files. [#8451]
+
 assign_wcs
 ----------
 
 - Change MIRI LRS WCS code to handle the tilted trace via a centroid shift as a function
   of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
   to ensure that iso-lambda is along pixel rows after this change. [#8411]
+
+- Fixed test for NIRCam TSGRISM mode. [#8449]
+
+- Move the assigned source position for dedicated NIRSpec MOS background slits from the
+  lower left corner of the slit to the middle of the slit. [#8461]
 
 associations
 ------------
@@ -23,7 +30,7 @@ associations
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
 
 dark_current
-------------  
+------------
 
 - Add log info message when specifying an average_dark_current for noise calculations.
   [#8425]
@@ -33,8 +40,10 @@ documentation
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
-  
+
 - Added documentation for multiprocessing. [#8408]
+
+- Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
 
 extract_1d
 ----------
@@ -44,17 +53,31 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+- Fix a crash in ``extract_1d`` encountered when multiple background or source
+  regions are specified and the lower and upper limits for one of them are
+  outside the valid area for some data range. [#8433]
+
+extract_2d
+----------
+
+- Added handling for NIRCam GRISM time series pointing offsets. [#8449]
+
 flat_field
 ----------
 
 - Update the flatfield code for NIRSpec IFU data to ensure that SCI=ERR=NaN and
   DQ has the DO_NOT_USE flag set outside the footprint of the IFU slices [#8385]
 
+- Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
+  DO_NOT_USE flag is set in the DQ array. [#8463]
+
 general
 -------
 
 - Removed deprecated stdatamodels model types ``DrizProductModel``,
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
+
+- Increase minimum required scipy. [#8441]
 
 outlier_detection
 -----------------
@@ -64,11 +87,24 @@ outlier_detection
 - Pass the ``weight_type`` parameter to all resampling function calls so that
   the default weighting can be overridden by the input step parameter. [#8290]
 
+- Remove unused ``OutlierDetectionScaledStep``,
+  ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
+  and ``scale_detection`` (an unused argument). [#8438]
+
+photom
+------
+
+- Ensure that NaNs in MRS photom files are not replaced with ones by
+  pipeline code for consistency with other modes [#8453]
+
 pipeline
 --------
 
 - Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
   that was causing them not to respect the ``output_file`` parameter. [#8368]
+
+- Removed unused ``scale_detection`` argument from ``calwebb_tso3``
+  pipeline. [#8438]
 
 ramp_fitting
 ------------
@@ -83,6 +119,14 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+- Update variance handling to propagate resampled variance components with
+  weights that match the science `weight_type`. [#8437]
+
+resample_spec
+-------------
+
+- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
 residual_fringe
 ---------------
 
@@ -95,6 +139,14 @@ tweakreg
 
 - Improved how a image group name is determined. [#8426]
 
+- Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
+  step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
+
+wfss_contam
+-----------
+
+- Fixed flux scaling issue in model contamination image by adding background
+  subtraction and re-scaling fluxes to respect wavelength oversampling. [#8416]
 
 1.14.0 (2024-03-29)
 ===================

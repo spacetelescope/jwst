@@ -8,7 +8,7 @@ Closes #
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
 
-**Checklist for maintainers**
+**Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
 - [ ] added entry in `CHANGES.rst` within the relevant release section
 - [ ] updated or added relevant tests
 - [ ] updated relevant documentation
@@ -16,4 +16,5 @@ This PR addresses ...
 - [ ] added relevant label(s)
 - [ ] ran regression tests, post a link to the Jenkins job below.
       [How to run regression tests on a PR](https://github.com/spacetelescope/jwst/wiki/Running-Regression-Tests-Against-PR-Branches)
+- [ ] All comments are resolved
 - [ ] Make sure the JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
