@@ -75,11 +75,6 @@ class ResampleData:
         if output is not None and '.fits' not in output:
             self.output_dir = output
             self.output_filename = None
-        if 'mk_output_list' in kwargs:
-            self.mk_output_list = kwargs['mk_output_list']
-        else:
-            self.mk_output_list = False
-        self.output_list = []  # list of the names of all output files created
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -309,8 +304,6 @@ class ResampleData:
                 if self.output_dir is not None:
                     output_name = os.path.join(self.output_dir, output_name)
                 output_model.save(output_name)
-                if self.mk_output_list:
-                    self.output_list.append(output_name)
                 log.info(f"Saved model in {output_name}")
                 self.output_models.append(output_name)
             else:
@@ -318,10 +311,7 @@ class ResampleData:
             output_model.data *= 0.
             output_model.wht *= 0.
 
-        if self.mk_output_list:
-            return self.output_list, self.output_models
-        else:
-            return self.output_models
+        return self.output_models
 
     def resample_many_to_one(self):
         """Resample and coadd many inputs to a single output.
