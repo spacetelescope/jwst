@@ -6,7 +6,6 @@ from jwst.datamodels import ModelContainer
 from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection, _remove_file
 
-import os
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
