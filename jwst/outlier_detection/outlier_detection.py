@@ -3,6 +3,7 @@
 from functools import partial
 import logging
 import warnings
+import os
 
 import numpy as np
 from astropy.stats import sigma_clip
@@ -140,7 +141,10 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            resamp = resample.ResampleData(self.input_models, single=True,
+            output_path = self.make_output_path(basepath=self.input_models[0].meta.filename,
+                            suffix='')
+            output_path = os.path.dirname(output_path)
+            resamp = resample.ResampleData(self.input_models, output=output_path, single=True,
                                            blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
 
@@ -171,6 +175,12 @@ class OutlierDetection:
                 suffix='median')
             median_model.save(median_model_output_path)
             log.info(f"Saved model in {median_model_output_path}")
+        else:
+            # since we're not saving intermediate results if the drizzled models
+            # were written to disk, remove them
+            if not pars['in_memory']:
+                for fn in drizzled_models._models:
+                    _remove_file(fn)
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
@@ -189,6 +199,9 @@ class OutlierDetection:
 
         # clean-up (just to be explicit about being finished with
         # these results)
+        if not pars['save_intermediate_results'] and not pars['in_memory']:
+            for fn in blot_models._models:
+                _remove_file(fn)
         del median_model, blot_models
 
     def create_median(self, resampled_models):
@@ -333,6 +346,12 @@ class OutlierDetection:
             # Make sure actual input gets updated with new results
             for i in range(len(self.input_models)):
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
+
+
+def _remove_file(fn):
+    if isinstance(fn, str) and os.path.isfile(fn):
+        os.remove(fn)
+        log.debug(f"    {fn}")
 
 
 def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
