@@ -61,10 +61,10 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     rtdata.input = "niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json"
     rtdata.get_data("niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json")
 
-    args = ["jwst.tweakreg.TweakRegStep", rtdata.input]
+    args = ["jwst.tweakreg.TweakRegStep", rtdata.input, "--abs_refcat='GAIADR3'"]
     result = Step.from_cmdline(args)
     # Check that the step is skipped
-    assert result.skip == True
+    assert result.skip
 
     # Check the status of the step is set correctly in the files.
     result = TweakRegStep.call(rtdata.input)
