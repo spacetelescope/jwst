@@ -6,7 +6,9 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
+from jwst import datamodels
 from jwst.stpipe import Step
+from jwst.tweakreg import TweakRegStep
 
 
 @pytest.fixture(scope="module")
@@ -42,6 +44,36 @@ def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_k
     """Regression test of detector1 pipeline performed on NIRISS imaging data.
     """
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
+    """Make sure tweakreg is skipped when sources are not found.
+    """
+    #rtdata = rtdata_module
+
+    cal_files = ["niriss/imaging/jw01537003001_02109_00001_nis_cal.fits",
+                 "niriss/imaging/jw01537003001_02109_00002_nis_cal.fits"]
+
+    for cal_file in cal_files:
+        rtdata.get_data(cal_file)
+
+    rtdata.input = "niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json"
+    rtdata.get_data("niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json")
+
+    args = ["jwst.tweakreg.TweakRegStep", rtdata.input]
+    result = Step.from_cmdline(args)
+    # Check that the step is skipped
+    assert result.skip == True
+
+    # Check the status of the step is set correctly in the files.
+    result = TweakRegStep.call(rtdata.input)
+
+    for fi in result._models:
+        with datamodels.open(fi) as model:
+            assert model.meta.cal_step.tweakreg == 'SKIPPED'
+
+    result.close()
 
 
 def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix):
