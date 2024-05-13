@@ -99,6 +99,8 @@ outlier_detection
   finished, unless save_intermediate_results is True. This PR also addressed
   the _i2d files not being saved in the specified output directory. [#8464]
 
+- Added tests for changes made in #8464. [#8481]
+
 photom
 ------
 
