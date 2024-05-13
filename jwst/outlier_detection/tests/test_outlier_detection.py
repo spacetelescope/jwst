@@ -17,8 +17,6 @@ from jwst.outlier_detection.outlier_detection_step import (
 )
 from jwst.assign_wcs.pointing import create_fitswcs
 
-from jwst.resample import resample
-
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
 )
