@@ -662,8 +662,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             quadrant = slitlets_sid[0]['shutter_quadrant']
             ycen = j
             xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
-            source_xpos = 0.0
-            source_ypos = 0.0
+            source_xpos = 0.5
+            source_ypos = 0.5
             source_id = _get_bkg_source_id(bkg_counter, max_source_id)
             log.info(f'Slitlet_id {slitlet_id} is background only; assigned source_id = {source_id}')
             bkg_counter += 1

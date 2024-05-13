@@ -7,6 +7,8 @@ from jwst.datamodels import ModelContainer
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
+from jwst.lib.wcs_utils import get_wavelengths
+
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
@@ -108,6 +110,16 @@ class ResampleSpecStep(ResampleStep):
         # Update ASNTABLE in output
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
         result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
+
+        # populate the result wavelength attribute for MultiSlitModel
+        if isinstance(result, MultiSlitModel):
+            for slit_idx, slit in enumerate(result.slits):
+                wl_array = get_wavelengths(result.slits[slit_idx])
+                result.slits[slit_idx].wavelength = wl_array
+        else:
+            # populate the result wavelength attribute for SlitModel
+            wl_array = get_wavelengths(result)
+            result.wavelength = wl_array
 
         return result
 

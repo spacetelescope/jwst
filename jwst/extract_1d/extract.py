@@ -2997,7 +2997,10 @@ def do_extract1d(
 
             # For NRS_FIXEDSLIT, the slit name comes from the FXD_SLIT keyword in the model meta
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
-                slitname = input_model.meta.instrument.fixed_slit
+                if hasattr(input_model, "name") and input_model.name is not None:
+                    slitname = input_model.name
+                else:
+                    slitname = input_model.meta.instrument.fixed_slit
 
             # Loop over all spectral orders available for extraction
             prev_offset = OFFSET_NOT_ASSIGNED_YET

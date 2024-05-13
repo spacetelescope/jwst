@@ -6,12 +6,19 @@ ami
 
 - Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
+- Allow ``ami_analyze`` to run on ``cal`` files. [#8451]
+
 assign_wcs
 ----------
 
 - Change MIRI LRS WCS code to handle the tilted trace via a centroid shift as a function
   of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
   to ensure that iso-lambda is along pixel rows after this change. [#8411]
+
+- Fixed test for NIRCam TSGRISM mode. [#8449]
+
+- Move the assigned source position for dedicated NIRSpec MOS background slits from the
+  lower left corner of the slit to the middle of the slit. [#8461]
 
 associations
 ------------
@@ -23,7 +30,7 @@ associations
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
 
 dark_current
-------------  
+------------
 
 - Add log info message when specifying an average_dark_current for noise calculations.
   [#8425]
@@ -33,8 +40,10 @@ documentation
 
 - Added docs for the NIRSpec MSA metadata file to the data products area of RTD.
   [#8399]
-  
+
 - Added documentation for multiprocessing. [#8408]
+
+- Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
 
 extract_1d
 ----------
@@ -44,13 +53,28 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+- Fix a crash in ``extract_1d`` encountered when multiple background or source
+  regions are specified and the lower and upper limits for one of them are
+  outside the valid area for some data range. [#8433]
+
+- Correct the output slit name for non-primary slit extractions in the
+  spec3 pipeline, for NIRSpec fixed slit mode. [#8470]
+
 - Add ``ifu_covar_scale`` parameter to help correct for IFU cube covariance. [#8457]
+
+extract_2d
+----------
+
+- Added handling for NIRCam GRISM time series pointing offsets. [#8449]
 
 flat_field
 ----------
 
 - Update the flatfield code for NIRSpec IFU data to ensure that SCI=ERR=NaN and
   DQ has the DO_NOT_USE flag set outside the footprint of the IFU slices [#8385]
+
+- Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
+  DO_NOT_USE flag is set in the DQ array. [#8463]
 
 general
 -------
@@ -71,6 +95,16 @@ outlier_detection
 - Remove unused ``OutlierDetectionScaledStep``,
   ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
   and ``scale_detection`` (an unused argument). [#8438]
+
+- Intermediate output files are now correctly removed after the step has
+  finished, unless save_intermediate_results is True. This PR also addressed
+  the _i2d files not being saved in the specified output directory. [#8464]
+
+photom
+------
+
+- Ensure that NaNs in MRS photom files are not replaced with ones by
+  pipeline code for consistency with other modes [#8453]
 
 pipeline
 --------
@@ -94,6 +128,14 @@ resample
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
 
+- Update variance handling to propagate resampled variance components with
+  weights that match the science `weight_type`. [#8437]
+
+resample_spec
+-------------
+
+- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
 residual_fringe
 ---------------
 
@@ -105,6 +147,17 @@ tweakreg
 - Output source catalog file now respects ``output_dir`` parameter. [#8386]
 
 - Improved how a image group name is determined. [#8426]
+
+- Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
+  step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
+
+- Improve error handling in the absolute alignment. [#8450]
+
+wfss_contam
+-----------
+
+- Fixed flux scaling issue in model contamination image by adding background
+  subtraction and re-scaling fluxes to respect wavelength oversampling. [#8416]
 
 
 1.14.0 (2024-03-29)

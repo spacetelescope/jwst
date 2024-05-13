@@ -508,18 +508,10 @@ class DataSet():
         # MRS detectors
         elif self.detector == 'MIRIFUSHORT' or self.detector == 'MIRIFULONG':
 
-            # Reset conversion and pixel size values with DQ=NON_SCIENCE to 1,
-            # so no conversion is applied
-            where_dq = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
-            ftab.data[where_dq > 0] = 1.0
-
-            # Reset NaN's in conversion array to 1
+            # Make sure all NaN's have DO_NOT_USE flag set
             where_nan = np.isnan(ftab.data)
-            ftab.data[where_nan] = 1.0
-
-            # Make sure all NaN's and zeros have DQ flags set
             ftab.dq[where_nan] = np.bitwise_or(ftab.dq[where_nan],
-                                               dqflags.pixel['NON_SCIENCE'])
+                                               dqflags.pixel['DO_NOT_USE'])
 
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data
