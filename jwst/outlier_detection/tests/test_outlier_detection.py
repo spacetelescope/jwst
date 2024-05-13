@@ -192,7 +192,7 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) == 0
     assert len(median_files) == 0
-    assert len(median_files) == 0
+    assert len(blot_files) == 0
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
@@ -215,7 +215,7 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) != 0
     assert len(median_files) != 0
-    assert len(median_files) != 0
+    assert len(blot_files) != 0
 
 
 def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
