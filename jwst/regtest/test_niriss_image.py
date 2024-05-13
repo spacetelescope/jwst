@@ -50,16 +50,9 @@ def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_k
 def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     """Make sure tweakreg is skipped when sources are not found.
     """
-    #rtdata = rtdata_module
-
-    cal_files = ["niriss/imaging/jw01537003001_02109_00001_nis_cal.fits",
-                 "niriss/imaging/jw01537003001_02109_00002_nis_cal.fits"]
-
-    for cal_file in cal_files:
-        rtdata.get_data(cal_file)
 
     rtdata.input = "niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json"
-    rtdata.get_data("niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json")
+    rtdata.get_asn("niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json")
 
     args = ["jwst.tweakreg.TweakRegStep", rtdata.input, "--abs_refcat='GAIADR3'"]
     result = Step.from_cmdline(args)
