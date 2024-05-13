@@ -245,7 +245,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         b_var_poisson *= 0
 
     # Deal with covariance in the IFU cube by multiplying 1d spectra errors by a scaling factor
-    if (extract_params['ifu_covar_scale'] != None):
+    if (extract_params['ifu_covar_scale'] is not None):
         log.info("Applying ERR covariance prefactor of %g", extract_params['ifu_covar_scale'])
         error *= extract_params['ifu_covar_scale']
         sb_error *= extract_params['ifu_covar_scale']
