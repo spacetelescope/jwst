@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from collections import defaultdict
 import os.path as op
-import numpy as np
 
 from stdatamodels.jwst import datamodels
 
