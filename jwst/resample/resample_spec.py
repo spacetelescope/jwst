@@ -63,6 +63,10 @@ class ResampleSpecData(ResampleData):
         self.input_models = input_models
 
         self.output_filename = output
+        self.output_dir = None
+        if output is not None and '.fits' not in output:
+            self.output_dir = output
+            self.output_filename = None
         self.pscale_ratio = pscale_ratio
         self.pscale = pscale
         self.single = single

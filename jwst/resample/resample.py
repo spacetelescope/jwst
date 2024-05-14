@@ -70,7 +70,12 @@ class ResampleData:
                 all products in memory.
         """
         self.input_models = input_models
+        self.output_dir = None
         self.output_filename = output
+        if output is not None and '.fits' not in output:
+            self.output_dir = output
+            self.output_filename = None
+
         self.pscale_ratio = pscale_ratio
         self.single = single
         self.blendheaders = blendheaders
@@ -296,6 +301,8 @@ class ResampleData:
             if not self.in_memory:
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
+                if self.output_dir is not None:
+                    output_name = os.path.join(self.output_dir, output_name)
                 output_model.save(output_name)
                 log.info(f"Saved model in {output_name}")
                 self.output_models.append(output_name)

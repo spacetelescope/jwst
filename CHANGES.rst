@@ -57,10 +57,14 @@ extract_1d
   regions are specified and the lower and upper limits for one of them are
   outside the valid area for some data range. [#8433]
 
+- Correct the output slit name for non-primary slit extractions in the
+  spec3 pipeline, for NIRSpec fixed slit mode. [#8470]
+
 extract_2d
 ----------
 
 - Added handling for NIRCam GRISM time series pointing offsets. [#8449]
+
 
 flat_field
 ----------
@@ -90,6 +94,10 @@ outlier_detection
 - Remove unused ``OutlierDetectionScaledStep``,
   ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
   and ``scale_detection`` (an unused argument). [#8438]
+
+- Intermediate output files are now correctly removed after the step has
+  finished, unless save_intermediate_results is True. This PR also addressed
+  the _i2d files not being saved in the specified output directory. [#8464]
 
 photom
 ------
@@ -142,11 +150,14 @@ tweakreg
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
   step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
+- Improve error handling in the absolute alignment. [#8450]
+
 wfss_contam
 -----------
 
 - Fixed flux scaling issue in model contamination image by adding background
   subtraction and re-scaling fluxes to respect wavelength oversampling. [#8416]
+
 
 1.14.0 (2024-03-29)
 ===================
