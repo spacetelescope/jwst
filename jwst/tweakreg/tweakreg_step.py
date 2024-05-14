@@ -406,7 +406,7 @@ class TweakRegStep(Step):
                 # Perform fit
                 try:
                     align_wcs(
-                        imcats,
+                        correctors,
                         refcat=ref_cat,
                         enforce_user_order=True,
                         expand_refcat=False,
