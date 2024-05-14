@@ -156,7 +156,6 @@ class OutlierDetectionStep(Step):
                         model.meta.cal_step.outlier_detection = "SKIPPED"
                 else:
                     self.input_models.meta.cal_step.outlier_detection = "SKIPPED"
-                self.skip = True
                 return self.input_models
 
             self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")

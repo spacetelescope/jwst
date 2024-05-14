@@ -637,20 +637,23 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             quadrant = slitlets_sid[0]['shutter_quadrant']
             ycen = j
             xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
-            source_xpos = 0.5
-            source_ypos = 0.5
+
+            # Background slits all have source_id=0 in the msa_file,
+            # so assign a unique id based on the slitlet_id
             source_id = slitlet_id
-            log.info(f'Slitlet_id {slitlet_id} is background only; assigned source_id = {source_id}')
 
             # Hardwire the source info for background slits, because there's
             # no source info for them in the msa_file
+            source_xpos = 0.5
+            source_ypos = 0.5
             source_name = "background_{}".format(slitlet_id)
             source_alias = "bkg_{}".format(slitlet_id)
             stellarity = 0.0
             source_ra = 0.0
             source_dec = 0.0
+            log.info(f'Slitlet {slitlet_id} is background only; assigned source_id={source_id}')
 
-        # There is 1 main shutter: this is a normal slit
+        # There is 1 main shutter: this is a slit containing either a real or virtual source
         elif n_main_shutter == 1:
             xcen, ycen, quadrant, source_xpos, source_ypos = [
                 (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
@@ -669,7 +672,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
                 if slitlets_sid[i]['primary_source'] == 'Y':
                     source_id = slitlets_sid[i]['source_id']
 
-            # Normal slits with a source assigned have a source_id > 0
+            # Slits with a real source assigned have a source_id > 0
             if source_id > 0:
                 shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
                 # Get source info for this normal slitlet
@@ -682,16 +685,15 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
             # Slits with source_id < 0 are "virtual" slits, with no source assigned
             else:
-                source_id = abs(source_id)
-                log.info(f'Slitlet_id {slitlet_id} is virtual; assigned source_id = {source_id}')
                 # Hardwire the source info for this virtual slit, because there's none in the MSA file
                 source_xpos = 0.5
                 source_ypos = 0.5
-                source_name = "virtual_{}".format(source_id)
-                source_alias = "vrt_{}".format(source_id)
+                source_name = "virtual_{}".format(abs(source_id))
+                source_alias = "vrt_{}".format(abs(source_id))
                 stellarity = 0.0
                 source_ra = 0.0
                 source_dec = 0.0
+                log.info(f'Slitlet {slitlet_id} is virtual, with source_id={source_id}')
 
         # More than 1 main shutter: Not allowed!
         else:
