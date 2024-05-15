@@ -56,7 +56,7 @@ class TweakRegStep(Step):
         use_custom_catalogs = boolean(default=False) # Use custom user-provided catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         catfile = string(default='') # Name of the file with a list of custom user-provided catalogs
-        starfinder = option('dao', 'iraf', 'segmentation', default='dao') # Star finder to use.
+        starfinder = option('dao', 'iraf', 'segmentation', default='iraf') # Star finder to use.
         snr_threshold = float(default=10.0) # SNR threshold above the bkg for star finder
         # kwargs for DAOStarFinder and IRAFStarFinder, only used if starfinder is 'dao' or 'iraf'
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
