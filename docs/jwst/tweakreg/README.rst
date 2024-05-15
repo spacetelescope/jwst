@@ -218,7 +218,7 @@ The ``tweakreg`` step has the following optional arguments:
   in pixels. (Default=400)
 
 * ``starfinder``: A `str` indicating the source detection algorithm to use.
-  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'dao'`)
+  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'iraf'`)
 
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. Required for all star finders. (Default=10.0)
