@@ -296,22 +296,75 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             background = correct_nrs_ifu_bkg(background)
 
     elif input.meta.instrument.name.upper() == "MIRI":
+
+        # Check the Left channel and right channel seperately to see min and max fall on a range
+        # of wavelengths in the master background
+        print('Master background wavelength range', min_wave, max_wave)
+        
         shape = input.data.shape
+        print(input.meta.filename)
         grid = np.indices(shape, dtype=np.float64)
         wl_array = input.meta.wcs(grid[1], grid[0])[2]
-        # first remove the nans from wl_array and replace with -1
         mask = np.isnan(wl_array)
-        wl_array[mask] = -1.
-        # next look at the limits of the wavelength table
-        mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
-        wl_array[mask_limit] = -1
+        # It would be nice  to add another DQ Flag something like NO_BACKGROUND but we have
+        # no space left in the current dqflags.
+        background.dq[mask] = np.bitwise_or(background.dq[mask],
+                                            dqflags.pixel['DO_NOT_USE'])
+        # ____________________________________________
+        # Work with the left side of the detector
+        wl_array_left = wl_array[:, 0:512]
+        data_min_left = np.nanmin(wl_array_left)
+        data_max_left = np.nanmax(wl_array_left)
+        print('Data range left ', data_min_left, data_max_left)
 
-        # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-        background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
-                                                  dqflags.pixel['DO_NOT_USE'])
-        bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
-                                    left=0., right=0.)
-        background.data[:, :] = bkg_surf_bright.copy()
+        # pull out the wavelength range in the back ground for this band/channel
+        index_left = np.where(np.logical_and(tab_wavelength >= data_min_left,
+                                             tab_wavelength <= data_max_left))
+        nvalues_left = len(index_left[0])
+        print('Values left', nvalues_left)
+        print(index_left) 
+        if nvalues_left > 0:
+            tab_wavelength_left = tab_wavelength[index_left]
+            tab_background_left = tab_background[index_left]
+            # remove the nans from wl_array and replace with -1
+            mask = np.isnan(wl_array_left)
+            wl_array_left[mask] = -1.
+            bkg_surf_bright_left = np.interp(wl_array_left, tab_wavelength_left,
+                                              tab_background_left,left=0., right=0.)
+        else: # there is not background for this channel
+            background.dq[:, 0:512] = np.bitwise_or(background.dq[:,0:512],
+                                                    dqflags.pixel['DO_NOT_USE'])            
+        # ____________________________________________
+        # Now work with the right side of the detector
+        wl_array_right = wl_array[:,512:] 
+
+        data_min_right = np.nanmin(wl_array_right)
+        data_max_right = np.nanmax(wl_array_right)
+        print('Data range right ', data_min_right, data_max_right)
+
+        # pull out the wavelength range in the back ground for this band/channel
+        index_right = np.where(np.logical_and(tab_wavelength >= data_min_right,
+                                              tab_wavelength <= data_max_right))
+        nvalues_right = len(index_right[0])
+        if nvalues_right > 0:
+            print('Values right', nvalues_right)
+            tab_wavelength_right = tab_wavelength[index_right]
+            tab_background_right = tab_background[index_right]
+
+            # remove the nans from wl_array and replace with -1
+            mask = np.isnan(wl_array_right)
+            wl_array_right[mask] = -1.
+            bkg_surf_bright_right = np.interp(wl_array_right, tab_wavelength_right,
+                                              tab_background_right,left=0., right=0.)
+        else: # there is not background for this channel
+            background.dq[:,512:] = np.bitwise_or(background.dq[:512:],
+                                                    dqflags.pixel['DO_NOT_USE'])            
+
+        # combine the left and right results
+        if nvalues_left > 0:
+            background.data[:, 0:512] = bkg_surf_bright_left.copy()
+        if nvalues_right > 0:
+            background.data[:, 512:] = bkg_surf_bright_right.copy()
 
     else:
         raise RuntimeError(f'Exposure type {input.meta.exposure.type} is not supported.')
