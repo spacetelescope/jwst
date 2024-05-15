@@ -152,6 +152,9 @@ tweakreg
 
 - Improve error handling in the absolute alignment. [#8450, #8477]
 
+- Change code default to use IRAF StarFinder instead of
+  DAO StarFinder [#8487]
+
 wfss_contam
 -----------
 
