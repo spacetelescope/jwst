@@ -637,6 +637,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             quadrant = slitlets_sid[0]['shutter_quadrant']
             ycen = j
             xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
+            shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
 
             # Background slits all have source_id=0 in the msa_file,
             # so assign a unique id based on the slitlet_id
@@ -660,6 +661,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
                  s['estimated_source_in_shutter_x'],
                  s['estimated_source_in_shutter_y'])
                 for s in slitlets_sid if s['background'] == 'N'][0]
+            shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
 
             # y-size
             jmin = min([s['shutter_column'] for s in slitlets_sid])
@@ -667,6 +669,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             j = ycen
             ymax = yhigh + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
+
             # get the source_id from the primary shutter entry
             for i in range(len(slitlets_sid)):
                 if slitlets_sid[i]['primary_source'] == 'Y':
@@ -674,7 +677,6 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
             # Slits with a real source assigned have a source_id > 0
             if source_id > 0:
-                shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
                 # Get source info for this normal slitlet
                 try:
                     source_name, source_alias, stellarity, source_ra, source_dec = [
