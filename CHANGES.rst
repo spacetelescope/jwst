@@ -150,7 +150,7 @@ tweakreg
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
   step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
-- Improve error handling in the absolute alignment. [#8450]
+- Improve error handling in the absolute alignment. [#8450, #8477]
 
 wfss_contam
 -----------
