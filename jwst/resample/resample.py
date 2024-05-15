@@ -45,7 +45,7 @@ class ResampleData:
     """
 
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
-                 pixfrac=1.0, kernel="square", fillval="INDEF", wht_type="ivm",
+                 pixfrac=1.0, kernel="square", fillval="NAN", wht_type="ivm",
                  good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
         """
         Parameters
@@ -595,7 +595,7 @@ class ResampleData:
     def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht,
                        outcon, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
                        iscale=1.0, pixfrac=1.0, kernel='square',
-                       fillval="INDEF", wtscale=1.0):
+                       fillval="NAN", wtscale=1.0):
         """
         Low level routine for performing 'drizzle' operation on one image.
 
@@ -685,7 +685,7 @@ class ResampleData:
 
         fillval: str, optional
             The value a pixel is set to in the output if the input image does
-            not overlap it. The default value of INDEF does not set a value.
+            not overlap it. The default value of NAN sets NaN values.
 
         Returns
         -------
@@ -698,7 +698,7 @@ class ResampleData:
 
         # Insure that the fillval parameter gets properly interpreted for use with tdriz
         if util.is_blank(str(fillval)):
-            fillval = 'INDEF'
+            fillval = 'NAN'
         else:
             fillval = str(fillval)
 
