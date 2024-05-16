@@ -166,25 +166,15 @@ class TweakRegStep(Step):
                 "Parameter 'separation' must be larger than 'tolerance' by at "
                 "least a factor of sqrt(2) to avoid source confusion."
             )
-            for model in images:
-                model.meta.cal_step.tweakreg = "SKIPPED"
-                # Remove the attached catalogs
-                if hasattr(model, "catalog"):
-                    del model.catalog
             self.skip = True
             self.log.warning("Skipping 'TweakRegStep' step.")
             return images
 
         if self.abs_separation <= _SQRT2 * self.abs_tolerance:
             self.log.error(
-                    "Parameter 'abs_separation' must be larger than 'abs_tolerance' "
-                    "by at least a factor of sqrt(2) to avoid source confusion."
-                )
-            for model in images:
-                model.meta.cal_step.tweakreg = "SKIPPED"
-                # Remove the attached catalogs
-                if hasattr(model, "catalog"):
-                    del model.catalog
+                "Parameter 'abs_separation' must be larger than 'abs_tolerance' "
+                "by at least a factor of sqrt(2) to avoid source confusion."
+            )
             self.skip = True
             self.log.warning("Skipping 'TweakRegStep' step.")
             return images
