@@ -35,8 +35,8 @@ input data:
      use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with
      resampling turned off as described in :ref:`outlier-detection-imaging`
    - **Time-Series Observations(TSO)**: both imaging and spectroscopic modes, use
-     :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling
-     turned off as described in :ref:`outlier-detection-imaging`
+     :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetectionTSO`
+     as described in :ref:`outlier-detection-tso`
    - **IFU observations**: use
      :py:class:`~jwst.outlier_detection.outlier_detection_ifu.OutlierDetectionIFU` as
      described in :ref:`outlier-detection-ifu`

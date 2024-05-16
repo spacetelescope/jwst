@@ -1,0 +1,42 @@
+.. _outlier-detection-tso:
+
+Outlier Detection for TSO and Coronagraphic data
+================================================
+
+Time-series observations (TSO) result in input data stored as a 3D CubeModel
+where each plane in the cube represents a separate integration without changing the
+pointing.  Normal imaging data benefit from combining all integrations into a
+single image. TSO data's value, however, comes from looking for variations from one
+integration to the next.  The outlier detection algorithm, therefore, gets run with 
+a few variations to accomodate the nature of these 3D data.
+
+#. Input data is converted from a CubeModel (3D data array) to a ModelContainer
+
+   - Each plane in the original input CubeModel gets copied to a separate model
+     in the ModelContainer
+
+#. The median image is created without resampling the input data
+
+   * The median image is created by combining all planes in the 
+     ModelContainer pixel-by-pixel using a rolling-median algorithm, in order
+     to flag outliers frame-by-frame but preserve real time variability.
+   * The ``n_ints`` parameter specifies the number of integrations over
+     which to compute the median. The default is 25. If the number of integrations
+     is less than ``n_ints``, a simple median is used instead.
+   * The ``nlow`` and ``nhigh`` parameters specify how many low and high values
+     to ignore when computing the median for any given pixel.
+   * The ``maskpt`` parameter sets the percentage of the weight image values to
+     use, and any pixel with a weight below this value gets flagged as "bad" and
+     ignored when resampled.
+   * The rolling-median CubeModel (3D data array) is written out to disk as `_<asn_id>_median.fits` by default.
+   * All integrations are aligned already, so no resampling or shifting needs to be performed
+  
+#. A matched median gets created by combining the single median frame with the 
+   noise model for each input integration.
+
+#. Perform statistical comparison between the matched median with each input integration.  
+
+#. Update input data model DQ arrays with the mask of detected outliers.
+
+
+.. automodapi:: jwst.outlier_detection.outlier_detection_tso

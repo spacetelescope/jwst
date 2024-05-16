@@ -10,11 +10,13 @@ from jwst.lib.pipe_utils import is_tso
 from jwst.outlier_detection import outlier_detection
 from jwst.outlier_detection import outlier_detection_ifu
 from jwst.outlier_detection import outlier_detection_spec
+from jwst.outlier_detection import outlier_detection_tso
 
 # Categorize all supported versions of outlier_detection
 outlier_registry = {'imaging': outlier_detection.OutlierDetection,
                     'ifu': outlier_detection_ifu.OutlierDetectionIFU,
-                    'slitspec': outlier_detection_spec.OutlierDetectionSpec
+                    'slitspec': outlier_detection_spec.OutlierDetectionSpec,
+                    'tso': outlier_detection_tso.OutlierDetectionTSO
                     }
 
 # Categorize all supported modes
@@ -61,6 +63,7 @@ class OutlierDetectionStep(Step):
         backg = float(default=0.0)
         kernel_size = string(default='7 7')
         threshold_percent = float(default=99.8)
+        n_ints = integer(default=25)
         ifu_second_check = boolean(default=False)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
@@ -112,6 +115,7 @@ class OutlierDetectionStep(Step):
                 'backg': self.backg,
                 'kernel_size': self.kernel_size,
                 'threshold_percent': self.threshold_percent,
+                'n_ints': self.n_ints,
                 'ifu_second_check': self.ifu_second_check,
                 'allowed_memory': self.allowed_memory,
                 'in_memory': self.in_memory,
@@ -121,7 +125,7 @@ class OutlierDetectionStep(Step):
                 'make_output_path': self.make_output_path,
             }
 
-            # Add logic here to select which version of OutlierDetection
+            # Select which version of OutlierDetection
             # needs to be used depending on the input data
             if self.input_container:
                 single_model = self.input_models[0]
@@ -130,10 +134,13 @@ class OutlierDetectionStep(Step):
             exptype = single_model.meta.exposure.type
             self.check_input()
 
-            # check for TSO models first
-            if is_tso(single_model) or exptype in CORON_IMAGE_MODES:
-                # algorithm selected for TSO data (no resampling)
-                pars['resample_data'] = False  # force resampling off...
+            if is_tso(single_model):
+                # force resampling off and use rolling median
+                pars['resample_data'] = False
+                detection_step = outlier_registry['tso']
+            elif exptype in CORON_IMAGE_MODES:
+                # force resampling off but use same workflow as imaging
+                pars['resample_data'] = False
                 detection_step = outlier_registry['imaging']
             elif exptype in IMAGE_MODES:
                 # imaging with resampling
