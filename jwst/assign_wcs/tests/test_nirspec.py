@@ -310,8 +310,8 @@ def test_msa_configuration_all_background():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 0, '1x1', 'background_57', 'bkg_57',
-                             0, 0.0, 0.0)
+    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 57, '1x1', 'background_57', 'bkg_57',
+                             0.0, 0.0, 0.0)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
