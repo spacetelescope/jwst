@@ -2,6 +2,7 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 import functools
+import shutil
 from math import cos, sin
 import os.path
 
@@ -311,7 +312,7 @@ def test_msa_configuration_all_background():
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 0, '1x1', 'background_57', 'bkg_57',
-                             0, -0.5, -0.5)
+                             0, 0.0, 0.0)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -347,6 +348,57 @@ def test_msa_configuration_multiple_returns():
                               0.70000000000000007, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
+
+
+def test_msa_fs_configuration():
+    """
+    Test the get_open_msa_slits function with FS and MSA slits defined.
+    """
+    msa_meta_id = 12
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    dither_position = 1
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+                                              slit_y_range=[-.5, .5])
+
+    # MSA slit: reads in as normal
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
+                             0.13, -0.31716078999999997, -0.18092266)
+    _compare_slits(slitlet_info[-1], ref_slit)
+
+    # FS primary: S200A1, shutter id 0, quadrant 5
+    ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x', '95065_3', '3',
+                             1.0, -0.161, -0.229, 53.139904, -27.805002)
+    _compare_slits(slitlet_info[0], ref_slit)
+
+    # FS background: S200A2, shutter id 1, quadrant 5
+    ref_slit = trmodels.Slit('S200A2', 1, 1, 0, 0, -0.5, 0.5, 5, 8, 'x',
+                             'background_S200A2', 'bkg_S200A2',
+                             0.0, 0.0, 0.0, 0.0, 0.0)
+    _compare_slits(slitlet_info[1], ref_slit)
+
+
+def test_msa_fs_configuration_unsupported(tmp_path):
+    """
+    Test the get_open_msa_slits function with unsupported FS defined.
+    """
+    # modify an existing MSA file to add a bad ros
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    bad_confl = tmp_path / 'bad_msa_fs_configuration.fits'
+    shutil.copy(msaconfl, bad_confl)
+
+    with fits.open(bad_confl) as msa_hdu_list:
+        shutter_table = table.Table(msa_hdu_list['SHUTTER_INFO'].data)
+        shutter_table.add_row(shutter_table[-1])
+        msa_hdu_list['SHUTTER_INFO'] = fits.table_to_hdu(shutter_table)
+        msa_hdu_list[2].name = 'SHUTTER_INFO'
+        msa_hdu_list.writeto(bad_confl, overwrite=True)
+
+    msa_meta_id = 12
+    dither_position = 1
+    with pytest.raises(MSAFileError, match='unsupported fixed slit'):
+        nirspec.get_open_msa_slits(bad_confl, msa_meta_id, dither_position,
+                                   slit_y_range=[-.5, .5])
+
 
 
 open_shutters = [[24], [23, 24], [22, 23, 25, 27], [22, 23, 25, 27, 28]]
