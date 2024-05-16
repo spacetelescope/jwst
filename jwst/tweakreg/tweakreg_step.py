@@ -161,6 +161,34 @@ class TweakRegStep(Step):
                         else:
                             catdict[member.expname] = path.join(asn_dir, member.tweakreg_catalog)
 
+        if self.separation <= _SQRT2 * self.tolerance:
+            self.log.error(
+                "Parameter 'separation' must be larger than 'tolerance' by at "
+                "least a factor of sqrt(2) to avoid source confusion."
+            )
+            for model in images:
+                model.meta.cal_step.tweakreg = "SKIPPED"
+                # Remove the attached catalogs
+                if hasattr(model, "catalog"):
+                    del model.catalog
+            self.skip = True
+            self.log.warning("Skipping 'TweakRegStep' step.")
+            return images
+
+        if self.abs_separation <= _SQRT2 * self.abs_tolerance:
+            self.log.error(
+                    "Parameter 'abs_separation' must be larger than 'abs_tolerance' "
+                    "by at least a factor of sqrt(2) to avoid source confusion."
+                )
+            for model in images:
+                model.meta.cal_step.tweakreg = "SKIPPED"
+                # Remove the attached catalogs
+                if hasattr(model, "catalog"):
+                    del model.catalog
+            self.skip = True
+            self.log.warning("Skipping 'TweakRegStep' step.")
+            return images
+
         if self.abs_refcat is not None and self.abs_refcat.strip():
             align_to_abs_refcat = True
             # Set expand_refcat to True to eliminate possibility of duplicate
