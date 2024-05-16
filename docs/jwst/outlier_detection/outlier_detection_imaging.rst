@@ -171,6 +171,12 @@ These changes result in a minimum amount of memory usage during processing at th
 expense of reading and writing the products from disk.
 
 
+Outlier Detection for Coronagraphic Data
+----------------------------------------
+Coronagraphic data is processed in a near-identical manner to direct imaging data, but
+no resampling occurs, because dithering is never used for coronagraphic observations.
+
+
 Outlier Detection for TSO data
 -------------------------------
 Normal imaging data benefit from combining all integrations into a

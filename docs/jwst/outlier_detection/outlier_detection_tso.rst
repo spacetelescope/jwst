@@ -1,7 +1,7 @@
 .. _outlier-detection-tso:
 
-Outlier Detection for TSO and Coronagraphic data
-================================================
+Outlier Detection for TSO Data
+==============================
 
 Time-series observations (TSO) result in input data stored as a 3D CubeModel
 where each plane in the cube represents a separate integration without changing the
