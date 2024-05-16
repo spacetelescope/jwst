@@ -181,7 +181,7 @@ class Spec3Pipeline(Pipeline):
                 if result[0].meta.exposure.type == "NRS_FIXEDSLIT":
                     # Output file name is constructed using the source_id and the slit name
                     slit_name = self._create_nrsfs_slit_name(result)
-                    srcid = f's{source_id.lower()}'
+                    srcid = f's{source_id:>09s}'
                     self.output_file = format_product(output_file, source_id=srcid, slit_name=slit_name)
 
                 # NIRSpec MOS/MSA data
