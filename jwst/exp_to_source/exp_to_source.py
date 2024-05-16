@@ -67,14 +67,12 @@ def exp_to_source(inputs):
             # (necessary for NIRSpec fixed slits defined as part of an MSA file)
             if slit_exptype is not None:
                 result_slit.exposures[-1].meta.exposure.type = slit_exptype
-
-                if result_slit.meta.instrument.name is None:
-                    result_slit.update(exposure)
-
                 result_slit.meta.exposure.type = slit_exptype
                 log.debug(f'Input exposure type: {exposure.meta.exposure.type}')
                 log.debug(f'Output exposure type: {result_slit.meta.exposure.type}')
 
+            if result_slit.meta.instrument.name is None:
+                result_slit.update(exposure)
             result_slit.meta.filename = None  # Resulting merged data doesn't come from one file
 
         exposure.close()
