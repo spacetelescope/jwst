@@ -20,6 +20,10 @@ assign_wcs
 - Move the assigned source position for dedicated NIRSpec MOS background slits from the
   lower left corner of the slit to the middle of the slit. [#8461]
 
+- Fixed a bug causing background slits to be marked as sources that were not assigned 
+  to slits but were in the source catalog. These incorrectly marked background slits are 
+  then extracted as targets. [#8494]
+
 associations
 ------------
 
