@@ -194,7 +194,7 @@ class Spec3Pipeline(Pipeline):
 
                 else:
                     # All other types just use the source_id directly in the file name
-                    srcid = f's{source_id.lower()}'
+                    srcid = f's{source_id:>09s}'
                     self.output_file = format_product(output_file, source_id=srcid)
             else:
                 result = source
