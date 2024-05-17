@@ -72,7 +72,7 @@ class ResampleData:
         self.input_models = input_models
         self.output_dir = None
         self.output_filename = output
-        if output is not None and '.fits' not in output:
+        if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
 

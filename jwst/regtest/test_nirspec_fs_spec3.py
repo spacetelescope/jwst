@@ -46,7 +46,7 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
-    if "s2d" in output:
+    if output == "s2d":
         # Compare the calculated wavelengths
         tolerance = 1e-03
         dmt = datamodels.open(rtdata.truth)

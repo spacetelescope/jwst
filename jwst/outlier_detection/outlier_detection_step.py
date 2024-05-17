@@ -166,8 +166,6 @@ class OutlierDetectionStep(Step):
 
             state = 'COMPLETE'
             if self.input_container:
-                if not self.save_intermediate_results:
-                    self.log.debug("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
             else:
