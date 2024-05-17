@@ -699,11 +699,11 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
         shutter_id = xcen + (ycen - 1) * 365
-        try:
+        if source_id < max_source_id:
             source_name, source_alias, stellarity, source_ra, source_dec = [
                 (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
                 for s in msa_source if s['source_id'] == source_id][0]
-        except IndexError:
+        else:
             # all background shutters
             source_name = "background_{}".format(slitlet_id)
             source_alias = "bkg_{}".format(slitlet_id)
