@@ -112,7 +112,7 @@ input exposure-based products. The source-based collections of data are saved in
 intermediate files, one per source/slit. The root names of the source-based files
 contain the source ID as an identifier and use the same "_cal" suffix as the input
 calibrated exposure files. An example source-based file name is
-"jw00042-o001_s0002_niriss_gr150r_f150w_cal.fits", where "s0002" is the source id.
+"jw00042-o001_s00000002_niriss_gr150r_f150w_cal.fits", where "s00000002" is the source id.
 
 The reorganized sets of data are sent to subsequent steps to process and combine
 all the data for one source at a time.
