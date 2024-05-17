@@ -79,7 +79,7 @@ def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwarg
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
-    if "s2d" in output:
+    if output == "s2d":
         # Compare the calculated wavelengths
         tolerance = 1e-03
         dmt = datamodels.open(rtdata.truth)

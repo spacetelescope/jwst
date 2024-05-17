@@ -351,7 +351,7 @@ class OutlierDetection:
 def _remove_file(fn):
     if isinstance(fn, str) and os.path.isfile(fn):
         os.remove(fn)
-        log.debug(f"    {fn}")
+        log.info(f"Removing file {fn}")
 
 
 def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
