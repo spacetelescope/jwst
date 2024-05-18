@@ -8,6 +8,7 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst import datamodels
 from jwst.stpipe import Step
+from jwst.tweakreg import TweakRegStep
 
 
 @pytest.fixture(scope="module")
@@ -64,16 +65,15 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     assert result.skip
 
     # Check the status of the step is set correctly in the files.
-    result = datamodels.ModelContainer(
-        rtdata.input,
-        return_open=False,
-        save_open=False
-    )
+    mc = datamodels.ModelContainer(rtdata.input)
 
-    for fi in result:
-        fi = fi[:-9] + "_tweakreg" + fi[-9:]
-        with datamodels.open(fi) as model:
-            assert model.meta.cal_step.tweakreg == 'SKIPPED'
+    for model in mc:
+        assert model.meta.cal_step.tweakreg != 'SKIPPED'
+
+    result = TweakRegStep.call(mc)
+
+    for model in result:
+        assert model.meta.cal_step.tweakreg == 'SKIPPED'
 
     result.close()
 
