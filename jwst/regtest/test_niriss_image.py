@@ -71,7 +71,7 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     )
 
     for fi in result:
-        fi = fi[:-5] + "_tweakreg" + fi[-5:]
+        fi = fi[:-9] + "_tweakreg" + fi[-9:]
         with datamodels.open(fi) as model:
             assert model.meta.cal_step.tweakreg == 'SKIPPED'
 
