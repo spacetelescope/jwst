@@ -99,6 +99,8 @@ outlier_detection
   finished, unless save_intermediate_results is True. This PR also addressed
   the _i2d files not being saved in the specified output directory. [#8464]
 
+- Added tests for changes made in #8464. [#8481]
+
 photom
 ------
 
@@ -146,6 +148,8 @@ tweakreg
 - Output source catalog file now respects ``output_dir`` parameter. [#8386]
 
 - Improved how a image group name is determined. [#8426]
+
+- Refactor step to work towards performance improvements. [#8424]
 
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
   step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
