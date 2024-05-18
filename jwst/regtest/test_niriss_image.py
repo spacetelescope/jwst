@@ -54,17 +54,26 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     rtdata.input = "niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json"
     rtdata.get_asn("niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json")
 
-    args = ["jwst.tweakreg.TweakRegStep", rtdata.input, "--abs_refcat='GAIADR3'"]
+    args = [
+        "jwst.tweakreg.TweakRegStep",
+        rtdata.input,
+        "--abs_refcat='GAIADR3'",
+        "--save_results=True",
+    ]
     result = Step.from_cmdline(args)
     # Check that the step is skipped
     assert result.skip
 
     # Check the status of the step is set correctly in the files.
-    result = TweakRegStep.call(rtdata.input)
+    mc = datamodels.ModelContainer(rtdata.input)
 
-    for fi in result._models:
-        with datamodels.open(fi) as model:
-            assert model.meta.cal_step.tweakreg == 'SKIPPED'
+    for model in mc:
+        assert model.meta.cal_step.tweakreg != 'SKIPPED'
+
+    result = TweakRegStep.call(mc)
+
+    for model in result:
+        assert model.meta.cal_step.tweakreg == 'SKIPPED'
 
     result.close()
 
