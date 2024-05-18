@@ -148,7 +148,7 @@ def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
     return sources
 
 
-def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='dao', starfinder_kwargs={}):
+def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='iraf', starfinder_kwargs={}):
     """
     Create a catalog of point-line sources to be used for image
     alignment in tweakreg.
