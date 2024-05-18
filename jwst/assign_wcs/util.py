@@ -199,7 +199,7 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
 
 def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None,
                         pscale_ratio=None, pscale=None, rotation=None,
-                        shape=None, crpix=None, crval=None):
+                        shape=None, crpix=None, crval=None, wcslist=None):
     """
     Create a WCS from a list of input data models.
 
@@ -259,7 +259,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     """
     bb = bounding_box
-    wcslist = [im.meta.wcs for im in dmodels]
+    if wcslist is None:
+        wcslist = [im.meta.wcs for im in dmodels]
 
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")

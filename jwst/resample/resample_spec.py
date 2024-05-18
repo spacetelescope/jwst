@@ -64,7 +64,7 @@ class ResampleSpecData(ResampleData):
 
         self.output_filename = output
         self.output_dir = None
-        if output is not None and '.fits' not in output:
+        if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
         self.pscale_ratio = pscale_ratio
