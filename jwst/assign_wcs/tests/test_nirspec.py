@@ -376,6 +376,16 @@ def test_msa_fs_configuration():
                              0.0, 0.0, 0.0, 0.0, 0.0)
     _compare_slits(slitlet_info[1], ref_slit)
 
+    # FS S200B1 is in the MSA file but neither background nor primary:
+    # it should not be defined.  The rest should be there.
+    fs_slits_defined = ['S200A1', 'S200A2', 'S400A1', 'S1600A1']
+    n_fixed = 0
+    for slit in slitlet_info:
+        if slit.quadrant == 5:
+            assert slit.name in fs_slits_defined
+            n_fixed += 1
+    assert n_fixed == len(fs_slits_defined)
+
 
 def test_msa_fs_configuration_unsupported(tmp_path):
     """

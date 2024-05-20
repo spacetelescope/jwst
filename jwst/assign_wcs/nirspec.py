@@ -650,7 +650,9 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
         # How many shutters in the slitlet are labeled as "main" or "primary"?
+        # How many are labeled background?
         n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
+        n_background = len([s for s in slitlets_sid if s['background'] == 'Y'])
 
         # Check for fixed slit sources defined in the MSA file
         is_fs = [False] * len(slitlets_sid)
@@ -672,7 +674,6 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             # One fixed slit open for the source
             slitlet = slitlets_sid[0]
             slit_name = slitlet['fixed_slit']
-            log.debug(f'Found fixed slit {slit_name} with primary target')
 
             # use standard number for fixed slit shutter id
             slitlet_id = slit_name
@@ -690,14 +691,19 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
                 source_id = slitlet['source_id']
                 source_xpos = slitlet['estimated_source_in_shutter_x']
                 source_ypos = slitlet['estimated_source_in_shutter_y']
-            else:
+                log.info(f'Found fixed slit {slitlet_id} with source_id = {source_id}.')
+            elif n_background == 1:
                 # source is background only
                 source_id = _get_bkg_source_id(bkg_counter, max_source_id)
                 source_xpos = 0.5
                 source_ypos = 0.5
                 log.info(f'Slitlet_id {slitlet_id} is background only; '
-                         f'assigned source_id = {source_id}')
+                         f'assigned source_id = {source_id}.')
                 bkg_counter += 1
+            else:
+                log.info(f'Fixed slit {slitlet_id} is neither background nor source; '
+                         f'skipping it.')
+                continue
 
         elif any(is_fs):
             # Unsupported fixed slit configuration
