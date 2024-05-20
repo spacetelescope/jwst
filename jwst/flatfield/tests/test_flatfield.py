@@ -5,6 +5,8 @@ from astropy.table import Table
 
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES, NRS_SPEC_MODES
 
@@ -221,7 +223,8 @@ def test_nirspec_bots_flat():
         flat.close()
 
 
-def test_nirspec_fs_flat():
+@pytest.mark.parametrize('srctype', ['POINT', 'EXTENDED'])
+def test_nirspec_fs_flat(srctype):
     """Test that the interface works for NIRSpec FS data."""
     shape = (20, 20)
     w_shape = (10, 20, 20)
@@ -243,7 +246,7 @@ def test_nirspec_fs_flat():
     data.slits[0].data = np.full(shape, 1.0)
     data.slits[0].wavelength = np.ones(shape[-2:])
     data.slits[0].wavelength[:] = np.linspace(1, 5, shape[-1], dtype=float)
-    data.slits[0].source_type = 'UNKNOWN'
+    data.slits[0].source_type = srctype
     data.slits[0].name = 'S200A1'
     data.slits[0].xstart = 1
     data.slits[0].ystart = 1
@@ -323,6 +326,49 @@ def test_nirspec_msa_flat():
     # (no other additive contribution, scale from data is 1.0)
     assert result.slits[0].var_flat.shape == shape
     assert np.allclose(result.slits[0].var_flat[nn], 0.1 ** 2)
+    assert result.meta.cal_step.flat_field == 'COMPLETE'
+
+    result.close()
+    for flat in flats:
+        flat.close()
+
+
+@pytest.mark.slow
+def test_nirspec_ifu_flat():
+    """Test that the interface works for NIRSpec IFU data.
+
+    Larger data and more WCS operations required for testing make
+    this test take more than a minute, so marking this test 'slow'.
+    """
+    shape = (2048, 2048)
+    w_shape = (10, 2048, 2048)
+
+    # IFU mode requires WCS information, so make a more realistic model
+    hdul = create_nirspec_ifu_file(grating='PRISM', filter='CLEAR',
+                                   gwa_xtil=0.35986012, gwa_ytil=0.13448857,
+                                   gwa_tilt=37.1)
+    hdul['SCI'].data = np.ones(shape, dtype=float)
+
+    data = datamodels.IFUImageModel(hdul)
+    data = AssignWcsStep.call(data)
+
+    flats = create_nirspec_flats(w_shape)
+    result = FlatFieldStep.call(data, override_fflat=flats[0], override_sflat=flats[1],
+                                override_dflat=flats[2], override_flat='N/A')
+
+    # null flat, so data is the same, other than nan edges
+    nn = ~np.isnan(result.data)
+    assert np.allclose(result.data[nn], data.data[nn])
+
+    # check that NaNs match in every extension they should
+    for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
+        test_data = getattr(result, ext)
+        assert np.all(np.isnan(test_data[~nn]))
+
+    # error is propagated from non-empty fflat error
+    # (no other additive contribution, scale from data is 1.0)
+    assert result.var_flat.shape == shape
+    assert np.allclose(result.var_flat[nn], 0.1 ** 2)
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 
     result.close()
