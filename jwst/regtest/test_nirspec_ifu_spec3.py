@@ -91,8 +91,8 @@ def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
         'jw01249005001_03101_00003_nrs2_o005_pixel_replace.fits',
         'jw01249005001_03101_00004_nrs1_o005_pixel_replace.fits',
         'jw01249005001_03101_00004_nrs2_o005_pixel_replace.fits',
-        'jw01249-o005_t001_nirspec_rptest_g395h-f290lp_s3d.fits',
-        'jw01249-o005_t001_nirspec_rptest_g395h-f290lp_x1d.fits',
+        'jw01249-o005_t001_nirspec_rp_test_g395h-f290lp_s3d.fits',
+        'jw01249-o005_t001_nirspec_rp_test_g395h-f290lp_x1d.fits',
     ]
 )
 def test_spec3_multi_pixel_replace(run_spec3_multi_pixel_replace, fitsdiff_default_kwargs, output):

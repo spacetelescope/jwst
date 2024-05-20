@@ -242,7 +242,7 @@ class Spec3Pipeline(Pipeline):
             if exptype in ['MIR_MRS']:
                 result = self.mrs_imatch(result)
 
-            # Call outlier detection
+            # Call outlier detection and pixel replacement
             if exptype not in SLITLESS_TYPES:
                 # Update the asn table name to the level 3 instance so that
                 # the downstream products have the correct table name since

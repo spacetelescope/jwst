@@ -315,6 +315,9 @@ class Spec2Pipeline(Pipeline):
             resampled = calibrated.copy()
             resampled = self.pixel_replace(resampled)
         else:
+            # pixel replacement for all other modes is only run if
+            # set in pars file on by user
+            calibrated = self.pixel_replace(calibrated) 
             resampled = calibrated
 
         # Extract a 1D spectrum from the 2D/3D data
@@ -495,7 +498,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.barshadow(calibrated)
         calibrated = self.wfss_contam(calibrated)
         calibrated = self.photom(calibrated)
-
         return calibrated
 
     def _process_nirspec_slits(self, data):
