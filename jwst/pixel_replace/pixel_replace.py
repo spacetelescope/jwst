@@ -153,12 +153,17 @@ class PixelReplacement:
                             self.output.data
                         )
 
+                        # do the same for dq, err, and var
                         self.output.dq = np.where(
-                            # Where trace is located, set replaced values
-                            trace_mask,
-                            trace_model.dq,
-                            self.output.dq
-                        )
+                            trace_mask, trace_model.dq, self.output.dq)
+                        self.output.err = np.where(
+                            trace_mask, trace_model.err, self.output.err)
+                        self.output.var_poisson = np.where(
+                            trace_mask, trace_model.var_poisson, self.output.var_poisson)
+                        self.output.var_rnoise = np.where(
+                            trace_mask, trace_model.var_rnoise, self.output.var_rnoise)
+                        self.output.var_flat = np.where(
+                            trace_mask, trace_model.var_flat, self.output.var_flat)
 
                         n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
                         log.info(f"Input NRS_IFU frame had {n_replaced} pixels replaced in IFU slice {i + 1}.")
@@ -186,16 +191,20 @@ class PixelReplacement:
         elif isinstance(self.input, (datamodels.CubeModel, datamodels.SlitModel)):
             # Initial attempt looped over model.meta.exposure.nints, but test data had mismatch. Could change this.
             for i in range(len(self.input.data)):
-                dummy_model = datamodels.ImageModel(data=self.input.data[i], dq=self.input.dq[i])
-                dummy_model.update(self.input)
-                dummy_replaced = self.algorithm(dummy_model)
-                n_replaced = np.count_nonzero(dummy_replaced.dq & self.FLUX_ESTIMATED)
+                img_model = datamodels.ImageModel(data=self.input.data[i], dq=self.input.dq[i])
+                img_model.update(self.input)
+                img_replaced = self.algorithm(img_model)
+                n_replaced = np.count_nonzero(img_replaced.dq & self.FLUX_ESTIMATED)
                 log.info(f"Input TSO integration {i} had {n_replaced} pixels replaced.")
 
-                self.output.data[i] = dummy_replaced.data
-                self.output.dq[i] = dummy_replaced.dq
-                dummy_replaced.close()
-                dummy_model.close()
+                self.output.data[i] = img_replaced.data
+                self.output.dq[i] = img_replaced.dq
+                self.output.err[i] = img_replaced.err
+                self.output.var_poisson[i] = img_replaced.var_poisson
+                self.output.var_rnoise[i] = img_replaced.var_rnoise
+                self.output.var_flat[i] = img_replaced.var_flat
+                img_replaced.close()
+                img_model.close()
 
         else:
             # This should never happen, as these should be caught in the step code.
