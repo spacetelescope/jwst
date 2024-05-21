@@ -13,6 +13,7 @@ from ..stpipe import Pipeline
 # step imports
 from ..assign_wcs import assign_wcs_step
 from ..background import background_step
+from ..badpix_selfcal import badpix_selfcal_step
 from ..barshadow import barshadow_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
@@ -65,6 +66,7 @@ class Spec2Pipeline(Pipeline):
     # Define aliases to steps
     step_defs = {
         'assign_wcs': assign_wcs_step.AssignWcsStep,
+        'badpix_selfcal': badpix_selfcal_step.BadpixSelfcalStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'nsclean': nsclean_step.NSCleanStep,
         'bkg_subtract': background_step.BackgroundStep,
@@ -243,6 +245,9 @@ class Spec2Pipeline(Pipeline):
                         raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input:
+
+        # self-calibrate bad/warm pixels; skipped by default
+        calibrated = self.badpix_selfcal(calibrated)
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)

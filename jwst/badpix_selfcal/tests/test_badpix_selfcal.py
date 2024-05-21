@@ -1,7 +1,8 @@
+import json
 import pytest
 import numpy as np
 from jwst.badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep
-from jwst.badpix_selfcal.badpix_selfcal import MRSPolyfitBackgroundFlagger, MRSMedfiltBackgroundFlagger
+from jwst.badpix_selfcal.badpix_selfcal import badpix_selfcal, apply_flags
 from jwst import datamodels as dm
 from jwst.assign_wcs import AssignWcsStep, miri
 from gwcs import wcs
@@ -18,7 +19,9 @@ wcs_kw = {'wcsaxes': 3, 'ra_ref': 165, 'dec_ref': 54,
           'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': 'um',
           }
 
-hotpixel_intensity = 50
+# warm pixels, so need to be much larger than noise, which has std dev of 1,
+# but smaller than smoothly-varying background, which maxes around 20
+hotpixel_intensity = 10
 outlier_indices = [(100, 100), (300, 300), (500, 600), (1000, 900)]
 
 def create_hdul(detector, channel, band):
@@ -72,7 +75,7 @@ def background():
     # add some outliers
     outliers = np.zeros(shp)
     for idx in outlier_indices:
-        outliers[idx] += hotpixel_intensity
+        outliers[idx] = hotpixel_intensity
     # one negative one just for fun
     outliers[100, 100] = -hotpixel_intensity
 
@@ -92,24 +95,71 @@ def background():
 
 
 @pytest.fixture(scope="module")
-def sci():
-    """Create science .rate file for testing"""
-    return
+def sci(background):
+    """Create science IFUImageMoel for testing.
+    Same data as background with different noise.
+    """
+    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="LONG")
+    hdul[1].data = background.data.copy()
+    rng = np.random.default_rng(seed=99)
+    hdul[1].data += rng.standard_normal(hdul[1].data.shape)
+    im = dm.IFUImageModel(hdul)
+    im.meta.wcs = background.meta.wcs
+    return im
 
 
-@pytest.mark.parametrize("algorithm", [MRSPolyfitBackgroundFlagger, MRSMedfiltBackgroundFlagger])
-def test_background_flagger_mrs(algorithm, background):
-    """"""
+@pytest.fixture(scope="module")
+def asn(tmp_cwd_module, background, sci):
+    """Create association for testing. Needs at least
+    two background images to properly test the step."""
 
-    # first get wavelength array from WCS
+    sci_path = tmp_cwd_module / "sci.fits"
+    bkg_path_0 = tmp_cwd_module / "bkg0.fits"
+    bkg_path_1 = tmp_cwd_module / "bkg1.fits"
+    sci.save(sci_path)
+    background.save(bkg_path_0)
+    background.save(bkg_path_1)
+
+    asn_table = {
+        "asn_pool": "singleton",
+        "products": [
+            {
+                "members": [
+                    {
+                        "expname": "sci.fits",
+                        "exptype": "science"
+                    },
+                    {
+                        "expname": "bkg0.fits",
+                        "exptype": "background"
+                    },
+                    {
+                        "expname": "bkg1.fits",
+                        "exptype": "background"
+                    },
+                ]
+            }
+        ]
+    }
+    with open(tmp_cwd_module / 'tmp_asn.json', 'w') as f:
+        json.dump(asn_table, f)
+
+    container = dm.open(tmp_cwd_module / 'tmp_asn.json')
+
+    return container
+
+
+def test_background_flagger_mrs(background):
+    """
+    Ensure the right number of outliers are found, and that
+    true outliers are among those.
+    """
+
     bg = background.data
-    shp = bg.shape
-    basex,basey = np.meshgrid(np.arange(shp[1]),np.arange(shp[0]))
-    _,_,lam=background.meta.wcs.transform('detector','world',basex,basey)
 
     # pass into the MRSBackgroundFlagger and check it found the right pixels
     flagfrac = 0.001
-    result = algorithm().flag_background(bg, lam, flagfrac)
+    result = badpix_selfcal(bg, flagfrac=flagfrac)
     result_tuples = [(i,j) for i,j in zip(*result)]
 
     # check that the hot pixels were among those flagged
@@ -120,11 +170,37 @@ def test_background_flagger_mrs(algorithm, background):
     assert np.isclose(len(result_tuples)/bg.size, flagfrac*2, atol=0.0001)
 
 
+def test_apply_flags(background):
+    """
+    Ensure that flagged pixels are set to NaN in the data and err arrays,
+    and that the DQ flag is set to 1.
+    """
 
-# def test_badpix_selfcal_step(tmp_cwd, background, sci):
+    flagged_indices = np.array(outlier_indices).T
+    flagged_indices = (flagged_indices[0], flagged_indices[1])
 
-#     # Run the badpix_selfcal step
-#     result = BadpixSelfcalStep.call(sci, background)
+    flagged = apply_flags(background, flagged_indices)
 
-#     # Compare the calculated result with the expected result
-#     assert np.allclose(result.data, expected_result.data)
+    # check that flagged pixels are NaN in data and err arrays
+    for idx in outlier_indices:
+        assert np.isnan(flagged.data[idx])
+        assert np.isnan(flagged.err[idx])
+
+    # check that DQ flag is set to 1
+    for idx in outlier_indices:
+        assert flagged.dq[idx] == 1
+
+
+@pytest.mark.parametrize("dset", ["sci", "asn"])
+def test_badpix_selfcal_step(request, dset):
+    """Test the badpix_selfcal step. This is a functional test that checks
+    that the step runs without error. The output will be checked by the
+    regtest.
+    """
+    input_data = request.getfixturevalue(dset)
+    result = BadpixSelfcalStep.call(input_data, skip=False)
+    try:
+        assert result.meta.cal_step.badpix_selfcal == "COMPLETE"
+    except AttributeError:
+        # ModelContainer does not itself have a cal_step attribute
+        assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"

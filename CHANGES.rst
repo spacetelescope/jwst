@@ -46,6 +46,12 @@ associations
 
 - Add NIRSpec optical path constraints for TSO associations. [#8537]
 
+badpix_selfcal
+--------------
+
+- Added new optional step ``badpix_selfcal`` to the spec2 pipeline to self-calibrate
+  bad pixels in IFU data. [#8500]
+
 combine_1d
 ----------
 
