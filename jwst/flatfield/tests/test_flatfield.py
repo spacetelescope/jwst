@@ -211,6 +211,7 @@ def test_nirspec_bots_flat():
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
         test_data = getattr(result, ext)
         assert np.all(np.isnan(test_data[~nn]))
+    assert np.all(result.dq[~nn] | datamodels.dqflags.pixel['DO_NOT_USE'])
 
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
@@ -265,6 +266,7 @@ def test_nirspec_fs_flat(srctype):
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
         test_data = getattr(result.slits[0], ext)
         assert np.all(np.isnan(test_data[~nn]))
+    assert np.all(result.slits[0].dq[~nn] | datamodels.dqflags.pixel['DO_NOT_USE'])
 
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
@@ -321,6 +323,7 @@ def test_nirspec_msa_flat():
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
         test_data = getattr(result.slits[0], ext)
         assert np.all(np.isnan(test_data[~nn]))
+    assert np.all(result.slits[0].dq[~nn] | datamodels.dqflags.pixel['DO_NOT_USE'])
 
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
@@ -364,6 +367,7 @@ def test_nirspec_ifu_flat():
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
         test_data = getattr(result, ext)
         assert np.all(np.isnan(test_data[~nn]))
+    assert np.all(result.dq[~nn] | datamodels.dqflags.pixel['DO_NOT_USE'])
 
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
