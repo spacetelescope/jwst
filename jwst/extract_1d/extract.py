@@ -2739,7 +2739,7 @@ def do_extract1d(
         ifu_rfcorr: Union[bool, None] = None,
         ifu_set_srctype: str = None,
         ifu_rscale: float = None,
-        ifu_covar_scale: float = None,
+        ifu_covar_scale: float = 1.0,
         was_source_model: bool = False
 ) -> DataModel:
     """Extract 1-D spectra.
