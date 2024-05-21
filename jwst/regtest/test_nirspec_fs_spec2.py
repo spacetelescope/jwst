@@ -70,7 +70,7 @@ def run_pipeline_pixel_replace(rtdata_module):
          Full-frame exposure (all slits will be extracted)
     """
     rtdata = rtdata_module
-    rtdata.get_asn('nirspec/fs/jw01309-o022_20230113t025924_spec2_pr_00001_asn.json')
+    rtdata.get_asn('nirspec/fs/jw01309_prtest_spec2_00001_asn.json')
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
@@ -106,10 +106,10 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
-    ['jw01309022001_04102_00004_nrs2_pixel_replace.fits',
-     'jw01309022001_04102_00004_nrs2_cal.fits',
-     'jw01309022001_04102_00004_nrs2_s2d.fits',
-     'jw01309022001_04102_00004_nrs2_x1d.fits']
+    ['jw013090_prtest_04102_00004_nrs2_pixel_replace.fits',
+     'jw013090_prtest_04102_00004_nrs2_cal.fits',
+     'jw013090_prtest_04102_00004_nrs2_s2d.fits',
+     'jw013090_prtest_04102_00004_nrs2_x1d.fits']
 )
 def test_nirspec_fs_spec2_pixel_replace(run_pipeline_pixel_replace, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_spec2 pipeline on a

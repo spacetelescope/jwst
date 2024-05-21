@@ -290,8 +290,11 @@ class Spec2Pipeline(Pipeline):
 
             # Call pixel replace, followed by resample_spec  for 2D slit data
             resampled = calibrated.copy()
+            self.log.info("calling pixel replace NRS FS, MSA, LRS FIXED SLIT")
             resampled = self.pixel_replace(resampled)
+            self.log.info('pixel replace status %s',resampled.meta.cal_step.pixel_replace)
             resampled = self.resample_spec(resampled)
+
 
         elif is_nrs_slit_linelamp(calibrated):
 
@@ -315,11 +318,12 @@ class Spec2Pipeline(Pipeline):
             resampled = calibrated.copy()
             resampled = self.pixel_replace(resampled)
         else:
-            # pixel replacement for all other modes is only run if
-            # set in pars file on by user
-            calibrated = self.pixel_replace(calibrated) 
-            resampled = calibrated
-
+            # pixel replacement for all other modes
+            # will be run if set in parameter ref file or by user
+            resampled = calibrated.copy()
+            self.log.info("calling pixel replace on other modes")
+            resampled = self.pixel_replace(resampled)
+            self.log.info('pixel replace status %s',resampled.meta.cal_step.pixel_replace)
         # Extract a 1D spectrum from the 2D/3D data
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
