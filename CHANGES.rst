@@ -117,6 +117,11 @@ pipeline
 - Removed unused ``scale_detection`` argument from ``calwebb_tso3``
   pipeline. [#8438]
 
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for nframes > 1. [#8499]
+
 ramp_fitting
 ------------
 
