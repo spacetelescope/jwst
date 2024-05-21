@@ -60,11 +60,12 @@ extract_1d
 - Correct the output slit name for non-primary slit extractions in the
   spec3 pipeline, for NIRSpec fixed slit mode. [#8470]
 
+- Add ``ifu_covar_scale`` parameter to help correct for IFU cube covariance. [#8457]
+
 extract_2d
 ----------
 
 - Added handling for NIRCam GRISM time series pointing offsets. [#8449]
-
 
 flat_field
 ----------

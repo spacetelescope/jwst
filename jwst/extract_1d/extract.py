@@ -2549,6 +2549,7 @@ def run_extract1d(
         ifu_rfcorr: Union[bool, None],
         ifu_set_srctype: str,
         ifu_rscale: float,
+        ifu_covar_scale: float,
         was_source_model: bool = False,
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2619,6 +2620,10 @@ def run_extract1d(
         radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
         extraction radius.
 
+    ifu_covar_scale : float
+        Scaling factor by which to multiply the ERR values in extracted spectra to account
+        for covariance between adjacent spaxels in the IFU data cube.
+
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
@@ -2669,6 +2674,7 @@ def run_extract1d(
         ifu_rfcorr,
         ifu_set_srctype,
         ifu_rscale,
+        ifu_covar_scale,
         was_source_model,
     )
 
@@ -2733,6 +2739,7 @@ def do_extract1d(
         ifu_rfcorr: Union[bool, None] = None,
         ifu_set_srctype: str = None,
         ifu_rscale: float = None,
+        ifu_covar_scale: float = 1.0,
         was_source_model: bool = False
 ) -> DataModel:
     """Extract 1-D spectra.
@@ -2812,6 +2819,10 @@ def do_extract1d(
         default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
         radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
         extraction radius.
+
+    ifu_covar_scale : float
+        Scaling factor by which to multiply the ERR values in extracted spectra to account
+        for covariance between adjacent spaxels in the IFU data cube.
 
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
@@ -3028,7 +3039,7 @@ def do_extract1d(
                 log.info(f"Overriding source type and setting it to = {ifu_set_srctype}")
             output_model = ifu.ifu_extract1d(
                 input_model, extract_ref_dict, source_type, subtract_background,
-                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale
+                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale, ifu_covar_scale
             )
 
         else:
