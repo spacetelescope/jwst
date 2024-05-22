@@ -26,22 +26,18 @@ Algorithm
 The algorithm relies on the assumption that bad pixels are outliers in the data along
 the spectral axis. The algorithm proceeds as follows:
 * A combined background image is created. If multiple background exposures are available, 
-  the pixelwise minimum of all background exposures is taken. If only one background exposure
-  is available, it is used without modification. If no background exposures are 
-  available, the science data itself is passed in without modification, serving as the 
-  "background image" for the rest of the procedure, i.e., true self-calibration.
-
+the pixelwise minimum of all background exposures is taken. If only one background exposure
+is available, it is used without modification. If no background exposures are 
+available, the science data itself is passed in without modification, serving as the 
+"background image" for the rest of the procedure, i.e., true self-calibration.
 * The combined background image is median-filtered, ignoring NaNs, along the spectral (Y-) axis 
-  with a user-specified kernel size. The default kernel size is 15 pixels.
-
+with a user-specified kernel size. The default kernel size is 15 pixels.
 * The difference between the original background image and the median-filtered background image
-  is taken. The highest- and lowest-flux pixels in this difference image are
-  flagged as bad pixels. The default fraction of pixels to flag is 0.1% of the total number of pixels
-  on each of the high-flux and low-flux ends of the distribution. This fraction can be adjusted
-  using the ``flagfrac`` parameter. The total fraction of flagged pixels is thus 2x ``flagfrac``.
-
+is taken. The highest- and lowest-flux pixels in this difference image are
+flagged as bad pixels. The default fraction of pixels to flag is 0.1% of the total number of pixels
+on each of the high-flux and low-flux ends of the distribution. This fraction can be adjusted
+using the ``flagfrac`` parameter. The total fraction of flagged pixels is thus 2x ``flagfrac``.
 * The bad pixels are flagged in the input data by setting the DQ flag to "WARM".
-
 * The bad pixels are also flagged in each background exposure, if available.
 
 Output product
