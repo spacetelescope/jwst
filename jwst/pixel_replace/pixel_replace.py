@@ -71,7 +71,9 @@ class PixelReplacement:
         to each 2D spectrum in input.
         """
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
-        if isinstance(self.input, datamodels.ImageModel):
+        if (isinstance(self.input, datamodels.ImageModel)
+                or (isinstance(self.input, datamodels.SlitModel)
+                    and self.input.data.ndim == 2)):
             self.output = self.algorithm(self.input)
             n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
             log.info(f"Input model had {n_replaced} pixels replaced.")
