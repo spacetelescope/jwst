@@ -1,6 +1,6 @@
 import numpy as np
 from .outlier_detection import OutlierDetection, _remove_file
-from jwst.resample.resample_utils import build_driz_weight
+from jwst.resample.resample_utils import build_driz_weight as build_weight
 
 from jwst import datamodels as dm
 import logging
@@ -31,34 +31,34 @@ class OutlierDetectionTSO(OutlierDetection):
     def do_detection(self):
 
         """Flag outlier pixels in DQ of input images."""
-        drizzled_models = self.driz_weight_no_resample()
+        weighted_models = self.weight_no_resample()
 
         maskpt = self.outlierpars.get('maskpt', 0.7)
-        weight_thresholds = self.compute_weight_threshold(drizzled_models, maskpt)
+        weight_thresholds = self.compute_weight_threshold(weighted_models, maskpt)
 
         rolling_width = self.outlierpars.get('n_ints', 25)
-        if (rolling_width > 1) and (rolling_width < len(drizzled_models)):
-            medians = self.compute_rolling_median(drizzled_models, weight_thresholds, w = rolling_width)
+        if (rolling_width > 1) and (rolling_width < len(weighted_models)):
+            medians = self.compute_rolling_median(weighted_models, weight_thresholds, w = rolling_width)
 
         else:
-            medians = super().create_median(drizzled_models)
+            medians = super().create_median(weighted_models)
             # this is a 2-D array, need to repeat it into the time axis
             # for consistent shape with rolling median case
-            shp = (len(drizzled_models), medians.shape[0], medians.shape[1])
+            shp = (len(weighted_models), medians.shape[0], medians.shape[1])
             medians = np.broadcast_to(medians, shp)
 
         # Save median model if pars['save_intermediate_results'] is True
         # this will be a CubeModel with rolling median values.
         if self.outlierpars['save_intermediate_results']:
             median_model = dm.CubeModel(data=medians)
-            with dm.open(drizzled_models[0]) as dm0:
+            with dm.open(weighted_models[0]) as dm0:
                 median_model.update(dm0)
             self.save_median(median_model) 
         else:
-            # since we're not saving intermediate results if the drizzled models
-            # were written to disk, remove them
+            # since we're not saving intermediate results,
+            # remove those files
             if not self.outlierpars['in_memory']:
-                for fn in drizzled_models._models:
+                for fn in weighted_models._models:
                     _remove_file(fn)
 
         # no need for blotting, resample is turned off for TSO
@@ -71,17 +71,17 @@ class OutlierDetectionTSO(OutlierDetection):
 
         return
     
-    def driz_weight_no_resample(self):
+    def weight_no_resample(self):
         """
-        give weights to drizzled model without resampling
+        give weights to model without resampling
         """
-        drizzled_models = self.input_models
+        weighted_models = self.input_models
         for i in range(len(self.input_models)):
-            drizzled_models[i].wht = build_driz_weight(
+            weighted_models[i].wht = build_weight(
                 self.input_models[i],
                 weight_type=self.outlierpars['weight_type'],
                 good_bits=self.outlierpars['good_bits'])
-        return drizzled_models
+        return weighted_models
 
     def compute_rolling_median(self, models: dm.ModelContainer, weight_thresholds: list, w:int = 25) -> np.ndarray:
         '''
