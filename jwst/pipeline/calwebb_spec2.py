@@ -248,8 +248,12 @@ class Spec2Pipeline(Pipeline):
 
         # self-calibrate bad/warm pixels, and apply to both background and science
         # skipped by default for all modes
-        calibrated, bkg_warmpix_flagged = self.badpix_selfcal(calibrated, members_by_type['background'])
-        members_by_type['background'] = bkg_warmpix_flagged
+        result = self.badpix_selfcal(calibrated, members_by_type['background'])
+        if isinstance(result, tuple):
+            # if step is skipped, result is just the input model
+            # if step actually occurs, then flagged backgroundss are also returned
+            calibrated, bkg_warmpix_flagged = result
+            members_by_type['background'] = bkg_warmpix_flagged
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)

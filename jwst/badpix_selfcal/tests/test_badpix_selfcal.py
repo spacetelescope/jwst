@@ -7,6 +7,7 @@ from jwst import datamodels as dm
 from jwst.assign_wcs import AssignWcsStep, miri
 from gwcs import wcs
 from astropy.io import fits
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
 wcs_kw = {'wcsaxes': 3, 'ra_ref': 165, 'dec_ref': 54,
           'v2_ref': -8.3942412, 'v3_ref': -5.3123744, 'roll_ref': 37,
@@ -188,7 +189,7 @@ def test_apply_flags(background):
 
     # check that DQ flag is set to 1
     for idx in outlier_indices:
-        assert flagged.dq[idx] == 1
+        assert flagged.dq[idx] == pixel["WARM"]
 
 
 @pytest.mark.parametrize("dset", ["sci", "asn"])
