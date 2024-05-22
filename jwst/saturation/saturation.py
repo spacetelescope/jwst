@@ -172,8 +172,9 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
                     nints, nrows, ncols = np.shape(saturation_in_goup3)
                     for ni in range(nints):
                         satgp3mask = saturation_in_goup3[ni]
-                        flag_temp[ni, 1][satgp3mask] = np.where(sci_temp[ni, 0][satgp3mask] < ATOD_LIMIT/10.,
-                                                            SATURATED, flag_temp[ni, 1][satgp3mask])
+                        gp1mask = np.where(sci_temp[ni, 0][satgp3mask] < ATOD_LIMIT/10., True, False)
+                        if np.any(gp1mask):
+                            flag_temp[ni, 1, ...] = np.where(gp1mask, SATURATED, flag_temp[ni, 1, ...])
             # check for A/D floor
             flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR | DONOTUSE, 0)
 
