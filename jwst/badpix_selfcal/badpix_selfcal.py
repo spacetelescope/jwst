@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 import jwst.datamodels as dm
 from jwst.outlier_detection.outlier_detection_ifu import medfilt
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
 
 def badpix_selfcal(medbg: np.ndarray, 
@@ -62,6 +63,6 @@ def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> d
 
     input_model.data[flagged_indices] = np.nan
     input_model.err[flagged_indices] = np.nan
-    input_model.dq[flagged_indices] = 1
+    input_model.dq[flagged_indices] = pixel["WARM"]
 
     return input_model
