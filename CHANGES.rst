@@ -425,6 +425,10 @@ ramp_fitting
 
 - Modified one runtime warning filter. [#8320]
 
+- Updated tests to properly handle the C extension (forcing arrays to be
+  of an expected type.  Modified the CHARGELESS portion of the ramp fit
+  step code to update read noise ramps only affected by CHARGELOSS. [#8355]
+
 refpix
 ------
 

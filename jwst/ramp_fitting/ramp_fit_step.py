@@ -476,11 +476,16 @@ class RampFitStep(Step):
                 # readnoise variances into copies of the original ramp fitting
                 # tuples.
                 image_info_new, integ_info_new = None, None
+                ch_int, ch_grp, ch_row, ch_col = wh_chargeloss
                 if image_info is not None and image_var_RN is not None:
-                    image_info_new = (image_info[0], image_info[1], image_info[2], image_var_RN, image_info[4])
+                    rnoise = image_info[3]
+                    rnoise[ch_row, ch_col] = image_var_RN[ch_row, ch_col]
+                    image_info_new = (image_info[0], image_info[1], image_info[2], rnoise, image_info[4])
 
                 if integ_info is not None and integ_var_RN is not None:
-                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_var_RN, integ_info[4])
+                    rnoise = integ_info[3]
+                    rnoise[ch_int, ch_row, ch_col] = integ_var_RN[ch_int, ch_row, ch_col]
+                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], rnoise, integ_info[4])
 
                 image_info = image_info_new
                 integ_info = integ_info_new
