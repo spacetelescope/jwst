@@ -62,7 +62,7 @@ class OutlierDetectionTSO(OutlierDetection):
                     _remove_file(fn)
 
         # no need for blotting, resample is turned off for TSO
-        blot_models = dm.ModelContainer(open_models=False)
+        blot_models = dm.ModelContainer()
         for i in range(len(self.input_models)):
             median_model = dm.ImageModel(data=medians[i].data)
             blot_models.append(median_model)
