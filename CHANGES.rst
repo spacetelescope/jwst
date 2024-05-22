@@ -84,6 +84,8 @@ general
 
 - Increase minimum required scipy. [#8441]
 
+- Renamed to default development branch to ``main``. [#8210]
+
 outlier_detection
 -----------------
 
