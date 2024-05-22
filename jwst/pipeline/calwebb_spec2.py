@@ -290,16 +290,17 @@ class Spec2Pipeline(Pipeline):
 
             # Call pixel replace, followed by resample_spec  for 2D slit data
             resampled = calibrated.copy()
-            self.log.info("calling pixel replace NRS FS, MSA, LRS FIXED SLIT")
+            # interpolate pixels are which have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
-            self.log.info('pixel replace status %s',resampled.meta.cal_step.pixel_replace)
             resampled = self.resample_spec(resampled)
-
 
         elif is_nrs_slit_linelamp(calibrated):
 
             # Call pixel_replace followed by resample_spec for NRS 2D line lamp slit data
             resampled = calibrated.copy()
+            # interpolate pixels are which have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
 
@@ -310,20 +311,23 @@ class Spec2Pipeline(Pipeline):
             # wavelength bands
 
             resampled = calibrated.copy()
+            # interpolate pixels are which have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.cube_build(resampled)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], suffix='s3d')
         elif exp_type in ['MIR_LRS-SLITLESS']:
             resampled = calibrated.copy()
+            # interpolate pixels are which have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
         else:
-            # pixel replacement for all other modes
             # will be run if set in parameter ref file or by user
             resampled = calibrated.copy()
-            self.log.info("calling pixel replace on other modes")
+            # interpolate pixels are which have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
-            self.log.info('pixel replace status %s',resampled.meta.cal_step.pixel_replace)
         # Extract a 1D spectrum from the 2D/3D data
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built

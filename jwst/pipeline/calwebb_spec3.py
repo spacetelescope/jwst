@@ -251,7 +251,7 @@ class Spec3Pipeline(Pipeline):
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 result = self.outlier_detection(result)
                 # interpolate pixels are which have a NaN value or are flagged
-                # as DO_NOT_USE or NON_SCIENCE
+                # as DO_NOT_USE or NON_SCIENCE.
                 result = self.pixel_replace(result)
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
@@ -271,12 +271,16 @@ class Spec3Pipeline(Pipeline):
             # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
 
-                # For slitless data, extract 1D spectra and then combine them
+                # interpolate pixels are which have a NaN value or are flagged
+                # as DO_NOT_USE or NON_SCIENCE
+                result = self.pixel_replace(result)
 
+                # For slitless data, extract 1D spectra and then combine them
                 if exptype in ['NIS_SOSS']:
                     # For NIRISS SOSS, don't save the extract_1d results,
                     # instead run photom on the extract_1d results and save
                     # those instead.
+
                     self.extract_1d.save_results = False
                     result = self.extract_1d(result)
 
