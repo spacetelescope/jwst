@@ -70,8 +70,8 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         ref_sub_model.close()
 
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
-        data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel, nframes,
-        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe)
+        data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
+        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe, nframes=nframes)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
