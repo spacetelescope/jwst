@@ -246,8 +246,10 @@ class Spec2Pipeline(Pipeline):
 
         # Steps whose order is the same for all types of input:
 
-        # self-calibrate bad/warm pixels; skipped by default
-        calibrated = self.badpix_selfcal(calibrated)
+        # self-calibrate bad/warm pixels, and apply to both background and science
+        # skipped by default for all modes
+        calibrated, bkg_warmpix_flagged = self.badpix_selfcal(calibrated, members_by_type['background'])
+        members_by_type['background'] = bkg_warmpix_flagged
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)
@@ -259,10 +261,7 @@ class Spec2Pipeline(Pipeline):
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
         # science and background exposures.  Otherwise, there will be as many `imprint` members as
         # there are science plus background members.
-
         calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
-
-        # for each background image subtract an associated leak cal
         for i, bkg_file in enumerate(members_by_type['background']):
             bkg_imprint_sub = self.imprint_subtract(bkg_file, members_by_type['imprint'])
             members_by_type['background'][i] = bkg_imprint_sub
