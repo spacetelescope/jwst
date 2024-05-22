@@ -71,6 +71,7 @@ class PixelReplacement:
         to each 2D spectrum in input.
         """
         # ImageModel inputs (MIR_LRS-FIXEDSLIT)
+        # or 2D SlitModel inputs (e.g. NRS_FIXEDSLIT in spec3)
         if (isinstance(self.input, datamodels.ImageModel)
                 or (isinstance(self.input, datamodels.SlitModel)
                     and self.input.data.ndim == 2)):
@@ -110,12 +111,17 @@ class PixelReplacement:
                             self.output.data
                         )
 
+                        # do the same for dq, err, and var
                         self.output.dq = np.where(
-                            # Where trace is located, set replaced values
-                            trace_mask,
-                            trace_model.dq,
-                            self.output.dq
-                        )
+                            trace_mask, trace_model.dq, self.output.dq)
+                        self.output.err = np.where(
+                            trace_mask, trace_model.err, self.output.err)
+                        self.output.var_poisson = np.where(
+                            trace_mask, trace_model.var_poisson, self.output.var_poisson)
+                        self.output.var_rnoise = np.where(
+                            trace_mask, trace_model.var_rnoise, self.output.var_rnoise)
+                        self.output.var_flat = np.where(
+                            trace_mask, trace_model.var_flat, self.output.var_flat)
 
                         n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
                         log.info(f"Input MRS frame had {n_replaced} pixels replaced in IFU slice {i+1}.")
@@ -186,12 +192,17 @@ class PixelReplacement:
 
                 self.output.slits[i] = slit_replaced
 
-        # CubeModel inputs are TSO (so far?); only SlitModel seen so far is NRS_BRIGHTOBJ, also requiring
-        # a re-packaging of the data into 2D inputs for the algorithm.
+        # CubeModel inputs are TSO (so far?); SlitModel may be NRS_BRIGHTOBJ,
+        # also requiring a re-packaging of the data into 2D inputs for the algorithm
         elif isinstance(self.input, (datamodels.CubeModel, datamodels.SlitModel)):
-            # Initial attempt looped over model.meta.exposure.nints, but test data had mismatch. Could change this.
             for i in range(len(self.input.data)):
-                img_model = datamodels.ImageModel(data=self.input.data[i], dq=self.input.dq[i])
+                img_model = datamodels.ImageModel(
+                    data=self.input.data[i], dq=self.input.dq[i],
+                    err=self.input.err[i],
+                    var_poisson=self.input.var_poisson[i],
+                    var_rnoise=self.input.var_rnoise[i],
+                    var_flat=self.input.var_flat[i],
+                )
                 img_model.update(self.input)
                 img_replaced = self.algorithm(img_model)
                 n_replaced = np.count_nonzero(img_replaced.dq & self.FLUX_ESTIMATED)
