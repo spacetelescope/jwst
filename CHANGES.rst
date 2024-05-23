@@ -218,7 +218,7 @@ tweakreg
   DAO StarFinder [#8487]
 
 - Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
-  that ``separation`` > ``sqrt(2) * tolerance`` that will now raise an exception
+  that ``separation`` > ``sqrt(2) * tolerance`` that will now raise an error
   when this condition is not satisfied and source confusion is possible during
   catalog matching. [#8476]
 
