@@ -130,6 +130,11 @@ def miri_mrs():
                          [nirspec_tso, nirspec_fs_slitmodel, miri_lrs, miri_mrs])
 @pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
 def test_pixel_replace_no_container(input_model_function, algorithm):
+    """
+    Test pixel replace for modes with no container.
+
+    This includes ImageModel, SlitModel, and IFUImageModel.
+    """
     input_model, bad_idx = input_model_function()
 
     # for this simple case, the results from either algorithm should
@@ -163,6 +168,7 @@ def test_pixel_replace_no_container(input_model_function, algorithm):
                          [nirspec_msa_multislit])
 @pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
 def test_pixel_replace_multislit(input_model_function, algorithm):
+    """Test pixel replace for multislit modes."""
     input_model, bad_idx = input_model_function()
 
     # for this simple case, the results from either algorithm should
