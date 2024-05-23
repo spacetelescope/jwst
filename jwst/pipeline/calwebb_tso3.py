@@ -167,10 +167,10 @@ class Tso3Pipeline(Pipeline):
 
             # For each exposure in the TSO...
             for cube in input_models:
-                # interpolate pixels are which have a NaN value or are flagged
+                # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
                 cube = self.pixel_replace(cube)
-
+                state = cube.meta.cal_step.pixel_replace
                 # Process spectroscopic TSO data
                 # extract 1D
                 self.log.info("Extracting 1-D spectra ...")
@@ -197,6 +197,7 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
+            x1d_result.meta.cal_step.pixel_replace = state
             self.save_model(x1d_result, suffix='x1dints')
 
         # Done with all the inputs

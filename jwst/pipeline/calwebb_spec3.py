@@ -108,8 +108,7 @@ class Spec3Pipeline(Pipeline):
         # steps.
         self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
         self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
-    
-            
+
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
         # load input members into models and ModelContainer, or just
@@ -250,8 +249,9 @@ class Spec3Pipeline(Pipeline):
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 result = self.outlier_detection(result)
-                # interpolate pixels are which have a NaN value or are flagged
+                # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
+                print(result)
                 result = self.pixel_replace(result)
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
@@ -271,7 +271,7 @@ class Spec3Pipeline(Pipeline):
             # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
 
-                # interpolate pixels are which have a NaN value or are flagged
+                # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE
                 result = self.pixel_replace(result)
 

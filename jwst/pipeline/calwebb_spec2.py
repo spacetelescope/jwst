@@ -290,7 +290,7 @@ class Spec2Pipeline(Pipeline):
 
             # Call pixel replace, followed by resample_spec  for 2D slit data
             resampled = calibrated.copy()
-            # interpolate pixels are which have a NaN value or are flagged
+            # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
@@ -299,7 +299,7 @@ class Spec2Pipeline(Pipeline):
 
             # Call pixel_replace followed by resample_spec for NRS 2D line lamp slit data
             resampled = calibrated.copy()
-            # interpolate pixels are which have a NaN value or are flagged
+            # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
@@ -311,7 +311,7 @@ class Spec2Pipeline(Pipeline):
             # wavelength bands
 
             resampled = calibrated.copy()
-            # interpolate pixels are which have a NaN value or are flagged
+            # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.cube_build(resampled)
@@ -319,13 +319,13 @@ class Spec2Pipeline(Pipeline):
                 self.save_model(resampled[0], suffix='s3d')
         elif exp_type in ['MIR_LRS-SLITLESS']:
             resampled = calibrated.copy()
-            # interpolate pixels are which have a NaN value or are flagged
+            # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
         else:
             # will be run if set in parameter ref file or by user
             resampled = calibrated.copy()
-            # interpolate pixels are which have a NaN value or are flagged
+            # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
         # Extract a 1D spectrum from the 2D/3D data

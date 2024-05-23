@@ -49,8 +49,6 @@ class PixelReplaceStep(Step):
             for any bad pixels, now flagged as TO-BE-DETERMINED (DQ bit 7?).
         """
         with datamodels.open(input) as input_model:
-            # Make copy of input to prevent overwriting
-            result = input_model.copy()
             # If more than one 2d spectrum exists in input, call replacement
 
             if input_model.meta.model_type in ['MultiSlitModel', 'SlitModel',
@@ -74,7 +72,7 @@ class PixelReplaceStep(Step):
             # calewbb_spec3 case
             # ___________________
             if isinstance(input_model, datamodels.ModelContainer):
-                output_model = input_model.copy()
+                output_model = input_model
                 # Setup output path naming if associations are involved.
                 asn_id = None
                 try:
@@ -108,14 +106,15 @@ class PixelReplaceStep(Step):
                     if run_pixel_replace:
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
-                        model = replacement.output
-                        self.record_step_status(replacement.output, 'pixel_replace', success=True)
-
+                        output_model[i] = replacement.output
+                        self.record_step_status(output_model[i], 'pixel_replace', success=True)
                 return output_model
             # ________________________________________
             # calewbb_spec2 case - single input model
             # ________________________________________
             else:
+                # Make copy of input to prevent overwriting
+                result = input_model.copy()
                 replacement = PixelReplacement(result, **pars)
                 replacement.replace()
                 self.record_step_status(replacement.output, 'pixel_replace', success=True)
