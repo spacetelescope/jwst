@@ -385,6 +385,7 @@ class RampFitStep(Step):
     class_alias = "ramp_fit"
 
     spec = """
+        algorithm = option('OLS', 'OLS_C', default='OLS') # Can be 'OLS_C' to select the C extension
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
@@ -399,8 +400,8 @@ class RampFitStep(Step):
     # As of 04/26/17, the only allowed algorithm is 'ols', and the
     #      only allowed weighting is 'optimal'.
 
-    algorithm = 'ols'      # Only algorithm allowed for Build 7.1
-#    algorithm = 'gls'       # 032520
+    # algorithm = 'ols'      # Only algorithm allowed for Build 7.1
+    # algorithm = 'gls'       # 032520
 
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 

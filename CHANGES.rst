@@ -129,6 +129,11 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
+- Changed the spec for ramp fitting that allows for selecting
+  the algorithm "OLS" to use the python implementation of ramp
+  fitting or "OLS_C" to use the C extension implementation of
+  ramp fitting. [#8503]
+
 resample
 --------
 
