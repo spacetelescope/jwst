@@ -113,10 +113,19 @@ class MasterBackgroundStep(Step):
                     
             # Compute master background and subtract it
             else:
+                    
                 if isinstance(input_data, ModelContainer):
                     input_data, background_data = split_container(input_data)
                     asn_id = input_data.meta.asn_table.asn_id
-
+            
+                    if input_data[0].meta.exposure.type == 'MIR_MRS':
+                        status_coverage_match = self.background_coverage(input_data, background_data)
+                        if not status_coverage_match:
+                            self.log.warning(" Science data is not fully covered by background observations. Step skipped")
+                            for model in input_data:
+                                self.record_step_status(model, 'master_background', success=False)
+                            return input_data
+                                             
                     for model in background_data:
                         # Check if the background members are nodded x1d extractions
                         # or background from dedicated background exposures.
@@ -126,6 +135,7 @@ class MasterBackgroundStep(Step):
                         this_is_ifu_extended = False
                         if (model.meta.exposure.type == 'NRS_IFU' and model.spec[0].source_type == 'EXTENDED'):
                             this_is_ifu_extended = True
+                            
                         if (model.meta.exposure.type == 'MIR_MRS'):
                             # always treat as extended for MIRI MRS
                             this_is_ifu_extended = True
@@ -139,12 +149,11 @@ class MasterBackgroundStep(Step):
                         exptime_key='exposure_time',
                     )
 
-                    print('************************************************')
-                    print(master_background.spec[0].spec_table['WAVELENGTH'])
                     background_data.close()
 
                     result = ModelContainer()
                     result.update(input_data)
+
                     background_2d_collection = ModelContainer()
                     background_2d_collection.update(input_data)
                     for model in input_data:
@@ -226,6 +235,36 @@ class MasterBackgroundStep(Step):
 
         return do_sub
 
+    
+    def background_coverage(self, science_data, background_data):
+
+        # 
+        # Currenly this is written for MIRI MRS data it could be adapted to handle NIRSpec data.
+        # In the NIRSpec case we could be checking the grating and filter
+    
+        # MIRI MRS case find the channels/bands covered by background and science data
+        status_coverage_match = True
+        background_band = []
+        for model in background_data:
+            band  = model.meta.instrument.channel + '_' + model.meta.instrument.band
+            background_band.append(band)
+
+        science_band = []
+        for model in science_data:
+            band  = model.meta.instrument.channel + '_' + model.meta.instrument.band
+            science_band.append(band)
+
+        background_band = np.unique(background_band)
+        science_band = np.unique(science_band)
+
+        for band in science_band:
+            if band not in background_band:
+                self.log.warning(' Science data contain bands not in background data')
+                self.log.warning(' Background does not contain %s', band)
+                self.log.warning(' Turning off master background subtraction')
+                status_coverage_match = False
+
+        return status_coverage_match
 
 def copy_background_to_surf_bright(spectrum):
     """Copy the background column to the surf_bright column in a MultiSpecModel in-place"""
