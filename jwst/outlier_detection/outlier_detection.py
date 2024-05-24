@@ -212,7 +212,7 @@ class OutlierDetection:
 
         log.info("Computing median")
 
-        weight_thresholds = self.compute_weight_threshold(resampled_models, maskpt)
+        weight_thresholds = self.compute_weight_threshold_container(resampled_models, maskpt)
 
         # Now, set up buffered access to all input models
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
@@ -271,7 +271,7 @@ class OutlierDetection:
         log.info(f"Saved model in {median_model_output_path}")
 
 
-    def compute_weight_threshold(self, resampled_models, maskpt):
+    def compute_weight_threshold_container(self, resampled_models, maskpt):
         '''
         Compute weight means without keeping datamodels for each input open
 
@@ -297,19 +297,7 @@ class OutlierDetection:
         # For each model, compute the bad-pixel threshold from the weight arrays
         for resampled in resampled_models:
             weight = resampled.wht
-            # necessary in order to assure that mask gets applied correctly
-            if hasattr(weight, '_mask'):
-                del weight._mask
-            mask_zero_weight = np.equal(weight, 0.)
-            mask_nans = np.isnan(weight)
-            # Combine the masks
-            weight_masked = np.ma.array(weight, mask=np.logical_or(
-                mask_zero_weight, mask_nans))
-            # Sigma-clip the unmasked data
-            weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
-            mean_weight = np.mean(weight_masked)
-            # Mask pixels where weight falls below maskpt percent
-            weight_threshold = mean_weight * maskpt
+            weight_threshold = self.compute_weight_threshold(weight, maskpt)
             weight_thresholds.append(weight_threshold)
             # close and delete the model, just to explicitly try to keep the memory as clean as possible
             resampled.close()
@@ -317,6 +305,40 @@ class OutlierDetection:
         # Reset ModelContainer attribute to original value
         resampled_models._return_open = ropen_orig
         return weight_thresholds
+    
+
+    def compute_weight_threshold(self, weight, maskpt):
+        '''
+        Compute the weight threshold for a single image or cube.
+
+        Parameters
+        ----------
+        weight : numpy.ndarray
+            The weight array
+
+        maskpt : float
+            The percentage of the mean weight to use as a threshold for masking.
+
+        Returns
+        -------
+        float
+            The mask representing weights below the threshold.
+        '''
+
+        # necessary in order to assure that mask gets applied correctly
+        if hasattr(weight, '_mask'):
+            del weight._mask
+        mask_zero_weight = np.equal(weight, 0.)
+        mask_nans = np.isnan(weight)
+        # Combine the masks
+        weight_masked = np.ma.array(weight, mask=np.logical_or(
+            mask_zero_weight, mask_nans))
+        # Sigma-clip the unmasked data
+        weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
+        mean_weight = np.mean(weight_masked)
+        # Mask pixels where weight falls below maskpt percent
+        weight_threshold = mean_weight * maskpt
+        return weight_threshold
 
 
     def blot_median(self, median_model):
@@ -400,10 +422,13 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     Parameters
     ----------
     sci_image : ~jwst.datamodels.ImageModel
-        the science data
+        the science data. Can also accept a CubeModel, but only if
+        resample_data is False
 
     blot_image : ~jwst.datamodels.ImageModel
-        the blotted median image of the dithered science frames
+        the blotted median image of the dithered science frames.
+        Can also accept a CubeModel, but only if resample_data
+        is False
 
     snr : str
         Signal-to-noise ratio
@@ -417,6 +442,14 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     resample_data : bool
         Boolean to indicate whether blot_image is created from resampled,
         dithered data or not
+
+    Notes
+    -----
+    Accepting a CubeModel for sci_image and blot_image with resample_data=True
+    appears to be a relatively simple extension, as the only thing that explicitly
+    relies on the dimensionality is the kernel, which could be generalized.
+    However, this is not currently needed, as CubeModels are only passed in for
+    TSO data, where resampling is always False.
     """
     snr1, snr2 = [float(val) for val in snr.split()]
     scale1, scale2 = [float(val) for val in scale.split()]
@@ -476,7 +509,7 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     # Report number (and percent) of new DO_NOT_USE pixels found
     count_outlier = np.count_nonzero(sci_image.dq & DO_NOT_USE)
     count_added = count_outlier - count_existing
-    percent_cr = count_added / (sci_image.shape[0] * sci_image.shape[1]) * 100
+    percent_cr = count_added / sci_image.dq.size * 100
     log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
 
 

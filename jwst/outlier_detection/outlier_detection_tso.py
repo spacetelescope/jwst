@@ -1,6 +1,6 @@
 import numpy as np
-from .outlier_detection import OutlierDetection, _remove_file
-from jwst.resample.resample_utils import build_driz_weight as build_weight
+from .outlier_detection import OutlierDetection, _remove_file, flag_cr
+from jwst.resample.resample_utils import build_mask
 
 from jwst import datamodels as dm
 import logging
@@ -15,84 +15,126 @@ class OutlierDetectionTSO(OutlierDetection):
     """Class to flag outlier pixels in DQ of TSO data. Works similarly to
     imaging outlier detection, but does not resample and uses a rolling median."""
 
-    def __init__(self, input_models: dm.ModelContainer, **pars):
+    def __init__(self, input_model: dm.CubeModel | dm.ModelContainer, **pars):
         """Initialize class for TSO data processing.
 
         Parameters
         ----------
-        input_models : ~jwst.datamodels.ModelContainer, str
-            list of data models as ModelContainer or ASN file,
-            one data model for each input 2-D ImageModel
+        input_models : ~jwst.datamodels.CubeModel or ~jwst.datamodels.ModelContainer
+            The input TSO data cube. if a ModelContainer is passed in, it is assumed
+            to be a list of ImageModels, and gets converted to a CubeModel.
+
         """
-        super().__init__(input_models, **pars)
-        self._convert_inputs()
+        super().__init__(input_model, **pars)
+        if isinstance(self.inputs, dm.ModelContainer):
+            self._undo_convert_inputs()
+        else:
+            self.input_models = self.inputs
+            self.converted = False
+
+
+    def _undo_convert_inputs(self):
+        """
+        Convert input from ModelContainer of ImageModels with identical
+        metadata (as is passed into outlier_detection for imaging) to a CubeModel.
+        For typical use of calwebb_tso3, the input is already a CubeModel, so this
+        is not needed. It is included mainly for backwards compatibility with older
+        workflows that may have used a ModelContainer of ImageModels as input.
+
+        This method converts `self.inputs` into a version of
+        `self.input_models` suitable for processing by the class.
+        """
+        num_inputs = len(self.inputs)
+        log.debug(f"Converting ModelContainer with {num_inputs} images back to CubeModel")
+        shp = (num_inputs, *self.inputs[0].data.shape)
+        cube = dm.CubeModel(data=np.empty(shp, dtype=np.float32),
+                                    err=np.empty(shp, dtype=np.float32),
+                                    dq=np.empty(shp, dtype=np.uint32),)
+                                    #var_noise=np.empty(shp, dtype=np.float32),)
+        
+        for i, im in enumerate(self.inputs):
+            cube.data[i] = im.data
+            cube.err[i] = im.err
+            cube.dq[i] = im.dq
+            #cube.var_noise[i] = im.var_noise
+            if i == 0:
+                cube.meta = im.meta
+            del im
+        self.converted = True
+        self.input_models = cube
 
 
     def do_detection(self):
-
         """Flag outlier pixels in DQ of input images."""
-        weighted_models = self.weight_no_resample()
+        weighted_cube = self.weight_no_resample()
 
         maskpt = self.outlierpars.get('maskpt', 0.7)
-        weight_thresholds = self.compute_weight_threshold(weighted_models, maskpt)
+        weight_threshold = self.compute_weight_threshold(weighted_cube.wht, maskpt)
 
         rolling_width = self.outlierpars.get('n_ints', 25)
-        if (rolling_width > 1) and (rolling_width < len(weighted_models)):
-            medians = self.compute_rolling_median(weighted_models, weight_thresholds, w = rolling_width)
+        if (rolling_width > 1) and (rolling_width < weighted_cube.shape[0]):
+            medians = self.compute_rolling_median(weighted_cube, weight_threshold, w = rolling_width)
 
         else:
-            medians = super().create_median(weighted_models)
+            medians = np.nanmedian(weighted_cube.data, axis=0)
             # this is a 2-D array, need to repeat it into the time axis
             # for consistent shape with rolling median case
-            shp = (len(weighted_models), medians.shape[0], medians.shape[1])
-            medians = np.broadcast_to(medians, shp)
+            medians = np.broadcast_to(medians, weighted_cube.shape)
+
+        # turn this into a cube model for saving and passing to flag_cr
+        median_model = dm.CubeModel(data=medians)
 
         # Save median model if pars['save_intermediate_results'] is True
         # this will be a CubeModel with rolling median values.
         if self.outlierpars['save_intermediate_results']:
-            median_model = dm.CubeModel(data=medians)
-            with dm.open(weighted_models[0]) as dm0:
+            with dm.open(weighted_cube[0]) as dm0:
                 median_model.update(dm0)
             self.save_median(median_model) 
-        else:
-            # since we're not saving intermediate results,
-            # remove those files
-            if not self.outlierpars['in_memory']:
-                for fn in weighted_models._models:
-                    _remove_file(fn)
 
         # no need for blotting, resample is turned off for TSO
-        blot_models = dm.ModelContainer()
-        for i in range(len(self.input_models)):
-            median_model = dm.ImageModel(data=medians[i].data)
-            blot_models.append(median_model)
+        # go straight to outlier detection
+        log.info("Flagging outliers")
+        flag_cr(self.input_models, median_model, **self.outlierpars)
 
-        self.detect_outliers(blot_models)
-
-        return
+        if self.converted:
+            # Make sure actual input gets updated with new results
+            for i in range(len(self.inputs)):
+                self.inputs[i].dq = self.input_models.dq[i]
+    
     
     def weight_no_resample(self):
         """
         give weights to model without resampling
-        """
-        weighted_models = self.input_models
-        for i in range(len(self.input_models)):
-            weighted_models[i].wht = build_weight(
-                self.input_models[i],
-                weight_type=self.outlierpars['weight_type'],
-                good_bits=self.outlierpars['good_bits'])
-        return weighted_models
 
-    def compute_rolling_median(self, models: dm.ModelContainer, weight_thresholds: list, w:int = 25) -> np.ndarray:
+        Notes
+        -----
+        Prior to PR #8473, the `build_driz_weight` function was used to
+        create the weights for the input models for TSO data. However, that
+        function was simply returning a copy of the DQ array because the 
+        var_noise was not being passed in by calwebb_tso3. As of PR #8473,
+        a cube model that includes the var_noise is passed into TSO 
+        outlier detection, so `build_driz_weight` would weight the cube model
+        by the variance. Therefore `build_driz_weight` was removed in order to
+        preserve the original behavior. If it is determined later that exposure
+        time or inverse variance weighting should be used here, build_driz_weight
+        should be re-implemented.
+        """
+        weighted_cube = self.input_models.copy()
+        dqmask = build_mask(self.input_models.dq, self.outlierpars['good_bits'])
+        weighted_cube.wht = dqmask.astype(np.float32)
+        return weighted_cube
+    
+
+    def compute_rolling_median(self, model: dm.CubeModel, weight_threshold: np.ndarray, w:int = 25) -> np.ndarray:
         '''
         Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
 
         Parameters
         ----------
-        models : ~jwst.datamodels.ModelContainer
-            The input data models.
+        model : ~jwst.datamodels.CubeModel
+            The input cube model
 
-        weight_thresholds : list
+        weight_threshold : np.ndarray
             The weight thresholds for each integration.
 
         w : int
@@ -104,22 +146,18 @@ class OutlierDetectionTSO(OutlierDetection):
             The rolling median of the input data. Same dimensions as input.
         '''
 
-        # Load model into memory as 3-D array
-        sci = np.array([model.data for model in models])
-        wht = np.array([model.wht for model in models])
-        badmasks = []
-        for weight, weight_threshold in zip(wht, weight_thresholds):
-            badmask = np.less(weight, weight_threshold)
-            log.debug("Percentage of pixels with low weight: {}".format(
-                np.sum(badmask) / len(weight.flat) * 100))
-            badmasks.append(badmask)
+        sci = model.data
+        weight = model.wht
+        badmask = np.less(weight, weight_threshold)
+        log.debug("Percentage of pixels with low weight: {}".format(
+                np.sum(badmask) / weight.size * 100))
 
         # Fill resampled_sci array with nan's where mask values are True
-        for f1, f2 in zip(sci, badmasks):
+        for f1, f2 in zip(sci, badmask):
             for elem1, elem2 in zip(f1, f2):
                 elem1[elem2] = np.nan
 
-        del badmasks
+        del badmask
 
         if w > sci.shape[0]:
             raise ValueError("Window size must be less than the number of integrations.")

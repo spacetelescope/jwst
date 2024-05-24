@@ -10,10 +10,8 @@ single image. TSO data's value, however, comes from looking for variations from 
 integration to the next.  The outlier detection algorithm, therefore, gets run with 
 a few variations to accomodate the nature of these 3D data.
 
-#. Input data is converted from a CubeModel (3D data array) to a ModelContainer
-
-   - Each plane in the original input CubeModel gets copied to a separate model
-     in the ModelContainer
+#. Input data is converted into a CubeModel (3D data array) if a ModelContainer
+  of 2D data arrays is provided.
 
 #. The median image is created without resampling the input data
 
@@ -28,15 +26,16 @@ a few variations to accomodate the nature of these 3D data.
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and
      ignored when resampled.
-   * The rolling-median CubeModel (3D data array) is written out to disk as `_<asn_id>_median.fits` by default.
+   * The rolling-median CubeModel (3D data array) is written out to disk as `_<asn_id>_median.fits`
+     if the ``save_intermediate_results`` parameter is set to True.
    * All integrations are aligned already, so no resampling or shifting needs to be performed
   
 #. A matched median gets created by combining the single median frame with the 
    noise model for each input integration.
 
-#. Perform statistical comparison between the matched median with each input integration.  
+#. A statistical comparison is performed between the matched median with each input integration.  
 
-#. Update input data model DQ arrays with the mask of detected outliers.
+#. The input data model DQ arrays are updated with the mask of detected outliers.
 
 
 .. automodapi:: jwst.outlier_detection.outlier_detection_tso

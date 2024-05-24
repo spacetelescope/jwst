@@ -368,3 +368,48 @@ def test_outlier_step_tso_rollingmed(exptype, tsovisit):
 
     # Verify CR is flagged
     assert result[cr_timestep].dq[12, 12] == OUTLIER_DO_NOT_USE
+
+
+@pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
+def test_outlier_step_tso_cube_input(exptype, tsovisit):
+    '''Test outlier detection with rolling median on time-varying source
+    This test fails if n_ints is set to 100, i.e., take simple median
+    '''
+    bkg = 1.5
+    sig = 0.02
+    n_ints = 7
+    numsci = 50
+    signal = 7.0
+    im = we_many_sci(
+        numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit
+    )
+    cube_data = np.array([i.data for i in im])
+    cube_err = np.array([i.err for i in im])
+    cube_dq = np.array([i.dq for i in im])
+    cube_var_noise = np.array([i.var_rnoise for i in im])
+    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
+
+    # update metadata of cube to match the first image
+    cube.meta = im[0].meta
+
+    # Drop a weak CR on the science array
+    cr_timestep = 5
+    cube.data[cr_timestep, 12, 12] = bkg + sig * 10
+
+    # make time variability that has larger total amplitude than
+    # the CR signal but deviations frame-by-frame are smaller
+    real_time_variability = signal * np.cos(np.linspace(0, np.pi, numsci))
+    for i, model in enumerate(im):
+        model.data[7, 7] += real_time_variability[i]
+        model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
+
+    result = OutlierDetectionStep.call(cube, n_ints=n_ints)
+
+    # Make sure nothing changed in SCI array
+    np.testing.assert_allclose(cube.data, result.data)
+
+    # Verify source is not flagged
+    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+
+    # Verify CR is flagged
+    assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
