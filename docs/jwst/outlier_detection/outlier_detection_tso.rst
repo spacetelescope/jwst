@@ -11,7 +11,7 @@ integration to the next.  The outlier detection algorithm, therefore, gets run w
 a few variations to accomodate the nature of these 3D data.
 
 #. Input data is converted into a CubeModel (3D data array) if a ModelContainer
-  of 2D data arrays is provided.
+   of 2D data arrays is provided.
 
 #. The median image is created without resampling the input data
 
@@ -29,7 +29,7 @@ a few variations to accomodate the nature of these 3D data.
    * The rolling-median CubeModel (3D data array) is written out to disk as `_<asn_id>_median.fits`
      if the ``save_intermediate_results`` parameter is set to True.
    * All integrations are aligned already, so no resampling or shifting needs to be performed
-  
+
 #. A matched median gets created by combining the single median frame with the 
    noise model for each input integration.
 
