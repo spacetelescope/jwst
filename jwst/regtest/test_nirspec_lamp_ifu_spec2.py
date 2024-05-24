@@ -20,9 +20,7 @@ def run_pipeline(rtdata_module):
     args = ["jwst.pipeline.Spec2Pipeline", rtdata.input,
             "--steps.assign_wcs.save_results=true",
             "--steps.msa_flagging.save_results=true",
-            "--steps.flat_field.save_results=true",
-            # Hardwire extract1d ref file selection until CRDS-525 is implemented
-            "--steps.extract_1d.override_extract1d=/grp/crds/jwst/references/jwst/jwst_nirspec_extract1d_0001.asdf"]
+            "--steps.flat_field.save_results=true"]
     Step.from_cmdline(args)
 
     return rtdata
