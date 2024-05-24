@@ -160,6 +160,7 @@ to supply custom catalogs.
         self.asn_table = {}
         self.asn_table_name = None
         self.asn_pool_name = None
+        self.asn_file_path = None
 
         self._memmap = kwargs.get("memmap", False)
         self._return_open = kwargs.get('return_open', True)
@@ -196,7 +197,8 @@ to supply custom catalogs.
             self.from_asn(init)
         elif isinstance(init, str):
             init_from_asn = self.read_asn(init)
-            self.from_asn(init_from_asn, asn_file_path=init)
+            self.asn_file_path = init
+            self.from_asn(init_from_asn)
         else:
             raise TypeError('Input {0!r} is not a list of JwstDataModels or '
                             'an ASN file'.format(init))
@@ -275,7 +277,7 @@ to supply custom catalogs.
             raise IOError("Cannot read ASN file.") from e
         return asn_data
 
-    def from_asn(self, asn_data, asn_file_path=None):
+    def from_asn(self, asn_data):
         """
         Load fits files from a JWST association file.
 
@@ -283,9 +285,6 @@ to supply custom catalogs.
         ----------
         asn_data : ~jwst.associations.Association
             An association dictionary
-
-        asn_file_path: str
-            Filepath of the association, if known.
         """
         # match the asn_exptypes to the exptype in the association and retain
         # only those file that match, as a list, if asn_exptypes is set to none
@@ -303,8 +302,8 @@ to supply custom catalogs.
             infiles = [member for member
                        in asn_data['products'][0]['members']]
 
-        if asn_file_path:
-            asn_dir = op.dirname(asn_file_path)
+        if self.asn_file_path:
+            asn_dir = op.dirname(self.asn_file_path)
         else:
             asn_dir = ''
 
@@ -348,8 +347,8 @@ to supply custom catalogs.
             self.meta.asn_table._instance, asn_data
         )
 
-        if asn_file_path is not None:
-            self.asn_table_name = op.basename(asn_file_path)
+        if self.asn_file_path is not None:
+            self.asn_table_name = op.basename(self.asn_file_path)
             self.asn_pool_name = asn_data['asn_pool']
             for model in self:
                 try:

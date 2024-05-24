@@ -74,11 +74,12 @@ extract_1d
 - Correct the output slit name for non-primary slit extractions in the
   spec3 pipeline, for NIRSpec fixed slit mode. [#8470]
 
+- Add ``ifu_covar_scale`` parameter to help correct for IFU cube covariance. [#8457]
+
 extract_2d
 ----------
 
 - Added handling for NIRCam GRISM time series pointing offsets. [#8449]
-
 
 flat_field
 ----------
@@ -146,6 +147,11 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
+- Changed the spec for ramp fitting that allows for selecting
+  the algorithm "OLS" to use the python implementation of ramp
+  fitting or "OLS_C" to use the C extension implementation of
+  ramp fitting. [#8503]
+
 resample
 --------
 
@@ -172,10 +178,15 @@ tweakreg
 
 - Improved how a image group name is determined. [#8426]
 
+- Refactor step to work towards performance improvements. [#8424]
+
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
   step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
 
 - Improve error handling in the absolute alignment. [#8450, #8477]
+
+- Change code default to use IRAF StarFinder instead of
+  DAO StarFinder [#8487]
 
 wfss_contam
 -----------
@@ -441,6 +452,10 @@ ramp_fitting
 ------------
 
 - Modified one runtime warning filter. [#8320]
+
+- Updated tests to properly handle the C extension (forcing arrays to be
+  of an expected type.  Modified the CHARGELESS portion of the ramp fit
+  step code to update read noise ramps only affected by CHARGELOSS. [#8355]
 
 refpix
 ------

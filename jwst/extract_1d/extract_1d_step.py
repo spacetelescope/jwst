@@ -91,6 +91,10 @@ class Extract1dStep(Step):
         in a smaller radius, a value of 2 results in no change to the radius and a value above
         2 results in a larger extraction radius.
 
+    ifu_covar_scale : float
+        Scaling factor by which to multiply the ERR values in extracted spectra to account
+        for covariance between adjacent spaxels in the IFU data cube.
+
     soss_atoca : bool, default=False
         Switch to toggle extraction of SOSS data with the ATOCA algorithm.
         WARNING: ATOCA results not fully validated, and require the photom step
@@ -161,6 +165,7 @@ class Extract1dStep(Step):
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
+    ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -296,6 +301,7 @@ class Extract1dStep(Step):
                         self.ifu_rfcorr,
                         self.ifu_set_srctype,
                         self.ifu_rscale,
+                        self.ifu_covar_scale,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -334,6 +340,7 @@ class Extract1dStep(Step):
                             self.ifu_rfcorr,
                             self.ifu_set_srctype,
                             self.ifu_rscale,
+                            self.ifu_covar_scale,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -375,6 +382,7 @@ class Extract1dStep(Step):
                     self.ifu_rfcorr,
                     self.ifu_set_srctype,
                     self.ifu_rscale,
+                    self.ifu_covar_scale,
                     was_source_model=was_source_model,
                 )
 
@@ -513,6 +521,7 @@ class Extract1dStep(Step):
                     self.ifu_rfcorr,
                     self.ifu_set_srctype,
                     self.ifu_rscale,
+                    self.ifu_covar_scale,
                     was_source_model=False,
                 )
 
