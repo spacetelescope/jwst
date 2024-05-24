@@ -1,5 +1,5 @@
 import numpy as np
-from .outlier_detection import OutlierDetection, _remove_file, flag_cr
+from .outlier_detection import OutlierDetection, flag_cr
 from jwst.resample.resample_utils import build_mask
 
 from jwst import datamodels as dm

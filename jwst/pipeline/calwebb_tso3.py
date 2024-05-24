@@ -5,7 +5,6 @@ from astropy.table import vstack
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
 
 from ..stpipe import Pipeline
 
