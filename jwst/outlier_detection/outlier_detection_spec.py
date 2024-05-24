@@ -110,6 +110,7 @@ class OutlierDetectionSpec(OutlierDetection):
             if not pars['in_memory']:
                 for fn in drizzled_models._models:
                     _remove_file(fn)
+                    log.info(f"Removing file {fn}")
 
         if pars['resample_data'] is True:
             # Blot the median image back to recreate each input image specified
@@ -130,4 +131,5 @@ class OutlierDetectionSpec(OutlierDetection):
         if not pars['save_intermediate_results']:
             for fn in blot_models._models:
                 _remove_file(fn)
+                log.info(f"Removing file {fn}")
         del median_model, blot_models
