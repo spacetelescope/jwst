@@ -9,11 +9,14 @@ def badpix_selfcal(medbg: np.ndarray,
                    flagfrac: float = 0.001, 
                    kernel_size: int = 15) -> np.ndarray:
     """
+    Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
+
     Parameters
     ----------
     medbg: np.ndarray
-        Background data of shape (x, y), i.e., after median has
-        already been taken over the number of exposures
+        Background data of shape (x, y), i.e., after some operation has
+        already been taken to combine multiple exposures,
+        typically a MIN operation.
     flagfrac: float
         Fraction of pixels to flag on each of low and high end
     kernel_size: int
@@ -44,7 +47,8 @@ def badpix_selfcal(medbg: np.ndarray,
 
 def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> dm.IFUImageModel:
     """
-    Apply the flagged indices to the input model.
+    Apply the flagged indices to the input model. Sets the flagged pixels to NaN
+    and the DQ flag to DO_NOT_USE + OTHER_BAD_PIXEL
 
     Parameters
     ----------
@@ -57,12 +61,15 @@ def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> d
     Returns
     -------
     output_model: dm.IFUImageModel
-        Data model with flagged pixels set to NaN
-        in data and err arrays, and dq flag set to 1
+        Flagged data model
     """
+
+    input_model.dq[flagged_indices] = pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
 
     input_model.data[flagged_indices] = np.nan
     input_model.err[flagged_indices] = np.nan
-    input_model.dq[flagged_indices] = pixel["WARM"]
+    input_model.var_poisson[flagged_indices] = np.nan
+    input_model.var_rnoise[flagged_indices] = np.nan
+    input_model.var_flat[flagged_indices] = np.nan
 
     return input_model

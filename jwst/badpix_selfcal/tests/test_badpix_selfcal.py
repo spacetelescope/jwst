@@ -20,7 +20,8 @@ wcs_kw = {'wcsaxes': 3, 'ra_ref': 165, 'dec_ref': 54,
           'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': 'um',
           }
 
-# warm pixels, so need to be much larger than noise, which has std dev of 1,
+# these are often warm pixels, so need to be much larger than noise, 
+# which has std dev of 1,
 # but smaller than smoothly-varying background, which maxes around 20
 hotpixel_intensity = 10
 outlier_indices = [(100, 100), (300, 300), (500, 600), (1000, 900)]
@@ -186,10 +187,13 @@ def test_apply_flags(background):
     for idx in outlier_indices:
         assert np.isnan(flagged.data[idx])
         assert np.isnan(flagged.err[idx])
+        assert np.isnan(flagged.var_poisson[idx])
+        assert np.isnan(flagged.var_rnoise[idx])
+        assert np.isnan(flagged.var_flat[idx])
 
-    # check that DQ flag is set to 1
+    # check that DQ flag is set properly
     for idx in outlier_indices:
-        assert flagged.dq[idx] == pixel["WARM"]
+        assert flagged.dq[idx] == pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
 
 
 @pytest.mark.parametrize("dset", ["sci", "asn"])

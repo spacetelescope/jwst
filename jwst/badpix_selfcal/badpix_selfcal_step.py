@@ -14,7 +14,13 @@ __all__ = ["BadpixSelfcalStep"]
 
 class BadpixSelfcalStep(Step):
     """
-    BadpixSelfcalStep: 
+    BadpixSelfcalStep: Flags residual artifacts as bad pixels in the DQ array 
+    of a JWST exposure using a median filter and percentile cutoffs.
+
+    All input exposures in the association file (or manually-provided bkg_list) are combined
+    into a single background model using a MIN operation. The bad pixels are then identified
+    using a median filter and percentile cutoffs, and applied to the science data by setting
+    the flagged pixels to NaN and the DQ flag to DO_NOT_USE + OTHER_BAD_PIXEL.
     """
 
     class_alias = "badpix_selfcal"
@@ -23,13 +29,13 @@ class BadpixSelfcalStep(Step):
     spec = """
     flagfrac = float(default=0.001)  #fraction of pixels to flag on each of low and high end
     kernel_size = integer(default=15)  #size of kernel for median filter
-    save_flagged_bkgd = boolean(default=False)  #save the flagged background exposures to fits
+    force_single = boolean(default=False)  #force single input exposure
     skip = boolean(default=True)
     """
 
     def process(self, input, bkg_list=None):
         """
-        Flag CRs in the DQ array of a JWST exposure
+        Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
 
         Parameters
         ----------
@@ -49,18 +55,21 @@ class BadpixSelfcalStep(Step):
         in the assocation file.
         If bkg_list is set to None and an association file is read in, the background exposures
         are read from the association file.
-        If bkg_list is set to None and input is a single science exposure, the input exposure
-        will be used as the background exposure, i.e., true self-calibration of
-        bad pixels.
+        If bkg_list is set to None and input is a single science exposure, the step will
+        be skipped with a warning unless the force_single parameter is set True.
+        In that case, the input exposure will be used as the sole background exposure, 
+        i.e., true self-calibration.
         """
         with dm.open(input) as input_data:
 
+            # find science and background exposures.
+            # note that bkg_list includes the science exposure. This is ok because
+            # all exposures are combined into a single background model using a MIN operation.
             if isinstance(input_data, dm.ModelContainer):
                 
                 sci_models, bkg_list_asn = split_container(input_data)
                 if bkg_list is None:
-                    #keeping as ModelContainer causes problems figuring out names to save if save_results=True
-                    bkg_list = list(bkg_list_asn) 
+                    bkg_list = list(sci_models) + list(bkg_list_asn) 
                 else:
                     log.warning("bkg_list provided directly as input, ignoring bkg_list from association file")
                 
@@ -74,12 +83,19 @@ class BadpixSelfcalStep(Step):
                     # true self-calibration on input data itself
                     bkg_list = [input_data]
                 else:
-                    bkg_list = [dm.open(bkg) for bkg in bkg_list]
+                    bkg_list = [input_data] + [dm.open(bkg) for bkg in bkg_list]
 
             else:
                 raise TypeError("Input data is not a ModelContainer, ImageModel, or IFUImageModel.\
                                 Cannot continue.")
-            
+
+        # ensure that there are background exposures to use, otherwise skip the step
+        # unless forced 
+        if (len(bkg_list) == 0) and (not self.force_single):
+            log.warning("No background exposures provided for self-calibration. Skipping step.")
+            self.record_step_status(input_sci, "badpix_selfcal", success=False)
+            return input_sci, bkg_list
+
         # collapse background dithers into a single background model
         bkgd_3d = []
         for i, background_model in enumerate(bkg_list):
@@ -91,14 +107,8 @@ class BadpixSelfcalStep(Step):
         input_sci = badpix_selfcal.apply_flags(input_sci, bad_indices)
 
         # apply the flags to the background data
-        for i, background_model in enumerate(bkg_list):
+        for i, background_model in enumerate(bkg_list[1:]):
             bkg_list[i] = badpix_selfcal.apply_flags(background_model, bad_indices)
-        
-        # save the flagged background exposures if desired
-        if self.save_flagged_bkgd:
-            for i, background_model in enumerate(bkg_list):
-                stem = background_model.meta.filename.strip(".fits")
-                background_model.save(f"{stem}_{self.suffix}.fits")
 
         self.record_step_status(input_sci, "badpix_selfcal", success=True)
         
