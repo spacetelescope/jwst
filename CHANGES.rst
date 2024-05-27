@@ -166,6 +166,10 @@ resample_spec
 
 - Change `fillval` parameter default from INDEF to NaN [#8488]
 
+- Fix a bug resulting in large WCS errors in the resampled image's WCS
+  when the slit was closely aligned with the RA direction
+  sky. [#8511]
+
 residual_fringe
 ---------------
 
