@@ -202,7 +202,7 @@ def test_tweakreg_step(example_input, with_shift):
 
 
 @pytest.mark.parametrize("alignment_type", ['', 'abs_'])
-def test_src_confusion_pars_test(example_input, alignment_type):
+def test_src_confusion_pars(example_input, alignment_type):
     # assign images to different groups (so they are aligned to each other)
     example_input[0].meta.group_id = 'a'
     example_input[1].meta.group_id = 'b'
