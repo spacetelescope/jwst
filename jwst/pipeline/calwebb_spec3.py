@@ -300,29 +300,29 @@ class Spec3Pipeline(Pipeline):
     def _create_nrsmos_source_id(self, source_models):
         """Create the complete source_id product field for NIRSpec MOS products.
 
-        The original source_id value has a "s", "b", or "v" character prepended
+        The source_id value gets a "s", "b", or "v" character prepended
         to uniquely identify source, background, and virtual slits.
         """
 
         # Get the original source name and ID from the input models
         source_name = source_models[0].source_name
-        source_id = str(source_models[0].source_id)
+        source_id = source_models[0].source_id
 
-        # MOS background sources have "background" in the source name
-        if "back" in source_name:
+        # MOS background sources have "BKG" in the source name
+        if "BKG" in source_name:
             # prepend "b" to the source_id number and format to 9 chars
-            srcid = f'b{source_id:>09s}'
+            srcid = f'b{str(source_id):>09s}'
             self.log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
 
-        # MOS virtual sources have "virtual" in the source name
-        elif "virt" in source_name:
+        # MOS virtual sources have a negative source_id value
+        elif source_id < 0:
             # prepend "v" to the source_id number and remove the leading negative sign
-            srcid = f'v{source_id[1:]:>09s}'
+            srcid = f'v{str(source_id)[1:]:>09s}'
             self.log.debug(f"Source {source_name} is a MOS virtual slitlet: ID={srcid}")
 
         # Regular MOS sources
         else:
             # prepend "s" to the source_id number and format to 9 chars
-            srcid = f's{source_id:>09s}'
+            srcid = f's{str(source_id):>09s}'
 
         return srcid

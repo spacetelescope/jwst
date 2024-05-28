@@ -401,6 +401,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """
     exp_type = input_model.meta.exposure.type.lower()
     lamp_mode = input_model.meta.instrument.lamp_mode
+    prog_id = input_model.meta.observation.program_number.lstrip("0")
     if isinstance(lamp_mode, str):
         lamp_mode = lamp_mode.lower()
     else:
@@ -409,7 +410,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
                                                        (lamp_mode == "msaspec")):
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
             input_model, reference_files)
-        slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
+        slits = get_open_msa_slits(prog_id, msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model, slit_y_range)
     elif exp_type == "nrs_brightobj":
@@ -510,27 +511,7 @@ def get_msa_metadata(input_model, reference_files):
     return msa_config, msa_metadata_id, dither_position
 
 
-def _get_bkg_source_id(bkg_counter, shift_by):
-    """
-    Compute a ``source_id`` for background slitlets.
-
-    All background slitlets are assigned a source_id of 0.
-    A unique ``source_id`` is necessary to keep them separate in exp_to_source.
-    A counter is used to assign a unique ``source_id`` that's
-    greater than the max ID number of all defined sources.
-
-    Parameters
-    ----------
-    bkg_counter : int
-        The current value of the counter.
-    shift_by : int
-        The highest of all source_id values.
-    """
-
-    return bkg_counter + shift_by
-
-
-def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
+def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
                        slit_y_range=[-.55, .55]):
     """
     Return the opened MOS slitlets.
@@ -557,6 +538,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
     Parameters
     ----------
+    prog_id : str
+        The program number
     msa_file : str
         MSA meta data file name, FITS keyword ``MSAMETFL``.
     msa_metadata_id : int
@@ -647,8 +630,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             # no source info for them in the msa_file
             source_xpos = 0.5
             source_ypos = 0.5
-            source_name = "background_{}".format(slitlet_id)
-            source_alias = "bkg_{}".format(slitlet_id)
+            source_name = f"{prog_id}_BKG{slitlet_id}"
+            source_alias = "BKG{}".format(slitlet_id)
             stellarity = 0.0
             source_ra = 0.0
             source_dec = 0.0
@@ -670,32 +653,23 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             ymax = yhigh + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
 
-            # get the source_id from the primary shutter entry
+            # Get the source_id from the primary shutter entry
             for i in range(len(slitlets_sid)):
                 if slitlets_sid[i]['primary_source'] == 'Y':
                     source_id = slitlets_sid[i]['source_id']
 
-            # Slits with a real source assigned have a source_id > 0
-            if source_id > 0:
-                # Get source info for this normal slitlet
-                try:
-                    source_name, source_alias, stellarity, source_ra, source_dec = [
-                        (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
-                        for s in msa_source if s['source_id'] == source_id][0]
-                except IndexError:
-                    log.warning("Could not retrieve source info from MSA file")
+            # Get source info for this slitlet;
+            # note that slits with a real source assigned have source_id > 0,
+            # while slits with source_id < 0 contain "virtual" sources
+            try:
+                source_name, source_alias, stellarity, source_ra, source_dec = [
+                    (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
+                    for s in msa_source if s['source_id'] == source_id][0]
+            except IndexError:
+                log.warning("Could not retrieve source info from MSA file")
 
-            # Slits with source_id < 0 are "virtual" slits, with no source assigned
-            else:
-                # Hardwire the source info for this virtual slit, because there's none in the MSA file
-                source_xpos = 0.5
-                source_ypos = 0.5
-                source_name = "virtual_{}".format(abs(source_id))
-                source_alias = "vrt_{}".format(abs(source_id))
-                stellarity = 0.0
-                source_ra = 0.0
-                source_dec = 0.0
-                log.info(f'Slitlet {slitlet_id} is virtual, with source_id={source_id}')
+            if source_id < 0:
+                log.info(f'Slitlet {slitlet_id} contains virtual source, with source_id={source_id}')
 
         # More than 1 main shutter: Not allowed!
         else:
