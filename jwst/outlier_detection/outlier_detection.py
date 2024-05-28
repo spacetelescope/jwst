@@ -322,7 +322,7 @@ class OutlierDetection:
         Returns
         -------
         float
-            The mask representing weights below the threshold.
+            The weight threshold for this integration.
         '''
 
         # necessary in order to assure that mask gets applied correctly

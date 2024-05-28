@@ -27,41 +27,10 @@ class OutlierDetectionTSO(OutlierDetection):
         """
         super().__init__(input_model, **pars)
         if isinstance(self.inputs, dm.ModelContainer):
-            self._undo_convert_inputs()
-        else:
-            self.input_models = self.inputs
-            self.converted = False
-
-
-    def _undo_convert_inputs(self):
-        """
-        Convert input from ModelContainer of ImageModels with identical
-        metadata (as is passed into outlier_detection for imaging) to a CubeModel.
-        For typical use of calwebb_tso3, the input is already a CubeModel, so this
-        is not needed. It is included mainly for backwards compatibility with older
-        workflows that may have used a ModelContainer of ImageModels as input.
-
-        This method converts `self.inputs` into a version of
-        `self.input_models` suitable for processing by the class.
-        """
-        num_inputs = len(self.inputs)
-        log.debug(f"Converting ModelContainer with {num_inputs} images to CubeModel")
-        shp = (num_inputs, *self.inputs[0].data.shape)
-        cube = dm.CubeModel(data=np.empty(shp, dtype=np.float32),
-                                    err=np.empty(shp, dtype=np.float32),
-                                    dq=np.empty(shp, dtype=np.uint32),)
-                                    #var_noise=np.empty(shp, dtype=np.float32),)
+            raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
         
-        for i, im in enumerate(self.inputs):
-            cube.data[i] = im.data
-            cube.err[i] = im.err
-            cube.dq[i] = im.dq
-            #cube.var_noise[i] = im.var_noise
-            if i == 0:
-                cube.meta = im.meta
-            del im
-        self.converted = True
-        self.input_models = cube
+        self.input_models = self.inputs
+        self.converted = False
 
 
     def do_detection(self):
@@ -73,7 +42,7 @@ class OutlierDetectionTSO(OutlierDetection):
 
         rolling_width = self.outlierpars.get('n_ints', 25)
         if (rolling_width > 1) and (rolling_width < weighted_cube.shape[0]):
-            medians = self.compute_rolling_median(weighted_cube, weight_threshold, w = rolling_width)
+            medians = self.compute_rolling_median(weighted_cube, weight_threshold, w=rolling_width)
 
         else:
             medians = np.nanmedian(weighted_cube.data, axis=0)
@@ -89,19 +58,14 @@ class OutlierDetectionTSO(OutlierDetection):
         if self.outlierpars['save_intermediate_results']:
             with dm.open(weighted_cube[0]) as dm0:
                 median_model.update(dm0)
-            self.save_median(median_model) 
+            self.save_median(median_model)
 
         # no need for blotting, resample is turned off for TSO
         # go straight to outlier detection
         log.info("Flagging outliers")
         flag_cr(self.input_models, median_model, **self.outlierpars)
 
-        if self.converted:
-            # Make sure actual input gets updated with new results
-            for i in range(len(self.inputs)):
-                self.inputs[i].dq = self.input_models.dq[i]
-    
-    
+
     def weight_no_resample(self):
         """
         give weights to model without resampling
@@ -110,9 +74,9 @@ class OutlierDetectionTSO(OutlierDetection):
         -----
         Prior to PR #8473, the `build_driz_weight` function was used to
         create the weights for the input models for TSO data. However, that
-        function was simply returning a copy of the DQ array because the 
+        function was simply returning a copy of the DQ array because the
         var_noise was not being passed in by calwebb_tso3. As of PR #8473,
-        a cube model that includes the var_noise is passed into TSO 
+        a cube model that includes the var_noise is passed into TSO
         outlier detection, so `build_driz_weight` would weight the cube model
         by the variance. Therefore `build_driz_weight` was removed in order to
         preserve the original behavior. If it is determined later that exposure
@@ -123,9 +87,9 @@ class OutlierDetectionTSO(OutlierDetection):
         dqmask = build_mask(self.input_models.dq, self.outlierpars['good_bits'])
         weighted_cube.wht = dqmask.astype(np.float32)
         return weighted_cube
-    
 
-    def compute_rolling_median(self, model: dm.CubeModel, weight_threshold: np.ndarray, w:int = 25) -> np.ndarray:
+
+    def compute_rolling_median(self, model: dm.CubeModel, weight_threshold: np.ndarray, w: int=25) -> np.ndarray:
         '''
         Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
 
@@ -138,7 +102,7 @@ class OutlierDetectionTSO(OutlierDetection):
             The weight thresholds for each integration.
 
         w : int
-            The window size for the rolling median. 
+            The window size for the rolling median.
 
         Returns
         -------
@@ -150,13 +114,10 @@ class OutlierDetectionTSO(OutlierDetection):
         weight = model.wht
         badmask = np.less(weight, weight_threshold)
         log.debug("Percentage of pixels with low weight: {}".format(
-                np.sum(badmask) / weight.size * 100))
+            np.sum(badmask) / weight.size * 100))
 
         # Fill resampled_sci array with nan's where mask values are True
-        for f1, f2 in zip(sci, badmask):
-            for elem1, elem2 in zip(f1, f2):
-                elem1[elem2] = np.nan
-
+        sci[badmask] = np.nan
         del badmask
 
         if w > sci.shape[0]:
@@ -165,12 +126,12 @@ class OutlierDetectionTSO(OutlierDetection):
 
         del sci
         return meds
-    
+
 
 def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     """
     Calculate the median of a moving window over the zeroth axis of an N-d array.
-    Algorithm works by expanding the array into an additional dimension 
+    Algorithm works by expanding the array into an additional dimension
     where the new axis has the same length as the window size. Each entry in that
     axis is a copy of the original array shifted by 1 with respect to the previous
     entry, such that the rolling median is simply the median over the new axis.
@@ -195,17 +156,17 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     """
     if w <= 1:
         raise ValueError("Rolling median window size must be greater than 1.")
-    shifted = np.zeros((x.shape[0]+w-1, w, *x.shape[1:]))*np.nan
-    for idx in range(w-1):
-        shifted[idx:-w+idx+1, idx] = x
-    shifted[idx+1:, idx+1] = x
+    shifted = np.zeros((x.shape[0] + w - 1, w, *x.shape[1:])) * np.nan
+    for idx in range(w - 1):
+        shifted[idx:-w + idx + 1, idx] = x
+    shifted[idx + 1:, idx + 1] = x
     medians = np.median(shifted, axis=1)
-    for idx in range(w-1):
-        medians[idx] = np.median(shifted[idx, :idx+1])
-        medians[-idx-1] = np.median(shifted[-idx-1, -idx-1:])
-    medians = medians[(w-1)//2:-(w-1)//2]
+    for idx in range(w - 1):
+        medians[idx] = np.median(shifted[idx, :idx + 1])
+        medians[-idx - 1] = np.median(shifted[-idx - 1, -idx - 1:])
+    medians = medians[(w - 1) // 2:-(w - 1) // 2]
 
     # Fill in the edges with the nearest valid value
-    medians[:w//2] = medians[w//2]
-    medians[-w//2:] = medians[-w//2]
+    medians[:w // 2] = medians[w // 2]
+    medians[-w // 2:] = medians[-w // 2]
     return medians

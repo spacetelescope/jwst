@@ -148,7 +148,7 @@ def we_many_sci(
         tsci.data = np.random.normal(loc=background, size=shape, scale=sigma)
         # Add a source in the center
         tsci.data[7, 7] += signal
-        tsci.meta.filename = f"foo{i+2}_cal.fits"
+        tsci.meta.filename = f"foo{i + 2}_cal.fits"
         all_sci.append(tsci)
 
     return all_sci
@@ -300,9 +300,9 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-@pytest.mark.parametrize("exptype, tsovisit", exptypes_tso + exptypes_coron)
-def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, tmp_cwd):
-    """Test whole step with an outlier for TSO & coronagraphic modes"""
+@pytest.mark.parametrize("exptype, tsovisit", exptypes_coron)
+def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
+    """Test whole step with an outlier for coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
     container = ModelContainer(
@@ -330,48 +330,7 @@ def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, tmp_cwd):
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
-def test_outlier_step_tso_rollingmed(exptype, tsovisit):
-    '''Test outlier detection with rolling median on time-varying source
-    This test fails if n_ints is set to 100, i.e., take simple median
-    '''
-    bkg = 1.5
-    sig = 0.02
-    numsci = 50
-    n_ints = 7 #rolling window size
-    signal = 7.0
-    container = ModelContainer(
-        we_many_sci(
-            numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit
-        )
-    )
-
-    # Drop a weak CR on the science array
-    cr_timestep = 5
-    container[cr_timestep].data[12, 12] = bkg + sig * 10
-
-    # make time variability that has larger total amplitude than 
-    # the CR signal but deviations frame-by-frame are smaller
-    real_time_variability = signal * np.cos(np.linspace(0, np.pi, numsci))
-    for i, model in enumerate(container):
-        model.data[7,7] += real_time_variability[i]
-        model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7,7])
-
-    result = OutlierDetectionStep.call(container, n_ints=n_ints)
-
-    # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
-
-    # Verify source is not flagged
-    for r in result:
-        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
-
-    # Verify CR is flagged
-    assert result[cr_timestep].dq[12, 12] == OUTLIER_DO_NOT_USE
-
-
-@pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
-def test_outlier_step_tso_cube_input(exptype, tsovisit):
+def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     '''Test outlier detection with rolling median on time-varying source
     This test fails if n_ints is set to 100, i.e., take simple median
     '''

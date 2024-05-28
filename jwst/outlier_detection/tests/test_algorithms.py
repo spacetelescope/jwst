@@ -8,7 +8,6 @@ from jwst.outlier_detection.outlier_detection_ifu import medfilt
 from jwst.outlier_detection.outlier_detection_tso import moving_median_over_zeroth_axis
 
 
-
 @pytest.mark.parametrize("shape,kern_size", [
     ([7, 7], [3, 3]),
     ([7, 7], [3, 1]),
