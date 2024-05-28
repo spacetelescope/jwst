@@ -49,7 +49,9 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
     """
 
     data = input_model.data
+    ngroups = input_model.meta.exposure.ngroups
     nframes = input_model.meta.exposure.nframes
+    readpatt = input_model.meta.exposure.readpatt
 
     # Create the output model as a copy of the input
     output_model = input_model.copy()
@@ -69,6 +71,12 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
+    #print('\n ******** using read_pattern = ', readpatt)
+    #read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
+    #gdq_new, pdq_new, zframe = flag_saturated_pixels(
+    #    data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
+    #    n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe)
+    print('\n ******** using nframes = ', nframes)
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
         n_pix_grow_sat=n_pix_grow_sat, zframe=zframe, nframes=nframes)
