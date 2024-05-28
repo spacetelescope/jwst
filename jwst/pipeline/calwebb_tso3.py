@@ -77,7 +77,7 @@ class Tso3Pipeline(Pipeline):
 
         # Input may consist of multiple exposures, so loop over each of them
         input_exptype = None
-        for cube in input_models:
+        for i, cube in enumerate(input_models):
             if input_exptype is None:
                 input_exptype = cube.meta.exposure.type
 
@@ -89,17 +89,17 @@ class Tso3Pipeline(Pipeline):
             self.log.info("Performing outlier detection on input images ...")
             cube = self.outlier_detection(cube)
 
-        # Save crfints products
-        if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
-            self.log.info("Saving crfints products with updated DQ arrays ...")
-            for cube in input_models:
+            # Save crfints products
+            if cube.meta.cal_step.outlier_detection == 'COMPLETE':
+                self.log.info("Saving crfints products with updated DQ arrays ...")
                 # preserve output filename
                 original_filename = cube.meta.filename
+                print(original_filename, input_models.meta.asn_table.asn_id)
                 self.save_model(
                     cube, output_file=original_filename, suffix='crfints',
-                    asn_id=input_models.meta.asn_table.asn_id
                 )
                 cube.meta.filename = original_filename
+            input_models[i] = cube
 
         # Create final photometry results as a single output
         # regardless of how many input members there may be

@@ -205,7 +205,7 @@ class OutlierDetectionStep(Step):
     def _check_input_cube(self):
         """Check to see whether input is the expected CubeModel object."""
         ninputs = self.input_models.shape[0]
-        if not isinstance(self.input_models, datamodels.CubeModel):
+        if type(self.input_models) not in [datamodels.CubeModel, datamodels.SlitModel]:
             self.log.warning("Input is not the expected CubeModel")
             self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False

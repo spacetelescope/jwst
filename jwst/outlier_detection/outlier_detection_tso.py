@@ -15,7 +15,7 @@ class OutlierDetectionTSO(OutlierDetection):
     """Class to flag outlier pixels in DQ of TSO data. Works similarly to
     imaging outlier detection, but does not resample and uses a rolling median."""
 
-    def __init__(self, input_model: dm.CubeModel | dm.ModelContainer, **pars):
+    def __init__(self, input_model: dm.SlitModel | dm.CubeModel | dm.ModelContainer, **pars):
         """Initialize class for TSO data processing.
 
         Parameters
@@ -45,7 +45,7 @@ class OutlierDetectionTSO(OutlierDetection):
         `self.input_models` suitable for processing by the class.
         """
         num_inputs = len(self.inputs)
-        log.debug(f"Converting ModelContainer with {num_inputs} images back to CubeModel")
+        log.debug(f"Converting ModelContainer with {num_inputs} images to CubeModel")
         shp = (num_inputs, *self.inputs[0].data.shape)
         cube = dm.CubeModel(data=np.empty(shp, dtype=np.float32),
                                     err=np.empty(shp, dtype=np.float32),
