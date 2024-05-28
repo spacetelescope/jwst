@@ -138,10 +138,14 @@ resample
 - Update variance handling to propagate resampled variance components with
   weights that match the science `weight_type`. [#8437]
 
+- Change `fillval` parameter default from INDEF to NaN [#8488]
+
 resample_spec
 -------------
 
 - Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
+- Change `fillval` parameter default from INDEF to NaN [#8488]
 
 residual_fringe
 ---------------
