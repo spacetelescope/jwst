@@ -116,11 +116,11 @@ def asn(tmp_cwd_module, background, sci):
     two background images to properly test the step."""
 
     sci_path = tmp_cwd_module / "sci.fits"
-    bkg_path_0 = tmp_cwd_module / "bkg0.fits"
-    bkg_path_1 = tmp_cwd_module / "bkg1.fits"
     sci.save(sci_path)
-    background.save(bkg_path_0)
-    background.save(bkg_path_1)
+
+    for root in ["bkg0", "bkg1", "selfcal0", "selfcal1"]:
+        path = tmp_cwd_module / (root + ".fits")
+        background.save(path)
 
     asn_table = {
         "asn_pool": "singleton",
@@ -139,6 +139,14 @@ def asn(tmp_cwd_module, background, sci):
                         "expname": "bkg1.fits",
                         "exptype": "background"
                     },
+                    {
+                        "expname": "selfcal0.fits",
+                        "exptype": "selfcal"
+                    },
+                    {
+                        "expname": "selfcal1.fits",
+                        "exptype": "selfcal"
+                    }
                 ]
             }
         ]
@@ -204,8 +212,10 @@ def test_badpix_selfcal_step(request, dset):
     """
     input_data = request.getfixturevalue(dset)
     result = BadpixSelfcalStep.call(input_data, skip=False)
-    try:
-        assert result.meta.cal_step.badpix_selfcal == "COMPLETE"
-    except AttributeError:
-        # ModelContainer does not itself have a cal_step attribute
-        assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
+
+    assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
+    if dset == "sci":
+        assert len(result) == 1
+    else:
+        # should return sci, bkg0, bkg1 but not selfcal0, selfcal1
+        assert len(result) == 3

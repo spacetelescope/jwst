@@ -51,10 +51,11 @@ class BadpixSelfcalStep(Step):
 
         Notes
         -----
-        If bkg_list is specified manually, it overrides the background exposures
-        in the assocation file.
-        If bkg_list is set to None and an association file is read in, the background exposures
-        are read from the association file.
+        If bkg_list is specified manually, it overrides any non-science exposures 
+        in the association file.
+        If bkg_list is set to None and an association file is read in, all exposures in the
+        association file, including science, background, and selfcal exposures,
+        are included in the MIN frame from which outliers are detected.
         If bkg_list is set to None and input is a single science exposure, the step will
         be skipped with a warning unless the force_single parameter is set True.
         In that case, the input exposure will be used as the sole background exposure, 
@@ -67,9 +68,11 @@ class BadpixSelfcalStep(Step):
             # all exposures are combined into a single background model using a MIN operation.
             if isinstance(input_data, dm.ModelContainer):
                 
-                sci_models, bkg_list_asn = split_container(input_data)
+                sci_models, bkg_list_asn, selfcal_list_asn = split_container(input_data, 
+                                    fields=['science', 'background', 'selfcal'])
+                
                 if bkg_list is None:
-                    bkg_list = list(sci_models) + list(bkg_list_asn) 
+                    bkg_list = list(sci_models) + list(bkg_list_asn) + list(selfcal_list_asn) 
                 else:
                     log.warning("bkg_list provided directly as input, ignoring bkg_list from association file")
                 
@@ -79,6 +82,7 @@ class BadpixSelfcalStep(Step):
             elif isinstance(input_data, dm.IFUImageModel) or isinstance(input_data, dm.ImageModel):
 
                 input_sci = input_data
+                bkg_list_asn = []
                 if bkg_list is None:
                     # true self-calibration on input data itself
                     bkg_list = [input_data]
@@ -94,7 +98,7 @@ class BadpixSelfcalStep(Step):
         if (len(bkg_list) == 0) and (not self.force_single):
             log.warning("No background exposures provided for self-calibration. Skipping step.")
             self.record_step_status(input_sci, "badpix_selfcal", success=False)
-            return input_sci, bkg_list
+            return input_sci, bkg_list_asn
 
         # collapse background dithers into a single background model
         bkgd_3d = []
@@ -106,10 +110,11 @@ class BadpixSelfcalStep(Step):
         # apply the flags to the science data
         input_sci = badpix_selfcal.apply_flags(input_sci, bad_indices)
 
-        # apply the flags to the background data
-        for i, background_model in enumerate(bkg_list[1:]):
-            bkg_list[i] = badpix_selfcal.apply_flags(background_model, bad_indices)
+        # apply the flags to the background data to be passed to background sub step
+        if len(bkg_list_asn) > 0:
+            for i, background_model in enumerate(bkg_list_asn):
+                bkg_list_asn[i] = badpix_selfcal.apply_flags(background_model, bad_indices)
 
         self.record_step_status(input_sci, "badpix_selfcal", success=True)
         
-        return input_sci, bkg_list
+        return input_sci, *bkg_list_asn

@@ -250,10 +250,12 @@ class Spec2Pipeline(Pipeline):
         # skipped by default for all modes
         result = self.badpix_selfcal(calibrated, members_by_type['background'])
         if isinstance(result, tuple):
-            # if step is skipped, result is just the input model
             # if step actually occurs, then flagged backgrounds are also returned
-            calibrated, bkg_outlier_flagged = result
+            calibrated, bkg_outlier_flagged = result[0], result[1:]
             members_by_type['background'] = bkg_outlier_flagged
+        else:
+            # if step is skipped, result is just input
+            calibrated = result
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)
