@@ -288,7 +288,7 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] \
            and not isinstance(calibrated, datamodels.CubeModel):
 
-            # Call pixel replace, followed by resample_spec  for 2D slit data
+            # Call pixel replace, followed by resample_spec for 2D slit data
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
