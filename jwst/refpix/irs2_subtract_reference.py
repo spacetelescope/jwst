@@ -1082,19 +1082,19 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
            (scipix_n + refpix_r + 2) * ny // 2 - elen // 2
 
     # Construct the filter [1, cos, 0, cos, 1].
-    temp_a1 = (np.cos(np.arange(elen, dtype=np.float32) *
+    temp_a1 = (np.cos(np.arange(elen, dtype=np.float64) *
                       np.pi / float(elen)) + 1.) / 2.
 
     # elen = 5000
     # blen = 30268
     # row * ny // 2 - 2 * blen - 2 * elen = 658552
     # len(temp_a2) = 729088
-    temp_a2 = np.concatenate((np.ones(blen, dtype=np.float32),
+    temp_a2 = np.concatenate((np.ones(blen, dtype=np.float64),
                               temp_a1.copy(),
                               np.zeros(row * ny // 2 - 2 * blen - 2 * elen,
-                                       dtype=np.float32),
+                                       dtype=np.float64),
                               temp_a1[::-1].copy(),
-                              np.ones(blen, dtype=np.float32)))
+                              np.ones(blen, dtype=np.float64)))
 
     roll_a2 = np.roll(temp_a2, -1)
     aa = np.concatenate((temp_a2, roll_a2[::-1]))
