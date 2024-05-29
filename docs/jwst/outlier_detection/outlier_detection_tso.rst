@@ -16,16 +16,16 @@ a few variations to accomodate the nature of these 3D data.
 #. The median image is created without resampling the input data
 
    * The median image is created by combining all planes in the 
-     ModelContainer pixel-by-pixel using a rolling-median algorithm, in order
-     to flag outliers frame-by-frame but preserve real time variability.
+     CubeModel pixel-by-pixel using a rolling-median algorithm, in order
+     to flag outliers integration-by-integration but preserve real time variability.
    * The ``n_ints`` parameter specifies the number of integrations over
      which to compute the median. The default is 25. If the number of integrations
-     is less than ``n_ints``, a simple median is used instead.
+     is less than or equal to ``n_ints``, a simple median is used instead.
    * The ``nlow`` and ``nhigh`` parameters specify how many low and high values
      to ignore when computing the median for any given pixel.
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and
-     ignored when resampled.
+     ignored when the median is taken.
    * The rolling-median CubeModel (3D data array) is written out to disk as `_<asn_id>_median.fits`
      if the ``save_intermediate_results`` parameter is set to True.
    * All integrations are aligned already, so no resampling or shifting needs to be performed

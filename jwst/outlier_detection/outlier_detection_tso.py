@@ -40,7 +40,7 @@ class OutlierDetectionTSO(OutlierDetection):
         maskpt = self.outlierpars.get('maskpt', 0.7)
         weight_threshold = self.compute_weight_threshold(weighted_cube.wht, maskpt)
 
-        rolling_width = self.outlierpars.get('n_ints', 25)
+        rolling_width = self.outlierpars.get("rolling_window_width", 25)
         if (rolling_width > 1) and (rolling_width < weighted_cube.shape[0]):
             medians = self.compute_rolling_median(weighted_cube, weight_threshold, w=rolling_width)
 

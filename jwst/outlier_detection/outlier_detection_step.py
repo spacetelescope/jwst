@@ -63,7 +63,7 @@ class OutlierDetectionStep(Step):
         backg = float(default=0.0)
         kernel_size = string(default='7 7')
         threshold_percent = float(default=99.8)
-        n_ints = integer(default=25)
+        rolling_window_width = integer(default=25)
         ifu_second_check = boolean(default=False)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
@@ -115,7 +115,7 @@ class OutlierDetectionStep(Step):
                 'backg': self.backg,
                 'kernel_size': self.kernel_size,
                 'threshold_percent': self.threshold_percent,
-                'n_ints': self.n_ints,
+                'rolling_window_width': self.rolling_window_width,
                 'ifu_second_check': self.ifu_second_check,
                 'allowed_memory': self.allowed_memory,
                 'in_memory': self.in_memory,
