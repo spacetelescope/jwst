@@ -63,7 +63,7 @@ extract_1d
 - Add ``ifu_covar_scale`` parameter to help correct for IFU cube covariance. [#8457]
 
 - Add propagation of uncertainty when annular backgrounds are subtracted
-  from source spectra during IFU spectral extraction. [#]
+  from source spectra during IFU spectral extraction. [#8515]
 
 extract_2d
 ----------
