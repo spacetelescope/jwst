@@ -129,6 +129,12 @@ ramp_fitting
   fitting or "OLS_C" to use the C extension implementation of
   ramp fitting. [#8503]
 
+refpix
+------
+
+- Use ``double`` for fft filter coefficients to improve compatibility
+  across system. [#8512]
+
 resample
 --------
 
