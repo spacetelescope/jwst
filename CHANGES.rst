@@ -164,6 +164,13 @@ resample_spec
 
 - Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
 
+<<<<<<< HEAD
+=======
+- Fix a bug resulting in large WCS errors in the resampled image's WCS
+when the slit was closely aligned with the RA direction
+  sky). [#8511]
+
+>>>>>>> 56f965fc9 (Update CHANGES.rst)
 - Change `fillval` parameter default from INDEF to NaN [#8488]
 
 - Fix a bug resulting in large WCS errors in the resampled image's WCS
