@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from stdatamodels.jwst import datamodels
 
@@ -229,8 +230,11 @@ def correct_nrs_fs_bkg(input_model):
         return input_model
 
     # Apply the corrections for the primary slit
-    input_model.data *= (pl_uniform / pl_point) * \
-                        (ff_uniform / ff_point) * \
-                        (ph_point / ph_uniform)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+        warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
+        input_model.data *= (pl_uniform / pl_point) * \
+                            (ff_uniform / ff_point) * \
+                            (ph_point / ph_uniform)
 
     return input_model
