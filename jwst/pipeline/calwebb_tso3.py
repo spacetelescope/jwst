@@ -94,9 +94,15 @@ class Tso3Pipeline(Pipeline):
                 self.log.info("Saving crfints products with updated DQ arrays ...")
                 # preserve output filename
                 original_filename = cube.meta.filename
-                print(original_filename, input_models.meta.asn_table.asn_id)
+
+                # ensure output filename will not have duplicate asn_id
+                if "_"+input_models.meta.asn_table.asn_id in original_filename:
+                    original_filename = original_filename.replace(
+                        "_"+input_models.meta.asn_table.asn_id, ''
+                    )
                 self.save_model(
                     cube, output_file=original_filename, suffix='crfints',
+                    asn_id=input_models.meta.asn_table.asn_id
                 )
                 cube.meta.filename = original_filename
             input_models[i] = cube

@@ -180,6 +180,7 @@ class OutlierDetectionStep(Step):
                 self.input_models.meta.cal_step.outlier_detection = state
             return self.input_models
 
+
     def check_input(self):
         """Use this method to determine whether input is valid or not."""
         if self.input_container:
