@@ -160,8 +160,29 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
     min_wave = np.amin(tab_wavelength)
     max_wave = np.amax(tab_wavelength)
 
+    # Check whether the photom step has been run
+    try:
+        s_photom = str(input.meta.cal_step.photom).upper()
+    except AttributeError:
+        s_photom = 'INCOMPLETE'
+
     for (k, slit) in enumerate(input.slits):
         log.info(f'Expanding background for slit {slit.name}')
+
+        # Check exposure type and calibration status for
+        # special handling
+        exp_type = slit.meta.exposure.type
+        if exp_type is None:
+            exp_type = input.meta.exposure.type
+
+        if exp_type == 'NRS_MSASPEC' and s_photom == 'COMPLETE':
+            log.warning('Master background subtraction is not supported '
+                        'for flux-calibrated NIRSpec MOS spectra.')
+            log.warning('Setting the background to 0.0')
+            background.slits[k].data[:] = 0.0
+            background.slits[k].dq[:] = 0
+            continue
+
         wl_array = get_wavelengths(slit, input.meta.exposure.type)
         if wl_array is None:
             raise RuntimeError(f"Can't determine wavelengths for {type(slit)}")
@@ -187,7 +208,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         # NIRSpec fixed slits need corrections applied to the 2D background
         # if the slit contains a point source, in order to make the master bkg
         # match the calibrated science data in the slit
-        if input.meta.exposure.type == 'NRS_FIXEDSLIT' and slit.source_type.upper() == 'POINT':
+        if exp_type == 'NRS_FIXEDSLIT' and slit.source_type.upper() == 'POINT':
             background.slits[k] = correct_nrs_fs_bkg(background.slits[k])
 
     return background
