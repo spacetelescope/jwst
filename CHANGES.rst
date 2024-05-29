@@ -120,8 +120,8 @@ pipeline
 pixel_replace
 -------------
 
-- Moved pixel_replace in calwebb_spec2 and calwebb_spec3 to be immediately
-  before resample_spec/cube_build. [#8409]
+- Moved pixel_replace in the calwebb_spec2 pipeline and added it to the calwebb_spec3
+  pipeline. In both pipelines it is now executed immediately before resample_spec/cube_build. [#8409]
 
 ramp_fitting
 ------------
