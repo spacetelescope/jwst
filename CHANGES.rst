@@ -117,6 +117,13 @@ pipeline
 - Removed unused ``scale_detection`` argument from ``calwebb_tso3``
   pipeline. [#8438]
 
+=======
+pixel_replace
+-------------
+
+- Moved pixel_replace in the calwebb_spec2 pipeline and added it to the calwebb_spec3
+  pipeline. In both pipelines it is now executed immediately before resample_spec/cube_build. [#8409]
+
 saturation
 ----------
 
@@ -134,6 +141,12 @@ ramp_fitting
   fitting or "OLS_C" to use the C extension implementation of
   ramp fitting. [#8503]
 
+refpix
+------
+
+- Use ``double`` for fft filter coefficients to improve compatibility
+  across system. [#8512]
+
 resample
 --------
 
@@ -143,10 +156,14 @@ resample
 - Update variance handling to propagate resampled variance components with
   weights that match the science `weight_type`. [#8437]
 
+- Change `fillval` parameter default from INDEF to NaN [#8488]
+
 resample_spec
 -------------
 
 - Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
+- Change `fillval` parameter default from INDEF to NaN [#8488]
 
 residual_fringe
 ---------------

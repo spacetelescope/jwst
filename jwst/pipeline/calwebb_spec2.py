@@ -51,7 +51,7 @@ class Spec2Pipeline(Pipeline):
     assign_wcs, NIRSpec MSA bad shutter flagging, nsclean, background subtraction,
     NIRSpec MSA imprint subtraction, 2-D subwindow extraction, flat field,
     source type decision, straylight, fringe, residual_fringe, pathloss,
-    barshadow,  photom, resample_spec, cube_build, and extract_1d.
+    barshadow,  photom, pixel_replace, resample_spec, cube_build, and extract_1d.
     """
 
     class_alias = "calwebb_spec2"
@@ -110,7 +110,7 @@ class Spec2Pipeline(Pipeline):
         asn = self.load_as_level2_asn(data)
         if len(asn['products']) > 1 and self.output_file is not None:
             self.log.warning('Multiple products in input association. Output file name will be ignored.')
-            self.output_file = None        
+            self.output_file = None
 
         # Each exposure is a product in the association.
         # Process each exposure.  Delay reporting failures until the end.
@@ -141,7 +141,7 @@ class Spec2Pipeline(Pipeline):
             else:
                 if result is not None:
                     results.append(result)
-            self.output_file = None #handles multiple products in the association
+            self.output_file = None  # handles multiple products in the association
 
         if len(failures) > 0 and self.fail_on_exception:
             raise RuntimeError('\n'.join(failures))
@@ -217,9 +217,7 @@ class Spec2Pipeline(Pipeline):
 
             # Decide on what steps can actually be accomplished based on the
             # provided input.
-
             self._step_verification(exp_type, science, members_by_type, multi_int)
-
             # Start processing the individual steps.
             # `assign_wcs` is the critical step. Without it, processing cannot proceed.
             assign_wcs_exception = None
@@ -290,29 +288,46 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] \
            and not isinstance(calibrated, datamodels.CubeModel):
 
-            # Call the resample_spec step for 2D slit data
+            # Call pixel replace, followed by resample_spec for 2D slit data
             resampled = calibrated.copy()
+            # interpolate pixels that have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
+            resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
 
         elif is_nrs_slit_linelamp(calibrated):
 
-            # Call resample_spec for NRS 2D line lamp slit data
+            # Call pixel_replace followed by resample_spec for NRS 2D line lamp slit data
             resampled = calibrated.copy()
+            # interpolate pixels that have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
+            resampled = self.pixel_replace(resampled)
             resampled = self.resample_spec(resampled)
 
         elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):
 
-            # Call the cube_build step for IFU data;
-            # always create a single cube containing multiple
+            # First call pixel_replace then call cube_build step for IFU data.
+            # For cube_build always create a single cube containing multiple
             # wavelength bands
 
             resampled = calibrated.copy()
+            # interpolate pixels that have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
+            resampled = self.pixel_replace(resampled)
             resampled = self.cube_build(resampled)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], suffix='s3d')
+        elif exp_type in ['MIR_LRS-SLITLESS']:
+            resampled = calibrated.copy()
+            # interpolate pixels that have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
+            resampled = self.pixel_replace(resampled)
         else:
-            resampled = calibrated
-
+            # will be run if set in parameter ref file or by user
+            resampled = calibrated.copy()
+            # interpolate pixels that have a NaN value or are flagged
+            # as DO_NOT_USE or NON_SCIENCE.
+            resampled = self.pixel_replace(resampled)
         # Extract a 1D spectrum from the 2D/3D data
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
@@ -491,8 +506,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.barshadow(calibrated)
         calibrated = self.wfss_contam(calibrated)
         calibrated = self.photom(calibrated)
-        calibrated = self.pixel_replace(calibrated)
-
         return calibrated
 
     def _process_nirspec_slits(self, data):
@@ -509,7 +522,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
-        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -525,7 +537,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.fringe(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
-        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
 
@@ -539,6 +550,5 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
         calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
-        calibrated = self.pixel_replace(calibrated)
 
         return calibrated
