@@ -120,6 +120,12 @@ pipeline
 - Removed unused ``scale_detection`` argument from ``calwebb_tso3``
   pipeline. [#8438]
 
+pixel_replace
+-------------
+
+- Moved pixel_replace in the calwebb_spec2 pipeline and added it to the calwebb_spec3
+  pipeline. In both pipelines it is now executed immediately before resample_spec/cube_build. [#8409]
+
 ramp_fitting
 ------------
 
@@ -131,6 +137,12 @@ ramp_fitting
   the algorithm "OLS" to use the python implementation of ramp
   fitting or "OLS_C" to use the C extension implementation of
   ramp fitting. [#8503]
+
+refpix
+------
+
+- Use ``double`` for fft filter coefficients to improve compatibility
+  across system. [#8512]
 
 resample
 --------

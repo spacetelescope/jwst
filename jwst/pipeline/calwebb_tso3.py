@@ -14,7 +14,7 @@ from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 from ..photom import photom_step
-
+from ..pixel_replace import pixel_replace_step
 from ..lib.pipe_utils import is_tso
 from astropy.io.fits import FITS_rec
 
@@ -30,6 +30,7 @@ class Tso3Pipeline(Pipeline):
 
         * outlier_detection
         * tso_photometry
+        * pixel_replace
         * extract_1d
         * photom
         * white_light
@@ -43,6 +44,7 @@ class Tso3Pipeline(Pipeline):
     step_defs = {'outlier_detection':
                  outlier_detection_step.OutlierDetectionStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
+                 'pixel_replace': pixel_replace_step.PixelReplaceStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'photom': photom_step.PhotomStep,
                  'white_light': white_light_step.WhiteLightStep
@@ -153,6 +155,7 @@ class Tso3Pipeline(Pipeline):
 
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
+
             x1d_result = datamodels.MultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             x1d_result.int_times = FITS_rec.from_columns(input_models[0].int_times.columns,
@@ -164,6 +167,10 @@ class Tso3Pipeline(Pipeline):
 
             # For each exposure in the TSO...
             for cube in input_models:
+                # interpolate pixels that have a NaN value or are flagged
+                # as DO_NOT_USE or NON_SCIENCE.
+                cube = self.pixel_replace(cube)
+                state = cube.meta.cal_step.pixel_replace
                 # Process spectroscopic TSO data
                 # extract 1D
                 self.log.info("Extracting 1-D spectra ...")
@@ -190,6 +197,7 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
+            x1d_result.meta.cal_step.pixel_replace = state
             self.save_model(x1d_result, suffix='x1dints')
 
         # Done with all the inputs
