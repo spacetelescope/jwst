@@ -36,6 +36,11 @@ associations
 - Updated Level3 rules for new handling of NIRSpec MOS source_id formatting when
   constructing output file names. [#8442]
 
+combine_1d
+----------
+
+- Fix weights for combining errors from 1D spectra. [#8520]
+
 dark_current
 ------------
 
