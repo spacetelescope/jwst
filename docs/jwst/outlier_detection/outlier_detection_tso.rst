@@ -18,9 +18,9 @@ a few variations to accomodate the nature of these 3D data.
    * The median image is created by combining all planes in the 
      CubeModel pixel-by-pixel using a rolling-median algorithm, in order
      to flag outliers integration-by-integration but preserve real time variability.
-   * The ``n_ints`` parameter specifies the number of integrations over
+   * The ``rolling_window_width`` parameter specifies the number of integrations over
      which to compute the median. The default is 25. If the number of integrations
-     is less than or equal to ``n_ints``, a simple median is used instead.
+     is less than or equal to ``rolling_window_width``, a simple median is used instead.
    * The ``nlow`` and ``nhigh`` parameters specify how many low and high values
      to ignore when computing the median for any given pixel.
    * The ``maskpt`` parameter sets the percentage of the weight image values to

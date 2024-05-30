@@ -107,7 +107,7 @@ outlier_detection
 
 - Added the option to use a rolling median instead of a simple median
   to detect outliers in TSO data, with user-defined
-  rolling window width via the ``n_ints`` parameter. [#8473]
+  rolling window width via the ``rolling_window_width`` parameter. [#8473]
 
 photom
 ------

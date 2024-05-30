@@ -57,7 +57,7 @@ that control the behavior of the processing:
 ``--backg`` (float, default=0.0)
   User-specified background value to apply to the median image.
 
-``--n_ints`` (int, default=25)
+``--rolling_window_width`` (int, default=25)
   Number of integrations over which to take the median when using rolling-window
   median for TSO observations.
 
