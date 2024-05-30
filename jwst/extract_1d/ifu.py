@@ -757,6 +757,11 @@ def extract_ifu(input_model, source_type, extract_params):
                                                  method=method, subpixels=subpixels)
             b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
+            # Propagate errors in background to the background-subtracted science spectrum
+            f_var_poisson[k] += b_var_poisson[k] * normalization * normalization
+            f_var_rnoise[k] += b_var_rnoise[k] * normalization * normalization
+            f_var_flat[k] += b_var_flat[k] * normalization * normalization
+
         # Extended source data - background determined from sigma clipping
         if source_type == 'EXTENDED':
             bkg_data = data[k, :, :]
