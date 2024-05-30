@@ -283,7 +283,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
         # in the whole pipeline) to microns (which is the expected output)
         #
         # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-        breakpoint()
+
         pipeline = [(det, dms2detector),
                     (sca, det2gwa),
                     (gwa, gwa2slit),
@@ -854,7 +854,7 @@ def ifuslit_to_slicer(slits, reference_files):
         msa_transform = slitdata_model | ifuslicer_model
         msa_transform.name = "ifuslit_to_slicer"
         msa_transform.inputs = ('x_slit', 'y_slit')
-        msa_transform.outputs = ('x_slicer', 'y_slicer')
+        msa_transform.outputs = ('x_msa', 'y_msa')
         models.append(msa_transform)
     ifuslicer.close()
 
@@ -878,7 +878,7 @@ def slicer_to_msa(reference_files):
     ifufore2fore_mapping.inverse = Mapping((0, 1, 2, 2))
     ifu_fore_transform = slicer2fore_mapping | ifufore & Identity(1)
     ifu_fore_transform.name = "slicer_to_msa"
-    ifu_fore_transform.inputs = ('x_slicer', 'y_slicer', 'lam')
+    ifu_fore_transform.inputs = ('x_msa', 'y_msa', 'lam')
     ifu_fore_transform.outputs = ('x_msa', 'y_msa', 'lam')
     return ifu_fore_transform
 

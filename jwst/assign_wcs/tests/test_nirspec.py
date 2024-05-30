@@ -5,6 +5,7 @@ import functools
 from math import cos, sin
 import os.path
 
+import asdf
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -785,30 +786,8 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     assert_allclose(v2, ins_tab['xV2V3'])
     assert_allclose(v3, ins_tab['yV2V3'])
 
-    # test transform metadata for slit_wcs
-    # available frames ['detector', 'sca', 'gwa', 'slit_frame', 'slicer', 'msa_frame', 'oteip', 'v2v3', 'v2v3vacorr', 'world']
-    assert slit_wcs.get_transform('detector', 'sca').inputs == ('x_detector', 'y_detector')
-    assert slit_wcs.get_transform('detector', 'sca').outputs == ('x_sca', 'y_sca')
-    assert slit_wcs.get_transform('sca', 'gwa').inputs == ('x_sca', 'y_sca')
-    assert slit_wcs.get_transform('sca', 'gwa').outputs == ('alpha', 'beta', 'gamma')
-    assert slit_wcs.get_transform('gwa', 'slit_frame').inputs == ('alpha', 'beta', 'gamma')
-    assert slit_wcs.get_transform('gwa', 'slit_frame').outputs == ('x_slit', 'y_slit', 'lam')
-    assert slit_wcs.get_transform('slit_frame', 'slicer').inputs == ('name', 'x_slit', 'y_slit')
-    assert slit_wcs.get_transform('slit_frame', 'slicer').outputs == ('name', 'x_slicer', 'y_slicer')
-    assert slit_wcs.get_transform('slicer', 'msa_frame').inputs == ('name', 'x_slicer', 'y_slicer')
-    assert slit_wcs.get_transform('slicer', 'msa_frame').outputs == ('x_msa', 'y_msa', 'lam')
-    assert slit_wcs.get_transform('msa_frame', 'oteip').inputs == ('x_msa', 'y_msa', 'lam')
-    assert slit_wcs.get_transform('msa_frame', 'oteip').outputs == ('xan', 'yan', 'lam')
-    assert slit_wcs.get_transform('oteip', 'v2v3').inputs == ('xan', 'yan', 'lam')
-    assert slit_wcs.get_transform('oteip', 'v2v3').outputs == ("v2", "v3", 'lam')
-    assert slit_wcs.get_transform('v2v3', 'v2v3vacorr').inputs == ("v2", "v3", 'lam')
-    assert slit_wcs.get_transform('v2v3', 'v2v3vacorr').outputs == ("v2", "v3", 'lam')
-    assert slit_wcs.get_transform('v2v3vacorr', 'world').inputs == ("v2", "v3", 'lam')
-    assert slit_wcs.get_transform('v2v3vacorr', 'world').outputs == ("ra", "dec", 'lam')
 
-
-
-def test_functional_ifu_prism():
+def test_functional_ifu_prism(tmp_cwd):
     """Compare Nirspec instrument model with IDT model for IFU prism."""
     # setup test
     model_file = 'ifu_prism_functional_ESA_v1_20180619.txt'
@@ -933,7 +912,7 @@ def test_functional_ifu_prism():
     assert w.get_transform('gwa', 'slit_frame').outputs == ('name', 'x_slit', 'y_slit', 'lam')
     assert w.get_transform('slit_frame', 'slicer').inputs == ('name', 'x_slit', 'y_slit')
     assert w.get_transform('slit_frame', 'slicer').outputs == ('x_msa', 'y_msa')
-    assert w.get_transform('slicer', 'msa_frame').inputs == ('x_msa', 'y_msa')
+    assert w.get_transform('slicer', 'msa_frame').inputs == ('x_msa', 'y_msa', 'lam')
     assert w.get_transform('slicer', 'msa_frame').outputs == ('x_msa', 'y_msa', 'lam')
     assert w.get_transform('msa_frame', 'oteip').inputs == ('x_msa', 'y_msa', 'lam')
     assert w.get_transform('msa_frame', 'oteip').outputs == ('xan', 'yan', 'lam')
@@ -944,7 +923,19 @@ def test_functional_ifu_prism():
     assert w.get_transform('v2v3vacorr', 'world').inputs == ("v2", "v3", 'lam')
     assert w.get_transform('v2v3vacorr', 'world').outputs == ("ra", "dec", 'lam')
 
-    # can they be serialized? when this is done are the names restored?
+
+    # test these can be serialized and that names are restored when this is done
+    outfile = 'w_asdf.asdf'
+    tree = {"wcs": w}
+    af = asdf.AsdfFile(tree)
+    af.write_to(outfile)
+    with asdf.open(outfile) as af:
+        w = af.tree['wcs']
+        print(w)
+        assert True
+        assert w.get_transform('detector', 'sca').inputs == ('x_detector', 'y_detector')
+        assert w.get_transform('detector', 'sca').outputs == ('x_sca', 'y_sca')
+        assert w.get_transform('detector', 'sca').name == "dms_to_sca"
 
 
 def test_ifu_bbox():

@@ -258,9 +258,9 @@ def test_transform_metadata_imaging(create_imaging_wcs):
 
 
 @pytest.mark.parametrize('exptype', ['tso', 'wfss'])
-def test_transform_metadata_grism(exptype):
+def test_transform_metadata_grism(exptype, create_tso_wcs):
     if exptype == "tso":
-        wcsobj = create_tso_wcs()
+        wcsobj = create_tso_wcs
         assert wcsobj.get_transform("grism_detector", "detector").inputs == ('x_grism', 'y_grism', 'order')
     elif exptype == "wfss":
         wcsobj = create_wfss_wcs('GRISMR')
