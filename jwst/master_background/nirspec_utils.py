@@ -71,7 +71,7 @@ def map_to_science_slits(input_model, master_bkg):
 
     # Loop over all input slits, creating 2D master background to
     # match each 2D slitlet cutout
-    output_model = expand_to_2d(input_model, master_bkg)
+    output_model = expand_to_2d(input_model, master_bkg, allow_mos=True)
 
     return output_model
 
