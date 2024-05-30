@@ -171,7 +171,10 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
 
         # Check exposure type and calibration status for
         # special handling
-        exp_type = slit.meta.exposure.type
+        try:
+            exp_type = slit.meta.exposure.type
+        except AttributeError:
+            exp_type = None
         if exp_type is None:
             exp_type = input.meta.exposure.type
 
