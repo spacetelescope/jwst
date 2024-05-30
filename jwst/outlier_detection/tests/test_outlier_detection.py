@@ -332,11 +332,11 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
 def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     '''Test outlier detection with rolling median on time-varying source
-    This test fails if n_ints is set to 100, i.e., take simple median
+    This test fails if rolling_window_width is set to 100, i.e., take simple median
     '''
     bkg = 1.5
     sig = 0.02
-    n_ints = 7
+    rolling_window_width = 7
     numsci = 50
     signal = 7.0
     im = we_many_sci(
@@ -362,7 +362,7 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
         model.data[7, 7] += real_time_variability[i]
         model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
 
-    result = OutlierDetectionStep.call(cube, n_ints=n_ints)
+    result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 
     # Make sure nothing changed in SCI array
     np.testing.assert_allclose(cube.data, result.data)
