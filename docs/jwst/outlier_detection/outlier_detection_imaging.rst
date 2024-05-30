@@ -183,13 +183,7 @@ Normal imaging data benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
 integration to the next.  The outlier detection algorithm, therefore, gets run with 
 a few variations to accomodate the nature of these 3D data. See the 
-:ref:`IFU outlier detection <outlier-detection-tso>` documentation for details.
-
-.. note:: 
-
-  This same set of steps also gets used to perform outlier detection on
-  coronographic data, because it too is processed as 3D (per-integration)
-  cubes.
+:ref:`TSO outlier detection <outlier-detection-tso>` documentation for details.
 
 
 Outlier Detection for IFU data
