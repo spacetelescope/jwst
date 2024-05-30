@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from astropy import units as u
+from astropy import wcs as fitswcs
 import gwcs
 
 from stdatamodels.dqflags import interpret_bit_flags
@@ -162,21 +163,40 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    try:
-        forward_transform = wcs1.pixel_to_world_values
-        backward_transform = wcs2.world_to_pixel_values
-    except AttributeError as err:
-        raise TypeError("Input should be a WCS") from err
+    # try:
+    #     # forward_transform = wcs1.pixel_to_world_values
+    #     # backward_transform = wcs2.world_to_pixel_values
+    #     forward_transform = wcs1.forward_transform
+    #     backward_transform = wcs2.backward_transform
+    # except AttributeError as err:
+    #     raise TypeError("Input should be a WCS") from err
+    def _get_forward(wcs):
+        if isinstance(wcs, gwcs.WCS):
+            return wcs.forward_transform
+        elif isinstance(wcs, fitswcs.WCS):
+            return wcs.pixel_to_world
+        elif isinstance(wcs, Model):
+            return wcs
+
+    def _get_backward(wcs):
+        if isinstance(wcs, gwcs.WCS):
+            return wcs.backward_transform
+        elif isinstance(wcs, fitswcs.WCS):
+            return wcs.world_to_pixel
+        elif isinstance(wcs, Model):
+            return wcs
 
     def _reproject(x, y):
-        sky = forward_transform(x, y)
+        #sky = forward_transform(x, y)
+        sky = _get_forward(wcs1)(x, y)
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
         # Filter out RuntimeWarnings due to computed NaNs in the WCS
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            det = backward_transform(*tuple(flat_sky))
+            #det = backward_transform(*tuple(flat_sky))
+            det = _get_backward(wcs2)(*tuple(flat_sky))
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
