@@ -401,25 +401,33 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """
     exp_type = input_model.meta.exposure.type.lower()
     lamp_mode = input_model.meta.instrument.lamp_mode
-    prog_id = input_model.meta.observation.program_number.lstrip("0")
     if isinstance(lamp_mode, str):
         lamp_mode = lamp_mode.lower()
     else:
         lamp_mode = 'none'
+
+    # MOS/MSA exposure requiring MSA metadata file
     if exp_type in ["nrs_msaspec", "nrs_autoflat"] or ((exp_type in ["nrs_lamp", "nrs_autowave"]) and
                                                        (lamp_mode == "msaspec")):
-        msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
-            input_model, reference_files)
+        prog_id = input_model.meta.observation.program_number.lstrip("0")
+        msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(input_model, reference_files)
         slits = get_open_msa_slits(prog_id, msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
+
+    # Fixed slits exposure (non-TSO)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model, slit_y_range)
+
+    # Bright object (TSO) exposure in S1600A1 fixed slit
     elif exp_type == "nrs_brightobj":
         slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 1)]
+
+    # Lamp exposure using fixed slits
     elif exp_type in ["nrs_lamp", "nrs_autowave"]:
         if lamp_mode in ['fixedslit', 'brightobj']:
             slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
+
     if reference_files is not None and slits:
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
