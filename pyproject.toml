@@ -144,7 +144,7 @@ requires = [
     "setuptools>=61.2",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "oldest-supported-numpy",
+    "numpy>=2.0.0rc2",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -229,7 +229,8 @@ results_root = "jwst-pipeline-results"
 text_file_format = "rst"
 doctest_plus = "enabled"
 doctest_rst = "enabled"
-addopts = ["-p no:legacypath",
+addopts = [
+    "-p no:legacypath",
     "--show-capture=no",
     "--report-crds-context",
 ]
@@ -283,10 +284,12 @@ exclude = [
     ".eggs",
     "build",
 ]
-lint.ignore = [
+line-length = 130
+
+[tool.ruff.lint]
+ignore = [
     "E741",
 ]
-line-length = 130
 
 [tool.ruff.lint.per-file-ignores]
 "jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
