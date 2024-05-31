@@ -51,7 +51,6 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
     data = input_model.data
     ngroups = input_model.meta.exposure.ngroups
     nframes = input_model.meta.exposure.nframes
-    readpatt = input_model.meta.exposure.readpatt
 
     # Create the output model as a copy of the input
     output_model = input_model.copy()
@@ -71,15 +70,10 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
-    #print('\n ******** using read_pattern = ', readpatt)
-    #read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
-    #gdq_new, pdq_new, zframe = flag_saturated_pixels(
-    #    data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
-    #    n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe)
-    print('\n ******** using nframes = ', nframes)
+    read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
-        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe, nframes=nframes)
+        n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
@@ -127,6 +121,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     ngroups = data.shape[1]
     detector = input_model.meta.instrument.detector
     nframes = input_model.meta.exposure.nframes
+    read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
 
     # create a mask of the appropriate size
     irs2_mask = x_irs2.make_mask(input_model)
@@ -170,19 +165,24 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
                                         irs2_mask, detector)
             # check for saturation
             flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
-            if group == 2 and nframes > 1:
-                # Look for pixels for which SATURATION is set in group 3. If the count
-                # value in group 1 is less than 1/10 of the value that would be required
-                # to trigger SATURATION (i.e., it isn't obviously a very bright source),
-                # then also set the SATURATION flag for this pixel in group 2.
-                saturation_in_goup3 = np.where(flag_temp[:, 2, ...] == SATURATED, True, False)
-                if np.any(saturation_in_goup3):
-                    nints, nrows, ncols = np.shape(saturation_in_goup3)
-                    for ni in range(nints):
-                        satgp3mask = saturation_in_goup3[ni]
-                        gp1mask = np.where(sci_temp[ni, 0][satgp3mask] < ATOD_LIMIT/10., True, False)
-                        if np.any(gp1mask):
-                            flag_temp[ni, 1, ...] = np.where(gp1mask, SATURATED, flag_temp[ni, 1, ...])
+            if group == 2:
+                # Identify groups which we wouldn't expect to saturate by the third group,
+                # on the basis of the first group
+                mask = sci_temp[ints, 0, ...] / np.mean(read_pattern[0]) * read_pattern[2][-1] < sat_thresh
+
+                # Identify groups with suspiciously large values in the second group
+                mask &= sci_temp[ints, 1, ...] > sat_thresh / len(read_pattern[1])
+
+                # Identify groups that are saturated in the third group
+                dq_temp = x_irs2.from_irs2(groupdq[ints, 2, :, :], irs2_mask, detector)
+                gp3mask = np.where(dq_temp & SATURATED, True, False)
+                mask &= gp3mask
+
+                # Flag the 2nd group for the pixels passing that gauntlet
+                dq_temp = x_irs2.from_irs2(groupdq[ints, 1, :, :], irs2_mask, detector)
+                dq_temp[mask] |= SATURATED
+                x_irs2.to_irs2(flagarray, dq_temp, irs2_mask, detector)
+
             # check for A/D floor
             flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR | DONOTUSE, 0)
 

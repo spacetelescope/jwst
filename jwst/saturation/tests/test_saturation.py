@@ -433,6 +433,7 @@ def setup_miri_cube():
         data_model.meta.subarray.xsize = ncols
         data_model.meta.subarray.ystart = ystart
         data_model.meta.subarray.ysize = nrows
+        data_model.meta.exposure.ngroups = ngroups
         data_model.meta.exposure.nframes = 3
 
         # create a saturation model for the saturation step
@@ -480,6 +481,7 @@ def setup_nrs_irs2_cube():
         data_model.meta.exposure.nrs_reference = 4
         data_model.meta.exposure.readpatt = 'NRSIRS2RAPID'
         data_model.meta.exposure.nframes = 3
+        data_model.meta.exposure.ngroups = 5
 
         # create a saturation model for the saturation step
         saturation_model = SaturationModel((2048, 2048))
