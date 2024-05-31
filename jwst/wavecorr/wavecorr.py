@@ -96,7 +96,7 @@ def do_correction(input_model, wavecorr_file):
                         completed = apply_zero_point_correction(slit, wavecorr_file)
                         if completed:
                             output_model.meta.cal_step.wavecorr = 'COMPLETE'
-                        else:
+                        else: # pragma: no cover
                             log.warning(f'Corrections are not invertible for slit {slit.name}')
                             log.warning('Skipping wavecorr correction')
                             output_model.meta.cal_step.wavecorr = 'SKIPPED'
@@ -110,7 +110,7 @@ def do_correction(input_model, wavecorr_file):
                     completed = apply_zero_point_correction(slit, wavecorr_file)
                     if completed:
                         output_model.meta.cal_step.wavecorr = 'COMPLETE'
-                    else:
+                    else: # pragma: no cover
                         log.warning(f'Corrections are not invertible for slit {slit.name}')
                         log.warning('Skipping wavecorr correction')
                         output_model.meta.cal_step.wavecorr = 'SKIPPED'
@@ -155,8 +155,8 @@ def apply_zero_point_correction(slit, reffile):
                                                               reffile,
                                                               source_xpos,
                                                               aperture_name)
-    
-    if wave2wavecorr is None: # Should not occur for real data
+    # wave2wavecorr should not be None for real data
+    if wave2wavecorr is None: # pragma: no cover
         completed = False
         return completed
     else:        
