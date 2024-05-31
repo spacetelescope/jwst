@@ -70,6 +70,7 @@ def nirspec_rate():
         'ysize': 416,
         'ystart': 529}
     im.meta.observation = {
+        'program_number': '1234',
         'date': '2016-09-05',
         'time': '8:59:37'}
     im.meta.exposure = {

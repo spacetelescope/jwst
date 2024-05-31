@@ -2,7 +2,7 @@
 
 MSA Metadata File: ``msa``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-While not containing any actual science data, the NIRSpec MSA metadata file is nonetheless
+While it doesn't contain any actual science data, the NIRSpec MSA metadata file is nonetheless
 a crucial component of calibration processing for NIRSpec MOS exposures.
 It contains all the slitlet, shutter, and source configuration information that's needed
 by the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline to process a MOS exposure.
@@ -128,6 +128,8 @@ where the values of `MSAMETID` and `PATT_NUM` in the science exposure match
 the values of `msa_metdata_id` and `dither_point_index`, respectively, are
 loaded.
 
+Slitlets with a catalog source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To better understand the ways in which these metadata are used, it's useful to
 reference a hypothetical example of data within a ``SHUTTER_INFO`` table.
 The table below shows the first 9 rows of a ``SHUTTER_INFO`` table for a MOS exposure
@@ -186,13 +188,46 @@ within each slitlet should be considered the "primary" shutter. This is especial
 important for slitlets that contain extended sources and hence the `source_id` and
 `background` entries may indicate that the source is present in multiple shutters.
 
-When a slitlet is found that has no shutters with a primary source (i.e. no shutters
-having `primary_source` = "Y"), it is classified as a background slitlet and assigned
-a source ID value that's greater than the maximum source ID assigned to other slitlets
-(because such slitlets all have a source ID of zero in the MSA metadata coming from
-the ground system).
-These background slitlets can then be used in :ref:`master background <master_background_step>`
-subtraction.
+.. _msa_background_and_virtual_slits:
+
+Slitlets without a catalog source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is possible for users to define slitlets that do not contain a source that's defined
+in the MPT catalog when constructing an MSA configuration for an observation. These
+kinds of slitlets can be used for two purposes. First, slitlets in which all of the
+constituent shutters only contain background can be used to perform "master background"
+subtraction during the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline processing
+(see :ref:`NIRSpec Master Background <nirspec_modes>` for more details).
+Second, slitlets made up of open shutters that may contain signal from some uncataloged
+source in the field can also be created. These are referred to as "virtual" slitlets.
+
+Background and virtual slitlets have unique metadata in the shutter information table.
+The primary defining piece of data is their assigned `source_id` value, because these
+slitlets don't have a corresponding source listed in the source information table.
+During creation with the MPT, all background slitlets are given a `source_id` of zero.
+Virtual slitlets, on the other hand, are assigned *negative* `source_id` values, starting
+with -1 and counting downwards from there (i.e. each virtual slit has a unique negative
+`source_id` value).
+
+During the parsing of shutter information described in the previous section, when a
+slitlet is found that has no shutters with a primary source (i.e. no shutters
+having `primary_source` = "Y"), it is recognized as a background slitlet. In order to
+be able to track multiple background slitlets through the remaining processing, they
+are reassigned a new `source_id` value equal to their `slitlet_id`. Virtual slitlets,
+meanwhile, retain their unique negative `source_id` values throughout processing.
+
+During Stage 3 processing with the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline,
+unique source-based product file names will be created that distinguish data from the
+three different kinds of slitlets: source, background, and virtual. As described in
+:ref:`source-based file names <src_file_names>`, the `SourceID` field of Stage 3
+file names consists of the 9-digit `source_id` number assigned to each MOS slitlet,
+preceded by one of the three characters "s", "b", or "v", which identifies whether
+the data are from a source, background, or virtual slitlet, respectively. Note that,
+as described above, the `source_id` number used here for background slitlets is a
+copy of their `slitlet_id` number. For example, a Stage 3 file name for data taken
+from a virtual slitlet with `source_id` = -42 will look like:
+
+  jw12345-o066_v000000042_nirspec_f170lp_g235m_x1d.fits
 
 
 The SOURCE_INFO Metadata
