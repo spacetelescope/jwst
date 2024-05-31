@@ -1034,7 +1034,7 @@ class Constraint_Target(Constraint):
                 ),
                 SimpleConstraint(
                     name='target',
-                    sources=lambda item: '999'
+                    sources=lambda item: '000'
                 )]),
             DMSAttrConstraint(
                 name='target',
