@@ -1,18 +1,20 @@
-from copy import deepcopy
 import json
 import os
+from copy import deepcopy
 
 import asdf
-from astropy.modeling.models import Shift
-from astropy.table import Table
 import numpy as np
 import pytest
+from astropy.wcs import WCS
+from astropy.modeling.models import Shift
+from astropy.table import Table
+from gwcs.wcstools import grid_from_bounding_box
+from stdatamodels.jwst.datamodels import ImageModel
 
+from jwst.datamodels import ModelContainer
 from jwst.tweakreg import tweakreg_step
 from jwst.tweakreg import tweakreg_catalog
 from jwst.tweakreg.utils import _wcsinfo_from_wcs_transform
-from stdatamodels.jwst.datamodels import ImageModel
-from jwst.datamodels import ModelContainer
 
 
 BKG_LEVEL = 0.001
@@ -340,3 +342,59 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
 
     with pytest.raises(ValueError, match="done testing"):
         step(str(asn_path))
+
+@pytest.mark.parametrize("with_shift", [True, False])
+def test_sip_approx(example_input, with_shift):
+    """
+    Test the output FITS WCS.
+    """
+    if with_shift:
+        # shift 9 pixels so that the sources in one of the 2 images
+        # appear at different locations (resulting in a correct wcs update)
+        example_input[1].data[:-9] = example_input[1].data[9:]
+        example_input[1].data[-9:] = BKG_LEVEL
+
+    # assign images to different groups (so they are aligned to each other)
+    example_input[0].meta.group_id = 'a'
+    example_input[1].meta.group_id = 'b'
+
+    # call th step with override SIP approximation parameters
+    step = tweakreg_step.TweakRegStep()
+    step.sip_approx = True
+    step.sip_max_pix_error = 0.1
+    step.sip_degree = 3
+    step.sip_max_inv_pix_error = 0.1
+    step.sip_inv_degree = 3
+    step.sip_npoints = 12
+
+    # run the step on the example input modified above
+    result = step(example_input)
+
+    # output wcs differs by a small amount due to the shift above:
+    # project one point through each wcs and compare the difference
+    abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
+    if with_shift:
+        assert abs_delta > 1E-5
+    else:
+        assert abs_delta < 1E-12
+
+    # the first wcs is identical to the input and
+    # does not have SIP approximation keywords --
+    # they are normally set by assign_wcs
+    assert np.allclose(result[0].meta.wcs(0, 0)[0], example_input[0].meta.wcs(0, 0)[0])
+    for key in ['ap_order', 'bp_order']:
+        assert key not in result[0].meta.wcsinfo.instance
+
+    # for the second, SIP approximation should be present
+    for key in ['ap_order', 'bp_order']:
+        assert result[1].meta.wcsinfo.instance[key] == 3
+
+    # evaluate fits wcs and gwcs for the approximation, make sure they agree
+    wcs_info = result[1].meta.wcsinfo.instance
+    grid = grid_from_bounding_box(result[1].meta.wcs.bounding_box)
+    gwcs_ra, gwcs_dec = result[1].meta.wcs(*grid)
+    fits_wcs = WCS(wcs_info)
+    fitswcs_res = fits_wcs.pixel_to_world(*grid)
+
+    assert np.allclose(fitswcs_res.ra.deg, gwcs_ra)
+    assert np.allclose(fitswcs_res.dec.deg, gwcs_dec)
