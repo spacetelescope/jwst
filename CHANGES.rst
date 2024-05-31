@@ -65,6 +65,8 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
+- Fix error in application of aperture correction to variance arrays. [#8530]
+
 extract_2d
 ----------
 
