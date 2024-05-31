@@ -154,8 +154,8 @@ class ApCorrBase(abc.ABC):
 
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = {'flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
-                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat'}
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
+                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for row in spec_table:
             correction = self.apcorr_func(row['npixels'], row['wavelength'])
@@ -237,8 +237,8 @@ class ApCorrPhase(ApCorrBase):
 
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = {'flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
-                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat'}
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
+                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for row in spec_table:
             try:
@@ -298,8 +298,8 @@ class ApCorrRadial(ApCorrBase):
 
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = {'flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
-                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat'}
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
+                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for i, row in enumerate(spec_table):
             correction = self.apcorr_correction[i]
