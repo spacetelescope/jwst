@@ -62,6 +62,9 @@ extract_1d
 
 - Add ``ifu_covar_scale`` parameter to help correct for IFU cube covariance. [#8457]
 
+- Add propagation of uncertainty when annular backgrounds are subtracted
+  from source spectra during IFU spectral extraction. [#8515]
+
 extract_2d
 ----------
 
@@ -101,6 +104,10 @@ outlier_detection
   the _i2d files not being saved in the specified output directory. [#8464]
 
 - Added tests for changes made in #8464. [#8481]
+
+- Added the option to use a rolling median instead of a simple median
+  to detect outliers in TSO data, with user-defined
+  rolling window width via the ``rolling_window_width`` parameter. [#8473]
 
 photom
 ------
@@ -164,6 +171,10 @@ resample_spec
 - Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
 
 - Change `fillval` parameter default from INDEF to NaN [#8488]
+
+- Fix a bug resulting in large WCS errors in the resampled image's WCS
+  when the slit was closely aligned with the RA direction
+  sky. [#8511]
 
 residual_fringe
 ---------------
