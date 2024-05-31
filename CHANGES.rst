@@ -68,7 +68,7 @@ extract_1d
 - Fix error in application of aperture correction to variance arrays. [#8530]
 
 - Add propagation of background uncertainty when background is subtracted from 
-  source spectra during non-IFU spectral extraction.
+  source spectra during non-IFU spectral extraction. [#8531]
 
 extract_2d
 ----------
