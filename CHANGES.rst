@@ -79,6 +79,9 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
+- Add propagation of background uncertainty when background is subtracted from 
+  source spectra during non-IFU spectral extraction. [#8531]
+
 extract_2d
 ----------
 
