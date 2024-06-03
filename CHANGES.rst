@@ -22,7 +22,7 @@ assign_wcs
 
 - Updated the routines that load NIRSpec MOS slit and source data from the MSA meta
   data file to properly handle background and virtual slits, and assign appropriate
-  meta data to them for use downstream. [#8442]
+  meta data to them for use downstream. [#8442, #8533]
 
 associations
 ------------
