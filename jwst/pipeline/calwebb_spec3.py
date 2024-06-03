@@ -2,7 +2,6 @@
 from collections import defaultdict
 from functools import wraps
 import os.path as op
-import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -182,54 +181,33 @@ class Spec3Pipeline(Pipeline):
                 for name, model in multislit_to_container(source_models).items()
             ]
 
-            # Check for negative and large source_id values
-            if len(sources) > 99999:
-                self.log.critical("Data contain more than 100,000 sources;"
-                                  "filename does not support 6 digit source ids.")
-                raise Exception
-
-            available_src_ids = set(np.arange(99999) + 1)
-            used_src_ids = set()
-            for src in sources:
-                src_id, model = src
-                src_id = int(src_id)
-                used_src_ids.add(src_id)
-                if 0 < src_id <= 99999:
-                    available_src_ids.remove(src_id)
-
-            hotfixed_sources = []
-            # now find and reset bad source_id values
-            for src in sources:
-                src_id, model = src
-                src_id = int(src_id)
-                # Replace ids that aren't positive 5-digit integers
-                if src_id < 0 or src_id > 99999:
-                    src_id_new = available_src_ids.pop()
-                    self.log.info(f"Source ID {src_id} falls outside allowed range.")
-                    self.log.info(f"Reassigning {src_id} to {str(src_id_new).zfill(5)}.")
-                    # Replace source_id for each model in the SourceModelContainers
-                    for contained_model in model:
-                        contained_model.source_id = src_id_new
-                    src_id = src_id_new
-                hotfixed_sources.append((str(src_id), model))
-
-            sources = hotfixed_sources
-
         # Process each source
         for source in sources:
 
             # If each source is a SourceModelContainer,
-            # the output name needs to be updated with the source ID, and potentially
-            # also the slit name (for NIRSpec fixed-slit only).
+            # the output name needs to be updated based on the source ID,
+            # and potentially also the slit name (for NIRSpec fixed-slit only).
             if isinstance(source, tuple):
                 source_id, result = source
+                # NIRSpec fixed-slit data
                 if exptype == "NRS_FIXEDSLIT":
+                    # Output file name is constructed using the source_id and the slit name
                     slit_name = self._create_nrsfs_slit_name(result)
-                    self.output_file = format_product(
-                        output_file, source_id=source_id.lower(), slit_name=slit_name)
+                    srcid = f's{source_id:>09s}'
+                    self.output_file = format_product(output_file, source_id=srcid, slit_name=slit_name)
+
+                # NIRSpec MOS/MSA data
+                elif exptype == "NRS_MSASPEC":
+                    # Construct the specially formatted source_id to use in the output file
+                    # name that separates source, background, and virtual slits
+                    srcid = self._create_nrsmos_source_id(result)
+                    self.output_file = format_product(output_file, source_id=srcid)
+                    self.log.debug(f"output_file = {self.output_file}")
+
                 else:
-                    self.output_file = format_product(
-                        output_file, source_id=source_id.lower())
+                    # All other types just use the source_id directly in the file name
+                    srcid = f's{source_id:>09s}'
+                    self.output_file = format_product(output_file, source_id=srcid)
             else:
                 result = source
 
@@ -338,6 +316,35 @@ class Spec3Pipeline(Pipeline):
 
         return slit_name
 
+    def _create_nrsmos_source_id(self, source_models):
+        """Create the complete source_id product field for NIRSpec MOS products.
+
+        The source_id value gets a "s", "b", or "v" character prepended
+        to uniquely identify source, background, and virtual slits.
+        """
+
+        # Get the original source name and ID from the input models
+        source_name = source_models[0].source_name
+        source_id = source_models[0].source_id
+
+        # MOS background sources have "BKG" in the source name
+        if "BKG" in source_name:
+            # prepend "b" to the source_id number and format to 9 chars
+            srcid = f'b{str(source_id):>09s}'
+            self.log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
+
+        # MOS virtual sources have a negative source_id value
+        elif source_id < 0:
+            # prepend "v" to the source_id number and remove the leading negative sign
+            srcid = f'v{str(source_id)[1:]:>09s}'
+            self.log.debug(f"Source {source_name} is a MOS virtual slitlet: ID={srcid}")
+
+        # Regular MOS sources
+        else:
+            # prepend "s" to the source_id number and format to 9 chars
+            srcid = f's{str(source_id):>09s}'
+
+        return srcid
 
 # #########
 # Utilities

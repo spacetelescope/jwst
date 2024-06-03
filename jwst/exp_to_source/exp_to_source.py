@@ -37,8 +37,15 @@ def exp_to_source(inputs):
         log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
 
         for slit in exposure.slits:
-            log.debug(f'Copying source {slit.source_id}')
-            result_slit = result[str(slit.source_id)]
+            if slit.source_name is None:
+                # All MultiSlit data other than NIRSpec MOS get sorted by
+                # source_id (source_name is not populated)
+                key = slit.source_id
+            else:
+                # NIRSpec MOS slits get sorted by source_name
+                key = slit.source_name
+            log.debug(f'Copying source {key}')
+            result_slit = result[str(key)]
             result_slit.exposures.append(slit)
 
             # store values for later use (after merge_tree)

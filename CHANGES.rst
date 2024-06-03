@@ -20,6 +20,10 @@ assign_wcs
 - Move the assigned source position for dedicated NIRSpec MOS background slits from the
   lower left corner of the slit to the middle of the slit. [#8461]
 
+- Updated the routines that load NIRSpec MOS slit and source data from the MSA meta
+  data file to properly handle background and virtual slits, and assign appropriate
+  meta data to them for use downstream. [#8442]
+
 associations
 ------------
 
@@ -28,6 +32,9 @@ associations
 
 - Match NIRSpec imprint observations to science exposures on mosaic tile location
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
+
+- Updated Level3 rules for new handling of NIRSpec MOS source_id formatting when
+  constructing output file names. [#8442]
 
 dark_current
 ------------
@@ -44,6 +51,13 @@ documentation
 - Added documentation for multiprocessing. [#8408]
 
 - Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
+
+exp_to_source
+-------------
+
+- Modified slit sorting to use `source_name` as the key, rather than `source_id`,
+  in order to support changes in `source_id` handling for NIRSpec MOS exposures
+  that contain background and virtual slits. [#8442]
 
 extract_1d
 ----------
@@ -103,6 +117,10 @@ outlier_detection
   finished, unless save_intermediate_results is True. This PR also addressed
   the _i2d files not being saved in the specified output directory. [#8464]
 
+- Removed the setting of `self.skip = True` when the step gets skipped (due to
+  inappropriate inputs), so that the step still executes when called again
+  while processing a list of multiple sources. [#8442]
+
 - Added tests for changes made in #8464. [#8481]
 
 - Added the option to use a rolling median instead of a simple median
@@ -123,6 +141,11 @@ pipeline
 
 - Removed unused ``scale_detection`` argument from ``calwebb_tso3``
   pipeline. [#8438]
+
+- Updated the ``calwebb_spec3`` pipeline handling of NIRSpec MOS inputs, to
+  comply with the new scheme for source ("s"), background ("b"), and
+  virtual ("v") slits and the construction of output file names for each
+  type. [#8442]
 
 pixel_replace
 -------------
@@ -165,6 +188,10 @@ resample_spec
 - Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
 
 - Change `fillval` parameter default from INDEF to NaN [#8488]
+
+- Fix a bug resulting in large WCS errors in the resampled image's WCS
+  when the slit was closely aligned with the RA direction
+  sky. [#8511]
 
 residual_fringe
 ---------------

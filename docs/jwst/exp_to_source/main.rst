@@ -83,8 +83,8 @@ on the meaning of each field in the file names.
 The FITS file naming scheme for the source-based "cal" products follows
 the standard Stage 3 syntax, such as::
 
- jw10006-o010_s00061_nirspec_f170lp-g235m_cal.fits
+ jw10006-o010_s000000061_nirspec_f170lp-g235m_cal.fits
 
-where "s00061" in this example is the source ID.
+where "s000000061" in this example is the source ID.
 See :ref:`source-based file names <src_file_names>` for more details
 on the meaning of each field in this type of file name.
