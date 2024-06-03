@@ -109,11 +109,15 @@ def do_correction(input_model, wavecorr_file):
                 if _is_point_source(slit, exp_type):
                     completed = apply_zero_point_correction(slit, wavecorr_file)
                     if completed:
-                        output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                        slit.meta.cal_step.wavecorr = 'COMPLETE'
                     else: # pragma: no cover
                         log.warning(f'Corrections are not invertible for slit {slit.name}')
                         log.warning('Skipping wavecorr correction')
-                        output_model.meta.cal_step.wavecorr = 'SKIPPED'
+                        slit.meta.cal_step.wavecorr = 'SKIPPED'
+                else:
+                    slit.meta.cal_step.wavecorr = 'SKIPPED'
+                    
+            output_model.meta.cal_step.wavecorr = 'COMPLETE'
 
     return output_model
 

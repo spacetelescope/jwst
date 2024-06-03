@@ -167,6 +167,45 @@ def test_skipped():
     transform = wavecorr.calculate_wavelength_correction_transform(
         lam, disp, reffile, source_xpos, aperture_name)
     assert transform is None
+    
+    
+def test_mos_slit_status():
+    """ Test conditions that are skipped for mos slitlets."""
+
+    hdul = create_nirspec_mos_file()
+    msa_meta = os.path.join(jwst.__path__[0], *['assign_wcs', 'tests', 'data', 'msa_configuration.fits'])
+    hdul[0].header['MSAMETFL'] = msa_meta
+    hdul[0].header['MSAMETID'] = 12
+    im = datamodels.ImageModel(hdul)
+    im_wcs = AssignWcsStep.call(im)
+    im_ex2d = Extract2dStep.call(im_wcs)
+    bbox = ((-.5, 1432.5), (-.5, 37.5))
+    im_ex2d.slits[0].meta.wcs.bounding_box = bbox
+    x, y = wcstools.grid_from_bounding_box(bbox)
+    ra, dec, lam_before = im_ex2d.slits[0].meta.wcs(x, y)
+    im_ex2d.slits[0].wavelength = lam_before
+    im_src = SourceTypeStep.call(im_ex2d)
+
+    # test the mock msa source as an extended source
+    im_src.slits[0].source_type = 'EXTENDED'
+    im_wave = WavecorrStep.call(im_src)
+    
+    # check that the step is recorded as completed
+    assert im_wave.meta.cal_step.wavecorr == 'COMPLETE'
+    
+    # check that the step is listed as skipped for extended mos sources
+    assert im_wave.slits[0].meta.cal_step.wavecorr == 'SKIPPED'
+    
+    # test the mock msa source as a point source
+    im_src.slits[0].source_type = 'POINT'
+    im_wave = WavecorrStep.call(im_src)
+    
+    # check that the step is recorded as completed
+    assert im_wave.meta.cal_step.wavecorr == 'COMPLETE'
+    
+    # check that the step is listed as complete for mos point sources
+    assert im_wave.slits[0].meta.cal_step.wavecorr == 'COMPLETE'
+
 
 def test_wavecorr_fs():
     hdul = create_nirspec_fs_file(grating="PRISM", filter="CLEAR")
