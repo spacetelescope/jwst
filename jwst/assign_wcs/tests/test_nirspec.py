@@ -360,31 +360,26 @@ def test_msa_fs_configuration():
     """
     Test the get_open_msa_slits function with FS and MSA slits defined.
     """
+    prog_id = '1234'
     msa_meta_id = 12
     msaconfl = get_file_path('msa_fs_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
-                                              slit_y_range=[-.5, .5])
+    slitlet_info = nirspec.get_open_msa_slits(
+        prog_id, msaconfl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
 
     # MSA slit: reads in as normal
     ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
                              0.13, -0.31716078999999997, -0.18092266)
-    _compare_slits(slitlet_info[-1], ref_slit)
+    _compare_slits(slitlet_info[0], ref_slit)
 
     # FS primary: S200A1, shutter id 0, quadrant 5
     ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x', '95065_3', '3',
                              1.0, -0.161, -0.229, 53.139904, -27.805002)
-    _compare_slits(slitlet_info[0], ref_slit)
-
-    # FS background: S200A2, shutter id 1, quadrant 5
-    ref_slit = trmodels.Slit('S200A2', 1, 1, 0, 0, -0.5, 0.5, 5, 8, 'x',
-                             'background_S200A2', 'bkg_S200A2',
-                             0.0, 0.0, 0.0, 0.0, 0.0)
     _compare_slits(slitlet_info[1], ref_slit)
 
-    # FS S200B1 is in the MSA file but neither background nor primary:
-    # it should not be defined.  The rest should be there.
-    fs_slits_defined = ['S200A1', 'S200A2', 'S400A1', 'S1600A1']
+    # The remaining fixed slits may be in the MSA file but not primary:
+    # they should not be defined.
+    fs_slits_defined = ['S200A1']
     n_fixed = 0
     for slit in slitlet_info:
         if slit.quadrant == 5:
@@ -397,7 +392,7 @@ def test_msa_fs_configuration_unsupported(tmp_path):
     """
     Test the get_open_msa_slits function with unsupported FS defined.
     """
-    # modify an existing MSA file to add a bad ros
+    # modify an existing MSA file to add a bad row
     msaconfl = get_file_path('msa_fs_configuration.fits')
     bad_confl = tmp_path / 'bad_msa_fs_configuration.fits'
     shutil.copy(msaconfl, bad_confl)
@@ -409,11 +404,12 @@ def test_msa_fs_configuration_unsupported(tmp_path):
         msa_hdu_list[2].name = 'SHUTTER_INFO'
         msa_hdu_list.writeto(bad_confl, overwrite=True)
 
+    prog_id = '1234'
     msa_meta_id = 12
     dither_position = 1
     with pytest.raises(MSAFileError, match='unsupported fixed slit'):
-        nirspec.get_open_msa_slits(bad_confl, msa_meta_id, dither_position,
-                                   slit_y_range=[-.5, .5])
+        nirspec.get_open_msa_slits(
+            prog_id, bad_confl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
 
 
 

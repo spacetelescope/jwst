@@ -33,6 +33,7 @@ def create_nirspec_hdul(detector='NRS1', grating='G395M', filter_name='F290LP',
     phdu.header['DETECTOR'] = detector
     phdu.header['FILTER'] = filter_name
     phdu.header['GRATING'] = grating
+    phdu.header['PROGRAM'] = '01234'
     phdu.header['TIME-OBS'] = '8:59:37'
     phdu.header['DATE-OBS'] = '2023-01-05'
     phdu.header['EXP_TYPE'] = exptype
