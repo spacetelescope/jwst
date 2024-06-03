@@ -131,6 +131,8 @@ class AssignWcsStep(Step):
                 wfss_imaging_wcs(result, imaging_func, bbox=bbox,
                                  max_pix_error=self.sip_max_pix_error,
                                  degree=self.sip_degree,
+                                 max_inv_pix_error=self.sip_max_inv_pix_error,
+                                 inv_degree=self.sip_inv_degree,
                                  npoints=self.sip_npoints,
                                  )
             except (ValueError, RuntimeError) as e:
