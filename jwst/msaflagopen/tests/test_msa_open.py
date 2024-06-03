@@ -158,6 +158,7 @@ def test_msaflagopen_step():
         'msa_metadata_id': 12}
 
     im.meta.observation = {
+        'program_number': '1234',
         'date': '2016-09-05',
         'time': '8:59:37'}
 
