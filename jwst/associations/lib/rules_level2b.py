@@ -474,6 +474,24 @@ class Asn_Lv2SpecTSO(
                     )
                 ],
                 reduce=Constraint.notany
+            ),
+            # Don't allow NIRSpec invalid optical paths in TSO3
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value=('nrs_brightobj')
+                        ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nrsfss_valid_detector(item) == value,
+                            force_unique=False
+                        ),
+                    ]),
+                ],
+                reduce=Constraint.notany
             )
         ])
 
