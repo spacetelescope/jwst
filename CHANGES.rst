@@ -129,6 +129,12 @@ outlier_detection
   to detect outliers in TSO data, with user-defined
   rolling window width via the ``rolling_window_width`` parameter. [#8473]
 
+master_background
+-----------------
+
+- For MIRI_MRS, added code to make sure the background matches as good as
+  possible the science data. [#8535]
+
 photom
 ------
 
