@@ -94,7 +94,7 @@ flat_field
   DO_NOT_USE flag is set in the DQ array. [#8463]
 
 - Updated the flatfield code to use the new format of the ``wavecorr`` 
-wavelength zero-point corrections for point sources.  [#8376]
+  wavelength zero-point corrections for point sources.  [#8376]
 
 general
 -------
@@ -108,8 +108,8 @@ lib
 ---
 
 - Updated the ``wcs_utils.get_wavelength`` to use the new format
-ofthe ``wavecorr`` wavelength zero-point corrections for point 
-sources. [#8376]
+  of the ``wavecorr`` wavelength zero-point corrections for point 
+  sources. [#8376]
 
 outlier_detection
 -----------------
@@ -141,8 +141,8 @@ pathloss
 --------
 
 - Updated pathloss calculations for fixed slit mode to use the appropriate 
-wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
-zero-point corrections for point sources have been applied. [#8376]
+  wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
+  zero-point corrections for point sources have been applied. [#8376]
 
 photom
 ------
