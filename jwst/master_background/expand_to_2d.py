@@ -296,6 +296,8 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             background = correct_nrs_ifu_bkg(background)
 
     elif input.meta.instrument.name.upper() == "MIRI":
+        # 1. Interpolate the 1d master background vector to the wavelengths
+        # of the 2d science data
         shape = input.data.shape
         grid = np.indices(shape, dtype=np.float64)
         wl_array = input.meta.wcs(grid[1], grid[0])[2]
@@ -311,9 +313,51 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
                                                   dqflags.pixel['DO_NOT_USE'])
         bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
                                     left=0., right=0.)
-        background.data[:, :] = bkg_surf_bright.copy()
+
+        if input.meta.exposure.type == 'MIR_MRS':
+            # 2. Look for all input science pixels whose wavelengths are more
+            # than 0.1 microns away from the closest wavelength in the 1d
+            # master background vector, and set the 2d background for
+            # those pixels to zero.
+            flat_wl = wl_array.flatten()
+            idx2zero = []
+            for wl in flat_wl:
+                val, idx = find_nearest(tab_wavelength, wl)
+                if wl != -1.0 and np.abs(wl - val) > 0.1:
+                    idx2zero.append(idx)
+            if len(idx2zero) > 0:
+                flat_bkgd = bkg_surf_bright.flatten()
+                flat_bkgd[idx2zero] = 0.0
+                bkg_surf_bright = flat_bkgd.reshape(np.shape(bkg_surf_bright))
+
+        # 3. Place result in the background data array
+        background.data[:, :] = bkg_surf_bright
 
     else:
         raise RuntimeError(f'Exposure type {input.meta.exposure.type} is not supported.')
 
     return background
+
+
+def find_nearest(arr, value):
+    """This function gives the content and the index in the array of the number that is closest to
+    the value given.
+
+    Parameters
+    ----------
+    arr : 1-D numpy array
+        The array where to look for the value
+
+    value : float or integer
+        Value to look for in the given array
+
+    Returns
+    -------
+    arr[idx] : float
+        The array element closest to value
+
+    idx : int
+        The index of array element closest to value
+    """
+    idx = (np.abs(arr - value)).argmin()
+    return arr[idx], idx
