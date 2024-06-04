@@ -103,6 +103,13 @@ general
 
 - Increase minimum required scipy. [#8441]
 
+master_background_mos
+---------------------
+
+- Updated check for NIRSpec MOS background slits to use new naming convention:
+  ``slit.source_name`` now contains the string "BKG" instead of
+  "background". [#8533]
+
 outlier_detection
 -----------------
 
