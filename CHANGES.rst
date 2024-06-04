@@ -36,6 +36,8 @@ associations
 - Updated Level3 rules for new handling of NIRSpec MOS source_id formatting when
   constructing output file names. [#8442]
 
+- Create WFSS Pure-Parallel associations [#8528]
+
 dark_current
 ------------
 
