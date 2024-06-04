@@ -583,7 +583,7 @@ class Spec2Pipeline(Pipeline):
 
             # Run each step with an alternate suffix,
             # to avoid overwriting previous products if save_results=True
-            fs_steps = ['wavecorr', 'flat_field', 'pathloss', 'barshadow', 'photom']
+            fs_steps = ['wavecorr', 'flat_field', 'pathloss', 'photom']
             for step_name in fs_steps:
                 # Set suffix
                 step = getattr(self, step_name)

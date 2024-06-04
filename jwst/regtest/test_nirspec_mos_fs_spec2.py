@@ -37,7 +37,7 @@ def run_pipeline(rtdata_module):
 @pytest.mark.parametrize("suffix", [
     "assign_wcs", "msa_flagging", "extract_2d", "srctype",
     "master_background_mos", "wavecorr", "flat_field", "pathloss", "barshadow",
-    "wavecorr_fs", "flat_field_fs", "pathloss_fs", "barshadow_fs",
+    "wavecorr_fs", "flat_field_fs", "pathloss_fs",
     "cal", "s2d", "x1d"])
 def test_nirspec_mos_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 on a NIRSpec MOS/FS exposure."""
