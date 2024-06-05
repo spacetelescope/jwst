@@ -31,15 +31,35 @@ def test_dq():
     assert np.isclose(result_dq.spec[0].spec_table['FLUX'][BAD_PIX], spec2.spec_table['FLUX'][BAD_PIX])
 
 
-def create_spec_model(npoints=10, flux=1e-9, wave_range=(11, 13)):
+def test_err():
+    """Test error propagation."""
+    spec1 = create_spec_model(flux=1.0, error=0.1)
+    spec2 = create_spec_model(flux=1.0, error=0.2)
+    ms = datamodels.MultiSpecModel()
+    ms.meta.exposure.exposure_time = 1
+    ms.spec.append(spec1)
+    ms.spec.append(spec2)
+
+    result = Combine1dStep.call(ms)
+
+    expected_error = np.sqrt(0.1**2 + 0.2**2) / 2
+    assert np.allclose(result.spec[0].spec_table['FLUX'], 1.0)
+    assert np.allclose(result.spec[0].spec_table['ERROR'], expected_error)
+    assert np.allclose(result.spec[0].spec_table['SURF_BRIGHT'], 1.0)
+    assert np.allclose(result.spec[0].spec_table['SB_ERROR'], expected_error)
+
+
+def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
     """Create a SpecModel"""
 
-    flux = np.full(npoints, flux)
     wavelength = np.arange(*wave_range, step=(wave_range[1] - wave_range[0]) / npoints)
-    error = np.zeros(npoints)
-    surf_bright = np.zeros(npoints)
-    sb_error = np.zeros(npoints)
-    var_dummy = error.copy()
+    flux = np.full(npoints, flux)
+    error = np.full(npoints, error)
+
+    surf_bright = np.full(npoints, flux)
+    sb_error = np.full(npoints, error)
+
+    var = np.zeros(npoints)
     dq = np.zeros(npoints)
     background = np.zeros(npoints)
     berror = np.zeros(npoints)
@@ -50,9 +70,9 @@ def create_spec_model(npoints=10, flux=1e-9, wave_range=(11, 13)):
     otab = np.array(
         list(
             zip(
-                wavelength, flux, error, var_dummy, var_dummy, var_dummy,
-                surf_bright, sb_error, var_dummy, var_dummy, var_dummy,
-                dq, background, berror, var_dummy, var_dummy, var_dummy,
+                wavelength, flux, error, var, var, var,
+                surf_bright, sb_error, var, var, var,
+                dq, background, berror, var, var, var,
                 npixels
             ),
         ), dtype=spec_dtype
