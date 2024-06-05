@@ -22,7 +22,7 @@ assign_wcs
 
 - Updated the routines that load NIRSpec MOS slit and source data from the MSA meta
   data file to properly handle background and virtual slits, and assign appropriate
-  meta data to them for use downstream. [#8442]
+  meta data to them for use downstream. [#8442, #8533]
 
 associations
 ------------
@@ -35,6 +35,16 @@ associations
 
 - Updated Level3 rules for new handling of NIRSpec MOS source_id formatting when
   constructing output file names. [#8442]
+
+- Added default values for new non-header keywords (``MOSTILNO`` and ``DITHPTIN``)
+  to the default values in the ``asn_make_pool`` script. [#8508]
+
+- Create WFSS Pure-Parallel associations [#8528]
+
+combine_1d
+----------
+
+- Fix weights for combining errors from 1D spectra. [#8520]
 
 dark_current
 ------------
@@ -103,6 +113,13 @@ general
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 - Increase minimum required scipy. [#8441]
+
+master_background_mos
+---------------------
+
+- Updated check for NIRSpec MOS background slits to use new naming convention:
+  ``slit.source_name`` now contains the string "BKG" instead of
+  "background". [#8533]
 
 outlier_detection
 -----------------
@@ -217,6 +234,11 @@ tweakreg
 
 - Change code default to use IRAF StarFinder instead of
   DAO StarFinder [#8487]
+
+- Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
+  that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
+  message and skip ``tweakreg`` step when this condition is not satisfied and
+  source confusion is possible during catalog matching. [#8476]
 
 wfss_contam
 -----------

@@ -201,6 +201,25 @@ def test_tweakreg_step(example_input, with_shift):
         assert abs_delta < 1E-12
 
 
+@pytest.mark.parametrize("alignment_type", ['', 'abs_'])
+def test_src_confusion_pars(example_input, alignment_type):
+    # assign images to different groups (so they are aligned to each other)
+    example_input[0].meta.group_id = 'a'
+    example_input[1].meta.group_id = 'b'
+
+    # make the step with arguments that may cause source confusion in match
+    pars = {
+        f"{alignment_type}separation": 1.0,
+        f"{alignment_type}tolerance": 1.0,
+    }
+    step = tweakreg_step.TweakRegStep(**pars)
+    result = step(example_input)
+
+    # check that step was skipped
+    for model in result:
+        assert model.meta.cal_step.tweakreg == 'SKIPPED'
+
+
 @pytest.fixture()
 def custom_catalog_path(tmp_path):
     fn = tmp_path / "custom_catalog.ecsv"
@@ -286,7 +305,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
             elif catfile == "invalid_catfile":
                 pass
 
-    # figure out how many sources to expect for the model in group 'a' 
+    # figure out how many sources to expect for the model in group 'a'
     n_custom_sources = N_EXAMPLE_SOURCES
     if custom:
         if catfile == "valid_catfile":
