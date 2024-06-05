@@ -39,7 +39,9 @@ associations
 - Added default values for new non-header keywords (``MOSTILNO`` and ``DITHPTIN``)
   to the default values in the ``asn_make_pool`` script. [#8508]
 
-- Create WFSS Pure-Parallel associations [#8528]
+- Create WFSS Pure-Parallel associations. [#8528]
+
+- Add NIRSpec optical path constraints for TSO associations. [#8537]
 
 combine_1d
 ----------
