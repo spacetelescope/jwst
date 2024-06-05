@@ -191,7 +191,7 @@ class MasterBackgroundMosStep(Pipeline):
         # count how many are background vs source.
         num_bkg = num_src = 0
         for slit in data.slits:
-            if "background" in slit.source_name:
+            if nirspec_utils.is_background_msa_slit(slit):
                 num_bkg += 1
             else:
                 num_src += 1

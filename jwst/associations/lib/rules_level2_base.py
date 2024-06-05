@@ -1021,14 +1021,27 @@ class Constraint_Spectral_Science(Constraint):
         )
 
 
-class Constraint_Target(DMSAttrConstraint):
+class Constraint_Target(Constraint):
     """Select on target id"""
 
     def __init__(self):
-        super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
-        )
+        constraints = [
+            Constraint([
+                DMSAttrConstraint(
+                    name='acdirect',
+                    sources=['asn_candidate'],
+                    value=r"\[\('c\d{4}', 'direct_image'\)\]"
+                ),
+                SimpleConstraint(
+                    name='target',
+                    sources=lambda item: '000'
+                )]),
+            DMSAttrConstraint(
+                name='target',
+                sources=['targetid'],
+            )
+        ]
+        super(Constraint_Target, self).__init__(constraints, reduce=Constraint.any)
 
 
 # ---------------------------------------------
@@ -1148,32 +1161,6 @@ class AsnMixin_Lv2WFSS:
             )
         science = sciences[0]
 
-        # Get the exposure sequence for the science. Then, find
-        # the direct image greater than but closest to this value.
-        closest = directs[0]  # If the search fails, just use the first.
-        try:
-            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
-        except KeyError:
-            # If exposure sequence cannot be determined, just fall through.
-            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
-        else:
-            min_diff = 9999         # Initialize to an invalid value.
-            for direct in directs:
-                try:
-                    direct_expspcin = int(getattr_from_list(
-                        direct.item, ['expspcin'], _EMPTY
-                    )[1])
-                except KeyError:
-                    # Try the next one.
-                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
-                    continue
-                diff = direct_expspcin - expspcin
-                if diff < min_diff and diff > 0:
-                    min_diff = diff
-                    closest = direct
-
-        # Note the selected direct image. Used in `Asn_Lv2WFSS._get_opt_element`
-        self.direct_image = closest
 
         # Remove all direct images from the association.
         members = self.current_product['members']
@@ -1188,6 +1175,7 @@ class AsnMixin_Lv2WFSS:
         ))
 
         # Add the Level3 catalog, direct image, and segmentation map members
+        self.direct_image = self.find_closest_direct(science, directs)
         lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
         members.append(
             Member({
@@ -1238,6 +1226,49 @@ class AsnMixin_Lv2WFSS:
             exp_type = 'direct_image'
 
         return exp_type
+
+    @staticmethod
+    def find_closest_direct(science, directs):
+        """Find the direct image that is closest to the science
+
+        Closeness is defined as number difference in the exposure sequence number,
+        as defined in the column EXPSPCIN.
+
+        Parameters
+        ----------
+        science : dict
+            The science member to compare against
+
+        directs : [dict[,...]]
+            The available direct members
+
+        Returns
+        -------
+        closest : dict
+            The direct image that is the "closest"
+        """
+        closest = directs[0]  # If the search fails, just use the first.
+        try:
+            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
+        except KeyError:
+            # If exposure sequence cannot be determined, just fall through.
+            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
+        else:
+            min_diff = 9999         # Initialize to an invalid value.
+            for direct in directs:
+                try:
+                    direct_expspcin = int(getattr_from_list(
+                        direct.item, ['expspcin'], _EMPTY
+                    )[1])
+                except KeyError:
+                    # Try the next one.
+                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
+                    continue
+                diff = direct_expspcin - expspcin
+                if diff < min_diff and diff > 0:
+                    min_diff = diff
+                    closest = direct
+        return closest
 
     def _get_opt_element(self):
         """Get string representation of the optical elements
