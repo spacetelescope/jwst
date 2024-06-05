@@ -217,6 +217,11 @@ tweakreg
 - Change code default to use IRAF StarFinder instead of
   DAO StarFinder [#8487]
 
+- Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
+  that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
+  message and skip ``tweakreg`` step when this condition is not satisfied and
+  source confusion is possible during catalog matching. [#8476]
+
 wfss_contam
 -----------
 
