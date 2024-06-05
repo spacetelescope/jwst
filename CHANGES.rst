@@ -22,7 +22,7 @@ assign_wcs
 
 - Updated the routines that load NIRSpec MOS slit and source data from the MSA meta
   data file to properly handle background and virtual slits, and assign appropriate
-  meta data to them for use downstream. [#8442]
+  meta data to them for use downstream. [#8442, #8533]
 
 associations
 ------------
@@ -102,6 +102,13 @@ general
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 - Increase minimum required scipy. [#8441]
+
+master_background_mos
+---------------------
+
+- Updated check for NIRSpec MOS background slits to use new naming convention:
+  ``slit.source_name`` now contains the string "BKG" instead of
+  "background". [#8533]
 
 outlier_detection
 -----------------
