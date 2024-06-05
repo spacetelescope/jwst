@@ -52,7 +52,8 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     # the slit frame and the wavelength corrected slit frame.  If the wavecorr_frame
     # is not in the wcs assume that the wavelength correction has not been applied.
     if use_wavecorr is not None:
-        if not use_wavecorr and 'wavecorr_frame' in model.meta.wcs.available_frames:
+        if (not use_wavecorr and hasattr(model.meta, "wcs")
+                and 'wavecorr_frame' in model.meta.wcs.available_frames):
             wcs = model.meta.wcs
             detector2slit = wcs.get_transform('detector', 'slit_frame')
             wavecorr2world = wcs.get_transform("wavecorr_frame", "world")
