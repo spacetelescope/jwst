@@ -60,9 +60,9 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
         "--abs_refcat='GAIADR3'",
         "--save_results=True",
     ]
+
+    # run the test from the command line:
     result = Step.from_cmdline(args)
-    # Check that the step is skipped
-    assert result.skip
 
     # Check the status of the step is set correctly in the files.
     mc = datamodels.ModelContainer(rtdata.input)
