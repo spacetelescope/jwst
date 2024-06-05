@@ -475,7 +475,7 @@ class Asn_Lv2SpecTSO(
                 ],
                 reduce=Constraint.notany
             ),
-            # Don't allow NIRSpec invalid optical paths in TSO3
+            # Don't allow NIRSpec invalid optical paths in spec2
             Constraint(
                 [
                     Constraint([
