@@ -41,6 +41,11 @@ associations
 
 - Create WFSS Pure-Parallel associations [#8528]
 
+combine_1d
+----------
+
+- Fix weights for combining errors from 1D spectra. [#8520]
+
 dark_current
 ------------
 
