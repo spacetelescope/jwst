@@ -1,7 +1,7 @@
 import json
 import pytest
 import numpy as np
-from jwst.badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep
+from jwst.badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep, _parse_inputs
 from jwst.badpix_selfcal.badpix_selfcal import badpix_selfcal, apply_flags
 from jwst import datamodels as dm
 from jwst.assign_wcs import AssignWcsStep, miri
@@ -20,11 +20,12 @@ wcs_kw = {'wcsaxes': 3, 'ra_ref': 165, 'dec_ref': 54,
           'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': 'um',
           }
 
-# these are often warm pixels, so need to be much larger than noise, 
+# these are often warm pixels, so need to be much larger than noise,
 # which has std dev of 1,
 # but smaller than smoothly-varying background, which maxes around 20
 hotpixel_intensity = 10
 outlier_indices = [(100, 100), (300, 300), (500, 600), (1000, 900)]
+
 
 def create_hdul(detector, channel, band):
     hdul = fits.HDUList()
@@ -62,7 +63,7 @@ def background():
     background data in a .rate file.
     Three components: random noise, low-order variability, and outliers
     """
-    
+
     # random noise
     rng = np.random.default_rng(seed=77)
     shp = (1024, 1032)
@@ -159,6 +160,38 @@ def asn(tmp_cwd_module, background, sci):
     return container
 
 
+def test_input_parsing(asn, sci, background):
+    """Test that the input parsing function correctly identifies the science,
+    background, and selfcal exposures in the association file
+    given association vs imagemodel inputs, and selfcal_list vs not
+    Note that science exposure gets added to selfcal_list later, not in parse_inputs
+    """
+
+    # basic association case. Both background and selfcal get into the list
+    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(asn, [])
+    assert isinstance(input_sci, dm.IFUImageModel)
+    assert len(bkg_list_asn) == 2
+    assert len(selfcal_list) == 4
+
+    # association with selfcal_list provided
+    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(asn, [background,] * 3)
+    assert isinstance(input_sci, dm.IFUImageModel)
+    assert len(bkg_list_asn) == 2
+    assert len(selfcal_list) == 3
+
+    # single science exposure
+    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(sci, [])
+    assert isinstance(input_sci, dm.IFUImageModel)
+    assert len(bkg_list_asn) == 0
+    assert len(selfcal_list) == 0
+
+    # single science exposure with selfcal_list provided
+    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(sci, [background,] * 3)
+    assert isinstance(input_sci, dm.IFUImageModel)
+    assert len(bkg_list_asn) == 0
+    assert len(selfcal_list) == 3
+
+
 def test_background_flagger_mrs(background):
     """
     Ensure the right number of outliers are found, and that
@@ -170,14 +203,14 @@ def test_background_flagger_mrs(background):
     # pass into the MRSBackgroundFlagger and check it found the right pixels
     flagfrac = 0.001
     result = badpix_selfcal(bg, flagfrac=flagfrac)
-    result_tuples = [(i,j) for i,j in zip(*result)]
+    result_tuples = [(i, j) for i, j in zip(*result)]
 
     # check that the hot pixels were among those flagged
     for idx in outlier_indices:
         assert idx in result_tuples
 
     # check that the number of flagged pixels is as expected
-    assert np.isclose(len(result_tuples)/bg.size, flagfrac*2, atol=0.0001)
+    assert np.isclose(len(result_tuples) / bg.size, flagfrac * 2, atol=0.0001)
 
 
 def test_apply_flags(background):
@@ -211,7 +244,7 @@ def test_badpix_selfcal_step(request, dset):
     regtest.
     """
     input_data = request.getfixturevalue(dset)
-    result = BadpixSelfcalStep.call(input_data, skip=False)
+    result = BadpixSelfcalStep.call(input_data, skip=False, force_single=True)
 
     assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
     if dset == "sci":
@@ -219,3 +252,55 @@ def test_badpix_selfcal_step(request, dset):
     else:
         # should return sci, bkg0, bkg1 but not selfcal0, selfcal1
         assert len(result) == 3
+
+
+def test_expected_fail_sci(sci):
+    """Test that the step fails as expected when given only a science exposure
+    and force_single is False.
+    """
+    result = BadpixSelfcalStep.call(sci, skip=False, force_single=False)
+    assert result[0].meta.cal_step.badpix_selfcal == "SKIPPED"
+
+
+@pytest.fixture(scope="module")
+def vertical_striping():
+    """2-D array with vertical stripes and some outliers, used to test that
+    the step is flagging in the correct (along-dispersion) direction
+    """
+    shp = (102, 96)
+    stripes = np.zeros(shp)
+    stripes[:, ::4] = hotpixel_intensity
+
+    # add some outliers
+    outliers = np.zeros(shp)
+    for idx in outlier_indices:
+        i, j = int(idx[0] / 10), int(idx[1] / 10)
+        outliers[i, j] = hotpixel_intensity
+    data = stripes + outliers
+
+    return data
+
+
+@pytest.mark.parametrize("dispaxis", [None, 1, 2])
+def test_dispersion_direction(vertical_striping, dispaxis):
+    """
+    Test that the flagging operates as expected as a function of direction.
+
+    Of the four outliers, only one lies atop a stripe, so the step should only
+    flag one in four as an outlier unless median filter occurs in the along-stripe
+    direction.
+    """
+
+    flagged_indices = badpix_selfcal(vertical_striping, dispaxis=dispaxis)
+
+    if dispaxis == 2:
+
+        assert len(flagged_indices[0]) == 4
+
+    elif dispaxis == 1:
+
+        assert len(flagged_indices[0]) == 1
+
+    elif dispaxis is None:
+
+        assert len(flagged_indices[0]) == 1

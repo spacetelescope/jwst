@@ -5,9 +5,10 @@ from jwst.outlier_detection.outlier_detection_ifu import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 
-def badpix_selfcal(medbg: np.ndarray, 
-                   flagfrac: float = 0.001, 
-                   kernel_size: int = 15) -> np.ndarray:
+def badpix_selfcal(medbg: np.ndarray,
+                   flagfrac: float = 0.001,
+                   kernel_size: int = 15,
+                   dispaxis=None) -> np.ndarray:
     """
     Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
 
@@ -21,24 +22,36 @@ def badpix_selfcal(medbg: np.ndarray,
         Fraction of pixels to flag on each of low and high end
     kernel_size: int
         Size of kernel for median filter
+    dispaxis: int
+        Dispersion axis, either 1 or 2. If None, a two-dimensional
+        median filter is applied.
 
     Returns
     -------
     flagged_indices: np.ndarray
-        Indices of the flagged pixels, 
+        Indices of the flagged pixels,
         shaped like output from np.where
     """
-    if flagfrac < 0 or flagfrac >=0.5:
+    if flagfrac < 0 or flagfrac >= 0.5:
         raise ValueError("flagfrac must be between 0 and 0.5. \
                         Note this fraction will be flagged on both high and low ends.")
+    if dispaxis not in [1, 2, None]:
+        raise ValueError("dispaxis must be either 1 or 2, or None.")
 
     # Determine outliers using median filter
-    kernel=np.array([1,kernel_size])
-    smoothed = medfilt(medbg, kernel)
+    if dispaxis is None:
+        kern_size = (kernel_size, kernel_size)
+    elif dispaxis == 2:
+        # check that this is the right way around!
+        kern_size = (kernel_size, 1)
+    elif dispaxis == 1:
+        kern_size = (1, kernel_size)
+
+    smoothed = medfilt(medbg, kern_size)
     medbg_hpf = medbg - smoothed
 
     # Flag outliers using percentile cutoff
-    flag_low, flag_high = np.nanpercentile(medbg_hpf, [flagfrac*100, (1-flagfrac)*100])
+    flag_low, flag_high = np.nanpercentile(medbg_hpf, [flagfrac * 100, (1 - flagfrac) * 100])
     bad = (medbg_hpf > flag_high) | (medbg_hpf < flag_low)
     flagged_indices = np.where(bad)
 
@@ -55,7 +68,7 @@ def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> d
     input_model: dm.IFUImageModel
         Input science data to be corrected
     flagged_indices: np.ndarray
-        Indices of the flagged pixels, 
+        Indices of the flagged pixels,
         shaped like output from np.where
 
     Returns
