@@ -5,6 +5,7 @@ JWST pipeline step for image alignment.
 
 """
 from os import path
+import math
 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -21,6 +22,9 @@ from ..stpipe import Step
 from ..assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging, wcs_from_footprints
 from .astrometric_utils import create_astrometric_catalog
 from .tweakreg_catalog import make_tweakreg_catalog
+
+
+_SQRT2 = math.sqrt(2.0)
 
 
 def _oxford_or_str_join(str_list):
@@ -123,6 +127,26 @@ class TweakRegStep(Step):
 
     def process(self, input):
         images = ModelContainer(input)
+
+        if self.separation <= _SQRT2 * self.tolerance:
+            self.log.error(
+                "Parameter 'separation' must be larger than 'tolerance' by at "
+                "least a factor of sqrt(2) to avoid source confusion."
+            )
+            for model in images:
+                model.meta.cal_step.tweakreg = "SKIPPED"
+            self.log.warning("Skipping 'TweakRegStep' step.")
+            return input
+
+        if self.abs_separation <= _SQRT2 * self.abs_tolerance:
+            self.log.error(
+                "Parameter 'abs_separation' must be larger than 'abs_tolerance' "
+                "by at least a factor of sqrt(2) to avoid source confusion."
+            )
+            for model in images:
+                model.meta.cal_step.tweakreg = "SKIPPED"
+            self.log.warning("Skipping 'TweakRegStep' step.")
+            return input
 
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")

@@ -772,13 +772,13 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
                     (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
                     for s in msa_source if s['source_id'] == source_id][0]
             except IndexError:
-                # Missing source information: assign a virtual source name
-                log.warning("Could not retrieve source info from MSA file")
                 source_name = f"{prog_id}_VRT{slitlet_id}"
                 source_alias = "VRT{}".format(slitlet_id)
                 stellarity = 0.0
                 source_ra = 0.0
                 source_dec = 0.0
+                log.warning(f"Could not retrieve source info from MSA file; "
+                            f"assigning virtual source_name={source_name}")
 
             if source_id < 0:
                 log.info(f'Slitlet {slitlet_id} contains virtual source, '

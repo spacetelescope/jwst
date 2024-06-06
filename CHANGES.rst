@@ -22,7 +22,7 @@ assign_wcs
 
 - Updated the routines that load NIRSpec MOS slit and source data from the MSA meta
   data file to properly handle background and virtual slits, and assign appropriate
-  meta data to them for use downstream. [#8442]
+  meta data to them for use downstream. [#8442, #8533]
 
 - Added handling for fixed slit sources defined in a MSA metadata file, for combined
   NIRSpec MOS and fixed slit observations. Slits are now appended to the data
@@ -40,7 +40,15 @@ associations
 - Updated Level3 rules for new handling of NIRSpec MOS source_id formatting when
   constructing output file names. [#8442]
 
+- Added default values for new non-header keywords (``MOSTILNO`` and ``DITHPTIN``)
+  to the default values in the ``asn_make_pool`` script. [#8508]
+
 - Create WFSS Pure-Parallel associations [#8528]
+
+combine_1d
+----------
+
+- Fix weights for combining errors from 1D spectra. [#8520]
 
 dark_current
 ------------
@@ -89,6 +97,11 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
+- Add propagation of background uncertainty when background is subtracted from 
+  source spectra during non-IFU spectral extraction. [#8532]
+
+- Fix error in application of aperture correction to variance arrays. [#8530]
+
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
@@ -134,6 +147,13 @@ master_background
   slits in the ``master_background``, called in ``calwebb_spec3``.
   Master background correction for MOS mode should be performed
   via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
+
+master_background_mos
+---------------------
+
+- Updated check for NIRSpec MOS background slits to use new naming convention:
+  ``slit.source_name`` now contains the string "BKG" instead of
+  "background". [#8533]
 
 nsclean
 -------
@@ -265,6 +285,11 @@ tweakreg
 
 - Change code default to use IRAF StarFinder instead of
   DAO StarFinder [#8487]
+
+- Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
+  that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
+  message and skip ``tweakreg`` step when this condition is not satisfied and
+  source confusion is possible during catalog matching. [#8476]
 
 wavecorr
 --------
@@ -577,6 +602,9 @@ resample
 - Replace use of ``check_memory_allocation``. [#8324]
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
+
+- Removing unnecessary warning. Errors are propagated identically for
+  the 'exptime' and 'ivm' weight options. [#8258]
 
 - Increased specificity of several warning filters. [#8320]
 

@@ -102,7 +102,7 @@ def create_background_from_multislit(input_model):
     bkg_model.update(input_model)
     slits = []
     for slit in input_model.slits:
-        if "background" in slit.source_name:
+        if is_background_msa_slit(slit):
             log.info(f'Using background slitlet {slit.source_name}')
             slits.append(slit)
 
@@ -238,3 +238,23 @@ def correct_nrs_fs_bkg(input_model):
                             (ph_point / ph_uniform)
 
     return input_model
+
+
+def is_background_msa_slit(slit):
+    """
+    Check if an MSA slitlet is a background source.
+
+    Parameters
+    ----------
+    slit : `~jwst.datamodels.SlitModel`
+        The slit model to check.
+
+    Returns
+    -------
+    bool
+        True if the slit is background; False if it is not.
+    """
+    if "BKG" in str(slit.source_name).upper():
+        return True
+    else:
+        return False

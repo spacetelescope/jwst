@@ -307,7 +307,8 @@ The ``tweakreg`` step has the following optional arguments:
 * ``use2dhist``: A boolean indicating whether to use 2D histogram to find
   initial offset. (Default=True)
 
-* ``separation``: Minimum object separation in arcsec. (Default=1.0)
+* ``separation``: Minimum object separation in arcsec. It **must be** at least
+  ``sqrt(2)`` times larger than ``tolerance``. (Default=1.0)
 
 * ``tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=0.7)
 
@@ -374,7 +375,8 @@ Parameters used for absolute astrometry to a reference catalog.
   Otherwise the initial guess for the offsets will be set to zero
   (Default=True)
 
-* ``abs_separation``: Minimum object separation in arcsec. (Default=1.0)
+* ``abs_separation``: Minimum object separation in arcsec. It **must be** at
+  least ``sqrt(2)`` times larger than ``abs_tolerance``. (Default=1.0)
 
 * ``abs_tolerance``: Matching tolerance for ``xyxymatch`` in arcsec.
   (Default=0.7)
