@@ -15,7 +15,7 @@ class GWCSDrizzle:
     """
 
     def __init__(self, product, outwcs=None, wt_scl=None,
-                 pixfrac=1.0, kernel="square", fillval="INDEF"):
+                 pixfrac=1.0, kernel="square", fillval="NAN"):
         """
         Create a new Drizzle output object and set the drizzle parameters.
 
@@ -53,7 +53,7 @@ class GWCSDrizzle:
 
         fillval : str, optional
             The value a pixel is set to in the output if the input image does
-            not overlap it. The default value of INDEF does not set a value.
+            not overlap it. The default value of NAN sets NaN values.
         """
 
         # Initialize the object fields
@@ -231,7 +231,7 @@ class GWCSDrizzle:
 
 def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
               expin, in_units, wt_scl, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
-              iscale=1.0, pixfrac=1.0, kernel='square', fillval="INDEF"):
+              iscale=1.0, pixfrac=1.0, kernel='square', fillval="NAN"):
     """
     Low level routine for performing 'drizzle' operation on one image.
 
@@ -326,7 +326,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
 
     fillval: str, optional
         The value a pixel is set to in the output if the input image does
-        not overlap it. The default value of INDEF does not set a value.
+        not overlap it. The default value of NAN sets NaN values.
 
     Returns
     -------
@@ -339,7 +339,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
 
     # Insure that the fillval parameter gets properly interpreted for use with tdriz
     if util.is_blank(str(fillval)):
-        fillval = 'INDEF'
+        fillval = 'NAN'
     else:
         fillval = str(fillval)
 

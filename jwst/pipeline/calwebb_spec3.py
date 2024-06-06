@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
+from functools import wraps
 import os.path as op
-import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -24,6 +24,7 @@ from ..resample import resample_spec_step
 from ..combine_1d import combine_1d_step
 from ..photom import photom_step
 from ..spectral_leak import spectral_leak_step
+from ..pixel_replace import pixel_replace_step
 
 __all__ = ['Spec3Pipeline']
 
@@ -60,6 +61,7 @@ class Spec3Pipeline(Pipeline):
         'master_background': master_background_step.MasterBackgroundStep,
         'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
+        'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep,
@@ -95,6 +97,16 @@ class Spec3Pipeline(Pipeline):
         self.combine_1d.save_results = self.save_results
         self.spectral_leak.suffix = 'x1d'
         self.spectral_leak.save_results = self.save_results
+        self.pixel_replace.suffix = 'pixel_replace'
+        self.pixel_replace.output_use_model = True
+        self.pixel_replace.save_results = self.save_results
+        
+        # Overriding the Step.save_model method for the following steps.
+        # These steps save intermediate files, resulting in meta.filename
+        # being modified. This can affect the filenames of subsequent
+        # steps.
+        self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
+        self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -169,54 +181,34 @@ class Spec3Pipeline(Pipeline):
                 for name, model in multislit_to_container(source_models).items()
             ]
 
-            # Check for negative and large source_id values
-            if len(sources) > 99999:
-                self.log.critical("Data contain more than 100,000 sources;"
-                                  "filename does not support 6 digit source ids.")
-                raise Exception
-
-            available_src_ids = set(np.arange(99999) + 1)
-            used_src_ids = set()
-            for src in sources:
-                src_id, model = src
-                src_id = int(src_id)
-                used_src_ids.add(src_id)
-                if 0 < src_id <= 99999:
-                    available_src_ids.remove(src_id)
-
-            hotfixed_sources = []
-            # now find and reset bad source_id values
-            for src in sources:
-                src_id, model = src
-                src_id = int(src_id)
-                # Replace ids that aren't positive 5-digit integers
-                if src_id < 0 or src_id > 99999:
-                    src_id_new = available_src_ids.pop()
-                    self.log.info(f"Source ID {src_id} falls outside allowed range.")
-                    self.log.info(f"Reassigning {src_id} to {str(src_id_new).zfill(5)}.")
-                    # Replace source_id for each model in the SourceModelContainers
-                    for contained_model in model:
-                        contained_model.source_id = src_id_new
-                    src_id = src_id_new
-                hotfixed_sources.append((str(src_id), model))
-
-            sources = hotfixed_sources
-
         # Process each source
         for source in sources:
 
             # If each source is a SourceModelContainer,
-            # the output name needs to be updated with the source ID, and potentially
-            # also the slit name (for NIRSpec fixed-slit only).
+            # the output name needs to be updated based on the source ID,
+            # and potentially also the slit name (for NIRSpec fixed-slit only).
             if isinstance(source, tuple):
                 source_id, result = source
+
+                # NIRSpec fixed-slit data
                 if result[0].meta.exposure.type == "NRS_FIXEDSLIT":
+                    # Output file name is constructed using the source_id and the slit name
                     slit_name = self._create_nrsfs_slit_name(result)
-                    self.output_file = format_product(
-                        output_file, source_id=source_id.lower(), slit_name=slit_name)
+                    srcid = f's{source_id:>09s}'
+                    self.output_file = format_product(output_file, source_id=srcid, slit_name=slit_name)
+
+                # NIRSpec MOS/MSA data
+                elif result[0].meta.exposure.type == "NRS_MSASPEC":
+                    # Construct the specially formatted source_id to use in the output file
+                    # name that separates source, background, and virtual slits
+                    srcid = self._create_nrsmos_source_id(result)
+                    self.output_file = format_product(output_file, source_id=srcid)
+                    self.log.debug(f"output_file = {self.output_file}")
+
                 else:
-                    self.output_file = format_product(
-                        output_file, source_id=source_id.lower())
+                    # All other types just use the source_id directly in the file name
+                    srcid = f's{source_id:>09s}'
+                    self.output_file = format_product(output_file, source_id=srcid)
             else:
                 result = source
 
@@ -228,7 +220,7 @@ class Spec3Pipeline(Pipeline):
             if exptype in ['MIR_MRS']:
                 result = self.mrs_imatch(result)
 
-            # Call outlier detection
+            # Call outlier detection and pixel replacement
             if exptype not in SLITLESS_TYPES:
                 # Update the asn table name to the level 3 instance so that
                 # the downstream products have the correct table name since
@@ -236,7 +228,10 @@ class Spec3Pipeline(Pipeline):
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 result = self.outlier_detection(result)
-
+                # interpolate pixels that have a NaN value or are flagged
+                # as DO_NOT_USE or NON_SCIENCE.
+                print(result)
+                result = self.pixel_replace(result)
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:
@@ -255,12 +250,16 @@ class Spec3Pipeline(Pipeline):
             # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
 
-                # For slitless data, extract 1D spectra and then combine them
+                # interpolate pixels that have a NaN value or are flagged
+                # as DO_NOT_USE or NON_SCIENCE
+                result = self.pixel_replace(result)
 
+                # For slitless data, extract 1D spectra and then combine them
                 if exptype in ['NIS_SOSS']:
                     # For NIRISS SOSS, don't save the extract_1d results,
                     # instead run photom on the extract_1d results and save
                     # those instead.
+
                     self.extract_1d.save_results = False
                     result = self.extract_1d(result)
 
@@ -317,3 +316,55 @@ class Spec3Pipeline(Pipeline):
         slit_name = "-".join(slit_names)  # append slit names using a dash separator
 
         return slit_name
+
+    def _create_nrsmos_source_id(self, source_models):
+        """Create the complete source_id product field for NIRSpec MOS products.
+
+        The source_id value gets a "s", "b", or "v" character prepended
+        to uniquely identify source, background, and virtual slits.
+        """
+
+        # Get the original source name and ID from the input models
+        source_name = source_models[0].source_name
+        source_id = source_models[0].source_id
+
+        # MOS background sources have "BKG" in the source name
+        if "BKG" in source_name:
+            # prepend "b" to the source_id number and format to 9 chars
+            srcid = f'b{str(source_id):>09s}'
+            self.log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
+
+        # MOS virtual sources have a negative source_id value
+        elif source_id < 0:
+            # prepend "v" to the source_id number and remove the leading negative sign
+            srcid = f'v{str(source_id)[1:]:>09s}'
+            self.log.debug(f"Source {source_name} is a MOS virtual slitlet: ID={srcid}")
+
+        # Regular MOS sources
+        else:
+            # prepend "s" to the source_id number and format to 9 chars
+            srcid = f's{str(source_id):>09s}'
+
+        return srcid
+
+# #########
+# Utilities
+# #########
+def invariant_filename(save_model_func):
+    """Restore meta.filename after save_model"""
+
+    @wraps(save_model_func)
+    def save_model(model, **kwargs):
+        try:
+            filename = model.meta.filename
+        except AttributeError:
+            filename = None
+
+        result = save_model_func(model, **kwargs)
+
+        if filename:
+            model.meta.filename = filename
+
+        return result
+
+    return save_model

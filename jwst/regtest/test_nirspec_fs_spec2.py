@@ -1,5 +1,4 @@
 import os
-
 import pytest
 import warnings
 
@@ -43,7 +42,6 @@ def run_pipeline(rtdata_module, request):
          3) S400A1 subarray exposure (1 slit extracted)"""
 
     rtdata = rtdata_module
-
     for fle in asn_memberdict[request.param]:
         rtdata.get_data('nirspec/fs/' + fle)
     # Get the input exposure
@@ -59,6 +57,25 @@ def run_pipeline(rtdata_module, request):
             "--steps.srctype.save_results=true",
             "--steps.flat_field.save_results=true",
             "--steps.pathloss.save_results=true"]
+    Step.from_cmdline(args)
+
+    return rtdata
+
+
+@pytest.fixture(scope="module")
+def run_pipeline_pixel_replace(rtdata_module):
+    """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures including pixel replacement.
+       The run_pipeline fixture saves the output for step before pixel_replace, so no need to retest.
+       We currently test the following types of inputs:
+         Full-frame exposure (all slits will be extracted)
+    """
+    rtdata = rtdata_module
+    rtdata.get_asn('nirspec/fs/jw01309_prtest_spec2_00001_asn.json')
+
+    # Run the calwebb_spec2 pipeline; save results from intermediate steps
+    args = ["calwebb_spec2", rtdata.input,
+            "--steps.pixel_replace.save_results=true",
+            "--steps.pixel_replace.skip=false"]
     Step.from_cmdline(args)
 
     return rtdata
@@ -80,6 +97,30 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 
     # Get the truth files
     rtdata.get_truth(os.path.join("truth/test_nirspec_fs_spec2", output))
+
+    # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'output',
+    ['jw013090_prtest_04102_00004_nrs2_pixel_replace.fits',
+     'jw013090_prtest_04102_00004_nrs2_cal.fits',
+     'jw013090_prtest_04102_00004_nrs2_s2d.fits',
+     'jw013090_prtest_04102_00004_nrs2_x1d.fits']
+)
+def test_nirspec_fs_spec2_pixel_replace(run_pipeline_pixel_replace, fitsdiff_default_kwargs, output):
+    """Regression test of the calwebb_spec2 pipeline on a
+       NIRSpec FS exposures."""
+
+    # Run the pipeline and retrieve outputs
+    rtdata = run_pipeline_pixel_replace
+    rtdata.output = output
+
+    # Get the truth files
+    rtdata.get_truth(os.path.join("truth/test_nirspec_fs_spec2_pixel_replace", output))
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -143,7 +184,7 @@ def test_pathloss_source_type(rtdata):
 @pytest.mark.bigdata
 def test_nirspec_fs_rateints_spec2(rtdata_module):
     """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure.
-       This is a test that the pipeline completes when processing this 
+       This is a test that the pipeline completes when processing this
        multi-integration input.
     """
     rtdata = rtdata_module

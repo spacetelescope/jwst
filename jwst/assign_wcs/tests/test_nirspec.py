@@ -4,6 +4,7 @@ Test functions for NIRSPEC WCS - all modes.
 import functools
 from math import cos, sin
 import os.path
+import shutil
 
 import pytest
 import numpy as np
@@ -70,6 +71,7 @@ def create_hdul(detector='NRS1'):
     phdu.header['detector'] = detector
     phdu.header['time-obs'] = '8:59:37'
     phdu.header['date-obs'] = '2016-09-05'
+    phdu.header['program'] = '1234'
 
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"
@@ -276,10 +278,11 @@ def test_msa_configuration_normal():
     """
 
     # Test 1: Reasonably normal as well
+    prog_id = '1234'
     msa_meta_id = 12
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
                              0.13, -0.31716078999999997, -0.18092266)
@@ -291,11 +294,12 @@ def test_msa_configuration_no_background():
     Test the get_open_msa_slits function.
     """
     # Test 2: Two main shutters, not allowed and should fail
+    prog_id = '1234'
     msa_meta_id = 13
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
     with pytest.raises(MSAFileError):
-        nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+        nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                    slit_y_range=[-.5, .5])
 
 
@@ -305,13 +309,14 @@ def test_msa_configuration_all_background():
     """
 
     # Test 3:  No non-background, not acceptable.
+    prog_id = '1234'
     msa_meta_id = 14
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 0, '1x1', 'background_57', 'bkg_57',
-                             0, -0.5, -0.5)
+    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 57, '1x1', '1234_BKG57', 'BKG57',
+                             0.0, 0.0, 0.0)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -321,10 +326,11 @@ def test_msa_configuration_row_skipped():
     """
 
     # Test 4: One row is skipped, should be acceptable.
+    prog_id = '1234'
     msa_meta_id = 15
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
                              0.130, -0.31716078999999997, -0.18092266)
@@ -336,10 +342,11 @@ def test_msa_configuration_multiple_returns():
     Test the get_open_msa_slits function.
     """
     # Test 4: One row is skipped, should be acceptable.
+    prog_id = '1234'
     msa_meta_id = 16
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
                               0.13000000000000003, -0.31716078999999997, -0.18092266)
@@ -348,6 +355,35 @@ def test_msa_configuration_multiple_returns():
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
 
+
+def test_msa_missing_source(tmp_path):
+    """
+    Test the get_open_msa_slits function with missing source information.
+    """
+    # modify an existing MSA file to remove source info
+    msaconfl = get_file_path('msa_configuration.fits')
+    bad_confl = str(tmp_path / 'bad_msa_configuration.fits')
+    shutil.copy(msaconfl, bad_confl)
+
+    with fits.open(bad_confl) as msa_hdu_list:
+        source_table = table.Table(msa_hdu_list['SOURCE_INFO'].data)
+        source_table.remove_rows(slice(0, -1))
+        msa_hdu_list['SOURCE_INFO'] = fits.table_to_hdu(source_table)
+        msa_hdu_list[3].name = 'SOURCE_INFO'
+        msa_hdu_list.writeto(bad_confl, overwrite=True)
+
+    prog_id = '1234'
+    msa_meta_id = 12
+    dither_position = 1
+
+    slitlet_info = nirspec.get_open_msa_slits(
+        prog_id, bad_confl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+    # MSA slit: virtual source name assigned
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x',
+                             '1234_VRT55', 'VRT55', 0.0,
+                             -0.31716078999999997, -0.18092266, 0.0, 0.0)
+    _compare_slits(slitlet_info[0], ref_slit)
 
 open_shutters = [[24], [23, 24], [22, 23, 25, 27], [22, 23, 25, 27, 28]]
 main_shutter = [24, 23, 25, 28]

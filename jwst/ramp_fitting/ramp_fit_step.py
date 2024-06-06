@@ -385,6 +385,7 @@ class RampFitStep(Step):
     class_alias = "ramp_fit"
 
     spec = """
+        algorithm = option('OLS', 'OLS_C', default='OLS') # Can be 'OLS_C' to select the C extension
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
@@ -399,8 +400,8 @@ class RampFitStep(Step):
     # As of 04/26/17, the only allowed algorithm is 'ols', and the
     #      only allowed weighting is 'optimal'.
 
-    algorithm = 'ols'      # Only algorithm allowed for Build 7.1
-#    algorithm = 'gls'       # 032520
+    # algorithm = 'ols'      # Only algorithm allowed for Build 7.1
+    # algorithm = 'gls'       # 032520
 
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 
@@ -476,11 +477,16 @@ class RampFitStep(Step):
                 # readnoise variances into copies of the original ramp fitting
                 # tuples.
                 image_info_new, integ_info_new = None, None
+                ch_int, ch_grp, ch_row, ch_col = wh_chargeloss
                 if image_info is not None and image_var_RN is not None:
-                    image_info_new = (image_info[0], image_info[1], image_info[2], image_var_RN, image_info[4])
+                    rnoise = image_info[3]
+                    rnoise[ch_row, ch_col] = image_var_RN[ch_row, ch_col]
+                    image_info_new = (image_info[0], image_info[1], image_info[2], rnoise, image_info[4])
 
                 if integ_info is not None and integ_var_RN is not None:
-                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_var_RN, integ_info[4])
+                    rnoise = integ_info[3]
+                    rnoise[ch_int, ch_row, ch_col] = integ_var_RN[ch_int, ch_row, ch_col]
+                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], rnoise, integ_info[4])
 
                 image_info = image_info_new
                 integ_info = integ_info_new

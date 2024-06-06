@@ -46,6 +46,8 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module):
         "--steps.assign_wcs.save_results=true",
         "--steps.srctype.save_results=true",
         "--steps.flat_field.save_results=true",
+        "--steps.pixel_replace.save_results=true",
+        "--steps.pixel_replace.skip=false"
     ]
     Step.from_cmdline(args)
 
@@ -83,7 +85,8 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_defau
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("step_suffix", ["assign_wcs", "srctype", "flat_field", "calints", "x1dints"])
+@pytest.mark.parametrize("step_suffix", ["assign_wcs", "srctype", "flat_field",
+                                          "pixel_replace", "calints", "x1dints"])
 def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
                                      step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 pipeline."""

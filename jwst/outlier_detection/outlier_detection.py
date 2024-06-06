@@ -3,6 +3,7 @@
 from functools import partial
 import logging
 import warnings
+import os
 
 import numpy as np
 from astropy.stats import sigma_clip
@@ -140,7 +141,10 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            resamp = resample.ResampleData(self.input_models, single=True,
+            output_path = self.make_output_path(basepath=self.input_models[0].meta.filename,
+                            suffix='')
+            output_path = os.path.dirname(output_path)
+            resamp = resample.ResampleData(self.input_models, output=output_path, single=True,
                                            blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
 
@@ -161,16 +165,15 @@ class OutlierDetection:
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
-        if pars['save_intermediate_results']:
-            if self.outlierpars.get('asn_id', None) is None:
-                suffix_to_remove = self.resample_suffix
-            else:
-                suffix_to_remove = f"_{self.outlierpars['asn_id']}{self.resample_suffix}"
-            median_model_output_path = self.make_output_path(
-                basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
-                suffix='median')
-            median_model.save(median_model_output_path)
-            log.info(f"Saved model in {median_model_output_path}")
+
+        if self.outlierpars['save_intermediate_results']:
+            self.save_median(median_model) 
+        else:
+            # since we're not saving intermediate results if the drizzled models
+            # were written to disk, remove them
+            if not self.outlierpars['in_memory']:
+                for fn in drizzled_models._models:
+                    _remove_file(fn)
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
@@ -189,7 +192,11 @@ class OutlierDetection:
 
         # clean-up (just to be explicit about being finished with
         # these results)
+        if not pars['save_intermediate_results'] and not pars['in_memory']:
+            for fn in blot_models._models:
+                _remove_file(fn)
         del median_model, blot_models
+    
 
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.
@@ -205,35 +212,7 @@ class OutlierDetection:
 
         log.info("Computing median")
 
-        # Compute weight means without keeping datamodels for eacn input open
-        # Start by insuring that the ModelContainer does NOT open and keep each datamodel
-        ropen_orig = resampled_models._return_open
-        resampled_models._return_open = False  # turn off auto-opening of models
-        # keep track of resulting computation for each input resampled datamodel
-        weight_thresholds = []
-        # For each model, compute the bad-pixel threshold from the weight arrays
-        for resampled in resampled_models:
-            m = datamodel_open(resampled)
-            weight = m.wht
-            # necessary in order to assure that mask gets applied correctly
-            if hasattr(weight, '_mask'):
-                del weight._mask
-            mask_zero_weight = np.equal(weight, 0.)
-            mask_nans = np.isnan(weight)
-            # Combine the masks
-            weight_masked = np.ma.array(weight, mask=np.logical_or(
-                mask_zero_weight, mask_nans))
-            # Sigma-clip the unmasked data
-            weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
-            mean_weight = np.mean(weight_masked)
-            # Mask pixels where weight falls below maskpt percent
-            weight_threshold = mean_weight * maskpt
-            weight_thresholds.append(weight_threshold)
-            # close and delete the model, just to explicitly try to keep the memory as clean as possible
-            m.close()
-            del m
-        # Reset ModelContainer attribute to original value
-        resampled_models._return_open = ropen_orig
+        weight_thresholds = self.compute_weight_threshold_container(resampled_models, maskpt)
 
         # Now, set up buffered access to all input models
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
@@ -269,6 +248,98 @@ class OutlierDetection:
             del resampled_sci, resampled_weight
 
         return median_image
+    
+
+    def save_median(self, median_model):
+        '''
+        Save median if requested by user
+
+        Parameters
+        ----------
+        median_model : ~jwst.datamodels.ImageModel
+            The median ImageModel or CubeModel to save
+        '''
+        
+        if self.outlierpars.get('asn_id', None) is None:
+            suffix_to_remove = self.resample_suffix
+        else:
+            suffix_to_remove = f"_{self.outlierpars['asn_id']}{self.resample_suffix}"
+        median_model_output_path = self.make_output_path(
+            basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
+            suffix='median')
+        median_model.save(median_model_output_path)
+        log.info(f"Saved model in {median_model_output_path}")
+
+
+    def compute_weight_threshold_container(self, resampled_models, maskpt):
+        '''
+        Compute weight means without keeping datamodels for each input open
+
+        Parameters
+        ----------
+        resampled_models : ~jwst.datamodels.ModelContainer
+            The input data models.
+
+        maskpt : float
+            The percentage of the mean weight to use as a threshold for masking.
+
+        Returns
+        -------
+        list
+            The weight thresholds for each integration.
+        '''
+
+        # Start by ensuring that the ModelContainer does NOT open and keep each datamodel
+        ropen_orig = resampled_models._return_open
+        resampled_models._return_open = True 
+        # keep track of resulting computation for each input resampled datamodel
+        weight_thresholds = []
+        # For each model, compute the bad-pixel threshold from the weight arrays
+        for resampled in resampled_models:
+            weight = resampled.wht
+            weight_threshold = self.compute_weight_threshold(weight, maskpt)
+            weight_thresholds.append(weight_threshold)
+            # close and delete the model, just to explicitly try to keep the memory as clean as possible
+            resampled.close()
+            del resampled
+        # Reset ModelContainer attribute to original value
+        resampled_models._return_open = ropen_orig
+        return weight_thresholds
+    
+
+    def compute_weight_threshold(self, weight, maskpt):
+        '''
+        Compute the weight threshold for a single image or cube.
+
+        Parameters
+        ----------
+        weight : numpy.ndarray
+            The weight array
+
+        maskpt : float
+            The percentage of the mean weight to use as a threshold for masking.
+
+        Returns
+        -------
+        float
+            The weight threshold for this integration.
+        '''
+
+        # necessary in order to assure that mask gets applied correctly
+        if hasattr(weight, '_mask'):
+            del weight._mask
+        mask_zero_weight = np.equal(weight, 0.)
+        mask_nans = np.isnan(weight)
+        # Combine the masks
+        weight_masked = np.ma.array(weight, mask=np.logical_or(
+            mask_zero_weight, mask_nans))
+        # Sigma-clip the unmasked data
+        weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
+        mean_weight = np.mean(weight_masked)
+        # Mask pixels where weight falls below maskpt percent
+        weight_threshold = mean_weight * maskpt
+        return weight_threshold
+
 
     def blot_median(self, median_model):
         """Blot resampled median image back to the detector images."""
@@ -335,6 +406,12 @@ class OutlierDetection:
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
 
 
+def _remove_file(fn):
+    if isinstance(fn, str) and os.path.isfile(fn):
+        os.remove(fn)
+        log.info(f"Removing file {fn}")
+
+
 def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
             resample_data=True, **kwargs):
     """Masks outliers in science image by updating DQ in-place
@@ -345,10 +422,13 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     Parameters
     ----------
     sci_image : ~jwst.datamodels.ImageModel
-        the science data
+        the science data. Can also accept a CubeModel, but only if
+        resample_data is False
 
     blot_image : ~jwst.datamodels.ImageModel
-        the blotted median image of the dithered science frames
+        the blotted median image of the dithered science frames.
+        Can also accept a CubeModel, but only if resample_data
+        is False
 
     snr : str
         Signal-to-noise ratio
@@ -362,6 +442,14 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     resample_data : bool
         Boolean to indicate whether blot_image is created from resampled,
         dithered data or not
+
+    Notes
+    -----
+    Accepting a CubeModel for sci_image and blot_image with resample_data=True
+    appears to be a relatively simple extension, as the only thing that explicitly
+    relies on the dimensionality is the kernel, which could be generalized.
+    However, this is not currently needed, as CubeModels are only passed in for
+    TSO data, where resampling is always False.
     """
     snr1, snr2 = [float(val) for val in snr.split()]
     scale1, scale2 = [float(val) for val in scale.split()]
@@ -421,7 +509,7 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     # Report number (and percent) of new DO_NOT_USE pixels found
     count_outlier = np.count_nonzero(sci_image.dq & DO_NOT_USE)
     count_added = count_outlier - count_existing
-    percent_cr = count_added / (sci_image.shape[0] * sci_image.shape[1]) * 100
+    percent_cr = count_added / sci_image.dq.size * 100
     log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
 
 

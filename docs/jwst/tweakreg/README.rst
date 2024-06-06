@@ -218,7 +218,7 @@ The ``tweakreg`` step has the following optional arguments:
   in pixels. (Default=400)
 
 * ``starfinder``: A `str` indicating the source detection algorithm to use.
-  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'dao'`)
+  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'iraf'`)
 
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. Required for all star finders. (Default=10.0)
@@ -307,7 +307,8 @@ The ``tweakreg`` step has the following optional arguments:
 * ``use2dhist``: A boolean indicating whether to use 2D histogram to find
   initial offset. (Default=True)
 
-* ``separation``: Minimum object separation in arcsec. (Default=1.0)
+* ``separation``: Minimum object separation in arcsec. It **must be** at least
+  ``sqrt(2)`` times larger than ``tolerance``. (Default=1.0)
 
 * ``tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=0.7)
 
@@ -374,7 +375,8 @@ Parameters used for absolute astrometry to a reference catalog.
   Otherwise the initial guess for the offsets will be set to zero
   (Default=True)
 
-* ``abs_separation``: Minimum object separation in arcsec. (Default=1.0)
+* ``abs_separation``: Minimum object separation in arcsec. It **must be** at
+  least ``sqrt(2)`` times larger than ``abs_tolerance``. (Default=1.0)
 
 * ``abs_tolerance``: Matching tolerance for ``xyxymatch`` in arcsec.
   (Default=0.7)

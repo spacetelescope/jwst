@@ -1,12 +1,10 @@
 """Class definition for performing outlier detection on spectra."""
-from functools import partial
-
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 
 from ..resample import resample_spec, resample_utils
-from .outlier_detection import OutlierDetection
+from .outlier_detection import OutlierDetection, _remove_file
 
 import logging
 log = logging.getLogger(__name__)
@@ -58,6 +56,9 @@ class OutlierDetectionSpec(OutlierDetection):
         """
         OutlierDetection.__init__(self, input_models, **pars)
 
+        # Set up the list of all intermediate output files
+        self.output_list = []
+
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
         self._convert_inputs()
@@ -103,16 +104,18 @@ class OutlierDetectionSpec(OutlierDetection):
             log.info("Writing out MEDIAN image to: {}".format(
                      median_model.meta.filename))
             median_model.save(median_model.meta.filename)
+        else:
+            # since we're not saving intermediate results if the drizzled models
+            # were written to disk, remove them
+            if not pars['in_memory']:
+                for fn in drizzled_models._models:
+                    _remove_file(fn)
+                    log.info(f"Removing file {fn}")
 
         if pars['resample_data'] is True:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
             blot_models = self.blot_median(median_model)
-            if save_intermediate_results:
-                log.info("Writing out BLOT images...")
-                blot_models.save(
-                    partial(self.make_output_path, suffix='blot')
-                )
         else:
             # Median image will serve as blot image
             blot_models = ModelContainer()
@@ -125,4 +128,8 @@ class OutlierDetectionSpec(OutlierDetection):
 
         # clean-up (just to be explicit about being finished
         #  with these results)
+        if not pars['save_intermediate_results']:
+            for fn in blot_models._models:
+                _remove_file(fn)
+                log.info(f"Removing file {fn}")
         del median_model, blot_models
