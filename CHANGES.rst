@@ -569,9 +569,13 @@ resample
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
 
+- Removing unnecessary warning. Errors are propagated identically for
+  the 'exptime' and 'ivm' weight options. [#8258]
+
 - Increased specificity of several warning filters. [#8320]
 
 - Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
+
 
 residual_fringe
 ---------------
