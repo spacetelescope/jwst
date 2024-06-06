@@ -802,7 +802,12 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        target_id = format_list(self.constraints['target'].found_values)
+        attrs = self.constraints.get_all_attr('found_values', name='target')
+        if attrs:
+            value = attrs[0][1]
+        else:
+            value = []
+        target_id = format_list(value)
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 

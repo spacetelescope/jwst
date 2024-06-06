@@ -25,12 +25,16 @@ NON_HEADER_COLS = {
     'is_imprt': 'f',
     'pntgtype': 'science',
     'targetid': '1',
+    'mostilno': '1',
+    'dithptin': '1'
 }
 
 
 def mkpool(data,
-           asn_candidate=NON_HEADER_COLS['asn_candidate'], dms_note=NON_HEADER_COLS['dms_note'],
-           is_imprt=NON_HEADER_COLS['is_imprt'], pntgtype=NON_HEADER_COLS['pntgtype'],
+           asn_candidate=NON_HEADER_COLS['asn_candidate'],
+           dms_note=NON_HEADER_COLS['dms_note'],
+           is_imprt=NON_HEADER_COLS['is_imprt'],
+           pntgtype=NON_HEADER_COLS['pntgtype'],
            **kwargs):
     """Create an association pool from a list of FITS files.
 
@@ -112,8 +116,14 @@ def mkpool(data,
     defaults = {param: 'null' for param in params}
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
-    # Set default values for user-settable non-header parameters
-    non_header_params = {'dms_note': dms_note, 'is_imprt': is_imprt, 'pntgtype': pntgtype}
+    # Set non-header values from hard-coded defaults
+    non_header_params = NON_HEADER_COLS.copy()
+
+    # Update default values for user-settable non-header parameters
+    non_header_params.update(
+        {'dms_note': dms_note,
+         'is_imprt': is_imprt,
+         'pntgtype': pntgtype})
 
     # Setup for target id calculation
     targetid = 0  # Start off with no target id.

@@ -68,6 +68,7 @@ class InputSpectrumModel:
         self.unit_weight = False        # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
+        self.name = spec.name
         self.source_id = spec.source_id
         self.source_type = spec.source_type
         self.flux_unit = spec.spec_table.columns['flux'].unit
@@ -204,7 +205,11 @@ class OutputSpectrumModel:
         ninputs = 0
         for in_spec in input_spectra:
             ninputs += 1
-            log.info(f'Accumulating data from input spectrum {ninputs}')
+            if in_spec.name is not None:
+                slit_name = f'{ninputs}, slit {in_spec.name}'
+            else:
+                slit_name = ninputs
+            log.info(f'Accumulating data from input spectrum {slit_name}')
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
             out_pixel = self.wcs.invert(in_spec.right_ascension,
@@ -263,8 +268,8 @@ class OutputSpectrumModel:
             sum_weight = np.where(self.weight > 0., self.weight, 1.)
             self.surf_bright /= sum_weight
             self.flux /= sum_weight
-            self.flux_error = np.sqrt(self.flux_error / sum_weight)
-            self.sb_error = np.sqrt(self.sb_error / sum_weight)
+            self.flux_error = np.sqrt(self.flux_error) / sum_weight
+            self.sb_error = np.sqrt(self.sb_error) / sum_weight
             self.normalized = True
 
     def create_output_data(self):

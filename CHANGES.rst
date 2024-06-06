@@ -22,7 +22,7 @@ assign_wcs
 
 - Updated the routines that load NIRSpec MOS slit and source data from the MSA meta
   data file to properly handle background and virtual slits, and assign appropriate
-  meta data to them for use downstream. [#8442]
+  meta data to them for use downstream. [#8442, #8533]
 
 associations
 ------------
@@ -35,6 +35,16 @@ associations
 
 - Updated Level3 rules for new handling of NIRSpec MOS source_id formatting when
   constructing output file names. [#8442]
+
+- Added default values for new non-header keywords (``MOSTILNO`` and ``DITHPTIN``)
+  to the default values in the ``asn_make_pool`` script. [#8508]
+
+- Create WFSS Pure-Parallel associations [#8528]
+
+combine_1d
+----------
+
+- Fix weights for combining errors from 1D spectra. [#8520]
 
 dark_current
 ------------
@@ -79,6 +89,11 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
+- Add propagation of background uncertainty when background is subtracted from 
+  source spectra during non-IFU spectral extraction. [#8532]
+
+- Fix error in application of aperture correction to variance arrays. [#8530]
+
 extract_2d
 ----------
 
@@ -110,6 +125,13 @@ lib
 - Updated the ``wcs_utils.get_wavelength`` to use the new format
   of the ``wavecorr`` wavelength zero-point corrections for point 
   sources. [#8376]
+
+master_background_mos
+---------------------
+
+- Updated check for NIRSpec MOS background slits to use new naming convention:
+  ``slit.source_name`` now contains the string "BKG" instead of
+  "background". [#8533]
 
 outlier_detection
 -----------------
@@ -232,12 +254,17 @@ tweakreg
 - Change code default to use IRAF StarFinder instead of
   DAO StarFinder [#8487]
 
+- Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
+  that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
+  message and skip ``tweakreg`` step when this condition is not satisfied and
+  source confusion is possible during catalog matching. [#8476]
+
 wavecorr
 --------
 
 - Changed the NIRSpec wavelength correction algorithm to include it in slit WCS
   models and resampling.  Fixed the sign of the wavelength corrections. [#8376]
-
+  
 wfss_contam
 -----------
 
