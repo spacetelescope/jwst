@@ -89,6 +89,11 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
+- Add propagation of background uncertainty when background is subtracted from 
+  source spectra during non-IFU spectral extraction. [#8532]
+
+- Fix error in application of aperture correction to variance arrays. [#8530]
+
 extract_2d
 ----------
 
@@ -546,9 +551,13 @@ resample
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
 
+- Removing unnecessary warning. Errors are propagated identically for
+  the 'exptime' and 'ivm' weight options. [#8258]
+
 - Increased specificity of several warning filters. [#8320]
 
 - Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
+
 
 residual_fringe
 ---------------
