@@ -5,7 +5,7 @@ from jwst.outlier_detection.outlier_detection_ifu import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 
-def badpix_selfcal(medbg: np.ndarray,
+def badpix_selfcal(minimg: np.ndarray,
                    flagfrac: float = 0.001,
                    kernel_size: int = 15,
                    dispaxis=None) -> np.ndarray:
@@ -14,8 +14,8 @@ def badpix_selfcal(medbg: np.ndarray,
 
     Parameters
     ----------
-    medbg: np.ndarray
-        Background data of shape (x, y), i.e., after some operation has
+    minimg: np.ndarray
+        Selfcal data of shape (x, y), i.e., after some operation has
         already been taken to combine multiple exposures,
         typically a MIN operation.
     flagfrac: float
@@ -47,12 +47,12 @@ def badpix_selfcal(medbg: np.ndarray,
     elif dispaxis == 1:
         kern_size = (1, kernel_size)
 
-    smoothed = medfilt(medbg, kern_size)
-    medbg_hpf = medbg - smoothed
+    smoothed = medfilt(minimg, kern_size)
+    minimg_hpf = minimg - smoothed
 
     # Flag outliers using percentile cutoff
-    flag_low, flag_high = np.nanpercentile(medbg_hpf, [flagfrac * 100, (1 - flagfrac) * 100])
-    bad = (medbg_hpf > flag_high) | (medbg_hpf < flag_low)
+    flag_low, flag_high = np.nanpercentile(minimg_hpf, [flagfrac * 100, (1 - flagfrac) * 100])
+    bad = (minimg_hpf > flag_high) | (minimg_hpf < flag_low)
     flagged_indices = np.where(bad)
 
     return flagged_indices
