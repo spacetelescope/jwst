@@ -2,28 +2,25 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 import functools
-import shutil
-from math import cos, sin
 import os.path
 import shutil
+from math import cos, sin
 
-import pytest
+import astropy.units as u
+import astropy.coordinates as coords
 import numpy as np
-from numpy.testing import assert_allclose
+import pytest
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy import table
 from astropy import wcs as astwcs
-import astropy.units as u
-import astropy.coordinates as coords
-from gwcs import wcs
-from gwcs import wcstools
+from gwcs import wcs, wcstools
+from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
-from jwst.assign_wcs import nirspec
-from jwst.assign_wcs import assign_wcs_step
+from jwst.assign_wcs import nirspec, assign_wcs_step
 from jwst.assign_wcs.tests import data
 from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
 
