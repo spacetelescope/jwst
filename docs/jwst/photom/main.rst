@@ -114,6 +114,13 @@ do not have source centering information available, so the
 difference between the point source and uniform source photometric
 conversions for those slits.
 
+Fixed slits planned as part of a combined MOS and FS observation are an
+exception to this rule.  These targets may each be identified as
+point sources, with location information for each given in the
+:ref:`MSA metadata file <msa_metadata>`. Point sources in fixed slits planned
+this way are all treated in the same manner as the primary fixed slit in standard
+FS observations.
+
 Pixel Area Data
 ^^^^^^^^^^^^^^^
 For all instrument modes other than NIRSpec the photom step loads a 2-D pixel
