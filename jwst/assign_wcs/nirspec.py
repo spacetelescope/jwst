@@ -633,13 +633,12 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
     # Add a margin to the slit y limits
     margin = 0.5
 
-    # Now let's look at each unique MOS slitlet id
+    # Now let's look at each unique slitlet id
     for slitlet_id, slitlet_rows in slitlet_sets.items():
         # Get the open shutter information from the slitlet rows
         open_shutters = [x['shutter_column'] for x in slitlet_rows]
 
         # How many shutters in the slitlet are labeled as "main" or "primary"?
-        # How many are labeled background?
         n_main_shutter = len([s for s in slitlet_rows if s['primary_source'] == 'Y'])
 
         # Check for fixed slit sources defined in the MSA file

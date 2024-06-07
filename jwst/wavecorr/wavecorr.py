@@ -237,7 +237,6 @@ def _is_msa_fixed_slit(slit):
     """
     # Fixed slits defined via MSA files in  MOS/FS combination
     # processing will have a non-empty shutter state
-    # TODO: determine if there's a better test
     if (not hasattr(slit, 'shutter_state')
             or slit.shutter_state is None
             or slit.shutter_state == ""):
