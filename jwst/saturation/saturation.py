@@ -168,15 +168,20 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
             if group == 2:
                 # Identify groups which we wouldn't expect to saturate by the third group,
                 # on the basis of the first group
-                mask = sci_temp[ints, 0, ...] / np.mean(read_pattern[0]) * read_pattern[2][-1] < sat_thresh
+                scigp1 = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector)
+                mask = scigp1 / np.mean(read_pattern[0]) * read_pattern[2][-1] < sat_thresh
 
                 # Identify groups with suspiciously large values in the second group
-                mask &= sci_temp[ints, 1, ...] > sat_thresh / len(read_pattern[1])
+                scigp2 = x_irs2.from_irs2(data[ints, 1, :, :], irs2_mask, detector)
+                mask &= scigp2 > sat_thresh / len(read_pattern[1])
 
                 # Identify groups that are saturated in the third group
-                dq_temp = x_irs2.from_irs2(groupdq[ints, 2, :, :], irs2_mask, detector)
-                gp3mask = np.where(dq_temp & SATURATED, True, False)
+                gp3mask = np.where(flag_temp & SATURATED, True, False)
                 mask &= gp3mask
+
+                # now, flag any pixels that border saturated pixels
+                if n_pix_grow_sat > 0:
+                    mask = adjacency_sat(mask, SATURATED, n_pix_grow_sat)
 
                 # Flag the 2nd group for the pixels passing that gauntlet
                 dq_temp = x_irs2.from_irs2(groupdq[ints, 1, :, :], irs2_mask, detector)
