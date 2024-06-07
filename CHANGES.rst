@@ -116,6 +116,8 @@ general
 
 - Increase minimum required scipy. [#8441]
 
+- remove OpenCV from dependencies [#8544]
+
 master_background_mos
 ---------------------
 
