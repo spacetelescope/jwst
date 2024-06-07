@@ -25,7 +25,6 @@ dependencies = [
     "drizzle>=1.15.0",
     "gwcs>=0.21.0,<0.22.0",
     "numpy>=1.22",
-    "opencv-python-headless>=4.6.0.66",
     "photutils>=1.5.0",
     "psutil>=5.7.2",
     "poppy>=1.0.2",
