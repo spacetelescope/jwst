@@ -1256,7 +1256,7 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
 
 def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
                         max_inv_pix_error=0.01, inv_degree=None,
-                        npoints=32, crpix=None, projection='TAN',
+                        npoints=12, crpix=None, projection='TAN',
                         imwcs=None, **kwargs):
     """
     Update ``datamodel.meta.wcsinfo`` based on a FITS WCS + SIP approximation

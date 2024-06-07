@@ -426,7 +426,7 @@ in the ``assign_wcs`` step.
   error for the SIP inverse fit, in units of pixels. Ignored if
   ``sip_inv_degree`` is set to an explicit value. (Default=0.01)
 
-* ``sip_npoints``: Number of points for the SIP fit. (Default=32).
+* ``sip_npoints``: Number of points for the SIP fit. (Default=12).
 
 Further Documentation
 ---------------------

@@ -22,7 +22,7 @@ the behavior of the processing.
   Maximum error for the SIP inverse fit, in units of pixels. Ignored if
   ``sip_inv_degree`` is set to an explicit value.
 
-``--sip_npoints`` (integer, default=32)
+``--sip_npoints`` (integer, default=12)
   Number of points for the SIP fit.
 
 ``--slit_y_low`` (float, default=-0.55)
