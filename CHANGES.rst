@@ -108,7 +108,7 @@ flat_field
 - Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
   DO_NOT_USE flag is set in the DQ array. [#8463]
 
-- Updated the flatfield code to use the new format of the ``wavecorr`` 
+- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr`` 
   wavelength zero-point corrections for point sources.  [#8376]
 
 general
@@ -124,7 +124,7 @@ lib
 
 - Updated the ``wcs_utils.get_wavelength`` to use the new format
   of the ``wavecorr`` wavelength zero-point corrections for point 
-  sources. [#8376]
+  sources in NIRSpec slit data. [#8376]
 
 master_background_mos
 ---------------------
@@ -162,7 +162,7 @@ outlier_detection
 pathloss
 --------
 
-- Updated pathloss calculations for fixed slit mode to use the appropriate 
+- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate 
   wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
   zero-point corrections for point sources have been applied. [#8376]
 
