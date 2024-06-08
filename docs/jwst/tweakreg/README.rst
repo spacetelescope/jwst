@@ -393,7 +393,7 @@ Parameters used for absolute astrometry to a reference catalog.
   that apply to ``fitgeometry`` also apply to ``abs_fitgeometry``.
 
 * ``abs_nclip``: A non-negative integer number of clipping iterations
-  to use in the fit. (Default = 3)
+  to use in the fit. (Default=3)
 
 * ``abs_sigma``: A positive `float` indicating the clipping limit, in sigma
   units, used when performing fit. (Default=3.0)
@@ -401,6 +401,32 @@ Parameters used for absolute astrometry to a reference catalog.
 * ``save_abs_catalog``: A boolean specifying whether or not to write out the
   astrometric catalog used for the fit as a separate product. (Default=False)
 
+**SIP approximation parameters:**
+
+Parameters used to provide a SIP-based approximation to the WCS,
+for FITS display. These parameter values should match the ones used
+in the ``assign_wcs`` step.
+
+* ``sip_approx``: A boolean flag to enable the computation of a SIP
+  approximation. (Default=True)
+
+* ``sip_degree``: A positive `int`, specifying the polynomial degree for
+  the forward SIP fit. `None` uses the best fit; the maximum value allowed
+  is 6. (Default=None)
+
+* ``sip_max_pix_error``: A positive `float`, specifying the maximum
+  error for the SIP forward fit, in units of pixels. Ignored if
+  ``sip_degree`` is set to an explicit value. (Default=0.01)
+
+* ``sip_inv_degree``: A positive `int`, specifying the polynomial degree for
+  the inverse SIP fit. `None` uses the best fit; the maximum value allowed
+  is 6. (Default=None)
+
+* ``sip_max_inv_pix_error``: A positive `float`, specifying the maximum
+  error for the SIP inverse fit, in units of pixels. Ignored if
+  ``sip_inv_degree`` is set to an explicit value. (Default=0.01)
+
+* ``sip_npoints``: Number of points for the SIP fit. (Default=12).
 
 Further Documentation
 ---------------------

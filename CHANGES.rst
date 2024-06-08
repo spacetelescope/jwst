@@ -24,6 +24,9 @@ assign_wcs
   data file to properly handle background and virtual slits, and assign appropriate
   meta data to them for use downstream. [#8442, #8533]
 
+- Update default parameters to increase the accuracy of the SIP approximation
+  in the output FITS WCS. [#8529]
+
 associations
 ------------
 
@@ -252,7 +255,10 @@ tweakreg
 - Improve error handling in the absolute alignment. [#8450, #8477]
 
 - Change code default to use IRAF StarFinder instead of
-  DAO StarFinder [#8487]
+  DAO StarFinder. [#8487]
+
+- Add new step parameters to control SIP approximation in the output FITS WCS,
+  matching the default values used in the ``assign_wcs`` step. [#8529]
 
 - Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
   that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
