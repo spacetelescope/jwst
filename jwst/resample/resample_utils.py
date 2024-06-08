@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 from astropy import units as u
 from astropy import wcs as fitswcs
+from astropy.modeling import Model
 import gwcs
 
 from stdatamodels.dqflags import interpret_bit_flags
