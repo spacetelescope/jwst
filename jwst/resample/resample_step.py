@@ -85,7 +85,7 @@ class ResampleStep(Step):
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
 
         # Setup drizzle-related parameters
-        kwargs = self.get_drizpars(input_models)
+        kwargs = self.get_drizpars()
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
@@ -161,7 +161,7 @@ class ResampleStep(Step):
 
         return wcs
 
-    def get_drizpars(self, input_models):
+    def get_drizpars(self):
         """
         Load all drizzle-related parameter values into kwargs list.
         """

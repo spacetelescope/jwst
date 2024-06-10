@@ -63,7 +63,7 @@ class ResampleSpecStep(ResampleStep):
             self.blendheaders = False
 
         # Setup drizzle-related parameters
-        kwargs = self.get_drizpars(input_models)
+        kwargs = self.get_drizpars()
         kwargs['output'] = output
         self.drizpars = kwargs
 
