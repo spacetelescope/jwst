@@ -84,9 +84,9 @@ conversion factor. If the time-dependent coefficients are present in the
 reference file, the photom step will apply the correction based on the
 observation date of the exposure being processed.
 
-NIRSpec Fixed-Slit Primary Slit
+NIRSpec Fixed Slit Primary Slit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The primary slit in a NIRSpec fixed-slit exposure receives special handling.
+The primary slit in a NIRSpec fixed slit exposure receives special handling.
 If the primary slit, as given by the "FXD_SLIT" keyword value, contains a
 point source, as given by the "SRCTYPE" keyword, it is necessary to know the
 photometric conversion factors for both a point source and a uniform source
@@ -96,7 +96,7 @@ is applied to the slit data, but that correction is not appropriate for the
 background signal contained in the slit, and hence corrections must be
 applied later in the :ref:`master background <master_background_step>` step.
 
-So in this case the `photom` step will compute 2D arrays of conversion
+In this case, the `photom` step will compute 2D arrays of conversion
 factors that are appropriate for a uniform source and for a point source,
 and store those correction factors in the "PHOTOM_UN" and "PHOTOM_PS"
 extensions, respectively, of the output data product. The point source
@@ -105,7 +105,7 @@ correction array is also applied to the slit data.
 Note that this special handling is only needed when the slit contains a
 point source, because in that case corrections to the wavelength grid are
 applied by the :ref:`wavecorr <wavecorr_step>` step to account for any
-source mis-centering in the slit and the photometric conversion factors are
+source offsets in the slit and the photometric conversion factors are
 wavelength-dependent. A uniform source does not require wavelength corrections
 and hence the photometric conversions will differ for point and uniform
 sources. Any secondary slits that may be included in a fixed-slit exposure

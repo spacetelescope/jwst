@@ -295,9 +295,9 @@ source centering within the slit, hence slits containing uniform sources receive
 the same flat-field and photometric calibrations as background spectra and
 therefore don't require corrections for those two calibrations. Furthermore, the
 source position in the slit is only known for the primary slit in an exposure, so
-secondary slits are always handled as extended sources, and no wavelength correction is
-applied, and therefore again the flat-field and photometric calibrations are
-the same as for background spectra.
+secondary slits are always handled as extended sources, no wavelength correction is
+applied, and therefore again the flat-field, photometric, and pathloss calibrations
+are the same as for background spectra.
 
 Fixed slits planned as part of a combined MOS and FS observation are an
 exception to this rule.  These targets may each be identified as
@@ -306,7 +306,7 @@ point sources, with location information for each given in the
 this way are treated in the same manner as the primary fixed slit in standard
 FS observations.
 
-Therefore if a fixed slit contains a point source (as given by the SRCTYPE keyword)
+Therefore, if a fixed slit contains a point source (as given by the SRCTYPE keyword)
 the corrections that need to be applied to the 2-D master background for that slit are:
 
 .. math::

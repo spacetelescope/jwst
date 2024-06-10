@@ -104,7 +104,7 @@ is applied to the slit data, but that correction is not appropriate for the
 background signal contained in the slit, and hence corrections must be
 applied later in the :ref:`master background <master_background_step>` step.
 
-So in this case the `flatfield` step will compute 2D arrays of conversion
+In this case, the `flatfield` step will compute 2D arrays of conversion
 factors that are appropriate for a uniform source and for a point source,
 and store those correction factors in the "FLATFIELD_UN" and "FLATFIELD_PS"
 extensions, respectively, of the output data product. The point source
@@ -118,7 +118,7 @@ wavelength-dependent. A uniform source does not require wavelength corrections
 and hence the flatfield conversions will differ for point and uniform
 sources. Any secondary slits that may be included in a fixed slit exposure
 do not have source centering information available, so the
-:ref:`wavecorr <wavecorr_step>` step is not applied, and hence there's no
+:ref:`wavecorr <wavecorr_step>` step is not applied, and there is no
 difference between the point source and uniform source flatfield
 conversions for those slits.
 

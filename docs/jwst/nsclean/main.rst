@@ -103,6 +103,10 @@ processing MOS and IFU images. The masked region is currently hardwired
 in the step to image indexes [1:2048, 923:1116], where the indexes are
 in x, y order and in 1-indexed values.
 
+Note, however, that it is possible to plan one or more fixed slit targets
+alongside MSA slitlets in MOS observations. In this situation, the fixed
+slit region is not automatically masked.
+
 Left/Right Reference Pixel Columns
 ----------------------------------
 Full-frame images contain 4 columns of reference pixels on the left and
