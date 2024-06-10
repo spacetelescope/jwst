@@ -331,10 +331,10 @@ def _is_msa_fixed_slit(slit):
         A slit object.
     """
     # Fixed slits defined via MSA files in  MOS/FS combination
-    # processing will have a non-empty shutter state
-    if (not hasattr(slit, 'shutter_state')
-            or slit.shutter_state is None
-            or slit.shutter_state == ""):
+    # processing will have a non-empty source name
+    if (not hasattr(slit, 'source_name')
+            or slit.source_name is None
+            or slit.source_name == ""):
         return False
     else:
         return True
