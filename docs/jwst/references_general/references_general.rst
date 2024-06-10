@@ -150,8 +150,6 @@ documentation on each reference file.
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`refpix <refpix_step>`                   | :ref:`REFPIX <refpix_reffile>`                   |
 +-----------------------------------------------+--------------------------------------------------+
-| :ref:`resample <resample_step>`               | :ref:`DRIZPARS <drizpars_reffile>`               |
-+-----------------------------------------------+--------------------------------------------------+
 | :ref:`reset <reset_step>`                     | :ref:`RESET <reset_reffile>`                     |
 +-----------------------------------------------+--------------------------------------------------+
 | :ref:`residual_fringe <residual_fringe_step>` | :ref:`FRINGEFREQ <fringefreq_reffile>`           |
@@ -203,8 +201,6 @@ documentation on each reference file.
 | :ref:`DISPERSER <disperser_reffile>`             | :ref:`assign_wcs <assign_wcs_step>`           |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`DISTORTION <distortion_reffile>`           | :ref:`assign_wcs <assign_wcs_step>`           |
-+--------------------------------------------------+-----------------------------------------------+
-| :ref:`DRIZPARS <drizpars_reffile>`               | :ref:`resample <resample_step>`               |
 +--------------------------------------------------+-----------------------------------------------+
 | :ref:`EMICORR <emicorr_reffile>`                 | :ref:`emicorr <emicorr_step>`                 |
 +--------------------------------------------------+-----------------------------------------------+
