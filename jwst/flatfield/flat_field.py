@@ -6,12 +6,11 @@ import logging
 import math
 
 import numpy as np
-from gwcs.wcstools import grid_from_bounding_box
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from ..lib import reffile_utils
+from ..lib import reffile_utils, wcs_utils
 from ..assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
@@ -1923,59 +1922,11 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     # Get the wavelength at each pixel in the extracted slit data.
     # If the wavelength attribute exists and is populated, use it
     # in preference to the wavelengths returned by the wcs function.
-    got_wl_attribute = True
-    try:
-        wl = slit.wavelength.copy()  # a 2-D array
-    except AttributeError:
-        got_wl_attribute = False
-    if not got_wl_attribute or len(wl) == 0:
-        got_wl_attribute = False
-    return_dummy = False
 
-    # Has the use_wavecorr param been set?
-    if use_wavecorr is not None:
-        if use_wavecorr:
-            # Need to use the 2D wavelength array, because that's where
-            # the corrected wavelengths are stored
-            if got_wl_attribute:
-                # We've got the "wl" wavelength array we need
-                pass
-            else:
-                # Can't do the computation without the 2D wavelength array
-                log.error(f"The wavelength array for slit {slit.name} is not populated")
-                log.error("Skipping flat-field correction")
-                return_dummy = True
-        elif not use_wavecorr:
-            # Need to use the WCS object to create an uncorrected 2D wavelength array
-            if got_wcs:
-                log.info(f"Creating wavelength array from WCS for slit {slit.name}")
-                bb = slit.meta.wcs.bounding_box
-                grid = grid_from_bounding_box(bb)
-                wl = slit.meta.wcs(*grid)[2]
-                del grid
-            else:
-                # Can't create the uncorrected wavelengths without the WCS
-                log.error(f"Slit {slit.name} has no WCS object")
-                log.error("Skipping flat-field correction")
-                return_dummy = True
-    else:
-        # use_wavecorr was not specified, so use default processing
-        if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
-            got_wl_attribute = False
-            log.warning(f"The wavelength array for slit {slit.name} has not been populated")
-            # Try to create it from the WCS
-            if got_wcs:
-                bb = slit.meta.wcs.bounding_box
-                grid = grid_from_bounding_box(bb)
-                wl = slit.meta.wcs(*grid)[2]
-                del grid
-            else:
-                log.warning("and this slit does not have a 'wcs' attribute")
-                log.warning("likely because assign_wcs has not been run.")
-                log.error("skipping ...")
-                return_dummy = True
-        else:
-            log.debug("Wavelengths are from the wavelength array.")
+    return_dummy = False
+    wl = wcs_utils.get_wavelengths(slit, use_wavecorr=use_wavecorr)
+    if wl is None:
+        return_dummy = True
 
     # Create and return a dummy flat as a placeholder, if necessary
     if return_dummy:

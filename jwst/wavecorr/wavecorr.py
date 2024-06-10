@@ -30,6 +30,10 @@ Both ways give the same result, the current code uses the first one.
 import logging
 import numpy as np
 from gwcs import wcstools
+from gwcs import coordinate_frames as cf
+from astropy import units as u
+from astropy.modeling import tabular
+from astropy.modeling.mappings import Identity
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
@@ -89,8 +93,15 @@ def do_correction(input_model, wavecorr_file):
                             log.warning('Skipping wavecorr correction')
                             input_model.meta.cal_step.wavecorr = 'SKIPPED'
                             continue
-                    apply_zero_point_correction(slit, wavecorr_file)
-                    corrected = True
+                    completed = apply_zero_point_correction(slit, wavecorr_file)
+                    if completed:
+                        corrected = True
+                        slit.meta.cal_step.wavecorr = 'COMPLETE'
+                    else:  # pragma: no cover
+                        log.warning(f'Corrections are not invertible for slit {slit.name}')
+                        log.warning('Skipping wavecorr correction')
+                        slit.meta.cal_step.wavecorr = 'SKIPPED'
+
             if corrected:
                 output_model.meta.cal_step.wavecorr = 'COMPLETE'
             else:
@@ -100,8 +111,21 @@ def do_correction(input_model, wavecorr_file):
         else:
             for slit in output_model.slits:
                 if _is_point_source(slit, exp_type):
-                    apply_zero_point_correction(slit, wavecorr_file)
-                    output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                    completed = apply_zero_point_correction(slit, wavecorr_file)
+                    if completed:
+                        slit.meta.cal_step.wavecorr = 'COMPLETE'
+                        corrected = True
+                    else: # pragma: no cover
+                        log.warning(f'Corrections are not invertible for slit {slit.name}')
+                        log.warning('Skipping wavecorr correction')
+                        slit.meta.cal_step.wavecorr = 'SKIPPED'
+                else:
+                    slit.meta.cal_step.wavecorr = 'SKIPPED'
+
+            if corrected:
+                output_model.meta.cal_step.wavecorr = 'COMPLETE'
+            else:
+                output_model.meta.cal_step.wavecorr = 'SKIPPED'
 
     return output_model
 
@@ -115,8 +139,14 @@ def apply_zero_point_correction(slit, reffile):
         Slit data to be corrected.
     reffile : str
         The ``wavecorr`` reference file.
+        
+    Returns
+    -------
+    completed : bool
+        A flag to report whether the zero-point correction was added or skipped.
     """
     log.info(f'slit name {slit.name}')
+    slit_wcs = slit.meta.wcs
 
     # Get the source position in the slit and set the aperture name
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
@@ -135,67 +165,106 @@ def apply_zero_point_correction(slit, reffile):
         # For the MSA the aperture name is "MOS"
         aperture_name = "MOS"
 
-    lam = slit.wavelength.copy()
+    lam = slit.wavelength.copy() * 1e-6
     dispersion = compute_dispersion(slit.meta.wcs)
-    corr, dq_lam = compute_zero_point_correction(lam, reffile, source_xpos,
-                                                 aperture_name, dispersion)
-    # TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
-    # The only purpose of dq_lam is to set that flag.
 
-    # Wavelength is in um, the correction is computed in meters.
-    slit.wavelength = slit.wavelength - corr * 10 ** 6
+    wave2wavecorr = calculate_wavelength_correction_transform(
+        lam, dispersion, reffile, source_xpos, aperture_name)
 
+    # wave2wavecorr should not be None for real data
+    if wave2wavecorr is None: # pragma: no cover
+        completed = False
+        return completed
+    else:        
+        # Make a new frame to insert into the slit wcs object
+        slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), 
+                                  unit=("", ""), axes_names=('x_slit', 'y_slit'))
+        spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                                axes_names=('wavelength',))
+        wcorr_frame = cf.CompositeFrame(
+            [slit_spatial, spec], name='wavecorr_frame')
+        
+        # Insert the new transform into the slit wcs object
+        wave2wavecorr = Identity(2) & wave2wavecorr
+        slit_wcs.insert_frame('slit_frame', wave2wavecorr, wcorr_frame)
+        
+        # Update the stored wavelengths for the slit
+        slit.wavelength = compute_wavelength(slit_wcs)
+        
+        completed = True
+        return completed
+    
 
-def compute_zero_point_correction(lam, freference, source_xpos,
-                                  aperture_name, dispersion):
-    """ Compute the NIRSpec wavelength zero-point correction.
+def calculate_wavelength_correction_transform(lam, dispersion, freference, 
+                                              source_xpos, aperture_name):
+    """ Generate a WCS transform for the NIRSpec wavelength zero-point correction
+    and add it to the WCS for each slit.
 
     Parameters
     ----------
     lam : ndarray
-        Wavelength array.
+        Wavelength array [in m].
+    dispersion : ndarray
+        The pixel dispersion [in m].
     freference : str
         ``wavecorr`` reference file name.
     source_xpos : float
         X position of the source as a fraction of the slit size.
     aperture_name : str
         Aperture name.
-    dispersion : ndarray
-        The pixel dispersion [in m].
-
+        
     Returns
     -------
-    lambda_corr : ndarray
-        Wavelength correction.
-    lam : ndarray
-        Interpolated wavelengths. Extrapolated values are reset to 0.
-        This is returned so that the DQ array can be updated with a flag
-        which indicates that no zero-point correction was done.
+    model : `~astropy.modeling.tabular.Tabular1D`or None
+        A model which takes wavelength inputs and returns zero-point
+        corrected wavelengths.  Returns None if an invertible model
+        cannot be generated.
     """
+    # Open the zero point reference model
     with datamodels.WaveCorrModel(freference) as wavecorr:
         for ap in wavecorr.apertures:
             if ap.aperture_name == aperture_name:
                 log.info(f'Using wavelength zero-point correction for aperture {ap.aperture_name}')
                 offset_model = ap.zero_point_offset.copy()
-                # TODO: implement variance
-                # variance = ap.variance.copy()
-                # width = ap.width
                 break
         else:
             log.info(f'No wavelength zero-point correction found for slit {aperture_name}')
-
-    deltax = source_xpos
-    lam = lam.copy()
-    lam_no_nans = lam[~np.isnan(lam)]
+        
+    # Set lookup table to extrapolate at bounds to recover wavelengths
+    # beyond model bounds, particularly for the red and blue ends of
+    # prism observations.  fill_value = None sets the lookup tables
+    # to use the default extrapolation which is a linear extrapolation
+    # from scipy.interpolate.interpn
     offset_model.bounds_error = False
-    correction = offset_model(lam_no_nans * 10 ** -6, [deltax] * lam_no_nans.size)
-    lam[~np.isnan(lam)] = correction
-
-    # The correction for pixels outside the slit and wavelengths
-    # outside the wave_range is 0.
-    lam[np.isnan(lam)] = 0.
-    lambda_cor = dispersion * lam
-    return lambda_cor, lam
+    offset_model.fill_value = None
+        
+    # Average the wavelength and dispersion across 2D extracted slit and remove nans
+    # So that we have a 1D wavelength array for building a 1D lookup table wcs transform
+    lam_mean = np.nanmean(lam, axis=0)
+    disp_mean = np.nanmean(dispersion, axis=0)
+    nan_lams = np.isnan(lam_mean) | np.isnan(disp_mean)
+    lam_mean = lam_mean[~nan_lams]
+    disp_mean = disp_mean[~nan_lams]
+    
+    # Calculate the corrected wavelengths
+    pixel_corrections = offset_model(lam_mean, source_xpos)
+    lam_corrected = lam_mean + (pixel_corrections * disp_mean)
+    
+    # Check to make sure that the corrected wavelengths are monotonically increasing
+    if np.all(np.diff(lam_corrected) > 0):
+        # monotonically increasing        
+        # Build a look up table to transform between corrected and uncorrected wavelengths
+        wave2wavecorr = tabular.Tabular1D(points=lam_mean, 
+                                          lookup_table=lam_corrected, 
+                                          bounds_error=False, 
+                                          fill_value=None, 
+                                          name='wave2wavecorr')
+    
+        return wave2wavecorr
+    
+    else:
+        # output wavelengths are not monotonically increasing
+        return None
 
 
 def compute_dispersion(wcs, xpix=None, ypix=None):
@@ -224,6 +293,32 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     _, _, lamright = wcs(xright, ypix)
     _, _, lamleft = wcs(xleft, ypix)
     return (lamright - lamleft) * 10 ** -6
+
+
+def compute_wavelength(wcs, xpix=None, ypix=None):
+    """ Compute the pixel wavelength.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.wcs.WCS`
+        The WCS object for this slit.
+    xpix : ndarray, float, optional
+    ypix : ndarray, float, optional
+        Compute the wavelength at the x, y pixels.
+        If not provided the dispersion is computed on a
+        grid based on ``wcs.bounding_box``.
+
+    Returns
+    -------
+    wavelength : ndarray
+        The wavelength [in microns].
+
+    """
+    if xpix is None or ypix is None:
+        xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
+        
+    _, _, lam = wcs(xpix, ypix)
+    return lam
 
 
 def _is_msa_fixed_slit(slit):
