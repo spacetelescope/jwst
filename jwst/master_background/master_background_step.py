@@ -236,48 +236,29 @@ def copy_background_to_surf_bright(spectrum):
         spec.spec_table['BKGD_ERROR'][:] = 0.
 
 
-def split_container(container: ModelContainer, fields=['science', 'background']):
-    """
-    Divide a ModelContainer with multiple exposure types, e.g.
-    science, background, and selfcal members, into separate containers.
-    Similar to, but distinct from, the split_container
-    method in MasterBackgroundStep, because this method
-    includes selfcal member handling.
-
-    Parameters
-    ----------
-    container: ModelContainer
-        The input container
-
-    fields: list, optional.
-        The list of exposure type strings to split the container into. Default 
-        is ['science', 'background'].
-
-    Returns
-    -------
-    container_list: list
-        List of ModelContainers, one for each field.
+def split_container(container):
+    """Divide a ModelContainer with science and background into one of each
     """
     asn = container.meta.asn_table.instance
 
-    container_list = []
-    for field in fields:
-        sub_container = ModelContainer()
-        for ind_field in container.ind_asn_type(field):
-            sub_container.append(container._models[ind_field])
+    background = ModelContainer()
+    science = ModelContainer()
 
-        # Pass along the association table to the output container
-        if field == "science":
-            sub_container.meta.asn_table = {}
-            sub_container.asn_pool_name = container.asn_pool_name
-            sub_container.asn_table_name = container.asn_table_name
-            merge_tree(sub_container.meta.asn_table.instance, asn)
-            # Prune the non-science members from the table
-            for p in sub_container.meta.asn_table.instance['products']:
-                p['members'] = [m for m in p['members'] if m['exptype'].lower() == 'science']
-        container_list.append(sub_container)
-    
-    return container_list
+    for ind_science in container.ind_asn_type('science'):
+        science.append(container._models[ind_science])
+
+    for ind_bkgd in container.ind_asn_type('background'):
+        background.append(container._models[ind_bkgd])
+
+    # Pass along the association table to the output science container
+    science.meta.asn_table = {}
+    science.asn_pool_name = container.asn_pool_name
+    science.asn_table_name = container.asn_table_name
+    merge_tree(science.meta.asn_table.instance, asn)
+    # Prune the background members from the table
+    for p in science.meta.asn_table.instance['products']:
+        p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
+    return science, background
 
 
 def subtract_2d_background(source, background):

@@ -6,7 +6,8 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 
 
 def badpix_selfcal(minimg: np.ndarray,
-                   flagfrac: float = 0.001,
+                   flagfrac_lower: float = 0.001,
+                   flagfrac_upper: float = 0.001,
                    kernel_size: int = 15,
                    dispaxis=None) -> np.ndarray:
     """
@@ -18,8 +19,10 @@ def badpix_selfcal(minimg: np.ndarray,
         Selfcal data of shape (x, y), i.e., after some operation has
         already been taken to combine multiple exposures,
         typically a MIN operation.
-    flagfrac: float
-        Fraction of pixels to flag on each of low and high end
+    flagfrac_lower: float
+        Fraction of pixels to flag on the low end
+    flagfrac_upper: float
+        Fraction of pixels to flag on the high end
     kernel_size: int
         Size of kernel for median filter
     dispaxis: int
@@ -32,9 +35,11 @@ def badpix_selfcal(minimg: np.ndarray,
         Indices of the flagged pixels,
         shaped like output from np.where
     """
-    if flagfrac < 0 or flagfrac >= 0.5:
-        raise ValueError("flagfrac must be between 0 and 0.5. \
-                        Note this fraction will be flagged on both high and low ends.")
+    if (flagfrac_lower < 0) or (flagfrac_upper < 0):
+        raise ValueError("Flagged fraction must be between 0 and 0.5")
+    if flagfrac_lower + flagfrac_upper >= 1:
+        raise ValueError("Total flagged fraction (lower plus upper) must be less than 1")
+
     if dispaxis not in [1, 2, None]:
         raise ValueError("dispaxis must be either 1 or 2, or None.")
 
@@ -51,7 +56,7 @@ def badpix_selfcal(minimg: np.ndarray,
     minimg_hpf = minimg - smoothed
 
     # Flag outliers using percentile cutoff
-    flag_low, flag_high = np.nanpercentile(minimg_hpf, [flagfrac * 100, (1 - flagfrac) * 100])
+    flag_low, flag_high = np.nanpercentile(minimg_hpf, [flagfrac_lower * 100, (1 - flagfrac_upper) * 100])
     bad = (minimg_hpf > flag_high) | (minimg_hpf < flag_low)
     flagged_indices = np.where(bad)
 
@@ -77,7 +82,7 @@ def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> d
         Flagged data model
     """
 
-    input_model.dq[flagged_indices] = pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
+    input_model.dq[flagged_indices] += pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
 
     input_model.data[flagged_indices] = np.nan
     input_model.err[flagged_indices] = np.nan

@@ -245,17 +245,20 @@ class Spec2Pipeline(Pipeline):
                         raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input:
-
         # self-calibrate bad/warm pixels, and apply to both background and science
         # skipped by default for all modes
-        result = self.badpix_selfcal(calibrated, members_by_type['background'])
-        if isinstance(result, tuple):
-            # if step actually occurs, then flagged backgrounds are also returned
-            calibrated, bkg_outlier_flagged = result[0], result[1:]
-            members_by_type['background'] = bkg_outlier_flagged
+        print(type(members_by_type['background']))
+        result = self.badpix_selfcal(
+            (calibrated, members_by_type['background'], members_by_type['selfcal']),
+            )
+        if len(result) == 1:
+            # if step is skipped, unchanged sci exposure is returned
+            calibrated = result[0]
         else:
-            # if step is skipped, result is just input
-            calibrated = result
+            # if step actually occurs, then flagged backgrounds are also returned
+            calibrated, bkg_outlier_flagged = result[0], result[1]
+            members_by_type['background'] = bkg_outlier_flagged
+        print(type(members_by_type['background']))
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)

@@ -1,24 +1,45 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-
-from jwst.badpix_selfcal import BadpixSelfcalStep
+from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline_background(rtdata_module):
 
     rtdata = rtdata_module
     rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_asn.json")
-    BadpixSelfcalStep.call(rtdata.input, skip=False, save_results=True, flagfrac=0.0005)
+    Step.from_cmdline(['calwebb_spec2', rtdata.input,
+                       "--steps.badpix_selfcal.save_results=True",
+                       "--steps.badpix_selfcal.flagfrac_lower=0.0005",
+                       "--steps.badpix_selfcal.skip=False"])
+    rtdata.output = "jw01204021001_02101_00004_mirifulong_0_badpix_selfcal.fits"
+    return rtdata
+
+
+@pytest.fixture(scope="module")
+def run_pipeline_selfcal(rtdata_module):
+    '''Identical pipeline run to above, but input asn sets all background exposures as `selfcal` type.
+    '''
+    rtdata = rtdata_module
+    rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_selfcal_asn.json")
+    Step.from_cmdline(['calwebb_spec2', rtdata.input,
+                       "--steps.badpix_selfcal.save_results=True",
+                       "--steps.badpix_selfcal.flagfrac_lower=0.0005",
+                       "--steps.badpix_selfcal.skip=False"])
+    rtdata.output = "jw01204021001_02101_00004_mirifulong_0_badpix_selfcal.fits"
+
     return rtdata
 
 
 @pytest.mark.bigdata
-def test_miri_mrs_badpix_selfcal(run_pipeline, fitsdiff_default_kwargs,):
+@pytest.mark.parametrize("run_pipeline", ["run_pipeline_background", "run_pipeline_selfcal"])
+def test_miri_mrs_badpix_selfcal(run_pipeline, fitsdiff_default_kwargs, request):
     """Run a test for MIRI MRS data with dedicated background exposures."""
 
-    rtdata = run_pipeline
-    rtdata.output = "jw01204-o021_20240127t024203_spec2_00010_asn_0_badpixselfcalstep.fits"
+    rtdata = request.getfixturevalue(run_pipeline)
+
+    import os
+    print(os.listdir("."))
 
     # Get the truth file
     rtdata.get_truth("truth/test_miri_mrs_badpix_selfcal/jw01204-o021_20240127t024203_spec2_00010_asn_0_badpixselfcalstep.fits")

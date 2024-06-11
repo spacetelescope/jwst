@@ -202,7 +202,7 @@ def test_background_flagger_mrs(background):
 
     # pass into the MRSBackgroundFlagger and check it found the right pixels
     flagfrac = 0.001
-    result = badpix_selfcal(bg, flagfrac=flagfrac)
+    result = badpix_selfcal(bg, flagfrac_lower=flagfrac, flagfrac_upper=flagfrac)
     result_tuples = [(i, j) for i, j in zip(*result)]
 
     # check that the hot pixels were among those flagged
@@ -248,10 +248,14 @@ def test_badpix_selfcal_step(request, dset):
 
     assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
     if dset == "sci":
-        assert len(result) == 1
+        assert len(result) == 2
+        assert len(result[0]) == 1
+        assert len(result[1]) == 0
     else:
-        # should return sci, bkg0, bkg1 but not selfcal0, selfcal1
-        assert len(result) == 3
+        # should return sci, (bkg0, bkg1) but not selfcal0, selfcal1
+        assert len(result) == 2
+        assert len(result[0]) == 1
+        assert len(result[1]) == 2
 
 
 def test_expected_fail_sci(sci):
