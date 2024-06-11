@@ -45,6 +45,10 @@ Once the 1-D correction arrays have been computed, both forms of the correction
 (point and uniform) are interpolated, as a function of wavelength, into
 the 2-D space of the slit or IFU data and attached to the output data model
 (extensions "PATHLOSS_PS" and "PATHLOSS_UN") as a record of what was computed.
+For fixed slit data, if the ``wavecorr`` step has been run to provide wavelength
+corrections to point sources, the corrected wavelengths will be used to
+calculate the point source pathloss, whereas the uncorrected wavelengths (appropriate 
+for uniform sources) will be used to calculate the uniform source pathlosses.
 The form of the 2-D correction (point or uniform) that's appropriate for the
 data is divided into the SCI and ERR arrays and propagated into the variance
 arrays of the science data.

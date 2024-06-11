@@ -57,6 +57,10 @@ that control the behavior of the processing:
 ``--backg`` (float, default=0.0)
   User-specified background value to apply to the median image.
 
+``--rolling_window_width`` (int, default=25)
+  Number of integrations over which to take the median when using rolling-window
+  median for TSO observations.
+
 ``--save_intermediate_results`` (boolean, default=False)
   Specifies whether or not to save any intermediate products created
   during step processing.

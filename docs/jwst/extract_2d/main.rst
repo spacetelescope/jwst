@@ -245,6 +245,13 @@ extension header of the input image. These values are used to set the source loc
 for all computations involving the extent of the spectral trace and pixel wavelength
 assignments.
 
+In rare cases, it may be desirable to shift the source location in the X-direction, e.g.
+for a custom noise suppression scheme. This is achieved in the APT by specifying an 
+offset special requirement, and shows up in the header keyword "XOFFSET". The 
+``extract_2d`` step accounts for this offset by simply shifting the wavelength array by
+the appropriate amount. The WCS information remains unchanged. Note that offsets in the 
+Y-direction (cross-dispersion direction) are not supported and should not be attempted.
+
 NIRCam subarrays used for TSGRISM observations always have their "bottom" edge located
 at the physical bottom edge of the detector and vary in size vertically.
 The source spectrum trace will always be centered somewhere near row 34 in the vertical

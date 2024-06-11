@@ -63,6 +63,10 @@ class ResampleSpecData(ResampleData):
         self.input_models = input_models
 
         self.output_filename = output
+        self.output_dir = None
+        if output is not None and '.fits' not in str(output):
+            self.output_dir = output
+            self.output_filename = None
         self.pscale_ratio = pscale_ratio
         self.pscale = pscale
         self.single = single
@@ -404,7 +408,7 @@ class ResampleSpecData(ResampleData):
                 undist2sky1 = tan | native2celestial
                 # Filter out RuntimeWarnings due to computed NaNs in the WCS
                 with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", RuntimeWarning) #was ignore. need to make more specific
+                    warnings.simplefilter("ignore", RuntimeWarning)  # was ignore. need to make more specific
                 # at this center of slit find x,y tangent projection - x_tan, y_tan
                 x_tan, y_tan = undist2sky1.inverse(ra, dec)
 
@@ -494,7 +498,7 @@ class ResampleSpecData(ResampleData):
         # mapping.inverse uses pix_to_ytan.inverse.  The auto definition
         # of mapping.inverse is to use the 2nd spatial coordinate, i.e. Dec.
 
-        swap_xy = np.isclose(pix_to_xtan.slope, 0, atol=1e-8)
+        swap_xy = abs(pix_to_xtan.slope) < abs(pix_to_ytan.slope)
         if swap_xy:
             # Account for vertical or horizontal dispersion on detector
             mapping.inverse = Mapping((2, 1) if spatial_axis else (1, 2))

@@ -45,7 +45,7 @@ class ResampleStep(Step):
     spec = """
         pixfrac = float(default=1.0) # change back to None when drizpar reference files are updated
         kernel = string(default='square') # change back to None when drizpar reference files are updated
-        fillval = string(default='INDEF' ) # change back to None when drizpar reference files are updated
+        fillval = string(default='NAN' )
         weight_type = option('ivm', 'exptime', None, default='ivm')  # change back to None when drizpar ref update
         output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
         crpix = float_list(min=2, max=2, default=None)
@@ -102,11 +102,6 @@ class ResampleStep(Step):
             kwargs = self.get_drizpars(ref_filename, input_models)
 
         kwargs['allowed_memory'] = self.allowed_memory
-
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
 
         # Custom output WCS parameters.
         # Modify get_drizpars if any of these get into reference files:
@@ -304,7 +299,7 @@ class ResampleStep(Step):
         if self.kernel is None:
             self.kernel = 'square'
         if self.fillval is None:
-            self.fillval = 'INDEF'
+            self.fillval = 'NAN'
         # Force definition of good bits
         kwargs['good_bits'] = GOOD_BITS
         kwargs['pixfrac'] = self.pixfrac
