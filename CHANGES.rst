@@ -24,6 +24,9 @@ assign_wcs
   data file to properly handle background and virtual slits, and assign appropriate
   meta data to them for use downstream. [#8442, #8533]
 
+- Update default parameters to increase the accuracy of the SIP approximation
+  in the output FITS WCS. [#8529]
+
 associations
 ------------
 
@@ -110,6 +113,9 @@ flat_field
 - Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
   DO_NOT_USE flag is set in the DQ array. [#8463]
 
+- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr`` 
+  wavelength zero-point corrections for point sources.  [#8376]
+
 general
 -------
 
@@ -117,6 +123,13 @@ general
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 - Increase minimum required scipy. [#8441]
+
+lib
+---
+
+- Updated the ``wcs_utils.get_wavelength`` to use the new format
+  of the ``wavecorr`` wavelength zero-point corrections for point 
+  sources in NIRSpec slit data. [#8376]
 
 master_background_mos
 ---------------------
@@ -150,6 +163,13 @@ outlier_detection
 - Added the option to use a rolling median instead of a simple median
   to detect outliers in TSO data, with user-defined
   rolling window width via the ``rolling_window_width`` parameter. [#8473]
+
+pathloss
+--------
+
+- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate 
+  wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
+  zero-point corrections for point sources have been applied. [#8376]
 
 photom
 ------
@@ -237,13 +257,22 @@ tweakreg
 - Improve error handling in the absolute alignment. [#8450, #8477]
 
 - Change code default to use IRAF StarFinder instead of
-  DAO StarFinder [#8487]
+  DAO StarFinder. [#8487]
+
+- Add new step parameters to control SIP approximation in the output FITS WCS,
+  matching the default values used in the ``assign_wcs`` step. [#8529]
 
 - Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
   that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
   message and skip ``tweakreg`` step when this condition is not satisfied and
   source confusion is possible during catalog matching. [#8476]
 
+wavecorr
+--------
+
+- Changed the NIRSpec wavelength correction algorithm to include it in slit WCS
+  models and resampling.  Fixed the sign of the wavelength corrections. [#8376]
+  
 wfss_contam
 -----------
 
