@@ -1,5 +1,3 @@
 Reference File
 ==============
-The ``resample`` step uses the DRIZPARS reference file.
-
-.. include:: ../references_general/drizpars_reffile.inc
+The ``resample`` step does not use any reference files.
