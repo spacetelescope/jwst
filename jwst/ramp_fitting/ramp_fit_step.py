@@ -385,7 +385,7 @@ class RampFitStep(Step):
     class_alias = "ramp_fit"
 
     spec = """
-        algorithm = option('OLS', 'OLS_C', default='OLS') # Can be 'OLS_C' to select the C extension
+        algorithm = option('OLS', 'OLS_C', default='OLS_C') # Can be 'OLS_C' to select the C extension
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
