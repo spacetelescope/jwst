@@ -134,6 +134,9 @@ class NSClean:
             
             # Get data and weights for this line
             d = data[y][self.mask[y]]  # unmasked (useable) data
+            # The line below uses a vector to represent a diagonal weight matrix.
+            # Multiplications by this vector later on may be viewed as
+            # equivalent formulations to multiplication by diag(p).
             p = self.P[y][self.mask[y]]  # Weights
 
             # If none of the pixels in this line is useable (all masked out),
