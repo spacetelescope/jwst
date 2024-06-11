@@ -137,7 +137,7 @@ master_background_mos
   "background". [#8533]
 
 nsclean
----------------------
+-------
 
 - Improved run time of NSClean.fit() by using a vector rather than a large,
   sparse matrix to perform linear algebra operations with a diagonal weight
