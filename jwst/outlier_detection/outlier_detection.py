@@ -568,7 +568,9 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
     log.debug("Sci shape: {}".format(blot_img.data.shape))
 
-    pix_ratio = 1
+    pix_ratio = np.sqrt(blot_img.meta.photometry.pixelarea_arcsecsq / \
+                        median_model.meta.photometry.pixelarea_arcsecsq)
+    #log.warning(f"Pixel area ratio: {pix_ratio:.6f}")
     log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
 
     outsci = np.zeros(blot_img.shape, dtype=np.float32)
