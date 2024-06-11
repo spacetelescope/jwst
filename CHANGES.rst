@@ -27,6 +27,9 @@ assign_wcs
 - Update default parameters to increase the accuracy of the SIP approximation
   in the output FITS WCS. [#8529]
 
+- Update MIRI LRS WCS code to introduce an intermediate alpha-beta slit reference frame
+  between pixel coordinates and the v2/v3 frame. [#8475]
+
 associations
 ------------
 
