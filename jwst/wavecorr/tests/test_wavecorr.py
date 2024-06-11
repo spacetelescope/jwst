@@ -7,6 +7,7 @@ from gwcs import wcstools
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models
+from stpipe.crds_client import reference_uri_to_cache_path
 
 import jwst
 from jwst.assign_wcs import AssignWcsStep
@@ -59,7 +60,7 @@ def test_wavecorr():
     # test the round-tripping on the wavelength correction transform
     ref_name = im_wave.meta.ref_file.wavecorr.name
     freference = datamodels.WaveCorrModel(
-        WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+        reference_uri_to_cache_path(ref_name, im.crds_observatory))
 
     lam_uncorr = lam_before * 1e-6
     wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(
@@ -160,7 +161,7 @@ def test_skipped():
 
     ref_name = outw.meta.ref_file.wavecorr.name
     reffile = datamodels.WaveCorrModel(
-        WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+        reference_uri_to_cache_path(ref_name, im.crds_observatory))
     source_xpos = 0.1
     aperture_name = 'S200A1'
     
@@ -263,10 +264,10 @@ def test_wavecorr_fs():
 
     # test the round-tripping on the wavelength correction transform
     ref_name = result.meta.ref_file.wavecorr.name
-    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+    freference = datamodels.WaveCorrModel(reference_uri_to_cache_path(ref_name, im.crds_observatory))
 
     lam_uncorr = lam_before * 1e-6
-    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion,
                                                                        freference, slit.source_xpos, 'S200A1')
     lam_corr = wave2wavecorr(lam_uncorr)
     assert_allclose(lam_uncorr, wave2wavecorr.inverse(lam_corr))
