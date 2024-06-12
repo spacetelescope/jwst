@@ -75,8 +75,8 @@ class BadpixSelfcalStep(Step):
         # ensure that there are background exposures to use, otherwise skip the step
         # unless forced
         if (len(selfcal_list + bkg_list) == 0) and (not self.force_single):
-            log.warning("No selfcal or background exposures provided for self-calibration."
-                        "Skipping step. If you want to force self-calibration with the science"
+            log.warning("No selfcal or background exposures provided for self-calibration. "
+                        "Skipping step. If you want to force self-calibration with the science "
                         "exposure alone (generally not recommended), set force_single=True.")
             input_sci.meta.cal_step.badpix_selfcal = 'SKIPPED'
             return input_sci, bkg_list
@@ -85,7 +85,7 @@ class BadpixSelfcalStep(Step):
         try:
             dispaxis = input_sci.meta.wcsinfo.dispersion_direction
         except AttributeError:
-            log.warning("Dispersion axis not found in input science image metadata."
+            log.warning("Dispersion axis not found in input science image metadata. "
                         "Kernel for self-calibration will be two-dimensional.")
             dispaxis = None
 
@@ -154,7 +154,7 @@ def _parse_inputs(input, selfcal_list, bkg_list):
             bkg_list += list(bkg_list_asn)
 
             if len(sci_models) > 1:
-                raise ValueError("Input data contains multiple science exposures."
+                raise ValueError("Input data contains multiple science exposures. "
                                     "This is not supported in calwebb_spec2 steps.")
             input_sci = sci_models[0]
 
@@ -163,7 +163,7 @@ def _parse_inputs(input, selfcal_list, bkg_list):
             input_sci = input_data
 
         else:
-            raise TypeError("Input data is not a ModelContainer, ImageModel, or IFUImageModel."
+            raise TypeError("Input data is not a ModelContainer, ImageModel, or IFUImageModel. "
                             "Cannot continue.")
 
     return input_sci, selfcal_list, bkg_list
