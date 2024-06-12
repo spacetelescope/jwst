@@ -1,3 +1,4 @@
+import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
@@ -63,6 +64,7 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module):
         "calwebb_tso3",
         ASN3_FILENAME,
         "--steps.outlier_detection.save_results=true",
+        "--steps.outlier_detection.save_intermediate_results=true"
     ]
     Step.from_cmdline(args)
 
@@ -106,6 +108,9 @@ def test_miri_lrs_slitless_tso3(run_tso3_pipeline, rtdata_module,
                                 fitsdiff_default_kwargs, step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
+
+    median_filename = f"{DATASET1_ID}_{ASN_ID}_median.fits"
+    assert os.path.isfile(median_filename)
 
     output_filename = f"{DATASET1_ID}_{ASN_ID}_{step_suffix}.fits"
     rtdata.output = output_filename
