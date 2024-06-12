@@ -12,7 +12,7 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
-from jwst.resample.resample import _compute_image_pixel_area
+from jwst.resample.resample import compute_image_pixel_area
 from jwst.resample.resample_spec import ResampleSpecData
 
 
@@ -28,7 +28,7 @@ def _set_photom_kwd(im):
         bb = ((xmin - 0.5, xmax - 0.5), (ymin - 0.5, ymax - 0.5))
         im.meta.wcs.bounding_box = bb
 
-    mean_pixel_area = _compute_image_pixel_area(im.meta.wcs)
+    mean_pixel_area = compute_image_pixel_area(im.meta.wcs)
     if mean_pixel_area:
         im.meta.photometry.pixelarea_steradians = mean_pixel_area
         im.meta.photometry.pixelarea_arcsecsq = (

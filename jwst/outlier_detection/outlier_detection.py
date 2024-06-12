@@ -17,7 +17,7 @@ from jwst.datamodels import ModelContainer
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from jwst.stpipe import Step
-from jwst.resample.resample import _compute_image_pixel_area
+from jwst.resample.resample import compute_image_pixel_area
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -570,7 +570,7 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     log.debug("Sci shape: {}".format(blot_img.data.shape))
 
     input_pixflux_area = blot_img.meta.photometry.pixelarea_steradians
-    input_pixel_area = _compute_image_pixel_area(blot_img.meta.wcs)
+    input_pixel_area = compute_image_pixel_area(blot_img.meta.wcs)
     pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
     log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
 
