@@ -14,6 +14,7 @@ from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
+from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from jwst.stpipe import Step
@@ -405,6 +406,13 @@ class OutlierDetection:
             # Make sure actual input gets updated with new results
             for i in range(len(self.input_models)):
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
+
+            # Make sure all data arrays have matching NaNs and DQ flags
+            match_nans_and_flags(self.inputs)
+        else:
+            # Just match NaNs and DQ flags
+            for input_model in self.input_models:
+                match_nans_and_flags(input_model)
 
 
 def _remove_file(fn):

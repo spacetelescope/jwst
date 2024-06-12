@@ -4,10 +4,12 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
 from jwst.datamodels import ModelContainer
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.lib.wcs_utils import get_wavelengths
+
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
-from jwst.lib.wcs_utils import get_wavelengths
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
@@ -115,6 +117,10 @@ class ResampleSpecStep(ResampleStep):
         result.update(input_models[0])
 
         for container in containers.values():
+            # Make sure all input models have consistent NaN and DO_NOT_USE values
+            for model in container:
+                match_nans_and_flags(model)
+
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
             drizzled_models = resamp.do_drizzle()
@@ -147,9 +153,11 @@ class ResampleSpecStep(ResampleStep):
         result : `~jwst.datamodels.SlitModel`
             The resampled output
         """
+        # Make sure all input models have consistent NaN and DO_NOT_USE values
+        for model in input_models:
+            match_nans_and_flags(model)
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
-
         drizzled_models = resamp.do_drizzle()
 
         result = drizzled_models[0]

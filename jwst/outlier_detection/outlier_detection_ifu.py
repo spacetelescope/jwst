@@ -7,6 +7,8 @@ from skimage.util import view_as_windows
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
+
+from jwst.lib.pipe_utils import match_nans_and_flags
 from .outlier_detection import OutlierDetection
 
 log = logging.getLogger(__name__)
@@ -307,5 +309,10 @@ class OutlierDetectionIFU(OutlierDetection):
                 total_bad = num_above + nadditional
                 percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
                 log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
+
+                # Make sure all error and variance arrays also have matching
+                # NaNs and DQ flags
+                match_nans_and_flags(model)
+
                 # update model
                 self.input_models[i] = model
