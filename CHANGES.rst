@@ -14,6 +14,15 @@ cube_build
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  building a cube. [#8557]
+
+flat_field
+----------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
+  variance, and DQ extensions for all modes. [#8557]
+
 master_background
 -----------------
 
@@ -25,6 +34,33 @@ outlier_detection
 
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+pathloss
+--------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+photom
+------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+resample
+--------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
+
+resample_spec
+-------------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
 
 stpipe
 ------
