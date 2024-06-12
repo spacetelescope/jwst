@@ -249,12 +249,12 @@ def test_badpix_selfcal_step(request, dset):
     assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
     if dset == "sci":
         assert len(result) == 2
-        assert len(result[0]) == 1
+        assert isinstance(result[0], dm.IFUImageModel)
         assert len(result[1]) == 0
     else:
         # should return sci, (bkg0, bkg1) but not selfcal0, selfcal1
         assert len(result) == 2
-        assert len(result[0]) == 1
+        assert isinstance(result[0], dm.IFUImageModel)
         assert len(result[1]) == 2
 
 
