@@ -1,7 +1,47 @@
 1.15.1 (unreleased)
 ===================
 
--
+cube_build
+----------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  building a cube. [#8557]
+
+flat_field
+----------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
+  variance, and DQ extensions for all modes. [#8557]
+
+outlier_detection
+-----------------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+pathloss
+--------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+photom
+------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+resample
+--------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
+
+resample_spec
+-------------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
 
 1.15.0 (2024-06-26)
 ===================
