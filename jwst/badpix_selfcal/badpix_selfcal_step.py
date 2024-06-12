@@ -1,5 +1,6 @@
 
 
+import warnings
 from ..stpipe import Step
 from . import badpix_selfcal
 import numpy as np
@@ -64,7 +65,7 @@ class BadpixSelfcalStep(Step):
         are included in the MIN frame from which outliers are detected.
         If selfcal_list and/or bkg_list are specified manually, they are appended to any
         selfcal or background exposures found in the input association file.
-        If selfcal_list and bkg_list are both set to None and input is 
+        If selfcal_list and bkg_list are both set to None and input is
         a single science exposure, the step will be skipped with a warning unless
         the force_single parameter is set True.
         In that case, the input exposure will be used as the sole background exposure,
@@ -96,7 +97,9 @@ class BadpixSelfcalStep(Step):
         selfcal_3d = []
         for i, selfcal_model in enumerate(selfcal_list):
             selfcal_3d.append(selfcal_model.data)
-        minimg = np.nanmin(np.asarray(selfcal_3d), axis=0)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
+            minimg = np.nanmin(np.asarray(selfcal_3d), axis=0)
         bad_indices = badpix_selfcal.badpix_selfcal(minimg, self.flagfrac_lower, self.flagfrac_upper, self.kernel_size, dispaxis)
 
         # apply the flags to the science data
@@ -155,7 +158,7 @@ def _parse_inputs(input, selfcal_list, bkg_list):
 
             if len(sci_models) > 1:
                 raise ValueError("Input data contains multiple science exposures. "
-                                    "This is not supported in calwebb_spec2 steps.")
+                                 "This is not supported in calwebb_spec2 steps.")
             input_sci = sci_models[0]
 
         elif isinstance(input_data, dm.IFUImageModel) or isinstance(input_data, dm.ImageModel):

@@ -3,6 +3,7 @@ import numpy as np
 import jwst.datamodels as dm
 from jwst.outlier_detection.outlier_detection_ifu import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
+import warnings
 
 
 def badpix_selfcal(minimg: np.ndarray,
@@ -52,7 +53,9 @@ def badpix_selfcal(minimg: np.ndarray,
     elif dispaxis == 1:
         kern_size = (1, kernel_size)
 
-    smoothed = medfilt(minimg, kern_size)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
+        smoothed = medfilt(minimg, kern_size)
     minimg_hpf = minimg - smoothed
 
     # Flag outliers using percentile cutoff
@@ -82,7 +85,7 @@ def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> d
         Flagged data model
     """
 
-    input_model.dq[flagged_indices] += pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
+    input_model.dq[flagged_indices] |= pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
 
     input_model.data[flagged_indices] = np.nan
     input_model.err[flagged_indices] = np.nan
