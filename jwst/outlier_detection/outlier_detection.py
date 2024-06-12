@@ -569,9 +569,12 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
     log.debug("Sci shape: {}".format(blot_img.data.shape))
 
-    input_pixflux_area = blot_img.meta.photometry.pixelarea_steradians
-    input_pixel_area = compute_image_pixel_area(blot_img.meta.wcs)
-    pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
+    if 'SPECTRAL' not in blot_img.meta.wcs.output_frame.axes_type:
+        input_pixflux_area = blot_img.meta.photometry.pixelarea_steradians
+        input_pixel_area = compute_image_pixel_area(blot_img.meta.wcs)
+        pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
+    else:
+        pix_ratio = 1.0
     log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
 
     outsci = np.zeros(blot_img.shape, dtype=np.float32)
