@@ -43,8 +43,10 @@ the spectral axis. The algorithm proceeds as follows:
 * The difference between the original background image and the median-filtered background image
   is taken. The highest- and lowest-flux pixels in this difference image are
   flagged as bad pixels. The default fraction of pixels to flag is 0.1% of the total number of pixels
-  on each of the high-flux and low-flux ends of the distribution. This fraction can be adjusted
-  using the ``flagfrac`` parameter. The total fraction of flagged pixels is thus 2x ``flagfrac``.
+  on each of the high-flux and low-flux ends of the distribution. These fractions can be adjusted
+  using the ``flagfrac_lower`` and ``flagfrac_upper`` parameters for the low- and high-flux ends
+  of the distribution, respectively. The total fraction of flagged pixels is thus 
+  ``flagfrac_lower + flagfrac_upper``.
 * The bad pixels are flagged in the input data by setting the DQ flag to
   "OTHER_BAD_PIXEL" and "DO_NOT_USE".
 * The bad pixels are also flagged in each exposure with ``asn.exptype`` equal to ``background``,

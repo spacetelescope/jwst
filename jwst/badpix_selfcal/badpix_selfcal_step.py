@@ -35,7 +35,7 @@ class BadpixSelfcalStep(Step):
     skip = boolean(default=True)
     """
 
-    def process(self, input, selfcal_list=[]):
+    def process(self, input, selfcal_list=None, bkg_list=None):
         """
         Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
 
@@ -44,7 +44,13 @@ class BadpixSelfcalStep(Step):
         input: JWST data model or association
             input science data to be corrected, or tuple of (sci, bkg, selfcal)
 
-        selfcal_list: list of user-defined ImageModels or filenames to use for selfcal
+        selfcal_list: list of ImageModels or filenames, default None
+            exposures to include as part of median background model used to find bad pixels,
+            but that are not flagged and returned as background exposures
+
+        bkg_list: list of ImageModels or filenames, default None
+            exposures to include as part of median background model used to find bad pixels,
+            and that are flagged and returned as background exposures
 
         Returns
         -------
@@ -53,33 +59,34 @@ class BadpixSelfcalStep(Step):
 
         Notes
         -----
-        If selfcal_list is specified manually, it overrides any non-science exposures
-        in the association file.
-        If selfcal_list is set to None and an association file is read in, all exposures in the
+        If an association file is read in, all exposures in the
         association file, including science, background, and selfcal exposures,
         are included in the MIN frame from which outliers are detected.
-        If selfcal_list is set to None and input is a single science exposure, the step will
-        be skipped with a warning unless the force_single parameter is set True.
+        If selfcal_list and/or bkg_list are specified manually, they are appended to any
+        selfcal or background exposures found in the input association file.
+        If selfcal_list and bkg_list are both set to None and input is 
+        a single science exposure, the step will be skipped with a warning unless
+        the force_single parameter is set True.
         In that case, the input exposure will be used as the sole background exposure,
         i.e., true self-calibration.
         """
+        input_sci, selfcal_list, bkg_list = _parse_inputs(input, selfcal_list, bkg_list)
 
-        input_sci, selfcal_list, bkg_list_asn = _parse_inputs(input, selfcal_list)
         # ensure that there are background exposures to use, otherwise skip the step
         # unless forced
-        if (len(selfcal_list) == 0) and (not self.force_single):
-            log.warning("No selfcal or background exposures provided for self-calibration. \
-                        Skipping step. If you want to force self-calibration with the science \
-                        exposure alone (generally not recommended), set force_single=True.")
+        if (len(selfcal_list + bkg_list) == 0) and (not self.force_single):
+            log.warning("No selfcal or background exposures provided for self-calibration."
+                        "Skipping step. If you want to force self-calibration with the science"
+                        "exposure alone (generally not recommended), set force_single=True.")
             input_sci.meta.cal_step.badpix_selfcal = 'SKIPPED'
-            return input_sci, bkg_list_asn
+            return input_sci, bkg_list
 
         # get the dispersion axis
         try:
             dispaxis = input_sci.meta.wcsinfo.dispersion_direction
         except AttributeError:
-            log.warning("Dispersion axis not found in input science image metadata.\
-                        Kernel for self-calibration will be two-dimensional.")
+            log.warning("Dispersion axis not found in input science image metadata."
+                        "Kernel for self-calibration will be two-dimensional.")
             dispaxis = None
 
         # collapse all selfcal exposures into a single background model
@@ -96,15 +103,15 @@ class BadpixSelfcalStep(Step):
         input_sci = badpix_selfcal.apply_flags(input_sci, bad_indices)
 
         # apply the flags to the background data to be passed to background sub step
-        if len(bkg_list_asn) > 0:
-            for i, background_model in enumerate(bkg_list_asn):
-                bkg_list_asn[i] = badpix_selfcal.apply_flags(dm.open(background_model), bad_indices)
+        if len(bkg_list) > 0:
+            for i, background_model in enumerate(bkg_list):
+                bkg_list[i] = badpix_selfcal.apply_flags(dm.open(background_model), bad_indices)
 
         input_sci.meta.cal_step.badpix_selfcal = 'COMPLETE'
-        return input_sci, bkg_list_asn
+        return input_sci, bkg_list
 
 
-def _parse_inputs(input, selfcal_list):
+def _parse_inputs(input, selfcal_list, bkg_list):
     """
     Parse the input to the step. This is a helper function that is used in the
     command line interface to the step.
@@ -112,9 +119,15 @@ def _parse_inputs(input, selfcal_list):
     Parameters
     ----------
     input: str
-        input file or association, or tuple of (sci, bkg, selfcal)
+        input science exposure or association
 
-    selfcal_list: list of user-supplied ImageModels or filenames to use for selfcal
+    selfcal_list: list of ImageModels or filenames, default None
+        exposures to include as part of median background model used to find bad pixels,
+        but that are not flagged and returned as background exposures
+
+    bkg_list: list of ImageModels or filenames, default None
+        exposures to include as part of median background model used to find bad pixels,
+        and that are flagged and returned as background exposures
 
     Returns
     -------
@@ -123,44 +136,37 @@ def _parse_inputs(input, selfcal_list):
 
     selfcal_list: list of ImageModels or filenames to use for selfcal
     """
-    selfcal_list_user = selfcal_list
+    if selfcal_list is None:
+        selfcal_list = []
+    if bkg_list is None:
+        bkg_list = []
+    selfcal_list = selfcal_list + bkg_list
 
-    if isinstance(input, tuple):
-        input_sci = dm.open(input[0])
-        selfcal_list = list(input[1]) + list(input[2])
-        bkg_list_asn = input[1]
+    with dm.open(input) as input_data:
 
-    else:
-        with dm.open(input) as input_data:
+        # find science and background exposures in association file
+        if isinstance(input_data, dm.ModelContainer):
 
-            # find science and background exposures.
-            if isinstance(input_data, dm.ModelContainer):
+            sci_models, bkg_list_asn, selfcal_list_asn = split_container_by_asn_exptype(
+                input_data, exptypes=['science', 'background', 'selfcal'])
 
-                sci_models, bkg_list_asn, selfcal_list_asn = split_container_by_asn_exptype(
-                    input_data, exptypes=['science', 'background', 'selfcal'])
+            selfcal_list = selfcal_list + list(bkg_list_asn) + list(selfcal_list_asn)
+            bkg_list += list(bkg_list_asn)
 
-                selfcal_list = list(bkg_list_asn) + list(selfcal_list_asn)
+            if len(sci_models) > 1:
+                raise ValueError("Input data contains multiple science exposures."
+                                    "This is not supported in calwebb_spec2 steps.")
+            input_sci = sci_models[0]
 
-                if len(sci_models) > 1:
-                    raise ValueError("Input data contains multiple science exposures. \
-                                     This is not supported in calwebb_spec2 steps.")
-                input_sci = sci_models[0]
+        elif isinstance(input_data, dm.IFUImageModel) or isinstance(input_data, dm.ImageModel):
 
-            elif isinstance(input_data, dm.IFUImageModel) or isinstance(input_data, dm.ImageModel):
+            input_sci = input_data
 
-                input_sci = input_data
-                bkg_list_asn = []
+        else:
+            raise TypeError("Input data is not a ModelContainer, ImageModel, or IFUImageModel."
+                            "Cannot continue.")
 
-            else:
-                raise TypeError("Input data is not a ModelContainer, ImageModel, or IFUImageModel.\
-                                Cannot continue.")
-
-    if len(selfcal_list_user) > 0:
-        selfcal_list = selfcal_list_user
-        log.warning("selfcal_list provided directly as input, ignoring any other \
-                    input background and selfcal exposure types, from e.g. an input \
-                    association file")
-    return input_sci, selfcal_list, bkg_list_asn
+    return input_sci, selfcal_list, bkg_list
 
 
 def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list) -> list:

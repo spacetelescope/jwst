@@ -164,32 +164,40 @@ def test_input_parsing(asn, sci, background):
     """Test that the input parsing function correctly identifies the science,
     background, and selfcal exposures in the association file
     given association vs imagemodel inputs, and selfcal_list vs not
+
     Note that science exposure gets added to selfcal_list later, not in parse_inputs
     """
 
     # basic association case. Both background and selfcal get into the list
-    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(asn, [])
+    input_sci, selfcal_list, bkg_list = _parse_inputs(asn, [], [])
     assert isinstance(input_sci, dm.IFUImageModel)
-    assert len(bkg_list_asn) == 2
+    assert len(bkg_list) == 2
     assert len(selfcal_list) == 4
 
-    # association with selfcal_list provided
-    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(asn, [background,] * 3)
+    # association with background_list provided
+    input_sci, selfcal_list, bkg_list = _parse_inputs(asn, [], [background,] * 3)
     assert isinstance(input_sci, dm.IFUImageModel)
-    assert len(bkg_list_asn) == 2
-    assert len(selfcal_list) == 3
+    assert len(bkg_list) == 5
+    assert len(selfcal_list) == 7
+
+    # association with selfcal_list provided
+    input_sci, selfcal_list, bkg_list = _parse_inputs(asn, [background,] * 3, [])
+    assert isinstance(input_sci, dm.IFUImageModel)
+    assert len(bkg_list) == 2
+    assert len(selfcal_list) == 7
 
     # single science exposure
-    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(sci, [])
+    input_sci, selfcal_list, bkg_list = _parse_inputs(sci, [], [])
     assert isinstance(input_sci, dm.IFUImageModel)
-    assert len(bkg_list_asn) == 0
+    assert len(bkg_list) == 0
     assert len(selfcal_list) == 0
 
-    # single science exposure with selfcal_list provided
-    input_sci, selfcal_list, bkg_list_asn = _parse_inputs(sci, [background,] * 3)
+    # single science exposure with selfcal_list and bkg_list provided
+    input_sci, selfcal_list, bkg_list = _parse_inputs(sci, [background,] * 3, [background,]*1)
     assert isinstance(input_sci, dm.IFUImageModel)
-    assert len(bkg_list_asn) == 0
-    assert len(selfcal_list) == 3
+    assert len(bkg_list) == 1
+    assert len(selfcal_list) == 4
+
 
 
 def test_background_flagger_mrs(background):

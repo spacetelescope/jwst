@@ -247,18 +247,16 @@ class Spec2Pipeline(Pipeline):
         # Steps whose order is the same for all types of input:
         # self-calibrate bad/warm pixels, and apply to both background and science
         # skipped by default for all modes
-        print(type(members_by_type['background']))
         result = self.badpix_selfcal(
-            (calibrated, members_by_type['background'], members_by_type['selfcal']),
+            calibrated, members_by_type['selfcal'], members_by_type['background'], 
             )
-        if len(result) == 1:
+        if isinstance(result, datamodels.JwstDataModel):
             # if step is skipped, unchanged sci exposure is returned
-            calibrated = result[0]
+            calibrated = result
         else:
             # if step actually occurs, then flagged backgrounds are also returned
             calibrated, bkg_outlier_flagged = result[0], result[1]
             members_by_type['background'] = bkg_outlier_flagged
-        print(type(members_by_type['background']))
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)
