@@ -15,11 +15,9 @@ The ``resample`` step can take as input either:
 #. a single 2D input image
 #. an association table (in json format)
 
-The defined parameters for the drizzle operation itself get
-provided by the DRIZPARS reference file (from CRDS).  The exact values
-used depends on the number of input images being combined and the filter
-being used. Other information may be added as selection criteria later,
-but for now, only basic information is used.
+The parameters for the drizzle operation are provided via ``resample``
+step parameters, which can be overridden by a step parameter reference
+file from CRDS.
 
 The output product gets defined using the WCS information of all inputs,
 even if it is just a single input image. The output WCS defines a

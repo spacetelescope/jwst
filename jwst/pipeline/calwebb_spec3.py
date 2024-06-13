@@ -228,10 +228,11 @@ class Spec3Pipeline(Pipeline):
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 result = self.outlier_detection(result)
+
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
-                print(result)
                 result = self.pixel_replace(result)
+
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:

@@ -35,6 +35,7 @@ class OutlierDetectionTSO(OutlierDetection):
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
+        self.build_suffix(**self.outlierpars)
         weighted_cube = self.weight_no_resample()
 
         maskpt = self.outlierpars.get('maskpt', 0.7)
@@ -56,7 +57,7 @@ class OutlierDetectionTSO(OutlierDetection):
         # Save median model if pars['save_intermediate_results'] is True
         # this will be a CubeModel with rolling median values.
         if self.outlierpars['save_intermediate_results']:
-            with dm.open(weighted_cube[0]) as dm0:
+            with dm.open(weighted_cube) as dm0:
                 median_model.update(dm0)
             self.save_median(median_model)
 
