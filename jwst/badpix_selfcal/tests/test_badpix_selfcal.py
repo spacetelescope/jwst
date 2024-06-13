@@ -193,11 +193,10 @@ def test_input_parsing(asn, sci, background):
     assert len(selfcal_list) == 0
 
     # single science exposure with selfcal_list and bkg_list provided
-    input_sci, selfcal_list, bkg_list = _parse_inputs(sci, [background,] * 3, [background,]*1)
+    input_sci, selfcal_list, bkg_list = _parse_inputs(sci, [background,] * 3, [background,] * 1)
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 1
     assert len(selfcal_list) == 4
-
 
 
 def test_background_flagger_mrs(background):

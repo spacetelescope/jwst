@@ -36,11 +36,6 @@ def badpix_selfcal(minimg: np.ndarray,
         Indices of the flagged pixels,
         shaped like output from np.where
     """
-    if (flagfrac_lower < 0) or (flagfrac_upper < 0):
-        raise ValueError("Flagged fraction must be between 0 and 0.5")
-    if flagfrac_lower + flagfrac_upper >= 1:
-        raise ValueError("Total flagged fraction (lower plus upper) must be less than 1")
-
     if dispaxis not in [1, 2, None]:
         raise ValueError("dispaxis must be either 1 or 2, or None.")
 

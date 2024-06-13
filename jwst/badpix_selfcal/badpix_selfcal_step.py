@@ -6,10 +6,6 @@ from . import badpix_selfcal
 import numpy as np
 from jwst import datamodels as dm
 
-import logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 __all__ = ["BadpixSelfcalStep"]
 
 
@@ -26,15 +22,27 @@ class BadpixSelfcalStep(Step):
     """
 
     class_alias = "badpix_selfcal"
-    bkg_suffix = "badpix_selfcal"
 
     spec = """
-    flagfrac_lower = float(default=0.001)  #fraction of pixels to flag on the low-flux end
-    flagfrac_upper = float(default=0.001)  #fraction of pixels to flag on the high-flux end
-    kernel_size = integer(default=15)  #size of kernel for median filter
+    flagfrac_lower = float(default=0.001, min=0.0, max=0.5)  #fraction of pixels to flag on the low-flux end
+    flagfrac_upper = float(default=0.001, min=0.0, max=0.5)  #fraction of pixels to flag on the high-flux end
+    kernel_size = integer(default=15, min=1)  #size of kernel for median filter
     force_single = boolean(default=False)  #force single input exposure
+    save_flagged_bkg = boolean(default=False)  #save flagged background exposures to file
     skip = boolean(default=True)
     """
+
+    def save_model(self, model, *args, **kwargs):
+        """Override save_model to suppress index 0 when save_model is True
+        """
+        kwargs["idx"] = None
+        return Step.save_model(self, model, *args, **kwargs)
+
+    def save_bkg(self, bkg_list, suffix="badpix_selfcal_bkg"):
+        """Save the background exposures to file with correct indexing
+        """
+        for i, bkg_model in enumerate(bkg_list):
+            self.save_model(bkg_model, suffix=suffix + f"_{str(i)}")
 
     def process(self, input, selfcal_list=None, bkg_list=None):
         """
@@ -76,7 +84,7 @@ class BadpixSelfcalStep(Step):
         # ensure that there are background exposures to use, otherwise skip the step
         # unless forced
         if (len(selfcal_list + bkg_list) == 0) and (not self.force_single):
-            log.warning("No selfcal or background exposures provided for self-calibration. "
+            self.log.warning("No selfcal or background exposures provided for self-calibration. "
                         "Skipping step. If you want to force self-calibration with the science "
                         "exposure alone (generally not recommended), set force_single=True.")
             input_sci.meta.cal_step.badpix_selfcal = 'SKIPPED'
@@ -86,14 +94,14 @@ class BadpixSelfcalStep(Step):
         try:
             dispaxis = input_sci.meta.wcsinfo.dispersion_direction
         except AttributeError:
-            log.warning("Dispersion axis not found in input science image metadata. "
+            self.log.warning("Dispersion axis not found in input science image metadata. "
                         "Kernel for self-calibration will be two-dimensional.")
             dispaxis = None
 
         # collapse all selfcal exposures into a single background model
         # note that selfcal_list includes the science exposure. This is expected.
         # all exposures are combined into a single background model using a MIN operation.
-        selfcal_list = [input_sci] + [dm.open(k) for k in selfcal_list]
+        selfcal_list = [input_sci] + selfcal_list
         selfcal_3d = []
         for i, selfcal_model in enumerate(selfcal_list):
             selfcal_3d.append(selfcal_model.data)
@@ -109,6 +117,9 @@ class BadpixSelfcalStep(Step):
         if len(bkg_list) > 0:
             for i, background_model in enumerate(bkg_list):
                 bkg_list[i] = badpix_selfcal.apply_flags(dm.open(background_model), bad_indices)
+
+        if self.save_flagged_bkg:
+            self.save_bkg(bkg_list)
 
         input_sci.meta.cal_step.badpix_selfcal = 'COMPLETE'
         return input_sci, bkg_list
@@ -141,8 +152,10 @@ def _parse_inputs(input, selfcal_list, bkg_list):
     """
     if selfcal_list is None:
         selfcal_list = []
+    selfcal_list = [dm.open(selfcal) for selfcal in selfcal_list]
     if bkg_list is None:
         bkg_list = []
+    bkg_list = [dm.open(bkg) for bkg in bkg_list]
     selfcal_list = selfcal_list + bkg_list
 
     with dm.open(input) as input_data:
