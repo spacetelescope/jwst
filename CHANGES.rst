@@ -138,6 +138,13 @@ master_background_mos
   ``slit.source_name`` now contains the string "BKG" instead of
   "background". [#8533]
 
+nsclean
+-------
+
+- Improved run time of NSClean.fit() by using a vector rather than a large,
+  sparse matrix to perform linear algebra operations with a diagonal weight
+  matrix. [#8547]
+
 outlier_detection
 -----------------
 

@@ -134,7 +134,10 @@ class NSClean:
             
             # Get data and weights for this line
             d = data[y][self.mask[y]]  # unmasked (useable) data
-            p = np.diag(self.P[y][self.mask[y]])  # Weights
+            # The line below uses a vector to represent a diagonal weight matrix.
+            # Multiplications by this vector later on may be viewed as
+            # equivalent formulations to multiplication by diag(p).
+            p = self.P[y][self.mask[y]]  # Weights
 
             # If none of the pixels in this line is useable (all masked out),
             # skip and move on to the next line.
@@ -164,7 +167,7 @@ class NSClean:
 
             # Compute the Moore-Penrose inverse of A = P*B.
             #     $A^+ = (A^H A)^{-1} A^H$
-            A = np.matmul(p, B)
+            A = B*p[:, np.newaxis]
             AH = np.conjugate(A.transpose())  # Hermitian transpose of A
             pinv_PB = np.matmul(np.linalg.inv(np.matmul(AH, A)), AH)
 
@@ -172,7 +175,7 @@ class NSClean:
             # The way that we have done it, this multiplies the input data by the 
             # number of samples used for the fit.
             rfft = np.zeros(self.nx//2 + 1, dtype=np.complex64)
-            rfft[:k.shape[1]] = np.matmul(np.matmul(pinv_PB, p), d)
+            rfft[:k.shape[1]] = np.matmul(pinv_PB, p*d)
 
             # Numpy requires that the forward transform multiply
             # the data by n. Correct normalization.
