@@ -171,6 +171,9 @@ outlier_detection
   to detect outliers in TSO data, with user-defined
   rolling window width via the ``rolling_window_width`` parameter. [#8473]
 
+- Fixed a bug that led to small total flux offsets between input and blotted
+  images if the nominal and actual wcs-computed pixel areas were different. [#8553]
+
 pathloss
 --------
 
