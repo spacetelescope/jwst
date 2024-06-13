@@ -174,6 +174,10 @@ master_background_mos
 nsclean
 -------
 
+- Improved run time of NSClean.fit() by using a vector rather than a large,
+  sparse matrix to perform linear algebra operations with a diagonal weight
+  matrix. [#8547]
+
 - Added a check for combined NIRSpec MOS and fixed slit products: if fixed
   slits are defined in a MOS product, the central fixed slit quadrant
   is not automatically masked. [#8467]
