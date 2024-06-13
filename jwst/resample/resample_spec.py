@@ -154,8 +154,8 @@ class ResampleSpecData(ResampleData):
             wmean_l = np.sum(ld[good_s]) / total
         else:
             # no good data - do an unweighted mean
-            wmean_s = np.mean(s)
-            wmean_l = np.mean(lam)
+            wmean_s = np.nanmean(s)
+            wmean_l = np.nanmean(lam)
 
         # transform the weighted means into target RA/Dec
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
