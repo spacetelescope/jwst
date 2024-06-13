@@ -40,18 +40,24 @@ def test_miri_mrs_badpix_selfcal(run_pipeline, fitsdiff_default_kwargs, request)
 
     rtdata = request.getfixturevalue(run_pipeline)
 
-    # check the bkg files are saved in the background case, but not in the selfcal case
-    for idx in range(4):
-        fname = f"jw01204021001_02101_00004_mirifulong_badpix_selfcal_bkg_{idx}.fits"
-        if run_pipeline == "run_pipeline_background":
-            assert os.path.isfile(fname)
-            os.remove(fname)
-        elif run_pipeline == "run_pipeline_selfcal":
-            assert not os.path.isfile(fname)
-
     # Get the truth file
     rtdata.get_truth("truth/test_miri_mrs_badpix_selfcal/jw01204021001_02101_00004_mirifulong_badpix_selfcal.fits")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+    # check the bkg files in the background case, but not in the selfcal case
+    for idx in range(4):
+        fname = f"jw01204021001_02101_00004_mirifulong_badpix_selfcal_bkg_{idx}.fits"
+        if run_pipeline == "run_pipeline_background":
+            rtdata.output = fname
+            rtdata.get_truth(f"truth/test_miri_mrs_badpix_selfcal/{fname}")
+            diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+            assert diff.identical, diff.report()
+            os.remove(fname)
+
+        elif run_pipeline == "run_pipeline_selfcal":
+            assert not os.path.isfile(fname)
+
+
