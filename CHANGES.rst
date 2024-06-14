@@ -49,6 +49,12 @@ associations
 - Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
   tso3 associations. [#8549]
 
+badpix_selfcal
+--------------
+
+- Added new optional step ``badpix_selfcal`` to the spec2 pipeline to self-calibrate
+  bad pixels in IFU data. [#8500]
+
 combine_1d
 ----------
 
@@ -203,6 +209,9 @@ pipeline
   comply with the new scheme for source ("s"), background ("b"), and
   virtual ("v") slits and the construction of output file names for each
   type. [#8442]
+
+- Added new optional step ``badpix_selfcal`` to the ``calwebb_spec2`` to self-calibrate
+  bad pixels in IFU data. [#8500]
 
 pixel_replace
 -------------

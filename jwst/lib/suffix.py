@@ -195,7 +195,8 @@ _calculated_suffixes = {
  'image2pipeline',
  'klip',
  'emicorr',
- 'emicorrstep'
+ 'emicorrstep',
+ 'badpixselfcalstep',
 }
 
 
