@@ -14,5 +14,5 @@ The ``badpix_selfcal`` step has the following optional arguments.
   The size of the kernel to use for the median filter, which is applied 
   in the spectral direction to make the smoothed image.
 
-``--save_flagged_bkgd`` (boolean, default=False)
+``--save_flagged_bkg`` (boolean, default=False)
   Whether to save the flagged background exposures to fits files.

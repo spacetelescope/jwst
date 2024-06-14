@@ -1,5 +1,3 @@
-
-
 import warnings
 from ..stpipe import Step
 from . import badpix_selfcal
@@ -24,11 +22,11 @@ class BadpixSelfcalStep(Step):
     class_alias = "badpix_selfcal"
 
     spec = """
-    flagfrac_lower = float(default=0.001, min=0.0, max=0.5)  #fraction of pixels to flag on the low-flux end
-    flagfrac_upper = float(default=0.001, min=0.0, max=0.5)  #fraction of pixels to flag on the high-flux end
-    kernel_size = integer(default=15, min=1)  #size of kernel for median filter
-    force_single = boolean(default=False)  #force single input exposure
-    save_flagged_bkg = boolean(default=False)  #save flagged background exposures to file
+    flagfrac_lower = float(default=0.001, min=0.0, max=0.5)  # fraction of pixels to flag on the low-flux end
+    flagfrac_upper = float(default=0.001, min=0.0, max=0.5)  # fraction of pixels to flag on the high-flux end
+    kernel_size = integer(default=15, min=1)  # size of kernel for median filter
+    force_single = boolean(default=False)  # force single input exposure
+    save_flagged_bkg = boolean(default=False)  # save flagged background exposures to file
     skip = boolean(default=True)
     """
 
@@ -50,20 +48,20 @@ class BadpixSelfcalStep(Step):
 
         Parameters
         ----------
-        input: JWST data model or association
+        input : JWST data model or association
             input science data to be corrected, or tuple of (sci, bkg, selfcal)
 
-        selfcal_list: list of ImageModels or filenames, default None
+        selfcal_list : list of ImageModels or filenames, default None
             exposures to include as part of median background model used to find bad pixels,
             but that are not flagged and returned as background exposures
 
-        bkg_list: list of ImageModels or filenames, default None
+        bkg_list : list of ImageModels or filenames, default None
             exposures to include as part of median background model used to find bad pixels,
             and that are flagged and returned as background exposures
 
         Returns
         -------
-        output: JWST data model or association
+        output : JWST data model or association
             data model with CRs flagged
 
         Notes
@@ -85,7 +83,8 @@ class BadpixSelfcalStep(Step):
         # unless forced
         if (len(selfcal_list + bkg_list) == 0) and (not self.force_single):
             self.log.warning("No selfcal or background exposures provided for self-calibration. "
-                        "Skipping step. If you want to force self-calibration with the science "
+                        "Skipping step.")
+            self.log.info("If you want to force self-calibration with the science "
                         "exposure alone (generally not recommended), set force_single=True.")
             input_sci.meta.cal_step.badpix_selfcal = 'SKIPPED'
             return input_sci, bkg_list
@@ -132,23 +131,23 @@ def _parse_inputs(input, selfcal_list, bkg_list):
 
     Parameters
     ----------
-    input: str
+    input : str
         input science exposure or association
 
-    selfcal_list: list of ImageModels or filenames, default None
+    selfcal_list : list of ImageModels or filenames, default None
         exposures to include as part of median background model used to find bad pixels,
         but that are not flagged and returned as background exposures
 
-    bkg_list: list of ImageModels or filenames, default None
+    bkg_list : list of ImageModels or filenames, default None
         exposures to include as part of median background model used to find bad pixels,
         and that are flagged and returned as background exposures
 
     Returns
     -------
-    input: JWST data model or association
+    input : JWST data model or association
         input science data to be corrected
 
-    selfcal_list: list of ImageModels or filenames to use for selfcal
+    selfcal_list : list of ImageModels or filenames to use for selfcal
     """
     if selfcal_list is None:
         selfcal_list = []
@@ -191,15 +190,15 @@ def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list)
 
     Parameters
     ----------
-    container: ModelContainer
+    container : ModelContainer
         input data
 
-    exptype: str
+    exptype : str
         exposure type to split on
 
     Returns
     -------
-    split_list: list of lists
+    split_list : list of lists
         lists of ImageModels
     """
     split_list = []

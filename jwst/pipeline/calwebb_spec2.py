@@ -245,7 +245,9 @@ class Spec2Pipeline(Pipeline):
                         raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input:
-        # self-calibrate bad/warm pixels, and apply to both background and science
+
+        # Self-calibrate to flag bad/warm pixels, and apply flags 
+        # to both background and science exposures.
         # skipped by default for all modes
         result = self.badpix_selfcal(
             calibrated, members_by_type['selfcal'], members_by_type['background'], 
@@ -269,6 +271,8 @@ class Spec2Pipeline(Pipeline):
         # science and background exposures.  Otherwise, there will be as many `imprint` members as
         # there are science plus background members.
         calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
+
+        # for each background image subtract an associated leak cal
         for i, bkg_file in enumerate(members_by_type['background']):
             bkg_imprint_sub = self.imprint_subtract(bkg_file, members_by_type['imprint'])
             members_by_type['background'][i] = bkg_imprint_sub

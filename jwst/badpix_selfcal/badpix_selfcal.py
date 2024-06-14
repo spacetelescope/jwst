@@ -16,23 +16,23 @@ def badpix_selfcal(minimg: np.ndarray,
 
     Parameters
     ----------
-    minimg: np.ndarray
+    minimg : np.ndarray
         Selfcal data of shape (x, y), i.e., after some operation has
         already been taken to combine multiple exposures,
         typically a MIN operation.
-    flagfrac_lower: float
+    flagfrac_lower : float
         Fraction of pixels to flag on the low end
-    flagfrac_upper: float
+    flagfrac_upper : float
         Fraction of pixels to flag on the high end
-    kernel_size: int
+    kernel_size : int
         Size of kernel for median filter
-    dispaxis: int
+    dispaxis : int
         Dispersion axis, either 1 or 2. If None, a two-dimensional
         median filter is applied.
 
     Returns
     -------
-    flagged_indices: np.ndarray
+    flagged_indices : np.ndarray
         Indices of the flagged pixels,
         shaped like output from np.where
     """
@@ -68,15 +68,15 @@ def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> d
 
     Parameters
     ----------
-    input_model: dm.IFUImageModel
+    input_model : dm.IFUImageModel
         Input science data to be corrected
-    flagged_indices: np.ndarray
+    flagged_indices : np.ndarray
         Indices of the flagged pixels,
         shaped like output from np.where
 
     Returns
     -------
-    output_model: dm.IFUImageModel
+    output_model : dm.IFUImageModel
         Flagged data model
     """
 
