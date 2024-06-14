@@ -49,6 +49,9 @@ associations
 
 - Add NIRSpec optical path constraints for TSO associations. [#8537]
 
+- Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
+  tso3 associations. [#8549]
+
 combine_1d
 ----------
 
