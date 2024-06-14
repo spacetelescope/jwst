@@ -50,6 +50,9 @@ associations
 
 - Add NIRSpec optical path constraints for TSO associations. [#8537]
 
+- Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
+  tso3 associations. [#8549]
+
 combine_1d
 ----------
 
@@ -207,6 +210,9 @@ outlier_detection
 - Added the option to use a rolling median instead of a simple median
   to detect outliers in TSO data, with user-defined
   rolling window width via the ``rolling_window_width`` parameter. [#8473]
+
+- Fixed a bug that led to small total flux offsets between input and blotted
+  images if the nominal and actual wcs-computed pixel areas were different. [#8553]
 
 pathloss
 --------

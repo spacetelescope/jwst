@@ -141,6 +141,10 @@ def we_many_sci(
     sci1.var_rnoise = np.zeros(shape) + 1.0
     sci1.meta.filename = "foo1_cal.fits"
 
+    # add pixel areas
+    sci1.meta.photometry.pixelarea_steradians = 1.0
+    sci1.meta.photometry.pixelarea_arcsecsq = 1.0
+
     # Make copies with different noise
     all_sci = [sci1]
     for i in range(numsci - 1):

@@ -13,6 +13,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_WFSC,
     format_list,
     item_getattr,
+    nissoss_calibrated_filter,
     nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
@@ -482,11 +483,29 @@ class Asn_Lv2SpecTSO(
                         DMSAttrConstraint(
                             name='exp_type',
                             sources=['exp_type'],
-                            value=('nrs_brightobj')
+                            value='nrs_brightobj'
                         ),
                         SimpleConstraint(
                             value=False,
                             test=lambda value, item: nrsfss_valid_detector(item) == value,
+                            force_unique=False
+                        ),
+                    ]),
+                ],
+                reduce=Constraint.notany
+            ),
+            # Don't allow NIRISS SOSS with uncalibrated filters
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nis_soss'
+                        ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nissoss_calibrated_filter(item) == value,
                             force_unique=False
                         ),
                     ]),
