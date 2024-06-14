@@ -267,7 +267,7 @@ resample_spec
 - Removed the use of the `drizpars` reference file [#8546]
 
 - Fix a bug resulting in incorrect output spectral WCS for NIRSpec data when
-  the first input data set is filled with NaN. [#8562]
+  the first input data set is filled with zero or NaN. [#8562]
 
 residual_fringe
 ---------------
