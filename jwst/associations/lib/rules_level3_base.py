@@ -583,7 +583,7 @@ class Utility():
 # Define default product name filling
 format_product = FormatTemplate(
     key_formats={
-        'source_id': ['s{:05d}', 's{:s}'],
+        'source_id': ['{:s}'],
         'expspcin': ['{:0>2s}'],
         'slit_name': ['{:s}']
     }
@@ -895,7 +895,7 @@ class Constraint_Spectral(DMSAttrConstraint):
         )
 
 
-class Constraint_Target(DMSAttrConstraint):
+class Constraint_Target(Constraint):
     """Select on target
 
     Parameters
@@ -905,19 +905,31 @@ class Constraint_Target(DMSAttrConstraint):
         to as part of the target selection.
     """
     def __init__(self, association=None):
+        constraints = [Constraint([
+            DMSAttrConstraint(
+                name='acdirect',
+                sources=['asn_candidate'],
+                value=r"\[\('c\d{4}', 'direct_image'\)\]"
+            ),
+            SimpleConstraint(
+                name='target',
+                sources=lambda item: '000'
+            )]
+        )]
         if association is None:
-            super(Constraint_Target, self).__init__(
+            constraints.append(DMSAttrConstraint(
                 name='target',
                 sources=['targetid'],
-            )
+            ))
         else:
-            super(Constraint_Target, self).__init__(
+            constraints.append(DMSAttrConstraint(
                 name='target',
                 sources=['targetid'],
                 onlyif=lambda item: association.get_exposure_type(item) != 'background',
                 force_reprocess=ListCategory.EXISTING,
                 only_on_match=True,
-            )
+            ))
+        super(Constraint_Target, self).__init__(constraints, reduce=Constraint.any)
 
 
 # -----------

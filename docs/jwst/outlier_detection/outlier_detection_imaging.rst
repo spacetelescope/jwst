@@ -171,37 +171,19 @@ These changes result in a minimum amount of memory usage during processing at th
 expense of reading and writing the products from disk.
 
 
+Outlier Detection for Coronagraphic Data
+----------------------------------------
+Coronagraphic data is processed in a near-identical manner to direct imaging data, but
+no resampling occurs.
+
+
 Outlier Detection for TSO data
 -------------------------------
-Time-series observations (TSO) result in input data stored as a 3D CubeModel
-where each plane in the cube represents a separate integration without changing the
-pointing.  Normal imaging data benefit from combining all integrations into a
+Normal imaging data benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
 integration to the next.  The outlier detection algorithm, therefore, gets run with 
-a few variations to accomodate the nature of these 3D data.
-
-#. Input data is converted from a CubeModel (3D data array) to a ModelContainer
-
-   - Each plane in the original input CubeModel gets copied to a separate model
-     in the ModelContainer
-
-#. The median image is created without resampling the input data
-
-   - All integrations are aligned already, so no resampling or shifting needs to be performed
-  
-#. A matched median gets created by combining the single median frame with the 
-   noise model for each input integration.
-
-#. Perform statistical comparison between the matched median with each input integration.  
-
-#. Update input data model DQ arrays with the mask of detected outliers.
-
-
-.. note:: 
-
-  This same set of steps also gets used to perform outlier detection on
-  coronographic data, because it too is processed as 3D (per-integration)
-  cubes.
+a few variations to accomodate the nature of these 3D data. See the 
+:ref:`TSO outlier detection <outlier-detection-tso>` documentation for details.
 
 
 Outlier Detection for IFU data
@@ -213,5 +195,10 @@ in the spatial (cross-dispersion) direction within the IFU slice images.
 See the :ref:`IFU outlier detection <outlier-detection-ifu>` documentation for
 all the details.
 
+
+Outlier Detection for Slit data
+-------------------------------
+See the :ref:`IFU outlier detection <outlier-detection-spec>` documentation for
+details.
 
 .. automodapi:: jwst.outlier_detection.outlier_detection

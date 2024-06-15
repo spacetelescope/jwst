@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 from scipy.ndimage import gaussian_filter
+from glob import glob
+import os
 
 from stdatamodels.jwst import datamodels
 
@@ -14,7 +16,6 @@ from jwst.outlier_detection.outlier_detection_step import (
     CORON_IMAGE_MODES,
 )
 from jwst.assign_wcs.pointing import create_fitswcs
-
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -140,6 +141,10 @@ def we_many_sci(
     sci1.var_rnoise = np.zeros(shape) + 1.0
     sci1.meta.filename = "foo1_cal.fits"
 
+    # add pixel areas
+    sci1.meta.photometry.pixelarea_steradians = 1.0
+    sci1.meta.photometry.pixelarea_arcsecsq = 1.0
+
     # Make copies with different noise
     all_sci = [sci1]
     for i in range(numsci - 1):
@@ -147,7 +152,7 @@ def we_many_sci(
         tsci.data = np.random.normal(loc=background, size=shape, scale=sigma)
         # Add a source in the center
         tsci.data[7, 7] += signal
-        tsci.meta.filename = f"foo{i+2}_cal.fits"
+        tsci.meta.filename = f"foo{i + 2}_cal.fits"
         all_sci.append(tsci)
 
     return all_sci
@@ -184,6 +189,15 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     # Drop a CR on the science array
     container[0].data[12, 12] += 1
 
+    # Verify that intermediary files are removed
+    OutlierDetectionStep.call(container)
+    i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
+    median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
+    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
+    assert len(i2d_files) == 0
+    assert len(median_files) == 0
+    assert len(blot_files) == 0
+
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
     )
@@ -198,6 +212,14 @@ def test_outlier_step(we_three_sci, tmp_cwd):
 
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+
+    # Verify that intermediary files are saved at the specified location
+    i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
+    median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
+    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
+    assert len(i2d_files) != 0
+    assert len(median_files) != 0
+    assert len(blot_files) != 0
 
 
 def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
@@ -282,9 +304,9 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-@pytest.mark.parametrize("exptype, tsovisit", exptypes_tso + exptypes_coron)
-def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, tmp_cwd):
-    """Test whole step with an outlier for TSO & coronagraphic modes"""
+@pytest.mark.parametrize("exptype, tsovisit", exptypes_coron)
+def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
+    """Test whole step with an outlier for coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
     container = ModelContainer(
@@ -309,3 +331,48 @@ def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit, tmp_cwd):
 
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+
+
+@pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
+def test_outlier_step_weak_cr_tso(exptype, tsovisit):
+    '''Test outlier detection with rolling median on time-varying source
+    This test fails if rolling_window_width is set to 100, i.e., take simple median
+    '''
+    bkg = 1.5
+    sig = 0.02
+    rolling_window_width = 7
+    numsci = 50
+    signal = 7.0
+    im = we_many_sci(
+        numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit
+    )
+    cube_data = np.array([i.data for i in im])
+    cube_err = np.array([i.err for i in im])
+    cube_dq = np.array([i.dq for i in im])
+    cube_var_noise = np.array([i.var_rnoise for i in im])
+    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
+
+    # update metadata of cube to match the first image
+    cube.meta = im[0].meta
+
+    # Drop a weak CR on the science array
+    cr_timestep = 5
+    cube.data[cr_timestep, 12, 12] = bkg + sig * 10
+
+    # make time variability that has larger total amplitude than
+    # the CR signal but deviations frame-by-frame are smaller
+    real_time_variability = signal * np.cos(np.linspace(0, np.pi, numsci))
+    for i, model in enumerate(im):
+        model.data[7, 7] += real_time_variability[i]
+        model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
+
+    result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
+
+    # Make sure nothing changed in SCI array
+    np.testing.assert_allclose(cube.data, result.data)
+
+    # Verify source is not flagged
+    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+
+    # Verify CR is flagged
+    assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE

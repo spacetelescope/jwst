@@ -1,7 +1,10 @@
 from astropy.io.fits.diff import FITSDiff
 import pytest
+import numpy as np
+from gwcs import wcstools
 
 from jwst.stpipe import Step
+from stdatamodels.jwst import datamodels
 
 
 @pytest.fixture(scope="module")
@@ -24,8 +27,8 @@ def run_pipeline(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
-@pytest.mark.parametrize("source_id,slit_name", [("s00001","s200a2"), ("s00021","s200a1"), ("s00023","s400a1"),
-    ("s00024","s1600a1"), ("s00025","s200b1")])
+@pytest.mark.parametrize("source_id,slit_name", [("s000000001","s200a2"), ("s000000021","s200a1"),
+    ("s000000023","s400a1"), ("s000000024","s1600a1"), ("s000000025","s200b1")])
 def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix, source_id, slit_name):
     """Test spec3 pipeline on a set of NIRSpec FS exposures."""
     rtdata = rtdata_module
@@ -42,3 +45,25 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+    if output == "s2d":
+        # Compare the calculated wavelengths
+        tolerance = 1e-03
+        dmt = datamodels.open(rtdata.truth)
+        dmr = datamodels.open(rtdata.output)
+        if isinstance(dmt, datamodels.MultiSlitModel):
+            names = [s.name for s in dmt.slits]
+            for name in names:
+                st_idx = [(s.wcs, s.wavelength) for s in dmt.slits if s.name==name]
+                w = dmt.slits[st_idx].meta.wcs
+                x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
+                _, _, wave = w(x, y)
+                sr_idx = [(s.wcs, s.wavelength) for s in dmr.slits if s.name==name]
+                wlr = dmr.slits[sr_idx].wavelength
+                assert np.all(np.isclose(wave, wlr, atol=tolerance))
+        else:
+            w = dmt.meta.wcs
+            x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
+            _, _, wave = w(x, y)
+            wlr = dmr.wavelength
+            assert np.all(np.isclose(wave, wlr, atol=tolerance))

@@ -1,6 +1,4 @@
 """Public common step definition for OutlierDetection processing."""
-import os
-
 from functools import partial
 
 from stdatamodels.jwst import datamodels
@@ -12,11 +10,13 @@ from jwst.lib.pipe_utils import is_tso
 from jwst.outlier_detection import outlier_detection
 from jwst.outlier_detection import outlier_detection_ifu
 from jwst.outlier_detection import outlier_detection_spec
+from jwst.outlier_detection import outlier_detection_tso
 
 # Categorize all supported versions of outlier_detection
 outlier_registry = {'imaging': outlier_detection.OutlierDetection,
                     'ifu': outlier_detection_ifu.OutlierDetectionIFU,
-                    'slitspec': outlier_detection_spec.OutlierDetectionSpec
+                    'slitspec': outlier_detection_spec.OutlierDetectionSpec,
+                    'tso': outlier_detection_tso.OutlierDetectionTSO
                     }
 
 # Categorize all supported modes
@@ -63,6 +63,7 @@ class OutlierDetectionStep(Step):
         backg = float(default=0.0)
         kernel_size = string(default='7 7')
         threshold_percent = float(default=99.8)
+        rolling_window_width = integer(default=25)
         ifu_second_check = boolean(default=False)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
@@ -114,6 +115,7 @@ class OutlierDetectionStep(Step):
                 'backg': self.backg,
                 'kernel_size': self.kernel_size,
                 'threshold_percent': self.threshold_percent,
+                'rolling_window_width': self.rolling_window_width,
                 'ifu_second_check': self.ifu_second_check,
                 'allowed_memory': self.allowed_memory,
                 'in_memory': self.in_memory,
@@ -123,7 +125,7 @@ class OutlierDetectionStep(Step):
                 'make_output_path': self.make_output_path,
             }
 
-            # Add logic here to select which version of OutlierDetection
+            # Select which version of OutlierDetection
             # needs to be used depending on the input data
             if self.input_container:
                 single_model = self.input_models[0]
@@ -132,10 +134,13 @@ class OutlierDetectionStep(Step):
             exptype = single_model.meta.exposure.type
             self.check_input()
 
-            # check for TSO models first
-            if is_tso(single_model) or exptype in CORON_IMAGE_MODES:
-                # algorithm selected for TSO data (no resampling)
-                pars['resample_data'] = False  # force resampling off...
+            if is_tso(single_model):
+                # force resampling off and use rolling median
+                pars['resample_data'] = False
+                detection_step = outlier_registry['tso']
+            elif exptype in CORON_IMAGE_MODES:
+                # force resampling off but use same workflow as imaging
+                pars['resample_data'] = False
                 detection_step = outlier_registry['imaging']
             elif exptype in IMAGE_MODES:
                 # imaging with resampling
@@ -158,7 +163,6 @@ class OutlierDetectionStep(Step):
                         model.meta.cal_step.outlier_detection = "SKIPPED"
                 else:
                     self.input_models.meta.cal_step.outlier_detection = "SKIPPED"
-                self.skip = True
                 return self.input_models
 
             self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
@@ -169,28 +173,12 @@ class OutlierDetectionStep(Step):
 
             state = 'COMPLETE'
             if self.input_container:
-                if not self.save_intermediate_results:
-                    self.log.debug("The following files will be deleted since save_intermediate_results=False:")
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
-                    if not self.save_intermediate_results:
-                        #  Remove unwanted files
-                        crf_path = self.make_output_path(basepath=model.meta.filename)
-                        if asn_id is None:
-                            suffix = model.meta.filename.split(sep='_')[-1]
-                            outlr_file = model.meta.filename.replace(suffix, 'outlier_i2d.fits')
-                        else:
-                            outlr_file = crf_path.replace('crf', 'outlier_i2d')
-                        blot_path = crf_path.replace('crf', 'blot')
-                        median_path = blot_path.replace('blot', 'median')
-
-                        for fle in [outlr_file, blot_path, median_path]:
-                            if os.path.isfile(fle):
-                                os.remove(fle)
-                                self.log.debug(f"    {fle}")
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
             return self.input_models
+
 
     def check_input(self):
         """Use this method to determine whether input is valid or not."""
@@ -217,7 +205,7 @@ class OutlierDetectionStep(Step):
     def _check_input_cube(self):
         """Check to see whether input is the expected CubeModel object."""
         ninputs = self.input_models.shape[0]
-        if not isinstance(self.input_models, datamodels.CubeModel):
+        if type(self.input_models) not in [datamodels.CubeModel, datamodels.SlitModel]:
             self.log.warning("Input is not the expected CubeModel")
             self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False

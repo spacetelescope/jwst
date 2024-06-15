@@ -64,6 +64,7 @@ def run_spec2_pipeline(make_dummy_rate_file, request):
     and skipping most of the rest for runtime
     '''
     args = ["calwebb_spec2", INPUT_FILE, 
+            "--steps.badpix_selfcal.skip=true",
             "--steps.msa_flagging.skip=true",
             "--steps.nsclean.skip=true",
             "--steps.flat_field.skip=true",
@@ -92,6 +93,7 @@ def run_spec2_pipeline_asn(make_dummy_association, request):
 
     args = ["calwebb_spec2", INPUT_ASN, 
             f"--logcfg={LOGCFG}",
+            "--steps.badpix_selfcal.skip=true",
             "--steps.msa_flagging.skip=true",
             "--steps.nsclean.skip=true",
             "--steps.flat_field.skip=true",

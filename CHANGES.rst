@@ -6,12 +6,26 @@ ami
 
 - Replaced deprecated ``np.mat()`` with ``np.asmatrix()``. [#8415]
 
+- Allow ``ami_analyze`` to run on ``cal`` files. [#8451]
+
 assign_wcs
 ----------
 
 - Change MIRI LRS WCS code to handle the tilted trace via a centroid shift as a function
   of pixel row rather than a rotation of the pixel coordinates.  The practical impact is
   to ensure that iso-lambda is along pixel rows after this change. [#8411]
+
+- Fixed test for NIRCam TSGRISM mode. [#8449]
+
+- Move the assigned source position for dedicated NIRSpec MOS background slits from the
+  lower left corner of the slit to the middle of the slit. [#8461]
+
+- Updated the routines that load NIRSpec MOS slit and source data from the MSA meta
+  data file to properly handle background and virtual slits, and assign appropriate
+  meta data to them for use downstream. [#8442, #8533]
+
+- Update default parameters to increase the accuracy of the SIP approximation
+  in the output FITS WCS. [#8529]
 
 associations
 ------------
@@ -25,6 +39,30 @@ associations
 
 - Match NIRSpec imprint observations to science exposures on mosaic tile location
   and dither pointing, ``MOSTILNO`` and ``DITHPTIN``. [#8410]
+
+- Updated Level3 rules for new handling of NIRSpec MOS source_id formatting when
+  constructing output file names. [#8442]
+
+- Added default values for new non-header keywords (``MOSTILNO`` and ``DITHPTIN``)
+  to the default values in the ``asn_make_pool`` script. [#8508]
+
+- Create WFSS Pure-Parallel associations. [#8528]
+
+- Add NIRSpec optical path constraints for TSO associations. [#8537]
+
+- Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
+  tso3 associations. [#8549]
+
+badpix_selfcal
+--------------
+
+- Added new optional step ``badpix_selfcal`` to the spec2 pipeline to self-calibrate
+  bad pixels in IFU data. [#8500]
+
+combine_1d
+----------
+
+- Fix weights for combining errors from 1D spectra. [#8520]
 
 dark_current
 ------------
@@ -40,6 +78,15 @@ documentation
 
 - Added documentation for multiprocessing. [#8408]
 
+- Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
+
+exp_to_source
+-------------
+
+- Modified slit sorting to use `source_name` as the key, rather than `source_id`,
+  in order to support changes in `source_id` handling for NIRSpec MOS exposures
+  that contain background and virtual slits. [#8442]
+
 extract_1d
 ----------
 
@@ -48,11 +95,39 @@ extract_1d
 
 - Replaced deprecated ``np.trapz`` with ``np.trapezoid()``. [#8415]
 
+- Fix a crash in ``extract_1d`` encountered when multiple background or source
+  regions are specified and the lower and upper limits for one of them are
+  outside the valid area for some data range. [#8433]
+
+- Correct the output slit name for non-primary slit extractions in the
+  spec3 pipeline, for NIRSpec fixed slit mode. [#8470]
+
+- Add ``ifu_covar_scale`` parameter to help correct for IFU cube covariance. [#8457]
+
+- Add propagation of uncertainty when annular backgrounds are subtracted
+  from source spectra during IFU spectral extraction. [#8515]
+
+- Add propagation of background uncertainty when background is subtracted from 
+  source spectra during non-IFU spectral extraction. [#8532]
+
+- Fix error in application of aperture correction to variance arrays. [#8530]
+
+extract_2d
+----------
+
+- Added handling for NIRCam GRISM time series pointing offsets. [#8449]
+
 flat_field
 ----------
 
 - Update the flatfield code for NIRSpec IFU data to ensure that SCI=ERR=NaN and
   DQ has the DO_NOT_USE flag set outside the footprint of the IFU slices [#8385]
+
+- Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
+  DO_NOT_USE flag is set in the DQ array. [#8463]
+
+- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr`` 
+  wavelength zero-point corrections for point sources.  [#8376]
 
 general
 -------
@@ -61,6 +136,27 @@ general
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 - Increase minimum required scipy. [#8441]
+
+lib
+---
+
+- Updated the ``wcs_utils.get_wavelength`` to use the new format
+  of the ``wavecorr`` wavelength zero-point corrections for point 
+  sources in NIRSpec slit data. [#8376]
+
+master_background_mos
+---------------------
+
+- Updated check for NIRSpec MOS background slits to use new naming convention:
+  ``slit.source_name`` now contains the string "BKG" instead of
+  "background". [#8533]
+
+nsclean
+-------
+
+- Improved run time of NSClean.fit() by using a vector rather than a large,
+  sparse matrix to perform linear algebra operations with a diagonal weight
+  matrix. [#8547]
 
 outlier_detection
 -----------------
@@ -74,6 +170,36 @@ outlier_detection
   ``OutlierDetectionStackStep``, ``outlierpars`` reference file handling,
   and ``scale_detection`` (an unused argument). [#8438]
 
+- Intermediate output files are now correctly removed after the step has
+  finished, unless save_intermediate_results is True. This PR also addressed
+  the _i2d files not being saved in the specified output directory. [#8464]
+
+- Removed the setting of `self.skip = True` when the step gets skipped (due to
+  inappropriate inputs), so that the step still executes when called again
+  while processing a list of multiple sources. [#8442]
+
+- Added tests for changes made in #8464. [#8481]
+
+- Added the option to use a rolling median instead of a simple median
+  to detect outliers in TSO data, with user-defined
+  rolling window width via the ``rolling_window_width`` parameter. [#8473]
+
+- Fixed a bug that led to small total flux offsets between input and blotted
+  images if the nominal and actual wcs-computed pixel areas were different. [#8553]
+
+pathloss
+--------
+
+- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate 
+  wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
+  zero-point corrections for point sources have been applied. [#8376]
+
+photom
+------
+
+- Ensure that NaNs in MRS photom files are not replaced with ones by
+  pipeline code for consistency with other modes [#8453]
+
 pipeline
 --------
 
@@ -83,6 +209,23 @@ pipeline
 - Removed unused ``scale_detection`` argument from ``calwebb_tso3``
   pipeline. [#8438]
 
+- Updated the ``calwebb_spec3`` pipeline handling of NIRSpec MOS inputs, to
+  comply with the new scheme for source ("s"), background ("b"), and
+  virtual ("v") slits and the construction of output file names for each
+  type. [#8442]
+
+- Added new optional step ``badpix_selfcal`` to the ``calwebb_spec2`` to self-calibrate
+  bad pixels in IFU data. [#8500]
+
+pixel_replace
+-------------
+
+- Moved pixel_replace in the calwebb_spec2 pipeline and added it to the calwebb_spec3
+  pipeline. In both pipelines it is now executed immediately before resample_spec/cube_build. [#8409]
+
+- Added estimated errors and variances for replaced pixels, following the
+  interpolation scheme used for the data. [#8504]
+
 ramp_fitting
 ------------
 
@@ -90,11 +233,42 @@ ramp_fitting
   to use uint16 instead of uint8, in order to avoid potential
   overflow/wraparound problems. [#8377]
 
+- Changed the spec for ramp fitting that allows for selecting
+  the algorithm "OLS" to use the python implementation of ramp
+  fitting or "OLS_C" to use the C extension implementation of
+  ramp fitting. [#8503]
+
+refpix
+------
+
+- Use ``double`` for fft filter coefficients to improve compatibility
+  across system. [#8512]
+
 resample
 --------
 
 - Remove sleep in median combination added in 8305 as it did not address
   the issue in operation [#8419]
+
+- Update variance handling to propagate resampled variance components with
+  weights that match the science `weight_type`. [#8437]
+
+- Change `fillval` parameter default from INDEF to NaN [#8488]
+
+- Removed the use of the `drizpars` reference file [#8546]
+
+resample_spec
+-------------
+
+- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+
+- Change `fillval` parameter default from INDEF to NaN [#8488]
+
+- Fix a bug resulting in large WCS errors in the resampled image's WCS
+  when the slit was closely aligned with the RA direction
+  sky. [#8511]
+
+- Removed the use of the `drizpars` reference file [#8546]
 
 residual_fringe
 ---------------
@@ -108,8 +282,35 @@ tweakreg
 
 - Improved how a image group name is determined. [#8426]
 
+- Refactor step to work towards performance improvements. [#8424]
+
 - Changed default settings for ``abs_separation`` parameter for the ``tweakreg``
   step to have a value compatible with the ``abs_tolerance`` parameter. [#8445]
+
+- Improve error handling in the absolute alignment. [#8450, #8477]
+
+- Change code default to use IRAF StarFinder instead of
+  DAO StarFinder. [#8487]
+
+- Add new step parameters to control SIP approximation in the output FITS WCS,
+  matching the default values used in the ``assign_wcs`` step. [#8529]
+
+- Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
+  that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
+  message and skip ``tweakreg`` step when this condition is not satisfied and
+  source confusion is possible during catalog matching. [#8476]
+
+wavecorr
+--------
+
+- Changed the NIRSpec wavelength correction algorithm to include it in slit WCS
+  models and resampling.  Fixed the sign of the wavelength corrections. [#8376]
+  
+wfss_contam
+-----------
+
+- Fixed flux scaling issue in model contamination image by adding background
+  subtraction and re-scaling fluxes to respect wavelength oversampling. [#8416]
 
 
 1.14.0 (2024-03-29)
@@ -370,6 +571,10 @@ ramp_fitting
 
 - Modified one runtime warning filter. [#8320]
 
+- Updated tests to properly handle the C extension (forcing arrays to be
+  of an expected type.  Modified the CHARGELESS portion of the ramp fit
+  step code to update read noise ramps only affected by CHARGELOSS. [#8355]
+
 refpix
 ------
 
@@ -405,9 +610,13 @@ resample
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
 
+- Removing unnecessary warning. Errors are propagated identically for
+  the 'exptime' and 'ivm' weight options. [#8258]
+
 - Increased specificity of several warning filters. [#8320]
 
 - Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
+
 
 residual_fringe
 ---------------

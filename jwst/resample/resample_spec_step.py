@@ -7,6 +7,8 @@ from jwst.datamodels import ModelContainer
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
+from jwst.lib.wcs_utils import get_wavelengths
+
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
@@ -60,40 +62,12 @@ class ResampleSpecStep(ResampleStep):
             output = input_new.meta.filename
             self.blendheaders = False
 
-        # Get the drizpars reference file
-        for reftype in self.reference_file_types:
-            ref_filename = self.get_reference_file(input_models[0], reftype)
-
-        if ref_filename != 'N/A':
-            self.log.info('Drizpars reference file: {}'.format(ref_filename))
-            kwargs = self.get_drizpars(ref_filename, input_models)
-        else:
-            # Deal with NIRSpec, which currently has no default drizpars reffile
-            self.log.info("No DRIZPARS reffile")
-            kwargs = self._set_spec_defaults()
-            kwargs['blendheaders'] = self.blendheaders
-
-        kwargs['output_shape'] = self._check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
-        kwargs['output_wcs'] = self._load_custom_wcs(
-            self.output_wcs,
-            kwargs['output_shape']
-        )
-
-        kwargs['allowed_memory'] = self.allowed_memory
+        # Setup drizzle-related parameters
+        kwargs = self.get_drizpars()
         kwargs['output'] = output
-
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
-        # Call resampling
         self.drizpars = kwargs
 
+        # Call resampling
         if isinstance(input_models[0], MultiSlitModel):
             result = self._process_multislit(input_models)
 
@@ -108,6 +82,16 @@ class ResampleSpecStep(ResampleStep):
         # Update ASNTABLE in output
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
         result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
+
+        # populate the result wavelength attribute for MultiSlitModel
+        if isinstance(result, MultiSlitModel):
+            for slit_idx, slit in enumerate(result.slits):
+                wl_array = get_wavelengths(result.slits[slit_idx])
+                result.slits[slit_idx].wavelength = wl_array
+        else:
+            # populate the result wavelength attribute for SlitModel
+            wl_array = get_wavelengths(result)
+            result.wavelength = wl_array
 
         return result
 

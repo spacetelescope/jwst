@@ -5,7 +5,6 @@ from astropy.table import vstack
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
 
 from ..stpipe import Pipeline
 
@@ -14,7 +13,7 @@ from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 from ..photom import photom_step
-
+from ..pixel_replace import pixel_replace_step
 from ..lib.pipe_utils import is_tso
 from astropy.io.fits import FITS_rec
 
@@ -30,6 +29,7 @@ class Tso3Pipeline(Pipeline):
 
         * outlier_detection
         * tso_photometry
+        * pixel_replace
         * extract_1d
         * photom
         * white_light
@@ -43,6 +43,7 @@ class Tso3Pipeline(Pipeline):
     step_defs = {'outlier_detection':
                  outlier_detection_step.OutlierDetectionStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
+                 'pixel_replace': pixel_replace_step.PixelReplaceStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'photom': photom_step.PhotomStep,
                  'white_light': white_light_step.WhiteLightStep
@@ -76,7 +77,7 @@ class Tso3Pipeline(Pipeline):
 
         # Input may consist of multiple exposures, so loop over each of them
         input_exptype = None
-        for cube in input_models:
+        for i, cube in enumerate(input_models):
             if input_exptype is None:
                 input_exptype = cube.meta.exposure.type
 
@@ -85,51 +86,26 @@ class Tso3Pipeline(Pipeline):
                 self.log.warning('Input data are 2D; skipping outlier_detection')
                 break
 
-            # FIXME OutlierDetectionStep can accept a cube input and will
-            # unpack it as a container which looks almost identical to the below
-            # code. There are some differences:
-            # - the inputs here are SlitModels
-            # - outlier detection will generate drizzle weight during the unpack
-            #   the below code does not
-            # - the code below takes a "bitwise or" whereas outlier detection
-            #   assigns over the dq array (I think this is the same as I expect
-            #   outlier detection to only add dq flags).
-
-            # Perform regular outlier detection
-
-            input_2dmodels = ModelContainer()
-            for i in range(cube.data.shape[0]):
-                # convert each plane of data cube into its own array
-                image = datamodels.ImageModel(data=cube.data[i],
-                                              err=cube.err[i], dq=cube.dq[i])
-                image.update(cube)
-                image.meta.wcs = cube.meta.wcs
-                input_2dmodels.append(image)
-
             self.log.info("Performing outlier detection on input images ...")
-            input_2dmodels = self.outlier_detection(input_2dmodels)
+            cube = self.outlier_detection(cube)
 
-            # Transfer updated DQ values to original input observation
-            for i in range(cube.data.shape[0]):
-                # Update DQ arrays with those from outlier_detection step
-                cube.dq[i] = np.bitwise_or(cube.dq[i], input_2dmodels[i].dq)
-
-            cube.meta.cal_step.outlier_detection = \
-                input_2dmodels[0].meta.cal_step.outlier_detection
-
-            del input_2dmodels
-
-        # Save crfints products
-        if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
-            self.log.info("Saving crfints products with updated DQ arrays ...")
-            for cube in input_models:
+            # Save crfints products
+            if cube.meta.cal_step.outlier_detection == 'COMPLETE':
+                self.log.info("Saving crfints products with updated DQ arrays ...")
                 # preserve output filename
                 original_filename = cube.meta.filename
+
+                # ensure output filename will not have duplicate asn_id
+                if "_"+input_models.meta.asn_table.asn_id in original_filename:
+                    original_filename = original_filename.replace(
+                        "_"+input_models.meta.asn_table.asn_id, ''
+                    )
                 self.save_model(
                     cube, output_file=original_filename, suffix='crfints',
                     asn_id=input_models.meta.asn_table.asn_id
                 )
                 cube.meta.filename = original_filename
+            input_models[i] = cube
 
         # Create final photometry results as a single output
         # regardless of how many input members there may be
@@ -153,6 +129,7 @@ class Tso3Pipeline(Pipeline):
 
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
+
             x1d_result = datamodels.MultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             x1d_result.int_times = FITS_rec.from_columns(input_models[0].int_times.columns,
@@ -164,6 +141,10 @@ class Tso3Pipeline(Pipeline):
 
             # For each exposure in the TSO...
             for cube in input_models:
+                # interpolate pixels that have a NaN value or are flagged
+                # as DO_NOT_USE or NON_SCIENCE.
+                cube = self.pixel_replace(cube)
+                state = cube.meta.cal_step.pixel_replace
                 # Process spectroscopic TSO data
                 # extract 1D
                 self.log.info("Extracting 1-D spectra ...")
@@ -190,6 +171,7 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
+            x1d_result.meta.cal_step.pixel_replace = state
             self.save_model(x1d_result, suffix='x1dints')
 
         # Done with all the inputs

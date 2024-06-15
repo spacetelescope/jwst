@@ -85,7 +85,7 @@ image.
         ``pixel_scale_ratio``, ``pixel_scale``, ``rotation``, ``crpix``,
         and ``crval`` will be ignored.
 
-``--fillval`` (str, default='INDEF')
+``--fillval`` (str, default='NAN')
     The value to assign to output pixels that have zero weight or do not
     receive any flux from any input pixels during drizzling.
 
