@@ -976,24 +976,41 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
             wavelength_pointsource *= 1.0e6
             wavelength_uniformsource *= 1.0e6
 
-            wavelength_array = slit.wavelength
-
-            # Compute the point source pathloss 2D correction
-            pathloss_2d_ps = interpolate_onto_grid(
-                wavelength_array,
-                wavelength_pointsource,
-                pathloss_pointsource_vector)
-
-            # Compute the uniform source pathloss 2D correction
-            pathloss_2d_un = interpolate_onto_grid(
-                wavelength_array,
-                wavelength_uniformsource,
-                pathloss_uniform_vector)
-
             # Use the appropriate correction for this slit
             if is_pointsource(source_type or slit.source_type):
+                # calculate the point source corrected wavelengths and uncorrected wavelengths for the slit
+                wavelength_array_corr = get_wavelengths(slit, use_wavecorr=True)
+                wavelength_array_uncorr = get_wavelengths(slit, use_wavecorr=False)
+
+                # Compute the point source pathloss 2D correction
+                pathloss_2d_ps = interpolate_onto_grid(
+                    wavelength_array_corr,
+                    wavelength_pointsource,
+                    pathloss_pointsource_vector)
+
+                # Compute the uniform source pathloss 2D correction
+                pathloss_2d_un = interpolate_onto_grid(
+                    wavelength_array_uncorr,
+                    wavelength_uniformsource,
+                    pathloss_uniform_vector)
+                
                 pathloss_2d = pathloss_2d_ps
+                
             else:
+                wavelength_array = slit.wavelength
+
+                # Compute the point source pathloss 2D correction
+                pathloss_2d_ps = interpolate_onto_grid(
+                    wavelength_array,
+                    wavelength_pointsource,
+                    pathloss_pointsource_vector)
+
+                # Compute the uniform source pathloss 2D correction
+                pathloss_2d_un = interpolate_onto_grid(
+                    wavelength_array,
+                    wavelength_uniformsource,
+                    pathloss_uniform_vector)
+                
                 pathloss_2d = pathloss_2d_un
 
             # Save the corrections. The `data` portion is the correction used.

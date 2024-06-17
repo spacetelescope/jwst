@@ -62,40 +62,12 @@ class ResampleSpecStep(ResampleStep):
             output = input_new.meta.filename
             self.blendheaders = False
 
-        # Get the drizpars reference file
-        for reftype in self.reference_file_types:
-            ref_filename = self.get_reference_file(input_models[0], reftype)
-
-        if ref_filename != 'N/A':
-            self.log.info('Drizpars reference file: {}'.format(ref_filename))
-            kwargs = self.get_drizpars(ref_filename, input_models)
-        else:
-            # Deal with NIRSpec, which currently has no default drizpars reffile
-            self.log.info("No DRIZPARS reffile")
-            kwargs = self._set_spec_defaults()
-            kwargs['blendheaders'] = self.blendheaders
-
-        kwargs['output_shape'] = self._check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
-        kwargs['output_wcs'] = self._load_custom_wcs(
-            self.output_wcs,
-            kwargs['output_shape']
-        )
-
-        kwargs['allowed_memory'] = self.allowed_memory
+        # Setup drizzle-related parameters
+        kwargs = self.get_drizpars()
         kwargs['output'] = output
-
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
-        # Call resampling
         self.drizpars = kwargs
 
+        # Call resampling
         if isinstance(input_models[0], MultiSlitModel):
             result = self._process_multislit(input_models)
 

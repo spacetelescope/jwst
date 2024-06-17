@@ -30,9 +30,11 @@ create and populate the WCS object for the exposure.
 
 For image display with software like DS9 that relies on specific WCS information, a SIP-based
 approximation to the WCS is fit. The results are FITS keywords stored in
-``model.meta.wcsinfo``. This is not an exact fit, but is accurate to ~0.25 pixel and is sufficient
-for display purposes. This step, which occurs for imaging modes, is performed by default, but
-can be switched off, and parameters controlling the SIP fit can also be adjusted.
+``model.meta.wcsinfo``. This is not an exact fit, but is accurate to ~0.01 pixel by default,
+and is sufficient for display purposes. This step, which occurs for imaging modes, is
+performed by default, but can be switched off, and parameters controlling the SIP fit can
+also be adjusted.  Note that if these parameters are changed, the equivalent parameters
+for the ``tweakreg`` step should be adjusted to match.
 
 The ``assign_wcs`` step can accept either a ``rate`` product, which is the result of averaging
 over all integrations in an exposure, or a ``rateints`` product, which is a 3D cube of

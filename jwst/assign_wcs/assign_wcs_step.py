@@ -52,9 +52,9 @@ class AssignWcsStep(Step):
 
     spec = """
         sip_approx = boolean(default=True)  # enables SIP approximation for imaging modes.
-        sip_max_pix_error = float(default=0.1)  # max err for SIP fit, forward.
+        sip_max_pix_error = float(default=0.01)  # max err for SIP fit, forward.
         sip_degree = integer(max=6, default=None)  # degree for forward SIP fit, None to use best fit.
-        sip_max_inv_pix_error = float(default=0.1)  # max err for SIP fit, inverse.
+        sip_max_inv_pix_error = float(default=0.01)  # max err for SIP fit, inverse.
         sip_inv_degree = integer(max=6, default=None)  # degree for inverse SIP fit, None to use best fit.
         sip_npoints = integer(default=12)  #  number of points for SIP
         slit_y_low = float(default=-.55)  # The lower edge of a slit.
@@ -131,6 +131,8 @@ class AssignWcsStep(Step):
                 wfss_imaging_wcs(result, imaging_func, bbox=bbox,
                                  max_pix_error=self.sip_max_pix_error,
                                  degree=self.sip_degree,
+                                 max_inv_pix_error=self.sip_max_inv_pix_error,
+                                 inv_degree=self.sip_inv_degree,
                                  npoints=self.sip_npoints,
                                  )
             except (ValueError, RuntimeError) as e:

@@ -114,7 +114,7 @@ class ResampleData:
                 self.output_wcs.array_shape = output_shape[::-1]
 
             if output_wcs.pixel_area is None:
-                output_pix_area = _compute_image_pixel_area(self.output_wcs)
+                output_pix_area = compute_image_pixel_area(self.output_wcs)
                 if output_pix_area is None:
                     raise ValueError(
                         "Unable to compute output pixel area from 'output_wcs'."
@@ -250,7 +250,7 @@ class ResampleData:
                 if (input_pixflux_area and
                         'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
                     img.meta.wcs.array_shape = img.data.shape
-                    input_pixel_area = _compute_image_pixel_area(img.meta.wcs)
+                    input_pixel_area = compute_image_pixel_area(img.meta.wcs)
                     if input_pixel_area is None:
                         raise ValueError(
                             "Unable to compute input pixel area from WCS of input "
@@ -336,7 +336,7 @@ class ResampleData:
             if (input_pixflux_area and
                     'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
                 img.meta.wcs.array_shape = img.data.shape
-                input_pixel_area = _compute_image_pixel_area(img.meta.wcs)
+                input_pixel_area = compute_image_pixel_area(img.meta.wcs)
                 if input_pixel_area is None:
                     raise ValueError(
                         "Unable to compute input pixel area from WCS of input "
@@ -805,7 +805,7 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     return x, y, area, center, b, r, t, l
 
 
-def _compute_image_pixel_area(wcs):
+def compute_image_pixel_area(wcs):
     """ Computes pixel area in steradians.
     """
     if wcs.array_shape is None:

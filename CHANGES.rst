@@ -24,6 +24,9 @@ assign_wcs
   data file to properly handle background and virtual slits, and assign appropriate
   meta data to them for use downstream. [#8442, #8533]
 
+- Update default parameters to increase the accuracy of the SIP approximation
+  in the output FITS WCS. [#8529]
+
 associations
 ------------
 
@@ -39,7 +42,18 @@ associations
 - Added default values for new non-header keywords (``MOSTILNO`` and ``DITHPTIN``)
   to the default values in the ``asn_make_pool`` script. [#8508]
 
-- Create WFSS Pure-Parallel associations [#8528]
+- Create WFSS Pure-Parallel associations. [#8528]
+
+- Add NIRSpec optical path constraints for TSO associations. [#8537]
+
+- Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
+  tso3 associations. [#8549]
+
+badpix_selfcal
+--------------
+
+- Added new optional step ``badpix_selfcal`` to the spec2 pipeline to self-calibrate
+  bad pixels in IFU data. [#8500]
 
 combine_1d
 ----------
@@ -89,6 +103,11 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
+- Add propagation of background uncertainty when background is subtracted from 
+  source spectra during non-IFU spectral extraction. [#8532]
+
+- Fix error in application of aperture correction to variance arrays. [#8530]
+
 extract_2d
 ----------
 
@@ -103,13 +122,31 @@ flat_field
 - Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
   DO_NOT_USE flag is set in the DQ array. [#8463]
 
+- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr`` 
+  wavelength zero-point corrections for point sources.  [#8376]
+
 general
 -------
+
+- Require numpy<2.0. [#8565]
 
 - Removed deprecated stdatamodels model types ``DrizProductModel``,
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 - Increase minimum required scipy. [#8441]
+
+lib
+---
+
+- Updated the ``wcs_utils.get_wavelength`` to use the new format
+  of the ``wavecorr`` wavelength zero-point corrections for point 
+  sources in NIRSpec slit data. [#8376]
+
+master_background
+-----------------
+
+- For MIRI_MRS, added code to make sure the background matches as good as
+  possible the science data. [#8535]
 
 master_background_mos
 ---------------------
@@ -117,6 +154,13 @@ master_background_mos
 - Updated check for NIRSpec MOS background slits to use new naming convention:
   ``slit.source_name`` now contains the string "BKG" instead of
   "background". [#8533]
+
+nsclean
+-------
+
+- Improved run time of NSClean.fit() by using a vector rather than a large,
+  sparse matrix to perform linear algebra operations with a diagonal weight
+  matrix. [#8547]
 
 outlier_detection
 -----------------
@@ -144,11 +188,15 @@ outlier_detection
   to detect outliers in TSO data, with user-defined
   rolling window width via the ``rolling_window_width`` parameter. [#8473]
 
-master_background
------------------
+- Fixed a bug that led to small total flux offsets between input and blotted
+  images if the nominal and actual wcs-computed pixel areas were different. [#8553]
 
-- For MIRI_MRS, added code to make sure the background matches as good as
-  possible the science data. [#8535]
+pathloss
+--------
+
+- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate 
+  wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
+  zero-point corrections for point sources have been applied. [#8376]
 
 photom
 ------
@@ -170,11 +218,17 @@ pipeline
   virtual ("v") slits and the construction of output file names for each
   type. [#8442]
 
+- Added new optional step ``badpix_selfcal`` to the ``calwebb_spec2`` to self-calibrate
+  bad pixels in IFU data. [#8500]
+
 pixel_replace
 -------------
 
 - Moved pixel_replace in the calwebb_spec2 pipeline and added it to the calwebb_spec3
   pipeline. In both pipelines it is now executed immediately before resample_spec/cube_build. [#8409]
+
+- Added estimated errors and variances for replaced pixels, following the
+  interpolation scheme used for the data. [#8504]
 
 ramp_fitting
 ------------
@@ -205,6 +259,8 @@ resample
 
 - Change `fillval` parameter default from INDEF to NaN [#8488]
 
+- Removed the use of the `drizpars` reference file [#8546]
+
 resample_spec
 -------------
 
@@ -215,6 +271,8 @@ resample_spec
 - Fix a bug resulting in large WCS errors in the resampled image's WCS
   when the slit was closely aligned with the RA direction
   sky. [#8511]
+
+- Removed the use of the `drizpars` reference file [#8546]
 
 residual_fringe
 ---------------
@@ -236,13 +294,22 @@ tweakreg
 - Improve error handling in the absolute alignment. [#8450, #8477]
 
 - Change code default to use IRAF StarFinder instead of
-  DAO StarFinder [#8487]
+  DAO StarFinder. [#8487]
+
+- Add new step parameters to control SIP approximation in the output FITS WCS,
+  matching the default values used in the ``assign_wcs`` step. [#8529]
 
 - Added a check for ``(abs_)separation`` and ``(abs_)tolerance`` parameters
   that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
   message and skip ``tweakreg`` step when this condition is not satisfied and
   source confusion is possible during catalog matching. [#8476]
 
+wavecorr
+--------
+
+- Changed the NIRSpec wavelength correction algorithm to include it in slit WCS
+  models and resampling.  Fixed the sign of the wavelength corrections. [#8376]
+  
 wfss_contam
 -----------
 
@@ -547,9 +614,13 @@ resample
 
 - Removed any reference to the "tophat" kernel for resample step. [#8364]
 
+- Removing unnecessary warning. Errors are propagated identically for
+  the 'exptime' and 'ivm' weight options. [#8258]
+
 - Increased specificity of several warning filters. [#8320]
 
 - Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
+
 
 residual_fringe
 ---------------

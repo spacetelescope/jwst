@@ -457,6 +457,11 @@ def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srcli
     # subtract background per pixel:
     val -= bkg
 
+    # add background variance to variance in source extraction region
+    f_var_poisson += b_var_poisson
+    f_var_rnoise += b_var_rnoise
+    f_var_flat += b_var_flat
+
     # scale per pixel values by pixel area included in extraction
     val *= area
     bkg *= area

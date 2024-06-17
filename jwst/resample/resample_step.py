@@ -2,10 +2,7 @@ import logging
 import re
 from copy import deepcopy
 
-import numpy as np
 import asdf
-from astropy.extern.configobj.validate import Validator
-from astropy.extern.configobj.configobj import ConfigObj
 
 from stdatamodels.jwst import datamodels
 
@@ -43,24 +40,24 @@ class ResampleStep(Step):
     class_alias = "resample"
 
     spec = """
-        pixfrac = float(default=1.0) # change back to None when drizpar reference files are updated
-        kernel = string(default='square') # change back to None when drizpar reference files are updated
-        fillval = string(default='NAN' )
-        weight_type = option('ivm', 'exptime', None, default='ivm')  # change back to None when drizpar ref update
+        pixfrac = float(min=0.0, max=1.0, default=1.0)  # Pixel shrinkage factor
+        kernel = option('square','gaussian','point','turbo','lanczos2','lanczos3',default='square')  # Flux distribution kernel
+        fillval = string(default='NAN')  # Output value for pixels with no weight or flux
+        weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
         output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
         crpix = float_list(min=2, max=2, default=None)
         crval = float_list(min=2, max=2, default=None)
-        rotation = float(default=None)
-        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
-        pixel_scale = float(default=None) # Absolute pixel scale in arcsec
-        output_wcs = string(default='')  # Custom output WCS.
-        single = boolean(default=False)
-        blendheaders = boolean(default=True)
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
-        in_memory = boolean(default=True)
+        rotation = float(default=None)  # Output image Y-axis PA relative to North
+        pixel_scale_ratio = float(default=1.0)  # Ratio of input to output pixel scale
+        pixel_scale = float(default=None)  # Absolute pixel scale in arcsec
+        output_wcs = string(default='')  # Custom output WCS
+        single = boolean(default=False)  # Resample each input to its own output grid
+        blendheaders = boolean(default=True)  # Blend metadata from inputs into output
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
+        in_memory = boolean(default=True)  # Keep images in memory
     """
 
-    reference_file_types = ['drizpars']
+    reference_file_types = []
 
     def process(self, input):
 
@@ -87,44 +84,8 @@ class ResampleStep(Step):
             # resample can only handle 2D images, not 3D cubes, etc
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
 
-        #  Get drizzle parameters reference file, if there is one
-        self.wht_type = self.weight_type
-        if 'drizpars' in self.reference_file_types:
-            ref_filename = self.get_reference_file(input_models[0], 'drizpars')
-        else:  # no drizpars reference file found
-            ref_filename = 'N/A'
-
-        if ref_filename == 'N/A':
-            self.log.info('No drizpars reference file found.')
-            kwargs = self._set_spec_defaults()
-        else:
-            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
-            kwargs = self.get_drizpars(ref_filename, input_models)
-
-        kwargs['allowed_memory'] = self.allowed_memory
-
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
-        # Custom output WCS parameters.
-        # Modify get_drizpars if any of these get into reference files:
-        kwargs['output_shape'] = self._check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
-        kwargs['output_wcs'] = self._load_custom_wcs(
-            self.output_wcs,
-            kwargs['output_shape']
-        )
-        kwargs['crpix'] = self._check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self._check_list_pars(self.crval, 'crval')
-        kwargs['rotation'] = self.rotation
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
-        kwargs['in_memory'] = self.in_memory
+        # Setup drizzle-related parameters
+        kwargs = self.get_drizpars()
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
@@ -200,128 +161,42 @@ class ResampleStep(Step):
 
         return wcs
 
-    def get_drizpars(self, ref_filename, input_models):
+    def get_drizpars(self):
         """
-        Extract drizzle parameters from reference file.
-
-        This method extracts parameters from the drizpars reference file and
-        uses those to set defaults on the following ResampleStep configuration
-        parameters:
-
-        pixfrac = float(default=None)
-        kernel = string(default=None)
-        fillval = string(default=None)
-        wht_type = option('ivm', 'exptime', None, default=None)
-
-        Once the defaults are set from the reference file, if the user has
-        used a resample.cfg file or run ResampleStep using command line args,
-        then these will overwrite the defaults pulled from the reference file.
+        Load all drizzle-related parameter values into kwargs list.
         """
-        with datamodels.DrizParsModel(ref_filename) as drpt:
-            drizpars_table = drpt.data
-
-        num_groups = len(input_models.group_names)
-        filtname = input_models[0].meta.instrument.filter
-        row = None
-        filter_match = False
-        # look for row that applies to this set of input data models
-        for n, filt, num in zip(
-            range(0, len(drizpars_table)),
-            drizpars_table['filter'],
-            drizpars_table['numimages']
-        ):
-            # only remember this row if no exact match has already been made for
-            # the filter. This allows the wild-card row to be anywhere in the
-            # table; since it may be placed at beginning or end of table.
-
-            if str(filt) == "ANY" and not filter_match and num_groups >= num:
-                row = n
-            # always go for an exact match if present, though...
-            if filtname == filt and num_groups >= num:
-                row = n
-                filter_match = True
-
-        # With presence of wild-card rows, code should never trigger this logic
-        if row is None:
-            self.log.error("No row found in %s matching input data.", ref_filename)
-            raise ValueError
-
-        # Define the keys to pull from drizpars reffile table.
-        # All values should be None unless the user set them on the command
-        # line or in the call to the step
-
-        drizpars = dict(
+        # Define the keys pulled from step parameters
+        kwargs = dict(
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type
-            # pscale_ratio=self.pixel_scale_ratio, # I think this can be removed JEM (??)
-        )
-
-        # For parameters that are set in drizpars table but not set by the
-        # user, use these.  Otherwise, use values set by user.
-        reffile_drizpars = {k: v for k, v in drizpars.items() if v is None}
-        user_drizpars = {k: v for k, v in drizpars.items() if v is not None}
-
-        # read in values from that row for each parameter
-        for k in reffile_drizpars:
-            if k in drizpars_table.names:
-                reffile_drizpars[k] = drizpars_table[k][row]
-
-        # Convert the strings in the FITS binary table from np.bytes_ to str
-        for k, v in reffile_drizpars.items():
-            if isinstance(v, np.bytes_):
-                reffile_drizpars[k] = v.decode('UTF-8')
-
-        all_drizpars = {**reffile_drizpars, **user_drizpars}
-
-        kwargs = dict(
+            wht_type=self.weight_type,
             good_bits=GOOD_BITS,
             single=self.single,
-            blendheaders=self.blendheaders
+            blendheaders=self.blendheaders,
+            allowed_memory = self.allowed_memory,
+            in_memory = self.in_memory
         )
 
-        kwargs.update(all_drizpars)
+        # Custom output WCS parameters.
+        kwargs['output_shape'] = self._check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = self._load_custom_wcs(
+            self.output_wcs,
+            kwargs['output_shape']
+        )
+        kwargs['crpix'] = self._check_list_pars(self.crpix, 'crpix')
+        kwargs['crval'] = self._check_list_pars(self.crval, 'crval')
+        kwargs['rotation'] = self.rotation
+        kwargs['pscale'] = self.pixel_scale
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
 
+        # Report values to processing log
         for k, v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
-
-        return kwargs
-
-    def _set_spec_defaults(self):
-        """NIRSpec currently has no default drizpars reference file, so default
-        drizzle parameters are not set properly.  This method sets them.
-
-        Remove this class method when a drizpars reffile is delivered.
-        """
-        configspec = self.load_spec_file()
-        config = ConfigObj(configspec=configspec)
-        if config.validate(Validator()):
-            kwargs = config.dict()
-
-        if self.pixfrac is None:
-            self.pixfrac = 1.0
-        if self.kernel is None:
-            self.kernel = 'square'
-        if self.fillval is None:
-            self.fillval = 'NAN'
-        # Force definition of good bits
-        kwargs['good_bits'] = GOOD_BITS
-        kwargs['pixfrac'] = self.pixfrac
-        kwargs['kernel'] = str(self.kernel)
-        kwargs['fillval'] = str(self.fillval)
-        #  self.weight_type has a default value of None
-        # The other instruments read this parameter from a reference file
-        if self.wht_type is None:
-            self.wht_type = 'ivm'
-
-        kwargs['wht_type'] = str(self.wht_type)
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
-        kwargs.pop('pixel_scale_ratio')
-
-        for k, v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'wht_type', 'pscale_ratio']:
-                log.info('  using: %s=%s', k, repr(v))
 
         return kwargs
 
