@@ -179,13 +179,13 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
                 gp3mask = np.where(flag_temp & SATURATED, True, False)
                 mask &= gp3mask
 
-                # now, flag any pixels that border saturated pixels
-                if n_pix_grow_sat > 0:
-                    mask = adjacency_sat(mask, SATURATED, n_pix_grow_sat)
-
                 # Flag the 2nd group for the pixels passing that gauntlet
                 dq_temp = x_irs2.from_irs2(groupdq[ints, 1, :, :], irs2_mask, detector)
                 dq_temp[mask] |= SATURATED
+                # flag any pixels that border saturated pixels
+                if n_pix_grow_sat > 0:
+                    dq_temp = adjacency_sat(dq_temp, SATURATED, n_pix_grow_sat)
+                # set the flags in flagarray for group 2, i.e. index 1
                 x_irs2.to_irs2(flagarray, dq_temp, irs2_mask, detector)
 
             # check for A/D floor
