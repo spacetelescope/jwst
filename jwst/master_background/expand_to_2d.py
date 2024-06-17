@@ -301,16 +301,6 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         shape = input.data.shape
         grid = np.indices(shape, dtype=np.float64)
         wl_array = input.meta.wcs(grid[1], grid[0])[2]
-        # first remove the nans from wl_array and replace with -1
-        mask = np.isnan(wl_array)
-        wl_array[mask] = -1.
-        # next look at the limits of the wavelength table
-        mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
-        wl_array[mask_limit] = -1
-
-        # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-        background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
-                                                  dqflags.pixel['DO_NOT_USE'])
         bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
                                     left=0., right=0.)
 
