@@ -185,7 +185,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
                 # flag any pixels that border saturated pixels
                 if n_pix_grow_sat > 0:
                     dq_temp = adjacency_sat(dq_temp, SATURATED, n_pix_grow_sat)
-                # set the flags in flagarray for group 2, i.e. index 1
+                # set the flags in dq array for group 2, i.e. index 1
                 x_irs2.to_irs2(flagarray, dq_temp, irs2_mask, detector)
                 np.bitwise_or(groupdq[ints, 1, ...], flagarray,
                               groupdq[ints, 1, ...])
