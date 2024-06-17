@@ -64,7 +64,6 @@ def get_center(exp_type, input, offsets=False):
         try:
             xcenter = input.source_xpos
             ycenter = input.source_ypos
-            #raise AttributeError("purposely skip try statement")
         except AttributeError:
             log.warning("Unable to get source center from model")
             log.warning("Using 0.0, 0.0")
