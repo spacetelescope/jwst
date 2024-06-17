@@ -141,6 +141,9 @@ extract_2d
 - Added support for slit names that have string values instead of integer
   values, necessary for processing combined NIRSpec MOS and fixed slit
   data products. [#8467]
+  
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes here instead of
+  in ``wavecorr`` for NIRSpec FS data. [#8569]
 
 flat_field
 ----------
@@ -347,6 +350,12 @@ residual_fringe
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
 
+srctype
+-------
+
+- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources 
+  in NIRSpec FS data to enable assigning those attributes in ``extract_2d``. [#8569]
+
 tweakreg
 --------
 
@@ -383,6 +392,9 @@ wavecorr
   Point source position is calculated from dither offsets only for standard
   fixed slit processing. [#8467]
 
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes in ``extract_2d``
+  instead of in ``wavecorr`` for NIRSpec FS data. [#8569]
+  
 wfss_contam
 -----------
 
