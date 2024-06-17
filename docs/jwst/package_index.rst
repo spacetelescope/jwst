@@ -13,6 +13,7 @@ Package Index
    associations/index.rst
    background_step/index.rst
    background_subtraction/index.rst
+   badpix_selfcal/index.rst
    barshadow/index.rst
    charge_migration/index.rst
    combine_1d/index.rst
