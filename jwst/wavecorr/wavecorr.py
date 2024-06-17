@@ -36,7 +36,6 @@ from astropy.modeling import tabular
 from astropy.modeling.mappings import Identity
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.transforms import models as trmodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -363,42 +362,3 @@ def _is_point_source(slit, exp_type):
         log.info("Unknown source type")
 
     return result
-
-
-def get_source_xpos(slit):
-    """
-    Compute the source position within the slit for a NIRSpec fixed slit.
-
-    Parameters
-    ----------
-    slit : `~jwst.datamodels.SlitModel`
-        The slit object.
-
-    Returns
-    -------
-    xpos : float
-        X coordinate of the source as a fraction of the slit size.
-    """
-    xoffset = slit.meta.dither.x_offset  # in arcsec
-    yoffset = slit.meta.dither.y_offset  # in arcsec
-    v2ref = slit.meta.wcsinfo.v2_ref  # in arcsec
-    v3ref = slit.meta.wcsinfo.v3_ref  # in arcsec
-    v3idlyangle = slit.meta.wcsinfo.v3yangle  # in deg
-    vparity = slit.meta.wcsinfo.vparity
-
-    idl2v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
-    log.debug("wcsinfo: {0}, {1}, {2}, {3}".format(v2ref, v3ref, v3idlyangle, vparity))
-    # Compute the location in V2,V3 [in arcsec]
-    xv, yv = idl2v23(xoffset, yoffset)
-    log.info(f'xoffset, yoffset, {xoffset}, {yoffset}')
-
-    # Position in the virtual slit
-    xpos_slit, ypos_slit, lam_slit = slit.meta.wcs.get_transform('v2v3', 'slit_frame')(
-        xv, yv, 2)
-    # Update slit.source_xpos, slit.source_ypos
-    slit.source_xpos = xpos_slit
-    slit.source_ypos = ypos_slit
-    log.debug('Source X/Y position in V2V3: {0}, {1}'.format(xv, yv))
-    log.info('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
-
-    return xpos_slit

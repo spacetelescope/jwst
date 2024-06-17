@@ -98,23 +98,6 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     # Get the truth files
     rtdata.get_truth(os.path.join("truth/test_nirspec_fs_spec2", output))
 
-    # with dm.open(rtdata.output) as data, dm.open(rtdata.truth) as truth:
-    #     print("*******" + suffix + "*******")
-    #     if isinstance(data, dm.MultiSlitModel):
-    #         for i, slit in enumerate(data.slits):
-    #             if (slit.name == data.meta.instrument.fixed_slit):
-    #                 print(f"Main slit {i} srctype: {slit.source_type}")
-    #                 print(f"Truth slit {i} srctype: {truth.slits[i].source_type}")
-    #                 print(f"Main slit {i} source xpos: {slit.source_xpos}")
-    #                 print(f"Truth slit {i} source xpos: {truth.slits[i].source_xpos}")
-    #             else:
-    #                 print(f"Source type for slit {i}: {slit.source_type}")
-    #                 print(f"Truth slit {i} srctype: {truth.slits[i].source_type}")
-    #                 print(f"Source xpos for slit {i}: {slit.source_xpos}")
-    #                 print(f"Truth slit {i} source xpos: {truth.slits[i].source_xpos}")
-    #     elif isinstance(data, dm.MultiSpecModel):
-    #         print(data.info())
-
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
