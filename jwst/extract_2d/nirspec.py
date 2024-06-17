@@ -13,6 +13,8 @@ from ..assign_wcs import nirspec
 from ..assign_wcs import util
 from ..lib import pipe_utils
 
+from ..wavecorr import wavecorr
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -81,6 +83,10 @@ def nrs_extract2d(input_model, slit_name=None):
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
+
+            if (new_model.meta.exposure.type.lower() == 'nrs_fixedslit') and \
+                (slit.name == input_model.meta.instrument.fixed_slit):
+                wavecorr.get_source_xpos(new_model, None, None)
 
             # Update the S_REGION keyword value for the extracted slit
             if 'world' in input_model.meta.wcs.available_frames:

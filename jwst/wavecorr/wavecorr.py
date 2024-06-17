@@ -147,21 +147,12 @@ def apply_zero_point_correction(slit, reffile):
     """
     log.info(f'slit name {slit.name}')
     slit_wcs = slit.meta.wcs
-
-    # Get the source position in the slit and set the aperture name
+        
+    # Retrieve the source position and aperture name from metadata
+    source_xpos = slit.source_xpos
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-        # Check for fixed slits defined via MSA files in
-        # MOS/FS combination processing: they should not have their
-        # source position overridden by dither keywords
-        if _is_msa_fixed_slit(slit):
-            # get the planned source position
-            source_xpos = slit.source_xpos
-        else:
-            # get the source position from the dither offsets
-            source_xpos = get_source_xpos(slit)
         aperture_name = slit.name
     else:
-        source_xpos = slit.source_xpos
         # For the MSA the aperture name is "MOS"
         aperture_name = "MOS"
 
