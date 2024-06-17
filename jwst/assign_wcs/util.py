@@ -1254,8 +1254,10 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
     return onslice_ind
 
 
-def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
-                        crpix=None, projection='TAN', imwcs=None, **kwargs):
+def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
+                        max_inv_pix_error=0.01, inv_degree=None,
+                        npoints=12, crpix=None, projection='TAN',
+                        imwcs=None, **kwargs):
     """
     Update ``datamodel.meta.wcsinfo`` based on a FITS WCS + SIP approximation
     of a GWCS object. By default, this function will approximate
@@ -1307,6 +1309,23 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
         to be fit to the WCS transformation. In this case
         ``max_pixel_error`` is ignored.
 
+    max_inv_pix_error : float, None, optional
+        Maximum allowed inverse error over the domain of the pixel array
+        in pixel units. With the default value of `None` no inverse
+        is generated.
+
+    inv_degree : int, iterable, None, optional
+        Degree of the SIP polynomial. Default value `None` indicates that
+        all allowed degree values (``[1...6]``) will be considered and
+        the lowest degree that meets accuracy requerements set by
+        ``max_pix_error`` will be returned. Alternatively, ``degree`` can be
+        an iterable containing allowed values for the SIP polynomial degree.
+        This option is similar to default `None` but it allows caller to
+        restrict the range of allowed SIP degrees used for fitting.
+        Finally, ``degree`` can be an integer indicating the exact SIP degree
+        to be fit to the WCS transformation. In this case
+        ``max_inv_pixel_error`` is ignored.
+
     npoints : int, optional
         The number of points in each dimension to sample the bounding box
         for use in the SIP fit. Minimum number of points is 3.
@@ -1346,24 +1365,6 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
 
     Other Parameters
     ----------------
-
-    max_inv_pix_error : float, None, optional
-        Maximum allowed inverse error over the domain of the pixel array
-        in pixel units. With the default value of `None` no inverse
-        is generated.
-
-    inv_degree : int, iterable, None, optional
-        Degree of the SIP polynomial. Default value `None` indicates that
-        all allowed degree values (``[1...6]``) will be considered and
-        the lowest degree that meets accuracy requerements set by
-        ``max_pix_error`` will be returned. Alternatively, ``degree`` can be
-        an iterable containing allowed values for the SIP polynomial degree.
-        This option is similar to default `None` but it allows caller to
-        restrict the range of allowed SIP degrees used for fitting.
-        Finally, ``degree`` can be an integer indicating the exact SIP degree
-        to be fit to the WCS transformation. In this case
-        ``max_inv_pixel_error`` is ignored.
-
     bounding_box : tuple, None, optional
         A pair of tuples, each consisting of two numbers
         Represents the range of pixel values in both dimensions
@@ -1372,11 +1373,9 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
     verbose : bool, optional
         Print progress of fits.
 
-
     Returns
     -------
     FITS header with all SIP WCS keywords
-
 
     Raises
     ------
@@ -1384,7 +1383,6 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
         If the WCS is not at least 2D, an exception will be raised. If the
         specified accuracy (both forward and inverse, both rms and maximum)
         is not achieved an exception will be raised.
-
 
     Notes
     -----
@@ -1409,15 +1407,11 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
     # make a copy of kwargs:
     kwargs = {k: v for k, v in kwargs.items()}
 
-    # override default values for "other parameters":
-    max_inv_pix_error = kwargs.pop('max_inv_pix_error', None)
-    inv_degree = kwargs.pop('inv_degree', None)
-    if inv_degree is None:
-        inv_degree = range(1, _MAX_SIP_DEGREE)
-
-    # limit default 'degree' range to _MAX_SIP_DEGREE:
+    # limit default 'degree' ranges to _MAX_SIP_DEGREE:
     if degree is None:
         degree = range(1, _MAX_SIP_DEGREE)
+    if inv_degree is None:
+        inv_degree = range(1, _MAX_SIP_DEGREE)
 
     hdr = imwcs.to_fits_sip(
         max_pix_error=max_pix_error,
@@ -1426,6 +1420,7 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
         inv_degree=inv_degree,
         npoints=npoints,
         crpix=crpix,
+        projection=projection,
         **kwargs
     )
 

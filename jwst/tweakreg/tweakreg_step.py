@@ -119,6 +119,14 @@ class TweakRegStep(Step):
         abs_separation = float(default=1) # Minimum object separation in arcsec when performing absolute astrometry
         abs_tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec when performing absolute astrometry
 
+        # SIP approximation options, should match assign_wcs
+        sip_approx = boolean(default=True)  # enables SIP approximation for imaging modes.
+        sip_max_pix_error = float(default=0.01)  # max err for SIP fit, forward.
+        sip_degree = integer(max=6, default=None)  # degree for forward SIP fit, None to use best fit.
+        sip_max_inv_pix_error = float(default=0.01)  # max err for SIP fit, inverse.
+        sip_inv_degree = integer(max=6, default=None)  # degree for inverse SIP fit, None to use best fit.
+        sip_npoints = integer(default=12)  #  number of points for SIP
+        
         # stpipe general options
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
     """
@@ -508,17 +516,22 @@ class TweakRegStep(Step):
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
-                try:
-                    update_fits_wcsinfo(
-                        image_model,
-                        max_pix_error=0.01,
-                        npoints=16
-                    )
-                except (ValueError, RuntimeError) as e:
-                    self.log.warning(
-                        "Failed to update 'meta.wcsinfo' with FITS SIP "
-                        f'approximation. Reported error is:\n"{e.args[0]}"'
-                    )
+                if self.sip_approx:
+                    try:
+                        update_fits_wcsinfo(
+                            image_model,
+                            max_pix_error=self.sip_max_pix_error,
+                            degree=self.sip_degree,
+                            max_inv_pix_error=self.sip_max_inv_pix_error,
+                            inv_degree=self.sip_inv_degree,
+                            npoints=self.sip_npoints,
+                            crpix=None
+                        )
+                    except (ValueError, RuntimeError) as e:
+                        self.log.warning(
+                            "Failed to update 'meta.wcsinfo' with FITS SIP "
+                            f'approximation. Reported error is:\n"{e.args[0]}"'
+                        )
 
         return images
 

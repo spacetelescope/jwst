@@ -4,6 +4,7 @@ from .ami.ami_normalize_step import AmiNormalizeStep
 from .assign_mtwcs.assign_mtwcs_step import AssignMTWcsStep
 from .assign_wcs.assign_wcs_step import AssignWcsStep
 from .background.background_step import BackgroundStep
+from .badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep
 from .barshadow.barshadow_step import BarShadowStep
 from .charge_migration.charge_migration_step import ChargeMigrationStep
 from .combine_1d.combine_1d_step import Combine1dStep
@@ -68,6 +69,7 @@ __all__ = [
     "AssignMTWcsStep",
     "AssignWcsStep",
     "BackgroundStep",
+    "BadpixSelfcalStep",
     "BarShadowStep",
     "Combine1dStep",
     "StackRefsStep",

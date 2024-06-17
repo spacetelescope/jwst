@@ -13,6 +13,7 @@ from ..stpipe import Pipeline
 # step imports
 from ..assign_wcs import assign_wcs_step
 from ..background import background_step
+from ..badpix_selfcal import badpix_selfcal_step
 from ..barshadow import barshadow_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
@@ -65,6 +66,7 @@ class Spec2Pipeline(Pipeline):
     # Define aliases to steps
     step_defs = {
         'assign_wcs': assign_wcs_step.AssignWcsStep,
+        'badpix_selfcal': badpix_selfcal_step.BadpixSelfcalStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'nsclean': nsclean_step.NSCleanStep,
         'bkg_subtract': background_step.BackgroundStep,
@@ -244,6 +246,20 @@ class Spec2Pipeline(Pipeline):
 
         # Steps whose order is the same for all types of input:
 
+        # Self-calibrate to flag bad/warm pixels, and apply flags 
+        # to both background and science exposures.
+        # skipped by default for all modes
+        result = self.badpix_selfcal(
+            calibrated, members_by_type['selfcal'], members_by_type['background'], 
+            )
+        if isinstance(result, datamodels.JwstDataModel):
+            # if step is skipped, unchanged sci exposure is returned
+            calibrated = result
+        else:
+            # if step actually occurs, then flagged backgrounds are also returned
+            calibrated, bkg_outlier_flagged = result[0], result[1]
+            members_by_type['background'] = bkg_outlier_flagged
+
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)
 
@@ -254,7 +270,6 @@ class Spec2Pipeline(Pipeline):
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
         # science and background exposures.  Otherwise, there will be as many `imprint` members as
         # there are science plus background members.
-
         calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
 
         # for each background image subtract an associated leak cal
