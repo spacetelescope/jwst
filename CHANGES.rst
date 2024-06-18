@@ -148,8 +148,6 @@ flat_field
 general
 -------
 
-- Require numpy<2.0. [#8565]
-
 - Removed deprecated stdatamodels model types ``DrizProductModel``,
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
