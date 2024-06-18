@@ -145,8 +145,8 @@ lib
 master_background
 -----------------
 
-- For MIRI_MRS, added code to make sure the background matches as good as
-  possible the science data. [#8535]
+- For MIRI_MRS, the background is be zero-valued outside the
+  wavelength coverage from the background spectra. [#8535]
 
 master_background_mos
 ---------------------
