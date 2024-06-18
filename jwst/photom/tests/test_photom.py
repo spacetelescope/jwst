@@ -1357,7 +1357,7 @@ def test_expected_failure_niriss_cubemodel():
         ds.calc_niriss(None)
 
 
-def test_expected_failure_niriss_imagemodel():
+def test_expected_failure_soss_imagemodel():
     """
     Test that passing a CubeModel to calc_niriss raises an exception
     This occurs when extract_1d step is skipped, e.g. for NIRISS SOSS data

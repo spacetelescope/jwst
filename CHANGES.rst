@@ -238,6 +238,9 @@ photom
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
+  
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
+  was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
 
 pipeline
 --------
