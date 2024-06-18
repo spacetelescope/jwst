@@ -3736,13 +3736,6 @@ def create_extraction(extract_ref_dict,
         use_source_posn = False
         log.info(f"Setting use_source_posn to False for source type {source_type}")
 
-    # Turn off use_source_posn if working on non-primary NRS fixed slits
-    if is_multiple_slits:
-        if exp_type == 'NRS_FIXEDSLIT' and slitname != slit.meta.instrument.fixed_slit:
-            use_source_posn = False
-            log.info("Can only compute source location for primary NIRSpec slit,")
-            log.info("so setting use_source_posn to False")
-
     if photom_has_been_run:
         pixel_solid_angle = meta_source.meta.photometry.pixelarea_steradians
         if pixel_solid_angle is None:

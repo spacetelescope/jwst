@@ -165,7 +165,12 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.stellarity = float(slit.stellarity)
         output_model.source_xpos = float(slit.source_xpos)
         output_model.source_ypos = float(slit.source_ypos)
-        output_model.slitlet_id = int(slit.name)
+        try:
+            output_model.slitlet_id = int(slit.name)
+        except ValueError:
+            # Fixed slits in MOS data have string values for the name;
+            # use the shutter ID instead
+            output_model.slitlet_id = slit.shutter_id
         output_model.quadrant = int(slit.quadrant)
         output_model.xcen = int(slit.xcen)
         output_model.ycen = int(slit.ycen)

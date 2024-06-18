@@ -41,7 +41,6 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
         got_wavelength = False
         wl_array = None
 
-
     # Evaluate the WCS on the grid of pixel indexes, capturing only the
     # resulting wavelength values
     shape = model.data.shape
