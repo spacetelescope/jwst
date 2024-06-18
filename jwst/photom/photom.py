@@ -421,7 +421,7 @@ class DataSet():
                     continue
                 self.photom_io(ftab.phot_table[row])
 
-        elif isinstance(self.input, datamodels.CubeModel):
+        elif isinstance(self.input, datamodels.CubeModel) or isinstance(self.input, datamodels.ImageModel):
             raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
 
         elif self.exptype in ['NIS_SOSS']:
