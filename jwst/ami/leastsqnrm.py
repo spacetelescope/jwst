@@ -550,7 +550,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     log.info(f"\tflatdqm {flatdqm.shape:}")
 
 
-    log.info("\n\ttype(dqm)", type(dqm))
+    log.info("\n\ttype(dqm) %s", type(dqm))
     if dqm is not None:
         nanlist = np.where(flatdqm)  # where DO_NOT_USE up.
     else:
@@ -577,8 +577,8 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     log.info(
         f"\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}"
     )
-    log.info("flat model dimensions ", np.shape(flatmodel))
-    log.info("flat image dimensions ", np.shape(flatimg))
+    log.info("flat model dimensions %s", np.shape(flatmodel))
+    log.info("flat image dimensions %s", np.shape(flatimg))
 
     for fringe in range(np.shape(model)[2]):
         flatmodel[:, fringe] = np.delete(flatmodel_nan[:, fringe], nanlist)
@@ -601,13 +601,13 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     res = np.insert(res, naninsert, np.nan)
     res = res.reshape(img.shape[0], img.shape[1])
 
-    log.info("model flux", flux)
-    log.info("data flux", flatimg.sum())
-    log.info("flat model dimensions ", np.shape(flatmodel))
-    log.info("model transpose dimensions ", np.shape(flatmodeltransp))
-    log.info("flat image dimensions ", np.shape(flatimg))
-    log.info("transpose * image data dimensions", np.shape(data_vector))
-    log.info("flat img * transpose dimensions", np.shape(inverse))
+    log.info("model flux %s", flux)
+    log.info("data flux %s", flatimg.sum())
+    log.info("flat model dimensions %s", np.shape(flatmodel))
+    log.info("model transpose dimensions %s", np.shape(flatmodeltransp))
+    log.info("flat image dimensions %s", np.shape(flatimg))
+    log.info("transpose * image data dimensions %s", np.shape(data_vector))
+    log.info("flat img * transpose dimensions %s", np.shape(inverse))
 
     if linfit:
         try:
