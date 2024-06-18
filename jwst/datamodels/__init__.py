@@ -8,6 +8,7 @@ import sys
 from stdatamodels.jwst.datamodels.util import open
 
 from .container import ModelContainer
+from .library import ModelLibrary
 from .source_container import SourceModelContainer
 
 import stdatamodels.jwst.datamodels
@@ -19,6 +20,7 @@ from stdatamodels.jwst.datamodels import * # noqa: F403
 __all__ = [
     'open',
     'ModelContainer', 'SourceModelContainer',
+    'ModelLibrary',
 ] + stdatamodels.jwst.datamodels.__all__
 
 
