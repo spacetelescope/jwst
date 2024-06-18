@@ -156,8 +156,20 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     mask[nan_pix] = False
 
     # If IFU or MOS, mask the fixed-slit area of the image; uses hardwired indexes
-    if exptype in ['nrs_ifu', 'nrs_msaspec']:
+    if exptype == 'nrs_ifu':
+        log.info("Masking the fixed slit region for IFU data.")
         mask[922:1116, :] = False
+    elif exptype == 'nrs_msaspec':
+        # check for any slits defined in the fixed slit quadrant:
+        # if there is nothing there of interest, mask the whole FS region
+        slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+        is_fs = [s.quadrant == 5 for s in slit2msa.slits]
+        if not any(is_fs):
+            log.info("Masking the fixed slit region for MOS data.")
+            mask[922:1116, :] = False
+        else:
+            log.info("Fixed slits found in MSA definition; "
+                     "not masking the fixed slit region for MOS data.")
 
     # Use left/right reference pixel columns (first and last 4). Can only be
     # applied to data that uses all 2048 columns of the detector.

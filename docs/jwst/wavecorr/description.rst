@@ -49,7 +49,7 @@ estimate the fractional location of the source within the given slit.
 Note that this computation can only be performed for the primary slit
 in the exposure, which is given in the "FXD_SLIT" keyword. The positions
 of sources in any additional slits cannot be estimated and therefore
-the wavelength correction is only applied to the primary slit.
+the wavelength correction is only applied to the primary slit.\ :sup:`1`
 
 The estimated position of the source within the primary slit (in the
 dispersion direction) is then used in the same manner as described above
@@ -58,3 +58,9 @@ for the primary slit.
 
 Upon successful completion of the step, the status keyword "S_WAVCOR"
 is set to "COMPLETE".
+
+:sup:`1`\ Note that fixed slits that are planned as part of a combined
+MOS and FS observation do have *a priori* estimates of their source
+locations, via the :ref:`MSA metadata file<msa_metadata>`. When available,
+these source locations are directly used, instead of recomputing the source
+position in the ``wavecorr`` step.
