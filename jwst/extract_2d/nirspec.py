@@ -62,6 +62,7 @@ def nrs_extract2d(input_model, slit_name=None):
         slit = open_slits[0]
         output_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit, exp_type)
         set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
+        get_source_xpos(output_model)
         if 'world' in input_model.meta.wcs.available_frames:
             orig_s_region = output_model.meta.wcsinfo.s_region.strip()
             util.update_s_region_nrs_slit(output_model)
@@ -301,8 +302,9 @@ def get_source_xpos(slit):
     log.info(f'xoffset, yoffset, {xoffset}, {yoffset}')
 
     # Position in the virtual slit
+    wavelength = 2.0 # microns, but it doesn't make any difference here
     xpos_slit, ypos_slit, lam_slit = slit.meta.wcs.get_transform('v2v3', 'slit_frame')(
-        xv, yv, 2)
+        xv, yv, wavelength)
     # Update slit.source_xpos, slit.source_ypos
     slit.source_xpos = xpos_slit
     slit.source_ypos = ypos_slit
