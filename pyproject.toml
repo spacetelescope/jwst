@@ -144,7 +144,7 @@ requires = [
     "setuptools>=61.2",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "numpy>=2.0.0rc2",
+    "numpy>=2.0",
 ]
 build-backend = "setuptools.build_meta"
 
