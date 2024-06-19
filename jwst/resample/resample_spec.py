@@ -120,13 +120,26 @@ class ResampleSpecData(ResampleData):
         if refmodel:
             all_wcs.insert(0, refmodel.meta.wcs)
         else:
-            refmodel = self.input_models[0]
+            # Use the first model with any good data as the reference model
+            for model in self.input_models:
+                dq_mask = resample_utils.build_mask(model.dq, self.good_bits)
+                good = np.isfinite(model.data) & (model.data != 0) & dq_mask
+                if np.any(good) and refmodel is None:
+                    refmodel = model
+                    break
+
+            # If no good data was found, use the first model.
+            if refmodel is None:
+                refmodel = self.input_models[0]
 
         # make a copy of the data array for internal manipulation
         refmodel_data = refmodel.data.copy()
+
         # renormalize to the minimum value, for best results when
         # computing the weighted mean below
-        refmodel_data -= np.nanmin(refmodel_data)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
+            refmodel_data -= np.nanmin(refmodel_data)
 
         # save the wcs of the reference model
         refwcs = refmodel.meta.wcs
@@ -145,8 +158,8 @@ class ResampleSpecData(ResampleData):
         sd = s * refmodel_data
         ld = lam * refmodel_data
         good_s = np.isfinite(sd)
-        if np.any(good_s):
-            total = np.sum(refmodel_data[good_s])
+        total = np.sum(refmodel_data[good_s])
+        if np.any(good_s) and total != 0:
             wmean_s = np.sum(sd[good_s]) / total
             wmean_l = np.sum(ld[good_s]) / total
         else:

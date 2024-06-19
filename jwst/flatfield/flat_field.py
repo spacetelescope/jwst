@@ -354,7 +354,6 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
     """
 
     exposure_type = output_model.meta.exposure.type
-    primary_slit = output_model.meta.instrument.fixed_slit
 
     # Create a list to hold the list of slits.  This will eventually be used
     # to extend the MultiSlitModel.slits attribute.  We do it this way to
@@ -375,12 +374,12 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         if user_supplied_flat is not None:
             slit_flat = user_supplied_flat.slits[slit_idx]
         else:
-            if exposure_type == "NRS_FIXEDSLIT" and \
-                    slit.name == primary_slit and slit.source_type.upper() == "POINT":
+            if (exposure_type == "NRS_FIXEDSLIT"
+                    and slit.source_type.upper() == "POINT"):
 
-                # For fixed-slit exposures, if this is the primary slit
-                # and it contains a point source, compute the flat-field
-                # corrections for both uniform (without wavecorr) and point
+                # For fixed-slit exposures, if this contains a point source,
+                # compute the flat-field corrections for both uniform
+                # (without wavecorr) and point
                 # source (with wavecorr) modes, applying only the point
                 # source version to the data.
 
