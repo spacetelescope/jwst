@@ -53,6 +53,12 @@ associations
 - Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
   tso3 associations. [#8549]
 
+background_subtraction
+----------------------
+
+- Clarified MIRI MRS default/optional background subtraction steps in the
+  documentation pages.  []
+
 badpix_selfcal
 --------------
 
