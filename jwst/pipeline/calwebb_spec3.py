@@ -138,7 +138,7 @@ class Spec3Pipeline(Pipeline):
         for member in product['members']:
             members_by_type[member['exptype'].lower()].append(member['expname'])
 
-        if is_moving_target(input_models):
+        if is_moving_target(input_models[0]):
             self.log.info("Assigning WCS to a Moving Target exposure.")
             input_models = self.assign_mtwcs(input_models)
 

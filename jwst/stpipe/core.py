@@ -1,16 +1,19 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
+import logging
+import os
+
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
-
-from .. import __version_commit__, __version__
-
 from stpipe import crds_client
 from stpipe import Step
 from stpipe import Pipeline
+
+from .. import __version_commit__, __version__
 from ..lib.suffix import remove_suffix
-import logging
+from jwst.datamodels.library import ModelLibrary
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -24,7 +27,12 @@ class JwstStep(Step):
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
-        return datamodels.open(init, **kwargs)
+        if isinstance(init, ModelLibrary):
+            return init
+        if isinstance(init, JwstDataModel) or os.path.splitext(init)[1] in (".asdf", ".fits"):
+            return datamodels.open(init, **kwargs)
+        return ModelLibrary(init)
+
 
     def load_as_level2_asn(self, obj):
         """Load object as an association

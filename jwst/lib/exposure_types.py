@@ -87,10 +87,8 @@ def is_nrs_autoflat(datamodel):
     return exp_type.lower() == 'nrs_autoflat'
 
 
-def is_moving_target(input_models):
+def is_moving_target(datamodel):
     """ Determine if a moving target exposure."""
-    model = input_models[0]
-    if hasattr(model.meta.target, 'type') and \
-            model.meta.target.type is not None and model.meta.target.type.lower() == 'moving':
+    if (hasattr(datamodel.meta.target, 'type') and datamodel.meta.target.type is not None and datamodel.meta.target.type.lower() == 'moving'):
         return True
     return False

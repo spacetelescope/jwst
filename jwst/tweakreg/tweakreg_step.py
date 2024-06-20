@@ -12,9 +12,9 @@ from tweakwcs.correctors import JWSTWCSCorrector
 
 import stcal.tweakreg.tweakreg as twk
 
-from jwst.datamodels import ModelContainer
 from jwst.stpipe import record_step_status
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
+from jwst.datamodels import ModelLibrary, ModelContainer
 
 # LOCAL
 from ..stpipe import Step
@@ -128,7 +128,12 @@ class TweakRegStep(Step):
     reference_file_types = []
 
     def process(self, input):
-        images = ModelContainer(input)
+        if isinstance(input, ModelLibrary):
+            images = input
+        elif isinstance(input, ModelContainer):
+            images = ModelLibrary(input, on_disk=False)
+        else:
+            images = ModelLibrary(input, on_disk=True)
 
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
@@ -153,15 +158,15 @@ class TweakRegStep(Step):
                     )
                     use_custom_catalogs = False
             # else, load from association
-            elif hasattr(images.meta, "asn_table") and getattr(images, "asn_file_path", None) is not None:
+            elif images._asn_dir is not None:
                 catdict = {}
-                asn_dir = path.dirname(images.asn_file_path)
-                for member in images.meta.asn_table.products[0].members:
-                    if hasattr(member, "tweakreg_catalog"):
-                        if member.tweakreg_catalog is None or not member.tweakreg_catalog.strip():
-                            catdict[member.expname] = None
+                for member in images.asn["products"][0]["members"]:
+                    if "tweakreg_catalog" in member:
+                        tweakreg_catalog = member["tweakreg_catalog"]
+                        if tweakreg_catalog is None or not tweakreg_catalog.strip():
+                            catdict[member["expname"]] = None
                         else:
-                            catdict[member.expname] = path.join(asn_dir, member.tweakreg_catalog)
+                            catdict[member["expname"]] = path.join(images._asn_dir, tweakreg_catalog)
 
         if self.abs_refcat is not None and self.abs_refcat.strip():
             align_to_abs_refcat = True
@@ -186,62 +191,65 @@ class TweakRegStep(Step):
         # pre-allocate collectors (same length and order as images)
         correctors = [None] * len(images)
 
-        # Build the catalog for each input image
-        for (model_index, image_model) in enumerate(images):
-            # now that the model is open, check it's metadata for a custom catalog
-            # only if it's not listed in the catdict
-            if use_custom_catalogs and image_model.meta.filename not in catdict:
-                if (image_model.meta.tweakreg_catalog is not None and image_model.meta.tweakreg_catalog.strip()):
-                    catdict[image_model.meta.filename] = image_model.meta.tweakreg_catalog
-            if use_custom_catalogs and catdict.get(image_model.meta.filename, None) is not None:
-                # FIXME this modifies the input_model
-                image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
-                # use user-supplied catalog:
-                self.log.info("Using user-provided input catalog "
-                              f"'{image_model.meta.tweakreg_catalog}'")
-                catalog = Table.read(
-                    image_model.meta.tweakreg_catalog,
-                )
-                save_catalog = False
-            else:
-                # source finding
-                catalog = self._find_sources(image_model)
+        # Build the catalog and corrector for each input images
+        with images:
+            for (model_index, image_model) in enumerate(images):
+                # now that the model is open, check it's metadata for a custom catalog
+                # only if it's not listed in the catdict
+                if use_custom_catalogs and image_model.meta.filename not in catdict:
+                    if (image_model.meta.tweakreg_catalog is not None and image_model.meta.tweakreg_catalog.strip()):
+                        catdict[image_model.meta.filename] = image_model.meta.tweakreg_catalog
+                if use_custom_catalogs and catdict.get(image_model.meta.filename, None) is not None:
+                    # FIXME this modifies the input_model
+                    image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
+                    # use user-supplied catalog:
+                    self.log.info("Using user-provided input catalog "
+                                  f"'{image_model.meta.tweakreg_catalog}'")
+                    catalog = Table.read(
+                        image_model.meta.tweakreg_catalog,
+                    )
+                    save_catalog = False
+                else:
+                    # source finding
+                    catalog = self._find_sources(image_model)
 
-                # only save if catalog was computed from _find_sources and
-                # the user requested save_catalogs
-                save_catalog = self.save_catalogs
+                    # only save if catalog was computed from _find_sources and
+                    # the user requested save_catalogs
+                    save_catalog = self.save_catalogs
 
-            # if needed rename xcentroid to x, ycentroid to y
-            catalog = _rename_catalog_columns(catalog)
+                # if needed rename xcentroid to x, ycentroid to y
+                catalog = _rename_catalog_columns(catalog)
 
-            # filter all sources outside the wcs bounding box
-            catalog = twk.filter_catalog_by_bounding_box(
-                catalog,
-                image_model.meta.wcs.bounding_box)
+                # filter all sources outside the wcs bounding box
+                catalog = twk.filter_catalog_by_bounding_box(
+                    catalog,
+                    image_model.meta.wcs.bounding_box)
 
-            # setting 'name' is important for tweakwcs logging
-            if catalog.meta.get('name') is None:
-                catalog.meta['name'] = path.splitext(image_model.meta.filename)[0].strip('_- ')
+                # setting 'name' is important for tweakwcs logging
+                if catalog.meta.get('name') is None:
+                    catalog.meta['name'] = path.splitext(image_model.meta.filename)[0].strip('_- ')
 
-            # log results of source finding (or user catalog)
-            filename = image_model.meta.filename
-            nsources = len(catalog)
-            if nsources == 0:
-                self.log.warning('No sources found in {}.'.format(filename))
-            else:
-                self.log.info('Detected {} sources in {}.'
-                              .format(len(catalog), filename))
+                # log results of source finding (or user catalog)
+                filename = image_model.meta.filename
+                nsources = len(catalog)
+                if nsources == 0:
+                    self.log.warning('No sources found in {}.'.format(filename))
+                else:
+                    self.log.info('Detected {} sources in {}.'
+                                  .format(len(catalog), filename))
 
-            # save catalog (if requested)
-            if save_catalog:
-                # FIXME this modifies the input_model
-                image_model.meta.tweakreg_catalog = self._write_catalog(catalog, filename)
+                # save catalog (if requested)
+                if save_catalog:
+                    # FIXME this modifies the input_model
+                    image_model.meta.tweakreg_catalog = self._write_catalog(catalog, filename)
 
-            # construct the corrector since the model is open (and already has a group_id)
-            correctors[model_index] = twk.construct_wcs_corrector(image_model.meta.wcs,
-                                                                  image_model.meta.wcsinfo.instance,
-                                                                  catalog,
-                                                                  image_model.meta.group_id,)
+                # construct the corrector since the model is open (and already has a group_id)
+                correctors[model_index] = \
+                    twk.construct_wcs_corrector(image_model.meta.wcs,
+                                                image_model.meta.wcsinfo.instance,
+                                                catalog,
+                                                image_model.meta.group_id,)
+                images.shelve(image_model, model_index)
 
         self.log.info('')
         self.log.info("Number of image groups to be aligned: {:d}."
@@ -278,7 +286,9 @@ class TweakRegStep(Step):
         # can (and does) occur after alignment between groups
         if align_to_abs_refcat:
             try:
-                ref_image = images[0]
+                with images:
+                    ref_image = images.borrow(0)
+                    images.shelve(ref_image, 0, modify=False)
                 correctors = \
                     twk.absolute_align(correctors, self.abs_refcat,
                                        ref_wcs=ref_image.meta.wcs,
@@ -298,13 +308,17 @@ class TweakRegStep(Step):
 
             except twk.TweakregError as e:
                 self.log.warning(str(e))
-                for model in images:
-                    model.meta.cal_step.tweakreg = "SKIPPED"
-                return images 
+                with images:
+                    for model in images:
+                        record_step_status(model, "tweakreg", success=False)
+                        images.shelve(model)
+                return images
 
-        if local_align_failed and not align_to_abs_refcat:    
-            for model in images:
-                record_step_status(model, "tweakreg", success=False)
+        if local_align_failed and not align_to_abs_refcat: 
+            with images:   
+                for model in images:
+                    record_step_status(model, "tweakreg", success=False)
+                    images.shelve(model)
             return images
 
         # one final pass through all the models to update them based
@@ -315,53 +329,53 @@ class TweakRegStep(Step):
 
 
     def _apply_tweakreg_solution(self,
-                        images: ModelContainer,
+                        images: ModelLibrary,
                         correctors: list[JWSTWCSCorrector],
                         align_to_abs_refcat: bool = False,
-                        ) -> ModelContainer:
+                        ) -> ModelLibrary:
+        with images:
+            for (image_model, corrector) in zip(images, correctors):
 
-        for (image_model, corrector) in zip(images, correctors):
+                # retrieve fit status and update wcs if fit is successful:
+                if ("fit_info" in corrector.meta and
+                        "SUCCESS" in corrector.meta["fit_info"]["status"]):
 
-            # retrieve fit status and update wcs if fit is successful:
-            if ("fit_info" in corrector.meta and
-                    "SUCCESS" in corrector.meta["fit_info"]["status"]):
+                    # Update/create the WCS .name attribute with information
+                    # on this astrometric fit as the only record that it was
+                    # successful:
+                    if align_to_abs_refcat:
+                        # NOTE: This .name attrib agreed upon by the JWST Cal
+                        #       Working Group.
+                        #       Current value is merely a place-holder based
+                        #       on HST conventions. This value should also be
+                        #       translated to the FITS WCSNAME keyword
+                        #       IF that is what gets recorded in the archive
+                        #       for end-user searches.
+                        corrector.wcs.name = f"FIT-LVL3-{self.abs_refcat}"
 
-                # Update/create the WCS .name attribute with information
-                # on this astrometric fit as the only record that it was
-                # successful:
-                if align_to_abs_refcat:
-                    # NOTE: This .name attrib agreed upon by the JWST Cal
-                    #       Working Group.
-                    #       Current value is merely a place-holder based
-                    #       on HST conventions. This value should also be
-                    #       translated to the FITS WCSNAME keyword
-                    #       IF that is what gets recorded in the archive
-                    #       for end-user searches.
-                    corrector.wcs.name = f"FIT-LVL3-{self.abs_refcat}"
+                    image_model.meta.wcs = corrector.wcs
+                    update_s_region_imaging(image_model)
 
-                image_model.meta.wcs = corrector.wcs
-                update_s_region_imaging(image_model)
-
-                # Also update FITS representation in input exposures for
-                # subsequent reprocessing by the end-user.
-                if self.sip_approx:
-                    try:
-                        update_fits_wcsinfo(
-                            image_model,
-                            max_pix_error=self.sip_max_pix_error,
-                            degree=self.sip_degree,
-                            max_inv_pix_error=self.sip_max_inv_pix_error,
-                            inv_degree=self.sip_inv_degree,
-                            npoints=self.sip_npoints,
-                            crpix=None
-                        )
-                    except (ValueError, RuntimeError) as e:
-                        msg = f"Failed to update 'meta.wcsinfo' with FITS SIP \
-                            approximation. Reported error is: \n {e.args[0]}"
-                        self.log.warning(msg)
-            record_step_status(image_model, "tweakreg", success=True)
-
-        return image_model
+                    # Also update FITS representation in input exposures for
+                    # subsequent reprocessing by the end-user.
+                    if self.sip_approx:
+                        try:
+                            update_fits_wcsinfo(
+                                image_model,
+                                max_pix_error=self.sip_max_pix_error,
+                                degree=self.sip_degree,
+                                max_inv_pix_error=self.sip_max_inv_pix_error,
+                                inv_degree=self.sip_inv_degree,
+                                npoints=self.sip_npoints,
+                                crpix=None
+                            )
+                        except (ValueError, RuntimeError) as e:
+                            msg = f"Failed to update 'meta.wcsinfo' with FITS SIP \
+                                approximation. Reported error is: \n {e.args[0]}"
+                            self.log.warning(msg)
+                images.shelve(image_model)
+            record_step_status(images, "tweakreg", success=True)
+        return images
 
 
     def _write_catalog(self, catalog, filename):
