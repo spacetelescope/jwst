@@ -57,7 +57,7 @@ background_subtraction
 ----------------------
 
 - Clarified MIRI MRS default/optional background subtraction steps in the
-  documentation pages.  []
+  documentation pages.  [#8582]
 
 badpix_selfcal
 --------------
