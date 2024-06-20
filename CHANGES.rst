@@ -238,7 +238,7 @@ photom
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
-  
+
 - Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
 
@@ -264,6 +264,9 @@ pipeline
   for MOS and FS are run twice, first for all MOS slits, then for all
   FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
   combined products. [#8467]
+
+- Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
+  for NIRISS SOSS data [#8575].
 
 pixel_replace
 -------------
