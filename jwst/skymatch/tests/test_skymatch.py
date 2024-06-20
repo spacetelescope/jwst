@@ -415,7 +415,6 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     # images are rotated and SATURATED pixels in the corners are not in the
     # common intersection of all input images. This is the purpose of this test
     step = SkyMatchStep(
-        minimize_memory=True,
         skymethod='match',
         match_down=True,
         subtract=True,
@@ -426,12 +425,8 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
 
     result = step.run(asn_out_fname)
 
-    assert isinstance(result, str)
-
     ref_levels = np.subtract(levels, min(levels))
     sub_levels = np.subtract(levels, ref_levels)
-
-    result = ModelContainer(result)
 
     for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
         # check that meta was set correctly:
@@ -498,7 +493,6 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     # images are rotated and SATURATED pixels in the corners are not in the
     # common intersection of all input images. This is the purpose of this test
     step = SkyMatchStep(
-        minimize_memory=True,
         skymethod=skymethod,
         match_down=True,
         subtract=subtract,
