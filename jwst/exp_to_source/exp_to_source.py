@@ -47,6 +47,7 @@ def exp_to_source(inputs):
             log.debug(f'Copying source {key}')
             result_slit = result[str(key)]
             result_slit.exposures.append(slit)
+
             # store values for later use (after merge_tree)
             # these values are incorrectly getting overwritten by
             # the top model.
@@ -54,12 +55,14 @@ def exp_to_source(inputs):
             slit_bunit_err = slit.meta.bunit_err
             slit_model = slit.meta.model_type
             slit_wcsinfo = slit.meta.wcsinfo.instance
-            # exposure.meta.bunit_data and bunit_err does not exist
-            # before calling merge_tree save these values
+            slit_exptype = None
+            if hasattr(slit.meta, 'exposure'):
+                if hasattr(slit.meta.exposure, 'type'):
+                    slit_exptype = slit.meta.exposure.type
+
             # Before merge_tree the slits have a model_type of SlitModel.
             # After merge_tree it is overwritten with MultiSlitModel.
             # store the model type to undo overwriting of modeltype.
-
             merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
 
             result_slit.exposures[-1].meta.bunit_data = slit_bunit
@@ -67,9 +70,16 @@ def exp_to_source(inputs):
             result_slit.exposures[-1].meta.model_type = slit_model
             result_slit.exposures[-1].meta.wcsinfo = slit_wcsinfo
 
+            # make sure top-level exposure type matches slit exposure type
+            # (necessary for NIRSpec fixed slits defined as part of an MSA file)
+            if slit_exptype is not None:
+                result_slit.exposures[-1].meta.exposure.type = slit_exptype
+                result_slit.meta.exposure.type = slit_exptype
+                log.debug(f'Input exposure type: {exposure.meta.exposure.type}')
+                log.debug(f'Output exposure type: {result_slit.meta.exposure.type}')
+
             if result_slit.meta.instrument.name is None:
                 result_slit.update(exposure)
-
             result_slit.meta.filename = None  # Resulting merged data doesn't come from one file
 
         exposure.close()

@@ -30,6 +30,10 @@ assign_wcs
 - Update MIRI LRS WCS code to introduce an intermediate alpha-beta slit reference frame
   between pixel coordinates and the v2/v3 frame. [#8475]
 
+- Added handling for fixed slit sources defined in a MSA metadata file, for combined
+  NIRSpec MOS and fixed slit observations. Slits are now appended to the data
+  product in the order they appear in the MSA file. [#8467]
+
 associations
 ------------
 
@@ -86,6 +90,10 @@ exp_to_source
   in order to support changes in `source_id` handling for NIRSpec MOS exposures
   that contain background and virtual slits. [#8442]
 
+- Update the top-level model exposure type from the slit exposure type,
+  to support processing for combined NIRSpec MOS and fixed slit
+  observations. [#8467]
+
 extract_1d
 ----------
 
@@ -111,10 +119,18 @@ extract_1d
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
 
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
+
 extract_2d
 ----------
 
 - Added handling for NIRCam GRISM time series pointing offsets. [#8449]
+
+- Added support for slit names that have string values instead of integer
+  values, necessary for processing combined NIRSpec MOS and fixed slit
+  data products. [#8467]
 
 flat_field
 ----------
@@ -125,8 +141,12 @@ flat_field
 - Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
   DO_NOT_USE flag is set in the DQ array. [#8463]
 
-- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr`` 
+- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr``
   wavelength zero-point corrections for point sources.  [#8376]
+
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
 
 general
 -------
@@ -142,8 +162,21 @@ lib
 ---
 
 - Updated the ``wcs_utils.get_wavelength`` to use the new format
-  of the ``wavecorr`` wavelength zero-point corrections for point 
+  of the ``wavecorr`` wavelength zero-point corrections for point
   sources in NIRSpec slit data. [#8376]
+
+master_background
+-----------------
+
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
+
+- Disabled support for master background correction for NIRSpec MOS
+  slits in the ``master_background``, called in ``calwebb_spec3``.
+  Master background correction for MOS mode should be performed
+  via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
+
 
 master_background_mos
 ---------------------
@@ -158,6 +191,10 @@ nsclean
 - Improved run time of NSClean.fit() by using a vector rather than a large,
   sparse matrix to perform linear algebra operations with a diagonal weight
   matrix. [#8547]
+
+- Added a check for combined NIRSpec MOS and fixed slit products: if fixed
+  slits are defined in a MOS product, the central fixed slit quadrant
+  is not automatically masked. [#8467]
 
 outlier_detection
 -----------------
@@ -201,6 +238,10 @@ photom
 - Ensure that NaNs in MRS photom files are not replaced with ones by
   pipeline code for consistency with other modes [#8453]
 
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
+
 pipeline
 --------
 
@@ -217,6 +258,12 @@ pipeline
 
 - Added new optional step ``badpix_selfcal`` to the ``calwebb_spec2`` to self-calibrate
   bad pixels in IFU data. [#8500]
+
+- Added ``calwebb_spec2`` pipeline handling for combined NIRSpec MOS and
+  fixed slit observations. Steps that require different reference files
+  for MOS and FS are run twice, first for all MOS slits, then for all
+  FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
+  combined products. [#8467]
 
 pixel_replace
 -------------
@@ -271,6 +318,9 @@ resample_spec
 
 - Removed the use of the `drizpars` reference file [#8546]
 
+- Fix a bug resulting in incorrect output spectral WCS for NIRSpec data when
+  the first input data set is filled with zero or NaN. [#8562]
+
 residual_fringe
 ---------------
 
@@ -306,7 +356,12 @@ wavecorr
 
 - Changed the NIRSpec wavelength correction algorithm to include it in slit WCS
   models and resampling.  Fixed the sign of the wavelength corrections. [#8376]
-  
+
+- Added a check for fixed slits that already have source position information,
+  assigned via a MSA metafile, for combined NIRSpec MOS and fixed slit processing.
+  Point source position is calculated from dither offsets only for standard
+  fixed slit processing. [#8467]
+
 wfss_contam
 -----------
 
@@ -617,7 +672,6 @@ resample
 - Increased specificity of several warning filters. [#8320]
 
 - Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
-
 
 residual_fringe
 ---------------

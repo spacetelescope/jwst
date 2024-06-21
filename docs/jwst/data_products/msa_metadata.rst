@@ -43,7 +43,7 @@ The overall structure of the MSA FITS file is as follows:
 +-----+---------------+----------+-----------+--------------------+
 |  1  | SHUTTER_IMAGE | IMAGE    | float32   | 342 x 730          |
 +-----+---------------+----------+-----------+--------------------+
-|  2  | SHUTTER_INFO  | BINTABLE | N/A       | variable x 12 cols |
+|  2  | SHUTTER_INFO  | BINTABLE | N/A       | variable x 13 cols |
 +-----+---------------+----------+-----------+--------------------+
 |  3  | SOURCE_INFO   | BINTABLE | N/A       | variable x 8 cols  |
 +-----+---------------+----------+-----------+--------------------+
@@ -89,6 +89,8 @@ The structure of the ``SHUTTER_INFO`` table extension is as follows:
 +-------------------------------+-----------+----------------------+
 | PRIMARY_SOURCE                | string    | Primary source flag  |
 +-------------------------------+-----------+----------------------+
+| FIXED_SLIT                    | string    | Fixed slit name      |
++-------------------------------+-----------+----------------------+
 
 - SLITLET_ID: integer ID of each slitlet consisting of one or more
   open shutters.
@@ -102,8 +104,8 @@ The structure of the ``SHUTTER_INFO`` table extension is as follows:
   quadrant.
 - SOURCE_ID: unique integer ID for each source in each slitlet, used
   for matching to an entry in the ``SOURCE_INFO`` table.
-- BACKGROUND: boolean indicating whether the shutter is open to background
-  only or contains a known source.
+- BACKGROUND: Y or N. Y indicates that the shutter is open to background
+  only.
 - SHUTTER_STATE: OPEN or CLOSED. Generally will always be OPEN, unless
   the shutter is part of a long slit that is not contiguous.
 - ESTIMATED_SOURCE_IN_SHUTTER_X/Y: the position of the source within the
@@ -111,8 +113,11 @@ The structure of the ``SHUTTER_INFO`` table extension is as follows:
   and 1,1 is upper-right, as planned in the MPT.
 - DITHER_POINT_INDEX: integer index of the nod sequence; matches to
   header keyword `PATT_NUM`.
-- PRIMARY_SOURCE: boolean indicating whether the shutter contains the
+- PRIMARY_SOURCE: Y or N. Y indicates that the shutter contains the
   primary science source.
+- FIXED_SLIT: string name of a fixed slit containing the source; set to
+  NONE for MSA slitlets. This column may not appear in older versions of
+  the MSA metadata files.
 
 It is the :ref:`assign_wcs <assign_wcs_step>` step in the
 :ref:`calwebb_spec2 <calwebb_spec2>` pipeline that opens and loads all
@@ -140,29 +145,29 @@ slitlet 2 is comprised of 3 shutters. Because a 3-point nod pattern has been use
 there are 3 different sets of metadata for each slitlet (one set for each dither/nod
 position) and hence a total of 9 entries (3 shutters x 3 dithers).
 
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-| Slit | Meta |      |     |     |   Src  |     |       |  X    |  Y    | Dith | Pri |
-|      |      |      |     |     |        |     |       |       |       |      |     |
-| ID   | ID   | Quad | Row | Col |   ID   | Bkg | State |  pos  |  pos  | Pt   | Src |
-+======+======+======+=====+=====+========+=====+=======+=======+=======+======+=====+
-|   2  |   1  |  2   |  10 | 154 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  1   |  N  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 155 |   42   |  N  | OPEN  | 0.399 | 0.702 |  1   |  Y  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 156 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  1   |  N  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 154 |   42   |  N  | OPEN  | 0.410 | 0.710 |  2   |  Y  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 155 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  2   |  N  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 156 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  2   |  N  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 154 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  3   |  N  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 155 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  3   |  N  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
-|   2  |   1  |  2   |  10 | 156 |   42   |  N  | OPEN  | 0.389 | 0.718 |  3   |  Y  |
-+------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+| Slit | Meta |      |     |     |   Src  |     |       |  X    |  Y    | Dith | Pri | Fxd  |
+|      |      |      |     |     |        |     |       |       |       |      |     |      |
+| ID   | ID   | Quad | Row | Col |   ID   | Bkg | State |  pos  |  pos  | Pt   | Src | Slit |
++======+======+======+=====+=====+========+=====+=======+=======+=======+======+=====+======+
+|   2  |   1  |  2   |  10 | 154 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  1   |  N  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 155 |   42   |  N  | OPEN  | 0.399 | 0.702 |  1   |  Y  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 156 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  1   |  N  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 154 |   42   |  N  | OPEN  | 0.410 | 0.710 |  2   |  Y  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 155 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  2   |  N  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 156 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  2   |  N  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 154 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  3   |  N  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 155 |    0   |  Y  | OPEN  |  NaN  |  NaN  |  3   |  N  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
+|   2  |   1  |  2   |  10 | 156 |   42   |  N  | OPEN  | 0.389 | 0.718 |  3   |  Y  | NONE |
++------+------+------+-----+-----+--------+-----+-------+-------+-------+------+-----+------+
 
 The values in the `slitlet_id` column show that we're only looking at table
 rows for slitlet 2, all of which come from MSA configuration (`msa_metadata_id`) 1.
@@ -228,6 +233,20 @@ copy of their `slitlet_id` number. For example, a Stage 3 file name for data tak
 from a virtual slitlet with `source_id` = -42 will look like:
 
   jw12345-o066_v000000042_nirspec_f170lp_g235m_x1d.fits
+
+Fixed Slits
+~~~~~~~~~~~
+
+It is possible to plan fixed slit sources alongside standard MOS targets. In this case,
+a unique `slitlet_id` is not assigned in the MSA file.  Instead, the slit is identified
+by the value of the `fixed_slit` column.  This value may be set to any of the NIRSpec
+fixed slit names used for science: S200A1, S200A2, S400A1, or S1600A1.
+
+Fixed slit targets must always have `primary_source` = "Y" and `background` = "N".
+They will never be extracted as background sources.
+
+The `shutter_quadrant`, `shutter_row`, and `shutter_column` fields are set to placeholder
+values. All other values have the same meaning and values as for MSA slitlets.
 
 
 The SOURCE_INFO Metadata
