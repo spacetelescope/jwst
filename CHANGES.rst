@@ -102,6 +102,10 @@ extract_1d
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
 
+- Fix error in _coalesce_bounds that returned incorrect spectral or background
+  extraction region when one set of pixel limits is entirely contained within
+  another [#8564]
+  
 extract_2d
 ----------
 
