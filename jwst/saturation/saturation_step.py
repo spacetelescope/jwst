@@ -4,6 +4,7 @@ from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from ..lib import pipe_utils
 from . import saturation
+from jwst.lib.basic_utils import use_datamodel
 
 
 __all__ = ["SaturationStep"]

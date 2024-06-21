@@ -1,5 +1,3 @@
-from stdatamodels.jwst import datamodels
-
 from ..stpipe import Step
 from . import firstframe_sub
 from jwst.lib.basic_utils import use_datamodel

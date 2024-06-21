@@ -1,5 +1,3 @@
-from stdatamodels.jwst import datamodels
-
 from ..stpipe import Step
 from . import gain_scale
 from jwst.lib.basic_utils import use_datamodel

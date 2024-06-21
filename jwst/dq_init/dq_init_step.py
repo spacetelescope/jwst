@@ -3,7 +3,6 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import dq_initialization
-from jwst.lib.basic_utils import use_datamodel
 
 
 __all__ = ["DQInitStep"]
@@ -40,10 +39,8 @@ class DQInitStep(Step):
 
         if not isinstance(input, str):
             input_model = input
-            print('\n *** used input')
         else:
             # Try to open the input as a regular RampModel
-            print('\n *** OPENED datamodel')
             try:
                 input_model = datamodels.RampModel(input)
 
