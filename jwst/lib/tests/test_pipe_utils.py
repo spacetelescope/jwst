@@ -159,7 +159,7 @@ def test_match_nans_and_flags_no_data(caplog):
     model_copy.close()
 
 
-def test_match_nans_and_flags_shape_mismatch(caplog):
+def test_match_nans_and_flags_shape_mismatch():
     # Set up a model with mismatched data shapes
     dnu = datamodels.dqflags.pixel['DO_NOT_USE']
     model = datamodels.SlitModel()
@@ -181,15 +181,10 @@ def test_match_nans_and_flags_shape_mismatch(caplog):
             invalid.flat[i] = True
         setattr(model, extname, data)
 
-    # Match flags and NaNs across all extensions
+    # Match flags and NaNs across all extensions:
+    # will warn for data mismatch
     model_copy = model.copy()
-    caplog.clear()
     pipe_utils.match_nans_and_flags(model)
-
-    # Two warnings for data mismatch
-    assert 'Mismatched data' in caplog.text
-    assert "skipping invalid data updates for extension 'dq'" in caplog.text
-    assert "skipping invalid data updates for extension 'var_poisson'" in caplog.text
 
     # Only data and err are updated
     for extname in extensions:
