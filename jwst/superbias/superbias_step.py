@@ -24,31 +24,30 @@ class SuperBiasStep(Step):
     def process(self, input):
 
         # Open the input data model
-        input_model = use_datamodel(input)
+        with use_datamodel(input) as input_model:
 
-        # Get the name of the superbias reference file to use
-        self.bias_name = self.get_reference_file(input_model, 'superbias')
-        self.log.info('Using SUPERBIAS reference file %s', self.bias_name)
+            # Get the name of the superbias reference file to use
+            self.bias_name = self.get_reference_file(input_model, 'superbias')
+            self.log.info('Using SUPERBIAS reference file %s', self.bias_name)
 
-        # Check for a valid reference file
-        if self.bias_name == 'N/A':
-            self.log.warning('No SUPERBIAS reference file found')
-            self.log.warning('Superbias step will be skipped')
-            result = input_model.copy()
-            result.meta.cal_step.superbias = 'SKIPPED'
-            return result
+            # Check for a valid reference file
+            if self.bias_name == 'N/A':
+                self.log.warning('No SUPERBIAS reference file found')
+                self.log.warning('Superbias step will be skipped')
+                result = input_model.copy()
+                result.meta.cal_step.superbias = 'SKIPPED'
+                return result
 
-        # Open the superbias ref file data model
-        bias_model = datamodels.SuperBiasModel(self.bias_name)
+            # Open the superbias ref file data model
+            bias_model = datamodels.SuperBiasModel(self.bias_name)
 
-        # Do the bias subtraction
-        result = bias_sub.do_correction(input_model, bias_model)
+            # Do the bias subtraction
+            result = bias_sub.do_correction(input_model, bias_model)
 
-        # Close the superbias reference file model and
-        # set the step status to complete
-        bias_model.close()
-        input_model.close()
-        result.meta.cal_step.superbias = 'COMPLETE'
+            # Close the superbias reference file model and
+            # set the step status to complete
+            bias_model.close()
+            input_model.close()
+            result.meta.cal_step.superbias = 'COMPLETE'
 
-        input_model.close()
         return result

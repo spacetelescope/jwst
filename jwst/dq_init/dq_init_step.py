@@ -37,12 +37,13 @@ class DQInitStep(Step):
             result JWST datamodel
         """
 
-        if not isinstance(input, str):
+        if isinstance(input, datamodels.JwstDataModel):
             input_model = input
         else:
             # Try to open the input as a regular RampModel
             try:
-                input_model = datamodels.RampModel(input)
+                if not isinstance(input_model, datamodels.RampModel):
+                    input_model = datamodels.RampModel(input_model)
 
                 # Check to see if it's Guider raw data
                 if input_model.meta.exposure.type in dq_initialization.guider_list:

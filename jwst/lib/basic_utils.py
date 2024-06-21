@@ -5,7 +5,7 @@ from stdatamodels.jwst.datamodels import dqflags
 import numpy as np
 
 
-def use_datamodel(input):
+def use_datamodel(input, ramp_model=False):
     """Determine if input is a datamodel, if so return it, else open it
 
     Parameters
@@ -18,8 +18,10 @@ def use_datamodel(input):
     model : datamodel
         The datamodel object
     """
-    if not isinstance(input, str):
+    if isinstance(input, datamodels.JwstDataModel):
         model = input
+        if ramp_model:
+            model = datamodels.RampModel(model)
     else:
         model = datamodels.open(input)
     return model

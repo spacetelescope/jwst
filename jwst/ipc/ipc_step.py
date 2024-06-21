@@ -32,29 +32,28 @@ class IPCStep(Step):
         """
 
         # Open the input data model
-        input_model = use_datamodel(input)
+        with use_datamodel(input, ramp_model=True) as input_model:
 
-        # Get the name of the ipc reference file to use
-        self.ipc_name = self.get_reference_file(input_model, 'ipc')
-        self.log.info('Using IPC reference file %s', self.ipc_name)
+            # Get the name of the ipc reference file to use
+            self.ipc_name = self.get_reference_file(input_model, 'ipc')
+            self.log.info('Using IPC reference file %s', self.ipc_name)
 
-        # Check for a valid reference file
-        if self.ipc_name == 'N/A':
-            self.log.warning('No IPC reference file found')
-            self.log.warning('IPC step will be skipped')
-            result = input_model.copy()
-            result.meta.cal_step.ipc = 'SKIPPED'
-            return result
+            # Check for a valid reference file
+            if self.ipc_name == 'N/A':
+                self.log.warning('No IPC reference file found')
+                self.log.warning('IPC step will be skipped')
+                result = input_model.copy()
+                result.meta.cal_step.ipc = 'SKIPPED'
+                return result
 
-        # Open the ipc reference file data model
-        ipc_model = datamodels.IPCModel(self.ipc_name)
+            # Open the ipc reference file data model
+            ipc_model = datamodels.IPCModel(self.ipc_name)
 
-        # Do the ipc correction
-        result = ipc_corr.do_correction(input_model, ipc_model)
+            # Do the ipc correction
+            result = ipc_corr.do_correction(input_model, ipc_model)
 
-        # Close the reference file and update the step status
-        ipc_model.close()
-        result.meta.cal_step.ipc = 'COMPLETE'
+            # Close the reference file and update the step status
+            ipc_model.close()
+            result.meta.cal_step.ipc = 'COMPLETE'
 
-        input_model.close()
         return result

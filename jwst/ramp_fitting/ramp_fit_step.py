@@ -411,7 +411,7 @@ class RampFitStep(Step):
     def process(self, input):
 
         # Open the input data model
-        input_model = use_datamodel(input)
+        input_model = use_datamodel(input, ramp_model=True)
 
         max_cores = self.maximum_cores
         readnoise_filename = self.get_reference_file(input_model, 'readnoise')

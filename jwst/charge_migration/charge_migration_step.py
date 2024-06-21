@@ -3,8 +3,6 @@ import logging
 
 from ..stpipe import Step
 
-from stdatamodels.jwst import datamodels
-
 from . import charge_migration
 from jwst.lib.basic_utils import use_datamodel
 
@@ -29,21 +27,20 @@ class ChargeMigrationStep(Step):
     def process(self, input):
 
         # Open the input data model
-        input_model = use_datamodel(input)
+        with use_datamodel(input, ramp_model=True) as input_model:
 
-        if (input_model.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
-            log.info('Too few groups per integration; skipping charge_migration')
-            
-            result = input_model
-            result.meta.cal_step.charge_migration = 'SKIPPED'
+            if (input_model.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
+                log.info('Too few groups per integration; skipping charge_migration')
+                
+                result = input_model
+                result.meta.cal_step.charge_migration = 'SKIPPED'
 
-            return result
+                return result
 
-        # Retrieve the parameter value(s)
-        signal_threshold = self.signal_threshold
+            # Retrieve the parameter value(s)
+            signal_threshold = self.signal_threshold
 
-        result = charge_migration.charge_migration(input_model, signal_threshold)
-        result.meta.cal_step.charge_migration = 'COMPLETE'
+            result = charge_migration.charge_migration(input_model, signal_threshold)
+            result.meta.cal_step.charge_migration = 'COMPLETE'
 
-        input_model.close()
         return result
