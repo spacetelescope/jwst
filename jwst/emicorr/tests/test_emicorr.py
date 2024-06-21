@@ -69,7 +69,7 @@ def test_do_correction():
         'nints_to_phase': None,
         'nbins': None,
         'scale_reference': True,
-        'onthefly_corr_freq': None
+        'onthefly_corr_freq': None,
         'use_n_cycles': None
     }
     save_onthefly_reffile = None
