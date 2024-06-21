@@ -381,7 +381,6 @@ def apply_emicorr(input_model, emicorr_model,
         # Define the binned waveform amplitude (pa = phase amplitude)
         pa = np.arange(nbins, dtype=float)
         # keep track of n per bin to check for low n
-        nu = np.arange(nbins)
         nb_over_nbins = [nb/nbins for nb in range(nbins)]
         nbp1_over_nbins = [(nb + 1)/nbins for nb in range(nbins)]
         finite_dd = np.isfinite(dd_all)
