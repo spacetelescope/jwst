@@ -80,6 +80,14 @@ documentation
 
 - Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
 
+emicorrr
+--------
+
+- Improved running time by introducing a new parameter, use_n_cycles, that can
+  be modified by the user and has a default of 3. Now the user can either provide
+  the number of integrations to phase or the number of cycles to calculate the
+  number of integrations necessary to phase. [#8589]
+
 exp_to_source
 -------------
 
