@@ -27,6 +27,9 @@ assign_wcs
 - Update default parameters to increase the accuracy of the SIP approximation
   in the output FITS WCS. [#8529]
 
+- Update MIRI LRS WCS code to introduce an intermediate alpha-beta slit reference frame
+  between pixel coordinates and the v2/v3 frame. [#8475]
+
 - Added handling for fixed slit sources defined in a MSA metadata file, for combined
   NIRSpec MOS and fixed slit observations. Slits are now appended to the data
   product in the order they appear in the MSA file. [#8467]
