@@ -93,6 +93,7 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     nbins = pars['nbins']
     scale_reference = pars['scale_reference']
     onthefly_corr_freq = pars['onthefly_corr_freq']
+    use_n_cycles = pars['use_n_cycles']
 
     output_model = apply_emicorr(input_model, emicorr_model,
                         onthefly_corr_freq, save_onthefly_reffile,
@@ -100,7 +101,8 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
                         user_supplied_reffile=user_supplied_reffile,
                         nints_to_phase=nints_to_phase,
                         nbins_all=nbins,
-                        scale_reference=scale_reference
+                        scale_reference=scale_reference,
+                        use_n_cycles=use_n_cycles
                         )
 
     return output_model
@@ -109,7 +111,8 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
 def apply_emicorr(input_model, emicorr_model,
         onthefly_corr_freq, save_onthefly_reffile,
         save_intermediate_results=False, user_supplied_reffile=None,
-        nints_to_phase=None, nbins_all=None, scale_reference=True):
+        nints_to_phase=None, nbins_all=None, scale_reference=True,
+        use_n_cycles=3):
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
@@ -166,6 +169,9 @@ def apply_emicorr(input_model, emicorr_model,
     scale_reference : bool
         If True, the reference wavelength will be scaled to the data's phase amplitude
 
+    use_n_cycles : int
+        Only use N cycles to calculate the phase to reduce code running time
+
     Returns
     -------
     output_model : JWST data model
@@ -216,10 +222,6 @@ def apply_emicorr(input_model, emicorr_model,
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
     nints, ngroups, ny, nx = np.shape(output_model.data)
-    if nints_to_phase is None:
-        nints_to_phase = nints
-    elif nints_to_phase > nints:
-        nints_to_phase = nints
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes
     if save_intermediate_results and save_onthefly_reffile is not None:
@@ -264,6 +266,20 @@ def apply_emicorr(input_model, emicorr_model,
         extra_rowclocks = (1024. - ny) * (4 + 3.)
         # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
         period_in_pixels = (1./frequency) / 10.0e-6
+
+        if nints_to_phase is None and use_n_cycles is None:  # user wats to use all integrations
+            # use all integrations
+            nints_to_phase = nints
+        elif nints_to_phase is None and use_n_cycles is not None: # user wants to use nints_to_phase
+            # Calculate how many integrations you need to get that many cycles for
+            # a given frequency (rounding up to the nearest Nintegrations)
+            nints_to_phase = (use_n_cycles * period_in_pixels) / (frameclocks * ngroups)
+            nints_to_phase = int(np.ceil(nints_to_phase))
+        elif nints_to_phase is not None and use_n_cycles == 3:
+            # user wants to use nints_to_phase because default value for use_n_cycles is 3
+            # make sure to never use more integrations than data has
+            if nints_to_phase > nints:
+                nints_to_phase = nints
 
         start_time, ref_pix_sample = 0, 3
 
@@ -332,7 +348,7 @@ def apply_emicorr(input_model, emicorr_model,
                 # point to the first pixel of the next frame (add "end-of-frame" pad)
                 start_time += extra_rowclocks
 
-            # Convert "times" to phase each integration. Nothe times has units of
+            # Convert "times" to phase each integration. Note that times has units of
             # number of 10us from the first data pixel in this integration, so to
             # convert to phase, divide by the waveform *period* in float pixels
             phase_this_int = times_this_int / period_in_pixels
@@ -366,9 +382,11 @@ def apply_emicorr(input_model, emicorr_model,
         pa = np.arange(nbins, dtype=float)
         # keep track of n per bin to check for low n
         nu = np.arange(nbins)
+        nb_over_nbins = [nb/nbins for nb in range(nbins)]
+        nbp1_over_nbins = [(nb + 1)/nbins for nb in range(nbins)]
+        finite_dd = np.isfinite(dd_all)
         for nb in range(nbins):
-            u = np.where((phaseall > nb/nbins) & (phaseall <= (nb + 1)/nbins) & (np.isfinite(dd_all)))
-            nu[nb] = phaseall[u].size
+            u = np.where((phaseall > nb_over_nbins[nb]) & (phaseall <= nbp1_over_nbins[nb]) & (finite_dd))
             # calculate the sigma-clipped mean
             dmean, _, _, _ = iter_stat_sig_clip(dd_all[u])
             pa[nb] = dmean   # amplitude in this bin
@@ -431,9 +449,9 @@ def apply_emicorr(input_model, emicorr_model,
 
         # Interleave (straight copy) into 4 amps
         noise = np.ones((nints, ngroups, ny, nx))   # same size as input data
+        noise_x = np.arange(nx4) * 4
         for k in range(4):
-            noise_x = np.arange(nx4)*4 + k
-            noise[..., noise_x] = dd_noise
+            noise[..., noise_x + k] = dd_noise
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')

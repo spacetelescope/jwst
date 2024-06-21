@@ -2,6 +2,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from stcal.dark_current import dark_sub
+from jwst.lib.basic_utils import use_datamodel
 import numpy as np
 
 
@@ -26,53 +27,54 @@ class DarkCurrentStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        input_model = use_datamodel(input)
 
-            # Get the name of the dark reference file to use
-            self.dark_name = self.get_reference_file(input_model, 'dark')
-            self.log.info('Using DARK reference file %s', self.dark_name)
+        # Get the name of the dark reference file to use
+        self.dark_name = self.get_reference_file(input_model, 'dark')
+        self.log.info('Using DARK reference file %s', self.dark_name)
 
-            # Check for a valid reference file
-            if self.dark_name == 'N/A':
-                self.log.warning('No DARK reference file found')
-                self.log.warning('Dark current step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.dark = 'SKIPPED'
-                return result
+        # Check for a valid reference file
+        if self.dark_name == 'N/A':
+            self.log.warning('No DARK reference file found')
+            self.log.warning('Dark current step will be skipped')
+            result = input_model.copy()
+            result.meta.cal_step.dark = 'SKIPPED'
+            return result
 
-            # Create name for the intermediate dark, if desired.
-            dark_output = self.dark_output
-            if dark_output is not None:
-                dark_output = self.make_output_path(
-                    basepath=dark_output,
-                    suffix=False
-                )
-
-            # Open the dark ref file data model - based on Instrument
-            instrument = input_model.meta.instrument.name
-            if instrument == 'MIRI':
-                dark_model = datamodels.DarkMIRIModel(self.dark_name)
-            else:
-                dark_model = datamodels.DarkModel(self.dark_name)
-
-            # Store user-defined average_dark_current in model, if provided
-            # A user-defined value will take precedence over any value present
-            # in dark reference file
-            self.set_average_dark_current(input_model, dark_model)
-
-            # Do the dark correction
-            result = dark_sub.do_correction(
-                input_model, dark_model, dark_output
+        # Create name for the intermediate dark, if desired.
+        dark_output = self.dark_output
+        if dark_output is not None:
+            dark_output = self.make_output_path(
+                basepath=dark_output,
+                suffix=False
             )
 
-            out_data, dark_data = result
+        # Open the dark ref file data model - based on Instrument
+        instrument = input_model.meta.instrument.name
+        if instrument == 'MIRI':
+            dark_model = datamodels.DarkMIRIModel(self.dark_name)
+        else:
+            dark_model = datamodels.DarkModel(self.dark_name)
 
-            if dark_data is not None and dark_data.save:
-                save_dark_data_as_dark_model(dark_data, dark_model, instrument)
-            dark_model.close()
+        # Store user-defined average_dark_current in model, if provided
+        # A user-defined value will take precedence over any value present
+        # in dark reference file
+        self.set_average_dark_current(input_model, dark_model)
 
-            out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
+        # Do the dark correction
+        result = dark_sub.do_correction(
+            input_model, dark_model, dark_output
+        )
 
+        out_data, dark_data = result
+
+        if dark_data is not None and dark_data.save:
+            save_dark_data_as_dark_model(dark_data, dark_model, instrument)
+        dark_model.close()
+
+        out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
+
+        input_model.close()
         return out_ramp
 
     def set_average_dark_current(self, input_model, dark_model):

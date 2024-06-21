@@ -1,7 +1,28 @@
 """General utility objects"""
 
+from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 import numpy as np
+
+
+def use_datamodel(input):
+    """Determine if input is a datamodel, if so return it, else open it
+
+    Parameters
+    ----------
+    input : string or datamodel
+        Either the name of the file to open or a datamodel
+
+    Returns
+    -------
+    model : datamodel
+        The datamodel object
+    """
+    if not isinstance(input, str):
+        model = input
+    else:
+        model = datamodels.open(input)
+    return model
 
 
 def set_nans_to_donotuse(data, dq):
