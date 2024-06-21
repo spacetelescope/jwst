@@ -83,7 +83,7 @@ documentation
 
 - Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
 
-emicorrr
+emicorr
 --------
 
 - Improved running time by introducing a new parameter, use_n_cycles, that can

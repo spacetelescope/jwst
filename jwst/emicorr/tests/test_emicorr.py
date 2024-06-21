@@ -70,6 +70,7 @@ def test_do_correction():
         'nbins': None,
         'scale_reference': True,
         'onthefly_corr_freq': None
+        'use_n_cycles': None
     }
     save_onthefly_reffile = None
     outmdl = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
