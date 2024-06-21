@@ -162,6 +162,11 @@ lib
   of the ``wavecorr`` wavelength zero-point corrections for point
   sources in NIRSpec slit data. [#8376]
 
+- Created the function ``use_datamodels`` in basic_ultis, which
+  determines if it is necessary to open a datamodel and returns it
+  or simply returns the datamodel given as input. This function is
+  now called in all steps of the Detector1 pipeline. [#8588]
+
 master_background
 -----------------
 
