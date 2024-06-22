@@ -13,6 +13,7 @@ from ..stpipe import Pipeline
 # step imports
 from ..assign_wcs import assign_wcs_step
 from ..background import background_step
+from ..badpix_selfcal import badpix_selfcal_step
 from ..barshadow import barshadow_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
@@ -65,6 +66,7 @@ class Spec2Pipeline(Pipeline):
     # Define aliases to steps
     step_defs = {
         'assign_wcs': assign_wcs_step.AssignWcsStep,
+        'badpix_selfcal': badpix_selfcal_step.BadpixSelfcalStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'nsclean': nsclean_step.NSCleanStep,
         'bkg_subtract': background_step.BackgroundStep,
@@ -244,6 +246,20 @@ class Spec2Pipeline(Pipeline):
 
         # Steps whose order is the same for all types of input:
 
+        # Self-calibrate to flag bad/warm pixels, and apply flags 
+        # to both background and science exposures.
+        # skipped by default for all modes
+        result = self.badpix_selfcal(
+            calibrated, members_by_type['selfcal'], members_by_type['background'], 
+            )
+        if isinstance(result, datamodels.JwstDataModel):
+            # if step is skipped, unchanged sci exposure is returned
+            calibrated = result
+        else:
+            # if step actually occurs, then flagged backgrounds are also returned
+            calibrated, bkg_outlier_flagged = result[0], result[1]
+            members_by_type['background'] = bkg_outlier_flagged
+
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)
 
@@ -254,7 +270,6 @@ class Spec2Pipeline(Pipeline):
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
         # science and background exposures.  Otherwise, there will be as many `imprint` members as
         # there are science plus background members.
-
         calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
 
         # for each background image subtract an associated leak cal
@@ -270,6 +285,8 @@ class Spec2Pipeline(Pipeline):
         # srctype and wavecorr before flat_field.
         if exp_type in GRISM_TYPES:
             calibrated = self._process_grism(calibrated)
+        elif exp_type == 'NRS_MSASPEC':
+            calibrated = self._process_nirspec_msa_slits(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == 'NIS_SOSS':
@@ -350,6 +367,13 @@ class Spec2Pipeline(Pipeline):
                 x1d = self.photom(x1d)
             else:
                 self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
+        elif exp_type == 'NRS_MSASPEC':
+            # Special handling for MSA spectra, to handle mixed-in
+            # fixed slits separately
+            if not self.extract_1d.skip:
+                x1d = self._extract_nirspec_msa_slits(resampled)
+            else:
+                x1d = resampled.copy()
         else:
             x1d = resampled.copy()
             x1d = self.extract_1d(x1d)
@@ -509,10 +533,15 @@ class Spec2Pipeline(Pipeline):
         return calibrated
 
     def _process_nirspec_slits(self, data):
-        """Process NIRSpec
+        """Process NIRSpec slits.
 
-        NIRSpec MOS and FS need srctype and wavecorr before flat_field.
-        Also have to deal with master background operations.
+        This function handles FS, BOTS, and calibration modes.
+        MOS mode is handled separately, in order to do master
+        background subtraction and process fixed slits defined in
+        MSA files.
+
+        Note that NIRSpec MOS and FS need srctype and wavecorr before
+        flat_field.
         """
         calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
@@ -524,6 +553,76 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.photom(calibrated)
 
         return calibrated
+
+    def _process_nirspec_msa_slits(self, data):
+        """Process NIRSpec MSA slits.
+
+        The NRS_MSASPEC exposure type may contain fixed slit definitions
+        in addition to standard MSA slitlets.  These are handled
+        separately internally to this function, in order to pull the
+        correct reference files and perform the right algorithms for
+        each slit type.  Processed slits are recombined into a single
+        model with EXP_TYPE=NRS_MSASPEC on return.
+
+        Note that NIRSpec MOS and FS need srctype and wavecorr before
+        flat_field. Also have to deal with master background operations.
+        """
+        calibrated = self.extract_2d(data)
+        calibrated = self.srctype(calibrated)
+
+        # Split the datamodel into 2 pieces: one with MOS slits and
+        # the other with FS slits
+        calib_mos = datamodels.MultiSlitModel()
+        calib_fss = datamodels.MultiSlitModel()
+        for slit in calibrated.slits:
+            if slit.quadrant == 5:
+                slit.meta.exposure.type = "NRS_FIXEDSLIT"
+                calib_fss.slits.append(slit)
+            else:
+                calib_mos.slits.append(slit)
+
+        # First process MOS slits through all remaining steps
+        calib_mos.update(calibrated)
+        if len(calib_mos.slits) > 0:
+            calib_mos = self.master_background_mos(calib_mos)
+            calib_mos = self.wavecorr(calib_mos)
+            calib_mos = self.flat_field(calib_mos)
+            calib_mos = self.pathloss(calib_mos)
+            calib_mos = self.barshadow(calib_mos)
+            calib_mos = self.photom(calib_mos)
+
+        # Now repeat for FS slits
+        if len(calib_fss.slits) > 0:
+            calib_fss.update(calibrated)
+            calib_fss.meta.exposure.type = "NRS_FIXEDSLIT"
+
+            # Run each step with an alternate suffix,
+            # to avoid overwriting previous products if save_results=True
+            fs_steps = ['wavecorr', 'flat_field', 'pathloss', 'photom']
+            for step_name in fs_steps:
+                # Set suffix
+                step = getattr(self, step_name)
+                current_suffix = step.suffix
+                step.suffix = f'{current_suffix}_fs'
+
+                # Run step
+                calib_fss = step(calib_fss)
+
+                # Reset suffix
+                step.suffix = current_suffix
+
+            # Append the FS results to the MOS results
+            for slit in calib_fss.slits:
+                calib_mos.slits.append(slit)
+
+            if len(calib_mos.slits) == len(calib_fss.slits):
+                # update the MOS model with step completion status from the
+                # FS model, since there were no MOS slits to run
+                for step in fs_steps:
+                    setattr(calib_mos.meta.cal_step, step,
+                            getattr(calib_fss.meta.cal_step, step))
+
+        return calib_mos
 
     def _process_niriss_soss(self, data):
         """Process SOSS
@@ -552,3 +651,56 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
 
         return calibrated
+
+    def _extract_nirspec_msa_slits(self, resampled):
+        """Extract NIRSpec MSA slits with separate handling for FS slits."""
+
+        # Check for fixed slits mixed in with MSA spectra:
+        # they need separate reference files
+        resamp_mos = datamodels.MultiSlitModel()
+        resamp_fss = datamodels.MultiSlitModel()
+        for slit in resampled.slits:
+            # Quadrant information is not preserved through resampling,
+            # but MSA slits have numbers for names, so use that to
+            # distinguish MSA from FS
+            try:
+                msa_name = int(slit.name)
+            except ValueError:
+                msa_name = None
+            if msa_name is None:
+                slit.meta.exposure.type = "NRS_FIXEDSLIT"
+                resamp_fss.slits.append(slit)
+            else:
+                slit.meta.exposure.type = "NRS_MSASPEC"
+                resamp_mos.slits.append(slit)
+        resamp_mos.update(resampled)
+        resamp_fss.update(resampled)
+
+        # Extract the MOS slits
+        x1d = None
+        save_x1d = self.extract_1d.save_results
+        self.extract_1d.save_results = False
+        if len(resamp_mos.slits) > 0:
+            self.log.info(f'Extracting {len(resamp_mos.slits)} MSA slitlets')
+            x1d = self.extract_1d(resamp_mos)
+
+        # Extract the FS slits
+        if len(resamp_fss.slits) > 0:
+            self.log.info(f'Extracting {len(resamp_fss.slits)} fixed slits')
+            resamp_fss.meta.exposure.type = "NRS_FIXEDSLIT"
+            x1d_fss = self.extract_1d(resamp_fss)
+            if x1d is None:
+                x1d = x1d_fss
+                x1d.meta.exposure.type = "NRS_MSASPEC"
+            else:
+                for spec in x1d_fss.spec:
+                    x1d.spec.append(spec)
+
+        # save the composite model
+        if save_x1d:
+            self.save_model(x1d, suffix='x1d')
+
+        resamp_mos.close()
+        resamp_fss.close()
+
+        return x1d

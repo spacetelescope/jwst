@@ -47,6 +47,8 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +==========================================================+=====+=====+=====+=====+=====+=====+=================+======+========+=====+
 | :ref:`assign_wcs <assign_wcs_step>`                      | |c| | |c| | |c| | |c| | |c| | |c| |       |c|       | |c|  |  |c|   | |c| |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
+| :ref:`badpix_selfcal <badpix_selfcal_step>`\ :sup:`2`    |     |     | |c| |     |     | |c| |                 |      |        |     |
++----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`msaflagopen <msaflagopen_step>`                    |     | |c| | |c| |     |     |     |                 |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`nsclean <nsclean_step>`                            | |c| | |c| | |c| |     |     |     |                 |      |        |     |
@@ -113,6 +115,48 @@ is not applied to a given exposure, the :ref:`extract_1d <extract_1d_step>` oper
 performed on the original (unresampled) data. The :ref:`cube_build <cube_build_step>` step produces
 a resampled/rectified cube for IFU exposures, which is then used as input to
 the :ref:`extract_1d <extract_1d_step>` step.
+
+Combined NIRSpec MOS and FS Exposures
+-------------------------------------
+
+It is possible to observe one or more fixed slit sources as part of a NIRSpec MOS
+observation.  Fixed slits observed this way are mostly handled as if they were
+MOS slitlets: they are assigned a WCS, extracted from the full-frame image, calibrated,
+and appended to the output data products.
+
+However, since FS and MOS modes require different pipeline steps and reference files
+at various points in the ``calwebb_spec2`` pipeline, the processing path is not as
+straightforward as for a standard MOS exposure.  Internal to the pipeline, the data
+product is sorted into MOS slits and FS slits.  MOS slits are processed together first,
+then FS slits are processed through the same steps.  At the end of the processing,
+the calibrated images and spectra are recombined into final data products containing
+all observed slits.
+
+The detailed processing flow is as follows:
+
+- Fixed slits containing primary sources are identified in the input
+  :ref:`MSA metadata file <msa_metadata>` in the :ref:`assign_wcs <assign_wcs_step>`
+  step, via the "fixed_slit" column in the MSA SHUTTER_INFO table.
+- All slits (MOS and FS) are processed together through the :ref:`srctype <srctype_step>` step.
+- MOS slits are processed together through the :ref:`master_background <master_background_step>`,
+  :ref:`wavecorr <wavecorr_step>`, :ref:`flat_field <flatfield_step>`,
+  :ref:`pathloss <pathloss_step>`, :ref:`barshadow <barshadow_step>`, and
+  :ref:`photom <photom_step>` steps.
+- FS slits are processed together through the :ref:`wavecorr <wavecorr_step>`,
+  :ref:`flat_field <flatfield_step>`, :ref:`pathloss <pathloss_step>`, and
+  :ref:`photom <photom_step>` steps.  If intermediate products from these
+  steps are saved, they will have an additional "_fs" suffix appended to
+  their file names.
+- MOS and FS slits are recombined and processed together through the
+  :ref:`resample_spec <resample_step>` step.
+- MOS slits are processed through the :ref:`extract_1d <extract_1d_step>` step,
+  then FS slits are processed through the same step.  The extracted spectra are
+  recombined into a final data product.
+
+The combined, calibrated output product for this mode may be used as input for
+the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline.  Since that pipeline sorts and
+separates the data by source, the fixed slit and MOS targets are independently handled
+through all pipeline steps with no further accommodation necessary.
 
 NIRSpec Lamp Exposures
 ----------------------

@@ -35,6 +35,8 @@ from ..lib.exposure_types import is_nrs_ifu_lamp
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+FIXED_SLIT_NUMS = {'NONE': 0, 'S200A1': 1, 'S200A2': 2,
+                   'S400A1': 3, 'S1600A1': 4, 'S200B1': 5}
 
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
            "nrs_ifu_wcs", "get_spectral_order_wrange"]
@@ -446,12 +448,11 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
     if input_model.meta.instrument.fixed_slit is None:
         input_model.meta.instrument.fixed_slit = 'NONE'
 
-    slit_nums = {'NONE':0, 'S200A1':1, 'S200A2':2, 'S400A1':3, 'S1600A1':4, 'S200B1':5}
     primary_slit = input_model.meta.instrument.fixed_slit
     ylow, yhigh = slit_y_range
 
     # Slits are defined with hardwired source ID's, based on the assignments
-    # in the "slit_nums" dictionary. Exact assignments depend on whether the
+    # in the "FIXED_SLIT_NUMS" dictionary. Exact assignments depend on whether the
     # slit is the "primary" and hence contains the target of interest. The
     # source_id for the primary slit is always 1, while source_ids for secondary
     # slits is a two-digit value, where the first (tens) digit corresponds to
@@ -461,15 +462,20 @@ def get_open_fixed_slits(input_model, slit_y_range=[-.55, .55]):
     #
     # Slit(Name, ShutterID, DitherPos, Xcen, Ycen, Ymin, Ymax, Quad, SourceID)
     s2a1 = Slit('S200A1', 0, 0, 0, 0, ylow, yhigh, 5,
-        1 if primary_slit=='S200A1' else 10*slit_nums[primary_slit] + 1)
+                1 if primary_slit == 'S200A1'
+                else 10 * FIXED_SLIT_NUMS[primary_slit] + 1)
     s2a2 = Slit('S200A2', 1, 0, 0, 0, ylow, yhigh, 5,
-        1 if primary_slit=='S200A2' else 10*slit_nums[primary_slit] + 2)
+                1 if primary_slit == 'S200A2'
+                else 10 * FIXED_SLIT_NUMS[primary_slit] + 2)
     s4a1 = Slit('S400A1', 2, 0, 0, 0, ylow, yhigh, 5,
-        1 if primary_slit=='S400A1' else 10*slit_nums[primary_slit] + 3)
+                1 if primary_slit == 'S400A1'
+                else 10 * FIXED_SLIT_NUMS[primary_slit] + 3)
     s16a1 = Slit('S1600A1', 3, 0, 0, 0, ylow, yhigh, 5,
-        1 if primary_slit=='S1600A1' else 10*slit_nums[primary_slit] + 4)
+                 1 if primary_slit == 'S1600A1'
+                 else 10 * FIXED_SLIT_NUMS[primary_slit] + 4)
     s2b1 = Slit('S200B1', 4, 0, 0, 0, ylow, yhigh, 5,
-        1 if primary_slit=='S200B1' else 10*slit_nums[primary_slit] + 5)
+                1 if primary_slit == 'S200B1'
+                else 10 * FIXED_SLIT_NUMS[primary_slit] + 5)
 
     # Decide which slits need to be added to this exposure
     subarray = input_model.meta.subarray.name.upper()
@@ -597,37 +603,127 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
     log.info(f'Retrieving open MSA slitlets for msa_metadata_id = {msa_metadata_id} '
              f'and dither_index = {dither_position}')
 
-    # Get the unique slitlet_ids
-    slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
+    # Sort the MSA rows by slitlet_id
+    slitlet_sets = {}
+    for row in msa_data:
+        # Check for fixed slit: if set, then slitlet_id is null
+        is_fs = False
+        try:
+            fixed_slit = row['fixed_slit']
+            if (fixed_slit in FIXED_SLIT_NUMS.keys()
+                    and fixed_slit != 'NONE'):
+                is_fs = True
+        except (IndexError, ValueError, KeyError):
+            # May be old-style MSA file without a fixed_slit column
+            fixed_slit = None
 
-    # add a margin to the slit y limits
+        if is_fs:
+            # Fixed slit - use the slit name as the ID
+            slitlet_id = fixed_slit
+        else:
+            # MSA - use the slitlet ID
+            slitlet_id = row['slitlet_id']
+
+        # Append the row for the slitlet
+        if slitlet_id in slitlet_sets:
+            slitlet_sets[slitlet_id].append(row)
+        else:
+            slitlet_sets[slitlet_id] = [row]
+
+    # Add a margin to the slit y limits
     margin = 0.5
 
-    # Now lets look at each unique slitlet id
-    for slitlet_id in slitlet_ids_unique:
-        # Get the rows of shutter info for the current slitlet_id
-        slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
-        open_shutters = [x['shutter_column'] for x in slitlets_sid]
+    # Now let's look at each unique slitlet id
+    for slitlet_id, slitlet_rows in slitlet_sets.items():
+        # Get the open shutter information from the slitlet rows
+        open_shutters = [x['shutter_column'] for x in slitlet_rows]
 
         # How many shutters in the slitlet are labeled as "main" or "primary"?
-        n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
+        n_main_shutter = len([s for s in slitlet_rows if s['primary_source'] == 'Y'])
+
+        # Check for fixed slit sources defined in the MSA file
+        is_fs = [False] * len(slitlet_rows)
+        for i, slitlet in enumerate(slitlet_rows):
+            try:
+                if (slitlet['fixed_slit'] in FIXED_SLIT_NUMS.keys()
+                        and slitlet['fixed_slit'] != 'NONE'):
+                    is_fs[i] = True
+            except (IndexError, ValueError, KeyError):
+                # May be old-style MSA file without a fixed_slit column
+                pass
 
         # In the next part we need to calculate, find, or determine 5 things for each slit:
         #    quadrant, xcen, ycen, ymin, ymax
 
-        # There are no main shutters: all are background
-        if n_main_shutter == 0:
+        # First, check for a fixed slit
+        if all(is_fs) and len(slitlet_rows) == 1:
+            # One fixed slit open for the source
+            slitlet = slitlet_rows[0]
+
+            # Use a standard number for fixed slit shutter id
+            shutter_id = FIXED_SLIT_NUMS[slitlet_id] - 1
+            xcen = ycen = 0
+            quadrant = 5
+
+            # No additional margin for fixed slit bounding boxes
+            ymin = ylow
+            ymax = yhigh
+
+            # Source position and id
+            if n_main_shutter == 1:
+                # Source is marked primary
+                source_id = slitlet['source_id']
+                source_xpos = slitlet['estimated_source_in_shutter_x']
+                source_ypos = slitlet['estimated_source_in_shutter_y']
+                log.info(f'Found fixed slit {slitlet_id} with source_id = {source_id}.')
+
+                # Get source info for this slitlet:
+                # note that slits with a real source assigned have source_id > 0,
+                # while slits with source_id < 0 contain "virtual" sources
+                try:
+                    source_name, source_alias, stellarity, source_ra, source_dec = [
+                        (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
+                        for s in msa_source if s['source_id'] == source_id][0]
+                except IndexError:
+                    # Missing source information: assign a virtual source name
+                    log.warning("Could not retrieve source info from MSA file")
+                    source_name = f"{prog_id}_VRT{slitlet_id}"
+                    source_alias = "VRT{}".format(slitlet_id)
+                    stellarity = 0.0
+                    source_ra = 0.0
+                    source_dec = 0.0
+
+            else:
+                log.warning(f'Fixed slit {slitlet_id} is not a primary source; '
+                            f'skipping it.')
+                continue
+
+        elif any(is_fs):
+            # Unsupported fixed slit configuration
+            message = ("For slitlet_id = {}, metadata_id = {}, "
+                       "dither_index = {}".format(
+                slitlet_id, msa_metadata_id, dither_position))
+            log.warning(message)
+            message = ("MSA configuration file has an unsupported "
+                       "fixed slit configuration.")
+            log.warning(message)
+            msa_file.close()
+            raise MSAFileError(message)
+
+        # Now check for regular MSA slitlets
+        elif n_main_shutter == 0:
+            # There are no main shutters: all are background
             if len(open_shutters) == 1:
                 jmin = jmax = j = open_shutters[0]
             else:
-                jmin = min([s['shutter_column'] for s in slitlets_sid])
-                jmax = max([s['shutter_column'] for s in slitlets_sid])
+                jmin = min([s['shutter_column'] for s in slitlet_rows])
+                jmax = max([s['shutter_column'] for s in slitlet_rows])
                 j = jmin + (jmax - jmin) // 2
             ymax = yhigh + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
-            quadrant = slitlets_sid[0]['shutter_quadrant']
+            quadrant = slitlet_rows[0]['shutter_quadrant']
             ycen = j
-            xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
+            xcen = slitlet_rows[0]['shutter_row']  # grab the first as they are all the same
             shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
 
             # Background slits all have source_id=0 in the msa_file,
@@ -651,20 +747,21 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
                 (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
                  s['estimated_source_in_shutter_x'],
                  s['estimated_source_in_shutter_y'])
-                for s in slitlets_sid if s['background'] == 'N'][0]
+                for s in slitlet_rows if s['background'] == 'N'][0]
             shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
 
             # y-size
-            jmin = min([s['shutter_column'] for s in slitlets_sid])
-            jmax = max([s['shutter_column'] for s in slitlets_sid])
+            jmin = min([s['shutter_column'] for s in slitlet_rows])
+            jmax = max([s['shutter_column'] for s in slitlet_rows])
             j = ycen
             ymax = yhigh + margin + (jmax - j) * 1.15
             ymin = -(-ylow + margin) + (jmin - j) * 1.15
 
             # Get the source_id from the primary shutter entry
-            for i in range(len(slitlets_sid)):
-                if slitlets_sid[i]['primary_source'] == 'Y':
-                    source_id = slitlets_sid[i]['source_id']
+            source_id = None
+            for i in range(len(slitlet_rows)):
+                if slitlet_rows[i]['primary_source'] == 'Y':
+                    source_id = slitlet_rows[i]['source_id']
 
             # Get source info for this slitlet;
             # note that slits with a real source assigned have source_id > 0,
@@ -683,14 +780,15 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
                             f"assigning virtual source_name={source_name}")
 
             if source_id < 0:
-                log.info(f'Slitlet {slitlet_id} contains virtual source, with source_id={source_id}')
+                log.info(f'Slitlet {slitlet_id} contains virtual source, '
+                         f'with source_id={source_id}')
 
         # More than 1 main shutter: Not allowed!
         else:
             message = ("For slitlet_id = {}, metadata_id = {}, "
                        "and dither_index = {}".format(slitlet_id, msa_metadata_id, dither_position))
             log.warning(message)
-            message = ("MSA configuration file has more than 1 shutter with primary source")
+            message = "MSA configuration file has more than 1 shutter with primary source"
             log.warning(message)
             msa_file.close()
             raise MSAFileError(message)
@@ -711,9 +809,12 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
         # Create the shutter_state string
         all_shutters = _shutter_id_to_str(open_shutters, ycen)
 
-        slitlets.append(Slit(slitlet_id, shutter_id, dither_position, xcen, ycen, ymin, ymax,
-                             quadrant, source_id, all_shutters, source_name, source_alias,
-                             stellarity, source_xpos, source_ypos, source_ra, source_dec))
+        slit_parameters = (slitlet_id, shutter_id, dither_position, xcen, ycen, ymin, ymax,
+                           quadrant, source_id, all_shutters, source_name, source_alias,
+                           stellarity, source_xpos, source_ypos, source_ra, source_dec)
+        log.debug(f'Appending slit: {slit_parameters}')
+        slitlets.append(Slit(*slit_parameters))
+
     msa_file.close()
     return slitlets
 

@@ -191,8 +191,9 @@ def test_mos_slit_status():
     im_src.slits[0].source_type = 'EXTENDED'
     im_wave = WavecorrStep.call(im_src)
     
-    # check that the step is recorded as completed
-    assert im_wave.meta.cal_step.wavecorr == 'COMPLETE'
+    # check that the step is recorded as skipped,
+    # since no slits were corrected
+    assert im_wave.meta.cal_step.wavecorr == 'SKIPPED'
     
     # check that the step is listed as skipped for extended mos sources
     assert im_wave.slits[0].meta.cal_step.wavecorr == 'SKIPPED'
@@ -248,7 +249,7 @@ def test_wavecorr_fs():
     assert_allclose(result.slits[0].source_xpos, 0.127111, atol=1e-6)
 
     slit = result.slits[0]
-    source_xpos = wavecorr.get_source_xpos(slit, slit.meta.wcs, lam=2)
+    source_xpos = wavecorr.get_source_xpos(slit)
     assert_allclose(result.slits[0].source_xpos, source_xpos, atol=1e-6)
 
     mean_correction = np.abs(src_result.slits[0].wavelength - result.slits[0].wavelength)
@@ -261,7 +262,7 @@ def test_wavecorr_fs():
     corrected_wavelength = wavecorr.compute_wavelength(slit.meta.wcs, x, y)
     assert_allclose(slit.wavelength, corrected_wavelength)
 
-    # test the roundtripping on the wavelength correction transform
+    # test the round-tripping on the wavelength correction transform
     ref_name = result.meta.ref_file.wavecorr.name
     freference = datamodels.WaveCorrModel(reference_uri_to_cache_path(ref_name, im.crds_observatory))
 
