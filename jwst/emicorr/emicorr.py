@@ -290,7 +290,7 @@ def apply_emicorr(input_model, emicorr_model,
         colstop = int( xsize/4 + xstart - 1 )
         log.info('doing phase calculation per integration')
 
-        for ninti in range(nints_to_phase):
+        for ninti in range(nints):
             log.debug('  Working on integration: {}'.format(ninti+1))
 
             # Remove source signal and fixed bias from each integration ramp
