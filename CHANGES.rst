@@ -56,6 +56,12 @@ associations
 - Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
   tso3 associations. [#8549]
 
+background_subtraction
+----------------------
+
+- Clarified MIRI MRS default/optional background subtraction steps in the
+  documentation pages.  [#8582]
+
 badpix_selfcal
 --------------
 
@@ -248,6 +254,9 @@ photom
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
+  was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
+
 pipeline
 --------
 
@@ -270,6 +279,9 @@ pipeline
   for MOS and FS are run twice, first for all MOS slits, then for all
   FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
   combined products. [#8467]
+
+- Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
+  for NIRISS SOSS data [#8575].
 
 pixel_replace
 -------------
