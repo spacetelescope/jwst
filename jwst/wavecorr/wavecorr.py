@@ -72,18 +72,8 @@ def do_correction(input_model, wavecorr_file):
         # position information
         corrected = False
         if exp_type == 'NRS_FIXEDSLIT':
-            primary_slit = input_model.meta.instrument.fixed_slit
             for slit in output_model.slits:
                 if _is_point_source(slit, exp_type):
-                    # If fixed slit was not defined via MSA file,
-                    # it must have dither information to find the
-                    # source position, and it must be the primary slit
-                    if not _is_msa_fixed_slit(slit):
-                        if slit.name != primary_slit:
-                            log.warning(f'Skipping wavecorr correction for '
-                                        f'non-primary slit {slit.name}')
-                            continue
-
                     completed = apply_zero_point_correction(slit, wavecorr_file)
                     if completed:
                         corrected = True
