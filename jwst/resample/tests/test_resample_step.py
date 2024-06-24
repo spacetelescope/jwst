@@ -266,7 +266,11 @@ def test_pixel_scale_ratio_spec(miri_rate, ratio):
     result1 = ResampleSpecStep.call(im)
     result2 = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
 
-    assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
+    # wavelength size does not change
+    assert result1.data.shape[0] == result2.data.shape[0]
+
+    # spatial dimension is scaled
+    assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
 
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
