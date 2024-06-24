@@ -27,6 +27,9 @@ assign_wcs
 - Update default parameters to increase the accuracy of the SIP approximation
   in the output FITS WCS. [#8529]
 
+- Update MIRI LRS WCS code to introduce an intermediate alpha-beta slit reference frame
+  between pixel coordinates and the v2/v3 frame. [#8475]
+
 - Added handling for fixed slit sources defined in a MSA metadata file, for combined
   NIRSpec MOS and fixed slit observations. Slits are now appended to the data
   product in the order they appear in the MSA file. [#8467]
@@ -116,6 +119,10 @@ extract_1d
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
 
+- Fix error in ``_coalesce_bounds`` that returned incorrect spectral or background
+  extraction region when one set of pixel limits is entirely contained within
+  another [#8586]
+  
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
