@@ -27,6 +27,9 @@ assign_wcs
 - Update default parameters to increase the accuracy of the SIP approximation
   in the output FITS WCS. [#8529]
 
+- Update MIRI LRS WCS code to introduce an intermediate alpha-beta slit reference frame
+  between pixel coordinates and the v2/v3 frame. [#8475]
+
 - Added handling for fixed slit sources defined in a MSA metadata file, for combined
   NIRSpec MOS and fixed slit observations. Slits are now appended to the data
   product in the order they appear in the MSA file. [#8467]
@@ -52,6 +55,12 @@ associations
 
 - Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
   tso3 associations. [#8549]
+
+background_subtraction
+----------------------
+
+- Clarified MIRI MRS default/optional background subtraction steps in the
+  documentation pages.  [#8582]
 
 badpix_selfcal
 --------------
@@ -80,7 +89,7 @@ documentation
 
 - Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
 
-emicorrr
+emicorr
 --------
 
 - Improved running time by introducing a new parameter, use_n_cycles, that can
@@ -126,6 +135,10 @@ extract_1d
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
 
+- Fix error in ``_coalesce_bounds`` that returned incorrect spectral or background
+  extraction region when one set of pixel limits is entirely contained within
+  another [#8586]
+  
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
@@ -249,6 +262,9 @@ photom
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
+  was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
+
 pipeline
 --------
 
@@ -271,6 +287,9 @@ pipeline
   for MOS and FS are run twice, first for all MOS slits, then for all
   FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
   combined products. [#8467]
+
+- Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
+  for NIRISS SOSS data [#8575].
 
 pixel_replace
 -------------

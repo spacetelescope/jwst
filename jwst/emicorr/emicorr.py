@@ -452,12 +452,18 @@ def apply_emicorr(input_model, emicorr_model,
         noise = np.ones((nints, ngroups, ny, nx))   # same size as input data
         noise_x = np.arange(nx4) * 4
         for k in range(4):
-            noise[..., noise_x + k] = dd_noise
+            noise[:, :, :, noise_x + k] = dd_noise
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')
         corr_data = orig_data - noise
         output_model.data = corr_data
+
+        # clean up
+        del data
+        del dd_all
+        del times_this_int
+        del phaseall
 
     if save_intermediate_results and save_onthefly_reffile is not None:
         if 'FAST' in readpatt:
