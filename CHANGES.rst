@@ -95,7 +95,9 @@ emicorr
 - Improved running time by introducing a new parameter, use_n_cycles, that can
   be modified by the user and has a default of 3. Now the user can either provide
   the number of integrations to phase or the number of cycles to calculate the
-  number of integrations necessary to phase. [#8589]
+  number of integrations necessary to phase. Additionally fix a bug in applying
+  emicorr to data with nints > 1, and improve runtime in the phase amplitude
+  loop. [#8589]
 
 exp_to_source
 -------------
