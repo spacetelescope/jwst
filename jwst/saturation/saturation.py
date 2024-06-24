@@ -49,8 +49,6 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
     """
 
     data = input_model.data
-    ngroups = input_model.meta.exposure.ngroups
-    nframes = input_model.meta.exposure.nframes
 
     # Create the output model as a copy of the input
     output_model = input_model.copy()

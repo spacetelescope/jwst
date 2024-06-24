@@ -278,11 +278,6 @@ pixel_replace
 - Added estimated errors and variances for replaced pixels, following the
   interpolation scheme used for the data. [#8504]
 
-saturation
-----------
-
-- Adds a check for saturation bias in group 2 for nframes > 1. [#8499]
-
 ramp_fitting
 ------------
 
@@ -334,6 +329,11 @@ residual_fringe
 ---------------
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
+
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8499]
 
 tweakreg
 --------
