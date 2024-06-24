@@ -119,6 +119,10 @@ extract_1d
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
 
+- Fix error in ``_coalesce_bounds`` that returned incorrect spectral or background
+  extraction region when one set of pixel limits is entirely contained within
+  another [#8586]
+  
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
