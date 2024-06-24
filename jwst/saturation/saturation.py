@@ -166,7 +166,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
                 # Identify groups which we wouldn't expect to saturate by the third group,
                 # on the basis of the first group
                 scigp1 = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector)
-                mask = (scigp1 - np.nanmedian(scigp1)) / np.mean(read_pattern[0]) * read_pattern[2][-1] < sat_thresh
+                mask = scigp1 / np.mean(read_pattern[0]) * read_pattern[2][-1] < sat_thresh
 
                 # Identify groups with suspiciously large values in the second group
                 scigp2 = x_irs2.from_irs2(data[ints, 1, :, :], irs2_mask, detector)
