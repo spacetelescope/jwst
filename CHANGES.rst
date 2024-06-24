@@ -178,7 +178,7 @@ lib
 master_background
 -----------------
 
-- For MIRI_MRS, the background is be zero-valued outside the
+- For MIRI_MRS, the background is now zero-valued outside the
   wavelength coverage from the background spectra. [#8535]
 
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
