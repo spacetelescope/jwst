@@ -81,7 +81,7 @@ estimate the fractional location of the source within the given slit.
 Note that this computation can only be performed for the primary slit
 in the exposure, which is given in the "FXD_SLIT" keyword. The positions
 of sources in any additional slits cannot be estimated and therefore
-the wavelength correction is only applied to the primary slit.\ :sup:`1`
+are set to 0.0 (the center of the slit).\ :sup:`1`
 
 :sup:`1`\ Note that fixed slits that are planned as part of a combined
 MOS and FS observation do have *a priori* estimates of their source

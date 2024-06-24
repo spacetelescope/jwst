@@ -68,45 +68,24 @@ def do_correction(input_model, wavecorr_file):
         if _is_point_source(input_model, exp_type):
             apply_zero_point_correction(output_model, wavecorr_file)
     else:
-        # For FS only work on point source slits with
-        # position information
         corrected = False
-        if exp_type == 'NRS_FIXEDSLIT':
-            for slit in output_model.slits:
-                if _is_point_source(slit, exp_type):
-                    completed = apply_zero_point_correction(slit, wavecorr_file)
-                    if completed:
-                        corrected = True
-                        slit.meta.cal_step.wavecorr = 'COMPLETE'
-                    else:  # pragma: no cover
-                        log.warning(f'Corrections are not invertible for slit {slit.name}')
-                        log.warning('Skipping wavecorr correction')
-                        slit.meta.cal_step.wavecorr = 'SKIPPED'
-
-            if corrected:
-                output_model.meta.cal_step.wavecorr = 'COMPLETE'
-            else:
-                output_model.meta.cal_step.wavecorr = 'SKIPPED'
-
-        # For MOS work on all slits containing a point source
-        else:
-            for slit in output_model.slits:
-                if _is_point_source(slit, exp_type):
-                    completed = apply_zero_point_correction(slit, wavecorr_file)
-                    if completed:
-                        slit.meta.cal_step.wavecorr = 'COMPLETE'
-                        corrected = True
-                    else: # pragma: no cover
-                        log.warning(f'Corrections are not invertible for slit {slit.name}')
-                        log.warning('Skipping wavecorr correction')
-                        slit.meta.cal_step.wavecorr = 'SKIPPED'
-                else:
+        for slit in output_model.slits:
+            if _is_point_source(slit, exp_type):
+                completed = apply_zero_point_correction(slit, wavecorr_file)
+                if completed:
+                    corrected = True
+                    slit.meta.cal_step.wavecorr = 'COMPLETE'
+                else:  # pragma: no cover
+                    log.warning(f'Corrections are not invertible for slit {slit.name}')
+                    log.warning('Skipping wavecorr correction')
                     slit.meta.cal_step.wavecorr = 'SKIPPED'
-
-            if corrected:
-                output_model.meta.cal_step.wavecorr = 'COMPLETE'
             else:
-                output_model.meta.cal_step.wavecorr = 'SKIPPED'
+                slit.meta.cal_step.wavecorr = 'SKIPPED'
+
+        if corrected:
+            output_model.meta.cal_step.wavecorr = 'COMPLETE'
+        else:
+            output_model.meta.cal_step.wavecorr = 'SKIPPED'
 
     return output_model
 
@@ -291,25 +270,6 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
         
     _, _, lam = wcs(xpix, ypix)
     return lam
-
-
-def _is_msa_fixed_slit(slit):
-    """
-    Determine if a fixed slit source was defined via a MSA file.
-
-    Parameters
-    ----------
-    slit : `~stdatamodels.jwst.transforms.models.Slit`
-        A slit object.
-    """
-    # Fixed slits defined via MSA files in  MOS/FS combination
-    # processing will have a non-empty source name
-    if (not hasattr(slit, 'source_name')
-            or slit.source_name is None
-            or slit.source_name == ""):
-        return False
-    else:
-        return True
 
 
 def _is_point_source(slit, exp_type):

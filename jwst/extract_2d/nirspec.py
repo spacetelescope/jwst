@@ -90,13 +90,17 @@ def nrs_extract2d(input_model, slit_name=None):
             # The overall subarray offset is recorded in model.meta.subarray.
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
 
-            if (new_model.meta.exposure.type.lower() == 'nrs_fixedslit') and \
-                (slit.name == input_model.meta.instrument.fixed_slit):
-                try:
-                    get_source_xpos(new_model)
-                except DitherMetadataError as e:
-                    log.warning(str(e))
-                    log.warning("Setting source position in slit to 0.0, 0.0")
+            if (new_model.meta.exposure.type.lower() == 'nrs_fixedslit'):
+                if (slit.name == input_model.meta.instrument.fixed_slit):
+                    try:
+                        get_source_xpos(new_model)
+                    except DitherMetadataError as e:
+                        log.warning(str(e))
+                        log.warning("Setting source position in slit to 0.0, 0.0")
+                        new_model.source_ypos = 0.0
+                        new_model.source_xpos = 0.0
+                else:
+                    # ensure nonsense data never end up in non-primary slits
                     new_model.source_ypos = 0.0
                     new_model.source_xpos = 0.0
 
@@ -307,11 +311,11 @@ def get_source_xpos(slit):
 
     if not hasattr(slit.meta, "dither"):
         raise DitherMetadataError('meta.dither is not populated for the primary slit; '
-                             'Failed to estimate source position in slit.')
+                                  'Failed to estimate source position in slit.')
 
     if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
         raise DitherMetadataError('meta.dither.x(y)_offset values are None for primary slit; '
-                        'Failed to estimate source position in slit.')
+                                  'Failed to estimate source position in slit.')
 
     xoffset = slit.meta.dither.x_offset  # in arcsec
     yoffset = slit.meta.dither.y_offset  # in arcsec

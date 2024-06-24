@@ -185,10 +185,10 @@ def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
 
 def test_extract_2d_nirspec_fs(nirspec_fs_rate):
     model = ImageModel(nirspec_fs_rate)
-    result = AssignWcsStep.call(model)
+    model_wcs = AssignWcsStep.call(model)
 
 
-    result = Extract2dStep.call(result)
+    result = Extract2dStep.call(model_wcs)
     assert isinstance(result, MultiSlitModel)
 
     # there should be 1 slit extracted: FS, S200A1
@@ -199,7 +199,18 @@ def test_extract_2d_nirspec_fs(nirspec_fs_rate):
     assert result.slits[0].slitlet_id == 0
     assert result.slits[0].data.shape == (45, 1254)
 
+    # ensure x_offset, y_offset become zero when dither information is missing
+    model_wcs.meta.dither = None
+    result = Extract2dStep.call(model_wcs)
+    assert result.slits[0].source_xpos == 0.0
+    assert result.slits[0].source_ypos == 0.0
+    model_wcs.meta.dither = {"x_offset": None, "y_offset": None}
+    result = Extract2dStep.call(model_wcs)
+    assert result.slits[0].source_xpos == 0.0
+    assert result.slits[0].source_ypos == 0.0
+
     model.close()
+    model_wcs.close()
     result.close()
 
 

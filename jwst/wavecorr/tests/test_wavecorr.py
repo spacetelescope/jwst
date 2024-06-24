@@ -140,28 +140,10 @@ def test_skipped():
     outs.slits[ind].source_ypos = source_pos[1]
 
     # Test step is skipped if no coverage in CRDS
-    outs.slits[ind].meta.observation.date = '2001-08-03'
+    outs.meta.observation.date = '2001-08-03'
     outw = WavecorrStep.call(outs)
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
+    assert outw.meta.cal_step.wavecorr == "SKIPPED"
     outs.meta.observation.date = '2017-08-03'
-
-    # Test step is skipped if  primary name not set
-    outs.meta.instrument.fixed_slit = None
-    outw = WavecorrStep.call(outs)
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
-    outs.meta.instrument.fixed_slit = "S400A1"
-
-    # Test step is skipped if meta.dither is not populated
-    outs.meta.dither = None
-    outw = WavecorrStep.call(outs)
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
-    outs.meta.dither = {'x_offset': 0.0, 'y_offset': 0.0}
-
-    # Test step is skipped if primary source is "EXTENDED" 
-    outs.slits[ind].source_type = 'EXTENDED'
-    outw = WavecorrStep.call(outs)
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
-    outs.slits[ind].source_type = 'POINT'
 
     # Run the step for real
     outw = WavecorrStep.call(outs)
