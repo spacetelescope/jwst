@@ -70,10 +70,9 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
-    read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
-        n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe)
+        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
@@ -179,9 +178,9 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
                 gp3mask = np.where(flag_temp & SATURATED, True, False)
                 mask &= gp3mask
 
-                # Flag the 2nd group for the pixels passing that gauntlet
-                dq_temp = x_irs2.from_irs2(groupdq[ints, 1, :, :], irs2_mask, detector)
-                dq_temp[mask] |= SATURATED
+                # Flag the 2nd group for the pixels passing that gauntlet in the 3rd group
+                dq_temp = np.zeros_like(mask,dtype='uint8')
+                dq_temp[mask] = SATURATED
                 # flag any pixels that border saturated pixels
                 if n_pix_grow_sat > 0:
                     dq_temp = adjacency_sat(dq_temp, SATURATED, n_pix_grow_sat)
