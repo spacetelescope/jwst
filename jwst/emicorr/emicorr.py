@@ -385,9 +385,9 @@ def apply_emicorr(input_model, emicorr_model,
         nbp1_over_nbins = [(nb + 1)/nbins for nb in range(nbins)]
         finite_dd = np.isfinite(dd_all)
         for nb in range(nbins):
-            u = np.where((phaseall > nb_over_nbins[nb]) & (phaseall <= nbp1_over_nbins[nb]) & (finite_dd))
+            low_n = dd_all[(phaseall > nb_over_nbins[nb]) & (phaseall <= nbp1_over_nbins[nb]) & (finite_dd)]
             # calculate the sigma-clipped mean
-            dmean, _, _, _ = iter_stat_sig_clip(dd_all[u])
+            dmean, _, _, _ = iter_stat_sig_clip(low_n)
             pa[nb] = dmean   # amplitude in this bin
 
         pa -= np.median(pa)
@@ -450,12 +450,18 @@ def apply_emicorr(input_model, emicorr_model,
         noise = np.ones((nints, ngroups, ny, nx))   # same size as input data
         noise_x = np.arange(nx4) * 4
         for k in range(4):
-            noise[..., noise_x + k] = dd_noise
+            noise[:, :, :, noise_x + k] = dd_noise
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')
         corr_data = orig_data - noise
         output_model.data = corr_data
+
+        # clean up
+        del data
+        del dd_all
+        del times_this_int
+        del phaseall
 
     if save_intermediate_results and save_onthefly_reffile is not None:
         if 'FAST' in readpatt:
