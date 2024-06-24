@@ -333,7 +333,7 @@ residual_fringe
 saturation
 ----------
 
-- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8499]
+- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8593]
 
 tweakreg
 --------
