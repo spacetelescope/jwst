@@ -24,14 +24,6 @@ that control the behavior of the processing:
   Any floating-point value, given as a string, is valid.
   A value of 'INDEF' will use the last zero weight flux.
 
-``--nlow`` (integer, default=0)
-  The number of low values in each pixel stack to ignore
-  when computing the median value.
-
-``--nhigh`` (integer, default=0)
-  The number of high values in each pixel stack to ignore
-  when computing the median value.
-
 ``--maskpt`` (float, default=0.7)
   The percent of maximum weight to use as lower-limit for valid data;
   valid values go from 0.0 to 1.0.

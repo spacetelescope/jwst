@@ -55,8 +55,6 @@ class OutlierDetectionStep(Step):
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
-        nlow = integer(default=0)
-        nhigh = integer(default=0)
         maskpt = float(default=0.7)
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
@@ -107,8 +105,6 @@ class OutlierDetectionStep(Step):
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,
-                'nlow': self.nlow,
-                'nhigh': self.nhigh,
                 'maskpt': self.maskpt,
                 'snr': self.snr,
                 'scale': self.scale,
