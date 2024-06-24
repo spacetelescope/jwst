@@ -362,11 +362,11 @@ class Spec2Pipeline(Pipeline):
             x1d = self.extract_1d(x1d)
 
             # Possible that no fit was possible - if so, skip photom
-            if x1d is not None:
+            if (x1d is None) or (x1d.meta.cal_step.extract_1d == "SKIPPED"):
+                self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
+            else:
                 self.photom.save_results = self.save_results
                 x1d = self.photom(x1d)
-            else:
-                self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
         elif exp_type == 'NRS_MSASPEC':
             # Special handling for MSA spectra, to handle mixed-in
             # fixed slits separately
