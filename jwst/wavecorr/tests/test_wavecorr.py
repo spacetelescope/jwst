@@ -108,11 +108,12 @@ def test_skipped():
 
     # Test an error is raised if assign_wcs or extract_2d were not run.
     im.meta.exposure.type = 'NRS_FIXEDSLIT'
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         WavecorrStep.call(im)
 
     outa = AssignWcsStep.call(im)
 
+    # wcs and other metadata necessary for a good (not skipped) result 
     dither = {'x_offset': 0.0, 'y_offset': 0.0}
     outa.meta.dither = dither
     outa.meta.wcsinfo.v3yangle = 138.78
@@ -120,36 +121,50 @@ def test_skipped():
     outa.meta.wcsinfo.v2_ref = 321.87
     outa.meta.wcsinfo.v3_ref = -477.94
     outa.meta.wcsinfo.roll_ref = 15.1234
+    outa.meta.instrument.fixed_slit = "S400A1"
 
     oute = Extract2dStep.call(outa)
+
+    # ensure the source position is set as expected by extract2d
+    ind = np.nonzero([s.name == 'S400A1' for s in oute.slits])[0].item()
+    source_pos = (0.004938526981283373, -0.02795306204991911)
+    assert_allclose((oute.slits[ind].source_xpos, oute.slits[ind].source_ypos),source_pos)
+
     outs = SourceTypeStep.call(oute)
 
+    # primary slit is found by source type step to be EXTENDED
+    # which means its source position is reset to (0, 0)
+    # hack it here to be a point source with the same offset as before here
+    outs.slits[ind].source_type = 'POINT'
+    outs.slits[ind].source_xpos = source_pos[0]
+    outs.slits[ind].source_ypos = source_pos[1]
+
     # Test step is skipped if no coverage in CRDS
-    outs.slits[0].meta.observation.date = '2001-08-03'
+    outs.slits[ind].meta.observation.date = '2001-08-03'
     outw = WavecorrStep.call(outs)
     assert out.meta.cal_step.wavecorr == "SKIPPED"
-
     outs.meta.observation.date = '2017-08-03'
-    outw = WavecorrStep.call(outs)
-    # Primary name not set
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
 
+    # Test step is skipped if  primary name not set
+    outs.meta.instrument.fixed_slit = None
+    outw = WavecorrStep.call(outs)
+    assert out.meta.cal_step.wavecorr == "SKIPPED"
     outs.meta.instrument.fixed_slit = "S400A1"
 
     # Test step is skipped if meta.dither is not populated
+    outs.meta.dither = None
     outw = WavecorrStep.call(outs)
     assert out.meta.cal_step.wavecorr == "SKIPPED"
+    outs.meta.dither = {'x_offset': 0.0, 'y_offset': 0.0}
 
-
-    # Test step is skipped if source is "EXTENDED"
+    # Test step is skipped if primary source is "EXTENDED" 
+    outs.slits[ind].source_type = 'EXTENDED'
     outw = WavecorrStep.call(outs)
     assert out.meta.cal_step.wavecorr == "SKIPPED"
+    outs.slits[ind].source_type = 'POINT'
 
+    # Run the step for real
     outw = WavecorrStep.call(outs)
-
-    ind = 0 # this is the only point source
-    source_pos = (33.110462,  2.329629)
-    assert_allclose((outw.slits[ind].source_xpos, outw.slits[ind].source_ypos),source_pos, rtol=1e-5)
 
     # Test if the corrected wavelengths are not monotonically increasing
 

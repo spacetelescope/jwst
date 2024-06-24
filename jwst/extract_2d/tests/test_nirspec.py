@@ -40,6 +40,8 @@ def create_nirspec_hdul(detector='NRS1', grating='G395M', filter_name='F290LP',
     phdu.header['EXP_TYPE'] = exptype
     phdu.header['PATT_NUM'] = 1
     phdu.header['SUBARRAY'] = subarray
+    phdu.header['XOFFSET'] = 0.0
+    phdu.header['YOFFSET'] = 0.0
     if subarray == 'SUBS200A1':
         phdu.header['SUBSIZE1'] = 2048
         phdu.header['SUBSIZE2'] = 64
@@ -184,7 +186,8 @@ def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
 def test_extract_2d_nirspec_fs(nirspec_fs_rate):
     model = ImageModel(nirspec_fs_rate)
     result = AssignWcsStep.call(model)
-    print(result.meta.wcsinfo.v3yangle)
+
+
     result = Extract2dStep.call(result)
     assert isinstance(result, MultiSlitModel)
 

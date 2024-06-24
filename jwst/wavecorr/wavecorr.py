@@ -17,7 +17,7 @@ in the assign_wcs step.
 FS data:
 ``input_model.meta.dither.x_offset``, populated by SDP, is used. The
 value is in the telescope Ideal frame. To calculate the slit position,
-it is transformed Ideal --> V2, V3 --> slit_frame.
+it is transformed Ideal --> V2, V3 --> slit_frame in the extract_2d step.
 
 The interpolation of the lookup table uses the absolute fractional offset in x.
 This can be computed in two ways. The above transform gives the absolute
@@ -83,15 +83,7 @@ def do_correction(input_model, wavecorr_file):
                             log.warning(f'Skipping wavecorr correction for '
                                         f'non-primary slit {slit.name}')
                             continue
-                        if not hasattr(slit.meta, "dither"):
-                            log.warning('meta.dither is not populated for the primary slit')
-                            log.warning('Skipping wavecorr correction')
-                            continue
-                        if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
-                            log.warning('dither.x(y)_offset values are None for primary slit')
-                            log.warning('Skipping wavecorr correction')
-                            input_model.meta.cal_step.wavecorr = 'SKIPPED'
-                            continue
+
                     completed = apply_zero_point_correction(slit, wavecorr_file)
                     if completed:
                         corrected = True

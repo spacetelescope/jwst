@@ -69,6 +69,26 @@ corresponding to the FITS keywords "SLTNAME", "SLTSTRT1", "SLTSIZE1",
 "SLTSTRT2", and "SLTSIZE2."  Keyword "DISPAXIS" (dispersion direction)
 will be copied from the input file to each of the output cutout images.
 
+The "SRCXPOS" and "SRCYPOS" keywords in the SCI extension header of each slitlet 
+are also populated with estimates of the source
+x (dispersion) and y (cross-dispersion) location within the slitlet.
+For MOS data, these values are taken from the :ref:`MSA metadata file<msa_metadata>`.
+Fixed slit data do not have an *a priori* estimate of the source
+location within a given slit, so the estimated source location is
+computed by the ``extract_2d`` step. It uses the target coordinates in
+conjunction with the aperture reference point in V2/V3 space to
+estimate the fractional location of the source within the given slit.
+Note that this computation can only be performed for the primary slit
+in the exposure, which is given in the "FXD_SLIT" keyword. The positions
+of sources in any additional slits cannot be estimated and therefore
+the wavelength correction is only applied to the primary slit.\ :sup:`1`
+
+:sup:`1`\ Note that fixed slits that are planned as part of a combined
+MOS and FS observation do have *a priori* estimates of their source
+locations, via the :ref:`MSA metadata file<msa_metadata>`. When available,
+these source locations are directly used, instead of recomputing the source
+position from the WCS information.
+
 
 NIRCam and NIRISS WFSS
 ++++++++++++++++++++++

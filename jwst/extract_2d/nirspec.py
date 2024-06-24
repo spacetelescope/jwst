@@ -62,7 +62,13 @@ def nrs_extract2d(input_model, slit_name=None):
         slit = open_slits[0]
         output_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit, exp_type)
         set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
-        get_source_xpos(output_model)
+        try:
+            get_source_xpos(output_model)
+        except DitherMetadataError as e:
+            log.warning(str(e))
+            log.warning("Setting source position in slit to 0.0, 0.0")
+            output_model.source_ypos = 0.0
+            output_model.source_xpos = 0.0
         if 'world' in input_model.meta.wcs.available_frames:
             orig_s_region = output_model.meta.wcsinfo.s_region.strip()
             util.update_s_region_nrs_slit(output_model)
@@ -86,7 +92,13 @@ def nrs_extract2d(input_model, slit_name=None):
 
             if (new_model.meta.exposure.type.lower() == 'nrs_fixedslit') and \
                 (slit.name == input_model.meta.instrument.fixed_slit):
-                get_source_xpos(new_model)
+                try:
+                    get_source_xpos(new_model)
+                except DitherMetadataError as e:
+                    log.warning(str(e))
+                    log.warning("Setting source position in slit to 0.0, 0.0")
+                    new_model.source_ypos = 0.0
+                    new_model.source_xpos = 0.0
 
             # Update the S_REGION keyword value for the extracted slit
             if 'world' in input_model.meta.wcs.available_frames:
@@ -274,6 +286,10 @@ def extract_slit(input_model, slit, exp_type):
     return new_model, xlo, xhi, ylo, yhi
 
 
+class DitherMetadataError(Exception):
+    pass
+
+
 def get_source_xpos(slit):
     """
     Compute the source position within the slit for a NIRSpec fixed slit.
@@ -288,6 +304,15 @@ def get_source_xpos(slit):
     xpos : float
         X coordinate of the source as a fraction of the slit size.
     """
+
+    if not hasattr(slit.meta, "dither"):
+        raise DitherMetadataError('meta.dither is not populated for the primary slit; '
+                             'Failed to estimate source position in slit.')
+
+    if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
+        raise DitherMetadataError('meta.dither.x(y)_offset values are None for primary slit; '
+                        'Failed to estimate source position in slit.')
+
     xoffset = slit.meta.dither.x_offset  # in arcsec
     yoffset = slit.meta.dither.y_offset  # in arcsec
     v2ref = slit.meta.wcsinfo.v2_ref  # in arcsec
