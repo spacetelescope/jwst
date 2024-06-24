@@ -241,7 +241,7 @@ class ResampleSpecData(ResampleData):
         # transform the weighted means into target RA/Dec
         # (at the center of the slit in x)
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
-        sx, sy = s2d(0, wmean_s, wmean_l)
+        sx, _ = s2d(0, wmean_s, wmean_l)
 
         # Estimate spatial sampling from the reference model
         # at the center wavelength
