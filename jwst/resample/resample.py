@@ -3,9 +3,9 @@ import os
 import warnings
 
 import numpy as np
-from drizzle import util
-from drizzle import cdrizzle
 import psutil
+from drizzle import cdrizzle, util
+from gwcs.wcstools import grid_from_bounding_box
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -264,9 +264,12 @@ class ResampleData:
                             self.pscale_ratio = self.pscale / self.input_pixscale0
                     iscale = np.sqrt(input_pixflux_area / input_pixel_area)
                 else:
+                    # Note: spectral scaling is only needed if the pixel ratio
+                    # is not set to 1.0, which is not supported for
+                    # outlier detection.
                     iscale = 1.0
+                log.debug(f'Using intensity scale iscale={iscale}')
 
-                # TODO: should weight_type=None here?
                 inwht = resample_utils.build_driz_weight(
                     img,
                     weight_type=self.weight_type,
@@ -333,24 +336,34 @@ class ResampleData:
         log.info("Resampling science data")
         for img in self.input_models:
             input_pixflux_area = img.meta.photometry.pixelarea_steradians
-            if (input_pixflux_area and
-                    'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                img.meta.wcs.array_shape = img.data.shape
-                input_pixel_area = compute_image_pixel_area(img.meta.wcs)
-                if input_pixel_area is None:
-                    raise ValueError(
-                        "Unable to compute input pixel area from WCS of input "
-                        f"image {repr(img.meta.filename)}."
-                    )
-                if self.input_pixscale0 is None:
-                    self.input_pixscale0 = np.rad2deg(
-                        np.sqrt(input_pixel_area)
-                    )
-                    if self._recalc_pscale_ratio:
-                        self.pscale_ratio = self.pscale / self.input_pixscale0
+            if input_pixflux_area:
+                if 'SPECTRAL' in img.meta.wcs.output_frame.axes_type:
+                    # Use the nominal area as is
+                    input_pixel_area = input_pixflux_area
+
+                    # If input image is in flux density units, correct the
+                    # flux for the user-specified change to the spatial dimension
+                    if 'sr' not in str(img.meta.bunit_data).lower():
+                        input_pixel_area *= self.pscale_ratio
+                else:
+                    img.meta.wcs.array_shape = img.data.shape
+                    input_pixel_area = compute_image_pixel_area(img.meta.wcs)
+
+                    if input_pixel_area is None:
+                        raise ValueError(
+                            "Unable to compute input pixel area from WCS of input "
+                            f"image {repr(img.meta.filename)}."
+                        )
+                    if self.input_pixscale0 is None:
+                        self.input_pixscale0 = np.rad2deg(
+                            np.sqrt(input_pixel_area)
+                        )
+                        if self._recalc_pscale_ratio:
+                            self.pscale_ratio = self.pscale / self.input_pixscale0
                 iscale = np.sqrt(input_pixflux_area / input_pixel_area)
             else:
                 iscale = 1.0
+            log.debug(f'Using intensity scale iscale={iscale}')
 
             img.meta.iscale = iscale
 
@@ -829,7 +842,7 @@ def compute_image_pixel_area(wcs):
 
     k = 0
     dxy = [1, -1, -1, 1]
-
+    ra, dec, center = np.nan, np.nan, (np.nan, np.nan)
     while xmin < xmax and ymin < ymax:
         try:
             x, y, image_area, center, b, r, t, l = _get_boundary_points(
@@ -854,7 +867,6 @@ def compute_image_pixel_area(wcs):
             if not (np.all(np.isfinite(ra[sl])) and
                     np.all(np.isfinite(dec[sl]))):
                 limits[k] += dxy[k]
-                ymin, xmax, ymax, xmin = limits
                 k = (k + 1) % 4
                 break
             k = (k + 1) % 4
@@ -880,3 +892,32 @@ def compute_image_pixel_area(wcs):
     pix_area = sky_area / image_area
 
     return pix_area
+
+
+def compute_spectral_pixel_area(wcs):
+    """ Compute output pixel area in steradians."""
+
+    # Approximate area algorithm borrowed from gwcs.wcs,
+    # _vectorized_fixed_point method, e.g.
+    # https://gwcs.readthedocs.io/en/latest/_modules/gwcs/wcs.html
+
+    x, y = grid_from_bounding_box(wcs.bounding_box)
+    ra1, dec1, _ = wcs(x - 0.5, y - 0.5)
+    ra2, dec2, _ = wcs(x - 0.5, y + 0.5)
+    ra3, dec3, _ = wcs(x + 0.5, y + 0.5)
+    ra4, dec4, _ = wcs(x + 0.5, y - 0.5)
+
+    ra = [ra1, ra2, ra3, ra4]
+    dec = [dec1, dec2, dec3, dec4]
+    for i in range(len(ra)):
+        ra[i] = np.deg2rad(ra[i])
+    for i in range(len(dec)):
+        dec[i] = np.deg2rad(dec[i])
+    area = np.abs(0.5 * ((ra[3] - ra[1]) * (np.sin(dec[0]) - np.sin(dec[2]))
+                         + (ra[0] - ra[2]) * (np.sin(dec[3]) - np.sin(dec[1]))))
+    mean_area = np.nanmean(area)
+    log.debug(f'Computed spatial area in sr: {mean_area}')
+    log.debug(f'Computed pixel scale in arcsec: '
+              f'{np.rad2deg(np.sqrt(mean_area)) * 3600}')
+
+    return mean_area
