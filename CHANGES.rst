@@ -168,6 +168,8 @@ general
 
 - Increase minimum required scipy. [#8441]
 
+- Increase minimum required stdatamodels and stpipe. [#8592]
+
 lib
 ---
 
