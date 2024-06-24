@@ -425,6 +425,9 @@ class DataSet():
             raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
 
         elif self.exptype in ['NIS_SOSS']:
+            if isinstance(self.input, datamodels.ImageModel):
+                raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
+
             for spec in self.input.spec:
                 self.specnum += 1
                 self.order = spec.spectral_order
