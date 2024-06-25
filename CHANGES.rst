@@ -168,6 +168,8 @@ general
 
 - Increase minimum required scipy. [#8441]
 
+- Increase minimum required stdatamodels and stpipe. [#8592]
+
 lib
 ---
 
@@ -282,6 +284,9 @@ pipeline
 
 - Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
   for NIRISS SOSS data [#8575].
+  
+- Added hook to the ``calwebb_tso3`` pipeline to skip all subsequent steps
+  if the ``extract_1d`` step is skipped. [#8583]
 
 pixel_replace
 -------------
