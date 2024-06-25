@@ -13,7 +13,7 @@ from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample import compute_image_pixel_area
-from jwst.resample.resample_spec import ResampleSpecData
+from jwst.resample.resample_spec import ResampleSpecData, compute_spectral_pixel_scale
 
 
 def _set_photom_kwd(im):
@@ -280,8 +280,19 @@ def test_miri_wcs_roundtrip(miri_cal):
 def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     miri_cal.meta.bunit_data = units
 
+    # Make an input pixel scale equivalent to the specified ratio
+    input_scale = compute_spectral_pixel_scale(miri_cal.meta.wcs, disp_axis=2)
+    pscale = 3600.0 * input_scale / ratio
+
     result1 = ResampleSpecStep.call(miri_cal)
     result2 = ResampleSpecStep.call(miri_cal, pixel_scale_ratio=ratio)
+    result3 = ResampleSpecStep.call(miri_cal, pixel_scale=pscale)
+
+    # pixel_scale and pixel_scale_ratio should be equivalent
+    nn = np.isnan(result2.data) | np.isnan(result3.data)
+    assert np.allclose(result2.data[~nn], result3.data[~nn])
+
+    # Check result2 for expected results
 
     # wavelength size does not change
     assert result1.data.shape[0] == result2.data.shape[0]
@@ -307,13 +318,17 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
     area2 = result2.meta.photometry.pixelarea_steradians
+    area3 = result2.meta.photometry.pixelarea_steradians
     assert np.isclose(area1 / area2, ratio)
+    assert np.isclose(area1 / area3, ratio)
 
     assert result1.meta.resample.pixel_scale_ratio == 1.0
     assert result2.meta.resample.pixel_scale_ratio == ratio
+    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
 
     result1.close()
     result2.close()
+    result3.close()
 
 
 @pytest.mark.parametrize("units", ["MJy/pixel", "MJy/sr"])
@@ -322,10 +337,22 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
     for slit in nirspec_cal.slits:
         slit.meta.bunit_data = units
 
+    # Make an input pixel scale equivalent to the specified ratio
+    input_scale = compute_spectral_pixel_scale(
+        nirspec_cal.slits[0].meta.wcs, disp_axis=1)
+    pscale = 3600.0 * input_scale / ratio
+
     result1 = ResampleSpecStep.call(nirspec_cal)
     result2 = ResampleSpecStep.call(nirspec_cal, pixel_scale_ratio=ratio)
+    result3 = ResampleSpecStep.call(nirspec_cal, pixel_scale=pscale)
 
-    for slit1, slit2 in zip(result1.slits, result2.slits):
+    for slit1, slit2, slit3 in zip(result1.slits, result2.slits, result3.slits):
+        # pixel_scale and pixel_scale_ratio should be equivalent
+        nn = np.isnan(result2.data) | np.isnan(result3.data)
+        assert np.allclose(slit2.data[~nn], slit3.data[~nn])
+
+        # Check result2 for expected results
+
         # wavelength size does not change
         assert slit1.data.shape[1] == slit2.data.shape[1]
 
@@ -350,13 +377,17 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
         # output area is updated either way
         area1 = slit1.meta.photometry.pixelarea_steradians
         area2 = slit2.meta.photometry.pixelarea_steradians
+        area3 = slit3.meta.photometry.pixelarea_steradians
         assert np.isclose(area1 / area2, ratio)
+        assert np.isclose(area1 / area3, ratio)
 
     assert result1.meta.resample.pixel_scale_ratio == 1.0
     assert result2.meta.resample.pixel_scale_ratio == ratio
+    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
 
     result1.close()
     result2.close()
+    result3.close()
 
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])

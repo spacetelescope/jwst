@@ -1023,4 +1023,4 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
         fiducial = wcs(center_x, center_y)
 
     pixel_scale = compute_scale(wcs, fiducial, disp_axis=disp_axis)
-    return pixel_scale
+    return float(pixel_scale)
