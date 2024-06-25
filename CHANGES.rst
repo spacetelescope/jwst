@@ -194,6 +194,9 @@ master_background
   Master background correction for MOS mode should be performed
   via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
 
+- Use zero values for master background outside the background
+  wavelength range instead of NaN to avoid NaN-ing out entire
+  sets of science data when backgrounds are missing. [#8597]
 
 master_background_mos
 ---------------------
@@ -351,6 +354,11 @@ residual_fringe
 ---------------
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
+
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8593]
 
 tweakreg
 --------
