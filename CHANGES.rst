@@ -56,12 +56,15 @@ associations
 - Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
   tso3 associations. [#8549]
 
+<<<<<<< HEAD
 background_subtraction
 ----------------------
 
 - Clarified MIRI MRS default/optional background subtraction steps in the
   documentation pages.  [#8582]
 
+=======
+>>>>>>> f4b3bafe7 (Replaced deep copies of NIRSpec WCS objects within most loops)
 badpix_selfcal
 --------------
 
@@ -234,9 +237,6 @@ outlier_detection
   to detect outliers in TSO data, with user-defined
   rolling window width via the ``rolling_window_width`` parameter. [#8473]
 
-- Fixed a bug that led to small total flux offsets between input and blotted
-  images if the nominal and actual wcs-computed pixel areas were different. [#8553]
-
 pathloss
 --------
 
@@ -254,9 +254,12 @@ photom
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
+<<<<<<< HEAD
 - Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
 
+=======
+>>>>>>> f4b3bafe7 (Replaced deep copies of NIRSpec WCS objects within most loops)
 pipeline
 --------
 
@@ -280,12 +283,15 @@ pipeline
   FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
   combined products. [#8467]
 
+<<<<<<< HEAD
 - Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
   for NIRISS SOSS data [#8575].
   
 - Added hook to the ``calwebb_tso3`` pipeline to skip all subsequent steps
   if the ``extract_1d`` step is skipped. [#8583]
 
+=======
+>>>>>>> f4b3bafe7 (Replaced deep copies of NIRSpec WCS objects within most loops)
 pixel_replace
 -------------
 

@@ -11,7 +11,7 @@ from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import Slit
 
-from ..assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
+from ..assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input_lite, get_transforms
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -96,11 +96,17 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     temporary_copy = input_datamodel.copy()
     temporary_copy.meta.wcs = wcs
     temporary_copy.meta.exposure.type = 'NRS_MSASPEC'
+
+    s = [slitlet.name for slitlet in failed_slitlets]
+    wcsobj, tr1, tr2, tr3, open_slits = get_transforms(temporary_copy, s, return_slits=True)
+    
     dq_array = input_datamodel.dq
-    for slitlet in failed_slitlets:
+    for k in range(len(s)):
         #
         # Pick the WCS for this slitlet from the WCS of the exposure
-        thiswcs = nrs_wcs_set_input(temporary_copy, slitlet.name)
+        thiswcs = nrs_wcs_set_input_lite(temporary_copy, wcsobj, s[k],
+                                         [tr1, tr2[k], tr3[k]],
+                                         open_slits=open_slits)
         #
         # Convert the bounding box for this slitlet to a set of indices to use as a slice
         xmin, xmax, ymin, ymax = boundingbox_to_indices(temporary_copy,

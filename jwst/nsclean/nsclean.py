@@ -39,10 +39,14 @@ def mask_ifu_slices(input_model, mask):
     dqmap = np.zeros_like(input_model.dq)
 
     # Get the wcs objects for all IFU slices
-    list_of_wcs = nirspec.nrs_ifu_wcs(input_model)
+    # Note: 30 in the line below is hardcoded in nirspec.nrs.ifu_wcs, which
+    # the line below replaces.
+    wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(input_model, np.arange(30))
 
     # Loop over the IFU slices, finding the valid region for each
-    for (k, ifu_wcs) in enumerate(list_of_wcs):
+    for k in range(len(tr2)):        
+        ifu_wcs = nirspec.nrs_wcs_set_input_lite(input_model, wcsobj, k,
+                                                 [tr1, tr2[k], tr3[k]])    
 
         # Construct array indexes for pixels in this slice
         x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,
@@ -88,7 +92,7 @@ def mask_slits(input_model, mask):
         output mask with additional flags for slit pixels
     """
 
-    from jwst.extract_2d.nirspec import offset_wcs
+    from jwst.extract_2d.nirspec import _toindex
 
     log.info("Finding slit/slitlet pixels")
 
@@ -98,9 +102,17 @@ def mask_slits(input_model, mask):
     # Loop over the slits, marking all the pixels within each bounding
     # box as False (do not use) in the mask.
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
-    for slit in slit2msa.slits:
-        slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-        xlo, xhi, ylo, yhi = offset_wcs(slit_wcs)
+
+    slits = [s.name for s in slit2msa.slits]
+    wcsobj, tr1, tr2, tr3, open_slits = nirspec.get_transforms(input_model, slits, return_slits=True)
+
+    for k in range(len(tr2)):
+        slit_wcs = nirspec.nrs_wcs_set_input_lite(input_model, wcsobj, slits[k],
+                                                  [tr1, tr2[k], tr3[k]],
+                                                  open_slits=open_slits)
+        
+        xlo, xhi = _toindex(slit_wcs.bounding_box[0])
+        ylo, yhi = _toindex(slit_wcs.bounding_box[1])
         mask[..., ylo:yhi, xlo:xhi] = False
 
     return mask

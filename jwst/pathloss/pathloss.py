@@ -1073,8 +1073,13 @@ def _corrections_for_ifu(data, pathloss, source_type):
     # Create the 2-d wavelength arrays, initialize with NaNs
     wavelength_array = np.zeros(data.shape, dtype=np.float32)
     wavelength_array.fill(np.nan)
+
+    wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(data, NIRSPEC_IFU_SLICES)
+    
     for slice in NIRSPEC_IFU_SLICES:
-        slice_wcs = nirspec.nrs_wcs_set_input(data, slice)
+        slice_wcs = nirspec.nrs_wcs_set_input_lite(data, wcsobj, slice,
+                                                   [tr1, tr2[slice], tr3[slice]])
+
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
         ra, dec, wavelength = slice_wcs(x, y)
         valid = ~np.isnan(wavelength)
