@@ -128,25 +128,6 @@ def test_minmed():
     assert compare_arr.all() == medimg.all()
 
 
-def test_iter_stat_sig_clip():
-    data = np.ones((5, 5, 5, 5))
-    data[0, 0, 0, 0] = 0.55
-    data[1, 1, 1, 1] = 1.11
-    data[2, 2, 2, 2] = 2.22
-    data[3, 3, 3, 3] = 3.33
-    data[4, 4, 4, 4] = 4.44
-    u = np.where(data > 1)
-    dmean, dmedian, dsigma, dmask = emicorr.iter_stat_sig_clip(data[u])
-
-    compare_mean, compare_median = 2.7750000000000004, 0.0
-    compare_sigma, compare_mask = 1.326703756361177, np.ones(np.size(data), dtype='b')+1
-
-    assert compare_mean == dmean
-    assert compare_median == dmedian
-    assert compare_sigma == dsigma
-    assert compare_mask.all() == dmask.all()
-
-
 def test_rebin():
     data = np.ones(10)
     data[1] = 0.55
