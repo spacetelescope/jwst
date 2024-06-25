@@ -28,8 +28,8 @@ def test_basic_saturation_flagging(setup_nrc_cube):
     # Add ramp values up to the saturation limit
     data.data[0, 0, 5, 5] = 0
     data.data[0, 1, 5, 5] = 20000
-    data.data[0, 2, 5, 5] = 40000
-    data.data[0, 3, 5, 5] = 60000   # Signal reaches saturation limit
+    data.data[0, 2, 5, 5] = 60000   # Signal reaches saturation limit
+    data.data[0, 3, 5, 5] = 60000
     data.data[0, 4, 5, 5] = 62000
 
     # Set saturation value in the saturation model
@@ -386,6 +386,7 @@ def setup_nrc_cube():
         data_model.meta.subarray.xsize = ncols
         data_model.meta.subarray.ysize = nrows
         data_model.meta.exposure.ngroups = ngroups
+        data_model.meta.exposure.nframes = 3
         data_model.meta.instrument.name = 'NIRCAM'
         data_model.meta.instrument.detector = 'NRCA1'
         data_model.meta.observation.date = '2017-10-01'
@@ -432,6 +433,8 @@ def setup_miri_cube():
         data_model.meta.subarray.xsize = ncols
         data_model.meta.subarray.ystart = ystart
         data_model.meta.subarray.ysize = nrows
+        data_model.meta.exposure.ngroups = ngroups
+        data_model.meta.exposure.nframes = 3
 
         # create a saturation model for the saturation step
         saturation_model = SaturationModel((1032, 1024))
@@ -477,6 +480,8 @@ def setup_nrs_irs2_cube():
         data_model.meta.exposure.nrs_normal = 16
         data_model.meta.exposure.nrs_reference = 4
         data_model.meta.exposure.readpatt = 'NRSIRS2RAPID'
+        data_model.meta.exposure.nframes = 3
+        data_model.meta.exposure.ngroups = 5
 
         # create a saturation model for the saturation step
         saturation_model = SaturationModel((2048, 2048))

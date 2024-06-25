@@ -295,6 +295,11 @@ pixel_replace
 - Added estimated errors and variances for replaced pixels, following the
   interpolation scheme used for the data. [#8504]
 
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for nframes > 1. [#8499]
+
 ramp_fitting
 ------------
 
