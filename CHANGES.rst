@@ -189,6 +189,9 @@ master_background
   Master background correction for MOS mode should be performed
   via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
 
+- Use zero values for master background outside the background
+  wavelength range instead of NaN to avoid NaN-ing out entire
+  sets of science data when backgrounds are missing. [#8597]
 
 master_background_mos
 ---------------------
