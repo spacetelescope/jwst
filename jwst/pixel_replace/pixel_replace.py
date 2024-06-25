@@ -3,7 +3,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 from scipy.optimize import minimize
 import warnings
-from ..assign_wcs.nirspec import nrs_wcs_set_input
+from ..assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -137,10 +137,11 @@ class PixelReplacement:
                     self.output = new_model
                 else:
                     # fit_profile method - iterate over IFU slices
+                    wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(self.input, np.arange(30))
                     for i in range(30):
-                        slice_wcs = nrs_wcs_set_input(self.input, i)
+                        slice_wcs = nirspec.nrs_wcs_set_input_lite(self.input, wcsobj, i,
+                                                                   [tr1, tr2[i], tr3[i]])
                         _, _, wave = slice_wcs.transform('detector', 'slicer', yy, xx)
-
                         # Define a mask that is True where this trace is located
                         trace_mask = (wave > 0)
                         trace_model = self.input.copy()

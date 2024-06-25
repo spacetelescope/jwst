@@ -747,9 +747,12 @@ class IFUCubeData():
                                     20, 9, 21, 8, 22, 7, 23, 6, 24, 5, 25,
                                     4, 26, 3, 27, 2, 28, 1, 29, 0]
 
+                        wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(input_model, np.arange(nslices))
+                        
                         for i in range(nslices):
 
-                            slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
+                            slice_wcs = nirspec.nrs_wcs_set_input_lite(input_model, wcsobj, i,
+                                                                       [tr1, tr2[i], tr3[i]]) 
                             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
                             detector2slicer = slice_wcs.get_transform('detector', 'slicer')
 
@@ -1857,8 +1860,12 @@ class IFUCubeData():
         nslices = 30
         log.info("Mapping each NIRSpec slice to sky for input file: %s", input_model.meta.filename)
 
+        wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(input_model, np.arange(nslices))
+        
         for ii in range(nslices):
-            slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
+            slice_wcs = nirspec.nrs_wcs_set_input_lite(input_model, wcsobj, ii,
+                                                       [tr1, tr2[ii], tr3[ii]]) 
+
             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
             ra, dec, lam = slice_wcs(x, y)
 
