@@ -802,7 +802,7 @@ def _coalesce_bounds(segments):
         pint = cint[-1]
         interval = intervals.pop(0)
         if interval[0] <= pint[1]:
-            pint[1] = interval[1]
+            pint[1] = max(interval[1], pint[1])
             continue
         cint.append(interval)
 

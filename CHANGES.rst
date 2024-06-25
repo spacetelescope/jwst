@@ -56,6 +56,12 @@ associations
 - Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
   tso3 associations. [#8549]
 
+background_subtraction
+----------------------
+
+- Clarified MIRI MRS default/optional background subtraction steps in the
+  documentation pages.  [#8582]
+
 badpix_selfcal
 --------------
 
@@ -119,6 +125,10 @@ extract_1d
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
 
+- Fix error in ``_coalesce_bounds`` that returned incorrect spectral or background
+  extraction region when one set of pixel limits is entirely contained within
+  another [#8586]
+  
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
@@ -157,6 +167,8 @@ general
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 - Increase minimum required scipy. [#8441]
+
+- Increase minimum required stdatamodels and stpipe. [#8592]
 
 lib
 ---
@@ -247,6 +259,9 @@ photom
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
+  was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
+
 pipeline
 --------
 
@@ -269,6 +284,12 @@ pipeline
   for MOS and FS are run twice, first for all MOS slits, then for all
   FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
   combined products. [#8467]
+
+- Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
+  for NIRISS SOSS data [#8575].
+  
+- Added hook to the ``calwebb_tso3`` pipeline to skip all subsequent steps
+  if the ``extract_1d`` step is skipped. [#8583]
 
 pixel_replace
 -------------
