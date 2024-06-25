@@ -34,6 +34,10 @@ assign_wcs
   NIRSpec MOS and fixed slit observations. Slits are now appended to the data
   product in the order they appear in the MSA file. [#8467]
 
+- Add helper functions to copy only the necessary parts of the WCS so that
+  these parts can be used within loops, avoiding copying the full WCS within
+  a loop [#8338]
+
 associations
 ------------
 
@@ -56,15 +60,12 @@ associations
 - Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
   tso3 associations. [#8549]
 
-<<<<<<< HEAD
 background_subtraction
 ----------------------
 
 - Clarified MIRI MRS default/optional background subtraction steps in the
   documentation pages.  [#8582]
 
-=======
->>>>>>> f4b3bafe7 (Replaced deep copies of NIRSpec WCS objects within most loops)
 badpix_selfcal
 --------------
 
@@ -76,6 +77,11 @@ combine_1d
 
 - Fix weights for combining errors from 1D spectra. [#8520]
 
+cube_build
+----------
+ 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+ 
 dark_current
 ------------
 
@@ -161,6 +167,8 @@ flat_field
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+ 
 general
 -------
 
@@ -192,6 +200,7 @@ master_background
   Master background correction for MOS mode should be performed
   via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
 
 master_background_mos
 ---------------------
@@ -199,6 +208,11 @@ master_background_mos
 - Updated check for NIRSpec MOS background slits to use new naming convention:
   ``slit.source_name`` now contains the string "BKG" instead of
   "background". [#8533]
+
+msaflagopen
+-----------
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
 
 nsclean
 -------
@@ -210,6 +224,8 @@ nsclean
 - Added a check for combined NIRSpec MOS and fixed slit products: if fixed
   slits are defined in a MOS product, the central fixed slit quadrant
   is not automatically masked. [#8467]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
 
 outlier_detection
 -----------------
@@ -244,6 +260,8 @@ pathloss
   wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
   zero-point corrections for point sources have been applied. [#8376]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+
 photom
 ------
 
@@ -254,14 +272,10 @@ photom
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
-<<<<<<< HEAD
 - Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
 
-=======
->>>>>>> f4b3bafe7 (Replaced deep copies of NIRSpec WCS objects within most loops)
-pipeline
---------
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
 
 - Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
   that was causing them not to respect the ``output_file`` parameter. [#8368]
@@ -283,15 +297,12 @@ pipeline
   FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
   combined products. [#8467]
 
-<<<<<<< HEAD
 - Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
   for NIRISS SOSS data [#8575].
   
 - Added hook to the ``calwebb_tso3`` pipeline to skip all subsequent steps
   if the ``extract_1d`` step is skipped. [#8583]
 
-=======
->>>>>>> f4b3bafe7 (Replaced deep copies of NIRSpec WCS objects within most loops)
 pixel_replace
 -------------
 
@@ -300,6 +311,8 @@ pixel_replace
 
 - Added estimated errors and variances for replaced pixels, following the
   interpolation scheme used for the data. [#8504]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
 
 ramp_fitting
 ------------
