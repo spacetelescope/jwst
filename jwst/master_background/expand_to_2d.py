@@ -319,8 +319,6 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
 
     background = input.copy()
     background.data[:, :] = 0.
-    min_wave = np.amin(tab_wavelength)
-    max_wave = np.amax(tab_wavelength)
 
     if input.meta.instrument.name.upper() == "NIRSPEC":
         list_of_wcs = nirspec.nrs_ifu_wcs(input)
