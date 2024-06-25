@@ -4,7 +4,8 @@ from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 
 from ..resample import resample_spec, resample_utils
-from .outlier_detection import OutlierDetection, _remove_file
+from .outlier_detection import OutlierDetection
+from .utils import _remove_file, create_median, detect_outliers
 
 import logging
 log = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ class OutlierDetectionSpec(OutlierDetection):
 
         # Perform median combination on set of drizzled mosaics
         # create_median should be called as a method from parent class
-        median_model.data = self.create_median(drizzled_models)
+        median_model.data = create_median(drizzled_models, self.outlierpars['maskpt'])
 
         if save_intermediate_results:
             log.info("Writing out MEDIAN image to: {}".format(
@@ -112,24 +113,8 @@ class OutlierDetectionSpec(OutlierDetection):
                     _remove_file(fn)
                     log.info(f"Removing file {fn}")
 
-        if pars['resample_data'] is True:
-            # Blot the median image back to recreate each input image specified
-            # in the original input list/ASN/ModelContainer
-            blot_models = self.blot_median(median_model)
-        else:
-            # Median image will serve as blot image
-            blot_models = ModelContainer()
-            for i in range(len(self.input_models)):
-                blot_models.append(median_model)
-
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
-        self.detect_outliers(blot_models)
+        detect_outliers(self.input_models, median_model, **self.outlierpars)
 
-        # clean-up (just to be explicit about being finished
-        #  with these results)
-        if not pars['save_intermediate_results']:
-            for fn in blot_models._models:
-                _remove_file(fn)
-                log.info(f"Removing file {fn}")
-        del median_model, blot_models
+        del median_model
