@@ -3,6 +3,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import dq_initialization
+from jwst.lib.basic_utils import use_datamodel
 
 
 __all__ = ["DQInitStep"]
@@ -37,32 +38,27 @@ class DQInitStep(Step):
             result JWST datamodel
         """
 
-        if isinstance(input, datamodels.JwstDataModel):
-            input_model = input
-        else:
-            # Try to open the input as a regular RampModel
+        # Try to open the input as a regular RampModel
+        try:
+            input_model = use_datamodel(input, model_class=datamodels.RampModel)
+            # Check to see if it's Guider raw data
+            if input_model.meta.exposure.type in dq_initialization.guider_list:
+                # Reopen as a GuiderRawModel
+                input_model.close()
+                input_model = datamodels.GuiderRawModel(input)
+                self.log.info("Input opened as GuiderRawModel")
+
+        except (TypeError, ValueError):
+            # If the initial open attempt fails,
+            # try to open as a GuiderRawModel
             try:
-                if not isinstance(input_model, datamodels.RampModel):
-                    input_model = datamodels.RampModel(input_model)
-
-                # Check to see if it's Guider raw data
-                if input_model.meta.exposure.type in dq_initialization.guider_list:
-                    # Reopen as a GuiderRawModel
-                    input_model.close()
-                    input_model = datamodels.GuiderRawModel(input)
-                    self.log.info("Input opened as GuiderRawModel")
-
+                input_model = datamodels.GuiderRawModel(input)
+                self.log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
-                # If the initial open attempt fails,
-                # try to open as a GuiderRawModel
-                try:
-                    input_model = datamodels.GuiderRawModel(input)
-                    self.log.info("Input opened as GuiderRawModel")
-                except (TypeError, ValueError):
-                    self.log.error("Unexpected or unknown input model type")
-            except Exception:
-                self.log.error("Can't open input")
-                raise
+                self.log.error("Unexpected or unknown input model type")
+        except Exception:
+            self.log.error("Can't open input")
+            raise
 
         # Retrieve the mask reference file name
         self.mask_filename = self.get_reference_file(input_model, 'mask')

@@ -27,7 +27,7 @@ class DarkCurrentStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with use_datamodel(input, ramp_model=True) as input_model:
+        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
 
             # Get the name of the dark reference file to use
             self.dark_name = self.get_reference_file(input_model, 'dark')
@@ -37,7 +37,7 @@ class DarkCurrentStep(Step):
             if self.dark_name == 'N/A':
                 self.log.warning('No DARK reference file found')
                 self.log.warning('Dark current step will be skipped')
-                result = input_model.copy()
+                result = input_model
                 result.meta.cal_step.dark = 'SKIPPED'
                 return result
 

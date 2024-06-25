@@ -34,9 +34,8 @@ class ResetStep(Step):
                 if self.reset_name == 'N/A':
                     self.log.warning('No RESET reference file found')
                     self.log.warning('Reset step will be skipped')
-                    result = input_model.copy()
-                    result.meta.cal_step.reset = 'SKIPPED'
-                    return result
+                    input_model.meta.cal_step.reset = 'SKIPPED'
+                    return input_model
 
                 # Open the reset ref file data model
                 reset_model = datamodels.ResetModel(self.reset_name)

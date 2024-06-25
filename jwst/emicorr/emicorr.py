@@ -4,7 +4,7 @@
 
 import numpy as np
 import logging
-
+from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -290,7 +290,7 @@ def apply_emicorr(input_model, emicorr_model,
         colstop = int( xsize/4 + xstart - 1 )
         log.info('doing phase calculation per integration')
 
-        for ninti in range(nints_to_phase):
+        for ninti in range(nints):
             log.debug('  Working on integration: {}'.format(ninti+1))
 
             # Remove source signal and fixed bias from each integration ramp
@@ -383,11 +383,13 @@ def apply_emicorr(input_model, emicorr_model,
         # keep track of n per bin to check for low n
         nb_over_nbins = [nb/nbins for nb in range(nbins)]
         nbp1_over_nbins = [(nb + 1)/nbins for nb in range(nbins)]
-        finite_dd = np.isfinite(dd_all)
+        # Construct a phase map and dd map for only the nints_to_phase
+        phase_temp = phaseall[0:nints_to_phase,:,:,:]
+        dd_temp = dd_all[0:nints_to_phase,:,:,:]
         for nb in range(nbins):
-            u = np.where((phaseall > nb_over_nbins[nb]) & (phaseall <= nbp1_over_nbins[nb]) & (finite_dd))
+            u = np.where((phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb]))
             # calculate the sigma-clipped mean
-            dmean, _, _, _ = iter_stat_sig_clip(dd_all[u])
+            dmean,_,_ = scs(dd_temp[u])
             pa[nb] = dmean   # amplitude in this bin
 
         pa -= np.median(pa)
@@ -450,12 +452,18 @@ def apply_emicorr(input_model, emicorr_model,
         noise = np.ones((nints, ngroups, ny, nx))   # same size as input data
         noise_x = np.arange(nx4) * 4
         for k in range(4):
-            noise[..., noise_x + k] = dd_noise
+            noise[:, :, :, noise_x + k] = dd_noise
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')
         corr_data = orig_data - noise
         output_model.data = corr_data
+
+        # clean up
+        del data
+        del dd_all
+        del times_this_int
+        del phaseall
 
     if save_intermediate_results and save_onthefly_reffile is not None:
         if 'FAST' in readpatt:
@@ -659,74 +667,6 @@ def get_frequency_info(freqs_names_vals, frequency_name):
                 break
         return freq_number, phase_amplitudes
 
-
-def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
-    """ Compute the mean, mediand and/or sigma of data with iterative sigma clipping.
-    This funtion is based on djs_iterstat.pro (authors therein)
-
-    Parameters
-    ----------
-    data : numpy array
-
-    sigrej : float
-        Sigma for rejection
-
-    maxiter: int
-        Maximum number of sigma rejection iterations
-
-    Returns
-    -------
-    dmean : float
-        Computed mean
-
-    dmedian : float
-        Computed median
-
-    dsigma : float
-        Computed sigma
-
-    dmask : numpy array
-        Mask set to 1 for good points, and 0 for rejected points
-    """
-    # special cases of 0 or 1 data points
-    ngood = np.size(data)
-    dmean, dmedian, dsigma, dmask = 0.0, 0.0, 0.0, np.zeros(np.shape(data))
-    if ngood == 0:
-        log.debug('No data points for sigma clipping')
-        return dmean, dmedian, dsigma, dmask
-    elif ngood == 1:
-        log.debug('Only 1 data point for sigma clipping')
-        return dmean, dmedian, dsigma, dmask
-
-    # Compute the mean + standard deviation of the entire data array,
-    # these values will be returned if there are fewer than 2 good points.
-    dmask = np.ones(ngood, dtype='b') + 1
-    dmean = np.sum(data * dmask) / ngood
-    dsigma = np.sqrt(sum((data - dmean)**2) / (ngood - 1))
-    iiter = 1
-
-    # Iteratively compute the mean + stdev, updating the sigma-rejection thresholds
-    # each iteration
-    nlast = -1
-    while iiter < maxiter and nlast != ngood and ngood >= 2:
-        loval = dmean - sigrej * dsigma
-        hival = dmean + sigrej * dsigma
-        nlast = ngood
-
-        dmask[data < loval] = 0
-        dmask[data > hival] = 0
-        ngood = sum(dmask)
-
-        if ngood >= 2:
-            dmean = np.sum(data*dmask) / ngood
-            dsigma = np.sqrt( sum((data - dmean)**2 * dmask) / (ngood - 1) )
-            dsigma = dsigma
-
-        iiter += 1
-
-    return dmean, dmedian, dsigma, dmask
-
-
 def rebin(arr, newshape):
     """Rebin an array to a new shape.
 
@@ -775,5 +715,3 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
     log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
-
-

@@ -1,3 +1,4 @@
+from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from . import group_scale
 from jwst.lib.basic_utils import use_datamodel
@@ -18,7 +19,7 @@ class GroupScaleStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with use_datamodel(input, ramp_model=True) as result:
+        with use_datamodel(input, model_class=datamodels.RampModel) as result:
 
             # Try to get values of NFRAMES and FRMDIVSR to see
             # if we need to do any rescaling

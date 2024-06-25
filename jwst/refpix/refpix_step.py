@@ -33,7 +33,7 @@ class RefPixStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with use_datamodel(input, ramp_model=True) as datamodel:
+        with use_datamodel(input, model_class=datamodels.RampModel) as datamodel:
 
             if pipe_utils.is_irs2(datamodel):
 

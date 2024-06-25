@@ -32,7 +32,7 @@ class IPCStep(Step):
         """
 
         # Open the input data model
-        with use_datamodel(input, ramp_model=True) as input_model:
+        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
 
             # Get the name of the ipc reference file to use
             self.ipc_name = self.get_reference_file(input_model, 'ipc')

@@ -28,7 +28,7 @@ class FirstFrameStep(Step):
             else:
                 self.log.warning('First Frame Correction is only for MIRI data')
                 self.log.warning('First frame step will be skipped')
-                result = input_model.copy()
+                result = input_model
                 result.meta.cal_step.firstframe = 'SKIPPED'
 
         return result

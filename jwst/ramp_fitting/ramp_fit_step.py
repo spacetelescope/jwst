@@ -17,7 +17,6 @@ from ..lib import reffile_utils
 from ..lib.basic_utils import use_datamodel
 
 import logging
-import copy
 import warnings
 
 log = logging.getLogger(__name__)
@@ -64,7 +63,7 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
         gain_2d = reffile_utils.get_subarray_data(model, gain_model)
 
     if reffile_utils.ref_matches_sci(model, readnoise_model):
-        readnoise_2d = readnoise_model.data.copy()
+        readnoise_2d = readnoise_model.data
     else:
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
@@ -411,7 +410,7 @@ class RampFitStep(Step):
     def process(self, input):
 
         # Open the input data model
-        input_model = use_datamodel(input, ramp_model=True)
+        input_model = use_datamodel(input, model_class=datamodels.RampModel)
 
         max_cores = self.maximum_cores
         readnoise_filename = self.get_reference_file(input_model, 'readnoise')
@@ -444,9 +443,10 @@ class RampFitStep(Step):
 
         int_times = input_model.int_times
 
-        # Before the ramp_fit() call, copy the input model ("_W" for weighting)
-        # for later reconstruction of the fitting array tuples.
-        input_model_W = copy.copy(input_model)
+        input_model_W = input_model
+        # Create a gdq to modify if there are charge_migrated groups
+        gdq = input_model_W.groupdq.copy()
+
         # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
         # ramp fitting arrays for the ImageModel, the CubeModel, and the
         # RampFitOutputModel.
@@ -454,9 +454,6 @@ class RampFitStep(Step):
             input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
             self.algorithm, self.weighting, max_cores, dqflags.pixel,
             suppress_one_group=self.suppress_one_group)
-
-        # Create a gdq to modify if there are charge_migrated groups
-        gdq = input_model_W.groupdq.copy()
 
         # Locate groups where that are flagged with CHARGELOSS
         wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
