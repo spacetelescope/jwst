@@ -5,7 +5,6 @@ import warnings
 import numpy as np
 import psutil
 from drizzle import cdrizzle, util
-from gwcs.wcstools import grid_from_bounding_box
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -892,32 +891,3 @@ def compute_image_pixel_area(wcs):
     pix_area = sky_area / image_area
 
     return pix_area
-
-
-def compute_spectral_pixel_area(wcs):
-    """ Compute output pixel area in steradians."""
-
-    # Approximate area algorithm borrowed from gwcs.wcs,
-    # _vectorized_fixed_point method, e.g.
-    # https://gwcs.readthedocs.io/en/latest/_modules/gwcs/wcs.html
-
-    x, y = grid_from_bounding_box(wcs.bounding_box)
-    ra1, dec1, _ = wcs(x - 0.5, y - 0.5)
-    ra2, dec2, _ = wcs(x - 0.5, y + 0.5)
-    ra3, dec3, _ = wcs(x + 0.5, y + 0.5)
-    ra4, dec4, _ = wcs(x + 0.5, y - 0.5)
-
-    ra = [ra1, ra2, ra3, ra4]
-    dec = [dec1, dec2, dec3, dec4]
-    for i in range(len(ra)):
-        ra[i] = np.deg2rad(ra[i])
-    for i in range(len(dec)):
-        dec[i] = np.deg2rad(dec[i])
-    area = np.abs(0.5 * ((ra[3] - ra[1]) * (np.sin(dec[0]) - np.sin(dec[2]))
-                         + (ra[0] - ra[2]) * (np.sin(dec[3]) - np.sin(dec[1]))))
-    mean_area = np.nanmean(area)
-    log.debug(f'Computed spatial area in sr: {mean_area}')
-    log.debug(f'Computed pixel scale in arcsec: '
-              f'{np.rad2deg(np.sqrt(mean_area)) * 3600}')
-
-    return mean_area
