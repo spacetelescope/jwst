@@ -343,7 +343,7 @@ assign_wcs
 
 - Add helper functions to copy only the necessary parts of the WCS so that
   these parts can be used within loops, avoiding copying the full WCS within
-  a loop [#8338]
+  a loop [#8587]
 
 associations
 ------------
@@ -387,7 +387,7 @@ combine_1d
 cube_build
 ----------
  
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
  
 dark_current
 ------------
@@ -494,7 +494,7 @@ flat_field
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
  
 general
 -------
@@ -535,6 +535,8 @@ master_background
 
 - Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+
 master_background_mos
 ---------------------
 
@@ -545,7 +547,7 @@ master_background_mos
 msaflagopen
 -----------
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 nsclean
 -------
@@ -558,7 +560,7 @@ nsclean
   slits are defined in a MOS product, the central fixed slit quadrant
   is not automatically masked. [#8467]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 outlier_detection
 -----------------
@@ -605,7 +607,7 @@ pathloss
   wavelengths for point and uniform sources if the ``wavecorr`` wavelength
   zero-point corrections for point sources have been applied. [#8376]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 photom
 ------
@@ -619,7 +621,6 @@ photom
 
 - Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
-
 
 pipeline
 --------
@@ -659,7 +660,7 @@ pixel_replace
 - Added estimated errors and variances for replaced pixels, following the
   interpolation scheme used for the data. [#8504]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 ramp_fitting
 ------------
