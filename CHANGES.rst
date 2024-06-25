@@ -625,6 +625,9 @@ photom
 pipeline
 --------
 
+pipeline
+--------
+  
 - Fixed a bug in the ``calwebb_spec2`` and ``calwebb_image2`` pipelines
   that was causing them not to respect the ``output_file`` parameter. [#8368]
 
