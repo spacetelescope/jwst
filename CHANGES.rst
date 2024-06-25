@@ -151,6 +151,9 @@ extract_2d
 - Added support for slit names that have string values instead of integer
   values, necessary for processing combined NIRSpec MOS and fixed slit
   data products. [#8467]
+  
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes here instead of
+  in ``wavecorr`` for NIRSpec FS data. [#8569]
 
 flat_field
 ----------
@@ -199,6 +202,9 @@ master_background
   Master background correction for MOS mode should be performed
   via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
 
+- Use zero values for master background outside the background
+  wavelength range instead of NaN to avoid NaN-ing out entire
+  sets of science data when backgrounds are missing. [#8597]
 
 master_background_mos
 ---------------------
@@ -357,6 +363,17 @@ residual_fringe
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
 
+srctype
+-------
+
+- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources 
+  in NIRSpec FS data to enable assigning those attributes in ``extract_2d``. [#8569]
+
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8593]
+
 tweakreg
 --------
 
@@ -393,6 +410,9 @@ wavecorr
   Point source position is calculated from dither offsets only for standard
   fixed slit processing. [#8467]
 
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes in ``extract_2d``
+  instead of in ``wavecorr`` for NIRSpec FS data. [#8569]
+  
 wfss_contam
 -----------
 
