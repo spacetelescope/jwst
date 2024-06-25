@@ -999,7 +999,7 @@ def _find_nirspec_sampling_wavelengths(wcs, ra0, dec0, ra, dec, fast=True):
 
 
 def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
-    """Compute an approximate spatial pixel scale in degrees.
+    """Compute an approximate spatial pixel scale for spectral data.
 
     Parameters
     ----------
