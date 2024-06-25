@@ -347,6 +347,11 @@ residual_fringe
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
 
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8593]
+
 tweakreg
 --------
 
