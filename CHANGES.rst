@@ -356,6 +356,11 @@ srctype
 - Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources 
   in NIRSpec FS data to enable assigning those attributes in ``extract_2d``. [#8569]
 
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8593]
+
 tweakreg
 --------
 
