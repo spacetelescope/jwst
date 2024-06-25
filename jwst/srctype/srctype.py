@@ -138,6 +138,10 @@ def set_source_type(input_model, source_type=None):
             for slit in input_model.slits:
                 if slit.name == primary_slit:
                     slit.source_type = src_type
+                    # Ensure x,y position reset to zero if source type is EXTENDED
+                    if src_type == 'EXTENDED':
+                        slit.source_xpos = 0.0
+                        slit.source_ypos = 0.0
                 else:
                     slit.source_type = default_type
                 log.debug(f' slit {slit.name} = {slit.source_type}')
