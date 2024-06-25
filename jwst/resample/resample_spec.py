@@ -19,10 +19,11 @@ from gwcs.geometry import SphericalToCartesian
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
+from jwst.assign_wcs.util import compute_scale
 
 from ..assign_wcs.util import wrap_ra
 from . import resample_utils
-from .resample import ResampleData, compute_spectral_pixel_area
+from .resample import ResampleData
 
 
 log = logging.getLogger(__name__)
@@ -79,10 +80,6 @@ class ResampleSpecData(ResampleData):
         self.weight_type = wht_type
         self.good_bits = good_bits
         self.in_memory = kwargs.get('in_memory', True)
-
-        # These are set here for compatibility with the imaging
-        # class but are not used.
-        self.input_pixscale0 = None
         self._recalc_pscale_ratio = False
 
         log.info(f"Driz parameter kernal: {self.kernel}")
@@ -95,27 +92,18 @@ class ResampleSpecData(ResampleData):
 
         self.asn_id = kwargs.get('asn_id', None)
 
+        # Get an average input pixel scale for parameter calculations
+        disp_axis = self.input_models[0].meta.wcsinfo.dispersion_direction
+        self.input_pixscale0 = compute_spectral_pixel_scale(
+            self.input_models[0].meta.wcs, disp_axis=disp_axis)
+
         nominal_area = self.input_models[0].meta.photometry.pixelarea_steradians
         if nominal_area is None:
-            log.warning('Nominal pixel area not set in input data; '
-                        'area will be calculated from spatial '
-                        'coordinates in the output WCS.')
+            log.warning('Nominal pixel area not set in input data.')
             if pscale is not None:
                 log.warning('Input pixel scale setting is not supported '
                             'without a nominal pixel scale. Setting pscale=None.')
                 pscale = None
-
-        if pscale is not None and nominal_area is not None:
-            log.info(f'Specified output pixel scale: {pscale} arcsec.')
-            pscale /= 3600.0
-
-            # Set the pscale ratio from the nominal pixel area
-            # (pscale is input / output)
-            if self.pscale_ratio != 1.0:
-                log.warning('Ignoring input pixel_scale_ratio in favor '
-                            'of explicit pixel_scale.')
-            self.pscale_ratio = nominal_area / np.deg2rad(pscale)**2
-            log.info(f'Computed output pixel scale ratio: {self.pscale_ratio:.5g}')
 
         if output_wcs:
             # Use user-supplied reference WCS for the resampled image:
@@ -124,23 +112,39 @@ class ResampleSpecData(ResampleData):
                 self.output_wcs.array_shape = output_shape[::-1]
 
             if output_wcs.pixel_area is None:
-                log.warning('Pixel area not set in user-specified WCS; '
-                            'calculating area from spatial coordinates.')
-                output_pix_area = compute_spectral_pixel_area(self.output_wcs)
-                if output_pix_area is None:
-                    raise ValueError(
-                        "Unable to compute output pixel area from 'output_wcs'."
-                    )
+                if nominal_area is not None:
+                    # Compare input and output spatial scale to update nominal area
+                    output_pscale = compute_spectral_pixel_scale(
+                        output_wcs, disp_axis=disp_axis)
+                    log.debug(f'Setting output pixel area from the approximate '
+                              f'output spatial scale: {output_pscale}')
+                    output_pix_area = (output_pscale * nominal_area
+                                       / self.input_pixscale0)
+                else:
+                    log.warning("Unable to compute output pixel area "
+                                "from 'output_wcs'.")
+                    output_pix_area = None
             else:
                 log.debug(f'Setting output pixel area from wcs.pixel_area: '
                           f'{output_wcs.pixel_area}')
                 output_pix_area = output_wcs.pixel_area
         else:
+            if pscale is not None and nominal_area is not None:
+                log.info(f'Specified output pixel scale: {pscale} arcsec.')
+                pscale /= 3600.0
+
+                # Set the pscale ratio from the input pixel scale
+                # (pscale is input / output)
+                if self.pscale_ratio != 1.0:
+                    log.warning('Ignoring input pixel_scale_ratio in favor '
+                                'of explicit pixel_scale.')
+                self.pscale_ratio = self.input_pixscale0 / pscale
+                log.info(f'Computed output pixel scale ratio: {self.pscale_ratio:.5g}')
+
             # Define output WCS based on all inputs, including a reference WCS.
-            # Use self.pscale_ratio to accommodate user settings.
-            if resample_utils.is_sky_like(
-                self.input_models[0].meta.wcs.output_frame
-            ):
+            # These functions internally use self.pscale_ratio to accommodate
+            # user settings.
+            if resample_utils.is_sky_like(self.input_models[0].meta.wcs.output_frame):
                 if self.input_models[0].meta.instrument.name != "NIRSPEC":
                     self.output_wcs = self.build_interpolated_output_wcs()
                 else:
@@ -155,11 +159,12 @@ class ResampleSpecData(ResampleData):
                 # pscale_ratio is not squared.
                 output_pix_area = nominal_area / self.pscale_ratio
             else:
-                output_pix_area = compute_spectral_pixel_area(self.output_wcs)
+                output_pix_area = None
 
         if pscale is None:
-            pscale = np.rad2deg(np.sqrt(output_pix_area))
-            log.info(f'Specified output pixel scale ratio: {pscale_ratio}.')
+            log.info(f'Specified output pixel scale ratio: {self.pscale_ratio}.')
+            pscale = compute_spectral_pixel_scale(
+                self.output_wcs, disp_axis=disp_axis)
             log.info(f'Computed output pixel scale: {3600.0 * pscale:.5g} arcsec.')
 
         # Output model
@@ -168,10 +173,10 @@ class ResampleSpecData(ResampleData):
         # update meta data and wcs
         self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
-        self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
-        self.blank_output.meta.photometry.pixelarea_arcsecsq = (
-            output_pix_area * np.rad2deg(3600)**2
-        )
+        if output_pix_area is not None:
+            self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
+            self.blank_output.meta.photometry.pixelarea_arcsecsq = (
+                output_pix_area * np.rad2deg(3600)**2)
 
         self.output_models = ModelContainer()
 
@@ -196,36 +201,36 @@ class ResampleSpecData(ResampleData):
             if refmodel is None:
                 refmodel = self.input_models[0]
 
-        # make a copy of the data array for internal manipulation
+        # Make a copy of the data array for internal manipulation
         refmodel_data = refmodel.data.copy()
 
-        # renormalize to the minimum value, for best results when
+        # Renormalize to the minimum value, for best results when
         # computing the weighted mean below
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
             refmodel_data -= np.nanmin(refmodel_data)
 
-        # save the wcs of the reference model
+        # Save the wcs of the reference model
         refwcs = refmodel.meta.wcs
 
-        # set up the transforms that are needed
+        # Set up the transforms that are needed
         s2d = refwcs.get_transform('slit_frame', 'detector')
         d2s = refwcs.get_transform('detector', 'slit_frame')
         s2w = refwcs.get_transform('slit_frame', 'world')
         w2s = refwcs.get_transform('world', 'slit_frame')
 
-        # estimate position of the target without relying on the meta.target:
+        # Estimate position of the target without relying on the meta.target:
         # compute the mean spatial and wavelength coords weighted
         # by the spectral intensity
         bbox = refwcs.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
         _, s, lam = np.array(d2s(*grid))
 
-        # find invalid values
+        # Find invalid values
         good = np.isfinite(s) & np.isfinite(lam) & np.isfinite(refmodel_data)
         refmodel_data[~good] = np.nan
 
-        # reject the worst outliers in the data
+        # Reject the worst outliers in the data
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=AstropyUserWarning,
                                     message=".*automatically clipped.*")
@@ -238,7 +243,7 @@ class ResampleSpecData(ResampleData):
             wmean_s = np.nanmean(s)
             wmean_l = np.nanmean(lam)
 
-        # transform the weighted means into target RA/Dec
+        # Transform the weighted means into target RA/Dec
         # (at the center of the slit in x)
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
         sx, _ = s2d(0, wmean_s, wmean_l)
@@ -249,7 +254,7 @@ class ResampleSpecData(ResampleData):
         grid_center = grid[0][:, lam_center_idx], grid[1][:, lam_center_idx]
         ra_ref, dec_ref, _ = np.array(refwcs(*grid_center))
 
-        # convert ra and dec to tangent projection
+        # Convert ra and dec to tangent projection
         tan = Pix2Sky_TAN()
         native2celestial = RotateNative2Celestial(targ_ra, targ_dec, 180)
         undist2sky = tan | native2celestial
@@ -258,7 +263,7 @@ class ResampleSpecData(ResampleData):
         x_tan = x_tan[~nn]
         y_tan = y_tan[~nn]
 
-        # estimate the spatial sampling from the tangent projection
+        # Estimate the spatial sampling from the tangent projection
         # offset from center
         fitter = LinearLSQFitter()
         fit_model = Linear1D()
@@ -270,15 +275,12 @@ class ResampleSpecData(ResampleData):
         pix_to_xtan = fitter(fit_model, x_idx, x_tan)
         pix_to_ytan = fitter(fit_model, y_idx, y_tan)
 
+        # Check whether sampling is more along RA or along Dec
         swap_xy = abs(pix_to_xtan.slope) < abs(pix_to_ytan.slope)
 
-        # get output wavelengths from all data
-        ref_lam = _find_nirspec_output_sampling_wavelengths(
-            all_wcs,
-            targ_ra, targ_dec
-        )
-        ref_lam = np.array(ref_lam)
-        n_lam = ref_lam.size
+        # Get output wavelengths from all data
+        ref_lam = _find_nirspec_output_sampling_wavelengths(all_wcs, targ_ra, targ_dec)
+        n_lam = len(ref_lam)
         if not n_lam:
             raise ValueError("Not enough data to construct output WCS.")
 
@@ -301,27 +303,28 @@ class ResampleSpecData(ResampleData):
 
         # For wavelengths, extrapolate 1/2 pixel at the edges and
         # make tabular model w/inverse
-        lam_tab = ref_lam.tolist()
         pixel_coord = list(range(n_lam))
         if len(pixel_coord) > 1:
             # left:
-            slope = (lam_tab[1] - lam_tab[0]) / pixel_coord[1]
-            lam_tab.insert(0, -0.5 * slope + lam_tab[0])
+            slope = (ref_lam[1] - ref_lam[0]) / pixel_coord[1]
+            ref_lam.insert(0, -0.5 * slope + ref_lam[0])
             pixel_coord.insert(0, -0.5)
 
             # right:
-            slope = (lam_tab[-1] - lam_tab[-2]) / (pixel_coord[-1] - pixel_coord[-2])
-            lam_tab.append(slope * (pixel_coord[-1] + 0.5) + lam_tab[-2])
+            slope = (ref_lam[-1] - ref_lam[-2]) / (pixel_coord[-1] - pixel_coord[-2])
+            ref_lam.append(slope * (pixel_coord[-1] + 0.5) + ref_lam[-2])
             pixel_coord.append(pixel_coord[-1] + 0.5)
         else:
-            lam_tab = 3 * lam_tab
+            ref_lam = 3 * ref_lam
             pixel_coord = [-0.5, 0, 0.5]
         wavelength_transform = Tabular1D(points=pixel_coord,
-                                         lookup_table=lam_tab,
+                                         lookup_table=ref_lam,
                                          bounds_error=False, fill_value=np.nan)
 
         # For spatial coordinates, map detector pixels to tangent offset,
-        # then to world coordinates (RA, Dec, wavelength in um)
+        # then to world coordinates (RA, Dec, wavelength in um).
+        # Make sure the inverse returns the axis with the larger slope,
+        # in case the smaller one is close to zero
         mapping = Mapping((1, 1, 0))
         if swap_xy:
             mapping.inverse = Mapping((2, 1))
@@ -332,7 +335,7 @@ class ResampleSpecData(ResampleData):
         # For NIRSpec, slit coordinates are still needed to locate the
         # planned source position.  Since the slit is now rectified,
         # return the central slit coords for all x, converting from pixels
-        # to world coordinates back to slit units.
+        # to world coordinates, then back to slit units.
         slit_center = w2s(*pix2world(np.full(ny, n_lam // 2), np.arange(ny)))[1]
 
         # Make a 1D lookup table for all ny.
@@ -993,3 +996,31 @@ def _find_nirspec_sampling_wavelengths(wcs, ra0, dec0, ra, dec, fast=True):
         )
 
     return lms, xdet, ys
+
+
+def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
+    """Compute an approximate spatial pixel scale in degrees.
+
+    Parameters
+    ----------
+    wcs : gwcs.WCS
+        Spatial/spectral WCS.
+    fiducial : tuple of float, optional
+        (RA, Dec, wavelength) taken as the fiducial reference. If
+        not specified, the center of the array is used.
+    disp_axis : int
+        Dispersion axis for the data. Assumes the same convention
+        as `wcsinfo.dispersion_direction` (1 for NIRSpec, 2 for MIRI).
+
+    Returns
+    -------
+    pixel_scale : float
+        The spatial scale in degrees.
+    """
+    # Get the coordinates for the center of the array
+    if fiducial is None:
+        center_x, center_y = np.mean(wcs.bounding_box, axis=1)
+        fiducial = wcs(center_x, center_y)
+
+    pixel_scale = compute_scale(wcs, fiducial, disp_axis=disp_axis)
+    return pixel_scale
