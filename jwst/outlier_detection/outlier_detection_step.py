@@ -50,6 +50,68 @@ class OutlierDetectionStep(Step):
     # The members of spec needs to be a super-set of all parameters needed
     # by the various versions of the outlier_detection algorithms, and each
     # version will pick and choose what they need while ignoring the rest.
+    # There are effectively N modes which use the following parameters:
+    #    "-" = parameter is disabled
+    #    " " = parameter is ignored
+    #    "+" = parameter is used
+    #    "!" = used only if another parameter is set
+    #    "?" = idk?
+    #                           | Image | Coron | TSO | Spec(IFU) | Spec |
+    # --------------------------------------------------------------------
+    # weight_type               |   !   |       |  +  |           |   !  |
+    # pixfrac                   |   !   |       |     |           |   !  |
+    # kernel                    |   !   |       |     |           |   !  |
+    # fillval                   |   !   |       |     |           |   !  |
+    # maskpt                    |       |       |  +  |           |      |
+    # snr                       |   +   |   +   |  +  |           |      |
+    # scale                     |   +   |   +   |  +  |           |      |
+    # backg                     |   +   |   +   |  +  |           |      |
+    # kernel_size               |       |       |     |     +     |      |
+    # threshold_percent         |       |       |     |     +     |      |
+    # rolling_window_width      |       |       |  +  |           |      |
+    # ifu_second_check          |       |       |     |     +     |      |
+    # save_intermediate_results |   +   |   +   |  +  |     +     |   +  |
+    # resample_data             |   +   |   -   |  -  |           |   +  |
+    # good_bits                 |   +   |   +   |  +  |     +     |   +  |
+    # search_output_file *2     |       |       |     |           |      |
+    # allowed_memory            |   !   |       |     |           |   !  |
+    # in_memory *1              |   +   |   +   |  +  |     +     |   +  |
+    #
+    # *1 in_memory is used in the generic step when opening the input. But
+    #    not all modes use the parameter internally.
+    #
+    # *2 This is used internally in stpipe. The table will not document this
+    #    feature as it's difficult to know when it will and won't be used.
+    #
+    # For each mode the input is:
+    # Image : ModelContainer of ImageModel
+    # Coron : CubeModel (either a psf or target)
+    # TSO   : CubeModel
+    # IFU   : ModelContainer of IFUImageModel
+    # Spec  : SourceModelContainer of SlitModel (created from MultiSlitModel)
+    #
+    # So the only mode that benefits from `in_memory` is Image.
+    #
+    # For Coron (which uses only the non-resampled version of Image) the fake
+    # ModelContainer made from the input CubeModel is all in memory so
+    # `_remove_file` is skipped (for the open models) for both the
+    # "drizzled_models" and "blot_models".
+    #
+    # For TSO `in_memory` isn't used (even for the calls to the parent
+    # `compute_weight_threshold` and `save_median`).
+    #
+    # For IFU `in_memory` isn't used (and the algorithm is very different using
+    # almost nothing from the parent class).
+    #
+    # For Spec(non-IFU) `in_memory` is used. However the input
+    # `SourceModelContainer` doesn't use the "save_open" "return_open"
+    # arguments when made from a `MultiSlitModel` (as in spec3). So the
+    # input is a list of "open" `SlitModel`s. The call to `ResampleSpec` does
+    # use `in_memory` and writes out the resampled `SlitModels` returning
+    # a `ModelContainer` (if `resample=True`). `create_median` and
+    # `blot_median` are used from the parent class and use `in_memory` in
+    # the same way as the Image mode.
+
     spec = """
         weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
