@@ -148,7 +148,7 @@ class Spec3Pipeline(Pipeline):
 
             # If the step is skipped, do the container splitting that
             # would've been done in master_background
-            if self.master_background.skip:
+            if source_models[0].meta.cal_step.master_background == 'SKIPPED':
                 source_models, bkg_models = split_container(input_models)
                 # we don't need the background members
                 bkg_models.close()

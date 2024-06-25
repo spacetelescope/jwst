@@ -332,7 +332,7 @@ class Spec2Pipeline(Pipeline):
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.cube_build(resampled)
-            if not self.cube_build.skip:
+            if resampled[0].meta.cal_step.cube_build == 'COMPLETE':
                 self.save_model(resampled[0], suffix='s3d')
         elif exp_type in ['MIR_LRS-SLITLESS']:
             resampled = calibrated.copy()
@@ -346,7 +346,7 @@ class Spec2Pipeline(Pipeline):
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
         # Extract a 1D spectrum from the 2D/3D data
-        if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
+        if exp_type in ['MIR_MRS', 'NRS_IFU'] and resampled[0].meta.cal_step.cube_build == 'SKIPPED':
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
 

@@ -396,13 +396,12 @@ class CubeBuildStep (Step):
                 if key in cube.meta.wcsinfo.instance:
                     del cube.meta.wcsinfo.instance[key]
         if status_cube == 1:
-            self.skip = True
+            self.record_step_status(cube_container, "cube_build", success=False)
+        else:
+            self.record_step_status(cube_container, "cube_build", success=True)
 
         t1 = time.time()
         self.log.debug(f'Time to build all cubes {t1-t0}')
-
-        if status_cube == 1:
-            self.skip = True
 
         input_table.close()
         return cube_container

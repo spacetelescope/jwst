@@ -107,7 +107,6 @@ class JwstStep(Step):
             status = 'COMPLETE'
         else:
             status = 'SKIPPED'
-            self.skip = True
 
         if isinstance(datamodel, Sequence):
             for model in datamodel:

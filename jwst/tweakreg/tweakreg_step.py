@@ -204,9 +204,7 @@ class TweakRegStep(Step):
                 self.log.warning("At least two exposures are required for image "
                                  "alignment.")
                 self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
-                self.skip = True
-                for model in images:
-                    model.meta.cal_step.tweakreg = "SKIPPED"
+                self.record_step_status(input, "tweakreg", success=False)
                 return input
 
         # === start processing images ===
@@ -311,10 +309,8 @@ class TweakRegStep(Step):
                     self.log.warning("At least two exposures are required for "
                                      "image alignment.")
                     self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
-                    for model in images:
-                        model.meta.cal_step.tweakreg = "SKIPPED"
+                    self.record_step_status(images, "tweakreg", success=False)
                     if not align_to_abs_refcat:
-                        self.skip = True
                         return images
                     local_align_failed = True
                 else:
@@ -329,9 +325,7 @@ class TweakRegStep(Step):
                                    "matched to a single reference source. Try to "
                                    "adjust 'tolerance' and/or 'separation' parameters.")
                     self.log.warning("Skipping 'TweakRegStep'...")
-                    self.skip = True
-                    for model in images:
-                        model.meta.cal_step.tweakreg = "SKIPPED"
+                    self.record_step_status(images, "tweakreg", success=False)
                     return images
                 else:
                     raise e
@@ -341,9 +335,7 @@ class TweakRegStep(Step):
                     self.log.warning("Skipping relative alignment (stage 1)...")
                 else:
                     self.log.warning("Skipping 'TweakRegStep'...")
-                    self.skip = True
-                    for model in images:
-                        model.meta.cal_step.tweakreg = "SKIPPED"
+                    self.record_step_status(images, "tweakreg", success=False)
                     return images
 
         if align_to_abs_refcat:
@@ -461,9 +453,7 @@ class TweakRegStep(Step):
                         )
                         if local_align_failed or n_groups == 1:
                             self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
-                            for model in images:
-                                model.meta.cal_step.tweakreg = "SKIPPED"
-                            self.skip = True
+                            self.record_step_status(images, "tweakreg", success=False)
                             return images
                     else:
                         raise e
@@ -482,9 +472,7 @@ class TweakRegStep(Step):
                         )
                         if local_align_failed or n_groups == 1:
                             self.log.warning("Skipping 'TweakRegStep'...")
-                            self.skip = True
-                            for model in images:
-                                model.meta.cal_step.tweakreg = "SKIPPED"
+                            self.record_step_status(images, "tweakreg", success=False)
                             return images
                     else:
                         raise e
