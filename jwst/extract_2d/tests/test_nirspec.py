@@ -11,6 +11,7 @@ from jwst.extract_2d.extract_2d_step import Extract2dStep
 # WCS keywords, borrowed from NIRCam grism tests
 WCS_KEYS = {'wcsaxes': 2, 'ra_ref': 53.1490299775, 'dec_ref': -27.8168745624,
             'v2_ref': 86.103458, 'v3_ref': -493.227512, 'roll_ref': 45.04234459270135,
+            'v3i_yang': 0.0, 'vparity': -1,
             'crpix1': 1024.5, 'crpix2': 1024.5,
             'crval1': 53.1490299775, 'crval2': -27.8168745624,
             'cdelt1': 1.81661111111111e-05, 'cdelt2': 1.8303611111111e-05,
@@ -39,6 +40,8 @@ def create_nirspec_hdul(detector='NRS1', grating='G395M', filter_name='F290LP',
     phdu.header['EXP_TYPE'] = exptype
     phdu.header['PATT_NUM'] = 1
     phdu.header['SUBARRAY'] = subarray
+    phdu.header['XOFFSET'] = 0.0
+    phdu.header['YOFFSET'] = 0.0
     if subarray == 'SUBS200A1':
         phdu.header['SUBSIZE1'] = 2048
         phdu.header['SUBSIZE2'] = 64
@@ -182,8 +185,10 @@ def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
 
 def test_extract_2d_nirspec_fs(nirspec_fs_rate):
     model = ImageModel(nirspec_fs_rate)
-    result = AssignWcsStep.call(model)
-    result = Extract2dStep.call(result)
+    model_wcs = AssignWcsStep.call(model)
+
+
+    result = Extract2dStep.call(model_wcs)
     assert isinstance(result, MultiSlitModel)
 
     # there should be 1 slit extracted: FS, S200A1
@@ -194,7 +199,18 @@ def test_extract_2d_nirspec_fs(nirspec_fs_rate):
     assert result.slits[0].slitlet_id == 0
     assert result.slits[0].data.shape == (45, 1254)
 
+    # ensure x_offset, y_offset become zero when dither information is missing
+    model_wcs.meta.dither = None
+    result = Extract2dStep.call(model_wcs)
+    assert result.slits[0].source_xpos == 0.0
+    assert result.slits[0].source_ypos == 0.0
+    model_wcs.meta.dither = {"x_offset": None, "y_offset": None}
+    result = Extract2dStep.call(model_wcs)
+    assert result.slits[0].source_xpos == 0.0
+    assert result.slits[0].source_ypos == 0.0
+
     model.close()
+    model_wcs.close()
     result.close()
 
 
