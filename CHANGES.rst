@@ -1,4 +1,9 @@
-1.14.1 (unreleased)
+1.15.1 (unreleased)
+===================
+
+-
+
+1.15.0 (2024-06-26)
 ===================
 
 ami
@@ -331,6 +336,8 @@ ramp_fitting
   the algorithm "OLS" to use the python implementation of ramp
   fitting or "OLS_C" to use the C extension implementation of
   ramp fitting. [#8503]
+
+- Made "OLS_C" the default algorithm for ramp fitting. [#8607]
 
 refpix
 ------
