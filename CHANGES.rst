@@ -134,11 +134,11 @@ extract_1d
   whether they are marked primary or not. [#8467]
 
 - Added functionality to the phase-based aperture correction object to support
-  reuse of aperture correction objects across multiple integrations [#]
+  reuse of aperture correction objects across multiple integrations [#8609]
 
 - Changed extract.py to attempt to tabulate and reuse an aperture correction
   object in integrations after the first one.  This can save a very large
-  amount of time in BOTS reductions [#]
+  amount of time in BOTS reductions [#8609]
 
 extract_2d
 ----------
