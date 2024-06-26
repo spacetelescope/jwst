@@ -167,7 +167,7 @@ def _absolute_subtract(array, tmp, out):
 
 
 def flag_cr(sci_image, blot_data, snr="5.0 4.0", scale="1.2 0.7", backg=0,
-            resample_data=True, **kwargs):
+            resample_data=True):
     """Masks outliers in science image by updating DQ in-place
 
     Mask blemishes in dithered data by comparing a science image
@@ -315,11 +315,11 @@ def gwcs_blot(median_model, blot_img):
     return outsci
 
 
-def detect_outliers(input_models, median_model, **kwargs):
+def detect_outliers(input_models, median_model, snr="5.0 4.0", scale="1.2 0.7", backg=0, resample_data=True):
     for image in input_models:
-        if kwargs["resample_data"]:
+        if resample_data:
             blot = gwcs_blot(median_model, image)
         else:
             blot = median_model.data
         # TODO save blot? are these actually useful?
-        flag_cr(image, blot, **kwargs)
+        flag_cr(image, blot, snr, scale, backg, resample_data)

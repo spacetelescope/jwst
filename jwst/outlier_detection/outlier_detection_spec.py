@@ -115,6 +115,13 @@ class OutlierDetectionSpec(OutlierDetection):
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
-        detect_outliers(self.input_models, median_model, **self.outlierpars)
+        detect_outliers(
+            self.input_models,
+            median_model,
+            self.outlierpars["snr"],
+            self.outlierpars["scale"],
+            self.outlierpars["backg"],
+            self.outlierpars["resample_data"],
+        )
 
         del median_model

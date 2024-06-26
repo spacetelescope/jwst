@@ -64,7 +64,14 @@ class OutlierDetectionTSO(OutlierDetection):
         # no need for blotting, resample is turned off for TSO
         # go straight to outlier detection
         log.info("Flagging outliers")
-        flag_cr(self.input_models, medians, **self.outlierpars)
+        flag_cr(
+            self.input_models,
+            medians,
+            self.outlierpars['snr'],
+            self.outlierpars['scale'],
+            self.outlierpars['backg'],
+            self.outlierpars['resample_data'],
+        )
 
     def weight_no_resample(self):
         """
