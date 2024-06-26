@@ -89,32 +89,6 @@ class JwstStep(Step):
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
-    def record_step_status(self, datamodel, cal_step, success=True):
-        """Record whether or not a step completed in meta.cal_step
-
-        Parameters
-        ----------
-        datamodel : `~jwst.datamodels.JwstDataModel` instance
-            This is the datamodel or container of datamodels to modify in place
-
-        cal_step : str
-            The attribute in meta.cal_step for recording the status of the step
-
-        success : bool
-            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
-        """
-        if success:
-            status = 'COMPLETE'
-        else:
-            status = 'SKIPPED'
-
-        if isinstance(datamodel, Sequence):
-            for model in datamodel:
-                model.meta.cal_step._instance[cal_step] = status
-        else:
-            datamodel.meta.cal_step._instance[cal_step] = status
-
-        # TODO: standardize cal_step naming to point to the official step name
 
     def remove_suffix(self, name):
         return remove_suffix(name)
@@ -127,3 +101,59 @@ class JwstPipeline(Pipeline, JwstStep):
     def finalize_result(self, result, reference_files_used):
         if isinstance(result, JwstDataModel):
             log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")
+
+
+def record_step_status(datamodel, cal_step, success=True):
+    """Record whether or not a step completed in meta.cal_step
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel` instance
+        This is the datamodel or container of datamodels to modify in place
+
+    cal_step : str
+        The attribute in meta.cal_step for recording the status of the step
+
+    success : bool
+        If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+    """
+    if success:
+        status = 'COMPLETE'
+    else:
+        status = 'SKIPPED'
+
+    if isinstance(datamodel, Sequence):
+        for model in datamodel:
+            model.meta.cal_step._instance[cal_step] = status
+    else:
+        datamodel.meta.cal_step._instance[cal_step] = status
+
+    # TODO: standardize cal_step naming to point to the official step name
+
+
+def query_step_status(datamodel, cal_step):
+    """Query the status of a step in meta.cal_step
+    
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel` instance
+        This is the datamodel or container of datamodels to check
+        
+    cal_step : str
+        The attribute in meta.cal_step to check
+    
+    Returns
+    -------
+    status : str
+        The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
+    """
+    if isinstance(datamodel, Sequence):
+        try:
+            return datamodel[0].meta.cal_step._instance[cal_step]
+        except KeyError:
+            return "NOT SET"
+    else:
+        try:
+            return datamodel.meta.cal_step._instance[cal_step]
+        except KeyError:
+            return "NOT SET"

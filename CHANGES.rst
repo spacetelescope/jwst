@@ -78,6 +78,12 @@ combine_1d
 
 - Fix weights for combining errors from 1D spectra. [#8520]
 
+cube_build
+----------
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
 dark_current
 ------------
 
@@ -385,6 +391,13 @@ saturation
 
 - Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8593]
 
+stpipe
+------
+
+- Removed setting of the `self.skip` attribute in the `record_step_status()` function,
+  added a `query_step_status()` function to use as an alternative to checking 
+  `self.skip`. [#8600]
+
 tweakreg
 --------
 
@@ -409,6 +422,9 @@ tweakreg
   that ``separation`` > ``sqrt(2) * tolerance`` that will now log an error
   message and skip ``tweakreg`` step when this condition is not satisfied and
   source confusion is possible during catalog matching. [#8476]
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
 
 wavecorr
 --------

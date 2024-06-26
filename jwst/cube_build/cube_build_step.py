@@ -3,7 +3,7 @@
 
 from jwst.datamodels import ModelContainer
 
-from ..stpipe import Step
+from ..stpipe import Step, record_step_status
 from . import cube_build
 from . import ifu_cube
 from . import data_types
@@ -396,9 +396,9 @@ class CubeBuildStep (Step):
                 if key in cube.meta.wcsinfo.instance:
                     del cube.meta.wcsinfo.instance[key]
         if status_cube == 1:
-            self.record_step_status(cube_container, "cube_build", success=False)
+            record_step_status(cube_container, "cube_build", success=False)
         else:
-            self.record_step_status(cube_container, "cube_build", success=True)
+            record_step_status(cube_container, "cube_build", success=True)
 
         t1 = time.time()
         self.log.debug(f'Time to build all cubes {t1-t0}')
