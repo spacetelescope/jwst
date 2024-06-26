@@ -253,6 +253,10 @@ outlier_detection
 - Fixed a bug that led to small total flux offsets between input and blotted
   images if the nominal and actual wcs-computed pixel areas were different. [#8553]
 
+- Deprecate ``nlow`` and ``nhigh`` parameters which do not have an effect. [#8603]
+
+- Fix errors in documentation describing arguments. [#8603]
+
 pathloss
 --------
 
