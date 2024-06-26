@@ -327,6 +327,8 @@ ramp_fitting
   fitting or "OLS_C" to use the C extension implementation of
   ramp fitting. [#8503]
 
+- Made "OLS_C" the default algorithm for ramp fitting. [#8607]
+
 refpix
 ------
 
