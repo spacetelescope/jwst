@@ -3790,7 +3790,7 @@ def create_extraction(extract_ref_dict,
         log.info(f"Beginning loop over {shape[0]} integrations ...")
         integrations = range(shape[0])
 
-    ra_last = dec_last = wl_last = None
+    ra_last = dec_last = wl_last = apcorr = None
     
     for integ in integrations:
         try:
@@ -3905,10 +3905,16 @@ def create_extraction(extract_ref_dict,
             else:
                 wl = wavelength.min()
 
+            apcorr_available = False
+            if apcorr is not None:
+                if hasattr(apcorr, 'tabulated_correction'):
+                    if apcorr.tabulated_correction is not None:
+                        apcorr_available = True
+                
             # See whether we can reuse the previous aperture correction
             # object.  If so, just apply the pre-computed correction to
             # save a ton of time.
-            if ra == ra_last and dec == dec_last and wl == wl_last and apcorr.tabulated_correction is not None:
+            if ra == ra_last and dec == dec_last and wl == wl_last and apcorr_available:
                 # re-use the last aperture correction
                 apcorr.apply_tabulated_correction(spec.spec_table)
 
@@ -3936,7 +3942,7 @@ def create_extraction(extract_ref_dict,
                 # If this fails, fall back on the old method.
                 try:
                     apcorr.tabulate_correction(spec.spec_table)
-                    print(apcorr.tabulated_correction)
+                    apcorr.apply_tabulated_correction(spec.spec_table)
                 except:
                     apcorr.apply(spec.spec_table)
 
