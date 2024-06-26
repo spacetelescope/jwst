@@ -12,7 +12,7 @@ that control the behavior of the processing:
   The type of data weighting to use during resampling.
 
 ``--pixfrac``
-  The pixel fraction used during resampling.
+  The pixel fraction used during resampling;
   valid values go from 0.0 to 1.0.
 
 ``--kernel``
