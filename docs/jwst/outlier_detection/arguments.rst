@@ -43,7 +43,7 @@ that control the behavior of the processing:
   be masked: the first for detecting the primary cosmic ray, and the
   second (typically lower threshold) for masking lower-level bad pixels
   adjacent to those found in the first pass.  Valid values are a pair of
-  floating-point values in a single string.
+  floating-point values in a single string (for example "5.0 4.0").
 
 ``--scale``
   The scaling factor applied to derivative used to identify bad pixels.
@@ -52,7 +52,7 @@ that control the behavior of the processing:
   be masked: the first for detecting the primary cosmic ray, and the
   second (typically lower threshold) for masking lower-level bad pixels
   adjacent to those found in the first pass.  Valid values are a pair of
-  floating-point values in a single string.
+  floating-point values in a single string (for example "1.2 0.7").
 
 ``--backg``
   User-specified background value to apply to the median image.
@@ -96,7 +96,8 @@ that control the behavior of the processing:
 
 ``--kernel_size``
   The size of the kernel to use to normalize the pixel differences. The kernel size
-  must only contain odd values.
+  must only contain odd values. Valid values are a pair of ints in a single string
+  (for example "7 7").
 
 ``--threshold_percent``
   The threshold (in percent) of the normalized minimum pixel difference used to identify bad pixels.
