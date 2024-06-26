@@ -34,9 +34,11 @@ class GainScaleStep(Step):
                 if gain_model.meta.exposure.gain_factor is None:
                     self.log.info('GAINFACT not found in gain reference file')
                     self.log.info('Step will be skipped')
-                    input_model.meta.cal_step.gain_scale = 'SKIPPED'
+                    result = input_model.copy()
+                    result.meta.cal_step.gain_scale = 'SKIPPED'
                     gain_model.close()
-                    return input_model
+                    input_model.close()
+                    return result
                 else:
                     gain_factor = gain_model.meta.exposure.gain_factor
                     gain_model.close()

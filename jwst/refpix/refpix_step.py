@@ -62,8 +62,10 @@ class RefPixStep(Step):
                 if self.irs2_name == 'N/A':
                     self.log.warning('No refpix reference file found')
                     self.log.warning('RefPix step will be skipped')
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
-                    return datamodel
+                    result = datamodel.copy()
+                    result.meta.cal_step.refpix = 'SKIPPED'
+                    datamodel.close()
+                    return result
 
                 # Load the reference file into a datamodel
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
@@ -79,7 +81,9 @@ class RefPixStep(Step):
 
             else:
                 # Not an NRS IRS2 exposure. Do the normal refpix correction.
-                status = reference_pixels.correct_model(datamodel,
+                result = datamodel.copy()
+                datamodel.close()
+                status = reference_pixels.correct_model(result,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
                                                         self.side_smoothing_length,
@@ -87,13 +91,13 @@ class RefPixStep(Step):
                                                         self.odd_even_rows)
 
                 if status == reference_pixels.REFPIX_OK:
-                    datamodel.meta.cal_step.refpix = 'COMPLETE'
+                    result.meta.cal_step.refpix = 'COMPLETE'
                 elif status == reference_pixels.SUBARRAY_DOESNTFIT:
                     self.log.warning("Subarray doesn't fit in full-sized array")
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
+                    result.meta.cal_step.refpix = 'SKIPPED'
                 elif status == reference_pixels.BAD_REFERENCE_PIXELS:
                     self.log.warning("No valid reference pixels, refpix step skipped")
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
+                    result.meta.cal_step.refpix = 'SKIPPED'
                 elif status == reference_pixels.SUBARRAY_SKIPPED:
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
-                return datamodel
+                    result.meta.cal_step.refpix = 'SKIPPED'
+                return result

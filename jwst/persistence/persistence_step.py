@@ -59,8 +59,10 @@ class PersistenceStep(Step):
                     for name in missing_reftypes:
                         msg += (" " + name)
                 self.log.warning("%s", msg)
-                output_obj.meta.cal_step.persistence = "SKIPPED"
-                return output_obj
+                result = output_obj.copy()
+                result.meta.cal_step.persistence = "SKIPPED"
+                output_obj.close()
+                return result
 
             if self.input_trapsfilled is None:
                 traps_filled_model = None
@@ -77,11 +79,12 @@ class PersistenceStep(Step):
                                          self.save_persistence,
                                          trap_density_model, trappars_model,
                                          persat_model)
-            (output_obj, traps_filled, output_pers, skipped) = pers_a.do_all()
+            (result, traps_filled, output_pers, skipped) = pers_a.do_all()
             if skipped:
-                output_obj.meta.cal_step.persistence = 'SKIPPED'
+                result = output_obj.copy()
+                result.meta.cal_step.persistence = 'SKIPPED'
             else:
-                output_obj.meta.cal_step.persistence = 'COMPLETE'
+                result.meta.cal_step.persistence = 'COMPLETE'
 
             if traps_filled_model is not None:      # input traps_filled
                 traps_filled_model.close()
@@ -101,4 +104,4 @@ class PersistenceStep(Step):
             trappars_model.close()
             persat_model.close()
 
-        return output_obj
+        return result
