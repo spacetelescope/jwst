@@ -24,11 +24,13 @@ class EmiCorrStep(Step):
         scale_reference = boolean(default=True)  # If True, the reference wavelength will be scaled to the data's phase amplitude
         skip = boolean(default=True)  # Skip the step
         onthefly_corr_freq = float_list(default=None)  # Frequencies to use for correction
+        use_n_cycles = integer(default=3)  # Use N cycles to calculate the phase, to use all integrations set to None
     """
 
     reference_file_types = ['emicorr']
 
     def process(self, input):
+        # Open the input data model
         with datamodels.open(input) as input_model:
 
             # Catch the cases to skip
@@ -52,7 +54,8 @@ class EmiCorrStep(Step):
                 'nints_to_phase': self.nints_to_phase,
                 'nbins': self.nbins,
                 'scale_reference': self.scale_reference,
-                'onthefly_corr_freq': self.onthefly_corr_freq
+                'onthefly_corr_freq': self.onthefly_corr_freq,
+                'use_n_cycles': self.use_n_cycles
             }
 
             # Get the reference file
