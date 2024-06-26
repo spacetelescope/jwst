@@ -3943,7 +3943,8 @@ def create_extraction(extract_ref_dict,
                 try:
                     apcorr.tabulate_correction(spec.spec_table)
                     apcorr.apply_tabulated_correction(spec.spec_table)
-                except:
+                except AttributeError:
+                    log.info("Falling back on old .apply method of aperture correction.")
                     apcorr.apply(spec.spec_table)
 
         # Save previous ra, dec, wavelength in case we can reuse
