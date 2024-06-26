@@ -161,7 +161,7 @@ class OutlierDetection:
         median_model.data = create_median(drizzled_models, self.outlierpars['maskpt'])
 
         if self.outlierpars['save_intermediate_results']:
-            self.save_median(median_model) 
+            self.save_median(median_model)
         else:
             # since we're not saving intermediate results if the drizzled models
             # were written to disk, remove them
@@ -171,7 +171,14 @@ class OutlierDetection:
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
-        detect_outliers(self.input_models, median_model, **self.outlierpars)
+        detect_outliers(
+            self.input_models,
+            median_model,
+            self.outlierpars["snr"],
+            self.outlierpars["scale"],
+            self.outlierpars["backg"],
+            self.outlierpars["resample_data"],
+        )
 
         # clean-up (just to be explicit about being finished with
         # these results)
