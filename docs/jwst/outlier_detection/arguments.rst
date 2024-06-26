@@ -13,6 +13,7 @@ that control the behavior of the processing:
 
 ``--pixfrac``
   The pixel fraction used during resampling.
+  valid values go from 0.0 to 1.0.
 
 ``--kernel``
   The form of the kernel function used to distribute flux onto a
