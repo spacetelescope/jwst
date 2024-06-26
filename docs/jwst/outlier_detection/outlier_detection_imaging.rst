@@ -69,8 +69,6 @@ Specifically, this routine performs the following operations:
 
    * The median image is created by combining all grouped mosaic images or
      non-resampled input data (as planes in a ModelContainer) pixel-by-pixel.
-   * The ``nlow`` and ``nhigh`` parameters specify how many low and high values
-     to ignore when computing the median for any given pixel.
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and
      ignored when resampled.
