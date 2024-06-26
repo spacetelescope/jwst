@@ -133,6 +133,13 @@ extract_1d
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
+- Added functionality to the phase-based aperture correction object to support
+  reuse of aperture correction objects across multiple integrations [#]
+
+- Changed extract.py to attempt to tabulate and reuse an aperture correction
+  object in integrations after the first one.  This can save a very large
+  amount of time in BOTS reductions [#]
+
 extract_2d
 ----------
 
