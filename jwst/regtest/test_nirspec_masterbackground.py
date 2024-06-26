@@ -76,7 +76,6 @@ def test_masterbkg_corrpars(rtdata):
         mbs = MasterBackgroundMosStep()
         corrected = mbs.run(data)
 
-        print(corrected.meta.cal_step.__dict__)
         mbs.use_correction_pars = True
         corrected_corrpars = mbs.run(data)
 
