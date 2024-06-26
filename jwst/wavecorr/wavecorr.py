@@ -17,7 +17,7 @@ in the assign_wcs step.
 FS data:
 ``input_model.meta.dither.x_offset``, populated by SDP, is used. The
 value is in the telescope Ideal frame. To calculate the slit position,
-it is transformed Ideal --> V2, V3 --> slit_frame.
+it is transformed Ideal --> V2, V3 --> slit_frame in the extract_2d step.
 
 The interpolation of the lookup table uses the absolute fractional offset in x.
 This can be computed in two ways. The above transform gives the absolute
@@ -36,7 +36,6 @@ from astropy.modeling import tabular
 from astropy.modeling.mappings import Identity
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.transforms import models as trmodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -69,63 +68,24 @@ def do_correction(input_model, wavecorr_file):
         if _is_point_source(input_model, exp_type):
             apply_zero_point_correction(output_model, wavecorr_file)
     else:
-        # For FS only work on point source slits with
-        # position information
         corrected = False
-        if exp_type == 'NRS_FIXEDSLIT':
-            primary_slit = input_model.meta.instrument.fixed_slit
-            for slit in output_model.slits:
-                if _is_point_source(slit, exp_type):
-                    # If fixed slit was not defined via MSA file,
-                    # it must have dither information to find the
-                    # source position, and it must be the primary slit
-                    if not _is_msa_fixed_slit(slit):
-                        if slit.name != primary_slit:
-                            log.warning(f'Skipping wavecorr correction for '
-                                        f'non-primary slit {slit.name}')
-                            continue
-                        if not hasattr(slit.meta, "dither"):
-                            log.warning('meta.dither is not populated for the primary slit')
-                            log.warning('Skipping wavecorr correction')
-                            continue
-                        if slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None:
-                            log.warning('dither.x(y)_offset values are None for primary slit')
-                            log.warning('Skipping wavecorr correction')
-                            input_model.meta.cal_step.wavecorr = 'SKIPPED'
-                            continue
-                    completed = apply_zero_point_correction(slit, wavecorr_file)
-                    if completed:
-                        corrected = True
-                        slit.meta.cal_step.wavecorr = 'COMPLETE'
-                    else:  # pragma: no cover
-                        log.warning(f'Corrections are not invertible for slit {slit.name}')
-                        log.warning('Skipping wavecorr correction')
-                        slit.meta.cal_step.wavecorr = 'SKIPPED'
-
-            if corrected:
-                output_model.meta.cal_step.wavecorr = 'COMPLETE'
-            else:
-                output_model.meta.cal_step.wavecorr = 'SKIPPED'
-
-        # For MOS work on all slits containing a point source
-        else:
-            for slit in output_model.slits:
-                if _is_point_source(slit, exp_type):
-                    completed = apply_zero_point_correction(slit, wavecorr_file)
-                    if completed:
-                        slit.meta.cal_step.wavecorr = 'COMPLETE'
-                        corrected = True
-                    else: # pragma: no cover
-                        log.warning(f'Corrections are not invertible for slit {slit.name}')
-                        log.warning('Skipping wavecorr correction')
-                        slit.meta.cal_step.wavecorr = 'SKIPPED'
-                else:
+        for slit in output_model.slits:
+            if _is_point_source(slit, exp_type):
+                completed = apply_zero_point_correction(slit, wavecorr_file)
+                if completed:
+                    corrected = True
+                    slit.meta.cal_step.wavecorr = 'COMPLETE'
+                else:  # pragma: no cover
+                    log.warning(f'Corrections are not invertible for slit {slit.name}')
+                    log.warning('Skipping wavecorr correction')
                     slit.meta.cal_step.wavecorr = 'SKIPPED'
-
-            if corrected:
-                output_model.meta.cal_step.wavecorr = 'COMPLETE'
             else:
-                output_model.meta.cal_step.wavecorr = 'SKIPPED'
+                slit.meta.cal_step.wavecorr = 'SKIPPED'
+
+        if corrected:
+            output_model.meta.cal_step.wavecorr = 'COMPLETE'
+        else:
+            output_model.meta.cal_step.wavecorr = 'SKIPPED'
 
     return output_model
 
@@ -147,21 +107,12 @@ def apply_zero_point_correction(slit, reffile):
     """
     log.info(f'slit name {slit.name}')
     slit_wcs = slit.meta.wcs
-
-    # Get the source position in the slit and set the aperture name
+        
+    # Retrieve the source position and aperture name from metadata
+    source_xpos = slit.source_xpos
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-        # Check for fixed slits defined via MSA files in
-        # MOS/FS combination processing: they should not have their
-        # source position overridden by dither keywords
-        if _is_msa_fixed_slit(slit):
-            # get the planned source position
-            source_xpos = slit.source_xpos
-        else:
-            # get the source position from the dither offsets
-            source_xpos = get_source_xpos(slit)
         aperture_name = slit.name
     else:
-        source_xpos = slit.source_xpos
         # For the MSA the aperture name is "MOS"
         aperture_name = "MOS"
 
@@ -321,25 +272,6 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
     return lam
 
 
-def _is_msa_fixed_slit(slit):
-    """
-    Determine if a fixed slit source was defined via a MSA file.
-
-    Parameters
-    ----------
-    slit : `~stdatamodels.jwst.transforms.models.Slit`
-        A slit object.
-    """
-    # Fixed slits defined via MSA files in  MOS/FS combination
-    # processing will have a non-empty source name
-    if (not hasattr(slit, 'source_name')
-            or slit.source_name is None
-            or slit.source_name == ""):
-        return False
-    else:
-        return True
-
-
 def _is_point_source(slit, exp_type):
     """
     Determine if a source is a point source.
@@ -372,42 +304,3 @@ def _is_point_source(slit, exp_type):
         log.info("Unknown source type")
 
     return result
-
-
-def get_source_xpos(slit):
-    """
-    Compute the source position within the slit for a NIRSpec fixed slit.
-
-    Parameters
-    ----------
-    slit : `~jwst.datamodels.SlitModel`
-        The slit object.
-
-    Returns
-    -------
-    xpos : float
-        X coordinate of the source as a fraction of the slit size.
-    """
-    xoffset = slit.meta.dither.x_offset  # in arcsec
-    yoffset = slit.meta.dither.y_offset  # in arcsec
-    v2ref = slit.meta.wcsinfo.v2_ref  # in arcsec
-    v3ref = slit.meta.wcsinfo.v3_ref  # in arcsec
-    v3idlyangle = slit.meta.wcsinfo.v3yangle  # in deg
-    vparity = slit.meta.wcsinfo.vparity
-
-    idl2v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
-    log.debug("wcsinfo: {0}, {1}, {2}, {3}".format(v2ref, v3ref, v3idlyangle, vparity))
-    # Compute the location in V2,V3 [in arcsec]
-    xv, yv = idl2v23(xoffset, yoffset)
-    log.info(f'xoffset, yoffset, {xoffset}, {yoffset}')
-
-    # Position in the virtual slit
-    xpos_slit, ypos_slit, lam_slit = slit.meta.wcs.get_transform('v2v3', 'slit_frame')(
-        xv, yv, 2)
-    # Update slit.source_xpos, slit.source_ypos
-    slit.source_xpos = xpos_slit
-    slit.source_ypos = ypos_slit
-    log.debug('Source X/Y position in V2V3: {0}, {1}'.format(xv, yv))
-    log.info('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
-
-    return xpos_slit

@@ -89,6 +89,16 @@ documentation
 
 - Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
 
+emicorr
+--------
+
+- Improved running time by introducing a new parameter, use_n_cycles, that can
+  be modified by the user and has a default of 3. Now the user can either provide
+  the number of integrations to phase or the number of cycles to calculate the
+  number of integrations necessary to phase. Additionally fix a bug in applying
+  emicorr to data with nints > 1, and improve runtime in the phase amplitude
+  loop. [#8589]
+
 exp_to_source
 -------------
 
@@ -148,6 +158,9 @@ extract_2d
 - Added support for slit names that have string values instead of integer
   values, necessary for processing combined NIRSpec MOS and fixed slit
   data products. [#8467]
+  
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes here instead of
+  in ``wavecorr`` for NIRSpec FS data. [#8569]
 
 flat_field
 ----------
@@ -196,6 +209,9 @@ master_background
   Master background correction for MOS mode should be performed
   via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
 
+- Use zero values for master background outside the background
+  wavelength range instead of NaN to avoid NaN-ing out entire
+  sets of science data when backgrounds are missing. [#8597]
 
 master_background_mos
 ---------------------
@@ -354,6 +370,12 @@ residual_fringe
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
 
+srctype
+-------
+
+- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources 
+  in NIRSpec FS data to enable assigning those attributes in ``extract_2d``. [#8569]
+
 saturation
 ----------
 
@@ -395,6 +417,9 @@ wavecorr
   Point source position is calculated from dither offsets only for standard
   fixed slit processing. [#8467]
 
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes in ``extract_2d``
+  instead of in ``wavecorr`` for NIRSpec FS data. [#8569]
+  
 wfss_contam
 -----------
 
