@@ -51,7 +51,7 @@ class OutlierDetectionSpec(OutlierDetection):
             drizzled_models = resamp.do_drizzle(input_models)
             if save_intermediate_results:
                 for model in drizzled_models:
-                    model.meta.filename = self.make_output_path(
+                    model.meta.filename = self.outlierpars["make_output_path"](
                         basepath=model.meta.filename,
                         suffix="_outlier_s2d.fits",
                     )
@@ -68,7 +68,7 @@ class OutlierDetectionSpec(OutlierDetection):
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta
-        median_model.meta.filename = self.make_output_path(
+        median_model.meta.filename = self.outlierpars["make_output_path"](
             basepath=input_models[0].meta.filename,
             suffix='median'
         )
