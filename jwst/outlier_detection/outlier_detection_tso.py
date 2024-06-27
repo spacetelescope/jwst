@@ -22,7 +22,6 @@ class OutlierDetectionTSO(OutlierDetection):
         """Flag outlier pixels in DQ of input images."""
         if isinstance(input_model, dm.ModelContainer):
             raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
-        self.build_suffix(**self.outlierpars)
         weighted_cube = weight_no_resample(input_model, self.outlierpars['good_bits'])
 
         maskpt = self.outlierpars.get('maskpt', 0.7)

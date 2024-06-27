@@ -208,10 +208,8 @@ class OutlierDetectionStep(Step):
             elif exptype in IMAGE_MODES:
                 # imaging with resampling
                 detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 'i2d'
             elif exptype in SLIT_SPEC_MODES:
                 detection_step = outlier_registry['slitspec']
-                pars['resample_suffix'] = 's2d'
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']

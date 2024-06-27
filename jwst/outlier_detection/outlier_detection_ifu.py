@@ -56,7 +56,6 @@ class OutlierDetectionIFU(OutlierDetection):
     # TODO: break up this long function
     def do_detection(self, input_models):
         """Split data by detector to find outliers."""
-        self.build_suffix(**self.outlierpars)
         save_intermediate_results = \
             self.outlierpars['save_intermediate_results']
 
