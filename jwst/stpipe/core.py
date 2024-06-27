@@ -1,7 +1,6 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
-from collections.abc import Sequence
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
 
