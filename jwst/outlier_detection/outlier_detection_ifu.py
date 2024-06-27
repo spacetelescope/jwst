@@ -15,6 +15,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["OutlierDetectionIFU"]
 
 
+# TODO move to utils?
 def medfilt(arr, kern_size):
     # scipy.signal.medfilt (and many other median filters) have undefined behavior
     # for nan inputs. See: https://github.com/scipy/scipy/issues/4800
@@ -52,57 +53,7 @@ class OutlierDetectionIFU(OutlierDetection):
       7. Updates input ImageModel DQ arrays with mask of detected outliers.
 
     """
-
-    def __init__(self, input_models, **pars):
-        """Initialize class for IFU data processing.
-
-        Parameters
-        ----------
-        input_models : ~jwst.datamodels.ModelContainer, str
-            list of data models as ModelContainer or ASN file,
-            one data model for each input 2-D ImageModel
-
-        """
-        OutlierDetection.__init__(self, input_models, **pars)
-
-    def create_optional_results_model(self, opt_info):
-        """
-        Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.
-
-        Parameter
-        ---------
-        input_model: ~stdatamodels.jwst.datamodels.RampModel
-
-        opt_info: tuple
-        The output arrays needed for the OultierOutputModel.
-
-        Return
-        ---------
-        opt_model : OutlierIFUOutputModel
-            The optional OutlierIFUOutputModel to be returned from the outlier_detection_ifu step.
-        """
-        (kernsize_x, kernsize_y, threshold_percent,
-         diffarr, minarr, normarr, minnorm) = opt_info
-        opt_model = datamodels.OutlierIFUOutputModel(
-            diffarr=diffarr,
-            minarr=minarr,
-            normarr=normarr,
-            minnorm=minnorm)
-        opt_model.meta.kernel_xsize = kernsize_x
-        opt_model.meta.kernel_ysize = kernsize_y
-        opt_model.meta.threshold_percent = threshold_percent
-        return opt_model
-
-    def _find_detector_parameters(self, input_models):
-        """Find the size of data and the axis to form the differences (perpendicular to disaxis) """
-
-        if input_models[0].meta.instrument.name.upper() == 'MIRI':
-            diffaxis = 1
-        elif input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
-            diffaxis = 0
-        ny, nx = input_models[0].data.shape
-        return (diffaxis, ny, nx)
-
+    # TODO: break up this long function
     def do_detection(self, input_models):
         """Split data by detector to find outliers."""
         self.build_suffix(**self.outlierpars)
@@ -127,7 +78,7 @@ class OutlierDetectionIFU(OutlierDetection):
             log.info("New y kernel size is {}: ".format(kern_size[1]))
 
         threshold_percent = self.outlierpars['threshold_percent']
-        (diffaxis, ny, nx) = self._find_detector_parameters(input_models)
+        (diffaxis, ny, nx) = _find_detector_parameters(input_models)
 
         nfiles = len(input_models)
         detector = np.empty(nfiles, dtype='<U15')
@@ -150,6 +101,11 @@ class OutlierDetectionIFU(OutlierDetection):
                                save_intermediate_results,
                                ifu_second_check)
 
+    # TODO: break up this long function
+    # TODO: the only reference to "self" is to make the output path
+    # for the optional intermediate result. Finding another way to
+    # handle this that allows removing "self" would allow this to be
+    # a function and easier to test.
     def flag_outliers(self, input_models, idet, uq_det, ndet_files,
                       diffaxis, nx, ny,
                       kern_size, threshold_percent,
@@ -241,7 +197,7 @@ class OutlierDetectionIFU(OutlierDetection):
             detector_name = uq_det[idet]
             opt_info = (kern_size[0], kern_size[1], threshold_percent,
                         diffarr, minarr, normarr, minarr_norm)
-            opt_model = self.create_optional_results_model(opt_info)
+            opt_model = create_optional_results_model(opt_info)
             opt_model.meta.filename = self.make_output_path(
                 basepath=input_models.meta.asn_table.products[0].name,
                 suffix=detector_name + '_outlier_output')
@@ -304,3 +260,46 @@ class OutlierDetectionIFU(OutlierDetection):
                 log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
                 # update model
                 input_models[i] = model
+
+
+# TODO move to utils?
+def _find_detector_parameters(input_models):
+    """Find the size of data and the axis to form the differences (perpendicular to disaxis) """
+
+    if input_models[0].meta.instrument.name.upper() == 'MIRI':
+        diffaxis = 1
+    elif input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
+        diffaxis = 0
+    ny, nx = input_models[0].data.shape
+    return (diffaxis, ny, nx)
+
+
+# TODO move to utils?
+def create_optional_results_model(opt_info):
+    """
+    Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.
+
+    Parameter
+    ---------
+    input_model: ~stdatamodels.jwst.datamodels.RampModel
+
+    opt_info: tuple
+    The output arrays needed for the OultierOutputModel.
+
+    Return
+    ---------
+    opt_model : OutlierIFUOutputModel
+        The optional OutlierIFUOutputModel to be returned from the outlier_detection_ifu step.
+    """
+    (kernsize_x, kernsize_y, threshold_percent,
+     diffarr, minarr, normarr, minnorm) = opt_info
+    opt_model = datamodels.OutlierIFUOutputModel(
+        diffarr=diffarr,
+        minarr=minarr,
+        normarr=normarr,
+        minnorm=minnorm)
+    opt_model.meta.kernel_xsize = kernsize_x
+    opt_model.meta.kernel_ysize = kernsize_y
+    opt_model.meta.threshold_percent = threshold_percent
+    return opt_model
+
