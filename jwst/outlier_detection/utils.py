@@ -9,7 +9,8 @@ from astropy.stats import sigma_clip
 from drizzle.cdrizzle import tblot
 from scipy import ndimage
 
-from jwst.resample.resample_utils import calc_gwcs_pixmap
+from jwst.datamodels import ModelContainer
+from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from jwst.resample.resample import compute_image_pixel_area
 from stdatamodels.jwst import datamodels
 
@@ -315,7 +316,7 @@ def gwcs_blot(median_model, blot_img):
     return outsci
 
 
-def detect_outliers(input_models, median_model, snr="5.0 4.0", scale="1.2 0.7", backg=0, resample_data=True):
+def _detect_outliers(input_models, median_model, snr="5.0 4.0", scale="1.2 0.7", backg=0, resample_data=True):
     for image in input_models:
         if resample_data:
             blot = gwcs_blot(median_model, image)
@@ -323,3 +324,56 @@ def detect_outliers(input_models, median_model, snr="5.0 4.0", scale="1.2 0.7", 
             blot = median_model.data
         # TODO save blot? are these actually useful?
         flag_cr(image, blot, snr, scale, backg, resample_data)
+
+
+# TODO remove kwargs
+def save_median(median_model, **kwargs):
+    '''
+    Save median if requested by user
+
+    Parameters
+    ----------
+    median_model : ~jwst.datamodels.ImageModel
+        The median ImageModel or CubeModel to save
+    '''
+    default_suffix = "_outlier_i2d.fits"
+    if kwargs.get('asn_id', None) is None:
+        suffix_to_remove = default_suffix
+    else:
+        suffix_to_remove = f"_{kwargs['asn_id']}{default_suffix}"
+    median_model_output_path = kwargs["make_output_path"](
+        basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
+        suffix='median')
+    median_model.save(median_model_output_path)
+    log.info(f"Saved model in {median_model_output_path}")
+
+
+def _convert_inputs(inputs, **kwargs):
+    """Convert input into datamodel required for processing.
+
+    This base class works on imaging data, and relies on use of the
+    ModelContainer class as the format needed for processing. However,
+    the input may not always be a ModelContainer object, so this method
+    will convert the input to a ModelContainer object for processing.
+    Additionally, sub-classes may redefine this to set up the input as
+    whatever format the sub-class needs for processing.
+
+    """
+    bits = kwargs['good_bits']
+    if isinstance(inputs, ModelContainer):
+        return inputs
+    input_models = ModelContainer()
+    num_inputs = inputs.data.shape[0]
+    log.debug("Converting CubeModel to ModelContainer with {} images".
+              format(num_inputs))
+    for i in range(inputs.data.shape[0]):
+        image = datamodels.ImageModel(data=inputs.data[i],
+                                      err=inputs.err[i],
+                                      dq=inputs.dq[i])
+        image.meta = inputs.meta
+        image.wht = build_driz_weight(image,
+                                      weight_type=kwargs['weight_type'],
+                                      good_bits=bits)
+        input_models.append(image)
+    return input_models
+
