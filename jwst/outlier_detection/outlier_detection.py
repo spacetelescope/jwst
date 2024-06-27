@@ -1,6 +1,5 @@
 """Primary code for performing outlier detection on JWST observations."""
 
-from functools import partial
 import logging
 import warnings
 import os
@@ -13,7 +12,6 @@ from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight
-from jwst.stpipe import Step
 
 from .utils import _remove_file, create_median, detect_outliers
 
@@ -47,8 +45,6 @@ class OutlierDetection:
 
     """
 
-    default_suffix = 'i2d'
-
     def __init__(self, input_models, **pars):
         """
         Initialize the class with input ModelContainers.
@@ -69,10 +65,8 @@ class OutlierDetection:
         self.outlierpars.update(pars)
 
         # Define how file names are created
-        self.make_output_path = pars.get(
-            'make_output_path',
-            partial(Step._make_output_path, None)
-        )
+        # TODO factor this out
+        self.make_output_path = pars["make_output_path"]
 
     def _convert_inputs(self, inputs):
         """Convert input into datamodel required for processing.
@@ -103,25 +97,12 @@ class OutlierDetection:
             input_models.append(image)
         return input_models
 
-    def build_suffix(self, **pars):
-        """Build suffix.
-
-        Class-specific method for defining the resample_suffix attribute
-        using a suffix specific to the sub-class.
-
-        """
-        # Parse any user-provided filename suffix for resampled products
-        self.resample_suffix = '_outlier_{}.fits'.format(
-            pars.get('resample_suffix', self.default_suffix))
-        if 'resample_suffix' in pars:
-            del pars['resample_suffix']
-        log.debug("Defined output product suffix as: {}".format(
-            self.resample_suffix))
-
     def do_detection(self, inputs):
         """Flag outlier pixels in DQ of input images."""
+
+        self.resample_suffix = "_outlier_i2d.fits"  # TODO factor this out
+
         input_models = self._convert_inputs(inputs)
-        self.build_suffix(**self.outlierpars)
 
         pars = self.outlierpars
 

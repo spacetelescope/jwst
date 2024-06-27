@@ -37,13 +37,9 @@ class OutlierDetectionSpec(OutlierDetection):
       6. Updates input data model DQ arrays with mask of detected outliers.
 
     """
-
-    default_suffix = 's2d'
-
     def do_detection(self, input_models):
         """Flag outlier pixels in DQ of input images."""
         self._convert_inputs()
-        self.build_suffix(**self.outlierpars)
 
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
@@ -57,7 +53,7 @@ class OutlierDetectionSpec(OutlierDetection):
                 for model in drizzled_models:
                     model.meta.filename = self.make_output_path(
                         basepath=model.meta.filename,
-                        suffix=self.resample_suffix
+                        suffix="_outlier_s2d.fits",
                     )
                     log.info("Writing out resampled spectra...")
                     model.save(model.meta.filename)
