@@ -131,10 +131,24 @@ class OutlierDetectionStep(Step):
         """Perform outlier detection processing on input data."""
 
         with datamodels.open(input_data, save_open=self.in_memory) as input_models:
-            if not isinstance(input_models, ModelContainer):
-                self.input_container = False
+            if isinstance(input_models, ModelContainer):
+                ninputs = len(input_models)
+                if ninputs < 2:
+                    self.log.warning(f"Input only contains {ninputs} exposure")
+                    self.log.warning("Outlier detection step will be skipped")
+                    return self._set_status(input_models, "SKIPPED")
+            elif isinstance(input_models, (datamodels.CubeModel, datamodels.SlitModel)):
+                ninputs = input_models.shape[0]
+                if ninputs < 2:
+                    self.log.warning(f"Input only contains {ninputs} integration")
+                    self.log.warning("Outlier detection step will be skipped")
+                    return self._set_status(input_models, "SKIPPED")
             else:
-                self.input_container = True
+                self.log.warning("Input {input_models} is not supported")
+                self.log.warning("Outlier detection step will be skipped")
+                return self._set_status(input_models, "SKIPPED")
+            self.log.info(f"Performing outlier detection with {ninputs} inputs")
+
             # Setup output path naming if associations are involved.
             asn_id = None
             try:
@@ -153,39 +167,13 @@ class OutlierDetectionStep(Step):
                     asn_id=asn_id
                 )
 
-            # Setup outlier detection parameters
-            pars = {
-                'weight_type': self.weight_type,  # for calling the resample step
-                'pixfrac': self.pixfrac,
-                'kernel': self.kernel,
-                'fillval': self.fillval,
-                'nlow': self.nlow,
-                'nhigh': self.nhigh,
-                'maskpt': self.maskpt,
-                'snr': self.snr,
-                'scale': self.scale,
-                'backg': self.backg,
-                'kernel_size': self.kernel_size,
-                'threshold_percent': self.threshold_percent,
-                'rolling_window_width': self.rolling_window_width,
-                'ifu_second_check': self.ifu_second_check,
-                'allowed_memory': self.allowed_memory,
-                'in_memory': self.in_memory,
-                'save_intermediate_results': self.save_intermediate_results,
-                'resample_data': self.resample_data,
-                'good_bits': self.good_bits,
-                'make_output_path': self.make_output_path,
-                'asn_id': asn_id,
-            }
-
             # Select which version of OutlierDetection
             # needs to be used depending on the input data
-            if self.input_container:
+            if isinstance(input_models, ModelContainer):
                 single_model = input_models[0]
             else:
                 single_model = input_models
             exptype = single_model.meta.exposure.type
-            self.check_input(input_models)
 
             if is_tso(single_model):
                 tso.detect_outliers(
@@ -268,61 +256,14 @@ class OutlierDetectionStep(Step):
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")
-                # FIXME: factor this out
-                self.valid_input = False
+                return self._set_status(input_models, "SKIPPED")
 
-            # FIXME: self.valid_input can also be set to false during check_input
-            # and could skip before the mode selection above
-            if not self.valid_input:
-                if self.input_container:
-                    for model in input_models:
-                        model.meta.cal_step.outlier_detection = "SKIPPED"
-                else:
-                    input_models.meta.cal_step.outlier_detection = "SKIPPED"
-                return input_models
+            return self._set_status(input_models, "COMPLETE")
 
-            state = 'COMPLETE'
-            if self.input_container:
-                for model in input_models:
-                    model.meta.cal_step.outlier_detection = state
-            else:
-                input_models.meta.cal_step.outlier_detection = state
-            return input_models
-
-
-    def check_input(self, input_models):
-        """Use this method to determine whether input is valid or not."""
-        if self.input_container:
-            self._check_input_container(input_models)
+    def _set_status(self, input_models, status):
+        if isinstance(input_models, ModelContainer):
+            for model in input_models:
+                model.meta.cal_step.outlier_detection = status
         else:
-            self._check_input_cube(input_models)
-
-    def _check_input_container(self, input_models):
-        """Check to see whether input is the expected ModelContainer object."""
-        ninputs = len(input_models)
-        if not isinstance(input_models, ModelContainer):
-            self.log.warning("Input is not a ModelContainer")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
-        elif ninputs < 2:
-            self.log.warning(f"Input only contains {ninputs} exposure")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
-        else:
-            self.valid_input = True
-            self.log.info(f"Performing outlier detection on {ninputs} inputs")
-
-    def _check_input_cube(self, input_models):
-        """Check to see whether input is the expected CubeModel object."""
-        ninputs = input_models.shape[0]
-        if type(input_models) not in [datamodels.CubeModel, datamodels.SlitModel]:
-            self.log.warning("Input is not the expected CubeModel")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
-        elif ninputs < 2:
-            self.log.warning(f"Input only contains {ninputs} integration")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
-        else:
-            self.valid_input = True
-            self.log.info(f"Performing outlier detection with {ninputs} inputs")
+            input_models.meta.cal_step.outlier_detection = status
+        return input_models
