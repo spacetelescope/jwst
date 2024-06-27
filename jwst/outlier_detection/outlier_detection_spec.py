@@ -60,7 +60,7 @@ class OutlierDetectionSpec(OutlierDetection):
         # Set up the list of all intermediate output files
         self.output_list = []
 
-    def do_detection(self):
+    def do_detection(self, input_models):
         """Flag outlier pixels in DQ of input images."""
         self._convert_inputs()
         self.build_suffix(**self.outlierpars)
@@ -70,7 +70,7 @@ class OutlierDetectionSpec(OutlierDetection):
         if pars['resample_data'] is True:
             # Start by creating resampled/mosaic images for
             #  each group of exposures
-            resamp = resample_spec.ResampleSpecData(self.input_models, single=True,
+            resamp = resample_spec.ResampleSpecData(input_models, single=True,
                                                     blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
             if save_intermediate_results:
@@ -82,10 +82,10 @@ class OutlierDetectionSpec(OutlierDetection):
                     log.info("Writing out resampled spectra...")
                     model.save(model.meta.filename)
         else:
-            drizzled_models = self.input_models
-            for i in range(len(self.input_models)):
+            drizzled_models = input_models
+            for i in range(len(input_models)):
                 drizzled_models[i].wht = resample_utils.build_driz_weight(
-                    self.input_models[i],
+                    input_models[i],
                     weight_type=pars['weight_type'],
                     good_bits=pars['good_bits'])
 
@@ -93,7 +93,7 @@ class OutlierDetectionSpec(OutlierDetection):
         median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta
         median_model.meta.filename = self.make_output_path(
-            basepath=self.input_models[0].meta.filename,
+            basepath=input_models[0].meta.filename,
             suffix='median'
         )
 
@@ -116,7 +116,7 @@ class OutlierDetectionSpec(OutlierDetection):
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
         detect_outliers(
-            self.input_models,
+            input_models,
             median_model,
             self.outlierpars["snr"],
             self.outlierpars["scale"],
