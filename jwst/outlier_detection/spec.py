@@ -36,7 +36,7 @@ __all__ = ["detect_outliers"]
 
 def do_detection(input_models, **kwargs):
     """Flag outlier pixels in DQ of input images."""
-    _convert_inputs(**kwargs)
+    input_models = _convert_inputs(input_models, kwargs["good_bits"], kwargs["weight_type"])
 
     save_intermediate_results = kwargs['save_intermediate_results']
     if kwargs['resample_data'] is True:

@@ -326,8 +326,7 @@ def _detect_outliers(input_models, median_model, snr="5.0 4.0", scale="1.2 0.7",
         flag_cr(image, blot, snr, scale, backg, resample_data)
 
 
-# TODO remove kwargs
-def save_median(median_model, **kwargs):
+def save_median(median_model, make_output_path, asn_id=None):
     '''
     Save median if requested by user
 
@@ -337,18 +336,18 @@ def save_median(median_model, **kwargs):
         The median ImageModel or CubeModel to save
     '''
     default_suffix = "_outlier_i2d.fits"
-    if kwargs.get('asn_id', None) is None:
+    if asn_id is None:
         suffix_to_remove = default_suffix
     else:
-        suffix_to_remove = f"_{kwargs['asn_id']}{default_suffix}"
-    median_model_output_path = kwargs["make_output_path"](
+        suffix_to_remove = f"_{asn_id}{default_suffix}"
+    median_model_output_path = make_output_path(
         basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
         suffix='median')
     median_model.save(median_model_output_path)
     log.info(f"Saved model in {median_model_output_path}")
 
 
-def _convert_inputs(inputs, **kwargs):
+def _convert_inputs(inputs, good_bits, weight_type):
     """Convert input into datamodel required for processing.
 
     This base class works on imaging data, and relies on use of the
@@ -359,7 +358,6 @@ def _convert_inputs(inputs, **kwargs):
     whatever format the sub-class needs for processing.
 
     """
-    bits = kwargs['good_bits']
     if isinstance(inputs, ModelContainer):
         return inputs
     input_models = ModelContainer()
@@ -372,8 +370,8 @@ def _convert_inputs(inputs, **kwargs):
                                       dq=inputs.dq[i])
         image.meta = inputs.meta
         image.wht = build_driz_weight(image,
-                                      weight_type=kwargs['weight_type'],
-                                      good_bits=bits)
+                                      weight_type=weight_type,
+                                      good_bits=good_bits)
         input_models.append(image)
     return input_models
 

@@ -42,10 +42,9 @@ log.setLevel(logging.DEBUG)
 __all__ = ["detect_outliers"]
 
 
-def detect_outliers(inputs, **kwargs):
+def detect_outliers(input_models, **kwargs):
     """Flag outlier pixels in DQ of input images."""
-
-    input_models = _convert_inputs(inputs, **kwargs)
+    input_models = _convert_inputs(input_models, kwargs["good_bits"], kwargs["weight_type"])
 
     if kwargs['resample_data']:
         # Start by creating resampled/mosaic images for
@@ -76,7 +75,7 @@ def detect_outliers(inputs, **kwargs):
     median_model.data = create_median(drizzled_models, kwargs['maskpt'])
 
     if kwargs['save_intermediate_results']:
-        save_median(median_model, **kwargs)
+        save_median(median_model, kwargs["make_output_path"], kwargs.get("asn_id", None))
     else:
         # since we're not saving intermediate results if the drizzled models
         # were written to disk, remove them
