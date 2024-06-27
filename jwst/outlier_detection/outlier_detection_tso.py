@@ -18,30 +18,19 @@ class OutlierDetectionTSO(OutlierDetection):
     """Class to flag outlier pixels in DQ of TSO data. Works similarly to
     imaging outlier detection, but does not resample and uses a rolling median."""
 
-    def __init__(self, input_model: dm.SlitModel | dm.CubeModel | dm.ModelContainer, **pars):
-        """Initialize class for TSO data processing.
-
-        Parameters
-        ----------
-        input_model : ~jwst.datamodels.CubeModel
-            The input TSO data cube.
-
-        """
-        if isinstance(input_model, dm.ModelContainer):
-            raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
-        super().__init__(input_model, **pars)
-
     def do_detection(self, input_model):
         """Flag outlier pixels in DQ of input images."""
+        if isinstance(input_model, dm.ModelContainer):
+            raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
         self.build_suffix(**self.outlierpars)
-        weighted_cube = self.weight_no_resample(input_model)
+        weighted_cube = weight_no_resample(input_model, self.outlierpars['good_bits'])
 
         maskpt = self.outlierpars.get('maskpt', 0.7)
         weight_threshold = compute_weight_threshold(weighted_cube.wht, maskpt)
 
         rolling_width = self.outlierpars.get("rolling_window_width", 25)
         if (rolling_width > 1) and (rolling_width < weighted_cube.shape[0]):
-            medians = self.compute_rolling_median(weighted_cube, weight_threshold, w=rolling_width)
+            medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_width)
 
         else:
             medians = np.nanmedian(weighted_cube.data, axis=0)
@@ -70,67 +59,72 @@ class OutlierDetectionTSO(OutlierDetection):
             self.outlierpars['resample_data'],
         )
 
-    def weight_no_resample(self, input_model):
-        """
-        give weights to model without resampling
 
-        Notes
-        -----
-        Prior to PR #8473, the `build_driz_weight` function was used to
-        create the weights for the input models for TSO data. However, that
-        function was simply returning a copy of the DQ array because the
-        var_noise was not being passed in by calwebb_tso3. As of PR #8473,
-        a cube model that includes the var_noise is passed into TSO
-        outlier detection, so `build_driz_weight` would weight the cube model
-        by the variance. Therefore `build_driz_weight` was removed in order to
-        preserve the original behavior. If it is determined later that exposure
-        time or inverse variance weighting should be used here, build_driz_weight
-        should be re-implemented.
-        """
-        weighted_cube = input_model.copy()
-        dqmask = build_mask(input_model.dq, self.outlierpars['good_bits'])
-        weighted_cube.wht = dqmask.astype(np.float32)
-        return weighted_cube
+# TODO move to utils?
+def weight_no_resample(input_model, good_bits):
+    """
+    give weights to model without resampling
 
-    def compute_rolling_median(self, model: dm.CubeModel, weight_threshold: np.ndarray, w: int=25) -> np.ndarray:
-        '''
-        Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
-
-        Parameters
-        ----------
-        model : ~jwst.datamodels.CubeModel
-            The input cube model
-
-        weight_threshold : np.ndarray
-            The weight thresholds for each integration.
-
-        w : int
-            The window size for the rolling median.
-
-        Returns
-        -------
-        np.ndarray
-            The rolling median of the input data. Same dimensions as input.
-        '''
-
-        sci = model.data
-        weight = model.wht
-        badmask = np.less(weight, weight_threshold)
-        log.debug("Percentage of pixels with low weight: {}".format(
-            np.sum(badmask) / weight.size * 100))
-
-        # Fill resampled_sci array with nan's where mask values are True
-        sci[badmask] = np.nan
-        del badmask
-
-        if w > sci.shape[0]:
-            raise ValueError("Window size must be less than the number of integrations.")
-        meds = moving_median_over_zeroth_axis(sci, w)
-
-        del sci
-        return meds
+    Notes
+    -----
+    Prior to PR #8473, the `build_driz_weight` function was used to
+    create the weights for the input models for TSO data. However, that
+    function was simply returning a copy of the DQ array because the
+    var_noise was not being passed in by calwebb_tso3. As of PR #8473,
+    a cube model that includes the var_noise is passed into TSO
+    outlier detection, so `build_driz_weight` would weight the cube model
+    by the variance. Therefore `build_driz_weight` was removed in order to
+    preserve the original behavior. If it is determined later that exposure
+    time or inverse variance weighting should be used here, build_driz_weight
+    should be re-implemented.
+    """
+    weighted_cube = input_model.copy()
+    dqmask = build_mask(input_model.dq, good_bits)
+    weighted_cube.wht = dqmask.astype(np.float32)
+    return weighted_cube
 
 
+# TODO move to utils?
+def compute_rolling_median(model: dm.CubeModel, weight_threshold: np.ndarray, w: int=25) -> np.ndarray:
+    '''
+    Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
+
+    Parameters
+    ----------
+    model : ~jwst.datamodels.CubeModel
+        The input cube model
+
+    weight_threshold : np.ndarray
+        The weight thresholds for each integration.
+
+    w : int
+        The window size for the rolling median.
+
+    Returns
+    -------
+    np.ndarray
+        The rolling median of the input data. Same dimensions as input.
+    '''
+
+    sci = model.data
+    weight = model.wht
+    badmask = np.less(weight, weight_threshold)
+    log.debug("Percentage of pixels with low weight: {}".format(
+        np.sum(badmask) / weight.size * 100))
+
+    # Fill resampled_sci array with nan's where mask values are True
+    sci[badmask] = np.nan
+    del badmask
+
+    if w > sci.shape[0]:
+        raise ValueError("Window size must be less than the number of integrations.")
+    meds = moving_median_over_zeroth_axis(sci, w)
+
+    del sci
+    return meds
+
+
+# TODO move to utils?
 def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     """
     Calculate the median of a moving window over the zeroth axis of an N-d array.

@@ -40,26 +40,6 @@ class OutlierDetectionSpec(OutlierDetection):
 
     default_suffix = 's2d'
 
-    def __init__(self, input_models, **pars):
-        """Initialize class with input_models.
-
-        Parameters
-        ----------
-        input_models : list of DataModels, str
-            list of data models as ModelContainer or ASN file,
-            one data model for each input image
-
-        pars : dict, optional
-            Optional user-specified parameters to modify how
-            outlier_detection will operate.  Valid parameters include:
-            - resample_suffix
-
-        """
-        OutlierDetection.__init__(self, input_models, **pars)
-
-        # Set up the list of all intermediate output files
-        self.output_list = []
-
     def do_detection(self, input_models):
         """Flag outlier pixels in DQ of input images."""
         self._convert_inputs()
