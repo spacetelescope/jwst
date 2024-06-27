@@ -52,6 +52,7 @@ NON_STEPS = [
     'SystemCall',
 ]
 
+NOT_SET = "NOT SET"
 
 def all_steps():
     """List all classes subclassed from Step
@@ -191,8 +192,7 @@ def query_step_status(datamodel, cal_step):
     status : str
         The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
     """
-    not_set = "NOT SET"
     if isinstance(datamodel, Sequence):
-        return getattr(datamodel[0].meta.cal_step, cal_step, not_set)
+        return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
     else:
-        return getattr(datamodel.meta.cal_step, cal_step, not_set)
+        return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)

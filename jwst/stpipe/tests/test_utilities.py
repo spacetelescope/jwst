@@ -2,7 +2,7 @@
 from stpipe.utilities import resolve_step_class_alias
 from jwst.stpipe import record_step_status, query_step_status
 
-from jwst.stpipe.utilities import all_steps
+from jwst.stpipe.utilities import all_steps, NOT_SET
 import jwst.pipeline
 import jwst.step
 from jwst import datamodels as dm
@@ -43,4 +43,4 @@ def test_record_query_step_status():
     assert query_step_status(model2, 'test_step') == 'SKIPPED'
 
     model3 = dm.MultiSpecModel()
-    assert query_step_status(model3, 'test_step') == 'NOT SET'
+    assert query_step_status(model3, 'test_step') == NOT_SET
