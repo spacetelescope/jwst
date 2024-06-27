@@ -229,8 +229,8 @@ class OutlierDetectionStep(Step):
             self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
 
             # Set up outlier detection, then do detection
-            step = detection_step(input_models, asn_id=asn_id, **pars)
-            step.do_detection(input_models)
+            step = detection_step()
+            step.do_detection(input_models, asn_id=asn_id, **pars)
 
             state = 'COMPLETE'
             if self.input_container:
