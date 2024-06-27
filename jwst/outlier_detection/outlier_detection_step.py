@@ -156,7 +156,6 @@ class OutlierDetectionStep(Step):
             # Setup outlier detection parameters
             pars = {
                 'weight_type': self.weight_type,  # for calling the resample step
-                'wht_type': self.weight_type,  # for calling the resample class directly
                 'pixfrac': self.pixfrac,
                 'kernel': self.kernel,
                 'fillval': self.fillval,
@@ -176,6 +175,7 @@ class OutlierDetectionStep(Step):
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
                 'make_output_path': self.make_output_path,
+                'asn_id': asn_id,
             }
 
             # Select which version of OutlierDetection
@@ -188,26 +188,91 @@ class OutlierDetectionStep(Step):
             self.check_input(input_models)
 
             if is_tso(single_model):
-                # force resampling off and use rolling median
-                pars['resample_data'] = False
-                mode = tso
+                tso.detect_outliers(
+                    input_models,
+                    self.save_intermediate_results,
+                    self.good_bits,
+                    self.maskpt,
+                    self.rolling_window_width,
+                    self.snr,
+                    self.scale,
+                    self.backg,
+                    asn_id,
+                    self.make_output_path,
+                )
             elif exptype in CORON_IMAGE_MODES:
-                # force resampling off but use same workflow as imaging
-                pars['resample_data'] = False
-                mode = imaging
+                imaging.detect_outliers(
+                    input_models,
+                    self.save_intermediate_results,
+                    self.good_bits,
+                    self.maskpt,
+                    self.snr,
+                    self.scale,
+                    self.backg,
+                    False,  # force resampling off but use the same workflow as imaging
+                    self.weight_type,
+                    self.pixfrac,
+                    self.kernel,
+                    self.fillval,
+                    self.allowed_memory,
+                    self.in_memory,
+                    asn_id,
+                    self.make_output_path,
+                )
             elif exptype in IMAGE_MODES:
-                # imaging with resampling
-                mode = imaging
+                imaging.detect_outliers(
+                    input_models,
+                    self.save_intermediate_results,
+                    self.good_bits,
+                    self.maskpt,
+                    self.snr,
+                    self.scale,
+                    self.backg,
+                    self.resample_data,
+                    self.weight_type,
+                    self.pixfrac,
+                    self.kernel,
+                    self.fillval,
+                    self.allowed_memory,
+                    self.in_memory,
+                    asn_id,
+                    self.make_output_path,
+                )
             elif exptype in SLIT_SPEC_MODES:
-                mode = spec
+                spec.detect_outliers(
+                    input_models,
+                    self.save_intermediate_results,
+                    self.good_bits,
+                    self.maskpt,
+                    self.snr,
+                    self.scale,
+                    self.backg,
+                    self.resample_data,
+                    self.weight_type,
+                    self.pixfrac,
+                    self.kernel,
+                    self.fillval,
+                    self.in_memory,
+                    asn_id,
+                    self.make_output_path,
+                )
             elif exptype in IFU_SPEC_MODES:
-                # select algorithm for IFU data
-                mode = ifu
+                ifu.detect_outliers(
+                    input_models,
+                    self.save_intermediate_results,
+                    self.kernel_size,
+                    self.ifu_second_check,
+                    self.threshold_percent,
+                    self.make_output_path,
+                )
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")
+                # FIXME: factor this out
                 self.valid_input = False
 
+            # FIXME: self.valid_input can also be set to false during check_input
+            # and could skip before the mode selection above
             if not self.valid_input:
                 if self.input_container:
                     for model in input_models:
@@ -215,11 +280,6 @@ class OutlierDetectionStep(Step):
                 else:
                     input_models.meta.cal_step.outlier_detection = "SKIPPED"
                 return input_models
-
-            self.log.debug(f"Using {mode.__name__} mode for outlier_detection")
-
-            # Set up outlier detection, then do detection
-            mode.detect_outliers(input_models, asn_id=asn_id, **pars)
 
             state = 'COMPLETE'
             if self.input_container:
