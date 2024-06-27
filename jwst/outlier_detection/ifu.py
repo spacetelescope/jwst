@@ -41,7 +41,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["detect_outliers"]
 
 
-# TODO move to utils?
+# TODO move to utils? this IS used by badpix so maybe somewhere more central
 def medfilt(arr, kern_size):
     # scipy.signal.medfilt (and many other median filters) have undefined behavior
     # for nan inputs. See: https://github.com/scipy/scipy/issues/4800
@@ -51,18 +51,21 @@ def medfilt(arr, kern_size):
 
 
 # TODO: break up this long function
-def detect_outliers(input_models, **kwargs):
+def detect_outliers(
+    input_models,
+    save_intermediate_results,
+    kernel_size,
+    ifu_second_check,
+    threshold_percent,
+    make_output_path,
+):
     """Split data by detector to find outliers."""
-    save_intermediate_results = \
-        kwargs['save_intermediate_results']
 
-    kernel_size = kwargs['kernel_size']
     sizex, sizey = [int(val) for val in kernel_size.split()]
     kern_size = np.zeros(2, dtype=int)
     kern_size[0] = sizex
     kern_size[1] = sizey
 
-    ifu_second_check = kwargs['ifu_second_check']
     # check if kernel size is an odd value
     if kern_size[0] % 2 == 0:
         log.info("X kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
@@ -73,7 +76,6 @@ def detect_outliers(input_models, **kwargs):
         kern_size[1] = kern_size[1] + 1
         log.info("New y kernel size is {}: ".format(kern_size[1]))
 
-    threshold_percent = kwargs['threshold_percent']
     (diffaxis, ny, nx) = _find_detector_parameters(input_models)
 
     nfiles = len(input_models)
@@ -96,7 +98,7 @@ def detect_outliers(input_models, **kwargs):
                       kern_size, threshold_percent,
                       save_intermediate_results,
                       ifu_second_check,
-                      kwargs["make_output_path"])
+                      make_output_path)
 
 # TODO: break up this long function
 def flag_outliers(input_models, idet, uq_det, ndet_files,

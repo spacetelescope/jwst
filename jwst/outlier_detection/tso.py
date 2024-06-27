@@ -13,18 +13,27 @@ log.setLevel(logging.DEBUG)
 __all__ = ["detect_outliers"]
 
 
-def detect_outliers(input_model, **kwargs):
+def detect_outliers(
+    input_model,
+    save_intermediate_results,
+    good_bits,
+    maskpt,
+    rolling_window_width,
+    snr,
+    scale,
+    backg,
+    asn_id,
+    make_output_path,
+):
     """Flag outlier pixels in DQ of input images."""
     if isinstance(input_model, dm.ModelContainer):
         raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
-    weighted_cube = weight_no_resample(input_model, kwargs['good_bits'])
+    weighted_cube = weight_no_resample(input_model, good_bits)
 
-    maskpt = kwargs.get('maskpt', 0.7)
     weight_threshold = compute_weight_threshold(weighted_cube.wht, maskpt)
 
-    rolling_width = kwargs.get("rolling_window_width", 25)
-    if (rolling_width > 1) and (rolling_width < weighted_cube.shape[0]):
-        medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_width)
+    if (rolling_window_width > 1) and (rolling_window_width < weighted_cube.shape[0]):
+        medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_window_width)
 
     else:
         medians = np.nanmedian(weighted_cube.data, axis=0)
@@ -34,11 +43,11 @@ def detect_outliers(input_model, **kwargs):
 
     # Save median model if pars['save_intermediate_results'] is True
     # this will be a CubeModel with rolling median values.
-    if kwargs['save_intermediate_results']:
+    if save_intermediate_results:
         median_model = dm.CubeModel(data=medians)
         with dm.open(weighted_cube) as dm0:
             median_model.update(dm0)
-        save_median(median_model, kwargs["make_output_path"], kwargs.get("asn_id", None))
+        save_median(median_model, make_output_path, asn_id)
         del median_model
 
     # no need for blotting, resample is turned off for TSO
@@ -47,10 +56,10 @@ def detect_outliers(input_model, **kwargs):
     flag_cr(
         input_model,
         medians,
-        kwargs['snr'],
-        kwargs['scale'],
-        kwargs['backg'],
-        kwargs['resample_data'],
+        snr,
+        scale,
+        backg,
+        False,  # force resampling off
     )
 
 

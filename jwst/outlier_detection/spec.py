@@ -34,20 +34,44 @@ log.setLevel(logging.DEBUG)
 __all__ = ["detect_outliers"]
 
 
-def do_detection(input_models, **kwargs):
+def do_detection(
+    input_models,
+    save_intermediate_results,
+    good_bits,
+    maskpt,
+    snr,
+    scale,
+    backg,
+    resample_data,
+    weight_type,
+    pixfrac,
+    kernel,
+    fillval,
+    in_memory,
+    make_output_path,
+):
     """Flag outlier pixels in DQ of input images."""
-    input_models = _convert_inputs(input_models, kwargs["good_bits"], kwargs["weight_type"])
+    input_models = _convert_inputs(input_models, good_bits, weight_type)
 
-    save_intermediate_results = kwargs['save_intermediate_results']
-    if kwargs['resample_data'] is True:
+    if resample_data is True:
         # Start by creating resampled/mosaic images for
         #  each group of exposures
-        resamp = resample_spec.ResampleSpecData(input_models, single=True,
-                                                blendheaders=False, **kwargs)
+        resamp = resample_spec.ResampleSpecData(
+            input_models,
+            single=True,
+            blendheaders=False,
+            wht_type=weight_type,
+            pixfrac=pixfrac,
+            kernel=kernel,
+            fillval=fillval,
+            good_bits=good_bits,
+            in_memory=in_memory,
+            asn_id=asn_id,
+        )
         drizzled_models = resamp.do_drizzle(input_models)
         if save_intermediate_results:
             for model in drizzled_models:
-                model.meta.filename = kwargs["make_output_path"](
+                model.meta.filename = make_output_path(
                     basepath=model.meta.filename,
                     suffix="_outlier_s2d.fits",
                 )
@@ -58,20 +82,20 @@ def do_detection(input_models, **kwargs):
         for i in range(len(input_models)):
             drizzled_models[i].wht = resample_utils.build_driz_weight(
                 input_models[i],
-                weight_type=kwargs['weight_type'],
-                good_bits=kwargs['good_bits'])
+                weight_type=weight_type,
+                good_bits=good_bits)
 
     # Initialize intermediate products used in the outlier detection
     median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
     median_model.meta = drizzled_models[0].meta
-    median_model.meta.filename = kwargs["make_output_path"](
+    median_model.meta.filename = make_output_path(
         basepath=input_models[0].meta.filename,
         suffix='median'
     )
 
     # Perform median combination on set of drizzled mosaics
     # create_median should be called as a method from parent class
-    median_model.data = create_median(drizzled_models, kwargs['maskpt'])
+    median_model.data = create_median(drizzled_models, maskpt)
 
     if save_intermediate_results:
         log.info("Writing out MEDIAN image to: {}".format(
@@ -80,7 +104,7 @@ def do_detection(input_models, **kwargs):
     else:
         # since we're not saving intermediate results if the drizzled models
         # were written to disk, remove them
-        if not kwargs['in_memory']:
+        if not in_memory:
             for fn in drizzled_models._models:
                 _remove_file(fn)
                 log.info(f"Removing file {fn}")
@@ -90,10 +114,10 @@ def do_detection(input_models, **kwargs):
     detect_outliers(
         input_models,
         median_model,
-        kwargs["snr"],
-        kwargs["scale"],
-        kwargs["backg"],
-        kwargs["resample_data"],
+        snr,
+        scale,
+        backg,
+        resample_data,
     )
 
     del median_model
