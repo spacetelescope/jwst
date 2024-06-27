@@ -18,16 +18,16 @@ class OutlierDetectionTSO(OutlierDetection):
     """Class to flag outlier pixels in DQ of TSO data. Works similarly to
     imaging outlier detection, but does not resample and uses a rolling median."""
 
-    def do_detection(self, input_model):
+    def do_detection(self, input_model, **kwargs):
         """Flag outlier pixels in DQ of input images."""
         if isinstance(input_model, dm.ModelContainer):
             raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
-        weighted_cube = weight_no_resample(input_model, self.outlierpars['good_bits'])
+        weighted_cube = weight_no_resample(input_model, kwargs['good_bits'])
 
-        maskpt = self.outlierpars.get('maskpt', 0.7)
+        maskpt = kwargs.get('maskpt', 0.7)
         weight_threshold = compute_weight_threshold(weighted_cube.wht, maskpt)
 
-        rolling_width = self.outlierpars.get("rolling_window_width", 25)
+        rolling_width = kwargs.get("rolling_window_width", 25)
         if (rolling_width > 1) and (rolling_width < weighted_cube.shape[0]):
             medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_width)
 
@@ -39,11 +39,11 @@ class OutlierDetectionTSO(OutlierDetection):
 
         # Save median model if pars['save_intermediate_results'] is True
         # this will be a CubeModel with rolling median values.
-        if self.outlierpars['save_intermediate_results']:
+        if kwargs['save_intermediate_results']:
             median_model = dm.CubeModel(data=medians)
             with dm.open(weighted_cube) as dm0:
                 median_model.update(dm0)
-            self.save_median(median_model)
+            self.save_median(median_model, **kwargs)
             del median_model
 
         # no need for blotting, resample is turned off for TSO
@@ -52,10 +52,10 @@ class OutlierDetectionTSO(OutlierDetection):
         flag_cr(
             input_model,
             medians,
-            self.outlierpars['snr'],
-            self.outlierpars['scale'],
-            self.outlierpars['backg'],
-            self.outlierpars['resample_data'],
+            kwargs['snr'],
+            kwargs['scale'],
+            kwargs['backg'],
+            kwargs['resample_data'],
         )
 
 

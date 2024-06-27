@@ -45,26 +45,7 @@ class OutlierDetection:
 
     """
 
-    def __init__(self, input_models, **pars):
-        """
-        Initialize the class with input ModelContainers.
-
-        Parameters
-        ----------
-        input_models : list of DataModels, str
-            list of data models as ModelContainer or ASN file,
-            one data model for each input image
-
-        pars : dict, optional
-            Optional user-specified parameters to modify how outlier_detection
-            will operate.  Valid parameters include:
-            - resample_suffix
-
-        """
-        self.outlierpars = {}
-        self.outlierpars.update(pars)
-
-    def _convert_inputs(self, inputs):
+    def _convert_inputs(self, inputs, **kwargs):
         """Convert input into datamodel required for processing.
 
         This base class works on imaging data, and relies on use of the
@@ -75,7 +56,7 @@ class OutlierDetection:
         whatever format the sub-class needs for processing.
 
         """
-        bits = self.outlierpars['good_bits']
+        bits = kwargs['good_bits']
         if isinstance(inputs, ModelContainer):
             return inputs
         input_models = ModelContainer()
@@ -88,28 +69,26 @@ class OutlierDetection:
                                           dq=inputs.dq[i])
             image.meta = inputs.meta
             image.wht = build_driz_weight(image,
-                                          weight_type=self.outlierpars['weight_type'],
+                                          weight_type=kwargs['weight_type'],
                                           good_bits=bits)
             input_models.append(image)
         return input_models
 
-    def do_detection(self, inputs):
+    def do_detection(self, inputs, **kwargs):
         """Flag outlier pixels in DQ of input images."""
 
         self.resample_suffix = "_outlier_i2d.fits"  # TODO factor this out
 
-        input_models = self._convert_inputs(inputs)
+        input_models = self._convert_inputs(inputs, **kwargs)
 
-        pars = self.outlierpars
-
-        if pars['resample_data']:
+        if kwargs['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            output_path = pars["make_output_path"](basepath=input_models[0].meta.filename,
+            output_path = kwargs["make_output_path"](basepath=input_models[0].meta.filename,
                             suffix='')
             output_path = os.path.dirname(output_path)
             resamp = resample.ResampleData(input_models, output=output_path, single=True,
-                                           blendheaders=False, **pars)
+                                           blendheaders=False, **kwargs)
             drizzled_models = resamp.do_drizzle(input_models)
 
         else:
@@ -118,8 +97,8 @@ class OutlierDetection:
             for i in range(len(input_models)):
                 drizzled_models[i].wht = build_driz_weight(
                     input_models[i],
-                    weight_type=pars['weight_type'],
-                    good_bits=pars['good_bits'])
+                    weight_type=kwargs['weight_type'],
+                    good_bits=kwargs['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
         with datamodel_open(drizzled_models[0]) as dm0:
@@ -128,14 +107,14 @@ class OutlierDetection:
             median_model.meta.wcs = dm0.meta.wcs
 
         # Perform median combination on set of drizzled mosaics
-        median_model.data = create_median(drizzled_models, self.outlierpars['maskpt'])
+        median_model.data = create_median(drizzled_models, kwargs['maskpt'])
 
-        if self.outlierpars['save_intermediate_results']:
-            self.save_median(median_model)
+        if kwargs['save_intermediate_results']:
+            self.save_median(median_model, **kwargs)
         else:
             # since we're not saving intermediate results if the drizzled models
             # were written to disk, remove them
-            if not self.outlierpars['in_memory']:
+            if not kwargs['in_memory']:
                 for fn in drizzled_models._models:
                     _remove_file(fn)
 
@@ -144,17 +123,17 @@ class OutlierDetection:
         detect_outliers(
             input_models,
             median_model,
-            self.outlierpars["snr"],
-            self.outlierpars["scale"],
-            self.outlierpars["backg"],
-            self.outlierpars["resample_data"],
+            kwargs["snr"],
+            kwargs["scale"],
+            kwargs["backg"],
+            kwargs["resample_data"],
         )
 
         # clean-up (just to be explicit about being finished with
         # these results)
         del median_model
 
-    def save_median(self, median_model):
+    def save_median(self, median_model, **kwargs):
         '''
         Save median if requested by user
 
@@ -163,11 +142,11 @@ class OutlierDetection:
         median_model : ~jwst.datamodels.ImageModel
             The median ImageModel or CubeModel to save
         '''
-        if self.outlierpars.get('asn_id', None) is None:
+        if kwargs.get('asn_id', None) is None:
             suffix_to_remove = self.resample_suffix
         else:
-            suffix_to_remove = f"_{self.outlierpars['asn_id']}{self.resample_suffix}"
-        median_model_output_path = self.outlierpars["make_output_path"](
+            suffix_to_remove = f"_{kwargs['asn_id']}{self.resample_suffix}"
+        median_model_output_path = kwargs["make_output_path"](
             basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
             suffix='median')
         median_model.save(median_model_output_path)

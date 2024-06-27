@@ -54,18 +54,18 @@ class OutlierDetectionIFU(OutlierDetection):
 
     """
     # TODO: break up this long function
-    def do_detection(self, input_models):
+    def do_detection(self, input_models, **kwargs):
         """Split data by detector to find outliers."""
         save_intermediate_results = \
-            self.outlierpars['save_intermediate_results']
+            kwargs['save_intermediate_results']
 
-        kernel_size = self.outlierpars['kernel_size']
+        kernel_size = kwargs['kernel_size']
         sizex, sizey = [int(val) for val in kernel_size.split()]
         kern_size = np.zeros(2, dtype=int)
         kern_size[0] = sizex
         kern_size[1] = sizey
 
-        ifu_second_check = self.outlierpars['ifu_second_check']
+        ifu_second_check = kwargs['ifu_second_check']
         # check if kernel size is an odd value
         if kern_size[0] % 2 == 0:
             log.info("X kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
@@ -76,7 +76,7 @@ class OutlierDetectionIFU(OutlierDetection):
             kern_size[1] = kern_size[1] + 1
             log.info("New y kernel size is {}: ".format(kern_size[1]))
 
-        threshold_percent = self.outlierpars['threshold_percent']
+        threshold_percent = kwargs['threshold_percent']
         (diffaxis, ny, nx) = _find_detector_parameters(input_models)
 
         nfiles = len(input_models)
@@ -98,7 +98,8 @@ class OutlierDetectionIFU(OutlierDetection):
                                diffaxis, nx, ny,
                                kern_size, threshold_percent,
                                save_intermediate_results,
-                               ifu_second_check)
+                               ifu_second_check,
+                               kwargs["make_output_path"])
 
     # TODO: break up this long function
     # TODO: the only reference to "self" is to make the output path
@@ -109,7 +110,8 @@ class OutlierDetectionIFU(OutlierDetection):
                       diffaxis, nx, ny,
                       kern_size, threshold_percent,
                       save_intermediate_results,
-                      ifu_second_check):
+                      ifu_second_check,
+                      make_output_path):
         """
         Flag outlier pixels on IFU. In general we are searching for pixels that
         are a form of a bad pixel but not in bad pixel mask, because the bad pixels vary with
@@ -197,7 +199,7 @@ class OutlierDetectionIFU(OutlierDetection):
             opt_info = (kern_size[0], kern_size[1], threshold_percent,
                         diffarr, minarr, normarr, minarr_norm)
             opt_model = create_optional_results_model(opt_info)
-            opt_model.meta.filename = self.outlierpars["make_output_path"](
+            opt_model.meta.filename = make_output_path(
                 basepath=input_models.meta.asn_table.products[0].name,
                 suffix=detector_name + '_outlier_output')
             log.info("Writing out intermediate outlier file {}".format(opt_model.meta.filename))
