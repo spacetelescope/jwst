@@ -64,10 +64,6 @@ class OutlierDetection:
         self.outlierpars = {}
         self.outlierpars.update(pars)
 
-        # Define how file names are created
-        # TODO factor this out
-        self.make_output_path = pars["make_output_path"]
-
     def _convert_inputs(self, inputs):
         """Convert input into datamodel required for processing.
 
@@ -109,7 +105,7 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            output_path = self.make_output_path(basepath=input_models[0].meta.filename,
+            output_path = pars["make_output_path"](basepath=input_models[0].meta.filename,
                             suffix='')
             output_path = os.path.dirname(output_path)
             resamp = resample.ResampleData(input_models, output=output_path, single=True,
@@ -171,7 +167,7 @@ class OutlierDetection:
             suffix_to_remove = self.resample_suffix
         else:
             suffix_to_remove = f"_{self.outlierpars['asn_id']}{self.resample_suffix}"
-        median_model_output_path = self.make_output_path(
+        median_model_output_path = self.outlierpars["make_output_path"](
             basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
             suffix='median')
         median_model.save(median_model_output_path)

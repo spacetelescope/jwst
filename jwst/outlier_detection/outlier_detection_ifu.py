@@ -197,7 +197,7 @@ class OutlierDetectionIFU(OutlierDetection):
             opt_info = (kern_size[0], kern_size[1], threshold_percent,
                         diffarr, minarr, normarr, minarr_norm)
             opt_model = create_optional_results_model(opt_info)
-            opt_model.meta.filename = self.make_output_path(
+            opt_model.meta.filename = self.outlierpars["make_output_path"](
                 basepath=input_models.meta.asn_table.products[0].name,
                 suffix=detector_name + '_outlier_output')
             log.info("Writing out intermediate outlier file {}".format(opt_model.meta.filename))
