@@ -89,6 +89,8 @@ class OutlierDetectionStep(Step):
     # TSO   : CubeModel
     # IFU   : ModelContainer of IFUImageModel
     # Spec  : SourceModelContainer of SlitModel (created from MultiSlitModel)
+    #         or ModelContainer of ImageModel (possible for MIR_LRS-FIXEDSLIT)
+    #         or ModelContainer of SlitModel (for...?)
     #
     # So the only mode that benefits from `in_memory` is Image.
     #
@@ -139,15 +141,14 @@ class OutlierDetectionStep(Step):
         """Perform outlier detection processing on input data."""
 
         with datamodels.open(input_data, save_open=self.in_memory) as input_models:
-            self.input_models = input_models
-            if not isinstance(self.input_models, ModelContainer):
+            if not isinstance(input_models, ModelContainer):
                 self.input_container = False
             else:
                 self.input_container = True
             # Setup output path naming if associations are involved.
             asn_id = None
             try:
-                asn_id = self.input_models.meta.asn_table.asn_id
+                asn_id = input_models.meta.asn_table.asn_id
             except (AttributeError, KeyError):
                 pass
             if asn_id is None:
@@ -190,11 +191,11 @@ class OutlierDetectionStep(Step):
             # Select which version of OutlierDetection
             # needs to be used depending on the input data
             if self.input_container:
-                single_model = self.input_models[0]
+                single_model = input_models[0]
             else:
-                single_model = self.input_models
+                single_model = input_models
             exptype = single_model.meta.exposure.type
-            self.check_input()
+            self.check_input(input_models)
 
             if is_tso(single_model):
                 # force resampling off and use rolling median
@@ -221,38 +222,38 @@ class OutlierDetectionStep(Step):
 
             if not self.valid_input:
                 if self.input_container:
-                    for model in self.input_models:
+                    for model in input_models:
                         model.meta.cal_step.outlier_detection = "SKIPPED"
                 else:
-                    self.input_models.meta.cal_step.outlier_detection = "SKIPPED"
-                return self.input_models
+                    input_models.meta.cal_step.outlier_detection = "SKIPPED"
+                return input_models
 
             self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
 
             # Set up outlier detection, then do detection
-            step = detection_step(self.input_models, asn_id=asn_id, **pars)
+            step = detection_step(input_models, asn_id=asn_id, **pars)
             step.do_detection()
 
             state = 'COMPLETE'
             if self.input_container:
-                for model in self.input_models:
+                for model in input_models:
                     model.meta.cal_step.outlier_detection = state
             else:
-                self.input_models.meta.cal_step.outlier_detection = state
-            return self.input_models
+                input_models.meta.cal_step.outlier_detection = state
+            return input_models
 
 
-    def check_input(self):
+    def check_input(self, input_models):
         """Use this method to determine whether input is valid or not."""
         if self.input_container:
-            self._check_input_container()
+            self._check_input_container(input_models)
         else:
-            self._check_input_cube()
+            self._check_input_cube(input_models)
 
-    def _check_input_container(self):
+    def _check_input_container(self, input_models):
         """Check to see whether input is the expected ModelContainer object."""
-        ninputs = len(self.input_models)
-        if not isinstance(self.input_models, ModelContainer):
+        ninputs = len(input_models)
+        if not isinstance(input_models, ModelContainer):
             self.log.warning("Input is not a ModelContainer")
             self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False
@@ -264,10 +265,10 @@ class OutlierDetectionStep(Step):
             self.valid_input = True
             self.log.info(f"Performing outlier detection on {ninputs} inputs")
 
-    def _check_input_cube(self):
+    def _check_input_cube(self, input_models):
         """Check to see whether input is the expected CubeModel object."""
-        ninputs = self.input_models.shape[0]
-        if type(self.input_models) not in [datamodels.CubeModel, datamodels.SlitModel]:
+        ninputs = input_models.shape[0]
+        if type(input_models) not in [datamodels.CubeModel, datamodels.SlitModel]:
             self.log.warning("Input is not the expected CubeModel")
             self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False
