@@ -93,24 +93,18 @@ class OutlierDetectionIFU(OutlierDetection):
         opt_model.meta.threshold_percent = threshold_percent
         return opt_model
 
-    def _find_detector_parameters(self):
+    def _find_detector_parameters(self, input_models):
         """Find the size of data and the axis to form the differences (perpendicular to disaxis) """
 
-        if self.input_models[0].meta.instrument.name.upper() == 'MIRI':
+        if input_models[0].meta.instrument.name.upper() == 'MIRI':
             diffaxis = 1
-        elif self.input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
+        elif input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
             diffaxis = 0
-        ny, nx = self.inputs[0].data.shape
+        ny, nx = input_models[0].data.shape
         return (diffaxis, ny, nx)
 
-    def do_detection(self):
+    def do_detection(self, input_models):
         """Split data by detector to find outliers."""
-
-        # outlier_detection.py has the basic class that is used by all favors
-        # of outlier detection. This class sets up self.inputs. We need to fill
-        # in self.input_models with flagged outliers (this is what outlier_detection_step.py
-        # returns).
-        self.input_models = self.inputs
         self.build_suffix(**self.outlierpars)
         save_intermediate_results = \
             self.outlierpars['save_intermediate_results']
@@ -133,14 +127,14 @@ class OutlierDetectionIFU(OutlierDetection):
             log.info("New y kernel size is {}: ".format(kern_size[1]))
 
         threshold_percent = self.outlierpars['threshold_percent']
-        (diffaxis, ny, nx) = self._find_detector_parameters()
+        (diffaxis, ny, nx) = self._find_detector_parameters(input_models)
 
-        nfiles = len(self.input_models)
+        nfiles = len(input_models)
         detector = np.empty(nfiles, dtype='<U15')
-        for i, model in enumerate(self.input_models):
+        for i, model in enumerate(input_models):
             detector[i] = model.meta.instrument.detector.lower()
 
-        exptype = self.input_models[0].meta.exposure.type
+        exptype = input_models[0].meta.exposure.type
         log.info("Performing IFU outlier_detection for exptype {}".format(
                  exptype))
         # How many unique values of detector?
@@ -149,13 +143,14 @@ class OutlierDetectionIFU(OutlierDetection):
         for idet in range(ndet):
             indx = (np.where(detector == uq_det[idet]))[0]
             ndet_files = int(len(indx))
-            self.flag_outliers(idet, uq_det, ndet_files,
+            self.flag_outliers(input_models,
+                               idet, uq_det, ndet_files,
                                diffaxis, nx, ny,
                                kern_size, threshold_percent,
                                save_intermediate_results,
                                ifu_second_check)
 
-    def flag_outliers(self, idet, uq_det, ndet_files,
+    def flag_outliers(self, input_models, idet, uq_det, ndet_files,
                       diffaxis, nx, ny,
                       kern_size, threshold_percent,
                       save_intermediate_results,
@@ -195,7 +190,7 @@ class OutlierDetectionIFU(OutlierDetection):
         # set up array to hold group differences
         diffarr = np.zeros([ndet_files, ny, nx])
         j = 0
-        for i, model in enumerate(self.input_models):
+        for i, model in enumerate(input_models):
             detector = model.meta.instrument.detector.lower()
             # only use data from the same detector
             if detector == uq_det[idet]:
@@ -248,7 +243,7 @@ class OutlierDetectionIFU(OutlierDetection):
                         diffarr, minarr, normarr, minarr_norm)
             opt_model = self.create_optional_results_model(opt_info)
             opt_model.meta.filename = self.make_output_path(
-                basepath=self.input_models.meta.asn_table.products[0].name,
+                basepath=input_models.meta.asn_table.products[0].name,
                 suffix=detector_name + '_outlier_output')
             log.info("Writing out intermediate outlier file {}".format(opt_model.meta.filename))
             opt_model.save(opt_model.meta.filename)
@@ -262,12 +257,12 @@ class OutlierDetectionIFU(OutlierDetection):
             nanindx = np.where(nanminarr)
 
         # Update DQ flag
-        for i in range(len(self.input_models)):
+        for i in range(len(input_models)):
 
-            detector = self.input_models[i].meta.instrument.detector.lower()
+            detector = input_models[i].meta.instrument.detector.lower()
             # only use data from the same detector
             if detector == uq_det[idet]:
-                model = self.input_models[i]
+                model = input_models[i]
                 sci = model.data
                 dq = model.dq
 
@@ -308,4 +303,4 @@ class OutlierDetectionIFU(OutlierDetection):
                 percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
                 log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
                 # update model
-                self.input_models[i] = model
+                input_models[i] = model

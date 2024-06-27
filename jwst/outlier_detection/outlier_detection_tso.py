@@ -23,21 +23,18 @@ class OutlierDetectionTSO(OutlierDetection):
 
         Parameters
         ----------
-        input_models : ~jwst.datamodels.CubeModel or ~jwst.datamodels.ModelContainer
-            The input TSO data cube. if a ModelContainer is passed in, it is assumed
-            to be a list of ImageModels, and gets converted to a CubeModel.
+        input_model : ~jwst.datamodels.CubeModel
+            The input TSO data cube.
 
         """
-        super().__init__(input_model, **pars)
-        if isinstance(self.inputs, dm.ModelContainer):
+        if isinstance(input_model, dm.ModelContainer):
             raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
+        super().__init__(input_model, **pars)
 
-        self.input_models = self.inputs
-
-    def do_detection(self):
+    def do_detection(self, input_model):
         """Flag outlier pixels in DQ of input images."""
         self.build_suffix(**self.outlierpars)
-        weighted_cube = self.weight_no_resample()
+        weighted_cube = self.weight_no_resample(input_model)
 
         maskpt = self.outlierpars.get('maskpt', 0.7)
         weight_threshold = compute_weight_threshold(weighted_cube.wht, maskpt)
@@ -65,7 +62,7 @@ class OutlierDetectionTSO(OutlierDetection):
         # go straight to outlier detection
         log.info("Flagging outliers")
         flag_cr(
-            self.input_models,
+            input_model,
             medians,
             self.outlierpars['snr'],
             self.outlierpars['scale'],
@@ -73,7 +70,7 @@ class OutlierDetectionTSO(OutlierDetection):
             self.outlierpars['resample_data'],
         )
 
-    def weight_no_resample(self):
+    def weight_no_resample(self, input_model):
         """
         give weights to model without resampling
 
@@ -90,8 +87,8 @@ class OutlierDetectionTSO(OutlierDetection):
         time or inverse variance weighting should be used here, build_driz_weight
         should be re-implemented.
         """
-        weighted_cube = self.input_models.copy()
-        dqmask = build_mask(self.input_models.dq, self.outlierpars['good_bits'])
+        weighted_cube = input_model.copy()
+        dqmask = build_mask(input_model.dq, self.outlierpars['good_bits'])
         weighted_cube.wht = dqmask.astype(np.float32)
         return weighted_cube
 

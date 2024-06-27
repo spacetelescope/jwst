@@ -65,12 +65,8 @@ class OutlierDetection:
             - resample_suffix
 
         """
-        self.inputs = input_models
-
         self.outlierpars = {}
         self.outlierpars.update(pars)
-        # Insure that self.input_models always refers to a ModelContainer
-        # representation of the inputs
 
         # Define how file names are created
         self.make_output_path = pars.get(
@@ -78,11 +74,8 @@ class OutlierDetection:
             partial(Step._make_output_path, None)
         )
 
-    def _convert_inputs(self):
+    def _convert_inputs(self, inputs):
         """Convert input into datamodel required for processing.
-
-        This method converts `self.inputs` into a version of
-        `self.input_models` suitable for processing by the class.
 
         This base class works on imaging data, and relies on use of the
         ModelContainer class as the format needed for processing. However,
@@ -93,22 +86,22 @@ class OutlierDetection:
 
         """
         bits = self.outlierpars['good_bits']
-        if isinstance(self.inputs, ModelContainer):
-            self.input_models = self.inputs
-        else:
-            self.input_models = ModelContainer()
-            num_inputs = self.inputs.data.shape[0]
-            log.debug("Converting CubeModel to ModelContainer with {} images".
-                      format(num_inputs))
-            for i in range(self.inputs.data.shape[0]):
-                image = datamodels.ImageModel(data=self.inputs.data[i],
-                                              err=self.inputs.err[i],
-                                              dq=self.inputs.dq[i])
-                image.meta = self.inputs.meta
-                image.wht = build_driz_weight(image,
-                                              weight_type=self.outlierpars['weight_type'],
-                                              good_bits=bits)
-                self.input_models.append(image)
+        if isinstance(inputs, ModelContainer):
+            return inputs
+        input_models = ModelContainer()
+        num_inputs = inputs.data.shape[0]
+        log.debug("Converting CubeModel to ModelContainer with {} images".
+                  format(num_inputs))
+        for i in range(inputs.data.shape[0]):
+            image = datamodels.ImageModel(data=inputs.data[i],
+                                          err=inputs.err[i],
+                                          dq=inputs.dq[i])
+            image.meta = inputs.meta
+            image.wht = build_driz_weight(image,
+                                          weight_type=self.outlierpars['weight_type'],
+                                          good_bits=bits)
+            input_models.append(image)
+        return input_models
 
     def build_suffix(self, **pars):
         """Build suffix.
@@ -125,9 +118,9 @@ class OutlierDetection:
         log.debug("Defined output product suffix as: {}".format(
             self.resample_suffix))
 
-    def do_detection(self):
+    def do_detection(self, inputs):
         """Flag outlier pixels in DQ of input images."""
-        self._convert_inputs()
+        input_models = self._convert_inputs(inputs)
         self.build_suffix(**self.outlierpars)
 
         pars = self.outlierpars
@@ -135,19 +128,19 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            output_path = self.make_output_path(basepath=self.input_models[0].meta.filename,
+            output_path = self.make_output_path(basepath=input_models[0].meta.filename,
                             suffix='')
             output_path = os.path.dirname(output_path)
-            resamp = resample.ResampleData(self.input_models, output=output_path, single=True,
+            resamp = resample.ResampleData(input_models, output=output_path, single=True,
                                            blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
 
         else:
             # for non-dithered data, the resampled image is just the original image
-            drizzled_models = self.input_models
-            for i in range(len(self.input_models)):
+            drizzled_models = input_models
+            for i in range(len(input_models)):
                 drizzled_models[i].wht = build_driz_weight(
-                    self.input_models[i],
+                    input_models[i],
                     weight_type=pars['weight_type'],
                     good_bits=pars['good_bits'])
 
@@ -172,7 +165,7 @@ class OutlierDetection:
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
         detect_outliers(
-            self.input_models,
+            input_models,
             median_model,
             self.outlierpars["snr"],
             self.outlierpars["scale"],

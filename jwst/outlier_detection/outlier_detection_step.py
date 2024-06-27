@@ -232,7 +232,7 @@ class OutlierDetectionStep(Step):
 
             # Set up outlier detection, then do detection
             step = detection_step(input_models, asn_id=asn_id, **pars)
-            step.do_detection()
+            step.do_detection(input_models)
 
             state = 'COMPLETE'
             if self.input_container:
