@@ -38,7 +38,7 @@ def detect_outliers(input_model, **kwargs):
         median_model = dm.CubeModel(data=medians)
         with dm.open(weighted_cube) as dm0:
             median_model.update(dm0)
-        save_median(median_model, **kwargs)
+        save_median(median_model, kwargs["make_output_path"], kwargs.get("asn_id", None))
         del median_model
 
     # no need for blotting, resample is turned off for TSO
