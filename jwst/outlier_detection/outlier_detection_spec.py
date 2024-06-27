@@ -72,7 +72,7 @@ class OutlierDetectionSpec(OutlierDetection):
             #  each group of exposures
             resamp = resample_spec.ResampleSpecData(input_models, single=True,
                                                     blendheaders=False, **pars)
-            drizzled_models = resamp.do_drizzle()
+            drizzled_models = resamp.do_drizzle(input_models)
             if save_intermediate_results:
                 for model in drizzled_models:
                     model.meta.filename = self.make_output_path(

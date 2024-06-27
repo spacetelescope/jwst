@@ -427,7 +427,7 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
     im1, im2 = miri_rate_pair
 
     driz = ResampleSpecData(ModelContainer([im1, im2]))
-    output_wcs = driz.build_interpolated_output_wcs()
+    output_wcs = driz.build_interpolated_output_wcs([im1, im2])
 
     # Make sure that all RA, Dec values in the input image have a location in
     # the output frame
