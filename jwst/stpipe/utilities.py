@@ -35,6 +35,7 @@ import inspect
 import logging
 import os
 import re
+from collections.abc import Sequence
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -144,3 +145,54 @@ def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
         for file in files:
             if basename_regex.match(file):
                 yield os.path.join(root, file)
+
+
+def record_step_status(datamodel, cal_step, success=True):
+    """Record whether or not a step completed in meta.cal_step
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel` instance
+        This is the datamodel or container of datamodels to modify in place
+
+    cal_step : str
+        The attribute in meta.cal_step for recording the status of the step
+
+    success : bool
+        If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+    """
+    if success:
+        status = 'COMPLETE'
+    else:
+        status = 'SKIPPED'
+
+    if isinstance(datamodel, Sequence):
+        for model in datamodel:
+            model.meta.cal_step._instance[cal_step] = status
+    else:
+        datamodel.meta.cal_step._instance[cal_step] = status
+
+    # TODO: standardize cal_step naming to point to the official step name
+
+
+def query_step_status(datamodel, cal_step):
+    """Query the status of a step in meta.cal_step
+    
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel` instance
+        This is the datamodel or container of datamodels to check
+        
+    cal_step : str
+        The attribute in meta.cal_step to check
+    
+    Returns
+    -------
+    status : str
+        The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
+    """
+    not_set = "NOT SET"
+    if isinstance(datamodel, Sequence):
+        return getattr(datamodel[0].meta.cal_step, cal_step, not_set)
+    else:
+        return getattr(datamodel.meta.cal_step, cal_step, not_set)

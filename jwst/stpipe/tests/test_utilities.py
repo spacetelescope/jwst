@@ -1,9 +1,11 @@
 """Test utility funcs"""
 from stpipe.utilities import resolve_step_class_alias
+from jwst.stpipe import record_step_status, query_step_status
 
 from jwst.stpipe.utilities import all_steps
 import jwst.pipeline
 import jwst.step
+from jwst import datamodels as dm
 
 
 # All steps available to users should be represented in one
@@ -25,3 +27,20 @@ def test_resolve_step_class_alias():
         if pipeline_class.class_alias is not None:
             assert resolve_step_class_alias(pipeline_class.class_alias) == full_class_name
         assert resolve_step_class_alias(full_class_name) == full_class_name
+
+
+def test_record_query_step_status():
+    model = dm.MultiSpecModel()
+    record_step_status(model, 'test_step', success=True)
+    assert query_step_status(model, 'test_step') == 'COMPLETE'
+
+    model2 = dm.ModelContainer()
+    model2.append(dm.MultiSpecModel())
+    model2.append(dm.MultiSpecModel())
+    record_step_status(model2, 'test_step', success=False)
+    assert model2[0].meta.cal_step._instance['test_step'] == 'SKIPPED'
+    assert model2[1].meta.cal_step._instance['test_step'] == 'SKIPPED'
+    assert query_step_status(model2, 'test_step') == 'SKIPPED'
+
+    model3 = dm.MultiSpecModel()
+    assert query_step_status(model3, 'test_step') == 'NOT SET'

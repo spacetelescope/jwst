@@ -205,8 +205,8 @@ class TweakRegStep(Step):
                 self.log.warning("At least two exposures are required for image "
                                  "alignment.")
                 self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
-                record_step_status(input, "tweakreg", success=False)
-                return input
+                record_step_status(images, "tweakreg", success=False)
+                return images
 
         # === start processing images ===
 
