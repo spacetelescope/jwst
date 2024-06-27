@@ -133,7 +133,7 @@ class OutlierDetection:
             output_path = os.path.dirname(output_path)
             resamp = resample.ResampleData(input_models, output=output_path, single=True,
                                            blendheaders=False, **pars)
-            drizzled_models = resamp.do_drizzle()
+            drizzled_models = resamp.do_drizzle(input_models)
 
         else:
             # for non-dithered data, the resampled image is just the original image
