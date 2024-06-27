@@ -7,17 +7,7 @@ from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
 from jwst.lib.pipe_utils import is_tso
 
-from jwst.outlier_detection import outlier_detection
-from jwst.outlier_detection import outlier_detection_ifu
-from jwst.outlier_detection import outlier_detection_spec
-from jwst.outlier_detection import outlier_detection_tso
-
-# Categorize all supported versions of outlier_detection
-outlier_registry = {'imaging': outlier_detection.OutlierDetection,
-                    'ifu': outlier_detection_ifu.OutlierDetectionIFU,
-                    'slitspec': outlier_detection_spec.OutlierDetectionSpec,
-                    'tso': outlier_detection_tso.OutlierDetectionTSO
-                    }
+from . import ifu, imaging, tso, spec
 
 # Categorize all supported modes
 IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
@@ -200,19 +190,19 @@ class OutlierDetectionStep(Step):
             if is_tso(single_model):
                 # force resampling off and use rolling median
                 pars['resample_data'] = False
-                detection_step = outlier_registry['tso']
+                mode = tso
             elif exptype in CORON_IMAGE_MODES:
                 # force resampling off but use same workflow as imaging
                 pars['resample_data'] = False
-                detection_step = outlier_registry['imaging']
+                mode = imaging
             elif exptype in IMAGE_MODES:
                 # imaging with resampling
-                detection_step = outlier_registry['imaging']
+                mode = imaging
             elif exptype in SLIT_SPEC_MODES:
-                detection_step = outlier_registry['slitspec']
+                mode = spec
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
-                detection_step = outlier_registry['ifu']
+                mode = ifu
             else:
                 self.log.error("Outlier detection failed for unknown/unsupported ",
                                f"exposure type: {exptype}")
@@ -226,11 +216,10 @@ class OutlierDetectionStep(Step):
                     input_models.meta.cal_step.outlier_detection = "SKIPPED"
                 return input_models
 
-            self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
+            self.log.debug(f"Using {mode.__name__} mode for outlier_detection")
 
             # Set up outlier detection, then do detection
-            step = detection_step()
-            step.do_detection(input_models, asn_id=asn_id, **pars)
+            mode.detect_outliers(input_models, asn_id=asn_id, **pars)
 
             state = 'COMPLETE'
             if self.input_container:
