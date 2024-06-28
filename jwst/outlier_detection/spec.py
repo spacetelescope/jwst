@@ -48,6 +48,7 @@ def detect_outliers(
     kernel,
     fillval,
     in_memory,
+    asn_id,
     make_output_path,
 ):
     """Flag outlier pixels in DQ of input images."""
@@ -111,7 +112,7 @@ def detect_outliers(
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    detect_outliers(
+    _detect_outliers(
         input_models,
         median_model,
         snr,
