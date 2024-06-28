@@ -1,9 +1,13 @@
+import logging
+
 import numpy as np
-from .outlier_detection import OutlierDetection, flag_cr
-from jwst.resample.resample_utils import build_mask
 
 from jwst import datamodels as dm
-import logging
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.outlier_detection.outlier_detection import OutlierDetection, flag_cr
+from jwst.resample.resample_utils import build_mask
+
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -66,6 +70,9 @@ class OutlierDetectionTSO(OutlierDetection):
         log.info("Flagging outliers")
         flag_cr(self.input_models, median_model, **self.outlierpars)
 
+        # Make sure all arrays have matching NaNs and DQ flags
+        for input_model in self.input_models:
+            match_nans_and_flags(input_model)
 
     def weight_no_resample(self):
         """
