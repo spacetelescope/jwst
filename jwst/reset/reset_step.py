@@ -2,6 +2,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import reset_sub
+from jwst.lib.basic_utils import use_datamodel
 
 __all__ = ["ResetStep"]
 
@@ -19,7 +20,7 @@ class ResetStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with use_datamodel(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
@@ -33,9 +34,8 @@ class ResetStep(Step):
                 if self.reset_name == 'N/A':
                     self.log.warning('No RESET reference file found')
                     self.log.warning('Reset step will be skipped')
-                    result = input_model.copy()
-                    result.meta.cal_step.reset = 'SKIPPED'
-                    return result
+                    input_model.meta.cal_step.reset = 'SKIPPED'
+                    return input_model
 
                 # Open the reset ref file data model
                 reset_model = datamodels.ResetModel(self.reset_name)

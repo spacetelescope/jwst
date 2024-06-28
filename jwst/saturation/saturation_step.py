@@ -4,6 +4,7 @@ from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from ..lib import pipe_utils
 from . import saturation
+from jwst.lib.basic_utils import use_datamodel
 
 
 __all__ = ["SaturationStep"]
@@ -25,7 +26,7 @@ class SaturationStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
 
             # Get the name of the saturation reference file
             self.ref_name = self.get_reference_file(input_model, 'saturation')

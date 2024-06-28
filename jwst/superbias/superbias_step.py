@@ -2,6 +2,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import bias_sub
+from jwst.lib.basic_utils import use_datamodel
 
 __all__ = ["SuperBiasStep"]
 
@@ -23,7 +24,7 @@ class SuperBiasStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        with use_datamodel(input) as input_model:
 
             # Get the name of the superbias reference file to use
             self.bias_name = self.get_reference_file(input_model, 'superbias')
@@ -46,6 +47,7 @@ class SuperBiasStep(Step):
             # Close the superbias reference file model and
             # set the step status to complete
             bias_model.close()
+            input_model.close()
             result.meta.cal_step.superbias = 'COMPLETE'
 
         return result

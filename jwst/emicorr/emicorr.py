@@ -715,5 +715,3 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
     log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
-
-

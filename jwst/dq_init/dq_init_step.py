@@ -3,6 +3,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import dq_initialization
+from jwst.lib.basic_utils import use_datamodel
 
 
 __all__ = ["DQInitStep"]
@@ -39,8 +40,7 @@ class DQInitStep(Step):
 
         # Try to open the input as a regular RampModel
         try:
-            input_model = datamodels.RampModel(input)
-
+            input_model = use_datamodel(input, model_class=datamodels.RampModel)
             # Check to see if it's Guider raw data
             if input_model.meta.exposure.type in dq_initialization.guider_list:
                 # Reopen as a GuiderRawModel

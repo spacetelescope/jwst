@@ -4,6 +4,7 @@
 from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from . import emicorr
+from jwst.lib.basic_utils import use_datamodel
 
 
 __all__ = ["EmiCorrStep"]
@@ -30,8 +31,9 @@ class EmiCorrStep(Step):
     reference_file_types = ['emicorr']
 
     def process(self, input):
+
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with use_datamodel(input) as input_model:
 
             # Catch the cases to skip
             instrument = input_model.meta.instrument.name

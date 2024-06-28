@@ -2,6 +2,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import linearity
+from jwst.lib.basic_utils import use_datamodel
 
 __all__ = ["LinearityStep"]
 
@@ -19,7 +20,7 @@ class LinearityStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
 
             # Get the name of the linearity reference file to use
             self.lin_name = self.get_reference_file(input_model, 'linearity')
@@ -29,7 +30,7 @@ class LinearityStep(Step):
             if self.lin_name == 'N/A':
                 self.log.warning('No Linearity reference file found')
                 self.log.warning('Linearity step will be skipped')
-                result = input_model.copy()
+                result = input_model
                 result.meta.cal_step.linearity = 'SKIPPED'
                 return result
 

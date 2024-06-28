@@ -4,6 +4,7 @@ from ..stpipe import Step
 from ..lib import pipe_utils
 from . import reference_pixels
 from . import irs2_subtract_reference
+from jwst.lib.basic_utils import use_datamodel
 
 
 __all__ = ["RefPixStep"]
@@ -31,13 +32,12 @@ class RefPixStep(Step):
 
     def process(self, input):
 
-        # Load the input science data
-        with datamodels.RampModel(input) as input_model:
+        # Open the input data model
+        with use_datamodel(input, model_class=datamodels.RampModel) as datamodel:
 
-            if pipe_utils.is_irs2(input_model):
+            if pipe_utils.is_irs2(datamodel):
 
                 # Flag bad reference pixels first
-                datamodel = input_model.copy()
                 irs2_subtract_reference.flag_bad_refpix(
                     datamodel, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
 
@@ -62,8 +62,10 @@ class RefPixStep(Step):
                 if self.irs2_name == 'N/A':
                     self.log.warning('No refpix reference file found')
                     self.log.warning('RefPix step will be skipped')
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
-                    return datamodel
+                    result = datamodel.copy()
+                    result.meta.cal_step.refpix = 'SKIPPED'
+                    datamodel.close()
+                    return result
 
                 # Load the reference file into a datamodel
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
@@ -79,8 +81,9 @@ class RefPixStep(Step):
 
             else:
                 # Not an NRS IRS2 exposure. Do the normal refpix correction.
-                datamodel = input_model.copy()
-                status = reference_pixels.correct_model(datamodel,
+                result = datamodel.copy()
+                datamodel.close()
+                status = reference_pixels.correct_model(result,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
                                                         self.side_smoothing_length,
@@ -88,13 +91,13 @@ class RefPixStep(Step):
                                                         self.odd_even_rows)
 
                 if status == reference_pixels.REFPIX_OK:
-                    datamodel.meta.cal_step.refpix = 'COMPLETE'
+                    result.meta.cal_step.refpix = 'COMPLETE'
                 elif status == reference_pixels.SUBARRAY_DOESNTFIT:
                     self.log.warning("Subarray doesn't fit in full-sized array")
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
+                    result.meta.cal_step.refpix = 'SKIPPED'
                 elif status == reference_pixels.BAD_REFERENCE_PIXELS:
                     self.log.warning("No valid reference pixels, refpix step skipped")
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
+                    result.meta.cal_step.refpix = 'SKIPPED'
                 elif status == reference_pixels.SUBARRAY_SKIPPED:
-                    datamodel.meta.cal_step.refpix = 'SKIPPED'
-                return datamodel
+                    result.meta.cal_step.refpix = 'SKIPPED'
+                return result

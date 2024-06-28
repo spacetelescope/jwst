@@ -3,6 +3,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from .jump import run_detect_jumps
+from jwst.lib.basic_utils import use_datamodel
 import time
 
 __all__ = ["JumpStep"]
@@ -57,14 +58,16 @@ class JumpStep(Step):
 
     def process(self, input):
 
-        with datamodels.RampModel(input) as input_model:
+        # Open the input data model
+        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
+
             tstart = time.time()
             # Check for an input model with NGROUPS<=2
             ngroups = input_model.data.shape[1]
             if ngroups <= 2:
                 self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
                 self.log.warning('Jump step will be skipped')
-                result = input_model.copy()
+                result = input_model
                 result.meta.cal_step.jump = 'SKIPPED'
                 return result
 

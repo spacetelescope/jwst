@@ -1,7 +1,7 @@
 from stdatamodels.jwst import datamodels
-
 from ..stpipe import Step
 from . import lastframe_sub
+from jwst.lib.basic_utils import use_datamodel
 
 __all__ = ["LastFrameStep"]
 
@@ -18,7 +18,7 @@ class LastFrameStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
@@ -28,7 +28,7 @@ class LastFrameStep(Step):
             else:
                 self.log.warning('Last Frame Correction is only for MIRI data')
                 self.log.warning('Last frame step will be skipped')
-                result = input_model.copy()
+                result = input_model
                 result.meta.cal_step.lastframe = 'SKIPPED'
 
         return result
