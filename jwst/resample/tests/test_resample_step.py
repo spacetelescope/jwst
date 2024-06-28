@@ -348,7 +348,7 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
 
     for slit1, slit2, slit3 in zip(result1.slits, result2.slits, result3.slits):
         # pixel_scale and pixel_scale_ratio should be equivalent
-        nn = np.isnan(result2.data) | np.isnan(result3.data)
+        nn = np.isnan(slit2.data) | np.isnan(slit3.data)
         assert np.allclose(slit2.data[~nn], slit3.data[~nn])
 
         # Check result2 for expected results
