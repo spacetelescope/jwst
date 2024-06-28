@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 import jwst.datamodels as dm
-from jwst.outlier_detection.outlier_detection_ifu import medfilt
+from jwst.outlier_detection.ifu import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
 import warnings
 
