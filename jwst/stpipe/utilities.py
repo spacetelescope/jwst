@@ -36,6 +36,7 @@ import logging
 import os
 import re
 from collections.abc import Sequence
+import numpy as np
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -53,6 +54,8 @@ NON_STEPS = [
 ]
 
 NOT_SET = "NOT SET"
+COMPLETE = "COMPLETE"
+SKIPPED = "SKIPPED"
 
 def all_steps():
     """List all classes subclassed from Step
@@ -193,6 +196,16 @@ def query_step_status(datamodel, cal_step):
         The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
     """
     if isinstance(datamodel, Sequence):
+        status = np.array([getattr(model.meta.cal_step, cal_step, NOT_SET) for model in datamodel])
+        if np.any(status == COMPLETE):
+            return COMPLETE
+        elif np.all(status == NOT_SET):
+            return NOT_SET
+        elif np.all(status == SKIPPED):
+            return SKIPPED
+        else:
+            msg = f"Unrecognized status in meta.cal_step.{cal_step}."
+            raise ValueError(msg)
         return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
     else:
         return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)

@@ -333,7 +333,6 @@ class Spec2Pipeline(Pipeline):
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.cube_build(resampled)
-            print('TYPE resampled', type(resampled))
             if query_step_status(resampled, "cube_build") == 'COMPLETE':
                 self.save_model(resampled[0], suffix='s3d')
         elif exp_type in ['MIR_LRS-SLITLESS']:

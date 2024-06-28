@@ -1,4 +1,5 @@
 """Test utility funcs"""
+import pytest
 from stpipe.utilities import resolve_step_class_alias
 from jwst.stpipe import record_step_status, query_step_status
 
@@ -30,10 +31,13 @@ def test_resolve_step_class_alias():
 
 
 def test_record_query_step_status():
+
+    # single model case
     model = dm.MultiSpecModel()
     record_step_status(model, 'test_step', success=True)
     assert query_step_status(model, 'test_step') == 'COMPLETE'
 
+    # modelcontainer case where all skipped
     model2 = dm.ModelContainer()
     model2.append(dm.MultiSpecModel())
     model2.append(dm.MultiSpecModel())
@@ -42,5 +46,15 @@ def test_record_query_step_status():
     assert model2[1].meta.cal_step._instance['test_step'] == 'SKIPPED'
     assert query_step_status(model2, 'test_step') == 'SKIPPED'
 
+    # modelcontainer case with at least one complete
+    model2.append(dm.MultiSpecModel())
+    model2[2].meta.cal_step._instance['test_step'] = 'COMPLETE'
+    assert query_step_status(model2, 'test_step') == 'COMPLETE'
+
+    model2[2].meta.cal_step._instance['test_step'] = 'UNRECOGNIZED'
+    with pytest.raises(ValueError):
+        query_step_status(model2, 'test_step')
+
+    # test query not set
     model3 = dm.MultiSpecModel()
     assert query_step_status(model3, 'test_step') == NOT_SET
