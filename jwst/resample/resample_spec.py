@@ -246,11 +246,15 @@ class ResampleSpecData(ResampleData):
         # Transform the weighted means into target RA/Dec
         # (at the center of the slit in x)
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
-        sx, _ = s2d(0, wmean_s, wmean_l)
+        sx, sy = s2d(0, wmean_s, wmean_l)
+        log.debug(f'Fiducial RA, Dec, wavelength: '
+                  f'{targ_ra}, {targ_dec}, {wmean_l}')
+        log.debug(f'Index at fiducial center: x={sx}, y={sy}')
 
         # Estimate spatial sampling from the reference model
-        # at the center wavelength
-        lam_center_idx = int(sx)
+        # at the center of the array
+        lam_center_idx = int(np.mean(bbox, axis=1)[0])
+        log.debug(f'Center of dispersion axis: {lam_center_idx}')
         grid_center = grid[0][:, lam_center_idx], grid[1][:, lam_center_idx]
         ra_ref, dec_ref, _ = np.array(refwcs(*grid_center))
 
@@ -277,6 +281,7 @@ class ResampleSpecData(ResampleData):
 
         # Check whether sampling is more along RA or along Dec
         swap_xy = abs(pix_to_xtan.slope) < abs(pix_to_ytan.slope)
+        log.debug(f'Swap xy: {swap_xy}')
 
         # Get output wavelengths from all data
         ref_lam = _find_nirspec_output_sampling_wavelengths(all_wcs, targ_ra, targ_dec)
@@ -292,12 +297,8 @@ class ResampleSpecData(ResampleData):
         else:
             pix_to_tan_slope = np.abs(pix_to_xtan.slope)
 
-        # Image size in spatial dimension
+        # Image size in spatial dimension from the maximum slope
         ny = int(np.ceil(diff / pix_to_tan_slope))
-        if swap_xy:
-            pix_to_ytan.intercept = -0.5 * (ny - 1) * pix_to_ytan.slope
-        else:
-            pix_to_xtan.intercept = -0.5 * (ny - 1) * pix_to_xtan.slope
 
         # Now set up the final transforms
 
