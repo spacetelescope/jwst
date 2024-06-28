@@ -34,7 +34,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["detect_outliers"]
 
 
-def do_detection(
+def detect_outliers(
     input_models,
     save_intermediate_results,
     good_bits,
