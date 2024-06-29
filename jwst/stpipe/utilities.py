@@ -36,7 +36,6 @@ import logging
 import os
 import re
 from collections.abc import Sequence
-import numpy as np
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -166,9 +165,9 @@ def record_step_status(datamodel, cal_step, success=True):
         If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
     """
     if success:
-        status = 'COMPLETE'
+        status = COMPLETE
     else:
-        status = 'SKIPPED'
+        status = SKIPPED
 
     if isinstance(datamodel, Sequence):
         for model in datamodel:
@@ -195,17 +194,4 @@ def query_step_status(datamodel, cal_step):
     status : str
         The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
     """
-    if isinstance(datamodel, Sequence):
-        status = np.array([getattr(model.meta.cal_step, cal_step, NOT_SET) for model in datamodel])
-        if np.any(status == COMPLETE):
-            return COMPLETE
-        elif np.all(status == NOT_SET):
-            return NOT_SET
-        elif np.all(status == SKIPPED):
-            return SKIPPED
-        else:
-            msg = f"Unrecognized status in meta.cal_step.{cal_step}."
-            raise ValueError(msg)
-        return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
-    else:
-        return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)
+    return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)

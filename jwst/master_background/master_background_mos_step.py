@@ -107,7 +107,8 @@ class MasterBackgroundMosStep(Pipeline):
             # If some type of background processing had already been done. Abort.
             # UNLESS forcing is enacted.
             if not self.force_subtract and \
-               'COMPLETE' in [query_step_status(data_model, "back_sub"), query_step_status(data_model, "master_background")]:
+               'COMPLETE' in [query_step_status_container(data_model, "back_sub"), \
+                              query_step_status_container(data_model, "master_background")]:
                 self.log.info('Background subtraction has already occurred. Skipping.')
                 record_step_status(data, 'master_background', success=False)
                 return data
@@ -275,3 +276,27 @@ class MasterBackgroundMosStep(Pipeline):
             mb_multislit = self.flat_field(mb_multislit)
 
         return master_background, mb_multislit
+
+
+def query_step_status_container(model: datamodels.JwstDataModel, step_name: str):
+    '''Query the status of a step in a datamodel or container of datamodels
+    assuming the step status for the zeroth model is representative of all models.
+    This is true for the master background step but may not be generally applicable.
+    
+    Parameters
+    ----------
+    model : `~jwst.datamodels.JwstDataModel` instance
+        This is the datamodel or container of datamodels to check
+        
+    step_name : str
+        The attribute in meta.cal_step to check
+        
+    Returns
+    -------
+    status : str
+        The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
+    '''
+    if isinstance(model, datamodels.ModelContainer):
+        return query_step_status(model[0], step_name)
+    else:
+        return query_step_status(model, step_name)
