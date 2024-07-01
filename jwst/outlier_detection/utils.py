@@ -322,7 +322,10 @@ def _detect_outliers(input_models, median_model, snr="5.0 4.0", scale="1.2 0.7",
             blot = gwcs_blot(median_model, image)
         else:
             blot = median_model.data
-        # TODO save blot? are these actually useful?
+        # previous versions of the code generated all of the blot models and wrote
+        # them to disk. Now the code generates the blot model(s) only when needed
+        # and no longer needs to write them to disk. We could re-introduce saving
+        # of blot models here.
         flag_cr(image, blot, snr, scale, backg, resample_data)
 
 
