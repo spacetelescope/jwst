@@ -202,7 +202,6 @@ def query_step_status(datamodel, cal_step):
     updated to accommodate that use-case as needed.
     """
     if isinstance(datamodel, Sequence):
-        statuses = [getattr(model.meta.cal_step, cal_step, NOT_SET) for model in datamodel]
-        return statuses[0]
+        return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
     else:
         return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)

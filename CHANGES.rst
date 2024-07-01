@@ -7,6 +7,12 @@ cube_build
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
+master_background
+-----------------
+
+- Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
+  as a background slit, instead of ``"bkg"`` only. [#8600]
+
 stpipe
 ------
 
