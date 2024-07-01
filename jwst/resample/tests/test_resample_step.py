@@ -13,7 +13,7 @@ from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample import compute_image_pixel_area
-from jwst.resample.resample_spec import ResampleSpecData
+from jwst.resample.resample_spec import ResampleSpecData, compute_spectral_pixel_scale
 
 
 def _set_photom_kwd(im):
@@ -146,8 +146,20 @@ def miri_rate():
         'start_time': 58119.8333,
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
+    yield im
+    im.close()
 
-    return im
+
+@pytest.fixture
+def miri_cal(miri_rate):
+    im = AssignWcsStep.call(miri_rate)
+    _set_photom_kwd(im)
+
+    # Add non-zero values to check flux conservation
+    im.data += 1.0
+
+    yield im
+    im.close()
 
 
 @pytest.fixture
@@ -220,22 +232,27 @@ def nircam_rate():
         'pixelarea_steradians': 1e-13,
         'pixelarea_arcsecsq': 4e-3,
     }
+    yield im
+    im.close()
 
-    return im
 
-
-def test_nirspec_wcs_roundtrip(nirspec_rate):
+@pytest.fixture
+def nirspec_cal(nirspec_rate):
     im = AssignWcsStep.call(nirspec_rate)
 
     # Since the ra_targ, and dec_targ are flux-weighted, we need non-zero
-    # flux values.  Add random values.
-    rng = np.random.default_rng(1234)
-    im.data += rng.random(im.data.shape)
+    # flux values.
+    im.data += 1.0
 
     im = Extract2dStep.call(im)
     for slit in im.slits:
         _set_photom_kwd(slit)
-    im = ResampleSpecStep.call(im)
+    yield im
+    im.close()
+
+
+def test_nirspec_wcs_roundtrip(nirspec_cal):
+    im = ResampleSpecStep.call(nirspec_cal)
 
     for slit in im.slits:
         x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
@@ -244,29 +261,133 @@ def test_nirspec_wcs_roundtrip(nirspec_rate):
 
         assert_allclose(x, xp, rtol=0, atol=1e-8)
         assert_allclose(y, yp, rtol=0, atol=3e-4)
+    im.close()
 
 
-def test_miri_wcs_roundtrip(miri_rate):
-    im = AssignWcsStep.call(miri_rate)
-    _set_photom_kwd(im)
-    im = ResampleSpecStep.call(im)
-
+def test_miri_wcs_roundtrip(miri_cal):
+    im = ResampleSpecStep.call(miri_cal)
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
     ra, dec, lam = im.meta.wcs(x, y)
     xp, yp = im.meta.wcs.invert(ra, dec, lam)
 
     assert_allclose(x, xp, atol=1e-8)
     assert_allclose(y, yp, atol=1e-8)
+    im.close()
 
 
-@pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
-def test_pixel_scale_ratio_spec(miri_rate, ratio):
-    im = AssignWcsStep.call(miri_rate, sip_approx=False)
-    _set_photom_kwd(im)
-    result1 = ResampleSpecStep.call(im)
-    result2 = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
+@pytest.mark.parametrize("units", ["MJy/pixel", "MJy/sr"])
+@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
+def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
+    miri_cal.meta.bunit_data = units
 
-    assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
+    # Make an input pixel scale equivalent to the specified ratio
+    input_scale = compute_spectral_pixel_scale(miri_cal.meta.wcs, disp_axis=2)
+    pscale = 3600.0 * input_scale / ratio
+
+    result1 = ResampleSpecStep.call(miri_cal)
+    result2 = ResampleSpecStep.call(miri_cal, pixel_scale_ratio=ratio)
+    result3 = ResampleSpecStep.call(miri_cal, pixel_scale=pscale)
+
+    # pixel_scale and pixel_scale_ratio should be equivalent
+    nn = np.isnan(result2.data) | np.isnan(result3.data)
+    assert np.allclose(result2.data[~nn], result3.data[~nn])
+
+    # Check result2 for expected results
+
+    # wavelength size does not change
+    assert result1.data.shape[0] == result2.data.shape[0]
+
+    # spatial dimension is scaled
+    assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
+
+    # data is non-trivial
+    assert np.nansum(result1.data) > 0.0
+    assert np.nansum(result2.data) > 0.0
+
+    # flux is conserved
+    if 'sr' not in units:
+        # flux density conservation: sum over pixels in each row
+        # needs to be about the same, other than the edges
+        assert np.allclose(np.nansum(result1.data, axis=1)[2:-2],
+                           np.nansum(result2.data, axis=1)[2:-2], rtol=0.05)
+    else:
+        # surface brightness conservation: sum over pixels scales with size
+        assert np.allclose(np.nansum(result1.data, axis=1)[2:-2],
+                           np.nansum(result2.data, axis=1)[2:-2] / ratio, rtol=0.05)
+
+    # output area is updated either way
+    area1 = result1.meta.photometry.pixelarea_steradians
+    area2 = result2.meta.photometry.pixelarea_steradians
+    area3 = result2.meta.photometry.pixelarea_steradians
+    assert np.isclose(area1 / area2, ratio)
+    assert np.isclose(area1 / area3, ratio)
+
+    assert result1.meta.resample.pixel_scale_ratio == 1.0
+    assert result2.meta.resample.pixel_scale_ratio == ratio
+    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
+
+    result1.close()
+    result2.close()
+    result3.close()
+
+
+@pytest.mark.parametrize("units", ["MJy/pixel", "MJy/sr"])
+@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
+def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
+    for slit in nirspec_cal.slits:
+        slit.meta.bunit_data = units
+
+    # Make an input pixel scale equivalent to the specified ratio
+    input_scale = compute_spectral_pixel_scale(
+        nirspec_cal.slits[0].meta.wcs, disp_axis=1)
+    pscale = 3600.0 * input_scale / ratio
+
+    result1 = ResampleSpecStep.call(nirspec_cal)
+    result2 = ResampleSpecStep.call(nirspec_cal, pixel_scale_ratio=ratio)
+    result3 = ResampleSpecStep.call(nirspec_cal, pixel_scale=pscale)
+
+    for slit1, slit2, slit3 in zip(result1.slits, result2.slits, result3.slits):
+        # pixel_scale and pixel_scale_ratio should be equivalent
+        nn = np.isnan(slit2.data) | np.isnan(slit3.data)
+        assert np.allclose(slit2.data[~nn], slit3.data[~nn])
+
+        # Check result2 for expected results
+
+        # wavelength size does not change
+        assert slit1.data.shape[1] == slit2.data.shape[1]
+
+        # spatial dimension is scaled
+        assert np.isclose(slit1.data.shape[0], slit2.data.shape[0] / ratio, atol=1)
+
+        # data is non-trivial
+        assert np.nansum(slit1.data) > 0.0
+        assert np.nansum(slit2.data) > 0.0
+
+        # flux is conserved
+        if 'sr' not in units:
+            # flux density conservation: sum over pixels in each column
+            # needs to be about the same, other than the edges
+            assert np.allclose(np.nansum(slit1.data, axis=0)[2:-2],
+                               np.nansum(slit2.data, axis=0)[2:-2], rtol=0.05)
+        else:
+            # surface brightness conservation: sum over pixels scales with size
+            assert np.allclose(np.nansum(slit1.data, axis=0)[2:-2],
+                               np.nansum(slit2.data, axis=0)[2:-2] / ratio, rtol=0.05)
+
+        # output area is updated either way
+        area1 = slit1.meta.photometry.pixelarea_steradians
+        area2 = slit2.meta.photometry.pixelarea_steradians
+        area3 = slit3.meta.photometry.pixelarea_steradians
+        assert np.isclose(area1 / area2, ratio)
+        assert np.isclose(area1 / area3, ratio)
+
+    assert result1.meta.resample.pixel_scale_ratio == 1.0
+    assert result2.meta.resample.pixel_scale_ratio == ratio
+    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
+
+    result1.close()
+    result2.close()
+    result3.close()
 
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
@@ -546,18 +667,20 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
     'output_shape2, match',
     [((1205, 1100), True), ((1222, 1111), False), (None, True)]
 )
-@pytest.mark.xfail(reason="Empty output region, unclear what this is meant to test.")
 def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
                                         tmp_path):
+
+    # make some data with a WCS and some random values
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    rng = np.random.default_rng(seed=77)
+    im.data[:, :] = rng.random(im.data.shape)
+
     crpix = (600, 550)
-    crval = (50, 77)
+    crval = (22.04, 11.98)
     rotation = 15
     ratio = 0.7
 
-    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
-
     # first pass - create a reference output WCS:
-    im.data[:, :] = np.random.random(im.data.shape)
     result = ResampleStep.call(
         im,
         output_shape=(1205, 1100),
@@ -567,7 +690,9 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
         pixel_scale_ratio=ratio
     )
 
+    # make sure results are nontrivial
     data1 = result.data
+    assert not np.all(np.isnan(data1))
 
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
@@ -580,6 +705,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     )
 
     data2 = result.data
+    assert not np.all(np.isnan(data2))
 
     if output_shape2 is not None:
         assert data2.shape == output_shape2[::-1]
@@ -587,7 +713,105 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     if match:
         # test output image shape
         assert data1.shape == data2.shape
-        assert np.allclose(data1, data2)
+        assert np.allclose(data1, data2, equal_nan=True)
+
+    # make sure pixel values are similar, accounting for scale factor
+    # (assuming inputs are in surface brightness units)
+    iscale = np.sqrt(im.meta.photometry.pixelarea_steradians
+                     / compute_image_pixel_area(im.meta.wcs))
+    input_mean = np.nanmean(im.data)
+    output_mean_1 = np.nanmean(data1)
+    output_mean_2 = np.nanmean(data2)
+    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
+    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
+
+
+@pytest.mark.parametrize('ratio', [0.7, 1.0, 1.3])
+def test_custom_refwcs_resample_miri(miri_cal, tmp_path, ratio):
+    im = miri_cal
+
+    # mock a spectrum by giving the first slit some random
+    # values at the center
+    rng = np.random.default_rng(seed=77)
+    new_values = rng.random(im.data.shape)
+
+    center = im.data.shape[1] // 2
+    im.data[:] = 0.0
+    im.data[:, center - 2:center + 2] = new_values[:, center - 2:center + 2]
+
+    # first pass: create a reference output WCS with a custom pixel scale
+    result = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
+
+    # make sure results are nontrivial
+    data1 = result.data
+    assert not np.all(np.isnan(data1))
+
+    # save the wcs from the output
+    refwcs = str(tmp_path / "resample_refwcs.asdf")
+    result.meta.wcs.pixel_area = result.meta.photometry.pixelarea_steradians
+    asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(refwcs)
+
+    # run again, this time using the created WCS as input
+    result = ResampleSpecStep.call(im, output_wcs=refwcs)
+    data2 = result.data
+    assert not np.all(np.isnan(data2))
+
+    # check output data against first pass
+    assert data1.shape == data2.shape
+    assert np.allclose(data1, data2, equal_nan=True, rtol=1e-4)
+
+    # make sure flux is conserved: sum over spatial dimension
+    # should be same in input and output
+    # (assuming inputs are in flux density units)
+    input_sum = np.nanmean(np.nansum(im.data, axis=1))
+    output_sum_1 = np.nanmean(np.nansum(data1, axis=1))
+    output_sum_2 = np.nanmean(np.nansum(data2, axis=1))
+    assert np.allclose(input_sum, output_sum_1, rtol=0.005)
+    assert np.allclose(input_sum, output_sum_2, rtol=0.005)
+
+
+@pytest.mark.parametrize('ratio', [0.7, 1.0, 1.3])
+def test_custom_refwcs_resample_nirspec(nirspec_cal, tmp_path, ratio):
+    im = nirspec_cal
+
+    # mock a spectrum by giving the first slit some random
+    # values at the center
+    rng = np.random.default_rng(seed=77)
+    new_values = rng.random(im.slits[0].data.shape)
+
+    center = im.slits[0].data.shape[0] // 2
+    im.slits[0].data[:] = 0.0
+    im.slits[0].data[center - 2:center + 2, :] = new_values[center - 2:center + 2, :]
+
+    # first pass: create a reference output WCS with a custom pixel scale
+    result = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
+
+    # make sure results are nontrivial
+    data1 = result.slits[0].data
+    assert not np.all(np.isnan(data1))
+
+    # save the wcs from the output
+    refwcs = str(tmp_path / "resample_refwcs.asdf")
+    asdf.AsdfFile({"wcs": result.slits[0].meta.wcs}).write_to(tmp_path / refwcs)
+
+    # run again, this time using the created WCS as input
+    result = ResampleSpecStep.call(im, output_wcs=refwcs)
+
+    data2 = result.slits[0].data
+    assert not np.all(np.isnan(data2))
+
+    # check output data against first pass
+    assert data1.shape == data2.shape
+    assert np.allclose(data1, data2, equal_nan=True, rtol=1e-4)
+
+    # make sure flux is conserved: sum over spatial dimension
+    # should be same in input and output
+    # (assuming inputs are in flux density units)
+    input_sum = np.nanmean(np.nansum(im.slits[0].data, axis=0))
+    output_sum_1 = np.nanmean(np.nansum(data1, axis=0))
+    output_sum_2 = np.nanmean(np.nansum(data2, axis=0))
+    assert np.allclose(input_sum, output_sum_1, rtol=0.005)
+    assert np.allclose(input_sum, output_sum_2, rtol=0.005)
 
 
 @pytest.mark.parametrize('ratio', [1.3, 1])

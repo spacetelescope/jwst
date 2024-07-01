@@ -3,9 +3,8 @@ import os
 import warnings
 
 import numpy as np
-from drizzle import util
-from drizzle import cdrizzle
 import psutil
+from drizzle import cdrizzle, util
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -264,9 +263,12 @@ class ResampleData:
                             self.pscale_ratio = self.pscale / self.input_pixscale0
                     iscale = np.sqrt(input_pixflux_area / input_pixel_area)
                 else:
+                    # Note: spectral scaling is only needed if the pixel ratio
+                    # is not set to 1.0, which is not supported for
+                    # outlier detection.
                     iscale = 1.0
+                log.debug(f'Using intensity scale iscale={iscale}')
 
-                # TODO: should weight_type=None here?
                 inwht = resample_utils.build_driz_weight(
                     img,
                     weight_type=self.weight_type,
@@ -333,24 +335,34 @@ class ResampleData:
         log.info("Resampling science data")
         for img in self.input_models:
             input_pixflux_area = img.meta.photometry.pixelarea_steradians
-            if (input_pixflux_area and
-                    'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                img.meta.wcs.array_shape = img.data.shape
-                input_pixel_area = compute_image_pixel_area(img.meta.wcs)
-                if input_pixel_area is None:
-                    raise ValueError(
-                        "Unable to compute input pixel area from WCS of input "
-                        f"image {repr(img.meta.filename)}."
-                    )
-                if self.input_pixscale0 is None:
-                    self.input_pixscale0 = np.rad2deg(
-                        np.sqrt(input_pixel_area)
-                    )
-                    if self._recalc_pscale_ratio:
-                        self.pscale_ratio = self.pscale / self.input_pixscale0
+            if input_pixflux_area:
+                if 'SPECTRAL' in img.meta.wcs.output_frame.axes_type:
+                    # Use the nominal area as is
+                    input_pixel_area = input_pixflux_area
+
+                    # If input image is in flux density units, correct the
+                    # flux for the user-specified change to the spatial dimension
+                    if 'sr' not in str(img.meta.bunit_data).lower():
+                        input_pixel_area *= self.pscale_ratio
+                else:
+                    img.meta.wcs.array_shape = img.data.shape
+                    input_pixel_area = compute_image_pixel_area(img.meta.wcs)
+
+                    if input_pixel_area is None:
+                        raise ValueError(
+                            "Unable to compute input pixel area from WCS of input "
+                            f"image {repr(img.meta.filename)}."
+                        )
+                    if self.input_pixscale0 is None:
+                        self.input_pixscale0 = np.rad2deg(
+                            np.sqrt(input_pixel_area)
+                        )
+                        if self._recalc_pscale_ratio:
+                            self.pscale_ratio = self.pscale / self.input_pixscale0
                 iscale = np.sqrt(input_pixflux_area / input_pixel_area)
             else:
                 iscale = 1.0
+            log.debug(f'Using intensity scale iscale={iscale}')
 
             img.meta.iscale = iscale
 
@@ -829,7 +841,7 @@ def compute_image_pixel_area(wcs):
 
     k = 0
     dxy = [1, -1, -1, 1]
-
+    ra, dec, center = np.nan, np.nan, (np.nan, np.nan)
     while xmin < xmax and ymin < ymax:
         try:
             x, y, image_area, center, b, r, t, l = _get_boundary_points(
@@ -854,7 +866,6 @@ def compute_image_pixel_area(wcs):
             if not (np.all(np.isfinite(ra[sl])) and
                     np.all(np.isfinite(dec[sl]))):
                 limits[k] += dxy[k]
-                ymin, xmax, ymax, xmin = limits
                 k = (k + 1) % 4
                 break
             k = (k + 1) % 4
