@@ -183,8 +183,8 @@ def query_step_status(datamodel, cal_step):
     
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel` instance
-        This is the datamodel or container of datamodels to check
+    datamodel : `~jwst.datamodels.JwstDataModel` or `~jwst.datamodels.ModelContainer` instance
+        The datamodel or container of datamodels to check
         
     cal_step : str
         The attribute in meta.cal_step to check
@@ -193,5 +193,16 @@ def query_step_status(datamodel, cal_step):
     -------
     status : str
         The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
+
+    Notes
+    -----
+    In principle, a step could set the COMPLETE status for only some subset 
+    of models, so checking the zeroth model instance may not always be correct.
+    However, this is not currently done in the pipeline. This function should be
+    updated to accommodate that use-case as needed.
     """
-    return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)
+    if isinstance(datamodel, Sequence):
+        statuses = [getattr(model.meta.cal_step, cal_step, NOT_SET) for model in datamodel]
+        return statuses[0]
+    else:
+        return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)
