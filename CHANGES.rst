@@ -1,7 +1,11 @@
 1.15.1 (unreleased)
 ===================
 
--
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
 
 1.15.0 (2024-06-26)
 ===================
