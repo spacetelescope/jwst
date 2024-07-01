@@ -88,8 +88,6 @@ class ResampleSpecData(ResampleData):
         log.info(f"Driz parameter weight_type: {self.weight_type}")
 
         output_wcs = kwargs.get('output_wcs', None)
-        output_shape = kwargs.get('output_shape', None)
-
         self.asn_id = kwargs.get('asn_id', None)
 
         # Get an average input pixel scale for parameter calculations
@@ -108,9 +106,6 @@ class ResampleSpecData(ResampleData):
         if output_wcs:
             # Use user-supplied reference WCS for the resampled image:
             self.output_wcs = output_wcs
-            if output_shape is not None:
-                self.output_wcs.array_shape = output_shape[::-1]
-
             if output_wcs.pixel_area is None:
                 if nominal_area is not None:
                     # Compare input and output spatial scale to update nominal area
@@ -128,6 +123,8 @@ class ResampleSpecData(ResampleData):
                 log.debug(f'Setting output pixel area from wcs.pixel_area: '
                           f'{output_wcs.pixel_area}')
                 output_pix_area = output_wcs.pixel_area
+            if output_pix_area is not None:
+                self.pscale_ratio = nominal_area / output_pix_area
         else:
             if pscale is not None and nominal_area is not None:
                 log.info(f'Specified output pixel scale: {pscale} arcsec.')
@@ -144,6 +141,7 @@ class ResampleSpecData(ResampleData):
             # Define output WCS based on all inputs, including a reference WCS.
             # These functions internally use self.pscale_ratio to accommodate
             # user settings.
+            # Any other customizations (crpix, crval, rotation) are ignored.
             if resample_utils.is_sky_like(self.input_models[0].meta.wcs.output_frame):
                 if self.input_models[0].meta.instrument.name != "NIRSPEC":
                     self.output_wcs = self.build_interpolated_output_wcs()
