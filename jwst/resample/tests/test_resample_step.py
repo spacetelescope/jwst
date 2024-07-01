@@ -726,6 +726,94 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     assert np.isclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
 
 
+@pytest.mark.parametrize('ratio', [0.7, 1.0, 1.3])
+def test_custom_refwcs_resample_miri(miri_cal, tmp_path, ratio):
+    im = miri_cal
+
+    # mock a spectrum by giving the first slit some random
+    # values at the center
+    rng = np.random.default_rng(seed=77)
+    new_values = rng.random(im.data.shape)
+
+    center = im.data.shape[1] // 2
+    im.data[:] = 0.0
+    im.data[:, center - 2:center + 2] = new_values[:, center - 2:center + 2]
+
+    # first pass: create a reference output WCS with a custom pixel scale
+    result = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
+
+    # make sure results are nontrivial
+    data1 = result.data
+    assert not np.all(np.isnan(data1))
+
+    # save the wcs from the output
+    refwcs = str(tmp_path / "resample_refwcs.asdf")
+    result.meta.wcs.pixel_area = result.meta.photometry.pixelarea_steradians
+    asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(refwcs)
+
+    # run again, this time using the created WCS as input
+    result = ResampleSpecStep.call(im, output_wcs=refwcs)
+    data2 = result.data
+    assert not np.all(np.isnan(data2))
+
+    # check output data against first pass
+    assert data1.shape == data2.shape
+    assert np.allclose(data1, data2, equal_nan=True, rtol=1e-4)
+
+    # make sure flux is conserved: sum over spatial dimension
+    # should be same in input and output
+    # (assuming inputs are in flux density units)
+    input_sum = np.nanmean(np.nansum(im.data, axis=1))
+    output_sum_1 = np.nanmean(np.nansum(data1, axis=1))
+    output_sum_2 = np.nanmean(np.nansum(data2, axis=1))
+    assert np.allclose(input_sum, output_sum_1, rtol=0.005)
+    assert np.allclose(input_sum, output_sum_2, rtol=0.005)
+
+
+@pytest.mark.parametrize('ratio', [0.7, 1.0, 1.3])
+def test_custom_refwcs_resample_nirspec(nirspec_cal, tmp_path, ratio):
+    im = nirspec_cal
+
+    # mock a spectrum by giving the first slit some random
+    # values at the center
+    rng = np.random.default_rng(seed=77)
+    new_values = rng.random(im.slits[0].data.shape)
+
+    center = im.slits[0].data.shape[0] // 2
+    im.slits[0].data[:] = 0.0
+    im.slits[0].data[center - 2:center + 2, :] = new_values[center - 2:center + 2, :]
+
+    # first pass: create a reference output WCS with a custom pixel scale
+    result = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
+
+    # make sure results are nontrivial
+    data1 = result.slits[0].data
+    assert not np.all(np.isnan(data1))
+
+    # save the wcs from the output
+    refwcs = str(tmp_path / "resample_refwcs.asdf")
+    asdf.AsdfFile({"wcs": result.slits[0].meta.wcs}).write_to(tmp_path / refwcs)
+
+    # run again, this time using the created WCS as input
+    result = ResampleSpecStep.call(im, output_wcs=refwcs)
+
+    data2 = result.slits[0].data
+    assert not np.all(np.isnan(data2))
+
+    # check output data against first pass
+    assert data1.shape == data2.shape
+    assert np.allclose(data1, data2, equal_nan=True, rtol=1e-4)
+
+    # make sure flux is conserved: sum over spatial dimension
+    # should be same in input and output
+    # (assuming inputs are in flux density units)
+    input_sum = np.nanmean(np.nansum(im.slits[0].data, axis=0))
+    output_sum_1 = np.nanmean(np.nansum(data1, axis=0))
+    output_sum_2 = np.nanmean(np.nansum(data2, axis=0))
+    assert np.allclose(input_sum, output_sum_1, rtol=0.005)
+    assert np.allclose(input_sum, output_sum_2, rtol=0.005)
+
+
 @pytest.mark.parametrize('ratio', [1.3, 1])
 def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
