@@ -30,7 +30,7 @@ class ResampleSpecStep(Step):
 
     spec = """
         pixfrac = float(min=0.0, max=1.0, default=1.0)  # Pixel shrinkage factor
-        kernel = option('square','gaussian','point','turbo','lanczos2','lanczos3',default='square')  # Flux distribution kernel
+        kernel = option('square', 'point', default='square')  # Flux distribution kernel
         fillval = string(default='NAN')  # Output value for pixels with no weight or flux
         weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
         pixel_scale_ratio = float(default=1.0)  # Ratio of input to output spatial pixel scale
