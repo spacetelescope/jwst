@@ -3,7 +3,7 @@ from jwst.resample.resample_utils import build_mask
 
 from jwst import datamodels as dm
 
-from .utils import compute_weight_threshold, flag_cr, save_median
+from .utils import compute_weight_threshold, flag_cr_update_model, save_median
 
 import logging
 log = logging.getLogger(__name__)
@@ -19,8 +19,10 @@ def detect_outliers(
     good_bits,
     maskpt,
     rolling_window_width,
-    snr,
-    scale,
+    snr1,
+    snr2,
+    scale1,
+    scale2,
     backg,
     asn_id,
     make_output_path,
@@ -53,11 +55,13 @@ def detect_outliers(
     # no need for blotting, resample is turned off for TSO
     # go straight to outlier detection
     log.info("Flagging outliers")
-    flag_cr(
+    flag_cr_update_model(
         input_model,
         medians,
-        snr,
-        scale,
+        snr1,
+        snr2,
+        scale1,
+        scale2,
         backg,
         False,  # force resampling off
     )

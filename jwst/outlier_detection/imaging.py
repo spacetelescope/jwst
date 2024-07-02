@@ -47,8 +47,10 @@ def detect_outliers(
     save_intermediate_results,
     good_bits,
     maskpt,
-    snr,
-    scale,
+    snr1,
+    snr2,
+    scale1,
+    scale2,
     backg,
     resample_data,
     weight_type,
@@ -95,6 +97,7 @@ def detect_outliers(
                 good_bits=good_bits)
 
     # Initialize intermediate products used in the outlier detection
+    # TODO do we need to make this a model?
     with datamodel_open(drizzled_models[0]) as dm0:
         median_model = datamodels.ImageModel(dm0.data.shape)
         median_model.update(dm0)
@@ -117,8 +120,10 @@ def detect_outliers(
     _detect_outliers(
         input_models,
         median_model,
-        snr,
-        scale,
+        snr1,
+        snr2,
+        scale1,
+        scale2,
         backg,
         resample_data,
     )

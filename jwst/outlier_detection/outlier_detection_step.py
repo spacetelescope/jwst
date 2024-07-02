@@ -175,6 +175,9 @@ class OutlierDetectionStep(Step):
                 single_model = input_models
             exptype = single_model.meta.exposure.type
 
+            snr1, snr2 = [float(v) for v in self.snr.split()]
+            scale1, scale2 = [float(v) for v in self.scale.split()]
+
             if is_tso(single_model):
                 tso.detect_outliers(
                     input_models,
@@ -182,8 +185,10 @@ class OutlierDetectionStep(Step):
                     self.good_bits,
                     self.maskpt,
                     self.rolling_window_width,
-                    self.snr,
-                    self.scale,
+                    snr1,
+                    snr2,
+                    scale1,
+                    scale2,
                     self.backg,
                     asn_id,
                     self.make_output_path,
@@ -194,8 +199,10 @@ class OutlierDetectionStep(Step):
                     self.save_intermediate_results,
                     self.good_bits,
                     self.maskpt,
-                    self.snr,
-                    self.scale,
+                    snr1,
+                    snr2,
+                    scale1,
+                    scale2,  # TODO turn off the things that aren't actually used
                     self.backg,
                     False,  # force resampling off but use the same workflow as imaging
                     self.weight_type,
@@ -213,8 +220,10 @@ class OutlierDetectionStep(Step):
                     self.save_intermediate_results,
                     self.good_bits,
                     self.maskpt,
-                    self.snr,
-                    self.scale,
+                    snr1,
+                    snr2,
+                    scale1,
+                    scale2,
                     self.backg,
                     self.resample_data,
                     self.weight_type,
@@ -232,8 +241,10 @@ class OutlierDetectionStep(Step):
                     self.save_intermediate_results,
                     self.good_bits,
                     self.maskpt,
-                    self.snr,
-                    self.scale,
+                    snr1,
+                    snr2,
+                    scale1,
+                    scale2,
                     self.backg,
                     self.resample_data,
                     self.weight_type,

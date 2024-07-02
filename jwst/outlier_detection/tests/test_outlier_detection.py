@@ -8,7 +8,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.utils import flag_cr
+from jwst.outlier_detection.utils import flag_cr_update_model
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
@@ -42,7 +42,8 @@ def sci_blot_image_pair():
     sci.meta.background.subtracted = False
     sci.meta.background.level = background
 
-    sci.data = np.random.normal(loc=background, size=shape, scale=sigma)
+    rng = np.random.default_rng(720)
+    sci.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci.err = np.zeros(shape) + sigma
     sci.var_rnoise += 0
 
@@ -74,7 +75,16 @@ def test_flag_cr(sci_blot_image_pair):
 
     # run flag_cr() which updates in-place.  Copy sci first.
     data_copy = sci.data.copy()
-    flag_cr(sci, blot.data)
+    flag_cr_update_model(
+        sci,
+        blot.data,
+        5.0,
+        4.0,
+        1.2,
+        0.7,
+        0,
+        True,
+    )
 
     # Make sure science data array is unchanged after flag_cr()
     np.testing.assert_allclose(sci.data, data_copy)
@@ -133,7 +143,8 @@ def we_many_sci(
 
     # Replace the FITS-type WCS with an Identity WCS
     sci1.meta.wcs = create_fitswcs(sci1)
-    sci1.data = np.random.normal(loc=background, size=shape, scale=sigma)
+    rng = np.random.default_rng(720)
+    sci1.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci1.err = np.zeros(shape) + sigma
     sci1.data[7, 7] += signal
     # update the noise for this source to include the photon/measurement noise
@@ -149,7 +160,7 @@ def we_many_sci(
     all_sci = [sci1]
     for i in range(numsci - 1):
         tsci = sci1.copy()
-        tsci.data = np.random.normal(loc=background, size=shape, scale=sigma)
+        tsci.data = rng.normal(loc=background, size=shape, scale=sigma)
         # Add a source in the center
         tsci.data[7, 7] += signal
         tsci.meta.filename = f"foo{i + 2}_cal.fits"
@@ -171,6 +182,9 @@ def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
     pristine = container.copy()
     result = OutlierDetectionStep.call(container)
 
+    # FIXME this test doesn't work as intended as there are no
+    # outliers so the input (even if it was modified, which it is)
+    # would not appear different from the "pristine" data
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
         np.testing.assert_allclose(image.data, uncorrected.data)

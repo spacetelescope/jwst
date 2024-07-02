@@ -23,12 +23,14 @@ DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
 
+# TODO fileio
 def _remove_file(fn):
     if isinstance(fn, str) and os.path.isfile(fn):
         os.remove(fn)
         log.info(f"Removing file {fn}")
 
 
+# TODO stcal
 def compute_weight_threshold(weight, maskpt):
     '''
     Compute the weight threshold for a single image or cube.
@@ -99,6 +101,7 @@ def compute_weight_threshold_container(resampled_models, maskpt):
     return weight_thresholds
 
 
+# TODO stcal as a "median computer"
 def create_median(resampled_models, maskpt):
     """Create a median image from the singly resampled images.
     """
@@ -142,6 +145,7 @@ def create_median(resampled_models, maskpt):
     return median_image
 
 
+# TODO stcal utils
 def _abs_deriv(array):
     """Take the absolute derivate of a numpy array."""
     tmp = np.zeros(array.shape, dtype=np.float64)
@@ -160,6 +164,7 @@ def _abs_deriv(array):
     return out
 
 
+# TODO stcal utils
 def _absolute_subtract(array, tmp, out):
     tmp = np.abs(array - tmp)
     out = np.maximum(tmp, out)
@@ -167,8 +172,18 @@ def _absolute_subtract(array, tmp, out):
     return tmp, out
 
 
-def flag_cr(sci_image, blot_data, snr="5.0 4.0", scale="1.2 0.7", backg=0,
-            resample_data=True):
+# TODO stcal utils
+def flag_cr(
+    sci_data,
+    sci_err,
+    blot_data,
+    snr1,
+    snr2,
+    scale1,
+    scale2,
+    backg,
+    resample_data,
+):
     """Masks outliers in science image by updating DQ in-place
 
     Mask blemishes in dithered data by comparing a science image
@@ -176,6 +191,9 @@ def flag_cr(sci_image, blot_data, snr="5.0 4.0", scale="1.2 0.7", backg=0,
 
     Parameters
     ----------
+
+    FIXME: update these
+
     sci_image : ~jwst.datamodels.ImageModel
         the science data. Can also accept a CubeModel, but only if
         resample_data is False
@@ -204,28 +222,12 @@ def flag_cr(sci_image, blot_data, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     However, this is not currently needed, as CubeModels are only passed in for
     TSO data, where resampling is always False.
     """
-    snr1, snr2 = [float(val) for val in snr.split()]
-    scale1, scale2 = [float(val) for val in scale.split()]
-
-    # Get background level of science data if it has not been subtracted, so it
-    # can be added into the level of the blotted data, which has been
-    # background-subtracted
-    if (sci_image.meta.background.subtracted is False and
-            sci_image.meta.background.level is not None):
-        subtracted_background = sci_image.meta.background.level
-        log.debug(f"Adding background level {subtracted_background} to blotted image")
-    else:
-        # No subtracted background.  Allow user-set value, which defaults to 0
-        subtracted_background = backg
-
-    sci_data = sci_image.data
-    err_data = np.nan_to_num(sci_image.err)
+    err_data = np.nan_to_num(sci_err)
 
     # create the outlier mask
     if resample_data:  # dithered outlier detection
         blot_deriv = _abs_deriv(blot_data)
-        blot_data += subtracted_background
-        diff_noise = np.abs(sci_data - blot_data)
+        diff_noise = np.abs(sci_data - blot_data - backg)
 
         # Create a boolean mask based on a scaled version of
         # the derivative image (dealing with interpolating issues?)
@@ -252,31 +254,15 @@ def flag_cr(sci_image, blot_data, snr="5.0 4.0", scale="1.2 0.7", backg=0,
         # err_data includes all noise sources (photon, read, and flat for baseline)
         cr_mask = np.greater(diff_noise, snr1 * err_data)
 
-    # Count existing DO_NOT_USE pixels
-    count_existing = np.count_nonzero(sci_image.dq & DO_NOT_USE)
-
-    # Update the DQ array in the input image.
-    # FIXME (or really "fixed") for a converted cube this used to overwrite
-    # the dq "view" of the cube with a new dq array. This broke the link
-    # between the converted ImageModel.dq and the original CubeModel.dq
-    # which required extra work at the end of outlier detection to update
-    # the cube. By modifying dq in-place we automatically update the cube.
-    # I put this as a FIXME because this comment can be removed when
-    # we don't convert cubes.
-    sci_image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
-
-    # Report number (and percent) of new DO_NOT_USE pixels found
-    count_outlier = np.count_nonzero(sci_image.dq & DO_NOT_USE)
-    count_added = count_outlier - count_existing
-    percent_cr = count_added / sci_image.dq.size * 100
-    log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
+    return cr_mask
 
 
+# TODO can this be model-independent?
 # FIXME (or fixed) interp and sinscl were "options" only when provided
 # as part of the step spec (which becomes outlierpars). As neither was
 # in the spec (and providing unknown arguments causes an error), these
 # were never configurable and always defaulted to linear and 1.0
-def gwcs_blot(median_model, blot_img):
+def gwcs_blot(median_data, median_wcs, blot_data, blot_wcs, pix_ratio):
     """
     Resample the output/resampled image to recreate an input image based on
     the input image's world coordinate system
@@ -288,47 +274,103 @@ def gwcs_blot(median_model, blot_img):
     blot_img : datamodel
         Datamodel containing header and WCS to define the 'blotted' image
     """
-    blot_wcs = blot_img.meta.wcs
-
     # Compute the mapping between the input and output pixel coordinates
-    pixmap = calc_gwcs_pixmap(blot_wcs, median_model.meta.wcs, blot_img.data.shape)
+    pixmap = calc_gwcs_pixmap(blot_wcs, median_wcs, blot_data.shape)
     log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
-    log.debug("Sci shape: {}".format(blot_img.data.shape))
+    log.debug("Sci shape: {}".format(blot_data.shape))
+    log.info('Blotting {} <-- {}'.format(blot_data.shape, median_data.shape))
 
-    if 'SPECTRAL' not in blot_img.meta.wcs.output_frame.axes_type:
-        input_pixflux_area = blot_img.meta.photometry.pixelarea_steradians
-        input_pixel_area = compute_image_pixel_area(blot_img.meta.wcs)
-        pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
-    else:
-        pix_ratio = 1.0
-    log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
-
-    outsci = np.zeros(blot_img.shape, dtype=np.float32)
+    outsci = np.zeros(blot_data.shape, dtype=np.float32)
 
     # Currently tblot cannot handle nans in the pixmap, so we need to give some
     # other value.  -1 is not optimal and may have side effects.  But this is
     # what we've been doing up until now, so more investigation is needed
     # before a change is made.  Preferably, fix tblot in drizzle.
     pixmap[np.isnan(pixmap)] = -1
-    tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
+    tblot(median_data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
           interp='linear', exptime=1.0, misval=0.0, sinscl=1.0)
 
     return outsci
 
 
-def _detect_outliers(input_models, median_model, snr="5.0 4.0", scale="1.2 0.7", backg=0, resample_data=True):
+def _detect_outliers(
+    input_models,
+    median_model,
+    snr1,
+    snr2,
+    scale1,
+    scale2,
+    backg,
+    resample_data,
+):
     for image in input_models:
         if resample_data:
-            blot = gwcs_blot(median_model, image)
+            if 'SPECTRAL' not in image.meta.wcs.output_frame.axes_type:
+                input_pixflux_area = image.meta.photometry.pixelarea_steradians
+                input_pixel_area = compute_image_pixel_area(image.meta.wcs)
+                pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
+            else:
+                pix_ratio = 1.0
+
+            blot = gwcs_blot(median_model.data, median_model.meta.wcs, image.data, image.meta.wcs, pix_ratio)
         else:
             blot = median_model.data
-        # previous versions of the code generated all of the blot models and wrote
-        # them to disk. Now the code generates the blot model(s) only when needed
-        # and no longer needs to write them to disk. We could re-introduce saving
-        # of blot models here.
-        flag_cr(image, blot, snr, scale, backg, resample_data)
+
+        # dq flags will be updated in-place
+        flag_cr_update_model(image, blot, snr1, snr2, scale1, scale2, backg, resample_data)
 
 
+def flag_cr_update_model(
+    image,
+    blot,
+    snr1,
+    snr2,
+    scale1,
+    scale2,
+    backg,
+    resample_data,
+):
+    # previous versions of the code generated all of the blot models and wrote
+    # them to disk. Now the code generates the blot model(s) only when needed
+    # and no longer needs to write them to disk. We could re-introduce saving
+    # of blot models here.
+
+    # If the datamodel has a measured background that has not been subtracted
+    # use it instead of the user provided backg.
+    # Get background level of science data if it has not been subtracted, so it
+    # can be added into the level of the blotted data, which has been
+    # background-subtracted
+    if (image.meta.background.subtracted is False and
+            image.meta.background.level is not None):
+        backg = image.meta.background.level
+        log.debug(f"Adding background level {backg} to blotted image")
+
+    cr_mask = flag_cr(image.data, image.err, blot, snr1, snr2, scale1, scale2, backg, resample_data)
+
+    # TODO is it necessary to do all this math for 1 possible log message?
+    # sould a count of flagged pixels in the mask be a suitable replacement?
+    # Count existing DO_NOT_USE pixels
+    count_existing = np.count_nonzero(image.dq & DO_NOT_USE)
+
+    # FIXME (or really "fixed") for a converted cube this used to overwrite
+    # the dq "view" of the cube with a new dq array. This broke the link
+    # between the converted ImageModel.dq and the original CubeModel.dq
+    # which required extra work at the end of outlier detection to update
+    # the cube. By modifying dq in-place we automatically update the cube.
+    # I put this as a FIXME because this comment can be removed when
+    # we don't convert cubes.
+    image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
+
+    # Report number (and percent) of new DO_NOT_USE pixels found
+    count_outlier = np.count_nonzero(image.dq & DO_NOT_USE)
+    count_added = count_outlier - count_existing
+    percent_cr = count_added / image.dq.size * 100
+    log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
+
+
+
+
+# TODO fileio
 def save_median(median_model, make_output_path, asn_id=None):
     '''
     Save median if requested by user
@@ -350,6 +392,7 @@ def save_median(median_model, make_output_path, asn_id=None):
     log.info(f"Saved model in {median_model_output_path}")
 
 
+# TODO fileio
 def _convert_inputs(inputs, good_bits, weight_type):
     """Convert input into datamodel required for processing.
 
@@ -377,4 +420,3 @@ def _convert_inputs(inputs, good_bits, weight_type):
                                       good_bits=good_bits)
         input_models.append(image)
     return input_models
-
