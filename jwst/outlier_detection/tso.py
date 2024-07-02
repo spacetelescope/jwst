@@ -3,7 +3,8 @@ from jwst.resample.resample_utils import build_mask
 
 from jwst import datamodels as dm
 
-from .utils import compute_weight_threshold, flag_cr_update_model, save_median
+from .utils import compute_weight_threshold, flag_cr_update_model
+from ._fileio import save_median
 
 import logging
 log = logging.getLogger(__name__)

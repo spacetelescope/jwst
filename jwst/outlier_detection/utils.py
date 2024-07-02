@@ -24,13 +24,6 @@ DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
 
-# TODO fileio
-def _remove_file(fn):
-    if isinstance(fn, str) and os.path.isfile(fn):
-        os.remove(fn)
-        log.info(f"Removing file {fn}")
-
-
 # TODO stcal
 def compute_weight_threshold(weight, maskpt):
     '''
@@ -64,42 +57,6 @@ def compute_weight_threshold(weight, maskpt):
     # Mask pixels where weight falls below maskpt percent
     weight_threshold = mean_weight * maskpt
     return weight_threshold
-
-
-def compute_weight_threshold_container(resampled_models, maskpt):
-    '''
-    Compute weight means without keeping datamodels for each input open
-
-    Parameters
-    ----------
-    resampled_models : ~jwst.datamodels.ModelContainer
-        The input data models.
-
-    maskpt : float
-        The percentage of the mean weight to use as a threshold for masking.
-
-    Returns
-    -------
-    list
-        The weight thresholds for each integration.
-    '''
-
-    # Start by ensuring that the ModelContainer does NOT open and keep each datamodel
-    ropen_orig = resampled_models._return_open
-    resampled_models._return_open = True
-    # keep track of resulting computation for each input resampled datamodel
-    weight_thresholds = []
-    # For each model, compute the bad-pixel threshold from the weight arrays
-    for resampled in resampled_models:
-        weight = resampled.wht
-        weight_threshold = compute_weight_threshold(weight, maskpt)
-        weight_thresholds.append(weight_threshold)
-        # close and delete the model, just to explicitly try to keep the memory as clean as possible
-        resampled.close()
-        del resampled
-    # Reset ModelContainer attribute to original value
-    resampled_models._return_open = ropen_orig
-    return weight_thresholds
 
 
 # TODO stcal as a "median computer"
@@ -258,7 +215,7 @@ def flag_cr(
     return cr_mask
 
 
-# TODO can this be model-independent?
+# TODO stcal? (would require moving calc_gwcs_pixmap)
 # FIXME (or fixed) interp and sinscl were "options" only when provided
 # as part of the step spec (which becomes outlierpars). As neither was
 # in the spec (and providing unknown arguments causes an error), these
@@ -292,6 +249,42 @@ def gwcs_blot(median_data, median_wcs, blot_data, blot_wcs, pix_ratio):
           interp='linear', exptime=1.0, misval=0.0, sinscl=1.0)
 
     return outsci
+
+
+def compute_weight_threshold_container(resampled_models, maskpt):
+    '''
+    Compute weight means without keeping datamodels for each input open
+
+    Parameters
+    ----------
+    resampled_models : ~jwst.datamodels.ModelContainer
+        The input data models.
+
+    maskpt : float
+        The percentage of the mean weight to use as a threshold for masking.
+
+    Returns
+    -------
+    list
+        The weight thresholds for each integration.
+    '''
+
+    # Start by ensuring that the ModelContainer does NOT open and keep each datamodel
+    ropen_orig = resampled_models._return_open
+    resampled_models._return_open = True
+    # keep track of resulting computation for each input resampled datamodel
+    weight_thresholds = []
+    # For each model, compute the bad-pixel threshold from the weight arrays
+    for resampled in resampled_models:
+        weight = resampled.wht
+        weight_threshold = compute_weight_threshold(weight, maskpt)
+        weight_thresholds.append(weight_threshold)
+        # close and delete the model, just to explicitly try to keep the memory as clean as possible
+        resampled.close()
+        del resampled
+    # Reset ModelContainer attribute to original value
+    resampled_models._return_open = ropen_orig
+    return weight_thresholds
 
 
 def _detect_outliers(
@@ -370,31 +363,6 @@ def flag_cr_update_model(
     log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
 
 
-
-
-# TODO fileio
-def save_median(median_model, make_output_path, asn_id=None):
-    '''
-    Save median if requested by user
-
-    Parameters
-    ----------
-    median_model : ~jwst.datamodels.ImageModel
-        The median ImageModel or CubeModel to save
-    '''
-    default_suffix = "_outlier_i2d.fits"
-    if asn_id is None:
-        suffix_to_remove = default_suffix
-    else:
-        suffix_to_remove = f"_{asn_id}{default_suffix}"
-    median_model_output_path = make_output_path(
-        basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
-        suffix='median')
-    median_model.save(median_model_output_path)
-    log.info(f"Saved model in {median_model_output_path}")
-
-
-# TODO fileio
 def _convert_inputs(inputs, good_bits, weight_type):
     """Convert input into datamodel required for processing.
 

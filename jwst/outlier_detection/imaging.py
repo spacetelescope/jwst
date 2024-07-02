@@ -33,7 +33,8 @@ from stdatamodels.jwst import datamodels
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight
 
-from .utils import _convert_inputs, _detect_outliers, _remove_file, create_median, save_median
+from .utils import _convert_inputs, _detect_outliers, create_median
+from ._fileio import remove_file, save_median
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -119,7 +120,7 @@ def detect_outliers(
         # were written to disk, remove them
         if not in_memory:
             for fn in drizzled_models._models:
-                _remove_file(fn)
+                remove_file(fn)
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image

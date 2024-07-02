@@ -24,7 +24,8 @@ This routine performs the following operations::
 from stdatamodels.jwst import datamodels
 
 from ..resample import resample_spec, resample_utils
-from .utils import _convert_inputs, _detect_outliers, _remove_file, create_median
+from .utils import _convert_inputs, _detect_outliers, create_median
+from ._fileio import remove_file
 
 import logging
 log = logging.getLogger(__name__)
@@ -113,7 +114,7 @@ def detect_outliers(
         # were written to disk, remove them
         if not in_memory:
             for fn in drizzled_models._models:
-                _remove_file(fn)
+                remove_file(fn)
                 log.info(f"Removing file {fn}")
 
     # Perform outlier detection using statistical comparisons between

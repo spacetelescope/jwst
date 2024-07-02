@@ -202,7 +202,7 @@ class OutlierDetectionStep(Step):
                     snr1,
                     snr2,
                     scale1,
-                    scale2,  # TODO turn off the things that aren't actually used
+                    scale2,
                     self.backg,
                     False,  # force resampling off but use the same workflow as imaging
                     self.weight_type,
