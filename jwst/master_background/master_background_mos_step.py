@@ -1,6 +1,6 @@
 """Master Background Pipeline for applying Master Background to NIRSpec MOS data"""
 from stpipe.step import preserve_step_pars
-from jwst.stpipe import record_step_status, query_step_status
+from jwst.stpipe import record_step_status
 
 from stdatamodels.jwst import datamodels
 
@@ -108,8 +108,6 @@ class MasterBackgroundMosStep(Pipeline):
             # UNLESS forcing is enacted.
             if not self.force_subtract and \
                'COMPLETE' in [data_model.meta.cal_step.back_sub, data_model.meta.cal_step.master_background]:
-                              #[query_step_status(data_model, "back_sub"), \
-                              #query_step_status(data_model, "master_background")]:
                 self.log.info('Background subtraction has already occurred. Skipping.')
                 record_step_status(data, 'master_background', success=False)
                 return data
