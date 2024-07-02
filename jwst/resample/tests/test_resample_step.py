@@ -7,9 +7,10 @@ import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_fiducial, compute_scale
+from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample import compute_image_pixel_area
@@ -321,6 +322,35 @@ def nirspec_cal(nirspec_rate):
 
 
 @pytest.fixture
+def nirspec_cal_pair(nirspec_rate):
+    # copy the rate model to make files with different filters
+    rate1 = nirspec_rate
+    rate1.meta.instrument.grating = 'G140H'
+    rate1.meta.instrument.filter = 'F070LP'
+    rate2 = nirspec_rate.copy()
+    rate2.meta.instrument.grating = 'G140H'
+    rate2.meta.instrument.filter = 'F100LP'
+
+    im1 = AssignWcsStep.call(nirspec_rate)
+    im2 = AssignWcsStep.call(rate2)
+
+    # Since the ra_targ, and dec_targ are flux-weighted, we need non-zero
+    # flux values.
+    im1.data += 1.0
+    im2.data += 1.0
+
+    im1 = Extract2dStep.call(im1)
+    im2 = Extract2dStep.call(im2)
+    for slit in im1.slits:
+        _set_photom_kwd(slit)
+    for slit in im2.slits:
+        _set_photom_kwd(slit)
+    yield im1, im2
+    im1.close()
+    im2.close()
+
+
+@pytest.fixture
 def nirspec_lamp(nirspec_rate):
     nirspec_rate.meta.exposure.type = 'NRS_LAMP'
     nirspec_rate.meta.instrument.lamp_mode = 'FIXEDSLIT'
@@ -601,13 +631,56 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
     grid = grid_from_bounding_box(im2.meta.wcs.bounding_box)
     ra, dec, lam = im2.meta.wcs(*grid)
     x, y = output_wcs.invert(ra, dec, lam)
-
-    # This currently fails, as we see a slight offset
-    # assert (x > 0).all()
+    nn = ~(np.isnan(x) | np.isnan(y))
+    assert np.sum(nn) > 0
+    assert np.all(x[nn] > -1)
 
     # Make sure the output slit size is larger than the input slit size
     # for this nodded data
     assert output_wcs.array_shape[1] > ra.shape[1]
+
+
+def test_build_nirspec_output_wcs(nirspec_cal_pair):
+    im1, im2 = nirspec_cal_pair
+    containers = multislit_to_container([im1, im2])
+    driz = ResampleSpecData(containers['1'])
+    output_wcs = driz.build_nirspec_output_wcs()
+
+    # Make sure that all slit values in the input images have a
+    # location in the output frame, in both RA/Dec and slit units
+    output_s2d = output_wcs.get_transform('slit_frame', 'detector')
+    for im in [im1, im2]:
+        grid = grid_from_bounding_box(im.slits[0].meta.wcs.bounding_box)
+
+        # check slit values
+        input_d2s = im.slits[0].meta.wcs.get_transform('detector', 'slit_frame')
+        sx, sy, lam = input_d2s(*grid)
+        x, y = output_s2d(np.full_like(sy, 0), sy, lam * 1e6)
+        nn = ~(np.isnan(x) | np.isnan(y))
+        assert np.sum(nn) > 0
+        assert np.all(y[nn] > -1)
+
+        # check RA, Dec, lam
+        ra, dec, lam = im.slits[0].meta.wcs(*grid)
+        x, y = output_wcs.invert(ra, dec, lam)
+        nn = ~(np.isnan(x) | np.isnan(y))
+        assert np.sum(nn) > 0
+        assert np.all(y[nn] > -1)
+
+    # Make a WCS for each input individually
+    containers = multislit_to_container([im1])
+    driz = ResampleSpecData(containers['1'])
+    compare_wcs_1 = driz.build_nirspec_output_wcs()
+
+    containers = multislit_to_container([im2])
+    driz = ResampleSpecData(containers['1'])
+    compare_wcs_2 = driz.build_nirspec_output_wcs()
+
+    # The output shape should be the larger of the two
+    assert output_wcs.array_shape[0] == max(
+        compare_wcs_1.array_shape[0], compare_wcs_2.array_shape[0])
+    assert output_wcs.array_shape[1] == max(
+        compare_wcs_1.array_shape[1], compare_wcs_2.array_shape[1])
 
 
 def test_wcs_keywords(nircam_rate):
