@@ -3,10 +3,11 @@ __all__ = ["ResampleSpecStep"]
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
-from jwst.datamodels import ModelContainer
-from . import resample_spec, ResampleStep
+from . import resample_spec, resample_utils
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
+from ..stpipe import Step
+from jwst.datamodels import ModelContainer
 from jwst.lib.wcs_utils import get_wavelengths
 
 
@@ -14,7 +15,7 @@ from jwst.lib.wcs_utils import get_wavelengths
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
 
-class ResampleSpecStep(ResampleStep):
+class ResampleSpecStep(Step):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the
     drizzle algorithm.
@@ -26,6 +27,19 @@ class ResampleSpecStep(ResampleStep):
     """
 
     class_alias = "resample_spec"
+
+    spec = """
+        pixfrac = float(min=0.0, max=1.0, default=1.0)  # Pixel shrinkage factor
+        kernel = option('square','gaussian','point','turbo','lanczos2','lanczos3',default='square')  # Flux distribution kernel
+        fillval = string(default='NAN')  # Output value for pixels with no weight or flux
+        weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
+        pixel_scale_ratio = float(default=1.0)  # Ratio of input to output spatial pixel scale
+        pixel_scale = float(default=None)  # Spatial pixel scale in arcsec
+        output_wcs = string(default='')  # Custom output WCS
+        single = boolean(default=False)  # Resample each input to its own output grid
+        blendheaders = boolean(default=True)  # Blend metadata from inputs into output
+        in_memory = boolean(default=True)  # Keep images in memory
+    """
 
     def process(self, input):
         self.wht_type = self.weight_type
@@ -139,6 +153,33 @@ class ResampleSpecStep(ResampleStep):
         result.meta.resample.pixfrac = self.pixfrac
 
         return result
+
+    def get_drizpars(self):
+        """
+        Load all drizzle-related parameter values into kwargs list.
+        """
+        # Define the keys pulled from step parameters
+        kwargs = dict(
+            pixfrac=self.pixfrac,
+            kernel=self.kernel,
+            fillval=self.fillval,
+            wht_type=self.weight_type,
+            good_bits=GOOD_BITS,
+            single=self.single,
+            blendheaders=self.blendheaders,
+            in_memory=self.in_memory
+        )
+
+        # Custom output WCS parameters
+        kwargs['output_wcs'] = resample_utils.load_custom_wcs(self.output_wcs)
+        kwargs['pscale'] = self.pixel_scale
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+
+        # Report values to processing log
+        for k, v in kwargs.items():
+            self.log.debug('   {}={}'.format(k, v))
+
+        return kwargs
 
     def _process_slit(self, input_models):
         """
