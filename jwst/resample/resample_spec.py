@@ -252,10 +252,9 @@ class ResampleSpecData(ResampleData):
         weights = np.ma.filled(weights, fill_value=0.0)
         if not np.all(weights == 0.0):
             wmean_s = np.average(s[good], weights=weights[good])
-            wmean_l = np.average(lam[good], weights=weights[good])
         else:
             wmean_s = np.nanmean(s)
-            wmean_l = np.nanmean(lam)
+        wmean_l = np.nanmean(lam)
 
         # Transform the weighted means into target RA/Dec
         # (at the center of the slit in x)
@@ -313,6 +312,14 @@ class ResampleSpecData(ResampleData):
 
         # Image size in spatial dimension from the maximum slope
         ny = int(np.ceil(diff / pix_to_tan_slope))
+
+        # Correct the intercept for the integer pixel size
+        # to make sure the data is centered in the array
+        offset = ny * pix_to_tan_slope - diff
+        if swap_xy:
+            pix_to_ytan.intercept += offset
+        else:
+            pix_to_xtan.intercept += offset
 
         # Now set up the final transforms
 
