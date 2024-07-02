@@ -246,26 +246,31 @@ class ResampleData:
                 img = datamodels.open(img)
 
                 input_pixflux_area = img.meta.photometry.pixelarea_steradians
-                if (input_pixflux_area and
-                        'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                    img.meta.wcs.array_shape = img.data.shape
-                    input_pixel_area = compute_image_pixel_area(img.meta.wcs)
-                    if input_pixel_area is None:
-                        raise ValueError(
-                            "Unable to compute input pixel area from WCS of input "
-                            f"image {repr(img.meta.filename)}."
-                        )
-                    if self.input_pixscale0 is None:
-                        self.input_pixscale0 = np.rad2deg(
-                            np.sqrt(input_pixel_area)
-                        )
-                        if self._recalc_pscale_ratio:
-                            self.pscale_ratio = self.pscale / self.input_pixscale0
+                if input_pixflux_area:
+                    if 'SPECTRAL' in img.meta.wcs.output_frame.axes_type:
+                        # Use the nominal area as is
+                        input_pixel_area = input_pixflux_area
+
+                        # If input image is in flux density units, correct the
+                        # flux for the user-specified change to the spatial dimension
+                        if 'sr' not in str(img.meta.bunit_data).lower():
+                            input_pixel_area *= self.pscale_ratio
+                    else:
+                        img.meta.wcs.array_shape = img.data.shape
+                        input_pixel_area = compute_image_pixel_area(img.meta.wcs)
+                        if input_pixel_area is None:
+                            raise ValueError(
+                                "Unable to compute input pixel area from WCS of input "
+                                f"image {repr(img.meta.filename)}."
+                            )
+                        if self.input_pixscale0 is None:
+                            self.input_pixscale0 = np.rad2deg(
+                                np.sqrt(input_pixel_area)
+                            )
+                            if self._recalc_pscale_ratio:
+                                self.pscale_ratio = self.pscale / self.input_pixscale0
                     iscale = np.sqrt(input_pixflux_area / input_pixel_area)
                 else:
-                    # Note: spectral scaling is only needed if the pixel ratio
-                    # is not set to 1.0, which is not supported for
-                    # outlier detection.
                     iscale = 1.0
                 log.debug(f'Using intensity scale iscale={iscale}')
 
