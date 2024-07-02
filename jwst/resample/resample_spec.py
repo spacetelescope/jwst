@@ -298,7 +298,7 @@ class ResampleSpecData(ResampleData):
         log.debug(f'Swap xy: {swap_xy}')
 
         # Get output wavelengths from all data
-        ref_lam = _find_nirspec_output_sampling_wavelengths(all_wcs, targ_ra, targ_dec)
+        ref_lam = _find_nirspec_output_sampling_wavelengths(all_wcs)
         n_lam = len(ref_lam)
         if not n_lam:
             raise ValueError("Not enough data to construct output WCS.")
@@ -799,33 +799,14 @@ def find_dispersion_axis(refmodel):
     return dispaxis - 1
 
 
-def _spherical_sep(j, k, wcs, xyz_ref):
-    """
-    Objective function that computes the angle between two points
-    on the sphere for small separations.
-    """
-    ra, dec, _ = wcs(k, j, with_bounding_box=False)
-    return 1 - np.dot(_S2C(ra, dec), xyz_ref)
-
-
-def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode='median'):
-    assert mode in ['median', 'fast', 'accurate']
+def _find_nirspec_output_sampling_wavelengths(wcs_list):
     refwcs = wcs_list[0]
     bbox = refwcs.bounding_box
 
     grid = wcstools.grid_from_bounding_box(bbox)
     ra, dec, lambdas = refwcs(*grid)
 
-    if mode == 'median':
-        ref_lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
-    else:
-        ref_lam, _, _ = _find_nirspec_sampling_wavelengths(
-            refwcs,
-            targ_ra, targ_dec,
-            ra, dec,
-            fast=mode == 'fast'
-        )
-
+    ref_lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
     lam1 = ref_lam[0]
     lam2 = ref_lam[-1]
 
@@ -836,15 +817,7 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
         bbox = w.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
         ra, dec, lambdas = w(*grid)
-        if mode == 'median':
-            lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
-        else:
-            lam, _, _ = _find_nirspec_sampling_wavelengths(
-                w,
-                targ_ra, targ_dec,
-                ra, dec,
-                fast=mode == 'fast'
-            )
+        lam = sorted(np.nanmedian(lambdas[:, np.any(np.isfinite(lambdas), axis=0)], axis=0))
         image_lam.append((lam, np.min(lam), np.max(lam)))
         min_delta = min(min_delta, np.fabs(np.ediff1d(ref_lam).min()))
 
@@ -891,126 +864,6 @@ def _find_nirspec_output_sampling_wavelengths(wcs_list, targ_ra, targ_dec, mode=
         del ref_lam[i]
 
     return ref_lam
-
-
-def _find_nirspec_sampling_wavelengths(wcs, ra0, dec0, ra, dec, fast=True):
-    xdet = []
-    lms = []
-    ys = []
-    skipped = []
-
-    eps = 10 * np.finfo(float).eps
-
-    xyz_ref = _S2C(ra0, dec0)
-    ymax, xmax = ra.shape
-    good = np.logical_and(np.isfinite(ra), np.isfinite(dec))
-
-    j0 = 0
-
-    for k in range(xmax):
-        if not any(good[:, k]):
-            if xdet:
-                skipped.append(k)
-            continue
-
-        idx = np.flatnonzero(good[:, k]).tolist()
-        if j0 in idx:
-            i = idx.index(j0)
-        else:
-            i = 0
-            j0 = idx[0]
-
-        dmin = _spherical_sep(j0, k, wcs, xyz_ref)
-
-        for j in idx[i + 1:]:
-            d = _spherical_sep(j, k, wcs, xyz_ref)
-            if d < dmin:
-                dmin = d
-                j0 = j
-            elif d > dmin:
-                break
-
-        for j in idx[max(i - 1, 0):None if i else 0:-1]:
-            d = _spherical_sep(j, k, wcs, xyz_ref)
-            if d < dmin:
-                dmin = d
-                j0 = j
-            elif d > dmin:
-                break
-
-        if j0 == 0 or not good[j0 - 1, k]:
-            j1 = j0 - 0.49999
-        else:
-            j1 = j0 - 0.99999
-
-        if j0 == ymax - 1 or not good[j0 + 1, k]:
-            j2 = j0 + 0.49999
-        else:
-            j2 = j0 + 0.99999
-
-        if fast:
-            # parabolic minimization:
-            f0 = dmin
-            f1 = _spherical_sep(j1, k, wcs, xyz_ref)
-            if not np.isfinite(f1):
-                # give another try with 1/2 step:
-                j1 = 0.5 * (j1 + j0)
-                f1 = _spherical_sep(j1, k, wcs, xyz_ref)
-
-            f2 = _spherical_sep(j2, k, wcs, xyz_ref)
-            if not np.isfinite(f2):
-                # give another try with 1/2 step:
-                j2 = 0.5 * (j2 + j0)
-                f2 = _spherical_sep(j2, k, wcs, xyz_ref)
-
-            if np.isfinite(f1) and np.isfinite(f2):
-                dn = (j0 - j1) * (f0 - f2) - (j0 - j2) * (f0 - f1)
-                if np.abs(dn) < eps:
-                    jmin = j0
-                else:
-                    jmin = j0 - 0.5 * ((j0 - j1)**2 * (f0 - f2) -
-                                       (j0 - j2)**2 * (f0 - f1)) / dn
-                    jmin = max(min(jmin, j2), j1)
-            else:
-                jmin = j0
-
-        else:
-            r = minimize_scalar(
-                _spherical_sep,
-                method='golden',
-                bracket=(j1, j2),
-                args=(k, wcs, xyz_ref),
-                tol=None,
-                options={'maxiter': 10, 'xtol': 1e-2 / (j0 + 1)}
-            )
-            jmin = r['x']
-            if np.isfinite(jmin):
-                jmin = max(min(jmin, j2), j1)
-            else:
-                jmin = j0
-
-        targ_lam = wcs(k, jmin)[-1]
-        if not np.isfinite(targ_lam):
-            targ_lam = wcs(k, j0)[-1]
-
-        if not np.isfinite(targ_lam):
-            if xdet:
-                skipped.append(k)
-            continue
-
-        lms.append(targ_lam)
-        ys.append(jmin)
-        xdet.append(k)
-
-    skipped = [s for s in skipped if s <= xdet[-1]]
-    if skipped and skipped[0] < xdet[-1]:
-        # there are columns with all pixels having invalid world,
-        # coordinates. Fill the gaps using linear interpolation.
-        raise NotImplementedError(
-            "Support for discontinuous sampling was not implemented."
-        )
-
-    return lms, xdet, ys
 
 
 def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
