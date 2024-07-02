@@ -94,6 +94,12 @@ class ResampleSpecData(ResampleData):
         disp_axis = self.input_models[0].meta.wcsinfo.dispersion_direction
         self.input_pixscale0 = compute_spectral_pixel_scale(
             self.input_models[0].meta.wcs, disp_axis=disp_axis)
+        if np.isnan(self.input_pixscale0):
+            log.warning('Input pixel scale could not be determined.')
+            if pscale is not None:
+                log.warning('Input pixel scale setting is not supported '
+                            'without an input pixel scale. Setting pscale=None.')
+                pscale = None
 
         nominal_area = self.input_models[0].meta.photometry.pixelarea_steradians
         if nominal_area is None:
@@ -111,20 +117,30 @@ class ResampleSpecData(ResampleData):
                     # Compare input and output spatial scale to update nominal area
                     output_pscale = compute_spectral_pixel_scale(
                         output_wcs, disp_axis=disp_axis)
-                    log.debug(f'Setting output pixel area from the approximate '
-                              f'output spatial scale: {output_pscale}')
-                    output_pix_area = (output_pscale * nominal_area
-                                       / self.input_pixscale0)
+                    if np.isnan(output_pscale) or np.isnan(self.input_pixscale0):
+                        log.warning('Output pixel scale could not be determined.')
+                        output_pix_area = None
+                    else:
+                        log.debug(f'Setting output pixel area from the approximate '
+                                  f'output spatial scale: {output_pscale}')
+                        output_pix_area = (output_pscale * nominal_area
+                                           / self.input_pixscale0)
                 else:
                     log.warning("Unable to compute output pixel area "
                                 "from 'output_wcs'.")
                     output_pix_area = None
-            else:
+            else:  # pragma: no cover
+                # This clause is not reachable under usual circumstances:
+                # gwcs WCS discards the pixel_area attribute when saved as ASDF
                 log.debug(f'Setting output pixel area from wcs.pixel_area: '
                           f'{output_wcs.pixel_area}')
                 output_pix_area = output_wcs.pixel_area
+
+            # Set the pscale ratio for scaling reasons
             if output_pix_area is not None:
                 self.pscale_ratio = nominal_area / output_pix_area
+            else:
+                self.pscale_ratio = 1.0
         else:
             if pscale is not None and nominal_area is not None:
                 log.info(f'Specified output pixel scale: {pscale} arcsec.')
