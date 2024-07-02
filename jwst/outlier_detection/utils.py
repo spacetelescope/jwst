@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+# flags used in flag_cr_update_model
 DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
@@ -295,7 +296,8 @@ def gwcs_blot(median_data, median_wcs, blot_data, blot_wcs, pix_ratio):
 
 def _detect_outliers(
     input_models,
-    median_model,
+    median_data,
+    median_wcs,
     snr1,
     snr2,
     scale1,
@@ -312,9 +314,9 @@ def _detect_outliers(
             else:
                 pix_ratio = 1.0
 
-            blot = gwcs_blot(median_model.data, median_model.meta.wcs, image.data, image.meta.wcs, pix_ratio)
+            blot = gwcs_blot(median_data, median_wcs, image.data, image.meta.wcs, pix_ratio)
         else:
-            blot = median_model.data
+            blot = median_data
 
         # dq flags will be updated in-place
         flag_cr_update_model(image, blot, snr1, snr2, scale1, scale2, backg, resample_data)

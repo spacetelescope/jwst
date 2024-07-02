@@ -88,22 +88,26 @@ def detect_outliers(
                 weight_type=weight_type,
                 good_bits=good_bits)
 
-    # Initialize intermediate products used in the outlier detection
-    median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
-    median_model.meta = drizzled_models[0].meta
-    median_model.meta.filename = make_output_path(
-        basepath=input_models[0].meta.filename,
-        suffix='median'
-    )
-
     # Perform median combination on set of drizzled mosaics
     # create_median should be called as a method from parent class
-    median_model.data = create_median(drizzled_models, maskpt)
+    median_data = create_median(drizzled_models, maskpt)
+    median_wcs = drizzled_models[0].meta.wcs
 
     if save_intermediate_results:
+        # Initialize intermediate products used in the outlier detection
+        median_model = datamodels.ImageModel(median_data)
+        median_model.meta = drizzled_models[0].meta
+        median_model.meta.filename = make_output_path(
+            basepath=input_models[0].meta.filename,
+            suffix='median'
+        )
+        median_model.data = median_data
+
         log.info("Writing out MEDIAN image to: {}".format(
                  median_model.meta.filename))
         median_model.save(median_model.meta.filename)
+
+        del median_model
     else:
         # since we're not saving intermediate results if the drizzled models
         # were written to disk, remove them
@@ -116,7 +120,8 @@ def detect_outliers(
     # each original input image and its blotted version of the median image
     _detect_outliers(
         input_models,
-        median_model,
+        median_data,
+        median_wcs,
         snr1,
         snr2,
         scale1,
@@ -124,5 +129,3 @@ def detect_outliers(
         backg,
         resample_data,
     )
-
-    del median_model

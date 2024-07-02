@@ -50,7 +50,6 @@ def medfilt(arr, kern_size):
     return np.nanmedian(windows, axis=np.arange(-len(kern_size), 0))
 
 
-# TODO: break up this long function
 def detect_outliers(
     input_models,
     save_intermediate_results,
@@ -100,7 +99,6 @@ def detect_outliers(
                       ifu_second_check,
                       make_output_path)
 
-# TODO: break up this long function
 def flag_outliers(input_models, idet, uq_det, ndet_files,
                   diffaxis, nx, ny,
                   kern_size, threshold_percent,
@@ -258,7 +256,6 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
             input_models[i] = model
 
 
-# TODO move to utils?
 def _find_detector_parameters(input_models):
     """Find the size of data and the axis to form the differences (perpendicular to disaxis) """
 
@@ -270,7 +267,6 @@ def _find_detector_parameters(input_models):
     return (diffaxis, ny, nx)
 
 
-# TODO move to utils?
 def create_optional_results_model(opt_info):
     """
     Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.

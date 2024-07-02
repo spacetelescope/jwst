@@ -67,7 +67,6 @@ def detect_outliers(
     )
 
 
-# TODO move to utils?
 def weight_no_resample(input_model, good_bits):
     """
     give weights to model without resampling
@@ -91,7 +90,6 @@ def weight_no_resample(input_model, good_bits):
     return weighted_cube
 
 
-# TODO move to utils?
 def compute_rolling_median(model: dm.CubeModel, weight_threshold: np.ndarray, w: int=25) -> np.ndarray:
     '''
     Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
@@ -131,7 +129,6 @@ def compute_rolling_median(model: dm.CubeModel, weight_threshold: np.ndarray, w:
     return meds
 
 
-# TODO move to utils?
 def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     """
     Calculate the median of a moving window over the zeroth axis of an N-d array.
