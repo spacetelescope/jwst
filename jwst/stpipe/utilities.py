@@ -35,6 +35,7 @@ import inspect
 import logging
 import os
 import re
+from collections.abc import Sequence
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -51,6 +52,9 @@ NON_STEPS = [
     'SystemCall',
 ]
 
+NOT_SET = "NOT SET"
+COMPLETE = "COMPLETE"
+SKIPPED = "SKIPPED"
 
 def all_steps():
     """List all classes subclassed from Step
@@ -144,3 +148,60 @@ def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
         for file in files:
             if basename_regex.match(file):
                 yield os.path.join(root, file)
+
+
+def record_step_status(datamodel, cal_step, success=True):
+    """Record whether or not a step completed in meta.cal_step
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel` instance
+        This is the datamodel or container of datamodels to modify in place
+
+    cal_step : str
+        The attribute in meta.cal_step for recording the status of the step
+
+    success : bool
+        If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+    """
+    if success:
+        status = COMPLETE
+    else:
+        status = SKIPPED
+
+    if isinstance(datamodel, Sequence):
+        for model in datamodel:
+            model.meta.cal_step._instance[cal_step] = status
+    else:
+        datamodel.meta.cal_step._instance[cal_step] = status
+
+    # TODO: standardize cal_step naming to point to the official step name
+
+
+def query_step_status(datamodel, cal_step):
+    """Query the status of a step in meta.cal_step
+    
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel` or `~jwst.datamodels.ModelContainer` instance
+        The datamodel or container of datamodels to check
+        
+    cal_step : str
+        The attribute in meta.cal_step to check
+    
+    Returns
+    -------
+    status : str
+        The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
+
+    Notes
+    -----
+    In principle, a step could set the COMPLETE status for only some subset 
+    of models, so checking the zeroth model instance may not always be correct.
+    However, this is not currently done in the pipeline. This function should be
+    updated to accommodate that use-case as needed.
+    """
+    if isinstance(datamodel, Sequence):
+        return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
+    else:
+        return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)

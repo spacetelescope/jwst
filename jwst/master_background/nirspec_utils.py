@@ -254,7 +254,8 @@ def is_background_msa_slit(slit):
     bool
         True if the slit is background; False if it is not.
     """
-    if "BKG" in str(slit.source_name).upper():
+    name = str(slit.source_name).upper()
+    if ("BKG" in name) or ("BACKGROUND" in name):
         return True
     else:
         return False

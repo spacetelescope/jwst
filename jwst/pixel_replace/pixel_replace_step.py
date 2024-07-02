@@ -2,6 +2,7 @@
 from functools import partial
 
 from ..stpipe import Step
+from jwst.stpipe import record_step_status
 from .. import datamodels
 from .pixel_replace import PixelReplacement
 
@@ -107,7 +108,7 @@ class PixelReplaceStep(Step):
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
                         output_model[i] = replacement.output
-                        self.record_step_status(output_model[i], 'pixel_replace', success=True)
+                        record_step_status(output_model[i], 'pixel_replace', success=True)
                 return output_model
             # ________________________________________
             # calewbb_spec2 case - single input model
@@ -117,6 +118,6 @@ class PixelReplaceStep(Step):
                 result = input_model.copy()
                 replacement = PixelReplacement(result, **pars)
                 replacement.replace()
-                self.record_step_status(replacement.output, 'pixel_replace', success=True)
+                record_step_status(replacement.output, 'pixel_replace', success=True)
                 result = replacement.output
                 return result
