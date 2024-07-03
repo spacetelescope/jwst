@@ -34,7 +34,7 @@ dependencies = [
     "scikit-image>=0.19",
     "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
-    "git+https://github.com/emolter/stcal.git@AL-850",
+    "stcal@git+https://github.com/emolter/stcal#AL-850",
     "stdatamodels>=2.0.0,<2.1.0",
     "stpipe>=0.6.0,<0.7.0",
     "stsci.image>=2.3.5",

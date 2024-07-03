@@ -7,7 +7,6 @@ import functools
 import numpy as np
 
 from astropy.coordinates import SkyCoord
-from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
@@ -15,15 +14,13 @@ from astropy.constants import c
 from typing import Union, List
 
 from gwcs import WCS
-from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
+from gwcs.wcstools import grid_from_bounding_box
 from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
 
-from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst.datamodels import WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import GrismObject
 
-from . import pointing
 from ..lib.catalog_utils import SkyObject
 
 
