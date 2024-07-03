@@ -391,6 +391,7 @@ def test_nirspec_lamp_wcs_roundtrip(nirspec_lamp):
         assert_allclose(y, yp, rtol=0, atol=3e-4)
     im.close()
 
+
 def test_miri_wcs_roundtrip(miri_cal):
     im = ResampleSpecStep.call(miri_cal)
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)

@@ -15,14 +15,39 @@ image.
     image.  Available kernels are `square`, `gaussian`, `point`,
     `turbo`, `lanczos2`, and `lanczos3`.
 
+    For spectral data, only the `square` and `point` kernels should be used.
+
 ``--pixel_scale_ratio`` (float, default=1.0)
-    Ratio of input to output pixel scale.  A value of 0.5 means the output
+    Ratio of input to output pixel scale.
+
+    For imaging data, a value of 0.5 means the output
     image would have 4 pixels sampling each input pixel.
+
+    For spectral data, values greater than 1 indicate that the input
+    pixels have a larger spatial scale, so more output pixels will
+    sample the same input pixel.  For example, a value of 2.0
+    means the output image would have 2 pixels sampling each input
+    spatial pixel. Note that this parameter is only applied in the
+    cross-dispersion direction: sampling wavelengths are not affected.
+
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
+
+    .. note::
+        If this parameter is modified for spectral data, the extraction
+        aperture for the :ref:`extract_1d <extract_1d_step>` step must
+        also be modified, since it is specified in pixels.
 
 ``--pixel_scale`` (float, default=None)
     Absolute pixel scale in ``arcsec``. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
+
+    For spectral data, this parameter is only applied in the
+    cross-dispersion direction: sampling wavelengths are not affected.
+
+    .. note::
+        If this parameter is modified for spectral data, the extraction
+        aperture for the :ref:`extract_1d <extract_1d_step>` step must
+        also be modified, since it is specified in pixels.
 
 ``--rotation`` (float, default=None)
     Position angle of output image’s Y-axis relative to North.
@@ -31,19 +56,20 @@ image.
     but will instead be resampled in the default orientation for the camera
     with the x and y axes of the resampled image corresponding
     approximately to the detector axes. Ignored when ``pixel_scale``
-    or ``output_wcs`` are provided.
+    or ``output_wcs`` are provided.  Also ignored for all spectral data.
 
 ``--crpix`` (tuple of float, default=None)
     Position of the reference pixel in the image array in the ``x, y`` order.
     If ``crpix`` is not specified, it will be set to the center of the bounding
     box of the returned WCS object. When supplied from command line, it should
     be a comma-separated list of floats. Ignored when ``output_wcs``
-    is provided.
+    is provided. Also ignored for all spectral data.
 
 ``--crval`` (tuple of float, default=None)
     Right ascension and declination of the reference pixel. Automatically
     computed if not provided. When supplied from command line, it should be a
     comma-separated list of floats. Ignored when ``output_wcs`` is provided.
+    Also ignored for all spectral data.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
@@ -116,6 +142,8 @@ image.
 
     For example, if set to ``0.5``, only resampled images that use less than
     half the available memory can be created.
+
+    This parameter is ignored for spectral data.
 
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during

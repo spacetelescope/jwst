@@ -26,10 +26,12 @@ log.setLevel(logging.DEBUG)
 
 _S2C = SphericalToCartesian()
 
+__all__ = ["ResampleSpecData"]
+
 
 class ResampleSpecData(ResampleData):
     """
-    This is the controlling routine for the resampling process.
+    This is the controlling routine for the resampling process for spectral data.
 
     Notes
     -----
@@ -196,7 +198,37 @@ class ResampleSpecData(ResampleData):
 
     def build_nirspec_output_wcs(self, refmodel=None):
         """
-        Create a spatial/spectral WCS covering footprint of the input
+        Create a spatial/spectral WCS covering the footprint of the input.
+
+        Creates the output frame by linearly fitting RA, Dec along the slit
+        and producing a lookup table to interpolate wavelengths in the
+        dispersion direction.
+
+        For NIRSpec, the output WCS must also provide slit coordinates
+        to support source location in the spectral extraction step. To do so,
+        this step creates a lookup table for virtual slit coordinates,
+        corresponding to the slit y-position at the center of the array
+        in the input reference model.  Slit x-position is set to zero for
+        all pixels.
+
+        Frames available in the output WCS are:
+
+            - `detector`: image x, y
+            - `slit_frame`: slit x, slit y, wavelength
+            - `world`: RA, Dec, wavelength
+
+        Parameters
+        ----------
+        refmodel : `~jwst.datamodels.JwstDataModel`, optional
+            The reference input image from which the fiducial WCS is created.
+            If not specified, the first image in self.input_models. If the
+            first model is empty (all-NaN or all-zero), the first non-empty
+            model is used.
+
+        Returns
+        -------
+        output_wcs : `~gwcs.WCS`
+            A gwcs WCS object defining the output frame WCS.
         """
         all_wcs = [m.meta.wcs for m in self.input_models if m is not refmodel]
         if refmodel:
@@ -440,19 +472,18 @@ class ResampleSpecData(ResampleData):
 
         return min_tan_all, max_tan_all
 
-    def build_interpolated_output_wcs(self, refmodel=None):
+    def build_interpolated_output_wcs(self):
         """
-        Create a spatial/spectral WCS output frame using all the input models
+        Create a spatial/spectral WCS output frame using all the input models.
 
         Creates output frame by linearly fitting RA, Dec along the slit and
         producing a lookup table to interpolate wavelengths in the dispersion
         direction.
 
-        Parameters
-        ----------
-        refmodel : `~jwst.datamodels.JwstDataModel`
-            The reference input image from which the fiducial WCS is created.
-            If not specified, the first image in self.input_models is used.
+        Frames available in the output WCS are:
+
+            - `detector`: image x, y
+            - `world`: RA, Dec, wavelength
 
         Returns
         -------
@@ -704,10 +735,15 @@ class ResampleSpecData(ResampleData):
         producing a lookup table to interpolate wavelengths in the dispersion
         direction.
 
+        Frames available in the output WCS are:
+
+            - `detector`: image x, y
+            - `world`: MSA x, MSA y, wavelength
+
         Returns
         -------
         output_wcs : `~gwcs.WCS` object
-            A gwcs WCS object defining the output frame WCS
+            A gwcs WCS object defining the output frame WCS.
         """
         model = self.input_models[0]
         wcs = model.meta.wcs
