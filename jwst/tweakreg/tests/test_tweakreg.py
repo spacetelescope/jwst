@@ -14,12 +14,14 @@ from stdatamodels.jwst.datamodels import ImageModel
 from jwst.datamodels import ModelContainer
 from jwst.tweakreg import tweakreg_step
 from jwst.tweakreg import tweakreg_catalog
-from jwst.tweakreg.utils import _wcsinfo_from_wcs_transform
+from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
+from stcal.tweakreg import tweakreg as twk
 
 
 BKG_LEVEL = 0.001
 N_EXAMPLE_SOURCES = 21
 N_CUSTOM_SOURCES = 15
+REFCAT = "GAIADR3"
 
 
 @pytest.fixture
@@ -213,6 +215,7 @@ def test_src_confusion_pars(example_input, alignment_type):
     pars = {
         f"{alignment_type}separation": 1.0,
         f"{alignment_type}tolerance": 1.0,
+        "abs_refcat": REFCAT,
     }
     step = tweakreg_step.TweakRegStep(**pars)
     result = step(example_input)
@@ -338,7 +341,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
             raise ValueError("done testing")
         return None
 
-    monkeypatch.setattr(tweakreg_step, "_construct_wcs_corrector", patched_construct_wcs_corrector)
+    monkeypatch.setattr(twk, "construct_wcs_corrector", patched_construct_wcs_corrector)
 
     with pytest.raises(ValueError, match="done testing"):
         step(str(asn_path))
