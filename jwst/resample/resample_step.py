@@ -1,11 +1,14 @@
 import logging
 import re
+from copy import deepcopy
+
+import asdf
 
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 
-from . import resample, resample_utils
+from . import resample
 from ..stpipe import Step
 from ..assign_wcs import util
 
@@ -111,7 +114,30 @@ class ResampleStep(Step):
         return result
 
     @staticmethod
-    def _check_list_pars(vals, name, min_vals=None):
+    def check_list_pars(vals, name, min_vals=None):
+        """
+        Validate step parameters that may take a 2-element list.
+
+        Parameters
+        ----------
+        vals : list or None
+            Values to validate.
+        name : str
+            Parameter name.
+        min_vals : list, optional
+            Minimum allowed values for the parameter. Must
+            have 2 values.
+
+        Returns
+        -------
+        values : list
+            The validated list of values.
+
+        Raises
+        ------
+        ValueError
+            If the values do not have expected values.
+        """
         if vals is None:
             return None
         if len(vals) != 2:
@@ -125,6 +151,55 @@ class ResampleStep(Step):
             return list(vals)
         else:
             raise ValueError(f"Both '{name}' values must be either None or not None.")
+
+    @staticmethod
+    def load_custom_wcs(asdf_wcs_file, output_shape=None):
+        """
+        Load a custom output WCS from an ASDF file.
+
+        Parameters
+        ----------
+        asdf_wcs_file : str
+            Path to an ASDF file containing a GWCS structure.
+        output_shape : tuple of int, optional
+            Array shape for the output data.  If not provided,
+            the custom WCS must specify one of: pixel_shape,
+            array_shape, or bounding_box.
+
+        Returns
+        -------
+        wcs : WCS
+            The output WCS to resample into.
+        """
+        if not asdf_wcs_file:
+            return None
+
+        with asdf.open(asdf_wcs_file) as af:
+            wcs = deepcopy(af.tree["wcs"])
+            wcs.pixel_area = af.tree.get("pixel_area", None)
+            wcs.array_shape = af.tree.get("pixel_shape", None)
+            wcs.array_shape = af.tree.get("array_shape", None)
+
+        if output_shape is not None:
+            wcs.array_shape = output_shape[::-1]
+            wcs.pixel_shape = output_shape
+        elif wcs.pixel_shape is not None:
+            wcs.array_shape = wcs.pixel_shape[::-1]
+        elif wcs.array_shape is not None:
+            wcs.pixel_shape = wcs.array_shape[::-1]
+        elif wcs.bounding_box is not None:
+            wcs.array_shape = tuple(
+                int(axs[1] + 0.5)
+                for axs in wcs.bounding_box.bounding_box(order="C")
+            )
+        else:
+            raise ValueError(
+                "Step argument 'output_shape' is required when custom WCS "
+                "does not have neither of 'array_shape', 'pixel_shape', or "
+                "'bounding_box' attributes set."
+            )
+
+        return wcs
 
     def get_drizpars(self):
         """
@@ -144,17 +219,17 @@ class ResampleStep(Step):
         )
 
         # Custom output WCS parameters.
-        kwargs['output_shape'] = self._check_list_pars(
+        kwargs['output_shape'] = self.check_list_pars(
             self.output_shape,
             'output_shape',
             min_vals=[1, 1]
         )
-        kwargs['output_wcs'] = resample_utils.load_custom_wcs(
+        kwargs['output_wcs'] = self.load_custom_wcs(
             self.output_wcs,
             kwargs['output_shape']
         )
-        kwargs['crpix'] = self._check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self._check_list_pars(self.crval, 'crval')
+        kwargs['crpix'] = self.check_list_pars(self.crpix, 'crpix')
+        kwargs['crval'] = self.check_list_pars(self.crval, 'crval')
         kwargs['rotation'] = self.rotation
         kwargs['pscale'] = self.pixel_scale
         kwargs['pscale_ratio'] = self.pixel_scale_ratio

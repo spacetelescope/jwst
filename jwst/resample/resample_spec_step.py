@@ -3,7 +3,7 @@ __all__ = ["ResampleSpecStep"]
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
-from . import resample_spec, resample_utils
+from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
 from ..stpipe import Step
@@ -33,6 +33,7 @@ class ResampleSpecStep(Step):
         kernel = option('square', 'point', default='square')  # Flux distribution kernel
         fillval = string(default='NAN')  # Output value for pixels with no weight or flux
         weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
+        output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
         pixel_scale_ratio = float(default=1.0)  # Ratio of input to output spatial pixel scale
         pixel_scale = float(default=None)  # Spatial pixel scale in arcsec
         output_wcs = string(default='')  # Custom output WCS
@@ -171,7 +172,13 @@ class ResampleSpecStep(Step):
         )
 
         # Custom output WCS parameters
-        kwargs['output_wcs'] = resample_utils.load_custom_wcs(self.output_wcs)
+        kwargs['output_shape'] = ResampleStep.check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = ResampleStep.load_custom_wcs(
+            self.output_wcs, kwargs['output_shape'])
         kwargs['pscale'] = self.pixel_scale
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
 

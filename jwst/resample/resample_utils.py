@@ -3,9 +3,8 @@ import logging
 import warnings
 
 import numpy as np
-import asdf
-import gwcs
 from astropy import units as u
+import gwcs
 
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
@@ -353,52 +352,3 @@ def check_for_tmeasure(model):
             return 0
     except AttributeError:
         return 0
-
-
-def load_custom_wcs(asdf_wcs_file, output_shape=None):
-    """
-    Load a custom output WCS from an ASDF file.
-
-    Parameters
-    ----------
-    asdf_wcs_file : str
-        Path to an ASDF file containing a GWCS structure.
-    output_shape : tuple of int, optional
-        Array shape for the output data.  If not provided,
-        the custom WCS must specify one of: pixel_shape,
-        array_shape, or bounding_box.
-
-    Returns
-    -------
-    wcs : WCS
-        The output WCS to resample into.
-    """
-    if not asdf_wcs_file:
-        return None
-
-    with asdf.open(asdf_wcs_file) as af:
-        wcs = deepcopy(af.tree["wcs"])
-        wcs.pixel_area = af.tree.get("pixel_area", None)
-        wcs.array_shape = af.tree.get("pixel_shape", None)
-        wcs.array_shape = af.tree.get("array_shape", None)
-
-    if output_shape is not None:
-        wcs.array_shape = output_shape[::-1]
-        wcs.pixel_shape = output_shape
-    elif wcs.pixel_shape is not None:
-        wcs.array_shape = wcs.pixel_shape[::-1]
-    elif wcs.array_shape is not None:
-        wcs.pixel_shape = wcs.array_shape[::-1]
-    elif wcs.bounding_box is not None:
-        wcs.array_shape = tuple(
-            int(axs[1] + 0.5)
-            for axs in wcs.bounding_box.bounding_box(order="C")
-        )
-    else:
-        raise ValueError(
-            "Step argument 'output_shape' is required when custom WCS "
-            "does not have neither of 'array_shape', 'pixel_shape', or "
-            "'bounding_box' attributes set."
-        )
-
-    return wcs
