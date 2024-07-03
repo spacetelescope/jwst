@@ -39,11 +39,12 @@ def do_correction(input_model, rscd_model, type):
 
     # Retrieve the reference parameters for this exposure type
     param = get_rscd_parameters(input_model, rscd_model)
+    output = input_model
 
     if not bool(param):  # empty dictionary
         log.warning('READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped')
-        input_model.meta.cal_step.rscd = 'SKIPPED'
-        return input_model
+        output.meta.cal_step.rscd = 'SKIPPED'
+        return output
 
     if type == 'baseline':
         group_skip = param['skip']
@@ -51,8 +52,8 @@ def do_correction(input_model, rscd_model, type):
     else:
         # enhanced algorithm is not enabled yet (updated code and validation needed)
         log.warning('Enhanced algorithm not support yet: RSCD correction will be skipped')
-        input_model.meta.cal_step.rscd = 'SKIPPED'
-        return input_model
+        output.meta.cal_step.rscd = 'SKIPPED'
+        return output
         # decay function algorithm update needed
         # output = correction_decay_function(input_model, param)
 

@@ -26,7 +26,6 @@ from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
-from pprint import pprint as pp
 __all__ = ['Detector1Pipeline']
 
 # Define logging
