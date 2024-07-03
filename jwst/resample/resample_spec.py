@@ -311,15 +311,15 @@ class ResampleSpecData(ResampleData):
             pix_to_tan_slope = np.abs(pix_to_xtan.slope)
 
         # Image size in spatial dimension from the maximum slope
-        ny = int(np.ceil(diff / pix_to_tan_slope))
+        ny = int(np.ceil(diff / pix_to_tan_slope)) + 1
 
         # Correct the intercept for the integer pixel size
         # to make sure the data is centered in the array
-        offset = ny * pix_to_tan_slope - diff
+        offset = (ny - 1) * pix_to_tan_slope - diff
         if swap_xy:
-            pix_to_ytan.intercept += offset
+            pix_to_ytan.intercept += np.sign(pix_to_ytan.intercept) * offset
         else:
-            pix_to_xtan.intercept += offset
+            pix_to_xtan.intercept += np.sign(pix_to_xtan.intercept) * offset
 
         # Now set up the final transforms
 
