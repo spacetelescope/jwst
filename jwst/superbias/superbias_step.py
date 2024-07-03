@@ -1,8 +1,9 @@
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import bias_sub
-from jwst.lib.basic_utils import use_datamodel
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 __all__ = ["SuperBiasStep"]
 
@@ -16,25 +17,25 @@ class SuperBiasStep(Step):
     class_alias = "superbias"
 
     spec = """
-
     """
 
     reference_file_types = ['superbias']
 
-    def process(self, input):
+    def process(self, input_model):
 
         # Open the input data model
-        with use_datamodel(input) as input_model:
+        with use_datamodel(input_model) as input_model:
+
+            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
 
             # Get the name of the superbias reference file to use
-            self.bias_name = self.get_reference_file(input_model, 'superbias')
+            self.bias_name = self.get_reference_file(result, 'superbias')
             self.log.info('Using SUPERBIAS reference file %s', self.bias_name)
 
             # Check for a valid reference file
             if self.bias_name == 'N/A':
                 self.log.warning('No SUPERBIAS reference file found')
                 self.log.warning('Superbias step will be skipped')
-                result = input_model.copy()
                 result.meta.cal_step.superbias = 'SKIPPED'
                 return result
 
@@ -42,12 +43,12 @@ class SuperBiasStep(Step):
             bias_model = datamodels.SuperBiasModel(self.bias_name)
 
             # Do the bias subtraction
-            result = bias_sub.do_correction(input_model, bias_model)
+            result = bias_sub.do_correction(result, bias_model)
 
             # Close the superbias reference file model and
             # set the step status to complete
-            bias_model.close()
-            input_model.close()
+            del bias_model
             result.meta.cal_step.superbias = 'COMPLETE'
 
+        gc.collect()
         return result

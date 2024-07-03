@@ -1,3 +1,4 @@
+import gc
 import logging
 
 import numpy as np
@@ -177,6 +178,7 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
 
     # Convert corrected data back to sky orientation
     output_model = input_model.copy()
+    input_model.close()
     if not preserve_refpix:
         temp_data = data[:, :, :, nx - ny:]
     else:
@@ -192,6 +194,7 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
     if not preserve_refpix:
         strip_ref_pixels(output_model, irs2_mask)
 
+    gc.collect()
     return output_model
 
 

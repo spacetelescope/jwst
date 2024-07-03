@@ -19,13 +19,21 @@ log.setLevel(logging.DEBUG)
 
 class JwstStep(Step):
 
+    how_many_times = 0
     spec = """
     output_ext = string(default='.fits')  # Output file type
+    modify_input = boolean(default=False)  # if True modify the input datamodel in-place, don't make a copy
     """
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
-        return datamodels.open(init, **kwargs)
+        if isinstance(input, datamodels.JwstDataModel) or cls.how_many_times >= 1:
+            model = init
+        else:
+            cls.how_many_times += 1
+            model = datamodels.open(init, **kwargs)
+        return model
+
 
     def load_as_level2_asn(self, obj):
         """Load object as an association

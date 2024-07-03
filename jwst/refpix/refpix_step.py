@@ -1,10 +1,11 @@
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from ..lib import pipe_utils
 from . import reference_pixels
 from . import irs2_subtract_reference
-from jwst.lib.basic_utils import use_datamodel
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 
 __all__ = ["RefPixStep"]
@@ -30,16 +31,18 @@ class RefPixStep(Step):
 
     reference_file_types = ['refpix']
 
-    def process(self, input):
+    def process(self, input_model):
 
         # Open the input data model
-        with use_datamodel(input, model_class=datamodels.RampModel) as datamodel:
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-            if pipe_utils.is_irs2(datamodel):
+            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
+
+            if pipe_utils.is_irs2(result):
 
                 # Flag bad reference pixels first
                 irs2_subtract_reference.flag_bad_refpix(
-                    datamodel, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
+                    result, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
 
                 # If desired, do the normal refpix correction before IRS2, without
                 # side pixel handling
@@ -48,23 +51,21 @@ class RefPixStep(Step):
                         self.log.info('Turning off side pixel correction for IRS2')
                         self.use_side_ref_pixels = False
                     reference_pixels.correct_model(
-                        datamodel, self.odd_even_columns, self.use_side_ref_pixels,
+                        result, self.odd_even_columns, self.use_side_ref_pixels,
                         self.side_smoothing_length, self.side_gain, self.odd_even_rows)
 
                 # Now that values are updated, replace bad reference pixels
-                irs2_subtract_reference.flag_bad_refpix(datamodel, replace_only=True)
+                irs2_subtract_reference.flag_bad_refpix(result, replace_only=True)
 
                 # Get the necessary refpix reference file for IRS2 correction
-                self.irs2_name = self.get_reference_file(datamodel, 'refpix')
+                self.irs2_name = self.get_reference_file(result, 'refpix')
                 self.log.info(f'Using refpix reference file: {self.irs2_name}')
 
                 # Check for a valid reference file
                 if self.irs2_name == 'N/A':
                     self.log.warning('No refpix reference file found')
                     self.log.warning('RefPix step will be skipped')
-                    result = datamodel.copy()
                     result.meta.cal_step.refpix = 'SKIPPED'
-                    datamodel.close()
                     return result
 
                 # Load the reference file into a datamodel
@@ -72,17 +73,17 @@ class RefPixStep(Step):
 
                 # Apply the IRS2 correction scheme
                 result = irs2_subtract_reference.correct_model(
-                    datamodel, irs2_model, preserve_refpix=self.preserve_irs2_refpix)
+                    result, irs2_model, preserve_refpix=self.preserve_irs2_refpix)
 
                 if result.meta.cal_step.refpix != 'SKIPPED':
                     result.meta.cal_step.refpix = 'COMPLETE'
-                irs2_model.close()
+                del irs2_model
+                collected = gc.collect()
+                print("\n ** refpix_step Garbage collector: collected %d objects. \n" % (collected))
                 return result
 
             else:
                 # Not an NRS IRS2 exposure. Do the normal refpix correction.
-                result = datamodel.copy()
-                datamodel.close()
                 status = reference_pixels.correct_model(result,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
@@ -100,4 +101,6 @@ class RefPixStep(Step):
                     result.meta.cal_step.refpix = 'SKIPPED'
                 elif status == reference_pixels.SUBARRAY_SKIPPED:
                     result.meta.cal_step.refpix = 'SKIPPED'
+
+                gc.collect()
                 return result

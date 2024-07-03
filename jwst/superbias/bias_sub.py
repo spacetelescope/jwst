@@ -71,9 +71,10 @@ def subtract_bias(input, bias):
 
     # Create output as a copy of the input science data model
     output = input.copy()
+    input.close()
 
     # combine the science and superbias DQ arrays
-    output.pixeldq = np.bitwise_or(input.pixeldq, bias.dq)
+    output.pixeldq = np.bitwise_or(output.pixeldq, bias.dq)
 
     # Subtract the superbias image from all groups and integrations
     # of the science data

@@ -1,6 +1,7 @@
 #
 #  Module for  subtracting reset correction from  science data sets
 #
+import gc
 import numpy as np
 import logging
 
@@ -35,11 +36,16 @@ def do_correction(input_model, reset_model):
 
     """
 
+    # Create output as a copy of the input science data model
+    output = input_model
+    input_model.close()
+    del input_model
+
     # Save some data params for easy use later
-    sci_nints = input_model.meta.exposure.nints      # num ints in input data
-    sci_ngroups = input_model.meta.exposure.ngroups  # num groups in input data
-    sci_integration_start = input_model.meta.exposure.integration_start
-    sci_integration_end = input_model.meta.exposure.integration_end
+    sci_nints = output.meta.exposure.nints      # num ints in input data
+    sci_ngroups = output.meta.exposure.ngroups  # num groups in input data
+    sci_integration_start = output.meta.exposure.integration_start
+    sci_integration_end = output.meta.exposure.integration_end
     istart = 0
     iend = sci_nints
 
@@ -55,9 +61,6 @@ def do_correction(input_model, reset_model):
     reset_model.data[np.isnan(reset_model.data)] = 0.0
     log.debug("Reset Sub using: nints = {}, ngroups = {}".format(sci_nints, sci_ngroups))
 
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
-
     # find out how many groups  we are correcting
     # the maximum number of groups to correct is reset_ngroups
     igroup = sci_ngroups
@@ -72,7 +75,7 @@ def do_correction(input_model, reset_model):
             ir = reset_nints - 1
 
         # combine the science and reset DQ arrays
-        output.pixeldq = np.bitwise_or(input_model.pixeldq, reset_model.dq)
+        output.pixeldq = np.bitwise_or(output.pixeldq, reset_model.dq)
 
         # we are only correcting the first reset_ngroups
         for j in range(igroup):
@@ -83,4 +86,5 @@ def do_correction(input_model, reset_model):
             # output.err[i,j] = np.sqrt(
             #           output.err[i,j]**2 + reset.err[j]**2)
 
+    gc.collect()
     return output

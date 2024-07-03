@@ -1,5 +1,6 @@
 #  Module for charge migration
 #
+import gc
 import logging
 import numpy as np
 
@@ -39,7 +40,8 @@ def charge_migration(input_model, signal_threshold):
     gdq = input_model.groupdq
 
     # Create the output model as a copy of the input
-    output_model = input_model.copy()
+    output_model = input_model
+    input_model.close()
 
     log.info('Using signal_threshold: %.2f', signal_threshold)
 
@@ -48,6 +50,8 @@ def charge_migration(input_model, signal_threshold):
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
 
+    collected = gc.collect()
+    print("\n ** charge_migration Garbage collector: collected %d objects. \n" % (collected))
     return output_model
 
 

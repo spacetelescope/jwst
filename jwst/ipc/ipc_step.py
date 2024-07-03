@@ -1,8 +1,9 @@
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import ipc_corr
-from jwst.lib.basic_utils import use_datamodel
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 __all__ = ["IPCStep"]
 
@@ -15,9 +16,12 @@ class IPCStep(Step):
 
     class_alias = "ipc"
 
+    spec = """
+    """
+
     reference_file_types = ['ipc']
 
-    def process(self, input):
+    def process(self, input_model):
         """Apply the IPC correction.
 
         Parameters
@@ -32,17 +36,18 @@ class IPCStep(Step):
         """
 
         # Open the input data model
-        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
+
+            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
 
             # Get the name of the ipc reference file to use
-            self.ipc_name = self.get_reference_file(input_model, 'ipc')
+            self.ipc_name = self.get_reference_file(result, 'ipc')
             self.log.info('Using IPC reference file %s', self.ipc_name)
 
             # Check for a valid reference file
             if self.ipc_name == 'N/A':
                 self.log.warning('No IPC reference file found')
                 self.log.warning('IPC step will be skipped')
-                result = input_model.copy()
                 result.meta.cal_step.ipc = 'SKIPPED'
                 return result
 
@@ -50,10 +55,11 @@ class IPCStep(Step):
             ipc_model = datamodels.IPCModel(self.ipc_name)
 
             # Do the ipc correction
-            result = ipc_corr.do_correction(input_model, ipc_model)
+            result = ipc_corr.do_correction(result, ipc_model)
 
             # Close the reference file and update the step status
-            ipc_model.close()
+            del ipc_model
             result.meta.cal_step.ipc = 'COMPLETE'
 
+        gc.collect()
         return result

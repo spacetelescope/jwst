@@ -1,8 +1,9 @@
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from stcal.dark_current import dark_sub
-from jwst.lib.basic_utils import use_datamodel
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 import numpy as np
 
 
@@ -24,21 +25,23 @@ class DarkCurrentStep(Step):
 
     reference_file_types = ['dark']
 
-    def process(self, input):
+    def process(self, input_model):
 
         # Open the input data model
-        with use_datamodel(input, model_class=datamodels.RampModel) as input_model:
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
+
+            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
 
             # Get the name of the dark reference file to use
-            self.dark_name = self.get_reference_file(input_model, 'dark')
+            self.dark_name = self.get_reference_file(result, 'dark')
             self.log.info('Using DARK reference file %s', self.dark_name)
 
             # Check for a valid reference file
             if self.dark_name == 'N/A':
                 self.log.warning('No DARK reference file found')
                 self.log.warning('Dark current step will be skipped')
-                result = input_model
                 result.meta.cal_step.dark = 'SKIPPED'
+                gc.collect()
                 return result
 
             # Create name for the intermediate dark, if desired.
@@ -50,7 +53,7 @@ class DarkCurrentStep(Step):
                 )
 
             # Open the dark ref file data model - based on Instrument
-            instrument = input_model.meta.instrument.name
+            instrument = result.meta.instrument.name
             if instrument == 'MIRI':
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:
@@ -59,21 +62,22 @@ class DarkCurrentStep(Step):
             # Store user-defined average_dark_current in model, if provided
             # A user-defined value will take precedence over any value present
             # in dark reference file
-            self.set_average_dark_current(input_model, dark_model)
+            self.set_average_dark_current(result, dark_model)
 
             # Do the dark correction
-            result = dark_sub.do_correction(
-                input_model, dark_model, dark_output
+            correction = dark_sub.do_correction(
+                result, dark_model, dark_output
             )
 
-            out_data, dark_data = result
+            out_data, dark_data = correction
 
             if dark_data is not None and dark_data.save:
                 save_dark_data_as_dark_model(dark_data, dark_model, instrument)
-            dark_model.close()
+            del dark_model
 
-            out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
+            out_ramp = dark_output_data_2_ramp_model(out_data, result)
 
+        gc.collect()
         return out_ramp
 
     def set_average_dark_current(self, input_model, dark_model):
@@ -141,7 +145,7 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
     out_dark_model.close()
 
 
-def dark_output_data_2_ramp_model(out_data, input_model):
+def dark_output_data_2_ramp_model(out_data, out_model):
     """
     Convert computed output data from the dark step to a RampModel.
 
@@ -150,7 +154,7 @@ def dark_output_data_2_ramp_model(out_data, input_model):
     out_data: ScienceData
         Computed science data from the dark current step.
 
-    input_model: RampModel
+    out_model: RampModel
         The input ramp model from which to subtract the dark current.
 
     Return
@@ -162,10 +166,9 @@ def dark_output_data_2_ramp_model(out_data, input_model):
     if out_data.cal_step == "SKIPPED":
         # If processing was skipped in the lower-level routines,
         # just return the unmodified input model
-        input_model.meta.cal_step.dark_sub = "SKIPPED"
-        return input_model
+        out_model.meta.cal_step.dark_sub = "SKIPPED"
+        return out_model
     else:
-        out_model = input_model.copy()
         out_model.meta.cal_step.dark_sub = out_data.cal_step
         out_model.data = out_data.data
         out_model.groupdq = out_data.groupdq

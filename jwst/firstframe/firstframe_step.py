@@ -1,6 +1,7 @@
+import gc
 from ..stpipe import Step
 from . import firstframe_sub
-from jwst.lib.basic_utils import use_datamodel
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 
 __all__ = ["FirstFrameStep"]
@@ -15,20 +16,25 @@ class FirstFrameStep(Step):
 
     class_alias = "firstframe"
 
-    def process(self, input):
+    spec = """
+    """
+
+    def process(self, input_model):
 
         # Open the input data model
-        with use_datamodel(input) as input_model:
+        with use_datamodel(input_model) as input_model:
+
+            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
 
             # check the data is MIRI data
-            detector = input_model.meta.instrument.detector.upper()
+            detector = result.meta.instrument.detector.upper()
             if detector[:3] == 'MIR':
                 # Do the firstframe correction subtraction
-                result = firstframe_sub.do_correction(input_model)
+                result = firstframe_sub.do_correction(result)
             else:
                 self.log.warning('First Frame Correction is only for MIRI data')
                 self.log.warning('First frame step will be skipped')
-                result = input_model
                 result.meta.cal_step.firstframe = 'SKIPPED'
 
+        gc.collect()
         return result

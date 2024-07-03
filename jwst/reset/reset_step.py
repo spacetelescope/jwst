@@ -1,8 +1,9 @@
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import reset_sub
-from jwst.lib.basic_utils import use_datamodel
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 __all__ = ["ResetStep"]
 
@@ -15,33 +16,38 @@ class ResetStep(Step):
 
     class_alias = "reset"
 
+    spec = """
+    """
+
     reference_file_types = ['reset']
 
-    def process(self, input):
+    def process(self, input_model):
 
         # Open the input data model
-        with use_datamodel(input) as input_model:
+        with use_datamodel(input_model) as input_model:
+
+            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
 
             # check the data is MIRI data
-            detector = input_model.meta.instrument.detector
+            detector = result.meta.instrument.detector
             if detector.startswith('MIR'):
 
                 # Get the name of the reset reference file to use
-                self.reset_name = self.get_reference_file(input_model, 'reset')
+                self.reset_name = self.get_reference_file(result, 'reset')
                 self.log.info('Using RESET reference file %s', self.reset_name)
 
                 # Check for a valid reference file
                 if self.reset_name == 'N/A':
                     self.log.warning('No RESET reference file found')
                     self.log.warning('Reset step will be skipped')
-                    input_model.meta.cal_step.reset = 'SKIPPED'
-                    return input_model
+                    result.meta.cal_step.reset = 'SKIPPED'
+                    return result
 
                 # Open the reset ref file data model
                 reset_model = datamodels.ResetModel(self.reset_name)
 
                 # Do the reset correction subtraction
-                result = reset_sub.do_correction(input_model, reset_model)
+                result = reset_sub.do_correction(result, reset_model)
 
                 # Close the reference file and update the step status
                 reset_model.close()
@@ -50,7 +56,7 @@ class ResetStep(Step):
             else:
                 self.log.warning('Reset Correction is only for MIRI data')
                 self.log.warning('Reset step will be skipped')
-                result = input_model.copy()
                 result.meta.cal_step.reset = 'SKIPPED'
 
+        gc.collect()
         return result

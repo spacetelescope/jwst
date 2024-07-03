@@ -75,7 +75,8 @@ def ipc_correction(input_model, ipc_model):
               input_model.data.shape[-2])
 
     # Create output as a copy of the input science data model.
-    output = input_model.copy()
+    output = input_model
+    input_model.close()
 
     # Was IRS2 readout used?
     is_irs2_format = pipe_utils.is_irs2(input_model)

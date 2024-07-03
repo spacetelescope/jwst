@@ -4,6 +4,7 @@
 
 import numpy as np
 import logging
+import gc
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
 
@@ -220,7 +221,9 @@ def apply_emicorr(input_model, emicorr_model,
     nsamples = input_model.meta.exposure.nsamples
 
     # Initialize the output model as a copy of the input
-    output_model = input_model.copy()
+    output_model = input_model
+    input_model.close()
+    del input_model
     nints, ngroups, ny, nx = np.shape(output_model.data)
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes
@@ -464,6 +467,7 @@ def apply_emicorr(input_model, emicorr_model,
         del dd_all
         del times_this_int
         del phaseall
+        gc.collect()
 
     if save_intermediate_results and save_onthefly_reffile is not None:
         if 'FAST' in readpatt:

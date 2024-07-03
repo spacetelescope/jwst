@@ -80,15 +80,17 @@ def correction_skip_groups(input_model, group_skip):
         RSCD-corrected science data
     """
 
+    # Create output as a copy of the input science data model
+    output = input_model.copy()
+    input_model.close()
+    del input_model
+
     # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]       # number of integrations
-    sci_ngroups = input_model.data.shape[1]     # number of groups
+    sci_nints = output.data.shape[0]       # number of integrations
+    sci_ngroups = output.data.shape[1]     # number of groups
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
-
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
 
     # If ngroups <= group_skip+3, skip the flagging
     # the +3 is to ensure there is a slope to be fit including the flagging for
@@ -146,15 +148,17 @@ def correction_decay_function(input_model, param):
 
     """
 
+    # Create output as a copy of the input science data model
+    output_model = input_model.copy()
+    input_model.close()
+    del input_model
+
     # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]       # number of integrations
-    sci_ngroups = input_model.data.shape[1]     # number of groups
+    sci_nints = output_model.data.shape[0]       # number of integrations
+    sci_ngroups = output_model.data.shape[1]     # number of groups
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
-
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
 
     # Check for valid parameters
     if sci_ngroups < 2:
@@ -208,7 +212,7 @@ def correction_decay_function(input_model, param):
             log.info(' Working on integration %d', i + 1)
 
         sat, dn_last23, dn_lastfit = \
-            get_DNaccumulated_last_int(input_model, i, sci_ngroups)
+            get_DNaccumulated_last_int(output, i, sci_ngroups)
 
         lastframe_even = dn_last23[1::2, :]
         lastframe_odd = dn_last23[0::2, :]
