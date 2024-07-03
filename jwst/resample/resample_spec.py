@@ -88,6 +88,7 @@ class ResampleSpecData(ResampleData):
         log.info(f"Driz parameter weight_type: {self.weight_type}")
 
         output_wcs = kwargs.get('output_wcs', None)
+        output_shape = kwargs.get('output_shape', None)
         self.asn_id = kwargs.get('asn_id', None)
 
         # Get an average input pixel scale for parameter calculations
@@ -141,6 +142,10 @@ class ResampleSpecData(ResampleData):
                 self.pscale_ratio = nominal_area / output_pix_area
             else:
                 self.pscale_ratio = 1.0
+
+            # Set the output shape if specified
+            if output_shape is not None:
+                self.output_wcs.array_shape = output_shape[::-1]
         else:
             if pscale is not None and nominal_area is not None:
                 log.info(f'Specified output pixel scale: {pscale} arcsec.')
