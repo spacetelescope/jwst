@@ -50,8 +50,7 @@ def charge_migration(input_model, signal_threshold):
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
 
-    collected = gc.collect()
-    print("\n ** charge_migration Garbage collector: collected %d objects. \n" % (collected))
+    gc.collect()
     return output_model
 
 
