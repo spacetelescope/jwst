@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 
 class JwstStep(Step):
 
-    how_many_times = 0
+    datamodel_access_times = 0
     spec = """
     output_ext = string(default='.fits')  # Output file type
     modify_input = boolean(default=False)  # if True modify the input datamodel in-place, don't make a copy
@@ -27,10 +27,10 @@ class JwstStep(Step):
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
-        if isinstance(input, datamodels.JwstDataModel) or cls.how_many_times >= 1:
+        if isinstance(input, datamodels.JwstDataModel) or cls.datamodel_access_times >= 1:
             model = init
         else:
-            cls.how_many_times += 1
+            cls.datamodel_access_times += 1
             model = datamodels.open(init, **kwargs)
         return model
 
