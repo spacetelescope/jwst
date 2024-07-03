@@ -31,7 +31,7 @@ class ChargeMigrationStep(Step):
         # Open the input data model
         with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
+            result, input_model = copy_datamodel(input_model, self.modify_input)
 
             if (result.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
                 log.info('Too few groups per integration; skipping charge_migration')

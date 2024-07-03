@@ -5,7 +5,7 @@ from stdatamodels.jwst.datamodels import dqflags
 import numpy as np
 
 
-def use_datamodel(input, model_class=None, modify_input=False):
+def use_datamodel(input, model_class=None):
     """Determine if input is a datamodel, if so return it, else open it
 
     Parameters
@@ -30,12 +30,13 @@ def use_datamodel(input, model_class=None, modify_input=False):
     return model
 
 def copy_datamodel(input, modify_input):
-    """Determine if input is a datamodel, if so return it, else open it
+    """Return a copy of the datamodel and set the input to None to recover memory or simply
+    return the input if the data is to be modified in-place.
 
     Parameters
     ----------
-    input : string or datamodel
-        Either the name of the file to open or a datamodel
+    input : jwst datamodel
+        The datamodel to copy
 
     modify_input = boolean
         If True modify the input datamodel in-place, don't make a copy
@@ -48,10 +49,11 @@ def copy_datamodel(input, modify_input):
     model_copy : datamodel
         The datamodel copy
     """
-    model_copy = None
     if not modify_input:
         model_copy = input.copy()
-    return input, model_copy
+        return model_copy, None
+    else:
+        return input, None
 
 
 def set_nans_to_donotuse(data, dq):

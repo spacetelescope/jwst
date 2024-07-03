@@ -35,7 +35,7 @@ class EmiCorrStep(Step):
         # Open the input data model
         with use_datamodel(input_model) as input_model:
 
-            result, input_model = copy_datamodel(input_model, modify_input=self.modify_input)
+            result, input_model = copy_datamodel(input_model, self.modify_input)
 
             # Catch the cases to skip
             instrument = result.meta.instrument.name
