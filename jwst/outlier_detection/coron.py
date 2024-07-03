@@ -59,7 +59,7 @@ def detect_outliers(
 ):
     """Flag outlier pixels in DQ of input images."""
     if not isinstance(input_model, datamodels.CubeModel):
-        raise Exception(f"Input must be a CubeModel: {input_models}")
+        raise Exception(f"Input must be a CubeModel: {input_model}")
 
     # FIXME don't store this on the model
     # FIXME does input have a var_rnoise?

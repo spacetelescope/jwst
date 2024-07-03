@@ -137,12 +137,16 @@ class OutlierDetectionStep(Step):
                     self.log.warning(f"Input only contains {ninputs} exposure")
                     self.log.warning("Outlier detection step will be skipped")
                     return self._set_status(input_models, "SKIPPED")
-            elif isinstance(input_models, (datamodels.CubeModel, datamodels.SlitModel)):
+            elif isinstance(input_models, datamodels.CubeModel):
                 ninputs = input_models.shape[0]
                 if ninputs < 2:
                     self.log.warning(f"Input only contains {ninputs} integration")
                     self.log.warning("Outlier detection step will be skipped")
                     return self._set_status(input_models, "SKIPPED")
+            elif isinstance(input_models, datamodels.SlitModel):
+                # FIXME the CubeModel check above used to also check for
+                # SlitModel. I see no place where this is used
+                raise Exception()
             else:
                 self.log.warning("Input {input_models} is not supported")
                 self.log.warning("Outlier detection step will be skipped")
