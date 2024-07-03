@@ -346,6 +346,18 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     im = we_many_sci(
         numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit
     )
+
+    # Drop a weak CR on the science array
+    cr_timestep = 5
+    im[cr_timestep].data[12, 12] = bkg + sig * 10
+
+    # make time variability that has larger total amplitude than
+    # the CR signal but deviations frame-by-frame are smaller
+    real_time_variability = signal * np.cos(np.linspace(0, np.pi, numsci))
+    for i, model in enumerate(im):
+        model.data[7, 7] += real_time_variability[i]
+        model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
+
     cube_data = np.array([i.data for i in im])
     cube_err = np.array([i.err for i in im])
     cube_dq = np.array([i.dq for i in im])
@@ -355,21 +367,11 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     # update metadata of cube to match the first image
     cube.meta = im[0].meta
 
-    # Drop a weak CR on the science array
-    cr_timestep = 5
-    cube.data[cr_timestep, 12, 12] = bkg + sig * 10
-
-    # make time variability that has larger total amplitude than
-    # the CR signal but deviations frame-by-frame are smaller
-    real_time_variability = signal * np.cos(np.linspace(0, np.pi, numsci))
-    for i, model in enumerate(im):
-        model.data[7, 7] += real_time_variability[i]
-        model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
-
     result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 
     # Make sure nothing changed in SCI array
-    np.testing.assert_allclose(cube.data, result.data)
+    for i, model in enumerate(im):
+        np.testing.assert_allclose(model.data, result.data[i])
 
     # Verify source is not flagged
     assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
