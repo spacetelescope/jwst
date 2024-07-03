@@ -30,10 +30,11 @@ import numpy as np
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst import datamodels
 
+from jwst.datamodels import ModelContainer
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight
 
-from .utils import _convert_inputs, create_median, flag_crs_in_models
+from .utils import create_median, flag_crs_in_models
 from ._fileio import remove_file, save_median
 
 log = logging.getLogger(__name__)
@@ -64,7 +65,8 @@ def detect_outliers(
     make_output_path,
 ):
     """Flag outlier pixels in DQ of input images."""
-    input_models = _convert_inputs(input_models, good_bits, weight_type)
+    if not isinstance(input_models, ModelContainer):
+        raise Exception(f"Input must be a ModelContainer: {input_models}")
 
     if resample_data:
         # Start by creating resampled/mosaic images for

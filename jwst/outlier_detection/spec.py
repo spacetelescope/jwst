@@ -23,8 +23,10 @@ This routine performs the following operations::
 
 from stdatamodels.jwst import datamodels
 
+from jwst.datamodels import ModelContainer
+
 from ..resample import resample_spec, resample_utils
-from .utils import _convert_inputs, create_median, flag_crs_in_models
+from .utils import create_median, flag_crs_in_models
 from ._fileio import remove_file
 
 import logging
@@ -55,7 +57,8 @@ def detect_outliers(
     make_output_path,
 ):
     """Flag outlier pixels in DQ of input images."""
-    input_models = _convert_inputs(input_models, good_bits, weight_type)
+    if not isinstance(input_models, ModelContainer):
+        raise Exception(f"Input must be a ModelContainer: {input_models}")
 
     if resample_data is True:
         # Start by creating resampled/mosaic images for
