@@ -7,7 +7,7 @@ import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels import ModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.exp_to_source import multislit_to_container

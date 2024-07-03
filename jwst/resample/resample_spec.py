@@ -2,7 +2,6 @@ import logging
 import warnings
 
 import numpy as np
-from scipy.optimize import minimize_scalar
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import (
@@ -11,19 +10,15 @@ from astropy.modeling.models import (
 from astropy.modeling.fitting import LinearLSQFitter
 from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
-
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
 from gwcs.geometry import SphericalToCartesian
-
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs.util import compute_scale, wrap_ra
 from jwst.datamodels import ModelContainer
-from jwst.assign_wcs.util import compute_scale
-
-from ..assign_wcs.util import wrap_ra
-from . import resample_utils
-from .resample import ResampleData
+from jwst.resample import resample_utils
+from jwst.resample.resample import ResampleData
 
 
 log = logging.getLogger(__name__)
@@ -235,8 +230,12 @@ class ResampleSpecData(ResampleData):
         # Set up the transforms that are needed
         s2d = refwcs.get_transform('slit_frame', 'detector')
         d2s = refwcs.get_transform('detector', 'slit_frame')
-        s2w = refwcs.get_transform('slit_frame', 'world')
-        w2s = refwcs.get_transform('world', 'slit_frame')
+        if 'moving_target' in refwcs.available_frames:
+            s2w = refwcs.get_transform('slit_frame', 'moving_target')
+            w2s = refwcs.get_transform('moving_target', 'slit_frame')
+        else:
+            s2w = refwcs.get_transform('slit_frame', 'world')
+            w2s = refwcs.get_transform('world', 'slit_frame')
 
         # Estimate position of the target without relying on the meta.target:
         # compute the mean spatial and wavelength coords weighted
