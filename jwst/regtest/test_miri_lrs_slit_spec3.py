@@ -4,7 +4,6 @@ import pytest
 import numpy as np
 from gwcs import wcstools
 
-import asdf
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step

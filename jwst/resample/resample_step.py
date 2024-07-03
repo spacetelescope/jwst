@@ -1,8 +1,5 @@
 import logging
 import re
-from copy import deepcopy
-
-import asdf
 
 from stdatamodels.jwst import datamodels
 
