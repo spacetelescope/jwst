@@ -113,7 +113,7 @@ def compute_weight_threshold_container(resampled_models, maskpt):
     return weight_thresholds
 
 
-def _detect_outliers(
+def flag_crs_in_models(
     input_models,
     median_data,
     median_wcs,

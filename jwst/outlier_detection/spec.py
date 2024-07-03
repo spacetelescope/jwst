@@ -24,7 +24,7 @@ This routine performs the following operations::
 from stdatamodels.jwst import datamodels
 
 from ..resample import resample_spec, resample_utils
-from .utils import _convert_inputs, _detect_outliers, create_median
+from .utils import _convert_inputs, create_median, flag_crs_in_models
 from ._fileio import remove_file
 
 import logging
@@ -118,7 +118,7 @@ def detect_outliers(
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    _detect_outliers(
+    flag_crs_in_models(
         input_models,
         median_data,
         median_wcs,

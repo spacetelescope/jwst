@@ -33,7 +33,7 @@ from stdatamodels.jwst import datamodels
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight
 
-from .utils import _convert_inputs, _detect_outliers, create_median
+from .utils import _convert_inputs, create_median, flag_crs_in_models
 from ._fileio import remove_file, save_median
 
 log = logging.getLogger(__name__)
@@ -123,7 +123,7 @@ def detect_outliers(
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    _detect_outliers(
+    flag_crs_in_models(
         input_models,
         median_data,
         median_wcs,

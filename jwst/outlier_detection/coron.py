@@ -33,7 +33,7 @@ from stdatamodels.jwst import datamodels
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight
 
-from .utils import _detect_outliers, create_cube_median
+from .utils import create_cube_median, flag_cr_update_model
 from ._fileio import remove_file, save_median
 
 log = logging.getLogger(__name__)
@@ -78,11 +78,9 @@ def detect_outliers(
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    # FIXME make this not expect a list/sequence
-    _detect_outliers(
-        [input_model],
+    flag_cr_update_model(
+        input_model,
         median_data,
-        None,  # no need for a wcs since this won't blot
         snr1,
         snr2,
         scale1,
