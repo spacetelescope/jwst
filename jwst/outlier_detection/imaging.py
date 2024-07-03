@@ -107,7 +107,6 @@ def detect_outliers(
             median_model.update(dm0)
             median_wcs = dm0.meta.wcs
             median_model.meta.wcs = median_wcs
-            median_model.data = median_data
 
         save_median(median_model, make_output_path, asn_id)
         del median_model

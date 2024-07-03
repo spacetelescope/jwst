@@ -21,6 +21,18 @@ DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
 
+def create_cube_median(cube_model, maskpt):
+    log.info("Computing median")
+
+    weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
+
+    median = np.nanmedian(
+        np.ma.masked_array(cube_model.data, np.less(cube_model.wht, weight_threshold), fill_value=np.nan),
+        axis=0,
+    )
+    return median
+
+
 # TODO figure out how to move to stcal
 def create_median(resampled_models, maskpt):
     """Create a median image from the singly resampled images.
@@ -157,7 +169,7 @@ def flag_cr_update_model(
     cr_mask = flag_cr(image.data, image.err, blot, snr1, snr2, scale1, scale2, backg, resample_data)
 
     # TODO is it necessary to do all this math for 1 possible log message?
-    # sould a count of flagged pixels in the mask be a suitable replacement?
+    # would a count of flagged pixels in the mask be a suitable replacement?
     # Count existing DO_NOT_USE pixels
     count_existing = np.count_nonzero(image.dq & DO_NOT_USE)
 

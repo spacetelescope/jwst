@@ -169,6 +169,22 @@ def we_many_sci(
     return all_sci
 
 
+def container_to_cube(container):
+    """
+    Utility function to convert the test container to a cube
+    for some tests
+    """
+    cube_data = np.array([i.data for i in container])
+    cube_err = np.array([i.err for i in container])
+    cube_dq = np.array([i.dq for i in container])
+    cube_var_noise = np.array([i.var_rnoise for i in container])
+    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
+
+    # update metadata of cube to match the first image
+    cube.meta = container[0].meta
+    return cube
+
+
 @pytest.fixture
 def we_three_sci():
     """Provide 3 science images with different noise but identical source
@@ -333,18 +349,21 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
     # no noise so it should always be above the default threshold of 5
     container[0].data[12, 12] = bkg + sig * 10
 
-    result = OutlierDetectionStep.call(container)
+    # FIXME this test incorrectly provides ImageModels whereas
+    # coron3 will provide a CubeModel. This is fixed here.
+    cube = container_to_cube(container)
+
+    result = OutlierDetectionStep.call(cube)
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    for i, image in enumerate(container):
+        np.testing.assert_allclose(image.data, result.data[i])
 
     # Verify source is not flagged
-    for r in result:
-        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
-    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    assert np.all(result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE)
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
@@ -372,14 +391,7 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
         model.data[7, 7] += real_time_variability[i]
         model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
 
-    cube_data = np.array([i.data for i in im])
-    cube_err = np.array([i.err for i in im])
-    cube_dq = np.array([i.dq for i in im])
-    cube_var_noise = np.array([i.var_rnoise for i in im])
-    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
-
-    # update metadata of cube to match the first image
-    cube.meta = im[0].meta
+    cube = container_to_cube(im)
 
     result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 

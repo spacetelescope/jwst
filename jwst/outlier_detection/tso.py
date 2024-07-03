@@ -3,7 +3,8 @@ from jwst.resample.resample_utils import build_mask
 
 from jwst import datamodels as dm
 
-from .utils import compute_weight_threshold, flag_cr_update_model
+from stcal.outlier_detection.utils import compute_weight_threshold
+from .utils import flag_cr_update_model
 from ._fileio import save_median
 
 import logging

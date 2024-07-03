@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 import scipy.signal
 
+# TODO move this to stcal
 from jwst.outlier_detection.ifu import medfilt
 from jwst.outlier_detection.tso import moving_median_over_zeroth_axis
 

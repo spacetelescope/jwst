@@ -1,9 +1,11 @@
 from __future__ import annotations
-import numpy as np
-import jwst.datamodels as dm
-from jwst.outlier_detection.ifu import medfilt
-from stdatamodels.jwst.datamodels.dqflags import pixel
 import warnings
+
+import numpy as np
+
+import jwst.datamodels as dm
+from stcal.outlier_detection.utils import medfilt
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
 
 def badpix_selfcal(minimg: np.ndarray,

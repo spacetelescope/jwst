@@ -102,7 +102,6 @@ def detect_outliers(
             basepath=input_models[0].meta.filename,
             suffix='median'
         )
-        median_model.data = median_data
 
         log.info("Writing out MEDIAN image to: {}".format(
                  median_model.meta.filename))

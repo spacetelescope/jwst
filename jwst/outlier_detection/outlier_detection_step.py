@@ -7,7 +7,7 @@ from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
 from jwst.lib.pipe_utils import is_tso
 
-from . import ifu, imaging, tso, spec
+from . import coron, ifu, imaging, tso, spec
 
 # Categorize all supported modes
 IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
@@ -194,7 +194,7 @@ class OutlierDetectionStep(Step):
                     self.make_output_path,
                 )
             elif exptype in CORON_IMAGE_MODES:
-                imaging.detect_outliers(
+                coron.detect_outliers(
                     input_models,
                     self.save_intermediate_results,
                     self.good_bits,
@@ -204,13 +204,7 @@ class OutlierDetectionStep(Step):
                     scale1,
                     scale2,
                     self.backg,
-                    False,  # force resampling off but use the same workflow as imaging
                     self.weight_type,
-                    self.pixfrac,
-                    self.kernel,
-                    self.fillval,
-                    self.allowed_memory,
-                    self.in_memory,
                     asn_id,
                     self.make_output_path,
                 )

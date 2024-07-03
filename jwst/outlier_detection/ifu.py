@@ -30,24 +30,15 @@ This routine performs the following operations::
 import logging
 
 import numpy as np
-from skimage.util import view_as_windows
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
+from stcal.outlier_detection.utils import medfilt
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 __all__ = ["detect_outliers"]
-
-
-# TODO move to utils? this IS used by badpix so maybe somewhere more central
-def medfilt(arr, kern_size):
-    # scipy.signal.medfilt (and many other median filters) have undefined behavior
-    # for nan inputs. See: https://github.com/scipy/scipy/issues/4800
-    padded = np.pad(arr, [[k // 2] for k in kern_size])
-    windows = view_as_windows(padded, kern_size, np.ones(len(kern_size), dtype='int'))
-    return np.nanmedian(windows, axis=np.arange(-len(kern_size), 0))
 
 
 def detect_outliers(
