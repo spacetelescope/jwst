@@ -5,6 +5,7 @@ align_refs
 ----------
 
 - Compute alignment shifts from the first integration of the science exposure only. [#8643]
+
 ami_average
 -----------
 
@@ -64,6 +65,10 @@ resample_spec
 
 - Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
   targets in the ``calwebb_spec3`` pipeline. [#8596]
+
+- Separate ``resample_spec`` step parameters from ``resample`` step parameters
+  so that the spectral resampling step only exposes parameters that are appropriate
+  for spectral data. [#8622]
 
 scripts
 -------
