@@ -95,7 +95,7 @@ class ResampleSpecData(ResampleData):
         if np.isnan(self.input_pixscale0):
             log.warning('Input pixel scale could not be determined.')
             if pscale is not None:
-                log.warning('Input pixel scale setting is not supported '
+                log.warning('Output pixel scale setting is not supported '
                             'without an input pixel scale. Setting pscale=None.')
                 pscale = None
 
@@ -103,7 +103,7 @@ class ResampleSpecData(ResampleData):
         if nominal_area is None:
             log.warning('Nominal pixel area not set in input data.')
             if pscale is not None:
-                log.warning('Input pixel scale setting is not supported '
+                log.warning('Output pixel scale setting is not supported '
                             'without a nominal pixel scale. Setting pscale=None.')
                 pscale = None
 
