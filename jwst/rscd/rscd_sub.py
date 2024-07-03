@@ -150,13 +150,13 @@ def correction_decay_function(input_model, param):
     """
 
     # Create output as a copy of the input science data model
-    output_model = input_model.copy()
+    output = input_model.copy()
     input_model.close()
     del input_model
 
     # Save some data params for easy use later
-    sci_nints = output_model.data.shape[0]       # number of integrations
-    sci_ngroups = output_model.data.shape[1]     # number of groups
+    sci_nints = output.data.shape[0]       # number of integrations
+    sci_ngroups = output.data.shape[1]     # number of groups
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
