@@ -76,7 +76,7 @@ class OutlierDetectionStep(Step):
     # For each mode the input is:
     # Image : ModelContainer of ImageModel
     # Coron : CubeModel (either a psf or target)
-    # TSO   : CubeModel
+    # TSO   : CubeModel or 3D SlitModel (for nircam tsgrism)
     # IFU   : ModelContainer of IFUImageModel
     # Spec  : SourceModelContainer of SlitModel (created from MultiSlitModel)
     #         or ModelContainer of ImageModel (possible for MIR_LRS-FIXEDSLIT)
@@ -137,16 +137,14 @@ class OutlierDetectionStep(Step):
                     self.log.warning(f"Input only contains {ninputs} exposure")
                     self.log.warning("Outlier detection step will be skipped")
                     return self._set_status(input_models, "SKIPPED")
-            elif isinstance(input_models, datamodels.CubeModel):
+            # TODO: tso data can be a CubeModel or SlitModel, coron is only a CubeModel?
+            # move this input checking into the modes since each is different
+            elif isinstance(input_models, (datamodels.CubeModel, datamodels.SlitModel)):
                 ninputs = input_models.shape[0]
                 if ninputs < 2:
                     self.log.warning(f"Input only contains {ninputs} integration")
                     self.log.warning("Outlier detection step will be skipped")
                     return self._set_status(input_models, "SKIPPED")
-            elif isinstance(input_models, datamodels.SlitModel):
-                # FIXME the CubeModel check above used to also check for
-                # SlitModel. I see no place where this is used
-                raise Exception()
             else:
                 self.log.warning("Input {input_models} is not supported")
                 self.log.warning("Outlier detection step will be skipped")
