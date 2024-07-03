@@ -1,13 +1,15 @@
+import logging
 import pytest
 import subprocess
 
 from jwst.stpipe import Step
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.pipeline import Spec2Pipeline
+from jwst.tests.helpers import LogWatcher
 
 
 @pytest.mark.bigdata
-def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, caplog):
+def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, monkeypatch):
     """
         Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
         that's missing an MSAMETFL. Exception should be raised.
@@ -19,14 +21,21 @@ def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, caplog):
     # Run the calwebb_spec2 pipeline
     args = ["calwebb_spec2", rtdata.input]
 
+    # watch for an error log message, we don't use caplog here because
+    # something in the test suite messes up the logging during some runs
+    # (probably stpipe or the association generator) and causes caplog
+    # to sometimes miss the message
+    watcher = LogWatcher('Missing MSA meta (MSAMETFL) file')
+    monkeypatch.setattr(logging.getLogger('jwst.assign_wcs.nirspec'), "error", watcher)
+
     with pytest.raises(Exception):
         Step.from_cmdline(args)
 
-    assert 'Missing MSA meta (MSAMETFL) file' in caplog.text
+    watcher.assert_seen()
 
 
 @pytest.mark.bigdata
-def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, caplog):
+def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, monkeypatch):
     """
         Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
         that's missing an MSAMETFL. Exception should NOT be raised.
@@ -40,9 +49,16 @@ def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, caplog):
             rtdata.input,
             '--fail_on_exception=False']
 
+    # watch for an error log message, we don't use caplog here because
+    # something in the test suite messes up the logging during some runs
+    # (probably stpipe or the association generator) and causes caplog
+    # to sometimes miss the message
+    watcher = LogWatcher('Missing MSA meta (MSAMETFL) file')
+    monkeypatch.setattr(logging.getLogger('jwst.assign_wcs.nirspec'), "error", watcher)
+
     Step.from_cmdline(args)
 
-    assert 'Missing MSA meta (MSAMETFL) file' in caplog.text
+    watcher.assert_seen()
 
 
 @pytest.mark.bigdata
