@@ -3898,6 +3898,9 @@ def create_extraction(extract_ref_dict,
             else:
                 wl = wavelength.min()
 
+            # Determine whether we have a tabulated aperature correction
+            # available to save time.
+            
             apcorr_available = False
             if apcorr is not None:
                 if hasattr(apcorr, 'tabulated_correction'):
@@ -3936,8 +3939,9 @@ def create_extraction(extract_ref_dict,
                 try:
                     apcorr.tabulate_correction(spec.spec_table)
                     apcorr.apply_tabulated_correction(spec.spec_table)
+                    log.info("Tabulating aperture correction for use in multiple integrations.")
                 except AttributeError:
-                    log.info("Falling back on old .apply method of aperture correction.")
+                    log.info("Computing aperture correction.")
                     apcorr.apply(spec.spec_table)
 
         # Save previous ra, dec, wavelength in case we can reuse
