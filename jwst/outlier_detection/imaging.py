@@ -88,7 +88,7 @@ def detect_outliers(
             asn_id=asn_id,
             allowed_memory=allowed_memory,
         )
-        median_wcs = resample.output_wcs
+        median_wcs = resamp.output_wcs
         drizzled_models = resamp.do_drizzle(input_models)
     else:
         # for non-dithered data, the resampled image is just the original image
