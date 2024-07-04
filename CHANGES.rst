@@ -1,4 +1,9 @@
-1.14.1 (unreleased)
+1.15.1 (unreleased)
+===================
+
+-
+
+1.15.0 (2024-06-26)
 ===================
 
 ami
@@ -260,6 +265,10 @@ outlier_detection
 - Fixed a bug that led to small total flux offsets between input and blotted
   images if the nominal and actual wcs-computed pixel areas were different. [#8553]
 
+- Deprecate ``nlow`` and ``nhigh`` parameters, which no longer have an effect. [#8603]
+
+- Fix errors in documentation describing arguments. [#8603]
+
 pathloss
 --------
 
@@ -329,6 +338,8 @@ ramp_fitting
   the algorithm "OLS" to use the python implementation of ramp
   fitting or "OLS_C" to use the C extension implementation of
   ramp fitting. [#8503]
+
+- Made "OLS_C" the default algorithm for ramp fitting. [#8607]
 
 refpix
 ------
