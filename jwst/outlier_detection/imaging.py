@@ -88,8 +88,8 @@ def detect_outliers(
             asn_id=asn_id,
             allowed_memory=allowed_memory,
         )
+        median_wcs = resample.output_wcs
         drizzled_models = resamp.do_drizzle(input_models)
-
     else:
         # for non-dithered data, the resampled image is just the original image
         drizzled_models = input_models
@@ -98,25 +98,23 @@ def detect_outliers(
                 input_models[i],
                 weight_type=weight_type,
                 good_bits=good_bits)
+        # TODO copy for when saving median and input is a filename?
+        median_wcs = input_models[0].meta.wcs
 
     # Perform median combination on set of drizzled mosaics
     median_data = create_median(drizzled_models, maskpt)
 
     if save_intermediate_results:
         # make a median model
+        # TODO can i get the wcs from resample (or the input)? otherwise I need to copy it here
         with datamodel_open(drizzled_models[0]) as dm0:
             median_model = datamodels.ImageModel(median_data)
             median_model.update(dm0)
-            median_wcs = dm0.meta.wcs
             median_model.meta.wcs = median_wcs
 
         save_median(median_model, make_output_path, asn_id)
         del median_model
     else:
-        # read the median wcs from one of the drizzled models
-        with datamodel_open(drizzled_models[0]) as dm0:
-            median_wcs = dm0.meta.wcs
-
         # since we're not saving intermediate results if the drizzled models
         # were written to disk, remove them
         if not in_memory:

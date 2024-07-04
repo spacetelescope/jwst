@@ -75,6 +75,7 @@ def detect_outliers(
             in_memory=in_memory,
             asn_id=asn_id,
         )
+        median_wcs = resamp.output_wcs
         drizzled_models = resamp.do_drizzle(input_models)
         if save_intermediate_results:
             for model in drizzled_models:
@@ -91,11 +92,12 @@ def detect_outliers(
                 input_models[i],
                 weight_type=weight_type,
                 good_bits=good_bits)
+        # TODO copy for when saving median and input is a filename?
+        median_wcs = input_models[0].meta.wcs
 
     # Perform median combination on set of drizzled mosaics
     # create_median should be called as a method from parent class
     median_data = create_median(drizzled_models, maskpt)
-    median_wcs = drizzled_models[0].meta.wcs
 
     if save_intermediate_results:
         # Initialize intermediate products used in the outlier detection
