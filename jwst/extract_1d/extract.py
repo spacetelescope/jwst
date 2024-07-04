@@ -3736,7 +3736,6 @@ def create_extraction(extract_ref_dict,
         use_source_posn = False
         log.info(f"Setting use_source_posn to False for source type {source_type}")
 
-
     if photom_has_been_run:
         pixel_solid_angle = meta_source.meta.photometry.pixelarea_steradians
         if pixel_solid_angle is None:
