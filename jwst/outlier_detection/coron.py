@@ -31,7 +31,7 @@ from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst import datamodels
 
 from jwst.resample import resample
-from jwst.resample.resample_utils import build_driz_weight
+from jwst.resample.resample_utils import build_driz_weight, build_mask
 
 from .utils import create_cube_median, flag_cr_update_model
 from ._fileio import remove_file, save_median
@@ -62,8 +62,11 @@ def detect_outliers(
         raise Exception(f"Input must be a CubeModel: {input_model}")
 
     # FIXME don't store this on the model
-    # FIXME does input have a var_rnoise?
-    input_model.wht = build_driz_weight(input_model, weight_type=weight_type, good_bits=good_bits)
+    # FIXME weight_type could now be used here. Similar to tso data coron
+    # data was previously losing var_rnoise due to the conversion from a cube
+    # to a ModelContainer (which makes the default ivm weight ignore var_rnoise).
+    # Now that it's handled as a cube we could use the var_rnoise.
+    input_model.wht = build_mask(input_model.dq, good_bits).astype(np.float32)
 
     # Perform median combination on set of drizzled mosaics
     median_data = create_cube_median(input_model, maskpt)
