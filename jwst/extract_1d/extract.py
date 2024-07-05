@@ -3898,7 +3898,7 @@ def create_extraction(extract_ref_dict,
             else:
                 wl = wavelength.min()
 
-            # Determine whether we have a tabulated aperature correction
+            # Determine whether we have a tabulated aperture correction
             # available to save time.
             
             apcorr_available = False
