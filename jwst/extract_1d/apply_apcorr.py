@@ -267,7 +267,7 @@ class ApCorrPhase(ApCorrBase):
 
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
         var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
-                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
+                               'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
         for col in flux_cols_to_correct:
             spec_table[col] *= self.tabulated_correction
         for col in var_cols_to_correct:
