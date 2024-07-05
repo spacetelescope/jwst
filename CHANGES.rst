@@ -153,7 +153,7 @@ extract_1d
 
 - Changed extract.py to attempt to tabulate and reuse an aperture correction
   object in integrations after the first one.  This can save a very large
-  amount of time in BOTS reductions [#8609]
+  amount of time in BOTS reductions. [#8609]
 
 extract_2d
 ----------
