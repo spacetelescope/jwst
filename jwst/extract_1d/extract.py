@@ -3944,11 +3944,11 @@ def create_extraction(extract_ref_dict,
                     log.info("Computing aperture correction.")
                     apcorr.apply(spec.spec_table)
 
-        # Save previous ra, dec, wavelength in case we can reuse
-        # the aperture correction object.
-        ra_last = ra
-        dec_last = dec
-        wl_last = wl
+            # Save previous ra, dec, wavelength in case we can reuse
+            # the aperture correction object.
+            ra_last = ra
+            dec_last = dec
+            wl_last = wl
         output_model.spec.append(spec)
 
         if log_increment > 0 and (integ + 1) % log_increment == 0:
