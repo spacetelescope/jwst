@@ -312,9 +312,9 @@ class ResampleSpecData(ResampleData):
         native2celestial = RotateNative2Celestial(targ_ra, targ_dec, 180)
         undist2sky = tan | native2celestial
         x_tan, y_tan = undist2sky.inverse(ra_ref, dec_ref)
-        nn = np.isnan(x_tan) | np.isnan(y_tan)
-        x_tan = x_tan[~nn]
-        y_tan = y_tan[~nn]
+        is_nan = np.isnan(x_tan) | np.isnan(y_tan)
+        x_tan = x_tan[~is_nan]
+        y_tan = y_tan[~is_nan]
 
         # Estimate the spatial sampling from the tangent projection
         # offset from center
@@ -343,19 +343,28 @@ class ResampleSpecData(ResampleData):
         diff = np.abs(max_tan - min_tan)
         if swap_xy:
             pix_to_tan_slope = np.abs(pix_to_ytan.slope)
+            slope_sign = np.sign(pix_to_ytan.slope)
         else:
             pix_to_tan_slope = np.abs(pix_to_xtan.slope)
+            slope_sign = np.sign(pix_to_ytan.slope)
 
         # Image size in spatial dimension from the maximum slope
+        # and tangent offset span, plus one pixel to make sure
+        # we catch all the data
         ny = int(np.ceil(diff / pix_to_tan_slope)) + 1
 
-        # Correct the intercept for the integer pixel size
-        # to make sure the data is centered in the array
-        offset = (ny - 1) * pix_to_tan_slope - diff
-        if swap_xy:
-            pix_to_ytan.intercept += np.sign(pix_to_ytan.intercept) * offset
+        # Correct the intercept for the new minimum value.
+        # Also account for integer pixel size to make sure the
+        # data is centered in the array.
+        offset = ny/2 * pix_to_tan_slope - diff/2
+        if slope_sign > 0:
+            zero_value = min_tan
         else:
-            pix_to_xtan.intercept += np.sign(pix_to_xtan.intercept) * offset
+            zero_value = max_tan
+        if swap_xy:
+            pix_to_ytan.intercept = zero_value - slope_sign * offset
+        else:
+            pix_to_xtan.intercept = zero_value - slope_sign * offset
 
         # Now set up the final transforms
 

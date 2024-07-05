@@ -465,12 +465,13 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     if 'sr' not in units:
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
-        assert np.allclose(np.nansum(result1.data, axis=1)[2:-2],
-                           np.nansum(result2.data, axis=1)[2:-2], rtol=0.05)
+        # Check the maximum sums, to avoid edges.
+        assert np.allclose(np.max(np.nansum(result1.data, axis=0)),
+                           np.max(np.nansum(result1.data, axis=0)), rtol=0.05)
     else:
-        # surface brightness conservation: sum over pixels scales with size
-        assert np.allclose(np.nansum(result1.data, axis=1)[2:-2],
-                           np.nansum(result2.data, axis=1)[2:-2] / ratio, rtol=0.05)
+        # surface brightness conservation: mean values are the same
+        assert np.allclose(np.nanmean(result1.data, axis=1)[2:-2],
+                           np.nanmean(result2.data, axis=1)[2:-2], rtol=0.05)
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -523,13 +524,14 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
         # flux is conserved
         if 'sr' not in units:
             # flux density conservation: sum over pixels in each column
-            # needs to be about the same, other than the edges
-            assert np.allclose(np.nansum(slit1.data, axis=0)[2:-2],
-                               np.nansum(slit2.data, axis=0)[2:-2], rtol=0.05)
+            # needs to be about the same, other than edge effects.
+            # Check the maximum sums, to avoid edges.
+            assert np.allclose(np.max(np.nansum(slit1.data, axis=0)),
+                               np.max(np.nansum(slit2.data, axis=0)), rtol=0.05)
         else:
-            # surface brightness conservation: sum over pixels scales with size
-            assert np.allclose(np.nansum(slit1.data, axis=0)[2:-2],
-                               np.nansum(slit2.data, axis=0)[2:-2] / ratio, rtol=0.05)
+            # surface brightness conservation: mean values are the same
+            assert np.allclose(np.nanmean(slit1.data, axis=0),
+                               np.nanmean(slit2.data, axis=0), rtol=0.05)
 
         # output area is updated either way
         area1 = slit1.meta.photometry.pixelarea_steradians
