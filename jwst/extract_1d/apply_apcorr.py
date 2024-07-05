@@ -255,52 +255,43 @@ class ApCorrPhase(ApCorrBase):
 
         self.tabulated_correction = np.asarray(coefs)
 
-    def apply_tabulated_correction(self, spec_table: fits.FITS_rec):
-        """Apply self.tabulated_correction values to source-related extraction results in-place.
-
-        Parameters
-        ----------
-        spec_table : `~fits.FITS_rec`
-            Table of aperture corrections values from apcorr reference file.
-
-        """
-
-        if self.tabulated_correction is None:
-            raise ValueError("Cannot call apply_tabulated_correction without first "
-                             "calling tabulate_correction")
-
-        flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
-                               'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
-        for col in flux_cols_to_correct:
-            spec_table[col] *= self.tabulated_correction
-        for col in var_cols_to_correct:
-            spec_table[col] *= self.tabulated_correction**2
-
-    def apply(self, spec_table: fits.FITS_rec):
+    def apply(self, spec_table: fits.FITS_rec, use_tabulated=False):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
 
         Parameters
         ----------
         spec_table : `~fits.FITS_rec`
             Table of aperture corrections values from apcorr reference file.
+        use_tabulated : bool, Optional
+            Use self.tabulated_correction to perform the aperture correction?
+            Default False (recompute correction from scratch).
 
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
         var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
                             'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
+        
+        if use_tabulated:
+            if self.tabulated_correction is None:
+                raise ValueError("Cannot call apply_tabulated_correction without first "
+                                 "calling tabulate_correction")
 
-        for row in spec_table:
-            try:
-                correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
-            except ValueError:
-                correction = None  # Some input wavelengths might not be supported (especially at the ends of the range)
+            for col in flux_cols_to_correct:
+                spec_table[col] *= self.tabulated_correction
+            for col in var_cols_to_correct:
+                spec_table[col] *= self.tabulated_correction**2
+        else:
+            for row in spec_table:
+                try:
+                    correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
+                except ValueError:
+                    correction = None  # Some input wavelengths might not be supported (especially at the ends of the range)
 
-            if correction:
-                for col in flux_cols_to_correct:
-                    row[col] *= correction.item()
-                for col in var_cols_to_correct:
-                    row[col] *= correction.item() * correction.item()
+                if correction:
+                    for col in flux_cols_to_correct:
+                        row[col] *= correction.item()
+                    for col in var_cols_to_correct:
+                        row[col] *= correction.item() * correction.item()
 
 
 class ApCorrRadial(ApCorrBase):
