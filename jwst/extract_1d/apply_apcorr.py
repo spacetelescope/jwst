@@ -229,7 +229,10 @@ class ApCorrPhase(ApCorrBase):
         pass
 
     def tabulate_correction(self, spec_table: fits.FITS_rec):
-        """Tabulate the interpolated aperture correction value.  This will save time when applying it later, especially if it is to be applied to multiple integrations.  Modifies self.tabulated_correction.
+        """Tabulate the interpolated aperture correction value.
+        
+         This will save time when applying it later, especially if it is to be applied to multiple integrations.  
+         Modifies self.tabulated_correction.
 
         Parameters
         ----------
