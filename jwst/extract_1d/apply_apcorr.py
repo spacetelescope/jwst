@@ -263,7 +263,8 @@ class ApCorrPhase(ApCorrBase):
         """
 
         if self.tabulated_correction is None:
-            raise ValueError("Cannot call apply_tabulated_correction without first calling tabulate_correction")
+            raise ValueError("Cannot call apply_tabulated_correction without first "
+                             "calling tabulate_correction")
 
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
         var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
