@@ -3912,7 +3912,7 @@ def create_extraction(extract_ref_dict,
             # save a ton of time.
             if ra == ra_last and dec == dec_last and wl == wl_last and apcorr_available:
                 # re-use the last aperture correction
-                apcorr.apply_tabulated_correction(spec.spec_table)
+                apcorr.apply(spec.spec_table, use_tabulated=True)
 
             else:
                 if isinstance(input_model, datamodels.ImageModel):
@@ -3938,7 +3938,7 @@ def create_extraction(extract_ref_dict,
                 # If this fails, fall back on the old method.
                 try:
                     apcorr.tabulate_correction(spec.spec_table)
-                    apcorr.apply_tabulated_correction(spec.spec_table)
+                    apcorr.apply(spec.spec_table, use_tabulated=True)
                     log.info("Tabulating aperture correction for use in multiple integrations.")
                 except AttributeError:
                     log.info("Computing aperture correction.")
