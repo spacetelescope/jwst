@@ -21,7 +21,7 @@ This routine performs the following operations::
 
 """
 
-
+import copy
 import logging
 import os
 
@@ -105,15 +105,14 @@ def detect_outliers(
                 input_models[i],
                 weight_type=weight_type,
                 good_bits=good_bits)
-        # TODO copy for when saving median and input is a filename?
-        median_wcs = input_models[0].meta.wcs
+        # copy for when saving median and input is a filename?
+        median_wcs = copy.deepcopy(input_models[0].meta.wcs)
 
     # Perform median combination on set of drizzled mosaics
     median_data = create_median(drizzled_models, maskpt)
 
     if save_intermediate_results:
         # make a median model
-        # TODO can i get the wcs from resample (or the input)? otherwise I need to copy it here
         with datamodel_open(drizzled_models[0]) as dm0:
             median_model = datamodels.ImageModel(median_data)
             median_model.update(dm0)

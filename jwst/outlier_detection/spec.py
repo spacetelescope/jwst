@@ -20,6 +20,7 @@ This routine performs the following operations::
   6. Updates input data model DQ arrays with mask of detected outliers.
 
 """
+import copy
 
 from stdatamodels.jwst import datamodels
 
@@ -99,8 +100,8 @@ def detect_outliers(
                 input_models[i],
                 weight_type=weight_type,
                 good_bits=good_bits)
-        # TODO copy for when saving median and input is a filename?
-        median_wcs = input_models[0].meta.wcs
+        # copy for when saving median and input is a filename?
+        median_wcs = copy.deepcopy(input_models[0].meta.wcs)
 
     # Perform median combination on set of drizzled mosaics
     # create_median should be called as a method from parent class

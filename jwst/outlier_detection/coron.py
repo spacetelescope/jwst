@@ -63,7 +63,6 @@ def detect_outliers(
     if not isinstance(input_model, datamodels.CubeModel):
         raise Exception(f"Input must be a CubeModel: {input_model}")
 
-    # FIXME don't store this on the model
     # FIXME weight_type could now be used here. Similar to tso data coron
     # data was previously losing var_rnoise due to the conversion from a cube
     # to a ModelContainer (which makes the default ivm weight ignore var_rnoise).
