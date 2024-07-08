@@ -70,7 +70,6 @@ class Detector1Pipeline(Pipeline):
                  }
 
     def run_step(self, step, model):
-        step.modify_input = True
         new_model = step(model)
         gc.collect()
         return new_model

@@ -35,7 +35,7 @@ class PersistenceStep(Step):
 
         with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-            result, input_model = copy_datamodel(input_model, self.modify_input)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
             self.trap_density_filename = self.get_reference_file(result,
                                                                  "trapdensity")

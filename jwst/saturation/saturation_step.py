@@ -29,7 +29,7 @@ class SaturationStep(Step):
         # Open the input data model
         with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-            result, input_model = copy_datamodel(input_model, self.modify_input)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
             # Get the name of the saturation reference file
             self.ref_name = self.get_reference_file(result, 'saturation')

@@ -412,7 +412,7 @@ class RampFitStep(Step):
         # Open the input data model
         input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
 
-        result, input_model = copy_datamodel(input_model, self.modify_input)
+        result, input_model = copy_datamodel(input_model, self.parent)
 
         max_cores = self.maximum_cores
         readnoise_filename = self.get_reference_file(result, 'readnoise')

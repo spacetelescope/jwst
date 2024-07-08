@@ -34,7 +34,7 @@ class RscdStep(Step):
         # Open the input data model
         with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-            result, input_model = copy_datamodel(input_model, self.modify_input)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
             # check the data is MIRI data
             detector = result.meta.instrument.detector

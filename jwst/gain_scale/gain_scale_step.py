@@ -25,7 +25,7 @@ class GainScaleStep(Step):
         # Open the input data model
         with use_datamodel(input_model) as input_model:
 
-            result, input_model = copy_datamodel(input_model, self.modify_input)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
             # Is the gain_factor already populated in the input model?
             if result.meta.exposure.gain_factor is None:

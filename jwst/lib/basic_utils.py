@@ -29,7 +29,7 @@ def use_datamodel(input, model_class=None):
         model = model_class(model)
     return model
 
-def copy_datamodel(input, modify_input):
+def copy_datamodel(input, step_parent):
     """Return a copy of the datamodel and set the input to None to recover memory or simply
     return the input if the data is to be modified in-place.
 
@@ -38,8 +38,8 @@ def copy_datamodel(input, modify_input):
     input : jwst datamodel
         The datamodel to copy
 
-    modify_input = boolean
-        If True modify the input datamodel in-place, don't make a copy
+    step_parent = self.parent
+        If the Step class is not part of a pipeline, this will be None
 
     Returns
     -------
@@ -49,7 +49,7 @@ def copy_datamodel(input, modify_input):
     model_copy : datamodel
         The datamodel copy
     """
-    if not modify_input:
+    if step_parent is None:
         model_copy = input.copy()
         return model_copy, None
     else:

@@ -63,7 +63,7 @@ class DQInitStep(Step):
             self.log.error("Can't open input")
             raise
 
-        result, input_model = copy_datamodel(input_model, self.modify_input)
+        result, input_model = copy_datamodel(input_model, self.parent)
         del input
 
         # Retrieve the mask reference file name
