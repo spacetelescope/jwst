@@ -198,4 +198,4 @@ Outlier Detection for Slit data
 See the :ref:`IFU outlier detection <outlier-detection-spec>` documentation for
 details.
 
-.. automodapi:: jwst.outlier_detection.outlier_detection
+.. automodapi:: jwst.outlier_detection.imaging

@@ -45,4 +45,4 @@ Specifically, this routine performs the following operations (modified from the
 #. Update input data model DQ arrays with mask of detected outliers
 
 
-.. automodapi:: jwst.outlier_detection.outlier_detection_spec
+.. automodapi:: jwst.outlier_detection.spec
