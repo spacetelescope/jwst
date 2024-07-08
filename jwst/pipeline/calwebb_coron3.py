@@ -87,7 +87,10 @@ class Coron3Pipeline(Pipeline):
 
         # Create a DM object using the association table
         input_models = datamodels.open(user_input, asn_exptypes=asn_exptypes)
-        acid = input_models.meta.asn_table.asn_id
+
+        # This asn_id assignment is important as it allows outlier detection
+        # to know the asn_id since that step receives the cube as input.
+        self.asn_id = input_models.meta.asn_table.asn_id
 
         # Store the output file for future use
         self.output_file = input_models.meta.asn_table.products[0].name
@@ -100,7 +103,7 @@ class Coron3Pipeline(Pipeline):
             members_by_type[member['exptype'].lower()].append(member['expname'])
 
         # Set up required output products and formats
-        self.outlier_detection.suffix = f'{acid}_crfints'
+        self.outlier_detection.suffix = f'{self.asn_id}_crfints'
         self.outlier_detection.save_results = self.save_results
         self.resample.blendheaders = False
 
@@ -173,7 +176,7 @@ class Coron3Pipeline(Pipeline):
                 # Save the alignment results
                 self.save_model(
                     psf_aligned, output_file=target_file,
-                    suffix='psfalign', acid=acid
+                    suffix='psfalign', acid=self.asn_id
                 )
 
                 # Call KLIP
@@ -183,7 +186,7 @@ class Coron3Pipeline(Pipeline):
                 # Save the psf subtraction results
                 self.save_model(
                     psf_sub, output_file=target_file,
-                    suffix='psfsub', acid=acid
+                    suffix='psfsub', acid=self.asn_id
                 )
 
                 # Split out the integrations into separate models

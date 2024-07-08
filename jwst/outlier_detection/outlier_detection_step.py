@@ -1,5 +1,6 @@
 """Public common step definition for OutlierDetection processing."""
 from functools import partial
+from pathlib import Path
 
 from stdatamodels.jwst import datamodels
 
@@ -34,6 +35,13 @@ class OutlierDetectionStep(Step):
         Single filename association table, or a datamodels.ModelContainer.
 
     """
+
+    # TODO note that this step does not have a suffix, the image3, coron3
+    # and spec3 pipelines set the suffix (tso3 does not).
+    # I think this means that running the step in isolation will produce
+    # a file with suffix "outlierdetectionstep" (which I think is a bug).
+    # FIXME coron3 also adds the asn_id to the suffix but didn't set
+    # the attribute (so I think intermediate files won't use the asn_id).
 
     class_alias = "outlier_detection"
 
@@ -130,6 +138,14 @@ class OutlierDetectionStep(Step):
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
 
+        # The input only needs to be opened to:
+        # - determine the asn_id (if not set by the pipeline)
+        # - determine the "mode" (if not set by the pipeline)
+
+        #if isinstance(input_data, (str, Path)):
+        # TODO allow pipelines to pre-select the mode?
+
+        # FIXME in_memory only makes sense for some modes
         with datamodels.open(input_data, save_open=self.in_memory) as input_models:
             if isinstance(input_models, ModelContainer):
                 ninputs = len(input_models)
@@ -153,6 +169,7 @@ class OutlierDetectionStep(Step):
 
             # Setup output path naming if associations are involved.
             asn_id = None
+            # FIXME only makes sense for a ModelContainer input
             try:
                 asn_id = input_models.meta.asn_table.asn_id
             except (AttributeError, KeyError):
@@ -160,6 +177,8 @@ class OutlierDetectionStep(Step):
             if asn_id is None:
                 asn_id = self.search_attr('asn_id')
             if asn_id is not None:
+                # FIXME why parent_first? this will (when run in a pipeline)
+                # get `_make_output_path` from the pipeline.
                 _make_output_path = self.search_attr(
                     '_make_output_path', parent_first=True
                 )
@@ -266,6 +285,9 @@ class OutlierDetectionStep(Step):
                 return self._set_status(input_models, "SKIPPED")
 
             return self._set_status(input_models, "COMPLETE")
+
+    def _guess_mode(self, input_models):
+        pass
 
     def _set_status(self, input_models, status):
         if isinstance(input_models, ModelContainer):

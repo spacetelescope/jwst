@@ -73,6 +73,9 @@ class Tso3Pipeline(Pipeline):
 
         if self.output_file is None:
             self.output_file = input_models.meta.asn_table.products[0].name
+
+        # This asn_id assignment is important as it allows outlier detection
+        # to know the asn_id since that step receives the cube as input.
         self.asn_id = input_models.meta.asn_table.asn_id
 
         # Input may consist of multiple exposures, so loop over each of them
