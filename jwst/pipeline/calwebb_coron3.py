@@ -104,6 +104,7 @@ class Coron3Pipeline(Pipeline):
 
         # Set up required output products and formats
         self.outlier_detection.suffix = f'{self.asn_id}_crfints'
+        self.outlier_detection.mode = 'coron'
         self.outlier_detection.save_results = self.save_results
         self.resample.blendheaders = False
 

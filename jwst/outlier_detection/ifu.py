@@ -50,6 +50,15 @@ def detect_outliers(
     make_output_path,
 ):
     """Split data by detector to find outliers."""
+    if not isinstance(input_models, ModelContainer):
+        input_models = ModelContainer(input_models)
+
+    if len(input_models) < 2:
+        log.warning(f"Input only contains {len(input_models)} exposures")
+        log.warning("Outlier detection will be skipped")
+        for model in input_models:
+            model.meta.cal_step.outlier_detection = "SKIPPED"
+        return input_models
 
     sizex, sizey = [int(val) for val in kernel_size.split()]
     kern_size = np.zeros(2, dtype=int)
@@ -89,6 +98,7 @@ def detect_outliers(
                       save_intermediate_results,
                       ifu_second_check,
                       make_output_path)
+    return input_models
 
 def flag_outliers(input_models, idet, uq_det, ndet_files,
                   diffaxis, nx, ny,

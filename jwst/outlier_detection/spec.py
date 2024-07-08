@@ -58,7 +58,14 @@ def detect_outliers(
 ):
     """Flag outlier pixels in DQ of input images."""
     if not isinstance(input_models, ModelContainer):
-        raise Exception(f"Input must be a ModelContainer: {input_models}")
+        input_models = ModelContainer(input_models, save_open=in_memory)
+
+    if len(input_models) < 2:
+        log.warning(f"Input only contains {len(input_models)} exposures")
+        log.warning("Outlier detection will be skipped")
+        for model in input_models:
+            model.meta.cal_step.outlier_detection = "SKIPPED"
+        return input_models
 
     if resample_data is True:
         # Start by creating resampled/mosaic images for
@@ -134,3 +141,4 @@ def detect_outliers(
         backg,
         resample_data,
     )
+    return input_models

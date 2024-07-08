@@ -27,7 +27,6 @@ import os
 
 import numpy as np
 
-from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst import datamodels
 
 from jwst.resample import resample
@@ -58,6 +57,9 @@ def detect_outliers(
     make_output_path,
 ):
     """Flag outlier pixels in DQ of input images."""
+    if not isinstance(input_model, datamodels.JwstDataModel):
+        input_model = datamodels.open(input_model)
+
     if not isinstance(input_model, datamodels.CubeModel):
         raise Exception(f"Input must be a CubeModel: {input_model}")
 
@@ -92,3 +94,4 @@ def detect_outliers(
         backg,
         False,
     )
+    return input_model

@@ -30,6 +30,8 @@ def detect_outliers(
     make_output_path,
 ):
     """Flag outlier pixels in DQ of input images."""
+    if not isinstance(input_model, dm.JwstDataModel):
+        input_model = dm.open(input_model)
     if isinstance(input_model, dm.ModelContainer):
         raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
     weighted_cube = weight_no_resample(input_model, good_bits)
@@ -67,6 +69,7 @@ def detect_outliers(
         backg,
         False,  # force resampling off
     )
+    return input_model
 
 
 def weight_no_resample(input_model, good_bits):
