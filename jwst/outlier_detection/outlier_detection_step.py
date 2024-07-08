@@ -1,6 +1,5 @@
 """Public common step definition for OutlierDetection processing."""
 from functools import partial
-from pathlib import Path
 
 from stdatamodels.jwst import datamodels
 

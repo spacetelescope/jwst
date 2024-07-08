@@ -23,17 +23,15 @@ This routine performs the following operations::
 
 
 import logging
-import os
 
 import numpy as np
 
 from stdatamodels.jwst import datamodels
 
-from jwst.resample import resample
-from jwst.resample.resample_utils import build_driz_weight, build_mask
+from jwst.resample.resample_utils import build_mask
 
 from .utils import create_cube_median, flag_cr_update_model
-from ._fileio import remove_file, save_median
+from ._fileio import save_median
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

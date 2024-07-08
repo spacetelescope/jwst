@@ -25,9 +25,6 @@ import copy
 import logging
 import os
 
-import numpy as np
-
-from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
@@ -113,7 +110,7 @@ def detect_outliers(
 
     if save_intermediate_results:
         # make a median model
-        with datamodel_open(drizzled_models[0]) as dm0:
+        with datamodels.open(drizzled_models[0]) as dm0:
             median_model = datamodels.ImageModel(median_data)
             median_model.update(dm0)
             median_model.meta.wcs = median_wcs

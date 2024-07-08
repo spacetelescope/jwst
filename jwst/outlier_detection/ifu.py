@@ -31,6 +31,7 @@ import logging
 
 import numpy as np
 
+from jwst.datamodels import ModelContainer
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from stcal.outlier_detection.utils import medfilt
