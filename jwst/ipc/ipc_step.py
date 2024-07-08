@@ -36,30 +36,30 @@ class IPCStep(Step):
         """
 
         # Open the input data model
-        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
+        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
 
-            result, input_model = copy_datamodel(input_model, self.parent)
+        result, input_model = copy_datamodel(input_model, self.parent)
 
-            # Get the name of the ipc reference file to use
-            self.ipc_name = self.get_reference_file(result, 'ipc')
-            self.log.info('Using IPC reference file %s', self.ipc_name)
+        # Get the name of the ipc reference file to use
+        self.ipc_name = self.get_reference_file(result, 'ipc')
+        self.log.info('Using IPC reference file %s', self.ipc_name)
 
-            # Check for a valid reference file
-            if self.ipc_name == 'N/A':
-                self.log.warning('No IPC reference file found')
-                self.log.warning('IPC step will be skipped')
-                result.meta.cal_step.ipc = 'SKIPPED'
-                return result
+        # Check for a valid reference file
+        if self.ipc_name == 'N/A':
+            self.log.warning('No IPC reference file found')
+            self.log.warning('IPC step will be skipped')
+            result.meta.cal_step.ipc = 'SKIPPED'
+            return result
 
-            # Open the ipc reference file data model
-            ipc_model = datamodels.IPCModel(self.ipc_name)
+        # Open the ipc reference file data model
+        ipc_model = datamodels.IPCModel(self.ipc_name)
 
-            # Do the ipc correction
-            result = ipc_corr.do_correction(result, ipc_model)
+        # Do the ipc correction
+        result = ipc_corr.do_correction(result, ipc_model)
 
-            # Close the reference file and update the step status
-            del ipc_model
-            result.meta.cal_step.ipc = 'COMPLETE'
+        # Close the reference file and update the step status
+        del ipc_model
+        result.meta.cal_step.ipc = 'COMPLETE'
 
         gc.collect()
         return result

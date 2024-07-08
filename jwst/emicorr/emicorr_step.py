@@ -33,76 +33,76 @@ class EmiCorrStep(Step):
     def process(self, input_model):
 
         # Open the input data model
-        with use_datamodel(input_model) as input_model:
+        input_model = use_datamodel(input_model)
 
-            result, input_model = copy_datamodel(input_model, self.parent)
+        result, input_model = copy_datamodel(input_model, self.parent)
 
-            # Catch the cases to skip
-            instrument = result.meta.instrument.name
-            if instrument != 'MIRI':
-                self.log.warning('EMI correction not implemented for instrument: {}'.format(instrument))
+        # Catch the cases to skip
+        instrument = result.meta.instrument.name
+        if instrument != 'MIRI':
+            self.log.warning('EMI correction not implemented for instrument: {}'.format(instrument))
+            result.meta.cal_step.emicorr = 'SKIPPED'
+            return result
+
+        readpatt = result.meta.exposure.readpatt
+        allowed_readpatts = ['FAST', 'FASTR1', 'SLOW', 'SLOWR1']
+        if readpatt.upper() not in allowed_readpatts:
+            self.log.warning('EMI correction not implemented for read pattern: {}'.format(readpatt))
+            result.meta.cal_step.emicorr = 'SKIPPED'
+            return result
+
+        # Setup parameters
+        pars = {
+            'save_intermediate_results': self.save_intermediate_results,
+            'user_supplied_reffile': self.user_supplied_reffile,
+            'nints_to_phase': self.nints_to_phase,
+            'nbins': self.nbins,
+            'scale_reference': self.scale_reference,
+            'onthefly_corr_freq': self.onthefly_corr_freq,
+            'use_n_cycles': self.use_n_cycles
+        }
+
+        # Get the reference file
+        save_onthefly_reffile, emicorr_ref_filename, emicorr_model = None, None, None
+        if self.onthefly_corr_freq is not None:
+            emicorr_ref_filename = None
+            self.log.info('Correcting with reference file created on-the-fly.')
+
+        elif self.user_supplied_reffile is None:
+            emicorr_ref_filename = self.get_reference_file(result, 'emicorr')
+            # Skip the spep if no reference file is found
+            if emicorr_ref_filename == 'N/A':
+                self.log.warning('No reference file found.')
+                self.log.warning('EMICORR step will be skipped')
                 result.meta.cal_step.emicorr = 'SKIPPED'
                 return result
-
-            readpatt = result.meta.exposure.readpatt
-            allowed_readpatts = ['FAST', 'FASTR1', 'SLOW', 'SLOWR1']
-            if readpatt.upper() not in allowed_readpatts:
-                self.log.warning('EMI correction not implemented for read pattern: {}'.format(readpatt))
-                result.meta.cal_step.emicorr = 'SKIPPED'
-                return result
-
-            # Setup parameters
-            pars = {
-                'save_intermediate_results': self.save_intermediate_results,
-                'user_supplied_reffile': self.user_supplied_reffile,
-                'nints_to_phase': self.nints_to_phase,
-                'nbins': self.nbins,
-                'scale_reference': self.scale_reference,
-                'onthefly_corr_freq': self.onthefly_corr_freq,
-                'use_n_cycles': self.use_n_cycles
-            }
-
-            # Get the reference file
-            save_onthefly_reffile, emicorr_ref_filename, emicorr_model = None, None, None
-            if self.onthefly_corr_freq is not None:
-                emicorr_ref_filename = None
-                self.log.info('Correcting with reference file created on-the-fly.')
-
-            elif self.user_supplied_reffile is None:
-                emicorr_ref_filename = self.get_reference_file(result, 'emicorr')
-                # Skip the spep if no reference file is found
-                if emicorr_ref_filename == 'N/A':
-                    self.log.warning('No reference file found.')
-                    self.log.warning('EMICORR step will be skipped')
-                    result.meta.cal_step.emicorr = 'SKIPPED'
-                    return result
-                else:
-                    self.log.info('Using CRDS reference file: {}'.format(emicorr_ref_filename))
-                    emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
-
             else:
-                self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
-                emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
+                self.log.info('Using CRDS reference file: {}'.format(emicorr_ref_filename))
+                emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
 
-            # Do the correction
-            if self.save_intermediate_results:
-                if emicorr_ref_filename is None and self.user_supplied_reffile is None:
-                    # get the same full path as input file to save the on-the-fly reference file
-                    emicorr_ref_filename = Step._make_output_path(self, suffix='emi_ref_waves')
-                    save_onthefly_reffile = emicorr_ref_filename
-                else:
-                    save_onthefly_reffile = None
-            result = emicorr.do_correction(result, emicorr_model, save_onthefly_reffile, **pars)
-            if isinstance(result, str) or result is None:
-                # in this case output_model=subarray_readpatt configuration
-                self.log.warning('No correction match for this configuration')
-                self.log.warning('Step skipped')
-                result.meta.cal_step.emicorr = 'SKIPPED'
-                return result
+        else:
+            self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
+            emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
 
-            # close and remove the reference file created on-the-fly
-            result.meta.cal_step.emicorr = 'COMPLETE'
-            del emicorr_model
+        # Do the correction
+        if self.save_intermediate_results:
+            if emicorr_ref_filename is None and self.user_supplied_reffile is None:
+                # get the same full path as input file to save the on-the-fly reference file
+                emicorr_ref_filename = Step._make_output_path(self, suffix='emi_ref_waves')
+                save_onthefly_reffile = emicorr_ref_filename
+            else:
+                save_onthefly_reffile = None
+        result = emicorr.do_correction(result, emicorr_model, save_onthefly_reffile, **pars)
+        if isinstance(result, str) or result is None:
+            # in this case output_model=subarray_readpatt configuration
+            self.log.warning('No correction match for this configuration')
+            self.log.warning('Step skipped')
+            result.meta.cal_step.emicorr = 'SKIPPED'
+            return result
+
+        # close and remove the reference file created on-the-fly
+        result.meta.cal_step.emicorr = 'COMPLETE'
+        del emicorr_model
 
         gc.collect()
         return result
