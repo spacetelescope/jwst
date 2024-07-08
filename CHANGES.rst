@@ -25,6 +25,8 @@ outlier_detection
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
 
+- Refactored to separate modes and move common code to stcal. [#8613]
+
 scripts
 -------
 
@@ -50,6 +52,7 @@ tweakreg
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
+
 
 1.15.1 (2024-07-08)
 ===================
