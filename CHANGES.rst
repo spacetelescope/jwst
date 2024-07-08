@@ -1,7 +1,17 @@
-1.15.1 (unreleased)
+1.15.2 (unreleased)
 ===================
 
 -
+
+1.15.1 (2024-07-08)
+===================
+
+ramp_fitting
+------------
+
+- Fix bugs in the C algorithm Poisson variance calculation when provided with an average dark current. [stcal#269]
+
+- Use the C extension with multiprocessing. [stcal#268]
 
 1.15.0 (2024-06-26)
 ===================
