@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def run_detect_jumps(input_model, gain_model, readnoise_model,
+def run_detect_jumps(output_model, gain_model, readnoise_model,
                      rejection_thresh, three_grp_thresh, four_grp_thresh,
                      max_cores, max_jump_to_flag_neighbors,
                      min_jump_to_flag_neighbors, flag_4_neighbors,
@@ -35,13 +35,11 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     # Runs `detect_jumps` in stcal
 
     # extract data and info from input_model to pass to detect_jumps
-    frames_per_group = input_model.meta.exposure.nframes
-    data = input_model.data
-    gdq = input_model.groupdq
-    pdq = input_model.pixeldq
-    err = input_model.err
-    output_model = input_model
-    del input_model
+    frames_per_group = output_model.meta.exposure.nframes
+    data = output_model.data
+    gdq = output_model.groupdq
+    pdq = output_model.pixeldq
+    err = output_model.err
 
     # determine the number of groups that correspond to the after_jump times
     # needed because the group time is not passed to detect_jumps

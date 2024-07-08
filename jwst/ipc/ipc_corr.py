@@ -50,12 +50,12 @@ def do_correction(input_model, ipc_model):
     return output_model
 
 
-def ipc_correction(input_model, ipc_model):
+def ipc_correction(output, ipc_model):
     """Apply the IPC correction to the science arrays.
 
     Parameters
     ----------
-    input_model : data model object
+    output : data model object
         The input science data.
 
     ipc_model : IPCModel object
@@ -69,14 +69,10 @@ def ipc_correction(input_model, ipc_model):
     """
 
     log.debug("ipc_correction: nints=%d, ngroups=%d, size=%d,%d",
-              input_model.meta.exposure.nints,
-              input_model.meta.exposure.ngroups,
-              input_model.data.shape[-1],
-              input_model.data.shape[-2])
-
-    # Create output as a copy of the input science data model.
-    output = input_model
-    input_model.close()
+              output.meta.exposure.nints,
+              output.meta.exposure.ngroups,
+              output.data.shape[-1],
+              output.data.shape[-2])
 
     # Was IRS2 readout used?
     is_irs2_format = pipe_utils.is_irs2(input_model)

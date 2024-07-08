@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model):
+def do_correction(output):
     """
     Short Summary
     -------------
@@ -20,7 +20,7 @@ def do_correction(input_model):
 
     Parameters
     ----------
-    input_model: data model object
+    output: data model object
         science data to be corrected
 
     Returns
@@ -29,11 +29,6 @@ def do_correction(input_model):
         lastframe-corrected science data
 
     """
-
-    # Create output as a copy of the input science data model
-    output = input_model
-    input_model.close()
-    del input_model
 
     # Save some data params for easy use later
     sci_ngroups = output.data.shape[1]
