@@ -8,7 +8,7 @@ import numpy as np
 from jwst.datamodels import ModelContainer
 from jwst.resample.resample_utils import build_driz_weight
 from jwst.resample.resample import compute_image_pixel_area
-from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_cr
+from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
 from stdatamodels.jwst import datamodels
 
 import logging
@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-# flags used in flag_cr_update_model
 DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
@@ -138,10 +137,10 @@ def flag_crs_in_models(
             blot = median_data
 
         # dq flags will be updated in-place
-        flag_cr_update_model(image, blot, snr1, snr2, scale1, scale2, backg, resample_data)
+        flag_resampled_model_crs(image, blot, snr1, snr2, scale1, scale2, backg, resample_data)
 
 
-def flag_cr_update_model(
+def flag_resampled_model_crs(
     image,
     blot,
     snr1,
@@ -166,12 +165,7 @@ def flag_cr_update_model(
         backg = image.meta.background.level
         log.debug(f"Adding background level {backg} to blotted image")
 
-    cr_mask = flag_cr(image.data, image.err, blot, snr1, snr2, scale1, scale2, backg, resample_data)
-
-    # TODO is it necessary to do all this math for 1 possible log message?
-    # would a count of flagged pixels in the mask be a suitable replacement?
-    # Count existing DO_NOT_USE pixels
-    count_existing = np.count_nonzero(image.dq & DO_NOT_USE)
+    cr_mask = flag_resampled_crs(image.data, image.err, blot, snr1, snr2, scale1, scale2, backg, resample_data)
 
     # FIXME (or really "fixed") for a converted cube this used to overwrite
     # the dq "view" of the cube with a new dq array. This broke the link
@@ -182,11 +176,14 @@ def flag_cr_update_model(
     # we don't convert cubes.
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
 
-    # Report number (and percent) of new DO_NOT_USE pixels found
-    count_outlier = np.count_nonzero(image.dq & DO_NOT_USE)
-    count_added = count_outlier - count_existing
-    percent_cr = count_added / image.dq.size * 100
-    log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
+    log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
+
+
+def flag_model_crs(image, blot, snr):
+    cr_mask = flag_crs(image.data, image.err, blot, snr)
+    # update dq array in-place
+    image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
+    log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
 
 
 def _convert_inputs(inputs, good_bits, weight_type):

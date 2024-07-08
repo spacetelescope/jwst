@@ -8,7 +8,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.utils import flag_cr_update_model
+from jwst.outlier_detection.utils import flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
@@ -75,7 +75,7 @@ def test_flag_cr(sci_blot_image_pair):
 
     # run flag_cr() which updates in-place.  Copy sci first.
     data_copy = sci.data.copy()
-    flag_cr_update_model(
+    flag_resampled_model_crs(
         sci,
         blot.data,
         5.0,

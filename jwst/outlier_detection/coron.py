@@ -30,7 +30,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.resample.resample_utils import build_mask
 
-from .utils import create_cube_median, flag_cr_update_model
+from .utils import create_cube_median, flag_model_crs
 from ._fileio import save_median
 
 log = logging.getLogger(__name__)
@@ -45,12 +45,7 @@ def detect_outliers(
     save_intermediate_results,
     good_bits,
     maskpt,
-    snr1,
-    snr2,
-    scale1,
-    scale2,
-    backg,
-    weight_type,
+    snr,
     asn_id,
     make_output_path,
 ):
@@ -81,14 +76,9 @@ def detect_outliers(
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    flag_cr_update_model(
+    flag_model_crs(
         input_model,
         median_data,
-        snr1,
-        snr2,
-        scale1,
-        scale2,
-        backg,
-        False,
+        snr,
     )
     return input_model

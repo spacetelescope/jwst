@@ -164,10 +164,6 @@ class OutlierDetectionStep(Step):
                 self.maskpt,
                 self.rolling_window_width,
                 snr1,
-                snr2,
-                scale1,
-                scale2,
-                self.backg,
                 asn_id,
                 self.make_output_path,
             )
@@ -178,11 +174,6 @@ class OutlierDetectionStep(Step):
                 self.good_bits,
                 self.maskpt,
                 snr1,
-                snr2,
-                scale1,
-                scale2,
-                self.backg,
-                self.weight_type,
                 asn_id,
                 self.make_output_path,
             )
