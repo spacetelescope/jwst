@@ -16,11 +16,12 @@ import importlib
 import sys
 import os
 from pathlib import Path
+from jwst import __version__
 
 if sys.version_info < (3, 11):
-     import tomli as tomllib
+    import tomli as tomllib
 else:
-     import tomllib
+    import tomllib
 from packaging.version import Version
 from configparser import ConfigParser
 
@@ -64,16 +65,16 @@ conf = ConfigParser()
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('../'))
-sys.path.insert(0, os.path.abspath('jwst/'))
-sys.path.insert(0, os.path.abspath('exts/'))
+sys.path.insert(0, os.path.abspath("jwst/"))
+sys.path.insert(0, os.path.abspath("exts/"))
 
 # -- General configuration ------------------------------------------------
 with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
-    metadata = tomllib.load(metadata_file)['project']
+    metadata = tomllib.load(metadata_file)["project"]
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.3'
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 
 def check_sphinx_version(expected_version):
@@ -82,27 +83,29 @@ def check_sphinx_version(expected_version):
     if sphinx_version < expected_version:
         raise RuntimeError(
             "At least Sphinx version {0} is required to build this "
-            "documentation.  Found {1}.".format(
-                expected_version, sphinx_version))
+            "documentation.  Found {1}.".format(expected_version, sphinx_version)
+        )
 
 
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://numpy.org/devdocs', None),
-    'scipy': ('http://scipy.github.io/devdocs', None),
-    'matplotlib': ('http://matplotlib.org/', None),
-    'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
-    'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
-    'stcal': ('https://stcal.readthedocs.io/en/latest/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://numpy.org/devdocs", None),
+    "scipy": ("http://scipy.github.io/devdocs", None),
+    "matplotlib": ("http://matplotlib.org/", None),
+    "gwcs": ("https://gwcs.readthedocs.io/en/stable/", None),
+    "stdatamodels": ("https://stdatamodels.readthedocs.io/en/latest/", None),
+    "stcal": ("https://stcal.readthedocs.io/en/latest/", None),
 }
 
 if sys.version_info[0] == 2:
-    intersphinx_mapping['python'] = ('http://docs.python.org/2/', None)
-    intersphinx_mapping['pythonloc'] = (
-        'http://docs.python.org/',
-        os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                     'local/python2_local_links.inv')))
+    intersphinx_mapping["python"] = ("http://docs.python.org/2/", None)
+    intersphinx_mapping["pythonloc"] = (
+        "http://docs.python.org/",
+        os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "local/python2_local_links.inv")
+        ),
+    )
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -111,44 +114,44 @@ if sys.version_info[0] == 2:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'numfig',
-    'sphinxcontrib.jquery',
-    'pytest_doctestplus.sphinx.doctestplus',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.inheritance_diagram',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.napoleon',
-    'sphinx_automodapi.automodapi',
-    'sphinx_automodapi.automodsumm',
-    'sphinx_automodapi.autodoc_enhancements',
-    'sphinx_automodapi.smart_resolver',
+    "numfig",
+    "sphinxcontrib.jquery",
+    "pytest_doctestplus.sphinx.doctestplus",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx_automodapi.automodapi",
+    "sphinx_automodapi.automodsumm",
+    "sphinx_automodapi.autodoc_enhancements",
+    "sphinx_automodapi.smart_resolver",
 ]
 
 
 if on_rtd:
-    extensions.append('sphinx.ext.mathjax')
+    extensions.append("sphinx.ext.mathjax")
 
-elif Version(sphinx.__version__) < Version('1.4'):
-    extensions.append('sphinx.ext.pngmath')
+elif Version(sphinx.__version__) < Version("1.4"):
+    extensions.append("sphinx.ext.pngmath")
 else:
-    extensions.append('sphinx.ext.imgmath')
+    extensions.append("sphinx.ext.imgmath")
 
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # A list of warning types to suppress arbitrary warning messages. We mean to
 # override directives in astropy_helpers.sphinx.ext.autodoc_enhancements,
@@ -156,27 +159,29 @@ master_doc = 'index'
 # released in upstream Sphinx (https://github.com/sphinx-doc/sphinx/pull/1843).
 # Suppress the warnings requires Sphinx v1.4.2
 
-suppress_warnings = ['app.add_directive', ]
+suppress_warnings = [
+    "app.add_directive",
+]
 
 
 # General information about the project
-project = metadata['name']
+project = metadata["name"]
 author = metadata["authors"][0]["name"]
-copyright = f'{datetime.datetime.today().year}, {author}'
+copyright = f"{datetime.datetime.today().year}, {author} `{__version__}`"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-package = importlib.import_module(metadata['name'])
+package = importlib.import_module(metadata["name"])
 try:
-    version = package.__version__.split('-', 1)[0]
+    version = package.__version__.split("-", 1)[0]
     # The full version, including alpha/beta/rc tags.
     release = package.__version__
 except AttributeError:
-    version = 'dev'
-    release = 'dev'
+    version = "dev"
+    release = "dev"
 
 # The language for content autogenerated by Sphinx. Refer to documentation
 # for a list of supported languages.
@@ -190,7 +195,7 @@ except AttributeError:
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ["_build"]
 
 # This is added to the end of RST files - a good place to put substitutions to
 # be used globally.
@@ -198,7 +203,7 @@ rst_epilog = """.. _jwst: high-level_API.html"""
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-default_role = 'obj'
+default_role = "obj"
 
 
 # Don't show summaries of the members in each class along with the
@@ -207,7 +212,7 @@ numpydoc_show_class_members = False
 
 autosummary_generate = True
 
-automodapi_toctreedirnm = 'api'
+automodapi_toctreedirnm = "api"
 
 # Class documentation should contain *both* the class docstring and
 # the __init__ docstring
@@ -217,12 +222,12 @@ autoclass_content = "both"
 graphviz_output_format = "svg"
 
 graphviz_dot_args = [
-    '-Nfontsize=10',
-    '-Nfontname=Helvetica Neue, Helvetica, Arial, sans-serif',
-    '-Efontsize=10',
-    '-Efontname=Helvetica Neue, Helvetica, Arial, sans-serif',
-    '-Gfontsize=10',
-    '-Gfontname=Helvetica Neue, Helvetica, Arial, sans-serif'
+    "-Nfontsize=10",
+    "-Nfontname=Helvetica Neue, Helvetica, Arial, sans-serif",
+    "-Efontsize=10",
+    "-Efontname=Helvetica Neue, Helvetica, Arial, sans-serif",
+    "-Gfontsize=10",
+    "-Gfontname=Helvetica Neue, Helvetica, Arial, sans-serif",
 ]
 
 
@@ -238,7 +243,7 @@ graphviz_dot_args = [
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'default'
+pygments_style = "default"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -248,15 +253,17 @@ pygments_style = 'default'
 
 # Mapping for links to the ASDF Standard in ASDF schema documentation
 asdf_schema_reference_mappings = [
-    ('tag:stsci.edu:asdf',
-     'http://asdf-standard.readthedocs.io/en/latest/generated/stsci.edu/asdf/'),
+    (
+        "tag:stsci.edu:asdf",
+        "http://asdf-standard.readthedocs.io/en/latest/generated/stsci.edu/asdf/",
+    ),
 ]
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -271,10 +278,10 @@ html_theme_options = {
     # "headbgcolor": "white",
 }
 
-html_logo = '_static/stsci_pri_combo_mark_white.png'
+html_logo = "_static/stsci_pri_combo_mark_white.png"
 
 # Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+# html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -303,14 +310,14 @@ html_logo = '_static/stsci_pri_combo_mark_white.png'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = "%b %d, %Y"
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': ['globaltoc.html', 'relations.html', 'searchbox.html']}
+html_sidebars = {"**": ["globaltoc.html", "relations.html", "searchbox.html"]}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -343,25 +350,25 @@ html_use_index = True
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'jwstdoc'
+htmlhelp_basename = "jwstdoc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    'papersize': 'letterpaper',
+    "papersize": "letterpaper",
     # The font size ('10pt', '11pt' or '12pt').
-    'pointsize': '14pt',
+    "pointsize": "14pt",
     # Additional stuff for the LaTeX preamble.
-    'preamble': r'''\usepackage{enumitem} \setlistdepth{99}'''
+    "preamble": r"""\usepackage{enumitem} \setlistdepth{99}""",
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'jwst.tex', u'JWST Pipeline Documentation', u'jwst', 'manual'),
+    ("index", "jwst.tex", "JWST Pipeline Documentation", "jwst", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -376,7 +383,7 @@ latex_documents = [
 # latex_show_pagerefs = False
 
 # If true, show URL addresses after external links.
-latex_show_urls = 'True'
+latex_show_urls = "True"
 
 # Documents to append as an appendix to all manuals.
 # latex_appendices = []
@@ -389,10 +396,7 @@ latex_domain_indices = True
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'jwst', u'JWST Pipeline Documentation',
-     [u'jwst'], 1)
-]
+man_pages = [("index", "jwst", "JWST Pipeline Documentation", ["jwst"], 1)]
 
 # If true, show URL addresses after external links.
 man_show_urls = True
@@ -404,8 +408,15 @@ man_show_urls = True
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'jwst', u'JWST Pipeline Documentation',
-     u'jwst', 'jwst', 'JWST Pipeline Documentation', 'Miscellaneous'),
+    (
+        "index",
+        "jwst",
+        "JWST Pipeline Documentation",
+        "jwst",
+        "jwst",
+        "JWST Pipeline Documentation",
+        "Miscellaneous",
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -415,7 +426,7 @@ texinfo_documents = [
 texinfo_domain_indices = True
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
-texinfo_show_urls = 'inline'
+texinfo_show_urls = "inline"
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
@@ -424,10 +435,10 @@ texinfo_show_urls = 'inline'
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'jwst'
-epub_author = u'STSCI'
-epub_publisher = u'STSCI'
-epub_copyright = u'2017, AURA'
+epub_title = "jwst"
+epub_author = "STSCI"
+epub_publisher = "STSCI"
+epub_copyright = "2017, AURA"
 
 # The basename for the epub file. It defaults to the project name.
 # epub_basename = u'jwst'
@@ -436,7 +447,7 @@ epub_copyright = u'2017, AURA'
 # optimized for small screen space, using the same theme for HTML and
 # epub output is usually not wise. This defaults to 'epub', a theme designed
 # to save visual space.
-epub_theme = 'epub'
+epub_theme = "epub"
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
@@ -467,7 +478,7 @@ epub_theme = 'epub'
 # epub_post_files = []
 
 # A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
+epub_exclude_files = ["search.html"]
 
 # The depth of the table of contents in toc.ncx.
 # epub_tocdepth = 3
