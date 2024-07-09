@@ -17,6 +17,7 @@ from gwcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
 from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
+from stcal.alignment.util import update_s_region_keyword
 
 from stdatamodels.jwst.datamodels import WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import GrismObject
@@ -789,32 +790,6 @@ def bounding_box_from_subarray(input_model):
     return bbox
 
 
-def update_s_region_imaging(model):
-    """
-    Update the ``S_REGION`` keyword using ``WCS.footprint``.
-    """
-
-    bbox = model.meta.wcs.bounding_box
-
-    if bbox is None:
-        bbox = wcs_bbox_from_shape(model.data.shape)
-        model.meta.wcs.bounding_box = bbox
-
-    # footprint is an array of shape (2, 4) as we
-    # are interested only in the footprint on the sky
-    footprint = model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
-    # take only imaging footprint
-    footprint = footprint[:2, :]
-
-    # Make sure RA values are all positive
-    negative_ind = footprint[0] < 0
-    if negative_ind.any():
-        footprint[0][negative_ind] = 360 + footprint[0][negative_ind]
-
-    footprint = footprint.T
-    update_s_region_keyword(model, footprint)
-
-
 def compute_footprint_spectral(model):
     """
     Determine spatial footprint for spectral observations using the instrument model.
@@ -886,23 +861,6 @@ def update_s_region_nrs_slit(slit):
     footprint, spectral_region = compute_footprint_nrs_slit(slit)
     update_s_region_keyword(slit, footprint)
     slit.meta.wcsinfo.spectral_region = spectral_region
-
-
-def update_s_region_keyword(model, footprint):
-    """ Update the S_REGION keyword.
-    """
-    s_region = (
-        "POLYGON ICRS "
-        " {0:.9f} {1:.9f}"
-        " {2:.9f} {3:.9f}"
-        " {4:.9f} {5:.9f}"
-        " {6:.9f} {7:.9f}".format(*footprint.flatten()))
-    if "nan" in s_region:
-        # do not update s_region if there are NaNs.
-        log.info("There are NaNs in s_region, S_REGION not updated.")
-    else:
-        model.meta.wcsinfo.s_region = s_region
-        log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
 
 
 def compute_footprint_nrs_ifu(dmodel, mod):

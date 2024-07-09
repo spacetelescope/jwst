@@ -248,10 +248,10 @@ class TweakRegStep(Step):
 
         # wrapper to stcal tweakreg routines
         # step skip conditions should throw TweakregError from stcal
-        try:
+        if n_groups > 1:
+            try:
             # relative alignment of images to each other (if more than one group)
-            if n_groups > 1:
-                correctors, local_align_failed = \
+                correctors = \
                     twk.relative_align(correctors,
                                        enforce_user_order=self.enforce_user_order,
                                        expand_refcat=self.expand_refcat,
@@ -264,14 +264,19 @@ class TweakRegStep(Step):
                                        separation=self.separation,
                                        tolerance=self.tolerance,
                                        xoffset=self.xoffset,
-                                       yoffset=self.yoffset,
-                                       align_to_abs_refcat=align_to_abs_refcat)
-            else:
+                                       yoffset=self.yoffset,)
+            except twk.TweakregError as e:
+                self.log.warning(str(e))
                 local_align_failed = True
+            else:
+                local_align_failed = False
+        else:
+            local_align_failed = True
 
-            # absolute alignment to the reference catalog
-            # can (and does) occur after alignment between groups
-            if align_to_abs_refcat:
+        # absolute alignment to the reference catalog
+        # can (and does) occur after alignment between groups
+        if align_to_abs_refcat:
+            try:
                 correctors = \
                     twk.absolute_align(correctors, self.abs_refcat, images[0],
                                        abs_minobj=self.abs_minobj,
@@ -284,20 +289,23 @@ class TweakRegStep(Step):
                                        abs_tolerance=self.abs_tolerance,
                                        save_abs_catalog=self.save_abs_catalog,
                                        abs_catalog_output_dir=self.output_dir,
-                                       local_align_failed=local_align_failed,
                                             )
 
-            # one final pass through all the models to update them based
-            # on the results of this step
-            self._apply_tweakreg_solution(images, correctors,
-                                        align_to_abs_refcat=align_to_abs_refcat)
+            except twk.TweakregError as e:
+                self.log.warning(str(e))
+                for model in images:
+                    model.meta.cal_step.tweakreg = "SKIPPED"
+                return images 
 
-        except twk.TweakregError as e:
-            self.log.error(str(e))
+        if local_align_failed and not align_to_abs_refcat:    
             for model in images:
                 record_step_status(model, "tweakreg", success=False)
             return images
 
+        # one final pass through all the models to update them based
+        # on the results of this step
+        self._apply_tweakreg_solution(images, correctors,
+                                    align_to_abs_refcat=align_to_abs_refcat)
         return images
 
 

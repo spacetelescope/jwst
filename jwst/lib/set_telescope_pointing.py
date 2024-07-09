@@ -72,11 +72,12 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from stdatamodels.jwst import datamodels
+from stcal.alignment.util import update_s_region_keyword
 
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 from .set_velocity_aberration import compute_va_effects_vector
 from .siafdb import SIAF, SiafDb
-from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
+from ..assign_wcs.util import calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
 from ..lib.engdb_tools import ENGDB_Service
 from ..lib.pipe_utils import is_tso

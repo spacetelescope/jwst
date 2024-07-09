@@ -7,7 +7,7 @@ from ..stpipe import Step, record_step_status
 from . import cube_build
 from . import ifu_cube
 from . import data_types
-from ..assign_wcs.util import update_s_region_keyword
+from stcal.alignment.util import update_s_region_keyword
 import time
 
 __all__ = ["CubeBuildStep"]

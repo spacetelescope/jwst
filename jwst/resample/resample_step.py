@@ -11,6 +11,7 @@ from jwst.datamodels import ModelContainer
 from . import resample
 from ..stpipe import Step
 from ..assign_wcs import util
+from stcal.alignment.util import update_s_region_imaging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -94,7 +95,7 @@ class ResampleStep(Step):
         for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
             self.update_fits_wcs(model)
-            util.update_s_region_imaging(model)
+            update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.asn_pool_name
             model.meta.asn.table_name = input_models.asn_table_name
 

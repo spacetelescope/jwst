@@ -14,6 +14,7 @@ from astropy import coordinates as coord
 
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.imalign import align_wcs
+from tweakwcs import imalign
 
 from stdatamodels.jwst.datamodels import ImageModel
 
@@ -224,7 +225,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     # 2. test_multichip_alignment_step() does not have access to 'fit_info'
     #    in the meta data and so test_multichip_jwst_alignment() can test
     #    the fit more extensively.
-    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(imalign, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
@@ -294,7 +295,7 @@ def test_multichip_jwst_alignment(monkeypatch):
 
 
 def test_multichip_alignment_step(monkeypatch):
-    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(imalign, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     # image 1
@@ -404,6 +405,8 @@ def test_multichip_alignment_step(monkeypatch):
     # step._is_wcs_correction_small = lambda x, y: True
 
     mr, m1, m2 = step.process(mc)
+    for im in [mr, m1, m2]:
+        assert im.meta.cal_step.tweakreg == 'COMPLETE'
 
     wc1 = m1.meta.wcs
     wc2 = m2.meta.wcs
@@ -422,7 +425,7 @@ def test_multichip_alignment_step(monkeypatch):
 
 
 def test_multichip_alignment_step_abs(monkeypatch):
-    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(imalign, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     refcat_path = os.path.join(data_path, 'ref.ecsv')

@@ -1,7 +1,8 @@
 import logging
 import importlib
 from gwcs.wcs import WCS
-from .util import (update_s_region_spectral, update_s_region_imaging,
+from stcal.alignment.util import update_s_region_imaging
+from .util import (update_s_region_spectral,
                    update_s_region_nrs_ifu, update_s_region_mrs)
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
