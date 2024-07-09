@@ -516,27 +516,24 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
 
 def abs_deriv(array):
     """Take the absolute derivate of a numpy array."""
-    tmp = np.zeros(array.shape, dtype=np.float64)
-    out = np.zeros(array.shape, dtype=np.float64)
+    out = np.zeros_like(array)  # use same dtype as input
 
-    tmp[1:, :] = array[:-1, :]
-    tmp, out = _absolute_subtract(array, tmp, out)
-    tmp[:-1, :] = array[1:, :]
-    tmp, out = _absolute_subtract(array, tmp, out)
+    # compute row-wise absolute diffference
+    d = np.abs(np.diff(array, axis=0))
+    out[1:] = d  # no need to do max yet
+    # since these are absolute differences |r0-r1| = |r1-r0|
+    # make a view of the target portion of the array
+    v = out[:-1]
+    # compute an in-place maximum
+    np.putmask(v, d > v, d)
 
-    tmp[:, 1:] = array[:, :-1]
-    tmp, out = _absolute_subtract(array, tmp, out)
-    tmp[:, :-1] = array[:, 1:]
-    tmp, out = _absolute_subtract(array, tmp, out)
-
+    # compute col-wise absolute difference
+    d = np.abs(np.diff(array, axis=1))
+    v = out[:, 1:]
+    np.putmask(v, d > v, d)
+    v = out[:, :-1]
+    np.putmask(v, d > v, d)
     return out
-
-
-def _absolute_subtract(array, tmp, out):
-    tmp = np.abs(array - tmp)
-    out = np.maximum(tmp, out)
-    tmp = tmp * 0.
-    return tmp, out
 
 
 def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
