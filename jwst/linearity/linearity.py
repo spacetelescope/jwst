@@ -11,12 +11,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model, lin_model):
+def do_correction(output_model, lin_model):
 
     # Create the output model as a copy of the input
-    output_model = input_model
-    input_model.close()
-    del input_model
     zframe = None
     if output_model.meta.exposure.zero_frame:
         zframe = output_model.zeroframe
