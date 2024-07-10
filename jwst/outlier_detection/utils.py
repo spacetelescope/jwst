@@ -32,7 +32,6 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
-# TODO figure out how to move to stcal
 def create_median(resampled_models, maskpt):
     """Create a median image from the singly resampled images.
     """
