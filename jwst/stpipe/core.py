@@ -1,7 +1,6 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
-from collections.abc import Sequence
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
 
@@ -94,33 +93,6 @@ class JwstStep(Step):
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
-    def record_step_status(self, datamodel, cal_step, success=True):
-        """Record whether or not a step completed in meta.cal_step
-
-        Parameters
-        ----------
-        datamodel : `~jwst.datamodels.JwstDataModel` instance
-            This is the datamodel or container of datamodels to modify in place
-
-        cal_step : str
-            The attribute in meta.cal_step for recording the status of the step
-
-        success : bool
-            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
-        """
-        if success:
-            status = 'COMPLETE'
-        else:
-            status = 'SKIPPED'
-            self.skip = True
-
-        if isinstance(datamodel, Sequence):
-            for model in datamodel:
-                model.meta.cal_step._instance[cal_step] = status
-        else:
-            datamodel.meta.cal_step._instance[cal_step] = status
-
-        # TODO: standardize cal_step naming to point to the official step name
 
     def remove_suffix(self, name):
         return remove_suffix(name)

@@ -74,6 +74,9 @@ authors:
 - family-names: "Pena-Guerrero"
   given-names: "Maria"
   orcid: "https://orcid.org/0000-0003-2314-3453"
+- family-names: "Graham"
+  given-names: "Brett"
+  orcid: "https://orcid.org/0000-0001-6315-4507"
 title: "JWST Calibration Pipeline"
 version: 1.15.1
 doi: 10.5281/zenodo.7038885
