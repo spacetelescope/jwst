@@ -27,7 +27,7 @@ def make_output_wcs(input_models, ref_wcs=None,
 
     Parameters
     ----------
-    input_models : list of `DataModel objects`
+    input_models : list of `~jwst.datamodel.JwstDataModel`
         Each datamodel must have a ~gwcs.WCS object.
 
     pscale_ratio : float, optional
@@ -74,8 +74,8 @@ def make_output_wcs(input_models, ref_wcs=None,
         naxes = wcslist[0].output_frame.naxes
 
         if naxes != 2:
-            msg = f"Output WCS needs 2 spatial axes \
-                    but the supplied WCS has {naxes} axes."
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
             raise RuntimeError(msg)
 
         output_wcs = util.wcs_from_footprints(
@@ -91,8 +91,8 @@ def make_output_wcs(input_models, ref_wcs=None,
     else:
         naxes = ref_wcs.output_frame.naxes
         if naxes != 2:
-            msg = f"Output WCS needs 2 spatial axes \
-                    but the supplied WCS has {naxes} axes."
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
             raise RuntimeError(msg)
         output_wcs = deepcopy(ref_wcs)
         if shape is not None:

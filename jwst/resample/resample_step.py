@@ -10,7 +10,6 @@ from jwst.datamodels import ModelContainer
 
 from . import resample
 from ..stpipe import Step
-from ..assign_wcs import util
 from stcal.alignment.util import update_s_region_imaging
 
 log = logging.getLogger(__name__)
