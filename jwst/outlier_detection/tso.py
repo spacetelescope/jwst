@@ -149,7 +149,6 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
 
     Notes
     -----
-    Returns NaN for the first and last w//2 elements.
     """
     if w <= 1:
         raise ValueError("Rolling median window size must be greater than 1.")
