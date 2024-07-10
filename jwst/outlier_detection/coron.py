@@ -30,7 +30,11 @@ def detect_outliers(
     asn_id,
     make_output_path,
 ):
-    """Flag outlier pixels in DQ of input images."""
+    """
+    Flag outliers in coronography data.
+
+    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    """
     if not isinstance(input_model, datamodels.JwstDataModel):
         input_model = datamodels.open(input_model)
 

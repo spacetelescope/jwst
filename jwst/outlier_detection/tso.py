@@ -25,7 +25,11 @@ def detect_outliers(
     asn_id,
     make_output_path,
 ):
-    """Flag outlier pixels in DQ of input images."""
+    """
+    Flag outliers in tso data.
+
+    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    """
     if not isinstance(input_model, dm.JwstDataModel):
         input_model = dm.open(input_model)
     if isinstance(input_model, dm.ModelContainer):

@@ -43,7 +43,11 @@ def detect_outliers(
     asn_id,
     make_output_path,
 ):
-    """Flag outlier pixels in DQ of input images."""
+    """
+    Flag outliers in imaging data.
+
+    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    """
     if not isinstance(input_models, ModelContainer):
         input_models = ModelContainer(input_models, save_open=in_memory)
 

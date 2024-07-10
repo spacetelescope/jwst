@@ -51,7 +51,11 @@ def detect_outliers(
     threshold_percent,
     make_output_path,
 ):
-    """Split data by detector to find outliers."""
+    """
+    Flag outliers in ifu data.
+
+    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    """
     if not isinstance(input_models, ModelContainer):
         input_models = ModelContainer(input_models)
 
