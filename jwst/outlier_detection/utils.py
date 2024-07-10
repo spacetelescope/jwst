@@ -149,11 +149,9 @@ def flag_resampled_model_crs(
     backg,
     resample_data,
 ):
-    # previous versions of the code generated all of the blot models and wrote
-    # them to disk. Now the code generates the blot model(s) only when needed
-    # and no longer needs to write them to disk. We could re-introduce saving
-    # of blot models here.
-
+    """
+    Flag crs in image based on a resampled (and blotted) data (blot).
+    """
     # If the datamodel has a measured background that has not been subtracted
     # use it instead of the user provided backg.
     # Get background level of science data if it has not been subtracted, so it
