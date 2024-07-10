@@ -6,8 +6,6 @@ JWST pipeline step for image alignment.
 """
 from os import path
 
-from astropy import units as u
-from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from tweakwcs.correctors import JWSTWCSCorrector
 

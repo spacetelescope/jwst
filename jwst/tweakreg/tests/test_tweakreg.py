@@ -104,9 +104,9 @@ def test_is_wcs_correction_small(offset, is_good):
         def meta(self):
             return {'original_skycoord': self._original_skycoord}
 
-    correctors = [FakeCorrector(twcs, tweakreg_step._wcs_to_skycoord(wcs))]
+    correctors = [FakeCorrector(twcs, twk._wcs_to_skycoord(wcs))]
 
-    assert step._is_wcs_correction_small(correctors) == is_good
+    assert twk._is_wcs_correction_small(correctors) == is_good
 
 
 def test_expected_failure_bad_starfinder():
@@ -148,6 +148,9 @@ def example_input(example_wcs):
     # add a wcs and wcsinfo
     m0.meta.wcs = example_wcs
     m0.meta.wcsinfo = _wcsinfo_from_wcs_transform(example_wcs)
+    m0.meta.wcsinfo.v3yangle = 0.0
+    m0.meta.wcsinfo.vparity = -1
+    m0.meta.observation.date = "2024-07-10T00:00:00.0"
 
     # and a few 'sources'
     m0.data[:] = BKG_LEVEL
