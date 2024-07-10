@@ -168,13 +168,7 @@ def flag_resampled_model_crs(
 
     cr_mask = flag_resampled_crs(image.data, image.err, blot, snr1, snr2, scale1, scale2, backg, resample_data)
 
-    # FIXME (or really "fixed") for a converted cube this used to overwrite
-    # the dq "view" of the cube with a new dq array. This broke the link
-    # between the converted ImageModel.dq and the original CubeModel.dq
-    # which required extra work at the end of outlier detection to update
-    # the cube. By modifying dq in-place we automatically update the cube.
-    # I put this as a FIXME because this comment can be removed when
-    # we don't convert cubes.
+    # update the dq flags in-place
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
 
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")

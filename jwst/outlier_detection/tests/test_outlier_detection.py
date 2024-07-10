@@ -223,10 +223,8 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     OutlierDetectionStep.call(container)
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    #blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) == 0
     assert len(median_files) == 0
-    #assert len(blot_files) == 0
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
@@ -246,10 +244,8 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     # Verify that intermediary files are saved at the specified location
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    #blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) != 0
     assert len(median_files) != 0
-    #assert len(blot_files) != 0
 
 
 def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
@@ -349,8 +345,7 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
     # no noise so it should always be above the default threshold of 5
     container[0].data[12, 12] = bkg + sig * 10
 
-    # FIXME this test incorrectly provides ImageModels whereas
-    # coron3 will provide a CubeModel. This is fixed here.
+    # coron3 will provide a CubeModel so convert the container to a cube
     cube = container_to_cube(container)
 
     result = OutlierDetectionStep.call(cube)
