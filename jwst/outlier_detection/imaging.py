@@ -1,24 +1,5 @@
 """
-Main class for performing outlier detection.
-
-This is the controlling routine for the outlier detection process.
-It loads and sets the various input data and parameters needed by
-the various functions and then controls the operation of this process
-through all the steps used for the detection.
-
-Notes
------
-This routine performs the following operations::
-
-  1. Extracts parameter settings from input model and merges
-     them with any user-provided values
-  2. Resamples all input images into grouped observation mosaics.
-  3. Creates a median image from all grouped observation mosaics.
-  4. Blot median image to match each original input image.
-  5. Perform statistical comparison between blotted image and original
-     image to identify outliers.
-  6. Updates input data model DQ arrays with mask of detected outliers.
-
+Submodule for performing outlier detection on imaging data.
 """
 
 import copy

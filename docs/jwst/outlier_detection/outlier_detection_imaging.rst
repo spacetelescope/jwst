@@ -82,7 +82,13 @@ Specifically, this routine performs the following operations:
 
 #. Perform statistical comparison between blotted image and original image to identify outliers.
 
-   * This comparison uses the original input images, the blotted
+   * If resampling is disabled (``resample_data == False``) a large number of parameters
+     will be ignored and instead the outlier mask will be computed using the following
+     formula:
+
+       .. math:: | image\_input - image\_median | > SNR*input_err
+
+   * When resampling is enabled, the comparison uses the original input images, the blotted
      median image, and the derivative of the blotted image to
      create a cosmic ray mask for each input image.
    * The derivative of the blotted image gets created using the blotted

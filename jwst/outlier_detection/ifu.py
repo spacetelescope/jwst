@@ -1,5 +1,5 @@
 """
-Sub-class defined for performing outlier detection on IFU data.
+Submodule defined for performing outlier detection on IFU data.
 
 This is the controlling routine for the outlier detection process.
 It loads and sets the various input data and parameters needed to flag
