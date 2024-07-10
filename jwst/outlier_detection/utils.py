@@ -132,7 +132,7 @@ def flag_crs_in_models(
             else:
                 pix_ratio = 1.0
 
-            blot = gwcs_blot(median_data, median_wcs, image.data, image.meta.wcs, pix_ratio)
+            blot = gwcs_blot(median_data, median_wcs, image.data.shape, image.meta.wcs, pix_ratio)
         else:
             blot = median_data
 
