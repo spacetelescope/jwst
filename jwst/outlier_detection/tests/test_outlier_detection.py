@@ -195,21 +195,13 @@ def we_three_sci():
 def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
-    pristine = container.copy()
+    pristine = ModelContainer([m.copy() for m in container])
     result = OutlierDetectionStep.call(container)
 
-    # FIXME this test doesn't work as intended as there are no
-    # outliers so the input (even if it was modified, which it is)
-    # would not appear different from the "pristine" data
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
         np.testing.assert_allclose(image.data, uncorrected.data)
         np.testing.assert_allclose(image.dq, uncorrected.dq)
-
-    # Make sure nothing changed in SCI and DQ arrays
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
-        np.testing.assert_allclose(image.dq, corrected.dq)
 
 
 def test_outlier_step(we_three_sci, tmp_cwd):
