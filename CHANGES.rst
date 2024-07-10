@@ -7,6 +7,19 @@ cube_build
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
+lib
+---
+
+- Created two functions to workaround the memory increase due to
+  datamodel.open. The new functions in the basic_ultis script are
+  ``use_datamodels`` and ``copy_datamodel``. The first function
+  determines if it is necessary to open a datamodel and returns
+  it or simply returns the datamodel given as input. The second
+  function makes a copy of the datamodel depending on whether
+  the step is being run as part of a pipeline or not. Both
+  functions are now called in all steps of the Detector1
+  pipeline. [#8588]
+
 master_background
 -----------------
 
@@ -227,11 +240,6 @@ lib
 - Updated the ``wcs_utils.get_wavelength`` to use the new format
   of the ``wavecorr`` wavelength zero-point corrections for point
   sources in NIRSpec slit data. [#8376]
-
-- Created the function ``use_datamodels`` in basic_ultis, which
-  determines if it is necessary to open a datamodel and returns it
-  or simply returns the datamodel given as input. This function is
-  now called in all steps of the Detector1 pipeline. [#8588]
 
 master_background
 -----------------
