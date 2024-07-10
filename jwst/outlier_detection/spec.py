@@ -6,6 +6,7 @@ import copy
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
+from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec, resample_utils
 from .utils import create_median, flag_crs_in_models
@@ -45,8 +46,7 @@ def detect_outliers(
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
         log.warning("Outlier detection will be skipped")
-        for model in input_models:
-            model.meta.cal_step.outlier_detection = "SKIPPED"
+        record_step_status(input_models, "outlier_detection", False)
         return input_models
 
     if resample_data is True:

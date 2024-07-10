@@ -5,6 +5,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
+from jwst.stpipe.utilities import record_step_status
 from jwst.lib.pipe_utils import is_tso
 
 from . import coron, ifu, imaging, tso, spec
@@ -79,7 +80,7 @@ class OutlierDetectionStep(Step):
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
         if mode is None:
-            return self._set_status(input_data, "SKIPPED")
+            return self._set_status(input_data, False)
         self.log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
@@ -163,9 +164,9 @@ class OutlierDetectionStep(Step):
         else:
             self.log.error("Outlier detection failed for unknown/unsupported ",
                            f"mode: {mode}")
-            return self._set_status(input_data, "SKIPPED")
+            return self._set_status(input_data, False)
 
-        return self._set_status(result_models, "COMPLETE")
+        return self._set_status(result_models, True)
 
     def _guess_mode(self, input_models):
         # The pipelines should set this mode or ideally these should
@@ -230,9 +231,5 @@ class OutlierDetectionStep(Step):
         if not isinstance(input_models, datamodels.JwstDataModel):
             input_models = datamodels.open(input_models)
 
-        if isinstance(input_models, ModelContainer):
-            for model in input_models:
-                model.meta.cal_step.outlier_detection = status
-        else:
-            input_models.meta.cal_step.outlier_detection = status
+        record_step_status(input_models, "outlier_detection", status)
         return input_models

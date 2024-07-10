@@ -32,6 +32,7 @@ import logging
 import numpy as np
 
 from jwst.datamodels import ModelContainer
+from jwst.stpipe.utilities import record_step_status
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from stcal.outlier_detection.utils import medfilt
@@ -57,8 +58,7 @@ def detect_outliers(
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
         log.warning("Outlier detection will be skipped")
-        for model in input_models:
-            model.meta.cal_step.outlier_detection = "SKIPPED"
+        record_step_status(input_models, "outlier_detection", False)
         return input_models
 
     sizex, sizey = [int(val) for val in kernel_size.split()]
