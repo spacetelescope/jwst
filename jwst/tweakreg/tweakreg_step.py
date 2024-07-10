@@ -217,7 +217,7 @@ class TweakRegStep(Step):
             catalog = _rename_catalog_columns(catalog)
 
             # filter all sources outside the wcs bounding box
-            catalog = _filter_catalog_by_bounding_box(
+            catalog = twk.filter_catalog_by_bounding_box(
                 catalog,
                 image_model.meta.wcs.bounding_box)
 
@@ -432,24 +432,6 @@ class TweakRegStep(Step):
             starfinder_kwargs=starfinder_kwargs,
         )
 
-    def _is_wcs_correction_small(self, correctors):
-        # check for a small wcs correction, it should be small
-        if self.use2dhist:
-            max_corr = 2 * (self.searchrad + self.tolerance) * u.arcsec
-        else:
-            max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
-                            self.tolerance) * u.arcsec
-        for corrector in correctors:
-            aligned_skycoord = _wcs_to_skycoord(corrector.wcs)
-            original_skycoord = corrector.meta['original_skycoord']
-            separation = original_skycoord.separation(aligned_skycoord)
-            if not (separation < max_corr).all():
-                # Large corrections are typically a result of source
-                # mis-matching or poorly-conditioned fit. Skip such models.
-                self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
-                return False
-        return True
-
 
 def _parse_catfile(catfile):
     """
@@ -508,20 +490,3 @@ def _rename_catalog_columns(catalog):
                     "'ycentroid'."
                 )
     return catalog
-
-
-def _filter_catalog_by_bounding_box(catalog, bounding_box):
-    if bounding_box is None:
-        return catalog
-
-    # filter out sources outside the WCS bounding box
-    ((xmin, xmax), (ymin, ymax)) = bounding_box
-    x = catalog['x']
-    y = catalog['y']
-    mask = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
-    return catalog[mask]
-
-
-def _wcs_to_skycoord(wcs):
-    ra, dec = wcs.footprint(axis_type="spatial").T
-    return SkyCoord(ra=ra, dec=dec, unit="deg")
