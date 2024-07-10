@@ -196,7 +196,7 @@ def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
     pristine = ModelContainer([m.copy() for m in container])
-    result = OutlierDetectionStep.call(container)
+    OutlierDetectionStep.call(container)
 
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
