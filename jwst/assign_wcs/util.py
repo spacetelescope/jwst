@@ -34,7 +34,7 @@ _MAX_SIP_DEGREE = 6
 
 __all__ = ["reproject", "velocity_correction",
            "MSAFileError", "NoDataOnDetectorError", "compute_scale",
-           "calc_rotation_matrix", "wrap_ra", "update_fits_wcsinfo",]
+           "calc_rotation_matrix", "wrap_ra", "update_fits_wcsinfo"]
 
 
 class MSAFileError(Exception):
