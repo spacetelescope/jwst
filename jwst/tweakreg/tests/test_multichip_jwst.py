@@ -27,8 +27,6 @@ from jwst.tweakreg.tests import data
 
 _REF_RMSE_RA = 3e-9
 _REF_RMSE_DEC = 3e-10
-_RAD2ARCSEC = 3600.0 * np.rad2deg(1.0)
-_ARCSEC2RAD = 1.0 / _RAD2ARCSEC
 
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
@@ -294,25 +292,7 @@ def test_multichip_jwst_alignment(monkeypatch):
 
 
 def test_multichip_alignment_step(monkeypatch):
-    """
-    This is failing because the XYXYMatch routine is finding bogus x,y shifts.
-    The x,y shift it finds is strongly dependent on the input searchrad value.
-    
-    example log message
-    2024-07-10 12:14:07,340 - stpipe - INFO - Matching sources from 'ext' catalog with sources from the reference 'refcat' catalog.
-    2024-07-10 12:14:07,340 - stpipe - INFO - Computing initial guess for X and Y shifts...
-    2024-07-10 12:14:07,342 - stpipe - INFO - Found initial X and Y shifts of -13.6, 17.2 (arcsec) with significance of 2.861 and 5 matches.
 
-    On the main branch the xyxymatch doesn't seem to do anything at all, i.e.,
-    these lines are not printed at all.
-    Furthermore, hardcoding xyxymatch = None makes this test pass.
-
-    But I can't figure out for the life of me what is different between xyxymatch, or any of the
-    other inputs (or log messages surrounding this one) between this branch and main
-
-    The fact that test_multichip_jwst_alignment passes means there is nothing wrong with align_wcs
-    and it must have to do with bad inputs to that function passing in from the pipeline.
-    """
     monkeypatch.setattr(tweakreg_step.twk, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
