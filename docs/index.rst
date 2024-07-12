@@ -8,7 +8,9 @@
    :width: 400
    :align: center
 
+
 **Version**: |release|
+
 
 Welcome to the documentation for `jwst`. This package contains the Python
 software suite for the James Webb Space Telescope (JWST) calibration pipeline,
