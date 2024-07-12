@@ -1,6 +1,11 @@
 1.15.2 (unreleased)
 ===================
 
+align_refs
+----------
+
+- Only aligning the first integration of the science exposure. [#8643]
+
 cube_build
 ----------
 
