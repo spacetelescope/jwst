@@ -26,7 +26,7 @@ build:
       - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' || true
       - git fetch --all --tags || true
     pre_install:
-      - git update-index --assume-unchanged environment.yml docs/conf.py
+      - git update-index --assume-unchanged docs/rtd_environment.yaml docs/conf.py
 
 conda:
   environment: docs/rtd_environment.yaml
