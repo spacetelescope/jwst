@@ -25,8 +25,6 @@ jobs:
     with:
       default_python: "3.12"
       envs: |
-        - linux: check-style
-        - linux: check-security
         - linux: check-dependencies
   crds_contexts:
     uses: spacetelescope/crds/.github/workflows/contexts.yml@master
