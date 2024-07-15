@@ -1,7 +1,6 @@
 import logging
 import numpy as np
-from photutils.aperture import (CircularAperture, CircularAnnulus,
-                                RectangularAperture, aperture_photometry)
+from photutils.aperture import CircularAperture, CircularAnnulus, RectangularAperture, aperture_photometry
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -32,12 +31,22 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 
 # This is intended to be larger than any possible distance (in pixels)
 # between the target and any point in the image; used by locn_from_wcs().
-HUGE_DIST = 1.e10
+HUGE_DIST = 1.0e10
 
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
-                  bkg_sigma_clip, apcorr_ref_model=None, center_xy=None,
-                  ifu_autocen=False, ifu_rfcorr=False, ifu_rscale=None, ifu_covar_scale=1.0):
+def ifu_extract1d(
+    input_model,
+    ref_dict,
+    source_type,
+    subtract_background,
+    bkg_sigma_clip,
+    apcorr_ref_model=None,
+    center_xy=None,
+    ifu_autocen=False,
+    ifu_rfcorr=False,
+    ifu_rscale=None,
+    ifu_covar_scale=1.0,
+):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -103,8 +112,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         instrument = instrument.upper()
     if source_type is not None:
         source_type = source_type.upper()
-    if source_type != 'POINT' and source_type != 'EXTENDED':
-        default_source_type = 'EXTENDED'
+    if source_type != "POINT" and source_type != "EXTENDED":
+        default_source_type = "EXTENDED"
         log.warning(f"Source type was '{source_type}'; setting to '{default_source_type}'.")
         source_type = default_source_type
     else:
@@ -121,48 +130,76 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
 
     # Add info about IFU auto-centroiding, residual fringe correction and extraction radius scale
     # to extract_params for use later
-    extract_params['ifu_autocen'] = ifu_autocen
-    extract_params['ifu_rfcorr'] = ifu_rfcorr
-    extract_params['ifu_rscale'] = ifu_rscale
-    extract_params['ifu_covar_scale'] = ifu_covar_scale
+    extract_params["ifu_autocen"] = ifu_autocen
+    extract_params["ifu_rfcorr"] = ifu_rfcorr
+    extract_params["ifu_rscale"] = ifu_rscale
+    extract_params["ifu_covar_scale"] = ifu_covar_scale
 
     # If the user supplied extraction center coords,
     # load them into extract_params for use later.
-    extract_params['x_center'] = None
-    extract_params['y_center'] = None
+    extract_params["x_center"] = None
+    extract_params["y_center"] = None
 
     if center_xy is not None:
         if len(center_xy) == 2:
-            extract_params['x_center'] = float(center_xy[0])
-            extract_params['y_center'] = float(center_xy[1])
-            log.info(f'Using user-supplied x_center={center_xy[0]}, y_center={center_xy[1]}')
+            extract_params["x_center"] = float(center_xy[0])
+            extract_params["y_center"] = float(center_xy[1])
+            log.info(f"Using user-supplied x_center={center_xy[0]}, y_center={center_xy[1]}")
         else:
-            log.warning('Incorrect number of values in center_xy; should be two.')
+            log.warning("Incorrect number of values in center_xy; should be two.")
 
     if subtract_background is not None:
         if subtract_background and source_type == "EXTENDED":
             subtract_background = False
-            log.info("Turning off background subtraction because "
-                     "the source is extended.")
-        extract_params['subtract_background'] = subtract_background
+            log.info("Turning off background subtraction because " "the source is extended.")
+        extract_params["subtract_background"] = subtract_background
 
     if extract_params:
-        if extract_params['ref_file_type'] == FILE_TYPE_ASDF:
-            (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, npixels_bkg,
-             radius_match, x_center, y_center) = \
-                extract_ifu(input_model, source_type, extract_params)
-        else:                                   # FILE_TYPE_IMAGE
-            (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, npixels_bkg,
-             x_center, y_center) = \
-                image_extract_ifu(input_model, source_type, extract_params)
+        if extract_params["ref_file_type"] == FILE_TYPE_ASDF:
+            (
+                ra,
+                dec,
+                wavelength,
+                temp_flux,
+                f_var_poisson,
+                f_var_rnoise,
+                f_var_flat,
+                background,
+                b_var_poisson,
+                b_var_rnoise,
+                b_var_flat,
+                npixels,
+                dq,
+                npixels_bkg,
+                radius_match,
+                x_center,
+                y_center,
+            ) = extract_ifu(input_model, source_type, extract_params)
+        else:  # FILE_TYPE_IMAGE
+            (
+                ra,
+                dec,
+                wavelength,
+                temp_flux,
+                f_var_poisson,
+                f_var_rnoise,
+                f_var_flat,
+                background,
+                b_var_poisson,
+                b_var_rnoise,
+                b_var_flat,
+                npixels,
+                dq,
+                npixels_bkg,
+                x_center,
+                y_center,
+            ) = image_extract_ifu(input_model, source_type, extract_params)
     else:
-        log.critical('Missing extraction parameters.')
-        raise ValueError('Missing extraction parameters.')
+        log.critical("Missing extraction parameters.")
+        raise ValueError("Missing extraction parameters.")
 
-    npixels_temp = np.where(npixels > 0., npixels, 1.)
-    npixels_bkg_temp = np.where(npixels_bkg > 0., npixels_bkg, 1.)
+    npixels_temp = np.where(npixels > 0.0, npixels, 1.0)
+    npixels_bkg_temp = np.where(npixels_bkg > 0.0, npixels_bkg, 1.0)
 
     # Convert the sum to an average, for surface brightness.
     # Remember variance requires dividing by N^2
@@ -179,54 +216,54 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     del npixels_bkg_temp
 
     # If selected, apply 1d residual fringe correction to the extracted spectrum
-    if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
+    if (input_model.meta.instrument.name == "MIRI") & (extract_params["ifu_rfcorr"] is True):
         log.info("Applying 1d residual fringe correction.")
         # Determine which MRS channel the spectrum is from
         thischannel = input_model.meta.instrument.channel
         # Valid single-channel values
-        validch = ['1', '2', '3', '4']
+        validch = ["1", "2", "3", "4"]
 
         # If a valid single channel, specify it in call to residual fringe code
-        if (thischannel in validch):
+        if thischannel in validch:
             channel = int(thischannel)
         else:
-            channel = ''
+            channel = ""
 
         # Embed all calls to residual fringe code in try/except blocks as the default behavior
         # if problems are encountered should be to not apply this optional step
 
         # Apply residual fringe to the flux array
         try:
-            temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=channel,
-                                                        dichroic_only=False, max_amp=None)
+            temp_flux = rfutils.fit_residual_fringes_1d(temp_flux, wavelength, channel=channel, dichroic_only=False, max_amp=None)
         except Exception:
             log.info("Flux residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the surf_bright array
         try:
-            surf_bright = rfutils.fit_residual_fringes_1d(surf_bright, wavelength, channel=channel,
-                                                          dichroic_only=False, max_amp=None)
+            surf_bright = rfutils.fit_residual_fringes_1d(
+                surf_bright, wavelength, channel=channel, dichroic_only=False, max_amp=None
+            )
         except Exception:
             log.info("Surf bright residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the background array
         try:
-            background = rfutils.fit_residual_fringes_1d(background, wavelength, channel=channel,
-                                                         dichroic_only=False, max_amp=None)
+            background = rfutils.fit_residual_fringes_1d(
+                background, wavelength, channel=channel, dichroic_only=False, max_amp=None
+            )
         except Exception:
             log.info("Background residual fringe correction failed- skipping.")
 
     pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
     if pixel_solid_angle is None:
-        log.warning("Pixel area (solid angle) is not populated; "
-                    "the flux will not be correct.")
-        pixel_solid_angle = 1.
+        log.warning("Pixel area (solid angle) is not populated; " "the flux will not be correct.")
+        pixel_solid_angle = 1.0
 
     # Convert flux from MJy / steradian to Jy.
-    flux = temp_flux * pixel_solid_angle * 1.e6
-    f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-    f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-    f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+    flux = temp_flux * pixel_solid_angle * 1.0e6
+    f_var_poisson *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
+    f_var_rnoise *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
+    f_var_flat *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
     # surf_bright and background were computed above
     del temp_flux
     error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
@@ -245,48 +282,65 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         b_var_poisson *= 0
 
     # Deal with covariance in the IFU cube by multiplying 1d spectra errors by a scaling factor
-    if (extract_params['ifu_covar_scale'] != 1.0):
-        log.info("Applying ERR covariance prefactor of %g", extract_params['ifu_covar_scale'])
-        error *= extract_params['ifu_covar_scale']
-        sb_error *= extract_params['ifu_covar_scale']
-        berror *= extract_params['ifu_covar_scale']
-        f_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        f_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        f_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        sb_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        sb_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        sb_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        b_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        b_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
-        b_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+    if extract_params["ifu_covar_scale"] != 1.0:
+        log.info("Applying ERR covariance prefactor of %g", extract_params["ifu_covar_scale"])
+        error *= extract_params["ifu_covar_scale"]
+        sb_error *= extract_params["ifu_covar_scale"]
+        berror *= extract_params["ifu_covar_scale"]
+        f_var_poisson *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        f_var_rnoise *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        f_var_flat *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        sb_var_poisson *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        sb_var_rnoise *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        sb_var_flat *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        b_var_poisson *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        b_var_rnoise *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
+        b_var_flat *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
 
     otab = np.array(
         list(
-            zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
-                surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
-                dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
+            zip(
+                wavelength,
+                flux,
+                error,
+                f_var_poisson,
+                f_var_rnoise,
+                f_var_flat,
+                surf_bright,
+                sb_error,
+                sb_var_poisson,
+                sb_var_rnoise,
+                sb_var_flat,
+                dq,
+                background,
+                berror,
+                b_var_poisson,
+                b_var_rnoise,
+                b_var_flat,
+                npixels,
+            )
         ),
-        dtype=spec_dtype
+        dtype=spec_dtype,
     )
 
     spec = datamodels.SpecModel(spec_table=otab)
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
-    spec.spec_table.columns['wavelength'].unit = 'um'
-    spec.spec_table.columns['flux'].unit = "Jy"
-    spec.spec_table.columns['flux_error'].unit = "Jy"
-    spec.spec_table.columns['flux_var_poisson'].unit = "Jy^2"
-    spec.spec_table.columns['flux_var_rnoise'].unit = "Jy^2"
-    spec.spec_table.columns['flux_var_flat'].unit = "Jy^2"
-    spec.spec_table.columns['surf_bright'].unit = "MJy/sr"
-    spec.spec_table.columns['sb_error'].unit = "MJy/sr"
-    spec.spec_table.columns['sb_var_poisson'].unit = "(MJy/sr)^2"
-    spec.spec_table.columns['sb_var_rnoise'].unit = "(MJy/sr)^2"
-    spec.spec_table.columns['sb_var_flat'].unit = "(MJy/sr)^2"
-    spec.spec_table.columns['background'].unit = "MJy/sr"
-    spec.spec_table.columns['bkgd_error'].unit = "MJy/sr"
-    spec.spec_table.columns['bkgd_var_poisson'].unit = "(MJy/sr)^2"
-    spec.spec_table.columns['bkgd_var_rnoise'].unit = "(MJy/sr)^2"
-    spec.spec_table.columns['bkgd_var_flat'].unit = "(MJy/sr)^2"
+    spec.spec_table.columns["wavelength"].unit = "um"
+    spec.spec_table.columns["flux"].unit = "Jy"
+    spec.spec_table.columns["flux_error"].unit = "Jy"
+    spec.spec_table.columns["flux_var_poisson"].unit = "Jy^2"
+    spec.spec_table.columns["flux_var_rnoise"].unit = "Jy^2"
+    spec.spec_table.columns["flux_var_flat"].unit = "Jy^2"
+    spec.spec_table.columns["surf_bright"].unit = "MJy/sr"
+    spec.spec_table.columns["sb_error"].unit = "MJy/sr"
+    spec.spec_table.columns["sb_var_poisson"].unit = "(MJy/sr)^2"
+    spec.spec_table.columns["sb_var_rnoise"].unit = "(MJy/sr)^2"
+    spec.spec_table.columns["sb_var_flat"].unit = "(MJy/sr)^2"
+    spec.spec_table.columns["background"].unit = "MJy/sr"
+    spec.spec_table.columns["bkgd_error"].unit = "MJy/sr"
+    spec.spec_table.columns["bkgd_var_poisson"].unit = "(MJy/sr)^2"
+    spec.spec_table.columns["bkgd_var_rnoise"].unit = "(MJy/sr)^2"
+    spec.spec_table.columns["bkgd_var_flat"].unit = "(MJy/sr)^2"
     spec.slit_ra = ra
     spec.slit_dec = dec
     if slitname is not None and slitname != "ANY":
@@ -296,19 +350,15 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     spec.extraction_x = x_center
     spec.extraction_y = y_center
 
-    if source_type == 'POINT' and apcorr_ref_model is not None:
-        log.info('Applying Aperture correction.')
+    if source_type == "POINT" and apcorr_ref_model is not None:
+        log.info("Applying Aperture correction.")
 
-        if instrument == 'NIRSPEC':
+        if instrument == "NIRSPEC":
             wl = np.median(wavelength)
         else:
             wl = wavelength.min()
 
-        apcorr = select_apcorr(input_model)(
-            input_model,
-            apcorr_ref_model,
-            location=(ra, dec, wl)
-        )
+        apcorr = select_apcorr(input_model)(input_model, apcorr_ref_model, location=(ra, dec, wl))
 
         # determine apcor function and apcor radius to use at each wavelength
         apcorr.match_wavelengths(wavelength)
@@ -347,11 +397,11 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
 
     extract_params = {}
     # for consistency put the bkg_sigma_clip in dictionary: extract_params
-    extract_params['bkg_sigma_clip'] = bkg_sigma_clip
+    extract_params["bkg_sigma_clip"] = bkg_sigma_clip
 
-    if ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
-        extract_params['ref_file_type'] = FILE_TYPE_ASDF
-        refmodel = ref_dict['ref_model']
+    if ref_dict["ref_file_type"] == FILE_TYPE_ASDF:
+        extract_params["ref_file_type"] = FILE_TYPE_ASDF
+        refmodel = ref_dict["ref_model"]
         subtract_background = refmodel.meta.subtract_background
         method = refmodel.meta.method
         subpixels = refmodel.meta.subpixels
@@ -362,21 +412,20 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
         inner_bkg = data.inner_bkg
         outer_bkg = data.outer_bkg
 
-        extract_params['subtract_background'] = bool(subtract_background)
-        extract_params['method'] = method
-        extract_params['subpixels'] = subpixels
-        extract_params['wavelength'] = wavelength
-        extract_params['radius'] = radius
-        extract_params['inner_bkg'] = inner_bkg
-        extract_params['outer_bkg'] = outer_bkg
+        extract_params["subtract_background"] = bool(subtract_background)
+        extract_params["method"] = method
+        extract_params["subpixels"] = subpixels
+        extract_params["wavelength"] = wavelength
+        extract_params["radius"] = radius
+        extract_params["inner_bkg"] = inner_bkg
+        extract_params["outer_bkg"] = outer_bkg
 
-    elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
-        extract_params['ref_file_type'] = FILE_TYPE_IMAGE
+    elif ref_dict["ref_file_type"] == FILE_TYPE_IMAGE:
+        extract_params["ref_file_type"] = FILE_TYPE_IMAGE
         foundit = False
-        for im in ref_dict['ref_model'].images:
-            if (im.name is None or im.name == "ANY" or slitname == "ANY" or
-                    im.name == slitname):
-                extract_params['ref_image'] = im
+        for im in ref_dict["ref_model"].images:
+            if im.name is None or im.name == "ANY" or slitname == "ANY" or im.name == slitname:
+                extract_params["ref_image"] = im
                 foundit = True
                 break
 
@@ -385,8 +434,7 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
             raise RuntimeError("Specify slit name or use 'any' in ref image.")
 
     else:
-        log.error("Reference file type %s not recognized",
-                  ref_dict['ref_file_type'])
+        log.error("Reference file type %s not recognized", ref_dict["ref_file_type"])
         raise RuntimeError("extract1d reference file must be ASDF, JSON or  FITS image.")
 
     return extract_params
@@ -514,17 +562,17 @@ def extract_ifu(input_model, source_type, extract_params):
 
     # If the user supplied extraction center coords, use them and
     # ignore all other source type and source position values
-    if extract_params['x_center'] is not None:
-        x_center = extract_params['x_center']
-        y_center = extract_params['y_center']
+    if extract_params["x_center"] is not None:
+        x_center = extract_params["x_center"]
+        y_center = extract_params["y_center"]
         locn = None
 
     # For a point source, try to compute the extraction center
     # from the source location
     elif source_type != "EXTENDED":
         # If ifu_autocen is set, try to find the source in the field using DAOphot
-        if extract_params['ifu_autocen'] is True:
-            log.info('Using auto source detection.')
+        if extract_params["ifu_autocen"] is True:
+            log.info("Using auto source detection.")
 
             # Median collapse across wavelengths, but ignore wavelengths above
             # 26 microns where MRS throughput is extremely low
@@ -537,36 +585,34 @@ def extract_ifu(input_model, source_type, extract_params):
             # Find source in the collapsed image above 3 sigma
             daofind = DAOStarFinder(fwhm=3.0, threshold=3 * cliprms)
             sources = daofind(collapse - clipmed)
-            if (sources is None):
+            if sources is None:
                 log.warning("Auto source detection failed.")
             else:
-                vals = sources['flux'].value
+                vals = sources["flux"].value
                 # Identify brightest source as the target
                 indx = np.argmax(vals)
-                x_center, y_center = sources[indx]['xcentroid'], sources[indx]['ycentroid']
+                x_center, y_center = sources[indx]["xcentroid"], sources[indx]["ycentroid"]
                 locn = None
                 log.info("Auto source detection success.")
                 log.info("Using x_center = %g, y_center = %g", x_center, y_center)
 
-        if (x_center is None):
-            log.info('Using target coordinates.')
+        if x_center is None:
+            log.info("Using target coordinates.")
             ra_targ = input_model.meta.target.ra
             dec_targ = input_model.meta.target.dec
             locn = locn_from_wcs(input_model, ra_targ, dec_targ)
 
             if locn is None or np.isnan(locn[0]):
-                log.warning("Couldn't determine source location from WCS, so "
-                            "extraction region will be centered.")
-                x_center = float(shape[-1]) / 2.
-                y_center = float(shape[-2]) / 2.
+                log.warning("Couldn't determine source location from WCS, so " "extraction region will be centered.")
+                x_center = float(shape[-1]) / 2.0
+                y_center = float(shape[-2]) / 2.0
             else:
                 (x_center, y_center) = locn
-                log.info("Using x_center = %g, y_center = %g, based on "
-                         "TARG_RA and TARG_DEC", x_center, y_center)
+                log.info("Using x_center = %g, y_center = %g, based on " "TARG_RA and TARG_DEC", x_center, y_center)
 
-    method = extract_params['method']
-    subpixels = extract_params['subpixels']
-    subtract_background = extract_params['subtract_background']
+    method = extract_params["method"]
+    subpixels = extract_params["subpixels"]
+    subtract_background = extract_params["subtract_background"]
 
     radius = None
     inner_bkg = None
@@ -578,21 +624,21 @@ def extract_ifu(input_model, source_type, extract_params):
     # using extract 1d wavelength, interpolate the radius, inner_bkg, outer_bkg to match input wavelength
 
     # find the wavelength array of the IFU cube
-    x0 = float(shape[2]) / 2.
-    y0 = float(shape[1]) / 2.
+    x0 = float(shape[2]) / 2.0
+    y0 = float(shape[1]) / 2.0
     (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
 
     # interpolate the extraction parameters to the wavelength of the IFU cube
     radius_match = None
-    if source_type == 'POINT':
-        wave_extract = extract_params['wavelength'].flatten()
-        inner_bkg = extract_params['inner_bkg'].flatten()
-        outer_bkg = extract_params['outer_bkg'].flatten()
-        radius = extract_params['radius'].flatten()
+    if source_type == "POINT":
+        wave_extract = extract_params["wavelength"].flatten()
+        inner_bkg = extract_params["inner_bkg"].flatten()
+        outer_bkg = extract_params["outer_bkg"].flatten()
+        radius = extract_params["radius"].flatten()
 
-        if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rscale'] is not None)):
-            radius = radius * extract_params['ifu_rscale']/2.0
-            log.info("Scaling radius by factor =  %g", extract_params['ifu_rscale'] / 2.0)
+        if (input_model.meta.instrument.name == "MIRI") & (extract_params["ifu_rscale"] is not None):
+            radius = radius * extract_params["ifu_rscale"] / 2.0
+            log.info("Scaling radius by factor =  %g", extract_params["ifu_rscale"] / 2.0)
 
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
@@ -604,10 +650,7 @@ def extract_ifu(input_model, source_type, extract_params):
         else:
             locn_use = (ra_targ, dec_targ, wavelength[0])
 
-        scale_degrees = compute_scale(
-            input_model.meta.wcs,
-            locn_use,
-            disp_axis=input_model.meta.wcsinfo.dispersion_direction)
+        scale_degrees = compute_scale(input_model.meta.wcs, locn_use, disp_axis=input_model.meta.wcsinfo.dispersion_direction)
 
         scale_arcsec = scale_degrees * 3600.00
         radius_match /= scale_arcsec
@@ -618,20 +661,20 @@ def extract_ifu(input_model, source_type, extract_params):
         fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
         outer_bkg_match = fouter(wavelength) / scale_arcsec
 
-    elif source_type == 'EXTENDED':
+    elif source_type == "EXTENDED":
         # Ignore any input parameters, and extract the whole image.
         width = float(shape[-1])
         height = float(shape[-2])
-        x_center = width / 2. - 0.5
-        y_center = height / 2. - 0.5
-        theta = 0.
+        x_center = width / 2.0 - 0.5
+        y_center = height / 2.0 - 0.5
+        theta = 0.0
         subtract_background = False
-        bkg_sigma_clip = extract_params['bkg_sigma_clip']
+        bkg_sigma_clip = extract_params["bkg_sigma_clip"]
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
     log.debug("  y_center = %s", str(y_center))
-    if source_type == 'POINT':
+    if source_type == "POINT":
         log.debug("  method = %s", method)
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
@@ -648,7 +691,7 @@ def extract_ifu(input_model, source_type, extract_params):
     position = (x_center, y_center)
 
     # get aperture for extended it will not change with wavelength
-    if source_type == 'EXTENDED':
+    if source_type == "EXTENDED":
         aperture = RectangularAperture(position, width, height, theta)
         annulus = None
 
@@ -656,14 +699,13 @@ def extract_ifu(input_model, source_type, extract_params):
         inner_bkg = None
         outer_bkg = None
 
-        if source_type == 'POINT':
+        if source_type == "POINT":
             radius = radius_match[k]  # this radius has been converted to pixels
             aperture = CircularAperture(position, r=radius)
             inner_bkg = inner_bkg_match[k]
             outer_bkg = outer_bkg_match[k]
-            if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
-                log.debug("Turning background subtraction off, due to "
-                          "the values of inner_bkg and outer_bkg.")
+            if inner_bkg <= 0.0 or outer_bkg <= 0.0 or inner_bkg >= outer_bkg:
+                log.debug("Turning background subtraction off, due to " "the values of inner_bkg and outer_bkg.")
                 subtract_background = False
 
         if subtract_background and inner_bkg is not None and outer_bkg is not None:
@@ -674,7 +716,7 @@ def extract_ifu(input_model, source_type, extract_params):
         subtract_background_plane = subtract_background
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)
-        normalization = 1.
+        normalization = 1.0
         temp_weightmap = weightmap[k, :, :]
         temp_weightmap[temp_weightmap > 1] = 1
         aperture_area = 0
@@ -685,14 +727,13 @@ def extract_ifu(input_model, source_type, extract_params):
         bmask[np.where(temp_weightmap == 0)] = True
 
         # aperture_photometry - using weight map
-        phot_table = aperture_photometry(temp_weightmap, aperture, mask=bmask,
-                                         method=method, subpixels=subpixels)
+        phot_table = aperture_photometry(temp_weightmap, aperture, mask=bmask, method=method, subpixels=subpixels)
 
-        aperture_area = float(phot_table['aperture_sum'][0])
+        aperture_area = float(phot_table["aperture_sum"][0])
         # if aperture_area = 0, then there is no valid data for this wavelength
         # set the DQ flag to DO_NOT_USE
         if aperture_area == 0:
-            dq[k] = dqflags.pixel['DO_NOT_USE']
+            dq[k] = dqflags.pixel["DO_NOT_USE"]
 
         # There is no valid data for this region. To prevent the code from
         # crashing set aperture_area to a nonzero value. It will have the dq flag
@@ -701,18 +742,16 @@ def extract_ifu(input_model, source_type, extract_params):
 
         if subtract_background and annulus is not None:
             # Compute the area of the annulus.
-            phot_table = aperture_photometry(temp_weightmap, annulus, mask=bmask,
-                                             method=method, subpixels=subpixels)
-            annulus_area = float(phot_table['aperture_sum'][0])
+            phot_table = aperture_photometry(temp_weightmap, annulus, mask=bmask, method=method, subpixels=subpixels)
+            annulus_area = float(phot_table["aperture_sum"][0])
 
             if annulus_area == 0 and annulus.area > 0:
                 annulus_area = annulus.area
 
-            if annulus_area > 0.:
+            if annulus_area > 0.0:
                 normalization = aperture_area / annulus_area
             else:
-                log.warning("Background annulus has no area, so background "
-                            f"subtraction will be turned off. {k}")
+                log.warning("Background annulus has no area, so background " f"subtraction will be turned off. {k}")
                 subtract_background_plane = False
 
         npixels[k] = aperture_area
@@ -722,40 +761,32 @@ def extract_ifu(input_model, source_type, extract_params):
             npixels_bkg[k] = annulus_area
         # aperture_photometry - using data
 
-        phot_table = aperture_photometry(data[k, :, :], aperture, mask=bmask,
-                                         method=method, subpixels=subpixels)
-        temp_flux[k] = float(phot_table['aperture_sum'][0])
+        phot_table = aperture_photometry(data[k, :, :], aperture, mask=bmask, method=method, subpixels=subpixels)
+        temp_flux[k] = float(phot_table["aperture_sum"][0])
 
-        var_poisson_table = aperture_photometry(var_poisson[k, :, :], aperture, mask=bmask,
-                                                method=method, subpixels=subpixels)
-        f_var_poisson[k] = float(var_poisson_table['aperture_sum'][0])
+        var_poisson_table = aperture_photometry(var_poisson[k, :, :], aperture, mask=bmask, method=method, subpixels=subpixels)
+        f_var_poisson[k] = float(var_poisson_table["aperture_sum"][0])
 
-        var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture, mask=bmask,
-                                               method=method, subpixels=subpixels)
-        f_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
+        var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture, mask=bmask, method=method, subpixels=subpixels)
+        f_var_rnoise[k] = float(var_rnoise_table["aperture_sum"][0])
 
-        var_flat_table = aperture_photometry(var_flat[k, :, :], aperture, mask=bmask,
-                                             method=method, subpixels=subpixels)
-        f_var_flat[k] = float(var_flat_table['aperture_sum'][0])
+        var_flat_table = aperture_photometry(var_flat[k, :, :], aperture, mask=bmask, method=method, subpixels=subpixels)
+        f_var_flat[k] = float(var_flat_table["aperture_sum"][0])
 
         # Point source type of data with defined annulus size
         if subtract_background_plane:
-            bkg_table = aperture_photometry(data[k, :, :], annulus, mask=bmask,
-                                            method=method, subpixels=subpixels)
-            background[k] = float(bkg_table['aperture_sum'][0])
+            bkg_table = aperture_photometry(data[k, :, :], annulus, mask=bmask, method=method, subpixels=subpixels)
+            background[k] = float(bkg_table["aperture_sum"][0])
             temp_flux[k] = temp_flux[k] - background[k] * normalization
 
-            var_poisson_table = aperture_photometry(var_poisson[k, :, :], annulus, mask=bmask,
-                                                    method=method, subpixels=subpixels)
-            b_var_poisson[k] = float(var_poisson_table['aperture_sum'][0])
+            var_poisson_table = aperture_photometry(var_poisson[k, :, :], annulus, mask=bmask, method=method, subpixels=subpixels)
+            b_var_poisson[k] = float(var_poisson_table["aperture_sum"][0])
 
-            var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], annulus, mask=bmask,
-                                                   method=method, subpixels=subpixels)
-            b_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
+            var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], annulus, mask=bmask, method=method, subpixels=subpixels)
+            b_var_rnoise[k] = float(var_rnoise_table["aperture_sum"][0])
 
-            var_flat_table = aperture_photometry(var_flat[k, :, :], annulus, mask=bmask,
-                                                 method=method, subpixels=subpixels)
-            b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
+            var_flat_table = aperture_photometry(var_flat[k, :, :], annulus, mask=bmask, method=method, subpixels=subpixels)
+            b_var_flat[k] = float(var_flat_table["aperture_sum"][0])
 
             # Propagate errors in background to the background-subtracted science spectrum
             f_var_poisson[k] += b_var_poisson[k] * normalization * normalization
@@ -763,7 +794,7 @@ def extract_ifu(input_model, source_type, extract_params):
             f_var_flat[k] += b_var_flat[k] * normalization * normalization
 
         # Extended source data - background determined from sigma clipping
-        if source_type == 'EXTENDED':
+        if source_type == "EXTENDED":
             bkg_data = data[k, :, :]
             # pull out the data with coverage in IFU cube. We do not want to use
             # the edge data that is zero to define the statistics on clipping
@@ -771,8 +802,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
             # If there are good data, work out the statistics
             if len(bkg_stat_data) > 0:
-                bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
-                                                                    sigma=bkg_sigma_clip, maxiters=5)
+                bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data, sigma=bkg_sigma_clip, maxiters=5)
                 low = bkg_mean - bkg_sigma_clip * bkg_stddev
                 high = bkg_mean + bkg_sigma_clip * bkg_stddev
 
@@ -782,24 +812,25 @@ def extract_ifu(input_model, source_type, extract_params):
                 # Reject data outside the valid data footprint
                 maskclip = np.logical_or(maskclip, bmask)
 
-                bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip,
-                                                method=method, subpixels=subpixels)
-                background[k] = float(bkg_table['aperture_sum'][0])
-                phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
-                                                 method=method, subpixels=subpixels)
-                npixels_bkg[k] = float(phot_table['aperture_sum'][0])
+                bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip, method=method, subpixels=subpixels)
+                background[k] = float(bkg_table["aperture_sum"][0])
+                phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip, method=method, subpixels=subpixels)
+                npixels_bkg[k] = float(phot_table["aperture_sum"][0])
 
-                var_poisson_table = aperture_photometry(var_poisson[k, :, :], aperture, mask=maskclip,
-                                                        method=method, subpixels=subpixels)
-                b_var_poisson[k] = float(var_poisson_table['aperture_sum'][0])
+                var_poisson_table = aperture_photometry(
+                    var_poisson[k, :, :], aperture, mask=maskclip, method=method, subpixels=subpixels
+                )
+                b_var_poisson[k] = float(var_poisson_table["aperture_sum"][0])
 
-                var_rnoise_table = aperture_photometry(var_rnoise[k, :, :], aperture, mask=maskclip,
-                                                       method=method, subpixels=subpixels)
-                b_var_rnoise[k] = float(var_rnoise_table['aperture_sum'][0])
+                var_rnoise_table = aperture_photometry(
+                    var_rnoise[k, :, :], aperture, mask=maskclip, method=method, subpixels=subpixels
+                )
+                b_var_rnoise[k] = float(var_rnoise_table["aperture_sum"][0])
 
-                var_flat_table = aperture_photometry(var_flat[k, :, :], aperture, mask=maskclip,
-                                                     method=method, subpixels=subpixels)
-                b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
+                var_flat_table = aperture_photometry(
+                    var_flat[k, :, :], aperture, mask=maskclip, method=method, subpixels=subpixels
+                )
+                b_var_flat[k] = float(var_flat_table["aperture_sum"][0])
 
         del temp_weightmap
         # done looping over wavelength bins
@@ -819,9 +850,25 @@ def extract_ifu(input_model, source_type, extract_params):
     b_var_rnoise = b_var_rnoise[nan_slc]
     b_var_flat = b_var_flat[nan_slc]
 
-    return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            background, b_var_poisson, b_var_rnoise, b_var_flat,
-            npixels, dq, npixels_bkg, radius_match, x_center, y_center)
+    return (
+        ra,
+        dec,
+        wavelength,
+        temp_flux,
+        f_var_poisson,
+        f_var_rnoise,
+        f_var_flat,
+        background,
+        b_var_poisson,
+        b_var_rnoise,
+        b_var_flat,
+        npixels,
+        dq,
+        npixels_bkg,
+        radius_match,
+        x_center,
+        y_center,
+    )
 
 
 def locn_from_wcs(input_model, ra_targ, dec_targ):
@@ -844,8 +891,7 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
     """
 
     if ra_targ is None or dec_targ is None:
-        log.warning("TARG_RA and/or TARG_DEC not found; can't compute "
-                    "pixel location of target.")
+        log.warning("TARG_RA and/or TARG_DEC not found; can't compute " "pixel location of target.")
         locn = None
     else:
         shape = input_model.data.shape
@@ -855,7 +901,7 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
         # output arrays will be 2-D.
         (ra_i, dec_i, wl) = input_model.meta.wcs(grid[1], grid[0], z)
         cart = celestial_to_cartesian(ra_i, dec_i)
-        v = celestial_to_cartesian(ra_targ, dec_targ)   # a single vector
+        v = celestial_to_cartesian(ra_targ, dec_targ)  # a single vector
         diff = cart - v
         # We want the pixel with the minimum distance from v, but the pixel
         # with the minimum value of distance squared will be the same.
@@ -864,14 +910,14 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
         dist2[..., :] = np.where(nan_mask, HUGE_DIST, dist2[..., :])
         del nan_mask
         k = np.argmin(dist2.ravel())
-        (j, i) = divmod(k, dist2.shape[1])      # y, x coordinates
+        (j, i) = divmod(k, dist2.shape[1])  # y, x coordinates
 
         if i <= 0 or j <= 0 or i >= shape[-1] - 1 or j >= shape[-2] - 1:
             log.warning("WCS implies the target is beyond the edge of the image")
             log.warning("This location will not be used")
             locn = None
         else:
-            locn = (i, j)                       # x, y coordinates
+            locn = (i, j)  # x, y coordinates
 
     return locn
 
@@ -900,16 +946,16 @@ def celestial_to_cartesian(ra, dec):
         celestial pole.
     """
 
-    if hasattr(ra, 'shape'):
+    if hasattr(ra, "shape"):
         shape = ra.shape + (3,)
     else:
         shape = (3,)
 
     cart = np.zeros(shape, dtype=np.float64)
-    cart[..., 2] = np.sin(dec * np.pi / 180.)
-    r_xy = np.cos(dec * np.pi / 180.)
-    cart[..., 1] = r_xy * np.sin(ra * np.pi / 180.)
-    cart[..., 0] = r_xy * np.cos(ra * np.pi / 180.)
+    cart[..., 2] = np.sin(dec * np.pi / 180.0)
+    r_xy = np.cos(dec * np.pi / 180.0)
+    cart[..., 1] = r_xy * np.sin(ra * np.pi / 180.0)
+    cart[..., 0] = r_xy * np.cos(ra * np.pi / 180.0)
 
     return cart
 
@@ -1030,9 +1076,9 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     dq = np.zeros(shape[0], dtype=np.uint32)
 
-    ref_image = extract_params['ref_image']
+    ref_image = extract_params["ref_image"]
     ref = ref_image.data
-    subtract_background = extract_params['subtract_background']
+    subtract_background = extract_params["subtract_background"]
 
     (mask_target, mask_bkg) = separate_target_and_background(ref)
 
@@ -1041,8 +1087,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     if subtract_background:
         if mask_bkg is None:
-            log.info("Skipping background subtraction because "
-                     "background regions are not defined.")
+            log.info("Skipping background subtraction because " "background regions are not defined.")
         subtract_background = False
 
     ra_targ = input_model.meta.target.ra
@@ -1051,27 +1096,23 @@ def image_extract_ifu(input_model, source_type, extract_params):
     x_center = None
     y_center = None
     if locn is not None:
-        log.info("Target location is x_center = %g, y_center = %g, "
-                 "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
+        log.info("Target location is x_center = %g, y_center = %g, " "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
 
     # Use the centroid of mask_target as the point where the target
     # would be without any source position correction.
     (y0, x0) = im_centroid(data, mask_target)
-    log.debug("Target location based on reference image is X = %g, Y = %g",
-              x0, y0)
+    log.debug("Target location based on reference image is X = %g, Y = %g", x0, y0)
 
     # TODO - check if shifting location should be done for reference_image option
     if locn is None or np.isnan(locn[0]):
-        log.warning("Couldn't determine pixel location from WCS, so "
-                    "source position correction will not be applied.")
+        log.warning("Couldn't determine pixel location from WCS, so " "source position correction will not be applied.")
     else:
         (x_center, y_center) = locn
         # Shift the reference image so it will be centered at locn.
         # Only shift by a whole number of pixels.
-        delta_x = int(round(x_center - x0))         # must be integer
+        delta_x = int(round(x_center - x0))  # must be integer
         delta_y = int(round(y_center - y0))
-        log.debug("Shifting reference image by %g in X and %g in Y",
-                  delta_x, delta_y)
+        log.debug("Shifting reference image by %g in X and %g in Y", delta_x, delta_y)
         temp = shift_ref_image(mask_target, delta_y, delta_x)
         if temp is not None:
             mask_target = temp
@@ -1092,19 +1133,19 @@ def image_extract_ifu(input_model, source_type, extract_params):
     f_var_flat = np.nansum(np.nansum(var_flat * mask_target, axis=2, dtype=np.float64), axis=1)
 
     # Compute the number of pixels that were added together to get gross.
-    normalization = 1.
+    normalization = 1.0
 
     weightmap = input_model.weightmap
     temp_weightmap = weightmap
     temp_weightmap[temp_weightmap > 1] = 1
     npixels[:] = np.nansum(np.nansum(temp_weightmap * mask_target, axis=2, dtype=np.float64), axis=1)
-    bkg_sigma_clip = extract_params['bkg_sigma_clip']
+    bkg_sigma_clip = extract_params["bkg_sigma_clip"]
 
     # Point Source data 1. extract background and subtract 2. do not
-    if source_type == 'POINT':
+    if source_type == "POINT":
         if subtract_background and mask_bkg is not None:
             n_bkg[:] = np.nansum(np.nansum(temp_weightmap * mask_bkg, axis=2, dtype=np.float64), axis=1)
-            n_bkg[:] = np.where(n_bkg <= 0., 1., n_bkg)
+            n_bkg[:] = np.where(n_bkg <= 0.0, 1.0, n_bkg)
             normalization = npixels / n_bkg
             background = np.nansum(np.nansum(data * mask_bkg, axis=2, dtype=np.float64), axis=1)
             b_var_poisson = np.nansum(np.nansum(var_poisson * mask_bkg, axis=2, dtype=np.float64), axis=1)
@@ -1120,12 +1161,11 @@ def image_extract_ifu(input_model, source_type, extract_params):
     else:
         temp_flux = np.nansum(np.nansum(data * mask_target, axis=2, dtype=np.float64), axis=1)
 
-    # Extended source data, sigma clip outliers of extraction region is performed
-    # at each wavelength plane.
-        (background, b_var_poisson, b_var_rnoise,
-         b_var_flat, n_bkg) = sigma_clip_extended_region(data, var_poisson, var_rnoise,
-                                                         var_flat, mask_target,
-                                                         temp_weightmap, bkg_sigma_clip)
+        # Extended source data, sigma clip outliers of extraction region is performed
+        # at each wavelength plane.
+        (background, b_var_poisson, b_var_rnoise, b_var_flat, n_bkg) = sigma_clip_extended_region(
+            data, var_poisson, var_rnoise, var_flat, mask_target, temp_weightmap, bkg_sigma_clip
+        )
 
     del temp_weightmap
 
@@ -1159,9 +1199,24 @@ def image_extract_ifu(input_model, source_type, extract_params):
     b_var_rnoise = b_var_rnoise[nan_slc]
     b_var_flat = b_var_flat[nan_slc]
 
-    return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            background, b_var_poisson, b_var_rnoise, b_var_flat,
-            npixels, dq, n_bkg, x_center, y_center)
+    return (
+        ra,
+        dec,
+        wavelength,
+        temp_flux,
+        f_var_poisson,
+        f_var_rnoise,
+        f_var_flat,
+        background,
+        b_var_poisson,
+        b_var_rnoise,
+        b_var_flat,
+        npixels,
+        dq,
+        n_bkg,
+        x_center,
+        y_center,
+    )
 
 
 def get_coordinates(input_model, x0, y0):
@@ -1188,7 +1243,7 @@ def get_coordinates(input_model, x0, y0):
         The wavelength in micrometers at each pixel.
     """
 
-    if hasattr(input_model.meta, 'wcs'):
+    if hasattr(input_model.meta, "wcs"):
         wcs = input_model.meta.wcs
     else:
         log.warning("WCS function not found in input.")
@@ -1207,7 +1262,7 @@ def get_coordinates(input_model, x0, y0):
         ra = ra[nelem // 2]
         dec = dec[nelem // 2]
     else:
-        (ra, dec) = (0., 0.)
+        (ra, dec) = (0.0, 0.0)
         wavelength = np.arange(1, nelem + 1, dtype=np.float64)
 
     return ra, dec, wavelength
@@ -1247,12 +1302,12 @@ def nans_in_wavelength(wavelength, dq):
     n_nan = nan_mask.sum(dtype=np.intp)
     if n_nan == nelem:
         log.warning("Wavelength array is all NaN!")
-        dq = np.bitwise_or(dq[:], dqflags.pixel['DO_NOT_USE'])
+        dq = np.bitwise_or(dq[:], dqflags.pixel["DO_NOT_USE"])
         return wavelength, dq, slice(0)
 
     if n_nan > 0:
         log.warning("%d NaNs in wavelength array.", n_nan)
-        dq[nan_mask] = np.bitwise_or(dq[nan_mask], dqflags.pixel['DO_NOT_USE'])
+        dq[nan_mask] = np.bitwise_or(dq[nan_mask], dqflags.pixel["DO_NOT_USE"])
         not_nan = np.logical_not(nan_mask)
         flag = np.where(not_nan)
         if len(flag[0]) > 0:
@@ -1261,8 +1316,7 @@ def nans_in_wavelength(wavelength, dq):
                 slc = slice(flag[0][0], flag[0][-1] + 1)
                 wavelength = wavelength[slc]
                 dq = dq[slc]
-                log.info("Output arrays have been trimmed by %d elements",
-                         n_trimmed)
+                log.info("Output arrays have been trimmed by %d elements", n_trimmed)
 
     return wavelength, dq, slc
 
@@ -1298,10 +1352,10 @@ def separate_target_and_background(ref):
         be set to None.
     """
 
-    mask_target = np.where(ref == 1., 1., 0.)
+    mask_target = np.where(ref == 1.0, 1.0, 0.0)
 
-    if np.any(ref == -1.):
-        mask_bkg = np.where(ref == -1., 1., 0.)
+    if np.any(ref == -1.0):
+        mask_bkg = np.where(ref == -1.0, 1.0, 0.0)
     else:
         mask_bkg = None
 
@@ -1336,11 +1390,11 @@ def im_centroid(data, mask_target):
         data_2d = data.sum(axis=0, dtype=np.float64) * mask_target
     else:
         data_2d = (data * mask_target).sum(axis=0, dtype=np.float64)
-    if data_2d.sum() == 0.:
+    if data_2d.sum() == 0.0:
         log.warning("Couldn't compute image centroid.")
         shape = data_2d.shape
-        y0 = shape[0] / 2.
-        x0 = shape[0] / 2.
+        y0 = shape[0] / 2.0
+        x0 = shape[0] / 2.0
         return y0, x0
 
     x_profile = data_2d.sum(axis=0, dtype=np.float64)
@@ -1391,8 +1445,7 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
 
     shape = mask.shape
     if abs(delta_y) >= shape[-2] or abs(delta_x) >= shape[-1]:
-        log.warning("Nod offset %d or %d is too large, skipping ...",
-                    delta_y, delta_x)
+        log.warning("Nod offset %d or %d is too large, skipping ...", delta_y, delta_x)
         return None
 
     if delta_y > 0:
@@ -1422,7 +1475,7 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
 
 
 def sigma_clip_extended_region(data, var_poisson, var_rnoise, var_flat, mask_targ, wmap, sigma_clip):
-    """ sigma clip the extraction region
+    """sigma clip the extraction region
 
     Parameters
     ----------
@@ -1475,8 +1528,7 @@ def sigma_clip_extended_region(data, var_poisson, var_rnoise, var_flat, mask_tar
         var_flat_plane = var_flat[k, :, :]
         # pull out extract source region to determined stats on for sigma clipping
         extract_data = data_plane[extract_region == 1]
-        ext_mean, _, ext_stddev = stats.sigma_clipped_stats(extract_data,
-                                                            sigma=sigma_clip, maxiters=5)
+        ext_mean, _, ext_stddev = stats.sigma_clipped_stats(extract_data, sigma=sigma_clip, maxiters=5)
         low = ext_mean - sigma_clip * ext_stddev
         high = ext_mean + sigma_clip * ext_stddev
 

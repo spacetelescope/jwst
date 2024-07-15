@@ -11,5 +11,3 @@ DESCRIPTION  string   A description of the data quality condition
 ===========  =======  ===============================================
 
 **NOTE:** For more information on standard bit definitions see: :ref:`Data Quality Flags`.
-
-

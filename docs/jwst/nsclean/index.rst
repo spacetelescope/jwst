@@ -9,5 +9,5 @@ NSClean 1/f Correction
    main.rst
    reference_files.rst
    arguments.rst
-   
+
 .. automodapi:: jwst.nsclean

@@ -90,7 +90,7 @@ on either the first group or frame zero pixel values.
    the `Detector1Pipeline` module for all NIRSpec exposures.
 .. [3] By default, the :ref:`charge_migration <charge_migration_step>` step is skipped in
    the `Detector1Pipeline` module for all instruments.
-   
+
 
 Arguments
 ---------

@@ -1,4 +1,4 @@
-'''
+"""
 This script adds velocity aberration correction information to the FITS
 files provided to it on the command line (one or more).
 
@@ -16,7 +16,7 @@ VA_SCALE (dimensionless scale factor)
 
 It does not currently place the new keywords in any particular location
 in the header other than what is required by the standard.
-'''
+"""
 
 import logging
 import numpy as np
@@ -33,7 +33,7 @@ SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
 
 
 def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
-    """ Computes constant scale factor due to velocity aberration as well as
+    """Computes constant scale factor due to velocity aberration as well as
     corrected ``RA`` and ``DEC`` values, in vector form
 
     Parameters
@@ -63,7 +63,7 @@ def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
     beta = np.array([velocity_x, velocity_y, velocity_z]) / SPEED_OF_LIGHT
     beta2 = np.dot(beta, beta)  # |beta|^2
     if beta2 == 0.0:
-        logger.warning('Observatory speed is zero. Setting VA scale to 1.0')
+        logger.warning("Observatory speed is zero. Setting VA scale to 1.0")
         return 1.0, u
 
     u_beta = np.dot(u, beta)
@@ -78,7 +78,7 @@ def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
 
 
 def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
-    """ Computes constant scale factor due to velocity aberration as well as
+    """Computes constant scale factor due to velocity aberration as well as
     corrected ``RA`` and ``DEC`` values.
 
     Parameters

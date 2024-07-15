@@ -35,4 +35,3 @@ Reference File Format
 +++++++++++++++++++++
 WAVECORR reference files are in ASDF format, with the format and contents
 specified by the `~jwst.datamodels.WaveCorrModel` data model schema.
-

@@ -231,5 +231,3 @@ def _rename(output_file):
         if not op.exists(temp_file):
             os.rename(output_file, temp_file)
             return temp_file
-
-

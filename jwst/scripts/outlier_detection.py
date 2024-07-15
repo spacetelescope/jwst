@@ -40,21 +40,18 @@ from jwst.outlier_detection import outlier_detection
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % jump.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % jump.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Do outlier detection on Level 2b FITS files""")
+    parser = argparse.ArgumentParser("""Do outlier detection on Level 2b FITS files""")
 
-    parser.add_argument(
-        'infile', metavar='infile', nargs=1,
-        help="""Input ASN file for Level 2b products.""")
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input ASN file for Level 2b products.""")
 
     args = parser.parse_args()
 
     outlier_detection.do_detection(args.infile[0], args.outfile[0])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

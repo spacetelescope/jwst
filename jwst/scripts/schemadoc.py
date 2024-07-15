@@ -50,10 +50,10 @@ def get_docstrings(template, model_names, all=False):
         try:
             docstring = build_docstring(klass, template)
         except Exception as err:
-            print(klassname, ':', str(err), file=sys.stderr)
+            print(klassname, ":", str(err), file=sys.stderr)
         else:
-            print('.. ' + klassname + ' ..')
-            print(docstring, end='')
+            print(".. " + klassname + " ..")
+            print(docstring, end="")
 
 
 def main():
@@ -62,23 +62,20 @@ def main():
     """
 
     parser = argparse.ArgumentParser(description=long_description)
-    parser.add_argument('-a', '--all', action='store_true',
-                        help='generate docstring for all models')
-    parser.add_argument('-t', '--template', type=str,
-                        help='input file containing templates')
-    parser.add_argument('models', nargs='*',
-                        help='Models to generate docstrings for')
+    parser.add_argument("-a", "--all", action="store_true", help="generate docstring for all models")
+    parser.add_argument("-t", "--template", type=str, help="input file containing templates")
+    parser.add_argument("models", nargs="*", help="Models to generate docstrings for")
     args = parser.parse_args()
 
     if args.template is None:
-        template = '{path} : {title} ({datatype})\n'
+        template = "{path} : {title} ({datatype})\n"
     else:
-        with open(args.template, 'r') as fd:
+        with open(args.template, "r") as fd:
             template = fd.readlines()
-            template = ''.join(template)
+            template = "".join(template)
 
     get_docstrings(template, args.models, all=args.all)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

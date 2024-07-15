@@ -44,4 +44,3 @@ input[1].data.reshape((input[0].header['NINT'], \
                        input[0].header['NGROUP'], \
                        input[1].header['NAXIS2'], \
                        input[1].header['NAXIS1'])).astype('uint16')
-

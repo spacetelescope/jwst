@@ -1,84 +1,84 @@
 # Pool.Candidates
-# 
+#
 # Examples of observation, candidates, and whole proposal associations
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
+#
 # Columns are the minimum necessary, so as to more easily edit.
 # Based on NIRCam Mosaic where any single observation produces a minimum of two associations: one for the short and long channels.
 # The basic exposure set will be repeated as needed to create other observations and candidates.
-# 
+#
 # ########
 # Proposal 93065
 # Mosaic: 1 row by 2 columns
 # Filters: F090W/F227W
 # Notes: detectors within ACT_ID within VISIT
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There are 2 AC's defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Base exposure set.
 # First observation, type==OBSERVATION
-# 
+#
 # Second observation, type=OBSERVATION
-# 
+#
 # Third observation, First, Second AC==MOSAIC
-# 
+#
 # Forth observation, First, Second AC==MOSAIC
-# 
+#
 # Fifth observation, Second AC==MOSAIC
-# 
+#
 # Sixth observation, Third AC==MOSAIC
-# 
+#
 # Seventh observation, Third AC==MOSAIC
-# 
+#
 # Set ACID to how many have been used.
 # Pool.Candidates
-# 
+#
 # Examples of observation, candidates, and whole proposal associations
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
+#
 # Columns are the minimum necessary, so as to more easily edit.
 # Based on NIRCam Mosaic where any single observation produces a minimum of two associations: one for the short and long channels.
 # The basic exposure set will be repeated as needed to create other observations and candidates.
-# 
+#
 # ########
 # Proposal 93065
 # Mosaic: 1 row by 2 columns
 # Filters: F090W/F227W
 # Notes: detectors within ACT_ID within VISIT
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There are 2 AC's defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Base exposure set.
 # First observation, type==OBSERVATION
-# 
+#
 # second observation, type=OBSERVATION
-# 
+#
 # Third observation, First, Second AC==MOSAIC
-# 
+#
 # Forth observation, First, Second AC==MOSAIC
-# 
+#
 # Fifth observation, Second AC==MOSAIC
-# 
+#
 # Sixth observation, Third AC==MOSAIC
-# 
+#
 # Seventh observation, Third AC==MOSAIC
-# 
+#
 # Set ACID to how many have been used.
 # Pool.Image.MIRI
-# 
+#
 # Examples of MIRI imaging proposals.
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 93065
 # Observations: 1
@@ -86,16 +86,16 @@
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
 # Notes: ACT_ID within VISIT
-# 
+#
 # VISIT == 1
 # VISIT == 2
 # Pool.Image.NIRCAM
-# 
+#
 # Example proposals of NIRCAM Imaging
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 93065
 # Observations: 2
@@ -103,19 +103,19 @@
 # Dithers: None
 # Filters: F090W/F227W
 # Notes: detectors within ACT_ID within VISIT
-# 
+#
 # VISIT == 1 ACT_ID == 1
 # VISIT == 1 ACT_ID == 2
 # VISIT == 2 ACT_ID == 1
 # Pool: WFS Phasing Examples
-# 
+#
 # Proposal: 00747
 # Instrument: NIRCam
-# 
-# 
+#
+#
 # Coarse Phasing
-# 
-# 
+#
+#
 # Fine Phasing
 # order: 1
 # order: 2
@@ -128,133 +128,133 @@
 # order: 9
 # order: 10
 # Pool.Spectrum.NIRISS
-# 
+#
 # Examples of NIRISS Spectrographic observations
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Observations: 1
 # Mode: SOSS
-# 
+#
 # Pool.Spectrum.NIRSpec
-# 
+#
 # Examples of NIRSpec spectroscopy
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 84500
 # Observations: 3
 # Mode: Fixed Slit, MOS, IFU
-# 
+#
 # Mode: Fixed Slit
-# 
+#
 # Mode: MOS
-# 
+#
 # Mode: IFU
 # Pool.Spectrum.MIRI
-# 
+#
 # Examples of MIRI spectrum proposals.
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 80500, 80600
-# 
+#
 # Mode: LRS Fixed Slit
-# 
+#
 # Mode: LRS Slitless (80600)
-# 
-# 
+#
+#
 # Mode: MRS (80600)
-# 
-# 
-# 
-# 
+#
+#
+#
+#
 # Pool.Spectrum.MIRI.LRS.Background
-# 
+#
 # Examples of MIRI LRS Fixed Slit with Background
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 80500, 80600
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There are two AC's defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Mode: LRS Fixed Slit with Background
-# 
+#
 # Background
-# 
-# 
+#
+#
 # Mode: MRS (80600)
-# 
-# 
-# 
-# 
-# 
+#
+#
+#
+#
+#
 # Background exposure
-# 
+#
 # Set ACID to how many have been used.
 # Pool.Spectrum.NIRSpec
-# 
+#
 # Examples of NIRSpec spectroscopy
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 84500
 # Observations: 3
 # Mode: Fixed Slit, MOS, IFU
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There are two AC's defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Background exposures: Fixed Slit
-# 
+#
 # Background exposures: IFU
-# 
+#
 # Mode: Fixed Slit
-# 
+#
 # Mode: IFU
-# 
+#
 # Set ACID to how many have been used.
 # Pool.Spectrum.MIRI.LRS.Background
-# 
+#
 # Examples of MIRI LRS Fixed Slit with Background
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 80500, 80600
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There is on AC defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Mode: LRS Fixed Slit with Background
-# 
+#
 # Background
-# 
-# 
+#
+#
 # Set ACID to how many have been used.
 # Pool.Image.MIRI
-# 
+#
 # Examples of MIRI imaging proposals.
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 93065
 # Observations: 1
@@ -262,184 +262,184 @@
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
 # Notes: ACT_ID within VISIT
-# 
+#
 # VISIT == 1
 # Pool.Coron.NIRCam
-# 
+#
 # Coronographic associations
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 10005
 # Observations: 6
 # PSF: 2
 # Filters: 2 (each orientation)
 # Targets: 3 (1 psf, 2 science)
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # Four PSF observations: Targets 1 and 5 in 2 orientations
-# 
-# 
-# 
-# 
-# 
+#
+#
+#
+#
+#
 # Observations on target #1, two in each orientation
-# 
-# 
-# 
-# 
+#
+#
+#
+#
 # Observations on target #3, two in each orientation
-# 
-# 
-# 
-# 
-# 
+#
+#
+#
+#
+#
 # Observations on target #4, two in each orientation
-# 
-# 
-# 
-# 
-# 
+#
+#
+#
+#
+#
 # Set ACID to how many have been used.
 # Pool.Coron.NIRCam
-# 
+#
 # Coronographic associations
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 10005
 # Observations: 6
 # PSF: 2
 # Filters: 2 (each orientation)
 # Targets: 3 (1 psf, 2 science)
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # Four PSF observations: Targets 1 and 5 in 2 orientations
-# 
-# 
-# 
+#
+#
+#
 # Observations on target #1, two in each orientation
 # Pool.AMI.NIRISS
-# 
+#
 # AMI associations
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 10005
 # Observations: 6
 # PSF: 2
 # Filters: 2 (each orientation)
 # Targets: 5 (2 psf, 3 science)
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # Four PSF observations: Targets 1 and 5 in 2 orientations
-# 
-# 
-# 
+#
+#
+#
 # Observations on target #1, two in each orientation
-# 
+#
 # Observations on target #3, two in each orientation
-# 
-# 
+#
+#
 # Observations on target #4, two in each orientation
-# 
-# 
+#
+#
 # Set ACID to how many have been used.
 # Pool.Spectrum.NIRSpec
-# 
+#
 # Examples of NIRSpec spectroscopy
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 84500
 # Observations: 3
 # Mode: Fixed Slit, MOS, IFU
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There are two AC's defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Mode: Fixed Slit
-# 
+#
 # Mode: IFU
-# 
+#
 # Background exposures: Fixed Slit
-# 
+#
 # Background exposures: IFU
-# 
+#
 # Set ACID to how many have been used.
 # Pool.Spectrum.NIRSpec
-# 
+#
 # Examples of NIRSpec spectroscopy
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 84500
 # Observations: 3
 # Mode: Fixed Slit, MOS, IFU
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There are two AC's defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Background exposures: Fixed Slit
-# 
+#
 # Background exposures: IFU
-# 
+#
 # Mode: Fixed Slit
-# 
+#
 # Mode: IFU
-# 
+#
 # Background exposures: Fixed Slit
-# 
+#
 # Background exposures: IFU
-# 
+#
 # Set ACID to how many have been used.
 # Pool.Spectrum.NIRSpec
-# 
+#
 # Examples of NIRSpec spectroscopy with IMPRINT
 # This is currently only applicable to NRS IFU usage.
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 84500
 # Observations: 3
 # Mode: Fixed IFU
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There is one AC defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Set the imprint exposures
-# 
+#
 # Mode: IFU
-# 
+#
 # Set ACID to how many have been used.
 # Pool.EXP_TYPE
-# 
+#
 # Exposures representing all exposure types. Other attributes of each exposure do
 # not necessarily match the exposure type.
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # Following AC's defined:
 # - NRC Coronographic
 # - MIR Coronographic-LYOT
@@ -450,50 +450,50 @@
 # - NRS Fixedslit Background
 # - NRS IFU Background
 # - NIS AMI
-# 
+#
 # NIRCam
-# 
-# 
+#
+#
 # MIRI
-# 
-# 
-# 
+#
+#
+#
 # NIRSpec
-# 
-# 
-# 
+#
+#
+#
 # NIRISS
-# 
-# 
-# 
+#
+#
+#
 # FGS
-# 
-# 
+#
+#
 # Set ACID to how many have been used.
 # Pool.niriss.wfss
-# 
+#
 # Dummy-upped pool to mimic expected NIRISS WFSS exposures.
-# 
+#
 # Proposal: Loosely based off of 95050
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
-# 
+#
+#
 # A WFSS cycle: 1 Direct Image, 6 GRISM Images, 2 Direct Images, 6 Grism Images, 1 Direct Image
-# 
+#
 # Set ACID to how many have been used.
 # Pool.Image.MIRI
-# 
+#
 # Examples of MIRI imaging proposals.
-# 
+#
 # Modified from all the pools with a new program 00009
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # ########
 # Proposal 93065
 # Observations: 1
@@ -501,103 +501,103 @@
 # Dither: Cycling, 3point
 # Filters: 1 (F560W) 6 alternate SLOW and FAST readout
 # Notes: ACT_ID within VISIT
-# 
+#
 # VISIT == 1
 # VISIT == 2
 # Pool.tso
-# 
+#
 # Dummy-upped pool to mimic basic Time-Series exposures
-# 
+#
 # Proposal: Completely fabricated
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
-# 
+#
+#
 # One exposure per instrument/mode
-# 
+#
 # Set ACID to how many have been used.
 # Pool.tso
-# 
+#
 # Dummy-upped pool to mimic basic Time-Series exposures
-# 
+#
 # Proposal: Completely fabricated
-# 
+#
 # OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
-# 
+#
+#
 # One exposure per instrument/mode
-# 
+#
 # Set ACID to how many have been used.
 # NIRSpec MSA simulated 3nod with 2 dither positions
-# 
+#
 # Based on 93125
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # Nod group 1, EXPSPCIN == 1
-# 
+#
 # Nod group 2, EXPSPCIN == 2
 # NIRSpec Fixed-slit with various nods and dithers
-# 
+#
 # This examples works through a number of the Nod/Sub-pixel patterns
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # Primary Dither=None, Sub-pixel Pattern=None, F290LP/G140M
-# 
+#
 # Primary Dither=None, Sub-pixel Pattern=Both, F290LP/G140M
-# 
+#
 # Primary Dither=2, Sub-pixel Pattern=None, F290LP/G140M
-# 
+#
 # Primary Dither=2, Sub-pixel Pattern=Both, F290LP/G140M
 # NIRSpec Fixed-slit with various nods and dithers and off-target backgrounds
-# 
+#
 # This examples works through a number of the Nod/Sub-pixel patterns
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # There are two AC's defined. Set ACID to reflect this as a last dummy exposure
-# 
+#
 # Background exposures: Fixed Slit
-# 
+#
 # Primary Dither=None, Sub-pixel Pattern=None, F290LP/G140M, using the background
-# 
+#
 # Primary Dither=2, Sub-pixel Pattern=None, F290LP/G140M
-# 
+#
 # Set ACID to how many have been used.
 # MIR IMAGE faked to TSO
-# 
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # NIRSpec IFU with various nods and dithers
-# 
+#
 # This examples works through a number of the Nod/Sub-pixel patterns
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 # Primary Dither type = None with, no repeat
-# 
+#
 # Primary Dither type = None with, 1 repeat
-# 
+#
 # Primary Dither type = 2_POINT_NOD, no repeat
-# 
+#
 # Primary Dither type = 4_POINT_NOD, no repeat
-# 
+#
 # Primary Dither type = 4_POINT_DITHER, no repeat
 # MIRI LRS Fixed Slit with ALONG-SLIT-NOD
-# 
-# 
+#
+#
 # Initialize ACID. This is done with a dummy exposure that will not match any association
-# 
+#
 filename|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|asn_candidate|tsovisit|subarray|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|fxd_slit|band|gwa_xtil|gwa_ytil|exposerr|is_psf|is_imprt|bkgdtarg|msastate|msametfl|wfsvisit
 set acid|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1000|tsovisit|subarray||||||||||||||||||||||||||||||||||||||||||
 jw_00001_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o001', 'observation')]|f|full||||||||||||||||||||||||||||||||||||||||||

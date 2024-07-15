@@ -18,19 +18,20 @@ log.setLevel(logging.DEBUG)
 
 
 class NIRISS:
-    def __init__(self,
-                 filt,
-                 nrm_model,
-                 chooseholes=None,
-                 affine2d=None,
-                 bandpass=None,
-                 usebp=True,
-                 firstfew=None,
-                 rotsearch_parameters=None,
-                 oversample=None,
-                 psf_offset=None,
-                 run_bpfix=True
-                 ):
+    def __init__(
+        self,
+        filt,
+        nrm_model,
+        chooseholes=None,
+        affine2d=None,
+        bandpass=None,
+        usebp=True,
+        firstfew=None,
+        rotsearch_parameters=None,
+        oversample=None,
+        psf_offset=None,
+        run_bpfix=True,
+    ):
         """
         Initialize NIRISS class
 
@@ -106,9 +107,7 @@ class NIRISS:
         # Separating detector tilt pixel scale effects from pupil distortion effects is
         # yet to be determined... see comments in Affine class definition.
         if affine2d is None:
-            self.affine2d = utils.Affine2d(
-                mx=1.0, my=1.0, sx=0.0, sy=0.0, xo=0.0, yo=0.0, name="Ideal"
-            )
+            self.affine2d = utils.Affine2d(mx=1.0, my=1.0, sx=0.0, sy=0.0, xo=0.0, yo=0.0, name="Ideal")
         else:
             self.affine2d = affine2d
 
@@ -200,7 +199,6 @@ class NIRISS:
         self.ra_uncertainty = input_model.meta.target.ra_uncertainty
         self.dec_uncertainty = input_model.meta.target.dec_uncertainty
 
-
         datestr = input_model.meta.visit.start_time.replace(" ", "T")
         self.date = datestr  # is this the right start time?
         self.year = datestr[:4]
@@ -249,9 +247,7 @@ class NIRISS:
         outliers2 = np.argwhere(mediandiff > nsigma * std_im)
 
         dqvalues = bpdata[outliers]
-        log.info(
-            f"{len(dqvalues)} additional pixels >10-sig from median of stack found"
-        )
+        log.info(f"{len(dqvalues)} additional pixels >10-sig from median of stack found")
         # decompose DQ values to check if they are already flagged DNU
         count = 0
         for loc, dq_value in zip(outliers2, dqvalues):
@@ -260,9 +256,7 @@ class NIRISS:
             for i, elem in enumerate(bitarr[::-1]):
                 if elem == str(1):
                     badval = 2**i
-                    key = next(
-                        key for key, value in dqflags.pixel.items() if value == badval
-                    )
+                    key = next(key for key, value in dqflags.pixel.items() if value == badval)
                     bad_types.append(key)
             if "DO_NOT_USE" not in bad_types:
                 bpdata[loc[0], loc[1], loc[2]] += 1
@@ -271,20 +265,15 @@ class NIRISS:
 
         # Roughly center scidata, bpdata around peak pixel position
         peakx, peaky, r = utils.min_distance_to_edge(med_im)
-        scidata_ctrd = scidata[
-            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
-        ]
-        bpdata_ctrd = bpdata[
-            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
-        ]
+        scidata_ctrd = scidata[:, int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)]
+        bpdata_ctrd = bpdata[:, int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)]
 
         log.info(
-            "Cropping all integrations to %ix%i pixels around peak (%i,%i)"
-            % (2 * r + 1, 2 * r + 1, peakx + 4, peaky)
+            "Cropping all integrations to %ix%i pixels around peak (%i,%i)" % (2 * r + 1, 2 * r + 1, peakx + 4, peaky)
         )  # +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
-            log.info('Applying Fourier bad pixel correction to cropped data, updating DQ array')
+            log.info("Applying Fourier bad pixel correction to cropped data, updating DQ array")
             scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(
                 scidata_ctrd,
                 bpdata_ctrd,
@@ -301,9 +290,7 @@ class NIRISS:
 
         # Make a bad pixel mask, either from real DQ data or zeros if usebp=False
         if self.usebp:
-            log.info(
-                "usebp flag set to TRUE: bad pixels will be excluded from model fit"
-            )
+            log.info("usebp flag set to TRUE: bad pixels will be excluded from model fit")
             DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
             JUMP_DET = dqflags.pixel["JUMP_DET"]
             dq_dnu = bpdata_ctrd & DO_NOT_USE == DO_NOT_USE
@@ -357,13 +344,9 @@ class NIRISS:
             if vpar == -1:
                 # rotate clockwise  <rotate coords clockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
-                log.info(
-                    f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees"
-                )
+                log.info(f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees")
             else:
                 # counterclockwise  <rotate coords counterclockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
-                log.info(
-                    f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees"
-                )
+                log.info(f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees")
             return ctrs_rot

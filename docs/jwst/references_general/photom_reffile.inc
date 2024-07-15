@@ -64,7 +64,7 @@ The MIRI Imager PHOTOM reference file can contain an optional BINTABLE extension
 named "TIMECOEFF", containing coefficients for an time-dependent correction. The format
 of this additional table extension is as follows:
 
-==========  ========  =====  ===========  =========  
+==========  ========  =====  ===========  =========
 EXTNAME     XTENSION  NAXIS  Dimensions   Data type
 ==========  ========  =====  ===========  =========
 TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
@@ -278,7 +278,7 @@ IMAGE extensions.
 The FITS primary HDU does not contain a data array.
 The format and content of the MIRI MRS PHOTOM reference file is as follows:
 
-==================  ========  =====  ===========  =========  
+==================  ========  =====  ===========  =========
 EXTNAME             XTENSION  NAXIS  Dimensions   Data type
 ==================  ========  =====  ===========  =========
 SCI                 IMAGE       2    1032 x 1024  float
@@ -314,7 +314,7 @@ product header by the photom step.
 
 The TIMECOEFF_CH tables contain the parameters to correct the MRS time-dependent
 throughput loss. If these tables do not exist in the reference file, then the MIRI
-MRS time-dependent correction is skipped. 
+MRS time-dependent correction is skipped.
 
 Constructing a PHOTOM Reference File
 ------------------------------------

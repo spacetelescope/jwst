@@ -42,4 +42,3 @@ EXTNAME  XTENSION  NAXIS  Dimensions      Data type
 =======  ========  =====  ==============  =========
 SCI      IMAGE       2    ncols x nrows   float
 =======  ========  =====  ==============  =========
-

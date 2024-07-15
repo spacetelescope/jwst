@@ -12,4 +12,3 @@ Group Scale Correction
    reference_files.rst
 
 .. automodapi:: jwst.group_scale
-

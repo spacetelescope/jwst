@@ -17,27 +17,24 @@ def test_nframes_or_frame_divisor_is_none(make_rampmodel):
     datmod = make_rampmodel(2, None, 4, 2048, 2048)
     do_correction(datmod)
 
-    assert datmod.meta.cal_step.group_scale == 'SKIPPED'
+    assert datmod.meta.cal_step.group_scale == "SKIPPED"
 
 
 def test_nframes_equal_frame_divisor(make_rampmodel):
-    """If nframes and frame_divisor are equal, skip correction
-    """
+    """If nframes and frame_divisor are equal, skip correction"""
     datmod = make_rampmodel(2, 4, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
-    print(output.meta.exposure.frame_divisor,
-          output.meta.exposure.nframes)
-    assert output.meta.cal_step.group_scale == 'SKIPPED'
+    print(output.meta.exposure.frame_divisor, output.meta.exposure.nframes)
+    assert output.meta.cal_step.group_scale == "SKIPPED"
 
 
 def test_nframes_not_equal_frame_divisor(make_rampmodel):
-    """If nframes and frame_divisor are not equal, do correction
-    """
+    """If nframes and frame_divisor are not equal, do correction"""
     datmod = make_rampmodel(2, 2, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
     # Assert that the step completed
-    assert output.meta.cal_step.group_scale == 'COMPLETE'
+    assert output.meta.cal_step.group_scale == "COMPLETE"
 
     # This assertion doesn't verify for correct output,
     # it just checks that the correction ran and that the data array
@@ -46,12 +43,11 @@ def test_nframes_not_equal_frame_divisor(make_rampmodel):
 
 
 def test_nframes_is_none(make_rampmodel):
-    """Make sure step is skipped if nframes is None
-    """
+    """Make sure step is skipped if nframes is None"""
     datmod = make_rampmodel(2, None, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
-    assert output.meta.cal_step.group_scale == 'SKIPPED'
+    assert output.meta.cal_step.group_scale == "SKIPPED"
 
 
 def test_nframes_is_power_of_two(make_rampmodel):
@@ -61,7 +57,7 @@ def test_nframes_is_power_of_two(make_rampmodel):
     datmod = make_rampmodel(2, 4, None, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
-    assert output.meta.cal_step.group_scale == 'SKIPPED'
+    assert output.meta.cal_step.group_scale == "SKIPPED"
 
 
 def test_nframes_is_not_power_of_two(make_rampmodel):
@@ -72,7 +68,7 @@ def test_nframes_is_not_power_of_two(make_rampmodel):
     datmod = make_rampmodel(2, 3, None, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
-    assert output.meta.cal_step.group_scale == 'SKIPPED'
+    assert output.meta.cal_step.group_scale == "SKIPPED"
 
 
 def test_scale_value(make_rampmodel):
@@ -99,9 +95,9 @@ def test_scale_value(make_rampmodel):
     assert scale == scale_from_data[0]
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def make_rampmodel():
-    '''Make NIRSPEC IRS2 model for testing'''
+    """Make NIRSPEC IRS2 model for testing"""
 
     # NRS1 and NRS2 are size  2048x2048 pixels
     def _dm(ngroups, nframes, frame_divisor, ysize, xsize):
@@ -113,14 +109,14 @@ def make_rampmodel():
         # create a JWST datamodel for NIRSPEC data
         dm = RampModel(data=data)
 
-        dm.meta.instrument.name = 'NIRSPEC'
-        dm.meta.date = '2018-01-01'
-        dm.meta.description = 'Fake data'
-        dm.meta.reftype = 'RampModel'
-        dm.meta.author = 'Mees'
-        dm.meta.pedigree = 'Dummy'
-        dm.meta.useafter = '2015-10-01T00:00:00'
-        dm.meta.readpatt = 'NRS_IRS2'
+        dm.meta.instrument.name = "NIRSPEC"
+        dm.meta.date = "2018-01-01"
+        dm.meta.description = "Fake data"
+        dm.meta.reftype = "RampModel"
+        dm.meta.author = "Mees"
+        dm.meta.pedigree = "Dummy"
+        dm.meta.useafter = "2015-10-01T00:00:00"
+        dm.meta.readpatt = "NRS_IRS2"
 
         # Begin NIRSPEC specific for tests.
         dm.meta.exposure.frame_divisor = frame_divisor

@@ -36,32 +36,32 @@ data might look like this::
     #include 'velocity_aberration_correction.gen.inc'
     #include 'nirspec_ifu_dither_pattern.gen.inc'
     #include 'time_related.gen.inc'
-    
+
     <<data>>
-    
+
     <<header science>>
     #include 'level1b_sci_extension_basic.gen.inc'
-    
+
     <<data>>
     input[0].data.reshape((input[0].header['NINT'], \
                            input[0].header['NGROUP'], \
                            input[0].header['NAXIS2'], \
                            input[0].header['NAXIS1'])). \
                            astype('uint16')
-    
+
     <<header error>>
     EXTNAME = 'ERR'
-    
+
     <<data>>
     np.ones((input[0].header['NINT'], \
              input[0].header['NGROUP'], \
              input[0].header['NAXIS2'], \
              input[0].header['NAXIS1'])). \
              astype('float32')
-    
+
     <<header data_quality>>
     EXTNAME = "DQ"
-    
+
     <<data>>
     np.zeros((input[0].header['NINT'], \
               input[0].header['NGROUP'], \
@@ -223,7 +223,7 @@ section headings in the output FITS file.  For example::
 as above, for example, the file ``target_information.gen.inc`` looks like this::
 
     / Target information
-    
+
     TARGPROP = input('TARGNAME') / proposer's name for the target
     TARGNAME = 'NGC 104' / standard astronomical catalog name for target
     TARGTYPE = 'FIXED' / fixed target, moving target, or generic target

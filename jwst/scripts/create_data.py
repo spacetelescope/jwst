@@ -41,27 +41,25 @@ from jwst.fits_generator import create_data
 
 def main():
     # bug: figure out how to get argparse to do this
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % fits_generator.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % fits_generator.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Creates Level 1b data from a set of raw FITSWriter files"""
-    )
+    parser = argparse.ArgumentParser("""Creates Level 1b data from a set of raw FITSWriter files""")
     parser.add_argument(
-        'directory',
+        "directory",
         nargs=1,
         help="""A list of directories containing proposal files
         to be processed.""",
     )
     parser.add_argument(
-        '-l',
-        '--level',
-        dest='level',
+        "-l",
+        "--level",
+        dest="level",
         nargs=1,
-        default='1b',
-        choices=('1b', '2a'),
-        help='Level of data to produce: default=\'1b\'',
+        default="1b",
+        choices=("1b", "2a"),
+        help="Level of data to produce: default='1b'",
     )
 
     args = parser.parse_args()
@@ -70,5 +68,5 @@ def main():
     create_data.run(base_directory=args.directory[0], level=args.level)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -137,5 +137,3 @@ in **parameter files**. See :ref:`parameter_files` for more information.
 
 Pipeline/Step Parameters
 ========================
-
-

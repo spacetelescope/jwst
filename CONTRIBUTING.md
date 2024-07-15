@@ -1,6 +1,6 @@
 # Basic Contribution Instructions
 
-`jwst` is an open source python package, and the source code is available in the 
+`jwst` is an open source python package, and the source code is available in the
 [JWST Github repository](https://github.com/spacetelescope/jwst/). New contributions
 and contributors are very welcome! Do not hesitate to reach out to the package
 maintainers if you are new to open-source development
@@ -40,7 +40,7 @@ to your own account space by clicking the appropriate button on the upper right-
 side. This will create an online clone of the main JWST repository but instead of
 being under the 'spacetelescope' organization, it will be under your personal
 account space. It is necessary to fork the repository so that many contributors
-aren't making branches directly on 'spacetelescope/jwst'. 
+aren't making branches directly on 'spacetelescope/jwst'.
 
 2. Now that you have remotely forked `jwst`, it needs to be downloaded
 to your machine. To create this 'local' clone, choose an area on your file system
@@ -60,7 +60,7 @@ local clone will be an exact copy of your remote, which is an exact copy of the 
 
 After your inital clone, you will likely be missing the reference to 'upstream'
 (which is just the most commonly used name in git to refer to the main project repository - you
-can call this whatever you want but the origin/upstream conventions are most commonly used) - to 
+can call this whatever you want but the origin/upstream conventions are most commonly used) - to
 set this, use the `add` git command:
 
 If you are using an SSH key to authenticate.
@@ -163,7 +163,7 @@ the 'master' branch.
 	runs several different checks including running the unit tests, ensuring
 	the documentation builds, checking for code style issues (see the [PEP8](https://peps.python.org/pep-0008/) style guide),
 	and ensuring any changes are covered by unit tests. The CI runs upon opening
-	a PR, and will re-run any time you push commits to that branch. 
+	a PR, and will re-run any time you push commits to that branch.
 	* You will need to add a change log entry in CHANGES.rst if your contribution
 	is a new feature or bug fix. An entry is not required for small fixes like typos.
 	* Your PR will need to be reviewed and approved by at least two maintainers.
@@ -181,7 +181,7 @@ made changes to your branch off 'master', but in the time its taken you to make 
 changes, 'upstream/master' has evolved with new commits from other developers. In this
 situation, you will want to make sure you incorporate these changes into your branch.
 Rebasing allows you to do two things - 1. apply others changes on top of yours, and 2.
-squash your commits, even if there aren't new changes to apply. 
+squash your commits, even if there aren't new changes to apply.
 
 Periodically, while writing code, to keep your branch up to date you will want to
 do an interactive rebase against upstream/master to apply any new changes on top of yours:

@@ -18,9 +18,7 @@ def main():
     example, accidentally adding a runtime dependency on pytest.
     """
 
-    parser = argparse.ArgumentParser(
-        description="Check if install_requires is up-to-date"
-    )
+    parser = argparse.ArgumentParser(description="Check if install_requires is up-to-date")
     parser.parse_args()
 
     pytest.main(

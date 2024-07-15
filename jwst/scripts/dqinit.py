@@ -39,12 +39,12 @@ from stpipe import cmdline
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('Version %s\n' % dq_init.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("Version %s\n" % dq_init.__version__)
         sys.exit(0)
 
     cmdline.step_script(DQInitStep)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

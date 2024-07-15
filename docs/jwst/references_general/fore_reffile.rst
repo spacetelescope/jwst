@@ -31,4 +31,3 @@ The compound model takes three inputs - x, y positions and wavelength.
 
 :filter: Filter name.
 :model: Transform through the Filter Wheel Assembly (FWA).
-

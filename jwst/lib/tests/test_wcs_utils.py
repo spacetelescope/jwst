@@ -14,7 +14,6 @@ from jwst.assign_wcs import util
 
 
 def create_model():
-
     det = cf.Frame2D(name="detector", axes_order=(0, 1))
 
     sky = cf.CelestialFrame(name="sky", axes_order=(0, 1), reference_frame=coord.ICRS())
@@ -25,9 +24,7 @@ def create_model():
         axes_names=("x_slit", "y_slit"),
     )
 
-    spec = cf.SpectralFrame(
-        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
-    )
+    spec = cf.SpectralFrame(name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",))
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name="slit_frame")
     world = cf.CompositeFrame([sky, spec], name="world")
 
@@ -60,7 +57,6 @@ def create_mock_wl():
 
 
 def test_get_wavelengths():
-
     # create a mock SlitModel
     model = create_model()
 
@@ -84,7 +80,6 @@ def test_get_wavelengths():
 
 
 def test_get_wavelengths_soss():
-
     # create a mock SlitModel
     model = create_model()
 
@@ -110,7 +105,6 @@ def test_get_wavelengths_soss():
 
 
 def test_get_wavelength_wavecorr():
-
     # create a mock SlitModel
     model = create_model()
 
@@ -133,9 +127,7 @@ def test_get_wavelength_wavecorr():
         unit=("", ""),
         axes_names=("x_slit", "y_slit"),
     )
-    spec = cf.SpectralFrame(
-        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
-    )
+    spec = cf.SpectralFrame(name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",))
     wcorr_frame = cf.CompositeFrame([slit_spatial, spec], name="wavecorr_frame")
 
     # Insert the new transform into the slit wcs object

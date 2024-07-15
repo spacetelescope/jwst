@@ -1,11 +1,12 @@
 """Project default for pytest"""
+
 import os
 import tempfile
 import pytest
 import inspect
 from pathlib import Path
 
-from jwst.associations import (AssociationRegistry, AssociationPool)
+from jwst.associations import AssociationRegistry, AssociationPool
 from jwst.associations.tests.helpers import t_path
 
 
@@ -19,10 +20,10 @@ def jail_environ():
         os.environ = original
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def full_pool_rules(request):
     """Setup to use the full example pool and registry"""
-    pool_fname = t_path('data/mega_pool.csv')
+    pool_fname = t_path("data/mega_pool.csv")
     pool = AssociationPool.read(pool_fname)
     rules = AssociationRegistry()
 
@@ -49,7 +50,7 @@ def slow(request):
     """Setup slow fixture for tests to identify if --slow
     has been specified
     """
-    return request.config.getoption('--slow')
+    return request.config.getoption("--slow")
 
 
 @pytest.fixture(scope="module")
@@ -60,7 +61,7 @@ def tmp_cwd_module(request, tmp_path_factory):
     temporary directory, and then have the tests access them.
     """
     old_dir = os.getcwd()
-    path = request.module.__name__.split('.')[-1]
+    path = request.module.__name__.split(".")[-1]
     if request._parent_request.fixturename is not None:
         path = path + "_" + request._parent_request.fixturename
     newpath = tmp_path_factory.mktemp(path)
@@ -82,8 +83,8 @@ def tmp_cwd(tmp_path):
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
-    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
-    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+    terminal_reporter = config.pluginmanager.getplugin("terminalreporter")
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), "testdescription")
 
 
 class TestDescriptionPlugin:
@@ -111,7 +112,7 @@ class TestDescriptionPlugin:
             yield
         # When run as `pytest -vv`, `pytest -vvv`, etc, print the test docstring
         else:
-            self.terminal_reporter.write('\n')
+            self.terminal_reporter.write("\n")
             yield
             if self.desc:
-                self.terminal_reporter.write(f'\n{self.desc} ')
+                self.terminal_reporter.write(f"\n{self.desc} ")

@@ -1,4 +1,4 @@
-from jwst.stpipe import (Pipeline, Step)
+from jwst.stpipe import Pipeline, Step
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel
@@ -7,7 +7,7 @@ from stdatamodels.jwst.datamodels import ImageModel
 class StepWithReference(Step):
     """Step that refers to a reference file"""
 
-    reference_file_types = ['flat']
+    reference_file_types = ["flat"]
 
     def process(self, data):
         return data
@@ -19,7 +19,7 @@ class PipeWithReference(Pipeline):
     spec = """
     """
 
-    step_defs = {'step_with_reference': StepWithReference}
+    step_defs = {"step_with_reference": StepWithReference}
 
     def process(self, data):
         result = self.step_with_reference(data)
@@ -45,7 +45,7 @@ class AnotherDummyStep(Step):
     """
     class_alias = "stpipe_dummy"
 
-    reference_file_types = ['flat_field']
+    reference_file_types = ["flat_field"]
 
     def process(self, a=0, b=0):
         self.log.info("Found a: {0}, b: {1}".format(a, b))
@@ -67,8 +67,7 @@ class WithDefaultsStep(Step):
     """
 
     def process(self, input):
-        self.log.info("Parameters par1=%s, par2=%s, par3=%s, par4=%s",
-                      self.par1, self.par2, self.par3, self.par3)
+        self.log.info("Parameters par1=%s, par2=%s, par3=%s, par4=%s", self.par1, self.par2, self.par3, self.par3)
 
         return input
 
@@ -83,17 +82,12 @@ class MakeListStep(Step):
     """
 
     def process(self, a=None, b=None):
-        self.log.info('Arguments a=%s b=%s', a, b)
-        self.log.info('Parameters par1=%s, par2=%s, par3=%s',
-                      self.par1, self.par2, self.par3)
+        self.log.info("Arguments a=%s b=%s", a, b)
+        self.log.info("Parameters par1=%s, par2=%s, par3=%s", self.par1, self.par2, self.par3)
 
-        result = [
-            item
-            for item in [a, b, self.par1, self.par2, self.par3]
-            if item is not None
-        ]
+        result = [item for item in [a, b, self.par1, self.par2, self.par3] if item is not None]
 
-        self.log.info('The list is %s', result)
+        self.log.info("The list is %s", result)
         return result
 
 
@@ -103,10 +97,10 @@ class OptionalRefTypeStep(Step):
     a reference file.
     """
 
-    reference_file_types = ['to_be_ignored_ref_type']
+    reference_file_types = ["to_be_ignored_ref_type"]
 
     def process(self):
-        ref_file = self.get_reference_file(datamodels.open(), 'to_be_ignored_ref_type')
+        ref_file = self.get_reference_file(datamodels.open(), "to_be_ignored_ref_type")
         assert ref_file == ""
 
 
@@ -135,7 +129,7 @@ class PostHookWithReturnStep(Step):
         self.log.info('Self.parent = "{}"'.format(self.parent))
 
         self.parent.post_hook_run = True
-        return 'PostHookWithReturnStep executed'
+        return "PostHookWithReturnStep executed"
 
 
 class PreHookStep(Step):
@@ -164,7 +158,7 @@ class SaveStep(Step):
         model = ImageModel(args[0])
 
         self.log.info('Saving model as "processed"')
-        self.save_model(model, 'processed')
+        self.save_model(model, "processed")
 
         return model
 
@@ -179,8 +173,8 @@ class StepWithContainer(Step):
         container = []
         model1 = ImageModel(args[0]).copy()
         model2 = ImageModel(args[0]).copy()
-        model1.meta.filename = 'swc_model1.fits'
-        model2.meta.filename = 'swc_model2.fits'
+        model1.meta.filename = "swc_model1.fits"
+        model2.meta.filename = "swc_model2.fits"
         container.append(model1)
         container.append(model2)
 
@@ -207,7 +201,6 @@ class EmptyPipeline(Pipeline):
     """
 
     def process(self, *args):
-
         return args
 
 
@@ -218,25 +211,24 @@ class ProperPipeline(Pipeline):
     """
 
     step_defs = {
-        'stepwithmodel': StepWithModel,
-        'another_stepwithmodel': StepWithModel,
-        'stepwithcontainer': StepWithContainer,
-        'withdefaultsstep': WithDefaultsStep
+        "stepwithmodel": StepWithModel,
+        "another_stepwithmodel": StepWithModel,
+        "stepwithcontainer": StepWithContainer,
+        "withdefaultsstep": WithDefaultsStep,
     }
 
     def process(self, *args):
-
-        self.suffix = 'pp'
+        self.suffix = "pp"
 
         model = ImageModel(args[0])
 
-        self.stepwithmodel.suffix = 'swm'
+        self.stepwithmodel.suffix = "swm"
         r = self.stepwithmodel(model)
-        self.another_stepwithmodel.suffix = 'aswm'
+        self.another_stepwithmodel.suffix = "aswm"
         r = self.another_stepwithmodel(r)
-        self.stepwithcontainer.suffix = 'swc'
+        self.stepwithcontainer.suffix = "swc"
         r = self.stepwithcontainer(r)
-        self.withdefaultsstep.suffix = 'wds'
+        self.withdefaultsstep.suffix = "wds"
         r = self.withdefaultsstep(r)
 
         return r
@@ -248,10 +240,7 @@ class SavePipeline(Pipeline):
     spec = """
     """
 
-    step_defs = {
-        'stepwithmodel': StepWithModel,
-        'savestep': SaveStep
-    }
+    step_defs = {"stepwithmodel": StepWithModel, "savestep": SaveStep}
 
     def process(self, *args):
         model = ImageModel(args[0])
@@ -270,9 +259,8 @@ class MakeListPipeline(Pipeline):
     """
 
     step_defs = {
-        'make_list': MakeListStep,
+        "make_list": MakeListStep,
     }
 
     def process(self, *args):
-
         return self.make_list(*args)

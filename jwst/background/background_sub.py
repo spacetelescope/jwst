@@ -24,23 +24,25 @@ class ImageSubsetArray:
     """
 
     def __init__(self, model):
-
         im = datamodels.open(model)
 
         # Make sure xstart/ystart/xsize/ysize exist in the model metadata
-        if (im.meta.subarray.xstart is None or im.meta.subarray.ystart is None or
-                im.meta.subarray.xsize is None or im.meta.subarray.ysize is None):
-
+        if (
+            im.meta.subarray.xstart is None
+            or im.meta.subarray.ystart is None
+            or im.meta.subarray.xsize is None
+            or im.meta.subarray.ysize is None
+        ):
             # If the ref file is full-frame, set the missing params to
             # default values
-            if im.meta.instrument.name.upper() == 'MIRI':
+            if im.meta.instrument.name.upper() == "MIRI":
                 if im.data.shape[-1] == 1032 and im.data.shape[-2] == 1024:
                     im.meta.subarray.xstart = 1
                     im.meta.subarray.ystart = 1
                     im.meta.subarray.xsize = 1032
                     im.meta.subarray.ysize = 1024
                 else:
-                    raise ValueError('xstart or ystart metadata values not found in model')
+                    raise ValueError("xstart or ystart metadata values not found in model")
             else:
                 if im.data.shape[-1] == 2048 and im.data.shape[-2] == 2048:
                     im.meta.subarray.xstart = 1
@@ -48,7 +50,7 @@ class ImageSubsetArray:
                     im.meta.subarray.xsize = 2048
                     im.meta.subarray.ysize = 2048
                 else:
-                    raise ValueError('xstart or ystart metadata values not found in model')
+                    raise ValueError("xstart or ystart metadata values not found in model")
 
         # Account for the fact these things are 1-indexed
         self.jmin = im.meta.subarray.ystart - 1
@@ -67,12 +69,7 @@ class ImageSubsetArray:
 
     def overlaps(self, other):
         """Find whether this subset and another overlap"""
-        return not (
-                self.imax <= other.imin
-                or other.imax <= self.imin
-                or self.jmax <= other.jmin
-                or other.jmax <= self.jmin
-        )
+        return not (self.imax <= other.imin or other.imax <= self.imin or self.jmax <= other.jmin or other.jmax <= self.jmin)
 
     def get_subset_array(self, other):
         """
@@ -97,14 +94,16 @@ class ImageSubsetArray:
         dq_overlap = np.zeros_like(other.data, dtype=np.uint32)
 
         if self.im_dim == 2:
-            idx = (slice(jmin - other.jmin, jmax - other.jmin),
-                   slice(imin - other.imin, imax - other.imin),
-                   )
+            idx = (
+                slice(jmin - other.jmin, jmax - other.jmin),
+                slice(imin - other.imin, imax - other.imin),
+            )
         if self.im_dim == 3:
-            idx = (slice(None, None),
-                   slice(jmin - other.jmin, jmax - other.jmin),
-                   slice(imin - other.imin, imax - other.imin),
-                   )
+            idx = (
+                slice(None, None),
+                slice(jmin - other.jmin, jmax - other.jmin),
+                slice(imin - other.imin, imax - other.imin),
+            )
 
         # Pull the values from the background obs
         data_cutout = other.data[idx]
@@ -112,9 +111,9 @@ class ImageSubsetArray:
         dq_cutout = other.dq[idx]
 
         # Put them into the right place in the original image array shape
-        data_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(data_cutout)
-        err_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(err_cutout)
-        dq_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(dq_cutout)
+        data_overlap[: data_cutout.shape[0], : data_cutout.shape[1]] = copy.deepcopy(data_cutout)
+        err_overlap[: data_cutout.shape[0], : data_cutout.shape[1]] = copy.deepcopy(err_cutout)
+        dq_overlap[: data_cutout.shape[0], : data_cutout.shape[1]] = copy.deepcopy(dq_cutout)
 
         return data_overlap, err_overlap, dq_overlap
 
@@ -153,14 +152,15 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 
     # Compute the average of the background images associated with
     # the target exposure
-    bkg_model = average_background(input_model,
-                                   bkg_list,
-                                   sigma,
-                                   maxiters,
-                                   )
+    bkg_model = average_background(
+        input_model,
+        bkg_list,
+        sigma,
+        maxiters,
+    )
 
     # Subtract the average background from the member
-    log.info('Subtracting avg bkg from {}'.format(input_model.meta.filename))
+    log.info("Subtracting avg bkg from {}".format(input_model.meta.filename))
 
     result = subtract_images.subtract(input_model, bkg_model)
 
@@ -211,14 +211,14 @@ def average_background(input_model, bkg_list, sigma, maxiters):
 
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
-        log.info(f'Accumulate bkg from {bkg_file}')
+        log.info(f"Accumulate bkg from {bkg_file}")
 
         bkg_array = ImageSubsetArray(bkg_file)
 
         if not bkg_array.overlaps(im_array):
             # We don't overlap, so put in a bunch of NaNs so sigma-clip
             # isn't affected and move on
-            log.debug(f'{bkg_file} does not overlap input image')
+            log.debug(f"{bkg_file} does not overlap input image")
             cdata[i] = np.ones(image_shape) * np.nan
             cerr[i] = np.ones(image_shape) * np.nan
             continue
@@ -249,7 +249,7 @@ def average_background(input_model, bkg_list, sigma, maxiters):
             avg_bkg.dq = np.bitwise_or(avg_bkg.dq, accum_dq_arr)
 
     # Clip the background data
-    log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
+    log.debug("clip with sigma={} maxiters={}".format(sigma, maxiters))
     mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
 
     # Compute the mean of the non-clipped values
@@ -304,10 +304,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
         bkg_mask = mask_from_source_cat(input_model, wl_range_name, mmag_extract)
         # Ensure mask has 100 pixels and that those pixels correspond to valid
         # pixels using model DQ array
-        if np.count_nonzero(input_model.dq[bkg_mask]
-                            ^ pixel['DO_NOT_USE']
-                            & pixel['DO_NOT_USE']
-                            ) < 100:
+        if np.count_nonzero(input_model.dq[bkg_mask] ^ pixel["DO_NOT_USE"] & pixel["DO_NOT_USE"]) < 100:
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
             return None
@@ -317,20 +314,16 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     # Compute the mean values of science image and background reference
     # image, including only regions where there are no identified sources.
     # Exclude pixel values in the lower and upper 25% of the histogram.
-    lowlim = 25.
-    highlim = 75.
-    sci_mean = robust_mean(input_model.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
-    bkg_mean = robust_mean(bkg_ref.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
+    lowlim = 25.0
+    highlim = 75.0
+    sci_mean = robust_mean(input_model.data[bkg_mask], lowlim=lowlim, highlim=highlim)
+    bkg_mean = robust_mean(bkg_ref.data[bkg_mask], lowlim=lowlim, highlim=highlim)
 
-    log.debug("mean of [{}, {}] percentile grism image = {}"
-              .format(lowlim, highlim, sci_mean))
-    log.debug("mean of [{}, {}] percentile background image = {}"
-              .format(lowlim, highlim, bkg_mean))
+    log.debug("mean of [{}, {}] percentile grism image = {}".format(lowlim, highlim, sci_mean))
+    log.debug("mean of [{}, {}] percentile background image = {}".format(lowlim, highlim, bkg_mean))
 
     result = input_model.copy()
-    if bkg_mean != 0.:
+    if bkg_mean != 0.0:
         subtract_this = (sci_mean / bkg_mean) * bkg_ref.data
         result.data = input_model.data - subtract_this
         log.info(f"Average of background image subtracted = {subtract_this.mean(dtype=float)}")
@@ -343,7 +336,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     return result
 
 
-def no_NaN(model, fill_value=0.):
+def no_NaN(model, fill_value=0.0):
     """Replace NaNs with a harmless value.
 
     Parameters
@@ -414,7 +407,7 @@ def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
     return bkg_mask
 
 
-def robust_mean(x, lowlim=25., highlim=75.):
+def robust_mean(x, lowlim=25.0, highlim=75.0):
     """Compute a mean value, excluding outliers.
 
     Parameters

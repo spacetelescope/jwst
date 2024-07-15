@@ -3,7 +3,7 @@
 AMI unit tests
 ==============
 
-There are unit tests for AMI Analyze and AMI interface. 
+There are unit tests for AMI Analyze and AMI interface.
 
 test_ami_interface
 ------------------
@@ -21,9 +21,9 @@ utils module tests:
 
 For the module *utils* we have several tests that compare the calculated value with a known value. The tests are:
 
- - Test of rebin() and krebin() 
- - Test of quadratic 
- - Test of findmax 
+ - Test of rebin() and krebin()
+ - Test of quadratic
+ - Test of findmax
  - Test of makeA
  - Test of fringes2pistons
  - Test of rcrosscorrelate()
@@ -91,15 +91,14 @@ hexee module tests:
 analyticnrm2 module tests:
 ++++++++++++++++++++++++++
 
- -  Test of PSF() 
- -  Test of ASFhex() in the analyticnrm2 module FOR HEX 
- -  Test of interf() 
+ -  Test of PSF()
+ -  Test of ASFhex() in the analyticnrm2 module FOR HEX
+ -  Test of interf()
  -  Test of phasor()
- 
+
 webb_psf module test:
 +++++++++++++++++++++
 
  -  Test of PSF()
         Create a Throughput datamodel, having a dummy filter bandpass data
         that peaks at 1.0 at the center and decreases in the wings.
-

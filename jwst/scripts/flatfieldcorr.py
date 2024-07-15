@@ -39,23 +39,19 @@ from jwst.flatfield import flat_field
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % ff.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % ff.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Do a Flat Field Correction on Level 1b FITS files"""
-    )
+    parser = argparse.ArgumentParser("""Do a Flat Field Correction on Level 1b FITS files""")
+
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input Level 1b FITS file.""")
+
+    parser.add_argument("offsets", metavar="offsets", nargs=1, help="""Offsets.""")
 
     parser.add_argument(
-        'infile', metavar='infile', nargs=1, help="""Input Level 1b FITS file."""
-    )
-
-    parser.add_argument('offsets', metavar='offsets', nargs=1, help="""Offsets.""")
-
-    parser.add_argument(
-        'outfile',
-        metavar='outfile',
+        "outfile",
+        metavar="outfile",
         nargs=1,
         help="""Output Flat Field corrected file""",
     )
@@ -66,5 +62,5 @@ def main():
     ff_a.do_all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

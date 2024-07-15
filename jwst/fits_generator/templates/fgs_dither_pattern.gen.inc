@@ -6,4 +6,3 @@ SUBPXNUM =   1      /    subpixel sampling pattern number
 SUBPXPNS =   1      /    number of points in subpixel dither pattern
 XOFFSET  =  0.0     /    x offset from pattern starting position
 YOFFSET  =  0.0     /    y offset from pattern starting position
-

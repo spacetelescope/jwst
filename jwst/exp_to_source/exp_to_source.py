@@ -1,5 +1,5 @@
-"""exp_to_source: Reformat Level2b multi-source data to be source-based.
-"""
+"""exp_to_source: Reformat Level2b multi-source data to be source-based."""
+
 import logging
 
 from collections import OrderedDict
@@ -10,7 +10,7 @@ from stdatamodels.jwst.datamodels import MultiExposureModel
 
 from jwst.datamodels import SourceModelContainer
 
-__all__ = ['exp_to_source', 'multislit_to_container']
+__all__ = ["exp_to_source", "multislit_to_container"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -34,7 +34,7 @@ def exp_to_source(inputs):
     result = DefaultOrderedDict(MultiExposureModel)
 
     for exposure in inputs:
-        log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
+        log.info(f"Reorganizing data from exposure {exposure.meta.filename}")
 
         for slit in exposure.slits:
             if slit.source_name is None:
@@ -44,7 +44,7 @@ def exp_to_source(inputs):
             else:
                 # NIRSpec MOS slits get sorted by source_name
                 key = slit.source_name
-            log.debug(f'Copying source {key}')
+            log.debug(f"Copying source {key}")
             result_slit = result[str(key)]
             result_slit.exposures.append(slit)
 
@@ -56,8 +56,8 @@ def exp_to_source(inputs):
             slit_model = slit.meta.model_type
             slit_wcsinfo = slit.meta.wcsinfo.instance
             slit_exptype = None
-            if hasattr(slit.meta, 'exposure'):
-                if hasattr(slit.meta.exposure, 'type'):
+            if hasattr(slit.meta, "exposure"):
+                if hasattr(slit.meta.exposure, "type"):
                     slit_exptype = slit.meta.exposure.type
 
             # Before merge_tree the slits have a model_type of SlitModel.
@@ -75,8 +75,8 @@ def exp_to_source(inputs):
             if slit_exptype is not None:
                 result_slit.exposures[-1].meta.exposure.type = slit_exptype
                 result_slit.meta.exposure.type = slit_exptype
-                log.debug(f'Input exposure type: {exposure.meta.exposure.type}')
-                log.debug(f'Output exposure type: {result_slit.meta.exposure.type}')
+                log.debug(f"Input exposure type: {exposure.meta.exposure.type}")
+                log.debug(f"Output exposure type: {result_slit.meta.exposure.type}")
 
             if result_slit.meta.instrument.name is None:
                 result_slit.update(exposure)
@@ -116,9 +116,8 @@ def multislit_to_container(inputs):
 class DefaultOrderedDict(OrderedDict):
     # Source http://stackoverflow.com/a/6190500/562769
     def __init__(self, default_factory=None, *a, **kw):
-        if (default_factory is not None and
-                not isinstance(default_factory, Callable)):
-            raise TypeError('first argument must be callable')
+        if default_factory is not None and not isinstance(default_factory, Callable):
+            raise TypeError("first argument must be callable")
         OrderedDict.__init__(self, *a, **kw)
         self.default_factory = default_factory
 
@@ -138,7 +137,7 @@ class DefaultOrderedDict(OrderedDict):
         if self.default_factory is None:
             args = tuple()
         else:
-            args = self.default_factory,
+            args = (self.default_factory,)
         return type(self), args, None, None, self.items()
 
     def copy(self):
@@ -149,9 +148,8 @@ class DefaultOrderedDict(OrderedDict):
 
     def __deepcopy__(self, memo):
         import copy
-        return type(self)(self.default_factory,
-                          copy.deepcopy(self.items()))
+
+        return type(self)(self.default_factory, copy.deepcopy(self.items()))
 
     def __repr__(self):
-        return 'OrderedDefaultDict(%s, %s)' % (self.default_factory,
-                                               OrderedDict.__repr__(self))
+        return "OrderedDefaultDict(%s, %s)" % (self.default_factory, OrderedDict.__repr__(self))

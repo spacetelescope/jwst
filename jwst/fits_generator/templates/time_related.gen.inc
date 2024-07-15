@@ -8,4 +8,3 @@ HELIDELT  =  0.0  / calculated Heliocentric time correction
 HSTRTIME  =  0.0  / Heliocentric exposure start time in MJD
 HENDTIME  =  0.0  / Heliocentric exposure end time in MJD
 HMIDTIME  =  0.0  / Heliocentric exposure mid time in MJD
-

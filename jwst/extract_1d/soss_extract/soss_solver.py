@@ -47,8 +47,7 @@ def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
 
     # Required rotation in the detector frame to match the data.
     angle = np.deg2rad(angle)
-    rot_mat = np.array([[np.cos(angle), -np.sin(angle)],
-                        [np.sin(angle), np.cos(angle)]])
+    rot_mat = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
 
     # Rotation center set to o1 trace centroid halfway along spectral axis.
     points = np.array([xpix - cenx, ypix - ceny])
@@ -98,8 +97,7 @@ def evaluate_model(xmod, transform, xref, yref):
     return ymod
 
 
-def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
-                 xdat_o1, ydat_o1, xdat_o2, ydat_o2):
+def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2, xdat_o1, ydat_o1, xdat_o2, ydat_o2):
     """Compute the chi-squared statistic for fitting the reference positions
     to the true positions.
 
@@ -133,7 +131,7 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     ymod_o1 = evaluate_model(xdat_o1, transform, xref_o1, yref_o1)
 
     # Compute the chi-square.
-    chisq_o1 = np.nansum((ydat_o1 - ymod_o1)**2)
+    chisq_o1 = np.nansum((ydat_o1 - ymod_o1) ** 2)
 
     # If second order centroids are provided, include them in the calculation.
     if xdat_o2 is not None:
@@ -141,7 +139,7 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
         ymod_o2 = evaluate_model(xdat_o2, transform, xref_o2, yref_o2)
 
         # Compute the chi-square and add to the first order.
-        chisq_o2 = np.nansum((ydat_o2 - ymod_o2)**2)
+        chisq_o2 = np.nansum((ydat_o2 - ymod_o2) ** 2)
         chisq = chisq_o1 + chisq_o2
     # If not, use only the first order.
     else:
@@ -150,10 +148,21 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
     return chisq
 
 
-def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
-                    yref_o2=None, halfwidth=30., is_fitted=(True, True, True),
-                    soss_filter='CLEAR', guess_transform=(None, None, None),
-                    bounds_theta=(-5., 5.), bounds_x=(-3, 3), bounds_y=(-3., 3.)):
+def solve_transform(
+    scidata_bkg,
+    scimask,
+    xref_o1,
+    yref_o1,
+    xref_o2=None,
+    yref_o2=None,
+    halfwidth=30.0,
+    is_fitted=(True, True, True),
+    soss_filter="CLEAR",
+    guess_transform=(None, None, None),
+    bounds_theta=(-5.0, 5.0),
+    bounds_x=(-3, 3),
+    bounds_y=(-3.0, 3.0),
+):
     """Given a science image, determine the centroids and find the simple
     transformation (rotation + vertical & horizonal offset, or some combination
     thereof) needed to match xref_o1 and yref_o1 to the image.
@@ -206,7 +215,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         xref_o1 and yref_o1 to the image.
     """
     # Convert None to 0. in guess_transform and then convert to array
-    guess_transform = [val if val is not None else 0. for val in guess_transform]
+    guess_transform = [val if val is not None else 0.0 for val in guess_transform]
     guess_transform = np.array(guess_transform)
 
     # Convert is_fitted to array
@@ -221,8 +230,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     # Get centroids from data.
     aper_mask_o1 = aperture_mask(xref_o1, yref_o1, halfwidth, scidata_bkg.shape)
     mask = aper_mask_o1 | scimask
-    xdat_o1, ydat_o1, _ = get_centroids_com(scidata_bkg, mask=mask,
-                                            poly_order=None)
+    xdat_o1, ydat_o1, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
 
     # If order 2 centroids are provided, include them in the analysis. The
     # inclusion of the order 2 centroids will allow for a more accurate
@@ -230,9 +238,9 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     # order provides an anchor in the spatial direction. However, there are
     # instances (a SUBSTRIP96, or F277W observation for example) where the
     # second order is not available. In this case, work only with order 1.
-    if xref_o2 is not None and yref_o2 is not None and (soss_filter == 'CLEAR' or soss_filter == 'FULL'):
+    if xref_o2 is not None and yref_o2 is not None and (soss_filter == "CLEAR" or soss_filter == "FULL"):
         # Remove any NaNs used to pad the xref, yref coordinates.
-        log.info('Measuring trace position for orders 1 and 2.')
+        log.info("Measuring trace position for orders 1 and 2.")
         mask_o2 = np.isfinite(xref_o2) & np.isfinite(yref_o2)
         xref_o2 = xref_o2[mask_o2]
         yref_o2 = yref_o2[mask_o2]
@@ -240,8 +248,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         # Get centroids from data.
         aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata_bkg.shape)
         mask = aper_mask_o2 | scimask
-        xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask,
-                                                poly_order=None)
+        xdat_o2, ydat_o2, _ = get_centroids_com(scidata_bkg, mask=mask, poly_order=None)
 
         # Use only the uncontaminated range between x=800 and x=1700.
         mask = (xdat_o1 >= 800) & (xdat_o1 <= 1700)
@@ -252,12 +259,12 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         xdat_o2 = xdat_o2[mask]
         ydat_o2 = ydat_o2[mask]
 
-    elif soss_filter == 'F277W':
+    elif soss_filter == "F277W":
         # If the exposure uses the F277W filter, there is no second order, and
         # first order centroids are only useful at wavelengths greater than 2.5µm.
         # Restrict centroids to lie within region lambda>~2.5µm, where the
         # F277W filter response is strong.
-        log.info('Measuring trace position for order 1 spanning the F277W pixels.')
+        log.info("Measuring trace position for order 1 spanning the F277W pixels.")
         mask = (xdat_o1 >= 25) & (xdat_o1 <= 425)
         xdat_o1 = xdat_o1[mask]
         ydat_o1 = ydat_o1[mask]
@@ -271,7 +278,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         # If the exposure is SUBSTRIP96 using the CLEAR filter, there is no
         # order 2. Use the entire first order to enable the maximum possible
         # positional constraint on the centroids.
-        log.info('Measuring trace position for order 1 only.')
+        log.info("Measuring trace position for order 1 only.")
         xdat_o2, ydat_o2 = None, None
 
     # Find the simple transformation via a chi-squared minimization of the
@@ -286,8 +293,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
         return _chi_squared(simple_transform, *args)
 
     # Set up the optimization problem.
-    min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
-                xdat_o1, ydat_o1, xdat_o2, ydat_o2)
+    min_args = (xref_o1, yref_o1, xref_o2, yref_o2, xdat_o1, ydat_o1, xdat_o2, ydat_o2)
 
     # Define the boundaries
     bounds = [bounds_theta, bounds_x, bounds_y]
@@ -295,8 +301,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2=None,
     bounds = [bnds for idx, bnds in enumerate(bounds) if is_fitted[idx]]
 
     # Find the best-fit transformation.
-    result = minimize(_chi2_to_fit, guess_transform[is_fitted], bounds=bounds,
-                      args=min_args)
+    result = minimize(_chi2_to_fit, guess_transform[is_fitted], bounds=bounds, args=min_args)
     simple_transform[is_fitted] = result.x
 
     return simple_transform
@@ -323,13 +328,13 @@ def rotate_image(image, angle, origin):
     # Pad image so we can safely rotate around the origin.
     padx = [image.shape[1] - origin[0], origin[0]]
     pady = [image.shape[0] - origin[1], origin[1]]
-    image_pad = np.pad(image, [pady, padx], 'constant')
+    image_pad = np.pad(image, [pady, padx], "constant")
 
     # Rotate the image.
     image_pad_rot = rotate(image_pad, angle, reshape=False)
 
     # Remove the padding.
-    image_rot = image_pad_rot[pady[0]:-pady[1], padx[0]:-padx[1]]
+    image_rot = image_pad_rot[pady[0] : -pady[1], padx[0] : -padx[1]]
 
     return image_rot
 
@@ -405,7 +410,7 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
     ceny = ovs * (pad + 50)
 
     # Apply the transformation to the reference map.
-    if (angle == 0 and xshift == 0 and yshift == 0):
+    if angle == 0 and xshift == 0 and yshift == 0:
         trans_map = ref_map
     else:
         trans_map = transform_image(-angle, xshift, yshift, ref_map, cenx, ceny)
@@ -453,11 +458,10 @@ def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
 
     # Set NaNs to zero to prevent errors when shifting/rotating.
     mask = np.isnan(wavemap)
-    wavemap = np.where(mask, 0., wavemap)
+    wavemap = np.where(mask, 0.0, wavemap)
 
     # Apply the transformation to the wavelength map.
-    trans_wavemap = apply_transform(simple_transform, wavemap, oversample,
-                                    pad, native=native)
+    trans_wavemap = apply_transform(simple_transform, wavemap, oversample, pad, native=native)
 
     # Set pixels with interpolation artifacts to zero by enforcing the
     # original min/max.
@@ -467,8 +471,7 @@ def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
     return trans_wavemap
 
 
-def transform_profile(simple_transform, profile, oversample, pad, native=True,
-                      norm=True):
+def transform_profile(simple_transform, profile, oversample, pad, native=True, norm=True):
     """Apply the transformation found by solve_transform() to a 2D reference
      trace profile map.
 
@@ -494,8 +497,7 @@ def transform_profile(simple_transform, profile, oversample, pad, native=True,
     """
 
     # Apply the transformation to the 2D trace map.
-    trans_profile = apply_transform(simple_transform, profile, oversample,
-                                    pad, native=native)
+    trans_profile = apply_transform(simple_transform, profile, oversample, pad, native=native)
 
     if norm:
         # Normalize so that the columns sum to 1.
@@ -503,6 +505,6 @@ def transform_profile(simple_transform, profile, oversample, pad, native=True,
             warnings.simplefilter(action="ignore", category=RuntimeWarning)
             trans_profile = trans_profile / np.nansum(trans_profile, axis=0)
 
-        trans_profile[~np.isfinite(trans_profile)] = 0.
+        trans_profile[~np.isfinite(trans_profile)] = 0.0
 
     return trans_profile

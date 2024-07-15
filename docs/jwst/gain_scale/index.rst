@@ -12,4 +12,3 @@ Gain Scale Correction
    reference_files.rst
 
 .. automodapi:: jwst.gain_scale
-

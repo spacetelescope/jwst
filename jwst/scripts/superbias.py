@@ -40,13 +40,13 @@ from jwst.superbias import superbias_step
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % superbias.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % superbias.__version__)
         sys.exit(0)
 
     # Pass the step class to cmdline.step_script
     cmdline.step_script(superbias_step.SuperBiasStep)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -22,8 +22,8 @@ from jwst.resample.resample import compute_image_pixel_area
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
-OUTLIER = datamodels.dqflags.pixel['OUTLIER']
+DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]
+OUTLIER = datamodels.dqflags.pixel["OUTLIER"]
 
 
 __all__ = ["OutlierDetection", "flag_cr", "abs_deriv"]
@@ -52,7 +52,7 @@ class OutlierDetection:
 
     """
 
-    default_suffix = 'i2d'
+    default_suffix = "i2d"
 
     def __init__(self, input_models, **pars):
         """
@@ -78,10 +78,7 @@ class OutlierDetection:
         # representation of the inputs
 
         # Define how file names are created
-        self.make_output_path = pars.get(
-            'make_output_path',
-            partial(Step._make_output_path, None)
-        )
+        self.make_output_path = pars.get("make_output_path", partial(Step._make_output_path, None))
 
     def _convert_inputs(self):
         """Convert input into datamodel required for processing.
@@ -97,23 +94,18 @@ class OutlierDetection:
         whatever format the sub-class needs for processing.
 
         """
-        bits = self.outlierpars['good_bits']
+        bits = self.outlierpars["good_bits"]
         if isinstance(self.inputs, ModelContainer):
             self.input_models = self.inputs
             self.converted = False
         else:
             self.input_models = ModelContainer()
             num_inputs = self.inputs.data.shape[0]
-            log.debug("Converting CubeModel to ModelContainer with {} images".
-                      format(num_inputs))
+            log.debug("Converting CubeModel to ModelContainer with {} images".format(num_inputs))
             for i in range(self.inputs.data.shape[0]):
-                image = datamodels.ImageModel(data=self.inputs.data[i],
-                                              err=self.inputs.err[i],
-                                              dq=self.inputs.dq[i])
+                image = datamodels.ImageModel(data=self.inputs.data[i], err=self.inputs.err[i], dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
-                image.wht = build_driz_weight(image,
-                                              weight_type=self.outlierpars['weight_type'],
-                                              good_bits=bits)
+                image.wht = build_driz_weight(image, weight_type=self.outlierpars["weight_type"], good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
 
@@ -125,12 +117,10 @@ class OutlierDetection:
 
         """
         # Parse any user-provided filename suffix for resampled products
-        self.resample_suffix = '_outlier_{}.fits'.format(
-            pars.get('resample_suffix', self.default_suffix))
-        if 'resample_suffix' in pars:
-            del pars['resample_suffix']
-        log.debug("Defined output product suffix as: {}".format(
-            self.resample_suffix))
+        self.resample_suffix = "_outlier_{}.fits".format(pars.get("resample_suffix", self.default_suffix))
+        if "resample_suffix" in pars:
+            del pars["resample_suffix"]
+        log.debug("Defined output product suffix as: {}".format(self.resample_suffix))
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""
@@ -139,14 +129,12 @@ class OutlierDetection:
 
         pars = self.outlierpars
 
-        if pars['resample_data']:
+        if pars["resample_data"]:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            output_path = self.make_output_path(basepath=self.input_models[0].meta.filename,
-                            suffix='')
+            output_path = self.make_output_path(basepath=self.input_models[0].meta.filename, suffix="")
             output_path = os.path.dirname(output_path)
-            resamp = resample.ResampleData(self.input_models, output=output_path, single=True,
-                                           blendheaders=False, **pars)
+            resamp = resample.ResampleData(self.input_models, output=output_path, single=True, blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
 
         else:
@@ -154,9 +142,8 @@ class OutlierDetection:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = build_driz_weight(
-                    self.input_models[i],
-                    weight_type=pars['weight_type'],
-                    good_bits=pars['good_bits'])
+                    self.input_models[i], weight_type=pars["weight_type"], good_bits=pars["good_bits"]
+                )
 
         # Initialize intermediate products used in the outlier detection
         with datamodel_open(drizzled_models[0]) as dm0:
@@ -167,16 +154,16 @@ class OutlierDetection:
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
 
-        if self.outlierpars['save_intermediate_results']:
-            self.save_median(median_model) 
+        if self.outlierpars["save_intermediate_results"]:
+            self.save_median(median_model)
         else:
             # since we're not saving intermediate results if the drizzled models
             # were written to disk, remove them
-            if not self.outlierpars['in_memory']:
+            if not self.outlierpars["in_memory"]:
                 for fn in drizzled_models._models:
                     _remove_file(fn)
 
-        if pars['resample_data']:
+        if pars["resample_data"]:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
             blot_models = self.blot_median(median_model)
@@ -193,11 +180,10 @@ class OutlierDetection:
 
         # clean-up (just to be explicit about being finished with
         # these results)
-        if not pars['save_intermediate_results'] and not pars['in_memory']:
+        if not pars["save_intermediate_results"] and not pars["in_memory"]:
             for fn in blot_models._models:
                 _remove_file(fn)
         del median_model, blot_models
-    
 
     def create_median(self, resampled_models):
         """Create a median image from the singly resampled images.
@@ -209,7 +195,7 @@ class OutlierDetection:
         - type of combination: fixed to 'median'
         - 'minmed' not implemented as an option
         """
-        maskpt = self.outlierpars.get('maskpt', 0.7)
+        maskpt = self.outlierpars.get("maskpt", 0.7)
 
         log.info("Computing median")
 
@@ -218,18 +204,16 @@ class OutlierDetection:
         # Now, set up buffered access to all input models
         resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
         resampled_sections = resampled_models.get_sections()
-        median_image = np.empty((resampled_models.imrows, resampled_models.imcols),
-                                resampled_models.imtype)
+        median_image = np.empty((resampled_models.imrows, resampled_models.imcols), resampled_models.imtype)
         median_image[:] = np.nan  # initialize with NaNs
 
-        for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
+        for resampled_sci, resampled_weight, (row1, row2) in resampled_sections:
             # Create a mask for each input image, masking out areas where there is
             # no data or the data has very low weight
             badmasks = []
             for weight, weight_threshold in zip(resampled_weight, weight_thresholds):
                 badmask = np.less(weight, weight_threshold)
-                log.debug("Percentage of pixels with low weight: {}".format(
-                    np.sum(badmask) / len(weight.flat) * 100))
+                log.debug("Percentage of pixels with low weight: {}".format(np.sum(badmask) / len(weight.flat) * 100))
                 badmasks.append(badmask)
 
             # Fill resampled_sci array with nan's where mask values are True
@@ -242,38 +226,34 @@ class OutlierDetection:
             # For a stack of images with "bad" data replaced with Nan
             # use np.nanmedian to compute the median.
             with warnings.catch_warnings():
-                warnings.filterwarnings(action="ignore",
-                                        message="All-NaN slice encountered",
-                                        category=RuntimeWarning)
+                warnings.filterwarnings(action="ignore", message="All-NaN slice encountered", category=RuntimeWarning)
                 median_image[row1:row2] = np.nanmedian(resampled_sci, axis=0)
             del resampled_sci, resampled_weight
 
         return median_image
-    
 
     def save_median(self, median_model):
-        '''
+        """
         Save median if requested by user
 
         Parameters
         ----------
         median_model : ~jwst.datamodels.ImageModel
             The median ImageModel or CubeModel to save
-        '''
-        
-        if self.outlierpars.get('asn_id', None) is None:
+        """
+
+        if self.outlierpars.get("asn_id", None) is None:
             suffix_to_remove = self.resample_suffix
         else:
             suffix_to_remove = f"_{self.outlierpars['asn_id']}{self.resample_suffix}"
         median_model_output_path = self.make_output_path(
-            basepath=median_model.meta.filename.replace(suffix_to_remove, '.fits'),
-            suffix='median')
+            basepath=median_model.meta.filename.replace(suffix_to_remove, ".fits"), suffix="median"
+        )
         median_model.save(median_model_output_path)
         log.info(f"Saved model in {median_model_output_path}")
 
-
     def compute_weight_threshold_container(self, resampled_models, maskpt):
-        '''
+        """
         Compute weight means without keeping datamodels for each input open
 
         Parameters
@@ -288,11 +268,11 @@ class OutlierDetection:
         -------
         list
             The weight thresholds for each integration.
-        '''
+        """
 
         # Start by ensuring that the ModelContainer does NOT open and keep each datamodel
         ropen_orig = resampled_models._return_open
-        resampled_models._return_open = True 
+        resampled_models._return_open = True
         # keep track of resulting computation for each input resampled datamodel
         weight_thresholds = []
         # For each model, compute the bad-pixel threshold from the weight arrays
@@ -306,10 +286,9 @@ class OutlierDetection:
         # Reset ModelContainer attribute to original value
         resampled_models._return_open = ropen_orig
         return weight_thresholds
-    
 
     def compute_weight_threshold(self, weight, maskpt):
-        '''
+        """
         Compute the weight threshold for a single image or cube.
 
         Parameters
@@ -324,16 +303,15 @@ class OutlierDetection:
         -------
         float
             The weight threshold for this integration.
-        '''
+        """
 
         # necessary in order to assure that mask gets applied correctly
-        if hasattr(weight, '_mask'):
+        if hasattr(weight, "_mask"):
             del weight._mask
-        mask_zero_weight = np.equal(weight, 0.)
+        mask_zero_weight = np.equal(weight, 0.0)
         mask_nans = np.isnan(weight)
         # Combine the masks
-        weight_masked = np.ma.array(weight, mask=np.logical_or(
-            mask_zero_weight, mask_nans))
+        weight_masked = np.ma.array(weight, mask=np.logical_or(mask_zero_weight, mask_nans))
         # Sigma-clip the unmasked data
         weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
         mean_weight = np.mean(weight_masked)
@@ -341,11 +319,10 @@ class OutlierDetection:
         weight_threshold = mean_weight * maskpt
         return weight_threshold
 
-
     def blot_median(self, median_model):
         """Blot resampled median image back to the detector images."""
-        interp = self.outlierpars.get('interp', 'linear')
-        sinscl = self.outlierpars.get('sinscl', 1.0)
+        interp = self.outlierpars.get("interp", "linear")
+        sinscl = self.outlierpars.get("sinscl", 1.0)
 
         # Initialize container for output blot images
         blot_models = ModelContainer(open_models=False)
@@ -356,13 +333,12 @@ class OutlierDetection:
 
             # clean out extra data not related to blot result
             blotted_median.err *= 0.0  # None
-            blotted_median.dq *= 0     # None
+            blotted_median.dq *= 0  # None
 
             # apply blot to re-create model.data from median image
-            blotted_median.data = gwcs_blot(median_model, model, interp=interp,
-                                            sinscl=sinscl)
+            blotted_median.data = gwcs_blot(median_model, model, interp=interp, sinscl=sinscl)
 
-            model_path = self.make_output_path(basepath=model.meta.filename, suffix='blot')
+            model_path = self.make_output_path(basepath=model.meta.filename, suffix="blot")
             blotted_median.save(model_path)
             log.info(f"Saved model in {model_path}")
 
@@ -413,8 +389,7 @@ def _remove_file(fn):
         log.info(f"Removing file {fn}")
 
 
-def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
-            resample_data=True, **kwargs):
+def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0, resample_data=True, **kwargs):
     """Masks outliers in science image by updating DQ in-place
 
     Mask blemishes in dithered data by comparing a science image
@@ -458,8 +433,7 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
     # Get background level of science data if it has not been subtracted, so it
     # can be added into the level of the blotted data, which has been
     # background-subtracted
-    if (sci_image.meta.background.subtracted is False and
-            sci_image.meta.background.level is not None):
+    if sci_image.meta.background.subtracted is False and sci_image.meta.background.level is not None:
         subtracted_background = sci_image.meta.background.level
         log.debug(f"Adding background level {subtracted_background} to blotted image")
     else:
@@ -484,7 +458,7 @@ def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
 
         # Smooth the boolean mask with a 3x3 boxcar kernel
         kernel = np.ones((3, 3), dtype=int)
-        mask1_smoothed = ndimage.convolve(mask1, kernel, mode='nearest')
+        mask1_smoothed = ndimage.convolve(mask1, kernel, mode="nearest")
 
         # Create a 2nd boolean mask based on the 2nd set of
         # scale and threshold values
@@ -535,11 +509,11 @@ def abs_deriv(array):
 def _absolute_subtract(array, tmp, out):
     tmp = np.abs(array - tmp)
     out = np.maximum(tmp, out)
-    tmp = tmp * 0.
+    tmp = tmp * 0.0
     return tmp, out
 
 
-def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
+def gwcs_blot(median_model, blot_img, interp="poly5", sinscl=1.0):
     """
     Resample the output/resampled image to recreate an input image based on
     the input image's world coordinate system
@@ -569,13 +543,13 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
     log.debug("Sci shape: {}".format(blot_img.data.shape))
 
-    if 'SPECTRAL' not in blot_img.meta.wcs.output_frame.axes_type:
+    if "SPECTRAL" not in blot_img.meta.wcs.output_frame.axes_type:
         input_pixflux_area = blot_img.meta.photometry.pixelarea_steradians
         input_pixel_area = compute_image_pixel_area(blot_img.meta.wcs)
         pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
     else:
         pix_ratio = 1.0
-    log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
+    log.info("Blotting {} <-- {}".format(blot_img.data.shape, median_model.data.shape))
 
     outsci = np.zeros(blot_img.shape, dtype=np.float32)
 
@@ -584,7 +558,6 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     # what we've been doing up until now, so more investigation is needed
     # before a change is made.  Preferably, fix tblot in drizzle.
     pixmap[np.isnan(pixmap)] = -1
-    tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
-          interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
+    tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0, interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
 
     return outsci

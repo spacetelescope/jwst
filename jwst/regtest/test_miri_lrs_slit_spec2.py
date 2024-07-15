@@ -12,34 +12,37 @@ from jwst.extract_1d import Extract1dStep
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
     """Run the calwebb_spec2 pipeline on an ASN of nodded MIRI LRS
-       fixedslit exposures."""
+    fixedslit exposures."""
     rtdata = rtdata_module
 
     # Get the spec2 ASN and its members
     rtdata.get_asn("miri/lrs/jw01530-o005_20221202t204827_spec2_00001_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.assign_wcs.save_results=true",
-            "--save_bsub=true",
-            "--steps.srctype.save_results=true",
-            "--steps.flat_field.save_results=true",
-            "--steps.pathloss.save_results=true",
-            "--steps.pixel_replace.skip=false",
-            "--steps.pixel_replace.save_results=true",
-            "--steps.bkg_subtract.save_combined_background=true"
-            ]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=true",
+        "--save_bsub=true",
+        "--steps.srctype.save_results=true",
+        "--steps.flat_field.save_results=true",
+        "--steps.pathloss.save_results=true",
+        "--steps.pixel_replace.skip=false",
+        "--steps.pixel_replace.save_results=true",
+        "--steps.bkg_subtract.save_combined_background=true",
+    ]
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", [
-    "assign_wcs", "combinedbackground", "bsub", "srctype", "flat_field", "pathloss",
-    "cal", "pixel_replace", "s2d", "x1d"])
+@pytest.mark.parametrize(
+    "suffix",
+    ["assign_wcs", "combinedbackground", "bsub", "srctype", "flat_field", "pathloss", "cal", "pixel_replace", "s2d", "x1d"],
+)
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, suffix, rtdata_module):
     """Regression test of the calwebb_spec2 pipeline on MIRI
-       LRS fixedslit data using along-slit-nod pattern for
-       background subtraction."""
+    LRS fixedslit data using along-slit-nod pattern for
+    background subtraction."""
     rtdata = rtdata_module
     output = f"jw01530005001_03103_00001_mirimage_{suffix}.fits"
     rtdata.output = output
@@ -70,10 +73,12 @@ def test_miri_lrs_extract1d_image_ref(run_pipeline, rtdata_module, fitsdiff_defa
 
     rtdata.get_data("miri/lrs/jw01530005001_03103_00001_mirimage_image_ref.fits")
     rtdata.input = "jw01530005001_03103_00001_mirimage_cal.fits"
-    Extract1dStep.call(rtdata.input,
-                       override_extract1d="jw01530005001_03103_00001_mirimage_image_ref.fits",
-                       suffix='x1dfromrefimage',
-                       save_results=True)
+    Extract1dStep.call(
+        rtdata.input,
+        override_extract1d="jw01530005001_03103_00001_mirimage_image_ref.fits",
+        suffix="x1dfromrefimage",
+        save_results=True,
+    )
     output = "jw01530005001_03103_00001_mirimage_x1dfromrefimage.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_miri_lrs_slit_spec2/{output}")

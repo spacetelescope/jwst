@@ -38,21 +38,15 @@ from jwst import cube_build
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % cube_build.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % cube_build.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Create a Spectral Cube using Level 2a FITS files"""
-    )
+    parser = argparse.ArgumentParser("""Create a Spectral Cube using Level 2a FITS files""")
 
-    parser.add_argument(
-        'infile', metavar='infile', nargs=1, help="""Input Level 2a FITS file."""
-    )
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input Level 2a FITS file.""")
 
-    parser.add_argument(
-        'outfile', metavar='outfile', nargs=1, help="""Output Spectral Cube file"""
-    )
+    parser.add_argument("outfile", metavar="outfile", nargs=1, help="""Output Spectral Cube file""")
 
     args = parser.parse_args()
 
@@ -60,5 +54,5 @@ def main():
     sl_p.do_all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

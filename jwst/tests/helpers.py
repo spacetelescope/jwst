@@ -1,4 +1,5 @@
 """Handy helpful pytest helpers helping pytest test"""
+
 from os import path as op
 
 
@@ -47,6 +48,7 @@ class LogWatcher:
     can be monkeypatched onto a logger method to
     check for a specific message.
     """
+
     def __init__(self, message):
         self.seen = False
         self.message = message

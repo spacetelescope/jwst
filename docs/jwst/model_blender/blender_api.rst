@@ -2,7 +2,7 @@
 
 Model Blender
 ==============
-These functions serve as the primary interface for blending models.  
+These functions serve as the primary interface for blending models.
 
 .. toctree::
    :maxdepth: 2

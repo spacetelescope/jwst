@@ -16,7 +16,6 @@ def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10
     def chi_sq(spline, weights):
         return np.nansum((y - spline(x)) ** 2 * weights)
 
-
     # initial fit
     spline = _lsq_spline(x, y, weights, knots, degree)
     chi = chi_sq(spline, weights)
@@ -30,7 +29,7 @@ def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10
 
         # Calculate new weights
         resid = (y - spline(x)) / (scale * domain)
-        new_w = (np.where(resid**2 <= 1, 1 - resid**2, 0.))**2 * weights
+        new_w = (np.where(resid**2 <= 1, 1 - resid**2, 0.0)) ** 2 * weights
 
         # Fit new model and find chi
         spline = _lsq_spline(x, y, new_w, knots, degree)

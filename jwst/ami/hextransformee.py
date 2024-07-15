@@ -55,13 +55,8 @@ def gfunction(xi, eta, **kwargs):
     g = (
         np.exp(-i * Pi * (2 * etap / np.sqrt(3) + xip))
         * (
-            (np.sqrt(3) * etap - 3 * xip)
-            * (
-                np.exp(i * Pi * np.sqrt(3) * etap)
-                - np.exp(i * Pi * (4 * etap / np.sqrt(3) + xip))
-            )
-            + (np.sqrt(3) * etap + 3 * xip)
-            * (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
+            (np.sqrt(3) * etap - 3 * xip) * (np.exp(i * Pi * np.sqrt(3) * etap) - np.exp(i * Pi * (4 * etap / np.sqrt(3) + xip)))
+            + (np.sqrt(3) * etap + 3 * xip) * (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
         )
         / (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
     )
@@ -135,6 +130,6 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
         affine2d=affine2d,
         minus=True,
     )
-    hex_complex[int(c[0]), int(c[1])] = (np.sqrt(3) / 2.0)
+    hex_complex[int(c[0]), int(c[1])] = np.sqrt(3) / 2.0
 
     return hex_complex

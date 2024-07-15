@@ -1,12 +1,13 @@
 """Test SpectralLeakStep on MIRI MRS"""
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
 
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    'output',
-    ['test_spectral_leak_asn_0_spectralleakstep.fits', 'test_spectral_leak_asn_1_spectralleakstep.fits']
+    "output", ["test_spectral_leak_asn_0_spectralleakstep.fits", "test_spectral_leak_asn_1_spectralleakstep.fits"]
 )
 def test_miri_spectral_leak(output, rtdata, fitsdiff_default_kwargs):
     """Run cube_build on single file using coord system = ifu_align"""

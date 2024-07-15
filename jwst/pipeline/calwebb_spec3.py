@@ -27,12 +27,12 @@ from ..photom import photom_step
 from ..spectral_leak import spectral_leak_step
 from ..pixel_replace import pixel_replace_step
 
-__all__ = ['Spec3Pipeline']
+__all__ = ["Spec3Pipeline"]
 
 # Group exposure types
-MULTISOURCE_MODELS = ['MultiSlitModel']
-IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
-SLITLESS_TYPES = ['NIS_SOSS', 'NIS_WFSS', 'NRC_WFSS']
+MULTISOURCE_MODELS = ["MultiSlitModel"]
+IFU_EXPTYPES = ["MIR_MRS", "NRS_IFU"]
+SLITLESS_TYPES = ["NIS_SOSS", "NIS_WFSS", "NRC_WFSS"]
 
 
 class Spec3Pipeline(Pipeline):
@@ -58,17 +58,17 @@ class Spec3Pipeline(Pipeline):
 
     # Define aliases to steps
     step_defs = {
-        'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
-        'master_background': master_background_step.MasterBackgroundStep,
-        'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
-        'outlier_detection': outlier_detection_step.OutlierDetectionStep,
-        'pixel_replace': pixel_replace_step.PixelReplaceStep,
-        'resample_spec': resample_spec_step.ResampleSpecStep,
-        'cube_build': cube_build_step.CubeBuildStep,
-        'extract_1d': extract_1d_step.Extract1dStep,
-        'photom': photom_step.PhotomStep,
-        'combine_1d': combine_1d_step.Combine1dStep,
-        'spectral_leak': spectral_leak_step.SpectralLeakStep
+        "assign_mtwcs": assign_mtwcs_step.AssignMTWcsStep,
+        "master_background": master_background_step.MasterBackgroundStep,
+        "mrs_imatch": mrs_imatch_step.MRSIMatchStep,
+        "outlier_detection": outlier_detection_step.OutlierDetectionStep,
+        "pixel_replace": pixel_replace_step.PixelReplaceStep,
+        "resample_spec": resample_spec_step.ResampleSpecStep,
+        "cube_build": cube_build_step.CubeBuildStep,
+        "extract_1d": extract_1d_step.Extract1dStep,
+        "photom": photom_step.PhotomStep,
+        "combine_1d": combine_1d_step.Combine1dStep,
+        "spectral_leak": spectral_leak_step.SpectralLeakStep,
     }
 
     # Main processing
@@ -80,28 +80,28 @@ class Spec3Pipeline(Pipeline):
         input: str, Level3 Association, or ~jwst.datamodels.JwstDataModel
             The exposure or association of exposures to process
         """
-        self.log.info('Starting calwebb_spec3 ...')
-        asn_exptypes = ['science', 'background']
+        self.log.info("Starting calwebb_spec3 ...")
+        asn_exptypes = ["science", "background"]
 
         # Setup sub-step defaults
-        self.master_background.suffix = 'mbsub'
-        self.mrs_imatch.suffix = 'mrs_imatch'
-        self.outlier_detection.suffix = 'crf'
+        self.master_background.suffix = "mbsub"
+        self.mrs_imatch.suffix = "mrs_imatch"
+        self.outlier_detection.suffix = "crf"
         self.outlier_detection.save_results = self.save_results
-        self.resample_spec.suffix = 's2d'
+        self.resample_spec.suffix = "s2d"
         self.resample_spec.save_results = self.save_results
-        self.cube_build.suffix = 's3d'
+        self.cube_build.suffix = "s3d"
         self.cube_build.save_results = self.save_results
-        self.extract_1d.suffix = 'x1d'
+        self.extract_1d.suffix = "x1d"
         self.extract_1d.save_results = self.save_results
-        self.combine_1d.suffix = 'c1d'
+        self.combine_1d.suffix = "c1d"
         self.combine_1d.save_results = self.save_results
-        self.spectral_leak.suffix = 'x1d'
+        self.spectral_leak.suffix = "x1d"
         self.spectral_leak.save_results = self.save_results
-        self.pixel_replace.suffix = 'pixel_replace'
+        self.pixel_replace.suffix = "pixel_replace"
         self.pixel_replace.output_use_model = True
         self.pixel_replace.save_results = self.save_results
-        
+
         # Overriding the Step.save_model method for the following steps.
         # These steps save intermediate files, resulting in meta.filename
         # being modified. This can affect the filenames of subsequent
@@ -135,21 +135,21 @@ class Spec3Pipeline(Pipeline):
         # Find all the member types in the product
         members_by_type = defaultdict(list)
         product = input_models.meta.asn_table.products[0].instance
-        for member in product['members']:
-            members_by_type[member['exptype'].lower()].append(member['expname'])
+        for member in product["members"]:
+            members_by_type[member["exptype"].lower()].append(member["expname"])
 
         if is_moving_target(input_models):
             self.log.info("Assigning WCS to a Moving Target exposure.")
             input_models = self.assign_mtwcs(input_models)
 
         # If background data are present, call the master background step
-        if members_by_type['background']:
+        if members_by_type["background"]:
             source_models = self.master_background(input_models)
             source_models.meta.asn_table = input_models.meta.asn_table
 
             # If the step is skipped, do the container splitting that
             # would've been done in master_background
-            if query_step_status(source_models, "master_background") == 'SKIPPED':
+            if query_step_status(source_models, "master_background") == "SKIPPED":
                 source_models, bkg_models = split_container(input_models)
                 # we don't need the background members
                 bkg_models.close()
@@ -176,15 +176,11 @@ class Spec3Pipeline(Pipeline):
         # a single ModelContainer.
         sources = [source_models]
         if model_type in MULTISOURCE_MODELS:
-            self.log.info('Convert from exposure-based to source-based data.')
-            sources = [
-                (name, model)
-                for name, model in multislit_to_container(source_models).items()
-            ]
+            self.log.info("Convert from exposure-based to source-based data.")
+            sources = [(name, model) for name, model in multislit_to_container(source_models).items()]
 
         # Process each source
         for source in sources:
-
             # If each source is a SourceModelContainer,
             # the output name needs to be updated based on the source ID,
             # and potentially also the slit name (for NIRSpec fixed-slit only).
@@ -194,7 +190,7 @@ class Spec3Pipeline(Pipeline):
                 if exptype == "NRS_FIXEDSLIT":
                     # Output file name is constructed using the source_id and the slit name
                     slit_name = self._create_nrsfs_slit_name(result)
-                    srcid = f's{source_id:>09s}'
+                    srcid = f"s{source_id:>09s}"
                     self.output_file = format_product(output_file, source_id=srcid, slit_name=slit_name)
 
                 # NIRSpec MOS/MSA data
@@ -207,17 +203,17 @@ class Spec3Pipeline(Pipeline):
 
                 else:
                     # All other types just use the source_id directly in the file name
-                    srcid = f's{source_id:>09s}'
+                    srcid = f"s{source_id:>09s}"
                     self.output_file = format_product(output_file, source_id=srcid)
             else:
                 result = source
 
             # The MultiExposureModel is a required output.
             if isinstance(result, SourceModelContainer):
-                self.save_model(result, 'cal')
+                self.save_model(result, "cal")
 
             # Call the skymatch step for MIRI MRS data
-            if exptype in ['MIR_MRS']:
+            if exptype in ["MIR_MRS"]:
                 result = self.mrs_imatch(result)
 
             # Call outlier detection and pixel replacement
@@ -250,13 +246,12 @@ class Spec3Pipeline(Pipeline):
 
             # Do 1-D spectral extraction
             if exptype in SLITLESS_TYPES:
-
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE
                 result = self.pixel_replace(result)
 
                 # For slitless data, extract 1D spectra and then combine them
-                if exptype in ['NIS_SOSS']:
+                if exptype in ["NIS_SOSS"]:
                     # For NIRISS SOSS, don't save the extract_1d results,
                     # instead run photom on the extract_1d results and save
                     # those instead.
@@ -267,38 +262,35 @@ class Spec3Pipeline(Pipeline):
                     # SOSS F277W may return None - don't bother with that.
                     if result is not None:
                         self.photom.save_results = self.save_results
-                        self.photom.suffix = 'x1d'
+                        self.photom.suffix = "x1d"
                         result = self.photom(result)
                 else:
                     result = self.extract_1d(result)
 
                 result = self.combine_1d(result)
 
-            elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
-
+            elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
 
                 if exptype in IFU_EXPTYPES:
                     self.extract_1d.search_output_file = False
-                    if exptype in ['MIR_MRS']:
+                    if exptype in ["MIR_MRS"]:
                         if not self.spectral_leak.skip:
                             self.extract_1d.save_results = False
-                            self.spectral_leak.suffix = 'x1d'
+                            self.spectral_leak.suffix = "x1d"
                             self.spectral_leak.search_output_file = False
                             self.spectral_leak.save_results = self.save_results
 
                 result = self.extract_1d(result)
 
-                if exptype in ['MIR_MRS']:
+                if exptype in ["MIR_MRS"]:
                     result = self.spectral_leak(result)
             else:
-                self.log.warning(
-                    'Resampling was not completed. Skipping extract_1d.'
-                )
+                self.log.warning("Resampling was not completed. Skipping extract_1d.")
 
         input_models.close()
 
-        self.log.info('Ending calwebb_spec3')
+        self.log.info("Ending calwebb_spec3")
         return
 
     def _create_nrsfs_slit_name(self, source_models):
@@ -332,21 +324,22 @@ class Spec3Pipeline(Pipeline):
         # MOS background sources have "BKG" in the source name
         if "BKG" in source_name:
             # prepend "b" to the source_id number and format to 9 chars
-            srcid = f'b{str(source_id):>09s}'
+            srcid = f"b{str(source_id):>09s}"
             self.log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
 
         # MOS virtual sources have a negative source_id value
         elif source_id < 0:
             # prepend "v" to the source_id number and remove the leading negative sign
-            srcid = f'v{str(source_id)[1:]:>09s}'
+            srcid = f"v{str(source_id)[1:]:>09s}"
             self.log.debug(f"Source {source_name} is a MOS virtual slitlet: ID={srcid}")
 
         # Regular MOS sources
         else:
             # prepend "s" to the source_id number and format to 9 chars
-            srcid = f's{str(source_id):>09s}'
+            srcid = f"s{str(source_id):>09s}"
 
         return srcid
+
 
 # #########
 # Utilities

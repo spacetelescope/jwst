@@ -38,19 +38,17 @@ from jwst import linearity
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % linearity.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % linearity.__version__)
         sys.exit(0)
 
     parser = argparse.ArgumentParser("""Do a Linearity Correction""")
 
-    parser.add_argument(
-        'infile', metavar='infile', nargs=1, help="""Input Level 1b FITS file."""
-    )
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input Level 1b FITS file.""")
 
     parser.add_argument(
-        'outfile',
-        metavar='outfile',
+        "outfile",
+        metavar="outfile",
         nargs=1,
         help="""Output linearity corrected file""",
     )
@@ -61,5 +59,5 @@ def main():
     ff_p.do_all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

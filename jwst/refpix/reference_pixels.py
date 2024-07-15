@@ -62,47 +62,34 @@ log.setLevel(logging.DEBUG)
 # The 'stop' values are one more than the actual final row or column, in
 # accordance with how Python slices work
 
-NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
-                                'bottom': (0, 4, 0, 512),
-                                'side': (0, 2048, 0, 4),
-                                'data': (0, 2048, 0, 512)},
-                          'B': {'top': (2044, 2048, 512, 1024),
-                                'bottom': (0, 4, 512, 1024),
-                                'data': (0, 2048, 512, 1024)},
-                          'C': {'top': (2044, 2048, 1024, 1536),
-                                'bottom': (0, 4, 1024, 1536),
-                                'data': (0, 2048, 1024, 1536)},
-                          'D': {'top': (2044, 2048, 1536, 2048),
-                                'bottom': (0, 4, 1536, 2048),
-                                'side': (0, 2048, 2044, 2048),
-                                'data': (0, 2048, 1536, 2048)}
-                          }
+NIR_reference_sections = {
+    "A": {"top": (2044, 2048, 0, 512), "bottom": (0, 4, 0, 512), "side": (0, 2048, 0, 4), "data": (0, 2048, 0, 512)},
+    "B": {"top": (2044, 2048, 512, 1024), "bottom": (0, 4, 512, 1024), "data": (0, 2048, 512, 1024)},
+    "C": {"top": (2044, 2048, 1024, 1536), "bottom": (0, 4, 1024, 1536), "data": (0, 2048, 1024, 1536)},
+    "D": {
+        "top": (2044, 2048, 1536, 2048),
+        "bottom": (0, 4, 1536, 2048),
+        "side": (0, 2048, 2044, 2048),
+        "data": (0, 2048, 1536, 2048),
+    },
+}
 
 # IRS2 sections for NIRSpec have a different size due to the
 # interleaved reference pixels and the reference sector.
 
-IRS2_reference_sections = {'0': {'top': (2044, 2048, 0, 640),
-                                 'bottom': (0, 4, 0, 640),
-                                 'data': (0, 2048, 0, 640)},
-                           'A': {'top': (2044, 2048, 640, 1280),
-                                 'bottom': (0, 4, 640, 1280),
-                                 'data': (0, 2048, 640, 1280)},
-                           'B': {'top': (2044, 2048, 1280, 1920),
-                                 'bottom': (0, 4, 1280, 1920),
-                                 'data': (0, 2048, 1280, 1920)},
-                           'C': {'top': (2044, 2048, 1920, 2560),
-                                 'bottom': (0, 4, 1920, 2560),
-                                 'data': (0, 2048, 1920, 2560)},
-                           'D': {'top': (2044, 2048, 2560, 3200),
-                                 'bottom': (0, 4, 2560, 3200),
-                                 'data': (0, 2048, 2560, 3200)}
-                           }
+IRS2_reference_sections = {
+    "0": {"top": (2044, 2048, 0, 640), "bottom": (0, 4, 0, 640), "data": (0, 2048, 0, 640)},
+    "A": {"top": (2044, 2048, 640, 1280), "bottom": (0, 4, 640, 1280), "data": (0, 2048, 640, 1280)},
+    "B": {"top": (2044, 2048, 1280, 1920), "bottom": (0, 4, 1280, 1920), "data": (0, 2048, 1280, 1920)},
+    "C": {"top": (2044, 2048, 1920, 2560), "bottom": (0, 4, 1920, 2560), "data": (0, 2048, 1920, 2560)},
+    "D": {"top": (2044, 2048, 2560, 3200), "bottom": (0, 4, 2560, 3200), "data": (0, 2048, 2560, 3200)},
+}
 
 # Special behavior is requested for NIRSpec subarrays that do not reach
 # detector edges; for these input models, we will assign the top and bottom
 # four rows as reference pixels to better treat pedestal noise issues.
 
-NRS_edgeless_subarrays = ['SUB512', 'SUB512S', 'SUB32']
+NRS_edgeless_subarrays = ["SUB512", "SUB512S", "SUB32"]
 
 #
 # MIR Reference section dictionaries are zero indexed and specify the values
@@ -111,19 +98,12 @@ NRS_edgeless_subarrays = ['SUB512', 'SUB512S', 'SUB32']
 # except the 'data' entry:
 # 'data': (rowstart, rowstop, colstart, colstop, stride)
 
-MIR_reference_sections = {'A': {'left': (0, 1024, 0),
-                                'right': (0, 1024, 1028),
-                                'data': (0, 1024, 0, 1032, 4)},
-                          'B': {'left': (0, 1024, 1),
-                                'right': (0, 1024, 1029),
-                                'data': (0, 1024, 1, 1032, 4)},
-                          'C': {'left': (0, 1024, 2),
-                                'right': (0, 1024, 1030),
-                                'data': (0, 1024, 2, 1032, 4)},
-                          'D': {'left': (0, 1024, 3),
-                                'right': (0, 1024, 1031),
-                                'data': (0, 1024, 3, 1032, 4)}
-                          }
+MIR_reference_sections = {
+    "A": {"left": (0, 1024, 0), "right": (0, 1024, 1028), "data": (0, 1024, 0, 1032, 4)},
+    "B": {"left": (0, 1024, 1), "right": (0, 1024, 1029), "data": (0, 1024, 1, 1032, 4)},
+    "C": {"left": (0, 1024, 2), "right": (0, 1024, 1030), "data": (0, 1024, 2, 1032, 4)},
+    "D": {"left": (0, 1024, 3), "right": (0, 1024, 1031), "data": (0, 1024, 3, 1032, 4)},
+}
 
 #
 # Status returns
@@ -134,7 +114,7 @@ SUBARRAY_DOESNTFIT = 2
 SUBARRAY_SKIPPED = 3
 
 
-class Dataset():
+class Dataset:
     """Base Class to handle passing stuff from routine to routine
 
     Parameters:
@@ -167,20 +147,16 @@ class Dataset():
         flag that controls whether odd and even-numbered rows are handled
         separately (MIR only)
 
-"""
+    """
 
-    def __init__(self, input_model,
-                 odd_even_columns,
-                 use_side_ref_pixels,
-                 side_smoothing_length,
-                 side_gain,
-                 odd_even_rows):
-
-        if (input_model.meta.subarray.xstart is None or
-                input_model.meta.subarray.ystart is None or
-                input_model.meta.subarray.xsize is None or
-                input_model.meta.subarray.ysize is None):
-            raise ValueError('subarray metadata not found')
+    def __init__(self, input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain, odd_even_rows):
+        if (
+            input_model.meta.subarray.xstart is None
+            or input_model.meta.subarray.ystart is None
+            or input_model.meta.subarray.xsize is None
+            or input_model.meta.subarray.ysize is None
+        ):
+            raise ValueError("subarray metadata not found")
         self.input_model = input_model
 
         is_subarray = False
@@ -219,7 +195,7 @@ class Dataset():
         self.bad_reference_pixels = False
 
         self.reference_sections = None
-        self.amplifiers = 'ABCD'
+        self.amplifiers = "ABCD"
 
         # Define temp array for processing every group
         self.pixeldq = self.get_pixeldq()
@@ -255,7 +231,7 @@ class Dataset():
         #
         # Only calculate the clipped mean for pixels that don't have the DO_NOT_USE
         # DQ bit set
-        goodpixels = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']) == 0)
+        goodpixels = np.where(np.bitwise_and(dq, dqflags.pixel["DO_NOT_USE"]) == 0)
         #
         # If there are no good pixels, return None
         if len(goodpixels[0]) == 0:
@@ -263,8 +239,7 @@ class Dataset():
         #
         # scipy routine fails if the pixels all have exactly the same value
         if np.std(data[goodpixels], dtype=np.float64) != 0.0:
-            clipped_ref, lowlim, uplim = stats.sigmaclip(data[goodpixels],
-                                                         low, high)
+            clipped_ref, lowlim, uplim = stats.sigmaclip(data[goodpixels], low, high)
             mean = clipped_ref.mean()
         else:
             mean = data[goodpixels].mean(dtype=np.float64)
@@ -289,7 +264,7 @@ class Dataset():
             # deal with subarrays by embedding the pixeldq array in a full-sized
             # array with DO_NOT_USE and REFERENCE_PIXEL dqflags bit set where the
             # reference pixels live, except where the data are embedded
-            if self.detector[:3] == 'MIR':
+            if self.detector[:3] == "MIR":
                 fullrows = 1024
                 fullcols = 1032
             else:
@@ -297,20 +272,24 @@ class Dataset():
                 fullcols = 2048
             self.full_shape = (fullrows, fullcols)
             pixeldq = np.zeros(self.full_shape, dtype=self.input_model.pixeldq.dtype)
-            refpixdq_dontuse = dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL']
+            refpixdq_dontuse = dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["REFERENCE_PIXEL"]
             pixeldq[0:4, :] = refpixdq_dontuse
-            pixeldq[fullrows - 4:fullrows, :] = refpixdq_dontuse
-            pixeldq[4:fullrows - 4, 0:4] = refpixdq_dontuse
-            pixeldq[4:fullrows - 4, fullcols - 4:fullcols] = refpixdq_dontuse
-            pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.pixeldq.copy()
+            pixeldq[fullrows - 4 : fullrows, :] = refpixdq_dontuse
+            pixeldq[4 : fullrows - 4, 0:4] = refpixdq_dontuse
+            pixeldq[4 : fullrows - 4, fullcols - 4 : fullcols] = refpixdq_dontuse
+            pixeldq[self.rowstart : self.rowstop, self.colstart : self.colstop] = self.input_model.pixeldq.copy()
             if self.subarray in NRS_edgeless_subarrays:
                 # Log assignment as rows (in DMS plane) despite assigning columns (in detector plane)
-                log.info(f"Subarray {self.subarray} has no reference pixels: "
-                         f"assigning top and bottom four rows as reference pixels.")
-                pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstart+4] = \
-                    pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstart+4] | dqflags.pixel['REFERENCE_PIXEL']
-                pixeldq[self.rowstart:self.rowstop, self.colstop-4:self.colstop] = \
-                    pixeldq[self.rowstart:self.rowstop, self.colstop-4:self.colstop] | dqflags.pixel['REFERENCE_PIXEL']
+                log.info(
+                    f"Subarray {self.subarray} has no reference pixels: "
+                    f"assigning top and bottom four rows as reference pixels."
+                )
+                pixeldq[self.rowstart : self.rowstop, self.colstart : self.colstart + 4] = (
+                    pixeldq[self.rowstart : self.rowstop, self.colstart : self.colstart + 4] | dqflags.pixel["REFERENCE_PIXEL"]
+                )
+                pixeldq[self.rowstart : self.rowstop, self.colstop - 4 : self.colstop] = (
+                    pixeldq[self.rowstart : self.rowstop, self.colstop - 4 : self.colstop] | dqflags.pixel["REFERENCE_PIXEL"]
+                )
         else:
             pixeldq = self.input_model.pixeldq.copy()
         return pixeldq
@@ -331,7 +310,9 @@ class Dataset():
         if self.group is None:
             self.group = np.zeros(self.full_shape, dtype=self.input_model.data.dtype)
         if self.is_subarray:
-            self.group[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.data[integration, group].copy()
+            self.group[self.rowstart : self.rowstop, self.colstart : self.colstop] = self.input_model.data[
+                integration, group
+            ].copy()
         else:
             self.group[:, :] = self.input_model.data[integration, group].copy()
 
@@ -350,7 +331,7 @@ class Dataset():
 
         """
         if self.is_subarray:
-            self.input_model.data[integration, group] = self.group[self.rowstart:self.rowstop, self.colstart:self.colstop]
+            self.input_model.data[integration, group] = self.group[self.rowstart : self.rowstop, self.colstart : self.colstop]
         else:
             self.input_model.data[integration, group] = self.group.copy()
 
@@ -371,16 +352,16 @@ class Dataset():
         is_NIR = isinstance(self, NIRDataset)
         if is_NIR:
             if not self.is_subarray:
-                log.info('NIR full frame data')
-                log.info('The following parameters are valid for this mode:')
-                log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
-                log.info(f'odd_even_columns = {self.odd_even_columns}')
-                log.info(f'side_smoothing_length = {self.side_smoothing_length}')
-                log.info(f'side_gain = {self.side_gain}')
-                log.info('The following parameter is not applicable and is ignored:')
-                log.info(f'odd_even_rows = {self.odd_even_rows}')
+                log.info("NIR full frame data")
+                log.info("The following parameters are valid for this mode:")
+                log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
+                log.info(f"odd_even_columns = {self.odd_even_columns}")
+                log.info(f"side_smoothing_length = {self.side_smoothing_length}")
+                log.info(f"side_gain = {self.side_gain}")
+                log.info("The following parameter is not applicable and is ignored:")
+                log.info(f"odd_even_rows = {self.odd_even_rows}")
             else:
-                log.info('NIR subarray data')
+                log.info("NIR subarray data")
                 # Transform the pixeldq array from DMS to detector coords
                 self.DMS_to_detector_dq()
                 ngoodside = self.count_good_side_refpixels()
@@ -392,69 +373,69 @@ class Dataset():
                 if self.noutputs == 4:
                     is_4amp = True
                 if is_4amp:
-                    log.info('4 readout amplifiers used')
+                    log.info("4 readout amplifiers used")
                     if (ngoodside + ngoodtopbottom) == 0:
-                        log.info('No valid reference pixels.  This step will have no effect')
+                        log.info("No valid reference pixels.  This step will have no effect")
                     else:
-                        log.info('The following parameters are valid for this mode:')
+                        log.info("The following parameters are valid for this mode:")
                         if ngoodtopbottom > 0:
-                            log.info(f'odd_even_columns = {self.odd_even_columns}')
+                            log.info(f"odd_even_columns = {self.odd_even_columns}")
                         if ngoodside > 0:
-                            log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
-                            log.info(f'side_smoothing_length = {self.side_smoothing_length}')
-                            log.info(f'side_gain = {self.side_gain}')
-                        log.info('The following parameters are not applicable and are ignored')
+                            log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
+                            log.info(f"side_smoothing_length = {self.side_smoothing_length}")
+                            log.info(f"side_gain = {self.side_gain}")
+                        log.info("The following parameters are not applicable and are ignored")
                         if ngoodtopbottom == 0:
-                            log.info(f'odd_even_columns = {self.odd_even_columns}')
+                            log.info(f"odd_even_columns = {self.odd_even_columns}")
                         if ngoodside == 0:
-                            log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
-                            log.info(f'side_smoothing_length = {self.side_smoothing_length}')
-                            log.info(f'side_gain = {self.side_gain}')
-                        log.info(f'odd_even_rows = {self.odd_even_rows}')
+                            log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
+                            log.info(f"side_smoothing_length = {self.side_smoothing_length}")
+                            log.info(f"side_gain = {self.side_gain}")
+                        log.info(f"odd_even_rows = {self.odd_even_rows}")
                 else:
-                    log.info('Single readout amplifier used')
+                    log.info("Single readout amplifier used")
                     if ngoodtopbottom == 0:
-                        log.info('No valid reference pixels.  This step will have no effect.')
+                        log.info("No valid reference pixels.  This step will have no effect.")
                     else:
-                        log.info('The following parameter is valid for this mode:')
-                        log.info(f'odd_even_columns = {self.odd_even_columns}')
-                        log.info('The following parameters are not applicable and are ignored:')
-                        log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
-                        log.info(f'side_smoothing_length = {self.side_smoothing_length}')
-                        log.info(f'side_gain = {self.side_gain}')
-                        log.info(f'odd_even_rows = {self.odd_even_rows}')
+                        log.info("The following parameter is valid for this mode:")
+                        log.info(f"odd_even_columns = {self.odd_even_columns}")
+                        log.info("The following parameters are not applicable and are ignored:")
+                        log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
+                        log.info(f"side_smoothing_length = {self.side_smoothing_length}")
+                        log.info(f"side_gain = {self.side_gain}")
+                        log.info(f"odd_even_rows = {self.odd_even_rows}")
         else:
             if not self.is_subarray:
-                log.info('MIRI full frame data')
-                log.info('The following parameter is valid for this mode:')
-                log.info(f'odd_even_rows = {self.odd_even_rows}')
-                log.info('The following parameters are not applicable and are ignored:')
-                log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
-                log.info(f'odd_even_columns = {self.odd_even_columns}')
-                log.info(f'side_smoothing_length = {self.side_smoothing_length}')
-                log.info(f'side_gain = {self.side_gain}')
+                log.info("MIRI full frame data")
+                log.info("The following parameter is valid for this mode:")
+                log.info(f"odd_even_rows = {self.odd_even_rows}")
+                log.info("The following parameters are not applicable and are ignored:")
+                log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
+                log.info(f"odd_even_columns = {self.odd_even_columns}")
+                log.info(f"side_smoothing_length = {self.side_smoothing_length}")
+                log.info(f"side_gain = {self.side_gain}")
             else:
-                log.info('MIRI subarray data')
-                log.info('refpix processing skipped for this mode')
+                log.info("MIRI subarray data")
+                log.info("refpix processing skipped for this mode")
 
     def count_good_side_refpixels(self):
-        donotuse = dqflags.pixel['DO_NOT_USE']
+        donotuse = dqflags.pixel["DO_NOT_USE"]
         ngood = 0
-        for amplifier in 'AD':
-            rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier]['side']
+        for amplifier in "AD":
+            rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier]["side"]
             good = np.where(np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse) != donotuse)
             ngood += len(good[0])
         return ngood
 
     def count_good_top_bottom_refpixels(self):
-        donotuse = dqflags.pixel['DO_NOT_USE']
-        refdq = dqflags.pixel['REFERENCE_PIXEL']
+        donotuse = dqflags.pixel["DO_NOT_USE"]
+        refdq = dqflags.pixel["REFERENCE_PIXEL"]
         ngood = 0
         if self.subarray in NRS_edgeless_subarrays:
             ngood = len(np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))[0])
             log.debug(f"Edgeless subarray {self.subarray} has {ngood} reference pixels.")
         else:
-            for edge in ['top', 'bottom']:
+            for edge in ["top", "bottom"]:
                 for amplifier in self.amplifiers:
                     rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][edge]
                     log.debug(f"Ref sections for {edge} & {amplifier}: {rowstart, rowstop, colstart, colstop}")
@@ -493,24 +474,16 @@ class NIRDataset(Dataset):
 
     """
 
-    def __init__(self, input_model,
-                 odd_even_columns,
-                 use_side_ref_pixels,
-                 side_smoothing_length,
-                 side_gain):
-
-        super(NIRDataset, self).__init__(input_model,
-                                         odd_even_columns,
-                                         use_side_ref_pixels,
-                                         side_smoothing_length,
-                                         side_gain,
-                                         odd_even_rows=False)
+    def __init__(self, input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain):
+        super(NIRDataset, self).__init__(
+            input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain, odd_even_rows=False
+        )
 
         # Set appropriate NIR sections
         self.is_irs2 = pipe_utils.is_irs2(input_model)
         if self.is_irs2:
             self.reference_sections = deepcopy(IRS2_reference_sections)
-            self.amplifiers = '0ABCD'
+            self.amplifiers = "0ABCD"
             self.irs2_odd_mask = self.make_irs2_odd_mask(input_model)
         else:
             self.reference_sections = NIR_reference_sections
@@ -548,28 +521,25 @@ class NIRDataset(Dataset):
         # Default n=16, r=4
         scipix_n = input_model.meta.exposure.nrs_normal
         if scipix_n is None:
-            log.warning("Keyword NRS_NORM not found; using default value %d" %
-                        scipix_n_default)
+            log.warning("Keyword NRS_NORM not found; using default value %d" % scipix_n_default)
             scipix_n = scipix_n_default
 
         refpix_r = input_model.meta.exposure.nrs_reference
         if refpix_r is None:
-            log.warning("Keyword NRS_REF not found; using default value %d" %
-                        refpix_r_default)
+            log.warning("Keyword NRS_REF not found; using default value %d" % refpix_r_default)
             refpix_r = refpix_r_default
 
         # If these are not set to standard values, the
         # reference sections values must be changed to match.
         n_sector = nx // 5
-        areas = ['top', 'bottom', 'data']  # assuming no 'side'
+        areas = ["top", "bottom", "data"]  # assuming no 'side'
         if nx != 3200:
-            for i, amplifier in enumerate('0ABCD'):
+            for i, amplifier in enumerate("0ABCD"):
                 x_start = n_sector * i
                 x_stop = n_sector * (i + 1)
                 for area in areas:
                     sec = self.reference_sections[amplifier][area]
-                    self.reference_sections[amplifier][area] = (
-                        sec[0], sec[1], x_start, x_stop)
+                    self.reference_sections[amplifier][area] = (sec[0], sec[1], x_start, x_stop)
 
         # Make a column mask that identifies the reference sector and
         # all interleaved pixels as False, all science pixels
@@ -581,7 +551,7 @@ class NIRDataset(Dataset):
         x_mask = ~x_mask
 
         # Treat the reference sector like the other sectors
-        x_mask[:n_sector] = x_mask[n_sector: 2 * n_sector]
+        x_mask[:n_sector] = x_mask[n_sector : 2 * n_sector]
 
         # Find even and odd interleaved pixels:
         # reference pixels come in two pairs, the first set odd
@@ -647,8 +617,7 @@ class NIRDataset(Dataset):
             Array containing all the odd dq values for those reference pixels
 
         """
-        rowstart, rowstop, colstart, colstop = \
-            self.reference_sections[amplifier][top_or_bottom]
+        rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][top_or_bottom]
 
         # handle interleaved pixels if needed
         if self.is_irs2:
@@ -692,8 +661,7 @@ class NIRDataset(Dataset):
         evendq : NDArray
             Array containing all the even dq values for those reference pixels
         """
-        rowstart, rowstop, colstart, colstop = \
-            self.reference_sections[amplifier][top_or_bottom]
+        rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][top_or_bottom]
 
         # handle interleaved pixels if needed
         if self.is_irs2:
@@ -806,8 +774,7 @@ class NIRDataset(Dataset):
                 self.bad_reference_pixels = True
             return odd, even
         else:
-            rowstart, rowstop, colstart, colstop = \
-                self.reference_sections[amplifier][top_or_bottom]
+            rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][top_or_bottom]
             ref = group[rowstart:rowstop, colstart:colstop]
             dq = self.pixeldq[rowstart:rowstop, colstart:colstop]
             mean = self.sigma_clip(ref, dq)
@@ -838,14 +805,13 @@ class NIRDataset(Dataset):
         refpix = {}
         for amplifier in self.amplifiers:
             refpix[amplifier] = {}
-            refpix[amplifier]['odd'] = {}
-            refpix[amplifier]['even'] = {}
-            for top_bottom in ('top', 'bottom'):
-                refvalues = self.get_amplifier_refvalue(group, amplifier,
-                                                        top_bottom)
+            refpix[amplifier]["odd"] = {}
+            refpix[amplifier]["even"] = {}
+            for top_bottom in ("top", "bottom"):
+                refvalues = self.get_amplifier_refvalue(group, amplifier, top_bottom)
                 if self.odd_even_columns:
-                    refpix[amplifier]['odd'][top_bottom] = refvalues[0]
-                    refpix[amplifier]['even'][top_bottom] = refvalues[1]
+                    refpix[amplifier]["odd"][top_bottom] = refvalues[0]
+                    refpix[amplifier]["even"][top_bottom] = refvalues[1]
                 else:
                     refpix[amplifier][top_bottom] = refvalues
         return refpix
@@ -875,40 +841,35 @@ class NIRDataset(Dataset):
 
         """
         for amplifier in self.amplifiers:
-            datarowstart, datarowstop, datacolstart, datacolstop = \
-                self.reference_sections[amplifier]['data']
+            datarowstart, datarowstop, datacolstart, datacolstop = self.reference_sections[amplifier]["data"]
             if self.odd_even_columns:
-                oddreftop = refvalues[amplifier]['odd']['top']
-                oddrefbottom = refvalues[amplifier]['odd']['bottom']
-                evenreftop = refvalues[amplifier]['even']['top']
-                evenrefbottom = refvalues[amplifier]['even']['bottom']
+                oddreftop = refvalues[amplifier]["odd"]["top"]
+                oddrefbottom = refvalues[amplifier]["odd"]["bottom"]
+                evenreftop = refvalues[amplifier]["even"]["top"]
+                evenrefbottom = refvalues[amplifier]["even"]["bottom"]
                 #
                 # For now, just average the top and bottom corrections
                 oddrefsignal = self.average_with_None(oddreftop, oddrefbottom)
                 evenrefsignal = self.average_with_None(evenreftop, evenrefbottom)
                 if oddrefsignal is not None and evenrefsignal is not None:
                     if not self.is_irs2:
-                        oddslice = (slice(datarowstart, datarowstop, 1),
-                                    slice(datacolstart, datacolstop, 2))
-                        evenslice = (slice(datarowstart, datarowstop, 1),
-                                     slice(datacolstart + 1, datacolstop, 2))
+                        oddslice = (slice(datarowstart, datarowstop, 1), slice(datacolstart, datacolstop, 2))
+                        evenslice = (slice(datarowstart, datarowstop, 1), slice(datacolstart + 1, datacolstop, 2))
                         group[oddslice] = group[oddslice] - oddrefsignal
                         group[evenslice] = group[evenslice] - evenrefsignal
                     else:
-                        dataslice = (slice(datarowstart, datarowstop, 1),
-                                     slice(datacolstart, datacolstop, 1))
+                        dataslice = (slice(datarowstart, datarowstop, 1), slice(datacolstart, datacolstop, 1))
                         odd_mask = self.irs2_odd_mask[datacolstart:datacolstop]
                         group[dataslice][:, odd_mask] -= oddrefsignal
                         group[dataslice][:, ~odd_mask] -= evenrefsignal
                 else:
                     pass
             else:
-                reftop = refvalues[amplifier]['top']
-                refbottom = refvalues[amplifier]['bottom']
+                reftop = refvalues[amplifier]["top"]
+                refbottom = refvalues[amplifier]["bottom"]
                 refsignal = self.average_with_None(reftop, refbottom)
                 if refsignal is not None:
-                    dataslice = (slice(datarowstart, datarowstop, 1),
-                                 slice(datacolstart, datacolstop, 1))
+                    dataslice = (slice(datarowstart, datarowstop, 1), slice(datacolstart, datacolstop, 1))
                     group[dataslice] = group[dataslice] - refsignal
                 else:
                     pass
@@ -974,9 +935,9 @@ class NIRDataset(Dataset):
         newheight = nrows + smoothing_length - 1
         reflected = np.zeros((newheight, ncols), dtype=data.dtype)
         bufsize = smoothing_length // 2
-        reflected[bufsize:bufsize + nrows] = data[:]
+        reflected[bufsize : bufsize + nrows] = data[:]
         reflected[:bufsize] = data[bufsize:0:-1]
-        reflected[-(bufsize):] = data[-2:-(bufsize + 2):-1]
+        reflected[-(bufsize):] = data[-2 : -(bufsize + 2) : -1]
         return reflected
 
     def median_filter(self, data, dq, smoothing_length):
@@ -1009,8 +970,7 @@ class NIRDataset(Dataset):
         for i in range(nrows):
             rowstart = i
             rowstop = rowstart + smoothing_length
-            goodpixels = np.where(np.bitwise_and(augmented_dq[rowstart:rowstop],
-                                                 dqflags.pixel['DO_NOT_USE']) == 0)
+            goodpixels = np.where(np.bitwise_and(augmented_dq[rowstart:rowstop], dqflags.pixel["DO_NOT_USE"]) == 0)
             if len(goodpixels[0]) == 0:
                 result[i] = np.nan
             else:
@@ -1044,8 +1004,8 @@ class NIRDataset(Dataset):
         """
 
         smoothing_length = self.side_smoothing_length
-        data = group[:, colstart:colstop + 1]
-        dq = self.pixeldq[:, colstart:colstop + 1]
+        data = group[:, colstart : colstop + 1]
+        dq = self.pixeldq[:, colstart : colstop + 1]
         return self.median_filter(data, dq, smoothing_length)
 
     def combine_ref_signals(self, left, right):
@@ -1200,8 +1160,8 @@ class NIRDataset(Dataset):
         #
         #  First transform to detector coordinates
         #
-        refdq = dqflags.pixel['REFERENCE_PIXEL']
-        donotuse = dqflags.pixel['DO_NOT_USE']
+        refdq = dqflags.pixel["REFERENCE_PIXEL"]
+        donotuse = dqflags.pixel["DO_NOT_USE"]
         #
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
@@ -1224,10 +1184,8 @@ class NIRDataset(Dataset):
                 else:
                     oddrefpixindices_row.append(refpixindices[0][i])
                     oddrefpixindices_col.append(refpixindices[1][i])
-            evenrefpixindices = (np.array(evenrefpixindices_row),
-                                 np.array(evenrefpixindices_col))
-            oddrefpixindices = (np.array(oddrefpixindices_row),
-                                np.array(oddrefpixindices_col))
+            evenrefpixindices = (np.array(evenrefpixindices_row), np.array(evenrefpixindices_col))
+            oddrefpixindices = (np.array(oddrefpixindices_row), np.array(oddrefpixindices_col))
 
         for integration in range(self.nints):
             for group in range(self.ngroups):
@@ -1239,15 +1197,12 @@ class NIRDataset(Dataset):
                 thisgroup = self.group
 
                 if self.odd_even_columns:
-                    evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
-                                                      self.pixeldq[evenrefpixindices])
-                    oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
-                                                     self.pixeldq[oddrefpixindices])
+                    evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices], self.pixeldq[evenrefpixindices])
+                    oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices], self.pixeldq[oddrefpixindices])
                     thisgroup[:, 0::2] -= evenrefpixvalue
                     thisgroup[:, 1::2] -= oddrefpixvalue
                 else:
-                    refpixvalue = self.sigma_clip(thisgroup[refpixindices],
-                                                  self.pixeldq[refpixindices])
+                    refpixvalue = self.sigma_clip(thisgroup[refpixindices], self.pixeldq[refpixindices])
                     thisgroup -= refpixvalue
                 #
                 #  Now transform back from detector to DMS coordinates.
@@ -1577,15 +1532,15 @@ class MIRIDataset(Dataset):
 
     """
 
-    def __init__(self, input_model,
-                 odd_even_rows):
-
-        super(MIRIDataset, self).__init__(input_model,
-                                          odd_even_columns=False,
-                                          use_side_ref_pixels=False,
-                                          side_smoothing_length=False,
-                                          side_gain=False,
-                                          odd_even_rows=odd_even_rows)
+    def __init__(self, input_model, odd_even_rows):
+        super(MIRIDataset, self).__init__(
+            input_model,
+            odd_even_columns=False,
+            use_side_ref_pixels=False,
+            side_smoothing_length=False,
+            side_gain=False,
+            odd_even_rows=odd_even_rows,
+        )
 
         self.reference_sections = MIR_reference_sections
 
@@ -1797,14 +1752,13 @@ class MIRIDataset(Dataset):
         refpix = {}
         for amplifier in self.amplifiers:
             refpix[amplifier] = {}
-            refpix[amplifier]['odd'] = {}
-            refpix[amplifier]['even'] = {}
-            for left_right in ('left', 'right'):
-                refvalues = self.get_amplifier_refvalue(group, amplifier,
-                                                        left_right)
+            refpix[amplifier]["odd"] = {}
+            refpix[amplifier]["even"] = {}
+            for left_right in ("left", "right"):
+                refvalues = self.get_amplifier_refvalue(group, amplifier, left_right)
                 if self.odd_even_rows:
-                    refpix[amplifier]['odd'][left_right] = refvalues[0]
-                    refpix[amplifier]['even'][left_right] = refvalues[1]
+                    refpix[amplifier]["odd"][left_right] = refvalues[0]
+                    refpix[amplifier]["even"][left_right] = refvalues[1]
                 else:
                     refpix[amplifier][left_right] = refvalues
         return refpix
@@ -1835,29 +1789,25 @@ class MIRIDataset(Dataset):
         """
 
         for amplifier in self.amplifiers:
-            datarowstart, datarowstop, datacolstart, datacolstop, stride = \
-                self.reference_sections[amplifier]['data']
+            datarowstart, datarowstop, datacolstart, datacolstop, stride = self.reference_sections[amplifier]["data"]
             if self.odd_even_rows:
-                oddrefleft = refvalues[amplifier]['odd']['left']
-                oddrefright = refvalues[amplifier]['odd']['right']
-                evenrefleft = refvalues[amplifier]['even']['left']
-                evenrefright = refvalues[amplifier]['even']['right']
+                oddrefleft = refvalues[amplifier]["odd"]["left"]
+                oddrefright = refvalues[amplifier]["odd"]["right"]
+                evenrefleft = refvalues[amplifier]["even"]["left"]
+                evenrefright = refvalues[amplifier]["even"]["right"]
                 #
                 # For now, just average the left and right corrections
                 oddrefsignal = 0.5 * (oddrefleft + oddrefright)
                 evenrefsignal = 0.5 * (evenrefleft + evenrefright)
-                oddslice = (slice(datarowstart, datarowstop, 2),
-                            slice(datacolstart, datacolstop, 4))
-                evenslice = (slice(datarowstart + 1, datarowstop, 2),
-                             slice(datacolstart, datacolstop, 4))
+                oddslice = (slice(datarowstart, datarowstop, 2), slice(datacolstart, datacolstop, 4))
+                evenslice = (slice(datarowstart + 1, datarowstop, 2), slice(datacolstart, datacolstop, 4))
                 group[oddslice] = group[oddslice] - oddrefsignal
                 group[evenslice] = group[evenslice] - evenrefsignal
             else:
-                refleft = refvalues[amplifier]['left']
-                refright = refvalues[amplifier]['right']
+                refleft = refvalues[amplifier]["left"]
+                refright = refvalues[amplifier]["right"]
                 refsignal = 0.5 * (refleft + refright)
-                dataslice = (slice(datarowstart, datarowstop, 1),
-                             slice(datacolstart, datacolstop, 4))
+                dataslice = (slice(datarowstart, datarowstop, 1), slice(datacolstart, datacolstop, 4))
                 group[dataslice] = group[dataslice] - refsignal
         return
 
@@ -1877,7 +1827,7 @@ class MIRIDataset(Dataset):
         #  First we need to subtract the first read of each integration
 
         first_read = np.zeros((self.nints, self.nrows, self.ncols))
-        log.info('Subtracting initial read from each integration')
+        log.info("Subtracting initial read from each integration")
 
         for i in range(self.nints):
             first_read[i] = self.input_model.data[i, 0].copy()
@@ -1909,7 +1859,7 @@ class MIRIDataset(Dataset):
         log.setLevel(logging.INFO)
         #
         #  All done, now add the first read back in
-        log.info('Adding initial read back in')
+        log.info("Adding initial read back in")
 
         for i in range(self.nints):
             self.input_model.data[i] += first_read[i]
@@ -1918,12 +1868,7 @@ class MIRIDataset(Dataset):
         return
 
 
-def create_dataset(input_model,
-                   odd_even_columns,
-                   use_side_ref_pixels,
-                   side_smoothing_length,
-                   side_gain,
-                   odd_even_rows):
+def create_dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain, odd_even_rows):
     """Create a dataset object from an input model.
 
     Parameters:
@@ -1960,116 +1905,47 @@ def create_dataset(input_model,
         colstop = colstart + input_model.meta.subarray.xsize
         rowstart = input_model.meta.subarray.ystart - 1
         rowstop = rowstart + input_model.meta.subarray.ysize
-        if rowstart < 0 or colstart < 0 \
-           or rowstop > 2048 or colstop > 2048:
+        if rowstart < 0 or colstart < 0 or rowstop > 2048 or colstop > 2048:
             return None
 
-    if detector[:3] == 'MIR':
-        return MIRIDataset(input_model,
-                           odd_even_rows)
-    elif detector == 'NRS1':
-        return NRS1Dataset(input_model,
-                           odd_even_columns,
-                           use_side_ref_pixels,
-                           side_smoothing_length,
-                           side_gain)
-    elif detector == 'NRS2':
-        return NRS2Dataset(input_model,
-                           odd_even_columns,
-                           use_side_ref_pixels,
-                           side_smoothing_length,
-                           side_gain)
-    elif detector == 'NRCA1':
-        return NRCA1Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCA2':
-        return NRCA2Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCA3':
-        return NRCA3Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCA4':
-        return NRCA4Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCALONG':
-        return NRCALONGDataset(input_model,
-                               odd_even_columns,
-                               use_side_ref_pixels,
-                               side_smoothing_length,
-                               side_gain)
-    elif detector == 'NRCB1':
-        return NRCB1Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCB2':
-        return NRCB2Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCB3':
-        return NRCB3Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCB4':
-        return NRCB4Dataset(input_model,
-                            odd_even_columns,
-                            use_side_ref_pixels,
-                            side_smoothing_length,
-                            side_gain)
-    elif detector == 'NRCBLONG':
-        return NRCBLONGDataset(input_model,
-                               odd_even_columns,
-                               use_side_ref_pixels,
-                               side_smoothing_length,
-                               side_gain)
-    elif detector == 'NIS':
-        return NIRISSDataset(input_model,
-                             odd_even_columns,
-                             use_side_ref_pixels,
-                             side_smoothing_length,
-                             side_gain)
-    elif detector == 'GUIDER1':
-        return GUIDER1Dataset(input_model,
-                              odd_even_columns,
-                              use_side_ref_pixels,
-                              side_smoothing_length,
-                              side_gain)
-    elif detector == 'GUIDER2':
-        return GUIDER2Dataset(input_model,
-                              odd_even_columns,
-                              use_side_ref_pixels,
-                              side_smoothing_length,
-                              side_gain)
+    if detector[:3] == "MIR":
+        return MIRIDataset(input_model, odd_even_rows)
+    elif detector == "NRS1":
+        return NRS1Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRS2":
+        return NRS2Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCA1":
+        return NRCA1Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCA2":
+        return NRCA2Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCA3":
+        return NRCA3Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCA4":
+        return NRCA4Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCALONG":
+        return NRCALONGDataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCB1":
+        return NRCB1Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCB2":
+        return NRCB2Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCB3":
+        return NRCB3Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCB4":
+        return NRCB4Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NRCBLONG":
+        return NRCBLONGDataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "NIS":
+        return NIRISSDataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "GUIDER1":
+        return GUIDER1Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
+    elif detector == "GUIDER2":
+        return GUIDER2Dataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
     else:
-        log.error('Unrecognized detector')
-        return NIRDataset(input_model,
-                          odd_even_columns,
-                          use_side_ref_pixels,
-                          side_smoothing_length,
-                          side_gain)
+        log.error("Unrecognized detector")
+        return NIRDataset(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain)
 
 
-def correct_model(input_model, odd_even_columns,
-                  use_side_ref_pixels,
-                  side_smoothing_length, side_gain,
-                  odd_even_rows):
+def correct_model(input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain, odd_even_rows):
     """Wrapper to do Reference Pixel Correction on a JWST Model.
     Performs the correction on the datamodel
 
@@ -2100,17 +1976,14 @@ def correct_model(input_model, odd_even_columns,
         separately (MIR only)
 
     """
-    if input_model.meta.instrument.name == 'MIRI':
+    if input_model.meta.instrument.name == "MIRI":
         if reffile_utils.is_subarray(input_model):
             log.warning("Refpix correction skipped for MIRI subarrays")
             return SUBARRAY_SKIPPED
 
-    input_dataset = create_dataset(input_model,
-                                   odd_even_columns,
-                                   use_side_ref_pixels,
-                                   side_smoothing_length,
-                                   side_gain,
-                                   odd_even_rows)
+    input_dataset = create_dataset(
+        input_model, odd_even_columns, use_side_ref_pixels, side_smoothing_length, side_gain, odd_even_rows
+    )
 
     if input_dataset is None:
         status = SUBARRAY_DOESNTFIT
@@ -2203,9 +2076,9 @@ def restore_input_model(input_dataset, saved_values):
     input_dataset.input_model.pixeldq = pdq
 
     # Save computed ZEROFRAME
-    zframe[zdq != 0] = 0.
+    zframe[zdq != 0] = 0.0
     input_dataset.input_model.zeroframe = zframe.reshape(zdims)
-    input_dataset.input_model.zeroframe[wh_zero] = 0.
+    input_dataset.input_model.zeroframe[wh_zero] = 0.0
 
 
 def setup_dataset_for_zeroframe(input_dataset, saved_values):
@@ -2231,7 +2104,7 @@ def setup_dataset_for_zeroframe(input_dataset, saved_values):
     gdtype = input_dataset.input_model.groupdq.dtype
     gdq = np.zeros(dims, dtype=gdtype)
     wh_zero = saved_values[-1]
-    gdq[wh_zero] = dqflags.pixel['DO_NOT_USE']
+    gdq[wh_zero] = dqflags.pixel["DO_NOT_USE"]
     gdq = gdq.reshape(new_dims)
 
     # Setup dataset with ZEROFRAME data
@@ -2268,6 +2141,6 @@ def save_science_values(input_dataset):
     data = input_dataset.input_model.data
     gdq = input_dataset.input_model.groupdq
     pdq = input_dataset.input_model.pixeldq
-    wh_zero = np.where(input_dataset.input_model.zeroframe[:, :, :] == 0.)
+    wh_zero = np.where(input_dataset.input_model.zeroframe[:, :, :] == 0.0)
 
     return data, gdq, pdq, wh_zero

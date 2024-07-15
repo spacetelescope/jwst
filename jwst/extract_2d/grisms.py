@@ -22,11 +22,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract_tso_object(input_model,
-                       reference_files=None,
-                       tsgrism_extract_height=None,
-                       extract_orders=None,
-                       compute_wavelength=True):
+def extract_tso_object(
+    input_model, reference_files=None, tsgrism_extract_height=None, extract_orders=None, compute_wavelength=True
+):
     """
     Extract the spectrum for a NIRCam TSO grism observation.
 
@@ -81,7 +79,7 @@ def extract_tso_object(input_model,
         raise TypeError("Expected a dictionary for reference_files")
 
     # Check for wavelengthrange reference file
-    if 'wavelengthrange' not in reference_files:
+    if "wavelengthrange" not in reference_files:
         raise KeyError("No wavelengthrange reference file specified")
 
     # If an extraction height is not supplied, default to entire
@@ -91,9 +89,8 @@ def extract_tso_object(input_model,
     log.info("Setting extraction height to {}".format(tsgrism_extract_height))
 
     # Get the disperser parameters that have the wave limits
-    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        if (f.meta.instrument.name != 'NIRCAM' or
-                f.meta.exposure.type != 'NRC_TSGRISM'):
+    with WavelengthrangeModel(reference_files["wavelengthrange"]) as f:
+        if f.meta.instrument.name != "NIRCAM" or f.meta.exposure.type != "NRC_TSGRISM":
             raise ValueError("Wavelengthrange reference file is not for NIRCAM TSGRISM mode!")
         wavelengthrange = f.wavelengthrange
         ref_extract_orders = f.extract_orders
@@ -103,22 +100,18 @@ def extract_tso_object(input_model,
     if extract_orders is None:
         log.info("Using default order extraction from reference file")
         extract_orders = ref_extract_orders
-        available_orders = [x[1] for x in extract_orders if
-                            x[0] == input_model.meta.instrument.filter].pop()
+        available_orders = [x[1] for x in extract_orders if x[0] == input_model.meta.instrument.filter].pop()
     else:
-        if (not isinstance(extract_orders, list) or
-                not all(isinstance(item, int) for item in extract_orders)):
+        if not isinstance(extract_orders, list) or not all(isinstance(item, int) for item in extract_orders):
             raise TypeError("Expected extract_orders to be a list of integers.")
         available_orders = extract_orders
 
     if len(available_orders) > 1:
-        raise NotImplementedError("Multiple order extraction for TSO is "
-                                  "not currently implemented.")
+        raise NotImplementedError("Multiple order extraction for TSO is " "not currently implemented.")
 
     # Check for the existence of the aperture reference location meta data
-    if (input_model.meta.wcsinfo.siaf_xref_sci is None or
-            input_model.meta.wcsinfo.siaf_yref_sci is None):
-        raise ValueError('XREF_SCI and YREF_SCI are required for TSO mode.')
+    if input_model.meta.wcsinfo.siaf_xref_sci is None or input_model.meta.wcsinfo.siaf_yref_sci is None:
+        raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
 
     # Create the extracted output as a SlitModel
     log.info("Extracting order: {}".format(available_orders))
@@ -128,25 +121,18 @@ def extract_tso_object(input_model,
 
     # Loop over spectral orders
     for order in available_orders:
-        range_select = [(x[2], x[3]) for x in wavelengthrange if
-                        (x[0] == order and x[1] == input_model.meta.instrument.filter)]
+        range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == input_model.meta.instrument.filter)]
 
         # Use the filter that was in front of the grism for translation
         lmin, lmax = range_select.pop()
 
         # Create the order bounding box
         distortion = subwcs.get_transform("v2v3", "direct_image")
-        source_xpos, _ = compute_tso_offset_center(input_model, distortion) # 1-indexing already handled
+        source_xpos, _ = compute_tso_offset_center(input_model, distortion)  # 1-indexing already handled
         source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove FITS 1-indexed offset
-        transform = input_model.meta.wcs.get_transform('direct_image', 'grism_detector')
-        xmin, ymin, _ = transform(source_xpos,
-                                  source_ypos,
-                                  lmin,
-                                  order)
-        xmax, ymax, _ = transform(source_xpos,
-                                  source_ypos,
-                                  lmax,
-                                  order)
+        transform = input_model.meta.wcs.get_transform("direct_image", "grism_detector")
+        xmin, ymin, _ = transform(source_xpos, source_ypos, lmin, order)
+        xmax, ymax, _ = transform(source_xpos, source_ypos, lmax, order)
 
         # Add the shift to the lower corner to the subarray WCS object.
         # The shift should just be the lower bounding box corner.
@@ -200,9 +186,9 @@ def extract_tso_object(input_model,
 
         order_model = Const1D(order)
         order_model.inverse = Const1D(order)
-        tr = input_model.meta.wcs.get_transform('grism_detector', 'direct_image')
+        tr = input_model.meta.wcs.get_transform("grism_detector", "direct_image")
         tr = Mapping((0, 1, 0)) | Shift(xmin_ext) & Shift(ymin) & order_model | tr
-        subwcs.set_transform('grism_detector', 'direct_image', tr)
+        subwcs.set_transform("grism_detector", "direct_image", tr)
 
         xmin = int(xmin)
         xmax = int(xmax)
@@ -210,25 +196,23 @@ def extract_tso_object(input_model,
         ymax = int(ymax)
 
         log.info("WCS made explicit for order: {}".format(order))
-        log.info("Spectral trace extents: (xmin: {}, ymin: {}), "
-                 "(xmax: {}, ymax: {})".format(xmin, ymin, xmax, ymax))
-        log.info("Extraction limits: (xmin: {}, ymin: {}), "
-                 "(xmax: {}, ymax: {})".format(xmin_ext, ymin, xmax_ext, ymax))
+        log.info("Spectral trace extents: (xmin: {}, ymin: {}), " "(xmax: {}, ymax: {})".format(xmin, ymin, xmax, ymax))
+        log.info("Extraction limits: (xmin: {}, ymin: {}), " "(xmax: {}, ymax: {})".format(xmin_ext, ymin, xmax_ext, ymax))
 
         # Cut out the subarray from the input data arrays
-        ext_data = input_model.data[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
-        ext_err = input_model.err[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
-        ext_dq = input_model.dq[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
+        ext_data = input_model.data[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
+        ext_err = input_model.err[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
+        ext_dq = input_model.dq[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
         if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
-            var_poisson = input_model.var_poisson[..., ymin:ymax + 1, xmin_ext:xmax_ext + 1].copy()
+            var_poisson = input_model.var_poisson[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
         else:
             var_poisson = None
         if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
-            var_rnoise = input_model.var_rnoise[..., ymin:ymax + 1, xmin_ext:xmax_ext + 1].copy()
+            var_rnoise = input_model.var_rnoise[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
         else:
             var_rnoise = None
         if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
-            var_flat = input_model.var_flat[..., ymin:ymax + 1, xmin_ext:xmax_ext + 1].copy()
+            var_flat = input_model.var_flat[..., ymin : ymax + 1, xmin_ext : xmax_ext + 1].copy()
         else:
             var_flat = None
 
@@ -244,14 +228,13 @@ def extract_tso_object(input_model,
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
             if compute_wavelength:
                 # this seems to happen near-instantly, suggest remove this message
-                #log.debug("Computing wavelengths (this takes a while ...)")
+                # log.debug("Computing wavelengths (this takes a while ...)")
                 output_model.wavelength = compute_tso_wavelength_array(output_model)
             output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
             output_model.meta.wcsinfo.spectral_order = order
-            output_model.meta.wcsinfo.dispersion_direction = \
-                input_model.meta.wcsinfo.dispersion_direction
-            output_model.name = '1'
+            output_model.meta.wcsinfo.dispersion_direction = input_model.meta.wcsinfo.dispersion_direction
+            output_model.name = "1"
             output_model.source_type = input_model.meta.target.source_type
             output_model.source_name = input_model.meta.target.catalog_name
             output_model.source_alias = input_model.meta.target.proposer_name
@@ -264,7 +247,7 @@ def extract_tso_object(input_model,
             output_model.source_id = 1
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
-            if hasattr(input_model, 'int_times'):
+            if hasattr(input_model, "int_times"):
                 output_model.int_times = input_model.int_times.copy()
 
     del subwcs
@@ -272,14 +255,16 @@ def extract_tso_object(input_model,
     return output_model
 
 
-def extract_grism_objects(input_model,
-                          grism_objects=None,
-                          reference_files=None,
-                          extract_orders=None,
-                          mmag_extract=None,
-                          compute_wavelength=True,
-                          wfss_extract_half_height=None,
-                          nbright=None):
+def extract_grism_objects(
+    input_model,
+    grism_objects=None,
+    reference_files=None,
+    extract_orders=None,
+    mmag_extract=None,
+    compute_wavelength=True,
+    wfss_extract_half_height=None,
+    nbright=None,
+):
     """
     Extract 2d boxes around each objects spectra for each order.
 
@@ -364,17 +349,18 @@ def extract_grism_objects(input_model,
 
     if grism_objects is None:
         # get the wavelengthrange reference file from the input_model
-        if ('wavelengthrange' not in reference_files or
-                reference_files['wavelengthrange'] in ['N/A', '']):
+        if "wavelengthrange" not in reference_files or reference_files["wavelengthrange"] in ["N/A", ""]:
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            grism_objects = util.create_grism_bbox(input_model, reference_files,
-                                                   extract_orders=extract_orders,
-                                                   mmag_extract=mmag_extract,
-                                                   wfss_extract_half_height=wfss_extract_half_height,
-                                                   nbright=nbright)
-            log.info("Grism object list created from source catalog: {0:s}"
-                     .format(input_model.meta.source_catalog))
+            grism_objects = util.create_grism_bbox(
+                input_model,
+                reference_files,
+                extract_orders=extract_orders,
+                mmag_extract=mmag_extract,
+                wfss_extract_half_height=wfss_extract_half_height,
+                nbright=nbright,
+            )
+            log.info("Grism object list created from source catalog: {0:s}".format(input_model.meta.source_catalog))
 
     if not isinstance(grism_objects, list):
         raise TypeError("Expected input grism objects to be a list")
@@ -406,7 +392,6 @@ def extract_grism_objects(input_model,
     slits = []
     for obj in grism_objects:
         for order in obj.order_bounding.keys():
-
             # Add the shift to the lower corner to each subarray WCS object
             # The shift should just be the lower bounding box corner
             # also replace the object center location inputs to the GrismDispersion
@@ -416,7 +401,7 @@ def extract_grism_objects(input_model,
             # The bounding boxes here are also limited to the size of the detector
             # The check for boxes entirely off the detector is done in create_grism_bbox right now
             y, x = obj.order_bounding[order]
-            log.debug(f'YYY, {y}, {clamp(y[0], 0, input_model.meta.subarray.ysize)}')
+            log.debug(f"YYY, {y}, {clamp(y[0], 0, input_model.meta.subarray.ysize)}")
 
             # limit the boxes to the detector
             ymin = clamp(y[0], 0, input_model.meta.subarray.ysize)
@@ -430,8 +415,7 @@ def extract_grism_objects(input_model,
             if ymax - ymin > 0 and xmax - xmin > 0:
                 subwcs = copy.deepcopy(inwcs)
                 log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
-                log.info("Subarray extents are: "
-                         "(xmin:{}, xmax:{}), (ymin:{}, ymax:{})".format(xmin, xmax, ymin, ymax))
+                log.info("Subarray extents are: " "(xmin:{}, xmax:{}), (ymin:{}, ymax:{})".format(xmin, xmax, ymin, ymax))
 
                 # only the first two numbers in the Mapping are used
                 # the order and source position are put directly into
@@ -445,11 +429,8 @@ def extract_grism_objects(input_model,
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                tr = inwcs.get_transform('grism_detector', 'detector')
-                tr = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
-                                                 xcenter_model &
-                                                 ycenter_model &
-                                                 order_model) | tr
+                tr = inwcs.get_transform("grism_detector", "detector")
+                tr = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model) | tr
 
                 y_slice = slice(_toindex(ymin), _toindex(ymax) + 1)
                 x_slice = slice(_toindex(xmin), _toindex(xmax) + 1)
@@ -471,17 +452,13 @@ def extract_grism_objects(input_model,
                     var_flat = None
 
                 tr.bounding_box = util.transform_bbox_from_shape(ext_data.shape)
-                subwcs.set_transform('grism_detector', 'detector', tr)
+                subwcs.set_transform("grism_detector", "detector", tr)
 
-                new_slit = datamodels.SlitModel(data=ext_data,
-                                                err=ext_err,
-                                                dq=ext_dq,
-                                                var_poisson=var_poisson,
-                                                var_rnoise=var_rnoise,
-                                                var_flat=var_flat)
+                new_slit = datamodels.SlitModel(
+                    data=ext_data, err=ext_err, dq=ext_dq, var_poisson=var_poisson, var_rnoise=var_rnoise, var_flat=var_flat
+                )
                 new_slit.meta.wcsinfo.spectral_order = order
-                new_slit.meta.wcsinfo.dispersion_direction = \
-                    input_model.meta.wcsinfo.dispersion_direction
+                new_slit.meta.wcsinfo.dispersion_direction = input_model.meta.wcsinfo.dispersion_direction
                 new_slit.meta.wcsinfo.specsys = input_model.meta.wcsinfo.specsys
                 new_slit.meta.coordinates = input_model.meta.coordinates
                 new_slit.meta.wcs = subwcs
@@ -591,7 +568,7 @@ def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel
     In the case that an Offset Special Requirement is requested in the APT,
     the source is no longer at the aperture reference point.
     The dither.x_offset and dither.y_offset values encode the offset
-    in units of arcseconds. They need to be translated from Ideal to 
+    in units of arcseconds. They need to be translated from Ideal to
     detector coordinates and into pixel units.
 
     Parameters
@@ -612,10 +589,12 @@ def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel
     v2v3 and direct image coordinates, so this can be hardcoded to NaN.
     """
 
-    idltov23 = IdealToV2V3(input_model.meta.wcsinfo.v3yangle,
-                input_model.meta.wcsinfo.v2_ref,
-                input_model.meta.wcsinfo.v3_ref,
-                input_model.meta.wcsinfo.vparity)
+    idltov23 = IdealToV2V3(
+        input_model.meta.wcsinfo.v3yangle,
+        input_model.meta.wcsinfo.v2_ref,
+        input_model.meta.wcsinfo.v3_ref,
+        input_model.meta.wcsinfo.vparity,
+    )
     v2_offset, v3_offset = idltov23(input_model.meta.dither.x_offset, input_model.meta.dither.y_offset)
     wavelength = np.nan
     xc, yc, _, _ = distortion(v2_offset, v3_offset, wavelength, 1)

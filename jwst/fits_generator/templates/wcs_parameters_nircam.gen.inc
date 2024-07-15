@@ -10,11 +10,11 @@ CTYPE1   = 'RA---TAN'  /  second axis coordinate type
 CTYPE2   = 'DEC--TAN'  /  third axis coordinate type
 CUNIT1   = 'deg'       /  first axis units
 CUNIT2   = 'deg'       /  second axis units
-CDELT1   = {'NRCA1': 0.032, \ 
-            'NRCA2': 0.032, \ 
-            'NRCA3': 0.032, \ 
-            'NRCA4': 0.032, \ 
-            'NRCALONG': 0.065, \ 
+CDELT1   = {'NRCA1': 0.032, \
+            'NRCA2': 0.032, \
+            'NRCA3': 0.032, \
+            'NRCA4': 0.032, \
+            'NRCALONG': 0.065, \
             'NRCB1': 0.032,  \
             'NRCB2': 0.032,  \
             'NRCB3': 0.032,  \

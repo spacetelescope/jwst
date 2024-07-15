@@ -1,6 +1,7 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
+
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
 
@@ -17,7 +18,6 @@ log.setLevel(logging.DEBUG)
 
 
 class JwstStep(Step):
-
     spec = """
     output_ext = string(default='.fits')  # Output file type
     """
@@ -47,7 +47,7 @@ class JwstStep(Step):
         from ..associations.lib.update_path import update_key_value
 
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
-        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
     def load_as_level3_asn(self, obj):
@@ -71,12 +71,12 @@ class JwstStep(Step):
         from ..associations.lib.update_path import update_key_value
 
         asn = LoadAsAssociation.load(obj)
-        update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
+        update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
     def finalize_result(self, result, reference_files_used):
         if isinstance(result, JwstDataModel):
-            result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
+            result.meta.calibration_software_revision = __version_commit__ or "RELEASE"
             result.meta.calibration_software_version = __version__
 
             if len(reference_files_used) > 0:
@@ -87,7 +87,6 @@ class JwstStep(Step):
                 result.meta.ref_file.crds.context_used = crds_client.get_context_used(result.crds_observatory)
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
-
 
     def remove_suffix(self, name):
         return remove_suffix(name)

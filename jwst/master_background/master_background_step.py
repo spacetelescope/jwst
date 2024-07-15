@@ -64,22 +64,22 @@ class MasterBackgroundStep(Step):
             # First check if we should even do the subtraction.  If not, bail.
             if not self._do_sub:
                 result = input_data.copy()
-                record_step_status(result, 'master_background', success=False)
+                record_step_status(result, "master_background", success=False)
                 return result
 
             # Check that data is a supported datamodel. If not, bail.
-            if not isinstance(input_data, (
-                ModelContainer,
-                datamodels.MultiSlitModel,
-                datamodels.ImageModel,
-                datamodels.IFUImageModel,
-            )):
+            if not isinstance(
+                input_data,
+                (
+                    ModelContainer,
+                    datamodels.MultiSlitModel,
+                    datamodels.ImageModel,
+                    datamodels.IFUImageModel,
+                ),
+            ):
                 result = input_data.copy()
-                self.log.warning(
-                    "Input %s of type %s cannot be handled.  Step skipped.",
-                    input, type(input)
-                )
-                record_step_status(result, 'master_background', success=False)
+                self.log.warning("Input %s of type %s cannot be handled.  Step skipped.", input, type(input))
+                record_step_status(result, "master_background", success=False)
                 return result
 
             # If user-supplied master background, subtract it
@@ -110,8 +110,8 @@ class MasterBackgroundStep(Step):
                 # the master background so just save the expanded 2d background
                 if self.save_background:
                     asn_id = input_data.meta.asn_table.asn_id
-                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
-                    
+                    self.save_model(background_2d_collection, suffix="masterbg2d", force=True, asn_id=asn_id)
+
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
@@ -125,9 +125,9 @@ class MasterBackgroundStep(Step):
                         # for simulated data that didn't bother populating this
                         # keyword.
                         this_is_ifu_extended = False
-                        if (model.meta.exposure.type == 'NRS_IFU' and model.spec[0].source_type == 'EXTENDED'):
+                        if model.meta.exposure.type == "NRS_IFU" and model.spec[0].source_type == "EXTENDED":
                             this_is_ifu_extended = True
-                        if (model.meta.exposure.type == 'MIR_MRS'):
+                        if model.meta.exposure.type == "MIR_MRS":
                             # always treat as extended for MIRI MRS
                             this_is_ifu_extended = True
 
@@ -137,7 +137,7 @@ class MasterBackgroundStep(Step):
 
                     master_background = combine_1d_spectra(
                         background_data,
-                        exptime_key='exposure_time',
+                        exptime_key="exposure_time",
                     )
 
                     background_data.close()
@@ -158,17 +158,18 @@ class MasterBackgroundStep(Step):
                     input_data.close()
                     self.log.warning(
                         "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
-                        input, type(input)
+                        input,
+                        type(input),
                     )
-                    record_step_status(result, 'master_background', success=False)
+                    record_step_status(result, "master_background", success=False)
                     return result
 
                 # Save the computed background if requested by user
                 if self.save_background:
-                    self.save_model(master_background, suffix='masterbg1d', force=True, asn_id=asn_id)
-                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+                    self.save_model(master_background, suffix="masterbg1d", force=True, asn_id=asn_id)
+                    self.save_model(background_2d_collection, suffix="masterbg2d", force=True, asn_id=asn_id)
 
-            record_step_status(result, 'master_background', success=True)
+            record_step_status(result, "master_background", success=True)
 
         return result
 
@@ -196,32 +197,35 @@ class MasterBackgroundStep(Step):
             if isinstance(input_data, ModelContainer):
                 isub = 0
                 for indata in input_data:
-                    if indata.meta.cal_step.back_sub == 'COMPLETE' or \
-                       indata.meta.cal_step.master_background == 'COMPLETE':
+                    if indata.meta.cal_step.back_sub == "COMPLETE" or indata.meta.cal_step.master_background == "COMPLETE":
                         do_sub = False
                         isub += 1
 
                 if not do_sub and isub == len(input_data):
+                    self.log.info("Not subtracting master background, background was subtracted in calspec2")
                     self.log.info(
-                        "Not subtracting master background, background was subtracted in calspec2")
-                    self.log.info("To force the master background to be subtracted from this data, "
-                                  "run again and set force_subtract = True.")
+                        "To force the master background to be subtracted from this data, "
+                        "run again and set force_subtract = True."
+                    )
 
                 if not do_sub and isub != len(input_data):
                     self.log.warning("Not subtracting master background.")
-                    self.log.warning("Input data contains a mixture of data with and without "
-                                     "background subtraction done in calspec2.")
-                    self.log.warning("To force the master background to be subtracted from this data, "
-                                     "run again and set force_subtract = True.")
+                    self.log.warning(
+                        "Input data contains a mixture of data with and without " "background subtraction done in calspec2."
+                    )
+                    self.log.warning(
+                        "To force the master background to be subtracted from this data, "
+                        "run again and set force_subtract = True."
+                    )
             # input data is a single file
             else:
-                if input_data.meta.cal_step.back_sub == 'COMPLETE' or \
-                   input_data.meta.cal_step.master_background == 'COMPLETE':
+                if input_data.meta.cal_step.back_sub == "COMPLETE" or input_data.meta.cal_step.master_background == "COMPLETE":
                     do_sub = False
+                    self.log.info("Not subtracting master background, background was subtracted in calspec2")
                     self.log.info(
-                        "Not subtracting master background, background was subtracted in calspec2")
-                    self.log.info("To force the master background to be subtracted from this data, "
-                                  "run again and set force_subtract = True.")
+                        "To force the master background to be subtracted from this data, "
+                        "run again and set force_subtract = True."
+                    )
 
         return do_sub
 
@@ -229,26 +233,25 @@ class MasterBackgroundStep(Step):
 def copy_background_to_surf_bright(spectrum):
     """Copy the background column to the surf_bright column in a MultiSpecModel in-place"""
     for spec in spectrum.spec:
-        spec.spec_table['SURF_BRIGHT'][:] = spec.spec_table['BACKGROUND'].copy()
-        spec.spec_table['SB_ERROR'][:] = spec.spec_table['BKGD_ERROR'].copy()
+        spec.spec_table["SURF_BRIGHT"][:] = spec.spec_table["BACKGROUND"].copy()
+        spec.spec_table["SB_ERROR"][:] = spec.spec_table["BKGD_ERROR"].copy()
         # Zero out the background column for safety
-        spec.spec_table['BACKGROUND'][:] = 0
+        spec.spec_table["BACKGROUND"][:] = 0
         # Set BERROR to dummy val of 0.0, as in extract_1d currently
-        spec.spec_table['BKGD_ERROR'][:] = 0.
+        spec.spec_table["BKGD_ERROR"][:] = 0.0
 
 
 def split_container(container):
-    """Divide a ModelContainer with science and background into one of each
-    """
+    """Divide a ModelContainer with science and background into one of each"""
     asn = container.meta.asn_table.instance
 
     background = ModelContainer()
     science = ModelContainer()
 
-    for ind_science in container.ind_asn_type('science'):
+    for ind_science in container.ind_asn_type("science"):
         science.append(container._models[ind_science])
 
-    for ind_bkgd in container.ind_asn_type('background'):
+    for ind_bkgd in container.ind_asn_type("background"):
         background.append(container._models[ind_bkgd])
 
     # Pass along the association table to the output science container
@@ -257,8 +260,8 @@ def split_container(container):
     science.asn_table_name = container.asn_table_name
     merge_tree(science.meta.asn_table.instance, asn)
     # Prune the background members from the table
-    for p in science.meta.asn_table.instance['products']:
-        p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
+    for p in science.meta.asn_table.instance["products"]:
+        p["members"] = [m for m in p["members"] if m["exptype"].lower() != "background"]
     return science, background
 
 
@@ -295,8 +298,7 @@ def subtract_2d_background(source, background):
             result.dq = np.bitwise_or(result.dq, background.dq)
         else:
             # Shouldn't get here.
-            raise RuntimeError("Input type {} is not supported."
-                               .format(type(model)))
+            raise RuntimeError("Input type {} is not supported.".format(type(model)))
         return result
 
     # Handle containers of many datamodels
@@ -312,7 +314,6 @@ def subtract_2d_background(source, background):
 
     else:
         # Shouldn't get here.
-        raise RuntimeError("Input type {} is not supported."
-                           .format(type(source)))
+        raise RuntimeError("Input type {} is not supported.".format(type(source)))
 
     return result

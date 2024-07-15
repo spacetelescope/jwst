@@ -39,9 +39,10 @@ def _SourceFinderWrapper(data, threshold, mask=None, **kwargs):
         A table containing the found sources.
     """
 
-    default_kwargs = {'npixels': 10,
-                      'progress_bar': False,
-                      }
+    default_kwargs = {
+        "npixels": 10,
+        "progress_bar": False,
+    }
     kwargs = {**default_kwargs, **kwargs}
 
     # handle passing kwargs into SourceFinder and SourceCatalog
@@ -51,14 +52,14 @@ def _SourceFinderWrapper(data, threshold, mask=None, **kwargs):
     catalog_args = list(inspect.signature(SourceCatalog).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
     catalog_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in catalog_args}
-    if ('kron_params' in catalog_dict.keys()) and (catalog_dict['kron_params'] is None):
-        catalog_dict['kron_params'] = (2.5, 1.4, 0.0)  # necessary because cannot specify default in Step spec string
+    if ("kron_params" in catalog_dict.keys()) and (catalog_dict["kron_params"] is None):
+        catalog_dict["kron_params"] = (2.5, 1.4, 0.0)  # necessary because cannot specify default in Step spec string
 
     finder = SourceFinder(**finder_dict)
     segment_map = finder(data, threshold, mask=mask)
     sources = SourceCatalog(data, segment_map, mask=mask, **catalog_dict).to_table()
-    sources.rename_column('label', 'id')
-    sources.rename_column('segment_flux', 'flux')
+    sources.rename_column("label", "id")
+    sources.rename_column("segment_flux", "flux")
 
     return sources
 
@@ -87,14 +88,16 @@ def _IRAFStarFinderWrapper(data, threshold, mask=None, **kwargs):
 
     # defaults are not necessary to repeat here when running full pipeline step
     # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
-    default_kwargs = {'fwhm': 2.5,}
+    default_kwargs = {
+        "fwhm": 2.5,
+    }
     kwargs = {**default_kwargs, **kwargs}
 
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(IRAFStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
-    fwhm = finder_dict.pop('fwhm')
+    fwhm = finder_dict.pop("fwhm")
 
     starfind = IRAFStarFinder(threshold, fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
@@ -126,7 +129,9 @@ def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
 
     # defaults are not necessary to repeat here when running full pipeline step
     # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
-    default_kwargs = {'fwhm': 2.5,}
+    default_kwargs = {
+        "fwhm": 2.5,
+    }
     kwargs = {**default_kwargs, **kwargs}
 
     # for consistency with IRAFStarFinder, allow minsep_fwhm to be passed in
@@ -141,14 +146,14 @@ def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
-    fwhm = finder_dict.pop('fwhm')
+    fwhm = finder_dict.pop("fwhm")
     starfind = DAOStarFinder(threshold, fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
 
     return sources
 
 
-def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='iraf', starfinder_kwargs={}):
+def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder="iraf", starfinder_kwargs={}):
     """
     Create a catalog of point-line sources to be used for image
     alignment in tweakreg.
@@ -191,29 +196,26 @@ def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='ira
         An astropy Table containing the source catalog.
     """
     if not isinstance(model, ImageModel):
-        raise TypeError('The input model must be an ImageModel.')
+        raise TypeError("The input model must be an ImageModel.")
 
-    if starfinder.lower() in ['dao', 'daostarfinder']:
+    if starfinder.lower() in ["dao", "daostarfinder"]:
         StarFinder = _DaoStarFinderWrapper
-    elif starfinder.lower() in ['iraf', 'irafstarfinder']:
+    elif starfinder.lower() in ["iraf", "irafstarfinder"]:
         StarFinder = _IRAFStarFinderWrapper
-    elif starfinder.lower() in ['segmentation', 'sourcefinder']:
+    elif starfinder.lower() in ["segmentation", "sourcefinder"]:
         StarFinder = _SourceFinderWrapper
     else:
         raise ValueError(f"Unknown starfinder type: {starfinder}")
 
     # Mask the non-imaging area, e.g. reference pixels and MIRI non-science area
-    coverage_mask = ((dqflags.pixel['NON_SCIENCE'] +
-                      dqflags.pixel['DO_NOT_USE']) &
-                     model.dq).astype(bool)
+    coverage_mask = ((dqflags.pixel["NON_SCIENCE"] + dqflags.pixel["DO_NOT_USE"]) & model.dq).astype(bool)
 
-    columns = ['id', 'xcentroid', 'ycentroid', 'flux']
+    columns = ["id", "xcentroid", "ycentroid", "flux"]
     try:
-        bkg = JWSTBackground(model.data, box_size=bkg_boxsize,
-                             coverage_mask=coverage_mask)
+        bkg = JWSTBackground(model.data, box_size=bkg_boxsize, coverage_mask=coverage_mask)
         with warnings.catch_warnings():
             # suppress warning about NaNs being automatically masked - this is desired
-            warnings.simplefilter('ignore', AstropyUserWarning) 
+            warnings.simplefilter("ignore", AstropyUserWarning)
             threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     except ValueError as e:
         log.warning(f"Error determining sky background: {e.args[0]}")

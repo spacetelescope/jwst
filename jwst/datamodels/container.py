@@ -15,12 +15,12 @@ from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst.datamodels.util import is_association
 
-__doctest_skip__ = ['ModelContainer']
+__doctest_skip__ = ["ModelContainer"]
 
-__all__ = ['ModelContainer']
+__all__ = ["ModelContainer"]
 
 _ONE_MB = 1 << 20
-RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
+RECOGNIZED_MEMBER_FIELDS = ["tweakreg_catalog", "group_id"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -146,11 +146,10 @@ to supply custom catalogs.
             ``models_grouped`` property for more details.
 
     """
+
     schema_url = None
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None,
-                 iscopy=False, **kwargs):
-
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, iscopy=False, **kwargs):
         super().__init__(init=None, **kwargs)
 
         self._models = []
@@ -163,8 +162,8 @@ to supply custom catalogs.
         self.asn_file_path = None
 
         self._memmap = kwargs.get("memmap", False)
-        self._return_open = kwargs.get('return_open', True)
-        self._save_open = kwargs.get('save_open', True)
+        self._return_open = kwargs.get("return_open", True)
+        self._save_open = kwargs.get("save_open", True)
 
         if init is None:
             # Don't populate the container with models
@@ -181,8 +180,7 @@ to supply custom catalogs.
                 if self._save_open:
                     init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
-                raise TypeError("list must contain items that can be opened "
-                                "with jwst.datamodels.open()")
+                raise TypeError("list must contain items that can be opened " "with jwst.datamodels.open()")
             self._models = init
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
@@ -200,8 +198,7 @@ to supply custom catalogs.
             self.asn_file_path = init
             self.from_asn(init_from_asn)
         else:
-            raise TypeError('Input {0!r} is not a list of JwstDataModels or '
-                            'an ASN file'.format(init))
+            raise TypeError("Input {0!r} is not a list of JwstDataModels or " "an ASN file".format(init))
 
     def __len__(self):
         return len(self._models)
@@ -240,9 +237,9 @@ to supply custom catalogs.
         """
         Returns a deep copy of the models in this model container.
         """
-        result = self.__class__(init=None,
-                                pass_invalid_values=self._pass_invalid_values,
-                                strict_validation=self._strict_validation)
+        result = self.__class__(
+            init=None, pass_invalid_values=self._pass_invalid_values, strict_validation=self._strict_validation
+        )
         instance = copy.deepcopy(self._instance, memo=memo)
         result._asdf = AsdfFile(instance)
         result._instance = instance
@@ -291,37 +288,34 @@ to supply custom catalogs.
         # grab all the files
         if self.asn_exptypes:
             infiles = []
-            logger.debug('Filtering datasets based on allowed exptypes {}:'
-                         .format(self.asn_exptypes))
-            for member in asn_data['products'][0]['members']:
-                if any([x for x in self.asn_exptypes if re.match(member['exptype'],
-                                                                 x, re.IGNORECASE)]):
+            logger.debug("Filtering datasets based on allowed exptypes {}:".format(self.asn_exptypes))
+            for member in asn_data["products"][0]["members"]:
+                if any([x for x in self.asn_exptypes if re.match(member["exptype"], x, re.IGNORECASE)]):
                     infiles.append(member)
-                    logger.debug('Files accepted for processing {}:'.format(member['expname']))
+                    logger.debug("Files accepted for processing {}:".format(member["expname"]))
         else:
-            infiles = [member for member
-                       in asn_data['products'][0]['members']]
+            infiles = [member for member in asn_data["products"][0]["members"]]
 
         if self.asn_file_path:
             asn_dir = op.dirname(self.asn_file_path)
         else:
-            asn_dir = ''
+            asn_dir = ""
 
         # Only handle the specified number of members.
         if self.asn_n_members:
-            sublist = infiles[:self.asn_n_members]
+            sublist = infiles[: self.asn_n_members]
         else:
             sublist = infiles
         try:
             for member in sublist:
-                filepath = op.join(asn_dir, member['expname'])
+                filepath = op.join(asn_dir, member["expname"])
                 update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
                 if update_model or self._save_open:
                     m = datamodel_open(filepath, memmap=self._memmap)
-                    m.meta.asn.exptype = member['exptype']
+                    m.meta.asn.exptype = member["exptype"]
                     for attr, val in member.items():
                         if attr in RECOGNIZED_MEMBER_FIELDS:
-                            if attr == 'tweakreg_catalog':
+                            if attr == "tweakreg_catalog":
                                 if val.strip():
                                     val = op.join(asn_dir, val)
                                 else:
@@ -343,13 +337,11 @@ to supply custom catalogs.
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
-        properties.merge_tree(
-            self.meta.asn_table._instance, asn_data
-        )
+        properties.merge_tree(self.meta.asn_table._instance, asn_data)
 
         if self.asn_file_path is not None:
             self.asn_table_name = op.basename(self.asn_file_path)
-            self.asn_pool_name = asn_data['asn_pool']
+            self.asn_pool_name = asn_data["asn_pool"]
             for model in self:
                 try:
                     model.meta.asn.table_name = self.asn_table_name
@@ -357,11 +349,7 @@ to supply custom catalogs.
                 except AttributeError:
                     pass
 
-    def save(self,
-             path=None,
-             dir_path=None,
-             save_model_func=None,
-             **kwargs):
+    def save(self, path=None, dir_path=None, save_model_func=None, **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
@@ -392,6 +380,7 @@ to supply custom catalogs.
         """
         output_paths = []
         if path is None:
+
             def path(filename, idx=None):
                 return filename
         elif not callable(path):
@@ -401,16 +390,12 @@ to supply custom catalogs.
             if len(self) <= 1:
                 idx = None
             if save_model_func is None:
-                outpath, filename = op.split(
-                    path(model.meta.filename, idx=idx)
-                )
+                outpath, filename = op.split(path(model.meta.filename, idx=idx))
                 if dir_path:
                     outpath = dir_path
                 save_path = op.join(outpath, filename)
                 try:
-                    output_paths.append(
-                        model.save(save_path, **kwargs)
-                    )
+                    output_paths.append(model.save(save_path, **kwargs))
                 except IOError as err:
                     raise err
 
@@ -442,13 +427,13 @@ to supply custom catalogs.
         used for grouping.
         """
         unique_exposure_parameters = [
-            'program_number',
-            'observation_number',
-            'visit_number',
-            'visit_group',
-            'sequence_id',
-            'activity_id',
-            'exposure_number'
+            "program_number",
+            "observation_number",
+            "visit_number",
+            "visit_group",
+            "sequence_id",
+            "activity_id",
+            "exposure_number",
         ]
 
         group_dict = OrderedDict()
@@ -457,26 +442,23 @@ to supply custom catalogs.
             if not self._save_open:
                 model = datamodel_open(model, memmap=self._memmap)
 
-            if (hasattr(model.meta, 'group_id') and
-                        model.meta.group_id not in [None, '']):
+            if hasattr(model.meta, "group_id") and model.meta.group_id not in [None, ""]:
                 group_id = model.meta.group_id
 
             else:
                 for param in unique_exposure_parameters:
                     params.append(getattr(model.meta.observation, param))
                 try:
-                    group_id = (
-                        'jw' + '_'.join(
-                            [
-                                ''.join(params[:3]),
-                                ''.join(params[3:6]),
-                                params[6],
-                            ]
-                        )
+                    group_id = "jw" + "_".join(
+                        [
+                            "".join(params[:3]),
+                            "".join(params[3:6]),
+                            params[6],
+                        ]
                     )
                     model.meta.group_id = group_id
                 except TypeError:
-                    model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+                    model.meta.group_id = "exposure{0:04d}".format(i + 1)
 
                 group_id = model.meta.group_id
 
@@ -602,8 +584,10 @@ to supply custom catalogs.
 
         if section_nrows == 0:
             self.buffer_size = min_buffer_size
-            logger.warning("WARNING: Buffer size is too small to hold a single row."
-                           f"Increasing buffer size to {self.buffer_size / _ONE_MB}MB")
+            logger.warning(
+                "WARNING: Buffer size is too small to hold a single row."
+                f"Increasing buffer size to {self.buffer_size / _ONE_MB}MB"
+            )
             section_nrows = 1
 
         nbr = section_nrows - self.overlap
@@ -629,10 +613,8 @@ to supply custom catalogs.
                 e2 = min(e2, self.imrows)
                 e1 = min(e1, e2 - self.overlap - 1)
 
-            data_list = np.empty((len(self._models), e2 - e1, self.imcols),
-                                 dtype=self.imtype)
-            wht_list = np.empty((len(self._models), e2 - e1, self.imcols),
-                                dtype=self.imtype)
+            data_list = np.empty((len(self._models), e2 - e1, self.imcols), dtype=self.imtype)
+            wht_list = np.empty((len(self._models), e2 - e1, self.imcols), dtype=self.imtype)
             for i, model in enumerate(self._models):
                 model = datamodel_open(model, memmap=self._memmap)
 

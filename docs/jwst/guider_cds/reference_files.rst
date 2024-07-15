@@ -11,4 +11,3 @@ values will be used.
 :ref:`GAIN <gain_reffile>`
 
 :ref:`READNOISE <readnoise_reffile>`
-

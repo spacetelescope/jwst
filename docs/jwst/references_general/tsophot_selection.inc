@@ -7,9 +7,8 @@ TSOPHOT is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ================================================
-Instrument Keywords                                         
+Instrument Keywords
 ========== ================================================
-MIRI       INSTRUME, EXP_TYPE, TSOVISIT, DATE-OBS, TIME-OBS 
-NIRCam     INSTRUME, EXP_TYPE, TSOVISIT, DATE-OBS, TIME-OBS 
+MIRI       INSTRUME, EXP_TYPE, TSOVISIT, DATE-OBS, TIME-OBS
+NIRCam     INSTRUME, EXP_TYPE, TSOVISIT, DATE-OBS, TIME-OBS
 ========== ================================================
-

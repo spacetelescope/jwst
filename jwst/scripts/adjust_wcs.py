@@ -48,6 +48,7 @@ From command line::
 
     % adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -r 0.2 arcsec -o 0.0023 deg
 """
+
 import argparse
 import glob
 import logging
@@ -70,12 +71,12 @@ logger.addHandler(logging.NullHandler())
 
 
 def _replace_suffix(file, new_suffix):
-    sep = '_'
+    sep = "_"
     directory, base = os.path.split(file)
     root, ext = os.path.splitext(base)
     if sep in root:
         name_parts = root.rpartition(sep)
-        root = ''.join(name_parts[:-1] + (new_suffix, ))
+        root = "".join(name_parts[:-1] + (new_suffix,))
     else:
         root = root + sep + new_suffix
     base = root + ext
@@ -106,7 +107,7 @@ def _is_unit(arg):
 
 
 def angle(arg):
-    args = arg.strip().split(' ')
+    args = arg.strip().split(" ")
     if len(args) == 1:
         return float(args[0])
     elif len(args) == 2:
@@ -120,82 +121,24 @@ def main():
         raise ValueError("Missing required arguments.")
 
     # Parse input parameters
-    parser = argparse.ArgumentParser(
-        prog="adjust_wcs",
-        description="Apply adjustments to data model's WCS"
-    )
+    parser = argparse.ArgumentParser(prog="adjust_wcs", description="Apply adjustments to data model's WCS")
 
-    parser.add_argument(
-        "arg0",
-        nargs='*',
-        metavar="input",
-        type=str,
-        help="Input data model file(s)."
-    )
+    parser.add_argument("arg0", nargs="*", metavar="input", type=str, help="Input data model file(s).")
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        "-u",
-        "--update",
-        action="store_true",
-        help="Update input data models."
-    )
-    group.add_argument(
-        "--suffix",
-        type=str,
-        help="Suffix for output files."
-    )
-    group.add_argument(
-        "-f",
-        "--file",
-        type=str,
-        help="Output file name."
-    )
+    group.add_argument("-u", "--update", action="store_true", help="Update input data models.")
+    group.add_argument("--suffix", type=str, help="Suffix for output files.")
+    group.add_argument("-f", "--file", type=str, help="Output file name.")
 
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite existing output files (ignored with -u/--update)."
-    )
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing output files (ignored with -u/--update).")
 
-    group_wcs = parser.add_argument_group(
-        title='WCS adjustment parameters'
-    )
-    group_wcs.add_argument(
-        "-r",
-        "--ra_delta",
-        type=angle,
-        default=0.0,
-        help="Delta RA (longitude), degrees."
-    )
-    group_wcs.add_argument(
-        "-d",
-        "--dec_delta",
-        type=angle,
-        default=0.0,
-        help="Delta DEC (latitude), degrees."
-    )
-    group_wcs.add_argument(
-        "-o",
-        "--roll_delta",
-        type=angle,
-        default=0.0,
-        help="Delta roll angle, degrees."
-    )
-    group_wcs.add_argument(
-        "-s",
-        "--scale_factor",
-        type=float,
-        default=1.0,
-        help="Scale factor."
-    )
+    group_wcs = parser.add_argument_group(title="WCS adjustment parameters")
+    group_wcs.add_argument("-r", "--ra_delta", type=angle, default=0.0, help="Delta RA (longitude), degrees.")
+    group_wcs.add_argument("-d", "--dec_delta", type=angle, default=0.0, help="Delta DEC (latitude), degrees.")
+    group_wcs.add_argument("-o", "--roll_delta", type=angle, default=0.0, help="Delta roll angle, degrees.")
+    group_wcs.add_argument("-s", "--scale_factor", type=float, default=1.0, help="Scale factor.")
 
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version="v{0}".format(jwst.__version__)
-    )
+    parser.add_argument("-v", "--version", action="version", version="v{0}".format(jwst.__version__))
 
     # pre-process argv for units and negative floats:
     argv = sys.argv[1:]
@@ -204,8 +147,7 @@ def main():
         argv_new.append(argv.pop(0))
 
         # check whether next argument is a float:
-        if (argv_new[-1] in _ANGLE_PARS and len(argv) >= 1 and
-                _is_float(argv[0])):
+        if argv_new[-1] in _ANGLE_PARS and len(argv) >= 1 and _is_float(argv[0]):
             angle_value = argv.pop(0)
             # check whether next argument is a unit:
             if len(argv) >= 1 and _is_unit(argv[0]):
@@ -221,17 +163,10 @@ def main():
     for f in options.arg0:
         files.extend(glob.glob(f))
 
-    if options.file and len(files) > 1 :
-        parser.error(
-            "argument -f/--file: not allowed with multiple input files"
-        )
+    if options.file and len(files) > 1:
+        parser.error("argument -f/--file: not allowed with multiple input files")
 
-    wcs_pars = [
-        options.ra_delta,
-        options.dec_delta,
-        options.roll_delta,
-        options.scale_factor
-    ]
+    wcs_pars = [options.ra_delta, options.dec_delta, options.roll_delta, options.scale_factor]
 
     if wcs_pars == [0.0, 0.0, 0.0, 1.0]:
         logger.info(
@@ -251,7 +186,7 @@ def main():
             delta_ra=options.ra_delta,
             delta_dec=options.dec_delta,
             delta_roll=options.roll_delta,
-            scale_factor=options.scale_factor
+            scale_factor=options.scale_factor,
         )
 
         # Save results:
@@ -259,16 +194,9 @@ def main():
         # Also update FITS representation in input exposures for
         # subsequent reprocessing by the end-user.
         try:
-            update_fits_wcsinfo(
-                data_model,
-                max_pix_error=0.001,
-                npoints=64
-            )
+            update_fits_wcsinfo(data_model, max_pix_error=0.001, npoints=64)
         except (ValueError, RuntimeError) as e:
-            logger.warning(
-                "Failed to update 'meta.wcsinfo' with FITS SIP "
-                f'approximation. Reported error is:\n"{e.args[0]}"'
-            )
+            logger.warning("Failed to update 'meta.wcsinfo' with FITS SIP " f'approximation. Reported error is:\n"{e.args[0]}"')
 
         if options.update:
             data_model.save(fname, overwrite=True)
@@ -283,5 +211,5 @@ def main():
             logger.info(f"Saved data model to '{output_file}'")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

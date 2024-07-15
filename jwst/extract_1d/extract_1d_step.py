@@ -181,7 +181,7 @@ class Extract1dStep(Step):
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr', 'wavemap', 'spectrace', 'specprofile', 'speckernel']
+    reference_file_types = ["extract1d", "apcorr", "wavemap", "spectrace", "specprofile", "speckernel"]
 
     def process(self, input):
         """Execute the step.
@@ -203,35 +203,34 @@ class Extract1dStep(Step):
         was_source_model = False  # default value
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
-            self.log.debug('Input is a CubeModel for a multiple integ. file')
+            self.log.debug("Input is a CubeModel for a multiple integ. file")
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image. This could be a resampled 2-D image
-            self.log.debug('Input is an ImageModel')
+            self.log.debug("Input is an ImageModel")
         elif isinstance(input_model, SourceModelContainer):
-            self.log.debug('Input is a SourceModelContainer')
+            self.log.debug("Input is a SourceModelContainer")
             was_source_model = True
         elif isinstance(input_model, ModelContainer):
-            self.log.debug('Input is a ModelContainer')
+            self.log.debug("Input is a ModelContainer")
         elif isinstance(input_model, datamodels.MultiSlitModel):
             #  If input is a 3D rateints (which is unsupported) skip the step
             if len((input_model[0]).shape) == 3:
-                self.log.warning('3D input is unsupported; step will be skipped')
-                input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                self.log.warning("3D input is unsupported; step will be skipped")
+                input_model.meta.cal_step.extract_1d = "SKIPPED"
                 return input_model
-            self.log.debug('Input is a MultiSlitModel')
+            self.log.debug("Input is a MultiSlitModel")
         elif isinstance(input_model, datamodels.MultiExposureModel):
-            self.log.warning('Input is a MultiExposureModel, '
-                             'which is not currently supported')
+            self.log.warning("Input is a MultiExposureModel, " "which is not currently supported")
         elif isinstance(input_model, datamodels.IFUCubeModel):
-            self.log.debug('Input is an IFUCubeModel')
+            self.log.debug("Input is an IFUCubeModel")
         elif isinstance(input_model, datamodels.SlitModel):
             # NRS_BRIGHTOBJ and MIRI LRS fixed-slit (resampled) modes
-            self.log.debug('Input is a SlitModel')
+            self.log.debug("Input is a SlitModel")
         else:
-            self.log.error(f'Input is a {str(type(input_model))}, ')
-            self.log.error('which was not expected for extract_1d')
-            self.log.error('extract_1d will be skipped.')
-            input_model.meta.cal_step.extract_1d = 'SKIPPED'
+            self.log.error(f"Input is a {str(type(input_model))}, ")
+            self.log.error("which was not expected for extract_1d")
+            self.log.error("extract_1d will be skipped.")
+            input_model.meta.cal_step.extract_1d = "SKIPPED"
             return input_model
 
         if isinstance(input_model, datamodels.IFUCubeModel):
@@ -243,23 +242,26 @@ class Extract1dStep(Step):
 
         if self.ifu_rfcorr:
             if exp_type != "MIR_MRS":
-                self.log.warning("The option to apply a residual refringe correction is"
-                                 f" not supported for {input_model.meta.exposure.type} data.")
+                self.log.warning(
+                    "The option to apply a residual refringe correction is"
+                    f" not supported for {input_model.meta.exposure.type} data."
+                )
 
         if self.ifu_rscale is not None:
             if exp_type != "MIR_MRS":
-                self.log.warning("The option to change the extraction radius is"
-                                 f" not supported for {input_model.meta.exposure.type} data.")
+                self.log.warning(
+                    "The option to change the extraction radius is" f" not supported for {input_model.meta.exposure.type} data."
+                )
 
         if self.ifu_set_srctype is not None:
             if exp_type != "MIR_MRS":
-                self.log.warning("The option to change the source type is"
-                                 f" not supported for {input_model.meta.exposure.type} data.")
+                self.log.warning(
+                    "The option to change the source type is" f" not supported for {input_model.meta.exposure.type} data."
+                )
 
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
         if isinstance(input_model, ModelContainer):
-
             # This is the branch  WFSS data take
             if len(input_model) > 1:
                 self.log.debug(f"Input contains {len(input_model)} items")
@@ -267,23 +269,20 @@ class Extract1dStep(Step):
                 # --------------------------------------------------------------
                 # Data is WFSS
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
-
                     # For WFSS level-3, the input is a single entry of a
                     # SourceContainer, which contains a list of multiple
                     # SlitModels for a single source. Send the whole list
                     # into extract1d and put all results in a single product.
-                    apcorr_ref = (
-                        self.get_reference_file(input_model[0], 'apcorr') if self.apply_apcorr is True else 'N/A'
-                    )
+                    apcorr_ref = self.get_reference_file(input_model[0], "apcorr") if self.apply_apcorr is True else "N/A"
 
-                    if apcorr_ref == 'N/A':
+                    if apcorr_ref == "N/A":
                         self.log.info('APCORR reference file name is "N/A"')
-                        self.log.info('APCORR will NOT be applied')
+                        self.log.info("APCORR will NOT be applied")
                     else:
-                        self.log.info(f'Using APCORR file {apcorr_ref}')
+                        self.log.info(f"Using APCORR file {apcorr_ref}")
 
-                    extract_ref = 'N/A'
-                    self.log.info('No EXTRACT1D reference file will be used')
+                    extract_ref = "N/A"
+                    self.log.info("No EXTRACT1D reference file will be used")
 
                     result = extract.run_extract1d(
                         input_model,
@@ -302,10 +301,10 @@ class Extract1dStep(Step):
                         self.ifu_set_srctype,
                         self.ifu_rscale,
                         self.ifu_covar_scale,
-                        was_source_model=was_source_model
+                        was_source_model=was_source_model,
                     )
                     # Set the step flag to complete
-                    result.meta.cal_step.extract_1d = 'COMPLETE'
+                    result.meta.cal_step.extract_1d = "COMPLETE"
 
                 # --------------------------------------------------------------
                 # Data is a ModelContainer but is not WFSS
@@ -313,16 +312,16 @@ class Extract1dStep(Step):
                     result = ModelContainer()
                     for model in input_model:
                         # Get the reference file names
-                        extract_ref = self.get_reference_file(model, 'extract1d')
-                        self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
+                        extract_ref = self.get_reference_file(model, "extract1d")
+                        self.log.info(f"Using EXTRACT1D reference file {extract_ref}")
 
-                        apcorr_ref = self.get_reference_file(model, 'apcorr') if self.apply_apcorr is True else 'N/A'
+                        apcorr_ref = self.get_reference_file(model, "apcorr") if self.apply_apcorr is True else "N/A"
 
-                        if apcorr_ref == 'N/A':
+                        if apcorr_ref == "N/A":
                             self.log.info('APCORR reference file name is "N/A"')
-                            self.log.info('APCORR will NOT be applied')
+                            self.log.info("APCORR will NOT be applied")
                         else:
-                            self.log.info(f'Using APCORR file {apcorr_ref}')
+                            self.log.info(f"Using APCORR file {apcorr_ref}")
 
                         temp = extract.run_extract1d(
                             model,
@@ -344,27 +343,27 @@ class Extract1dStep(Step):
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
-                        temp.meta.cal_step.extract_1d = 'COMPLETE'
+                        temp.meta.cal_step.extract_1d = "COMPLETE"
                         result.append(temp)
                         del temp
             # ------------------------------------------------------------------------
             # Still in ModelContainer type, but only 1 model
             elif len(input_model) == 1:
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
-                    extract_ref = 'N/A'
-                    self.log.info('No EXTRACT1D reference file will be used')
+                    extract_ref = "N/A"
+                    self.log.info("No EXTRACT1D reference file will be used")
                 else:
                     # Get the extract1d reference file name for the one model in input
-                    extract_ref = self.get_reference_file(input_model[0], 'extract1d')
-                    self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
+                    extract_ref = self.get_reference_file(input_model[0], "extract1d")
+                    self.log.info(f"Using EXTRACT1D reference file {extract_ref}")
 
-                apcorr_ref = self.get_reference_file(input_model[0], 'apcorr') if self.apply_apcorr is True else 'N/A'
+                apcorr_ref = self.get_reference_file(input_model[0], "apcorr") if self.apply_apcorr is True else "N/A"
 
-                if apcorr_ref == 'N/A':
+                if apcorr_ref == "N/A":
                     self.log.info('APCORR reference file name is "N/A"')
-                    self.log.info('APCORR will NOT be applied')
+                    self.log.info("APCORR will NOT be applied")
                 else:
-                    self.log.info(f'Using APCORR file {apcorr_ref}')
+                    self.log.info(f"Using APCORR file {apcorr_ref}")
 
                 result = extract.run_extract1d(
                     input_model[0],
@@ -387,73 +386,76 @@ class Extract1dStep(Step):
                 )
 
                 # Set the step flag to complete
-                result.meta.cal_step.extract_1d = 'COMPLETE'
+                result.meta.cal_step.extract_1d = "COMPLETE"
             else:
-                self.log.error('Input model is empty;')
-                self.log.error('extract_1d will be skipped.')
+                self.log.error("Input model is empty;")
+                self.log.error("extract_1d will be skipped.")
                 return input_model
 
         # ______________________________________________________________________
         # Data that is not a ModelContainer (IFUCube and other single models)
         else:
             # Data is NRISS SOSS observation.
-            if input_model.meta.exposure.type == 'NIS_SOSS':
-
-                self.log.info(
-                    'Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.')
+            if input_model.meta.exposure.type == "NIS_SOSS":
+                self.log.info("Input is a NIRISS SOSS observation, the specialized SOSS extraction (ATOCA) will be used.")
 
                 # Set the filter configuration
-                if input_model.meta.instrument.filter == 'CLEAR':
-                    self.log.info('Exposure is through the GR700XD + CLEAR (science).')
-                    soss_filter = 'CLEAR'
+                if input_model.meta.instrument.filter == "CLEAR":
+                    self.log.info("Exposure is through the GR700XD + CLEAR (science).")
+                    soss_filter = "CLEAR"
                 else:
-                    self.log.error('The SOSS extraction is implemented for the CLEAR filter only.'
-                                   f'Requested filter is {input_model.meta.instrument.filter}.')
-                    self.log.error('extract_1d will be skipped.')
-                    input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                    self.log.error(
+                        "The SOSS extraction is implemented for the CLEAR filter only."
+                        f"Requested filter is {input_model.meta.instrument.filter}."
+                    )
+                    self.log.error("extract_1d will be skipped.")
+                    input_model.meta.cal_step.extract_1d = "SKIPPED"
                     return input_model
 
                 # Set the subarray mode being processed
-                if input_model.meta.subarray.name == 'SUBSTRIP256':
-                    self.log.info('Exposure is in the SUBSTRIP256 subarray.')
-                    self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
-                    subarray = 'SUBSTRIP256'
-                elif input_model.meta.subarray.name == 'SUBSTRIP96':
-                    self.log.info('Exposure is in the SUBSTRIP96 subarray.')
-                    self.log.info('Traces of orders 1 and 2 will be modelled but only order 1'
-                                  ' will be decontaminated before extraction.')
-                    subarray = 'SUBSTRIP96'
+                if input_model.meta.subarray.name == "SUBSTRIP256":
+                    self.log.info("Exposure is in the SUBSTRIP256 subarray.")
+                    self.log.info("Traces 1 and 2 will be modelled and decontaminated before extraction.")
+                    subarray = "SUBSTRIP256"
+                elif input_model.meta.subarray.name == "SUBSTRIP96":
+                    self.log.info("Exposure is in the SUBSTRIP96 subarray.")
+                    self.log.info(
+                        "Traces of orders 1 and 2 will be modelled but only order 1" " will be decontaminated before extraction."
+                    )
+                    subarray = "SUBSTRIP96"
                 else:
-                    self.log.error('The SOSS extraction is implemented for the SUBSTRIP256'
-                                   'and SUBSTRIP96 subarrays only. Subarray is currently '
-                                   f'{input_model.meta.subarray.name}.')
-                    self.log.error('Extract1dStep will be skipped.')
-                    input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                    self.log.error(
+                        "The SOSS extraction is implemented for the SUBSTRIP256"
+                        "and SUBSTRIP96 subarrays only. Subarray is currently "
+                        f"{input_model.meta.subarray.name}."
+                    )
+                    self.log.error("Extract1dStep will be skipped.")
+                    input_model.meta.cal_step.extract_1d = "SKIPPED"
                     return input_model
 
                 # Load reference files.
-                spectrace_ref_name = self.get_reference_file(input_model, 'spectrace')
-                wavemap_ref_name = self.get_reference_file(input_model, 'wavemap')
-                specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
-                speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
+                spectrace_ref_name = self.get_reference_file(input_model, "spectrace")
+                wavemap_ref_name = self.get_reference_file(input_model, "wavemap")
+                specprofile_ref_name = self.get_reference_file(input_model, "specprofile")
+                speckernel_ref_name = self.get_reference_file(input_model, "speckernel")
 
                 # Build SOSS kwargs dictionary.
                 soss_kwargs = dict()
-                soss_kwargs['threshold'] = self.soss_threshold
-                soss_kwargs['n_os'] = self.soss_n_os
-                soss_kwargs['tikfac'] = self.soss_tikfac
-                soss_kwargs['width'] = self.soss_width
-                soss_kwargs['bad_pix'] = self.soss_bad_pix
-                soss_kwargs['transform'] = self.soss_transform
-                soss_kwargs['subtract_background'] = self.subtract_background
-                soss_kwargs['rtol'] = self.soss_rtol
-                soss_kwargs['max_grid_size'] = self.soss_max_grid_size
-                soss_kwargs['wave_grid_in'] = self.soss_wave_grid_in
-                soss_kwargs['wave_grid_out'] = self.soss_wave_grid_out
-                soss_kwargs['estimate'] = self.soss_estimate
-                soss_kwargs['atoca'] = self.soss_atoca
+                soss_kwargs["threshold"] = self.soss_threshold
+                soss_kwargs["n_os"] = self.soss_n_os
+                soss_kwargs["tikfac"] = self.soss_tikfac
+                soss_kwargs["width"] = self.soss_width
+                soss_kwargs["bad_pix"] = self.soss_bad_pix
+                soss_kwargs["transform"] = self.soss_transform
+                soss_kwargs["subtract_background"] = self.subtract_background
+                soss_kwargs["rtol"] = self.soss_rtol
+                soss_kwargs["max_grid_size"] = self.soss_max_grid_size
+                soss_kwargs["wave_grid_in"] = self.soss_wave_grid_in
+                soss_kwargs["wave_grid_out"] = self.soss_wave_grid_out
+                soss_kwargs["estimate"] = self.soss_estimate
+                soss_kwargs["atoca"] = self.soss_atoca
                 # Set flag to output the model and the tikhonov tests
-                soss_kwargs['model'] = True if self.soss_modelname else False
+                soss_kwargs["model"] = True if self.soss_modelname else False
 
                 # Run the extraction.
                 result, ref_outputs, atoca_outputs = soss_extract.run_extract1d(
@@ -464,46 +466,41 @@ class Extract1dStep(Step):
                     speckernel_ref_name,
                     subarray,
                     soss_filter,
-                    soss_kwargs)
+                    soss_kwargs,
+                )
 
                 # Set the step flag to complete
                 if result is None:
                     return None
                 else:
-                    result.meta.cal_step.extract_1d = 'COMPLETE'
+                    result.meta.cal_step.extract_1d = "COMPLETE"
                     result.meta.target.source_type = None
 
                     input_model.close()
 
                     if self.soss_modelname:
-                        soss_modelname = self.make_output_path(
-                            basepath=self.soss_modelname,
-                            suffix='SossExtractModel'
-                        )
+                        soss_modelname = self.make_output_path(basepath=self.soss_modelname, suffix="SossExtractModel")
                         ref_outputs.save(soss_modelname)
 
                 if self.soss_modelname:
-                    soss_modelname = self.make_output_path(
-                        basepath=self.soss_modelname,
-                        suffix='AtocaSpectra'
-                    )
+                    soss_modelname = self.make_output_path(basepath=self.soss_modelname, suffix="AtocaSpectra")
                     atoca_outputs.save(soss_modelname)
             else:
                 # Get the reference file names
                 if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
-                    extract_ref = 'N/A'
-                    self.log.info('No EXTRACT1D reference file will be used')
+                    extract_ref = "N/A"
+                    self.log.info("No EXTRACT1D reference file will be used")
                 else:
-                    extract_ref = self.get_reference_file(input_model, 'extract1d')
-                    self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
+                    extract_ref = self.get_reference_file(input_model, "extract1d")
+                    self.log.info(f"Using EXTRACT1D reference file {extract_ref}")
 
-                apcorr_ref = self.get_reference_file(input_model, 'apcorr') if self.apply_apcorr is True else 'N/A'
+                apcorr_ref = self.get_reference_file(input_model, "apcorr") if self.apply_apcorr is True else "N/A"
 
-                if apcorr_ref == 'N/A':
+                if apcorr_ref == "N/A":
                     self.log.info('APCORR reference file name is "N/A"')
-                    self.log.info('APCORR will NOT be applied')
+                    self.log.info("APCORR will NOT be applied")
                 else:
-                    self.log.info(f'Using APCORR file {apcorr_ref}')
+                    self.log.info(f"Using APCORR file {apcorr_ref}")
 
                 result = extract.run_extract1d(
                     input_model,
@@ -526,7 +523,7 @@ class Extract1dStep(Step):
                 )
 
                 # Set the step flag to complete
-                result.meta.cal_step.extract_1d = 'COMPLETE'
+                result.meta.cal_step.extract_1d = "COMPLETE"
 
         input_model.close()
 

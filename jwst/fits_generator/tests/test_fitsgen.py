@@ -8,7 +8,7 @@ dotfile_directory = test_directory + '/dotfile/'
 okfile_directory = test_directory + '/okfile/'
 
 def test_get_proposals():
-    """Test the get_proposals function. """ 
+    """Test the get_proposals function. """
     dotfile_list = create_data.get_proposals(dotfile_directory)
     assert dotfile_list == []
 
@@ -16,4 +16,3 @@ def test_get_proposals():
     assert okfile_list == [(okfile_directory, '05181.prop')]
 
     return
-

@@ -460,7 +460,7 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
                         value = ('T')
                     )],
                     reduce=Constraint.notany
-                ),  
+                ),
                 DMSAttrConstraint(
                     name='channel',
                     sources=['channel'],

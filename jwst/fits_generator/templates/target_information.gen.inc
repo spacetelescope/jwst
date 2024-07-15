@@ -10,4 +10,3 @@ TARRUDEC =  0.0  / target Dec uncertainty
 PROP_RA  =  0.0  / proposer specified RA for the target
 PROP_DEC =  0.0  / proposer specified Dec for the target
 PROPEPOC = 2000.0  / proposer specified epoch for RA and Dec
-

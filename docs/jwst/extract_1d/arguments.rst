@@ -114,7 +114,7 @@ The ``extract_1d`` step has the following step-specific arguments.
   A string that can be used to override the extraction method for the source_type
   given by the SRCTYPE keyword. The allowed values are POINT and EXTENDED. The SRCTYPE keyword is
   not changed, instead the extraction method used is based on this parameter setting. This is
-  only allowed for MIRI MRS IFU data. 
+  only allowed for MIRI MRS IFU data.
 
 ``--ifu_rscale``
    A float designating the number of PSF FWHMs to use for the extraction radius. This
@@ -128,7 +128,7 @@ The ``extract_1d`` step has the following step-specific arguments.
    for covariance between adjacent spaxels in the IFU data cube.  The default value is
    1.0 (i.e., no correction) unless set by a user or a parameter reference file.  This
    parameter only affects MIRI and NIRSpec IFU spectroscopy.
-   
+
 ``--soss_atoca``
   This is a NIRISS-SOSS algorithm-specific parameter; if True, use the ATOCA
   algorithm to treat order contamination. Default is ``True``.

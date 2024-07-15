@@ -57,4 +57,3 @@ For application to imaging data, the FITS file contains a single set of SCI,
 ERR, DQ, and DQ_DEF extensions.  Image dimensions should be 2048x2048 for the
 NIR detectors and 1032x1024 for MIRI (i.e. they include reference pixels),
 unless data were taken in subarray mode.
-

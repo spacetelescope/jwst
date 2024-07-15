@@ -38,7 +38,7 @@
                 {
                     "type": "null"
                 }
-            ] 
+            ]
         },
         "products": {
             "description": "Array of output products and their required inputs derived from this association.",

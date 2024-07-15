@@ -6,7 +6,7 @@
 
 .. _astropy Table:
    http://docs.astropy.org/en/stable/table/index.html
-   
+
 Association pools are simply tables. Pools are instantiated using the
 :py:class:`~jwst.associations.AssociationPool`. This class is simply a subclass of `astropy
 Table`_. As such, any file that is supported by  astropy I/O can be

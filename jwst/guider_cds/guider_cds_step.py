@@ -8,14 +8,14 @@ from ..stpipe import Step
 from . import guider_cds
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 __all__ = ["GuiderCdsStep"]
 
 
-class GuiderCdsStep (Step):
-
+class GuiderCdsStep(Step):
     """
     This step calculates the countrate for each pixel for FGS modes.
     """
@@ -24,28 +24,26 @@ class GuiderCdsStep (Step):
 
     def process(self, input):
         with datamodels.GuiderRawModel(input) as input_model:
-
             # Get the gain reference file
-            gain_model = None   # will overwrite if file can be retrieved
+            gain_model = None  # will overwrite if file can be retrieved
             try:
-                gain_filename = self.get_reference_file(input_model, 'gain')
+                gain_filename = self.get_reference_file(input_model, "gain")
                 gain_model = datamodels.GainModel(gain_filename)
-                self.log.info('Using GAIN reference file: %s', gain_filename)
+                self.log.info("Using GAIN reference file: %s", gain_filename)
             except CrdsLookupError:
-                self.log.warning('Unable to retrieve GAIN ref file.')
+                self.log.warning("Unable to retrieve GAIN ref file.")
 
             # Get the readnoise reference file
-            readnoise_model = None   # will overwrite if file can be retrieved
+            readnoise_model = None  # will overwrite if file can be retrieved
             try:
-                readnoise_filename = self.get_reference_file(input_model, 'readnoise')
+                readnoise_filename = self.get_reference_file(input_model, "readnoise")
                 readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
-                self.log.info('Using READNOISE reference file: %s',
-                              readnoise_filename)
+                self.log.info("Using READNOISE reference file: %s", readnoise_filename)
             except CrdsLookupError:
-                self.log.warning('Unable to retrieve READNOISE ref file.')
+                self.log.warning("Unable to retrieve READNOISE ref file.")
 
             out_model = guider_cds.guider_cds(input_model, gain_model, readnoise_model)
 
-        out_model.meta.cal_step.guider_cds = 'COMPLETE'
+        out_model.meta.cal_step.guider_cds = "COMPLETE"
 
         return out_model

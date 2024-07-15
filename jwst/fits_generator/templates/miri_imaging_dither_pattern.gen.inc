@@ -7,6 +7,5 @@ NUMDTHPT  =   1    /        number of points in primary dither pattern
 PATTSIZE  =  '0.0'   /        primary dither pattern size
 SUBPIXEL  =   F    /        subpixel sampling performed (T/F)
 SUBPXNUM  =   1    /        subpixel sampling pattern number
-XOFFSET   =  0.0   /        x offset from pattern starting position 
-YOFFSET   =  0.0   /        y offset from pattern starting position 
-
+XOFFSET   =  0.0   /        x offset from pattern starting position
+YOFFSET   =  0.0   /        y offset from pattern starting position

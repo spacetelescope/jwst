@@ -52,21 +52,20 @@ class PixelReplaceStep(Step):
         with datamodels.open(input) as input_model:
             # If more than one 2d spectrum exists in input, call replacement
 
-            if input_model.meta.model_type in ['MultiSlitModel', 'SlitModel',
-                                               'ImageModel', 'IFUImageModel', 'CubeModel']:
-                self.log.debug('Input is a {input_model.meta.model_type}.')
+            if input_model.meta.model_type in ["MultiSlitModel", "SlitModel", "ImageModel", "IFUImageModel", "CubeModel"]:
+                self.log.debug("Input is a {input_model.meta.model_type}.")
             elif isinstance(input_model, datamodels.ModelContainer):
-                self.log.debug('Input is a ModelContainer.')
+                self.log.debug("Input is a ModelContainer.")
             else:
-                self.log.error(f'Input is of type {str(type(input_model))} for which')
-                self.log.error('pixel_replace does not have an algorithm.\n')
-                self.log.error('Pixel replacement will be skipped.')
-                input_model.meta.cal_step.pixel_replace = 'SKIPPED'
+                self.log.error(f"Input is of type {str(type(input_model))} for which")
+                self.log.error("pixel_replace does not have an algorithm.\n")
+                self.log.error("Pixel replacement will be skipped.")
+                input_model.meta.cal_step.pixel_replace = "SKIPPED"
                 return input_model
 
             pars = {
-                'algorithm': self.algorithm,
-                'n_adjacent_cols': self.n_adjacent_cols,
+                "algorithm": self.algorithm,
+                "n_adjacent_cols": self.n_adjacent_cols,
             }
 
             # ___________________
@@ -81,26 +80,20 @@ class PixelReplaceStep(Step):
                 except (AttributeError, KeyError):
                     pass
                 if asn_id is None:
-                    asn_id = self.search_attr('asn_id')
+                    asn_id = self.search_attr("asn_id")
                 if asn_id is not None:
-                    _make_output_path = self.search_attr(
-                        '_make_output_path', parent_first=True
-                    )
-                    self._make_output_path = partial(
-                        _make_output_path,
-                        asn_id=asn_id
-                    )
+                    _make_output_path = self.search_attr("_make_output_path", parent_first=True)
+                    self._make_output_path = partial(_make_output_path, asn_id=asn_id)
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
                     run_pixel_replace = True
-                    if model.meta.model_type in ['MultiSlitModel', 'SlitModel',
-                                                 'ImageModel', 'IFUImageModel', 'CubeModel']:
-                        self.log.debug('Input is a {model.meta.model_type}.')
+                    if model.meta.model_type in ["MultiSlitModel", "SlitModel", "ImageModel", "IFUImageModel", "CubeModel"]:
+                        self.log.debug("Input is a {model.meta.model_type}.")
                     else:
-                        self.log.error(f'Input is of type {model.meta.model_type} for which')
-                        self.log.error('pixel_replace does not have an algorithm.\n')
-                        self.log.error('Pixel replacement will be skipped.')
-                        model.meta.cal_step.pixel_replace = 'SKIPPED'
+                        self.log.error(f"Input is of type {model.meta.model_type} for which")
+                        self.log.error("pixel_replace does not have an algorithm.\n")
+                        self.log.error("Pixel replacement will be skipped.")
+                        model.meta.cal_step.pixel_replace = "SKIPPED"
                         run_pixel_replace = False
 
                     # all checks on model have passed. Now run pixel replacement
@@ -108,7 +101,7 @@ class PixelReplaceStep(Step):
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
                         output_model[i] = replacement.output
-                        record_step_status(output_model[i], 'pixel_replace', success=True)
+                        record_step_status(output_model[i], "pixel_replace", success=True)
                 return output_model
             # ________________________________________
             # calewbb_spec2 case - single input model
@@ -118,6 +111,6 @@ class PixelReplaceStep(Step):
                 result = input_model.copy()
                 replacement = PixelReplacement(result, **pars)
                 replacement.replace()
-                record_step_status(replacement.output, 'pixel_replace', success=True)
+                record_step_status(replacement.output, "pixel_replace", success=True)
                 result = replacement.output
                 return result

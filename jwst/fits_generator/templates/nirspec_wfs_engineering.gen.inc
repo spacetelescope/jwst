@@ -2,4 +2,3 @@
 
 RMA_POS   =  'N/A'  /  Refocus Mechanism Assembly hall-position sensor value
 FCSRLPOS  =  'N/A'  /  Refocus Mechanism Assembly relative position
-

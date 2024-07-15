@@ -51,15 +51,13 @@ class NSCleanStep(Step):
 
         # Open the input data model
         with datamodels.open(input) as input_model:
-
             # Do the NSClean correction
-            result = nsclean.do_correction(input_model, self.mask_spectral_regions, self.n_sigma,
-                                           self.save_mask, self.user_mask)
+            result = nsclean.do_correction(input_model, self.mask_spectral_regions, self.n_sigma, self.save_mask, self.user_mask)
             output_model, mask_model = result
 
             # Save the mask, if requested
             if self.save_mask and mask_model is not None:
-                mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix='mask')
+                mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix="mask")
                 self.log.info(f"Saving mask file {mask_path}")
                 mask_model.save(mask_path)
                 mask_model.close()

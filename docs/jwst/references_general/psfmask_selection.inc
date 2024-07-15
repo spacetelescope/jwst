@@ -7,9 +7,8 @@ PSFMASK is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ========================================================
-Instrument Keywords                                         
+Instrument Keywords
 ========== ========================================================
-MIRI       INSTRUME, FILTER, CORONMSK, SUBARRAY, DATE-OBS, TIME-OBS           
-NIRCam     INSTRUME, FILTER, CORONMSK, SUBARRAY, DATE-OBS, TIME-OBS           
+MIRI       INSTRUME, FILTER, CORONMSK, SUBARRAY, DATE-OBS, TIME-OBS
+NIRCam     INSTRUME, FILTER, CORONMSK, SUBARRAY, DATE-OBS, TIME-OBS
 ========== ========================================================
-

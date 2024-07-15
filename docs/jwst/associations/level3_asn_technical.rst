@@ -12,10 +12,10 @@ the stage 3 schema
 
   * :ref:`Informational Meta Keywords<asn-level3-meta-keywords>`
   * List of :ref:`products<asn-level3-products>`, each consisting of
-    
+
     * Output product name
     * List of :ref:`exposure members<asn-level3-members>`, each consisting of
-      
+
       * Filename of the exposure that is a member of this association
       * Type of exposure
       * If present, information about errors from the observatory log
@@ -101,7 +101,7 @@ target *optional*
   Target ID to which this association refers. JWST currently uses
   the TARGETID header keyword in the stage 2 exposure files, but there
   are no formal restrictions on value.
-  
+
 version_id *optional*
   Version identifier. DMS uses a time stamp with the format
   ``yyyymmddthhmmss``
@@ -146,7 +146,7 @@ exptype *required*
     to be ``science``.
 
   * ``background``: Exposures used for background subtraction.
-    
+
   * ``psf``: Exposures that should be considered PSF references for
     coronagraphic and AMI calibration.
 

@@ -12,6 +12,7 @@ import math
 from stdatamodels.jwst import datamodels
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -70,9 +71,8 @@ def contrast_curve(target_model, width):
         # within the limits of the current annulus
         for r in range(nrows):
             for c in range(ncols):
-
                 # Compute the distance of this pixel from the image center
-                d = math.sqrt((r - crow)**2 + (c - ccol)**2)
+                d = math.sqrt((r - crow) ** 2 + (c - ccol) ** 2)
 
                 # If this pixel is within the current annulus,
                 # reset its mask value to 1
@@ -81,7 +81,7 @@ def contrast_curve(target_model, width):
 
         # Compute the standard deviation of all unmasked pixels
         std = np.nanstd(mask * target_model.data)
-        log.debug(' rmin=%d, rmax=%d, rmid=%g, sigma=%g', rmin, rmax, rmid, std)
+        log.debug(" rmin=%d, rmax=%d, rmid=%g, sigma=%g", rmin, rmax, rmid, std)
 
         # Append the radius and standard deviation values for this annulus
         # to the output lists

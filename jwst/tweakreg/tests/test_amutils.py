@@ -1,4 +1,5 @@
 """Test astrometric utility functions for alignment"""
+
 import os
 
 import asdf
@@ -9,17 +10,17 @@ from jwst.tweakreg import astrometric_utils as amutils
 
 
 # Define input GWCS specification to be used for these tests
-WCS_NAME = 'mosaic_long_i2d_gwcs.asdf'  # Derived using B7.5 Level 3 product
+WCS_NAME = "mosaic_long_i2d_gwcs.asdf"  # Derived using B7.5 Level 3 product
 EXPECTED_NUM_SOURCES = 2469
 EXPECTED_RADIUS = 0.02564497890604383
-TEST_CATALOG = 'GAIADR3'
+TEST_CATALOG = "GAIADR3"
 
 
 @pytest.fixture(scope="module")
 def wcsobj():
     path = os.path.join(os.path.dirname(__file__), WCS_NAME)
     with asdf.open(path) as asdf_file:
-        wcs = asdf_file['wcs']
+        wcs = asdf_file["wcs"]
 
     return wcs
 
@@ -37,8 +38,7 @@ def test_get_catalog(wcsobj):
     radius, fiducial = amutils.compute_radius(wcsobj)
 
     # Get the catalog
-    cat = amutils.get_catalog(fiducial[0], fiducial[1], sr=radius,
-                              catalog=TEST_CATALOG)
+    cat = amutils.get_catalog(fiducial[0], fiducial[1], sr=radius, catalog=TEST_CATALOG)
 
     assert len(cat) == EXPECTED_NUM_SOURCES
 
@@ -50,17 +50,17 @@ def test_create_catalog(wcsobj):
         existing_wcs=wcsobj,
         catalog=TEST_CATALOG,
         output=None,
-        epoch='2016.0',
+        epoch="2016.0",
     )
     # check that we got expected number of sources
     assert len(gcat) == EXPECTED_NUM_SOURCES
 
 
 def test_create_catalog_graceful_failure(wcsobj):
-    '''
+    """
     Ensure catalog retuns zero sources instead of failing outright
     when the bounding box is too small to find any sources
-    '''
+    """
     wcsobj.bounding_box = ((0, 0.5), (0, 0.5))
 
     # Create catalog
@@ -69,7 +69,7 @@ def test_create_catalog_graceful_failure(wcsobj):
         existing_wcs=wcsobj,
         catalog=TEST_CATALOG,
         output=None,
-        epoch='2016.0',
+        epoch="2016.0",
     )
     # check that we got expected number of sources
     assert len(gcat) == 0

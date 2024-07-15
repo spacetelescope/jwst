@@ -108,4 +108,3 @@ hitting any warning for that Step:
     [*.MyStep]
     level = INFO
     break_level = WARNING
-

@@ -14,7 +14,7 @@ AUTHOR        model.meta.author           author
 DATAMODL      model.meta.model_type       model_type
 DATE          model.meta.date             date
 DESCRIP       model.meta.description      description
-FILENAME      model.meta.filename         N/A     
+FILENAME      model.meta.filename         N/A
 INSTRUME      model.meta.instrument.name  instrument: {name}
 PEDIGREE      model.meta.pedigree         pedigree
 REFTYPE       model.meta.reftype          reftype

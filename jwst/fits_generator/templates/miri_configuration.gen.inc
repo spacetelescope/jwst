@@ -6,4 +6,3 @@ CHANNEL   = {493: 'N/A', \
              494: '34', \
              495: '12'}[input('SCA_ID')]
 CCCSTATE  = input('CCC_POS') / contamination control cover state
-

@@ -8,4 +8,3 @@ GWA_TILT  = input('GWA_TTIL') or 0.0 /    GWA temperature ave [K]
 FXD_SLIT  = 'NONE'            /       name of fixed slit aperture used
 MSASTATE  = 'CONFIGURED'    /  state of MSA: all open, all closed, configured
 FOCUSPOS  =   0.0              /       [mm] focus position for NIRSpec
-

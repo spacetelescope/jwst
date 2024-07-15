@@ -19,7 +19,7 @@ __all__ = ["ResampleStep"]
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
-GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleStep(Step):
@@ -60,7 +60,6 @@ class ResampleStep(Step):
     reference_file_types = []
 
     def process(self, input):
-
         input = datamodels.open(input)
 
         if isinstance(input, ModelContainer):
@@ -92,7 +91,7 @@ class ResampleStep(Step):
         result = resamp.do_drizzle()
 
         for model in result:
-            model.meta.cal_step.resample = 'COMPLETE'
+            model.meta.cal_step.resample = "COMPLETE"
             self.update_fits_wcs(model)
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.asn_pool_name
@@ -105,7 +104,7 @@ class ResampleStep(Step):
                 model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
             else:
                 model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-            model.meta.resample.pixfrac = kwargs['pixfrac']
+            model.meta.resample.pixfrac = kwargs["pixfrac"]
 
         if len(result) == 1:
             result = result[0]
@@ -148,10 +147,7 @@ class ResampleStep(Step):
         elif wcs.array_shape is not None:
             wcs.pixel_shape = wcs.array_shape[::-1]
         elif wcs.bounding_box is not None:
-            wcs.array_shape = tuple(
-                int(axs[1] + 0.5)
-                for axs in wcs.bounding_box.bounding_box(order="C")
-            )
+            wcs.array_shape = tuple(int(axs[1] + 0.5) for axs in wcs.bounding_box.bounding_box(order="C"))
         else:
             raise ValueError(
                 "Step argument 'output_shape' is required when custom WCS "
@@ -174,29 +170,22 @@ class ResampleStep(Step):
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders,
-            allowed_memory = self.allowed_memory,
-            in_memory = self.in_memory
+            allowed_memory=self.allowed_memory,
+            in_memory=self.in_memory,
         )
 
         # Custom output WCS parameters.
-        kwargs['output_shape'] = self._check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
-        kwargs['output_wcs'] = self._load_custom_wcs(
-            self.output_wcs,
-            kwargs['output_shape']
-        )
-        kwargs['crpix'] = self._check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self._check_list_pars(self.crval, 'crval')
-        kwargs['rotation'] = self.rotation
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+        kwargs["output_shape"] = self._check_list_pars(self.output_shape, "output_shape", min_vals=[1, 1])
+        kwargs["output_wcs"] = self._load_custom_wcs(self.output_wcs, kwargs["output_shape"])
+        kwargs["crpix"] = self._check_list_pars(self.crpix, "crpix")
+        kwargs["crval"] = self._check_list_pars(self.crval, "crval")
+        kwargs["rotation"] = self.rotation
+        kwargs["pscale"] = self.pixel_scale
+        kwargs["pscale_ratio"] = self.pixel_scale_ratio
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug('   {}={}'.format(k, v))
+            self.log.debug("   {}={}".format(k, v))
 
         return kwargs
 
@@ -231,8 +220,7 @@ class ResampleStep(Step):
         model.meta.wcsinfo.ctype2 = "DEC--TAN"
 
         # Remove no longer relevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
+        rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref", "v3yangle", "vparity"]
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]

@@ -4,7 +4,7 @@
 Running the JWST pipeline: Python Interface
 ===========================================
 
-.. note:: 
+.. note::
 	The use of the ``run`` method to run a pipeline or step is not
 	recommended. By default, using the ``pipeline.run()`` method defaults to
 	pipeline and step-level coded defaults, ignoring parameter files,
@@ -12,7 +12,7 @@ Running the JWST pipeline: Python Interface
 
 The Python interface is one of two options for running the pipeline.
 See :ref:`here <run_from_strun>` for an overview of the alternative command line
-interface. 
+interface.
 
 
 Overview of Running the Pipeline in Python
@@ -258,7 +258,7 @@ Multiple reference file overrides can be provided, for example:
 
 
 To override a reference file for a standalone step, "override\_<stepname>"
-can be passed directly as a keyword argument to that step's `call` method: 
+can be passed directly as a keyword argument to that step's `call` method:
 
 ::
 
@@ -344,7 +344,7 @@ By default, when running in Python, all outputs are returned in-memory
 (typically as a `Datamodel`) and no output files are written - even the final
 result of a pipeline. To control this behavior, and other aspects of output file
 generation like directory and file name, certain pipeline and step-level parameters
-can be set. 
+can be set.
 
 **Output file behavior can be modified with the ``save_results``, ``output_file``, and ``output_dir`` parameters**
 
@@ -354,7 +354,7 @@ Saving Final Pipeline Results
 The ``save_results`` parameter, when set at the pipeline-level, indicates
 that the final pipeline output products should be saved to a file. The output
 files will be in the current working directory, and be named based on the
-input file name and the appropriate file suffix. Note that setting ``save_results`` 
+input file name and the appropriate file suffix. Note that setting ``save_results``
 at the pipeline-level will not save the results from each step, only the final
 results from the full pipeline.
 
@@ -415,7 +415,7 @@ Saving Intermediate Step Results
 
 When the ``save_results`` parameter is set at the step-level (either within a pipeline,
 or on a standalone step), it indicates that the result from that step should be
-saved to a file. 
+saved to a file.
 
 To save the intermediate output from a step within a pipeline:
 
@@ -437,7 +437,7 @@ that the final result from that step should be saved.
 	 SaturationStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', save_results=True)
 
 
-**Setting Output File Name** 
+**Setting Output File Name**
 
 Setting ``output_file`` at the step-level indicates that the step's result should
 be saved (so, also setting ``save_results`` is redundant), and that a new file
@@ -463,7 +463,7 @@ appropriate suffix.
 	 from jwst.linearity import SaturationStep
 	 SaturationStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', output_file="saturation_result")
 
-**Setting Output File Directory** 
+**Setting Output File Directory**
 
 Setting ``output_dir`` at the step-level indicates that the step's result should
 be saved (so, also setting ``save_results`` is redundant), and that the files
@@ -484,7 +484,7 @@ that the result from that step should be saved to the specified directory:
 
 ::
 
-	# to save the final result of a 
+	# to save the final result of a
 	 from jwst.pipeline import Detector1Pipeline
 	 result = DarkCurrentStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', output_dir='calibrated')
 

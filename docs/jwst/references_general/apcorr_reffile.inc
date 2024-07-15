@@ -262,7 +262,7 @@ For IFU data the APCORR reference files are in ASDF format. The aperture correct
 varies with wavelength and the contents of the files are shown below. The radius,
 aperture correction and error are all 2D arrays. Currently the 2nd dimension does
 not add information, but in the future it could be used to provide different aperture
-corrections for different radii. 
+corrections for different radii.
 
 :Data model: `~jwst.datamodels.MirMrsApcorrModel`
 

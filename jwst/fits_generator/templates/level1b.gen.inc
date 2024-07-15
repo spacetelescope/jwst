@@ -13,4 +13,3 @@ ORIGIN   = 'STScI' / Institution responsible for creating FITS file
 FILENAME = '#TODO' / Name of file
 FILETYPE = 'UNCALIBRATED' / Type of data found in file
 DPSW_VER = version() / Data processing software version number
-

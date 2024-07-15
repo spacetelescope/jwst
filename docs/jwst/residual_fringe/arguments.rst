@@ -12,4 +12,3 @@ The two lists must contain an equal number of elements.
 
 ``ignore_region_max`` [float, default = None]
   The maximum wavelengths for the region(s) to be ignored, given as a comma-separated list.
-

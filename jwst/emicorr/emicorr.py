@@ -12,50 +12,17 @@ log.setLevel(logging.DEBUG)
 
 
 subarray_clocks = {
-
-    "SLITLESSPRISM": {
-        "rowclocks": 28,
-        "frameclocks": 15904},
-
-    "MASKLYOT": {
-        "rowclocks": 90,
-        "frameclocks": 32400},
-
-    "SUB64": {
-        "rowclocks": 28,
-        "frameclocks": 8512},
-
-    "SUB128": {
-        "rowclocks": 44,
-        "frameclocks": 11904},
-
-    "MASK1140": {
-        "rowclocks": 82,
-        "frameclocks": 23968},
-
-    "MASK1550": {
-        "rowclocks": 82,
-        "frameclocks": 23968},
-
-    "MASK1065": {
-        "rowclocks": 82,
-        "frameclocks": 23968},
-
-    "FULL_FAST": {
-        "rowclocks": 271,
-        "frameclocks": 277504},
-
-    "FULL_SLOW": {
-        "rowclocks": 2333,
-        "frameclocks": 2388992},
-
-    "BRIGHTSKY": {
-        "rowclocks": 162,
-        "frameclocks": 86528},
-
-    "SUB256": {
-        "rowclocks": 96,
-        "frameclocks": 29952},
+    "SLITLESSPRISM": {"rowclocks": 28, "frameclocks": 15904},
+    "MASKLYOT": {"rowclocks": 90, "frameclocks": 32400},
+    "SUB64": {"rowclocks": 28, "frameclocks": 8512},
+    "SUB128": {"rowclocks": 44, "frameclocks": 11904},
+    "MASK1140": {"rowclocks": 82, "frameclocks": 23968},
+    "MASK1550": {"rowclocks": 82, "frameclocks": 23968},
+    "MASK1065": {"rowclocks": 82, "frameclocks": 23968},
+    "FULL_FAST": {"rowclocks": 271, "frameclocks": 277504},
+    "FULL_SLOW": {"rowclocks": 2333, "frameclocks": 2388992},
+    "BRIGHTSKY": {"rowclocks": 162, "frameclocks": 86528},
+    "SUB256": {"rowclocks": 96, "frameclocks": 29952},
 }
 
 
@@ -87,32 +54,42 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
         emi-corrected science data model
 
     """
-    save_intermediate_results = pars['save_intermediate_results']
-    user_supplied_reffile = pars['user_supplied_reffile']
-    nints_to_phase = pars['nints_to_phase']
-    nbins = pars['nbins']
-    scale_reference = pars['scale_reference']
-    onthefly_corr_freq = pars['onthefly_corr_freq']
-    use_n_cycles = pars['use_n_cycles']
+    save_intermediate_results = pars["save_intermediate_results"]
+    user_supplied_reffile = pars["user_supplied_reffile"]
+    nints_to_phase = pars["nints_to_phase"]
+    nbins = pars["nbins"]
+    scale_reference = pars["scale_reference"]
+    onthefly_corr_freq = pars["onthefly_corr_freq"]
+    use_n_cycles = pars["use_n_cycles"]
 
-    output_model = apply_emicorr(input_model, emicorr_model,
-                        onthefly_corr_freq, save_onthefly_reffile,
-                        save_intermediate_results=save_intermediate_results,
-                        user_supplied_reffile=user_supplied_reffile,
-                        nints_to_phase=nints_to_phase,
-                        nbins_all=nbins,
-                        scale_reference=scale_reference,
-                        use_n_cycles=use_n_cycles
-                        )
+    output_model = apply_emicorr(
+        input_model,
+        emicorr_model,
+        onthefly_corr_freq,
+        save_onthefly_reffile,
+        save_intermediate_results=save_intermediate_results,
+        user_supplied_reffile=user_supplied_reffile,
+        nints_to_phase=nints_to_phase,
+        nbins_all=nbins,
+        scale_reference=scale_reference,
+        use_n_cycles=use_n_cycles,
+    )
 
     return output_model
 
 
-def apply_emicorr(input_model, emicorr_model,
-        onthefly_corr_freq, save_onthefly_reffile,
-        save_intermediate_results=False, user_supplied_reffile=None,
-        nints_to_phase=None, nbins_all=None, scale_reference=True,
-        use_n_cycles=3):
+def apply_emicorr(
+    input_model,
+    emicorr_model,
+    onthefly_corr_freq,
+    save_onthefly_reffile,
+    save_intermediate_results=False,
+    user_supplied_reffile=None,
+    nints_to_phase=None,
+    nbins_all=None,
+    scale_reference=True,
+    use_n_cycles=3,
+):
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
@@ -181,13 +158,13 @@ def apply_emicorr(input_model, emicorr_model,
     detector = input_model.meta.instrument.detector
     subarray = input_model.meta.subarray.name
     readpatt = input_model.meta.exposure.readpatt
-    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
-    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
+    xsize = input_model.meta.subarray.xsize  # SUBSIZE1 keyword
+    xstart = input_model.meta.subarray.xstart  # SUBSTRT1 keyword
 
     # get the subarray case from either the ref file or set default values
     freqs_numbers = []
     if emicorr_model is not None:
-        log.info('Using reference file to get subarray case.')
+        log.info("Using reference file to get subarray case.")
         subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model, subarray, readpatt, detector)
         reference_wave_list = []
         if freqs2correct is not None:
@@ -198,20 +175,20 @@ def apply_emicorr(input_model, emicorr_model,
     else:
         # if we got here, the user requested to do correction with on-the-fly reference file
         subname = subarray
-        if subname == 'FULL':
-            if 'FAST' in readpatt.upper():
-                subname += '_FAST'
-            elif 'SLOW' in readpatt.upper():
-                subname += '_SLOW'
+        if subname == "FULL":
+            if "FAST" in readpatt.upper():
+                subname += "_FAST"
+            elif "SLOW" in readpatt.upper():
+                subname += "_SLOW"
         if subname in subarray_clocks:
-            rowclocks = subarray_clocks[subname]['rowclocks']
-            frameclocks = subarray_clocks[subname]['frameclocks']
+            rowclocks = subarray_clocks[subname]["rowclocks"]
+            frameclocks = subarray_clocks[subname]["frameclocks"]
             freqs_numbers = onthefly_corr_freq
             freqs2correct = [repr(freq) for freq in onthefly_corr_freq]
         else:
             subname, rowclocks, frameclocks, freqs2correct = None, None, None, None
 
-    log.info('With configuration: Subarray={}, Read_pattern={}, Detector={}'.format(subarray, readpatt, detector))
+    log.info("With configuration: Subarray={}, Read_pattern={}, Detector={}".format(subarray, readpatt, detector))
     if rowclocks is None or len(freqs_numbers) == 0:
         # no subarray or read pattern match found, print to log and skip correction
         return subname
@@ -225,14 +202,14 @@ def apply_emicorr(input_model, emicorr_model,
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes
     if save_intermediate_results and save_onthefly_reffile is not None:
-        freq_pa_dict = {'frequencies': {}, 'subarray_cases': {}}
+        freq_pa_dict = {"frequencies": {}, "subarray_cases": {}}
 
     # Loop over the frequencies to correct
-    log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
-    log.info('   {}'.format(freqs2correct))
+    log.info("Will correct data for the following {} frequencies: ".format(len(freqs2correct)))
+    log.info("   {}".format(freqs2correct))
     for fi, frequency_name in enumerate(freqs2correct):
         frequency = freqs_numbers[fi]
-        log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
+        log.info("Correcting for frequency: {} Hz  ({} out of {})".format(frequency, fi + 1, len(freqs2correct)))
 
         # Read image data and set up some variables
         orig_data = output_model.data
@@ -244,10 +221,10 @@ def apply_emicorr(input_model, emicorr_model,
         # sz[2] = ny
         # sz[3] = ngroups
         # sz[4] = nints
-        nx4 = int(nx/4)
+        nx4 = int(nx / 4)
 
         dd_all = np.ones((nints, ngroups, ny, nx4))
-        log.info('Subtracting self-superbias from each group of each integration and')
+        log.info("Subtracting self-superbias from each group of each integration and")
 
         # Calculate times of all pixels in the input integration, then use that to calculate
         # phase of all pixels. Times here is in integer numbers of 10us pixels starting from
@@ -259,18 +236,18 @@ def apply_emicorr(input_model, emicorr_model,
         # int, with less risk of datatype overflow. Still, use the largest datatype available
         # for the time_this_int array.
 
-        times_this_int = np.zeros((ngroups, ny, nx4), dtype='ulonglong')
+        times_this_int = np.zeros((ngroups, ny, nx4), dtype="ulonglong")
         phaseall = np.zeros((nints, ngroups, ny, nx4))
 
         # non-roi rowclocks between subarray frames (this will be 0 for fullframe)
-        extra_rowclocks = (1024. - ny) * (4 + 3.)
+        extra_rowclocks = (1024.0 - ny) * (4 + 3.0)
         # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
-        period_in_pixels = (1./frequency) / 10.0e-6
+        period_in_pixels = (1.0 / frequency) / 10.0e-6
 
         if nints_to_phase is None and use_n_cycles is None:  # user wats to use all integrations
             # use all integrations
             nints_to_phase = nints
-        elif nints_to_phase is None and use_n_cycles is not None: # user wants to use nints_to_phase
+        elif nints_to_phase is None and use_n_cycles is not None:  # user wants to use nints_to_phase
             # Calculate how many integrations you need to get that many cycles for
             # a given frequency (rounding up to the nearest Nintegrations)
             nints_to_phase = (use_n_cycles * period_in_pixels) / (frameclocks * ngroups)
@@ -287,24 +264,24 @@ def apply_emicorr(input_model, emicorr_model,
         # this number comes from the subarray definition (see subarray_cases dict above), but
         # calculate it from the input image header here just in case the subarray definitions
         # are not available to this routine.
-        colstop = int( xsize/4 + xstart - 1 )
-        log.info('doing phase calculation per integration')
+        colstop = int(xsize / 4 + xstart - 1)
+        log.info("doing phase calculation per integration")
 
         for ninti in range(nints):
-            log.debug('  Working on integration: {}'.format(ninti+1))
+            log.debug("  Working on integration: {}".format(ninti + 1))
 
             # Remove source signal and fixed bias from each integration ramp
             # (linear is good enough for phase finding)
 
             # do linear fit for source + sky
-            s0, mm0 = sloper(data[ninti, 1:ngroups-1, :, :])
+            s0, mm0 = sloper(data[ninti, 1 : ngroups - 1, :, :])
 
             # subtract source+sky from each frame of this ramp
             for ngroupi in range(ngroups):
                 data[ninti, ngroupi, ...] = orig_data[ninti, ngroupi, ...] - (s0 * ngroupi)
 
             # make a self-superbias
-            m0 = minmed(data[ninti, 1:ngroups-1, :, :])
+            m0 = minmed(data[ninti, 1 : ngroups - 1, :, :])
 
             # subtract self-superbias from each frame of this ramp
             for ngroupi in range(ngroups):
@@ -316,18 +293,18 @@ def apply_emicorr(input_model, emicorr_model,
                 d1 = data[ninti, ngroupi, :, 1:nx:4]
                 d2 = data[ninti, ngroupi, :, 2:nx:4]
                 d3 = data[ninti, ngroupi, :, 3:nx:4]
-                dd = (d0 + d1 + d2 + d3)/4.
+                dd = (d0 + d1 + d2 + d3) / 4.0
 
                 # fix a bad ref col
-                dd[:, 1] = (dd[:, 0] + dd[:, 3])/2
-                dd[:, 2] = (dd[:, 0] + dd[:, 3])/2
+                dd[:, 1] = (dd[:, 0] + dd[:, 3]) / 2
+                dd[:, 2] = (dd[:, 0] + dd[:, 3]) / 2
                 # This is the quad-averaged, cleaned, input image data for the exposure
                 dd_all[ninti, ngroupi, ...] = dd - np.median(dd)
 
-            for k in range(ngroups):   # frames
-                for j in range(ny):    # rows
+            for k in range(ngroups):  # frames
+                for j in range(ny):  # rows
                     # nsamples= 1 for fast, 9 for slow (from metadata)
-                    times_this_int[k, j, :] = np.arange(nx4, dtype='ulonglong') * nsamples + start_time
+                    times_this_int[k, j, :] = np.arange(nx4, dtype="ulonglong") * nsamples + start_time
 
                     # If the last pixel in a row is a reference pixel, need to push it out
                     # by ref_pix_sample sample times. The same thing happens for the first
@@ -340,7 +317,7 @@ def apply_emicorr(input_model, emicorr_model,
 
                     if colstop == 258:
                         ulonglong_ref_pix_sample = ref_pix_sample + 2**32
-                        times_this_int[k, j, nx4-1] = times_this_int[k, j, nx4-1] + ulonglong_ref_pix_sample
+                        times_this_int[k, j, nx4 - 1] = times_this_int[k, j, nx4 - 1] + ulonglong_ref_pix_sample
 
                     # point to the first pixel of the next row (add "end-of-row" pad)
                     start_time += rowclocks
@@ -352,10 +329,10 @@ def apply_emicorr(input_model, emicorr_model,
             # number of 10us from the first data pixel in this integration, so to
             # convert to phase, divide by the waveform *period* in float pixels
             phase_this_int = times_this_int / period_in_pixels
-            phaseall[ninti, ...] = phase_this_int - phase_this_int.astype('ulonglong')
+            phaseall[ninti, ...] = phase_this_int - phase_this_int.astype("ulonglong")
 
             # add a frame time to account for the extra frame reset between MIRI integrations
-            if readpatt.upper() == 'FASTR1' or readpatt.upper() == 'SLOWR1':
+            if readpatt.upper() == "FASTR1" or readpatt.upper() == "SLOWR1":
                 start_time += frameclocks
 
         # use phaseall vs dd_all
@@ -370,27 +347,27 @@ def apply_emicorr(input_model, emicorr_model,
         # number of bins in one phased wave (e.g. 255, 218, etc)
         if nbins_all is None:
             # the IDL code sets nbins as ulong type (ulonglong in python)
-            nbins = int(period_in_pixels/2.0)
+            nbins = int(period_in_pixels / 2.0)
         else:
             nbins = nbins_all
         if nbins > 501:
             nbins = 500
 
         # bin the whole set
-        log.info('Calculating the phase amplitude for {} bins'.format(nbins))
+        log.info("Calculating the phase amplitude for {} bins".format(nbins))
         # Define the binned waveform amplitude (pa = phase amplitude)
         pa = np.arange(nbins, dtype=float)
         # keep track of n per bin to check for low n
-        nb_over_nbins = [nb/nbins for nb in range(nbins)]
-        nbp1_over_nbins = [(nb + 1)/nbins for nb in range(nbins)]
+        nb_over_nbins = [nb / nbins for nb in range(nbins)]
+        nbp1_over_nbins = [(nb + 1) / nbins for nb in range(nbins)]
         # Construct a phase map and dd map for only the nints_to_phase
-        phase_temp = phaseall[0:nints_to_phase,:,:,:]
-        dd_temp = dd_all[0:nints_to_phase,:,:,:]
+        phase_temp = phaseall[0:nints_to_phase, :, :, :]
+        dd_temp = dd_all[0:nints_to_phase, :, :, :]
         for nb in range(nbins):
             u = np.where((phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb]))
             # calculate the sigma-clipped mean
-            dmean,_,_ = scs(dd_temp[u])
-            pa[nb] = dmean   # amplitude in this bin
+            dmean, _, _ = scs(dd_temp[u])
+            pa[nb] = dmean  # amplitude in this bin
 
         pa -= np.median(pa)
 
@@ -400,19 +377,19 @@ def apply_emicorr(input_model, emicorr_model,
         # reference_wave, but perfectly matched in phase by definition so no need for a
         # crosscor or other phase-finder against a reference_wave). This may not be
         # necessary. Can just assume pa and the reference_wave are exactly 1.0 waves long.
-        #pa_phase = (np.arange(nbins, dtype=np.float32) + 0.5) / nbins
+        # pa_phase = (np.arange(nbins, dtype=np.float32) + 0.5) / nbins
 
         # Correction using direct look-up from either pa (self-correction) or
         # the reference wave (if provided)
         # Make a vector to hold a version of pa that is close to an integer number of
         # pixels long. This will be the noise amplitude look-up table.
-        lut = rebin(pa, [period_in_pixels])   # shift and resample reference_wave at pa's phase
+        lut = rebin(pa, [period_in_pixels])  # shift and resample reference_wave at pa's phase
 
         # If a reference_wave_filename was provided, use it to measure phase shift between
         # pa (binned phased wave) from the input image vs. the reference_wave using xcorr.
         # These two methods give the same integer-reference_wave-element resolution results.
         if emicorr_model is not None:
-            log.info('Using reference file to measure phase shift')
+            log.info("Using reference file to measure phase shift")
             reference_wave = np.array(reference_wave_list[fi])
             reference_wave_size = np.size(reference_wave)
             rebinned_pa = rebin(pa, [reference_wave_size])
@@ -432,7 +409,7 @@ def apply_emicorr(input_model, emicorr_model,
             # Scale reference wave amplitude to match the pa amplitude from this dataset by
             # fitting a line rather than taking a mean ratio so that any DC offset drops out
             # in the intercept (and to avoid potential divide-by-zeros)
-            m, b = np.polyfit(lut_reference, lut, 1)   # the slope is the amplitude ratio
+            m, b = np.polyfit(lut_reference, lut, 1)  # the slope is the amplitude ratio
 
             # check pa-to-reference_wave phase match and optional scale
             if scale_reference:
@@ -441,21 +418,20 @@ def apply_emicorr(input_model, emicorr_model,
             lut = lut_reference
 
         if save_intermediate_results and save_onthefly_reffile is not None:
-            freq_pa_dict['frequencies'][frequency_name] = {'frequency' : frequency,
-                                                        'phase_amplitudes' : pa}
+            freq_pa_dict["frequencies"][frequency_name] = {"frequency": frequency, "phase_amplitudes": pa}
 
-        log.info('Creating phased-matched noise model to subtract from data')
+        log.info("Creating phased-matched noise model to subtract from data")
         # This is the phase matched noise model to subtract from each pixel of the input image
         dd_noise = lut[(phaseall * period_in_pixels).astype(int)]
 
         # Interleave (straight copy) into 4 amps
-        noise = np.ones((nints, ngroups, ny, nx))   # same size as input data
+        noise = np.ones((nints, ngroups, ny, nx))  # same size as input data
         noise_x = np.arange(nx4) * 4
         for k in range(4):
             noise[:, :, :, noise_x + k] = dd_noise
 
         # Subtract EMI noise from the input data
-        log.info('Subtracting EMI noise from data')
+        log.info("Subtracting EMI noise from data")
         corr_data = orig_data - noise
         output_model.data = corr_data
 
@@ -466,23 +442,20 @@ def apply_emicorr(input_model, emicorr_model,
         del phaseall
 
     if save_intermediate_results and save_onthefly_reffile is not None:
-        if 'FAST' in readpatt:
+        if "FAST" in readpatt:
             freqs_dict = {readpatt: freqs2correct}
         else:
-            freqs_dict = {readpatt: {detector: freqs2correct} }
+            freqs_dict = {readpatt: {detector: freqs2correct}}
         on_the_fly_subarr_case = {}
-        on_the_fly_subarr_case[subarray] = {
-            'rowclocks': rowclocks,
-            'frameclocks': frameclocks,
-            'freqs': freqs_dict }
-        freq_pa_dict['subarray_cases'] = on_the_fly_subarr_case
+        on_the_fly_subarr_case[subarray] = {"rowclocks": rowclocks, "frameclocks": frameclocks, "freqs": freqs_dict}
+        freq_pa_dict["subarray_cases"] = on_the_fly_subarr_case
         mk_reffile(freq_pa_dict, save_onthefly_reffile)
 
     return output_model
 
 
 def sloper(data):
-    """ Fit slopes to all pix of a ramp, using numerical recipies plane-adding
+    """Fit slopes to all pix of a ramp, using numerical recipies plane-adding
      returning intercept image.
 
     Parameters
@@ -499,7 +472,7 @@ def sloper(data):
         slope intercept values
     """
     ngroups, ny, nx = np.shape(data)
-    frametime = 1.0   # use 1.0 for per-frame slopes, otherwise put a real time here
+    frametime = 1.0  # use 1.0 for per-frame slopes, otherwise put a real time here
     grouptimes = np.arange(ngroups) * frametime
 
     sxy = np.zeros((ny, nx))
@@ -512,19 +485,19 @@ def sloper(data):
         sxy = sxy + grouptimes[groupcount] * data[groupcount, ...]
         sx = sx + grouptimes[groupcount]
         sy = sy + data[groupcount, ...]
-        sxx = sxx + grouptimes[groupcount]**2
+        sxx = sxx + grouptimes[groupcount] ** 2
 
     # calculate the final per-pixel slope values
-    outarray = (ngroups * sxy - sx * sy)/(ngroups * sxx - sx * sx)
+    outarray = (ngroups * sxy - sx * sy) / (ngroups * sxx - sx * sx)
 
     # calculate the final per-pixel intercept values
-    intercept = (sxx * sy - sx * sxy)/(ngroups * sxx - sx * sx)
+    intercept = (sxx * sy - sx * sxy) / (ngroups * sxx - sx * sx)
 
     return outarray, intercept
 
 
 def minmed(data, minval=False, avgval=False, maxval=False):
-    """ Returns the median image of a stack of images, or if there are 2 or less
+    """Returns the median image of a stack of images, or if there are 2 or less
     non-zero frames, returns the minimum (or this minimum can be forced).
 
     Parameters
@@ -565,7 +538,7 @@ def minmed(data, minval=False, avgval=False, maxval=False):
 
 
 def get_subarcase(subarray_cases, subarray, readpatt, detector):
-    """ Get the rowclocks and frameclocks values for the given configuration.
+    """Get the rowclocks and frameclocks values for the given configuration.
 
     Parameters
     ----------
@@ -602,20 +575,20 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
     if "FAST" not in readpatt:
         no_fast_match_readpatt = True
     if no_slow_match_readpatt and no_fast_match_readpatt:
-        log.info('Read pattern {} does not include expected string FAST or SLOW'.format(readpatt))
+        log.info("Read pattern {} does not include expected string FAST or SLOW".format(readpatt))
         return subname, rowclocks, frameclocks, frequencies
 
     # search and return the specific values for the configuration
     frequencies = []
     mdl_dict = subarray_cases.to_flat_dict()
     for subname in subarray_cases.subarray_cases:
-        subname = subname.split(sep='.')[0]
+        subname = subname.split(sep=".")[0]
         dataconfig = subarray
-        if 'FULL' in dataconfig:
-            dataconfig = subarray + '_' + readpatt.replace('R1', '')
+        if "FULL" in dataconfig:
+            dataconfig = subarray + "_" + readpatt.replace("R1", "")
         if dataconfig != subname:
             continue
-        log.debug('Found subarray case {}!'.format(subname))
+        log.debug("Found subarray case {}!".format(subname))
         for item, val in mdl_dict.items():
             if subname in item:
                 if "rowclocks" in item:
@@ -625,7 +598,7 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
                 else:
                     if "SLOW" in readpatt and "SLOW" in item and detector in item:
                         frequencies.append(val)
-                    elif "FAST" in readpatt  and "FAST" in item:
+                    elif "FAST" in readpatt and "FAST" in item:
                         frequencies.append(val)
             if subname is not None and rowclocks is not None and frameclocks is not None and frequencies is not None:
                 break
@@ -659,13 +632,14 @@ def get_frequency_info(freqs_names_vals, frequency_name):
         mdl_dict = freqs_names_vals.to_flat_dict()
         for item, val in mdl_dict.items():
             if frequency_name in item:
-                if 'frequency' in item:
+                if "frequency" in item:
                     freq_number = val
-                if 'phase_amplitudes' in item:
+                if "phase_amplitudes" in item:
                     phase_amplitudes = val
             if freq_number is not None and phase_amplitudes is not None:
                 break
         return freq_number, phase_amplitudes
+
 
 def rebin(arr, newshape):
     """Rebin an array to a new shape.
@@ -685,15 +659,15 @@ def rebin(arr, newshape):
     """
     assert len(arr.shape) == len(newshape)
 
-    slices = [ slice(0,old, float(old)/new) for old,new in zip(arr.shape,newshape) ]
+    slices = [slice(0, old, float(old) / new) for old, new in zip(arr.shape, newshape)]
     coordinates = np.mgrid[slices]
-    indices = coordinates.astype('i')   # choose the biggest smaller integer index
+    indices = coordinates.astype("i")  # choose the biggest smaller integer index
 
     return arr[tuple(indices)]
 
 
 def mk_reffile(freq_pa_dict, emicorr_ref_filename):
-    """ Create the reference file hdulist object.
+    """Create the reference file hdulist object.
 
     Parameters
     ----------
@@ -710,10 +684,8 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     """
     # save the reference file if save_intermediate_results=True and no CRDS file exists
     emicorr_model = datamodels.EmiModel(freq_pa_dict)
-    if 'fits' in emicorr_ref_filename:
-        emicorr_ref_filename = emicorr_ref_filename.replace('fits', 'asdf')
+    if "fits" in emicorr_ref_filename:
+        emicorr_ref_filename = emicorr_ref_filename.replace("fits", "asdf")
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
-    log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
-
-
+    log.info("On-the-fly reference file written as: %s", emicorr_ref_filename)

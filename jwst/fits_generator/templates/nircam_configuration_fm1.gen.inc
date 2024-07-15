@@ -10,4 +10,3 @@ CHANNEL  = {'L': 'LONG',  \
 PUPIL    = input('PUPIL_P') or input('PUPIL')   /        name of the pupil element used
 FILTER   = input('FILTER_P') or input('FILTER')  /        name of the filter element used
 PILIN    =   F      /        pupil imaging lens in optical path: T/F
-

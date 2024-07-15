@@ -39,5 +39,5 @@ NRM      IMAGE       2    1024 x 1024     float
 =======  ========  =====  ==============  =========
 
 The ``NRM`` array contains the 2-D image representing the geometry
-of the non-redundant mask in the pupil wheel of NIRISS. This mask 
+of the non-redundant mask in the pupil wheel of NIRISS. This mask
 enables the Aperture Masking Interferometry (AMI) mode.

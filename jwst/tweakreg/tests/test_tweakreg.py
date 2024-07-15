@@ -24,8 +24,7 @@ N_CUSTOM_SOURCES = 15
 
 @pytest.fixture
 def dummy_source_catalog():
-
-    columns = ['id', 'xcentroid', 'ycentroid', 'flux']
+    columns = ["id", "xcentroid", "ycentroid", "flux"]
     catalog = Table(names=columns, dtype=(int, float, float, float))
     catalog.add_row([1, 100.0, 100.0, 100.0])
 
@@ -47,10 +46,10 @@ def test_rename_catalog_columns(dummy_source_catalog, inplace):
     else:
         catalog = renamed_catalog
 
-    assert 'xcentroid' not in catalog.colnames
-    assert 'ycentroid' not in catalog.colnames
-    assert 'x' in catalog.colnames
-    assert 'y' in catalog.colnames
+    assert "xcentroid" not in catalog.colnames
+    assert "ycentroid" not in catalog.colnames
+    assert "x" in catalog.colnames
+    assert "y" in catalog.colnames
 
 
 @pytest.mark.parametrize("missing", ["x", "y", "xcentroid", "ycentroid"])
@@ -100,7 +99,7 @@ def test_is_wcs_correction_small(offset, is_good):
 
         @property
         def meta(self):
-            return {'original_skycoord': self._original_skycoord}
+            return {"original_skycoord": self._original_skycoord}
 
     correctors = [FakeCorrector(twcs, tweakreg_step._wcs_to_skycoord(wcs))]
 
@@ -108,33 +107,29 @@ def test_is_wcs_correction_small(offset, is_good):
 
 
 def test_expected_failure_bad_starfinder():
-
     model = ImageModel()
     with pytest.raises(ValueError):
-        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder='bad_value')
+        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder="bad_value")
 
 
 def test_write_catalog(dummy_source_catalog, tmp_cwd):
-    '''
+    """
     Covers an issue where catalog write did not respect self.output_dir
-    '''
+    """
 
-    OUTDIR = 'outdir'
+    OUTDIR = "outdir"
     step = tweakreg_step.TweakRegStep()
     os.mkdir(OUTDIR)
     step.output_dir = OUTDIR
-    expected_outfile = os.path.join(OUTDIR, 'catalog.ecsv')
-    step._write_catalog(dummy_source_catalog, 'catalog.ecsv')
+    expected_outfile = os.path.join(OUTDIR, "catalog.ecsv")
+    step._write_catalog(dummy_source_catalog, "catalog.ecsv")
 
     assert os.path.exists(expected_outfile)
 
 
 @pytest.fixture()
 def example_wcs():
-    path = os.path.join(
-        os.path.dirname(__file__),
-        "data",
-        "nrcb1-wcs.asdf")
+    path = os.path.join(os.path.dirname(__file__), "data", "nrcb1-wcs.asdf")
     with asdf.open(path, lazy_load=False) as af:
         return af.tree["wcs"]
 
@@ -154,7 +149,7 @@ def example_input(example_wcs):
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y-1:y+2, x-1:x+2] = [
+        m0.data[y - 1 : y + 2, x - 1 : x + 2] = [
             [0.1, 0.6, 0.1],
             [0.6, 0.8, 0.6],
             [0.1, 0.6, 0.1],
@@ -162,8 +157,8 @@ def example_input(example_wcs):
 
     m1 = m0.copy()
     # give each a unique filename
-    m0.meta.filename = 'some_file_0.fits'
-    m1.meta.filename = 'some_file_1.fits'
+    m0.meta.filename = "some_file_0.fits"
+    m1.meta.filename = "some_file_1.fits"
     c = ModelContainer([m0, m1])
     return c
 
@@ -181,8 +176,8 @@ def test_tweakreg_step(example_input, with_shift):
         example_input[1].data[-9:] = BKG_LEVEL
 
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = 'a'
-    example_input[1].meta.group_id = 'b'
+    example_input[0].meta.group_id = "a"
+    example_input[1].meta.group_id = "b"
 
     # make the step with default arguments
     step = tweakreg_step.TweakRegStep()
@@ -192,22 +187,22 @@ def test_tweakreg_step(example_input, with_shift):
 
     # check that step completed
     for model in result:
-        assert model.meta.cal_step.tweakreg == 'COMPLETE'
+        assert model.meta.cal_step.tweakreg == "COMPLETE"
 
     # and that the wcses differ by a small amount due to the shift above
     # by projecting one point through each wcs and comparing the difference
     abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
     if with_shift:
-        assert abs_delta > 1E-5
+        assert abs_delta > 1e-5
     else:
-        assert abs_delta < 1E-12
+        assert abs_delta < 1e-12
 
 
-@pytest.mark.parametrize("alignment_type", ['', 'abs_'])
+@pytest.mark.parametrize("alignment_type", ["", "abs_"])
 def test_src_confusion_pars(example_input, alignment_type):
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = 'a'
-    example_input[1].meta.group_id = 'b'
+    example_input[0].meta.group_id = "a"
+    example_input[1].meta.group_id = "b"
 
     # make the step with arguments that may cause source confusion in match
     pars = {
@@ -219,7 +214,7 @@ def test_src_confusion_pars(example_input, alignment_type):
 
     # check that step was skipped
     for model in result:
-        assert model.meta.cal_step.tweakreg == 'SKIPPED'
+        assert model.meta.cal_step.tweakreg == "SKIPPED"
 
 
 @pytest.fixture()
@@ -233,7 +228,7 @@ def custom_catalog_path(tmp_path):
     n_sources = N_CUSTOM_SOURCES
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
-    catalog = Table(np.vstack((xs, ys)).T, names=['x', 'y'], dtype=[float, float])
+    catalog = Table(np.vstack((xs, ys)).T, names=["x", "y"], dtype=[float, float])
     catalog.write(fn)
     return fn
 
@@ -264,8 +259,8 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
         - `use_custom_catalogs` (True/False)
         - a "valid" file passed as `catfile`
     """
-    example_input[0].meta.group_id = 'a'
-    example_input[1].meta.group_id = 'b'
+    example_input[0].meta.group_id = "a"
+    example_input[1].meta.group_id = "b"
 
     # this worked because if use_custom_catalogs was true but
     # catfile was blank tweakreg still uses custom catalogs
@@ -278,28 +273,28 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     # write out the ModelContainer and association (so the association table will be loaded)
     example_input.save(dir_path=str(custom_catalog_path.parent))
     asn_data = {
-        'asn_id': 'foo',
-        'asn_pool': 'bar',
-        'products': [
+        "asn_id": "foo",
+        "asn_pool": "bar",
+        "products": [
             {
-                'members': [{'expname': m.meta.filename, 'exptype': 'science'} for m in example_input],
+                "members": [{"expname": m.meta.filename, "exptype": "science"} for m in example_input],
             },
         ],
     }
 
     if asn == "empty_asn_entry":
-        asn_data['products'][0]['members'][0]['tweakreg_catalog'] = ''
+        asn_data["products"][0]["members"][0]["tweakreg_catalog"] = ""
     elif asn == "cat_in_asn":
-        asn_data['products'][0]['members'][0]['tweakreg_catalog'] = str(custom_catalog_path.name)
+        asn_data["products"][0]["members"][0]["tweakreg_catalog"] = str(custom_catalog_path.name)
 
-    asn_path = custom_catalog_path.parent / 'example_input.json'
-    with open(asn_path, 'w') as f:
+    asn_path = custom_catalog_path.parent / "example_input.json"
+    with open(asn_path, "w") as f:
         json.dump(asn_data, f)
 
     # write out a catfile
     if catfile != "no_catfile":
-        catfile_path = custom_catalog_path.parent / 'catfile.txt'
-        with open(catfile_path, 'w') as f:
+        catfile_path = custom_catalog_path.parent / "catfile.txt"
+        with open(catfile_path, "w") as f:
             if catfile == "valid_catfile":
                 f.write(f"{example_input[0].meta.filename} {custom_catalog_path.name}")
             elif catfile == "empty_catfile_row":
@@ -321,7 +316,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
             elif asn == "no_cat_in_asn" and meta == "cat_in_meta":
                 n_custom_sources = N_CUSTOM_SOURCES
 
-    kwargs = {'use_custom_catalogs': custom}
+    kwargs = {"use_custom_catalogs": custom}
     if catfile != "no_catfile":
         kwargs["catfile"] = str(catfile_path)
     step = tweakreg_step.TweakRegStep(**kwargs)
@@ -329,9 +324,9 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     # patch _construct_wcs_corrector to check the correct catalog was loaded
     def patched_construct_wcs_corrector(model, catalog, _seen=[]):
         # we don't need to continue
-        if model.meta.group_id == 'a':
+        if model.meta.group_id == "a":
             assert len(catalog) == n_custom_sources
-        elif model.meta.group_id == 'b':
+        elif model.meta.group_id == "b":
             assert len(catalog) == N_EXAMPLE_SOURCES
         _seen.append(model)
         if len(_seen) == 2:
@@ -342,6 +337,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
 
     with pytest.raises(ValueError, match="done testing"):
         step(str(asn_path))
+
 
 @pytest.mark.parametrize("with_shift", [True, False])
 def test_sip_approx(example_input, with_shift):
@@ -355,8 +351,8 @@ def test_sip_approx(example_input, with_shift):
         example_input[1].data[-9:] = BKG_LEVEL
 
     # assign images to different groups (so they are aligned to each other)
-    example_input[0].meta.group_id = 'a'
-    example_input[1].meta.group_id = 'b'
+    example_input[0].meta.group_id = "a"
+    example_input[1].meta.group_id = "b"
 
     # call th step with override SIP approximation parameters
     step = tweakreg_step.TweakRegStep()
@@ -374,19 +370,19 @@ def test_sip_approx(example_input, with_shift):
     # project one point through each wcs and compare the difference
     abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
     if with_shift:
-        assert abs_delta > 1E-5
+        assert abs_delta > 1e-5
     else:
-        assert abs_delta < 1E-12
+        assert abs_delta < 1e-12
 
     # the first wcs is identical to the input and
     # does not have SIP approximation keywords --
     # they are normally set by assign_wcs
     assert np.allclose(result[0].meta.wcs(0, 0)[0], example_input[0].meta.wcs(0, 0)[0])
-    for key in ['ap_order', 'bp_order']:
+    for key in ["ap_order", "bp_order"]:
         assert key not in result[0].meta.wcsinfo.instance
 
     # for the second, SIP approximation should be present
-    for key in ['ap_order', 'bp_order']:
+    for key in ["ap_order", "bp_order"]:
         assert result[1].meta.wcsinfo.instance[key] == 3
 
     # evaluate fits wcs and gwcs for the approximation, make sure they agree

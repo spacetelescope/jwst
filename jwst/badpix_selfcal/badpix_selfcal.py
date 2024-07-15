@@ -6,11 +6,9 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 import warnings
 
 
-def badpix_selfcal(minimg: np.ndarray,
-                   flagfrac_lower: float = 0.001,
-                   flagfrac_upper: float = 0.001,
-                   kernel_size: int = 15,
-                   dispaxis=None) -> np.ndarray:
+def badpix_selfcal(
+    minimg: np.ndarray, flagfrac_lower: float = 0.001, flagfrac_upper: float = 0.001, kernel_size: int = 15, dispaxis=None
+) -> np.ndarray:
     """
     Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
 

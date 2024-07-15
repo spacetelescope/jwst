@@ -12,4 +12,3 @@ Guider CDS Processing
    reference_files.rst
 
 .. automodapi:: jwst.guider_cds
-

@@ -30,13 +30,11 @@ def create_afflist_rot(rotdegs):
     alist = []
     for nrot, rotd in enumerate(rotdegs):
         rotd_ = utils.avoidhexsingularity(rotd)
-        alist.append(utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0,
-                                    name="affrot_{0:+.3f}".format(rotd_)))
+        alist.append(utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0, name="affrot_{0:+.3f}".format(rotd_)))
     return alist
 
 
-def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
-                  pixel, npix, bandpass, over, holeshape):
+def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo, pixel, npix, bandpass, over, holeshape):
     """
     Create an affine2d object using the known rotation and scale.
 
@@ -90,15 +88,15 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
         Affine2d object using the known rotation and scale.
 
     """
-    if hasattr(rotdegs, '__iter__') is False:
+    if hasattr(rotdegs, "__iter__") is False:
         rotdegs = (rotdegs,)
 
     affine2d_list = create_afflist_rot(rotdegs)
 
     crosscorr_rots = []
 
-    for (rot, aff) in zip(rotdegs, affine2d_list):
-        jw = lg_model.NrmModel(mask='jwst_g7s6c', holeshape=holeshape, over=over, affine2d=aff)
+    for rot, aff in zip(rotdegs, affine2d_list):
+        jw = lg_model.NrmModel(mask="jwst_g7s6c", holeshape=holeshape, over=over, affine2d=aff)
 
         jw.set_pixelscale(pixel)
         # psf_offset in data coords & pixels.  Does it get rotated?  Second order errors poss.
@@ -111,7 +109,6 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     rot_measured_d, max_cor = utils.findpeak_1d(crosscorr_rots, rotdegs)
 
     # return convenient affine2d
-    new_affine2d = utils.Affine2d(rotradccw=np.pi * rot_measured_d / 180.0,
-                                  name="{0:.4f}".format(rot_measured_d))
+    new_affine2d = utils.Affine2d(rotradccw=np.pi * rot_measured_d / 180.0, name="{0:.4f}".format(rot_measured_d))
 
     return new_affine2d

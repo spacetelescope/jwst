@@ -39,20 +39,17 @@ from stcal.ramp_fitting import ramp_fit
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % rf.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % rf.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Do a Ramp Fitting""")
+    parser = argparse.ArgumentParser("""Do a Ramp Fitting""")
 
-    parser.add_argument(
-        'infile', metavar='infile', nargs=1,
-        help="""Input Level 1b FITS file.""")
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input Level 1b FITS file.""")
 
     args = parser.parse_args()
     ramp_fit.ramp_fit(args.infile[0], ramp_fit.BUFSIZE)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

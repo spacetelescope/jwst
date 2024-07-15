@@ -10,4 +10,3 @@ each pixel. Both are necessary for proper computation of noise estimates.
 :ref:`GAIN <gain_reffile>`
 
 :ref:`READNOISE <readnoise_reffile>`
-

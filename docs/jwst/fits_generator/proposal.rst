@@ -26,7 +26,7 @@ tags.  Finally, the type of exposure can be placed between the <exp_type>
 +------------------+---------+----------------+---------+------------+
 |MIR_LRS-FIXEDSLIT |NRC_DARK |NRS_FIXEDSLIT   |         |            |
 +------------------+---------+----------------+---------+------------+
-|MIR_LRS-SLITLESS  |NRC_FLAT |NRS_AUTOWAVECAL |         |            |  
+|MIR_LRS-SLITLESS  |NRC_FLAT |NRS_AUTOWAVECAL |         |            |
 +------------------+---------+----------------+---------+------------+
 |MIR_MRS           |         |NRS_IFU         |         |            |
 +------------------+---------+----------------+---------+------------+

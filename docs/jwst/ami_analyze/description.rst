@@ -20,7 +20,7 @@ the SUB80 subarray, in order to reduce execution time.
 
 Arguments
 ---------
-The ``ami_analyze`` step has several optional arguments. In most cases the 
+The ``ami_analyze`` step has several optional arguments. In most cases the
 default arguments will be suitable but more advanced users may wish to test
 other options:
 
@@ -36,10 +36,10 @@ other options:
                     rotation search values. The default setting of '-3 3 1'
                     results in search values of [-3, -2, -1, 0, 1, 2, 3].
 
-:--bandpass: Synphot spectrum or suitable array to override filter/source 
+:--bandpass: Synphot spectrum or suitable array to override filter/source
              (default=None)
 
-:--usebp: If True, exclude pixels marked DO_NOT_USE from fringe fitting 
+:--usebp: If True, exclude pixels marked DO_NOT_USE from fringe fitting
           (default=True)
 
 :--firstfew: If not None, process only the first few integrations (default=None)
@@ -50,7 +50,7 @@ other options:
 :--affine2d: User-defined Affine2d object (default=None)
 
 :--run_bpfix: Run Fourier bad pixel fix on cropped data (default=True)
-            
+
 
 Inputs
 ------
@@ -84,19 +84,19 @@ Interferometric observables
 . The inteferometric observables are saved as OIFITS files, a registered FITS format
 for optical interferometry, containing the following list of extensions:
 
-1)  ``OI_ARRAY``: AMI subaperture information  
-2)  ``OI_TARGET``: target properties  
-3)  ``OI_T3``: extracted closure amplitudes, phases 
+1)  ``OI_ARRAY``: AMI subaperture information
+2)  ``OI_TARGET``: target properties
+3)  ``OI_T3``: extracted closure amplitudes, phases
 4)  ``OI_VIS``: extracted visibility (fringe) amplitudes, phases
 5)  ``OI_VIS2``: squared visibility (fringe) amplitudes
 6)  ``OI_WAVELENGTH``: filter information
 
 For more information on the format and contents of OIFITS files, see the `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-The _ami-oi.fits file contains tables of median observables over all integrations of the input file.  Errors 
+The _ami-oi.fits file contains tables of median observables over all integrations of the input file.  Errors
 are computed as the sigma-clipped standard deviation over integrations.
 The _amimulti-oi.fits file contains observables for each integration, and does not contain error estimates. The
-structure is the same as the _ami-oi.fits file, but the following data columns are 2D, with the second dimension being 
+structure is the same as the _ami-oi.fits file, but the following data columns are 2D, with the second dimension being
 the number of integrations: "PISTONS", "PIST_ERR", "VISAMP", "VISAMPERR", "VISPHI", "VISPHIERR", "VIS2DATA", "VIS2ERR", "T3AMP", "T3AMPERR", "T3PHI", "T3PHIERR".
 
 LG model parameters
@@ -104,7 +104,7 @@ LG model parameters
 :Data model: `~jwst.datamodels.AmiLgFitModel`
 :File suffix: _amilg.fits
 
-The _amilg.fits output file contains the cropped and cleaned data, model, and residuals (data - model) as well as 
+The _amilg.fits output file contains the cropped and cleaned data, model, and residuals (data - model) as well as
 the parameters of the best-fit LG model. It contains the following extensions:
 
 1) ``CTRD``: a 3D image of the centered, cropped data

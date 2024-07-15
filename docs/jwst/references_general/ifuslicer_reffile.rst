@@ -1,7 +1,7 @@
 :orphan:
 
 .. _ifuslicer_reffile:
-  
+
 IFUSLICER Reference File (NIRSpec only)
 ---------------------------------------
 

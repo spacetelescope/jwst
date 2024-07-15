@@ -28,10 +28,10 @@ resample            3   None                    None                            
 wfs_combine         3   None                    ERR                                    None
 ================= ===== ======================= ====================================== ==========
 
-Stage 1 Pipelines 
+Stage 1 Pipelines
 -----------------
 Stage 1 pipelines perform detector-level corrections and ramp fitting for
-individual exposures, for nearly all imaging and spectroscopic modes. Details 
+individual exposures, for nearly all imaging and spectroscopic modes. Details
 of the pipelines can be found at :ref:`Stage 1 Pipelines <calwebb_detector1>`.
 
 The Stage 1 pipeline steps that alter the ERR, VAR_POISSON, or VAR_RNOISE arrays of
@@ -49,18 +49,18 @@ The details of the calculations can be found at :ref:`ramp_fitting <ramp_fitting
 
 gain_scale
 ++++++++++
-The ``gain_scale`` step is applied after ``ramp_fitting``, and applies to both the 
-rate and rateints products. The gain correction is applied to the ERR, 
+The ``gain_scale`` step is applied after ``ramp_fitting``, and applies to both the
+rate and rateints products. The gain correction is applied to the ERR,
 VAR_POISSON, and VAR_RNOISE arrays.  The SCI and ERR arrays are multiplied by the
 gain correction factor, and the variance arrays are multiplied by the square of
 the gain correction factor. More details can be
 found at :ref:`gain_scale <gain_scale_step>`.
 
-Stage 2 Pipelines 
+Stage 2 Pipelines
 -----------------
-Stage 2 pipelines perform additional instrument-level and observing-mode corrections and 
+Stage 2 pipelines perform additional instrument-level and observing-mode corrections and
 calibrations to produce fully calibrated exposures. There are two main Stage 2 pipelines:
-one for imaging :ref:`calwebb_image2 <calwebb_image2>` and one for 
+one for imaging :ref:`calwebb_image2 <calwebb_image2>` and one for
 spectroscopy :ref:`calwebb_spec2 <calwebb_spec2>`.
 In these pipelines, the various steps that apply corrections and calibrations
 apply those same corrections/calibrations to all variance arrays and update the total
@@ -70,31 +70,31 @@ flat_field
 ++++++++++
 The SCI array of the exposure being processed is divided by the flat-field reference
 image.  The VAR_FLAT array is created, computed from the science data and the flat-field
-reference file ERR array. 
+reference file ERR array.
 
 For all modes except GUIDER, the VAR_POISSON and VAR_RNOISE arrays are divided by the
 square of the flat. The science data ERR array is then updated to be the square root
-of the sum of the three variance arrays. 
+of the sum of the three variance arrays.
 
 For the GUIDER mode, their are no VAR_POISSON and VAR_RNOISE arrays. The science data
 ERR array is updated to be the square root of the sum of the variance VAR_FLAT and the
-square of the incoming science ERR array. 
+square of the incoming science ERR array.
 
 For more details see :ref:`flat_field <flatfield_step>`.
 
-fringe 
+fringe
 ++++++
 For MIRI MRS (IFU) mode exposures, the SCI and ERR arrays in the science exposure
-are divided by the fringe reference image.  For details of the fringe correction, see 
+are divided by the fringe reference image.  For details of the fringe correction, see
 :ref:`fringe <fringe_step>`.
 
-barshadow 
+barshadow
 +++++++++
 This step is applied only to NIRSpec MSA data for extended sources. Once the
 2-D correction array for each slit has been computed, it is applied to the
 science (SCI), error (ERR), and variance (VAR_POISSON, VAR_RNOISE, and VAR_FLAT)
 arrays of the slit.  The correction values are divided into the SCI and ERR
-arrays, and the square of the correction values are divided into the variance 
+arrays, and the square of the correction values are divided into the variance
 arrays.   For details of the bar shadow correction, see
 :ref:`barshadow <barshadow_step>`.
 
@@ -106,7 +106,7 @@ the science data, and the square of the correction values are divided into the
 variance arrays. For details of this step, see :ref:`pathloss <pathloss_step>`.
 
 photom
-++++++ 
+++++++
 The calibration information for the ``photom`` step includes a scalar flux conversion
 constant, as well as optional arrays of wavelength and relative response (as a
 function of wavelength). The combination of the scalar conversion factor and any 2-D
@@ -120,13 +120,13 @@ Stage 3 pipelines
 -----------------
 Stage 3 pipelines perform operations that work with multiple exposures and in
 most cases produce some kind of combined product.  The operations in these
-pipelines that either use or modify variance/error arrays that are propagated 
+pipelines that either use or modify variance/error arrays that are propagated
 through the pipeline are ``outlier_detection`` and ``wfs_combine``.
 
 outlier_detection
 +++++++++++++++++
 The ``outlier_detection`` step is used in all Stage 3 pipelines.  It uses the ERR array to
-make a local noise model, based on the readnoise and calibration errors of earlier 
+make a local noise model, based on the readnoise and calibration errors of earlier
 steps in the pipeline. This step does not modify the ERR array or any of the VAR
 arrays.
 

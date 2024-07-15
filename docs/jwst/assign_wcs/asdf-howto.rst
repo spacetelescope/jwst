@@ -144,5 +144,3 @@ To test the file, it can be read in again using the ``asdf.open()`` function:
 ...     model = ff.tree['model']
 ...     model(1)
     -152.2
-
-

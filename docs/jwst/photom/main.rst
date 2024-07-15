@@ -172,7 +172,7 @@ band, as a function of time, is shown in Figure 1.
 .. figure:: Model_summary.png
    :scale: 50%
    :align: center
-	   
+
 Figure 1:
 Time-dependent decrease in the observed MRS count rate as measured from internal flat-field exposures.
 Solid points illustrate measurements at the central wavelength of each of the 12 MRS bands;

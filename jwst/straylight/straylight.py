@@ -19,15 +19,14 @@ log.setLevel(logging.DEBUG)
 
 # C version of the fitting code
 def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
-
     fuse = fimg.copy()
-    badval = np.where(fuse < 0.)
+    badval = np.where(fuse < 0.0)
     if len(badval[0]) > 0:
-        fuse[badval] = 0.
+        fuse[badval] = 0.0
     fuse1d = fuse.ravel()
 
-    gamma = lor_fwhm / 2.
-    g_std = g_fwhm / (2 * np.sqrt(2. * np.log(2)))
+    gamma = lor_fwhm / 2.0
+    g_std = g_fwhm / (2 * np.sqrt(2.0 * np.log(2)))
 
     xsize, ysize = 1032, 1024
 
@@ -42,36 +41,43 @@ def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_
 
 # Python version of the fitting code
 def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
-
     model = np.zeros_like(fimg)
     model1d = model.ravel()
 
     fuse = fimg.copy()
-    badval = np.where(fuse < 0.)
+    badval = np.where(fuse < 0.0)
     if len(badval[0]) > 0:
-        fuse[badval] = 0.
+        fuse[badval] = 0.0
     fuse1d = fuse.ravel()
 
-    gamma = lor_fwhm / 2.
-    gstd = g_fwhm / (2 * np.sqrt(2. * np.log(2)))
+    gamma = lor_fwhm / 2.0
+    gstd = g_fwhm / (2 * np.sqrt(2.0 * np.log(2)))
 
     for yy in range(0, 1024):
         for ii in range(imin, imax):
-            model1d[1032 * yy:1032 * (yy + 1)] += \
-                (fuse1d[yy * 1032 + ii] * lor_amp[yy] * gamma[yy] * gamma[yy]) \
-                / (gamma[yy] * gamma[yy] + (xvec - ii) * (xvec - ii))
-            model1d[1032 * yy:1032 * (yy + 1)] += \
-                (fuse1d[yy * 1032 + ii] * g1_amp[yy]
-                 * np.exp(-((xvec - ii - g_dx[yy]) * (xvec - ii - g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
-            model1d[1032 * yy:1032 * (yy + 1)] += \
-                (fuse1d[yy * 1032 + ii] * g1_amp[yy]
-                 * np.exp(-((xvec - ii + g_dx[yy]) * (xvec - ii + g_dx[yy])) / (2 * gstd[yy] * gstd[yy])))
-            model1d[1032 * yy:1032 * (yy + 1)] += \
-                (fuse1d[yy * 1032 + ii] * g2_amp[yy]
-                 * np.exp(-((xvec - ii - 2 * g_dx[yy]) * (xvec - ii - 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy])))
-            model1d[1032 * yy:1032 * (yy + 1)] += \
-                (fuse1d[yy * 1032 + ii] * g2_amp[yy]
-                 * np.exp(-((xvec - ii + 2 * g_dx[yy]) * (xvec - ii + 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy])))
+            model1d[1032 * yy : 1032 * (yy + 1)] += (fuse1d[yy * 1032 + ii] * lor_amp[yy] * gamma[yy] * gamma[yy]) / (
+                gamma[yy] * gamma[yy] + (xvec - ii) * (xvec - ii)
+            )
+            model1d[1032 * yy : 1032 * (yy + 1)] += (
+                fuse1d[yy * 1032 + ii]
+                * g1_amp[yy]
+                * np.exp(-((xvec - ii - g_dx[yy]) * (xvec - ii - g_dx[yy])) / (2 * gstd[yy] * gstd[yy]))
+            )
+            model1d[1032 * yy : 1032 * (yy + 1)] += (
+                fuse1d[yy * 1032 + ii]
+                * g1_amp[yy]
+                * np.exp(-((xvec - ii + g_dx[yy]) * (xvec - ii + g_dx[yy])) / (2 * gstd[yy] * gstd[yy]))
+            )
+            model1d[1032 * yy : 1032 * (yy + 1)] += (
+                fuse1d[yy * 1032 + ii]
+                * g2_amp[yy]
+                * np.exp(-((xvec - ii - 2 * g_dx[yy]) * (xvec - ii - 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy]))
+            )
+            model1d[1032 * yy : 1032 * (yy + 1)] += (
+                fuse1d[yy * 1032 + ii]
+                * g2_amp[yy]
+                * np.exp(-((xvec - ii + 2 * g_dx[yy]) * (xvec - ii + 2 * g_dx[yy])) / (8 * gstd[yy] * gstd[yy]))
+            )
 
     return model
 
@@ -117,8 +123,7 @@ def correct_xartifact(input_model, modelpars):
 
     # flag pixels that should not be used for computation
     mask_dq = input_model.dq.copy()  # * mask # find DQ flags of the gap values
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE']
-                 + dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
+    all_flags = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"] + dqflags.pixel["DEAD"] + dqflags.pixel["HOT"]
     # where are pixels set to any one of the all_flags cases
     testflags = np.bitwise_and(mask_dq, all_flags)
     # where are testflags ne 0 and mask == 1
@@ -130,12 +135,12 @@ def correct_xartifact(input_model, modelpars):
     band = input_model.meta.instrument.band
 
     # Define the 'dark' region to use between the channels
-    if (channel == '12'):
+    if channel == "12":
         xd1, xd2 = 503, 516
-        yd1, yd2 = 50, 1024-50
+        yd1, yd2 = 50, 1024 - 50
     else:
         xd1, xd2 = 474, 507
-        yd1, yd2 = 50, 1024-50
+        yd1, yd2 = 50, 1024 - 50
 
     # Estimate a first-pass pedestal correction based on sigma-clipped
     # statistics in the dark region. We need to do this here so that
@@ -149,23 +154,23 @@ def correct_xartifact(input_model, modelpars):
     mask[indx] = 0
 
     # Deal with normal cases only, we won't apply to cross-dichroic cases for now
-    left, right = 'N/A', 'N/A'
+    left, right = "N/A", "N/A"
 
-    if channel == '12' and band == 'SHORT':
-        left, right = 'ch1a_table', 'ch2a_table'
-    if channel == '12' and band == 'MEDIUM':
-        left, right = 'ch1b_table', 'ch2b_table'
-    if channel == '12' and band == 'LONG':
-        left, right = 'ch1c_table', 'ch2c_table'
-    if channel == '34' and band == 'SHORT':
-        left, right = 'ch4a_table', 'ch3a_table'
-    if channel == '34' and band == 'MEDIUM':
-        left, right = 'ch4b_table', 'ch3b_table'
-    if channel == '34' and band == 'LONG':
-        left, right = 'ch4c_table', 'ch3c_table'
+    if channel == "12" and band == "SHORT":
+        left, right = "ch1a_table", "ch2a_table"
+    if channel == "12" and band == "MEDIUM":
+        left, right = "ch1b_table", "ch2b_table"
+    if channel == "12" and band == "LONG":
+        left, right = "ch1c_table", "ch2c_table"
+    if channel == "34" and band == "SHORT":
+        left, right = "ch4a_table", "ch3a_table"
+    if channel == "34" and band == "MEDIUM":
+        left, right = "ch4b_table", "ch3b_table"
+    if channel == "34" and band == "LONG":
+        left, right = "ch4c_table", "ch3c_table"
 
     # Catch failure cases with a log warning
-    if left == 'N/A' or right == 'N/A':
+    if left == "N/A" or right == "N/A":
         log.info("Warning: no parameters found for channel = " + str(channel) + " band = " + str(band))
 
     xvec = (np.arange(ncols)).astype(float)
@@ -179,9 +184,18 @@ def correct_xartifact(input_model, modelpars):
         istart, istop = 0, 516
         # Subtract off intial guess at pedestal first
         fimg = (usedata - pedestal_guess) * mask
-        left_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
-                                     param['LOR_SCALE'], param['GAU_FWHM'],
-                                     param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
+        left_model = makemodel_ccode(
+            fimg,
+            xvec,
+            istart,
+            istop,
+            param["LOR_FWHM"],
+            param["LOR_SCALE"],
+            param["GAU_FWHM"],
+            param["GAU_XOFF"],
+            param["GAU_SCALE1"],
+            param["GAU_SCALE2"],
+        )
     except Exception:
         left_model[:, :] = 0
         log.info("No parameters for left detector half, not applying Cross-Artifact correction.")
@@ -192,9 +206,18 @@ def correct_xartifact(input_model, modelpars):
         log.info("Found parameters for right detector half, applying Cross-Artifact correction.")
         istart, istop = 516, 1024
         fimg = (usedata - pedestal_guess) * mask
-        right_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
-                                      param['LOR_SCALE'], param['GAU_FWHM'],
-                                      param['GAU_XOFF'], param['GAU_SCALE1'], param['GAU_SCALE2'])
+        right_model = makemodel_ccode(
+            fimg,
+            xvec,
+            istart,
+            istop,
+            param["LOR_FWHM"],
+            param["LOR_SCALE"],
+            param["GAU_FWHM"],
+            param["GAU_XOFF"],
+            param["GAU_SCALE1"],
+            param["GAU_SCALE2"],
+        )
     except Exception:
         right_model[:, :] = 0
         log.info("No parameters for right detector half, not applying Cross-Artifact correction.")

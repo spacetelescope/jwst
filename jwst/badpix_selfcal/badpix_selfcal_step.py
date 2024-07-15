@@ -31,14 +31,12 @@ class BadpixSelfcalStep(Step):
     """
 
     def save_model(self, model, *args, **kwargs):
-        """Override save_model to suppress index 0 when save_model is True
-        """
+        """Override save_model to suppress index 0 when save_model is True"""
         kwargs["idx"] = None
         return Step.save_model(self, model, *args, **kwargs)
 
     def save_bkg(self, bkg_list, suffix="badpix_selfcal_bkg"):
-        """Save the background exposures to file with correct indexing
-        """
+        """Save the background exposures to file with correct indexing"""
         for i, bkg_model in enumerate(bkg_list):
             self.save_model(bkg_model, suffix=suffix + f"_{str(i)}")
 
@@ -82,19 +80,22 @@ class BadpixSelfcalStep(Step):
         # ensure that there are background exposures to use, otherwise skip the step
         # unless forced
         if (len(selfcal_list + bkg_list) == 0) and (not self.force_single):
-            self.log.warning("No selfcal or background exposures provided for self-calibration. "
-                        "Skipping step.")
-            self.log.info("If you want to force self-calibration with the science "
-                        "exposure alone (generally not recommended), set force_single=True.")
-            input_sci.meta.cal_step.badpix_selfcal = 'SKIPPED'
+            self.log.warning("No selfcal or background exposures provided for self-calibration. " "Skipping step.")
+            self.log.info(
+                "If you want to force self-calibration with the science "
+                "exposure alone (generally not recommended), set force_single=True."
+            )
+            input_sci.meta.cal_step.badpix_selfcal = "SKIPPED"
             return input_sci, bkg_list
 
         # get the dispersion axis
         try:
             dispaxis = input_sci.meta.wcsinfo.dispersion_direction
         except AttributeError:
-            self.log.warning("Dispersion axis not found in input science image metadata. "
-                        "Kernel for self-calibration will be two-dimensional.")
+            self.log.warning(
+                "Dispersion axis not found in input science image metadata. "
+                "Kernel for self-calibration will be two-dimensional."
+            )
             dispaxis = None
 
         # collapse all selfcal exposures into a single background model
@@ -120,7 +121,7 @@ class BadpixSelfcalStep(Step):
         if self.save_flagged_bkg:
             self.save_bkg(bkg_list)
 
-        input_sci.meta.cal_step.badpix_selfcal = 'COMPLETE'
+        input_sci.meta.cal_step.badpix_selfcal = "COMPLETE"
         return input_sci, bkg_list
 
 
@@ -158,28 +159,26 @@ def _parse_inputs(input, selfcal_list, bkg_list):
     selfcal_list = selfcal_list + bkg_list
 
     with dm.open(input) as input_data:
-
         # find science and background exposures in association file
         if isinstance(input_data, dm.ModelContainer):
-
             sci_models, bkg_list_asn, selfcal_list_asn = split_container_by_asn_exptype(
-                input_data, exptypes=['science', 'background', 'selfcal'])
+                input_data, exptypes=["science", "background", "selfcal"]
+            )
 
             selfcal_list = selfcal_list + list(bkg_list_asn) + list(selfcal_list_asn)
             bkg_list += list(bkg_list_asn)
 
             if len(sci_models) > 1:
-                raise ValueError("Input data contains multiple science exposures. "
-                                 "This is not supported in calwebb_spec2 steps.")
+                raise ValueError(
+                    "Input data contains multiple science exposures. " "This is not supported in calwebb_spec2 steps."
+                )
             input_sci = sci_models[0]
 
         elif isinstance(input_data, dm.IFUImageModel) or isinstance(input_data, dm.ImageModel):
-
             input_sci = input_data
 
         else:
-            raise TypeError("Input data is not a ModelContainer, ImageModel, or IFUImageModel. "
-                            "Cannot continue.")
+            raise TypeError("Input data is not a ModelContainer, ImageModel, or IFUImageModel. " "Cannot continue.")
 
     return input_sci, selfcal_list, bkg_list
 

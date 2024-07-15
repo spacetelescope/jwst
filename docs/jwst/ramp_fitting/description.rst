@@ -21,7 +21,7 @@ from ramp fitting.
 The count rate for each pixel is determined by a linear fit to the
 cosmic-ray-free and saturation-free ramp intervals for each pixel, with any
 intervening groups flagged as "DO_NOT_USE" excluded from the fits. Hereafter
-such intervals will be referred to as a ramp "segment." The fitting algorithm uses an 
+such intervals will be referred to as a ramp "segment." The fitting algorithm uses an
 'optimal' weighting scheme, as described by
 `Fixsen et al 2000 <https://ui.adsabs.harvard.edu/abs/2000PASP..112.1350F/abstract>`_.
 

@@ -117,7 +117,7 @@ exposure file name of a Stage 3 associations:
 
    exposure = asn['products'][0]['members'][0]['expname']
 
-Since most JWST data are some form of a 
+Since most JWST data are some form of a
 :ref:`JWST Data Model<jwst-data-models>`
 an association can be opened with
 :ref:`datamodels.open<stdatamodels:datamodels-open>`

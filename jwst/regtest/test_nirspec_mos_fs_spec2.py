@@ -18,27 +18,45 @@ def run_pipeline(rtdata_module):
     rtdata.get_data("nirspec/mos/jw02674004001_03101_00001_nrs1_rate.fits")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.assign_wcs.save_results=true",
-            "--steps.msa_flagging.save_results=true",
-            "--steps.master_background_mos.save_results=true",
-            "--steps.extract_2d.save_results=true",
-            "--steps.srctype.save_results=true",
-            "--steps.wavecorr.save_results=true",
-            "--steps.flat_field.save_results=true",
-            "--steps.pathloss.save_results=true",
-            "--steps.barshadow.save_results=true"]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=true",
+        "--steps.msa_flagging.save_results=true",
+        "--steps.master_background_mos.save_results=true",
+        "--steps.extract_2d.save_results=true",
+        "--steps.srctype.save_results=true",
+        "--steps.wavecorr.save_results=true",
+        "--steps.flat_field.save_results=true",
+        "--steps.pathloss.save_results=true",
+        "--steps.barshadow.save_results=true",
+    ]
     Step.from_cmdline(args)
 
     return rtdata
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", [
-    "assign_wcs", "msa_flagging", "extract_2d", "srctype",
-    "master_background_mos", "wavecorr", "flat_field", "pathloss", "barshadow",
-    "wavecorr_fs", "flat_field_fs", "pathloss_fs",
-    "cal", "s2d", "x1d"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "assign_wcs",
+        "msa_flagging",
+        "extract_2d",
+        "srctype",
+        "master_background_mos",
+        "wavecorr",
+        "flat_field",
+        "pathloss",
+        "barshadow",
+        "wavecorr_fs",
+        "flat_field_fs",
+        "pathloss_fs",
+        "cal",
+        "s2d",
+        "x1d",
+    ],
+)
 def test_nirspec_mos_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 on a NIRSpec MOS/FS exposure."""
 

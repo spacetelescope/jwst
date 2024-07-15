@@ -64,7 +64,7 @@ x_det : double array
 y_det : double array
    size: point cloud elements. Y detector value of each point cloud member
 debug_cube_index : int
-   if > 0, value of cube index to print information on 
+   if > 0, value of cube index to print information on
 
 Returns
 -------
@@ -283,14 +283,14 @@ int match_driz(double *xc, double *yc, double *zc,
 		  varv[index_cube] = varv[index_cube] + weighted_var;
 		  ifluxv[index_cube] = ifluxv[index_cube] +1.0;
 		}
-		
+
 		// Keep print statement in code - used for debugging
 		if (index_cube == debug_cube_index){
 		  printf("spaxel, flux, x, y [count starting at 0]  %i %f %f %f  \n ", index_cube,
 			 x_det[k], y_det[k], flux[k]);
 		}
-		
-		
+
+
 		// end of print statements
 	      } // xleft, xright, ybot, ytop
 
@@ -332,7 +332,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   PyObject  *cdelt3o;
   PyObject *xi1o, *eta1o, *xi2o, *eta2o, *xi3o, *eta3o, *xi4o, *eta4o, *x_deto, *y_deto;
   PyObject *dwaveo;
-  
+
   double cdelt1, cdelt2,cdelt3_mean;
   int  nwave, nxx, nyy;
   long npt, ncube, debug_cube_index;

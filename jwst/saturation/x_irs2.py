@@ -76,8 +76,7 @@ def _get_irs2_parameters(input_model, n=None, r=None):
     if r is not None:
         n_ref = r
 
-    param = ReadoutParam(refout=(512 + 512 // n_norm * n_ref),
-                         n=n_norm, r=n_ref)
+    param = ReadoutParam(refout=(512 + 512 // n_norm * n_ref), n=n_norm, r=n_ref)
 
     return param
 
@@ -92,7 +91,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
         if detector is None:
             detector = input_model.meta.instrument.detector
 
-    if not pipe_utils.is_irs2(input_model):     # not IRS2 format
+    if not pipe_utils.is_irs2(input_model):  # not IRS2 format
         return shape
 
     param = _get_irs2_parameters(input_model, n=n, r=r)
@@ -102,8 +101,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
     elif detector == "NRS1" or detector == "NRS2":
         irs2_nx = shape[-2]
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError("Detector %s is not supported for IRS2 data" % detector)
 
     k = (irs2_nx - param.refout) // (param.n + param.r)
     n_output = (irs2_nx - param.refout) - k * param.r
@@ -164,21 +162,21 @@ def make_mask(input_model, n=None, r=None):
         # The interspersed reference pixels are in the same locations
         # regardless of readout direction.
         for i in range(refout + n_norm // 2, irs2_nx + 1, n_norm + n_ref):
-            irs2_mask[i:i + n_ref] = False
+            irs2_mask[i : i + n_ref] = False
     else:
         # Set the flags for each readout direction separately.
-        nelem = (irs2_nx - refout) // 4         # number of elements per output
+        nelem = (irs2_nx - refout) // 4  # number of elements per output
         temp = np.ones(nelem, dtype=bool)
         for i in range(n_norm // 2, nelem + 1, n_norm + n_ref):
-            temp[i:i + n_ref] = False
+            temp[i : i + n_ref] = False
         j = refout
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j = refout + nelem
-        irs2_mask[j + nelem - 1:j - 1:-1] = temp.copy()
+        irs2_mask[j + nelem - 1 : j - 1 : -1] = temp.copy()
         j = refout + 2 * nelem
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j = refout + 3 * nelem
-        irs2_mask[j + nelem - 1:j - 1:-1] = temp.copy()
+        irs2_mask[j + nelem - 1 : j - 1 : -1] = temp.copy()
 
     return irs2_mask
 
@@ -221,8 +219,7 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
         temp_mask = irs2_mask[::-1]
         norm_data = irs2_data[..., temp_mask, :]
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError("Detector %s is not supported for IRS2 data" % detector)
 
     return norm_data
 
@@ -266,5 +263,4 @@ def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
         temp_mask = irs2_mask[::-1]
         irs2_data[..., temp_mask, :] = norm_data.copy()
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError("Detector %s is not supported for IRS2 data" % detector)

@@ -3,7 +3,7 @@
 Step Arguments
 ==============
 The default values for the step arguments are found in the ``CubeBuildStep.spec`` attribute.
-The user can override the default values for a parameter if a step argument exist for the parameter. 
+The user can override the default values for a parameter if a step argument exist for the parameter.
 
 The  step arguments can be used to control the properties of the output IFU cube or to select  subsets of data are used to produce the output cubes. Note that some options will result in multiple cubes being
 created. For example, if the input data span several bands, but ``output_type = band``  then a cube for
@@ -21,7 +21,7 @@ each band will be created.
 ``band [string]``
   This is a MIRI only option and the valid values are SHORT, MEDIUM, LONG, and ALL.
   If the ``band`` argument is given, then only data corresponding
-  to that sub-channel will be used in constructing the cube. Only one value can be specified. 
+  to that sub-channel will be used in constructing the cube. Only one value can be specified.
   Note we use the name ``band`` for this argument instead of
   ``subchannel``, because the keyword ``band`` in the input images is used to indicate which MIRI subchannel the
   data cover.   This parameter can be combined
@@ -51,14 +51,14 @@ each band will be created.
 
   - ``output_type = channel`` creates a single IFU cube from each unique channel of MIRI data
     (or just those channels set by the 'channel' option). This is the default mode for the
-    :ref:`calwebb_spec3 <calwebb_spec3>` pipeline for MIRI data. 
+    :ref:`calwebb_spec3 <calwebb_spec3>` pipeline for MIRI data.
 
   - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
     grating option into a single IFU cube. The is the default mode for the
-    :ref:`calwebb_spec3 <calwebb_spec3>` pipeline for NIRSpec data. 
+    :ref:`calwebb_spec3 <calwebb_spec3>` pipeline for NIRSpec data.
 
   - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for
-    :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.  
+    :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
     If in addition,  channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
 
@@ -92,11 +92,11 @@ The following arguments control the size and sampling characteristics of the out
   The odd integer number of spaxels to use in the y dimension of the tangent plane.
 
 ``coord_system [string]``
-  The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up 
+  The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up
   and east is left. There are two other coordinate systems an IFU cube can be built on:
 
-  - ``coord_system=ifualign`` is also on the ra-dec system but the IFU cube is aligned with the instrument IFU plane. 
-  - ``coord_system=internal_cal`` is built on the local internal IFU slicer plane. These types of cubes will be useful during commissioning. For both MIRI ad NIRSpec only a single band from a single exposure can be used to create these type of cubes. The spatial dimensions for these cubes are two orthogonal axes, one parallel and the perpendicular to the slices in the FOV. 
+  - ``coord_system=ifualign`` is also on the ra-dec system but the IFU cube is aligned with the instrument IFU plane.
+  - ``coord_system=internal_cal`` is built on the local internal IFU slicer plane. These types of cubes will be useful during commissioning. For both MIRI ad NIRSpec only a single band from a single exposure can be used to create these type of cubes. The spatial dimensions for these cubes are two orthogonal axes, one parallel and the perpendicular to the slices in the FOV.
 
 There are a number of arguments that control how the point cloud values are combined together to produce the final
 flux associated with each output spaxel flux. The first set defines the the  **region of interest**,  which defines the
@@ -111,12 +111,12 @@ The arguments related to region of interest and how the fluxes are combined toge
 
 ``weighting [string]``
   The type of weighting to use when combining detector pixel fluxes to represent the spaxel flux. Allowed values are
-  ``emsm``,  ``msm`` and ``drizzle``. 
+  ``emsm``,  ``msm`` and ``drizzle``.
 
   For more details on how the weighting of the detector pixel fluxes are used in determining the final spaxel flux see
   the :ref:`weighting` section.
 
-A parameter only used for investigating which detector pixels contributed to a cube spaxel is ``debug_spaxel``. This option is only valid if the ``weighting`` parameter is set to ``drizzle`` (default). 
+A parameter only used for investigating which detector pixels contributed to a cube spaxel is ``debug_spaxel``. This option is only valid if the ``weighting`` parameter is set to ``drizzle`` (default).
 
 ``debug_spaxel [string]``
 

@@ -23,7 +23,7 @@ def set_nans_to_donotuse(data, dq):
     dq : numpy array
         The updated DQ array.
     """
-    dq[np.isnan(data)] |= dqflags.pixel['DO_NOT_USE']
+    dq[np.isnan(data)] |= dqflags.pixel["DO_NOT_USE"]
     return dq
 
 

@@ -14,7 +14,7 @@ dark current values for a given detector readout mode.
 .. include:: ../includes/standard_keywords.inc
 
 .. include:: ../references_general/dark_specific.inc
-             
+
 Reference File Format
 +++++++++++++++++++++
 DARK reference files are FITS format, with 3 IMAGE extensions
@@ -38,7 +38,7 @@ DQ_DEF   2      TFIELDS = 4              N/A
 
 MIRI Detectors
 ~~~~~~~~~~~~~~
-The DARK reference files for the MIRI detectors depend on the integration number,  
+The DARK reference files for the MIRI detectors depend on the integration number,
 because the first integration of MIRI exposures contains effects from the detector
 reset and are slightly different from subsequent integrations. Currently the MIRI
 DARK reference files contain a correction for only two integrations: the first

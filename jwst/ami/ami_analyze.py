@@ -94,9 +94,9 @@ def apply_LG_plus(
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_copy.data = input_copy.data[:, ystart - 1:ystop, xstart - 1:xstop]
-        input_copy.dq = input_copy.dq[:, ystart - 1:ystop, xstart - 1:xstop]
-        input_copy.err = input_copy.err[:, ystart - 1:ystop, xstart - 1:xstop]
+        input_copy.data = input_copy.data[:, ystart - 1 : ystop, xstart - 1 : xstop]
+        input_copy.dq = input_copy.dq[:, ystart - 1 : ystop, xstart - 1 : xstop]
+        input_copy.err = input_copy.err[:, ystart - 1 : ystop, xstart - 1 : xstop]
 
     data = input_copy.data
     dim = data.shape[-1]  # 80 px
@@ -127,9 +127,7 @@ def apply_LG_plus(
     bandpass = utils.handle_bandpass(bandpass, throughput_model)
 
     rotsearch_d = np.append(
-        np.arange(
-            rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]
-        ),
+        np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]),
         rotsearch_parameters[1],
     )
 
@@ -141,17 +139,13 @@ def apply_LG_plus(
         # (only used for centroiding in rotation search)
         meddata = np.median(data, axis=0)
         nan_locations = np.where(np.isnan(meddata))
-        log.info(
-            f"Replacing {len(nan_locations[0])} NaNs in median image with median of surrounding pixels"
-        )
+        log.info(f"Replacing {len(nan_locations[0])} NaNs in median image with median of surrounding pixels")
         box_size = 3
         hbox = int(box_size / 2)
         for i_pos in range(len(nan_locations[0])):
             y_box = nan_locations[0][i_pos]
             x_box = nan_locations[1][i_pos]
-            box = meddata[
-                y_box - hbox:y_box + hbox + 1, x_box - hbox:x_box + hbox + 1
-            ]
+            box = meddata[y_box - hbox : y_box + hbox + 1, x_box - hbox : x_box + hbox + 1]
             median_fill = np.nanmedian(box)
             if np.isnan(median_fill):
                 median_fill = 0  # not ideal
@@ -174,18 +168,18 @@ def apply_LG_plus(
             holeshape,
         )
 
-    niriss = instrument_data.NIRISS(filt,
-                                    nrm_model,
-                                    bandpass=bandpass,
-                                    affine2d=affine2d,
-                                    firstfew=firstfew,
-                                    usebp=usebp,
-                                    chooseholes=chooseholes,
-                                    run_bpfix=run_bpfix)
+    niriss = instrument_data.NIRISS(
+        filt,
+        nrm_model,
+        bandpass=bandpass,
+        affine2d=affine2d,
+        firstfew=firstfew,
+        usebp=usebp,
+        chooseholes=chooseholes,
+        run_bpfix=run_bpfix,
+    )
 
-    ff_t = nrm_core.FringeFitter(niriss,
-                                 psf_offset_ff=psf_offset_ff,
-                                 oversample=oversample)
+    ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff, oversample=oversample)
 
     oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
 

@@ -79,7 +79,7 @@ The following two additional equations are used in Equation 2:
   :math:`b{1} = ascale * (illum_{zpt} + illum_{slope}*N + illum2* N^2) \; \; (Equation \; 2.1)`
 
   :math:`Counts{2} = Final \, DN \, in \, the \,  last \, group \, in \; the \, previous \, integration \, - Crossover \, Point \; \; (Equation \; 2.2)`
-      
+
 where:
 
  - N in equation 2.1 is the number of groups per integration
@@ -89,7 +89,7 @@ If the previous integration saturates, :math:`scale` is no longer calculated usi
 2 - 2.2. Instead it is calculated using equations 3 and 3.1:
 
    :math:`scale_\text{sat} = slope * Counts{3} + sat_\text{mzp} \; \; (Equation \; 3)`
- 
+
    :math:`slope = sat_{zp} + sat_{slope} * N + sat_2*N^2 + evenrow_{corrections} \; \; (Equation \; 3.1)`
 
 where:
@@ -103,4 +103,3 @@ where:
     - :math:`sat_2` is sat2 in the RSCD table
     - :math:`evenrow_{corrections}` is sat_rowterm in the RSCD table
     - N is the number of groups per integration
- 

@@ -48,13 +48,12 @@ def arange_2d(starts, stops, dtype=None):
 
     # Check input for starts and stops is valid.
     if starts.shape != stops.shape and starts.shape != ():
-        msg = ('Shapes of starts and stops are not compatible, '
-               'they must either have the same shape or starts must be scalar.')
+        msg = "Shapes of starts and stops are not compatible, " "they must either have the same shape or starts must be scalar."
         log.critical(msg)
         raise ValueError(msg)
 
     if np.any(stops < starts):
-        msg = 'stops must be everywhere greater or equal to starts.'
+        msg = "stops must be everywhere greater or equal to starts."
         log.critical(msg)
         raise ValueError(msg)
 
@@ -69,12 +68,12 @@ def arange_2d(starts, stops, dtype=None):
     nrows = len(stops)
     ncols = np.amax(lengths)
     out = np.ones((nrows, ncols), dtype=dtype)
-    mask = np.ones((nrows, ncols), dtype='bool')
+    mask = np.ones((nrows, ncols), dtype="bool")
 
     # Compute the indices.
     for irow in range(nrows):
-        out[irow, :lengths[irow]] = np.arange(starts[irow], stops[irow])
-        mask[irow, :lengths[irow]] = False
+        out[irow, : lengths[irow]] = np.arange(starts[irow], stops[irow])
+        mask[irow, : lengths[irow]] = False
 
     return out, mask
 
@@ -163,7 +162,7 @@ def unsparse(matrix, fill_value=np.nan):
 
 
 def get_wave_p_or_m(wave_map, dispersion_axis=1):
-    """ Compute upper and lower boundaries of a pixel map,
+    """Compute upper and lower boundaries of a pixel map,
     given the pixel central value.
     Parameters
     ----------
@@ -181,13 +180,13 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
     wave_left, wave_right = get_wv_map_bounds(wave_map, dispersion_axis=dispersion_axis)
 
     # The outputs depend on the direction of the spectral axis.
-    invalid = (wave_map == 0)
+    invalid = wave_map == 0
     if ((wave_right >= wave_left) | invalid).all():
         wave_plus, wave_minus = wave_right, wave_left
     elif ((wave_right <= wave_left) | invalid).all():
         wave_plus, wave_minus = wave_left, wave_right
     else:
-        msg = 'Some pixels do not follow the expected dispersion axis!'
+        msg = "Some pixels do not follow the expected dispersion axis!"
         log.critical(msg)
         raise ValueError(msg)
 
@@ -195,7 +194,7 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
 
 
 def get_wv_map_bounds(wave_map, dispersion_axis=1):
-    """ Compute boundaries of a pixel map, given the pixel central value.
+    """Compute boundaries of a pixel map, given the pixel central value.
     Parameters
     ----------
     wave_map : array[float]
@@ -214,7 +213,7 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
         # Simpler to use transpose
         wave_map = wave_map.T
     elif dispersion_axis != 0:
-        msg = 'Dispersion axis must be 0 or 1!'
+        msg = "Dispersion axis must be 0 or 1!"
         log.critical(msg)
         raise ValueError(msg)
 
@@ -228,7 +227,7 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
 
         # Compute the change in wavelength for valid cols
         idx_valid = np.isfinite(wave_col)
-        idx_valid &= (wave_col >= 0)
+        idx_valid &= wave_col >= 0
         wv_col_valid = wave_col[idx_valid]
         delta_wave = np.diff(wv_col_valid)
 
@@ -275,7 +274,7 @@ def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
     dwv = wave_right - wave_left
 
     # Return bool map of pixels following the good direction
-    bool_map = (dwv_sign * dwv >= 0)
+    bool_map = dwv_sign * dwv >= 0
     # The bad value could be from left or right so mask both
     bool_map &= np.roll(bool_map, 1, axis=dispersion_axis)
 
@@ -349,13 +348,12 @@ def oversample_grid(wave_grid, n_os=1):
 
     # n_os needs to have the dimension: len(wave_grid) - 1.
     if n_os.ndim == 0:
-
         # A scalar was given, repeat the value.
         n_os = np.repeat(n_os, len(wave_grid) - 1)
 
     elif len(n_os) != (len(wave_grid) - 1):
         # An array of incorrect size was given.
-        msg = 'n_os must be a scalar or an array of size len(wave_grid) - 1.'
+        msg = "n_os must be a scalar or an array of size len(wave_grid) - 1."
         log.critical(msg)
         raise ValueError(msg)
 
@@ -367,7 +365,6 @@ def oversample_grid(wave_grid, n_os=1):
 
     # Iterate over oversampling factors to generate new grid points.
     for i_os in range(1, n_os.max()):
-
         # Consider only intervals that are not complete yet.
         mask = n_os > i_os
 
@@ -411,7 +408,6 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
     # Extrapolate out-of-bound values on the left-side of the grid.
     grid_left = []
     if wave_range[0] < wave_grid.min():
-
         # Compute the first extrapolated grid point.
         grid_left = [wave_grid.min() - f_delta(wave_grid.min())]
 
@@ -430,7 +426,6 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
     # Extrapolate out-of-bound values on the right-side of the grid.
     grid_right = []
     if wave_range[-1] > wave_grid.max():
-
         # Compute the first extrapolated grid point.
         grid_right = [wave_grid.max() + f_delta(wave_grid.max())]
 
@@ -483,7 +478,7 @@ def _grid_from_map(wave_map, trace_profile):
     sort = np.argsort(center_wv)
     grid = center_wv[sort]
 
-    icols, = np.where(mask)
+    (icols,) = np.where(mask)
     return grid, icols[sort]
 
 
@@ -580,8 +575,7 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
     elif np.ndim(n_os) == 0:
         n_os = [n_os, n_os]
     elif len(n_os) != 2:
-        msg = (f"n_os must be an integer or a 2 element list or array of "
-               f"integers, got {n_os} instead")
+        msg = f"n_os must be an integer or a 2 element list or array of " f"integers, got {n_os} instead"
         log.critical(msg)
         raise ValueError(msg)
 
@@ -596,14 +590,11 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
     wave_max_o2 = np.minimum(wave_maps[1].max(), wave_max)
 
     # Now generate range for each orders
-    range_list = [[wave_min_o1, wave_max],
-                  [wave_min, wave_max_o2]]
+    range_list = [[wave_min_o1, wave_max], [wave_min, wave_max_o2]]
 
     # Use grid_from_map to construct separate oversampled grids for both orders.
-    wave_grid_o1 = grid_from_map(wave_maps[0], trace_profiles[0],
-                                 wave_range=range_list[0], n_os=n_os[0])
-    wave_grid_o2 = grid_from_map(wave_maps[1], trace_profiles[1],
-                                 wave_range=range_list[1], n_os=n_os[1])
+    wave_grid_o1 = grid_from_map(wave_maps[0], trace_profiles[0], wave_range=range_list[0], n_os=n_os[0])
+    wave_grid_o2 = grid_from_map(wave_maps[1], trace_profiles[1], wave_range=range_list[1], n_os=n_os[1])
 
     # Keep only wavelengths in order 1 that aren't covered by order 2.
     mask = wave_grid_o1 > wave_grid_o2.max()
@@ -619,7 +610,7 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
 
 
 def _trim_grids(all_grids, grid_range=None):
-    """ Remove all parts of the grids that are not in range
+    """Remove all parts of the grids that are not in range
     or that are already covered by grids with higher priority,
     i.e. preceding in the list.
     """
@@ -628,14 +619,14 @@ def _trim_grids(all_grids, grid_range=None):
         # Remove parts of the grid that are not in the wavelength range
         if grid_range is not None:
             # Find where the limit values fall on the grid
-            i_min = np.searchsorted(grid, grid_range[0], side='right')
-            i_max = np.searchsorted(grid, grid_range[1], side='left')
+            i_min = np.searchsorted(grid, grid_range[0], side="right")
+            i_max = np.searchsorted(grid, grid_range[1], side="left")
             # Make sure it is a valid value and take one grid point past the limit
             # since the oversampling could squeeze some nodes near the limits
             i_min = np.max([i_min - 1, 0])
             i_max = np.min([i_max, len(grid) - 1])
             # Trim the grid
-            grid = grid[i_min:i_max + 1]
+            grid = grid[i_min : i_max + 1]
 
         # Remove parts of the grid that are already covered
         if len(grids_trimmed) > 0:
@@ -647,7 +638,7 @@ def _trim_grids(all_grids, grid_range=None):
 
             # Do nothing yet if it surrounds the previous grid
             if is_below.any() and is_above.any():
-                msg = 'Grid surrounds another grid, better to split in 2 parts.'
+                msg = "Grid surrounds another grid, better to split in 2 parts."
                 log.warning(msg)
 
             # Remove values already covered, but keep one
@@ -655,7 +646,7 @@ def _trim_grids(all_grids, grid_range=None):
             elif is_below.any():
                 idx = np.max(np.nonzero(is_below))
                 idx = np.min([idx + 1, len(grid) - 1])
-                grid = grid[:idx + 1]
+                grid = grid[: idx + 1]
             elif is_above.any():
                 idx = np.min(np.nonzero(is_above))
                 idx = np.max([idx - 1, 0])
@@ -671,8 +662,9 @@ def _trim_grids(all_grids, grid_range=None):
     return grids_trimmed
 
 
-def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
-                                max_iter=10, rtol=10e-6, tol=0.0, max_total_size=1000000):
+def make_combined_adaptive_grid(
+    all_grids, all_estimate, grid_range=None, max_iter=10, rtol=10e-6, tol=0.0, max_total_size=1000000
+):
     """Return an irregular oversampled grid needed to reach a
     given precision when integrating over each intervals of `grid`.
     The grid is built by subdividing iteratively each intervals that
@@ -716,7 +708,6 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
     # Iterate over grids to build the combined grid
     combined_grid = np.array([])  # Init with empty array
     for i_grid, grid in enumerate(all_grids):
-
         estimate = all_estimate[i_grid]
 
         # Get the max_grid_size, considering the other grids
@@ -727,7 +718,7 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
             if i_size > i_grid:
                 max_grid_size = max_grid_size - size
         # Make sure it is at least the size of the native grid.
-        kwargs['max_grid_size'] = np.max([max_grid_size, all_sizes[i_grid]])
+        kwargs["max_grid_size"] = np.max([max_grid_size, all_sizes[i_grid]])
 
         # Oversample the grid based on tolerance required
         grid, is_converged = adapt_grid(grid, estimate, **kwargs)
@@ -737,21 +728,20 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
 
         # Check convergence
         if not is_converged:
-            msg = 'Precision cannot be garanteed:'
-            if grid.size < kwargs['max_grid_size']:
-                msg += (f' smallest subdivision 1/{2 ** kwargs["max_iter"]:2.1e}'
-                        f' was reached for grid index = {i_grid}')
+            msg = "Precision cannot be garanteed:"
+            if grid.size < kwargs["max_grid_size"]:
+                msg += f' smallest subdivision 1/{2 ** kwargs["max_iter"]:2.1e}' f' was reached for grid index = {i_grid}'
             else:
                 total_size = np.sum(all_sizes)
-                msg += ' max grid size of '
-                msg += ' + '.join([f'{size}' for size in all_sizes])
-                msg += f' = {total_size} was reached for grid index = {i_grid}.'
+                msg += " max grid size of "
+                msg += " + ".join([f"{size}" for size in all_sizes])
+                msg += f" = {total_size} was reached for grid index = {i_grid}."
             log.warning(msg)
 
         # Remove regions already covered in the output grid
         if len(combined_grid) > 0:
-            idx_covered = (np.min(combined_grid) <= grid)
-            idx_covered &= (grid <= np.max(combined_grid))
+            idx_covered = np.min(combined_grid) <= grid
+            idx_covered &= grid <= np.max(combined_grid)
             grid = grid[~idx_covered]
 
         # Combine grids
@@ -762,8 +752,8 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
 
     # Final trim to make sure it respects the range
     if grid_range is not None:
-        idx_in_range = (grid_range[0] <= combined_grid)
-        idx_in_range &= (combined_grid <= grid_range[-1])
+        idx_in_range = grid_range[0] <= combined_grid
+        idx_in_range &= combined_grid <= grid_range[-1]
         combined_grid = combined_grid[idx_in_range]
 
     return combined_grid
@@ -914,7 +904,6 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
     last_row = [results]
 
     for i_div in range(1, divmax + 1):
-
         # Increase the number of trapezoids by factors of 2.
         numtraps *= 2
 
@@ -1006,7 +995,7 @@ def estim_integration_err(grid, fct):
 
     # Compute errors
     err = np.abs(romb - trpz)
-    non_zero = (romb != 0)
+    non_zero = romb != 0
     rel_err = np.full_like(err, np.inf)
     rel_err[non_zero] = np.abs(err[non_zero] / romb[non_zero])
 
@@ -1060,11 +1049,10 @@ def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
         max_grid_size = np.inf
 
     # Init some flags
-    max_size_reached = (grid.size >= max_grid_size)
+    max_size_reached = grid.size >= max_grid_size
 
     # Iterate until precision is reached of max_iter
     for _ in range(max_iter):
-
         # Estimate error using Romberg integration
         err, rel_err = estim_integration_err(grid, fct)
 
@@ -1115,7 +1103,6 @@ def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
 
 
 class ThroughputSOSS(interp1d):
-
     def __init__(self, wavelength, throughput):
         """Create an instance of scipy.interpolate.interp1d to handle the
         throughput values.
@@ -1129,14 +1116,20 @@ class ThroughputSOSS(interp1d):
         """
 
         # Interpolate
-        super().__init__(wavelength, throughput, kind='cubic', fill_value=0,
-                         bounds_error=False)
+        super().__init__(wavelength, throughput, kind="cubic", fill_value=0, bounds_error=False)
 
 
 class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need further adjustment.
-
-    def __init__(self, wave_kernels, kernels, wave_map, n_os, n_pix,  # TODO kernels may need to be flipped?
-                 bounds_error=False, fill_value="extrapolate"):
+    def __init__(
+        self,
+        wave_kernels,
+        kernels,
+        wave_map,
+        n_os,
+        n_pix,  # TODO kernels may need to be flipped?
+        bounds_error=False,
+        fill_value="extrapolate",
+    ):
         """A handler for the kernel values.
 
         Parameters
@@ -1189,14 +1182,12 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         # Use the next kernels at each extremities to define the
         # boundaries of the interpolation to use in the class
         # RectBivariateSpline (at the end)
-        bbox = [None, None,
-                wave_center[np.maximum(i_min - 1, 0)],
-                wave_center[np.minimum(i_max + 1, len(wave_center) - 1)]]
+        bbox = [None, None, wave_center[np.maximum(i_min - 1, 0)], wave_center[np.minimum(i_max + 1, len(wave_center) - 1)]]
         #######################
 
         # Keep only kernels that fall on the detector.
-        kernels = kernels[:, i_min:i_max + 1].copy()
-        wave_kernels = wave_kernels[:, i_min:i_max + 1].copy()
+        kernels = kernels[:, i_min : i_max + 1].copy()
+        wave_kernels = wave_kernels[:, i_min : i_max + 1].copy()
         wave_center = np.array(wave_kernels[0, :])
 
         # Save minimum kernel value (greater than zero)
@@ -1215,9 +1206,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
             wv = np.ma.masked_all(i_surround.shape)
 
             # Closest pixel wv
-            i_row, i_col = np.unravel_index(
-                np.argmin(np.abs(wave_map - wv_c)), wave_map.shape
-            )
+            i_row, i_col = np.unravel_index(np.argmin(np.abs(wave_map - wv_c)), wave_map.shape)
             # Update wavelength center value
             # (take the nearest pixel center value)
             wave_center[i_cen] = wave_map[i_row, i_col]
@@ -1310,7 +1299,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         # pix = a_pix * lambda + b_pix
         a_pix = 1 / (a_c * poly[i_wv_c, 0] + b_c * poly[i_wv_c + 1, 0])
         b_pix = -(a_c * poly[i_wv_c, 1] + b_c * poly[i_wv_c + 1, 1])
-        b_pix /= (a_c * poly[i_wv_c, 0] + b_c * poly[i_wv_c + 1, 0])
+        b_pix /= a_c * poly[i_wv_c, 0] + b_c * poly[i_wv_c + 1, 0]
 
         # Compute pixel values
         pix = a_pix * wave + b_pix
@@ -1359,9 +1348,9 @@ def gaussians(x, x0, sig, amp=None):
 
     # Amplitude term
     if amp is None:
-        amp = 1. / np.sqrt(2. * np.pi * sig**2.)
+        amp = 1.0 / np.sqrt(2.0 * np.pi * sig**2.0)
 
-    values = amp * np.exp(-0.5 * ((x - x0) / sig) ** 2.)
+    values = amp * np.exp(-0.5 * ((x - x0) / sig) ** 2.0)
 
     return values
 
@@ -1380,13 +1369,13 @@ def fwhm2sigma(fwhm):
         Standard deviation of a gaussian.
     """
 
-    sigma = fwhm / np.sqrt(8. * np.log(2.))
+    sigma = fwhm / np.sqrt(8.0 * np.log(2.0))
 
     return sigma
 
 
 def to_2d(kernel, grid_range):
-    """ Build a 2d kernel array with a constant 1D kernel (input)
+    """Build a 2d kernel array with a constant 1D kernel (input)
 
     Parameters
     ----------
@@ -1458,14 +1447,14 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
     i_grid = np.max([0, i_a - h_len])
 
     # Save the new grid
-    grid_new = grid[i_grid:i_b - h_len]
+    grid_new = grid[i_grid : i_b - h_len]
 
     # Re-use dummy variable `i_grid`
     i_grid = len(grid_new)
 
     # Compute kernel at the left end.
     # `i_grid` accounts for smaller length.
-    ker = fct(grid_new, grid[i_b - i_grid:i_b])
+    ker = fct(grid_new, grid[i_b - i_grid : i_b])
     left[-i_grid:] = ker
 
     # Add the right value on the grid
@@ -1473,9 +1462,9 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
     # take last value of the grid if so.
     # Same steps as the left end (see above)
     i_grid = np.min([n_k, i_b + h_len])
-    grid_new = grid[i_a + h_len:i_grid]
+    grid_new = grid[i_a + h_len : i_grid]
     i_grid = len(grid_new)
-    ker = fct(grid_new, grid[i_a:i_a + i_grid])
+    ker = fct(grid_new, grid[i_a : i_a + i_grid])
     right[:i_grid] = ker
 
     return left, right
@@ -1590,8 +1579,8 @@ def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
                 length += 2
 
                 # Set value to zero if smaller than threshold
-                left[left < thresh] = 0.
-                right[right < thresh] = 0.
+                left[left < thresh] = 0.0
+                right[right < thresh] = 0.0
 
                 # add new values to output
                 out = np.vstack([left, out, right])
@@ -1622,7 +1611,7 @@ def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
         log.critical(msg)
         raise ValueError(msg)
 
-    kern_array = (out * weights)
+    kern_array = out * weights
     return kern_array
 
 
@@ -1658,7 +1647,6 @@ def cut_ker(ker, n_out=None, thresh=None):
 
     # Determine n_out with thresh if not given
     if n_out is None:
-
         if thresh is None:
             # No cut to apply
             return ker
@@ -1690,13 +1678,13 @@ def cut_ker(ker, n_out=None, thresh=None):
         # Add condition in case the kernel is larger
         # than the grid where it's projected.
         if i_k < n_k_c:
-            ker[:i_left - i_k, i_k] = 0
+            ker[: i_left - i_k, i_k] = 0
 
     for i_k in range(i_right + 1 - n_ker, 0):
         # Add condition in case the kernel is larger
         # than the grid where it's projected.
         if -i_k <= n_k_c:
-            ker[i_right - n_ker - i_k:, i_k] = 0
+            ker[i_right - n_ker - i_k :, i_k] = 0
 
     return ker
 
@@ -1736,7 +1724,6 @@ def sparse_c(ker, n_k, i_zero=0):
     # Define each diagonal of the sparse convolution matrix
     diag_val, offset = [], []
     for i_ker, i_k_c in enumerate(range(-h_len, h_len + 1)):
-
         i_k = i_zero + i_k_c
 
         if i_k < 0:
@@ -1752,8 +1739,7 @@ def sparse_c(ker, n_k, i_zero=0):
     return matrix
 
 
-def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
-                 sparse=True, n_out=None, thresh_out=None, **kwargs):
+def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True, sparse=True, n_out=None, thresh_out=None, **kwargs):
     """Return a convolution matrix
     Can return a sparse matrix (N_k_convolved, N_k)
     or a matrix in the compact form (N_ker, N_k_convolved).
@@ -1806,7 +1792,6 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
     # Define range where the convolution is defined on the grid.
     # If `i_bounds` is not specified, try with `bounds`.
     if i_bounds is None:
-
         if bounds is None:
             a, b = 0, len(grid)
         else:
@@ -1828,8 +1813,7 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
         kernel = to_2d(kernel, [a, b])
 
     if kernel.ndim != 2:
-        msg = ("Input kernel to get_c_matrix must be callable or"
-               " array with one or two dimensions.")
+        msg = "Input kernel to get_c_matrix must be callable or" " array with one or two dimensions."
         log.critical(msg)
         raise ValueError(msg)
     # Kernel should now be a 2-D array (N_kernel x N_kc)
@@ -1859,8 +1843,7 @@ class NyquistKer:
     the kernel as a function of its position relative to the grid.
     """
 
-    def __init__(self, grid, n_sampling=2, bounds_error=False,
-                 fill_value="extrapolate", **kwargs):
+    def __init__(self, grid, n_sampling=2, bounds_error=False, fill_value="extrapolate", **kwargs):
         """Parameters
         ----------
         grid : array[float]
@@ -1885,8 +1868,7 @@ class NyquistKer:
         sig = fwhm2sigma(fwhm)
 
         # Now put sigma as a function of the grid
-        sig = interp1d(grid[1:-1], sig, bounds_error=bounds_error,
-                       fill_value=fill_value, **kwargs)
+        sig = interp1d(grid[1:-1], sig, bounds_error=bounds_error, fill_value=fill_value, **kwargs)
 
         self.fct_sig = sig
 
@@ -1931,8 +1913,8 @@ def finite_diff(x):
     n_x = len(x)
 
     # Build matrix
-    diff_matrix = diags([-1.], shape=(n_x - 1, n_x))
-    diff_matrix += diags([1.], 1, shape=(n_x - 1, n_x))
+    diff_matrix = diags([-1.0], shape=(n_x - 1, n_x))
+    diff_matrix += diags([1.0], 1, shape=(n_x - 1, n_x))
 
     return diff_matrix
 
@@ -1960,13 +1942,13 @@ def finite_second_d(grid):
     d_grid = d_matrix.dot(grid)
 
     # First derivative operator
-    first_d = diags(1. / d_grid).dot(d_matrix)
+    first_d = diags(1.0 / d_grid).dot(d_matrix)
 
     # Second derivative operator
     second_d = finite_diff(grid[:-1]).dot(first_d)
 
     # don't forget the delta lambda
-    second_d = diags(1. / d_grid[:-1]).dot(second_d)
+    second_d = diags(1.0 / d_grid[:-1]).dot(second_d)
 
     return second_d
 
@@ -1994,7 +1976,7 @@ def finite_first_d(grid):
     d_grid = d_matrix.dot(grid)
 
     # First derivative operator
-    first_d = diags(1. / d_grid).dot(d_matrix)
+    first_d = diags(1.0 / d_grid).dot(d_matrix)
 
     return first_d
 
@@ -2042,7 +2024,7 @@ def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0
         raise ValueError(msg)
 
     if estimate is not None:
-        if hasattr(estimate, 'derivative'):
+        if hasattr(estimate, "derivative"):
             # Get the derivatives directly from the spline
             if n_derivative == 1:
                 derivative = estimate.derivative(n=n_derivative)
@@ -2121,7 +2103,7 @@ def curvature_finite(factors, log_reg2, log_chi2):
 
 
 def get_finite_derivatives(x_array, y_array):
-    """ Compute first and second finite derivatives
+    """Compute first and second finite derivatives
     Parameters
     ----------
     x_array : array[float]
@@ -2148,7 +2130,7 @@ def get_finite_derivatives(x_array, y_array):
 
 
 def _get_interp_idx_array(idx, relative_range, max_length):
-    """ Generate array given the relative range around an index.
+    """Generate array given the relative range around an index.
 
     Parameters
     ----------
@@ -2179,7 +2161,7 @@ def _get_interp_idx_array(idx, relative_range, max_length):
 
 
 def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
-    """ Find minimum of a grid using akima spline interpolation to get a finer estimate
+    """Find minimum of a grid using akima spline interpolation to get a finer estimate
 
     Parameters
     ----------
@@ -2228,12 +2210,11 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
 
         # Find min
         bounds = (x_val.min(), x_val.max())
-        opt_args = {"bounds": bounds,
-                    "method": "bounded"}
+        opt_args = {"bounds": bounds, "method": "bounded"}
         min_fac = minimize_scalar(fct, **opt_args).x
 
         # Back to linear scale
-        min_fac = 10. ** min_fac
+        min_fac = 10.0**min_fac
 
     else:
         # Simply return the min value
@@ -2244,7 +2225,7 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
 
 
 def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
-    """ Find the root of y_val - thresh (so the intersection between thresh and y_val)
+    """Find the root of y_val - thresh (so the intersection between thresh and y_val)
     Parameters
     ----------
     factors : array[float]
@@ -2281,7 +2262,7 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
     factors, y_val = factors[idx_sort], y_val[idx_sort]
 
     # Check if the threshold is reached
-    cond_below = (y_val < thresh)
+    cond_below = y_val < thresh
     if cond_below.any():
         # Find where the threshold is crossed
         idx_below = np.where(cond_below)[0]
@@ -2298,10 +2279,9 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
         interpolate = False
 
     if interpolate:
-
         # Interpolate with log10(factors) to get a finer estimate
         x_val = np.log10(factors)
-        d_chi2_spl = interp1d(x_val, y_val - thresh, kind='linear')
+        d_chi2_spl = interp1d(x_val, y_val - thresh, kind="linear")
 
         # Use index only around the best value
         max_length = len(y_val)
@@ -2312,7 +2292,7 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
         best_val = brentq(d_chi2_spl, *bracket)
 
         # Back to linear scale
-        best_val = 10. ** best_val
+        best_val = 10.0**best_val
 
     else:
         # Simply return the value
@@ -2322,7 +2302,7 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
 
 
 def soft_l1(z):
-    return 2 * ((1 + z)**0.5 - 1)
+    return 2 * ((1 + z) ** 0.5 - 1)
 
 
 def cauchy(z):
@@ -2333,7 +2313,7 @@ def linear(z):
     return z
 
 
-LOSS_FUNCTIONS = {'soft_l1': soft_l1, 'cauchy': cauchy, 'linear': linear}
+LOSS_FUNCTIONS = {"soft_l1": soft_l1, "cauchy": cauchy, "linear": linear}
 
 
 class TikhoTests(dict):
@@ -2348,11 +2328,9 @@ class TikhoTests(dict):
         by default.
     """
 
-    DEFAULT_TRESH_DERIVATIVE = (('chi2', 1e-5),
-                                ('chi2_soft_l1', 1e-4),
-                                ('chi2_cauchy', 1e-3))
+    DEFAULT_TRESH_DERIVATIVE = (("chi2", 1e-5), ("chi2_soft_l1", 1e-4), ("chi2_cauchy", 1e-3))
 
-    def __init__(self, test_dict=None, default_chi2='chi2_cauchy'):
+    def __init__(self, test_dict=None, default_chi2="chi2_cauchy"):
         """
         Parameters
         ----------
@@ -2365,36 +2343,33 @@ class TikhoTests(dict):
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
         if test_dict is None:
-            print('Unable to get the number of data points. Setting `n_points` to 1')
+            print("Unable to get the number of data points. Setting `n_points` to 1")
             n_points = 1
         else:
-            n_points = len(test_dict['error'][0].squeeze())
+            n_points = len(test_dict["error"][0].squeeze())
 
         # Save attributes
         self.n_points = n_points
         self.default_chi2 = default_chi2
-        self.default_thresh = {chi2_type: thresh
-                               for (chi2_type, thresh)
-                               in self.DEFAULT_TRESH_DERIVATIVE}
+        self.default_thresh = {chi2_type: thresh for (chi2_type, thresh) in self.DEFAULT_TRESH_DERIVATIVE}
 
         # Initialize so it behaves like a dictionary
         super().__init__(test_dict)
 
-        chi2_loss = {'chi2': 'linear',
-                     'chi2_soft_l1': 'soft_l1',
-                     'chi2_cauchy': 'cauchy'}
+        chi2_loss = {"chi2": "linear", "chi2_soft_l1": "soft_l1", "chi2_cauchy": "cauchy"}
         for chi2_type, loss in chi2_loss.items():
             try:
                 # Save the chi2
                 self[chi2_type]
             except KeyError:
                 self[chi2_type] = self.compute_chi2(loss=loss)
-#         # Save different loss function for chi2
-#         self['chi2_soft_l1'] = self.compute_chi2(loss='soft_l1')
-#         self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
 
-    def compute_chi2(self, tests=None, n_points=None, loss='linear'):
-        """ Calculates the reduced chi squared statistic
+    #         # Save different loss function for chi2
+    #         self['chi2_soft_l1'] = self.compute_chi2(loss='soft_l1')
+    #         self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
+
+    def compute_chi2(self, tests=None, n_points=None, loss="linear"):
+        """Calculates the reduced chi squared statistic
 
         Parameters
         ----------
@@ -2419,20 +2394,20 @@ class TikhoTests(dict):
                 loss = LOSS_FUNCTIONS[loss]
             except KeyError as e:
                 keys = [key for key in LOSS_FUNCTIONS.keys()]
-                msg = f'loss={loss} not a valid key. Must be one of {keys} or callable.'
+                msg = f"loss={loss} not a valid key. Must be one of {keys} or callable."
                 raise e(msg)
         elif not callable(loss):
-            raise ValueError('Invalid value for loss.')
+            raise ValueError("Invalid value for loss.")
 
         # Compute the reduced chi^2 for all tests
-        chi2 = np.nanmean(loss(tests['error']**2), axis=-1)
+        chi2 = np.nanmean(loss(tests["error"] ** 2), axis=-1)
         # Remove residual dimensions
         chi2 = chi2.squeeze()
 
         return chi2
 
     def get_chi2_derivative(self, key=None):
-        """ Compute derivative of the chi2 with respect to log10(factors)
+        """Compute derivative of the chi2 with respect to log10(factors)
 
         Parameters
         ----------
@@ -2450,17 +2425,16 @@ class TikhoTests(dict):
             key = self.default_chi2
 
         # Compute finite derivative
-        fac_log = np.log10(self['factors'])
+        fac_log = np.log10(self["factors"])
         d_chi2 = np.diff(self[key]) / np.diff(fac_log)
 
         # Update size of factors to fit derivatives
         # Equivalent to derivative on the left side of the nodes
-        factors_leftd = self['factors'][1:]
+        factors_leftd = self["factors"][1:]
 
         return factors_leftd, d_chi2
 
     def compute_curvature(self, tests=None, key=None):
-
         if key is None:
             key = self.default_chi2
 
@@ -2470,16 +2444,13 @@ class TikhoTests(dict):
 
         # Compute the curvature...
         # Get the norm-2 of the regularisation term
-        reg2 = np.nansum(tests['reg'] ** 2, axis=-1)
+        reg2 = np.nansum(tests["reg"] ** 2, axis=-1)
 
-        factors, curv = curvature_finite(tests['factors'],
-                                         np.log10(self[key]),
-                                         np.log10(reg2))
+        factors, curv = curvature_finite(tests["factors"], np.log10(self[key]), np.log10(reg2))
 
         return factors, curv
 
-    def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None,
-                          mode='curvature', key=None, thresh=None):
+    def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None, mode="curvature", key=None, thresh=None):
         """Compute the best scale factor for Tikhonov regularisation.
         It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
@@ -2518,25 +2489,25 @@ class TikhoTests(dict):
             tests = self
 
         # Number of factors
-        n_fac = len(tests['factors'])
+        n_fac = len(tests["factors"])
 
         # Determine the mode (what do we minimize?)
-        if mode == 'curvature' and n_fac > 2:
+        if mode == "curvature" and n_fac > 2:
             # Compute the curvature
             factors, curv = tests.compute_curvature()
 
             # Find min factor
             best_fac = _minimize_on_grid(factors, curv, interpolate, interp_index)
 
-        elif mode == 'chi2':
+        elif mode == "chi2":
             # Simply take the chi2 and factors
-            factors = tests['factors']
+            factors = tests["factors"]
             y_val = tests[key]
 
             # Find min factor
             best_fac = _minimize_on_grid(factors, y_val, interpolate, interp_index)
 
-        elif mode == 'd_chi2' and n_fac > 1:
+        elif mode == "d_chi2" and n_fac > 1:
             # Compute the derivative of the chi2
             factors, y_val = tests.get_chi2_derivative()
 
@@ -2562,15 +2533,16 @@ class TikhoTests(dict):
             # Find intersection with threshold
             best_fac = _find_intersect(factors[idx], y_val[idx], thresh, interpolate, interp_index)
 
-        elif mode in ['curvature', 'd_chi2', 'chi2']:
-            best_fac = np.max(tests['factors'])
-            msg = (f'Could not compute {mode} because number of factor={n_fac}. '
-                   f'Setting best factor to max factor: {best_fac:.5e}')
+        elif mode in ["curvature", "d_chi2", "chi2"]:
+            best_fac = np.max(tests["factors"])
+            msg = (
+                f"Could not compute {mode} because number of factor={n_fac}. "
+                f"Setting best factor to max factor: {best_fac:.5e}"
+            )
             log.warning(msg)
 
         else:
-            msg = (f'`mode`={mode} is not a valid option for '
-                   f'TikhoTests.best_tikho_factor().')
+            msg = f"`mode`={mode} is not a valid option for " f"TikhoTests.best_tikho_factor()."
             log.critical(msg)
             raise ValueError(msg)
 
@@ -2649,7 +2621,7 @@ class Tikhonov:
         idx_valid = self.idx_valid
 
         # Matrix gamma squared (with scale factor)
-        gamma_2 = factor ** 2 * t_mat_2
+        gamma_2 = factor**2 * t_mat_2
 
         # Finalize building matrix
         matrix = a_mat_2 + gamma_2
@@ -2685,7 +2657,7 @@ class Tikhonov:
             Dictionary of test results
         """
 
-        log.info('Testing factors...')
+        log.info("Testing factors...")
 
         # Get relevant attributes
         b_vec = self.b_vec
@@ -2697,7 +2669,6 @@ class Tikhonov:
 
         # Test all factors
         for i_fac, factor in enumerate(factors):
-
             # Save solution
             sln.append(self.solve(factor))
 
@@ -2709,11 +2680,11 @@ class Tikhonov:
             reg.append(reg_i)
 
             # Print
-            message = '{}/{}'.format(i_fac, len(factors))
+            message = "{}/{}".format(i_fac, len(factors))
             log.info(message)
 
         # Final print
-        message = '{}/{}'.format(i_fac + 1, len(factors))
+        message = "{}/{}".format(i_fac + 1, len(factors))
         log.info(message)
 
         # Convert to arrays
@@ -2723,9 +2694,6 @@ class Tikhonov:
 
         # Save in a dictionary
 
-        tests = TikhoTests({'factors': factors,
-                            'solution': sln,
-                            'error': err,
-                            'reg': reg})
+        tests = TikhoTests({"factors": factors, "solution": sln, "error": err, "reg": reg})
 
         return tests

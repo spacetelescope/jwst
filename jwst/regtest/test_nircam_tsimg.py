@@ -19,7 +19,7 @@ def run_pipelines(rtdata_module):
     # Run the calwebb_tso-image2 pipeline on each of the 2 inputs
     rate_files = [
         "nircam/tsimg/jw00312006001_02102_00001-seg001_nrcb1_rateints.fits",
-        "nircam/tsimg/jw00312006001_02102_00001-seg002_nrcb1_rateints.fits"
+        "nircam/tsimg/jw00312006001_02102_00001-seg002_nrcb1_rateints.fits",
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
@@ -78,13 +78,13 @@ def test_nircam_setpointing_tsimg(rtdata, engdb, fitsdiff_default_kwargs):
 
     # Call the WCS routine, using the ENGDB_Service
     try:
-        add_wcs(rtdata.input, engdb_url='http://localhost', siaf_path=siaf_path)
+        add_wcs(rtdata.input, engdb_url="http://localhost", siaf_path=siaf_path)
     except ValueError:
-        pytest.skip('Engineering Database not available.')
+        pytest.skip("Engineering Database not available.")
 
     rtdata.get_truth("truth/test_nircam_setpointing/jw00312006001_02102_00001-seg001_nrcb1_uncal.fits")
 
-    fitsdiff_default_kwargs['rtol'] = 1e-6
+    fitsdiff_default_kwargs["rtol"] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -95,7 +95,7 @@ def test_nircam_setpointing_tsimg(rtdata, engdb, fitsdiff_default_kwargs):
 @pytest.fixture
 def engdb():
     """Setup the mock engineering database"""
-    db_path = Path(__file__).parents[1] / 'lib' / 'tests' / 'data' / 'engdb'
+    db_path = Path(__file__).parents[1] / "lib" / "tests" / "data" / "engdb"
     with EngDB_Mocker(db_path=db_path):
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
+        engdb = engdb_tools.ENGDB_Service(base_url="http://localhost")
         yield engdb

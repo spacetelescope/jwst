@@ -23,16 +23,14 @@ class WhiteLightStep(Step):
     """
 
     def process(self, input):
-
         # Load the input
         with datamodels.open(input) as input_model:
-
             # Call the white light curve generation routine
             result = white_light(input_model, self.min_wavelength, self.max_wavelength)
 
             # Write the output catalog
             if self.save_results:
                 output_path = self.make_output_path()
-                result.write(output_path, format='ascii.ecsv', overwrite=True)
+                result.write(output_path, format="ascii.ecsv", overwrite=True)
 
         return result

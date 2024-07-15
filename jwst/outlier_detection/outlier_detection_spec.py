@@ -1,4 +1,5 @@
 """Class definition for performing outlier detection on spectra."""
+
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
@@ -7,6 +8,7 @@ from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection, _remove_file
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -37,7 +39,7 @@ class OutlierDetectionSpec(OutlierDetection):
 
     """
 
-    default_suffix = 's2d'
+    default_suffix = "s2d"
 
     def __init__(self, input_models, **pars):
         """Initialize class with input_models.
@@ -65,54 +67,45 @@ class OutlierDetectionSpec(OutlierDetection):
         self.build_suffix(**self.outlierpars)
 
         pars = self.outlierpars
-        save_intermediate_results = pars['save_intermediate_results']
-        if pars['resample_data'] is True:
+        save_intermediate_results = pars["save_intermediate_results"]
+        if pars["resample_data"] is True:
             # Start by creating resampled/mosaic images for
             #  each group of exposures
-            resamp = resample_spec.ResampleSpecData(self.input_models, single=True,
-                                                    blendheaders=False, **pars)
+            resamp = resample_spec.ResampleSpecData(self.input_models, single=True, blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
             if save_intermediate_results:
                 for model in drizzled_models:
-                    model.meta.filename = self.make_output_path(
-                        basepath=model.meta.filename,
-                        suffix=self.resample_suffix
-                    )
+                    model.meta.filename = self.make_output_path(basepath=model.meta.filename, suffix=self.resample_suffix)
                     log.info("Writing out resampled spectra...")
                     model.save(model.meta.filename)
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = resample_utils.build_driz_weight(
-                    self.input_models[i],
-                    weight_type=pars['weight_type'],
-                    good_bits=pars['good_bits'])
+                    self.input_models[i], weight_type=pars["weight_type"], good_bits=pars["good_bits"]
+                )
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta
-        median_model.meta.filename = self.make_output_path(
-            basepath=self.input_models[0].meta.filename,
-            suffix='median'
-        )
+        median_model.meta.filename = self.make_output_path(basepath=self.input_models[0].meta.filename, suffix="median")
 
         # Perform median combination on set of drizzled mosaics
         # create_median should be called as a method from parent class
         median_model.data = self.create_median(drizzled_models)
 
         if save_intermediate_results:
-            log.info("Writing out MEDIAN image to: {}".format(
-                     median_model.meta.filename))
+            log.info("Writing out MEDIAN image to: {}".format(median_model.meta.filename))
             median_model.save(median_model.meta.filename)
         else:
             # since we're not saving intermediate results if the drizzled models
             # were written to disk, remove them
-            if not pars['in_memory']:
+            if not pars["in_memory"]:
                 for fn in drizzled_models._models:
                     _remove_file(fn)
                     log.info(f"Removing file {fn}")
 
-        if pars['resample_data'] is True:
+        if pars["resample_data"] is True:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
             blot_models = self.blot_median(median_model)
@@ -128,7 +121,7 @@ class OutlierDetectionSpec(OutlierDetection):
 
         # clean-up (just to be explicit about being finished
         #  with these results)
-        if not pars['save_intermediate_results']:
+        if not pars["save_intermediate_results"]:
             for fn in blot_models._models:
                 _remove_file(fn)
                 log.info(f"Removing file {fn}")

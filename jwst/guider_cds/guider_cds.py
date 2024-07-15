@@ -61,7 +61,7 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
 
     # If exp_type is 'FGS_ID', force output to have single slice, and use
     # default GAIN and READNOISE values by setting their ref models to None
-    if exp_type[:6] == 'FGS_ID':
+    if exp_type[:6] == "FGS_ID":
         new_model = datamodels.GuiderCalModel((1,) + imshape)
         gain_model = None
         readnoise_model = None
@@ -69,12 +69,11 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
         new_model = datamodels.GuiderCalModel()
 
     # get gain and readnoise arrays to calculate ERR array
-    gain_arr, readnoise_arr = get_ref_arr(model, imshape, gain_model,
-                                          readnoise_model)
+    gain_arr, readnoise_arr = get_ref_arr(model, imshape, gain_model, readnoise_model)
 
     # set up output data arrays
     slope_int_cube = np.zeros((n_int,) + imshape, dtype=np.float32)
-    if exp_type[:6] == 'FGS_ID':
+    if exp_type[:6] == "FGS_ID":
         var_rn = np.zeros((1,) + imshape, dtype=np.float32)
         var_pn = np.zeros((1,) + imshape, dtype=np.float32)
     else:
@@ -85,15 +84,15 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
     # loop over data integrations
     for num_int in range(0, n_int):
         data_sect = model.data[num_int, :, :, :]
-        if exp_type == 'FGS_FINEGUIDE':
+        if exp_type == "FGS_FINEGUIDE":
             first_4 = data_sect[:4, :, :].mean(axis=0)
             last_4 = data_sect[-4:, :, :].mean(axis=0)
             slope_int_cube[num_int, :, :] = last_4 - first_4
 
-            var_rn[num_int, :, :] = 2 * (readnoise_arr / grp_time)**2
+            var_rn[num_int, :, :] = 2 * (readnoise_arr / grp_time) ** 2
             var_pn[num_int, :, :] = slope_int_cube[num_int, :, :] / (gain_arr * grp_time)
 
-        elif exp_type[:6] == 'FGS_ID':
+        elif exp_type[:6] == "FGS_ID":
             grp_last = data_sect[1, :, :]
             grp_first = data_sect[0, :, :]
 
@@ -106,18 +105,18 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
             grp_last = data_sect[1, :, :]
             grp_first = data_sect[0, :, :]
             slope_int_cube[num_int, :, :] = grp_last - grp_first
-            var_rn[num_int, :, :] = 2 * (readnoise_arr / grp_time)**2
+            var_rn[num_int, :, :] = 2 * (readnoise_arr / grp_time) ** 2
             var_pn[num_int, :, :] = slope_int_cube[num_int, :, :] / (gain_arr * grp_time)
 
-    if exp_type[:6] == 'FGS_ID':
+    if exp_type[:6] == "FGS_ID":
         new_model.data[0, :, :] = np.minimum(diff_int1, diff_int0) / grp_time
-        var_rn[0, :, :] = 2 * (readnoise_arr / grp_time)**2
+        var_rn[0, :, :] = 2 * (readnoise_arr / grp_time) ** 2
         var_pn[0, :, :] = np.minimum(diff_int1, diff_int0) / (gain_arr * grp_time)
     else:  # FINEGUIDE, ACQ1, ACQ2, or TRACK
         new_model.data = slope_int_cube / grp_time
 
     # set err to sqrt of sum of variances
-    var_pn[var_pn < 0] = 0.  # ensure variance is non-negative
+    var_pn[var_pn < 0] = 0.0  # ensure variance is non-negative
     new_model.err = (var_rn + var_pn) ** 0.5
 
     # Add all table extensions to be carried over to output
@@ -136,7 +135,7 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
     new_model.update(model)
 
     # Update BUNIT to reflect count rate
-    new_model.meta.bunit_data = 'DN/s'
+    new_model.meta.bunit_data = "DN/s"
 
     return new_model
 
@@ -173,15 +172,15 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
     if gain_model is None:
         gain_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_GAIN
 
-        log.info('A GAIN reference file could not be retrieved from CRDS.')
-        log.info('The mean of the SCI values in the FGS gain reference file %s', DEFAULT_GAIN_FILE)
-        log.info('will be used to populate the gain array.')
+        log.info("A GAIN reference file could not be retrieved from CRDS.")
+        log.info("The mean of the SCI values in the FGS gain reference file %s", DEFAULT_GAIN_FILE)
+        log.info("will be used to populate the gain array.")
     else:
         # extract subarray from gain reference file, if necessary
         if reffile_utils.ref_matches_sci(model, gain_model):
             gain_arr = gain_model.data
         else:
-            log.info('Extracting reference file subarray to match science data')
+            log.info("Extracting reference file subarray to match science data")
             ref_sub_model = reffile_utils.get_subarray_model(model, gain_model)
             gain_arr = ref_sub_model.data
             ref_sub_model.close()
@@ -190,15 +189,15 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
     if readnoise_model is None:
         readnoise_arr = np.zeros(imshape, dtype=np.float32) + DEFAULT_READNOISE
 
-        log.info('A READNOISE reference file could not be retrieved from CRDS.')
-        log.info('The mean of the SCI values in the FGS readnoise reference file %s', DEFAULT_READNOISE_FILE)
-        log.info('will be used to populate the readnoise array.')
+        log.info("A READNOISE reference file could not be retrieved from CRDS.")
+        log.info("The mean of the SCI values in the FGS readnoise reference file %s", DEFAULT_READNOISE_FILE)
+        log.info("will be used to populate the readnoise array.")
     else:
         # extract subarray from readnoise reference file, if necessary
         if reffile_utils.ref_matches_sci(model, readnoise_model):
             readnoise_arr = readnoise_model.data
         else:
-            log.info('Extracting readnoise reference file subarray to match science data')
+            log.info("Extracting readnoise reference file subarray to match science data")
             ref_sub_model = reffile_utils.get_subarray_model(model, readnoise_model)
             readnoise_arr = ref_sub_model.data
             ref_sub_model.close()
@@ -244,11 +243,11 @@ def get_dataset_info(model):
 
     imshape = (asize2, asize1)
 
-    log.info('Instrument: %s' % (instrume))
-    log.info('Exposure type: %s' % (exp_type))
-    log.info('Number of integrations: %d' % (n_int))
-    log.info('Number of groups per integration: %d' % (ngroups))
-    log.info('Group time: %s' % (grp_time))
-    log.info('Frame time: %10.5f' % (frame_time))
+    log.info("Instrument: %s" % (instrume))
+    log.info("Exposure type: %s" % (exp_type))
+    log.info("Number of integrations: %d" % (n_int))
+    log.info("Number of groups per integration: %d" % (ngroups))
+    log.info("Group time: %s" % (grp_time))
+    log.info("Frame time: %10.5f" % (frame_time))
 
     return imshape, n_int, grp_time, exp_type

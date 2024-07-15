@@ -297,8 +297,8 @@ Inputs
 :File suffix: _rate or _rateints
 
 The input to the ``Spec2Pipeline`` pipeline is a countrate exposure, in the form
-of either "_rate" or "_rateints" data. A single input FITS file can be processed 
-or an ASN file can be used, as long as there is only one output product specified 
+of either "_rate" or "_rateints" data. A single input FITS file can be processed
+or an ASN file can be used, as long as there is only one output product specified
 in the association.
 
 If "_rateints" products are used as input, for modes other than NIRSpec Fixed Slit,

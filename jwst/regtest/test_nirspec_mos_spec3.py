@@ -22,10 +22,9 @@ def run_pipeline(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
-@pytest.mark.parametrize("source_id", ["b000000030", "b000000031",
-                                       "s000004385", "s000007380",
-                                       "v000000048", "v000000049",
-                                       "v000000053", "v000000056"])
+@pytest.mark.parametrize(
+    "source_id", ["b000000030", "b000000031", "s000004385", "s000007380", "v000000048", "v000000049", "v000000053", "v000000056"]
+)
 def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwargs):
     """Check results of calwebb_spec3"""
     rtdata = run_pipeline
@@ -50,11 +49,11 @@ def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwa
         if isinstance(dmt, datamodels.MultiSlitModel):
             names = [s.name for s in dmt.slits]
             for name in names:
-                st_idx = [(s.wcs, s.wavelength) for s in dmt.slits if s.name==name]
+                st_idx = [(s.wcs, s.wavelength) for s in dmt.slits if s.name == name]
                 w = dmt.slits[st_idx].meta.wcs
                 x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
                 _, _, wave = w(x, y)
-                sr_idx = [(s.wcs, s.wavelength) for s in dmr.slits if s.name==name]
+                sr_idx = [(s.wcs, s.wavelength) for s in dmr.slits if s.name == name]
                 wlr = dmr.slits[sr_idx].wavelength
                 assert np.all(np.isclose(wave, wlr, atol=tolerance))
         else:

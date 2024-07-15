@@ -4,6 +4,7 @@ JWST pipeline step for image alignment.
 :Authors: Mihai Cara
 
 """
+
 from os import path
 import math
 
@@ -31,20 +32,20 @@ _SQRT2 = math.sqrt(2.0)
 def _oxford_or_str_join(str_list):
     nelem = len(str_list)
     if not nelem:
-        return 'N/A'
+        return "N/A"
     str_list = list(map(repr, str_list))
     if nelem == 1:
         return str_list
     elif nelem == 2:
-        return str_list[0] + ' or ' + str_list[1]
+        return str_list[0] + " or " + str_list[1]
     else:
-        return ', '.join(map(repr, str_list[:-1])) + ', or ' + repr(str_list[-1])
+        return ", ".join(map(repr, str_list[:-1])) + ", or " + repr(str_list[-1])
 
 
-SINGLE_GROUP_REFCAT = ['GAIADR3', 'GAIADR2', 'GAIADR1']
+SINGLE_GROUP_REFCAT = ["GAIADR3", "GAIADR2", "GAIADR1"]
 _SINGLE_GROUP_REFCAT_STR = _oxford_or_str_join(SINGLE_GROUP_REFCAT)
 
-__all__ = ['TweakRegStep']
+__all__ = ["TweakRegStep"]
 
 
 class TweakRegStep(Step):
@@ -127,7 +128,7 @@ class TweakRegStep(Step):
         sip_max_inv_pix_error = float(default=0.01)  # max err for SIP fit, inverse.
         sip_inv_degree = integer(max=6, default=None)  # degree for inverse SIP fit, None to use best fit.
         sip_npoints = integer(default=12)  #  number of points for SIP
-        
+
         # stpipe general options
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
     """
@@ -202,8 +203,7 @@ class TweakRegStep(Step):
             # are saving catalogs, if not, and we have 1 group, skip
             if not self.save_catalogs and n_groups == 1:
                 # we need at least two exposures to perform image alignment
-                self.log.warning("At least two exposures are required for image "
-                                 "alignment.")
+                self.log.warning("At least two exposures are required for image " "alignment.")
                 self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
                 record_step_status(images, "tweakreg", success=False)
                 return images
@@ -214,18 +214,17 @@ class TweakRegStep(Step):
         correctors = [None] * len(images)
 
         # Build the catalog and corrector for each input images
-        for (model_index, image_model) in enumerate(images):
+        for model_index, image_model in enumerate(images):
             # now that the model is open, check it's metadata for a custom catalog
             # only if it's not listed in the catdict
             if use_custom_catalogs and image_model.meta.filename not in catdict:
-                if (image_model.meta.tweakreg_catalog is not None and image_model.meta.tweakreg_catalog.strip()):
+                if image_model.meta.tweakreg_catalog is not None and image_model.meta.tweakreg_catalog.strip():
                     catdict[image_model.meta.filename] = image_model.meta.tweakreg_catalog
             if use_custom_catalogs and catdict.get(image_model.meta.filename, None) is not None:
                 # FIXME this modifies the input_model
                 image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
                 # use user-supplied catalog:
-                self.log.info("Using user-provided input catalog "
-                              f"'{image_model.meta.tweakreg_catalog}'")
+                self.log.info("Using user-provided input catalog " f"'{image_model.meta.tweakreg_catalog}'")
                 catalog = Table.read(
                     image_model.meta.tweakreg_catalog,
                 )
@@ -242,22 +241,19 @@ class TweakRegStep(Step):
             catalog = _rename_catalog_columns(catalog)
 
             # filter all sources outside the wcs bounding box
-            catalog = _filter_catalog_by_bounding_box(
-                catalog,
-                image_model.meta.wcs.bounding_box)
+            catalog = _filter_catalog_by_bounding_box(catalog, image_model.meta.wcs.bounding_box)
 
             # setting 'name' is important for tweakwcs logging
-            if catalog.meta.get('name') is None:
-                catalog.meta['name'] = path.splitext(image_model.meta.filename)[0].strip('_- ')
+            if catalog.meta.get("name") is None:
+                catalog.meta["name"] = path.splitext(image_model.meta.filename)[0].strip("_- ")
 
             # log results of source finding (or user catalog)
             filename = image_model.meta.filename
             nsources = len(catalog)
             if nsources == 0:
-                self.log.warning('No sources found in {}.'.format(filename))
+                self.log.warning("No sources found in {}.".format(filename))
             else:
-                self.log.info('Detected {} sources in {}.'
-                              .format(len(catalog), filename))
+                self.log.info("Detected {} sources in {}.".format(len(catalog), filename))
 
             # save catalog (if requested)
             if save_catalog:
@@ -267,9 +263,8 @@ class TweakRegStep(Step):
             # construct the corrector since the model is open (and already has a group_id)
             correctors[model_index] = _construct_wcs_corrector(image_model, catalog)
 
-        self.log.info('')
-        self.log.info("Number of image groups to be aligned: {:d}."
-                      .format(n_groups))
+        self.log.info("")
+        self.log.info("Number of image groups to be aligned: {:d}.".format(n_groups))
 
         # keep track of if 'local' alignment failed, even if this
         # fails, absolute alignment might be run (if so configured)
@@ -277,7 +272,6 @@ class TweakRegStep(Step):
 
         # if we have >1 group of images, align them to each other
         if n_groups > 1:
-
             # align images:
             xyxymatch = XYXYMatch(
                 searchrad=self.searchrad,
@@ -285,7 +279,7 @@ class TweakRegStep(Step):
                 use2dhist=self.use2dhist,
                 tolerance=self.tolerance,
                 xoffset=self.xoffset,
-                yoffset=self.yoffset
+                yoffset=self.yoffset,
             )
 
             try:
@@ -298,17 +292,15 @@ class TweakRegStep(Step):
                     match=xyxymatch,
                     fitgeom=self.fitgeometry,
                     nclip=self.nclip,
-                    sigma=(self.sigma, 'rmse')
+                    sigma=(self.sigma, "rmse"),
                 )
 
             except ValueError as e:
                 msg = e.args[0]
-                if (msg == "Too few input images (or groups of images) with "
-                        "non-empty catalogs."):
+                if msg == "Too few input images (or groups of images) with " "non-empty catalogs.":
                     # we need at least two exposures to perform image alignment
                     self.log.warning(msg)
-                    self.log.warning("At least two exposures are required for "
-                                     "image alignment.")
+                    self.log.warning("At least two exposures are required for " "image alignment.")
                     self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
                     record_step_status(images, "tweakreg", success=False)
                     if not align_to_abs_refcat:
@@ -322,9 +314,11 @@ class TweakRegStep(Step):
                 if msg.startswith("Number of output coordinates exceeded allocation"):
                     # we need at least two exposures to perform image alignment
                     self.log.error(msg)
-                    self.log.error("Multiple sources within specified tolerance "
-                                   "matched to a single reference source. Try to "
-                                   "adjust 'tolerance' and/or 'separation' parameters.")
+                    self.log.error(
+                        "Multiple sources within specified tolerance "
+                        "matched to a single reference source. Try to "
+                        "adjust 'tolerance' and/or 'separation' parameters."
+                    )
                     self.log.warning("Skipping 'TweakRegStep'...")
                     record_step_status(images, "tweakreg", success=False)
                     return images
@@ -352,9 +346,9 @@ class TweakRegStep(Step):
 
             if self.save_abs_catalog:
                 if self.output_dir is None:
-                    output_name = 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower())
+                    output_name = "fit_{}_ref.ecsv".format(self.abs_refcat.lower())
                 else:
-                    output_name = path.join(self.output_dir, 'fit_{}_ref.ecsv'.format(self.abs_refcat.lower()))
+                    output_name = path.join(self.output_dir, "fit_{}_ref.ecsv".format(self.abs_refcat.lower()))
             else:
                 output_name = None
 
@@ -390,9 +384,11 @@ class TweakRegStep(Step):
                 ref_cat = Table.read(self.abs_refcat)
 
             else:
-                raise ValueError("'abs_refcat' must be a path to an "
-                                 "existing file name or one of the supported "
-                                 f"reference catalogs: {_SINGLE_GROUP_REFCAT_STR}.")
+                raise ValueError(
+                    "'abs_refcat' must be a path to an "
+                    "existing file name or one of the supported "
+                    f"reference catalogs: {_SINGLE_GROUP_REFCAT_STR}."
+                )
 
             # Check that there are enough GAIA sources for a reliable/valid fit
             num_ref = len(ref_cat)
@@ -414,7 +410,7 @@ class TweakRegStep(Step):
                     use2dhist=self.abs_use2dhist,
                     tolerance=self.abs_tolerance,
                     xoffset=self.abs_xoffset,
-                    yoffset=self.abs_yoffset
+                    yoffset=self.abs_yoffset,
                 )
 
                 # Set group_id to same value so all get fit as one observation
@@ -423,10 +419,9 @@ class TweakRegStep(Step):
                 # as opposed to the group_id values used for relative alignment
                 # earlier in this step.
                 for corrector in correctors:
-                    corrector.meta['group_id'] = 987654
-                    if ('fit_info' in corrector.meta and
-                            'REFERENCE' in corrector.meta['fit_info']['status']):
-                        del corrector.meta['fit_info']
+                    corrector.meta["group_id"] = 987654
+                    if "fit_info" in corrector.meta and "REFERENCE" in corrector.meta["fit_info"]["status"]:
+                        del corrector.meta["fit_info"]
 
                 # Perform fit
                 try:
@@ -439,12 +434,11 @@ class TweakRegStep(Step):
                         match=xyxymatch_gaia,
                         fitgeom=self.abs_fitgeometry,
                         nclip=self.abs_nclip,
-                        sigma=(self.abs_sigma, 'rmse')
+                        sigma=(self.abs_sigma, "rmse"),
                     )
                 except ValueError as e:
                     msg = e.args[0]
-                    if (msg == "Too few input images (or groups of images) with "
-                            "non-empty catalogs."):
+                    if msg == "Too few input images (or groups of images) with " "non-empty catalogs.":
                         # we need at least two exposures to perform image alignment
                         self.log.warning(msg)
                         self.log.warning(
@@ -480,13 +474,11 @@ class TweakRegStep(Step):
 
         # one final pass through all the models to update them based
         # on the results of this step
-        for (image_model, corrector) in zip(images, correctors):
-            image_model.meta.cal_step.tweakreg = 'COMPLETE'
+        for image_model, corrector in zip(images, correctors):
+            image_model.meta.cal_step.tweakreg = "COMPLETE"
 
             # retrieve fit status and update wcs if fit is successful:
-            if ('fit_info' in corrector.meta and
-                    'SUCCESS' in corrector.meta['fit_info']['status']):
-
+            if "fit_info" in corrector.meta and "SUCCESS" in corrector.meta["fit_info"]["status"]:
                 # Update/create the WCS .name attribute with information
                 # on this astrometric fit as the only record that it was
                 # successful:
@@ -514,18 +506,17 @@ class TweakRegStep(Step):
                             max_inv_pix_error=self.sip_max_inv_pix_error,
                             inv_degree=self.sip_inv_degree,
                             npoints=self.sip_npoints,
-                            crpix=None
+                            crpix=None,
                         )
                     except (ValueError, RuntimeError) as e:
                         self.log.warning(
-                            "Failed to update 'meta.wcsinfo' with FITS SIP "
-                            f'approximation. Reported error is:\n"{e.args[0]}"'
+                            "Failed to update 'meta.wcsinfo' with FITS SIP " f'approximation. Reported error is:\n"{e.args[0]}"'
                         )
 
         return images
 
     def _write_catalog(self, catalog, filename):
-        '''
+        """
         Determine output filename for catalog based on outfile for step
         and output dir, then write catalog to file.
 
@@ -540,58 +531,50 @@ class TweakRegStep(Step):
         -------
         catalog_filename : str
             Filename where the catalog was saved
-        '''
+        """
 
-        catalog_filename = str(filename).replace(
-                    '.fits', '_cat.{}'.format(self.catalog_format)
-                )
-        if self.catalog_format == 'ecsv':
-            fmt = 'ascii.ecsv'
-        elif self.catalog_format == 'fits':
+        catalog_filename = str(filename).replace(".fits", "_cat.{}".format(self.catalog_format))
+        if self.catalog_format == "ecsv":
+            fmt = "ascii.ecsv"
+        elif self.catalog_format == "fits":
             # NOTE: The catalog must not contain any 'None' values.
             #       FITS will also not clobber existing files.
-            fmt = 'fits'
+            fmt = "fits"
         else:
-            raise ValueError(
-                '\'catalog_format\' must be "ecsv" or "fits".'
-            )
+            raise ValueError('\'catalog_format\' must be "ecsv" or "fits".')
         if self.output_dir is None:
             catalog.write(catalog_filename, format=fmt, overwrite=True)
         else:
-            catalog.write(
-                path.join(self.output_dir, catalog_filename),
-                format=fmt,
-                overwrite=True
-            )
-        self.log.info('Wrote source catalog: {}'
-                      .format(catalog_filename))
+            catalog.write(path.join(self.output_dir, catalog_filename), format=fmt, overwrite=True)
+        self.log.info("Wrote source catalog: {}".format(catalog_filename))
         return catalog_filename
 
     def _find_sources(self, image_model):
         # source finding
         starfinder_kwargs = {
-            'fwhm': self.kernel_fwhm,
-            'sigma_radius': self.sigma_radius,
-            'minsep_fwhm': self.minsep_fwhm,
-            'sharplo': self.sharplo,
-            'sharphi': self.sharphi,
-            'roundlo': self.roundlo,
-            'roundhi': self.roundhi,
-            'peakmax': self.peakmax,
-            'brightest': self.brightest,
-            'npixels': self.npixels,
-            'connectivity': int(self.connectivity),  # option returns a string, so cast to int
-            'nlevels': self.nlevels,
-            'contrast': self.contrast,
-            'mode': self.multithresh_mode,
-            'error': image_model.err,
-            'localbkg_width': self.localbkg_width,
-            'apermask_method': self.apermask_method,
-            'kron_params': self.kron_params,
+            "fwhm": self.kernel_fwhm,
+            "sigma_radius": self.sigma_radius,
+            "minsep_fwhm": self.minsep_fwhm,
+            "sharplo": self.sharplo,
+            "sharphi": self.sharphi,
+            "roundlo": self.roundlo,
+            "roundhi": self.roundhi,
+            "peakmax": self.peakmax,
+            "brightest": self.brightest,
+            "npixels": self.npixels,
+            "connectivity": int(self.connectivity),  # option returns a string, so cast to int
+            "nlevels": self.nlevels,
+            "contrast": self.contrast,
+            "mode": self.multithresh_mode,
+            "error": image_model.err,
+            "localbkg_width": self.localbkg_width,
+            "apermask_method": self.apermask_method,
+            "kron_params": self.kron_params,
         }
 
         return make_tweakreg_catalog(
-            image_model, self.snr_threshold,
+            image_model,
+            self.snr_threshold,
             starfinder=self.starfinder,
             bkg_boxsize=self.bkg_boxsize,
             starfinder_kwargs=starfinder_kwargs,
@@ -602,11 +585,10 @@ class TweakRegStep(Step):
         if self.use2dhist:
             max_corr = 2 * (self.searchrad + self.tolerance) * u.arcsec
         else:
-            max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) +
-                            self.tolerance) * u.arcsec
+            max_corr = 2 * (max(abs(self.xoffset), abs(self.yoffset)) + self.tolerance) * u.arcsec
         for corrector in correctors:
             aligned_skycoord = _wcs_to_skycoord(corrector.wcs)
-            original_skycoord = corrector.meta['original_skycoord']
+            original_skycoord = corrector.meta["original_skycoord"]
             separation = original_skycoord.separation(aligned_skycoord)
             if not (separation < max_corr).all():
                 # Large corrections are typically a result of source
@@ -644,7 +626,7 @@ def _parse_catfile(catfile):
 
         for line in f.readlines():
             sline = line.strip()
-            if not sline or sline[0] == '#':
+            if not sline or sline[0] == "#":
                 continue
 
             data_model, *catalog = sline.split()
@@ -661,16 +643,14 @@ def _parse_catfile(catfile):
 
 
 def _rename_catalog_columns(catalog):
-    for axis in ['x', 'y']:
+    for axis in ["x", "y"]:
         if axis not in catalog.colnames:
-            long_axis = axis + 'centroid'
+            long_axis = axis + "centroid"
             if long_axis in catalog.colnames:
                 catalog.rename_column(long_axis, axis)
             else:
                 raise ValueError(
-                    "'tweakreg' source catalogs must contain either "
-                    "columns 'x' and 'y' or 'xcentroid' and "
-                    "'ycentroid'."
+                    "'tweakreg' source catalogs must contain either " "columns 'x' and 'y' or 'xcentroid' and " "'ycentroid'."
                 )
     return catalog
 
@@ -681,8 +661,8 @@ def _filter_catalog_by_bounding_box(catalog, bounding_box):
 
     # filter out sources outside the WCS bounding box
     ((xmin, xmax), (ymin, ymax)) = bounding_box
-    x = catalog['x']
-    y = catalog['y']
+    x = catalog["x"]
+    y = catalog["y"]
     mask = (x > xmin) & (x < xmax) & (y > ymin) & (y < ymax)
     return catalog[mask]
 
@@ -699,14 +679,12 @@ def _construct_wcs_corrector(image_model, catalog):
     refang = image_model.meta.wcsinfo.instance
     return JWSTWCSCorrector(
         wcs=image_model.meta.wcs,
-        wcsinfo={'roll_ref': refang['roll_ref'],
-                 'v2_ref': refang['v2_ref'],
-                 'v3_ref': refang['v3_ref']},
+        wcsinfo={"roll_ref": refang["roll_ref"], "v2_ref": refang["v2_ref"], "v3_ref": refang["v3_ref"]},
         # catalog and group_id are required meta
         meta={
-            'catalog': catalog,
-            'name': catalog.meta.get('name'),
-            'group_id': image_model.meta.group_id,
-            'original_skycoord': _wcs_to_skycoord(wcs),
-        }
+            "catalog": catalog,
+            "name": catalog.meta.get("name"),
+            "group_id": image_model.meta.group_id,
+            "original_skycoord": _wcs_to_skycoord(wcs),
+        },
     )

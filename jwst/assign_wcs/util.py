@@ -2,6 +2,7 @@
 Utility function for assign_wcs.
 
 """
+
 import logging
 import functools
 import numpy as np
@@ -34,13 +35,20 @@ log.setLevel(logging.DEBUG)
 _MAX_SIP_DEGREE = 6
 
 
-__all__ = ["reproject", "wcs_from_footprints", "velocity_correction",
-           "MSAFileError", "NoDataOnDetectorError", "compute_scale",
-           "calc_rotation_matrix", "wrap_ra", "update_fits_wcsinfo"]
+__all__ = [
+    "reproject",
+    "wcs_from_footprints",
+    "velocity_correction",
+    "MSAFileError",
+    "NoDataOnDetectorError",
+    "compute_scale",
+    "calc_rotation_matrix",
+    "wrap_ra",
+    "update_fits_wcsinfo",
+]
 
 
 class MSAFileError(Exception):
-
     def __init__(self, message):
         super(MSAFileError, self).__init__(message)
 
@@ -60,7 +68,7 @@ class NoDataOnDetectorError(StpipeExitException):
 
     def __init__(self, message=None):
         if message is None:
-            message = 'WCS solution indicate that no science is in the data.'
+            message = "WCS solution indicate that no science is in the data."
         # The first argument instructs stpipe CLI tools to exit with status
         # 64 when this exception is raised.
         super().__init__(64, message)
@@ -68,7 +76,7 @@ class NoDataOnDetectorError(StpipeExitException):
 
 def _domain_to_bounding_box(domain):
     # TODO: remove this when domain is completely removed
-    bb = tuple([(item['lower'], item['upper']) for item in domain])
+    bb = tuple([(item["lower"], item["upper"]) for item in domain])
     if len(bb) == 1:
         bb = bb[0]
     return bb
@@ -97,11 +105,11 @@ def reproject(wcs1, wcs2):
     def _reproject(x, y):
         sky = wcs1.forward_transform(x, y)
         return wcs2.backward_transform(*sky)
+
     return _reproject
 
 
-def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
-                  disp_axis: int = None, pscale_ratio: float = None) -> float:
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int = None, pscale_ratio: float = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -124,15 +132,15 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
         Scaling factor for x and y or cross-dispersion direction.
 
     """
-    spectral = 'SPECTRAL' in wcs.output_frame.axes_type
+    spectral = "SPECTRAL" in wcs.output_frame.axes_type
 
     if spectral and disp_axis is None:
-        raise ValueError('If input WCS is spectral, a disp_axis must be given')
+        raise ValueError("If input WCS is spectral, a disp_axis must be given")
 
     crpix = np.array(wcs.invert(*fiducial))
 
     delta = np.zeros_like(crpix)
-    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
+    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == "SPATIAL")[0]
     delta[spatial_idx[0]] = 1
 
     crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
@@ -185,7 +193,7 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
 
     """
     if vparity not in (1, -1):
-        raise ValueError(f'vparity should be 1 or -1. Input was: {vparity}')
+        raise ValueError(f"vparity should be 1 or -1. Input was: {vparity}")
 
     rel_angle = roll_ref - (vparity * v3i_yang)
 
@@ -197,9 +205,19 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
     return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
-def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None,
-                        pscale_ratio=None, pscale=None, rotation=None,
-                        shape=None, crpix=None, crval=None, wcslist=None):
+def wcs_from_footprints(
+    dmodels,
+    refmodel=None,
+    transform=None,
+    bounding_box=None,
+    pscale_ratio=None,
+    pscale=None,
+    rotation=None,
+    shape=None,
+    crpix=None,
+    crval=None,
+    wcslist=None,
+):
     """
     Create a WCS from a list of input data models.
 
@@ -279,7 +297,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         # overwrite spatial axes with user-provided CRVAL:
         i = 0
         for k, axt in enumerate(wcslist[0].output_frame.axes_type):
-            if axt == 'SPATIAL':
+            if axt == "SPATIAL":
                 fiducial[k] = crval[i]
                 i += 1
 
@@ -302,27 +320,22 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         else:
             roll_ref = np.deg2rad(rotation) + (vparity * v3yangle)
 
-        pc = np.reshape(
-            calc_rotation_matrix(roll_ref, v3yangle, vparity=vparity),
-            (2, 2)
-        )
+        pc = np.reshape(calc_rotation_matrix(roll_ref, v3yangle, vparity=vparity), (2, 2))
 
-        rotation = astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix')
+        rotation = astmodels.AffineTransformation2D(pc, name="pc_rotation_matrix")
         transform.append(rotation)
 
         if sky_axes:
             if not pscale:
-                pscale = compute_scale(refmodel.meta.wcs, ref_fiducial,
-                                       pscale_ratio=pscale_ratio)
-            transform.append(astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2'))
+                pscale = compute_scale(refmodel.meta.wcs, ref_fiducial, pscale_ratio=pscale_ratio)
+            transform.append(astmodels.Scale(pscale, name="cdelt1") & astmodels.Scale(pscale, name="cdelt2"))
 
         if transform:
             transform = functools.reduce(lambda x, y: x | y, transform)
 
     out_frame = refmodel.meta.wcs.output_frame
     input_frame = refmodel.meta.wcs.input_frame
-    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
-                             transform=transform, input_frame=input_frame)
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj, transform=transform, input_frame=input_frame)
 
     footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
@@ -341,9 +354,9 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         offset2 -= axis_min_values[1]
     else:
         offset1, offset2 = crpix
-    offsets = astmodels.Shift(-offset1, name='crpix1') & astmodels.Shift(-offset2, name='crpix2')
+    offsets = astmodels.Shift(-offset1, name="crpix1") & astmodels.Shift(-offset2, name="crpix2")
 
-    wnew.insert_transform('detector', offsets, after=True)
+    wnew.insert_transform("detector", offsets, after=True)
     wnew.bounding_box = output_bounding_box
 
     if shape is None:
@@ -364,8 +377,8 @@ def compute_fiducial(wcslist, bounding_box=None):
     """
 
     axes_types = wcslist[0].output_frame.axes_type
-    spatial_axes = np.array(axes_types) == 'SPATIAL'
-    spectral_axes = np.array(axes_types) == 'SPECTRAL'
+    spatial_axes = np.array(axes_types) == "SPATIAL"
+    spectral_axes = np.array(axes_types) == "SPECTRAL"
     footprints = np.hstack([w.footprint(bounding_box=bounding_box).T for w in wcslist])
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
@@ -378,11 +391,11 @@ def compute_fiducial(wcslist, bounding_box=None):
         y = np.cos(lat) * np.sin(lon)
         z = np.sin(lat)
 
-        x_mid = (np.max(x) + np.min(x)) / 2.
-        y_mid = (np.max(y) + np.min(y)) / 2.
-        z_mid = (np.max(z) + np.min(z)) / 2.
+        x_mid = (np.max(x) + np.min(x)) / 2.0
+        y_mid = (np.max(y) + np.min(y)) / 2.0
+        z_mid = (np.max(z) + np.min(z)) / 2.0
         lon_fiducial = np.rad2deg(np.arctan2(y_mid, x_mid)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mid, np.sqrt(x_mid ** 2 + y_mid ** 2)))
+        lat_fiducial = np.rad2deg(np.arctan2(z_mid, np.sqrt(x_mid**2 + y_mid**2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
     if spectral_footprint.any():
         fiducial[spectral_axes] = spectral_footprint.min()
@@ -412,7 +425,7 @@ def is_fits(input_img):
 
     isfits = False
     fitstype = None
-    names = ['fits', 'fit', 'FITS', 'FIT']
+    names = ["fits", "fit", "FITS", "FIT"]
     # determine if input is a fits file based on extension
     # Only check type of FITS file if filename ends in valid FITS string
     f = None
@@ -428,7 +441,7 @@ def is_fits(input_img):
     if isfits:
         if not f:
             try:
-                f = fits.open(input_img, mode='readonly')
+                f = fits.open(input_img, mode="readonly")
                 fileclose = True
             except Exception:
                 if f is not None:
@@ -438,12 +451,12 @@ def is_fits(input_img):
         if data0 is not None:
             try:
                 if isinstance(f[1], fits.TableHDU):
-                    fitstype = 'waiver'
+                    fitstype = "waiver"
             except IndexError:
-                fitstype = 'simple'
+                fitstype = "simple"
 
         else:
-            fitstype = 'mef'
+            fitstype = "mef"
         if fileclose:
             f.close()
 
@@ -478,8 +491,7 @@ def subarray_transform(input_model):
     if ystart is not None and ystart != 1:
         tr_ystart = astmodels.Shift(ystart - 1)
 
-    if (isinstance(tr_xstart, astmodels.Identity) and
-            isinstance(tr_ystart, astmodels.Identity)):
+    if isinstance(tr_xstart, astmodels.Identity) and isinstance(tr_ystart, astmodels.Identity):
         # the case of a full frame observation
         return None
     else:
@@ -524,7 +536,7 @@ def get_object_info(catalog_name=None):
             log.error(err_text)
             raise ValueError(err_text)
         try:
-            catalog = QTable.read(catalog_name, format='ascii.ecsv')
+            catalog = QTable.read(catalog_name, format="ascii.ecsv")
         except FileNotFoundError as e:
             log.error("Could not find catalog file: {0}".format(e))
             raise FileNotFoundError("Could not find catalog: {0}".format(e))
@@ -558,29 +570,33 @@ def get_object_info(catalog_name=None):
     # (hence, the four separate columns).
 
     for row in catalog:
-        objects.append(SkyObject(label=row['label'],
-                                 xcentroid=row['xcentroid'],
-                                 ycentroid=row['ycentroid'],
-                                 sky_centroid=row['sky_centroid'],
-                                 isophotal_abmag=row['isophotal_abmag'],
-                                 isophotal_abmag_err=row['isophotal_abmag_err'],
-                                 sky_bbox_ll=row['sky_bbox_ll'],
-                                 sky_bbox_lr=row['sky_bbox_lr'],
-                                 sky_bbox_ul=row['sky_bbox_ul'],
-                                 sky_bbox_ur=row['sky_bbox_ur'],
-                                 is_extended=row['is_extended']
-                                 )
-                       )
+        objects.append(
+            SkyObject(
+                label=row["label"],
+                xcentroid=row["xcentroid"],
+                ycentroid=row["ycentroid"],
+                sky_centroid=row["sky_centroid"],
+                isophotal_abmag=row["isophotal_abmag"],
+                isophotal_abmag_err=row["isophotal_abmag_err"],
+                sky_bbox_ll=row["sky_bbox_ll"],
+                sky_bbox_lr=row["sky_bbox_lr"],
+                sky_bbox_ul=row["sky_bbox_ul"],
+                sky_bbox_ur=row["sky_bbox_ur"],
+                is_extended=row["is_extended"],
+            )
+        )
     return objects
 
 
-def create_grism_bbox(input_model,
-                      reference_files=None,
-                      mmag_extract=None,
-                      extract_orders=None,
-                      wfss_extract_half_height=None,
-                      wavelength_range=None,
-                      nbright=None):
+def create_grism_bbox(
+    input_model,
+    reference_files=None,
+    mmag_extract=None,
+    extract_orders=None,
+    wfss_extract_half_height=None,
+    wavelength_range=None,
+    nbright=None,
+):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -662,8 +678,8 @@ def create_grism_bbox(input_model,
             raise TypeError(message)
     else:
         # Get the list of extract_orders and lmin, lmax from the ``wavelengthrange`` reference file.
-        with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-            if 'WFSS' not in f.meta.exposure.type:
+        with WavelengthrangeModel(reference_files["wavelengthrange"]) as f:
+            if "WFSS" not in f.meta.exposure.type:
                 err_text = "Wavelengthrange reference file not for WFSS"
                 log.error(err_text)
                 raise ValueError(err_text)
@@ -675,7 +691,7 @@ def create_grism_bbox(input_model,
             wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
 
     if mmag_extract is None:
-        mmag_extract = 999.  # extract all objects, regardless of magnitude
+        mmag_extract = 999.0  # extract all objects, regardless of magnitude
     else:
         log.info("Extracting objects < abmag = {0}".format(mmag_extract))
     if not isinstance(mmag_extract, (int, float)):
@@ -689,14 +705,11 @@ def create_grism_bbox(input_model,
 
     log.info(f"Getting objects from {input_model.meta.source_catalog}")
 
-    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range,
-                              nbright)
+    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range, nbright)
 
 
-def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=None,
-                       wavelength_range=None, nbright=None):
-
-    log.debug(f'Extracting with wavelength_range {wavelength_range}')
+def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=None, wavelength_range=None, nbright=None):
+    log.debug(f"Extracting with wavelength_range {wavelength_range}")
 
     # this contains the pure information from the catalog with no translations
     skyobject_list = get_object_info(input_model.meta.source_catalog)
@@ -704,7 +717,7 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
     # here, image is in the imaging reference frame, before going through the
     # dispersion coefficients
 
-    sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
+    sky_to_detector = input_model.meta.wcs.get_transform("world", "detector")
     sky_to_grism = input_model.meta.wcs.backward_transform
 
     grism_objects = []  # the return list of GrismObjects
@@ -716,9 +729,7 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                 # save the image frame center of the object
                 # takes in ra, dec, wavelength, order but wave and order
                 # don't get used until the detector->grism_detector transform
-                xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
-                                                         obj.sky_centroid.icrs.dec.value,
-                                                         1, 1)
+                xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1, 1)
 
                 order_bounding = {}
                 waverange = {}
@@ -731,10 +742,17 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                     # location of the +/- sides of the bounding box in the
                     # grism image
                     lmin, lmax = wavelength_range[order]
-                    ra = np.array([obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value,
-                                   obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value])
-                    dec = np.array([obj.sky_bbox_ll.dec.value, obj.sky_bbox_lr.dec.value,
-                                    obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
+                    ra = np.array(
+                        [obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value, obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value]
+                    )
+                    dec = np.array(
+                        [
+                            obj.sky_bbox_ll.dec.value,
+                            obj.sky_bbox_lr.dec.value,
+                            obj.sky_bbox_ul.dec.value,
+                            obj.sky_bbox_ur.dec.value,
+                        ]
+                    )
                     x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
                     x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
 
@@ -789,9 +807,7 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                     # direction, and one in the cross-dispersed direction when
                     # placed into the subarray extent.
                     pts = np.array([[ymin, xmin], [ymax, xmax]])
-                    subarr_extent = np.array([[0, 0],
-                                             [input_model.meta.subarray.ysize - 1,
-                                              input_model.meta.subarray.xsize - 1]])
+                    subarr_extent = np.array([[0, 0], [input_model.meta.subarray.ysize - 1, input_model.meta.subarray.xsize - 1]])
 
                     if input_model.meta.wcsinfo.dispersion_direction == 1:
                         # X-axis is dispersion direction
@@ -802,10 +818,12 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
                         disp_col = 0
                         xdisp_col = 1
 
-                    dispaxis_check = (pts[1, disp_col] - subarr_extent[0, disp_col] > 0) and \
-                                     (subarr_extent[1, disp_col] - pts[0, disp_col] > 0)
-                    xdispaxis_check = (pts[1, xdisp_col] - subarr_extent[0, xdisp_col] >= 0) and \
-                                      (subarr_extent[1, xdisp_col] - pts[0, xdisp_col] >= 0)
+                    dispaxis_check = (pts[1, disp_col] - subarr_extent[0, disp_col] > 0) and (
+                        subarr_extent[1, disp_col] - pts[0, disp_col] > 0
+                    )
+                    xdispaxis_check = (pts[1, xdisp_col] - subarr_extent[0, xdisp_col] >= 0) and (
+                        subarr_extent[1, xdisp_col] - pts[0, xdisp_col] >= 0
+                    )
 
                     contained = dispaxis_check and xdispaxis_check
 
@@ -822,23 +840,27 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
 
                     if not exclude:
                         order_bounding[order] = ((ymin, ymax), (xmin, xmax))
-                        waverange[order] = ((lmin, lmax))
+                        waverange[order] = (lmin, lmax)
                         partial_order[order] = ispartial
 
                 if len(order_bounding) > 0:
-                    grism_objects.append(GrismObject(sid=obj.label,
-                                                     order_bounding=order_bounding,
-                                                     sky_centroid=obj.sky_centroid,
-                                                     partial_order=partial_order,
-                                                     waverange=waverange,
-                                                     sky_bbox_ll=obj.sky_bbox_ll,
-                                                     sky_bbox_lr=obj.sky_bbox_lr,
-                                                     sky_bbox_ul=obj.sky_bbox_ul,
-                                                     sky_bbox_ur=obj.sky_bbox_ur,
-                                                     xcentroid=xcenter,
-                                                     ycentroid=ycenter,
-                                                     is_extended=obj.is_extended,
-                                                     isophotal_abmag=obj.isophotal_abmag))
+                    grism_objects.append(
+                        GrismObject(
+                            sid=obj.label,
+                            order_bounding=order_bounding,
+                            sky_centroid=obj.sky_centroid,
+                            partial_order=partial_order,
+                            waverange=waverange,
+                            sky_bbox_ll=obj.sky_bbox_ll,
+                            sky_bbox_lr=obj.sky_bbox_lr,
+                            sky_bbox_ul=obj.sky_bbox_ul,
+                            sky_bbox_ur=obj.sky_bbox_ur,
+                            xcentroid=xcenter,
+                            ycentroid=ycenter,
+                            is_extended=obj.is_extended,
+                            isophotal_abmag=obj.isophotal_abmag,
+                        )
+                    )
 
     # At this point we have a list of grism objects limited to
     # isophotal_abmag < mmag_extract. We now need to further restrict
@@ -874,8 +896,8 @@ def get_num_msa_open_shutters(shutter_state):
         ``Slit.shutter_state`` attribute - a combination of
         ``1`` - open shutter, ``0`` - closed shutter, ``x`` - main shutter.
     """
-    num = shutter_state.count('1')
-    if 'x' in shutter_state:
+    num = shutter_state.count("1")
+    if "x" in shutter_state:
         num += 1
     return num
 
@@ -895,8 +917,7 @@ def transform_bbox_from_shape(shape):
     bbox : tuple
         Bounding box in y, x order.
     """
-    bbox = ((-0.5, shape[-2] - 0.5),
-            (-0.5, shape[-1] - 0.5))
+    bbox = ((-0.5, shape[-2] - 0.5), (-0.5, shape[-1] - 0.5))
     return bbox
 
 
@@ -914,8 +935,7 @@ def wcs_bbox_from_shape(shape):
     bbox : tuple
         Bounding box in x, y order.
     """
-    bbox = ((-0.5, shape[-1] - 0.5),
-            (-0.5, shape[-2] - 0.5))
+    bbox = ((-0.5, shape[-1] - 0.5), (-0.5, shape[-2] - 0.5))
     return bbox
 
 
@@ -1004,25 +1024,21 @@ def compute_footprint_spectral(model):
         min_ra = min_ra + 360.0
     if max_ra >= 360.0:
         max_ra = max_ra - 360.0
-    footprint = np.array([[min_ra, np.nanmin(dec)],
-                          [max_ra, np.nanmin(dec)],
-                          [max_ra, np.nanmax(dec)],
-                          [min_ra, np.nanmax(dec)]])
+    footprint = np.array([[min_ra, np.nanmin(dec)], [max_ra, np.nanmin(dec)], [max_ra, np.nanmax(dec)], [min_ra, np.nanmax(dec)]])
     lam_min = np.nanmin(lam)
     lam_max = np.nanmax(lam)
     return footprint, (lam_min, lam_max)
 
 
 def update_s_region_spectral(model):
-    """ Update the S_REGION keyword.
-    """
+    """Update the S_REGION keyword."""
     footprint, spectral_region = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
     model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def compute_footprint_nrs_slit(slit):
-    """ Compute the footprint of a Nirspec slit using the instrument model.
+    """Compute the footprint of a Nirspec slit using the instrument model.
 
     Parameters
     ----------
@@ -1030,13 +1046,11 @@ def compute_footprint_nrs_slit(slit):
     """
     slit2world = slit.meta.wcs.get_transform("slit_frame", "world")
     # Define the corners of a virtual slit. The center of the slit is (0, 0).
-    virtual_corners_x = [-.5, -.5, .5, .5]
+    virtual_corners_x = [-0.5, -0.5, 0.5, 0.5]
     virtual_corners_y = [slit.slit_ymin, slit.slit_ymax, slit.slit_ymax, slit.slit_ymin]
     # Use a default wavelength or 2 microns as input to the transform.
     input_lam = [2e-6] * 4
-    ra, dec, lam = slit2world(virtual_corners_x,
-                              virtual_corners_y,
-                              input_lam)
+    ra, dec, lam = slit2world(virtual_corners_x, virtual_corners_y, input_lam)
     footprint = np.array([ra, dec]).T
     lam_min = np.nanmin(lam)
     lam_max = np.nanmax(lam)
@@ -1050,14 +1064,10 @@ def update_s_region_nrs_slit(slit):
 
 
 def update_s_region_keyword(model, footprint):
-    """ Update the S_REGION keyword.
-    """
-    s_region = (
-        "POLYGON ICRS "
-        " {0:.9f} {1:.9f}"
-        " {2:.9f} {3:.9f}"
-        " {4:.9f} {5:.9f}"
-        " {6:.9f} {7:.9f}".format(*footprint.flatten()))
+    """Update the S_REGION keyword."""
+    s_region = "POLYGON ICRS " " {0:.9f} {1:.9f}" " {2:.9f} {3:.9f}" " {4:.9f} {5:.9f}" " {6:.9f} {7:.9f}".format(
+        *footprint.flatten()
+    )
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
         log.info("There are NaNs in s_region, S_REGION not updated.")
@@ -1181,7 +1191,7 @@ def velocity_correction(velosys):
     velosys : float
         Radial velocity wrt Barycenter [m / s].
     """
-    correction = (1 / (1 + velosys / c.value))
+    correction = 1 / (1 + velosys / c.value)
     model = astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
     model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correction")
 
@@ -1244,20 +1254,28 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
     x, y : float, ndarray
         x, y locations within the slice.
     """
-    slicer2world = slice_wcs.get_transform('slicer', 'world')
+    slicer2world = slice_wcs.get_transform("slicer", "world")
     slx, sly, sllam = slicer2world.inverse(ra, dec, lam)
 
     # Compute the slice X coordinate using the center of the slit.
-    SLX, _, _ = slice_wcs.get_transform('slit_frame', 'slicer')(0, 0, 2e-6)
+    SLX, _, _ = slice_wcs.get_transform("slit_frame", "slicer")(0, 0, 2e-6)
     onslice_ind = np.isclose(slx, SLX, atol=5e-4)
 
     return onslice_ind
 
 
-def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
-                        max_inv_pix_error=0.01, inv_degree=None,
-                        npoints=12, crpix=None, projection='TAN',
-                        imwcs=None, **kwargs):
+def update_fits_wcsinfo(
+    datamodel,
+    max_pix_error=0.01,
+    degree=None,
+    max_inv_pix_error=0.01,
+    inv_degree=None,
+    npoints=12,
+    crpix=None,
+    projection="TAN",
+    imwcs=None,
+    **kwargs,
+):
     """
     Update ``datamodel.meta.wcsinfo`` based on a FITS WCS + SIP approximation
     of a GWCS object. By default, this function will approximate
@@ -1421,22 +1439,19 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
         npoints=npoints,
         crpix=crpix,
         projection=projection,
-        **kwargs
+        **kwargs,
     )
 
     # update meta.wcsinfo with FITS keywords except for naxis*
-    del hdr['naxis*']
+    del hdr["naxis*"]
 
     # maintain convention of lowercase keys
     hdr_dict = {k.lower(): v for k, v in hdr.items()}
 
     # delete naxis, cdelt, pc from wcsinfo
-    rm_keys = ['naxis', 'cdelt1', 'cdelt2',
-               'pc1_1', 'pc1_2', 'pc2_1', 'pc2_2',
-               'a_order', 'b_order', 'ap_order', 'bp_order']
+    rm_keys = ["naxis", "cdelt1", "cdelt2", "pc1_1", "pc1_2", "pc2_1", "pc2_2", "a_order", "b_order", "ap_order", "bp_order"]
 
-    rm_keys.extend(f"{s}_{i}_{j}" for i in range(10) for j in range(10)
-                   for s in ['a', 'b', 'ap', 'bp'])
+    rm_keys.extend(f"{s}_{i}_{j}" for i in range(10) for j in range(10) for s in ["a", "b", "ap", "bp"])
 
     for key in rm_keys:
         if key in datamodel.meta.wcsinfo.instance:
@@ -1449,7 +1464,7 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
 
 
 def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
-    """ Add a FITS WCS approximation for imaging mode to WFSS headers.
+    """Add a FITS WCS approximation for imaging mode to WFSS headers.
 
     Parameters
     ----------
@@ -1475,7 +1490,7 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
     else:
         imwcs.bounding_box = wcs_bbox_from_shape(wfss_model.data.shape)
 
-    _ = update_fits_wcsinfo(wfss_model, projection='TAN', imwcs=imwcs, bounding_box=None, **kwargs)
+    _ = update_fits_wcsinfo(wfss_model, projection="TAN", imwcs=imwcs, bounding_box=None, **kwargs)
 
 
 def get_wcs_reference_files(datamodel):
@@ -1489,11 +1504,12 @@ def get_wcs_reference_files(datamodel):
 
     """
     from jwst.assign_wcs import AssignWcsStep
+
     refs = {}
     step = AssignWcsStep()
     for reftype in AssignWcsStep.reference_file_types:
         val = step.get_reference_file(datamodel, reftype)
-        if val.strip() == 'N/A':
+        if val.strip() == "N/A":
             refs[reftype] = None
         else:
             refs[reftype] = val

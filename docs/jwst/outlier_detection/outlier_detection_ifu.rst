@@ -10,7 +10,7 @@ in the calibrated images created by the :ref:`calwebb_spec2 <calwebb_spec2>` pip
 After launch it was discovered the
 bad pixels on the MIRI detectors vary with time. The pixels varied from usable to unusable, and at times,
 back to usable  on a time frame that was too short (sometimes as short as 2 days)  to fold into the bad pixel mask applied
-in the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline. 
+in the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline.
 At this time it is believed that NIRSpec IFU data also have bad pixels that vary with time, though the time variation is
 still under study.
 
@@ -21,9 +21,9 @@ input files contained in an association. The neighbor pixel differences are the 
 For MIRI data neighbor differences are found to the left and right of every
 science pixel, while for NIRSpec data the neighbor differences are
 determined from pixels above and below every science pixel. The difference between the MIRI MRS and NIRPSpec algorithm for finding the
-spatial pixel differences is due to the opposite dispersion directions between the two instruments. 
-The  pixel differences for each input model 
-in the association are determined and stored in a stack of pixel differences. 
+spatial pixel differences is due to the opposite dispersion directions between the two instruments.
+The  pixel differences for each input model
+in the association are determined and stored in a stack of pixel differences.
 For each pixel the minimum difference
 through this stack is determined and normalized. The normalization uses a local median of the difference array
 (set by the kernel size). A pixel is flagged as an outlier if  this normalized minimum difference

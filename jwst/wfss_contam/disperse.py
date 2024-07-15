@@ -7,10 +7,27 @@ from ..lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
 
 
-def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
-                    oversample_factor=2, extrapolate_sed=False, xoffset=0,
-                    yoffset=0):
+def dispersed_pixel(
+    x0,
+    y0,
+    width,
+    height,
+    lams,
+    flxs,
+    order,
+    wmin,
+    wmax,
+    sens_waves,
+    sens_resp,
+    seg_wcs,
+    grism_wcs,
+    ID,
+    naxis,
+    oversample_factor=2,
+    extrapolate_sed=False,
+    xoffset=0,
+    yoffset=0,
+):
     """
     This function take a list of pixels and disperses them using the information contained
     in the grism image WCS object and returns a list of dispersed pixels and fluxes.
@@ -81,8 +98,8 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     """
 
     # Setup the transforms we need from the input WCS objects
-    sky_to_imgxy = grism_wcs.get_transform('world', 'detector')
-    imgxy_to_grismxy = grism_wcs.get_transform('detector', 'grism_detector')
+    sky_to_imgxy = grism_wcs.get_transform("world", "detector")
+    imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
     # Setup function for retrieving flux values at each dispersed wavelength
     if len(lams) > 1:
@@ -90,7 +107,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         # we have the option to extrapolate the fluxes outside the
         # wavelength range of the direct images
         if extrapolate_sed is False:
-            flux = interp1d(lams, flxs, fill_value=0., bounds_error=False)
+            flux = interp1d(lams, flxs, fill_value=0.0, bounds_error=False)
         else:
             flux = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
     else:
@@ -144,12 +161,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
 
     # Compute arrays of dispersed pixel locations and areas
     padding = 1
-    xs, ys, areas, index = get_clipped_pixels(
-        x0s, y0s,
-        padding,
-        naxis[0], naxis[1],
-        width, height
-    )
+    xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     lams = np.take(lambdas, index)
 
     # If results give no dispersed pixels, return null result
@@ -166,6 +178,6 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
         counts = flux(lams) * areas / (sens * oversample_factor)
-    counts[no_cal] = 0.  # set to zero where no flux cal info available
+    counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
     return xs, ys, areas, lams, counts, ID

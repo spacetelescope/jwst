@@ -13,5 +13,4 @@ The ``photom`` step has the following optional arguments.
 
 ``--mrs_time_correction`` (boolean, default=True)
    A flag to indicate whether to turn on the time and wavelength dependent
-   correction for MIRI MRS data. 
-   
+   correction for MIRI MRS data.

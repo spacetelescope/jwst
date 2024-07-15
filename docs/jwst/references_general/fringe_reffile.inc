@@ -48,4 +48,3 @@ Because MIRI MRS exposures are always full-frame, the image dimensions
 should be 1032 x 1024.
 
 .. include:: ../includes/dq_def.inc
-

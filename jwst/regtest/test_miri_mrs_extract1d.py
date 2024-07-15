@@ -1,5 +1,5 @@
-"""Test Extract1dStep on MIRI data running the step various ways
-"""
+"""Test Extract1dStep on MIRI data running the step various ways"""
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -20,7 +20,7 @@ def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
     rtdata.output = "jw01024-c1000_t002_miri_ch2-mediumlong_extract1dstep.fits"
 
     # Get the truth file
-    rtdata.get_truth('truth/test_miri_mrs_extract1d/jw01024-c1000_t002_miri_ch2-mediumlong_extract1dstep.fits')
+    rtdata.get_truth("truth/test_miri_mrs_extract1d/jw01024-c1000_t002_miri_ch2-mediumlong_extract1dstep.fits")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -35,14 +35,17 @@ def test_miri_mrs_extract1d_center(rtdata, fitsdiff_default_kwargs):
 
     rtdata.get_data("miri/mrs/jw01024-c1000_t002_miri_ch2-mediumlong_s3d.fits")
 
-    args = ['jwst.extract_1d.Extract1dStep', rtdata.input,
-            '--output_file=jw01024-c1000_t002_miri_ch2-mediumlong_center',
-            '--center_xy=33,27']
+    args = [
+        "jwst.extract_1d.Extract1dStep",
+        rtdata.input,
+        "--output_file=jw01024-c1000_t002_miri_ch2-mediumlong_center",
+        "--center_xy=33,27",
+    ]
     Step.from_cmdline(args)
     rtdata.output = "jw01024-c1000_t002_miri_ch2-mediumlong_center_extract1dstep.fits"
 
     # Get the truth file
-    rtdata.get_truth('truth/test_miri_mrs_extract1d/jw01024-c1000_t002_miri_ch2-mediumlong_center_extract1dstep.fits')
+    rtdata.get_truth("truth/test_miri_mrs_extract1d/jw01024-c1000_t002_miri_ch2-mediumlong_center_extract1dstep.fits")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -57,14 +60,17 @@ def test_miri_mrs_extract1d_radius(rtdata, fitsdiff_default_kwargs):
 
     rtdata.get_data("miri/mrs/jw01024-c1000_t002_miri_ch2-mediumlong_s3d.fits")
 
-    args = ['jwst.extract_1d.Extract1dStep', rtdata.input,
-            '--output_file=jw01024-c1000_t002_miri_ch2-mediumlong_radius',
-            '--ifu_rscale=1.0']
+    args = [
+        "jwst.extract_1d.Extract1dStep",
+        rtdata.input,
+        "--output_file=jw01024-c1000_t002_miri_ch2-mediumlong_radius",
+        "--ifu_rscale=1.0",
+    ]
     Step.from_cmdline(args)
     rtdata.output = "jw01024-c1000_t002_miri_ch2-mediumlong_radius_extract1dstep.fits"
 
     # Get the truth file
-    rtdata.get_truth('truth/test_miri_mrs_extract1d/jw01024-c1000_t002_miri_ch2-mediumlong_radius_extract1dstep.fits')
+    rtdata.get_truth("truth/test_miri_mrs_extract1d/jw01024-c1000_t002_miri_ch2-mediumlong_radius_extract1dstep.fits")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -85,7 +91,7 @@ def test_miri_mrs_extract1d_extended(rtdata, fitsdiff_default_kwargs):
     rtdata.output = "jw01355-o005_t010_miri_ch3-long_extract1dstep.fits"
 
     # Get the truth file
-    rtdata.get_truth('truth/test_miri_mrs_extract1d/jw01355-o005_t010_miri_ch3-long_extract1dstep.fits')
+    rtdata.get_truth("truth/test_miri_mrs_extract1d/jw01355-o005_t010_miri_ch3-long_extract1dstep.fits")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

@@ -71,33 +71,33 @@ def main(filenames, mode):
         is not in the image header
     """
     methods = {
-        'nrs_ifu': ifu_coords,
-        'nrs_fixedslit': compute_world_coordinates,
-        'nrs_msaspec': compute_world_coordinates,
-        'nrs_taconfirm': imaging_coords,
-        'nrs_brightobj': imaging_coords,
-        'nrs_bota': imaging_coords,
-        'nrs_tacq': imaging_coords,
-        'nrs_focus': imaging_coords,
-        'nrs_lamp': imaging_coords,
-        'nrs_mimf': imaging_coords,
-        'nrs_image': imaging_coords,
-        'nrs_confirm': imaging_coords,
-        'nrs_taslit': imaging_coords,
+        "nrs_ifu": ifu_coords,
+        "nrs_fixedslit": compute_world_coordinates,
+        "nrs_msaspec": compute_world_coordinates,
+        "nrs_taconfirm": imaging_coords,
+        "nrs_brightobj": imaging_coords,
+        "nrs_bota": imaging_coords,
+        "nrs_tacq": imaging_coords,
+        "nrs_focus": imaging_coords,
+        "nrs_lamp": imaging_coords,
+        "nrs_mimf": imaging_coords,
+        "nrs_image": imaging_coords,
+        "nrs_confirm": imaging_coords,
+        "nrs_taslit": imaging_coords,
     }
 
     ok = True
     outputs = build_output_files(filenames)
-    for (input_file, output_file) in zip(filenames, outputs):
+    for input_file, output_file in zip(filenames, outputs):
         if not os.path.exists(input_file):
-            warn_user(input_file, 'is not found')
+            warn_user(input_file, "is not found")
             ok = False
             continue
 
         try:
             model = dmopen(input_file, pass_invalid_values=True)
         except IOError:
-            warn_user(input_file, 'is not valid fits')
+            warn_user(input_file, "is not valid fits")
             ok = False
             continue
 
@@ -111,9 +111,9 @@ def main(filenames, mode):
         model.close()
 
     if not ok:
-        msg = 'Error in input file'
+        msg = "Error in input file"
         if len(filenames) > 1:
-            msg += 's'
+            msg += "s"
         raise ValueError(msg)
 
 
@@ -161,10 +161,10 @@ def build_output_files(filenames):
         # Build output base and extensions
         dirname, root = os.path.split(filename)
         base, ext = os.path.splitext(root)
-        if ext != '.fits':
-            ext = '.fits'
-        if not base.endswith('world_coordinates'):
-            base = '_'.join([base, 'world_coordinates'])
+        if ext != ".fits":
+            ext = ".fits"
+        if not base.endswith("world_coordinates"):
+            base = "_".join([base, "world_coordinates"])
 
         # Substitute output directory if present
         if output_dir is not None:
@@ -190,8 +190,8 @@ def compute_world_coordinates(model):
     """
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
-    phdu.header['filename'] = model.meta.filename
-    phdu.header['data'] = 'world coordinates'
+    phdu.header["filename"] = model.meta.filename
+    phdu.header["data"] = "world coordinates"
     hdulist.append(phdu)
     output_frame = model.slits[0].meta.wcs.available_frames[-1]
 
@@ -200,30 +200,28 @@ def compute_world_coordinates(model):
         # xstart, xend = slit.xstart - 1, slit.xstart -1 + slit.xsize
         # ystart, yend = slit.ystart - 1, slit.ystart -1 + slit.ysize
         # y, x = np.mgrid[ystart: yend, xstart: xend]
-        x, y = wcstools.grid_from_bounding_box(
-            slit.meta.wcs.bounding_box, step=(1, 1), center=True
-        )
+        x, y = wcstools.grid_from_bounding_box(slit.meta.wcs.bounding_box, step=(1, 1), center=True)
 
         ra, dec, lam = slit.meta.wcs(x, y)
-        detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
+        detector2slit = slit.meta.wcs.get_transform("detector", "slit_frame")
 
         sx, sy, ls = detector2slit(x, y)
         world_coordinates = np.array([lam, ra, dec, sy])  # , x, y])
         imhdu = fits.ImageHDU(data=world_coordinates)
-        imhdu.header['PLANE1'] = 'lambda, microns'
-        imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
-        imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
-        imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
-        imhdu.header['SLIT'] = slit.name
+        imhdu.header["PLANE1"] = "lambda, microns"
+        imhdu.header["PLANE2"] = "{0}_x, arcsec".format(output_frame)
+        imhdu.header["PLANE3"] = "{0}_y, arcsec".format(output_frame)
+        imhdu.header["PLANE4"] = "slit_y, relative to center (0, 0)"
+        imhdu.header["SLIT"] = slit.name
 
         # add the overall subarray offset
-        imhdu.header['CRVAL1'] = slit.xstart - 1 + model.meta.subarray.xstart
-        imhdu.header['CRVAL2'] = slit.ystart - 1 + model.meta.subarray.ystart
+        imhdu.header["CRVAL1"] = slit.xstart - 1 + model.meta.subarray.xstart
+        imhdu.header["CRVAL2"] = slit.ystart - 1 + model.meta.subarray.ystart
 
-        imhdu.header['CRPIX1'] = 1
-        imhdu.header['CRPIX2'] = 1
-        imhdu.header['CTYPE1'] = 'pixel'
-        imhdu.header['CTYPE2'] = 'pixel'
+        imhdu.header["CRPIX1"] = 1
+        imhdu.header["CRPIX2"] = 1
+        imhdu.header["CTYPE1"] = "pixel"
+        imhdu.header["CTYPE2"] = "pixel"
         hdulist.append(imhdu)
 
     return hdulist
@@ -248,7 +246,7 @@ def get_update_method(methods, model, mode):
     """
     exp_type = model.meta.exposure.type
     if exp_type is None and mode is not None:
-        mode = 'nrs_' + mode.lower()
+        mode = "nrs_" + mode.lower()
         for candidate_type in methods.keys():
             if candidate_type.startswith(mode):
                 if exp_type is None:
@@ -258,14 +256,14 @@ def get_update_method(methods, model, mode):
                     break
 
         if exp_type is None:
-            warn_user(mode, 'does not match an exposure type')
+            warn_user(mode, "does not match an exposure type")
         else:
             model.meta.exposure.type = exp_type.upper()
 
     exp_type = exp_type.lower()
     method = methods.get(exp_type)
     if method is None:
-        warnings.warn(exp_type, 'is not a supported exposure type')
+        warnings.warn(exp_type, "is not a supported exposure type")
 
     return method
 
@@ -287,38 +285,34 @@ def ifu_coords(model):
 
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
-    phdu.header['filename'] = model.meta.filename
-    phdu.header['data'] = 'world coordinates'
+    phdu.header["filename"] = model.meta.filename
+    phdu.header["data"] = "world coordinates"
     hdulist.append(phdu)
     output_frame = ifu_slits[0].available_frames[-1]
 
     for i, slit in enumerate(ifu_slits):
         x, y = wcstools.grid_from_bounding_box(slit.bounding_box, (1, 1), center=True)
         ra, dec, lam = slit(x, y)
-        detector2slit = slit.get_transform('detector', 'slit_frame')
+        detector2slit = slit.get_transform("detector", "slit_frame")
         sx, sy, ls = detector2slit(x, y)
         world_coordinates = np.array([lam, ra, dec, sy])
 
         imhdu = fits.ImageHDU(data=world_coordinates)
-        imhdu.header['PLANE1'] = 'lambda, microns'
-        imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
-        imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
-        imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
-        imhdu.header['SLIT'] = 'SLIT_{0}'.format(i)
+        imhdu.header["PLANE1"] = "lambda, microns"
+        imhdu.header["PLANE2"] = "{0}_x, arcsec".format(output_frame)
+        imhdu.header["PLANE3"] = "{0}_y, arcsec".format(output_frame)
+        imhdu.header["PLANE4"] = "slit_y, relative to center (0, 0)"
+        imhdu.header["SLIT"] = "SLIT_{0}".format(i)
 
         # -1 and +1 are to express this in 1-based coordinates
-        imhdu.header['CRVAL1'] = (
-            model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[0][0])) + 1
-        )
-        imhdu.header['CRVAL2'] = (
-            model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[1][0])) + 1
-        )
+        imhdu.header["CRVAL1"] = model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[0][0])) + 1
+        imhdu.header["CRVAL2"] = model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[1][0])) + 1
 
         # Input coordinates will be 1-based.
-        imhdu.header['CRPIX1'] = 1
-        imhdu.header['CRPIX2'] = 1
-        imhdu.header['CTYPE1'] = 'pixel'
-        imhdu.header['CTYPE2'] = 'pixel'
+        imhdu.header["CRPIX1"] = 1
+        imhdu.header["CRPIX2"] = 1
+        imhdu.header["CTYPE1"] = "pixel"
+        imhdu.header["CTYPE2"] = "pixel"
         hdulist.append(imhdu)
     return hdulist
 
@@ -338,8 +332,8 @@ def imaging_coords(model):
     """
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
-    phdu.header['filename'] = model.meta.filename
-    phdu.header['data'] = 'world coordinates'
+    phdu.header["filename"] = model.meta.filename
+    phdu.header["data"] = "world coordinates"
     hdulist.append(phdu)
 
     output_frame = model.available_frames[-1]
@@ -349,20 +343,20 @@ def imaging_coords(model):
     world_coordinates = np.array([lam, ra, dec])
 
     imhdu = fits.ImageHDU(data=world_coordinates)
-    imhdu.header['PLANE1'] = 'lambda, microns'
-    imhdu.header['PLANE2'] = '{0}_x, deg'.format(output_frame)
-    imhdu.header['PLANE3'] = '{0}_y, deg'.format(output_frame)
-    imhdu.header['SLIT'] = 'SLIT_{0}'.format(i)  # noqa
+    imhdu.header["PLANE1"] = "lambda, microns"
+    imhdu.header["PLANE2"] = "{0}_x, deg".format(output_frame)
+    imhdu.header["PLANE3"] = "{0}_y, deg".format(output_frame)
+    imhdu.header["SLIT"] = "SLIT_{0}".format(i)  # noqa
 
     # add the overall subarray offset
-    imhdu.header['CRVAL1'] = model.meta.subarray.xstart - 1 + int(_toindex(bb[0][0]))
-    imhdu.header['CRVAL2'] = model.meta.subarray.ystart - 1 + int(_toindex(bb[1][0]))
+    imhdu.header["CRVAL1"] = model.meta.subarray.xstart - 1 + int(_toindex(bb[0][0]))
+    imhdu.header["CRVAL2"] = model.meta.subarray.ystart - 1 + int(_toindex(bb[1][0]))
 
     # Input coordinates will be 1-based.
-    imhdu.header['CRPIX1'] = 1
-    imhdu.header['CRPIX2'] = 1
-    imhdu.header['CTYPE1'] = 'pixel'
-    imhdu.header['CTYPE2'] = 'pixel'
+    imhdu.header["CRPIX1"] = 1
+    imhdu.header["CRPIX2"] = 1
+    imhdu.header["CTYPE1"] = "pixel"
+    imhdu.header["CTYPE2"] = "pixel"
     hdulist.append(imhdu)
     return hdulist
 
@@ -376,11 +370,11 @@ def warn_user(*argv):
     argv : strings
         One or more strings to be printed
     """
-    print(' '.join(argv), file=sys.stderr)
+    print(" ".join(argv), file=sys.stderr)
 
 
-if __name__ == '__main__':
-    short_description = 'Create NIRSPEC world coordinates file'
+if __name__ == "__main__":
+    short_description = "Create NIRSPEC world coordinates file"
     long_description = """
 
 A tool to read in the output of extract2d (FS and MOS) or assign_wcs
@@ -419,11 +413,9 @@ without the nrs_ prefix or any unique prefix of it.
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument('-mode', help='set exposure mode')
+    parser.add_argument("-mode", help="set exposure mode")
 
-    parser.add_argument(
-        'filenames', help='Name of input and/or output files', nargs='*'
-    )
+    parser.add_argument("filenames", help="Name of input and/or output files", nargs="*")
 
     res = parser.parse_args()
     main(res.filenames, res.mode)

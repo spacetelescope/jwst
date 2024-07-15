@@ -12,4 +12,3 @@ EFFINTTM  = ((input('NGROUP')-1)*(input('NFRAME')+input('GROUPGAP'))-input('GROU
 EFFEXPTM  = ((input('NGROUP')-1)*(input('NFRAME')+input('GROUPGAP'))-input('GROUPGAP'))*input('TFRAME')*input('NINT') / [seconds] effective exposure time
 CHRGTIME  =  -1.0   / [seconds] charge accumulation time
 DURATION  =  -1.0   / [seconds] total duration of exposure
-

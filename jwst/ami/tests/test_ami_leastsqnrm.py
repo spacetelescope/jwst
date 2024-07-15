@@ -4,9 +4,9 @@ from jwst.ami import leastsqnrm
 
 
 def test_weighted_operations():
-    img = np.arange(1, 5, dtype='f4').reshape((2, 2))
-    model = np.arange(8, dtype='f4').reshape((2, 2, 2))
-    dq = np.zeros((2, 2), dtype='int32')
+    img = np.arange(1, 5, dtype="f4").reshape((2, 2))
+    model = np.arange(8, dtype="f4").reshape((2, 2, 2))
+    dq = np.zeros((2, 2), dtype="int32")
     dq[1, 1] = 1
     x, res, cond, singvals = leastsqnrm.weighted_operations(img, model, dq)
 

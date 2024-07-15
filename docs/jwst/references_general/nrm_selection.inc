@@ -7,7 +7,7 @@ NRM is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ================================================
-Instrument Keywords                                         
+Instrument Keywords
 ========== ================================================
-NIRISS     INSTRUME, DATE-OBS, TIME-OBS           
+NIRISS     INSTRUME, DATE-OBS, TIME-OBS
 ========== ================================================

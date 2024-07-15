@@ -18,4 +18,3 @@ SUBSTRT2   model.meta.subarray.ystart      NIRSpec
 SUBSIZE1   model.meta.subarray.xsize       NIRSpec
 SUBSIZE2   model.meta.subarray.ysize       NIRSpec
 =========  ==============================  ==========================
-

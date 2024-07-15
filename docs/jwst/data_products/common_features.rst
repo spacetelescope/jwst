@@ -14,4 +14,3 @@ and organization:
 2. All data related to the product are contained in one or more FITS
    IMAGE or BINTABLE extensions. The header of each extension may contain
    keywords that pertain uniquely to that extension.
-

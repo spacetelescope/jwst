@@ -7,6 +7,7 @@ averaged and multi-integration versions, sigma-clipped stats over ints
 
 CalibOifits class: takes two AmiOIModel datamodels and produces a final calibrated datamodel.
 """
+
 import numpy as np
 
 from scipy.special import comb
@@ -32,7 +33,7 @@ class RawOifits:
 
         Notes
         -----
-        Based on ObservablesFromText from ImPlaneIA, e.g. 
+        Based on ObservablesFromText from ImPlaneIA, e.g.
         https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
         """
         self.fringe_fitter = fringefitter
@@ -47,9 +48,7 @@ class RawOifits:
 
         self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
         self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
-        self.pa = (
-            self.fringe_fitter.instrument_data.pav3
-        )  # header pav3, not including v3i_yang??
+        self.pa = self.fringe_fitter.instrument_data.pav3  # header pav3, not including v3i_yang??
 
         self.bholes, self.bls = self._makebaselines()
         self.tholes, self.tuv = self._maketriples_all()
@@ -72,12 +71,10 @@ class RawOifits:
             self.fringe_amplitudes[i, :] = nrmslc.fringeamp
             self.closure_phases[i, :] = np.rad2deg(nrmslc.redundant_cps)  # CPs in degrees
             self.closure_amplitudes[i, :] = nrmslc.redundant_cas
-            self.pistons[i, :] = np.rad2deg(
-                nrmslc.fringepistons
-            )  # segment pistons in degrees
+            self.pistons[i, :] = np.rad2deg(nrmslc.fringepistons)  # segment pistons in degrees
             self.solns[i, :] = nrmslc.soln
 
-        self.fringe_amplitudes_squared = self.fringe_amplitudes ** 2  # squared visibilities
+        self.fringe_amplitudes_squared = self.fringe_amplitudes**2  # squared visibilities
 
     def make_oifits(self):
         """
@@ -93,8 +90,7 @@ class RawOifits:
         self.make_obsarrays()
         instrument_data = self.fringe_fitter.instrument_data
         observation_date = Time(
-            "%s-%s-%s"
-            % (instrument_data.year, instrument_data.month, instrument_data.day),
+            "%s-%s-%s" % (instrument_data.year, instrument_data.month, instrument_data.day),
             format="fits",
         )
 
@@ -173,9 +169,7 @@ class RawOifits:
         sta_index = np.arange(N_ap) + 1
 
         pscale = instrument_data.pscale_mas / 1000.0  # arcsec
-        isz = self.fringe_fitter.scidata.shape[
-            1
-        ]  # Size of the image to extract NRM data
+        isz = self.fringe_fitter.scidata.shape[1]  # Size of the image to extract NRM data
         fov = [pscale * isz] * N_ap
         fovtype = ["RADIUS"] * N_ap
 
@@ -205,64 +199,64 @@ class RawOifits:
         m.array["PIST_ERR"] = self.e_pist
 
         # oi_target extension data
-        m.target['TARGET_ID'] = [1]
-        m.target['TARGET'] = instrument_data.objname
-        m.target['RAEP0'] = instrument_data.ra
-        m.target['DECEP0'] = instrument_data.dec
-        m.target['EQUINOX'] = [2000]
-        m.target['RA_ERR'] = instrument_data.ra_uncertainty
-        m.target['DEC_ERR'] = instrument_data.dec_uncertainty
-        m.target['SYSVEL'] = [0]
-        m.target['VELTYP'] = ['UNKNOWN']
-        m.target['VELDEF'] = ['OPTICAL']
-        m.target['PMRA'] = instrument_data.pmra
-        m.target['PMDEC'] = instrument_data.pmdec
-        m.target['PMRA_ERR'] = [0]
-        m.target['PMDEC_ERR'] = [0]
-        m.target['PARALLAX'] = [0]
-        m.target['PARA_ERR'] = [0]
-        m.target['SPECTYP'] = ['UNKNOWN']
+        m.target["TARGET_ID"] = [1]
+        m.target["TARGET"] = instrument_data.objname
+        m.target["RAEP0"] = instrument_data.ra
+        m.target["DECEP0"] = instrument_data.dec
+        m.target["EQUINOX"] = [2000]
+        m.target["RA_ERR"] = instrument_data.ra_uncertainty
+        m.target["DEC_ERR"] = instrument_data.dec_uncertainty
+        m.target["SYSVEL"] = [0]
+        m.target["VELTYP"] = ["UNKNOWN"]
+        m.target["VELDEF"] = ["OPTICAL"]
+        m.target["PMRA"] = instrument_data.pmra
+        m.target["PMDEC"] = instrument_data.pmdec
+        m.target["PMRA_ERR"] = [0]
+        m.target["PMDEC_ERR"] = [0]
+        m.target["PARALLAX"] = [0]
+        m.target["PARA_ERR"] = [0]
+        m.target["SPECTYP"] = ["UNKNOWN"]
 
         # oi_vis extension data
-        m.vis['TARGET_ID'] = 1
-        m.vis['TIME'] = 0
-        m.vis['MJD'] = observation_date.mjd
-        m.vis['INT_TIME'] = instrument_data.itime
-        m.vis['VISAMP'] = self.visamp
-        m.vis['VISAMPERR'] = self.e_visamp
-        m.vis['VISPHI'] = self.visphi
-        m.vis['VISPHIERR'] = self.e_visphi
-        m.vis['UCOORD'] = ucoord
-        m.vis['VCOORD'] = vcoord
-        m.vis['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        m.vis['FLAG'] = flagVis
+        m.vis["TARGET_ID"] = 1
+        m.vis["TIME"] = 0
+        m.vis["MJD"] = observation_date.mjd
+        m.vis["INT_TIME"] = instrument_data.itime
+        m.vis["VISAMP"] = self.visamp
+        m.vis["VISAMPERR"] = self.e_visamp
+        m.vis["VISPHI"] = self.visphi
+        m.vis["VISPHIERR"] = self.e_visphi
+        m.vis["UCOORD"] = ucoord
+        m.vis["VCOORD"] = vcoord
+        m.vis["STA_INDEX"] = self._format_STAINDEX_V2(self.bholes)
+        m.vis["FLAG"] = flagVis
 
         # oi_vis2 extension data
-        m.vis2['TARGET_ID'] = 1
-        m.vis2['TIME'] = 0
-        m.vis2['MJD'] = observation_date.mjd
-        m.vis2['INT_TIME'] = instrument_data.itime
-        m.vis2['VIS2DATA'] = self.vis2
-        m.vis2['VIS2ERR'] = self.e_vis2
-        m.vis2['UCOORD'] = ucoord
-        m.vis2['VCOORD'] = vcoord
-        m.vis2['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        m.vis2['FLAG'] = flagVis
+        m.vis2["TARGET_ID"] = 1
+        m.vis2["TIME"] = 0
+        m.vis2["MJD"] = observation_date.mjd
+        m.vis2["INT_TIME"] = instrument_data.itime
+        m.vis2["VIS2DATA"] = self.vis2
+        m.vis2["VIS2ERR"] = self.e_vis2
+        m.vis2["UCOORD"] = ucoord
+        m.vis2["VCOORD"] = vcoord
+        m.vis2["STA_INDEX"] = self._format_STAINDEX_V2(self.bholes)
+        m.vis2["FLAG"] = flagVis
 
         # oi_t3 extension data
-        m.t3['TARGET_ID'] = 1
-        m.t3['TIME'] = 0
-        m.t3['MJD'] = observation_date.mjd
-        m.t3['T3AMP'] = self.camp
-        m.t3['T3AMPERR'] = self.e_camp
-        m.t3['T3PHI'] = self.closure_phases
-        m.t3['T3PHIERR'] = self.e_cp
-        m.t3['U1COORD'] = u1coord
-        m.t3['V1COORD'] = v1coord
-        m.t3['U2COORD'] = u2coord
-        m.t3['V2COORD'] = v2coord
-        m.t3['STA_INDEX'] = self._format_STAINDEX_T3(self.tholes)
-        m.t3['FLAG'] = flagT3
+        m.t3["TARGET_ID"] = 1
+        m.t3["TIME"] = 0
+        m.t3["MJD"] = observation_date.mjd
+        m.t3["T3AMP"] = self.camp
+        m.t3["T3AMPERR"] = self.e_camp
+        m.t3["T3PHI"] = self.closure_phases
+        m.t3["T3PHIERR"] = self.e_cp
+        m.t3["U1COORD"] = u1coord
+        m.t3["V1COORD"] = v1coord
+        m.t3["U2COORD"] = u2coord
+        m.t3["V2COORD"] = v2coord
+        m.t3["STA_INDEX"] = self._format_STAINDEX_T3(self.tholes)
+        m.t3["FLAG"] = flagT3
 
         # oi_wavelength extension data
         m.wavelength["EFF_WAVE"] = wl
@@ -439,7 +433,7 @@ class RawOifits:
         sta_index: list
             Hole triples indices
         int array of triangles
-        """    
+        """
         sta_index = []
         for x in tab:
             ap1 = int(x[0])
@@ -466,13 +460,13 @@ class RawOifits:
         sta_index: list
             Hole baseline indices
         int array of baselines
-        """    
+        """
         sta_index = []
         for x in tab:
             ap1 = int(x[0])
             ap2 = int(x[1])
             if np.min(tab) == 0:
-                line = np.array([ap1, ap2]) + 1 # RAC 2/2021
+                line = np.array([ap1, ap2]) + 1  # RAC 2/2021
             else:
                 line = np.array([ap1, ap2])
             sta_index.append(line)
@@ -541,12 +535,10 @@ class CalibOifits:
         vaerr_c = self.caloimodel.vis["VISAMPERR"]
         cperr_out = np.sqrt(cperr_t**2.0 + cperr_c**2.0)
         sqverr_out = sqv_out * np.sqrt(
-            (sqverr_t / self.targoimodel.vis2["VIS2DATA"]) ** 2.0
-            + (sqverr_c / self.caloimodel.vis2["VIS2DATA"]) ** 2.0
+            (sqverr_t / self.targoimodel.vis2["VIS2DATA"]) ** 2.0 + (sqverr_c / self.caloimodel.vis2["VIS2DATA"]) ** 2.0
         )
         vaerr_out = va_out * np.sqrt(
-            (vaerr_t / self.targoimodel.vis["VISAMP"]) ** 2.0
-            + (vaerr_c / self.caloimodel.vis["VISAMP"]) ** 2.0
+            (vaerr_t / self.targoimodel.vis["VISAMP"]) ** 2.0 + (vaerr_c / self.caloimodel.vis["VISAMP"]) ** 2.0
         )
 
         pistons_t = self.targoimodel.array["PISTONS"]

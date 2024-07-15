@@ -148,7 +148,7 @@ Choose:
   Target Acquisition Filter:  {F560W|F1000W|F1500W|FND}
 
   Science Observations Coronagraph: {F1065C|F1140C|F1550C|F2300C}
-  
+
   Readout Pattern: {FAST|SLOW|FASTGRPAVG|FASTINTAVG}
 
   Number of Groups: {Integer from 1 to ?}
@@ -248,6 +248,6 @@ along the slit.
 Choose MIRI LRS by SCA_ID = %x1ed
                    FILTER = 'P750L'
 
-    
+
 MIRI MRS Spectroscopy / MIRI IFU
 --------------------------------

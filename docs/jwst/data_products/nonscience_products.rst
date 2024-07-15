@@ -103,4 +103,3 @@ technique that results in a standard imaging FITS file structure, as shown below
  - ERR: 2-D data array containing uncertainty estimates for each pixel.
  - DQ: 2-D data array containing DQ flags for each pixel.
  - ADSF: The data model meta data.
-

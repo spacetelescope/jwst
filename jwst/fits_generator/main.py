@@ -368,4 +368,3 @@ def guess_filename(hdulist):
     except KeyError:
         raise ValueError("Could not automatically generate output filename")
     return filename
-

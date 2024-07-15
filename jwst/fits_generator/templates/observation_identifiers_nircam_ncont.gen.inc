@@ -11,4 +11,3 @@ VISITGRP  = obsid() or input('OBS_ID')[11:13] / visit group identifier
 SEQ_ID    = obsid() or input('OBS_ID')[13:14] / parallel sequence identifier
 ACT_ID    = obsid() or input('OBS_ID')[14:16] / activity identifier
 EXPOSURE  = obsid() or input('EXP_ID') / exposure request number within a single activity
-

@@ -5,6 +5,7 @@ from drizzle import cdrizzle
 from . import resample_utils
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -14,8 +15,7 @@ class GWCSDrizzle:
     Combine images using the drizzle algorithm
     """
 
-    def __init__(self, product, outwcs=None, wt_scl=None,
-                 pixfrac=1.0, kernel="square", fillval="NAN"):
+    def __init__(self, product, outwcs=None, wt_scl=None, pixfrac=1.0, kernel="square", fillval="NAN"):
         """
         Create a new Drizzle output object and set the drizzle parameters.
 
@@ -89,12 +89,12 @@ class GWCSDrizzle:
         self.outcon = product.con
 
         if self.outcon.ndim == 2:
-            self.outcon = np.reshape(self.outcon, (1,
-                                                   self.outcon.shape[0],
-                                                   self.outcon.shape[1]))
+            self.outcon = np.reshape(self.outcon, (1, self.outcon.shape[0], self.outcon.shape[1]))
         elif self.outcon.ndim != 3:
-            raise ValueError("Drizzle context image has wrong dimensions: \
-                {0}".format(product))
+            raise ValueError(
+                "Drizzle context image has wrong dimensions: \
+                {0}".format(product)
+            )
 
         # Check field values
         if not self.outwcs:
@@ -117,8 +117,9 @@ class GWCSDrizzle:
         """Set new context array"""
         self._product.con = value
 
-    def add_image(self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0,
-                  expin=1.0, in_units="cps", wt_scl=1.0, iscale=1.0):
+    def add_image(
+        self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0, expin=1.0, in_units="cps", wt_scl=1.0, iscale=1.0
+    ):
         """
         Combine an input image with the output drizzled image.
 
@@ -197,11 +198,27 @@ class GWCSDrizzle:
         wt_scl = 1.0  # hard-coded for JWST count-rate data
         self.increment_id()
 
-        dodrizzle(insci, inwcs, inwht, self.outwcs, self.outsci, self.outwht,
-                  self.outcon, expin, in_units, wt_scl, uniqid=self.uniqid,
-                  xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-                  iscale=iscale, pixfrac=self.pixfrac, kernel=self.kernel,
-                  fillval=self.fillval)
+        dodrizzle(
+            insci,
+            inwcs,
+            inwht,
+            self.outwcs,
+            self.outsci,
+            self.outwht,
+            self.outcon,
+            expin,
+            in_units,
+            wt_scl,
+            uniqid=self.uniqid,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax,
+            iscale=iscale,
+            pixfrac=self.pixfrac,
+            kernel=self.kernel,
+            fillval=self.fillval,
+        )
 
     def increment_id(self):
         """
@@ -229,9 +246,27 @@ class GWCSDrizzle:
         self.uniqid += 1
 
 
-def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
-              expin, in_units, wt_scl, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
-              iscale=1.0, pixfrac=1.0, kernel='square', fillval="NAN"):
+def dodrizzle(
+    insci,
+    input_wcs,
+    inwht,
+    output_wcs,
+    outsci,
+    outwht,
+    outcon,
+    expin,
+    in_units,
+    wt_scl,
+    uniqid=1,
+    xmin=0,
+    xmax=0,
+    ymin=0,
+    ymax=0,
+    iscale=1.0,
+    pixfrac=1.0,
+    kernel="square",
+    fillval="NAN",
+):
     """
     Low level routine for performing 'drizzle' operation on one image.
 
@@ -339,11 +374,11 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
 
     # Insure that the fillval parameter gets properly interpreted for use with tdriz
     if util.is_blank(str(fillval)):
-        fillval = 'NAN'
+        fillval = "NAN"
     else:
         fillval = str(fillval)
 
-    if in_units == 'cps':
+    if in_units == "cps":
         expscale = 1.0
     else:
         expscale = expin
@@ -392,17 +427,23 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
 
     _vers, nmiss, nskip = cdrizzle.tdriz(
-        insci.astype(np.float32), inwht.astype(np.float32), pixmap,
-        outsci, outwht, outcon,
+        insci.astype(np.float32),
+        inwht.astype(np.float32),
+        pixmap,
+        outsci,
+        outwht,
+        outcon,
         uniqid=uniqid,
-        xmin=xmin, xmax=xmax,
-        ymin=ymin, ymax=ymax,
+        xmin=xmin,
+        xmax=xmax,
+        ymin=ymin,
+        ymax=ymax,
         scale=iscale,
         pixfrac=pixfrac,
         kernel=kernel,
         in_units=in_units,
         expscale=expscale,
         wtscale=wt_scl,
-        fillstr=fillval
+        fillstr=fillval,
     )
     return _vers, nmiss, nskip

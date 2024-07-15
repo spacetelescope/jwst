@@ -11,7 +11,7 @@ from jwst.lib.wcs_utils import get_wavelengths
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
-GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleSpecStep(ResampleStep):
@@ -36,8 +36,8 @@ class ResampleSpecStep(ResampleStep):
 
         #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
         if model_is_msm and len((input_new[0]).shape) == 3:
-            self.log.warning('Resample spec step will be skipped')
-            input_new.meta.cal_step.resample_spec = 'SKIPPED'
+            self.log.warning("Resample spec step will be skipped")
+            input_new.meta.cal_step.resample_spec = "SKIPPED"
 
             return input_new
 
@@ -64,7 +64,7 @@ class ResampleSpecStep(ResampleStep):
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
-        kwargs['output'] = output
+        kwargs["output"] = output
         self.drizpars = kwargs
 
         # Call resampling
@@ -172,10 +172,23 @@ class ResampleSpecStep(ResampleStep):
         the normal update() method doesn't work with them. Updates output_model
         in-place.
         """
-        for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                     'dispersion_direction', 'shutter_state']:
+        for attr in [
+            "name",
+            "xstart",
+            "xsize",
+            "ystart",
+            "ysize",
+            "slitlet_id",
+            "source_id",
+            "source_name",
+            "source_alias",
+            "stellarity",
+            "source_type",
+            "source_xpos",
+            "source_ypos",
+            "dispersion_direction",
+            "shutter_state",
+        ]:
             try:
                 val = getattr(self.input_models[-1], attr)
             except AttributeError:

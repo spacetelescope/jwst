@@ -58,4 +58,3 @@ if the persistence step is run on MIRI or NIRSpec data, in which case
 the input will be returned unchanged,
 except that the primary header keyword S_PERSIS will will have been
 set to 'SKIPPED'.
-

@@ -70,7 +70,7 @@ cross one or the other of NIRSpec's detectors.
 Configuring a Pipeline/Step with ``strun``
 ==========================================
 
-By default, pipeline parameters and reference files are chosen by CRDS based on 
+By default, pipeline parameters and reference files are chosen by CRDS based on
 instrument, observing mode, date, etc. If set to the most current :ref:`crds_context`,
 these represent the 'best' set of parameters and reference files for the pipeline
 as determined by the JWST instrument teams.
@@ -151,7 +151,7 @@ And pass in the modified file to ``strun``:
 
 Overriding Reference Files
 --------------------------
-By default, when the pipeline or step is run, CRDS will determine the best set of 
+By default, when the pipeline or step is run, CRDS will determine the best set of
 reference files based on file metadata and the current CRDS mapping (also known
 as 'context'). It is possible to override these files and use a custom reference file,
 or one not chosen by CRDS.
@@ -256,11 +256,11 @@ By default, when running the pipeline with ``strun``, the final outputs of a pip
 (or final outputs when running an individual step) will be written out to a file
 in the current working directory. The base name of these final output files is
 derived from the input file name, by default. Additionally, no intermediate step
-results will be saved. This behavior can be modified to change output file names, 
+results will be saved. This behavior can be modified to change output file names,
 locations, and specify that intermediate results from a step in a pipeline should
 be written out to a file.
 
-.. _strun_intermediate_outputs: 
+.. _strun_intermediate_outputs:
 
 Saving Intermediate Pipeline Results to a File
 ----------------------------------------------
@@ -284,7 +284,7 @@ For example, to save the result from the dark current step of ``Detector1Pipelin
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.dark_current.save_results=true
 
-This will create the file ``jw00017001001_01101_00001_dark_current.fits`` in the 
+This will create the file ``jw00017001001_01101_00001_dark_current.fits`` in the
 current working directory.
 
 
@@ -366,4 +366,3 @@ that the result from that step should be saved to the specified directory:
 ::
 
     $ strun dark_current jw00017001001_01101_00001_nrca1_uncal.fits --output_dir='calibrated'
-

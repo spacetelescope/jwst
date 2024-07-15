@@ -6,4 +6,3 @@ TACQ1IMG = '#TODO'   /   first target acquisition image file name
 TACQ2IMG = '#TODO'   /   second target acquisition image file name
 TACNFIMG = '#TODO'   /   target acquisition confirmation image file name
 SCCNFIMG = '#TODO'   /   science confirmation image file name
-

@@ -1,11 +1,12 @@
 """Regression tests for NIRISS WFSS mode"""
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_nis_wfss_spec2(rtdata_module):
     """Run the calwebb_spec2 pipeline on NIRISS WFSS exposures"""
     rtdata = rtdata_module
@@ -20,33 +21,32 @@ def run_nis_wfss_spec2(rtdata_module):
 
     # Only the first exposure will be used to do comparisons
     rtdata.get_asn(spec2_asns[0])
-    args = ["calwebb_spec2", rtdata.input,
-            '--steps.assign_wcs.save_results=true',
-            '--steps.bkg_subtract.save_results=true',
-            '--steps.flat_field.save_results=true',
-            '--steps.extract_2d.save_results=true',
-            '--steps.srctype.save_results=true',
-            '--steps.pathloss.save_results=true',
-            '--steps.photom.save_results=true',
-            '--steps.extract_1d.save_results=true',
-            '--save_wfss_esec=true',
-            '--steps.extract_2d.wfss_nbright=10']
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=true",
+        "--steps.bkg_subtract.save_results=true",
+        "--steps.flat_field.save_results=true",
+        "--steps.extract_2d.save_results=true",
+        "--steps.srctype.save_results=true",
+        "--steps.pathloss.save_results=true",
+        "--steps.photom.save_results=true",
+        "--steps.extract_1d.save_results=true",
+        "--save_wfss_esec=true",
+        "--steps.extract_2d.wfss_nbright=10",
+    ]
     Step.from_cmdline(args)
 
     # Run the remaining exposures without doing comparisons, just so that
     # fresh results are available for level-3 processing
     for asn in spec2_asns[1:]:
         rtdata.get_asn(asn)
-        args = ["calwebb_spec2", rtdata.input,
-                "--steps.extract_2d.wfss_nbright=10"]
+        args = ["calwebb_spec2", rtdata.input, "--steps.extract_2d.wfss_nbright=10"]
         Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize(
-    'suffix',
-    ['assign_wcs', 'bsub', 'cal', 'esec', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
-)
+@pytest.mark.parametrize("suffix", ["assign_wcs", "bsub", "cal", "esec", "extract_2d", "flat_field", "photom", "srctype", "x1d"])
 def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to NIRISS WFSS data"""
     rtdata = rtdata_module
@@ -59,7 +59,7 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
     assert diff.identical, diff.report()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module):
     """Run the calwebb_spec3 pipeline"""
     rtdata = rtdata_module
@@ -73,8 +73,8 @@ def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize('suffix', ['cal', 'x1d', 'c1d'])
-@pytest.mark.parametrize('source_id', ['s000000015', 's000000104'])
+@pytest.mark.parametrize("suffix", ["cal", "x1d", "c1d"])
+@pytest.mark.parametrize("source_id", ["s000000015", "s000000104"])
 def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fitsdiff_default_kwargs):
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
     rtdata = rtdata_module
@@ -84,6 +84,6 @@ def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fi
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
     # Compare the results
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

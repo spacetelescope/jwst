@@ -17,9 +17,7 @@ from jwst.outlier_detection.outlier_detection_step import (
 )
 from jwst.assign_wcs.pointing import create_fitswcs
 
-OUTLIER_DO_NOT_USE = np.bitwise_or(
-    datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
-)
+OUTLIER_DO_NOT_USE = np.bitwise_or(datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"])
 
 # TSO types to test
 exptypes_tso = [(exptype, True) for exptype in TSO_SPEC_MODES + TSO_IMAGE_MODES]
@@ -50,7 +48,7 @@ def sci_blot_image_pair():
     signal = 20 * sigma
     sci.data[10, 10] += signal
     # update the noise for this source to include the photon/measurement noise
-    sci.err[10, 10] = np.sqrt(sigma ** 2 + signal)
+    sci.err[10, 10] = np.sqrt(sigma**2 + signal)
 
     # The blot image is just a smoothed version of the science image that has
     # its background subtracted
@@ -90,9 +88,7 @@ def test_flag_cr(sci_blot_image_pair):
 
 
 # not a fixture - now has options
-def we_many_sci(
-    numsci=3, sigma=0.02, background=1.5, signal=7, exptype="MIR_IMAGE", tsovisit=False
-):
+def we_many_sci(numsci=3, sigma=0.02, background=1.5, signal=7, exptype="MIR_IMAGE", tsovisit=False):
     """Provide numsci science images with different noise but identical source
     and same background level"""
     shape = (20, 20)
@@ -137,7 +133,7 @@ def we_many_sci(
     sci1.err = np.zeros(shape) + sigma
     sci1.data[7, 7] += signal
     # update the noise for this source to include the photon/measurement noise
-    sci1.err[7, 7] = np.sqrt(sigma ** 2 + signal)
+    sci1.err[7, 7] = np.sqrt(sigma**2 + signal)
     sci1.var_rnoise = np.zeros(shape) + 1.0
     sci1.meta.filename = "foo1_cal.fits"
 
@@ -191,16 +187,14 @@ def test_outlier_step(we_three_sci, tmp_cwd):
 
     # Verify that intermediary files are removed
     OutlierDetectionStep.call(container)
-    i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
-    median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
+    i2d_files = glob(os.path.join(tmp_cwd, "*i2d.fits"))
+    median_files = glob(os.path.join(tmp_cwd, "*median.fits"))
+    blot_files = glob(os.path.join(tmp_cwd, "*blot.fits"))
     assert len(i2d_files) == 0
     assert len(median_files) == 0
     assert len(blot_files) == 0
 
-    result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True
-    )
+    result = OutlierDetectionStep.call(container, save_results=True, save_intermediate_results=True)
 
     # Make sure nothing changed in SCI array
     for image, corrected in zip(container, result):
@@ -214,9 +208,9 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
     # Verify that intermediary files are saved at the specified location
-    i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
-    median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
+    i2d_files = glob(os.path.join(tmp_cwd, "*i2d.fits"))
+    median_files = glob(os.path.join(tmp_cwd, "*median.fits"))
+    blot_files = glob(os.path.join(tmp_cwd, "*blot.fits"))
     assert len(i2d_files) != 0
     assert len(median_files) != 0
     assert len(blot_files) != 0
@@ -236,9 +230,7 @@ def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
     # Initialize inputs for the test based on filenames only
     container = ModelContainer(filenames)
 
-    result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True
-    )
+    result = OutlierDetectionStep.call(container, save_results=True, save_intermediate_results=True)
 
     # Make sure nothing changed in SCI array
     for image, corrected in zip(container, result):
@@ -282,9 +274,7 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
     """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
-    container = ModelContainer(
-        we_many_sci(background=bkg, sigma=sig, signal=7.0, exptype=exptype)
-    )
+    container = ModelContainer(we_many_sci(background=bkg, sigma=sig, signal=7.0, exptype=exptype))
 
     # Drop a weak CR on the science array
     # no noise so it should always be above the default threshold of 5
@@ -309,11 +299,7 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
     """Test whole step with an outlier for coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
-    container = ModelContainer(
-        we_many_sci(
-            background=bkg, sigma=sig, signal=7.0, exptype=exptype, tsovisit=tsovisit
-        )
-    )
+    container = ModelContainer(we_many_sci(background=bkg, sigma=sig, signal=7.0, exptype=exptype, tsovisit=tsovisit))
 
     # Drop a weak CR on the science array
     # no noise so it should always be above the default threshold of 5
@@ -335,17 +321,15 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
 def test_outlier_step_weak_cr_tso(exptype, tsovisit):
-    '''Test outlier detection with rolling median on time-varying source
+    """Test outlier detection with rolling median on time-varying source
     This test fails if rolling_window_width is set to 100, i.e., take simple median
-    '''
+    """
     bkg = 1.5
     sig = 0.02
     rolling_window_width = 7
     numsci = 50
     signal = 7.0
-    im = we_many_sci(
-        numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit
-    )
+    im = we_many_sci(numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit)
 
     # Drop a weak CR on the science array
     cr_timestep = 5
@@ -356,7 +340,7 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     real_time_variability = signal * np.cos(np.linspace(0, np.pi, numsci))
     for i, model in enumerate(im):
         model.data[7, 7] += real_time_variability[i]
-        model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
+        model.err[7, 7] = np.sqrt(sig**2 + model.data[7, 7])
 
     cube_data = np.array([i.data for i in im])
     cube_err = np.array([i.err for i in im])

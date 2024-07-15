@@ -3,6 +3,7 @@ import numpy as np
 from jwst.photom.photom import find_row
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -33,19 +34,19 @@ def get_photom_data(phot_model, filter, pupil, order):
 
     # Get the appropriate row of data from the reference table
     phot_table = phot_model.phot_table
-    fields_to_match = {'filter': filter, 'pupil': pupil, 'order': order}
+    fields_to_match = {"filter": filter, "pupil": pupil, "order": order}
     row = find_row(phot_table, fields_to_match)
     tabdata = phot_table[row]
 
     # Scalar conversion factor
-    scalar_conversion = tabdata['photmjsr']   # unit is MJy / sr
+    scalar_conversion = tabdata["photmjsr"]  # unit is MJy / sr
 
     # Get the length of the relative response arrays in this row
-    nelem = tabdata['nelem']
+    nelem = tabdata["nelem"]
 
     # Load the wavelength and relative response arrays
-    ref_waves = tabdata['wavelength'][:nelem]
-    relresps = scalar_conversion * tabdata['relresponse'][:nelem]
+    ref_waves = tabdata["wavelength"][:nelem]
+    relresps = scalar_conversion * tabdata["relresponse"][:nelem]
 
     # Make sure waves and relresps are in increasing wavelength order
     if not np.all(np.diff(ref_waves) > 0):
@@ -54,9 +55,9 @@ def get_photom_data(phot_model, filter, pupil, order):
         relresps = relresps[index].copy()
 
     # Convert wavelengths from meters to microns, if necessary
-    microns_100 = 1.e-4         # 100 microns, in meters
-    if ref_waves.max() > 0. and ref_waves.max() < microns_100:
-        ref_waves *= 1.e+6
+    microns_100 = 1.0e-4  # 100 microns, in meters
+    if ref_waves.max() > 0.0 and ref_waves.max() < microns_100:
+        ref_waves *= 1.0e6
 
     return ref_waves, relresps
 

@@ -2,4 +2,3 @@
 
 CORONMSK = '#TODO' / coronagraph mask used
 TACQNAME = '#TODO' / target acquisition file name
-

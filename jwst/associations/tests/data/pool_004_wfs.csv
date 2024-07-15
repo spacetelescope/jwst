@@ -1,10 +1,10 @@
 # Pool: WFS Phasing Examples
-# 
+#
 # Proposal: 00747
 # Instrument: NIRCam
-# 
+#
 filename|obs_id|program|visit|visit_id|visitgrp|visitype|seq_id|act_id|exposure|exp_type|nexposur|expcount|instrume|detector|channel|targetid|targprop|targname|targtype|template|pntgtype|pntg_seq|targordn|expspcin|dithptin|mostilno|module|filter|pupil|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|grating|fxd_slit|band|gwa_xtil|gwa_ytil|exposerr|is_psf|is_imprt|bkgdtarg|tsovisit|msastate|msametfl|obs_num|asn_candidate
-# 
+#
 # Coarse Phasing
 #
 @!fmt_fname(next(expnum))|v00747001001p0000000002102|747|1|00747001001|2|prime_wfsc_sensing_control|1|02|1|nrc_image|14|1|nircam|nrca1|short|2|bd+65-1248|bd+65 1248|fixed|wfsc nircam coarse phasing|science|1|1|1|1|1|a|f212n|clear|1|wfsc|null|2|null|1|0|0|null|nrca3_fp1|2018_1a|sub96dhspila|null|null|null|null|null|null|null|null|f|f|null|null|@!next(obsnum)|@!fmt_cand([(obsnum.value, 'observation')])

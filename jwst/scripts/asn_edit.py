@@ -34,30 +34,22 @@ not, no change will be made to the file.
     )
 
     arg_group = parser.add_mutually_exclusive_group()
-    arg_group.add_argument(
-        '-a', '--add', action='store_true', help='Add files to association'
-    )
-    arg_group.add_argument(
-        '-r', '--remove', action='store_true', help='Remove files to association'
-    )
+    arg_group.add_argument("-a", "--add", action="store_true", help="Add files to association")
+    arg_group.add_argument("-r", "--remove", action="store_true", help="Remove files to association")
 
+    parser.add_argument("-t", "--type", default="science", help="Exptype, if adding filenames")
     parser.add_argument(
-        '-t', '--type', default='science', help='Exptype, if adding filenames'
-    )
-    parser.add_argument(
-        '-i',
-        '--ignore',
-        action='store_true',
-        help='Ignore suffix on filename when matching',
+        "-i",
+        "--ignore",
+        action="store_true",
+        help="Ignore suffix on filename when matching",
     )
 
-    parser.add_argument(
-        '-o', '--output', help='Output association name if different than input'
-    )
+    parser.add_argument("-o", "--output", help="Output association name if different than input")
 
-    parser.add_argument('association', help='The association file name')
+    parser.add_argument("association", help="The association file name")
 
-    parser.add_argument('filenames', nargs='+', help='The filenames to process')
+    parser.add_argument("filenames", nargs="+", help="The filenames to process")
 
     args = parser.parse_args()
 
@@ -78,5 +70,5 @@ not, no change will be made to the file.
     asn_edit.writer(asn, output_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

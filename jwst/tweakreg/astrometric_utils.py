@@ -11,7 +11,7 @@ from ..resample import resample_utils
 from ..assign_wcs import util as wcsutil
 
 ASTROMETRIC_CAT_ENVVAR = "ASTROMETRIC_CATALOG_URL"
-DEF_CAT_URL = 'http://gsss.stsci.edu/webservices'
+DEF_CAT_URL = "http://gsss.stsci.edu/webservices"
 
 if ASTROMETRIC_CAT_ENVVAR in os.environ:
     SERVICELOCATION = os.environ[ASTROMETRIC_CAT_ENVVAR]
@@ -30,9 +30,16 @@ Primary function for creating an astrometric reference catalog.
 __all__ = ["TIMEOUT", "compute_radius", "create_astrometric_catalog", "get_catalog"]
 
 
-def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.ecsv",
-                               gaia_only=False, table_format="ascii.ecsv",
-                               existing_wcs=None, num_sources=None, epoch=None):
+def create_astrometric_catalog(
+    input_models,
+    catalog="GAIADR3",
+    output="ref_cat.ecsv",
+    gaia_only=False,
+    table_format="ascii.ecsv",
+    existing_wcs=None,
+    num_sources=None,
+    epoch=None,
+):
     """Create an astrometric catalog that covers the inputs' field-of-view.
 
     Parameters
@@ -60,7 +67,7 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
         Maximum number of brightest/faintest sources to return in catalog.
         If `num_sources` is negative, return that number of the faintest
         sources.  By default, all sources are returned.
-    
+
     epoch : float, optional
         Reference epoch used to update the coordinates for proper motion
         (in decimal year). If `None` then the epoch is obtained from
@@ -90,42 +97,38 @@ def create_astrometric_catalog(input_models, catalog="GAIADR3", output="ref_cat.
     radius, fiducial = compute_radius(outwcs)
 
     # perform query for this field-of-view
-    epoch = (
-        epoch
-        if epoch is not None
-        else Time(input_models[0].meta.observation.date).decimalyear
-    )
+    epoch = epoch if epoch is not None else Time(input_models[0].meta.observation.date).decimalyear
     ref_dict = get_catalog(fiducial[0], fiducial[1], epoch=epoch, sr=radius, catalog=catalog)
     if len(ref_dict) == 0:
         return ref_dict
-    
-    colnames = ('ra', 'dec', 'mag', 'objID', 'epoch')
+
+    colnames = ("ra", "dec", "mag", "objID", "epoch")
     ref_table = ref_dict[colnames]
 
     # Add catalog name as meta data
-    ref_table.meta['catalog'] = catalog
-    ref_table.meta['gaia_only'] = gaia_only
+    ref_table.meta["catalog"] = catalog
+    ref_table.meta["gaia_only"] = gaia_only
 
     # rename coordinate columns to be consistent with tweakwcs
-    ref_table.rename_column('ra', 'RA')
-    ref_table.rename_column('dec', 'DEC')
+    ref_table.rename_column("ra", "RA")
+    ref_table.rename_column("dec", "DEC")
 
     # Append GAIA ID as a new column to the table...
     gaia_sources = []
     for source in ref_dict:
-        if 'GAIAsourceID' in source:
-            g = source['GAIAsourceID']
-            if gaia_only and g.strip() == '':
+        if "GAIAsourceID" in source:
+            g = source["GAIAsourceID"]
+            if gaia_only and g.strip() == "":
                 continue
         else:
             g = "-1"  # indicator for no source ID extracted
         gaia_sources.append(g)
 
-    gaia_col = table.Column(data=gaia_sources, name='GaiaID', dtype='U25')
+    gaia_col = table.Column(data=gaia_sources, name="GaiaID", dtype="U25")
     ref_table.add_column(gaia_col)
 
     # sort table by magnitude, fainter to brightest
-    ref_table.sort('mag', reverse=True)
+    ref_table.sort("mag", reverse=True)
 
     # If specified by the use through the 'num_sources' parameter,
     # trim the returned catalog down to just the brightest 'num_sources' sources
@@ -155,15 +158,14 @@ def compute_radius(wcs):
     fiducial = wcsutil.compute_fiducial([wcs], wcs.bounding_box)
     img_center = SkyCoord(ra=fiducial[0] * u.degree, dec=fiducial[1] * u.degree)
     wcs_foot = wcs.footprint()
-    img_corners = SkyCoord(ra=wcs_foot[:, 0] * u.degree,
-                           dec=wcs_foot[:, 1] * u.degree)
+    img_corners = SkyCoord(ra=wcs_foot[:, 0] * u.degree, dec=wcs_foot[:, 1] * u.degree)
     radius = img_center.separation(img_corners).max().value
 
     return radius, fiducial
 
 
-def get_catalog(ra, dec, epoch=2016.0, sr=0.1, catalog='GAIADR3'):
-    """ Extract catalog from VO web service.
+def get_catalog(ra, dec, epoch=2016.0, sr=0.1, catalog="GAIADR3"):
+    """Extract catalog from VO web service.
 
     Parameters
     ----------
@@ -174,7 +176,7 @@ def get_catalog(ra, dec, epoch=2016.0, sr=0.1, catalog='GAIADR3'):
         Declination (Dec) of center of field-of-view (in decimal degrees)
 
     epoch : float, optional
-        Reference epoch used to update the coordinates for proper motion 
+        Reference epoch used to update the coordinates for proper motion
         (in decimal year). Default: 2016.0
 
     sr : float, optional
@@ -199,9 +201,9 @@ def get_catalog(ra, dec, epoch=2016.0, sr=0.1, catalog='GAIADR3'):
     service_url = f"{SERVICELOCATION}/{service_type}?{spec}"
     rawcat = requests.get(service_url, headers=headers, timeout=TIMEOUT)
     r_contents = rawcat.content.decode()  # convert from bytes to a String
-    rstr = r_contents.split('\r\n')
+    rstr = r_contents.split("\r\n")
     # remove initial line describing the number of sources returned
     # CRITICAL to proper interpretation of CSV data
     del rstr[0]
 
-    return Table.read(rstr, format='csv')
+    return Table.read(rstr, format="csv")

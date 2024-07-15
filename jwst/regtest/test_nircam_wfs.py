@@ -9,9 +9,9 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_pipelines(rtdata_module):
     """Run the calwebb_wfs-image2 and calwebb_wfs-image3 pipelines
-       on NIRCam WFS&C images. The calwebb_wfs-image3 pipeline is
-       run twice: once with default params and a second time with
-       the do_refine option turned on."""
+    on NIRCam WFS&C images. The calwebb_wfs-image3 pipeline is
+    run twice: once with default params and a second time with
+    the do_refine option turned on."""
 
     rtdata = rtdata_module
 
@@ -44,21 +44,25 @@ def run_pipelines(rtdata_module):
 @pytest.mark.bigdata
 def test_nicam_wfsimage_noextras(run_pipelines):
     """Ensure that i2d files are not created"""
-    i2ds = list(Path('.').glob('*i2d*'))
+    i2ds = list(Path(".").glob("*i2d*"))
 
     assert not i2ds
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output",[
-    "jw00632003002_03105_00001_nrca4_cal.fits",
-    "jw00632003002_03105_00002_nrca4_cal.fits",
-    "jw00632-o003_t001_nircam_f212n-wlp8-nrca4_wfscmb-05.fits",
-    "jw00632-o003_t001_nircam_f212n-wlp8-nrca4_wfscmb-05_refine.fits"],
-    ids=["cal1", "cal2", "wfscmb1", "wfscmb2"])
+@pytest.mark.parametrize(
+    "output",
+    [
+        "jw00632003002_03105_00001_nrca4_cal.fits",
+        "jw00632003002_03105_00002_nrca4_cal.fits",
+        "jw00632-o003_t001_nircam_f212n-wlp8-nrca4_wfscmb-05.fits",
+        "jw00632-o003_t001_nircam_f212n-wlp8-nrca4_wfscmb-05_refine.fits",
+    ],
+    ids=["cal1", "cal2", "wfscmb1", "wfscmb2"],
+)
 def test_nircam_wfsimage(run_pipelines, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_wfs-image2 and calwebb_wfs-image3
-       pipelines on a dithered pair of NIRCam images."""
+    pipelines on a dithered pair of NIRCam images."""
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipelines

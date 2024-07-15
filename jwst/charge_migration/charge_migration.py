@@ -41,7 +41,7 @@ def charge_migration(input_model, signal_threshold):
     # Create the output model as a copy of the input
     output_model = input_model.copy()
 
-    log.info('Using signal_threshold: %.2f', signal_threshold)
+    log.info("Using signal_threshold: %.2f", signal_threshold)
 
     gdq_new = flag_pixels(data, gdq, signal_threshold)
 
@@ -76,26 +76,26 @@ def flag_pixels(data, gdq, signal_threshold):
     chargeloss_pix = np.where((data > signal_threshold) & (gdq != DNU))
 
     new_gdq = gdq.copy()
-    
-    for k in range(len(chargeloss_pix[0])): 
+
+    for k in range(len(chargeloss_pix[0])):
         integ, group = chargeloss_pix[0][k], chargeloss_pix[1][k]
         row, col = chargeloss_pix[2][k], chargeloss_pix[3][k]
         new_gdq[integ, group:, row, col] |= CHLO_DNU
 
         # North
         if row > 0:
-            new_gdq[integ, group:, row-1, col] |= CHLO_DNU
+            new_gdq[integ, group:, row - 1, col] |= CHLO_DNU
 
         # South
-        if row < (n_rows-1):
-            new_gdq[integ, group:, row+1, col] |= CHLO_DNU
+        if row < (n_rows - 1):
+            new_gdq[integ, group:, row + 1, col] |= CHLO_DNU
 
         # East
-        if col < (n_cols-1):
-            new_gdq[integ, group:, row, col+1] |= CHLO_DNU
+        if col < (n_cols - 1):
+            new_gdq[integ, group:, row, col + 1] |= CHLO_DNU
 
         # West
         if col > 0:
-            new_gdq[integ, group:, row, col-1] |= CHLO_DNU
+            new_gdq[integ, group:, row, col - 1] |= CHLO_DNU
 
     return new_gdq

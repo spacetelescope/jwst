@@ -19,13 +19,13 @@ def mock_nrm_reference_file(tmp_path, monkeypatch):
 
     # make a fake nrm file
     m = datamodels.NRMModel()
-    m.nrm = np.zeros((1024, 1024), dtype='f4')
+    m.nrm = np.zeros((1024, 1024), dtype="f4")
     m.save(fn)
 
     original_get_reference_file = crds_client.get_reference_file
 
     def mock_get_reference_file(dataset, reference_file_type, observatory):
-        if reference_file_type == 'nrm':
+        if reference_file_type == "nrm":
             return str(fn)
         return original_get_reference_file(dataset, reference_file_type, observatory)
 
@@ -69,7 +69,8 @@ def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
 
     def mockreturn(input_model, reftype, observatory=None, asn_exptypes=None):
         return "N/A"
-    monkeypatch.setattr(stpipe.crds_client, 'get_reference_file', mockreturn)
+
+    monkeypatch.setattr(stpipe.crds_client, "get_reference_file", mockreturn)
 
     with pytest.raises(RuntimeError, match="No throughput reference file found."):
         AmiAnalyzeStep.call(example_model)

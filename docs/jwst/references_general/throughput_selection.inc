@@ -7,8 +7,7 @@ THROUGHPUT is not applicable for instruments not in the table.
 All keywords used for file selection are *required*.
 
 ========== ================================================
-Instrument Keywords                                         
+Instrument Keywords
 ========== ================================================
-NIRISS     INSTRUME, FILTER, DATE-OBS, TIME-OBS           
+NIRISS     INSTRUME, FILTER, DATE-OBS, TIME-OBS
 ========== ================================================
-

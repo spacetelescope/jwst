@@ -9,6 +9,7 @@
 import numpy as np
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -41,7 +42,6 @@ def klip(target_model, refs_model, truncate):
 
     # Loop over the target integrations
     for i in range(target_model.data.shape[0]):
-
         # Load the target data array and flatten it from 2-D to 1-D
         target = target_model.data[i].astype(np.float64)
         tshape = target.shape

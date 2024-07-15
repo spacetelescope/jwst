@@ -9,20 +9,20 @@ def test_flag_bad_refpix():
     pixeldq = np.full((3200, 5), 0)
 
     # set some previously marked bad reference pixels
-    data[:, :, 670, :] = 0.
-    data[:, :, 688, :] = 0.
-    data[:, :, 2110, :] = 0.
-    pixeldq[670, :] = datamodels.dqflags.pixel['BAD_REF_PIXEL']
-    pixeldq[688, :] = datamodels.dqflags.pixel['BAD_REF_PIXEL']
-    pixeldq[2110, :] = datamodels.dqflags.pixel['BAD_REF_PIXEL']
+    data[:, :, 670, :] = 0.0
+    data[:, :, 688, :] = 0.0
+    data[:, :, 2110, :] = 0.0
+    pixeldq[670, :] = datamodels.dqflags.pixel["BAD_REF_PIXEL"]
+    pixeldq[688, :] = datamodels.dqflags.pixel["BAD_REF_PIXEL"]
+    pixeldq[2110, :] = datamodels.dqflags.pixel["BAD_REF_PIXEL"]
 
     # set the intermittent bad pixels
-    data[:, :, 648, :] = 10.
-    data[:, :, 668, :] = 20.
-    data[:, :, 988, :] = 11.
-    data[:, :, 1369, :] = 7.
-    data[:, :, 2150, :] = 13.
-    data[:, :, 3128, :] = 15.
+    data[:, :, 648, :] = 10.0
+    data[:, :, 668, :] = 20.0
+    data[:, :, 988, :] = 11.0
+    data[:, :, 1369, :] = 7.0
+    data[:, :, 2150, :] = 13.0
+    data[:, :, 3128, :] = 15.0
 
     scipix_n, refpix_r = 16, 4
     ovr_corr_mitigation_ftr = 3.0
@@ -37,21 +37,21 @@ def test_flag_bad_refpix():
     compare = np.ones((2, 3, 3200, 5), dtype=np.float32)
 
     # previously marked pixel, lower pix bad, upper pix good
-    compare[:, :, 688, :] = 1.
+    compare[:, :, 688, :] = 1.0
     # previously marked pixel, lower and upper pix good
-    compare[:, :, 670, :] = 1.
-    compare[:, :, 2110, :] = 1.
+    compare[:, :, 670, :] = 1.0
+    compare[:, :, 2110, :] = 1.0
 
     # no lower pix, upper pix bad, neighbor okay
-    compare[:, :, 648:650, :] = 1.
+    compare[:, :, 648:650, :] = 1.0
     # lower and upper pix bad, neighbor bad
-    compare[:, :, 668, :] = 0.
+    compare[:, :, 668, :] = 0.0
     # lower pix bad, upper pix good
-    compare[:, :, 669, :] = 1.
+    compare[:, :, 669, :] = 1.0
     # lower and upper pix good
-    compare[:, :, 988:990, :] = 1.
-    compare[:, :, 1368:1370, :] = 1.
-    compare[:, :, 2150:2152, :] = 1.
-    compare[:, :, 3128:3130, :] = 1.
+    compare[:, :, 988:990, :] = 1.0
+    compare[:, :, 1368:1370, :] = 1.0
+    compare[:, :, 2150:2152, :] = 1.0
+    compare[:, :, 3128:3130, :] = 1.0
 
     assert np.allclose(data, compare)

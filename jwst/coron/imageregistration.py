@@ -6,12 +6,13 @@ from scipy.ndimage import fourier_shift
 from stdatamodels.jwst.datamodels import QuadModel
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def align_fourierLSQ(reference, target, mask=None):
-    '''LSQ optimization with Fourier shift alignment
+    """LSQ optimization with Fourier shift alignment
 
     Parameters
     ----------
@@ -36,16 +37,15 @@ def align_fourierLSQ(reference, target, mask=None):
             of target from reference and `beta` is the fraction by which the
             target intensity must be reduced to match the intensity
             of the reference.
-    '''
+    """
 
-    init_pars = [0., 0., 1.]
-    results, _ = optimize.leastsq(shift_subtract, init_pars,
-                                  args=(reference, target, mask))
+    init_pars = [0.0, 0.0, 1.0]
+    results, _ = optimize.leastsq(shift_subtract, init_pars, args=(reference, target, mask))
     return results
 
 
 def shift_subtract(params, reference, target, mask=None):
-    '''Use Fourier Shift theorem for subpixel shifts.
+    """Use Fourier Shift theorem for subpixel shifts.
 
     Parameters
     ----------
@@ -68,7 +68,7 @@ def shift_subtract(params, reference, target, mask=None):
         1D numpy.ndarray of target-reference residual after
         applying shift and intensity fraction.
 
-    '''
+    """
     shift = params[:2]
     beta = params[2]
 
@@ -81,7 +81,7 @@ def shift_subtract(params, reference, target, mask=None):
 
 
 def fourier_imshift(image, shift):
-    '''  Shift an image by use of Fourier shift theorem
+    """Shift an image by use of Fourier shift theorem
 
     Parameters
     ----------
@@ -99,23 +99,19 @@ def fourier_imshift(image, shift):
         offset : numpy.ndarray
             Shifted image
 
-    '''
+    """
     ndim = len(image.shape)
 
     if ndim == 2:
         shift = np.asanyarray(shift)[:2]
-        offset_image = fourier_shift(
-            np.fft.fftn(image),
-            shift[::-1]
-        )
+        offset_image = fourier_shift(np.fft.fftn(image), shift[::-1])
         offset = np.fft.ifftn(offset_image).real
 
     elif ndim == 3:
         nslices = image.shape[0]
         shift = np.asanyarray(shift)[:, :2]
         if shift.shape[0] != nslices:
-            raise ValueError("The number of provided shifts must be equal "
-                             "to the number of slices in the input image.")
+            raise ValueError("The number of provided shifts must be equal " "to the number of slices in the input image.")
 
         offset = np.empty_like(image, dtype=float)
         for k in range(nslices):
@@ -211,28 +207,21 @@ def align_models(reference, target, mask):
     nrefslices = reference.data.shape[0]
 
     # Create output QuadModel of required dimensions
-    quad_shape = (nrefslices,
-                  target.shape[0], target.shape[1], target.shape[2])
+    quad_shape = (nrefslices, target.shape[0], target.shape[1], target.shape[2])
     output_model = QuadModel(quad_shape)
     output_model.update(target)
 
     # Loop over all integrations of the science exposure
     for k in range(nrefslices):
-
         # Compute the shifts of the PSF ("target") images relative to
         # the science ("reference") image in this integration, and apply
         # the shifts to the PSF images
-        d, shifts = align_array(
-            reference.data[k].astype(np.float64),
-            target.data.astype(np.float64),
-            mask.data)
+        d, shifts = align_array(reference.data[k].astype(np.float64), target.data.astype(np.float64), mask.data)
         output_model.data[k] = d
 
         # Apply the same shifts to the PSF error arrays, if they exist
         if target.err is not None:
-            output_model.err[k] = fourier_imshift(
-                target.err.astype(np.float64),
-                -shifts)
+            output_model.err[k] = fourier_imshift(target.err.astype(np.float64), -shifts)
 
         # TODO: in the future we need to add shifts and other info (such as
         # slice ID from the reference image to which target was aligned)

@@ -4,7 +4,7 @@ Reference Files
 WCS Reference files are in the Advanced Scientific Data Format (ASDF).
 The best way to create the file is to programmatically create the model and then save it to a file.
 A tutorial on creating reference files in ASDF format is available
-`here 
+`here
 <https://github.com/spacetelescope/jwreftools/blob/master/docs/notebooks/referece_files_asdf.ipynb>`_.
 
 Transforms are 0-indexed. The forward direction is from detector to sky.

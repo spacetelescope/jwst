@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclude_percentile=30.0):
+def background_subtract(data, box_size=None, filter_size=(3, 3), sigma=3.0, exclude_percentile=30.0):
     """
     Simple astropy background subtraction
 
@@ -26,7 +26,7 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
     data : np.ndarray
         2D array of pixel values
     box_size : tuple
-        Size of box in pixels to use for background estimation. 
+        Size of box in pixels to use for background estimation.
         If not set, defaults to 1/5 of the image size.
     filter_size : tuple
         Size of filter to use for background estimation
@@ -47,12 +47,17 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
     in a previous version.
     """
     if box_size is None:
-        box_size = (int(data.shape[0]/5), int(data.shape[1]/5))
+        box_size = (int(data.shape[0] / 5), int(data.shape[1] / 5))
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
-    bkg = Background2D(data, box_size, filter_size=filter_size,
-                   sigma_clip=sigma_clip, bkg_estimator=bkg_estimator, 
-                   exclude_percentile=exclude_percentile)
+    bkg = Background2D(
+        data,
+        box_size,
+        filter_size=filter_size,
+        sigma_clip=sigma_clip,
+        bkg_estimator=bkg_estimator,
+        exclude_percentile=exclude_percentile,
+    )
 
     return data - bkg.background
 
@@ -60,10 +65,20 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
 class Observation:
     """This class defines an actual observation. It is tied to a single grism image."""
 
-    def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=0,
-                 sed_file=None, extrapolate_sed=False,
-                 boundaries=[], offsets=[0, 0], renormalize=True, max_cpu=1):
-
+    def __init__(
+        self,
+        direct_images,
+        segmap_model,
+        grism_wcs,
+        filter,
+        ID=0,
+        sed_file=None,
+        extrapolate_sed=False,
+        boundaries=[],
+        offsets=[0, 0],
+        renormalize=True,
+        max_cpu=1,
+    ):
         """
         Initialize all data and metadata for a given observation. Creates lists of
         direct image pixel values for selected objects.
@@ -101,7 +116,7 @@ class Observation:
         self.dir_image_names = direct_images
         self.seg = segmap_model.data
         self.filter = filter
-        self.sed_file = sed_file   # should always be NONE for baseline pipeline (use flat SED)
+        self.sed_file = sed_file  # should always be NONE for baseline pipeline (use flat SED)
         self.cache = False
         self.renormalize = renormalize
         self.max_cpu = max_cpu
@@ -159,7 +174,6 @@ class Observation:
         # Populate lists of direct image flux values for the sources.
         self.fluxes = {}
         for dir_image_name in self.dir_image_names:
-
             log.info(f"Using direct image {dir_image_name}")
             with datamodels.open(dir_image_name) as model:
                 dimage = model.data
@@ -169,7 +183,7 @@ class Observation:
                     # Default pipeline will use sed_file=None, so we need to compute
                     # photometry values that used to come from HST-style header keywords.
                     # Set pivlam, in units of microns, based on filter name.
-                    pivlam = float(self.filter[1:4]) / 100.
+                    pivlam = float(self.filter[1:4]) / 100.0
 
                     # Use pixel fluxes from the direct image.
                     self.fluxes[pivlam] = []
@@ -224,14 +238,14 @@ class Observation:
         for i in range(len(self.IDs)):
             if self.cache:
                 self.cached_object[i] = {}
-                self.cached_object[i]['x'] = []
-                self.cached_object[i]['y'] = []
-                self.cached_object[i]['f'] = []
-                self.cached_object[i]['w'] = []
-                self.cached_object[i]['minx'] = []
-                self.cached_object[i]['maxx'] = []
-                self.cached_object[i]['miny'] = []
-                self.cached_object[i]['maxy'] = []
+                self.cached_object[i]["x"] = []
+                self.cached_object[i]["y"] = []
+                self.cached_object[i]["f"] = []
+                self.cached_object[i]["w"] = []
+                self.cached_object[i]["minx"] = []
+                self.cached_object[i]["maxx"] = []
+                self.cached_object[i]["miny"] = []
+                self.cached_object[i]["maxy"] = []
 
             self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp)
 
@@ -268,7 +282,6 @@ class Observation:
         # Loop over all pixels in list for object "c"
         log.debug(f"source contains {len(self.xs[c])} pixels")
         for i in range(len(self.xs[c])):
-
             # Here "i" and "ID" are just indexes into the pixel list for the object
             # being processed, as opposed to the ID number of the object itself
             ID = i
@@ -288,15 +301,31 @@ class Observation:
             # "fluxes" is the array of pixel values from the direct image(s).
             # For the simple case of 1 combined direct image, this contains a
             # a single value (just like "lams").
-            fluxes, lams = map(np.array, zip(*[
-                (self.fluxes[lm][c][i], lm) for lm in sorted(self.fluxes.keys())
-                if self.fluxes[lm][c][i] != 0
-            ]))
+            fluxes, lams = map(
+                np.array, zip(*[(self.fluxes[lm][c][i], lm) for lm in sorted(self.fluxes.keys()) if self.fluxes[lm][c][i] != 0])
+            )
 
-            pars_i = (xc, yc, width, height, lams, fluxes, self.order,
-                      self.wmin, self.wmax, self.sens_waves, self.sens_resp,
-                      self.seg_wcs, self.grism_wcs, ID, self.dims[::-1], 2,
-                      self.extrapolate_sed, self.xoffset, self.yoffset)
+            pars_i = (
+                xc,
+                yc,
+                width,
+                height,
+                lams,
+                fluxes,
+                self.order,
+                self.wmin,
+                self.wmax,
+                self.sens_waves,
+                self.sens_resp,
+                self.seg_wcs,
+                self.grism_wcs,
+                ID,
+                self.dims[::-1],
+                2,
+                self.extrapolate_sed,
+                self.xoffset,
+                self.yoffset,
+            )
 
             pars.append(pars_i)
             # now have full pars list for all pixels for this object
@@ -331,22 +360,21 @@ class Observation:
             maxx = int(max(x))
             miny = int(min(y))
             maxy = int(max(y))
-            a = sparse.coo_matrix((f, (y - miny, x - minx)),
-                                  shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+            a = sparse.coo_matrix((f, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
 
             # Accumulate results into simulated images
-            self.simulated_image[miny:maxy + 1, minx:maxx + 1] += a
-            this_object[miny:maxy + 1, minx:maxx + 1] += a
+            self.simulated_image[miny : maxy + 1, minx : maxx + 1] += a
+            this_object[miny : maxy + 1, minx : maxx + 1] += a
 
             if self.cache:
-                self.cached_object[c]['x'].append(x)
-                self.cached_object[c]['y'].append(y)
-                self.cached_object[c]['f'].append(f)
-                self.cached_object[c]['w'].append(w)
-                self.cached_object[c]['minx'].append(minx)
-                self.cached_object[c]['maxx'].append(maxx)
-                self.cached_object[c]['miny'].append(miny)
-                self.cached_object[c]['maxy'].append(maxy)
+                self.cached_object[c]["x"].append(x)
+                self.cached_object[c]["y"].append(y)
+                self.cached_object[c]["f"].append(f)
+                self.cached_object[c]["w"].append(w)
+                self.cached_object[c]["minx"].append(minx)
+                self.cached_object[c]["maxx"].append(maxx)
+                self.cached_object[c]["miny"].append(miny)
+                self.cached_object[c]["maxy"].append(maxy)
 
         time2 = time.time()
         log.debug(f"Elapsed time {time2-time1} sec")
@@ -378,26 +406,25 @@ class Observation:
         if trans is not None:
             log.debug("Applying a transmission function...")
 
-        for i in range(len(self.cached_object[c]['x'])):
-            x = self.cached_object[c]['x'][i]
-            y = self.cached_object[c]['y'][i]
-            f = self.cached_object[c]['f'][i] * 1.
-            w = self.cached_object[c]['w'][i]
+        for i in range(len(self.cached_object[c]["x"])):
+            x = self.cached_object[c]["x"][i]
+            y = self.cached_object[c]["y"][i]
+            f = self.cached_object[c]["f"][i] * 1.0
+            w = self.cached_object[c]["w"][i]
 
             if trans is not None:
                 f *= trans(w)
 
-            minx = self.cached_object[c]['minx'][i]
-            maxx = self.cached_object[c]['maxx'][i]
-            miny = self.cached_object[c]['miny'][i]
-            maxy = self.cached_object[c]['maxy'][i]
+            minx = self.cached_object[c]["minx"][i]
+            maxx = self.cached_object[c]["maxx"][i]
+            miny = self.cached_object[c]["miny"][i]
+            maxy = self.cached_object[c]["maxy"][i]
 
-            a = sparse.coo_matrix((f, (y - miny, x - minx)),
-                                  shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+            a = sparse.coo_matrix((f, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
 
             # Accumulate the results into the simulated images
-            self.simulated_image[miny:maxy + 1, minx:maxx + 1] += a
-            this_object[miny:maxy + 1, minx:maxx + 1] += a
+            self.simulated_image[miny : maxy + 1, minx : maxx + 1] += a
+            this_object[miny : maxy + 1, minx : maxx + 1] += a
 
         time2 = time.time()
         log.debug(f"Elapsed time {time2-time1} sec")

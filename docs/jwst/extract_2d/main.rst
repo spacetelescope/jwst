@@ -69,7 +69,7 @@ corresponding to the FITS keywords "SLTNAME", "SLTSTRT1", "SLTSIZE1",
 "SLTSTRT2", and "SLTSIZE2."  Keyword "DISPAXIS" (dispersion direction)
 will be copied from the input file to each of the output cutout images.
 
-The "SRCXPOS" and "SRCYPOS" keywords in the SCI extension header of each slitlet 
+The "SRCXPOS" and "SRCYPOS" keywords in the SCI extension header of each slitlet
 are also populated with estimates of the source
 x (dispersion) and y (cross-dispersion) location within the slitlet.
 For MOS data, these values are taken from the :ref:`MSA metadata file<msa_metadata>`.
@@ -93,7 +93,7 @@ position from the WCS information.
 NIRCam and NIRISS WFSS
 ++++++++++++++++++++++
 
-During normal, automated processing of WFSS grism images, the 
+During normal, automated processing of WFSS grism images, the
 step parameter ``grism_objects`` is left unspecified, in which case the ``extract_2d``
 step uses the source catalog that is specified in the input model's meta information,
 ``input_model.meta.source_catalog.filename`` ("SCATFILE" keyword) to define the
@@ -113,7 +113,7 @@ The ``wfss_mmag_extract`` and ``wfss_nbright`` parameters both affect which obje
 from a source catalog will be retained for extraction. The rejection or retention of
 objects proceeds as follows:
 
-1. As each object is read from the source catalog, they are immediately rejected if 
+1. As each object is read from the source catalog, they are immediately rejected if
    their isophotal_abmag > ``wfss_mmag_extract``, meaning that only objects brighter than
    ``wfss_mmag_extract`` will be retained. The default ``wfss_mmag_extract`` value of
    ``None`` retains all objects.
@@ -196,7 +196,7 @@ Create a list of grism objects for a specified spectral order and wavelength ran
 In this case we don't use the default wavelength range limits from the ``wavelengthrange``
 reference file, but instead designate custom limits via the ``wavelength_range`` parameter
 passed to the ``create_grism_bbox`` function, which is a dictionary of the form
-``{spectral_order: (wave_min, wave_max)}``. 
+``{spectral_order: (wave_min, wave_max)}``.
 Use the source ID, ``sid``, to identify the object(s) to be modified.
 The computed extraction limits are stored in the ``order_bounding`` attribute,
 which is ordered ``(y, x)``.
@@ -266,10 +266,10 @@ for all computations involving the extent of the spectral trace and pixel wavele
 assignments.
 
 In rare cases, it may be desirable to shift the source location in the X-direction, e.g.
-for a custom noise suppression scheme. This is achieved in the APT by specifying an 
-offset special requirement, and shows up in the header keyword "XOFFSET". The 
+for a custom noise suppression scheme. This is achieved in the APT by specifying an
+offset special requirement, and shows up in the header keyword "XOFFSET". The
 ``extract_2d`` step accounts for this offset by simply shifting the wavelength array by
-the appropriate amount. The WCS information remains unchanged. Note that offsets in the 
+the appropriate amount. The WCS information remains unchanged. Note that offsets in the
 Y-direction (cross-dispersion direction) are not supported and should not be attempted.
 
 NIRCam subarrays used for TSGRISM observations always have their "bottom" edge located

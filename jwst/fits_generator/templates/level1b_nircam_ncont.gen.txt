@@ -34,4 +34,3 @@ input[0].data.reshape((1, \
                        input[0].header['NAXIS2'], \
                        input[0].header['NAXIS1'])). \
                        astype('uint16')
-

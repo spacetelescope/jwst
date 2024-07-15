@@ -15,7 +15,6 @@ log.setLevel(logging.DEBUG)
 
 
 def mask_ifu_slices(input_model, mask):
-
     """Find pixels located within IFU slices and flag them in the
     mask, so that they do not get used.
 
@@ -42,12 +41,9 @@ def mask_ifu_slices(input_model, mask):
     list_of_wcs = nirspec.nrs_ifu_wcs(input_model)
 
     # Loop over the IFU slices, finding the valid region for each
-    for (k, ifu_wcs) in enumerate(list_of_wcs):
-
+    for k, ifu_wcs in enumerate(list_of_wcs):
         # Construct array indexes for pixels in this slice
-        x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,
-                                                    step=(1, 1),
-                                                    center=True)
+        x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box, step=(1, 1), center=True)
         # Get the world coords for all pixels in this slice;
         # all we actually need are wavelengths
         coords = ifu_wcs(x, y)
@@ -64,13 +60,12 @@ def mask_ifu_slices(input_model, mask):
         dqmap[y.astype(int), x.astype(int)] = dq
 
     # Now set all non-zero locations in the mask to False (do not use)
-    mask[dqmap==1] = False
+    mask[dqmap == 1] = False
 
     return mask
 
 
 def mask_slits(input_model, mask):
-
     """Find pixels located within MOS or fixed slit footprints
     and flag them in the mask, so that they do not get used.
 
@@ -93,7 +88,7 @@ def mask_slits(input_model, mask):
     log.info("Finding slit/slitlet pixels")
 
     # Get the slit-to-msa frame transform from the WCS object
-    slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+    slit2msa = input_model.meta.wcs.get_transform("slit_frame", "msa_frame")
 
     # Loop over the slits, marking all the pixels within each bounding
     # box as False (do not use) in the mask.
@@ -137,16 +132,16 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     mask = np.full(np.shape(input_model.dq), True)
 
     # If IFU, mask all pixels contained in the IFU slices
-    if exptype == 'nrs_ifu' and mask_spectral_regions:
+    if exptype == "nrs_ifu" and mask_spectral_regions:
         mask = mask_ifu_slices(input_model, mask)
 
     # If MOS or FS, mask all pixels affected by open slitlets
-    if exptype in ['nrs_fixedslit', 'nrs_brightobj', 'nrs_msaspec'] and mask_spectral_regions:
+    if exptype in ["nrs_fixedslit", "nrs_brightobj", "nrs_msaspec"] and mask_spectral_regions:
         mask = mask_slits(input_model, mask)
 
     # If IFU or MOS, mask pixels affected by failed-open shutters
-    if exptype in ['nrs_ifu', 'nrs_msaspec']:
-        open_pix = input_model.dq & dqflags.pixel['MSA_FAILED_OPEN']
+    if exptype in ["nrs_ifu", "nrs_msaspec"]:
+        open_pix = input_model.dq & dqflags.pixel["MSA_FAILED_OPEN"]
         mask[open_pix > 0] = False
 
     # Temporarily reset NaN pixels and mask them.
@@ -156,20 +151,19 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     mask[nan_pix] = False
 
     # If IFU or MOS, mask the fixed-slit area of the image; uses hardwired indexes
-    if exptype == 'nrs_ifu':
+    if exptype == "nrs_ifu":
         log.info("Masking the fixed slit region for IFU data.")
         mask[922:1116, :] = False
-    elif exptype == 'nrs_msaspec':
+    elif exptype == "nrs_msaspec":
         # check for any slits defined in the fixed slit quadrant:
         # if there is nothing there of interest, mask the whole FS region
-        slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+        slit2msa = input_model.meta.wcs.get_transform("slit_frame", "msa_frame")
         is_fs = [s.quadrant == 5 for s in slit2msa.slits]
         if not any(is_fs):
             log.info("Masking the fixed slit region for MOS data.")
             mask[922:1116, :] = False
         else:
-            log.info("Fixed slits found in MSA definition; "
-                     "not masking the fixed slit region for MOS data.")
+            log.info("Fixed slits found in MSA definition; " "not masking the fixed slit region for MOS data.")
 
     # Use left/right reference pixel columns (first and last 4). Can only be
     # applied to data that uses all 2048 columns of the detector.
@@ -188,7 +182,6 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
         _, median, sigma = sigma_clipped_stats(input_model.data, mask=~mask, mask_value=0, sigma=5.0)
         outliers = input_model.data > (median + n_sigma * sigma)
         mask[outliers] = False
-
 
     # Return the mask and the record of which pixels were NaN in the input;
     # it'll be needed later
@@ -277,7 +270,6 @@ def clean_subarray(detector, image, mask):
 
 
 def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_mask):
-
     """Apply the NSClean 1/f noise correction
 
     Parameters
@@ -308,13 +300,13 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
 
     detector = input_model.meta.instrument.detector.upper()
     exp_type = input_model.meta.exposure.type
-    log.info(f'Input exposure type is {exp_type}, detector={detector}')
+    log.info(f"Input exposure type is {exp_type}, detector={detector}")
 
     # Check for a valid input that we can work on
     if input_model.meta.subarray.name.upper() == "ALLSLITS":
         log.warning("Step cannot be applied to ALLSLITS subarray images")
         log.warning("Step will be skipped")
-        input_model.meta.cal_step.nsclean = 'SKIPPED'
+        input_model.meta.cal_step.nsclean = "SKIPPED"
         return input_model, None
 
     output_model = input_model.copy()
@@ -356,7 +348,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
         # Check for 3D mask
         if len(Mask.shape) == 2:
             log.warning("Data are 3D, but mask is 2D. Step will be skipped.")
-            output_model.meta.cal_step.nsclean = 'SKIPPED'
+            output_model.meta.cal_step.nsclean = "SKIPPED"
             return output_model, None
     else:
         nints = 1
@@ -380,7 +372,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
 
         # Check for failure
         if cleaned_image is None:
-            output_model.meta.cal_step.nsclean = 'SKIPPED'
+            output_model.meta.cal_step.nsclean = "SKIPPED"
             break
         else:
             # Store the cleaned image in the output model
@@ -393,6 +385,6 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     output_model.data[nan_pix] = np.nan
 
     # Set completion status
-    output_model.meta.cal_step.nsclean = 'COMPLETE'
+    output_model.meta.cal_step.nsclean = "COMPLETE"
 
     return output_model, mask_model

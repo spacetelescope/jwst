@@ -116,7 +116,7 @@ also added to the product. The FITS file layout is as follows:
    exposure.
  - REFOUT: The MIRI detector reference output values. Only appears in MIRI exposures.
  - ADSF: The data model meta data.
- 
+
 .. _rate:
 .. _rateints:
 
@@ -778,21 +778,21 @@ and are encapsulated within a `~jwst.datamodels.AmiOIModel` data model.
 There are two additional outputs of the :ref:`ami_analyze <ami_analyze_step>` intended
 to enable a more detailed look at the data. The ``amimulti-oi`` file contains per-integration
 interferometric observables and is also a contained in a `~jwst.datamodels.AmiOIModel`,
-while the ``amilg`` product is a primarily image-based FITS file containing the 
+while the ``amilg`` product is a primarily image-based FITS file containing the
 cropped data, model, and residuals as well as the best-fit model parameters. It
 is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
 
 The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` product,
-which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard 
+which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard
 defined in `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS", 
-and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals 
+In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS",
+and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals
 the number of integrations. In the averaged ``ami-oi`` product and normalized ``aminorm-oi``
-products, these columns have a single dimension whose length is independent of the number 
+products, these columns have a single dimension whose length is independent of the number
 of integrations.
 
-The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and 
+The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and
 ``aminorm-oi`` products) is as follows:
 
 +-----+--------------+----------+-----------+------------------+

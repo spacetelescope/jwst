@@ -15,7 +15,7 @@ For each type the primary HDU does not contain a data array.
 :Data model: `~jwst.datamodels.NirspecFlatModel`
 
 The fixed slit FFLAT files have EXP_TYPE=NRS_FIXEDSLIT, and have a single BINTABLE
-extension, labeled FAST_VARIATION. 
+extension, labeled FAST_VARIATION.
 
 The table contains four columns:
 
@@ -82,7 +82,7 @@ The same wavelength-dependent value is applied to all pixels in a quadrant.
 :Data model: `~jwst.datamodels.NirspecFlatModel`
 
 The IFU FFLAT files have EXP_TYPE=NRS_IFU.  These have one extension,
-a BINTABLE extension labeled FAST_VARIATION. 
+a BINTABLE extension labeled FAST_VARIATION.
 
 The FAST_VARIATION table contains four columns:
 
@@ -94,5 +94,5 @@ The FAST_VARIATION table contains four columns:
 For each pixel in the science data, the wavelength of the light that fell
 on that pixel will be determined from the WAVELENGTH array in the science exposure
 (in the absence of that array, it will be computed using the WCS interface).
-The flat-field value for that pixel will then be obtained by interpolating within the 
+The flat-field value for that pixel will then be obtained by interpolating within the
 wavelength and data arrays from the FAST_VARIATION table.

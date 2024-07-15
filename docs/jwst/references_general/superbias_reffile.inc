@@ -53,4 +53,3 @@ The ``SCI`` array contains the super-bias image of the detector. The
 image.
 
 .. include:: ../includes/dq_def.inc
-

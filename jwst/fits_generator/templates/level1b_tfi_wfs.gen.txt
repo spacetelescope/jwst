@@ -51,4 +51,3 @@ np.zeros((input[0].header['NINT'], \
           input[0].header['NGROUP'], \
           input[0].header['NAXIS2'], \
           input[0].header['NAXIS1']), dtype='int16')
-

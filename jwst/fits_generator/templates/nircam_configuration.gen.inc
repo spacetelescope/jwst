@@ -7,4 +7,3 @@ CHANNEL  = {'L': 'LONG',  \
 PUPIL    = input('PUPIL')   /        name of the pupil element used
 FILTER   = input('FILTER')  /        name of the filter element used
 PILIN    = input('PIL_MODE')  /        pupil imaging lens in optical path: T/F
-

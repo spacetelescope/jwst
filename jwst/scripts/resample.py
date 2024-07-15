@@ -40,25 +40,20 @@ from jwst import jump
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % jump.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % jump.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Do image resampling on Level 2b FITS files""")
+    parser = argparse.ArgumentParser("""Do image resampling on Level 2b FITS files""")
 
-    parser.add_argument(
-        'infile', metavar='infile', nargs=1,
-        help="""Input Level 2b FITS file.""")
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input Level 2b FITS file.""")
 
-    parser.add_argument(
-        'outfile', metavar='outfile', nargs=1,
-        help="""Output resampled file""")
+    parser.add_argument("outfile", metavar="outfile", nargs=1, help="""Output resampled file""")
 
     args = parser.parse_args()
 
     resample.do_drizzle(args.infile[0], args.outfile[0])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

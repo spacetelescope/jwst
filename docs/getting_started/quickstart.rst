@@ -1,7 +1,7 @@
 .. _quickstart:
 
 =================
-Quickstart Guide 
+Quickstart Guide
 =================
 
 The following is a quickstart guide to installing and running and the

@@ -39,12 +39,12 @@ from jwst import assign_wcs
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % assign_wcs.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % assign_wcs.__version__)
         sys.exit(0)
 
     cmdline.step_script(assign_wcs.AssignWcsStep)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

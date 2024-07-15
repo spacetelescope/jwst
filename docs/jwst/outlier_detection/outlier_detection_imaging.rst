@@ -179,8 +179,8 @@ Outlier Detection for TSO data
 -------------------------------
 Normal imaging data benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
-integration to the next.  The outlier detection algorithm, therefore, gets run with 
-a few variations to accomodate the nature of these 3D data. See the 
+integration to the next.  The outlier detection algorithm, therefore, gets run with
+a few variations to accomodate the nature of these 3D data. See the
 :ref:`TSO outlier detection <outlier-detection-tso>` documentation for details.
 
 

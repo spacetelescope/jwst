@@ -70,7 +70,7 @@ area values are in units of square arcseconds and represent the nominal
 area of any pixel illuminated by the slit.
 
 ===========  =========
-Column name  Data type 
+Column name  Data type
 ===========  =========
 slit_id      char\*15
 pixarea      float
@@ -88,7 +88,7 @@ units of square arcseconds and represent the nominal area of any pixel
 illuminated by a given MSA shutter.
 
 ===========  =========
-Column name  Data type 
+Column name  Data type
 ===========  =========
 quadrant     integer
 shutter_x    integer
@@ -108,9 +108,8 @@ area values are in units of square arcseconds and represent the nominal
 area of any pixel illuminated by a given IFU slice.
 
 ===========  =========
-Column name  Data type 
+Column name  Data type
 ===========  =========
 slice_id     integer
 pixarea      float
 ===========  =========
-

@@ -24,7 +24,7 @@ class AmiAnalyzeStep(Step):
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
-    reference_file_types = ['throughput', 'nrm']
+    reference_file_types = ["throughput", "nrm"]
 
     def save_model(self, model, *args, **kwargs):
         # Override save_model to change suffix based on list of results
@@ -75,17 +75,16 @@ class AmiAnalyzeStep(Step):
         # Open the input data model. Can be 2D or 3D image
         with datamodels.open(input) as input_model:
             # Get the name of the filter throughput reference file to use
-            throughput_reffile = self.get_reference_file(input_model, 'throughput')
-            self.log.info(f'Using filter throughput reference file {throughput_reffile}')
+            throughput_reffile = self.get_reference_file(input_model, "throughput")
+            self.log.info(f"Using filter throughput reference file {throughput_reffile}")
 
             # Check for a valid reference file or user-provided bandpass
-            if (throughput_reffile == 'N/A') & (bandpass is None):
-                raise RuntimeError("No THROUGHPUT reference file found. "
-                                   "ami_analyze cannot continue.")
+            if (throughput_reffile == "N/A") & (bandpass is None):
+                raise RuntimeError("No THROUGHPUT reference file found. " "ami_analyze cannot continue.")
 
             # Get the name of the NRM reference file to use
-            nrm_reffile = self.get_reference_file(input_model, 'nrm')
-            self.log.info(f'Using NRM reference file {nrm_reffile}')
+            nrm_reffile = self.get_reference_file(input_model, "nrm")
+            self.log.info(f"Using NRM reference file {nrm_reffile}")
 
             with (
                 datamodels.ThroughputModel(throughput_reffile) as throughput_model,
@@ -108,8 +107,8 @@ class AmiAnalyzeStep(Step):
                     run_bpfix,
                 )
 
-        amilgmodel.meta.cal_step.ami_analyze = 'COMPLETE'
-        oifitsmodel.meta.cal_step.ami_analyze = 'COMPLETE'
-        oifitsmodel_multi.meta.cal_step.ami_analyze = 'COMPLETE'
+        amilgmodel.meta.cal_step.ami_analyze = "COMPLETE"
+        oifitsmodel.meta.cal_step.ami_analyze = "COMPLETE"
+        oifitsmodel_multi.meta.cal_step.ami_analyze = "COMPLETE"
 
         return oifitsmodel, oifitsmodel_multi, amilgmodel

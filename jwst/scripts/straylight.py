@@ -38,20 +38,15 @@ from jwst import straylight
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % straylight.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % straylight.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Do a Straylight correction on Level 2a FITS files""")
+    parser = argparse.ArgumentParser("""Do a Straylight correction on Level 2a FITS files""")
 
-    parser.add_argument(
-        'infile', metavar='infile', nargs=1,
-        help="""Input Level 2a FITS file.""")
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input Level 2a FITS file.""")
 
-    parser.add_argument(
-        'outfile', metavar='outfile', nargs=1,
-        help="""Output straylight corrected file""")
+    parser.add_argument("outfile", metavar="outfile", nargs=1, help="""Output straylight corrected file""")
 
     args = parser.parse_args()
 
@@ -59,5 +54,5 @@ def main():
     sl_p.do_all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

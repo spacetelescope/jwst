@@ -38,12 +38,12 @@ from jwst.refpix import refpix_step
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % refpix.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % refpix.__version__)
         sys.exit(0)
     # Pass the step class to cmdline.step_script
     cmdline.step_script(refpix_step.RefPixStep)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

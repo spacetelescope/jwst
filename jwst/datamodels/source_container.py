@@ -3,13 +3,11 @@ from .container import ModelContainer
 from stdatamodels.jwst.datamodels import MultiExposureModel, SlitModel
 
 
-__all__ = ['SourceModelContainer']
+__all__ = ["SourceModelContainer"]
 
 
 # Models that can initialize into a SourceModelContainer
-VALID_INITS = (
-    MultiExposureModel,
-)
+VALID_INITS = (MultiExposureModel,)
 
 
 class SourceModelContainer(ModelContainer):
@@ -24,11 +22,8 @@ class SourceModelContainer(ModelContainer):
     """
 
     def __init__(self, init=None, **kwargs):
-
-        if not isinstance(init, (self.__class__, ) + VALID_INITS):
-            raise TypeError(
-                'Input {0!r} cannot initialize a SourceModelContainer'.format(init)
-            )
+        if not isinstance(init, (self.__class__,) + VALID_INITS):
+            raise TypeError("Input {0!r} cannot initialize a SourceModelContainer".format(init))
 
         if isinstance(init, SourceModelContainer):
             super(SourceModelContainer, self).__init__(init, **kwargs)
@@ -60,18 +55,10 @@ class SourceModelContainer(ModelContainer):
 
         return self._multiexposure
 
-    def save(self,
-             path=None,
-             dir_path=None,
-             save_model_func=None,
-             *args, **kwargs):
+    def save(self, path=None, dir_path=None, save_model_func=None, *args, **kwargs):
         """Save out the container as a MultiExposureModel"""
 
         if save_model_func is None:
-            self.multiexposure.save(
-                path=path,
-                dir_path=dir_path,
-                *args, **kwargs
-            )
+            self.multiexposure.save(path=path, dir_path=dir_path, *args, **kwargs)
         else:
             save_model_func(self.multiexposure, output_file=path)

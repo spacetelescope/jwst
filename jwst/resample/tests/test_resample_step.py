@@ -31,9 +31,7 @@ def _set_photom_kwd(im):
     mean_pixel_area = compute_image_pixel_area(im.meta.wcs)
     if mean_pixel_area:
         im.meta.photometry.pixelarea_steradians = mean_pixel_area
-        im.meta.photometry.pixelarea_arcsecsq = (
-            mean_pixel_area * np.rad2deg(3600)**2
-        )
+        im.meta.photometry.pixelarea_arcsecsq = mean_pixel_area * np.rad2deg(3600) ** 2
 
 
 @pytest.fixture
@@ -43,55 +41,48 @@ def nirspec_rate():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.var_rnoise += 1
-    im.meta.target = {'ra': 100.1237, 'dec': 39.86}
+    im.meta.target = {"ra": 100.1237, "dec": 39.86}
     im.meta.wcsinfo = {
-        'dec_ref': 40,
-        'ra_ref': 100,
-        'roll_ref': 0,
-        'v2_ref': -453.5134,
-        'v3_ref': -373.4826,
-        'v3yangle': 0.0,
-        'vparity': -1}
+        "dec_ref": 40,
+        "ra_ref": 100,
+        "roll_ref": 0,
+        "v2_ref": -453.5134,
+        "v3_ref": -373.4826,
+        "v3yangle": 0.0,
+        "vparity": -1,
+    }
     im.meta.instrument = {
-        'detector': 'NRS1',
-        'filter': 'CLEAR',
-        'grating': 'PRISM',
-        'name': 'NIRSPEC',
-        'gwa_tilt': 37.0610,
-        'gwa_xtilt': 0.0001,
-        'gwa_ytilt': 0.0001,
-        'fixed_slit': 'S200A1'}
-    im.meta.subarray = {
-        'fastaxis': 1,
-        'name': 'SUBS200A1',
-        'slowaxis': 2,
-        'xsize': 72,
-        'xstart': 1,
-        'ysize': 416,
-        'ystart': 529}
-    im.meta.observation = {
-        'program_number': '1234',
-        'date': '2016-09-05',
-        'time': '8:59:37'}
+        "detector": "NRS1",
+        "filter": "CLEAR",
+        "grating": "PRISM",
+        "name": "NIRSPEC",
+        "gwa_tilt": 37.0610,
+        "gwa_xtilt": 0.0001,
+        "gwa_ytilt": 0.0001,
+        "fixed_slit": "S200A1",
+    }
+    im.meta.subarray = {"fastaxis": 1, "name": "SUBS200A1", "slowaxis": 2, "xsize": 72, "xstart": 1, "ysize": 416, "ystart": 529}
+    im.meta.observation = {"program_number": "1234", "date": "2016-09-05", "time": "8:59:37"}
     im.meta.exposure = {
-        'duration': 11.805952,
-        'end_time': 58119.85416,
-        'exposure_time': 11.776,
-        'measurement_time': 11.65824,
-        'frame_time': 0.11776,
-        'group_time': 0.11776,
-        'groupgap': 0,
-        'integration_time': 11.776,
-        'nframes': 1,
-        'ngroups': 100,
-        'nints': 1,
-        'nresets_between_ints': 0,
-        'nsamples': 1,
-        'readpatt': 'NRSRAPID',
-        'sample_time': 10.0,
-        'start_time': 58119.8333,
-        'type': 'NRS_FIXEDSLIT',
-        'zero_frame': False}
+        "duration": 11.805952,
+        "end_time": 58119.85416,
+        "exposure_time": 11.776,
+        "measurement_time": 11.65824,
+        "frame_time": 0.11776,
+        "group_time": 0.11776,
+        "groupgap": 0,
+        "integration_time": 11.776,
+        "nframes": 1,
+        "ngroups": 100,
+        "nints": 1,
+        "nresets_between_ints": 0,
+        "nsamples": 1,
+        "readpatt": "NRSRAPID",
+        "sample_time": 10.0,
+        "start_time": 58119.8333,
+        "type": "NRS_FIXEDSLIT",
+        "zero_frame": False,
+    }
 
     return im
 
@@ -105,47 +96,45 @@ def miri_rate():
     im.data += 5
     im.var_rnoise += 1
     im.meta.wcsinfo = {
-        'dec_ref': 40,
-        'ra_ref': 100,
-        'roll_ref': 0.0,
-        'v2_ref': -453.5134,
-        'v3_ref': -373.4826,
-        'v3yangle': 0.0,
-        'vparity': -1}
-    im.meta.instrument = {
-        'detector': 'MIRIMAGE',
-        'filter': 'P750L',
-        'name': 'MIRI'}
-    im.meta.observation = {
-        'date': '2019-01-01',
-        'time': '17:00:00'}
+        "dec_ref": 40,
+        "ra_ref": 100,
+        "roll_ref": 0.0,
+        "v2_ref": -453.5134,
+        "v3_ref": -373.4826,
+        "v3yangle": 0.0,
+        "vparity": -1,
+    }
+    im.meta.instrument = {"detector": "MIRIMAGE", "filter": "P750L", "name": "MIRI"}
+    im.meta.observation = {"date": "2019-01-01", "time": "17:00:00"}
     im.meta.subarray = {
-        'fastaxis': 1,
-        'name': 'SLITLESSPRISM',
-        'slowaxis': 2,
-        'xsize': xsize,
-        'xstart': 1,
-        'ysize': ysize,
-        'ystart': 529}
+        "fastaxis": 1,
+        "name": "SLITLESSPRISM",
+        "slowaxis": 2,
+        "xsize": xsize,
+        "xstart": 1,
+        "ysize": ysize,
+        "ystart": 529,
+    }
     im.meta.exposure = {
-        'duration': 11.805952,
-        'end_time': 58119.85416,
-        'exposure_time': 11.776,
-        'measurement_time': 11.65824,
-        'frame_time': 0.11776,
-        'group_time': 0.11776,
-        'groupgap': 0,
-        'integration_time': 11.776,
-        'nframes': 1,
-        'ngroups': 100,
-        'nints': 1,
-        'nresets_between_ints': 0,
-        'nsamples': 1,
-        'readpatt': 'FAST',
-        'sample_time': 10.0,
-        'start_time': 58119.8333,
-        'type': 'MIR_LRS-SLITLESS',
-        'zero_frame': False}
+        "duration": 11.805952,
+        "end_time": 58119.85416,
+        "exposure_time": 11.776,
+        "measurement_time": 11.65824,
+        "frame_time": 0.11776,
+        "group_time": 0.11776,
+        "groupgap": 0,
+        "integration_time": 11.776,
+        "nframes": 1,
+        "ngroups": 100,
+        "nints": 1,
+        "nresets_between_ints": 0,
+        "nsamples": 1,
+        "readpatt": "FAST",
+        "sample_time": 10.0,
+        "start_time": 58119.8333,
+        "type": "MIR_LRS-SLITLESS",
+        "zero_frame": False,
+    }
 
     return im
 
@@ -158,67 +147,64 @@ def nircam_rate():
     im = ImageModel(shape)
     im.var_rnoise += 0
     im.meta.wcsinfo = {
-        'ctype1': 'RA---TAN',
-        'ctype2': 'DEC--TAN',
-        'dec_ref': 11.99875540218638,
-        'ra_ref': 22.02351763251896,
-        'roll_ref': 0.005076934167039675,
-        'v2_ref': 86.039011,
-        'v3_ref': -493.385704,
-        'v3yangle': -0.07385127,
-        'vparity': -1,
-        'wcsaxes': 2}
+        "ctype1": "RA---TAN",
+        "ctype2": "DEC--TAN",
+        "dec_ref": 11.99875540218638,
+        "ra_ref": 22.02351763251896,
+        "roll_ref": 0.005076934167039675,
+        "v2_ref": 86.039011,
+        "v3_ref": -493.385704,
+        "v3yangle": -0.07385127,
+        "vparity": -1,
+        "wcsaxes": 2,
+    }
     im.meta.instrument = {
-        'channel': 'LONG',
-        'detector': 'NRCALONG',
-        'filter': 'F444W',
-        'lamp_mode': 'NONE',
-        'module': 'A',
-        'name': 'NIRCAM',
-        'pupil': 'CLEAR'}
-    im.meta.subarray = {
-        'fastaxis': -1,
-        'name': 'FULL',
-        'slowaxis': 2,
-        'xsize': xsize,
-        'xstart': 1,
-        'ysize': ysize,
-        'ystart': 1}
+        "channel": "LONG",
+        "detector": "NRCALONG",
+        "filter": "F444W",
+        "lamp_mode": "NONE",
+        "module": "A",
+        "name": "NIRCAM",
+        "pupil": "CLEAR",
+    }
+    im.meta.subarray = {"fastaxis": -1, "name": "FULL", "slowaxis": 2, "xsize": xsize, "xstart": 1, "ysize": ysize, "ystart": 1}
     im.meta.observation = {
-        'activity_id': '01',
-        'date': '2021-10-25',
-        'exposure_number': '00001',
-        'obs_id': 'V42424001001P0000000001101',
-        'observation_label': 'nircam_ptsrc_only',
-        'observation_number': '001',
-        'program_number': '42424',
-        'sequence_id': '1',
-        'time': '16:58:27.258',
-        'visit_group': '01',
-        'visit_id': '42424001001',
-        'visit_number': '001'}
+        "activity_id": "01",
+        "date": "2021-10-25",
+        "exposure_number": "00001",
+        "obs_id": "V42424001001P0000000001101",
+        "observation_label": "nircam_ptsrc_only",
+        "observation_number": "001",
+        "program_number": "42424",
+        "sequence_id": "1",
+        "time": "16:58:27.258",
+        "visit_group": "01",
+        "visit_id": "42424001001",
+        "visit_number": "001",
+    }
     im.meta.exposure = {
-        'duration': 161.05155,
-        'end_time': 59512.70899968495,
-        'exposure_time': 150.31478,
-        'measurement_time': 139.57801,
-        'frame_time': 10.73677,
-        'group_time': 21.47354,
-        'groupgap': 1,
-        'integration_time': 150.31478,
-        'mid_time': 59512.70812980775,
-        'nframes': 1,
-        'ngroups': 7,
-        'nints': 1,
-        'nresets_at_start': 1,
-        'nresets_between_ints': 1,
-        'readpatt': 'BRIGHT1',
-        'sample_time': 10,
-        'start_time': 59512.70725993055,
-        'type': 'NRC_IMAGE'}
+        "duration": 161.05155,
+        "end_time": 59512.70899968495,
+        "exposure_time": 150.31478,
+        "measurement_time": 139.57801,
+        "frame_time": 10.73677,
+        "group_time": 21.47354,
+        "groupgap": 1,
+        "integration_time": 150.31478,
+        "mid_time": 59512.70812980775,
+        "nframes": 1,
+        "ngroups": 7,
+        "nints": 1,
+        "nresets_at_start": 1,
+        "nresets_between_ints": 1,
+        "readpatt": "BRIGHT1",
+        "sample_time": 10,
+        "start_time": 59512.70725993055,
+        "type": "NRC_IMAGE",
+    }
     im.meta.photometry = {
-        'pixelarea_steradians': 1e-13,
-        'pixelarea_arcsecsq': 4e-3,
+        "pixelarea_steradians": 1e-13,
+        "pixelarea_arcsecsq": 4e-3,
     }
 
     return im
@@ -277,12 +263,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     result1 = ResampleStep.call(im)
     result2 = ResampleStep.call(im, pixel_scale_ratio=ratio)
 
-    assert_allclose(
-        np.array(result1.data.shape),
-        np.array(result2.data.shape) * ratio,
-        rtol=1,
-        atol=1
-    )
+    assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
 
     # Make sure the photometry keywords describing the solid angle of a pixel
     # are updated
@@ -304,9 +285,9 @@ def test_weight_type(nircam_rate, tmp_cwd):
     im1.data += 10
     im2.data += 5
     im3.data += 5
-    im1.var_rnoise += (1 / 10)
-    im2.var_rnoise += (1 / 5)
-    im3.var_rnoise += (1 / 5)
+    im1.var_rnoise += 1 / 10
+    im2.var_rnoise += 1 / 5
+    im3.var_rnoise += 1 / 5
     im2.meta.observation.sequence_id = "2"
     im3.meta.observation.sequence_id = "3"
 
@@ -323,7 +304,7 @@ def test_weight_type(nircam_rate, tmp_cwd):
     result2 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
 
     assert_allclose(result2.data[100:105, 100:105], 6.667, rtol=1e-2)
-    expectation_value = 407.
+    expectation_value = 407.0
     assert_allclose(result2.wht[100:105, 100:105], expectation_value, rtol=1e-2)
 
     # remove measurement time to force use of exposure time
@@ -366,46 +347,36 @@ def miri_rate_zero_crossing():
     im = ImageModel(shape)
     im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
-        'dec_ref': 2.16444343946559e-05,
-        'ra_ref': -0.00026031780056776,
-        'roll_ref': 0.0,
-        'v2_ref': -415.0690466121227,
-        'v3_ref': -400.575920398547,
-        'v3yangle': 0.0,
-        'vparity': -1}
-    im.meta.instrument = {
-        'detector': 'MIRIMAGE',
-        'filter': 'P750L',
-        'name': 'MIRI'}
-    im.meta.observation = {
-        'date': '2019-01-01',
-        'time': '17:00:00'}
-    im.meta.subarray = {
-        'fastaxis': 1,
-        'name': 'FULL',
-        'slowaxis': 2,
-        'xsize': xsize,
-        'xstart': 1,
-        'ysize': ysize,
-        'ystart': 1}
+        "dec_ref": 2.16444343946559e-05,
+        "ra_ref": -0.00026031780056776,
+        "roll_ref": 0.0,
+        "v2_ref": -415.0690466121227,
+        "v3_ref": -400.575920398547,
+        "v3yangle": 0.0,
+        "vparity": -1,
+    }
+    im.meta.instrument = {"detector": "MIRIMAGE", "filter": "P750L", "name": "MIRI"}
+    im.meta.observation = {"date": "2019-01-01", "time": "17:00:00"}
+    im.meta.subarray = {"fastaxis": 1, "name": "FULL", "slowaxis": 2, "xsize": xsize, "xstart": 1, "ysize": ysize, "ystart": 1}
     im.meta.exposure = {
-        'duration': 11.805952,
-        'end_time': 58119.85416,
-        'exposure_time': 11.776,
-        'frame_time': 0.11776,
-        'group_time': 0.11776,
-        'groupgap': 0,
-        'integration_time': 11.776,
-        'nframes': 1,
-        'ngroups': 100,
-        'nints': 1,
-        'nresets_between_ints': 0,
-        'nsamples': 1,
-        'readpatt': 'FAST',
-        'sample_time': 10.0,
-        'start_time': 58119.8333,
-        'type': 'MIR_LRS-FIXEDSLIT',
-        'zero_frame': False}
+        "duration": 11.805952,
+        "end_time": 58119.85416,
+        "exposure_time": 11.776,
+        "frame_time": 0.11776,
+        "group_time": 0.11776,
+        "groupgap": 0,
+        "integration_time": 11.776,
+        "nframes": 1,
+        "ngroups": 100,
+        "nints": 1,
+        "nresets_between_ints": 0,
+        "nsamples": 1,
+        "readpatt": "FAST",
+        "sample_time": 10.0,
+        "start_time": 58119.8333,
+        "type": "MIR_LRS-FIXEDSLIT",
+        "zero_frame": False,
+    }
 
     return im
 
@@ -444,8 +415,7 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
 
 
 def test_wcs_keywords(nircam_rate):
-    """Make sure certain wcs keywords are removed after resample
-    """
+    """Make sure certain wcs keywords are removed after resample"""
     im = AssignWcsStep.call(nircam_rate)
     result = ResampleStep.call(im)
 
@@ -458,9 +428,10 @@ def test_wcs_keywords(nircam_rate):
     assert result.meta.wcsinfo.vparity is None
 
 
-@pytest.mark.parametrize("n_images,weight_type",
-                         [(1, 'ivm'), (2, 'ivm'), (3, 'ivm'), (9, 'ivm'),
-                          (1, 'exptime'), (2, 'exptime'), (3, 'exptime'), (9, 'exptime')])
+@pytest.mark.parametrize(
+    "n_images,weight_type",
+    [(1, "ivm"), (2, "ivm"), (3, "ivm"), (9, "ivm"), (1, "exptime"), (2, "exptime"), (3, "exptime"), (9, "exptime")],
+)
 def test_resample_variance(nircam_rate, n_images, weight_type):
     """Test that resampled variance and error arrays are computed properly"""
     err = 0.02429
@@ -485,7 +456,7 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
     assert_allclose(result.var_poisson[5:-5, 5:-5].mean(), var_poisson / n_images, atol=1e-7)
 
 
-@pytest.mark.parametrize("shape", [(0, ), (10, 1)])
+@pytest.mark.parametrize("shape", [(0,), (10, 1)])
 def test_resample_undefined_variance(nircam_rate, shape):
     """Test that resampled variance and error arrays are computed properly"""
     im = AssignWcsStep.call(nircam_rate)
@@ -505,35 +476,25 @@ def test_resample_undefined_variance(nircam_rate, shape):
     assert_allclose(result.var_flat, np.nan)
 
 
-@pytest.mark.parametrize('ratio', [0.7, 1.2])
-@pytest.mark.parametrize('rotation', [0, 15, 135])
-@pytest.mark.parametrize('crpix', [(256, 488), (700, 124)])
-@pytest.mark.parametrize('crval', [(50, 77), (20, -30)])
-@pytest.mark.parametrize('shape', [(1205, 1100)])
+@pytest.mark.parametrize("ratio", [0.7, 1.2])
+@pytest.mark.parametrize("rotation", [0, 15, 135])
+@pytest.mark.parametrize("crpix", [(256, 488), (700, 124)])
+@pytest.mark.parametrize("crval", [(50, 77), (20, -30)])
+@pytest.mark.parametrize("shape", [(1205, 1100)])
 def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval, shape):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.data += 5
-    result = ResampleStep.call(
-        im,
-        output_shape=shape,
-        crpix=crpix,
-        crval=crval,
-        rotation=rotation,
-        pixel_scale_ratio=ratio
-    )
+    result = ResampleStep.call(im, output_shape=shape, crpix=crpix, crval=crval, rotation=rotation, pixel_scale_ratio=ratio)
 
     t = result.meta.wcs.forward_transform
 
     # test rotation
-    pc = t['pc_rotation_matrix'].matrix.value
+    pc = t["pc_rotation_matrix"].matrix.value
     orientation = np.rad2deg(np.arctan2(pc[0, 1], pc[1, 1]))
     assert np.allclose(rotation, orientation)
 
     # test CRPIX
-    assert np.allclose(
-        (-t['crpix1'].offset.value, -t['crpix2'].offset.value),
-        crpix
-    )
+    assert np.allclose((-t["crpix1"].offset.value, -t["crpix2"].offset.value), crpix)
 
     # test CRVAL
     assert np.allclose(t(*crpix), crval)
@@ -542,13 +503,9 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
     assert result.data.shape == shape[::-1]
 
 
-@pytest.mark.parametrize(
-    'output_shape2, match',
-    [((1205, 1100), True), ((1222, 1111), False), (None, True)]
-)
+@pytest.mark.parametrize("output_shape2, match", [((1205, 1100), True), ((1222, 1111), False), (None, True)])
 @pytest.mark.xfail(reason="Empty output region, unclear what this is meant to test.")
-def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
-                                        tmp_path):
+def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match, tmp_path):
     crpix = (600, 550)
     crval = (50, 77)
     rotation = 15
@@ -559,12 +516,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     # first pass - create a reference output WCS:
     im.data[:, :] = np.random.random(im.data.shape)
     result = ResampleStep.call(
-        im,
-        output_shape=(1205, 1100),
-        crpix=crpix,
-        crval=crval,
-        rotation=rotation,
-        pixel_scale_ratio=ratio
+        im, output_shape=(1205, 1100), crpix=crpix, crval=crval, rotation=rotation, pixel_scale_ratio=ratio
     )
 
     data1 = result.data
@@ -573,11 +525,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
     asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(tmp_path / refwcs)
 
-    result = ResampleStep.call(
-        im,
-        output_shape=output_shape2,
-        output_wcs=refwcs
-    )
+    result = ResampleStep.call(im, output_shape=output_shape2, output_wcs=refwcs)
 
     data2 = result.data
 
@@ -590,18 +538,14 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
         assert np.allclose(data1, data2)
 
 
-@pytest.mark.parametrize('ratio', [1.3, 1])
+@pytest.mark.parametrize("ratio", [1.3, 1])
 def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.data += 5
 
     fiducial = compute_fiducial([im.meta.wcs])
     input_scale = compute_scale(wcs=im.meta.wcs, fiducial=fiducial)
-    result = ResampleStep.call(
-        im,
-        pixel_scale_ratio=ratio,
-        pixel_scale=3600 * input_scale * 0.75
-    )
+    result = ResampleStep.call(im, pixel_scale_ratio=ratio, pixel_scale=3600 * input_scale * 0.75)
     output_scale = compute_scale(wcs=result.meta.wcs, fiducial=fiducial)
 
     # test scales are close
@@ -609,7 +553,6 @@ def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
 
 
 def test_pixscale(nircam_rate):
-
     # check that if both 'pixel_scale_ratio' and 'pixel_scale' are passed in,
     # that 'pixel_scale' overrides correctly
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
@@ -642,21 +585,6 @@ def test_phot_keywords(nircam_rate):
     res = ResampleStep.call(im, pixel_scale=0.04)
     new_psr = res.meta.resample.pixel_scale_ratio
 
-    assert np.allclose(
-        res.meta.resample.pixel_scale_ratio,
-        0.04 / np.sqrt(orig_pix_area_arcsec),
-        atol=0,
-        rtol=1e-12
-    )
-    assert np.allclose(
-        res.meta.photometry.pixelarea_steradians,
-        orig_pix_area_sr * new_psr**2,
-        atol=0,
-        rtol=1e-12
-    )
-    assert np.allclose(
-        res.meta.photometry.pixelarea_arcsecsq,
-        orig_pix_area_arcsec * new_psr**2,
-        atol=0,
-        rtol=1e-12
-    )
+    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04 / np.sqrt(orig_pix_area_arcsec), atol=0, rtol=1e-12)
+    assert np.allclose(res.meta.photometry.pixelarea_steradians, orig_pix_area_sr * new_psr**2, atol=0, rtol=1e-12)
+    assert np.allclose(res.meta.photometry.pixelarea_arcsecsq, orig_pix_area_arcsec * new_psr**2, atol=0, rtol=1e-12)

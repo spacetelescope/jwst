@@ -1,3 +1,3 @@
 from .flat_field_step import FlatFieldStep
 
-__all__ = ['FlatFieldStep']
+__all__ = ["FlatFieldStep"]

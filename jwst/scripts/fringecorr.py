@@ -14,5 +14,5 @@ def main():
     cmdline.step_script(flat_field_step)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

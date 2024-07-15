@@ -21,7 +21,7 @@ class DQInitStep(Step):
 
     class_alias = "dq_init"
 
-    reference_file_types = ['mask']
+    reference_file_types = ["mask"]
 
     def process(self, input):
         """Perform the dq_init calibration step
@@ -61,15 +61,15 @@ class DQInitStep(Step):
             raise
 
         # Retrieve the mask reference file name
-        self.mask_filename = self.get_reference_file(input_model, 'mask')
-        self.log.info('Using MASK reference file %s', self.mask_filename)
+        self.mask_filename = self.get_reference_file(input_model, "mask")
+        self.log.info("Using MASK reference file %s", self.mask_filename)
 
         # Check for a valid reference file
-        if self.mask_filename == 'N/A':
-            self.log.warning('No MASK reference file found')
-            self.log.warning('DQ initialization step will be skipped')
+        if self.mask_filename == "N/A":
+            self.log.warning("No MASK reference file found")
+            self.log.warning("DQ initialization step will be skipped")
             result = input_model.copy()
-            result.meta.cal_step.dq_init = 'SKIPPED'
+            result.meta.cal_step.dq_init = "SKIPPED"
             return result
 
         # Load the reference file

@@ -39,20 +39,15 @@ from stcal.jump import twopoint_difference
 
 
 def main():
-    if '--version' in sys.argv:
-        sys.stdout.write('%s\n' % jump.__version__)
+    if "--version" in sys.argv:
+        sys.stdout.write("%s\n" % jump.__version__)
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(
-        """Do jump detection on Level 1b FITS files""")
+    parser = argparse.ArgumentParser("""Do jump detection on Level 1b FITS files""")
 
-    parser.add_argument(
-        'infile', metavar='infile', nargs=1,
-        help="""Input Level 1b FITS file.""")
+    parser.add_argument("infile", metavar="infile", nargs=1, help="""Input Level 1b FITS file.""")
 
-    parser.add_argument(
-        'outfile', metavar='outfile', nargs=1,
-        help="""Output jump detected file""")
+    parser.add_argument("outfile", metavar="outfile", nargs=1, help="""Output jump detected file""")
 
     args = parser.parse_args()
 
@@ -60,5 +55,5 @@ def main():
     jd_a.do_all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

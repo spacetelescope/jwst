@@ -1,4 +1,5 @@
 """File utility functions"""
+
 from contextlib import contextmanager
 import os
 from pathlib import Path

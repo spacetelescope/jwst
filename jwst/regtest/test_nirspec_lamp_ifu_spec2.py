@@ -14,29 +14,30 @@ def run_pipeline(rtdata_module):
     rtdata = rtdata_module
 
     # Get the input exposure
-    rtdata.get_data('nirspec/lamp/jw00626030001_02103_00005_nrs1_rate.fits')
+    rtdata.get_data("nirspec/lamp/jw00626030001_02103_00005_nrs1_rate.fits")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["jwst.pipeline.Spec2Pipeline", rtdata.input,
-            "--steps.assign_wcs.save_results=true",
-            "--steps.msa_flagging.save_results=true",
-            "--steps.flat_field.save_results=true"]
+    args = [
+        "jwst.pipeline.Spec2Pipeline",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=true",
+        "--steps.msa_flagging.save_results=true",
+        "--steps.flat_field.save_results=true",
+    ]
     Step.from_cmdline(args)
 
     return rtdata
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", [
-    "assign_wcs", "msa_flagging", "flat_field", "cal", "s3d", "x1d"])
+@pytest.mark.parametrize("suffix", ["assign_wcs", "msa_flagging", "flat_field", "cal", "s3d", "x1d"])
 def test_nirspec_lamp_ifu_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
-       NIRSpec lamp exposure in IFU mode."""
+    NIRSpec lamp exposure in IFU mode."""
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
-    output = replace_suffix(
-        os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
+    output = replace_suffix(os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + ".fits"
     rtdata.output = output
 
     # Get the truth files

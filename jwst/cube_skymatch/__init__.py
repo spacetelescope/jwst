@@ -1,14 +1,15 @@
-""" skymatch
+"""skymatch
 
 This package provides support for sky background subtraction and equalization
 (matching).
 
 """
+
 import logging
 
 from .cube_skymatch_step import CubeSkyMatchStep
 
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
 
 __all__ = ["CubeSkyMatchStep"]
@@ -19,8 +20,7 @@ log.setLevel(logging.DEBUG)
 
 
 def help():
-    msg = \
-        """
+    msg = """
 The skymatch package contains the following tasks that allow users
 perform sky level matching on user images.
 

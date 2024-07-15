@@ -36,7 +36,7 @@ The pre-fetch also enables CRDS to report on all reference file assignment and
 availability problems a pipeline will encounter in a single CAL run.  This is
 required in I&T scenarios where the total number of pipeline runs is very
 limited (often weekly) so solving as many reference file issues per run as
-possible is needed. 
+possible is needed.
 
 While the prefetch runs for onsite users,  since the default CRDS configuration
 points to a complete CRDS cache,  no downloads will occur.
@@ -215,17 +215,17 @@ below::
  })
 
 Each class of CRDS rmap selector defines a search algorithm to be used at that
-stage of the reference file lookup. 
+stage of the reference file lookup.
 
 Match Selector
 ++++++++++++++
- 
+
 In the example shown above, CRDS selects a nested UseAfter selector based on
 the value of META.EXPOSURE.TYPE (EXP_TYPE).   The nested UseAfter is then
 used for a secondary lookup to determine the assigned reference.
 
 Parameters which contain or-bars, e.g.::
-  
+
   'NRS_FIXEDSLIT|NRS_BRIGHTOBJ'
 
 specify groups of values for which a file is equally applicable.
@@ -250,7 +250,7 @@ occur prior to a dataset, CRDS chooses the most recent reference file as best.
 
 Based on the dataset's values of::
 
-   META.OBSERVATION.DATE (DATE-OBS) 
+   META.OBSERVATION.DATE (DATE-OBS)
    META.OBSERVATION.TIME (TIME-OBS)
 
 CRDS will choose the appropriate reference file by comparing them to the
@@ -394,4 +394,3 @@ More information about CRDS can be found in the CRDS User's Guide maintained
 on the CRDS server here:
 
 https://jwst-crds.stsci.edu/static/users_guide/index.html
-

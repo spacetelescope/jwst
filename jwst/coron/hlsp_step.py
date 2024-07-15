@@ -8,7 +8,6 @@ __all__ = ["HlspStep"]
 
 
 class HlspStep(Step):
-
     """
     HlspStep: Make High-Level Science Products (HLSP's) from the results of
     coronagraphic exposure that's had KLIP processing applied to it.
@@ -22,30 +21,28 @@ class HlspStep(Step):
     """
 
     def process(self, target):
-
         width = self.annuli_width
 
         # Open the input target image model
         with datamodels.ImageModel(target) as target_model:
-
             # Create a signal-to-noise ratio image
-            self.log.info('Creating SNR image')
+            self.log.info("Creating SNR image")
             snr = hlsp.snr_image(target_model)
 
             # Create a contrast curve
-            self.log.info('Creating contrast curve')
+            self.log.info("Creating contrast curve")
             contrast = hlsp.contrast_curve(target_model, width)
 
         # Save the SNR output file
         if self.output_file is None:
             self.output_file = target_model.meta.filename
-        snr.meta.cal_step.hlsp = 'COMPLETE'
-        self.save_model(snr, suffix='snr')
+        snr.meta.cal_step.hlsp = "COMPLETE"
+        self.save_model(snr, suffix="snr")
         snr.close()
 
         # Save the Contrast curve file
-        contrast.meta.cal_step.hlsp = 'COMPLETE'
-        self.save_model(contrast, 'contrast')
+        contrast.meta.cal_step.hlsp = "COMPLETE"
+        self.save_model(contrast, "contrast")
         contrast.close()
 
         return

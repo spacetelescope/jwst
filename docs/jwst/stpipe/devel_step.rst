@@ -60,7 +60,7 @@ Output Suffix
 There are three ways a step's results can be written to a file:
 
 1. Implicitly when a step is run from the command line or with
-   `Step.from_cmdline` 
+   `Step.from_cmdline`
 
 2. Explicitly by specifying the parameter `save_results`
 

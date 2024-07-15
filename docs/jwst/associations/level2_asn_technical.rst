@@ -11,16 +11,16 @@ and enforced by the stage 2 schema.
 
   * :ref:`Informational Meta Keywords<asn-level2-meta-keywords>`
   * List of :ref:`products<asn-level2-products>`, each consisting of
-    
+
     * Output product name
     * List of :ref:`exposure members<asn-level2-members>`, each consisting of
-      
+
       * Filename of the exposure that is a member of this association
       * Type of exposure
       * If present, information about errors from the observatory log
 
 .. _asn-level2-example:
-   
+
 Example Association
 -------------------
 
@@ -60,7 +60,7 @@ The following are the informational, meta keywords of an association.
 
 asn_id *required*
   The association id. The id is what appears in the :ref:`asn-jwst-naming`
-  
+
 asn_pool *required*
   Association pool from which this association was created.
 
@@ -93,7 +93,7 @@ target *optional*
   Target ID for which this association refers to. JWST currently uses
   the TARGETID header keyword in the stage 2 exposure files, but there
   is no formal restrictions on value.
-  
+
 version_id *optional*
   Version identifier. DMS uses a time stamp with the format
   ``yyyymmddthhmmss``
@@ -109,7 +109,7 @@ stage 2, each product is an exposure. Each product should have one
 ``science`` member, the exposure on which the stage 2 processing will
 occur.
 
-Association products have two components: 
+Association products have two components:
 
 name *optional*
   The string template to be used by stage 2 processing tasks to create
@@ -145,11 +145,11 @@ exptype *required*
 
   * ``science``: Primary science exposure. For each product, only one exposure can
     be ``science``.
-    
+
   * ``background``: Background exposure to subtract.
-    
+
   * ``imprint``: Imprint exposure to subtract.
-    
+
   * ``sourcecat``: The catalog of sources to extract spectra for. Usually produced by
     :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
 

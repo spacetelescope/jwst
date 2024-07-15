@@ -11,7 +11,6 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, lin_model):
-
     # Create the output model as a copy of the input
     output_model = input_model.copy()
     zframe = None
@@ -37,8 +36,8 @@ def do_correction(input_model, lin_model):
 
     # Call linearity correction function in stcal
     new_data, new_pdq, new_zframe = linearity_correction(
-        output_model.data, gdq, pdq, lin_coeffs, lin_dq, dqflags.pixel,
-        zframe=zframe)
+        output_model.data, gdq, pdq, lin_coeffs, lin_dq, dqflags.pixel, zframe=zframe
+    )
 
     output_model.data = new_data
     output_model.pixeldq = new_pdq

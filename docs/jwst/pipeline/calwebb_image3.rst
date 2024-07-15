@@ -6,7 +6,7 @@ calwebb_image3: Stage 3 Imaging Processing
 :Class: `jwst.pipeline.Image3Pipeline`
 :Alias: calwebb_image3
 
-Stage 3 processing for direct-imaging observations is intended for combining the 
+Stage 3 processing for direct-imaging observations is intended for combining the
 calibrated data from multiple exposures (e.g. a dither or mosaic pattern) into a
 single rectified (distortion corrected) product.
 Before being combined, the exposures receive additional corrections for the
