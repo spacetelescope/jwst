@@ -466,12 +466,13 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert np.allclose(np.max(np.nansum(result1.data, axis=0)),
-                           np.max(np.nansum(result1.data, axis=0)), rtol=0.05)
+        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
+                           np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
     else:
         # surface brightness conservation: mean values are the same
-        assert np.allclose(np.nanmean(result1.data, axis=1)[2:-2],
-                           np.nanmean(result2.data, axis=1)[2:-2], rtol=0.05)
+        assert np.allclose(np.nanmean(result1.data, axis=1),
+                           np.nanmean(result2.data, axis=1), rtol=0.05,
+                           equal_nan=True)
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -531,7 +532,8 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
         else:
             # surface brightness conservation: mean values are the same
             assert np.allclose(np.nanmean(slit1.data, axis=0),
-                               np.nanmean(slit2.data, axis=0), rtol=0.05)
+                               np.nanmean(slit2.data, axis=0), rtol=0.05,
+                               equal_nan=True)
 
         # output area is updated either way
         area1 = slit1.meta.photometry.pixelarea_steradians
