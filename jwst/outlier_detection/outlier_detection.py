@@ -569,7 +569,8 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
     log.debug("Sci shape: {}".format(blot_img.data.shape))
 
-    blot_img.meta.wcs.array_shape = blot_img.shape #needed for compute image pixel area
+    # Set array shape, needed to compute image pixel area
+    blot_img.meta.wcs.array_shape = blot_img.shape
     if 'SPECTRAL' not in blot_img.meta.wcs.output_frame.axes_type:
         input_pixflux_area = blot_img.meta.photometry.pixelarea_steradians
         input_pixel_area = compute_image_pixel_area(blot_img.meta.wcs)
