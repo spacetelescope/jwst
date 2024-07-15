@@ -7,6 +7,7 @@ JWST pipeline step for image alignment.
 from os import path
 
 from astropy.table import Table
+from astropy.time import Time
 from tweakwcs.correctors import JWSTWCSCorrector
 
 import stcal.tweakreg.tweakreg as twk
@@ -275,8 +276,12 @@ class TweakRegStep(Step):
         # can (and does) occur after alignment between groups
         if align_to_abs_refcat:
             try:
+                ref_image = images[0]
                 correctors = \
-                    twk.absolute_align(correctors, self.abs_refcat, images[0],
+                    twk.absolute_align(correctors, self.abs_refcat,
+                                       ref_wcs=ref_image.meta.wcs,
+                                       ref_wcsinfo=ref_image.meta.wcsinfo,
+                                       epoch=Time(ref_image.meta.observation.date).decimalyear,
                                        abs_minobj=self.abs_minobj,
                                        abs_fitgeometry=self.abs_fitgeometry,
                                        abs_nclip=self.abs_nclip,
@@ -333,7 +338,9 @@ class TweakRegStep(Step):
                     corrector.wcs.name = f"FIT-LVL3-{self.abs_refcat}"
 
                 image_model.meta.wcs = corrector.wcs
-                update_s_region_imaging(image_model)
+                update_s_region_imaging(image_model.meta.wcs, 
+                                        image_model.meta.wcsinfo, 
+                                        shape=image_model.data.shape)
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.

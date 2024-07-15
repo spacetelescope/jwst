@@ -94,7 +94,9 @@ class ResampleStep(Step):
         for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
             self.update_fits_wcs(model)
-            update_s_region_imaging(model)
+            update_s_region_imaging(model.meta.wcs, 
+                                    model.meta.wcsinfo, 
+                                    shape=model.data.shape)
             model.meta.asn.pool_name = input_models.asn_pool_name
             model.meta.asn.table_name = input_models.asn_table_name
 
