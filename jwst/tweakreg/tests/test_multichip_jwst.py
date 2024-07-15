@@ -440,6 +440,7 @@ def test_multichip_alignment_step_abs(monkeypatch):
     mr.meta.observation.sequence_id = '0'
     mr.meta.observation.activity_id = '0'
     mr.meta.observation.exposure_number = '0'
+    mr.meta.observation.date = '2019-01-01'
 
     mr.meta.wcsinfo.v2_ref = 0
     mr.meta.wcsinfo.v3_ref = 0
