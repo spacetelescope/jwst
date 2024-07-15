@@ -120,22 +120,18 @@ def match_nans_and_flags(input_model):
                 continue
             is_invalid |= np.isnan(data)
 
+    # Nothing to do if no extensions were found to update
+    if is_invalid is None:
+        return
+
     # Add in invalid flags from the DQ extension if present
     if hasattr(input_model, 'dq'):
         do_not_use = (input_model.dq & dqflags.pixel['DO_NOT_USE']).astype(bool)
-        if is_invalid is None:
-            is_invalid = do_not_use
-            data_shape = input_model.dq.shape
+        if input_model.dq.shape != data_shape:
+            log.warning("Mismatched data shapes; skipping invalid data "
+                        "updates for extension 'dq'")
         else:
-            if input_model.dq.shape != data_shape:
-                log.warning("Mismatched data shapes; skipping invalid data "
-                            "updates for extension 'dq'")
-            else:
-                is_invalid |= do_not_use
-
-    # Nothing to do if no extensions were found
-    if is_invalid is None:
-        return
+            is_invalid |= do_not_use
 
     # Update all the data extensions
     for extension in nan_extensions:
