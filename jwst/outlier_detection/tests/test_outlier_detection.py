@@ -202,9 +202,11 @@ def test_outlier_step(we_three_sci, tmp_cwd):
         container, save_results=True, save_intermediate_results=True
     )
 
-    # Make sure nothing changed in SCI array
+    # Make sure nothing changed in SCI array except outliers are NaN
     for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+        dnu = (corrected.dq & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(corrected.data[dnu]))
+        assert np.allclose(image.data[~dnu], corrected.data[~dnu])
 
     # Verify source is not flagged
     for r in result:
@@ -212,6 +214,7 @@ def test_outlier_step(we_three_sci, tmp_cwd):
 
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    assert np.isnan(result[0].data[12, 12])
 
     # Verify that intermediary files are saved at the specified location
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
@@ -240,9 +243,11 @@ def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
         container, save_results=True, save_intermediate_results=True
     )
 
-    # Make sure nothing changed in SCI array
+    # Make sure nothing changed in SCI array except outliers are NaN
     for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+        dnu = (corrected.dq & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(corrected.data[dnu]))
+        assert np.allclose(image.data[~dnu], corrected.data[~dnu])
 
     # Verify source is not flagged
     for r in result:
@@ -250,6 +255,7 @@ def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
 
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    assert np.isnan(result[0].data[12, 12])
 
 
 def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
@@ -292,9 +298,11 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
 
     result = OutlierDetectionStep.call(container)
 
-    # Make sure nothing changed in SCI array
+    # Make sure nothing changed in SCI array except outliers are NaN
     for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+        dnu = (corrected.dq & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(corrected.data[dnu]))
+        assert np.allclose(image.data[~dnu], corrected.data[~dnu])
 
     # Verify source is not flagged
     for r in result:
@@ -302,6 +310,7 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
 
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    assert np.isnan(result[0].data[12, 12])
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_coron)
@@ -321,9 +330,12 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
 
     result = OutlierDetectionStep.call(container)
 
-    # Make sure nothing changed in SCI array
+    # Make sure nothing changed in SCI array except that
+    # outliers are NaN
     for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+        dnu = (corrected.dq & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(corrected.data[dnu]))
+        assert np.allclose(image.data[~dnu], corrected.data[~dnu])
 
     # Verify source is not flagged
     for r in result:
@@ -331,6 +343,7 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
 
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    assert np.isnan(result[0].data[12, 12])
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
@@ -369,9 +382,12 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
 
     result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 
-    # Make sure nothing changed in SCI array
+    # Make sure nothing changed in SCI array except
+    # that outliers are NaN
     for i, model in enumerate(im):
-        np.testing.assert_allclose(model.data, result.data[i])
+        dnu = (result.dq[i] & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(result.data[i][dnu]))
+        assert np.allclose(model.data[~dnu], result.data[i][~dnu])
 
     # Verify source is not flagged
     assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])

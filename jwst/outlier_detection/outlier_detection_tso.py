@@ -71,8 +71,7 @@ class OutlierDetectionTSO(OutlierDetection):
         flag_cr(self.input_models, median_model, **self.outlierpars)
 
         # Make sure all arrays have matching NaNs and DQ flags
-        for input_model in self.input_models:
-            match_nans_and_flags(input_model)
+        match_nans_and_flags(self.input_models)
 
     def weight_no_resample(self):
         """
