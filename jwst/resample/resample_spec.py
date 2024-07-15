@@ -346,7 +346,7 @@ class ResampleSpecData(ResampleData):
             slope_sign = np.sign(pix_to_ytan.slope)
         else:
             pix_to_tan_slope = np.abs(pix_to_xtan.slope)
-            slope_sign = np.sign(pix_to_ytan.slope)
+            slope_sign = np.sign(pix_to_xtan.slope)
 
         # Image size in spatial dimension from the maximum slope
         # and tangent offset span, plus one pixel to make sure
