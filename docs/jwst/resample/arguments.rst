@@ -27,8 +27,13 @@ image.
     pixels have a larger spatial scale, so more output pixels will
     sample the same input pixel.  For example, a value of 2.0
     means the output image would have 2 pixels sampling each input
-    spatial pixel. Note that this parameter is only applied in the
-    cross-dispersion direction: sampling wavelengths are not affected.
+    spatial pixel. If the input data has units of flux density (MJy/pixel),
+    the output flux per pixel will be approximately half the input flux
+    per pixel.  If the input data has units of surface brightness (MJy/sr),
+    the output flux per pixel is not scaled.
+
+    Note that this parameter is only applied in the cross-dispersion
+    direction for spectral data: sampling wavelengths are not affected.
 
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
 
@@ -41,8 +46,14 @@ image.
     Absolute pixel scale in ``arcsec``. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
 
-    For spectral data, this parameter is only applied in the
-    cross-dispersion direction: sampling wavelengths are not affected.
+    For spectral data, if the input data has units of flux density
+    (MJy/pixel), the output flux per pixel will be scaled by the ratio
+    of the selected output pixel scale to an average input pixel scale.
+    If the input data has units of surface brightness (MJy/sr),
+    the output flux per pixel is not scaled.
+
+    Note that this parameter is only applied in the cross-dispersion
+    direction for spectral data: sampling wavelengths are not affected.
 
     .. note::
         If this parameter is modified for spectral data, the extraction
