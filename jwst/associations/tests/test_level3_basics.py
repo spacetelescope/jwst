@@ -47,7 +47,7 @@ def test_targacq(pool_file):
     assert len(asns) > 0
     for asn in asns:
         # Ignore reprocessed asn's with only science
-        if not asn['asn_rule'] in ["Asn_Lv3SpecAux", "Asn_Lv3NRSIFUBackground"]:
+        if asn['asn_rule'] not in ["Asn_Lv3SpecAux", "Asn_Lv3NRSIFUBackground"]:
             for product in asn['products']:
                 exptypes = [
                     member['exptype'].lower()
