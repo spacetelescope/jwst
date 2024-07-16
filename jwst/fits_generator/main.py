@@ -28,7 +28,6 @@
 # DAMAGE.
 
 # THIRD-PARTY
-# from astropy.io import fits as pyfits
 
 # STDLIB
 import glob
