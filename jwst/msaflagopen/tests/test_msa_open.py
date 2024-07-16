@@ -103,7 +103,7 @@ def test_create_slitlets():
 
     for slit in result:
         # Test the returned data type and fields.
-        assert type(slit) == Slit
+        assert isinstance(slit, Slit)
         assert slit._fields == slit_fields
 
 
