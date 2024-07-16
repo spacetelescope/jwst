@@ -8,7 +8,11 @@ from jwst.associations.lib.dms_base import (
     nissoss_calibrated_filter, nrccoron_valid_detector,
     nrsfss_valid_detector, nrsifu_valid_detector)
 from jwst.associations.lib.process_list import ListCategory
-from jwst.associations.lib.rules_level3_base import DMS_Level3_Base,Constraint,SimpleConstraint,AsnMixin_Science,Constraint_Optical_Path,DMSAttrConstraint,Constraint_Target,Constraint_Image,AsnMixin_AuxData,AsnMixin_Coronagraphy,AsnMixin_Spectrum,Constraint_MSA,Constraint_IFU
+from jwst.associations.lib.rules_level3_base import (
+  AsnMixin_Science, AsnMixin_AuxData, AsnMixin_Coronagraphy, AsnMixin_Spectrum, 
+  DMS_Level3_Base, DMSAttrConstraint, Utility,
+  Constraint, SimpleConstraint, Constraint_Optical_Path, Constraint_Target, Constraint_Image, Constraint_MSA, Constraint_IFU
+)
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources, dms_product_name_nrsfs_sources,
     dms_product_name_noopt, dms_product_name_coronimage,
