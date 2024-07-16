@@ -8,31 +8,32 @@ from jwst import datamodels
 from jwst.assign_wcs import nirspec
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.nsclean.lib import NSClean, NSCleanSubarray
+from jwst.clean_noise.lib import NSClean, NSCleanSubarray
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def mask_ifu_slices(input_model, mask):
+    """
+    Flag pixels within IFU slices.
 
-    """Find pixels located within IFU slices and flag them in the
-    mask, so that they do not get used.
+    Find pixels located within IFU slices, according to the WCS,
+    and flag them in the mask, so that they do not get used.
 
     Parameters
     ----------
-    input_model : data model object
-        science data
+    input_model : `~jwst.datamodel.JwstDataModel`
+        Science data model
 
-    mask : 2D bool array
-        input mask that will be updated
+    mask : array-like of bool
+        2D input mask that will be updated
 
     Returns
     -------
-    mask : 2D bool array
-        output mask with additional flags for science pixels
+    mask : array-like of bool
+        2D output mask with additional flags for science pixels
     """
-
     log.info("Finding slice pixels for an IFU image")
 
     # Initialize global DQ map to all zero (OK to use)
@@ -64,28 +65,30 @@ def mask_ifu_slices(input_model, mask):
         dqmap[y.astype(int), x.astype(int)] = dq
 
     # Now set all non-zero locations in the mask to False (do not use)
-    mask[dqmap==1] = False
+    mask[dqmap == 1] = False
 
     return mask
 
 
 def mask_slits(input_model, mask):
+    """
+    Flag pixels within science regions.
 
-    """Find pixels located within MOS or fixed slit footprints
+    Find pixels located within MOS or fixed slit footprints
     and flag them in the mask, so that they do not get used.
 
     Parameters
     ----------
-    input_model : data model object
-        science data
+    input_model : `~jwst.datamodel.JwstDataModel`
+        Science data model
 
-    mask : 2D bool array
-        input mask that will be updated
+    mask : array-like of bool
+        2D input mask that will be updated
 
     Returns
     -------
-    mask : 2D bool array
-        output mask with additional flags for slit pixels
+    mask : array-like of bool
+        2D output mask with additional flags for slit pixels
     """
 
     from jwst.extract_2d.nirspec import offset_wcs
@@ -106,35 +109,42 @@ def mask_slits(input_model, mask):
     return mask
 
 
-def create_mask(input_model, mask_spectral_regions, n_sigma):
-    """Create the pixel mask needed for setting which pixels to use
-    for measuring 1/f noise.
+def create_mask(input_model, mask_spectral_regions, n_sigma, n_integ):
+    """
+    Create a mask identifying background pixels.
 
     Parameters
     ----------
-    input_model : data model object
-        science data
+    input_model : `~jwst.datamodel.JwstDataModel`
+        Science data model
 
     mask_spectral_regions : bool
-        mask slit/slice regions defined in WCS
+        Mask slit/slice regions defined in WCS
 
     n_sigma : float
-        sigma threshold for masking outliers
+        Sigma threshold for masking outliers
+
+    n_integ : int or None
+        Number of integrations to use for creating the mask.
+        If None, a separate mask will be made for each integration.
 
     Returns
     -------
-    mask : 2D or 3D bool array
-        image mask
+    mask : array-like of bool
+        2D or 3D image mask
 
-    nan_pix : array
-        indexes of image locations with NaN values
+    nan_pix : array-like of bool
+        Image locations with NaN values
     """
     exptype = input_model.meta.exposure.type.lower()
 
     # Initialize mask to all True. Subsequent operations will mask
     # out pixels that contain signal.
     # Note: mask will be 3D for BOTS mode data
-    mask = np.full(np.shape(input_model.dq), True)
+    if n_integ is None:
+        mask = np.full(np.shape(input_model.dq), True)
+    else:
+        mask = np.full(np.shape(input_model.dq[-2:]), True)
 
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
@@ -189,29 +199,29 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
         outliers = input_model.data > (median + n_sigma * sigma)
         mask[outliers] = False
 
-
     # Return the mask and the record of which pixels were NaN in the input;
     # it'll be needed later
     return mask, nan_pix
 
 
 def clean_full_frame(detector, image, mask):
-    """Clean a full-frame (2048x2048) image.
+    """
+    Clean a full-frame (2048x2048) image.
 
     Parameters
     ----------
     detector : str
         The name of the detector from which the data originate.
 
-    image : 2D float array
+    image : array-like of float
         The image to be cleaned.
 
-    mask : 2D bool array
+    mask : array-like of bool
         The mask that indicates which pixels are to be used in fitting.
 
     Returns
     -------
-    cleaned_image : 2D float array
+    cleaned_image : array-like of float
         The cleaned image.
     """
 
@@ -229,22 +239,23 @@ def clean_full_frame(detector, image, mask):
 
 
 def clean_subarray(detector, image, mask):
-    """Clean a subarray image.
+    """
+    Clean a subarray image.
 
     Parameters
     ----------
     detector : str
         The name of the detector from which the data originate.
 
-    image : 2D float array
+    image : array-like of float
         The image to be cleaned.
 
-    mask : 2D bool array
+    mask : array-like of bool
         The mask that indicates which pixels are to be used in fitting.
 
     Returns
     -------
-    cleaned_image : 2D float array
+    cleaned_image : array-like of float
         The cleaned image.
     """
 
@@ -276,23 +287,31 @@ def clean_subarray(detector, image, mask):
     return cleaned_image
 
 
-def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_mask):
-
-    """Apply the NSClean 1/f noise correction
+def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
+                  n_integ, save_mask, user_mask):
+    """
+    Apply the 1/f noise correction.
 
     Parameters
     ----------
-    input_model : data model object
-        science data to be corrected
+    input_model : `~jwst.datamodel.JwstDataModel`
+        Science data to be corrected
+
+    algorithm : {'fft', 'median'}
+        The algorithm to use to fit background noise
 
     mask_spectral_regions : bool
         Mask slit/slice regions defined in WCS
 
     n_sigma : float
-        n-sigma rejection level for finding outliers
+        N-sigma rejection level for finding outliers
+
+    n_integ : int or None
+        Number of integrations to use to create the background mask.
+        If set to None, a mask will be made for each integration.
 
     save_mask : bool
-        switch to indicate whether the mask should be saved
+        Switch to indicate whether the mask should be saved
 
     user_mask : str or None
         Path to user-supplied mask image
@@ -300,21 +319,26 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     Returns
     -------
     output_model : `~jwst.datamodel.JwstDataModel`
-        corrected data
+        Corrected data
 
     mask_model : `~jwst.datamodel.JwstDataModel`
-        pixel mask to be saved or None
+        Pixel mask to be saved or None
     """
 
     detector = input_model.meta.instrument.detector.upper()
+    subarray = input_model.meta.subarray.name.upper()
     exp_type = input_model.meta.exposure.type
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
 
     # Check for a valid input that we can work on
-    if input_model.meta.subarray.name.upper() == "ALLSLITS":
-        log.warning("Step cannot be applied to ALLSLITS subarray images")
+    nsclean_allowed = ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']
+    if algorithm == 'fft':
+        if exp_type not in nsclean_allowed:
+            log.warning(f"Algorithm 'fft' cannot be applied to exp_type {exp_type}")
+        elif subarray == 'ALLSLITS':
+            log.warning(f"Algorithm 'fft' cannot be applied to subarray {subarray}")
         log.warning("Step will be skipped")
-        input_model.meta.cal_step.nsclean = 'SKIPPED'
+        input_model.meta.cal_step.clean_noise = 'SKIPPED'
         return input_model, None
 
     output_model = input_model.copy()
@@ -322,12 +346,12 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # Check for a user-supplied mask image. If so, use it.
     if user_mask is not None:
         mask_model = datamodels.open(user_mask)
-        Mask = (mask_model.data.copy()).astype(np.bool_)
+        background_mask = (mask_model.data.copy()).astype(np.bool_)
 
         # Reset and save list of NaN pixels in the input image
         nan_pix = np.isnan(input_model.data)
         input_model.data[nan_pix] = 0
-        Mask[nan_pix] = False
+        background_mask[nan_pix] = False
 
     else:
         # Create the pixel mask that'll be used to indicate which pixels
@@ -337,14 +361,15 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
         # For BOTS mode the mask will be 3D, to accommodate changes in masked
         # pixels per integration.
         log.info("Creating mask")
-        Mask, nan_pix = create_mask(input_model, mask_spectral_regions, n_sigma)
+        background_mask, nan_pix = create_mask(
+            input_model, mask_spectral_regions, n_sigma, n_integ)
 
         # Store the mask image in a model, if requested
         if save_mask:
-            if len(Mask.shape) == 3:
-                mask_model = datamodels.CubeModel(data=Mask)
+            if len(background_mask.shape) == 3:
+                mask_model = datamodels.CubeModel(data=background_mask)
             else:
-                mask_model = datamodels.ImageModel(data=Mask)
+                mask_model = datamodels.ImageModel(data=background_mask)
         else:
             mask_model = None
 
@@ -353,10 +378,14 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # Setup for handling 2D or 3D inputs
     if len(input_model.data.shape) == 3:
         nints = input_model.data.shape[0]
-        # Check for 3D mask
-        if len(Mask.shape) == 2:
-            log.warning("Data are 3D, but mask is 2D. Step will be skipped.")
-            output_model.meta.cal_step.nsclean = 'SKIPPED'
+
+        # Check for 3D mask: if not passed, the same mask will
+        # be used for all ints
+        if background_mask.ndim == 2:
+            log.warning("Data are 3D, but mask is 2D.")
+        elif background_mask.shape != input_model.data.shape:
+            log.warning("Mask does not match data shape. Step will be skipped.")
+            output_model.meta.cal_step.clean_noise = 'SKIPPED'
             return output_model, None
     else:
         nints = 1
@@ -364,23 +393,29 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     # Loop over integrations (even if there's only 1)
     for i in range(nints):
         log.debug(f" working on integration {i+1}")
-        if len(input_model.data.shape) == 3:
+        if input_model.data.ndim == 3:
             image = np.float32(input_model.data[i])
-            mask = Mask[i]
+            if background_mask.ndim == 3:
+                mask = background_mask[i]
+            else:
+                mask = background_mask
         else:
             image = np.float32(input_model.data)
-            mask = Mask
+            mask = background_mask
 
-        if input_model.data.shape[-2:] == (2048, 2048):
-            # Clean a full-frame image
-            cleaned_image = clean_full_frame(detector, image, mask)
+        if algorithm == 'fft':
+            if input_model.data.shape[-2:] == (2048, 2048):
+                # Clean a full-frame image
+                cleaned_image = clean_full_frame(detector, image, mask)
+            else:
+                # Clean a subarray image
+                cleaned_image = clean_subarray(detector, image, mask)
         else:
-            # Clean a subarray image
-            cleaned_image = clean_subarray(detector, image, mask)
+            raise NotImplementedError('Median algorithm is not yet implemented.')
 
         # Check for failure
         if cleaned_image is None:
-            output_model.meta.cal_step.nsclean = 'SKIPPED'
+            output_model.meta.cal_step.clean_noise = 'SKIPPED'
             break
         else:
             # Store the cleaned image in the output model
@@ -393,6 +428,6 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     output_model.data[nan_pix] = np.nan
 
     # Set completion status
-    output_model.meta.cal_step.nsclean = 'COMPLETE'
+    output_model.meta.cal_step.clean_noise = 'COMPLETE'
 
     return output_model, mask_model

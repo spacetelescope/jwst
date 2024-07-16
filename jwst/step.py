@@ -7,6 +7,7 @@ from .background.background_step import BackgroundStep
 from .badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep
 from .barshadow.barshadow_step import BarShadowStep
 from .charge_migration.charge_migration_step import ChargeMigrationStep
+from .clean_noise.clean_noise_step import CleanNoiseStep
 from .combine_1d.combine_1d_step import Combine1dStep
 from .coron.stack_refs_step import StackRefsStep
 from .coron.align_refs_step import AlignRefsStep
@@ -34,7 +35,6 @@ from .master_background.master_background_step import MasterBackgroundStep
 from .master_background.master_background_mos_step import MasterBackgroundMosStep
 from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
-from .nsclean.nsclean_step import NSCleanStep
 from .outlier_detection.outlier_detection_step import OutlierDetectionStep
 from .pathloss.pathloss_step import PathLossStep
 from .persistence.persistence_step import PersistenceStep
@@ -76,6 +76,7 @@ __all__ = [
     "AlignRefsStep",
     "KlipStep",
     "HlspStep",
+    "CleanNoiseStep",
     "CubeBuildStep",
     "CubeSkyMatchStep",
     "DarkCurrentStep",
@@ -98,7 +99,6 @@ __all__ = [
     "MasterBackgroundMosStep",
     "MRSIMatchStep",
     "MSAFlagOpenStep",
-    "NSCleanStep",
     "OutlierDetectionStep",
     "PathLossStep",
     "PersistenceStep",

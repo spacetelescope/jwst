@@ -50,8 +50,8 @@ def run_pipeline(rtdata_module, request):
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
-            "--steps.nsclean.skip=False",
-            "--steps.nsclean.save_results=true",
+            "--steps.clean_noise.skip=False",
+            "--steps.clean_noise.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.wavecorr.save_results=true",
             "--steps.srctype.save_results=true",
@@ -83,7 +83,7 @@ def run_pipeline_pixel_replace(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
-    "assign_wcs", "nsclean", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
+    "assign_wcs", "clean_noise", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
     "cal", "s2d", "x1d"])
 def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
