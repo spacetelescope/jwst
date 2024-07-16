@@ -26,6 +26,12 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+outlier_detection
+-----------------
+
+- Fixed failures due to a missing ``wcs.array_shape`` attribute when the 
+  ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
 stpipe
 ------
 
