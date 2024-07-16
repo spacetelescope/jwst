@@ -288,6 +288,12 @@ lint.ignore = [
 line-length = 130
 
 [tool.ruff.lint.per-file-ignores]
+"jwst/**/__init__.py" = [
+    "E402", # module-level import not at top of file
+    "F401", # unused import
+    "F403", # import with *
+    "F405", # ambiguous import from *
+]
 "jwst/fits_generator/*" = [
     "F821", # undefined name
 ]

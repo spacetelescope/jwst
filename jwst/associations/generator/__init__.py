@@ -1,1 +1,1 @@
-from .generate import generate # noqa F401
+from .generate import generate

@@ -9,7 +9,7 @@ For more, see the :ref:`documentation overview <asn-overview>`.
 """
 
 # Take version from the upstream package
-from .. import __version__ # noqa F401
+from .. import __version__
 
 
 # Utility
@@ -24,12 +24,12 @@ def libpath(filepath):
                 'lib',
                 filepath)
 
-from .association import * # noqa F402,F403
-from .association_io import * # noqa F402,F403
-from .exceptions import * # noqa F402,F403
-from .generator import * # noqa F402,F403
-from .lib.process_list import * # noqa F402,F403
-from .pool import * # noqa F402,F403
-from .registry import * # noqa F402,F403
-from .load_asn import load_asn # noqa F402,F403
-from .main import * # noqa F402,F403
+from .association import *
+from .association_io import *
+from .exceptions import *
+from .generator import *
+from .lib.process_list import *
+from .pool import *
+from .registry import *
+from .load_asn import load_asn
+from .main import *
