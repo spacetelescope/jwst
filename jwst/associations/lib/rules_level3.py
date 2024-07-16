@@ -9,6 +9,7 @@ from jwst.associations.lib.dms_base import (
     nrsfss_valid_detector, nrsifu_valid_detector)
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import (
+    ASN_SCHEMA, # noqa F401
     AsnMixin_Science, AsnMixin_AuxData, AsnMixin_Coronagraphy, AsnMixin_Spectrum, 
     DMS_Level3_Base, DMSAttrConstraint, 
     Utility, # noqa F401
