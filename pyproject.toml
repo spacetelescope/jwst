@@ -277,8 +277,6 @@ write_to = "jwst/_version.py"
 exclude = [
     "jwst/extern",
     "docs",
-    "jwst/associations",
-    "jwst/fits_generator",
     ".tox",
     ".eggs",
     "build",
