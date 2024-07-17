@@ -80,7 +80,6 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
         will operate.  Valid parameters include:
             save_intermediate_results - saves the output into a file and the
                                         reference file (if created on-the-fly)
-            user_supplied_reffile - reference file supplied by the user
 
     Returns
     -------
@@ -89,7 +88,6 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
 
     """
     save_intermediate_results = pars['save_intermediate_results']
-    user_supplied_reffile = pars['user_supplied_reffile']
     nints_to_phase = pars['nints_to_phase']
     nbins = pars['nbins']
     scale_reference = pars['scale_reference']
@@ -99,7 +97,6 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     output_model = apply_emicorr(input_model, emicorr_model,
                         onthefly_corr_freq, save_onthefly_reffile,
                         save_intermediate_results=save_intermediate_results,
-                        user_supplied_reffile=user_supplied_reffile,
                         nints_to_phase=nints_to_phase,
                         nbins_all=nbins,
                         scale_reference=scale_reference,
@@ -109,11 +106,10 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     return output_model
 
 
-def apply_emicorr(input_model, emicorr_model,
+def apply_emicorr(output_model, emicorr_model,
         onthefly_corr_freq, save_onthefly_reffile,
-        save_intermediate_results=False, user_supplied_reffile=None,
-        nints_to_phase=None, nbins_all=None, scale_reference=True,
-        use_n_cycles=3):
+        save_intermediate_results=False, nints_to_phase=None,
+        nbins_all=None, scale_reference=True, use_n_cycles=3):
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
@@ -142,7 +138,7 @@ def apply_emicorr(input_model, emicorr_model,
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    output_model : `~jwst.datamodels.JwstDataModel`
         input science data model to be emi-corrected
 
     emicorr_model : `~jwst.datamodels.EmiModel`
@@ -156,9 +152,6 @@ def apply_emicorr(input_model, emicorr_model,
 
     save_intermediate_results : bool
         Saves the output into a file and the reference file (if created on-the-fly)
-
-    user_supplied_reffile : str
-        Reference file supplied by the user
 
     nints_to_phase : int
         Number of integrations to phase
@@ -179,11 +172,11 @@ def apply_emicorr(input_model, emicorr_model,
         input science data model which has been emi-corrected
     """
     # get the subarray case and other info
-    detector = input_model.meta.instrument.detector
-    subarray = input_model.meta.subarray.name
-    readpatt = input_model.meta.exposure.readpatt
-    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
-    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
+    detector = output_model.meta.instrument.detector
+    subarray = output_model.meta.subarray.name
+    readpatt = output_model.meta.exposure.readpatt
+    xsize = output_model.meta.subarray.xsize   # SUBSIZE1 keyword
+    xstart = output_model.meta.subarray.xstart   # SUBSTRT1 keyword
 
     # get the subarray case from either the ref file or set default values
     freqs_numbers = []
@@ -218,12 +211,9 @@ def apply_emicorr(input_model, emicorr_model,
         return subname
 
     # get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
-    nsamples = input_model.meta.exposure.nsamples
+    nsamples = output_model.meta.exposure.nsamples
 
     # Initialize the output model as a copy of the input
-    output_model = input_model
-    input_model.close()
-    del input_model
     nints, ngroups, ny, nx = np.shape(output_model.data)
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes

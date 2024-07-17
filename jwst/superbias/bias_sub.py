@@ -47,7 +47,7 @@ def do_correction(input_model, bias_model):
     return output_model
 
 
-def subtract_bias(input, bias):
+def subtract_bias(output, bias):
     """
     Subtracts a superbias image from a science data set, subtracting the
     superbias from each group of each integration in the science data.
@@ -56,7 +56,7 @@ def subtract_bias(input, bias):
 
     Parameters
     ----------
-    input: data model object
+    output: data model object
         the input science data
 
     bias: superbias model object
@@ -69,10 +69,6 @@ def subtract_bias(input, bias):
 
     """
 
-    # Create output as a copy of the input science data model
-    output = input.copy()
-    input.close()
-
     # combine the science and superbias DQ arrays
     output.pixeldq = np.bitwise_or(output.pixeldq, bias.dq)
 
@@ -82,7 +78,7 @@ def subtract_bias(input, bias):
 
     # If ZEROFRAME is present, subtract the super bias.  Zero values
     # indicate bad data, so should be kept zero.
-    if input.meta.exposure.zero_frame:
+    if output.meta.exposure.zero_frame:
         wh_zero = np.where(output.zeroframe == 0.)
         output.zeroframe -= bias.data
         output.zeroframe[wh_zero] = 0.  # Zero values indicate unusable data

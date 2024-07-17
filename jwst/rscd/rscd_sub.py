@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model, rscd_model, type):
+def do_correction(output_model, rscd_model, type):
     """
     Short Summary
     -------------
@@ -21,7 +21,7 @@ def do_correction(input_model, rscd_model, type):
 
     Parameters
     ----------
-    input_model: ~jwst.datamodels.RampModel
+    output_model: ~jwst.datamodels.RampModel
         science data to be corrected
 
     rscd_model: ~jwst.datamodels.RSCDModel
@@ -38,26 +38,25 @@ def do_correction(input_model, rscd_model, type):
     """
 
     # Retrieve the reference parameters for this exposure type
-    param = get_rscd_parameters(input_model, rscd_model)
-    output = input_model
+    param = get_rscd_parameters(output_model, rscd_model)
 
     if not bool(param):  # empty dictionary
         log.warning('READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
-        return output
+        output_model.meta.cal_step.rscd = 'SKIPPED'
+        return output_model
 
     if type == 'baseline':
         group_skip = param['skip']
-        output = correction_skip_groups(input_model, group_skip)
+        output_model = correction_skip_groups(output_model, group_skip)
     else:
         # enhanced algorithm is not enabled yet (updated code and validation needed)
         log.warning('Enhanced algorithm not support yet: RSCD correction will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
-        return output
+        output_model.meta.cal_step.rscd = 'SKIPPED'
+        return output_model
         # decay function algorithm update needed
-        # output = correction_decay_function(input_model, param)
+        # output_model = correction_decay_function(input_model, param)
 
-    return output
+    return output_model
 
 
 def correction_skip_groups(input_model, group_skip):

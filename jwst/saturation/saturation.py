@@ -23,7 +23,7 @@ NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
 
-def flag_saturation(input_model, ref_model, n_pix_grow_sat):
+def flag_saturation(output_model, ref_model, n_pix_grow_sat):
     """
     Short Summary
     -------------
@@ -31,7 +31,7 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
     ref_model : `~jwst.datamodels.SaturationModel`
@@ -49,9 +49,6 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         the GROUPDQ array
     """
 
-    # Create the output model as a copy of the input
-    output_model = input_model.copy()
-    input_model.close()
     gdq = output_model.groupdq
     pdq = output_model.pixeldq
     data = output_model.data

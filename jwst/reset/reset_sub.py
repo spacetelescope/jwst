@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model, reset_model):
+def do_correction(output_model, reset_model):
     """
     Short Summary
     -------------
@@ -22,7 +22,7 @@ def do_correction(input_model, reset_model):
 
     Parameters
     ----------
-    input_model: data model object
+    output_model: data model object
         science data to be corrected
 
     reset_model: reset model object
@@ -36,16 +36,11 @@ def do_correction(input_model, reset_model):
 
     """
 
-    # Create output as a copy of the input science data model
-    output = input_model
-    input_model.close()
-    del input_model
-
     # Save some data params for easy use later
-    sci_nints = output.meta.exposure.nints      # num ints in input data
-    sci_ngroups = output.meta.exposure.ngroups  # num groups in input data
-    sci_integration_start = output.meta.exposure.integration_start
-    sci_integration_end = output.meta.exposure.integration_end
+    sci_nints = output_model.meta.exposure.nints      # num ints in input data
+    sci_ngroups = output_model.meta.exposure.ngroups  # num groups in input data
+    sci_integration_start = output_model.meta.exposure.integration_start
+    sci_integration_end = output_model.meta.exposure.integration_end
     istart = 0
     iend = sci_nints
 
@@ -75,11 +70,11 @@ def do_correction(input_model, reset_model):
             ir = reset_nints - 1
 
         # combine the science and reset DQ arrays
-        output.pixeldq = np.bitwise_or(output.pixeldq, reset_model.dq)
+        output_model.pixeldq = np.bitwise_or(output_model.pixeldq, reset_model.dq)
 
         # we are only correcting the first reset_ngroups
         for j in range(igroup):
-            output.data[i - istart, j] -= reset_model.data[ir, j]
+            output_model.data[i - istart, j] -= reset_model.data[ir, j]
 
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
@@ -87,4 +82,4 @@ def do_correction(input_model, reset_model):
             #           output.err[i,j]**2 + reset.err[j]**2)
 
     gc.collect()
-    return output
+    return output_model

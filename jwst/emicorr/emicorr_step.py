@@ -54,7 +54,6 @@ class EmiCorrStep(Step):
         # Setup parameters
         pars = {
             'save_intermediate_results': self.save_intermediate_results,
-            'user_supplied_reffile': self.user_supplied_reffile,
             'nints_to_phase': self.nints_to_phase,
             'nbins': self.nbins,
             'scale_reference': self.scale_reference,

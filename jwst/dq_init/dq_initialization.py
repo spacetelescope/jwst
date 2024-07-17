@@ -39,12 +39,12 @@ def correct_model(input_model, mask_model):
     return output_model
 
 
-def do_dqinit(input_model, mask_model):
+def do_dqinit(output_model, mask_model):
     """Perform the dq_init step on a JWST datamodel
 
     Parameters
     ----------
-    input_model : input JWST datamodel
+    output_model : input JWST datamodel
         The jwst datamodel to be corrected
 
     mask_model : mask datamodel
@@ -57,12 +57,7 @@ def do_dqinit(input_model, mask_model):
     """
 
     # Inflate empty DQ array, if necessary
-    check_dimensions(input_model)
-
-    # Create output model as copy of input
-    output_model = input_model
-    input_model.close()
-    del input_model
+    check_dimensions(output_model)
 
     # Extract subarray from reference data, if necessary
     if reffile_utils.ref_matches_sci(output_model, mask_model):
