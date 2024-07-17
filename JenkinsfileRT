@@ -104,11 +104,13 @@ bc1.test_configs = []
 
 bc2 = utils.copy(bc0)
 bc2.pip_reqs_files = ['requirements-dev-st.txt']
+bc2.test_configs = []
 
 bc3 = utils.copy(bc0)
 bc3.conda_packages = [
     "python=3.12",
 ]
+bc3.test_configs = []
 
 utils.run([jobconfig, bc0, bc1, bc2, bc3])
 }  // withCredentials
