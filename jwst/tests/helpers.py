@@ -37,3 +37,25 @@ def word_precision_check(str1, str2, length=5):
     else:
         return True
     return False
+
+
+class LogWatcher:
+    """
+    The pytest caplog fixture only works for the root
+    logger. We use all sorts of loggers which can lead
+    to random test failures with caplog. This class
+    can be monkeypatched onto a logger method to
+    check for a specific message.
+    """
+    def __init__(self, message):
+        self.seen = False
+        self.message = message
+
+    def __call__(self, *args, **kwargs):
+        if not args or not isinstance(args[0], str):
+            return
+        if self.message in args[0]:
+            self.seen = True
+
+    def assert_seen(self):
+        assert self.seen, f"{self.message} not in logs"
