@@ -40,7 +40,7 @@ dependencies = [
     "stsci.image>=2.3.5",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
-    "tweakwcs>=0.8.6",
+    "tweakwcs>=0.8.8",
     "asdf-astropy>=0.3.0",
     "wiimatch>=0.2.1",
     "packaging>20.0",
