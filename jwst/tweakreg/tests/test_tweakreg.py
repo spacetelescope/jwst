@@ -333,13 +333,13 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     step = tweakreg_step.TweakRegStep(**kwargs)
 
     # patch _construct_wcs_corrector to check the correct catalog was loaded
-    def patched_construct_wcs_corrector(model, catalog, _seen=[]):
+    def patched_construct_wcs_corrector(wcs, wcsinfo, catalog, group_id, _seen=[]):
         # we don't need to continue
-        if model.meta.group_id == 'a':
+        if group_id == 'a':
             assert len(catalog) == n_custom_sources
-        elif model.meta.group_id == 'b':
+        elif group_id == 'b':
             assert len(catalog) == N_EXAMPLE_SOURCES
-        _seen.append(model)
+        _seen.append(wcs)
         if len(_seen) == 2:
             raise ValueError("done testing")
         return None

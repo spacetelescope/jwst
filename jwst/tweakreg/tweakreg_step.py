@@ -239,7 +239,10 @@ class TweakRegStep(Step):
                 image_model.meta.tweakreg_catalog = self._write_catalog(catalog, filename)
 
             # construct the corrector since the model is open (and already has a group_id)
-            correctors[model_index] = twk.construct_wcs_corrector(image_model, catalog)
+            correctors[model_index] = twk.construct_wcs_corrector(image_model.meta.wcs,
+                                                                  image_model.meta.wcsinfo,
+                                                                  catalog,
+                                                                  image_model.meta.group_id,)
 
         self.log.info('')
         self.log.info("Number of image groups to be aligned: {:d}."
