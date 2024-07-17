@@ -1,11 +1,54 @@
-1.15.1 (unreleased)
+1.15.2 (unreleased)
 ===================
+
 
 scripts
 -------
 
 - Removed many non-working and out-dated scripts. Including
   many scripts that were replaced by ``strun``. [#8619]
+
+cube_build
+----------
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+master_background
+-----------------
+
+- Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
+  as a background slit, instead of ``"bkg"`` only. [#8600]
+
+outlier_detection
+-----------------
+
+- Fixed failures due to a missing ``wcs.array_shape`` attribute when the 
+  ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
+stpipe
+------
+
+- Removed setting of the `self.skip` attribute in the `record_step_status()` function;
+  added a `query_step_status()` function to use as an alternative to checking 
+  `self.skip`. [#8600]
+
+tweakreg
+--------
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+1.15.1 (2024-07-08)
+===================
+
+ramp_fitting
+------------
+
+- Fix bugs in the C algorithm Poisson variance calculation when provided with an average dark current. [stcal#269]
+
+- Use the C extension with multiprocessing. [stcal#268]
+
 
 1.15.0 (2024-06-26)
 ===================

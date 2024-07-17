@@ -28,7 +28,6 @@
 # DAMAGE.
 
 # STDLIB
-from operator import itemgetter
 import os
 import re
 
