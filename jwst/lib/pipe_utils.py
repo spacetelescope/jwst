@@ -3,7 +3,8 @@
 import logging
 
 import numpy as np
-from stdatamodels.jwst.datamodels import dqflags
+from stdatamodels.properties import ObjectNode
+from stdatamodels.jwst.datamodels import dqflags, JwstDataModel
 
 from jwst.associations.lib.dms_base import TSO_EXP_TYPES
 
@@ -102,6 +103,11 @@ def match_nans_and_flags(input_model):
         var_poisson, and var_flat extensions. These extensions must all have
         matching dimensions if present.
     """
+    # Check for datamodel input or slit instance
+    if (not isinstance(input_model, JwstDataModel)
+            and not isinstance(input_model, ObjectNode)):
+        raise ValueError(f"Input {type(input_model)} is not a datamodel.")
+
     # Build up the invalid data flags from each available data extension.
     is_invalid = None
     data_shape = None

@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.properties import ObjectNode
 
 from jwst.lib import pipe_utils
 from jwst.associations.lib import dms_base
@@ -157,6 +158,24 @@ def test_match_nans_and_flags_no_data(caplog):
 
     model.close()
     model_copy.close()
+
+
+def test_match_nans_and_flags_not_a_model():
+    # Make sure the function throws an error if input is not a model
+    model = "not_a_model"
+    with pytest.raises(ValueError, match="not a datamodel"):
+        pipe_utils.match_nans_and_flags(model)
+
+    # empty JwstDataModel is okay
+    model = datamodels.JwstDataModel()
+    pipe_utils.match_nans_and_flags(model)
+
+    # a datamodel object node is also okay
+    multislit = datamodels.MultiSlitModel()
+    multislit.slits.append(datamodels.SlitModel())
+    assert not isinstance(multislit.slits[0], datamodels.JwstDataModel)
+    assert isinstance(multislit.slits[0], ObjectNode)
+    pipe_utils.match_nans_and_flags(multislit.slits[0])
 
 
 def test_match_nans_and_flags_shape_mismatch():
