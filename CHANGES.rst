@@ -1,6 +1,13 @@
 1.15.2 (unreleased)
 ===================
 
+
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
+
 cube_build
 ----------
 
@@ -54,6 +61,7 @@ ramp_fitting
 - Fix bugs in the C algorithm Poisson variance calculation when provided with an average dark current. [stcal#269]
 
 - Use the C extension with multiprocessing. [stcal#268]
+
 
 1.15.0 (2024-06-26)
 ===================
