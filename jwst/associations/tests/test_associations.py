@@ -8,9 +8,6 @@ from jwst.associations import (
     AssociationError,
     AssociationRegistry,
     generate)
-from jwst.associations.registry import (
-    import_from_file,
-)
 from jwst.associations.lib.dms_base import DMSAttrConstraint
 
 

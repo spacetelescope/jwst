@@ -277,30 +277,32 @@ write_to = "jwst/_version.py"
 exclude = [
     "jwst/extern",
     "docs",
-    "jwst/associations",
-    "jwst/fits_generator",
     ".tox",
     ".eggs",
     "build",
 ]
 lint.ignore = [
     "E741", # ambiguous variable name (O/0, l/I, etc.)
+    "E722", # Do not use bare `except`
 ]
 line-length = 130
 
 [tool.ruff.lint.per-file-ignores]
-"jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
-    "E402",
+"jwst/**/__init__.py" = [
+    "E402", # module-level import not at top of file
+    "F401", # unused import
+    "F403", # import with *
+    "F405", # ambiguous import from *
 ]
-"jwst/ramp_fitting/tests/compare_crs.py" = [
-    "E402",
+"jwst/fits_generator/*" = [
+    "F821", # undefined name
 ]
-"jwst/ramp_fitting/tests/compare_cr_files.py" = [
-    "E402",
+"jwst/fits_generator/tests/*" = [
+    "F841", # unused variable
 ]
-"jwst/ramp_fitting/tests/create_cube.py" = [
-    "E402",
+"jwst/associations/tests*" = [
+    "F841", # unused variable
 ]
-"jwst/ramp_fitting/tests/mc_3d.py" = [
-    "E402",
+"jwst/ramp_fitting/tests/*" = [
+    "E402", # module-level import not at top of file
 ]
