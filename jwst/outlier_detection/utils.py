@@ -126,6 +126,8 @@ def flag_crs_in_models(
         if resample_data:
             if 'SPECTRAL' not in image.meta.wcs.output_frame.axes_type:
                 input_pixflux_area = image.meta.photometry.pixelarea_steradians
+                # Set array shape, needed to compute image pixel area
+                image.meta.wcs.array_shape = image.shape
                 input_pixel_area = compute_image_pixel_area(image.meta.wcs)
                 pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
             else:
