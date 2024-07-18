@@ -1,10 +1,6 @@
 """Test the Registry"""
-import sys
-from copy import deepcopy
-from tempfile import NamedTemporaryFile
 
 from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
-from jwst.associations.registry import import_from_file
 
 import pytest
 
