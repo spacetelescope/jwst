@@ -150,7 +150,7 @@ Need other useful packages in your development environment?
 
 **Note: As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
 For details, refer to the [CRDS PUB Server Freeze
-and Deprecation page](https://jwst-pipeline.readthedocs.io/en/stable/jwst/pub_deprecation.html#pub-deprecation)**
+and Deprecation page](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/pub_deprecation.html#crds-pub-server-freeze-and-deprecation)**
 
 
 CRDS is the system that manages the reference files needed to run the pipeline.
