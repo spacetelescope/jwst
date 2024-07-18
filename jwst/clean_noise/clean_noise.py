@@ -15,6 +15,11 @@ from jwst.ramp_fitting import RampFitStep
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+# Fixed slit region to mask, for NIRSpec MOS and IFU data
+# Values are y start and stop indices, for the edges of the
+# region to mask.
+NRS_FS_REGION = [922, 1116]
+
 
 def mask_ifu_slices(input_model, mask):
     """
@@ -148,7 +153,7 @@ def make_rate(input_model, return_cube=False):
 
 def assign_wcs_to_rate(input_model, msaflagopen=False):
     """
-    Assign a WCS to the input model.
+    Assign a WCS to the input rate model.
 
     Parameters
     ----------
@@ -161,7 +166,7 @@ def assign_wcs_to_rate(input_model, msaflagopen=False):
 
     Returns
     -------
-    model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+    output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
         The updated model.
     """
     output_model = AssignWcsStep.call(input_model)
@@ -203,7 +208,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
     # make a rate file if needed
     flag_open = (exptype in ['nrs_ifu', 'nrs_msaspec'])
     if isinstance(input_model, datamodels.RampModel):
-        image_model = make_rate(input_model, return_cube=(not single_mask)),
+        image_model = make_rate(input_model, return_cube=(not single_mask))
 
         # if needed, also assign a WCS
         if mask_spectral_regions:
@@ -242,7 +247,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
     if mask_spectral_regions:
         if exptype == 'nrs_ifu':
             log.info("Masking the fixed slit region for IFU data.")
-            mask[..., 922:1116, :] = False
+            mask[..., NRS_FS_REGION[0]:NRS_FS_REGION[1], :] = False
         elif exptype == 'nrs_msaspec':
             # check for any slits defined in the fixed slit quadrant:
             # if there is nothing there of interest, mask the whole FS region
@@ -250,7 +255,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
             is_fs = [s.quadrant == 5 for s in slit2msa.slits]
             if not any(is_fs):
                 log.info("Masking the fixed slit region for MOS data.")
-                mask[..., 922:1116, :] = False
+                mask[..., NRS_FS_REGION[0]:NRS_FS_REGION[1], :] = False
             else:
                 log.info("Fixed slits found in MSA definition; "
                          "not masking the fixed slit region for MOS data.")
@@ -479,8 +484,8 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
         # Check for 3D mask
         if background_mask.ndim == 2:
             if nints > 1:
-                log.info("Data has multiple integrations, but mask is 2D.")
-                log.info("The same mask will be used for all integrations.")
+                log.info("Data has multiple integrations, but mask is 2D: "
+                         "the same mask will be used for all integrations.")
         elif background_mask.shape[0] != nints:
             log.warning("Mask does not match data shape. Step will be skipped.")
             output_model.meta.cal_step.clean_noise = 'SKIPPED'

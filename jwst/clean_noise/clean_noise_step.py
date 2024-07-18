@@ -10,10 +10,10 @@ class CleanNoiseStep(Step):
     """
     CleanNoiseStep: This step performs 1/f noise correction ("cleaning").
 
-    Input data is expected to be a ramp file, in between jump and
-    ramp fitting steps.
+    Input data is expected to be a ramp file (RampModel), in between
+    jump and ramp fitting steps, or a rate file (ImageModel or CubeModel).
 
-    Algorithms implemented are:
+    Correction algorithms implemented are:
         - `fft`: Background noise is fit in frequency space.
            Implementation is based on the NSClean algorithm, developed
            by Bernard Rauscher.
