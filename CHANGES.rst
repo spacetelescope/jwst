@@ -26,6 +26,11 @@ outlier_detection
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
 
+set_telescope_pointing
+----------------------
+
+- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+
 stpipe
 ------
 
