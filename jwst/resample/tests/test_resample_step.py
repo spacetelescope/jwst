@@ -546,18 +546,20 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
     'output_shape2, match',
     [((1205, 1100), True), ((1222, 1111), False), (None, True)]
 )
-@pytest.mark.xfail(reason="Empty output region, unclear what this is meant to test.")
 def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
                                         tmp_path):
+
+    # make some data with a WCS and some random values
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    rng = np.random.default_rng(seed=77)
+    im.data[:, :] = rng.random(im.data.shape)
+
     crpix = (600, 550)
-    crval = (50, 77)
+    crval = (22.04, 11.98)
     rotation = 15
     ratio = 0.7
 
-    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
-
     # first pass - create a reference output WCS:
-    im.data[:, :] = np.random.random(im.data.shape)
     result = ResampleStep.call(
         im,
         output_shape=(1205, 1100),
@@ -567,7 +569,9 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
         pixel_scale_ratio=ratio
     )
 
+    # make sure results are nontrivial
     data1 = result.data
+    assert not np.all(np.isnan(data1))
 
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
@@ -580,6 +584,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     )
 
     data2 = result.data
+    assert not np.all(np.isnan(data2))
 
     if output_shape2 is not None:
         assert data2.shape == output_shape2[::-1]
@@ -587,7 +592,17 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     if match:
         # test output image shape
         assert data1.shape == data2.shape
-        assert np.allclose(data1, data2)
+        assert np.allclose(data1, data2, equal_nan=True)
+
+    # make sure pixel values are similar, accounting for scale factor
+    # (assuming inputs are in surface brightness units)
+    iscale = np.sqrt(im.meta.photometry.pixelarea_steradians
+                     / compute_image_pixel_area(im.meta.wcs))
+    input_mean = np.nanmean(im.data)
+    output_mean_1 = np.nanmean(data1)
+    output_mean_2 = np.nanmean(data2)
+    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
+    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
 
 
 @pytest.mark.parametrize('ratio', [1.3, 1])
