@@ -54,17 +54,17 @@ def mask_ifu_slices(input_model, mask):
         # Get the world coords for all pixels in this slice;
         # all we actually need are wavelengths
         coords = ifu_wcs(x, y)
-        dq = dqmap[y.astype(int), x.astype(int)]
+        dq = dqmap[..., y.astype(int), x.astype(int)]
         wl = coords[2]
         # set non-NaN wavelength locations as do not use (one)
         valid = ~np.isnan(wl)
-        dq = dq[valid]
-        x = x[valid]
-        y = y[valid]
+        dq = dq[..., valid]
+        x = x[..., valid]
+        y = y[..., valid]
         dq[:] = 1
 
         # Copy DQ for this slice into global DQ map
-        dqmap[y.astype(int), x.astype(int)] = dq
+        dqmap[..., y.astype(int), x.astype(int)] = dq
 
     # Now set all non-zero locations in the mask to False (do not use)
     mask[dqmap == 1] = False
@@ -218,10 +218,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
 
     # Initialize mask to all True. Subsequent operations will mask
     # out pixels that contain signal.
-    if single_mask:
-        mask = np.full(image_model.dq.shape[-2:], True)
-    else:
-        mask = np.full(image_model.dq.shape, True)
+    mask = np.full(image_model.dq.shape, True)
 
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
@@ -245,7 +242,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
     if mask_spectral_regions:
         if exptype == 'nrs_ifu':
             log.info("Masking the fixed slit region for IFU data.")
-            mask[922:1116, :] = False
+            mask[..., 922:1116, :] = False
         elif exptype == 'nrs_msaspec':
             # check for any slits defined in the fixed slit quadrant:
             # if there is nothing there of interest, mask the whole FS region
@@ -253,7 +250,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
             is_fs = [s.quadrant == 5 for s in slit2msa.slits]
             if not any(is_fs):
                 log.info("Masking the fixed slit region for MOS data.")
-                mask[922:1116, :] = False
+                mask[..., 922:1116, :] = False
             else:
                 log.info("Fixed slits found in MSA definition; "
                          "not masking the fixed slit region for MOS data.")
@@ -265,7 +262,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
     mask[dnu > 0] = False
 
     # Mask outliers using sigma clipping stats.
-    # For BOTS mode, which uses 3D data, loop over each integration separately.
+    # For 3D data, loop over each integration separately.
     if image_model.data.ndim == 3:
         for i in range(image_model.data.shape[0]):
             _, median, sigma = sigma_clipped_stats(image_model.data[i], mask=~mask[i], mask_value=0, sigma=5.0)
@@ -280,6 +277,10 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
     if image_model is not input_model:
         image_model.close()
         del image_model
+
+    # Reduce the mask to a single plane if needed
+    if single_mask and mask.ndim == 3:
+        mask = np.all(mask, axis=0)
 
     # Return the mask
     return mask

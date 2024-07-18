@@ -157,6 +157,8 @@ _calculated_suffixes = {
  'combine1dstep',
  'tsophotometrystep',
  'spec3pipeline',
+ 'nsclean',
+ 'nscleanstep',
  'clean_noise',
  'cleannoisestep',
  'outlierdetectionstep',

@@ -1,51 +1,45 @@
+import warnings
+
 from stdatamodels.jwst import datamodels
 
+from jwst.clean_noise import clean_noise
 from ..stpipe import Step
-from . import clean_noise
 
-__all__ = ["CleanNoiseStep"]
+__all__ = ["NSCleanStep"]
 
 
-class CleanNoiseStep(Step):
+class NSCleanStep(Step):
     """
-    CleanNoiseStep: This step performs 1/f noise correction ("cleaning").
+    NSCleanStep: This step performs 1/f noise correction ("cleaning")
+    of NIRSpec images, using the "NSClean" method.
 
-    Input data is expected to be a ramp file, in between jump and
-    ramp fitting steps.
-
-    Algorithms implemented are:
-        - `fft`: Background noise is fit in frequency space.
-           Implementation is based on the NSClean algorithm, developed
-           by Bernard Rauscher.
-        - `median`: Background noise is characterized by a median
-          along the detector slow axis. Implementation is based on the
-          `image1overf` algorithm, developed by Chris Willott.
+    NOTE: This step is a deprecated alias to the ``clean_noise`` step.
     """
 
-    class_alias = "clean_noise"
+    class_alias = "nsclean"
 
     spec = """
         algorithm = option('fft', 'median', default='fft')  # Noise fitting algorithm
-        mask_spectral_regions = boolean(default=True)  # Mask WCS-defined regions for spectral data
+        mask_spectral_regions = boolean(default=True)  # Mask WCS-defined regions
         single_mask = boolean(default=False)  # Make a single mask for all integrations
         n_sigma = float(default=5.0)  # Clipping level for outliers
         save_mask = boolean(default=False)  # Save the created mask
         user_mask = string(default=None)  # Path to user-supplied mask
-        use_diff = string(default=None)  # Correct group diffs instead of group images
         skip = boolean(default=True)  # By default, skip the step
     """
 
     def process(self, input):
         """
-        Fit and subtract 1/f background noise from a ramp data set.
+        Fit and subtract 1/f background noise from a NIRSpec image
 
         Parameters
         ----------
-        input : `~jwst.datamodels.RampModel`
+        input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
             Input datamodel to be corrected
 
         algorithm : str, optional
-            The background fit algorithm to use.  Options are 'fft' and 'median'.
+            The background fit algorithm to use.  Options are 'fft' and 'median';
+            'fft' performs the original NSClean implementation.
 
         mask_spectral_regions : bool, optional
             Mask regions of the image defined by WCS bounding boxes for slits/slices
@@ -55,8 +49,8 @@ class CleanNoiseStep(Step):
 
         single_mask : bool, optional
             If set, a single mask will be created, regardless of
-            the number of input integrations. Otherwise, for BOTS data,
-            the mask will be a 3D cube, with one plane for each integration.
+            the number of input integrations. Otherwise, the mask will
+            be a 3D cube, with one plane for each integration.
 
         save_mask : bool, optional
             Save the computed mask image
@@ -64,24 +58,26 @@ class CleanNoiseStep(Step):
         user_mask : None, str, or `~jwst.datamodels.ImageModel`
             Optional user-supplied mask image; path to file or opened datamodel
 
-        use_diff : bool, optional
-            If set, and the input is ramp data, correction is performed
-            on diffs between group images.  Otherwise, correction is
-            performed directly on the group image.
-
         Returns
         -------
-        output_model : `~jwst.datamodels.RampModel`
+        output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
             The 1/f corrected datamodel
         """
+        message = ("The 'nsclean' step is a deprecated alias to 'clean_noise' "
+                   "and will be removed in future builds.")
+        self.log.warning(message)
 
         # Open the input data model
         with datamodels.open(input) as input_model:
 
+            # This step is called only from spec2, so use_diff is irrelevant.
+            use_diff = False
+
+            # Do the NSClean correction
             result = clean_noise.do_correction(
                 input_model, self.algorithm, self.mask_spectral_regions,
                 self.n_sigma, self.single_mask, self.save_mask, self.user_mask,
-                self.use_diff)
+                use_diff)
             output_model, mask_model = result
 
             # Save the mask, if requested

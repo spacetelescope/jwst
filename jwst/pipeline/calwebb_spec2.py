@@ -26,6 +26,7 @@ from ..imprint import imprint_step
 from ..master_background import master_background_mos_step
 from ..msaflagopen import msaflagopen_step
 from ..clean_noise import clean_noise_step
+from ..nsclean import nsclean_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..pixel_replace import pixel_replace_step
@@ -70,6 +71,7 @@ class Spec2Pipeline(Pipeline):
         'badpix_selfcal': badpix_selfcal_step.BadpixSelfcalStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'clean_noise': clean_noise_step.CleanNoiseStep,
+        'nsclean': nsclean_step.NSCleanStep,
         'bkg_subtract': background_step.BackgroundStep,
         'imprint_subtract': imprint_step.ImprintStep,
         'extract_2d': extract_2d_step.Extract2dStep,
@@ -247,11 +249,11 @@ class Spec2Pipeline(Pipeline):
 
         # Steps whose order is the same for all types of input:
 
-        # Self-calibrate to flag bad/warm pixels, and apply flags 
+        # Self-calibrate to flag bad/warm pixels, and apply flags
         # to both background and science exposures.
         # skipped by default for all modes
         result = self.badpix_selfcal(
-            calibrated, members_by_type['selfcal'], members_by_type['background'], 
+            calibrated, members_by_type['selfcal'], members_by_type['background'],
             )
         if isinstance(result, datamodels.JwstDataModel):
             # if step is skipped, unchanged sci exposure is returned
@@ -265,7 +267,13 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.msa_flagging(calibrated)
 
         # apply 1/f noise cleaning
-        calibrated = self.clean_noise(calibrated)
+        if exp_type in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+            # For NIRSpec data, call the nsclean alias to clean_noise.
+            # This alias is deprecated and should be removed when users
+            # have had time to adjust.
+            calibrated = self.nsclean(calibrated)
+        else:
+            calibrated = self.clean_noise(calibrated)
 
         # Leakcal subtraction (imprint)  occurs before background subtraction on a per-exposure basis.
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
@@ -404,6 +412,12 @@ class Spec2Pipeline(Pipeline):
                                                            'NRS_AUTOFLAT', 'NRS_AUTOWAVE']:
             self.log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
             self.msa_flagging.skip = True
+
+        # Check for NIRSpec "nsclean" correction. Attempt to apply to
+        # IFU, MOS, FIXEDSLIT, and NRS_BRIGHTOBJ modes, for now.
+        if not self.nsclean.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+            self.log.debug('Science data does not allow NSClean correction. Skipping "nsclean".')
+            self.nsclean.skip = True
 
         # Check for image-to-image background subtraction can be done.
         if not self.bkg_subtract.skip:

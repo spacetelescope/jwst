@@ -35,6 +35,7 @@ from .master_background.master_background_step import MasterBackgroundStep
 from .master_background.master_background_mos_step import MasterBackgroundMosStep
 from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
+from .nsclean.nsclean_step import NSCleanStep
 from .outlier_detection.outlier_detection_step import OutlierDetectionStep
 from .pathloss.pathloss_step import PathLossStep
 from .persistence.persistence_step import PersistenceStep
@@ -99,6 +100,7 @@ __all__ = [
     "MasterBackgroundMosStep",
     "MRSIMatchStep",
     "MSAFlagOpenStep",
+    "NSCleanStep",
     "OutlierDetectionStep",
     "PathLossStep",
     "PersistenceStep",
