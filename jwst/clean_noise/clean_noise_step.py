@@ -31,6 +31,7 @@ class CleanNoiseStep(Step):
         n_sigma = float(default=5.0)  # Clipping level for outliers
         save_mask = boolean(default=False)  # Save the created mask
         user_mask = string(default=None)  # Path to user-supplied mask
+        use_diff = string(default=None)  # Correct group diffs instead of group images
         skip = boolean(default=True)  # By default, skip the step
     """
 
@@ -60,6 +61,11 @@ class CleanNoiseStep(Step):
         mask_spectral_regions : bool, optional
             Mask regions of the image defined by WCS bounding boxes for slits/slices
 
+        use_diff : bool, optional
+            If set, and the input is ramp data, correction is performed
+            on diffs between group images.  Otherwise, correction is
+            performed directly on the group image.
+
         Returns
         -------
         output_model : `~jwst.datamodels.RampModel`
@@ -71,7 +77,8 @@ class CleanNoiseStep(Step):
 
             result = clean_noise.do_correction(
                 input_model, self.algorithm, self.mask_spectral_regions,
-                self.n_sigma, self.single_mask, self.save_mask, self.user_mask)
+                self.n_sigma, self.single_mask, self.save_mask, self.user_mask,
+                self.use_diff)
             output_model, mask_model = result
 
             # Save the mask, if requested

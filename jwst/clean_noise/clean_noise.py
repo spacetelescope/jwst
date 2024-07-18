@@ -111,7 +111,7 @@ def mask_slits(input_model, mask):
     return mask
 
 
-def make_rate(input_model, return_cube=False, assign_wcs=False, msaflagopen=False):
+def make_rate(input_model, return_cube=False):
     """
     Make a rate model from a ramp model.
 
@@ -125,21 +125,14 @@ def make_rate(input_model, return_cube=False, assign_wcs=False, msaflagopen=Fals
         rate for each integration.  Otherwise, an ImageModel is returned
         with the combined rate for the full observation.
 
-    assign_wcs : bool, optional
-        If set, the assign_wcs step will be called on the rate model
-        before returning.
-
-    msaflagopen : bool, optional
-        If set, the msaflagopen step will be called on the rate model
-        before returning.  Ignored if `assign_wcs` is not set.
-
     Returns
     -------
     rate_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+        The rate or rateints model.
     """
     # Call the ramp fit step on a copy of the input
     # Note: the copy is currently needed because ramp fit
-    # closes the input model when it's done and we need
+    # closes the input model when it's done, and we need
     # it to stay open.
     rate, rateints = RampFitStep.call(input_model.copy())
 
@@ -150,12 +143,32 @@ def make_rate(input_model, return_cube=False, assign_wcs=False, msaflagopen=Fals
         output_model = rate
         rateints.close()
 
-    # If needed, assign a WCS and flag open MSA shutters
-    if assign_wcs:
-        output_model = AssignWcsStep.call(output_model)
+    return output_model
 
-        if msaflagopen:
-            output_model = MSAFlagOpenStep.call(output_model)
+
+def assign_wcs_to_rate(input_model, msaflagopen=False):
+    """
+    Assign a WCS to the input model.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+        Input rate model.
+
+    msaflagopen : bool, optional
+        If set, the msaflagopen step will be additionally be called
+        on the rate model before returning.
+
+    Returns
+    -------
+    model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+        The updated model.
+    """
+    output_model = AssignWcsStep.call(input_model)
+
+    # If needed, flag open MSA shutters
+    if msaflagopen:
+        output_model = MSAFlagOpenStep.call(output_model)
 
     return output_model
 
@@ -188,13 +201,20 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
     exptype = input_model.meta.exposure.type.lower()
 
     # make a rate file if needed
+    flag_open = (exptype in ['nrs_ifu', 'nrs_msaspec'])
     if isinstance(input_model, datamodels.RampModel):
-        flag_open = (exptype in ['nrs_ifu', 'nrs_msaspec'])
-        image_model = make_rate(input_model, return_cube=(not single_mask),
-                                assign_wcs=mask_spectral_regions,
-                                msaflagopen=flag_open)
+        image_model = make_rate(input_model, return_cube=(not single_mask)),
+
+        # if needed, also assign a WCS
+        if mask_spectral_regions:
+            image_model = assign_wcs_to_rate(image_model, msaflagopen=flag_open)
     else:
+        # input is already a rate file
         image_model = input_model
+
+        # if needed, assign a WCS
+        if mask_spectral_regions and not hasattr(image_model.meta, 'wcs'):
+            image_model = assign_wcs_to_rate(image_model, msaflagopen=flag_open)
 
     # Initialize mask to all True. Subsequent operations will mask
     # out pixels that contain signal.
@@ -349,7 +369,7 @@ def clean_subarray(detector, image, mask):
 
 
 def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
-                  single_mask, save_mask, user_mask):
+                  single_mask, save_mask, user_mask, use_diff):
     """
     Apply the 1/f noise correction.
 
@@ -377,6 +397,11 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
 
     user_mask : str or None
         Path to user-supplied mask image
+
+    use_diff : bool
+        If set, and the input is ramp data, correction is performed
+        on diffs between group images.  Otherwise, correction is
+        performed directly on the group or rate image.
 
     Returns
     -------
@@ -408,12 +433,12 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
 
     output_model = input_model.copy()
 
-    # Check for a user-supplied mask image. If so, use it.
+    # Check for a user-supplied mask image. If provided, use it.
     if user_mask is not None:
         mask_model = datamodels.open(user_mask)
         background_mask = (mask_model.data.copy()).astype(np.bool_)
     else:
-        # Create the pixel mask that'll be used to indicate which pixels
+        # Create the pixel mask that will be used to indicate which pixels
         # to include in the 1/f noise measurements. Basically, we're setting
         # all illuminated pixels to False, so that they do not get used, and
         # setting all unilluminated pixels to True (so they DO get used).
@@ -445,7 +470,10 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
         if ndim == 3:
             ngroups = 1
         else:
-            ngroups = input_model.data.shape[1] - 1
+            if use_diff:
+                ngroups = input_model.data.shape[1] - 1
+            else:
+                ngroups = input_model.data.shape[1]
 
         # Check for 3D mask
         if background_mask.ndim == 2:
@@ -476,8 +504,12 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
                 image = input_model.data[i]
             else:
                 # Ramp data input -
-                # subtract the current group from the next one
-                image = input_model.data[i, j + 1] - input_model.data[i, j]
+                if use_diff:
+                    # subtract the current group from the next one
+                    image = input_model.data[i, j + 1] - input_model.data[i, j]
+                else:
+                    image = input_model.data[i, j]
+
             image = image.astype(np.float32)
 
             # Find and replace NaNs
@@ -515,7 +547,10 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
                 elif ndim == 3:
                     output_model.data[i] = cleaned_image
                 else:
-                    output_model.data[i, j + 1] = input_model.data[i, j] + cleaned_image
+                    if use_diff:
+                        output_model.data[i, j + 1] = input_model.data[i, j] + cleaned_image
+                    else:
+                        output_model.data[i, j] = cleaned_image
 
     # Set completion status
     output_model.meta.cal_step.clean_noise = 'COMPLETE'
