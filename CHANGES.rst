@@ -41,9 +41,8 @@ tweakreg
 
 - Updated requirement for ``tweakwcs`` to version ``0.8.8`` which fixes a crash
   in the ``tweakreg`` step due to a ``MalformedPolygonError`` exception being
-  raised by the ``spherical_geometry`` package for some data sets. For more
-  details, see JP-3636 and
-  https://github.com/spacetelescope/tweakwcs/pull/205. [#8657]
+  raised by the ``spherical_geometry`` package for some data
+  sets. [#8657, spacetelescope/tweakwcs#205]
 
 
 1.15.1 (2024-07-08)
