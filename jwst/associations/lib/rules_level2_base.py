@@ -8,7 +8,6 @@ from os.path import (
     splitext
 )
 import re
-import warnings
 
 from jwst.associations import (
     Association,
@@ -22,7 +21,6 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.dms_base import (
     Constraint_TargetAcq,
-    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -788,9 +786,11 @@ class Constraint_Imprint_Special(Constraint):
         # If an association is not provided, the check for original
         # exposure type is ignored.
         if association is None:
-            sources = lambda item: 'not imprint'
+            def sources(item): 
+                return 'not imprint'
         else:
-            sources = lambda item: association.original_exposure_type
+            def sources(item):
+                return association.original_exposure_type
 
         super(Constraint_Imprint_Special, self).__init__(
             [
