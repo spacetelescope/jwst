@@ -59,21 +59,43 @@ def test_readnoise_variance():
     gain_2d = np.zeros(imshape, dtype=np.float32) + gain
 
     # Populate ramps with a variety of flags
-    gdq_4d[:, 7, 1, 3] = JUMP_DET
-    gdq_4d[:, 6:, 1, 2] = SATURATED
-    gdq_4d[:, 3:, 0, 3] = DO_NOT_USE + CHARGELOSS
-    gdq_4d[:, 7:, 2, 3] = DO_NOT_USE + CHARGELOSS
-    gdq_4d[:, 3, 2, 2] = JUMP_DET
-    gdq_4d[:, 6, 2, 2] = JUMP_DET
-    gdq_4d[:, 8:, 2, 2] = DO_NOT_USE + CHARGELOSS
-    gdq_4d[:, 8, 2, 2] += JUMP_DET
-    gdq_4d[:, 0, 0, 0] = DO_NOT_USE + SATURATED
+    # (0, 0)
+    gdq_4d[:, 0,  0, 0] = DO_NOT_USE + SATURATED
     gdq_4d[:, 1:, 0, 0] = SATURATED
-    gdq_4d[:, 0, 0, 2] = SATURATED + DO_NOT_USE
+    # (0, 1)
+    # (0, 2)
+    gdq_4d[:, 0,  0, 2] = SATURATED + DO_NOT_USE
     gdq_4d[:, 1:, 0, 2] = SATURATED + DO_NOT_USE + CHARGELOSS
-    gdq_4d[:, 0:, 1, 0] = JUMP_DET
+    # (0, 3)
 
-    var_r2, var_r3, var_r4 = compute_RN_variances(gdq_4d, readnoise_2d, gain_2d, group_time)
+    gdq_4d[:, 3:, 0, 3] = DO_NOT_USE + CHARGELOSS
+    # (1, 0)
+    gdq_4d[:, 0:, 1, 0] = JUMP_DET
+    # (1, 1)
+    # (1, 2)
+    gdq_4d[:, 6:, 1, 2] = SATURATED
+    # (1, 3)
+
+    gdq_4d[:, 7,  1, 3] = JUMP_DET
+    # (2, 0)
+    # (2, 1)
+    # (2, 2)
+    gdq_4d[:, 3,  2, 2] = JUMP_DET
+    gdq_4d[:, 6,  2, 2] = JUMP_DET
+    gdq_4d[:, 8:, 2, 2] = DO_NOT_USE + CHARGELOSS
+    gdq_4d[:, 8,  2, 2] += JUMP_DET
+    # (2, 3)
+    gdq_4d[:, 7:, 2, 3] = DO_NOT_USE + CHARGELOSS
+
+    # import ipdb; ipdb.set_trace()
+
+    print(" ")
+    print(gdq_4d)
+
+    var_r2, var_r3, var_r4 = compute_RN_variances(
+            gdq_4d, readnoise_2d, gain_2d, group_time)
+
+    # import ipdb; ipdb.set_trace()
 
     # Compare the exposure level RN variances
     true_var_r2 = np.array(
@@ -1006,3 +1028,22 @@ def base_print(label, arr):
     print(label)
     print(arr_str)
 
+
+def dbg_print_data(model):
+    nints, ngroups, nrows, ncols = model.data.shape
+    print("Model Data:")
+    for row in range(nrows):
+        for col in range(ncols):
+            print(f"    Pixel ({row}, {col})")
+            for integ in range(nints):
+                print(f"[{integ}] {model.data[integ, :, row, col]}")
+
+
+def dbg_print_dq(model):
+    nints, ngroups, nrows, ncols = model.data.shape
+    print("Model DQ:")
+    for row in range(nrows):
+        for col in range(ncols):
+            print(f"    Pixel ({row}, {col})")
+            for integ in range(nints):
+                print(f"[{integ}] {model.groupdq[integ, :, row, col]}")
