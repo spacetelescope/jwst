@@ -276,7 +276,7 @@ def describe(filetype, format='rst', output=None):
             return stream.getvalue()
     else:
         try:
-            import docutils
+            import docutils # noqa F401
         except ImportError:
             raise ImportError("docutils is required for HTML output")
 

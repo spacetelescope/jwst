@@ -5,7 +5,7 @@ from jwst.associations.tests.helpers import (
     t_path
 )
 
-from jwst.associations.lib.process_list import *
+from jwst.associations.lib.process_list import ProcessItem, ProcessList, ProcessQueue, ProcessQueueSorted, ListCategory
 
 
 def test_item():
