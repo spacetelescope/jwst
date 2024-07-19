@@ -1,6 +1,11 @@
 1.15.2 (unreleased)
 ===================
 
+associations
+------------
+
+- Added association rules to process exp_type=NIS_EXTCAL through
+  spec2, and be able to create the corresponding asn files. [#8661]
 
 scripts
 -------
