@@ -127,7 +127,7 @@ def fourier_imshift(image, shift):
     return offset
 
 
-def align_array(reference, target, mask=None, useshift=None):
+def align_array(reference, target, mask=None):
     """
     Computes shifts between target image (or image "slices") and the reference
     image and re-aligns input images to the target.
