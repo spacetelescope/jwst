@@ -592,31 +592,36 @@ def do_correction(input_model, fit_method, background_method,
                 else:
                     image = input_model.data[i, j]
 
-            # Make sure data is float32
-            image = image.astype(np.float32)
-
-            # Find and replace NaNs
-            nan_pix = np.isnan(image)
-            image[nan_pix] = 0.0
-
-            # TODO: add dnu and jump to mask
-
+            # Copy the mask, for further flagging
             if background_mask.ndim == 3:
                 mask = background_mask[i].copy()
             else:
                 mask = background_mask.copy()
+
+            # Make sure data is float32
+            image = image.astype(np.float32)
+
+            # Find and replace/mask NaNs
+            nan_pix = np.isnan(image)
+            image[nan_pix] = 0.0
             mask[nan_pix] = False
 
-            # Fit and remove a background level
-            background = background_level(
-                image, mask, background_method=background_method)
-            bkg_sub = image - background
+            # TODO: add dnu and jump to mask
 
-            # Flag more outliers in the background subtracted image
-            _, med_val, sigma = sigma_clipped_stats(
-                bkg_sub, mask=~mask, mask_value=0, sigma=5.0)
-            outliers = np.abs(bkg_sub - med_val) > n_sigma * sigma
-            mask[outliers] = False
+            # Fit and remove a background level
+            if background_method is None:
+                background = 0.0
+                bkg_sub = image
+            else:
+                background = background_level(
+                    image, mask, background_method=background_method)
+                bkg_sub = image - background
+
+                # Flag more outliers in the background subtracted image
+                _, med_val, sigma = sigma_clipped_stats(
+                    bkg_sub, mask=~mask, mask_value=0, sigma=5.0)
+                outliers = np.abs(bkg_sub - med_val) > n_sigma * sigma
+                mask[outliers] = False
 
             if fit_method == 'fft':
                 if bkg_sub.shape == (2048, 2048):
