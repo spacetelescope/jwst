@@ -93,7 +93,7 @@ class CleanNoiseStep(Step):
                 self.mask_spectral_regions,
                 self.n_sigma, self.single_mask, self.save_mask, self.user_mask,
                 self.use_diff)
-            output_model, mask_model = result
+            output_model, mask_model, status = result
 
             # Save the mask, if requested
             if self.save_mask and mask_model is not None:
@@ -101,5 +101,8 @@ class CleanNoiseStep(Step):
                 self.log.info(f"Saving mask file {mask_path}")
                 mask_model.save(mask_path)
                 mask_model.close()
+
+            # Set the step completion status
+            output_model.meta.cal_step.clean_noise = status
 
         return output_model

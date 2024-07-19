@@ -261,12 +261,6 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
                 log.info("Fixed slits found in MSA definition; "
                          "not masking the fixed slit region for MOS data.")
 
-    # Mask any reference pixels or do_not_use pixels
-    ref_pix = image_model.dq & dqflags.pixel['REFERENCE_PIXEL']
-    mask[ref_pix > 0] = False
-    dnu = image_model.dq & dqflags.pixel['DO_NOT_USE']
-    mask[dnu > 0] = False
-
     # Mask outliers using sigma clipping stats.
     # For 3D data, loop over each integration separately.
     if image_model.data.ndim == 3:
@@ -499,6 +493,8 @@ def do_correction(input_model, fit_method, background_method,
     mask_model : `~jwst.datamodel.JwstDataModel`
         Pixel mask to be saved or None
     """
+    # Track the completion status, for various failure conditions
+    status = 'SKIPPED'
 
     detector = input_model.meta.instrument.detector.upper()
     slowaxis = np.abs(input_model.meta.subarray.slowaxis)
@@ -517,8 +513,7 @@ def do_correction(input_model, fit_method, background_method,
         if message is not None:
             log.warning(message)
             log.warning("Step will be skipped")
-            input_model.meta.cal_step.clean_noise = 'SKIPPED'
-            return input_model, None
+            return input_model, None, status
 
     output_model = input_model.copy()
 
@@ -571,14 +566,12 @@ def do_correction(input_model, fit_method, background_method,
                          "the same mask will be used for all integrations.")
         elif background_mask.shape[0] != nints:
             log.warning("Mask does not match data shape. Step will be skipped.")
-            output_model.meta.cal_step.clean_noise = 'SKIPPED'
-            return output_model, None
+            return output_model, None, status
 
     # Check that mask matches 2D data shape
     if background_mask.shape[-2:] != image_shape:
         log.warning("Mask does not match data shape. Step will be skipped.")
-        output_model.meta.cal_step.clean_noise = 'SKIPPED'
-        return output_model, None
+        return output_model, None, status
 
     # Loop over integrations and groups (even if there's only 1)
     for i in range(nints):
@@ -599,6 +592,7 @@ def do_correction(input_model, fit_method, background_method,
                 else:
                     image = input_model.data[i, j]
 
+            # Make sure data is float32
             image = image.astype(np.float32)
 
             # Find and replace NaNs
@@ -611,6 +605,7 @@ def do_correction(input_model, fit_method, background_method,
                 mask = background_mask[i].copy()
             else:
                 mask = background_mask.copy()
+            mask[nan_pix] = False
 
             # Fit and remove a background level
             background = background_level(
@@ -640,8 +635,7 @@ def do_correction(input_model, fit_method, background_method,
                 output_model.close()
                 del output_model
                 output_model = input_model.copy()
-                output_model.meta.cal_step.clean_noise = 'SKIPPED'
-                return output_model, None
+                return output_model, None, status
             else:
                 # Restore the background level
                 cleaned_image += background
@@ -661,6 +655,6 @@ def do_correction(input_model, fit_method, background_method,
                         output_model.data[i, j] = cleaned_image
 
     # Set completion status
-    output_model.meta.cal_step.clean_noise = 'COMPLETE'
+    status = 'COMPLETE'
 
-    return output_model, mask_model
+    return output_model, mask_model, status
