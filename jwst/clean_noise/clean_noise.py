@@ -2,7 +2,8 @@ import logging
 import numpy as np
 
 import gwcs
-from astropy.stats import sigma_clipped_stats
+from astropy.stats import sigma_clipped_stats, SigmaClip
+from photutils.background import Background2D, MedianBackground
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
@@ -19,6 +20,68 @@ log.setLevel(logging.DEBUG)
 # Values are y start and stop indices, for the edges of the
 # region to mask.
 NRS_FS_REGION = [922, 1116]
+
+
+def make_rate(input_model, return_cube=False):
+    """
+    Make a rate model from a ramp model.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.RampModel`
+        Input ramp model.
+
+    return_cube : bool, optional
+        If set, a CubeModel will be returned, with a separate
+        rate for each integration.  Otherwise, an ImageModel is returned
+        with the combined rate for the full observation.
+
+    Returns
+    -------
+    rate_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+        The rate or rateints model.
+    """
+    # Call the ramp fit step on a copy of the input
+    # Note: the copy is currently needed because ramp fit
+    # closes the input model when it's done, and we need
+    # it to stay open.
+    rate, rateints = RampFitStep.call(input_model.copy())
+
+    if return_cube:
+        output_model = rateints
+        rate.close()
+    else:
+        output_model = rate
+        rateints.close()
+
+    return output_model
+
+
+def assign_wcs_to_rate(input_model, msaflagopen=False):
+    """
+    Assign a WCS to the input rate model.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+        Input rate model.
+
+    msaflagopen : bool, optional
+        If set, the msaflagopen step will be additionally be called
+        on the rate model before returning.
+
+    Returns
+    -------
+    output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+        The updated model.
+    """
+    output_model = AssignWcsStep.call(input_model)
+
+    # If needed, flag open MSA shutters
+    if msaflagopen:
+        output_model = MSAFlagOpenStep.call(output_model)
+
+    return output_model
 
 
 def mask_ifu_slices(input_model, mask):
@@ -114,68 +177,6 @@ def mask_slits(input_model, mask):
         mask[..., ylo:yhi, xlo:xhi] = False
 
     return mask
-
-
-def make_rate(input_model, return_cube=False):
-    """
-    Make a rate model from a ramp model.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodel.RampModel`
-        Input ramp model.
-
-    return_cube : bool, optional
-        If set, a CubeModel will be returned, with a separate
-        rate for each integration.  Otherwise, an ImageModel is returned
-        with the combined rate for the full observation.
-
-    Returns
-    -------
-    rate_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
-        The rate or rateints model.
-    """
-    # Call the ramp fit step on a copy of the input
-    # Note: the copy is currently needed because ramp fit
-    # closes the input model when it's done, and we need
-    # it to stay open.
-    rate, rateints = RampFitStep.call(input_model.copy())
-
-    if return_cube:
-        output_model = rateints
-        rate.close()
-    else:
-        output_model = rate
-        rateints.close()
-
-    return output_model
-
-
-def assign_wcs_to_rate(input_model, msaflagopen=False):
-    """
-    Assign a WCS to the input rate model.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
-        Input rate model.
-
-    msaflagopen : bool, optional
-        If set, the msaflagopen step will be additionally be called
-        on the rate model before returning.
-
-    Returns
-    -------
-    output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
-        The updated model.
-    """
-    output_model = AssignWcsStep.call(input_model)
-
-    # If needed, flag open MSA shutters
-    if msaflagopen:
-        output_model = MSAFlagOpenStep.call(output_model)
-
-    return output_model
 
 
 def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
@@ -291,20 +292,61 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
     return mask
 
 
-def clean_full_frame(detector, image, mask):
+def background_level(image, mask, background_method='median'):
     """
-    Clean a full-frame (2048x2048) image.
+    Fit a low-resolution background level.
 
     Parameters
     ----------
-    detector : str
-        The name of the detector from which the data originate.
+    image : array-like of float
+        The 2D image containing the background to fit.
 
+    mask : array-like of bool
+        The mask that indicates which pixels are to be used in fitting.
+        True indicates a background pixel.
+
+    background_method : {'median', 'model', None}, optional
+        If 'median', the preliminary background to remove and restore
+        is a simple median of the background data.  If 'model', the
+        background data is modeled with a median filter with a 5x5
+        pixel kernel.  If None, the background value is 0.0.
+
+    Returns
+    -------
+    background : float or array-like of float
+        The background level: a single value, if `background_method`
+        is 'median' or None, or an array matching the input image size
+        if `background_method` is 'model'.
+    """
+    if background_method is None:
+        background = 0.0
+    elif background_method == 'model':
+        sigma_clip_for_bkg = SigmaClip(sigma=3., maxiters=5)
+        bkg_estimator = MedianBackground()
+        bkg = Background2D(
+            image, (34, 34), filter_size=(5, 5), mask=~mask,
+            sigma_clip=sigma_clip_for_bkg,
+            bkg_estimator=bkg_estimator)
+        background = bkg.background
+    else:
+        background = np.nanmedian(image[mask])
+    return background
+
+
+def fft_clean_full_frame(image, mask, detector):
+    """
+    Fit and remove background noise in frequency space for a full-frame image.
+
+    Parameters
+    ----------
     image : array-like of float
         The image to be cleaned.
 
     mask : array-like of bool
         The mask that indicates which pixels are to be used in fitting.
+
+    detector : str
+        The name of the detector from which the data originate.
 
     Returns
     -------
@@ -325,20 +367,20 @@ def clean_full_frame(detector, image, mask):
     return cleaned_image
 
 
-def clean_subarray(detector, image, mask):
+def fft_clean_subarray(image, mask, detector):
     """
-    Clean a subarray image.
+    Fit and remove background noise in frequency space for a subarray image.
 
     Parameters
     ----------
-    detector : str
-        The name of the detector from which the data originate.
-
     image : array-like of float
         The image to be cleaned.
 
     mask : array-like of bool
         The mask that indicates which pixels are to be used in fitting.
+
+    detector : str
+        The name of the detector from which the data originate.
 
     Returns
     -------
@@ -374,7 +416,41 @@ def clean_subarray(detector, image, mask):
     return cleaned_image
 
 
-def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
+def median_clean(image, mask, slowaxis):
+    """
+    Fit and remove background noise via median values along the detector slow axis.
+
+    Parameters
+    ----------
+    image : array-like of float
+        The image to be cleaned.
+
+    mask : array-like of bool
+        The mask that indicates which pixels are to be used in fitting.
+        True indicates a background pixel.
+
+    slowaxis : int
+        The detector slow readout direction.  Values expected are 1
+        or 2, following the JWST datamodel definition (meta.subarray.slowaxis).
+
+    Returns
+    -------
+    cleaned_image : array-like of float
+        The cleaned image.
+    """
+    # Masked median along slow axis
+    masked_image = np.ma.array(image, mask=~mask)
+    stripes = np.ma.median(masked_image, axis=(slowaxis-1), keepdims=True)
+    stripes = np.ma.filled(stripes, fill_value=0.0)
+
+    # Remove median stripes
+    corrected_image = image - stripes
+
+    return corrected_image
+
+
+def do_correction(input_model, fit_method, background_method,
+                  mask_spectral_regions, n_sigma,
                   single_mask, save_mask, user_mask, use_diff):
     """
     Apply the 1/f noise correction.
@@ -384,8 +460,14 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
     input_model : `~jwst.datamodel.JwstDataModel`
         Science data to be corrected
 
-    algorithm : {'fft', 'median'}
+    fit_method : {'fft', 'median'}
         The algorithm to use to fit background noise
+
+    background_method : {'median', 'model', None}
+        If 'median', the preliminary background to remove and restore
+        is a simple median of the background data.  If 'model', the
+        background data is modeled with a median filter with a 5x5
+        pixel kernel.  If None, the background value is 0.0.
 
     mask_spectral_regions : bool
         Mask slit/slice regions defined in WCS
@@ -419,18 +501,19 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
     """
 
     detector = input_model.meta.instrument.detector.upper()
+    slowaxis = np.abs(input_model.meta.subarray.slowaxis)
     subarray = input_model.meta.subarray.name.upper()
     exp_type = input_model.meta.exposure.type
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
 
     # Check for a valid input that we can work on
     nsclean_allowed = ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']
-    if algorithm == 'fft':
+    if fit_method == 'fft':
         message = None
         if exp_type not in nsclean_allowed:
-            message = f"Algorithm 'fft' cannot be applied to exp_type {exp_type}"
+            message = f"Fit method 'fft' cannot be applied to exp_type {exp_type}"
         elif subarray == 'ALLSLITS':
-            message = f"Algorithm 'fft' cannot be applied to subarray {subarray}"
+            message = f"Fit method 'fft' cannot be applied to subarray {subarray}"
         if message is not None:
             log.warning(message)
             log.warning("Step will be skipped")
@@ -522,28 +605,47 @@ def do_correction(input_model, algorithm, mask_spectral_regions, n_sigma,
             nan_pix = np.isnan(image)
             image[nan_pix] = 0.0
 
-            if background_mask.ndim == 3:
-                mask = background_mask[i]
-            else:
-                mask = background_mask
+            # TODO: add dnu and jump to mask
 
-            if algorithm == 'fft':
-                if input_model.data.shape[-2:] == (2048, 2048):
+            if background_mask.ndim == 3:
+                mask = background_mask[i].copy()
+            else:
+                mask = background_mask.copy()
+
+            # Fit and remove a background level
+            background = background_level(
+                image, mask, background_method=background_method)
+            bkg_sub = image - background
+
+            # Flag more outliers in the background subtracted image
+            _, med_val, sigma = sigma_clipped_stats(
+                bkg_sub, mask=~mask, mask_value=0, sigma=5.0)
+            outliers = np.abs(bkg_sub - med_val) > n_sigma * sigma
+            mask[outliers] = False
+
+            if fit_method == 'fft':
+                if bkg_sub.shape == (2048, 2048):
                     # Clean a full-frame image
-                    cleaned_image = clean_full_frame(detector, image, mask)
+                    cleaned_image = fft_clean_full_frame(bkg_sub, mask, detector)
                 else:
                     # Clean a subarray image
-                    cleaned_image = clean_subarray(detector, image, mask)
+                    cleaned_image = fft_clean_subarray(bkg_sub, mask, detector)
             else:
-                log.warning('Median algorithm is not yet implemented.')
-                cleaned_image = image
+                cleaned_image = median_clean(bkg_sub, mask, slowaxis)
 
             # Check for failure
             if cleaned_image is None:
-                # todo - this may return partial results for multi-int/group data
+                log.error(f'Cleaning failed for integration {i + 1}, group {j + 1}')
+                # re-copy input to make sure any partial changes are thrown away
+                output_model.close()
+                del output_model
+                output_model = input_model.copy()
                 output_model.meta.cal_step.clean_noise = 'SKIPPED'
                 return output_model, None
             else:
+                # Restore the background level
+                cleaned_image += background
+
                 # Restore NaNs in cleaned image
                 cleaned_image[nan_pix] = np.nan
 

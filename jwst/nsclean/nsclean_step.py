@@ -19,8 +19,9 @@ class NSCleanStep(Step):
     class_alias = "nsclean"
 
     spec = """
-        algorithm = option('fft', 'median', default='fft')  # Noise fitting algorithm
-        mask_spectral_regions = boolean(default=True)  # Mask WCS-defined regions
+        fit_method = option('fft', 'median', default='fft')  # Noise fitting algorithm
+        background_method = option('median', 'model', None, default=None)
+        mask_spectral_regions = boolean(default=True)  # Mask WCS-defined spectral regions
         single_mask = boolean(default=False)  # Make a single mask for all integrations
         n_sigma = float(default=5.0)  # Clipping level for outliers
         save_mask = boolean(default=False)  # Save the created mask
@@ -35,17 +36,23 @@ class NSCleanStep(Step):
         Parameters
         ----------
         input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
-            Input datamodel to be corrected
+            Input datamodel to be corrected.
 
-        algorithm : str, optional
+        fit_method : str, optional
             The background fit algorithm to use.  Options are 'fft' and 'median';
             'fft' performs the original NSClean implementation.
 
+        background_method : {'median', 'model', None}, optional
+            If 'median', the preliminary background to remove and restore
+            is a simple median of the background data.  If 'model', the
+            background data is modeled with a median filter with a 5x5
+            pixel kernel.  If None, the background value is 0.0.
+
         mask_spectral_regions : bool, optional
-            Mask regions of the image defined by WCS bounding boxes for slits/slices
+            Mask regions of the image defined by WCS bounding boxes for slits/slices.
 
         n_sigma : float, optional
-            Sigma clipping threshold to be used in detecting outliers in the image
+            Sigma clipping threshold to be used in detecting outliers in the image.
 
         single_mask : bool, optional
             If set, a single mask will be created, regardless of
@@ -53,15 +60,15 @@ class NSCleanStep(Step):
             be a 3D cube, with one plane for each integration.
 
         save_mask : bool, optional
-            Save the computed mask image
+            Save the computed mask image.
 
         user_mask : None, str, or `~jwst.datamodels.ImageModel`
-            Optional user-supplied mask image; path to file or opened datamodel
+            Optional user-supplied mask image; path to file or opened datamodel.
 
         Returns
         -------
         output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
-            The 1/f corrected datamodel
+            The 1/f corrected datamodel.
         """
         message = ("The 'nsclean' step is a deprecated alias to 'clean_noise' "
                    "and will be removed in future builds.")
@@ -75,7 +82,8 @@ class NSCleanStep(Step):
 
             # Do the NSClean correction
             result = clean_noise.do_correction(
-                input_model, self.algorithm, self.mask_spectral_regions,
+                input_model, self.fit_method, self.background_method,
+                self.mask_spectral_regions,
                 self.n_sigma, self.single_mask, self.save_mask, self.user_mask,
                 use_diff)
             output_model, mask_model = result
