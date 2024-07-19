@@ -9,6 +9,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     Constraint_WFSC,
     nissoss_calibrated_filter,
+    niswfss_extcal_image2,
     nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
@@ -762,6 +763,7 @@ class Asn_Lv2NRSLAMPSpectral(
 class Asn_Lv2WFSSNIS(
         AsnMixin_Lv2WFSS,
         AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
 ):
     """Level2b WFSS/GRISM Association
 
@@ -782,7 +784,7 @@ class Asn_Lv2WFSSNIS(
                 DMSAttrConstraint(
                     name='exp_type',
                     sources=['exp_type'],
-                    value='nis_wfss',
+                    value='nis_wfss|nis_extcal',
                 ),
                 DMSAttrConstraint(
                     name='image_exp_type',
@@ -806,6 +808,11 @@ class Asn_Lv2WFSSNIS(
                     test=lambda value, item: self.get_exposure_type(item) != value,
                     force_unique=False,
                     ),
+                SimpleConstraint(
+                    value=False,
+                    test=lambda value, item: niswfss_extcal_image2(item) == value,
+                    force_unique=False
+                ),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
             ], reduce=Constraint.any)
         ])
