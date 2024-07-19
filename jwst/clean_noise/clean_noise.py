@@ -585,7 +585,7 @@ def do_correction(input_model, fit_method, background_method,
             elif ndim == 3:
                 image = input_model.data[i]
             else:
-                # Ramp data input -
+                # Ramp data input
                 if use_diff:
                     # subtract the current group from the next one
                     image = input_model.data[i, j + 1] - input_model.data[i, j]
@@ -617,10 +617,15 @@ def do_correction(input_model, fit_method, background_method,
                     image, mask, background_method=background_method)
                 bkg_sub = image - background
 
-                # Flag more outliers in the background subtracted image
-                _, med_val, sigma = sigma_clipped_stats(
-                    bkg_sub, mask=~mask, mask_value=0, sigma=5.0)
-                outliers = np.abs(bkg_sub - med_val) > n_sigma * sigma
+                # Flag more outliers in the background subtracted image,
+                # with sigma set by the lower half of the distribution only
+                median_value = np.median(bkg_sub[mask])
+                lower_half_idx = mask & (bkg_sub < median_value)
+                lower_half_distribution = np.concatenate(
+                    ((bkg_sub[lower_half_idx] - median_value),
+                     (median_value - bkg_sub[lower_half_idx])))
+                bkg_sigma = np.std(lower_half_distribution)
+                outliers = np.abs(bkg_sub - median_value) > n_sigma * bkg_sigma
                 mask[outliers] = False
 
             if fit_method == 'fft':

@@ -27,7 +27,7 @@ class CleanNoiseStep(Step):
     spec = """
         fit_method = option('fft', 'median', default='median')  # Noise fitting algorithm
         background_method = option('median', 'model', None, default='median')
-        mask_spectral_regions = boolean(default=True)  # Mask WCS-defined regions for spectral data
+        mask_spectral_regions = boolean(default=False)  # Mask WCS-defined regions for spectral data
         single_mask = boolean(default=False)  # Make a single mask for all integrations
         n_sigma = float(default=5.0)  # Clipping level for outliers
         save_mask = boolean(default=False)  # Save the created mask
