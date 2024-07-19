@@ -127,7 +127,7 @@ def fourier_imshift(image, shift):
     return offset
 
 
-def align_array(reference, target, mask=None):
+def align_array(reference, target, mask=None, useshift=None):
     """
     Computes shifts between target image (or image "slices") and the reference
     image and re-aligns input images to the target.
@@ -216,26 +216,28 @@ def align_models(reference, target, mask):
     output_model = QuadModel(quad_shape)
     output_model.update(target)
 
-    # Do alignment with only the first integration of the science exposure
-    k = 0
-
     # Compute the shifts of the PSF ("target") images relative to
-    # the science ("reference") image in this integration, and apply
-    # the shifts to the PSF images
-    d, shifts = align_array(
-        reference.data[k].astype(np.float64),
+    # the science ("reference") image in the first integration
+    _, shifts = align_array(
+        reference.data[0].astype(np.float64),
         target.data.astype(np.float64),
         mask.data)
-    output_model.data[k] = d
 
-    # Apply the same shifts to the PSF error arrays, if they exist
-    if target.err is not None:
-        output_model.err[k] = fourier_imshift(
-            target.err.astype(np.float64),
+    # Loop over all integrations of the science exposure
+    for k in range(nrefslices):
+
+        # Apply the shifts to the PSF images
+        output_model.data[k] = fourier_imshift(
+            target.data.astype(np.float64),
             -shifts)
 
-    # TODO: in the future we need to add shifts and other info (such as
-    # slice ID from the reference image to which target was aligned)
-    # to output cube metadata (or property).
+        # Apply the same shifts to the PSF error arrays, if they exist
+        if target.err is not None:
+            output_model.err[k] = fourier_imshift(
+                target.err.astype(np.float64),
+                -shifts)
 
+        # TODO: in the future we need to add shifts and other info (such as
+        # slice ID from the reference image to which target was aligned)
+        # to output cube metadata (or property).
     return output_model
