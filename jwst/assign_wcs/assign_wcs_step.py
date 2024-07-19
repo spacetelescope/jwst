@@ -17,7 +17,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["AssignWcsStep"]
 
 
-WFSS_TYPES = set(['nrc_wfss', 'nis_wfss'])
+WFSS_TYPES = set(['nrc_wfss', 'nis_wfss', 'nis_extcal'])
 
 
 class AssignWcsStep(Step):
