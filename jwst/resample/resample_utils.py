@@ -81,7 +81,7 @@ def make_output_wcs(input_models, ref_wcs=None,
         output_wcs = util.wcs_from_footprints(
             wcslist,
             ref_wcs=wcslist[0],
-            ref_wcsinfo=input_models[0].meta.wcsinfo,
+            ref_wcsinfo=input_models[0].meta.wcsinfo.instance,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,

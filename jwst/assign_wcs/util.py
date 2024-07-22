@@ -831,7 +831,7 @@ def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
     footprint, spectral_region = compute_footprint_spectral(model)
-    update_s_region_keyword(model.meta.wcsinfo, footprint)
+    update_s_region_keyword(model.meta.wcsinfo.instance, footprint)
     model.meta.wcsinfo.spectral_region = spectral_region
 
 
@@ -859,7 +859,7 @@ def compute_footprint_nrs_slit(slit):
 
 def update_s_region_nrs_slit(slit):
     footprint, spectral_region = compute_footprint_nrs_slit(slit)
-    update_s_region_keyword(slit.meta.wcsinfo, footprint)
+    update_s_region_keyword(slit.meta.wcsinfo.instance, footprint)
     slit.meta.wcsinfo.spectral_region = spectral_region
 
 

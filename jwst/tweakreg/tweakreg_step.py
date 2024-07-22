@@ -240,7 +240,7 @@ class TweakRegStep(Step):
 
             # construct the corrector since the model is open (and already has a group_id)
             correctors[model_index] = twk.construct_wcs_corrector(image_model.meta.wcs,
-                                                                  image_model.meta.wcsinfo,
+                                                                  image_model.meta.wcsinfo.instance,
                                                                   catalog,
                                                                   image_model.meta.group_id,)
 
@@ -283,7 +283,7 @@ class TweakRegStep(Step):
                 correctors = \
                     twk.absolute_align(correctors, self.abs_refcat,
                                        ref_wcs=ref_image.meta.wcs,
-                                       ref_wcsinfo=ref_image.meta.wcsinfo,
+                                       ref_wcsinfo=ref_image.meta.wcsinfo.instance,
                                        epoch=Time(ref_image.meta.observation.date).decimalyear,
                                        abs_minobj=self.abs_minobj,
                                        abs_fitgeometry=self.abs_fitgeometry,
@@ -342,7 +342,7 @@ class TweakRegStep(Step):
 
                 image_model.meta.wcs = corrector.wcs
                 update_s_region_imaging(image_model.meta.wcs, 
-                                        image_model.meta.wcsinfo, 
+                                        image_model.meta.wcsinfo.instance, 
                                         shape=image_model.data.shape)
 
                 # Also update FITS representation in input exposures for
