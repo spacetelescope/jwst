@@ -20,7 +20,6 @@ from ci_watson.artifactory_helpers import (
 from jwst.associations import AssociationNotValidError, load_asn
 from jwst.lib.file_utils import pushdir
 from jwst.lib.suffix import replace_suffix
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 # Define location of default Artifactory API key, for Jenkins use only
@@ -296,7 +295,6 @@ def run_step_from_dict(rtdata, **step_params):
         step = os.path.join('config', step)
 
     # Run the step
-    collect_pipeline_cfgs('config')
     full_args = [step, rtdata.input]
     full_args.extend(step_params['args'])
 

@@ -42,9 +42,7 @@ retrieved from CRDS. In short, the values will be those actually used in the
 running of the step.
 
 For more information about and editing of parameter files, see
-:ref:`config_asdf_files`. Note that the older :ref:`config_cfg_files` format is
-still an option, understanding that this format will be deprecated.
-
+:ref:`config_asdf_files`.
 
 More information on parameter files can be found in the ``stpipe`` User's
 Guide at :ref:`stpipe-user-steps`.

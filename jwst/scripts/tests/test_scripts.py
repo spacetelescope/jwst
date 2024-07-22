@@ -7,7 +7,6 @@ SCRIPTS = [
     'asn_edit',
     'asn_gather',
     'asn_make_pool',
-    'collect_pipeline_cfgs',
     'create_data',
     'okify_regtests',
     'pointing_summary',
