@@ -965,7 +965,7 @@ def update_s_region_mrs(output_model):
         The output of assign_wcs.
     """
     footprint, spectral_region = compute_footprint_spectral(output_model)
-    update_s_region_keyword(output_model.meta.wcsinfo, footprint)
+    update_s_region_keyword(output_model.meta.wcsinfo.instance, footprint)
     output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
