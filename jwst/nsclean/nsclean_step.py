@@ -24,6 +24,7 @@ class NSCleanStep(Step):
         mask_spectral_regions = boolean(default=True)  # Mask WCS-defined spectral regions
         single_mask = boolean(default=False)  # Make a single mask for all integrations
         n_sigma = float(default=5.0)  # Clipping level for outliers
+        fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
         save_mask = boolean(default=False)  # Save the created mask
         user_mask = string(default=None)  # Path to user-supplied mask
         skip = boolean(default=True)  # By default, skip the step
@@ -54,6 +55,11 @@ class NSCleanStep(Step):
         n_sigma : float, optional
             Sigma clipping threshold to be used in detecting outliers in the image.
 
+        fit_histogram : bool, optional
+            If set, the 'sigma' used with `n_sigma` for clipping outliers
+            is derived from a Gaussian fit to a histogram of values.
+            Otherwise, a simple iterative sigma clipping is performed.
+
         single_mask : bool, optional
             If set, a single mask will be created, regardless of
             the number of input integrations. Otherwise, the mask will
@@ -83,8 +89,8 @@ class NSCleanStep(Step):
             # Do the NSClean correction
             result = clean_noise.do_correction(
                 input_model, self.fit_method, self.background_method,
-                self.mask_spectral_regions,
-                self.n_sigma, self.single_mask, self.save_mask, self.user_mask,
+                self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
+                self.single_mask, self.save_mask, self.user_mask,
                 use_diff)
             output_model, mask_model, status = result
 

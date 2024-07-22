@@ -1,9 +1,10 @@
 import logging
-import numpy as np
 
 import gwcs
+import numpy as np
 from astropy.stats import sigma_clipped_stats, SigmaClip
 from photutils.background import Background2D, MedianBackground
+from scipy.optimize import curve_fit
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
@@ -179,22 +180,151 @@ def mask_slits(input_model, mask):
     return mask
 
 
-def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
+def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
+                       fit_histogram=False, lower_half_only=False,
+                       verbose=False):
+    """
+    Flag signal and bad pixels in the image mask.
+
+    Given an image, estimate the background level and a sigma value for the
+    mean background.
+
+    The center and sigma may be calculated from a simple sigma-clipped
+    median and standard deviation, or may be refined by fitting a Gaussian
+    to a histogram of the values.  In that case, the center is the
+    Gaussian mean and the sigma is the Gaussian width.
+
+    Pixels above the center + sigma_upper * sigma are assumed to
+    have signal; those below this level are assumed to be background pixels.
+
+    Pixels less than center - sigma_lower * sigma are also excluded as bad values.
+
+    The input mask is updated in place.
+
+    Parameters
+    ----------
+    image
+    mask
+    sigma_lower
+    sigma_upper
+    fit_histogram
+    lower_half_only
+    verbose
+    """
+    # Sigma limit for basic stats
+    sigma_limit = 3.0
+
+    # Initial iterative sigma clip
+    mean, median, sigma = sigma_clipped_stats(image, mask=~mask, sigma=sigma_limit)
+    if fit_histogram:
+        center = mean
+    else:
+        center = median
+    if verbose:
+        log.debug('From initial sigma clip:')
+        log.debug(f'    center: {center:.5g}')
+        log.debug(f'    sigma: {sigma:.5g}')
+
+    # If desired, use only the lower half of the data distribution
+    if lower_half_only:
+        lower_half_idx = mask & (image < center)
+        data_for_stats = np.concatenate(
+            ((image[lower_half_idx] - center),
+             (center - image[lower_half_idx]))) + center
+
+        # Redo stats on lower half of distribution
+        mean, median, sigma = sigma_clipped_stats(data_for_stats, sigma=sigma_limit)
+        if fit_histogram:
+            center = mean
+        else:
+            center = median
+        if verbose:
+            log.debug('From lower half distribution:')
+            log.debug(f'    center: {center:.5g}')
+            log.debug(f'    sigma: {sigma:.5g}')
+    else:
+        data_for_stats = image[mask]
+
+    # Refine sigma and center from a fit to a histogram, if desired
+    if fit_histogram:
+        hist, edges = np.histogram(data_for_stats, bins=2000,
+                                   range=(center - 4. * sigma, center + 4. * sigma))
+        values = (edges[1:] + edges[0:-1]) / 2.
+        ind = np.argmax(hist)
+        mode_estimate = values[ind]
+
+        # Fit a Gaussian profile to the histogram
+        def gaussian(x, g_amp, g_mean, g_sigma):
+            return g_amp * np.exp(-0.5 * ((x - g_mean) / g_sigma) ** 2)
+
+        param_start = (hist[ind], mode_estimate, sigma)
+        bounds = [(0, values[0], 0),
+                  (np.inf, values[-1], values[-1] - values[0])]
+        try:
+            param_opt, _ = curve_fit(gaussian, values, hist, p0=param_start,
+                                     bounds=bounds)
+        except RuntimeError:
+            log.error('Gaussian fit failed; using clip center and sigma.')
+            param_opt = None
+
+        if verbose:
+            log.debug('From histogram:')
+            log.debug(f'    mode estimate: {mode_estimate:.5g}')
+            log.debug(f'    range of values in histogram: '
+                      f'{values[0]:.5g} to {values[-1]:.5g}')
+            log.debug('Gaussian fit results:')
+        if param_opt is None:
+            if verbose:
+                log.debug('    (fit failed)')
+        else:
+            if verbose:
+                log.debug(f'    peak: {param_opt[0]:.5g}')
+                log.debug(f'    center: {param_opt[1]:.5g}')
+                log.debug(f'    sigma: {param_opt[2]:.5g}')
+            center = param_opt[1]
+            sigma = param_opt[2]
+
+    # Set limits from center and sigma
+    background_lower_limit = center - sigma_lower * sigma
+    background_upper_limit = center + sigma_upper * sigma
+    if verbose:
+        log.debug(f'Mask limits: {background_lower_limit:.5g} '
+                  f'to {background_upper_limit:.5g}')
+
+    # Clip bad values
+    bad_values = image < background_lower_limit
+    mask[bad_values] = False
+
+    # Clip signal (> N sigma)
+    signal = image > background_upper_limit
+    mask[signal] = False
+
+    return
+
+
+def create_mask(input_model, mask_spectral_regions=False,
+                n_sigma=2.0, fit_histogram=False, single_mask=False):
     """
     Create a mask identifying background pixels.
 
     Parameters
     ----------
     input_model : `~jwst.datamodel.JwstDataModel`
-        Science data model
+        Science data model.
 
-    mask_spectral_regions : bool
-        Mask slit/slice regions defined in WCS
+    mask_spectral_regions : bool, optional
+        Mask slit/slice regions defined in WCS. Implemented
+        only for NIRSpec science modes.
 
-    n_sigma : float
-        Sigma threshold for masking outliers
+    n_sigma : float, optional
+        Sigma threshold for masking outliers.
 
-    single_mask : bool
+    fit_histogram : bool, optional
+        If set, the 'sigma' used with `n_sigma` for clipping outliers
+        is derived from a Gaussian fit to a histogram of values.
+        Otherwise, a simple iterative sigma clipping is performed.
+
+    single_mask : bool, optional
         If set, a single mask will be created, regardless of
         the number of input integrations. Otherwise, the mask will
         be a 3D cube, with one plane for each integration.
@@ -240,9 +370,9 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
         open_pix = image_model.dq & dqflags.pixel['MSA_FAILED_OPEN']
         mask[open_pix > 0] = False
 
-    # Mask any NaN pixels
-    nan_pix = np.isnan(image_model.data)
-    mask[nan_pix] = False
+    # Mask any NaN pixels or exactly zero value pixels
+    no_data_pix = np.isnan(image_model.data) | (image_model.data == 0)
+    mask[no_data_pix] = False
 
     # If IFU or MOS, mask the fixed-slit area of the image; uses hardwired indexes
     if mask_spectral_regions:
@@ -261,17 +391,17 @@ def create_mask(input_model, mask_spectral_regions, n_sigma, single_mask):
                 log.info("Fixed slits found in MSA definition; "
                          "not masking the fixed slit region for MOS data.")
 
-    # Mask outliers using sigma clipping stats.
+    # Mask outliers and signal using sigma clipping stats.
     # For 3D data, loop over each integration separately.
     if image_model.data.ndim == 3:
         for i in range(image_model.data.shape[0]):
-            _, median, sigma = sigma_clipped_stats(image_model.data[i], mask=~mask[i], mask_value=0, sigma=5.0)
-            outliers = image_model.data[i] > (median + n_sigma * sigma)
-            mask[i][outliers] = False
+            clip_to_background(
+                image_model.data[i], mask[i],
+                sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True)
     else:
-        _, median, sigma = sigma_clipped_stats(image_model.data, mask=~mask, mask_value=0, sigma=5.0)
-        outliers = image_model.data > (median + n_sigma * sigma)
-        mask[outliers] = False
+        clip_to_background(
+            image_model.data, mask,
+            sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True)
 
     # Close the image model if needed
     if image_model is not input_model:
@@ -314,16 +444,31 @@ def background_level(image, mask, background_method='median'):
     """
     if background_method is None:
         background = 0.0
-    elif background_method == 'model':
-        sigma_clip_for_bkg = SigmaClip(sigma=3., maxiters=5)
-        bkg_estimator = MedianBackground()
-        bkg = Background2D(
-            image, (34, 34), filter_size=(5, 5), mask=~mask,
-            sigma_clip=sigma_clip_for_bkg,
-            bkg_estimator=bkg_estimator)
-        background = bkg.background
+
     else:
-        background = np.nanmedian(image[mask])
+        # Sigma limit for basic stats
+        sigma_limit = 3.0
+
+        # Flag more signal in the background subtracted image,
+        # with sigma set by the lower half of the distribution only
+        clip_to_background(
+            image, mask, sigma_lower=sigma_limit, sigma_upper=sigma_limit,
+            lower_half_only=True)
+
+        if background_method == 'model':
+            sigma_clip_for_bkg = SigmaClip(sigma=sigma_limit, maxiters=5)
+            bkg_estimator = MedianBackground()
+            try:
+                bkg = Background2D(
+                    image, (34, 34), filter_size=(5, 5), mask=~mask,
+                    sigma_clip=sigma_clip_for_bkg,
+                    bkg_estimator=bkg_estimator)
+                background = bkg.background
+            except ValueError:
+                log.error('Background fit failed, using median value.')
+                background = np.nanmedian(image[mask])
+        else:
+            background = np.nanmedian(image[mask])
     return background
 
 
@@ -434,7 +579,7 @@ def median_clean(image, mask, slowaxis):
     """
     # Masked median along slow axis
     masked_image = np.ma.array(image, mask=~mask)
-    stripes = np.ma.median(masked_image, axis=(slowaxis-1), keepdims=True)
+    stripes = np.ma.median(masked_image, axis=(slowaxis - 1), keepdims=True)
     stripes = np.ma.filled(stripes, fill_value=0.0)
 
     # Remove median stripes
@@ -444,7 +589,7 @@ def median_clean(image, mask, slowaxis):
 
 
 def do_correction(input_model, fit_method, background_method,
-                  mask_spectral_regions, n_sigma,
+                  mask_spectral_regions, n_sigma, fit_histogram,
                   single_mask, save_mask, user_mask, use_diff):
     """
     Apply the 1/f noise correction.
@@ -452,10 +597,10 @@ def do_correction(input_model, fit_method, background_method,
     Parameters
     ----------
     input_model : `~jwst.datamodel.JwstDataModel`
-        Science data to be corrected
+        Science data to be corrected.
 
     fit_method : {'fft', 'median'}
-        The algorithm to use to fit background noise
+        The algorithm to use to fit background noise.
 
     background_method : {'median', 'model', None}
         If 'median', the preliminary background to remove and restore
@@ -464,10 +609,15 @@ def do_correction(input_model, fit_method, background_method,
         pixel kernel.  If None, the background value is 0.0.
 
     mask_spectral_regions : bool
-        Mask slit/slice regions defined in WCS
+        Mask slit/slice regions defined in WCS.
 
     n_sigma : float
-        N-sigma rejection level for finding outliers
+        N-sigma rejection level for finding outliers.
+
+    fit_histogram : bool, optional
+        If set, the 'sigma' used with `n_sigma` for clipping outliers
+        is derived from a Gaussian fit to a histogram of values.
+        Otherwise, a simple iterative sigma clipping is performed.
 
     single_mask : bool
         If set, a single mask will be created, regardless of
@@ -475,10 +625,10 @@ def do_correction(input_model, fit_method, background_method,
         be a 3D cube, with one plane for each integration.
 
     save_mask : bool
-        Switch to indicate whether the mask should be saved
+        Switch to indicate whether the mask should be saved.
 
     user_mask : str or None
-        Path to user-supplied mask image
+        Path to user-supplied mask image.
 
     use_diff : bool
         If set, and the input is ramp data, correction is performed
@@ -488,10 +638,10 @@ def do_correction(input_model, fit_method, background_method,
     Returns
     -------
     output_model : `~jwst.datamodel.JwstDataModel`
-        Corrected data
+        Corrected data.
 
     mask_model : `~jwst.datamodel.JwstDataModel`
-        Pixel mask to be saved or None
+        Pixel mask to be saved or None.
     """
     # Track the completion status, for various failure conditions
     status = 'SKIPPED'
@@ -526,11 +676,12 @@ def do_correction(input_model, fit_method, background_method,
         # to include in the 1/f noise measurements. Basically, we're setting
         # all illuminated pixels to False, so that they do not get used, and
         # setting all unilluminated pixels to True (so they DO get used).
-        # For BOTS mode the mask will be 3D, to accommodate changes in masked
-        # pixels per integration.
         log.info("Creating mask")
         background_mask = create_mask(
-            input_model, mask_spectral_regions, n_sigma, single_mask)
+            input_model,
+            mask_spectral_regions=mask_spectral_regions,
+            n_sigma=n_sigma, fit_histogram=fit_histogram,
+            single_mask=single_mask)
 
         # Store the mask image in a model, if requested
         if save_mask:
@@ -579,6 +730,12 @@ def do_correction(input_model, fit_method, background_method,
         for j in range(ngroups):
             log.debug(f"Working on group {j + 1}")
 
+            # Copy the scene mask, for further flagging
+            if background_mask.ndim == 3:
+                mask = background_mask[i].copy()
+            else:
+                mask = background_mask.copy()
+
             # Get the relevant image data
             if ndim == 2:
                 image = input_model.data
@@ -589,14 +746,16 @@ def do_correction(input_model, fit_method, background_method,
                 if use_diff:
                     # subtract the current group from the next one
                     image = input_model.data[i, j + 1] - input_model.data[i, j]
+                    dq = input_model.groupdq[i, j + 1]
                 else:
                     image = input_model.data[i, j]
+                    dq = input_model.groupdq[i, j]
 
-            # Copy the mask, for further flagging
-            if background_mask.ndim == 3:
-                mask = background_mask[i].copy()
-            else:
-                mask = background_mask.copy()
+                # For ramp data, mask any DNU and JUMP pixels
+                dnu = (dq & dqflags.group['DO_NOT_USE']) > 0
+                mask[dnu] = False
+                jump = (dq & dqflags.group['JUMP_DET']) > 0
+                mask[jump] = False
 
             # Make sure data is float32
             image = image.astype(np.float32)
@@ -606,27 +765,23 @@ def do_correction(input_model, fit_method, background_method,
             image[nan_pix] = 0.0
             mask[nan_pix] = False
 
-            # TODO: add dnu and jump to mask
-
             # Fit and remove a background level
-            if background_method is None:
+            if str(background_method).lower() == 'none':
                 background = 0.0
                 bkg_sub = image
             else:
                 background = background_level(
                     image, mask, background_method=background_method)
+                log.debug(f'Background level: {np.nanmedian(background):.5g}')
                 bkg_sub = image - background
 
-                # Flag more outliers in the background subtracted image,
+                # Flag more signal in the background subtracted image,
                 # with sigma set by the lower half of the distribution only
-                median_value = np.median(bkg_sub[mask])
-                lower_half_idx = mask & (bkg_sub < median_value)
-                lower_half_distribution = np.concatenate(
-                    ((bkg_sub[lower_half_idx] - median_value),
-                     (median_value - bkg_sub[lower_half_idx])))
-                bkg_sigma = np.std(lower_half_distribution)
-                outliers = np.abs(bkg_sub - median_value) > n_sigma * bkg_sigma
-                mask[outliers] = False
+                clip_to_background(
+                    bkg_sub, mask, sigma_lower=n_sigma,
+                    sigma_upper=n_sigma, lower_half_only=True)
+
+                # TODO: add segmentation masking?
 
             if fit_method == 'fft':
                 if bkg_sub.shape == (2048, 2048):
@@ -660,7 +815,8 @@ def do_correction(input_model, fit_method, background_method,
                     output_model.data[i] = cleaned_image
                 else:
                     if use_diff:
-                        output_model.data[i, j + 1] = input_model.data[i, j] + cleaned_image
+                        # add the cleaned data to the previously cleaned group
+                        output_model.data[i, j + 1] = output_model.data[i, j] + cleaned_image
                     else:
                         output_model.data[i, j] = cleaned_image
 
