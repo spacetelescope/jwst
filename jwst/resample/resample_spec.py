@@ -16,7 +16,7 @@ from gwcs.geometry import SphericalToCartesian
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import compute_scale, wrap_ra
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleData
 
@@ -52,7 +52,7 @@ class ResampleSpecData(ResampleData):
         """
         Parameters
         ----------
-        input_models : list of objects
+        input_models : ModelLibrary
             list of data models, one for each input image
 
         output : str
@@ -61,7 +61,10 @@ class ResampleSpecData(ResampleData):
         kwargs : dict
             Other parameters
         """
-        self.input_models = input_models
+        if isinstance(input_models, ModelContainer):
+            self.input_models = ModelLibrary(input_models)
+        else:
+            self.input_models = input_models
         self.output_dir = None
         self.output_filename = output
         if output is not None and '.fits' not in str(output):
@@ -89,9 +92,12 @@ class ResampleSpecData(ResampleData):
         self.asn_id = kwargs.get('asn_id', None)
 
         # Get an average input pixel scale for parameter calculations
-        disp_axis = self.input_models[0].meta.wcsinfo.dispersion_direction
+        with self.input_models:
+            example_model = self.input_models.borrow(0)
+            self.input_models.shelve(example_model, 0, modify=False)
+        disp_axis = example_model.meta.wcsinfo.dispersion_direction
         self.input_pixscale0 = compute_spectral_pixel_scale(
-            self.input_models[0].meta.wcs, disp_axis=disp_axis)
+            example_model.meta.wcs, disp_axis=disp_axis)
         if np.isnan(self.input_pixscale0):
             log.warning('Input pixel scale could not be determined.')
             if pscale is not None:
@@ -99,7 +105,7 @@ class ResampleSpecData(ResampleData):
                             'without an input pixel scale. Setting pscale=None.')
                 pscale = None
 
-        nominal_area = self.input_models[0].meta.photometry.pixelarea_steradians
+        nominal_area = example_model.meta.photometry.pixelarea_steradians
         if nominal_area is None:
             log.warning('Nominal pixel area not set in input data.')
             if pscale is not None:
@@ -160,8 +166,8 @@ class ResampleSpecData(ResampleData):
             # These functions internally use self.pscale_ratio to accommodate
             # user settings.
             # Any other customizations (crpix, crval, rotation) are ignored.
-            if resample_utils.is_sky_like(self.input_models[0].meta.wcs.output_frame):
-                if self.input_models[0].meta.instrument.name != "NIRSPEC":
+            if resample_utils.is_sky_like(example_model.meta.wcs.output_frame):
+                if example_model.meta.instrument.name != "NIRSPEC":
                     self.output_wcs = self.build_interpolated_output_wcs()
                 else:
                     self.output_wcs = self.build_nirspec_output_wcs()
@@ -187,14 +193,16 @@ class ResampleSpecData(ResampleData):
         self.blank_output = datamodels.SlitModel(tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
-        self.blank_output.update(input_models[0])
+        self.blank_output.update(example_model)
         self.blank_output.meta.wcs = self.output_wcs
         if output_pix_area is not None:
             self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
             self.blank_output.meta.photometry.pixelarea_arcsecsq = (
                 output_pix_area * np.rad2deg(3600)**2)
 
+        # FIXME: this should be a library
         self.output_models = ModelContainer()
+        del example_model
 
     def build_nirspec_output_wcs(self, refmodel=None):
         """
@@ -230,22 +238,28 @@ class ResampleSpecData(ResampleData):
         output_wcs : `~gwcs.WCS`
             A gwcs WCS object defining the output frame WCS.
         """
-        all_wcs = [m.meta.wcs for m in self.input_models if m is not refmodel]
-        if refmodel:
-            all_wcs.insert(0, refmodel.meta.wcs)
-        else:
-            # Use the first model with a reasonable amount of good data
-            # as the reference model
-            for model in self.input_models:
-                dq_mask = resample_utils.build_mask(model.dq, self.good_bits)
-                good = np.isfinite(model.data) & (model.data != 0) & dq_mask
-                if np.sum(good) > 100 and refmodel is None:
-                    refmodel = model
-                    break
+        with self.input_models:
+            all_wcs = []
+            for i, model in enumerate(self.input_models):
+                all_wcs.append(model.meta.wcs)
+                self.input_models.shelve(model, i, modify=False)
+            if refmodel:
+                all_wcs.insert(0, refmodel.meta.wcs)
+            else:
+                # Use the first model with any good data as the reference model
+                for i, model in enumerate(self.input_models):
+                    dq_mask = resample_utils.build_mask(model.dq, self.good_bits)
+                    good = np.isfinite(model.data) & (model.data != 0) & dq_mask
+                    if np.sum(good) > 100 and refmodel is None:
+                        refmodel = model
+                        self.input_models.shelve(model, i, modify=False)
+                        break
+                    self.input_models.shelve(model, i)
 
             # If no good data was found, use the first model.
             if refmodel is None:
-                refmodel = self.input_models[0]
+                refmodel = self.input_models.borrow(0)
+                self.input_models.shelve(refmodel, 0, modify=False)
 
         # Make a copy of the data array for internal manipulation
         refmodel_data = refmodel.data.copy()
@@ -513,14 +527,26 @@ class ResampleSpecData(ResampleData):
         all_ra_slit = []
         all_dec_slit = []
 
-        for im, model in enumerate(self.input_models):
-            wcs = model.meta.wcs
+        all_wcs = []
+        spectral_axes = []
+        with self.input_models:
+            example_model = self.input_models.borrow(0)
+            self.input_models.shelve(example_model, 0, modify=False)
+            for im, model in enumerate(self.input_models):
+                wcs = model.meta.wcs
+                spectral_axis = find_dispersion_axis(model)
+                self.input_models.shelve(model, im, modify=False)
+                all_wcs.append(wcs)
+                spectral_axes.append(spectral_axis)
+
+        for im in range(len(all_wcs)):
+            wcs = all_wcs[im]
             bbox = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bbox)
             ra, dec, lam = np.array(wcs(*grid))
             # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
             # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
-            spectral_axis = find_dispersion_axis(model)
+            spectral_axis = spectral_axes[im]
             spatial_axis = spectral_axis ^ 1
 
             # Compute the wavelength array, trimming NaNs from the ends
@@ -625,7 +651,7 @@ class ResampleSpecData(ResampleData):
         # Check if the data is MIRI LRS FIXED Slit. If it is then
         # the wavelength array needs to be flipped so that the resampled
         # dispersion direction matches the dispersion direction on the detector.
-        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+        if example_model.meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
             wavelength_array = np.flip(wavelength_array, axis=None)
 
         step = 1
@@ -754,7 +780,9 @@ class ResampleSpecData(ResampleData):
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS.
         """
-        model = self.input_models[0]
+        with self.input_models:
+            model = self.input_models.borrow(0)
+            self.input_models.shelve(model, 0, modify=False)
         wcs = model.meta.wcs
         bbox = wcs.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)

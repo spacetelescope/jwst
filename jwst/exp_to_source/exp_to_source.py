@@ -8,9 +8,9 @@ from collections.abc import Callable
 from stdatamodels.properties import merge_tree
 from stdatamodels.jwst.datamodels import MultiExposureModel
 
-from jwst.datamodels import SourceModelContainer
+from jwst.datamodels import SourceModelContainer, ModelLibrary
 
-__all__ = ['exp_to_source', 'multislit_to_container']
+__all__ = ['exp_to_source', 'multislit_to_container', 'multislit_to_library']
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -109,6 +109,23 @@ def multislit_to_container(inputs):
     containers = exp_to_source(inputs)
     for id in containers:
         containers[id] = SourceModelContainer(containers[id])
+
+    return containers
+
+
+# this is a hacky solution - fix it later
+def multislit_to_library(inputs):
+    if isinstance(inputs, ModelLibrary):
+        # convert to list of MultiSlitModels expected by exp_to_source
+        multislit_list = []
+        with inputs:
+            for i in range(len(inputs)):
+                multislit_list.append(inputs.borrow(i))
+                inputs.shelve(multislit_list[-1], i, modify=False)
+        inputs = multislit_list
+    containers = exp_to_source(inputs)
+    for id in containers:
+        containers[id] = ModelLibrary(SourceModelContainer(containers[id]))
 
     return containers
 

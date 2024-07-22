@@ -4,9 +4,8 @@ from copy import deepcopy
 
 import asdf
 
-from stdatamodels.jwst import datamodels
-
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.datamodels.library import container_to_library, library_to_container
 
 from . import resample
 from ..stpipe import Step
@@ -61,10 +60,12 @@ class ResampleStep(Step):
 
     def process(self, input):
 
-        input = datamodels.open(input)
-
-        if isinstance(input, ModelContainer):
+        if isinstance(input, ModelLibrary):
             input_models = input
+        elif isinstance(input, ModelContainer):
+            input_models = container_to_library(input)
+
+        if isinstance(input, ModelLibrary):
             try:
                 output = input_models.meta.asn_table.products[0].name
             except AttributeError:
@@ -73,16 +74,20 @@ class ResampleStep(Step):
                 # TODO: figure out why and make sure asn_table is carried along
                 output = None
         else:
-            input_models = ModelContainer([input])
+            input_models = ModelLibrary([input])
             input_models.asn_pool_name = input.meta.asn.pool_name
             input_models.asn_table_name = input.meta.asn.table_name
             output = input.meta.filename
             self.blendheaders = False
 
         # Check that input models are 2D images
-        if len(input_models[0].data.shape) != 2:
-            # resample can only handle 2D images, not 3D cubes, etc
-            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+        with input_models:
+            example_model = input_models.borrow(0)
+            data_shape = example_model.data.shape
+            input_models.shelve(example_model, 0, modify=False)
+            if len(data_shape) != 2:
+                # resample can only handle 2D images, not 3D cubes, etc
+                raise RuntimeError(f"Input {example_model} is not a 2D image.")
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
@@ -91,27 +96,29 @@ class ResampleStep(Step):
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
         result = resamp.do_drizzle()
 
-        for model in result:
-            model.meta.cal_step.resample = 'COMPLETE'
-            self.update_fits_wcs(model)
-            util.update_s_region_imaging(model)
-            model.meta.asn.pool_name = input_models.asn_pool_name
-            model.meta.asn.table_name = input_models.asn_table_name
+        with result:
+            for i, model in enumerate(result):
+                model.meta.cal_step.resample = 'COMPLETE'
+                self.update_fits_wcs(model)
+                util.update_s_region_imaging(model)
+                resample.copy_asn_info_from_library(input_models, model)
 
-            # if pixel_scale exists, it will override pixel_scale_ratio.
-            # calculate the actual value of pixel_scale_ratio based on pixel_scale
-            # because source_catalog uses this value from the header.
-            if self.pixel_scale is None:
-                model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-            else:
-                model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-            model.meta.resample.pixfrac = kwargs['pixfrac']
+                # if pixel_scale exists, it will override pixel_scale_ratio.
+                # calculate the actual value of pixel_scale_ratio based on pixel_scale
+                # because source_catalog uses this value from the header.
+                if self.pixel_scale is None:
+                    model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+                else:
+                    model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
+                model.meta.resample.pixfrac = kwargs['pixfrac']
+                result.shelve(model, 0)
 
-        if len(result) == 1:
-            result = result[0]
+            if len(result) == 1:
+                model = result.borrow(0)
+                result.shelve(model, 0, modify=False)
+                return model
 
-        input_models.close()
-        return result
+        return library_to_container(result)
 
     @staticmethod
     def _check_list_pars(vals, name, min_vals=None):

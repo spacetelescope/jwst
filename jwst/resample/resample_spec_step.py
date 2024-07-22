@@ -3,9 +3,11 @@ __all__ = ["ResampleSpecStep"]
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.datamodels.library import container_to_library
 from . import resample_spec, ResampleStep
-from ..exp_to_source import multislit_to_container
+from jwst.resample.resample import copy_asn_info_from_library
+from ..exp_to_source import multislit_to_library
 from ..assign_wcs.util import update_s_region_spectral
 from jwst.lib.wcs_utils import get_wavelengths
 
@@ -46,8 +48,18 @@ class ResampleSpecStep(ResampleStep):
             input_new = datamodels.SlitModel(input_new)
 
         if isinstance(input_new, ModelContainer):
+            input_models = container_to_library(input_new)
+            try:
+                output = input_models.meta.asn_table.products[0].name
+            except AttributeError:
+                # NIRSpec MOS data goes through this path, as the container
+                # is only ModelContainer-like, and doesn't have an asn_table
+                # attribute attached.  Output name handling gets done in
+                # _process_multislit() via the update method
+                # TODO: the container-like object should retain asn_table
+                output = None
+        elif isinstance(input_new, ModelLibrary):
             input_models = input_new
-
             try:
                 output = input_models.meta.asn_table.products[0].name
             except AttributeError:
@@ -58,9 +70,9 @@ class ResampleSpecStep(ResampleStep):
                 # TODO: the container-like object should retain asn_table
                 output = None
         else:
-            input_models = ModelContainer([input_new])
+            input_models = ModelLibrary([input_new])
             output = input_new.meta.filename
-            self.blendheaders = False
+            self.blendheaders = False 
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
@@ -68,20 +80,23 @@ class ResampleSpecStep(ResampleStep):
         self.drizpars = kwargs
 
         # Call resampling
-        if isinstance(input_models[0], MultiSlitModel):
-            result = self._process_multislit(input_models)
+        with input_models:
+            example_model = input_models.borrow(0)
+            input_models.shelve(example_model, 0, modify=False)
+            if isinstance(example_model, MultiSlitModel):
+                result = self._process_multislit(input_models)
 
-        elif len(input_models[0].data.shape) != 2:
-            # resample can only handle 2D images, not 3D cubes, etc
-            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+            elif len(example_model.data.shape) != 2:
+                # resample can only handle 2D images, not 3D cubes, etc
+                raise RuntimeError("Input {} is not a 2D image.".format(example_model))
 
-        else:
-            # result is a SlitModel
-            result = self._process_slit(input_models)
+            else:
+                # result is a SlitModel
+                result = self._process_slit(input_models)
 
         # Update ASNTABLE in output
-        result.meta.asn.table_name = input_models[0].meta.asn.table_name
-        result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
+        result.meta.asn.table_name = example_model.meta.asn.table_name
+        result.meta.asn.pool_name = example_model.meta.asn.pool_name
 
         # populate the result wavelength attribute for MultiSlitModel
         if isinstance(result, MultiSlitModel):
@@ -101,37 +116,41 @@ class ResampleSpecStep(ResampleStep):
 
         Parameters
         ----------
-        input : `~jwst.datamodels.ModelContainer`
-            A container of `~jwst.datamodels.MultiSlitModel`
+        input_models : `~jwst.datamodels.ModelLibrary`
+            A library of `~jwst.datamodels.MultiSlitModel`
 
         Returns
         -------
         result : `~jwst.datamodels.MultiSlitModel`
             The resampled output, one per source
         """
-        containers = multislit_to_container(input_models)
-        result = datamodels.MultiSlitModel()
-
-        result.update(input_models[0])
+        library_ordereddict = multislit_to_library(input_models)
+        with input_models:
+            example_model = input_models.borrow(0)
+            result = datamodels.MultiSlitModel()
+            result.update(example_model)
+            input_models.shelve(example_model, 0, modify=False)
 
         pscale_ratio = None
-        for container in containers.values():
-            resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
+        for input_library in library_ordereddict.values():
+
+            resamp = resample_spec.ResampleSpecData(input_library, **self.drizpars)
 
             drizzled_models = resamp.do_drizzle()
-
-            for model in drizzled_models:
-                self.update_slit_metadata(model)
-                update_s_region_spectral(model)
-                result.slits.append(model)
+            with drizzled_models:
+                for i, model in enumerate(drizzled_models):
+                    self.update_slit_metadata(model)
+                    update_s_region_spectral(model)
+                    result.slits.append(model)
+                    drizzled_models.shelve(model, i, modify=False)
 
             # Keep the first computed pixel scale ratio for storage
             if self.pixel_scale is not None and pscale_ratio is None:
                 pscale_ratio = resamp.pscale_ratio
 
         result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
+        # copy over asn information
+        copy_asn_info_from_library(input_models, result)
         if self.pixel_scale is None or pscale_ratio is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         else:
@@ -160,18 +179,18 @@ class ResampleSpecStep(ResampleStep):
 
         drizzled_models = resamp.do_drizzle()
 
-        result = drizzled_models[0]
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
-        result.meta.bunit_data = drizzled_models[0].meta.bunit_data
-        if self.pixel_scale is None:
-            result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-        else:
-            result.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-        result.meta.resample.pixfrac = self.pixfrac
-        self.update_slit_metadata(result)
-        update_s_region_spectral(result)
+        with drizzled_models:
+            result = drizzled_models.borrow(0)
+            drizzled_models.shelve(result, 0, modify=False)
+            result.meta.cal_step.resample = "COMPLETE"
+            copy_asn_info_from_library(input_models, result)
+            if self.pixel_scale is None:
+                result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+            else:
+                result.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
+            result.meta.resample.pixfrac = self.pixfrac
+            self.update_slit_metadata(result)
+            update_s_region_spectral(result)
 
         return result
 
