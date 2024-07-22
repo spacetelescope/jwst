@@ -16,6 +16,7 @@ image.
     `turbo`, `lanczos2`, and `lanczos3`.
 
     For spectral data, only the `square` and `point` kernels should be used.
+    The other kernels do not conserve spectral flux.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
     Ratio of input to output pixel scale.
@@ -28,9 +29,9 @@ image.
     sample the same input pixel.  For example, a value of 2.0
     means the output image would have 2 pixels sampling each input
     spatial pixel. If the input data has units of flux density (MJy/pixel),
-    the output flux per pixel will be approximately half the input flux
-    per pixel.  If the input data has units of surface brightness (MJy/sr),
-    the output flux per pixel is not scaled.
+    the output flux per pixel will be half the input flux per pixel.
+    If the input data has units of surface brightness (MJy/sr), the output
+    flux per pixel is not scaled.
 
     Note that this parameter is only applied in the cross-dispersion
     direction for spectral data: sampling wavelengths are not affected.
