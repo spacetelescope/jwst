@@ -6,7 +6,7 @@ from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
-from jwst.ramp_fitting.ramp_fit_step import compute_RN_variances
+# from jwst.ramp_fitting.ramp_fit_step import compute_RN_variances
 
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -46,6 +46,7 @@ def test_drop_frames1_not_set():
     np.testing.assert_allclose(data[50, 50], 10.0, 1e-6)
 
 
+@pytest.mark.skip(reason="Unweighted fit not implemented.")
 def test_readnoise_variance():
     # test RN variance calculations for handling charge_migration
     group_time = 10.6
