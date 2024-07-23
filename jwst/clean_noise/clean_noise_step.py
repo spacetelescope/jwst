@@ -28,13 +28,12 @@ class CleanNoiseStep(Step):
         fit_method = option('fft', 'median', default='median')  # Noise fitting algorithm
         background_method = option('median', 'model', None, default='median')
         mask_spectral_regions = boolean(default=False)  # Mask WCS-defined regions for spectral data
-        single_mask = boolean(default=False)  # Make a single mask for all integrations
-        n_sigma = float(default=5.0)  # Clipping level for outliers
+        single_mask = boolean(default=True)  # Make a single mask for all integrations
+        n_sigma = float(default=2.0)  # Clipping level for non-background signal
         fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
         save_mask = boolean(default=False)  # Save the created mask
         user_mask = string(default=None)  # Path to user-supplied mask
-        use_diff = boolean(default=False)  # Correct group diffs instead of group images
-        skip = boolean(default=True)  # By default, skip the step        
+        skip = boolean(default=True)  # By default, skip the step
     """
 
     def process(self, input):
@@ -80,11 +79,6 @@ class CleanNoiseStep(Step):
             May be a 2D image (ImageModel) or 3D cube (CubeModel), matching the
             number of integrations in the data.
 
-        use_diff : bool, optional
-            If set, and the input is ramp data, correction is performed
-            on diffs between group images.  Otherwise, correction is
-            performed directly on the group image.
-
         Returns
         -------
         output_model : DataModel
@@ -97,8 +91,7 @@ class CleanNoiseStep(Step):
             result = clean_noise.do_correction(
                 input_model, self.fit_method, self.background_method,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
-                self.single_mask, self.save_mask, self.user_mask,
-                self.use_diff)
+                self.single_mask, self.save_mask, self.user_mask)
             output_model, mask_model, status = result
 
             # Save the mask, if requested

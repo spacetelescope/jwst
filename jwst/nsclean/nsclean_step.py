@@ -1,5 +1,3 @@
-import warnings
-
 from stdatamodels.jwst import datamodels
 
 from jwst.clean_noise import clean_noise
@@ -83,15 +81,11 @@ class NSCleanStep(Step):
         # Open the input data model
         with datamodels.open(input) as input_model:
 
-            # This step is called only from spec2, so use_diff is irrelevant.
-            use_diff = False
-
             # Do the NSClean correction
             result = clean_noise.do_correction(
                 input_model, self.fit_method, self.background_method,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
-                self.single_mask, self.save_mask, self.user_mask,
-                use_diff)
+                self.single_mask, self.save_mask, self.user_mask)
             output_model, mask_model, status = result
 
             # Save the mask, if requested

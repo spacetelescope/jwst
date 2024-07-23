@@ -590,7 +590,7 @@ def median_clean(image, mask, slowaxis):
 
 def do_correction(input_model, fit_method, background_method,
                   mask_spectral_regions, n_sigma, fit_histogram,
-                  single_mask, save_mask, user_mask, use_diff):
+                  single_mask, save_mask, user_mask):
     """
     Apply the 1/f noise correction.
 
@@ -629,11 +629,6 @@ def do_correction(input_model, fit_method, background_method,
 
     user_mask : str or None
         Path to user-supplied mask image.
-
-    use_diff : bool
-        If set, and the input is ramp data, correction is performed
-        on diffs between group images.  Otherwise, correction is
-        performed directly on the group or rate image.
 
     Returns
     -------
@@ -705,10 +700,7 @@ def do_correction(input_model, fit_method, background_method,
         if ndim == 3:
             ngroups = 1
         else:
-            if use_diff:
-                ngroups = input_model.data.shape[1] - 1
-            else:
-                ngroups = input_model.data.shape[1]
+            ngroups = input_model.data.shape[1] - 1
 
         # Check for 3D mask
         if background_mask.ndim == 2:
@@ -742,14 +734,10 @@ def do_correction(input_model, fit_method, background_method,
             elif ndim == 3:
                 image = input_model.data[i]
             else:
-                # Ramp data input
-                if use_diff:
-                    # subtract the current group from the next one
-                    image = input_model.data[i, j + 1] - input_model.data[i, j]
-                    dq = input_model.groupdq[i, j + 1]
-                else:
-                    image = input_model.data[i, j]
-                    dq = input_model.groupdq[i, j]
+                # Ramp data input:
+                # subtract the current group from the next one
+                image = input_model.data[i, j+1] - input_model.data[i, j]
+                dq = input_model.groupdq[i, j+1]
 
                 # For ramp data, mask any DNU and JUMP pixels
                 dnu = (dq & dqflags.group['DO_NOT_USE']) > 0
@@ -814,11 +802,9 @@ def do_correction(input_model, fit_method, background_method,
                 elif ndim == 3:
                     output_model.data[i] = cleaned_image
                 else:
-                    if use_diff:
-                        # add the cleaned data to the previously cleaned group
-                        output_model.data[i, j + 1] = output_model.data[i, j] + cleaned_image
-                    else:
-                        output_model.data[i, j] = cleaned_image
+                    # add the cleaned data diff to the previously cleaned group,
+                    # rather than the noisy input group
+                    output_model.data[i, j+1] = output_model.data[i, j] + cleaned_image
 
     # Set completion status
     status = 'COMPLETE'
