@@ -72,7 +72,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from stdatamodels.jwst import datamodels
-from stcal.alignment.util import update_s_region_keyword
+from stcal.alignment.util import compute_s_region_keyword
 
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 from .set_velocity_aberration import compute_va_effects_vector
@@ -987,7 +987,7 @@ def update_s_region(model, siaf):
     ra_vert, dec_vert = v23tosky_tr(v2, v3)
     # Do not do any sorting, use the vertices in the SIAF order.
     footprint = np.array([ra_vert, dec_vert]).T
-    update_s_region_keyword(model.meta.wcsinfo, footprint)
+    model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
 
 
 def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):

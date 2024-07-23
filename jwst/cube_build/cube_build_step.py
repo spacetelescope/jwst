@@ -7,7 +7,7 @@ from ..stpipe import Step, record_step_status
 from . import cube_build
 from . import ifu_cube
 from . import data_types
-from stcal.alignment.util import update_s_region_keyword
+from stcal.alignment.util import compute_s_region_keyword
 import time
 
 __all__ = ["CubeBuildStep"]
@@ -389,7 +389,7 @@ class CubeBuildStep (Step):
 
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
-            update_s_region_keyword(cube.meta.wcsinfo, footprint)
+            cube.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
 
             # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
             for key in rm_keys:

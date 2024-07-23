@@ -17,7 +17,7 @@ from gwcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
 from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
-from stcal.alignment.util import update_s_region_keyword
+from stcal.alignment.util import compute_s_region_keyword
 
 from stdatamodels.jwst.datamodels import WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import GrismObject
@@ -831,7 +831,7 @@ def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
     footprint, spectral_region = compute_footprint_spectral(model)
-    update_s_region_keyword(model.meta.wcsinfo, footprint)
+    model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
     model.meta.wcsinfo.spectral_region = spectral_region
 
 
@@ -859,7 +859,7 @@ def compute_footprint_nrs_slit(slit):
 
 def update_s_region_nrs_slit(slit):
     footprint, spectral_region = compute_footprint_nrs_slit(slit)
-    update_s_region_keyword(slit.meta.wcsinfo, footprint)
+    slit.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
     slit.meta.wcsinfo.spectral_region = spectral_region
 
 
@@ -951,7 +951,7 @@ def update_s_region_nrs_ifu(output_model, mod):
         The imported ``nirspec`` module.
     """
     footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
-    update_s_region_keyword(output_model.meta.wcsinfo, footprint)
+    output_model.meta.wcsinfo = compute_s_region_keyword(footprint)
     output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
@@ -965,7 +965,7 @@ def update_s_region_mrs(output_model):
         The output of assign_wcs.
     """
     footprint, spectral_region = compute_footprint_spectral(output_model)
-    update_s_region_keyword(output_model.meta.wcsinfo, footprint)
+    output_model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
     output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
