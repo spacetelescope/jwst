@@ -59,7 +59,7 @@ def test_fs_correction():
 
 @pytest.mark.parametrize('name,status',
                          [('BKG101', True), ('bkg101', True),
-                          ('background_101', False), ('101', False),
+                          ('background_101', True), ('101', False),
                           (None, False)])
 def test_is_background(name, status):
     """Test check for background slit."""

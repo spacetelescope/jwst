@@ -1,7 +1,60 @@
-1.15.1 (unreleased)
+1.15.2 (unreleased)
 ===================
 
--
+
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
+
+cube_build
+----------
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+master_background
+-----------------
+
+- Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
+  as a background slit, instead of ``"bkg"`` only. [#8600]
+
+outlier_detection
+-----------------
+
+- Fixed failures due to a missing ``wcs.array_shape`` attribute when the
+  ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
+stpipe
+------
+
+- Removed setting of the `self.skip` attribute in the `record_step_status()` function;
+  added a `query_step_status()` function to use as an alternative to checking
+  `self.skip`. [#8600]
+
+tweakreg
+--------
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+- Updated requirement for ``tweakwcs`` to version ``0.8.8`` which fixes a crash
+  in the ``tweakreg`` step due to a ``MalformedPolygonError`` exception being
+  raised by the ``spherical_geometry`` package for some data
+  sets. [#8657, spacetelescope/tweakwcs#205]
+
+
+1.15.1 (2024-07-08)
+===================
+
+ramp_fitting
+------------
+
+- Fix bugs in the C algorithm Poisson variance calculation when provided with an average dark current. [stcal#269]
+
+- Use the C extension with multiprocessing. [stcal#268]
+
 
 1.15.0 (2024-06-26)
 ===================
@@ -135,7 +188,7 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
-- Add propagation of background uncertainty when background is subtracted from 
+- Add propagation of background uncertainty when background is subtracted from
   source spectra during non-IFU spectral extraction. [#8532]
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
@@ -143,7 +196,7 @@ extract_1d
 - Fix error in ``_coalesce_bounds`` that returned incorrect spectral or background
   extraction region when one set of pixel limits is entirely contained within
   another [#8586]
-  
+
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
@@ -163,7 +216,7 @@ extract_2d
 - Added support for slit names that have string values instead of integer
   values, necessary for processing combined NIRSpec MOS and fixed slit
   data products. [#8467]
-  
+
 - Assign slit ``source_xpos`` and ``source_ypos`` attributes here instead of
   in ``wavecorr`` for NIRSpec FS data. [#8569]
 
@@ -272,8 +325,8 @@ outlier_detection
 pathloss
 --------
 
-- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate 
-  wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
+- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate
+  wavelengths for point and uniform sources if the ``wavecorr`` wavelength
   zero-point corrections for point sources have been applied. [#8376]
 
 photom
@@ -314,7 +367,7 @@ pipeline
 
 - Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
   for NIRISS SOSS data [#8575].
-  
+
 - Added hook to the ``calwebb_tso3`` pipeline to skip all subsequent steps
   if the ``extract_1d`` step is skipped. [#8583]
 
@@ -384,7 +437,7 @@ residual_fringe
 srctype
 -------
 
-- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources 
+- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources
   in NIRSpec FS data to enable assigning those attributes in ``extract_2d``. [#8569]
 
 saturation
@@ -430,7 +483,7 @@ wavecorr
 
 - Assign slit ``source_xpos`` and ``source_ypos`` attributes in ``extract_2d``
   instead of in ``wavecorr`` for NIRSpec FS data. [#8569]
-  
+
 wfss_contam
 -----------
 

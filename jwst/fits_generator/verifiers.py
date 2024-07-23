@@ -95,7 +95,7 @@ def is_cds(val):
         raise ValueError(
             "Expected integer value for CDS")
 
-    day = (value & 0xffff000000000000) >> (32 + 16)
+    day = (value & 0xffff000000000000) >> (32 + 16) # noqa F841
     millis = (value & 0xffffffff0000) >> 16
     submillis = (value & 0xffff)
 

@@ -28,10 +28,7 @@
 # DAMAGE.
 
 # STDLIB
-import datetime
-import os
 import re
-import warnings
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits
@@ -568,6 +565,6 @@ class File(list, Object):
             assert isinstance(hdudef, HDU)
             state.hdu = i
             state.depth += 1
-            hdu = hdudef.describe(stream, state)
+            hdudef.describe(stream, state)
             state.depth -= 1
     describe.__doc__ = Object.describe.__doc__
