@@ -1,3 +1,4 @@
+#-*- python -*-
 import numpy as np
 
 
@@ -134,7 +135,10 @@ class NSClean:
             
             # Get data and weights for this line
             d = data[y][self.mask[y]]  # unmasked (useable) data
-            p = np.diag(self.P[y][self.mask[y]])  # Weights
+            # The line below uses a vector to represent a diagonal weight matrix.
+            # Multiplications by this vector later on may be viewed as
+            # equivalent formulations to multiplication by diag(p).
+            p = self.P[y][self.mask[y]]  # Weights
 
             # If none of the pixels in this line is useable (all masked out),
             # skip and move on to the next line.
@@ -164,7 +168,7 @@ class NSClean:
 
             # Compute the Moore-Penrose inverse of A = P*B.
             #     $A^+ = (A^H A)^{-1} A^H$
-            A = np.matmul(p, B)
+            A = B*p[:, np.newaxis]
             AH = np.conjugate(A.transpose())  # Hermitian transpose of A
             pinv_PB = np.matmul(np.linalg.inv(np.matmul(AH, A)), AH)
 
@@ -172,7 +176,7 @@ class NSClean:
             # The way that we have done it, this multiplies the input data by the 
             # number of samples used for the fit.
             rfft = np.zeros(self.nx//2 + 1, dtype=np.complex64)
-            rfft[:k.shape[1]] = np.matmul(np.matmul(pinv_PB, p), d)
+            rfft[:k.shape[1]] = np.matmul(pinv_PB, p*d)
 
             # Numpy requires that the forward transform multiply
             # the data by n. Correct normalization.
@@ -515,7 +519,7 @@ class NSCleanSubarray:
             return(rfft)
 
 
-    def clean(self, weight_fit=True):
+    def clean(self, weight_fit=True, return_model=False):
         """
         Clean the data
 
@@ -524,6 +528,9 @@ class NSCleanSubarray:
         weight_fit : bool
             Use weighted least squares as described in the NSClean paper.
             Otherwise, it is a simple unweighted fit.
+        return_model : bool
+            Return the fitted model rather than the corrected data?
+            Default False (return the corrected data, not the model).
 
         Returns
         -------
@@ -531,5 +538,8 @@ class NSCleanSubarray:
             The cleaned data array.
         """ 
         self.fit(weight_fit=weight_fit)  # Fit the background model
-        self.data -= self.model  # Overwrite data with cleaned data
-        return(self.data)
+        if return_model:
+            return self.model
+        else:
+            self.data -= self.model  # Overwrite data with cleaned data
+            return(self.data)
