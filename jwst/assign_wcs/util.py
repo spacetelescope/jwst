@@ -951,7 +951,7 @@ def update_s_region_nrs_ifu(output_model, mod):
         The imported ``nirspec`` module.
     """
     footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
-    output_model.meta.wcsinfo = compute_s_region_keyword(footprint)
+    output_model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
     output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
