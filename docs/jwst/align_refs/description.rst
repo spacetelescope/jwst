@@ -9,13 +9,17 @@ sub-package that is part of Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>` proce
 It computes offsets between science target
 images and reference PSF images, and shifts the PSF images into
 alignment. This is performed from the first integration and applied to all the
-subsequent ones for both the science target
-data and the reference PSF data. The first integration contained in the stacked PSF data
+subsequent ones for both the science target data and the reference PSF data.
+Each integration contained in the stacked PSF data
 (the result of the :ref:`stack_refs <stack_refs_step>`) step is
 aligned to the first integration within a given science target exposure.
 This results in a new product for each science target exposure that contains a stack
-of individual PSF images that have been aligned to each integration in the science
+of individual PSF images that have been aligned to the first integration in the science
 target exposure.
+
+The simplification of aligning to the first science integration is due to flight data
+showing minimal drifts during an observation in line-of-sight pointing, or in PSF
+properties.
 
 Shifts between each PSF and target image are computed using the
 ``scipy.optimize.leastsq`` function. A 2D mask, supplied via a PSFMASK reference file, 
