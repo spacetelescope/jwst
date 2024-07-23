@@ -27,7 +27,7 @@ class CleanNoiseStep(Step):
     spec = """
         fit_method = option('fft', 'median', default='median')  # Noise fitting algorithm
         background_method = option('median', 'model', None, default='median')
-        mask_spectral_regions = boolean(default=False)  # Mask WCS-defined regions for spectral data
+        mask_spectral_regions = boolean(default=False)  # Mask WCS-defined regions for NIRSpec spectral data
         single_mask = boolean(default=True)  # Make a single mask for all integrations
         n_sigma = float(default=2.0)  # Clipping level for non-background signal
         fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
@@ -56,7 +56,7 @@ class CleanNoiseStep(Step):
 
         mask_spectral_regions : bool, optional
             Mask regions of the image defined by WCS bounding boxes for slits/slices.
-            Ignored for imaging data.
+            Ignored for non-NIRSpec data.
 
         n_sigma : float, optional
             Sigma clipping threshold to be used in detecting outliers in the image.

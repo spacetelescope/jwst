@@ -609,7 +609,8 @@ def do_correction(input_model, fit_method, background_method,
         pixel kernel.  If None, the background value is 0.0.
 
     mask_spectral_regions : bool
-        Mask slit/slice regions defined in WCS.
+        Mask slit/slice regions defined in WCS. Implemented only for
+        NIRSpec science data modes.
 
     n_sigma : float
         N-sigma rejection level for finding outliers.
