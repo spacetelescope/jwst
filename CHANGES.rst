@@ -4,7 +4,7 @@
 align_refs
 ----------
 
-- Only aligning the first integration of the science exposure. [#8643]
+- Compute alignment shifts from the first integration of the science exposure only. [#8643]
 
 scripts
 -------
