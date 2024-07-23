@@ -25,7 +25,6 @@ from ..residual_fringe import residual_fringe_step
 from ..imprint import imprint_step
 from ..master_background import master_background_mos_step
 from ..msaflagopen import msaflagopen_step
-from ..clean_noise import clean_noise_step
 from ..nsclean import nsclean_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
@@ -51,7 +50,7 @@ class Spec2Pipeline(Pipeline):
     Accepts a single exposure or an association as input.
 
     Included steps are:
-    assign_wcs, NIRSpec MSA bad shutter flagging, clean_noise, background subtraction,
+    assign_wcs, NIRSpec MSA bad shutter flagging, nsclean, background subtraction,
     NIRSpec MSA imprint subtraction, 2-D subwindow extraction, flat field,
     source type decision, straylight, fringe, residual_fringe, pathloss,
     barshadow,  photom, pixel_replace, resample_spec, cube_build, and extract_1d.
@@ -70,7 +69,6 @@ class Spec2Pipeline(Pipeline):
         'assign_wcs': assign_wcs_step.AssignWcsStep,
         'badpix_selfcal': badpix_selfcal_step.BadpixSelfcalStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
-        'clean_noise': clean_noise_step.CleanNoiseStep,
         'nsclean': nsclean_step.NSCleanStep,
         'bkg_subtract': background_step.BackgroundStep,
         'imprint_subtract': imprint_step.ImprintStep,
@@ -266,14 +264,8 @@ class Spec2Pipeline(Pipeline):
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging(calibrated)
 
-        # apply 1/f noise cleaning
-        if exp_type in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-            # For NIRSpec data, call the nsclean alias to clean_noise.
-            # This alias is deprecated and should be removed when users
-            # have had time to adjust.
-            calibrated = self.nsclean(calibrated)
-        else:
-            calibrated = self.clean_noise(calibrated)
+        # apply the "nsclean" 1/f correction to NIRSpec images
+        calibrated = self.nsclean(calibrated)
 
         # Leakcal subtraction (imprint)  occurs before background subtraction on a per-exposure basis.
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
