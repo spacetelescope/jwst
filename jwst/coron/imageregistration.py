@@ -127,7 +127,7 @@ def fourier_imshift(image, shift):
     return offset
 
 
-def align_array(reference, target, mask=None):
+def align_array(reference, target, mask=None, return_aligned=True):
     """
     Computes shifts between target image (or image "slices") and the reference
     image and re-aligns input images to the target.
@@ -160,21 +160,26 @@ def align_array(reference, target, mask=None):
 
     if len(target.shape) == 2:
         shifts = align_fourierLSQ(reference, target, mask=mask)
-        aligned = fourier_imshift(target, -shifts)
+        if return_aligned:
+            aligned = fourier_imshift(target, -shifts)
 
     elif len(target.shape) == 3:
         nslices = target.shape[0]
         shifts = np.empty((nslices, 3), dtype=float)
-        aligned = np.empty_like(target)
+        if return_aligned:
+            aligned = np.empty_like(target)
 
         for m in range(nslices):
             sh = align_fourierLSQ(reference, target[m], mask=mask)
             shifts[m, :] = sh
-            aligned[m, :, :] = fourier_imshift(target[m], -sh)
+            if return_aligned:
+                aligned[m, :, :] = fourier_imshift(target[m], -sh)
 
     else:
         raise ValueError("Input target image must be either a 2D or 3D array.")
 
+    if not return_aligned:
+        return shifts
     return aligned, shifts
 
 
@@ -218,10 +223,10 @@ def align_models(reference, target, mask):
 
     # Compute the shifts of the PSF ("target") images relative to
     # the science ("reference") image in the first integration
-    _, shifts = align_array(
+    shifts = align_array(
         reference.data[0].astype(np.float64),
         target.data.astype(np.float64),
-        mask.data)
+        mask=mask.data, return_aligned=False)
 
     # Loop over all integrations of the science exposure
     for k in range(nrefslices):
