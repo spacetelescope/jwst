@@ -9,7 +9,7 @@ Closes #
 This PR addresses ...
 
 **Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
-- [ ] added entry in `CHANGES.rst` within the relevant release section
+- [ ] write a news fragment in `changes/` with the format `<#>.<type>.rst`, i.e. for pull request #8670 `changes/8670.feature.rst`. Types are `feature`, `bugfix`, `doc`, `removal`, and `misc`.
 - [ ] updated or added relevant tests
 - [ ] updated relevant documentation
 - [ ] added relevant milestone

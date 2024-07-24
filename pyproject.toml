@@ -285,3 +285,9 @@ line-length = 130
 "jwst/ramp_fitting/tests/*" = [
     "E402", # module-level import not at top of file
 ]
+
+[tool.towncrier]
+filename = "CHANGES.rst"
+directory = "changes"
+package = "jwst"
+title_format = "{version} ({project_date})"
