@@ -14,9 +14,9 @@ This PR addresses ...
 
 ### Optional
 - [ ] this PR changes user-facing code / API
-  - [ ] added an entry to `CHANGES.rst` within the relevant release section (otherwise add the `no-changelog-entry-needed` label to this PR)
-  - [ ] updated or added relevant tests
-  - [ ] updated relevant docstrings and / or `docs/` page
+  - [ ] add an entry to `CHANGES.rst` within the relevant release section (otherwise add the `no-changelog-entry-needed` label to this PR)
+  - [ ] update or added relevant tests
+  - [ ] update relevant docstrings and / or `docs/` page
   - [ ] [start a regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and include a link to the running job
     - [ ] do truth files need to be updated ("okified")?
       - [ ] **after a maintainer has approved these changes**, run `okify_regtests` to update the truth files
