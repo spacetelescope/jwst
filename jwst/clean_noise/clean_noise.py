@@ -10,6 +10,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst import datamodels
 from jwst.assign_wcs import nirspec, AssignWcsStep
 from jwst.clean_noise.lib import NSClean, NSCleanSubarray
+from jwst.lib.basic_utils import LoggingContext
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.ramp_fitting import RampFitStep
 
@@ -46,7 +47,11 @@ def make_rate(input_model, return_cube=False):
     # Note: the copy is currently needed because ramp fit
     # closes the input model when it's done, and we need
     # it to stay open.
-    rate, rateints = RampFitStep.call(input_model.copy())
+    log.info("Creating draft rate file for scene masking")
+    step = RampFitStep()
+    with LoggingContext(step.log, level=logging.WARNING):
+        # Use software default values for parameters
+        rate, rateints = step.run(input_model.copy())
 
     if return_cube:
         output_model = rateints
@@ -76,11 +81,17 @@ def assign_wcs_to_rate(input_model, msaflagopen=False):
     output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
         The updated model.
     """
-    output_model = AssignWcsStep.call(input_model)
+    log.info("Assigning a WCS for scene masking")
+    step = AssignWcsStep()
+    with LoggingContext(step.log, level=logging.WARNING):
+        output_model = step.run(input_model)
 
     # If needed, flag open MSA shutters
     if msaflagopen:
-        output_model = MSAFlagOpenStep.call(output_model)
+        log.info("Flagging failed-open MSA shutters for scene masking")
+        step = MSAFlagOpenStep()
+        with LoggingContext(step.log, level=logging.WARNING):
+            output_model = step.run(output_model)
 
     return output_model
 
