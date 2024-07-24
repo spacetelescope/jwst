@@ -8,7 +8,7 @@ The ``align_refs`` step is one of the coronagraphic-specific steps in the ``coro
 sub-package that is part of Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>` processing.
 It computes offsets between science target
 images and reference PSF images, and shifts the PSF images into
-alignment. This is performed from the first integration and applied to all the
+alignment. The alignment shifts are computed from the first integration and applied to all the
 subsequent ones for both the science target data and the reference PSF data.
 Each integration contained in the stacked PSF data
 (the result of the :ref:`stack_refs <stack_refs_step>`) step is
