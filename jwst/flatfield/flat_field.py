@@ -10,7 +10,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from ..lib import reffile_utils, wcs_utils
+from ..lib import pipe_utils, reffile_utils, wcs_utils
 from ..assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
@@ -234,6 +234,9 @@ def apply_flat_field(science, flat, inverse=False):
     flag_nonsci = np.bitwise_and(science.dq, dqflags.pixel['NON_SCIENCE']).astype(bool)
     science.dq[flag_nonsci] = np.bitwise_or(science.dq[flag_nonsci], dqflags.pixel['DO_NOT_USE'])
 
+    # Make sure all NaNs and flags match up in the output model
+    pipe_utils.match_nans_and_flags(science)
+
 
 #
 # The following functions are for NIRSpec spectrographic data.
@@ -438,14 +441,8 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         # Combine the science and flat DQ arrays
         slit.dq |= slit_flat.dq
 
-        # Make sure all DO_NOT_USE pixels are set to NaN,
-        # including those flagged by this step
-        dnu = np.where(slit.dq & dqflags.pixel['DO_NOT_USE'])
-        slit.data[dnu] = np.nan
-        slit.err[dnu] = np.nan
-        slit.var_poisson[dnu] = np.nan
-        slit.var_rnoise[dnu] = np.nan
-        slit.var_flat[dnu] = np.nan
+        # Make sure all NaNs and flags match up in the output model
+        pipe_utils.match_nans_and_flags(slit)
 
         any_updated = True
 
@@ -522,14 +519,8 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
         output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
     )
 
-    # Make sure all DO_NOT_USE pixels are set to NaN,
-    # including those flagged by this step
-    dnu = np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])
-    output_model.data[dnu] = np.nan
-    output_model.err[dnu] = np.nan
-    output_model.var_poisson[dnu] = np.nan
-    output_model.var_rnoise[dnu] = np.nan
-    output_model.var_flat[dnu] = np.nan
+    # Make sure all NaNs and flags match up in the output model
+    pipe_utils.match_nans_and_flags(output_model)
 
     output_model.meta.cal_step.flat_field = 'COMPLETE'
 
@@ -597,14 +588,8 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
             output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
         )
 
-        # Make sure all DO_NOT_USE pixels are set to NaN,
-        # including those flagged by this step
-        dnu = np.where(output_model.dq & dqflags.pixel['DO_NOT_USE'])
-        output_model.data[dnu] = np.nan
-        output_model.err[dnu] = np.nan
-        output_model.var_poisson[dnu] = np.nan
-        output_model.var_rnoise[dnu] = np.nan
-        output_model.var_flat[dnu] = np.nan
+        # Make sure all NaNs and flags match up in the output model
+        pipe_utils.match_nans_and_flags(output_model)
 
         output_model.meta.cal_step.flat_field = 'COMPLETE'
 

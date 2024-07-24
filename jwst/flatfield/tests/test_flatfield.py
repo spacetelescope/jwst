@@ -60,7 +60,18 @@ def test_flatfield_step_interface(instrument, exptype):
     finally:
         FlatFieldStep.reference_file_types = previous_reference_file_types
 
-    assert (result.data == data.data).all()
+    # flat is unity, so data should match up except where invalid
+    is_nan = np.isnan(result.data)
+    assert np.all(result.data[~is_nan] == data.data[~is_nan])
+
+    # where data is invalid, error and variance are also invalid
+    # and DQ is set to DO_NOT_USE
+    assert np.all(np.isnan(result.err[is_nan]))
+    assert np.all(np.isnan(result.var_rnoise[is_nan]))
+    assert np.all(np.isnan(result.var_poisson[is_nan]))
+    assert np.all(np.isnan(result.var_flat[is_nan]))
+    assert np.all(result.dq[is_nan] | datamodels.dqflags.pixel['DO_NOT_USE'])
+
     assert result.var_flat.shape == shape
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 

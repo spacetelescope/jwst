@@ -7,6 +7,7 @@ import asdf
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
+from jwst.lib.pipe_utils import match_nans_and_flags
 
 from . import resample
 from ..stpipe import Step
@@ -83,6 +84,10 @@ class ResampleStep(Step):
         if len(input_models[0].data.shape) != 2:
             # resample can only handle 2D images, not 3D cubes, etc
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+
+        # Make sure all input models have consistent NaN and DO_NOT_USE values
+        for model in input_models:
+            match_nans_and_flags(model)
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()

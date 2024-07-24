@@ -1,14 +1,16 @@
 """ This is the main ifu spectral cube building routine.
 """
 
-from jwst.datamodels import ModelContainer
+import time
 
-from ..stpipe import Step, record_step_status
+from jwst.datamodels import ModelContainer
+from jwst.lib.pipe_utils import match_nans_and_flags
+
 from . import cube_build
 from . import ifu_cube
 from . import data_types
 from ..assign_wcs.util import update_s_region_keyword
-import time
+from ..stpipe import Step, record_step_status
 
 __all__ = ["CubeBuildStep"]
 
@@ -280,6 +282,10 @@ class CubeBuildStep (Step):
 
 # ________________________________________________________________________________
 # create an instance of class CubeData
+
+        # Make sure all input models have consistent NaN and DO_NOT_USE values
+        for model in self.input_models:
+            match_nans_and_flags(model)
 
         cubeinfo = cube_build.CubeData(
             self.input_models,
