@@ -8,13 +8,16 @@ Closes #
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
 
-**Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
+### Required
+- [ ] **request a review from someone specific so it preferably doesn't fall back onto the maintainer team**
+- [ ] add a build milestone, i.e. `Build 11.3` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
+
+### Optional
 - [ ] this PR changes user-facing code / API
   - [ ] added an entry to `CHANGES.rst` within the relevant release section
   - [ ] updated or added relevant tests
   - [ ] updated relevant docstrings and / or `docs/` page
-- [ ] started a [regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and included a link to the running job
+- [ ] [start a regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and include a link to the running job
   - [ ] do truth files need to be updated ("okified")?
     - [ ] **after a maintainer has approved these changes**, run `okify_regtests` to update the truth files
-- [ ] added a milestone, if relevant
-- [ ] JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
+- [ ] [JIRA ticket is resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
