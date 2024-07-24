@@ -432,7 +432,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     result2.close()
 
 
-@pytest.mark.parametrize("units", ["MJy/pixel", "MJy/sr"])
+@pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
 @pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
 def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     miri_cal.meta.bunit_data = units
@@ -490,7 +490,7 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     result3.close()
 
 
-@pytest.mark.parametrize("units", ["MJy/pixel", "MJy/sr"])
+@pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
 @pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
 def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
     for slit in nirspec_cal.slits:
@@ -868,6 +868,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
 @pytest.mark.parametrize('ratio', [0.7, 1.0, 1.3])
 def test_custom_refwcs_resample_miri(miri_cal, tmp_path, ratio):
     im = miri_cal
+    miri_cal.meta.bunit_data = "MJy"
 
     # mock a spectrum by giving the first slit some random
     # values at the center
@@ -914,6 +915,8 @@ def test_custom_refwcs_resample_miri(miri_cal, tmp_path, ratio):
 @pytest.mark.parametrize('ratio', [0.7, 1.0, 1.3])
 def test_custom_refwcs_resample_nirspec(nirspec_cal, tmp_path, ratio):
     im = nirspec_cal
+    for slit in im.slits:
+        slit.meta.bunit_data = "MJy"
 
     # mock a spectrum by giving the first slit some random
     # values at the center

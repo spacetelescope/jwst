@@ -245,7 +245,7 @@ class ResampleData:
 
                 # If input image is in flux density units, correct the
                 # flux for the user-specified change to the spatial dimension
-                if 'sr' not in str(img.meta.bunit_data).lower():
+                if resample_utils.is_flux_density(img.meta.bunit_data):
                     input_pixel_area *= self.pscale_ratio
             else:
                 img.meta.wcs.array_shape = img.data.shape
