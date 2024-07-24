@@ -6,7 +6,7 @@ import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
 import astropy.units as u
-from photutils.aperture import CircularAperture, CircularAnnulus
+from photutils.aperture import CircularAperture, CircularAnnulus, ApertureStats
 
 from stdatamodels.jwst.datamodels import CubeModel
 
@@ -79,9 +79,9 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
                 'subarray.  No background subtraction was performed.')
 
         for i in np.arange(nimg):
-            aperture_sum.append(np.sum(datamodel.data[i, :, :]))
+            aperture_sum.append(np.nansum(datamodel.data[i, :, :]))
             aperture_sum_err.append(
-                np.sqrt(np.sum(datamodel.err[i, :, :]**2)))
+                np.sqrt(np.nansum(datamodel.err[i, :, :]**2)))
     else:
         info = ('Photometry measured in a circular aperture of r={0} '
                 'pixels.  Background calculated as the mean in a '
@@ -89,15 +89,18 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
                 'r_outer={2} pixels.'.format(radius, radius_inner,
                                              radius_outer))
         for i in np.arange(nimg):
-            aper_sum, aper_sum_err = phot_aper.do_photometry(
-                datamodel.data[i, :, :], error=datamodel.err[i, :, :])
-            ann_sum, ann_sum_err = bkg_aper.do_photometry(
-                datamodel.data[i, :, :], error=datamodel.err[i, :, :])
+            aperstats = ApertureStats(datamodel.data[i, :, :],
+                                      phot_aper,
+                                      error=datamodel.err[i, :, :])
 
-            aperture_sum.append(aper_sum[0])
-            aperture_sum_err.append(aper_sum_err[0])
-            annulus_sum.append(ann_sum[0])
-            annulus_sum_err.append(ann_sum_err[0])
+            annstats = ApertureStats(datamodel.data[i, :, :],
+                                     bkg_aper,
+                                     error=datamodel.err[i, :, :])
+
+            aperture_sum.append(aperstats.sum)
+            aperture_sum_err.append(aperstats.sum_err)
+            annulus_sum.append(annstats.sum)
+            annulus_sum_err.append(annstats.sum_err)
 
     aperture_sum = np.array(aperture_sum)
     aperture_sum_err = np.array(aperture_sum_err)
