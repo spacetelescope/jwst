@@ -9,7 +9,7 @@ Closes #
 This PR addresses ...
 
 ### Required
-- [ ] **request a review from someone specific so it preferably doesn't fall back onto the maintainer team**
+- [ ] **request a review from someone specific**, to avoid making the maintainers review every PR
 - [ ] add a build milestone, i.e. `Build 11.3` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
 
 ### Optional
