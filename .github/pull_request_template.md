@@ -12,7 +12,7 @@ This PR addresses ...
 - [ ] this PR changes user-facing code / API
   - [ ] added an entry to `CHANGES.rst` within the relevant release section
   - [ ] updated or added relevant tests
-  - [ ] updated relevant documentation
+  - [ ] updated relevant docstrings and / or `docs/` page
 - [ ] started a [regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and included a link to the running job
   - [ ] do truth files need to be updated ("okified")?
     - [ ] **after a maintainer has approved these changes**, run `okify_regtests` to update the truth files
