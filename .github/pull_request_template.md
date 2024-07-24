@@ -9,7 +9,7 @@ Closes #
 This PR addresses ...
 
 **Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
-- [ ] write a news fragment in `changes/` with the format `<#>.<type>.rst`, i.e. for pull request #8670 `changes/8670.feature.rst`. Types are `feature`, `bugfix`, `doc`, `removal`, and `misc`.
+- [ ] write a [news fragment in `changes/` with the format `<pr#>.<feature|bugfix|doc|removal|misc>.rst`](https://towncrier.readthedocs.io/en/latest/tutorial.html#creating-news-fragments), i.e. `changes/8671.misc.rst`
 - [ ] updated or added relevant tests
 - [ ] updated relevant documentation
 - [ ] added relevant milestone
