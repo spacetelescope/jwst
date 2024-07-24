@@ -193,7 +193,6 @@ minversion = "6.0"
 norecursedirs = [
     "docs/_build",
     "docs/exts",
-    "jwst/timeconversion",
     "jwst/associations/tests/data",
     "scripts",
     ".tox",
@@ -286,3 +285,356 @@ lint.ignore = [
 "jwst/ramp_fitting/tests/*" = [
     "E402", # module-level import not at top of file
 ]
+
+[tool.towncrier]
+filename = "CHANGES.rst"
+directory = "changes"
+package = "jwst"
+title_format = "{version} ({project_date})"
+ignore = [".gitkeep"]
+wrap = true
+issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
+
+[[tool.towncrier.type]]
+directory = "general"
+name = "General"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "stpipe"
+name = '``stpipe``'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "datamodels"
+name = "Data Models"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "associations"
+name = "Associations"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "scripts"
+name = "Scripts"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fits_generator"
+name = "``fits_generator``"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "set_telescope_pointing"
+name = '``set_telescope_pointing``'
+showcontent = true
+
+# stage 1
+
+[[tool.towncrier.type]]
+directory = "group_scale"
+name = '``group_scale`` (``detector1`` NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "dq_init"
+name = '``dq_init`` (``detector1``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "emicorr"
+name = '``emicorr`` (``detector1`` MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "saturation"
+name = '``saturation`` (``detector1``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "ipc"
+name = '``ipc`` (``detector1``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "firstframe"
+name = '``firstframe`` (``detector1`` MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "lastframe"
+name = '``lastframe`` (``detector1`` MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "reset"
+name = '``reset`` (``detector1`` MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "superbias"
+name = '``superbias`` (``detector1`` NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "refpix"
+name = '``refpix`` (``detector1``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "linearity"
+name = '``linearity`` (``detector1``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "rscd"
+name = '``rscd`` (``detector1`` MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "persistence"
+name = '``persistence`` (``detector1`` NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "dark_current"
+name = '``dark_current`` (``detector1`` NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "charge_migration"
+name = "``charge_migration`` (``detector1`` NIR)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "jump"
+name = '``jump`` (``detector1``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "ramp_fitting"
+name = '``ramp_fitting`` (``detector1``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "gain_scale"
+name = '``gain_scale`` (``detector1`` NIR)'
+showcontent = true
+
+# stage 2
+
+[[tool.towncrier.type]]
+directory = "assign_wcs"
+name = '``assign_wcs`` (``image2``, ``spec2``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "msaflagopen"
+name = '``msaflagopen`` (``spec2`` IFU, ``spec2`` MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "nsclean"
+name = "``nsclean`` (``spec2`` IFU, ``spec2`` MOS)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "imprint"
+name = '``imprint`` (``spec2`` IFU, ``spec2`` MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "background"
+name = '``background`` (``image2``, ``spec2``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "extract_2d"
+name = '``extract_2d`` (``spec2`` MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "master_background"
+name = '``master_background`` (``spec2`` MOS, ``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "wavecorr"
+name = '``wavecorr`` (``spec2`` MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "srctype"
+name = '``srctype`` (``spec2``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "straylight"
+name = '``straylight`` (``spec2`` IFU)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "wfss_contam"
+name = '``wfss_contam`` (``spec2`` WFSS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "flatfield"
+name = '``flatfield`` (``image2``, ``spec2``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fringe"
+name = '``fringe`` (``spec2`` IFU)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "pathloss"
+name = '``pathloss`` (``spec2`` IFU, ``spec2`` MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "barshadow"
+name = '``barshadow`` (``spec2`` MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "photom"
+name = '``photom`` (``image2``, ``spec2``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "pixel_replace"
+name = '``pixel_replace`` (``spec2`` MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "resample_spec"
+name = '``resample_spec`` (``spec2`` MOS, ``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "residual_fringe"
+name = '``residual_fringe`` (``spec2`` IFU)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "cube_build"
+name = '``cube_build`` (``spec2`` IFU, ``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "extract_1d"
+name = '``extract_1d`` (``spec2``, ``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "resample"
+name = '``resample`` (``image2``, ``image3``, ``coron3``)'
+showcontent = true
+
+# stage 3
+
+[[tool.towncrier.type]]
+directory = "assign_mtwcs"
+name = '``assign_mtwcs`` (``image3``, ``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "mrs_imatch"
+name = '``mrs_imatch`` (``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "tweakreg"
+name = '``tweakreg`` (``image3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "skymatch"
+name = '``skymatch`` (``image3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "exp_to_source"
+name = '``exp_to_source`` (``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "outlier_detection"
+name = '``outlier_detection`` (``image3``, ``tso3``, ``spec3``, ``coron3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "tso_photometry"
+name = '``tso_photometry`` (``tso3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "stack_refs"
+name = "``stack_refs`` (``coron3``)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "align_refs"
+name = '``align_refs`` (``coron3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "klip"
+name = "``klip`` (``coron3``)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "spectral_leak"
+name = "``spectral_leak`` (``spec3``)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "source_catalog"
+name = '``source_catalog`` (``image3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "combine_1d"
+name = '``combine_1d`` (``spec3``)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "ami"
+name = '``ami_analyze`` / ``ami_normalize`` / ``ami_average`` (``ami3``)'
+showcontent = true
+
+# other
+
+[[tool.towncrier.type]]
+directory = "wfs_combine"
+name = '``wfs_combine``'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "white_light"
+name = '``white_light``'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "cube_skymatch"
+name = '``cube_skymatch``'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "engdb_tools"
+name = '``engdb_tools``'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "guider_cds"
+name = '``guider_cds`` (FGS)'
+showcontent = true
+
