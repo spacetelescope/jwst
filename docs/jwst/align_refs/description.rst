@@ -17,8 +17,8 @@ This results in a new product for each science target exposure that contains a s
 of individual PSF images that have been aligned to the first integration in the science
 target exposure.
 
-The simplification of aligning to the first science integration is due to flight data
-showing minimal drifts during an observation in line-of-sight pointing, or in PSF
+Note that aligning to the first science integration is sufficient because flight data
+shows that there are minimal drifts during an observation in line-of-sight pointing, or in PSF
 properties.
 
 Shifts between each PSF and target image are computed using the
