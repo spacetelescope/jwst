@@ -9,12 +9,12 @@ Closes #
 This PR addresses ...
 
 **Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
-- [ ] added entry in `CHANGES.rst` within the relevant release section
-- [ ] updated or added relevant tests
-- [ ] updated relevant documentation
-- [ ] added relevant milestone
-- [ ] added relevant label(s)
-- [ ] ran regression tests, post a link to the Jenkins job below.
-      [How to run regression tests on a PR](https://github.com/spacetelescope/jwst/wiki/Running-Regression-Tests-Against-PR-Branches)
-- [ ] All comments are resolved
-- [ ] Make sure the JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
+- [ ] this PR changes user-facing code / API
+  - [ ] added an entry to `CHANGES.rst` within the relevant release section
+  - [ ] updated or added relevant tests
+  - [ ] updated relevant documentation
+- [ ] started a [regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and included a link to the running job
+  - [ ] do truth files need to be updated ("okified")?
+    - [ ] **after a maintainer has approved these changes**, run `okify_regtests` to update the truth files
+- [ ] added a milestone, if relevant
+- [ ] JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
