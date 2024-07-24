@@ -76,10 +76,12 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
             imaging_types.update(['mir_lrs-fixedslit', 'mir_lrs-slitless'])
             if output_model.meta.exposure.type.lower() in imaging_types:
                 try:
-                    output_model.meta.wcsinfo.s_region = compute_s_region_imaging(
+                    s_region = compute_s_region_imaging(
                         output_model.meta.wcs,
                         shape=output_model.data.shape
                         )
+                    if s_region:
+                        output_model.meta.wcsinfo.s_region = s_region
                 except Exception as exc:
                     log.error("Unable to update S_REGION for type {}: {}".format(
                         output_model.meta.exposure.type, exc))

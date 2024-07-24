@@ -987,7 +987,9 @@ def update_s_region(model, siaf):
     ra_vert, dec_vert = v23tosky_tr(v2, v3)
     # Do not do any sorting, use the vertices in the SIAF order.
     footprint = np.array([ra_vert, dec_vert]).T
-    model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
+    s_region = compute_s_region_keyword(footprint)
+    if s_region:
+        model.meta.wcsinfo.s_region = s_region
 
 
 def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):

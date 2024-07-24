@@ -341,9 +341,11 @@ class TweakRegStep(Step):
                     corrector.wcs.name = f"FIT-LVL3-{self.abs_refcat}"
 
                 image_model.meta.wcs = corrector.wcs
-                image_model.meta.wcsinfo.s_region = compute_s_region_imaging(
+                s_region = compute_s_region_imaging(
                     image_model.meta.wcs,
                     shape=image_model.data.shape)
+                if s_region:
+                    image_model.meta.wcsinfo.s_region = s_region
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.

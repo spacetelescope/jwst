@@ -831,7 +831,9 @@ def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
     footprint, spectral_region = compute_footprint_spectral(model)
-    model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
+    s_region = compute_s_region_keyword(footprint)
+    if s_region:
+        model.meta.wcsinfo.s_region = s_region
     model.meta.wcsinfo.spectral_region = spectral_region
 
 
@@ -859,7 +861,9 @@ def compute_footprint_nrs_slit(slit):
 
 def update_s_region_nrs_slit(slit):
     footprint, spectral_region = compute_footprint_nrs_slit(slit)
-    slit.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
+    s_region = compute_s_region_keyword(footprint)
+    if s_region:
+        slit.meta.wcsinfo.s_region = s_region
     slit.meta.wcsinfo.spectral_region = spectral_region
 
 
@@ -951,7 +955,9 @@ def update_s_region_nrs_ifu(output_model, mod):
         The imported ``nirspec`` module.
     """
     footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
-    output_model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
+    s_region = compute_s_region_keyword(footprint)
+    if s_region:
+        output_model.meta.wcsinfo.s_region = s_region
     output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
@@ -965,7 +971,9 @@ def update_s_region_mrs(output_model):
         The output of assign_wcs.
     """
     footprint, spectral_region = compute_footprint_spectral(output_model)
-    output_model.meta.wcsinfo.s_region = compute_s_region_keyword(footprint)
+    s_region = compute_s_region_keyword(footprint)
+    if s_region:
+        output_model.meta.wcsinfo.s_region = s_region
     output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
