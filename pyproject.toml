@@ -291,3 +291,9 @@ filename = "CHANGES.rst"
 directory = "changes"
 package = "jwst"
 title_format = "{version} ({project_date})"
+
+[tool.changelog-bot.towncrier_changelog]
+enabled = true
+verify_pr_number = true
+changelog_skip_label = "no-changelog-entry-needed"
+changelog_noop_label = "skip-changelog-checks"

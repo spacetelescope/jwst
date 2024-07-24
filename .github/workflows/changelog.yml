@@ -9,8 +9,8 @@ jobs:
     name: Verify that a changelog entry exists for this pull request
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - run: grep -P '\[[^\]]*#${{github.event.number}}[,\]]' CHANGES.rst
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-changelog-entry-needed') }}
+    - uses: scientific-python/action-towncrier-changelog@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BOT_USERNAME: changelog-bot
+
