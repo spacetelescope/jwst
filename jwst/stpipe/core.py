@@ -24,11 +24,7 @@ class JwstStep(Step):
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
-        if isinstance(input, datamodels.JwstDataModel):
-            model = init
-        else:
-            model = datamodels.open(init, **kwargs)
-        return model
+        return datamodels.open(init, **kwargs)
 
 
     def load_as_level2_asn(self, obj):
