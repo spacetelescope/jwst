@@ -8,11 +8,9 @@ Closes #
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
 
-### Required
+### Tasks
 - [ ] **request a review from someone specific**, to avoid making the maintainers review every PR
 - [ ] add a build milestone, i.e. `Build 11.3` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
-
-### Optional
 - [ ] Does this PR change user-facing code / API?
   - [ ] add an entry to `CHANGES.rst` within the relevant release section (otherwise add the `no-changelog-entry-needed` label to this PR)
   - [ ] update or add relevant tests
