@@ -1,8 +1,7 @@
 import logging
 import importlib
 from gwcs.wcs import WCS
-from stcal.alignment.util import compute_s_region_imaging
-from .util import (update_s_region_spectral,
+from .util import (update_s_region_spectral, update_s_region_imaging,
                    update_s_region_nrs_ifu, update_s_region_mrs)
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
@@ -76,12 +75,7 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
             imaging_types.update(['mir_lrs-fixedslit', 'mir_lrs-slitless'])
             if output_model.meta.exposure.type.lower() in imaging_types:
                 try:
-                    s_region = compute_s_region_imaging(
-                        output_model.meta.wcs,
-                        shape=output_model.data.shape
-                        )
-                    if s_region:
-                        output_model.meta.wcsinfo.s_region = s_region
+                    update_s_region_imaging(output_model)
                 except Exception as exc:
                     log.error("Unable to update S_REGION for type {}: {}".format(
                         output_model.meta.exposure.type, exc))

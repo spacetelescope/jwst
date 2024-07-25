@@ -11,11 +11,10 @@ from astropy.time import Time
 from tweakwcs.correctors import JWSTWCSCorrector
 
 import stcal.tweakreg.tweakreg as twk
-from stcal.alignment import compute_s_region_imaging
 
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import record_step_status
-from jwst.assign_wcs.util import update_fits_wcsinfo
+from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 
 # LOCAL
 from ..stpipe import Step
@@ -341,11 +340,7 @@ class TweakRegStep(Step):
                     corrector.wcs.name = f"FIT-LVL3-{self.abs_refcat}"
 
                 image_model.meta.wcs = corrector.wcs
-                s_region = compute_s_region_imaging(
-                    image_model.meta.wcs,
-                    shape=image_model.data.shape)
-                if s_region:
-                    image_model.meta.wcsinfo.s_region = s_region
+                update_s_region_imaging(image_model)
 
                 # Also update FITS representation in input exposures for
                 # subsequent reprocessing by the end-user.
