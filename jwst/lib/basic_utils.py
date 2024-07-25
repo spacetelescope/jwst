@@ -1,6 +1,5 @@
 """General utility objects"""
 
-from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 import numpy as np
 
