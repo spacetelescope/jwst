@@ -1,14 +1,14 @@
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from . import clean_noise
+from . import clean_flicker_noise
 
-__all__ = ["CleanNoiseStep"]
+__all__ = ["CleanFlickerNoiseStep"]
 
 
-class CleanNoiseStep(Step):
+class CleanFlickerNoiseStep(Step):
     """
-    CleanNoiseStep: This step performs 1/f noise correction ("cleaning").
+    CleanFlickerNoiseStep: This step performs 1/f noise correction ("cleaning").
 
     Input data is expected to be a ramp file (RampModel), in between
     jump and ramp fitting steps, or a rate file (ImageModel or CubeModel).
@@ -22,7 +22,7 @@ class CleanNoiseStep(Step):
           `image1overf` algorithm, developed by Chris Willott.
     """
 
-    class_alias = "clean_noise"
+    class_alias = "clean_flicker_noise"
 
     spec = """
         fit_method = option('fft', 'median', default='median')  # Noise fitting algorithm
@@ -88,7 +88,7 @@ class CleanNoiseStep(Step):
         # Open the input data model
         with datamodels.open(input) as input_model:
 
-            result = clean_noise.do_correction(
+            result = clean_flicker_noise.do_correction(
                 input_model, self.fit_method, self.background_method,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
                 self.single_mask, self.save_mask, self.user_mask)
@@ -102,6 +102,6 @@ class CleanNoiseStep(Step):
                 mask_model.close()
 
             # Set the step completion status
-            output_model.meta.cal_step.clean_noise = status
+            output_model.meta.cal_step.clean_flicker_noise = status
 
         return output_model

@@ -9,7 +9,7 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
 from jwst.assign_wcs import nirspec, AssignWcsStep
-from jwst.clean_noise.lib import NSClean, NSCleanSubarray
+from jwst.clean_flicker_noise.lib import NSClean, NSCleanSubarray
 from jwst.lib.basic_utils import LoggingContext
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.ramp_fitting import RampFitStep

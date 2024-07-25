@@ -7,7 +7,7 @@ from .background.background_step import BackgroundStep
 from .badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep
 from .barshadow.barshadow_step import BarShadowStep
 from .charge_migration.charge_migration_step import ChargeMigrationStep
-from .clean_noise.clean_noise_step import CleanNoiseStep
+from .clean_flicker_noise.clean_flicker_noise_step import CleanFlickerNoiseStep
 from .combine_1d.combine_1d_step import Combine1dStep
 from .coron.stack_refs_step import StackRefsStep
 from .coron.align_refs_step import AlignRefsStep
@@ -77,7 +77,7 @@ __all__ = [
     "AlignRefsStep",
     "KlipStep",
     "HlspStep",
-    "CleanNoiseStep",
+    "CleanFlickerNoiseStep",
     "CubeBuildStep",
     "CubeSkyMatchStep",
     "DarkCurrentStep",

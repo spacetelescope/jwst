@@ -1,6 +1,6 @@
 from stdatamodels.jwst import datamodels
 
-from jwst.clean_noise import clean_noise
+from jwst.clean_flicker_noise import clean_flicker_noise
 from ..stpipe import Step
 
 __all__ = ["NSCleanStep"]
@@ -11,7 +11,7 @@ class NSCleanStep(Step):
     NSCleanStep: This step performs 1/f noise correction ("cleaning")
     of NIRSpec images, using the "NSClean" method.
 
-    NOTE: This step is a deprecated alias to the ``clean_noise`` step.
+    NOTE: This step is a deprecated alias to the ``clean_flicker_noise`` step.
     """
 
     class_alias = "nsclean"
@@ -74,7 +74,7 @@ class NSCleanStep(Step):
         output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
             The 1/f corrected datamodel.
         """
-        message = ("The 'nsclean' step is a deprecated alias to 'clean_noise' "
+        message = ("The 'nsclean' step is a deprecated alias to 'clean_flicker_noise' "
                    "and will be removed in future builds.")
         self.log.warning(message)
 
@@ -82,7 +82,7 @@ class NSCleanStep(Step):
         with datamodels.open(input) as input_model:
 
             # Do the NSClean correction
-            result = clean_noise.do_correction(
+            result = clean_flicker_noise.do_correction(
                 input_model, self.fit_method, self.background_method,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
                 self.single_mask, self.save_mask, self.user_mask)
