@@ -13,7 +13,7 @@ from stdatamodels.jwst.library.basic_utils import bytes2human
 from jwst.datamodels import ModelContainer
 
 from . import gwcs_drizzle
-from . import resample_utils
+from jwst.resample import resample_utils
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)

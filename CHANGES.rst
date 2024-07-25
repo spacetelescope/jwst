@@ -1,12 +1,11 @@
 1.15.2 (unreleased)
 ===================
 
+assign_wcs
+----------
 
-scripts
--------
-
-- Removed many non-working and out-dated scripts. Including
-  many scripts that were replaced by ``strun``. [#8619]
+- Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
+  into stcal. [#8624]
 
 cube_build
 ----------
@@ -43,6 +42,12 @@ resample_spec
 - Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
   targets in the ``calwebb_spec3`` pipeline. [#8596]
 
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
+
 stpipe
 ------
 
@@ -53,14 +58,15 @@ stpipe
 tweakreg
 --------
 
-- Removed direct setting of the ``self.skip`` attribute from within the step
-  itself. [#8600]
-
 - Updated requirement for ``tweakwcs`` to version ``0.8.8`` which fixes a crash
   in the ``tweakreg`` step due to a ``MalformedPolygonError`` exception being
   raised by the ``spherical_geometry`` package for some data
   sets. [#8657, spacetelescope/tweakwcs#205]
 
+- Moved all realignment methods to stcal. [#8624]
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
 
 1.15.1 (2024-07-08)
 ===================
