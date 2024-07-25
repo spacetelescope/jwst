@@ -74,6 +74,8 @@ def subtract_bias(output, bias):
 
     # Subtract the superbias image from all groups and integrations
     # of the science data
+    if not isinstance(type(output.data), float):
+        output.data = (output.data).astype(float)
     output.data -= bias.data
 
     # If ZEROFRAME is present, subtract the super bias.  Zero values
