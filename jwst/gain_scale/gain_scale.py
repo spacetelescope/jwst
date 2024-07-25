@@ -1,4 +1,3 @@
-import gc
 import numpy as np
 import logging
 
@@ -45,5 +44,4 @@ def do_correction(output_model, gain_factor):
     output_model.meta.exposure.gain_factor = gain_factor
     output_model.meta.cal_step.gain_scale = 'COMPLETE'
 
-    gc.collect()
     return output_model

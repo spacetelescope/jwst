@@ -1,9 +1,7 @@
-import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from stcal.dark_current import dark_sub
-from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 import numpy as np
 
 
@@ -25,59 +23,61 @@ class DarkCurrentStep(Step):
 
     reference_file_types = ['dark']
 
-    def process(self, input_model):
+    def process(self, step_input):
 
         # Open the input data model
-        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
+        with datamodels.RampModel(step_input) as input_model:
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+            # Get the name of the dark reference file to use
+            self.dark_name = self.get_reference_file(input_model, 'dark')
+            self.log.info('Using DARK reference file %s', self.dark_name)
 
-        # Get the name of the dark reference file to use
-        self.dark_name = self.get_reference_file(result, 'dark')
-        self.log.info('Using DARK reference file %s', self.dark_name)
+            # Check for a valid reference file
+            if self.dark_name == 'N/A':
+                self.log.warning('No DARK reference file found')
+                self.log.warning('Dark current step will be skipped')
+                input_model.meta.cal_step.dark = 'SKIPPED'
+                return input_model
 
-        # Check for a valid reference file
-        if self.dark_name == 'N/A':
-            self.log.warning('No DARK reference file found')
-            self.log.warning('Dark current step will be skipped')
-            result.meta.cal_step.dark = 'SKIPPED'
-            gc.collect()
-            return result
+            # Work on a copy
+            result = input_model.copy()
 
-        # Create name for the intermediate dark, if desired.
-        dark_output = self.dark_output
-        if dark_output is not None:
-            dark_output = self.make_output_path(
-                basepath=dark_output,
-                suffix=False
+            # Create name for the intermediate dark, if desired.
+            dark_output = self.dark_output
+            if dark_output is not None:
+                dark_output = self.make_output_path(
+                    basepath=dark_output,
+                    suffix=False
+                )
+
+            # Open the dark ref file data model - based on Instrument
+            instrument = result.meta.instrument.name
+            if instrument == 'MIRI':
+                dark_model = datamodels.DarkMIRIModel(self.dark_name)
+            else:
+                dark_model = datamodels.DarkModel(self.dark_name)
+
+            # Store user-defined average_dark_current in model, if provided
+            # A user-defined value will take precedence over any value present
+            # in dark reference file
+            self.set_average_dark_current(result, dark_model)
+
+            # Do the dark correction
+            correction = dark_sub.do_correction(
+                result, dark_model, dark_output
             )
 
-        # Open the dark ref file data model - based on Instrument
-        instrument = result.meta.instrument.name
-        if instrument == 'MIRI':
-            dark_model = datamodels.DarkMIRIModel(self.dark_name)
-        else:
-            dark_model = datamodels.DarkModel(self.dark_name)
+            out_data, dark_data = correction
 
-        # Store user-defined average_dark_current in model, if provided
-        # A user-defined value will take precedence over any value present
-        # in dark reference file
-        self.set_average_dark_current(result, dark_model)
+            if dark_data is not None and dark_data.save:
+                save_dark_data_as_dark_model(dark_data, dark_model, instrument)
 
-        # Do the dark correction
-        correction = dark_sub.do_correction(
-            result, dark_model, dark_output
-        )
+            out_ramp = dark_output_data_2_ramp_model(out_data, result)
 
-        out_data, dark_data = correction
+            # Cleanup
+            del dark_model
+            del result
 
-        if dark_data is not None and dark_data.save:
-            save_dark_data_as_dark_model(dark_data, dark_model, instrument)
-        del dark_model
-
-        out_ramp = dark_output_data_2_ramp_model(out_data, result)
-
-        gc.collect()
         return out_ramp
 
     def set_average_dark_current(self, input_model, dark_model):

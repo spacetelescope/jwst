@@ -1,5 +1,4 @@
 import logging
-import gc
 
 import numpy as np
 
@@ -82,7 +81,6 @@ def do_dqinit(output_model, mask_model):
 
     output_model.meta.cal_step.dq_init = 'COMPLETE'
 
-    gc.collect()
     return output_model
 
 

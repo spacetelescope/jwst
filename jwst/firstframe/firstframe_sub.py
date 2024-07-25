@@ -1,7 +1,6 @@
 #
 #  Module for the firstframe correction for MIRI science data sets
 #
-import gc
 import numpy as np
 import logging
 
@@ -46,5 +45,4 @@ def do_correction(output):
         log.warning("Step will be skipped")
         output.meta.cal_step.firstframe = 'SKIPPED'
 
-    gc.collect()
     return output

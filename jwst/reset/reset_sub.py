@@ -1,7 +1,6 @@
 #
 #  Module for  subtracting reset correction from  science data sets
 #
-import gc
 import numpy as np
 import logging
 
@@ -81,5 +80,4 @@ def do_correction(output_model, reset_model):
             # output.err[i,j] = np.sqrt(
             #           output.err[i,j]**2 + reset.err[j]**2)
 
-    gc.collect()
     return output_model

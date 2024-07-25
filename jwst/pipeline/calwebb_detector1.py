@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import logging
-import gc
 
 from stdatamodels.jwst import datamodels
 
@@ -69,11 +68,6 @@ class Detector1Pipeline(Pipeline):
                  'gain_scale': gain_scale_step.GainScaleStep,
                  }
 
-    def run_step(self, step, model):
-        new_model = step(model)
-        gc.collect()
-        return new_model
-
     # start the actual processing
     def process(self, input):
 
@@ -93,18 +87,18 @@ class Detector1Pipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            input = self.run_step(self.group_scale, input)
-            input = self.run_step(self.dq_init, input)
-            input = self.run_step(self.emicorr, input)
-            input = self.run_step(self.saturation, input)
-            input = self.run_step(self.ipc, input)
-            input = self.run_step(self.firstframe, input)
-            input = self.run_step(self.lastframe, input)
-            input = self.run_step(self.reset, input)
-            input = self.run_step(self.linearity, input)
-            input = self.run_step(self.rscd, input)
-            input = self.run_step(self.dark_current, input)
-            input = self.run_step(self.refpix, input)
+            input = self.group_scale(input)
+            input = self.dq_init(input)
+            input = self.emicorr(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.firstframe(input)
+            input = self.lastframe(input)
+            input = self.reset(input)
+            input = self.linearity(input)
+            input = self.rscd(input)
+            input = self.dark_current(input)
+            input = self.refpix(input)
 
             # skip until MIRI team has figured out an algorithm
             # input = self.persistence(input)
@@ -114,25 +108,25 @@ class Detector1Pipeline(Pipeline):
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
-            input = self.run_step(self.group_scale, input)
-            input = self.run_step(self.dq_init, input)
-            input = self.run_step(self.saturation, input)
-            input = self.run_step(self.ipc, input)
-            input = self.run_step(self.superbias, input)
-            input = self.run_step(self.refpix, input)
-            input = self.run_step(self.linearity, input)
+            input = self.group_scale(input)
+            input = self.dq_init(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.superbias(input)
+            input = self.refpix(input)
+            input = self.linearity(input)
 
             # skip persistence for NIRSpec
             if instrument != 'NIRSPEC':
-                input = self.run_step(self.persistence, input)
+                input = self.persistence(input)
 
-            input = self.run_step(self.dark_current, input)
+            input = self.dark_current(input)
 
         # apply the charge_migration step
-        input = self.run_step(self.charge_migration, input)
+        input = self.charge_migration(input)
 
         # apply the jump step
-        input = self.run_step(self.jump, input)
+        input = self.jump(input)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:

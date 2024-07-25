@@ -1,4 +1,3 @@
-import gc
 import logging
 
 import numpy as np
@@ -192,7 +191,6 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
     if not preserve_refpix:
         strip_ref_pixels(output_model, irs2_mask)
 
-    gc.collect()
     return output_model
 
 

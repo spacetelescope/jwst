@@ -1,4 +1,3 @@
-import gc
 from stdatamodels.jwst.datamodels import dqflags
 from ..lib import reffile_utils
 
@@ -45,5 +44,4 @@ def do_correction(output_model, lin_model):
     if zframe is not None:
         output_model.zeroframe = new_zframe
 
-    gc.collect()
     return output_model

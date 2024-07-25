@@ -1,6 +1,5 @@
 #  Module for charge migration
 #
-import gc
 import logging
 import numpy as np
 
@@ -46,7 +45,6 @@ def charge_migration(output_model, signal_threshold):
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
 
-    gc.collect()
     return output_model
 
 

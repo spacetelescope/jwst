@@ -5,57 +5,6 @@ from stdatamodels.jwst.datamodels import dqflags
 import numpy as np
 
 
-def use_datamodel(input, model_class=None):
-    """Determine if input is a datamodel, if so return it, else open it
-
-    Parameters
-    ----------
-    input : string or datamodel
-        Either the name of the file to open or a datamodel
-
-    model_class : jwst datamodel class
-        Specific class desired for the output datamodel, e.g. RampModel
-
-    Returns
-    -------
-    model : datamodel
-        The datamodel object
-    """
-    if isinstance(input, datamodels.JwstDataModel) or isinstance(input, datamodels.RampModel):
-        model = input
-    else:
-        model = datamodels.open(input)
-    if model_class is not None:
-        model = model_class(model)
-    return model
-
-def copy_datamodel(input, step_parent):
-    """Return a copy of the datamodel and set the input to None to recover memory or simply
-    return the input if the data is to be modified in-place.
-
-    Parameters
-    ----------
-    input : jwst datamodel
-        The datamodel to copy
-
-    step_parent = self.parent
-        If the Step class is not part of a pipeline, this will be None
-
-    Returns
-    -------
-    input : datamodel
-        The original datamodel object
-
-    model_copy : datamodel
-        The datamodel copy
-    """
-    if step_parent is None:
-        model_copy = input.copy()
-        return model_copy, None
-    else:
-        return input, None
-
-
 def set_nans_to_donotuse(data, dq):
     """Set all NaN values in the data that have an even value to
     DO_NOT_USE.

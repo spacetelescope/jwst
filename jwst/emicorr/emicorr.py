@@ -4,7 +4,6 @@
 
 import numpy as np
 import logging
-import gc
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
 
@@ -457,7 +456,6 @@ def apply_emicorr(output_model, emicorr_model,
         del dd_all
         del times_this_int
         del phaseall
-        gc.collect()
 
     if save_intermediate_results and save_onthefly_reffile is not None:
         if 'FAST' in readpatt:

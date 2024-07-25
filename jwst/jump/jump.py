@@ -1,4 +1,3 @@
-import gc
 import logging
 import numpy as np
 from stcal.jump.jump import detect_jumps
@@ -111,5 +110,4 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
         output_model.meta.exposure.extended_emission_events = 1e6 * number_extended_events /\
                                                               (total_time * total_pixels)
 
-    gc.collect()
     return output_model

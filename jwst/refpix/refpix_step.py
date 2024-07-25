@@ -1,11 +1,9 @@
-import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from ..lib import pipe_utils
 from . import reference_pixels
 from . import irs2_subtract_reference
-from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 
 __all__ = ["RefPixStep"]
@@ -31,75 +29,74 @@ class RefPixStep(Step):
 
     reference_file_types = ['refpix']
 
-    def process(self, input_model):
+    def process(self, step_input):
 
         # Open the input data model
-        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
+        with datamodels.RampModel(step_input) as input_model:
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+            # Work on a copy
+            result = input_model.copy()
 
-        if pipe_utils.is_irs2(result):
+            if pipe_utils.is_irs2(result):
 
-            # Flag bad reference pixels first
-            irs2_subtract_reference.flag_bad_refpix(
-                result, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
+                # Flag bad reference pixels first
+                irs2_subtract_reference.flag_bad_refpix(
+                    result, n_sigma=self.ovr_corr_mitigation_ftr, flag_only=True)
 
-            # If desired, do the normal refpix correction before IRS2, without
-            # side pixel handling
-            if self.irs2_mean_subtraction:
-                if self.use_side_ref_pixels:
-                    self.log.info('Turning off side pixel correction for IRS2')
-                    self.use_side_ref_pixels = False
-                reference_pixels.correct_model(
-                    result, self.odd_even_columns, self.use_side_ref_pixels,
-                    self.side_smoothing_length, self.side_gain, self.odd_even_rows)
+                # If desired, do the normal refpix correction before IRS2, without
+                # side pixel handling
+                if self.irs2_mean_subtraction:
+                    if self.use_side_ref_pixels:
+                        self.log.info('Turning off side pixel correction for IRS2')
+                        self.use_side_ref_pixels = False
+                    reference_pixels.correct_model(
+                        result, self.odd_even_columns, self.use_side_ref_pixels,
+                        self.side_smoothing_length, self.side_gain, self.odd_even_rows)
 
-            # Now that values are updated, replace bad reference pixels
-            irs2_subtract_reference.flag_bad_refpix(result, replace_only=True)
+                # Now that values are updated, replace bad reference pixels
+                irs2_subtract_reference.flag_bad_refpix(result, replace_only=True)
 
-            # Get the necessary refpix reference file for IRS2 correction
-            self.irs2_name = self.get_reference_file(result, 'refpix')
-            self.log.info(f'Using refpix reference file: {self.irs2_name}')
+                # Get the necessary refpix reference file for IRS2 correction
+                self.irs2_name = self.get_reference_file(result, 'refpix')
+                self.log.info(f'Using refpix reference file: {self.irs2_name}')
 
-            # Check for a valid reference file
-            if self.irs2_name == 'N/A':
-                self.log.warning('No refpix reference file found')
-                self.log.warning('RefPix step will be skipped')
-                result.meta.cal_step.refpix = 'SKIPPED'
+                # Check for a valid reference file
+                if self.irs2_name == 'N/A':
+                    self.log.warning('No refpix reference file found')
+                    self.log.warning('RefPix step will be skipped')
+                    result.meta.cal_step.refpix = 'SKIPPED'
+                    return result
+
+                # Load the reference file into a datamodel
+                irs2_model = datamodels.IRS2Model(self.irs2_name)
+
+                # Apply the IRS2 correction scheme
+                result = irs2_subtract_reference.correct_model(
+                    result, irs2_model, preserve_refpix=self.preserve_irs2_refpix)
+
+                if result.meta.cal_step.refpix != 'SKIPPED':
+                    result.meta.cal_step.refpix = 'COMPLETE'
+                del irs2_model
                 return result
 
-            # Load the reference file into a datamodel
-            irs2_model = datamodels.IRS2Model(self.irs2_name)
+            else:
+                # Not an NRS IRS2 exposure. Do the normal refpix correction.
+                status = reference_pixels.correct_model(result,
+                                                        self.odd_even_columns,
+                                                        self.use_side_ref_pixels,
+                                                        self.side_smoothing_length,
+                                                        self.side_gain,
+                                                        self.odd_even_rows)
 
-            # Apply the IRS2 correction scheme
-            result = irs2_subtract_reference.correct_model(
-                result, irs2_model, preserve_refpix=self.preserve_irs2_refpix)
+                if status == reference_pixels.REFPIX_OK:
+                    result.meta.cal_step.refpix = 'COMPLETE'
+                elif status == reference_pixels.SUBARRAY_DOESNTFIT:
+                    self.log.warning("Subarray doesn't fit in full-sized array")
+                    result.meta.cal_step.refpix = 'SKIPPED'
+                elif status == reference_pixels.BAD_REFERENCE_PIXELS:
+                    self.log.warning("No valid reference pixels, refpix step skipped")
+                    result.meta.cal_step.refpix = 'SKIPPED'
+                elif status == reference_pixels.SUBARRAY_SKIPPED:
+                    result.meta.cal_step.refpix = 'SKIPPED'
 
-            if result.meta.cal_step.refpix != 'SKIPPED':
-                result.meta.cal_step.refpix = 'COMPLETE'
-            del irs2_model
-            gc.collect()
-            return result
-
-        else:
-            # Not an NRS IRS2 exposure. Do the normal refpix correction.
-            status = reference_pixels.correct_model(result,
-                                                    self.odd_even_columns,
-                                                    self.use_side_ref_pixels,
-                                                    self.side_smoothing_length,
-                                                    self.side_gain,
-                                                    self.odd_even_rows)
-
-            if status == reference_pixels.REFPIX_OK:
-                result.meta.cal_step.refpix = 'COMPLETE'
-            elif status == reference_pixels.SUBARRAY_DOESNTFIT:
-                self.log.warning("Subarray doesn't fit in full-sized array")
-                result.meta.cal_step.refpix = 'SKIPPED'
-            elif status == reference_pixels.BAD_REFERENCE_PIXELS:
-                self.log.warning("No valid reference pixels, refpix step skipped")
-                result.meta.cal_step.refpix = 'SKIPPED'
-            elif status == reference_pixels.SUBARRAY_SKIPPED:
-                result.meta.cal_step.refpix = 'SKIPPED'
-
-            gc.collect()
-            return result
+                return result

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import gc
 import numpy as np
 
 from stcal.ramp_fitting import ramp_fit
@@ -14,7 +13,6 @@ from stdatamodels.jwst.datamodels import dqflags
 from ..stpipe import Step
 
 from ..lib import reffile_utils
-from ..lib.basic_utils import use_datamodel, copy_datamodel
 
 import logging
 import warnings
@@ -407,12 +405,13 @@ class RampFitStep(Step):
 
     reference_file_types = ['readnoise', 'gain']
 
-    def process(self, input_model):
+    def process(self, step_input):
 
         # Open the input data model
-        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
+        input_model = datamodels.RampModel(step_input)
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+        # Work on a copy
+        result = input_model.copy()
 
         max_cores = self.maximum_cores
         readnoise_filename = self.get_reference_file(result, 'readnoise')
@@ -445,9 +444,8 @@ class RampFitStep(Step):
 
         int_times = result.int_times
 
-        input_model_W = result
         # Create a gdq to modify if there are charge_migrated groups
-        gdq = input_model_W.groupdq.copy()
+        gdq = result.groupdq.copy()
 
         # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
         # ramp fitting arrays for the ImageModel, the CubeModel, and the
@@ -531,5 +529,7 @@ class RampFitStep(Step):
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
-        gc.collect()
+        # Cleanup
+        del input_model
+
         return out_model, int_model

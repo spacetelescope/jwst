@@ -1,7 +1,6 @@
 
 #  Module for 2d saturation
 #
-import gc
 import logging
 import numpy as np
 from scipy.ndimage import binary_dilation
@@ -79,11 +78,10 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat):
     if zframe is not None:
         output_model.zeroframe = zframe
 
-    gc.collect()
     return output_model
 
 
-def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
+def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat):
     """
     Short Summary
     -------------
@@ -94,7 +92,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
     ref_model : `~jwst.datamodels.SaturationModel`
@@ -113,8 +111,6 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     """
 
     # Create the output model as a copy of the input
-    output_model = input_model.copy()
-    input_model.close()
     groupdq = output_model.groupdq
 
     data = output_model.data
