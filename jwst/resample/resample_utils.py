@@ -9,7 +9,8 @@ import gwcs
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
+from jwst.assign_wcs.util import wcs_bbox_from_shape
+from stcal.alignment import util
 
 
 log = logging.getLogger(__name__)
@@ -22,21 +23,23 @@ __all__ = ['decode_context']
 def make_output_wcs(input_models, ref_wcs=None,
                     pscale_ratio=None, pscale=None, rotation=None, shape=None,
                     crpix=None, crval=None):
-    """ Generate output WCS here based on footprints of all input WCS objects
+    """Generate output WCS here based on footprints of all input WCS objects.
+
     Parameters
     ----------
     input_models : list of `~jwst.datamodel.JwstDataModel`
         Each datamodel must have a ~gwcs.WCS object.
 
     pscale_ratio : float, optional
-        Ratio of input to output pixel scale. Ignored when ``pscale`` is provided.
+        Ratio of input to output pixel scale. Ignored when ``pscale``
+        is provided.
 
     pscale : float, None, optional
         Absolute pixel scale in degrees. When provided, overrides
         ``pscale_ratio``.
 
     rotation : float, None, optional
-        Position angle of output image’s Y-axis relative to North.
+        Position angle of output image Y-axis relative to North.
         A value of 0.0 would orient the final output image to be North up.
         The default of `None` specifies that the images will not be rotated,
         but will instead be resampled in the default orientation for the camera
@@ -50,7 +53,7 @@ def make_output_wcs(input_models, ref_wcs=None,
         WCS object.
 
     crpix : tuple of float, None, optional
-        Position of the reference pixel in the image array.  If ``crpix`` is not
+        Position of the reference pixel in the image array. If ``crpix`` is not
         specified, it will be set to the center of the bounding box of the
         returned WCS object.
 
@@ -62,7 +65,6 @@ def make_output_wcs(input_models, ref_wcs=None,
     -------
     output_wcs : object
         WCS object, with defined domain, covering entire set of input frames
-
     """
     if ref_wcs is None:
         wcslist = [i.meta.wcs for i in input_models]
@@ -72,11 +74,14 @@ def make_output_wcs(input_models, ref_wcs=None,
         naxes = wcslist[0].output_frame.naxes
 
         if naxes != 2:
-            raise RuntimeError("Output WCS needs 2 spatial axes. "
-                               f"{wcslist[0]} has {naxes}.")
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
+            raise RuntimeError(msg)
 
-        output_wcs = wcs_from_footprints(
-            input_models,
+        output_wcs = util.wcs_from_footprints(
+            wcslist,
+            ref_wcs=wcslist[0],
+            ref_wcsinfo=input_models[0].meta.wcsinfo.instance,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,
@@ -88,15 +93,17 @@ def make_output_wcs(input_models, ref_wcs=None,
     else:
         naxes = ref_wcs.output_frame.naxes
         if naxes != 2:
-            raise RuntimeError("Output WCS needs 2 spatial axes but the "
-                               f"supplied WCS has {naxes} axes.")
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
+            raise RuntimeError(msg)
         output_wcs = deepcopy(ref_wcs)
         if shape is not None:
             output_wcs.array_shape = shape
 
     # Check that the output data shape has no zero length dimensions
     if not np.prod(output_wcs.array_shape):
-        raise ValueError(f"Invalid output frame shape: {tuple(output_wcs.array_shape)}")
+        msg = f"Invalid output frame shape: {tuple(output_wcs.array_shape)}"
+        raise ValueError(msg)
 
     return output_wcs
 

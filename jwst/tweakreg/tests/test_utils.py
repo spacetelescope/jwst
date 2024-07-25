@@ -14,9 +14,8 @@ from stdatamodels.jwst.datamodels import ImageModel
 from jwst.tweakreg.utils import (
     adjust_wcs,
     transfer_wcs_correction,
-    _wcsinfo_from_wcs_transform
 )
-
+from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
 
 data_path = path.split(path.abspath(data.__file__))[0]
 
