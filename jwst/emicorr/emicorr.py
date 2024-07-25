@@ -455,7 +455,7 @@ def apply_emicorr(input_model, emicorr_model,
             noise[:, :, :, noise_x + k] = dd_noise
 
         # Safety catch; anywhere the noise value is not finite, set it to zero
-        noise[np.isfinite(noise) == False] = 0
+        noise[~np.isfinite(noise)] = 0
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')
