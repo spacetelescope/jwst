@@ -660,17 +660,22 @@ def do_correction(input_model, fit_method, background_method,
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
 
     # Check for a valid input that we can work on
+    message = None
+    miri_allowed = ['MIR_IMAGE']
+    if exp_type.startswith('MIR') and exp_type not in miri_allowed:
+        message = f"EXP_TYPE {exp_type} is not supported"
+
     nsclean_allowed = ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']
     if fit_method == 'fft':
-        message = None
         if exp_type not in nsclean_allowed:
             message = f"Fit method 'fft' cannot be applied to exp_type {exp_type}"
         elif subarray == 'ALLSLITS':
             message = f"Fit method 'fft' cannot be applied to subarray {subarray}"
-        if message is not None:
-            log.warning(message)
-            log.warning("Step will be skipped")
-            return input_model, None, status
+
+    if message is not None:
+        log.warning(message)
+        log.warning("Step will be skipped")
+        return input_model, None, status
 
     output_model = input_model.copy()
 
