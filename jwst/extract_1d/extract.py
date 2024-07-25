@@ -3783,6 +3783,8 @@ def create_extraction(extract_ref_dict,
         log.info(f"Beginning loop over {shape[0]} integrations ...")
         integrations = range(shape[0])
 
+    ra_last = dec_last = wl_last = apcorr = None
+    
     for integ in integrations:
         try:
             ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, \
@@ -3896,27 +3898,57 @@ def create_extraction(extract_ref_dict,
             else:
                 wl = wavelength.min()
 
-            if isinstance(input_model, datamodels.ImageModel):
-                apcorr = select_apcorr(input_model)(
-                    input_model,
-                    apcorr_ref_model.apcorr_table,
-                    apcorr_ref_model.sizeunit,
-                    location=(ra, dec, wl)
-                )
+            # Determine whether we have a tabulated aperture correction
+            # available to save time.
+            
+            apcorr_available = False
+            if apcorr is not None:
+                if hasattr(apcorr, 'tabulated_correction'):
+                    if apcorr.tabulated_correction is not None:
+                        apcorr_available = True
+                
+            # See whether we can reuse the previous aperture correction
+            # object.  If so, just apply the pre-computed correction to
+            # save a ton of time.
+            if ra == ra_last and dec == dec_last and wl == wl_last and apcorr_available:
+                # re-use the last aperture correction
+                apcorr.apply(spec.spec_table, use_tabulated=True)
+
             else:
-                match_kwargs = {'location': (ra, dec, wl)}
-                if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-                    match_kwargs['slit'] = slitname
+                if isinstance(input_model, datamodels.ImageModel):
+                    apcorr = select_apcorr(input_model)(
+                        input_model,
+                        apcorr_ref_model.apcorr_table,
+                        apcorr_ref_model.sizeunit,
+                        location=(ra, dec, wl)
+                    )
+                else:
+                    match_kwargs = {'location': (ra, dec, wl)}
+                    if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+                        match_kwargs['slit'] = slitname
 
-                apcorr = select_apcorr(input_model)(
-                    input_model,
-                    apcorr_ref_model.apcorr_table,
-                    apcorr_ref_model.sizeunit,
-                    slit_name=slitname,
-                    **match_kwargs
-                )
-            apcorr.apply(spec.spec_table)
+                    apcorr = select_apcorr(input_model)(
+                        input_model,
+                        apcorr_ref_model.apcorr_table,
+                        apcorr_ref_model.sizeunit,
+                        slit_name=slitname,
+                        **match_kwargs
+                    )
+                # Attempt to tabulate the aperture correction for later use.
+                # If this fails, fall back on the old method.
+                try:
+                    apcorr.tabulate_correction(spec.spec_table)
+                    apcorr.apply(spec.spec_table, use_tabulated=True)
+                    log.info("Tabulating aperture correction for use in multiple integrations.")
+                except AttributeError:
+                    log.info("Computing aperture correction.")
+                    apcorr.apply(spec.spec_table)
 
+            # Save previous ra, dec, wavelength in case we can reuse
+            # the aperture correction object.
+            ra_last = ra
+            dec_last = dec
+            wl_last = wl
         output_model.spec.append(spec)
 
         if log_increment > 0 and (integ + 1) % log_increment == 0:
