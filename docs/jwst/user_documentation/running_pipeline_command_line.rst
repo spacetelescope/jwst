@@ -4,13 +4,6 @@
 Running the JWST pipeline: Command Line Interface (``strun``)
 =============================================================
 
-.. note::
-
-   For seasoned users who are familiar with using ``collect_pipeline_cfgs`` and
-   running pipelines by the default configuration (CFG) files, please note that
-   this functionality has been deprecated. Please read :ref:`CFG Usage
-   Deprecation Notice<cfg_usage_deprecation_notice>`.
-
 Individual steps and pipelines (consisting of a series of steps) can be run
 and configured from the command line using the ``strun`` command.
 ``strun`` is one of two options for running the pipeline. See

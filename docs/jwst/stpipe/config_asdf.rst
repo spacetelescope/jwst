@@ -9,7 +9,7 @@ Format", a general purpose, non-proprietary, and system-agnostic format for the
 dissemination of data. Built on `YAML <https://yaml.org/>`_, the most basic file
 is text-based requiring minimal formatting.
 
-ASDF replaces the original :ref:`CFG <config_cfg_files>` format for step
+ASDF replaces the original ``CFG`` format for step
 configuration. Using ASDF allows the configurations to be stored and retrieved
 from CRDS, selecting the best parameter file for a given set of criteria, such
 as instrument and observation mode.
@@ -17,7 +17,7 @@ as instrument and observation mode.
 .. _asdf_minimal_file:
 
 To create a parameter file, the most direct way is to choose the Pipeline
-class, Step class, or already existing .asdf or .cfg file, and run that step
+class, Step class, or already existing .asdf file, and run that step
 using the ``--save-parameters`` option. For example, to get the parameters for
 the ``Spec2Pipeline`` pipeline, do the following: ::
 
@@ -98,18 +98,18 @@ There are two required keys at the top level: ``class`` and ``parameters``.
 ``class`` specifies the Python class to run.  It should be a
 fully-qualified Python path to the class.  Step classes can ship with
 ``stpipe`` itself, they may be part of other Python packages, or they
-exist in freestanding modules alongside the configuration file.  For
+exist in freestanding modules alongside the parameter file.  For
 example, to use the ``SystemCall`` step included with ``stpipe``, set
 ``class`` to ``stpipe.subprocess.SystemCall``.  To use a class called
 ``Custom`` defined in a file ``mysteps.py`` in the same directory as
-the configuration file, set ``class`` to ``mysteps.Custom``.
+the parameter file, set ``class`` to ``mysteps.Custom``.
 
 ``name`` defines the name of the step.  This is distinct from the
 class of the step, since the same class of Step may be configured in
 different ways, and it is useful to be able to have a way of
 distinguishing between them.  For example, when Steps are combined
 into :ref:`stpipe-user-pipelines`, a Pipeline may use the same Step class
-multiple times, each with different configuration parameters.
+multiple times, each with different parameters.
 
 Parameters
 ++++++++++
@@ -167,8 +167,8 @@ need only contain the following:
 Pipeline Configuration
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Pipelines are essentially steps that refer to sub-steps. As in the original cfg
-format, parameters for sub-steps can also be specified. All sub-step parameters
+Pipelines are essentially steps that refer to sub-steps. Parameters for sub-steps can
+also be specified. All sub-step parameters
 appear in a key called `steps`. Sub-step parameters are specified by using the
 sub-step name as the key, then underneath and indented, the parameters to change
 for that sub-step. For example, to define the ``weight_power`` of the
@@ -209,7 +209,7 @@ the parameter file would look like:
 
    In the previous examples, one may have noted the line ``parameters: {}``. In
    neither example, and is a common situation when defining pipeline
-   configurations, there is no need to set any of the parameters for the
+   parameterss, there is no need to set any of the parameters for the
    pipeline itself. However, the keyword ``parameters`` is required. As such,
    the value for ``parameters`` is defined as an empty dictionary, ``{}``.
 

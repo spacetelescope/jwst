@@ -13,11 +13,9 @@ For Users
    user_pipeline.rst
    user_logging.rst
    config_asdf.rst
-   config_cfg.rst
    call_via_call.rst
    call_via_run.rst
    parameter_files.rst
-   cfg_deprecation.rst
 
 
 .. _stpipe-devel-steps:
