@@ -385,7 +385,8 @@ def wfss(input_model, reference_files):
         raise TypeError('The input data model must be an ImageModel.')
 
     # make sure this is a grism image
-    if "NIS_WFSS" != input_model.meta.exposure.type:
+    grism_exp = ["NIS_WFSS", "NIS_EXTCAL", ]
+    if input_model.meta.exposure.type not in grism_exp:
         raise ValueError('The input exposure is not NIRISS grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
