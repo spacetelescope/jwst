@@ -34,7 +34,7 @@ dependencies = [
     "scikit-image>=0.19",
     "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
-    "stcal>=1.7.3,<1.8.0",
+    "stcal@git+https://github.com/spacetelescope/stcal@main",
     "stdatamodels>=2.0.0,<2.1.0",
     "stpipe>=0.6.0,<0.7.0",
     "stsci.image>=2.3.5",
@@ -123,7 +123,7 @@ requires = [
     "setuptools>=61.2",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "oldest-supported-numpy",
+    "numpy>=2.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -208,7 +208,8 @@ results_root = "jwst-pipeline-results"
 text_file_format = "rst"
 doctest_plus = "enabled"
 doctest_rst = "enabled"
-addopts = ["-p no:legacypath",
+addopts = [
+    "-p no:legacypath",
     "--show-capture=no",
     "--report-crds-context",
 ]
@@ -260,11 +261,12 @@ exclude = [
     ".eggs",
     "build",
 ]
+line-length = 130
+
 lint.ignore = [
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
 ]
-line-length = 130
 
 [tool.ruff.lint.per-file-ignores]
 "jwst/**/__init__.py" = [
