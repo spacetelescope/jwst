@@ -1,6 +1,6 @@
 .. _outlier-detection-coron:
 
-Outlier Detection for Coronography Data
+Outlier Detection for Coronagraphic Data
 =======================================
 
 This module serves as the interface for applying ``outlier_detection`` to coronographic
