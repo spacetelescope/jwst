@@ -73,6 +73,7 @@ class ApCorrBase(abc.ABC):
         self.reference = self._reduce_reftable()
         self._convert_size_units()
         self.apcorr_func = self.approximate()
+        self.tabulated_correction = None
 
     def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
@@ -227,8 +228,11 @@ class ApCorrPhase(ApCorrBase):
     def measure_phase(self):  # Future method in determining pixel phase
         pass
 
-    def apply(self, spec_table: fits.FITS_rec):
-        """Apply interpolated aperture correction value to source-related extraction results in-place.
+    def tabulate_correction(self, spec_table: fits.FITS_rec):
+        """Tabulate the interpolated aperture correction value.
+        
+         This will save time when applying it later, especially if it is to be applied to multiple integrations.  
+         Modifies self.tabulated_correction.
 
         Parameters
         ----------
@@ -236,10 +240,8 @@ class ApCorrPhase(ApCorrBase):
             Table of aperture corrections values from apcorr reference file.
 
         """
-        flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
-                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
+        coefs = []
         for row in spec_table:
             try:
                 correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
@@ -247,10 +249,49 @@ class ApCorrPhase(ApCorrBase):
                 correction = None  # Some input wavelengths might not be supported (especially at the ends of the range)
 
             if correction:
-                for col in flux_cols_to_correct:
-                    row[col] *= correction.item()
-                for col in var_cols_to_correct:
-                    row[col] *= correction.item() * correction.item()
+                coefs += [correction.item()]
+            else:
+                coefs += [1]
+
+        self.tabulated_correction = np.asarray(coefs)
+
+    def apply(self, spec_table: fits.FITS_rec, use_tabulated=False):
+        """Apply interpolated aperture correction value to source-related extraction results in-place.
+
+        Parameters
+        ----------
+        spec_table : `~fits.FITS_rec`
+            Table of aperture corrections values from apcorr reference file.
+        use_tabulated : bool, Optional
+            Use self.tabulated_correction to perform the aperture correction?
+            Default False (recompute correction from scratch).
+
+        """
+        flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
+                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
+        
+        if use_tabulated:
+            if self.tabulated_correction is None:
+                raise ValueError("Cannot call apply_tabulated_correction without first "
+                                 "calling tabulate_correction")
+
+            for col in flux_cols_to_correct:
+                spec_table[col] *= self.tabulated_correction
+            for col in var_cols_to_correct:
+                spec_table[col] *= self.tabulated_correction**2
+        else:
+            for row in spec_table:
+                try:
+                    correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
+                except ValueError:
+                    correction = None  # Some input wavelengths might not be supported (especially at the ends of the range)
+
+                if correction:
+                    for col in flux_cols_to_correct:
+                        row[col] *= correction.item()
+                    for col in var_cols_to_correct:
+                        row[col] *= correction.item() * correction.item()
 
 
 class ApCorrRadial(ApCorrBase):
