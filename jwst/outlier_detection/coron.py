@@ -39,7 +39,7 @@ def detect_outliers(
         input_model = datamodels.open(input_model)
 
     if not isinstance(input_model, datamodels.CubeModel):
-        raise Exception(f"Input must be a CubeModel: {input_model}")
+        raise TypeError(f"Input must be a CubeModel: {input_model}")
 
     # FIXME weight_type could now be used here. Similar to tso data coron
     # data was previously losing var_rnoise due to the conversion from a cube
