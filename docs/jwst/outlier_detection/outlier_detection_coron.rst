@@ -3,7 +3,7 @@
 Outlier Detection for Coronagraphic Data
 =======================================
 
-This module serves as the interface for applying ``outlier_detection`` to coronographic
+This module serves as the interface for applying ``outlier_detection`` to coronagraphic
 image observations.
 
 Specifically, this routine performs the following operations:
