@@ -9,7 +9,7 @@ from jwst.datamodels import ModelContainer
 from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec, resample_utils
-from .utils import create_median, flag_crs_in_models
+from .utils import create_median, flag_crs_in_models, flag_crs_in_models_with_resampling
 from ._fileio import remove_file
 
 import logging
@@ -116,15 +116,17 @@ def detect_outliers(
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    flag_crs_in_models(
-        input_models,
-        median_data,
-        median_wcs,
-        snr1,
-        snr2,
-        scale1,
-        scale2,
-        backg,
-        resample_data,
-    )
+    if resample_data:
+        flag_crs_in_models_with_resampling(
+            input_models,
+            median_data,
+            median_wcs,
+            snr1,
+            snr2,
+            scale1,
+            scale2,
+            backg,
+        )
+    else:
+        flag_crs_in_models(input_models, median_data, snr1)
     return input_models

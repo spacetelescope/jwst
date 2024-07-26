@@ -83,7 +83,6 @@ def test_flag_cr(sci_blot_image_pair):
         1.2,
         0.7,
         0,
-        True,
     )
 
     # Make sure science data array is unchanged after flag_cr()

@@ -112,31 +112,36 @@ def compute_weight_threshold_container(resampled_models, maskpt):
 def flag_crs_in_models(
     input_models,
     median_data,
+    snr1,
+):
+    for image in input_models:
+        # dq flags will be updated in-place
+        flag_model_crs(image, median_data, snr1)
+
+
+def flag_crs_in_models_with_resampling(
+    input_models,
+    median_data,
     median_wcs,
     snr1,
     snr2,
     scale1,
     scale2,
     backg,
-    resample_data,
 ):
     for image in input_models:
-        if resample_data:
-            if 'SPECTRAL' not in image.meta.wcs.output_frame.axes_type:
-                input_pixflux_area = image.meta.photometry.pixelarea_steradians
-                # Set array shape, needed to compute image pixel area
-                image.meta.wcs.array_shape = image.shape
-                input_pixel_area = compute_image_pixel_area(image.meta.wcs)
-                pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
-            else:
-                pix_ratio = 1.0
-
-            blot = gwcs_blot(median_data, median_wcs, image.data.shape, image.meta.wcs, pix_ratio)
+        if 'SPECTRAL' not in image.meta.wcs.output_frame.axes_type:
+            input_pixflux_area = image.meta.photometry.pixelarea_steradians
+            # Set array shape, needed to compute image pixel area
+            image.meta.wcs.array_shape = image.shape
+            input_pixel_area = compute_image_pixel_area(image.meta.wcs)
+            pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
         else:
-            blot = median_data
+            pix_ratio = 1.0
 
+        blot = gwcs_blot(median_data, median_wcs, image.data.shape, image.meta.wcs, pix_ratio)
         # dq flags will be updated in-place
-        flag_resampled_model_crs(image, blot, snr1, snr2, scale1, scale2, backg, resample_data)
+        flag_resampled_model_crs(image, blot, snr1, snr2, scale1, scale2, backg)
 
 
 def flag_resampled_model_crs(
@@ -147,7 +152,6 @@ def flag_resampled_model_crs(
     scale1,
     scale2,
     backg,
-    resample_data,
 ):
     """
     Flag crs in image based on a resampled (and blotted) data (blot).
@@ -162,7 +166,7 @@ def flag_resampled_model_crs(
         backg = image.meta.background.level
         log.debug(f"Adding background level {backg} to blotted image")
 
-    cr_mask = flag_resampled_crs(image.data, image.err, blot, snr1, snr2, scale1, scale2, backg, resample_data)
+    cr_mask = flag_resampled_crs(image.data, image.err, blot, snr1, snr2, scale1, scale2, backg)
 
     # update the dq flags in-place
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
