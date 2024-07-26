@@ -277,6 +277,8 @@ general
 
 - Increase minimum required stdatamodels and stpipe. [#8592]
 
+- build with Numpy 2.0 release candidate to address ABI changes [#8527]
+
 lib
 ---
 
