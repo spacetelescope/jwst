@@ -1,6 +1,11 @@
 1.15.2 (unreleased)
 ===================
 
+ami_average
+-----------
+
+- Fix error in step spec that prevents step creation. [#8677]
+
 assign_wcs
 ----------
 
