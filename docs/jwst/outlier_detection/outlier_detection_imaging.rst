@@ -1,7 +1,7 @@
 .. _outlier-detection-imaging:
 
-Default Outlier Detection Algorithm
-===================================
+Outlier Detection Algorithm for Imaging Data
+============================================
 
 This module serves as the interface for applying ``outlier_detection`` to direct
 image observations, like those taken with MIRI, NIRCam and NIRISS.  The code implements the
