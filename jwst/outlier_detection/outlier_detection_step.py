@@ -44,11 +44,6 @@ class OutlierDetectionStep(Step):
 
     """
 
-    # FIXME note that this step does not have a suffix, the image3, coron3
-    # and spec3 pipelines set the suffix (tso3 does not).
-    # I think this means that running the step in isolation will produce
-    # a file with suffix "outlierdetectionstep" (which I think is a bug).
-
     class_alias = "outlier_detection"
 
     spec = """
