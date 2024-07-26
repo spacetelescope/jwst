@@ -161,11 +161,11 @@ class ResampleSpecData(ResampleData):
             # Any other customizations (crpix, crval, rotation) are ignored.
             if resample_utils.is_sky_like(input_models[0].meta.wcs.output_frame):
                 if input_models[0].meta.instrument.name != "NIRSPEC":
-                    self.output_wcs = self.build_interpolated_output_wcs()
+                    self.output_wcs = self.build_interpolated_output_wcs(input_models)
                 else:
                     self.output_wcs = self.build_nirspec_output_wcs(input_models)
             else:
-                self.output_wcs = self.build_nirspec_lamp_output_wcs()
+                self.output_wcs = self.build_nirspec_lamp_output_wcs(input_models)
 
             # Use the nominal output pixel area in sr if available,
             # scaling for user-set pixel_scale ratio if needed.
@@ -480,7 +480,7 @@ class ResampleSpecData(ResampleData):
 
         return min_tan_all, max_tan_all
 
-    def build_interpolated_output_wcs(self):
+    def build_interpolated_output_wcs(self, input_models):
         """
         Create a spatial/spectral WCS output frame using all the input models.
 

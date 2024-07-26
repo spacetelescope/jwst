@@ -649,7 +649,7 @@ def test_build_nirspec_output_wcs(nirspec_cal_pair):
     im1, im2 = nirspec_cal_pair
     containers = multislit_to_container([im1, im2])
     driz = ResampleSpecData(containers['1'])
-    output_wcs = driz.build_nirspec_output_wcs()
+    output_wcs = driz.build_nirspec_output_wcs(containers['1'])
 
     # Make sure that all slit values in the input images have a
     # location in the output frame, in both RA/Dec and slit units
@@ -675,11 +675,11 @@ def test_build_nirspec_output_wcs(nirspec_cal_pair):
     # Make a WCS for each input individually
     containers = multislit_to_container([im1])
     driz = ResampleSpecData(containers['1'])
-    compare_wcs_1 = driz.build_nirspec_output_wcs()
+    compare_wcs_1 = driz.build_nirspec_output_wcs(containers['1'])
 
     containers = multislit_to_container([im2])
     driz = ResampleSpecData(containers['1'])
-    compare_wcs_2 = driz.build_nirspec_output_wcs()
+    compare_wcs_2 = driz.build_nirspec_output_wcs(containers['1'])
 
     # The output shape should be the larger of the two
     assert output_wcs.array_shape[0] == max(
