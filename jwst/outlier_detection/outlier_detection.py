@@ -572,10 +572,16 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     # Set array shape, needed to compute image pixel area
     blot_img.meta.wcs.array_shape = blot_img.shape
     if 'SPECTRAL' not in blot_img.meta.wcs.output_frame.axes_type:
+        # Account for intensity scaling, needed if there is a difference
+        # between nominal pixel area and average pixel area,
+        # computed from the WCS
         input_pixflux_area = blot_img.meta.photometry.pixelarea_steradians
         input_pixel_area = compute_image_pixel_area(blot_img.meta.wcs)
         pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
     else:
+        # Note: spectral scaling is only needed if the pixel ratio
+        # is not set to 1.0, which is not supported for
+        # outlier detection.
         pix_ratio = 1.0
     log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
 
