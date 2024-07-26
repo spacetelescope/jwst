@@ -29,3 +29,5 @@ Specifically, this routine performs the following operations:
    .. math:: | image\_input - image\_median | > SNR*input_\err
 
 #. Update input data model DQ arrays with mask of detected outliers.
+
+.. automodapi:: jwst.outlier_detection.coron
