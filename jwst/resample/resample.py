@@ -3,9 +3,8 @@ import os
 import warnings
 
 import numpy as np
-from drizzle import util
-from drizzle import cdrizzle
 import psutil
+from drizzle import cdrizzle, util
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -14,7 +13,7 @@ from stdatamodels.jwst.library.basic_utils import bytes2human
 from jwst.datamodels import ModelContainer
 
 from . import gwcs_drizzle
-from . import resample_utils
+from jwst.resample import resample_utils
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
@@ -216,6 +215,57 @@ class ResampleData:
             ignore=ignore_list
         )
 
+    def _get_intensity_scale(self, img):
+        """
+        Compute an intensity scale from the input and output pixel area.
+
+        For imaging data, the scaling is used to account for differences
+        between the nominal pixel area and the average pixel area for
+        the input data.
+
+        For spectral data, the scaling is used to account for flux
+        conservation with non-unity pixel scale ratios, when the
+        data units are flux density.
+
+        Parameters
+        ----------
+        img : DataModel
+            The input data model.
+
+        Returns
+        -------
+        iscale : float
+            The scale to apply to the input data before drizzling.
+        """
+        input_pixflux_area = img.meta.photometry.pixelarea_steradians
+        if input_pixflux_area:
+            if 'SPECTRAL' in img.meta.wcs.output_frame.axes_type:
+                # Use the nominal area as is
+                input_pixel_area = input_pixflux_area
+
+                # If input image is in flux density units, correct the
+                # flux for the user-specified change to the spatial dimension
+                if resample_utils.is_flux_density(img.meta.bunit_data):
+                    input_pixel_area *= self.pscale_ratio
+            else:
+                img.meta.wcs.array_shape = img.data.shape
+                input_pixel_area = compute_image_pixel_area(img.meta.wcs)
+                if input_pixel_area is None:
+                    raise ValueError(
+                        "Unable to compute input pixel area from WCS of input "
+                        f"image {repr(img.meta.filename)}."
+                    )
+                if self.input_pixscale0 is None:
+                    self.input_pixscale0 = np.rad2deg(
+                        np.sqrt(input_pixel_area)
+                    )
+                    if self._recalc_pscale_ratio:
+                        self.pscale_ratio = self.pscale / self.input_pixscale0
+            iscale = np.sqrt(input_pixflux_area / input_pixel_area)
+        else:
+            iscale = 1.0
+        return iscale
+
     def resample_many_to_many(self):
         """Resample many inputs to many outputs where outputs have a common frame.
 
@@ -245,28 +295,9 @@ class ResampleData:
             log.info(f"{len(exposure)} exposures to drizzle together")
             for img in exposure:
                 img = datamodels.open(img)
+                iscale = self._get_intensity_scale(img)
+                log.debug(f'Using intensity scale iscale={iscale}')
 
-                input_pixflux_area = img.meta.photometry.pixelarea_steradians
-                if (input_pixflux_area and
-                        'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                    img.meta.wcs.array_shape = img.data.shape
-                    input_pixel_area = compute_image_pixel_area(img.meta.wcs)
-                    if input_pixel_area is None:
-                        raise ValueError(
-                            "Unable to compute input pixel area from WCS of input "
-                            f"image {repr(img.meta.filename)}."
-                        )
-                    if self.input_pixscale0 is None:
-                        self.input_pixscale0 = np.rad2deg(
-                            np.sqrt(input_pixel_area)
-                        )
-                        if self._recalc_pscale_ratio:
-                            self.pscale_ratio = self.pscale / self.input_pixscale0
-                    iscale = np.sqrt(input_pixflux_area / input_pixel_area)
-                else:
-                    iscale = 1.0
-
-                # TODO: should weight_type=None here?
                 inwht = resample_utils.build_driz_weight(
                     img,
                     weight_type=self.weight_type,
@@ -332,26 +363,8 @@ class ResampleData:
 
         log.info("Resampling science data")
         for img in self.input_models:
-            input_pixflux_area = img.meta.photometry.pixelarea_steradians
-            if (input_pixflux_area and
-                    'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                img.meta.wcs.array_shape = img.data.shape
-                input_pixel_area = compute_image_pixel_area(img.meta.wcs)
-                if input_pixel_area is None:
-                    raise ValueError(
-                        "Unable to compute input pixel area from WCS of input "
-                        f"image {repr(img.meta.filename)}."
-                    )
-                if self.input_pixscale0 is None:
-                    self.input_pixscale0 = np.rad2deg(
-                        np.sqrt(input_pixel_area)
-                    )
-                    if self._recalc_pscale_ratio:
-                        self.pscale_ratio = self.pscale / self.input_pixscale0
-                iscale = np.sqrt(input_pixflux_area / input_pixel_area)
-            else:
-                iscale = 1.0
-
+            iscale = self._get_intensity_scale(img)
+            log.debug(f'Using intensity scale iscale={iscale}')
             img.meta.iscale = iscale
 
             inwht = resample_utils.build_driz_weight(img,
@@ -829,7 +842,7 @@ def compute_image_pixel_area(wcs):
 
     k = 0
     dxy = [1, -1, -1, 1]
-
+    ra, dec, center = np.nan, np.nan, (np.nan, np.nan)
     while xmin < xmax and ymin < ymax:
         try:
             x, y, image_area, center, b, r, t, l = _get_boundary_points(
@@ -854,7 +867,6 @@ def compute_image_pixel_area(wcs):
             if not (np.all(np.isfinite(ra[sl])) and
                     np.all(np.isfinite(dec[sl]))):
                 limits[k] += dxy[k]
-                ymin, xmax, ymax, xmin = limits
                 k = (k + 1) % 4
                 break
             k = (k + 1) % 4

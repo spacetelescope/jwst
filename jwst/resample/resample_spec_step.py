@@ -114,6 +114,7 @@ class ResampleSpecStep(ResampleStep):
 
         result.update(input_models[0])
 
+        pscale_ratio = None
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
@@ -124,10 +125,17 @@ class ResampleSpecStep(ResampleStep):
                 update_s_region_spectral(model)
                 result.slits.append(model)
 
+            # Keep the first computed pixel scale ratio for storage
+            if self.pixel_scale is not None and pscale_ratio is None:
+                pscale_ratio = resamp.pscale_ratio
+
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.asn_pool_name
         result.meta.asn.table_name = input_models.asn_table_name
-        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        if self.pixel_scale is None or pscale_ratio is None:
+            result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        else:
+            result.meta.resample.pixel_scale_ratio = pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
 
         return result
@@ -157,7 +165,10 @@ class ResampleSpecStep(ResampleStep):
         result.meta.asn.pool_name = input_models.asn_pool_name
         result.meta.asn.table_name = input_models.asn_table_name
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
-        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        if self.pixel_scale is None:
+            result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        else:
+            result.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
         self.update_slit_metadata(result)
         update_s_region_spectral(result)
