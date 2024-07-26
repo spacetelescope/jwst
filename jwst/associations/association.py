@@ -1,5 +1,4 @@
 from collections.abc import MutableMapping
-from copy import deepcopy
 from datetime import datetime, timezone
 import json
 import jsonschema

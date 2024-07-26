@@ -4,6 +4,7 @@ from stdatamodels.properties import merge_tree
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
+from jwst.stpipe import record_step_status
 
 from ..stpipe import Step
 from ..combine_1d.combine1d import combine_1d_spectra
@@ -63,7 +64,7 @@ class MasterBackgroundStep(Step):
             # First check if we should even do the subtraction.  If not, bail.
             if not self._do_sub:
                 result = input_data.copy()
-                self.record_step_status(result, 'master_background', success=False)
+                record_step_status(result, 'master_background', success=False)
                 return result
 
             # Check that data is a supported datamodel. If not, bail.
@@ -78,7 +79,7 @@ class MasterBackgroundStep(Step):
                     "Input %s of type %s cannot be handled.  Step skipped.",
                     input, type(input)
                 )
-                self.record_step_status(result, 'master_background', success=False)
+                record_step_status(result, 'master_background', success=False)
                 return result
 
             # If user-supplied master background, subtract it
@@ -159,7 +160,7 @@ class MasterBackgroundStep(Step):
                         "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
                         input, type(input)
                     )
-                    self.record_step_status(result, 'master_background', success=False)
+                    record_step_status(result, 'master_background', success=False)
                     return result
 
                 # Save the computed background if requested by user
@@ -167,7 +168,7 @@ class MasterBackgroundStep(Step):
                     self.save_model(master_background, suffix='masterbg1d', force=True, asn_id=asn_id)
                     self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
 
-            self.record_step_status(result, 'master_background', success=True)
+            record_step_status(result, 'master_background', success=True)
 
         return result
 

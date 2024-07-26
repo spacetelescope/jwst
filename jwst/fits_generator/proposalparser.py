@@ -49,7 +49,6 @@ def get_detectors(filename):
                         ExposureNum = 0
                         for exposure in activity:
                             ExposureNum = ExposureNum + 1
-                            DetectorNum = 0
                             for detector in exposure:
                                 subarray = detector.find('subarray').text
                                 base = detector.find('base').text

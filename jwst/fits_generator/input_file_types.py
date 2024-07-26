@@ -351,7 +351,8 @@ def is_nirspec_fm1(hdulist):
     """Returns True if the file is NIRSpec FM1 data.  These files
     have a DATE-OBS in the first half of 2011"""
     instrument = hdulist[0].header['INSTRUME']
-    if instrument != 'NIRSPEC': return False
+    if instrument != 'NIRSPEC':
+        return False
     date = hdulist[0].header['DATE-OBS']
     year = date[:4]
     target_year = '2011'
@@ -365,7 +366,8 @@ def is_nircam_fm1(hdulist):
     """Returns True is the file is NIRCAM FM1 data.  These files
     have a DATE-OBS after the first half of 2012"""
     instrument = hdulist[0].header['INSTRUME']
-    if instrument != 'NIRCAM': return False
+    if instrument != 'NIRCAM':
+        return False
     date = hdulist[0].header['DATE-OBS']
     year = int(date[:4])
     target_year = 2012.5
