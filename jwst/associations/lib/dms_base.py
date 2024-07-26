@@ -1180,17 +1180,19 @@ def nissoss_calibrated_filter(item):
     return filter not in NIS_SOSS_UNCALIBRATED_FILTERS
 
 
-def niswfss_extcal_image2(item):
+def niswfss_extcal(item):
     """Check that a NIS_EXTCAL exp_type matches filters."""
     _, exp_type = item_getattr(item, ['exp_type'])
     if exp_type == 'nis_extcal':
         try:
             _, filter = item_getattr(item, ['filter'])
             _, pupil = item_getattr(item, ['pupil'])
-            extcal_filters = ['GR150R', 'GR150C']
-            extcal_pupils = ['F090W', 'F115W', 'F140W', 'F150W', 'F158M', 'F200W']
+            extcal_pupils = ['GR150R', 'GR150C']
+            extcal_filters = ['F090W', 'F115W', 'F140W', 'F150W', 'F158M', 'F200W']
             if filter in extcal_filters and pupil in extcal_pupils:
                 return True
+            else:
+                return False
         except KeyError:
             return False
     else:
