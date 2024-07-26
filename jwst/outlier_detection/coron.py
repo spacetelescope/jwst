@@ -1,5 +1,5 @@
 """
-Submodule for performing outlier detection on coronography data.
+Submodule for performing outlier detection on coronagraphy data.
 """
 
 
