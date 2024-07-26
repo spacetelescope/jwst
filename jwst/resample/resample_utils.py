@@ -219,6 +219,27 @@ def is_sky_like(frame):
     return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
 
 
+def is_flux_density(bunit):
+    """
+    Differentiate between surface brightness and flux density data units.
+
+    Parameters
+    ----------
+    bunit : str or `~astropy.units.Unit`
+       Data units, e.g. 'MJy' (is flux density) or 'MJy/sr' (is not).
+
+    Returns
+    -------
+    bool
+        True if the units are equivalent to flux density units.
+    """
+    try:
+        flux_density = u.Unit(bunit).is_equivalent(u.Jy)
+    except (ValueError, TypeError):
+        flux_density = False
+    return flux_density
+
+
 def decode_context(context, x, y):
     """ Get 0-based indices of input images that contributed to (resampled)
     output pixel with coordinates ``x`` and ``y``.
