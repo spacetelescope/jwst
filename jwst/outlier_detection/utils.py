@@ -5,8 +5,6 @@ import warnings
 
 import numpy as np
 
-from jwst.datamodels import ModelContainer
-from jwst.resample.resample_utils import build_driz_weight
 from jwst.resample.resample import compute_image_pixel_area
 from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
 from stdatamodels.jwst import datamodels
@@ -177,32 +175,3 @@ def flag_model_crs(image, blot, snr):
     # update dq array in-place
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
-
-
-def _convert_inputs(inputs, good_bits, weight_type):
-    """Convert input into datamodel required for processing.
-
-    This base class works on imaging data, and relies on use of the
-    ModelContainer class as the format needed for processing. However,
-    the input may not always be a ModelContainer object, so this method
-    will convert the input to a ModelContainer object for processing.
-    Additionally, sub-classes may redefine this to set up the input as
-    whatever format the sub-class needs for processing.
-
-    """
-    if isinstance(inputs, ModelContainer):
-        return inputs
-    input_models = ModelContainer()
-    num_inputs = inputs.data.shape[0]
-    log.debug("Converting CubeModel to ModelContainer with {} images".
-              format(num_inputs))
-    for i in range(inputs.data.shape[0]):
-        image = datamodels.ImageModel(data=inputs.data[i],
-                                      err=inputs.err[i],
-                                      dq=inputs.dq[i])
-        image.meta = inputs.meta
-        image.wht = build_driz_weight(image,
-                                      weight_type=weight_type,
-                                      good_bits=good_bits)
-        input_models.append(image)
-    return input_models
