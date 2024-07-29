@@ -566,9 +566,9 @@ def fft_clean_subarray(image, mask, detector):
     return cleaned_image
 
 
-def median_clean(image, mask, slowaxis):
+def median_clean(image, mask, axis_to_correct):
     """
-    Fit and remove background noise via median values along the detector slow axis.
+    Fit and remove background noise via median values along one image axis.
 
     Parameters
     ----------
@@ -579,9 +579,12 @@ def median_clean(image, mask, slowaxis):
         The mask that indicates which pixels are to be used in fitting.
         True indicates a background pixel.
 
-    slowaxis : int
-        The detector slow readout direction.  Values expected are 1
-        or 2, following the JWST datamodel definition (meta.subarray.slowaxis).
+    axis_to_correct : int
+        For NIR detectors, the axis to correct should be the detector slow
+        readout direction.  Values expected are 1 or 2, following the JWST
+        datamodel definition (meta.subarray.slowaxis).  For MIRI, flicker
+        noise appears along the vertical direction, so `axis_to_correct`
+        should be set to 1 (median along the y-axis).
 
     Returns
     -------
@@ -590,7 +593,7 @@ def median_clean(image, mask, slowaxis):
     """
     # Masked median along slow axis
     masked_image = np.ma.array(image, mask=~mask)
-    stripes = np.ma.median(masked_image, axis=(slowaxis - 1), keepdims=True)
+    stripes = np.ma.median(masked_image, axis=(axis_to_correct - 1), keepdims=True)
     stripes = np.ma.filled(stripes, fill_value=0.0)
 
     # Remove median stripes
@@ -673,10 +676,18 @@ def do_correction(input_model, fit_method,
     status = 'SKIPPED'
 
     detector = input_model.meta.instrument.detector.upper()
-    slowaxis = np.abs(input_model.meta.subarray.slowaxis)
     subarray = input_model.meta.subarray.name.upper()
     exp_type = input_model.meta.exposure.type
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
+
+    if exp_type.startswith('MIR'):
+        # MIRI doesn't have f-noise, but it does have a vertical flickering.
+        # Set the axis for median correction to the y-axis.
+        axis_to_correct = 1
+    else:
+        # For NIR detectors, the axis for median correction is the
+        # detector slowaxis.
+        axis_to_correct = abs(input_model.meta.subarray.slowaxis)
 
     # Check for a valid input that we can work on
     message = None
@@ -879,7 +890,7 @@ def do_correction(input_model, fit_method,
                     # Clean a subarray image
                     cleaned_image = fft_clean_subarray(bkg_sub, mask, detector)
             else:
-                cleaned_image = median_clean(bkg_sub, mask, slowaxis)
+                cleaned_image = median_clean(bkg_sub, mask, axis_to_correct)
 
             # Check for failure
             if cleaned_image is None:
