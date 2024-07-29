@@ -628,7 +628,7 @@ def do_correction(input_model, fit_method,
 
     background_from_rate : bool
         If set, and the input data is a ramp model, the background will be
-        fit to the rate image instead of the individual group differences.
+        fit to the rate images instead of the individual group differences.
         The preliminary background subtracted from each diff before fitting
         noise is then rate background * group time.
 
@@ -747,20 +747,6 @@ def do_correction(input_model, fit_method,
         else:
             mask_model = None
 
-    # Get the background level from the draft rate file if desired
-    if background_from_rate:
-        rate_background = background_level(
-            image_model.data, background_mask, background_method=background_method,
-            background_box_size=background_box_size)
-        log.debug(f'Background level from rate: {np.nanmedian(rate_background):.5g}')
-    else:
-        rate_background = None
-
-    # Close the draft rate model if needed
-    if image_model is not input_model:
-        image_model.close()
-        del image_model
-
     log.info(f"Cleaning image {input_model.meta.filename}")
 
     # Setup for handling 2D, 3D, or 4D inputs
@@ -791,6 +777,33 @@ def do_correction(input_model, fit_method,
     if background_mask.shape[-2:] != image_shape:
         log.warning("Mask does not match data shape. Step will be skipped.")
         return output_model, None, None, None, status
+
+    # Get the background level from the draft rate file if desired
+    if ndim > 3 and background_from_rate:
+        if single_mask:
+            # One rate image, use for all integrations
+            rate_background = background_level(
+                image_model.data, background_mask,
+                background_method=background_method,
+                background_box_size=background_box_size)
+            rate_background *= group_time
+        else:
+            # Compute background for each integration separately
+            rate_background = []
+            for integ in range(nints):
+                rbg = background_level(
+                    image_model.data[integ], background_mask[integ],
+                    background_method=background_method,
+                    background_box_size=background_box_size)
+                rate_background.append(rbg * group_time)
+    else:
+        background_from_rate = False
+        rate_background = None
+
+    # Close the draft rate model if created - it is no longer needed.
+    if image_model is not input_model:
+        image_model.close()
+        del image_model
 
     # Make a background cube for saving, if desired
     if save_background:
@@ -841,7 +854,10 @@ def do_correction(input_model, fit_method,
                 bkg_sub = image
             else:
                 if background_from_rate:
-                    background = rate_background * group_time
+                    if single_mask:
+                        background = rate_background
+                    else:
+                        background = rate_background[i]
                 else:
                     background = background_level(
                         image, mask, background_method=background_method,
