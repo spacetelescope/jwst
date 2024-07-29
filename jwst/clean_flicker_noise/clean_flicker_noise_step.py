@@ -29,7 +29,7 @@ class CleanFlickerNoiseStep(Step):
         background_method = option('median', 'model', None, default='median') # Background fitting algorithm
         background_box_size = int_list(min=2, max=2, default=None)  # Background box size for modeled background
         background_from_rate = boolean(default=False)  # Fit background to rate image
-        mask_spectral_regions = boolean(default=False)  # Mask WCS-defined regions for NIRSpec spectral data
+        mask_science_regions = boolean(default=False)  # Mask known science regions
         single_mask = boolean(default=True)  # Make a single mask for all integrations
         n_sigma = float(default=2.0)  # Clipping level for non-background signal
         fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
@@ -70,9 +70,11 @@ class CleanFlickerNoiseStep(Step):
             The preliminary background subtracted from each diff before fitting
             noise is then rate background * group time.
 
-        mask_spectral_regions : bool, optional
-            Mask regions of the image defined by WCS bounding boxes for slits/slices.
-            Ignored for non-NIRSpec data.
+        mask_science_regions : bool, optional
+            For NIRSpec, mask regions of the image defined by WCS bounding
+            boxes for slits/slices, as well as any regions known to be
+            affected by failed-open MSA shutters.  For MIRI imaging, mask
+            regions of the detector not used for science.
 
         n_sigma : float, optional
             Sigma clipping threshold to be used in detecting outliers in the image.
@@ -112,7 +114,7 @@ class CleanFlickerNoiseStep(Step):
                 input_model, self.fit_method,
                 self.background_method, self.background_box_size,
                 self.background_from_rate,
-                self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
+                self.mask_science_regions, self.n_sigma, self.fit_histogram,
                 self.single_mask, self.user_mask,
                 self.save_mask, self.save_background, self.save_noise)
             output_model, mask_model, background_model, noise_model, status = result

@@ -11,6 +11,7 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
 from jwst.assign_wcs import nirspec, AssignWcsStep
+from jwst.flatfield import FlatFieldStep
 from jwst.clean_flicker_noise.lib import NSClean, NSCleanSubarray
 from jwst.lib.basic_utils import LoggingContext
 from jwst.msaflagopen import MSAFlagOpenStep
@@ -65,9 +66,9 @@ def make_rate(input_model, return_cube=False):
     return output_model
 
 
-def assign_wcs_to_rate(input_model, msaflagopen=False):
+def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=False):
     """
-    Assign a WCS to the input rate model.
+    Post-process the input rate model, as needed
 
     Parameters
     ----------
@@ -83,10 +84,14 @@ def assign_wcs_to_rate(input_model, msaflagopen=False):
     output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
         The updated model.
     """
-    log.info("Assigning a WCS for scene masking")
-    step = AssignWcsStep()
-    with LoggingContext(step.log, level=logging.WARNING):
-        output_model = step.run(input_model)
+    output_model = input_model
+
+    # If needed, assign a WCS
+    if assign_wcs:
+        log.info("Assigning a WCS for scene masking")
+        step = AssignWcsStep()
+        with LoggingContext(step.log, level=logging.WARNING):
+            output_model = step.run(output_model)
 
     # If needed, flag open MSA shutters
     if msaflagopen:
@@ -94,6 +99,16 @@ def assign_wcs_to_rate(input_model, msaflagopen=False):
         step = MSAFlagOpenStep()
         with LoggingContext(step.log, level=logging.WARNING):
             output_model = step.run(output_model)
+
+    # If needed, draft a flat correction to retrieve non-science areas
+    if flat_dq:
+        log.info("Retrieving flat DQ values for scene masking")
+        step = FlatFieldStep()
+        with LoggingContext(step.log, level=logging.WARNING):
+            flat_corrected_model = step.run(output_model)
+
+        # Copy out the flat DQ plane, leave the data as is
+        output_model.dq |= flat_corrected_model.dq
 
     return output_model
 
@@ -130,14 +145,15 @@ def mask_ifu_slices(input_model, mask):
     for (k, ifu_wcs) in enumerate(list_of_wcs):
 
         # Construct array indexes for pixels in this slice
-        x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,
-                                                    step=(1, 1),
-                                                    center=True)
+        x, y = gwcs.wcstools.grid_from_bounding_box(
+            ifu_wcs.bounding_box, step=(1, 1), center=True)
+
         # Get the world coords for all pixels in this slice;
         # all we actually need are wavelengths
         coords = ifu_wcs(x, y)
         dq = dqmap[..., y.astype(int), x.astype(int)]
         wl = coords[2]
+
         # set non-NaN wavelength locations as do not use (one)
         valid = ~np.isnan(wl)
         dq = dq[..., valid]
@@ -313,7 +329,7 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
     mask[signal] = False
 
 
-def create_mask(input_model, mask_spectral_regions=False,
+def create_mask(input_model, mask_science_regions=False,
                 n_sigma=2.0, fit_histogram=False, single_mask=False):
     """
     Create a mask identifying background pixels.
@@ -323,7 +339,7 @@ def create_mask(input_model, mask_spectral_regions=False,
     input_model : `~jwst.datamodel.JwstDataModel`
         Science data model, containing rate data.
 
-    mask_spectral_regions : bool, optional
+    mask_science_regions : bool, optional
         Mask slit/slice regions defined in WCS. Implemented
         only for NIRSpec science modes.
 
@@ -352,25 +368,31 @@ def create_mask(input_model, mask_spectral_regions=False,
     mask = np.full(input_model.dq.shape, True)
 
     # If IFU, mask all pixels contained in the IFU slices
-    if exptype == 'nrs_ifu' and mask_spectral_regions:
+    if exptype == 'nrs_ifu' and mask_science_regions:
         mask = mask_ifu_slices(input_model, mask)
 
     # If MOS or FS, mask all pixels affected by open slitlets
     if (exptype in ['nrs_fixedslit', 'nrs_brightobj', 'nrs_msaspec']
-            and mask_spectral_regions):
+            and mask_science_regions):
         mask = mask_slits(input_model, mask)
 
     # If IFU or MOS, mask pixels affected by failed-open shutters
-    if mask_spectral_regions and exptype in ['nrs_ifu', 'nrs_msaspec']:
+    if mask_science_regions and exptype in ['nrs_ifu', 'nrs_msaspec']:
         open_pix = input_model.dq & dqflags.pixel['MSA_FAILED_OPEN']
         mask[open_pix > 0] = False
+
+    # If MIRI imaging, mask the non-science regions:
+    # they contain irrelevant emission
+    if mask_science_regions and exptype in ['mir_image']:
+        non_science = (input_model.dq & dqflags.pixel['NON_SCIENCE']) > 1
+        mask[non_science] = False
 
     # Mask any NaN pixels or exactly zero value pixels
     no_data_pix = np.isnan(input_model.data) | (input_model.data == 0)
     mask[no_data_pix] = False
 
     # If IFU or MOS, mask the fixed-slit area of the image; uses hardwired indexes
-    if mask_spectral_regions:
+    if mask_science_regions:
         if exptype == 'nrs_ifu':
             log.info("Masking the fixed slit region for IFU data.")
             mask[..., NRS_FS_REGION[0]:NRS_FS_REGION[1], :] = False
@@ -604,7 +626,7 @@ def median_clean(image, mask, axis_to_correct):
 
 def do_correction(input_model, fit_method,
                   background_method, background_box_size, background_from_rate,
-                  mask_spectral_regions, n_sigma, fit_histogram,
+                  mask_science_regions, n_sigma, fit_histogram,
                   single_mask, user_mask, save_mask, save_background, save_noise):
     """
     Apply the 1/f noise correction.
@@ -635,7 +657,7 @@ def do_correction(input_model, fit_method,
         The preliminary background subtracted from each diff before fitting
         noise is then rate background * group time.
 
-    mask_spectral_regions : bool
+    mask_science_regions : bool
         Mask slit/slice regions defined in WCS. Implemented only for
         NIRSpec science data modes.
 
@@ -717,16 +739,21 @@ def do_correction(input_model, fit_method,
 
     # Make a rate file if needed
     if user_mask is None or background_from_rate:
-        flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
         if isinstance(input_model, datamodels.RampModel):
             image_model = make_rate(input_model, return_cube=(not single_mask))
         else:
             # input is already a rate file
             image_model = input_model
 
-        # If needed, assign a WCS to the rate file
-        if mask_spectral_regions and not hasattr(image_model.meta, 'wcs'):
-            image_model = assign_wcs_to_rate(image_model, msaflagopen=flag_open)
+        # If needed, assign a WCS to the rate file,
+        # flag open MSA shutters, or retrieve flat DQ flags
+        assign_wcs = exp_type.startswith('NRS')
+        flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
+        flat_dq = (exp_type in ['MIR_IMAGE'])
+        if mask_science_regions and not hasattr(image_model.meta, 'wcs'):
+            image_model = post_process_rate(
+                image_model, assign_wcs=assign_wcs,
+                msaflagopen=flag_open, flat_dq=flat_dq)
     else:
         image_model = input_model
 
@@ -742,7 +769,7 @@ def do_correction(input_model, fit_method,
         log.info("Creating mask")
         background_mask = create_mask(
             image_model,
-            mask_spectral_regions=mask_spectral_regions,
+            mask_science_regions=mask_science_regions,
             n_sigma=n_sigma, fit_histogram=fit_histogram,
             single_mask=single_mask)
 
@@ -859,6 +886,13 @@ def do_correction(input_model, fit_method,
             image[nan_pix] = 0.0
             mask[nan_pix] = False
 
+            # If there's no good data remaining in the mask,
+            # skip this image
+            if not np.any(mask):
+                log.warning(f'No usable data in integration {i+1}, group {j+1}. '
+                            f'Skipping correction for this image.')
+                continue
+
             # Fit and remove a background level
             if str(background_method).lower() == 'none':
                 background = 0.0
@@ -895,6 +929,7 @@ def do_correction(input_model, fit_method,
             # Check for failure
             if cleaned_image is None:
                 log.error(f'Cleaning failed for integration {i + 1}, group {j + 1}')
+
                 # re-copy input to make sure any partial changes are thrown away
                 output_model.close()
                 del output_model
