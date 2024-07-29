@@ -5,7 +5,6 @@ from copy import deepcopy
 import asdf
 
 from jwst.datamodels import ModelContainer, ModelLibrary
-from jwst.datamodels.library import container_to_library, library_to_container
 
 from . import resample
 from ..stpipe import Step
@@ -62,8 +61,10 @@ class ResampleStep(Step):
 
         if isinstance(input, ModelLibrary):
             input_models = input
-        elif isinstance(input, ModelContainer):
-            input_models = container_to_library(input)
+        elif isinstance(input, (str, dict)):
+            input_models = ModelLibrary(input, on_disk=~self.in_memory)
+        elif isinstance(input, (ModelContainer, list)):
+            input_models = ModelLibrary(input, on_disk=False) #cannot instantiate on disk for data already in memory
 
         if isinstance(input, ModelLibrary):
             try:
@@ -74,7 +75,7 @@ class ResampleStep(Step):
                 # TODO: figure out why and make sure asn_table is carried along
                 output = None
         else:
-            input_models = ModelLibrary([input])
+            input_models = ModelLibrary([input], on_disk=False) #single model will not benefit from on_disk
             input_models.asn_pool_name = input.meta.asn.pool_name
             input_models.asn_table_name = input.meta.asn.table_name
             output = input.meta.filename
@@ -118,7 +119,7 @@ class ResampleStep(Step):
                 result.shelve(model, 0, modify=False)
                 return model
 
-        return library_to_container(result)
+        return result
 
     @staticmethod
     def _check_list_pars(vals, name, min_vals=None):
