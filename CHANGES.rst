@@ -5,6 +5,10 @@ align_refs
 ----------
 
 - Compute alignment shifts from the first integration of the science exposure only. [#8643]
+ami_average
+-----------
+
+- Fix error in step spec that prevents step creation. [#8677]
 
 assign_wcs
 ----------
