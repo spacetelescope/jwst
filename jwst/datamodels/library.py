@@ -1,5 +1,4 @@
 import io
-from pathlib import Path
 
 import asdf
 from astropy.io import fits
@@ -7,7 +6,6 @@ from stdatamodels.jwst.datamodels.util import open as datamodels_open
 from stpipe.library import AbstractModelLibrary, NoGroupID
 
 from jwst.associations import AssociationNotValidError, load_asn
-from jwst.datamodels import ModelContainer
 
 __all__ = ["ModelLibrary"]
 
@@ -98,13 +96,6 @@ class ModelLibrary(AbstractModelLibrary):
         model.meta.asn.table_name = self.asn.get("table_name", "")
         model.meta.asn.pool_name = self.asn.get("asn_pool", "")
 
-    def ind_asn_type(self, exptype):
-        return [
-            i
-            for i, member in enumerate(self.asn['products'][0]['members'])
-            if member['exptype'] == exptype
-        ]
-
 
 def _attrs_to_group_id(
         program_number,
@@ -123,30 +114,3 @@ def _attrs_to_group_id(
         f"_{visit_group}{sequence_id}{activity_id}"
         f"_{exposure_number}"
     )
-
-
-def container_to_library(container):
-    """
-    Temporary converter function so that steps can start using ModelLibrary
-    without changing stdatamodels.jwst.open() to return ModelLibrary by default."""
-    lib = ModelLibrary(container.asn_file_path)
-    with lib:
-        for i, model in enumerate(container):
-            lib.borrow(i)
-            lib.shelve(model, i)
-    lib.asn_table_name = getattr(container, "asn_table_name", "")
-    return lib
-
-
-def library_to_container(library):
-    """
-    Temporary converter function so that steps can start using ModelLibrary
-    without changing stdatamodels.jwst.open() to return ModelLibrary by default."""
-    container = ModelContainer(str(Path(library._asn_dir) / Path(library._asn["table_name"])))
-    with library:
-        for i, _ in enumerate(container):
-            model = library.borrow(i)
-            container[i] = model
-            library.shelve(model, i, modify=False)
-    container.asn_table_name = getattr(library, "asn_table_name", "")
-    return container
