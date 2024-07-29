@@ -310,8 +310,6 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
     signal = image > background_upper_limit
     mask[signal] = False
 
-    return
-
 
 def create_mask(input_model, mask_spectral_regions=False,
                 n_sigma=2.0, fit_histogram=False, single_mask=False):
@@ -427,7 +425,8 @@ def create_mask(input_model, mask_spectral_regions=False,
     return mask
 
 
-def background_level(image, mask, background_method='median'):
+def background_level(image, mask, background_method='median',
+                     background_box_size=None):
     """
     Fit a low-resolution background level.
 
@@ -443,8 +442,15 @@ def background_level(image, mask, background_method='median'):
     background_method : {'median', 'model', None}, optional
         If 'median', the preliminary background to remove and restore
         is a simple median of the background data.  If 'model', the
-        background data is modeled with a median filter with a 5x5
-        pixel kernel.  If None, the background value is 0.0.
+        background data is fit with a low-resolution model via
+        `~photutils.background.Background2D`.  If None, the background
+        value is 0.0.
+
+    background_box_size : tuple of int, optional
+        Box size for the data grid used by `Background2D` when
+        `background_method` = 'model'. For best results, use a box size
+        that evenly divides the input image shape. Defaults to 32x32 if
+        not provided.
 
     Returns
     -------
@@ -469,10 +475,20 @@ def background_level(image, mask, background_method='median'):
         if background_method == 'model':
             sigma_clip_for_bkg = SigmaClip(sigma=sigma_limit, maxiters=5)
             bkg_estimator = MedianBackground()
+
+            if background_box_size is None:
+                background_box_size = [32, 32]
+            box_division_remainder = (image.shape[0] % background_box_size[0],
+                                      image.shape[1] % background_box_size[1])
+            if not np.allclose(box_division_remainder, 0):
+                log.warning(f'Background box size {background_box_size} '
+                            f'does not divide evenly into the image '
+                            f'shape {image.shape}.')
+
             try:
                 bkg = Background2D(
-                    image, (34, 34), filter_size=(5, 5), mask=~mask,
-                    sigma_clip=sigma_clip_for_bkg,
+                    image, box_size=background_box_size, filter_size=(5, 5),
+                    mask=~mask, sigma_clip=sigma_clip_for_bkg,
                     bkg_estimator=bkg_estimator)
                 background = bkg.background
             except ValueError:
@@ -599,9 +615,9 @@ def median_clean(image, mask, slowaxis):
     return corrected_image
 
 
-def do_correction(input_model, fit_method, background_method,
+def do_correction(input_model, fit_method, background_method, background_box_size,
                   mask_spectral_regions, n_sigma, fit_histogram,
-                  single_mask, save_mask, user_mask):
+                  single_mask, user_mask, save_mask, save_background, save_noise):
     """
     Apply the 1/f noise correction.
 
@@ -616,8 +632,14 @@ def do_correction(input_model, fit_method, background_method,
     background_method : {'median', 'model', None}
         If 'median', the preliminary background to remove and restore
         is a simple median of the background data.  If 'model', the
-        background data is modeled with a median filter with a 5x5
-        pixel kernel.  If None, the background value is 0.0.
+        background data is fit with a low-resolution model via
+        `~photutils.background.Background2D`.  If None, the background
+        value is 0.0.
+
+    background_box_size : tuple of int, optional
+        Box size for the data grid used by `Background2D` when
+        `background_method` = 'model'. For best results, use a box size
+        that evenly divides the input image shape.
 
     mask_spectral_regions : bool
         Mask slit/slice regions defined in WCS. Implemented only for
@@ -636,11 +658,17 @@ def do_correction(input_model, fit_method, background_method,
         the number of input integrations. Otherwise, the mask will
         be a 3D cube, with one plane for each integration.
 
+    user_mask : str or None
+        Path to user-supplied mask image.
+
     save_mask : bool
         Switch to indicate whether the mask should be saved.
 
-    user_mask : str or None
-        Path to user-supplied mask image.
+    save_background : bool
+        Switch to indicate whether the fit background should be saved.
+
+    save_noise : bool
+        Switch to indicate whether the fit noise should be saved.
 
     Returns
     -------
@@ -675,7 +703,7 @@ def do_correction(input_model, fit_method, background_method,
     if message is not None:
         log.warning(message)
         log.warning("Step will be skipped")
-        return input_model, None, status
+        return input_model, None, None, None, status
 
     output_model = input_model.copy()
 
@@ -701,6 +729,9 @@ def do_correction(input_model, fit_method, background_method,
                 mask_model = datamodels.CubeModel(data=background_mask)
             else:
                 mask_model = datamodels.ImageModel(data=background_mask)
+
+            # Copy metadata from input
+            mask_model.update(output_model)
         else:
             mask_model = None
 
@@ -726,12 +757,18 @@ def do_correction(input_model, fit_method, background_method,
                          "the same mask will be used for all integrations.")
         elif background_mask.shape[0] != nints:
             log.warning("Mask does not match data shape. Step will be skipped.")
-            return output_model, None, status
+            return output_model, None, None, None, status
 
     # Check that mask matches 2D data shape
     if background_mask.shape[-2:] != image_shape:
         log.warning("Mask does not match data shape. Step will be skipped.")
-        return output_model, None, status
+        return output_model, None, None, None, status
+
+    # Make a background cube for saving, if desired
+    if save_background:
+        background_to_save = np.zeros_like(input_model.data)
+    else:
+        background_to_save = None
 
     # Loop over integrations and groups (even if there's only 1)
     for i in range(nints):
@@ -776,7 +813,8 @@ def do_correction(input_model, fit_method, background_method,
                 bkg_sub = image
             else:
                 background = background_level(
-                    image, mask, background_method=background_method)
+                    image, mask, background_method=background_method,
+                    background_box_size=background_box_size)
                 log.debug(f'Background level: {np.nanmedian(background):.5g}')
                 bkg_sub = image - background
 
@@ -785,8 +823,6 @@ def do_correction(input_model, fit_method, background_method,
                 clip_to_background(
                     bkg_sub, mask, sigma_lower=n_sigma,
                     sigma_upper=n_sigma, lower_half_only=True)
-
-                # TODO: add segmentation masking?
 
             if fit_method == 'fft':
                 if bkg_sub.shape == (2048, 2048):
@@ -805,7 +841,7 @@ def do_correction(input_model, fit_method, background_method,
                 output_model.close()
                 del output_model
                 output_model = input_model.copy()
-                return output_model, None, status
+                return output_model, None, None, None, status
             else:
                 # Restore the background level
                 cleaned_image += background
@@ -816,14 +852,49 @@ def do_correction(input_model, fit_method, background_method,
                 # Store the cleaned image in the output model
                 if ndim == 2:
                     output_model.data = cleaned_image
+                    if save_background:
+                        background_to_save[:] = background
                 elif ndim == 3:
                     output_model.data[i] = cleaned_image
+                    if save_background:
+                        background_to_save[i] = background
                 else:
                     # add the cleaned data diff to the previously cleaned group,
                     # rather than the noisy input group
                     output_model.data[i, j+1] = output_model.data[i, j] + cleaned_image
+                    if save_background:
+                        background_to_save[i, j+1] = background
+
+    # Store the background image in a model, if requested
+    if save_background:
+        if background_to_save.ndim == 4:
+            background_model = datamodels.RampModel(data=background_to_save)
+        elif background_to_save.ndim == 3:
+            background_model = datamodels.CubeModel(data=background_to_save)
+        else:
+            background_model = datamodels.ImageModel(data=background_to_save)
+
+        # Copy metadata from input
+        background_model.update(output_model)
+    else:
+        background_model = None
+
+    # For the noise image, diff the input and output models
+    if save_noise:
+        noise_data = output_model.data - input_model.data
+        if input_model.data.ndim == 4:
+            noise_model = datamodels.RampModel(data=noise_data)
+        elif input_model.data.ndim == 3:
+            noise_model = datamodels.CubeModel(data=noise_data)
+        else:
+            noise_model = datamodels.ImageModel(data=noise_data)
+
+        # Copy metadata from input
+        noise_model.update(output_model)
+    else:
+        noise_model = None
 
     # Set completion status
     status = 'COMPLETE'
 
-    return output_model, mask_model, status
+    return output_model, mask_model, background_model, noise_model, status
