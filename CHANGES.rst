@@ -1,12 +1,16 @@
 1.15.2 (unreleased)
 ===================
 
+ami_average
+-----------
 
-scripts
--------
+- Fix error in step spec that prevents step creation. [#8677]
 
-- Removed many non-working and out-dated scripts. Including
-  many scripts that were replaced by ``strun``. [#8619]
+assign_wcs
+----------
+
+- Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
+  into stcal. [#8624]
 
 cube_build
 ----------
@@ -39,6 +43,29 @@ outlier_detection
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
 
+resample_spec
+-------------
+
+- Modified the output NIRSpec spectral WCS to sample the input data linearly in sky
+  coordinates, rather than slit coordinates, in order to conserve spectral
+  flux in default reductions. [#8596]
+
+- Updated handling for the ``pixel_scale_ratio`` parameter to apply only to the
+  spatial dimension, to match the sense of the parameter application to the
+  documented intent, and to conserve spectral flux when applied. [#8596]
+
+- Implemented handling for the ``pixel_scale`` parameter, which was previously
+  ignored for spectral resampling. [#8596]
+
+- Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
+  targets in the ``calwebb_spec3`` pipeline. [#8596]
+
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
+
 stpipe
 ------
 
@@ -49,14 +76,15 @@ stpipe
 tweakreg
 --------
 
-- Removed direct setting of the ``self.skip`` attribute from within the step
-  itself. [#8600]
-
 - Updated requirement for ``tweakwcs`` to version ``0.8.8`` which fixes a crash
   in the ``tweakreg`` step due to a ``MalformedPolygonError`` exception being
   raised by the ``spherical_geometry`` package for some data
   sets. [#8657, spacetelescope/tweakwcs#205]
 
+- Moved all realignment methods to stcal. [#8624]
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
 
 1.15.1 (2024-07-08)
 ===================
@@ -260,6 +288,8 @@ general
 - Increase minimum required scipy. [#8441]
 
 - Increase minimum required stdatamodels and stpipe. [#8592]
+
+- build with Numpy 2.0 release candidate to address ABI changes [#8527]
 
 lib
 ---
