@@ -6,7 +6,6 @@ from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
-# from jwst.ramp_fitting.ramp_fit_step import compute_RN_variances
 
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]

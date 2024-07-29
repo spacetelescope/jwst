@@ -30,6 +30,12 @@ outlier_detection
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
 
+ramp_fitting
+------------
+
+- Moving the read noise recalculation due to the CHARGELOSS flagging into the
+  C extension in STCAL. [#8678, spacetelescope/stcal#275]
+
 resample_spec
 -------------
 
