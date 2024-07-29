@@ -15,7 +15,7 @@ This PR addresses ...
   - [ ] add an entry to `CHANGES.rst` within the relevant release section (otherwise add the `no-changelog-entry-needed` label to this PR)
   - [ ] update or add relevant tests
   - [ ] update relevant docstrings and / or `docs/` page
-  - [ ] [start a regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and include a link to the running job
+  - [ ] [start a regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and include a link to the running job ([click here for instructions](https://github.com/spacetelescope/RegressionTests/blob/main/docs/running_regression_tests.md))
     - [ ] Do truth files need to be updated ("okified")?
       - [ ] **after the reviewer has approved these changes**, run `okify_regtests` to update the truth files
 - [ ] if a JIRA ticket exists, [make sure it is resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
