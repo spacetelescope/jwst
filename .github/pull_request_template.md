@@ -8,7 +8,7 @@ Closes #
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
 
-### Tasks
+### Tasks (if you can't perform these due to permissions, please ask a maintainer to do them)
 - [ ] **request a review from someone specific**, to avoid making the maintainers review every PR
 - [ ] add a build milestone, i.e. `Build 11.3` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
 - [ ] Does this PR change user-facing code / API?
