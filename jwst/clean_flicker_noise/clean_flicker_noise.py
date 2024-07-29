@@ -698,6 +698,12 @@ def do_correction(input_model, fit_method,
 
     output_model = input_model.copy()
 
+    # Standardize background arguments
+    if str(background_method).lower() == 'none':
+        background_method = None
+    if background_method is None:
+        background_from_rate = False
+
     # Make a rate file if needed
     if user_mask is None or background_from_rate:
         flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
