@@ -18,8 +18,9 @@ class NSCleanStep(Step):
 
     spec = """
         fit_method = option('fft', 'median', default='fft')  # Noise fitting algorithm
-        background_method = option('median', 'model', None, default=None)
-        background_box_size = int_list(min=2, max=2, default=None)
+        background_method = option('median', 'model', None, default=None) # Background fitting algorithm
+        background_box_size = int_list(min=2, max=2, default=None)  # Background box size for modeled background
+        background_from_rate = boolean(default=False)  # Fit background to rate image
         mask_spectral_regions = boolean(default=True)  # Mask WCS-defined spectral regions
         single_mask = boolean(default=False)  # Make a single mask for all integrations
         n_sigma = float(default=5.0)  # Clipping level for outliers
@@ -55,6 +56,12 @@ class NSCleanStep(Step):
             Box size for the data grid used by `Background2D` when
             `background_method` = 'model'. For best results, use a box size
             that evenly divides the input image shape.
+
+        background_from_rate : bool, optional
+            If set, and the input data is a ramp model, the background will be
+            fit to the rate image instead of the individual ramp differences.
+            The preliminary background subtracted from each diff before fitting
+            noise is then rate background * group time.
 
         mask_spectral_regions : bool, optional
             Mask regions of the image defined by WCS bounding boxes for slits/slices.
@@ -100,6 +107,7 @@ class NSCleanStep(Step):
             result = clean_flicker_noise.do_correction(
                 input_model, self.fit_method,
                 self.background_method, self.background_box_size,
+                self.background_from_rate,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
                 self.single_mask, self.user_mask,
                 self.save_mask, self.save_background, self.save_noise)

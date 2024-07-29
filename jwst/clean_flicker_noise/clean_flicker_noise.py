@@ -1,8 +1,10 @@
 import logging
+import warnings
 
 import gwcs
 import numpy as np
 from astropy.stats import sigma_clipped_stats, SigmaClip
+from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
 from scipy.optimize import curve_fit
 from stdatamodels.jwst.datamodels import dqflags
@@ -319,7 +321,7 @@ def create_mask(input_model, mask_spectral_regions=False,
     Parameters
     ----------
     input_model : `~jwst.datamodel.JwstDataModel`
-        Science data model.
+        Science data model, containing rate data.
 
     mask_spectral_regions : bool, optional
         Mask slit/slice regions defined in WCS. Implemented
@@ -345,42 +347,26 @@ def create_mask(input_model, mask_spectral_regions=False,
     """
     exptype = input_model.meta.exposure.type.lower()
 
-    # make a rate file if needed
-    flag_open = (exptype in ['nrs_ifu', 'nrs_msaspec'])
-    if isinstance(input_model, datamodels.RampModel):
-        image_model = make_rate(input_model, return_cube=(not single_mask))
-
-        # if needed, also assign a WCS
-        if mask_spectral_regions:
-            image_model = assign_wcs_to_rate(image_model, msaflagopen=flag_open)
-    else:
-        # input is already a rate file
-        image_model = input_model
-
-        # if needed, assign a WCS
-        if mask_spectral_regions and not hasattr(image_model.meta, 'wcs'):
-            image_model = assign_wcs_to_rate(image_model, msaflagopen=flag_open)
-
     # Initialize mask to all True. Subsequent operations will mask
     # out pixels that contain signal.
-    mask = np.full(image_model.dq.shape, True)
+    mask = np.full(input_model.dq.shape, True)
 
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
-        mask = mask_ifu_slices(image_model, mask)
+        mask = mask_ifu_slices(input_model, mask)
 
     # If MOS or FS, mask all pixels affected by open slitlets
     if (exptype in ['nrs_fixedslit', 'nrs_brightobj', 'nrs_msaspec']
             and mask_spectral_regions):
-        mask = mask_slits(image_model, mask)
+        mask = mask_slits(input_model, mask)
 
     # If IFU or MOS, mask pixels affected by failed-open shutters
     if mask_spectral_regions and exptype in ['nrs_ifu', 'nrs_msaspec']:
-        open_pix = image_model.dq & dqflags.pixel['MSA_FAILED_OPEN']
+        open_pix = input_model.dq & dqflags.pixel['MSA_FAILED_OPEN']
         mask[open_pix > 0] = False
 
     # Mask any NaN pixels or exactly zero value pixels
-    no_data_pix = np.isnan(image_model.data) | (image_model.data == 0)
+    no_data_pix = np.isnan(input_model.data) | (input_model.data == 0)
     mask[no_data_pix] = False
 
     # If IFU or MOS, mask the fixed-slit area of the image; uses hardwired indexes
@@ -391,7 +377,7 @@ def create_mask(input_model, mask_spectral_regions=False,
         elif exptype == 'nrs_msaspec':
             # check for any slits defined in the fixed slit quadrant:
             # if there is nothing there of interest, mask the whole FS region
-            slit2msa = image_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+            slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
             is_fs = [s.quadrant == 5 for s in slit2msa.slits]
             if not any(is_fs):
                 log.info("Masking the fixed slit region for MOS data.")
@@ -402,20 +388,15 @@ def create_mask(input_model, mask_spectral_regions=False,
 
     # Mask outliers and signal using sigma clipping stats.
     # For 3D data, loop over each integration separately.
-    if image_model.data.ndim == 3:
-        for i in range(image_model.data.shape[0]):
+    if input_model.data.ndim == 3:
+        for i in range(input_model.data.shape[0]):
             clip_to_background(
-                image_model.data[i], mask[i],
+                input_model.data[i], mask[i],
                 sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True)
     else:
         clip_to_background(
-            image_model.data, mask,
+            input_model.data, mask,
             sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True)
-
-    # Close the image model if needed
-    if image_model is not input_model:
-        image_model.close()
-        del image_model
 
     # Reduce the mask to a single plane if needed
     if single_mask and mask.ndim == 3:
@@ -486,10 +467,13 @@ def background_level(image, mask, background_method='median',
                             f'shape {image.shape}.')
 
             try:
-                bkg = Background2D(
-                    image, box_size=background_box_size, filter_size=(5, 5),
-                    mask=~mask, sigma_clip=sigma_clip_for_bkg,
-                    bkg_estimator=bkg_estimator)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        action="ignore", category=AstropyUserWarning)
+                    bkg = Background2D(
+                        image, box_size=background_box_size, filter_size=(5, 5),
+                        mask=~mask, sigma_clip=sigma_clip_for_bkg,
+                        bkg_estimator=bkg_estimator)
                 background = bkg.background
             except ValueError:
                 log.error('Background fit failed, using median value.')
@@ -615,7 +599,8 @@ def median_clean(image, mask, slowaxis):
     return corrected_image
 
 
-def do_correction(input_model, fit_method, background_method, background_box_size,
+def do_correction(input_model, fit_method,
+                  background_method, background_box_size, background_from_rate,
                   mask_spectral_regions, n_sigma, fit_histogram,
                   single_mask, user_mask, save_mask, save_background, save_noise):
     """
@@ -640,6 +625,12 @@ def do_correction(input_model, fit_method, background_method, background_box_siz
         Box size for the data grid used by `Background2D` when
         `background_method` = 'model'. For best results, use a box size
         that evenly divides the input image shape.
+
+    background_from_rate : bool
+        If set, and the input data is a ramp model, the background will be
+        fit to the rate image instead of the individual group differences.
+        The preliminary background subtracted from each diff before fitting
+        noise is then rate background * group time.
 
     mask_spectral_regions : bool
         Mask slit/slice regions defined in WCS. Implemented only for
@@ -707,6 +698,21 @@ def do_correction(input_model, fit_method, background_method, background_box_siz
 
     output_model = input_model.copy()
 
+    # Make a rate file if needed
+    if user_mask is None or background_from_rate:
+        flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
+        if isinstance(input_model, datamodels.RampModel):
+            image_model = make_rate(input_model, return_cube=(not single_mask))
+        else:
+            # input is already a rate file
+            image_model = input_model
+
+        # If needed, assign a WCS to the rate file
+        if mask_spectral_regions and not hasattr(image_model.meta, 'wcs'):
+            image_model = assign_wcs_to_rate(image_model, msaflagopen=flag_open)
+    else:
+        image_model = input_model
+
     # Check for a user-supplied mask image. If provided, use it.
     if user_mask is not None:
         mask_model = datamodels.open(user_mask)
@@ -718,7 +724,7 @@ def do_correction(input_model, fit_method, background_method, background_box_siz
         # setting all unilluminated pixels to True (so they DO get used).
         log.info("Creating mask")
         background_mask = create_mask(
-            input_model,
+            image_model,
             mask_spectral_regions=mask_spectral_regions,
             n_sigma=n_sigma, fit_histogram=fit_histogram,
             single_mask=single_mask)
@@ -735,11 +741,26 @@ def do_correction(input_model, fit_method, background_method, background_box_siz
         else:
             mask_model = None
 
+    # Get the background level from the draft rate file if desired
+    if background_from_rate:
+        rate_background = background_level(
+            image_model.data, background_mask, background_method=background_method,
+            background_box_size=background_box_size)
+        log.debug(f'Background level from rate: {np.nanmedian(rate_background):.5g}')
+    else:
+        rate_background = None
+
+    # Close the draft rate model if needed
+    if image_model is not input_model:
+        image_model.close()
+        del image_model
+
     log.info(f"Cleaning image {input_model.meta.filename}")
 
     # Setup for handling 2D, 3D, or 4D inputs
     image_shape = input_model.data.shape[-2:]
     ndim = input_model.data.ndim
+    group_time = 1.0
     if ndim == 2:
         nints = 1
         ngroups = 1
@@ -749,6 +770,7 @@ def do_correction(input_model, fit_method, background_method, background_box_siz
             ngroups = 1
         else:
             ngroups = input_model.data.shape[1] - 1
+            group_time = input_model.meta.exposure.group_time
 
         # Check for 3D mask
         if background_mask.ndim == 2:
@@ -812,9 +834,12 @@ def do_correction(input_model, fit_method, background_method, background_box_siz
                 background = 0.0
                 bkg_sub = image
             else:
-                background = background_level(
-                    image, mask, background_method=background_method,
-                    background_box_size=background_box_size)
+                if background_from_rate:
+                    background = rate_background * group_time
+                else:
+                    background = background_level(
+                        image, mask, background_method=background_method,
+                        background_box_size=background_box_size)
                 log.debug(f'Background level: {np.nanmedian(background):.5g}')
                 bkg_sub = image - background
 
