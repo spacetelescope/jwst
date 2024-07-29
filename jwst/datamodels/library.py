@@ -43,31 +43,33 @@ class ModelLibrary(AbstractModelLibrary):
         """
         # use astropy.io.fits directly to read header keywords
         # avoiding the DataModel overhead
-        # TODO look up attribute to keyword in core schema
-        with fits.open(filename) as ff:
-            if "ASDF" in ff:
-                asdf_yaml = asdf.util.load_yaml(io.BytesIO(ff['ASDF'].data.tobytes()))
-                if group_id := asdf_yaml.get('meta', {}).get('group_id'):
-                    return group_id
-            header = ff["PRIMARY"].header
-            program_number = header["PROGRAM"]
-            observation_number = header["OBSERVTN"]
-            visit_number = header["VISIT"]
-            visit_group = header["VISITGRP"]
-            sequence_id = header["SEQ_ID"]
-            activity_id = header["ACT_ID"]
-            exposure_number = header["EXPOSURE"]
+        try:
+            with fits.open(filename) as ff:
+                if "ASDF" in ff:
+                    asdf_yaml = asdf.util.load_yaml(io.BytesIO(ff['ASDF'].data.tobytes()))
+                    if group_id := asdf_yaml.get('meta', {}).get('group_id'):
+                        return group_id
+                header = ff["PRIMARY"].header
+                program_number = header["PROGRAM"]
+                observation_number = header["OBSERVTN"]
+                visit_number = header["VISIT"]
+                visit_group = header["VISITGRP"]
+                sequence_id = header["SEQ_ID"]
+                activity_id = header["ACT_ID"]
+                exposure_number = header["EXPOSURE"]
 
-        # FIXME try except and NoGroupID...
-        return _attrs_to_group_id(
-            program_number,
-            observation_number,
-            visit_number,
-            visit_group,
-            sequence_id,
-            activity_id,
-            exposure_number,
-        )
+            return _attrs_to_group_id(
+                program_number,
+                observation_number,
+                visit_number,
+                visit_group,
+                sequence_id,
+                activity_id,
+                exposure_number,
+            )
+        except KeyError as e:
+            msg = f"Cannot find header keyword {e} in {filename}"
+            raise NoGroupID(msg) from e
 
     def _model_to_group_id(self, model):
         """
@@ -75,16 +77,17 @@ class ModelLibrary(AbstractModelLibrary):
         """
         if group_id := getattr(model.meta, "group_id", None):
             return group_id
-        # FIXME try except and NoGroupID...
-        return _attrs_to_group_id(
-            model.meta.observation.program_number,
-            model.meta.observation.observation_number,
-            model.meta.observation.visit_number,
-            model.meta.observation.visit_group,
-            model.meta.observation.sequence_id,
-            model.meta.observation.activity_id,
-            model.meta.observation.exposure_number,
-        )
+        if hasattr(model.meta, "observation"):
+            return _attrs_to_group_id(
+                model.meta.observation.program_number,
+                model.meta.observation.observation_number,
+                model.meta.observation.visit_number,
+                model.meta.observation.visit_group,
+                model.meta.observation.sequence_id,
+                model.meta.observation.activity_id,
+                model.meta.observation.exposure_number,
+                )
+        raise NoGroupID(f"{model} missing group_id")
 
     def _assign_member_to_model(self, model, member):
         for attr in ("group_id", "tweakreg_catalog", "exptype"):
