@@ -12,21 +12,49 @@ image.
 
 ``--kernel`` (str, default='square')
     The form of the kernel function used to distribute flux onto the output
-    image.  Available kernels are `square` and `point`.
+    image.  Available kernels for spectral data are `square` and `point`.
+    Other drizzle kernels, available for imaging data, do not conserve
+    spectral flux.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
-    Ratio of input to output spatial pixel scale.  Values greater than 1
-    indicate that the input pixels have a larger spatial scale, so more output
-    pixels will sample the same input pixel.  For example, a value of 2.0
-    means the output image would have 4 pixels sampling each input pixel.
-    This parameter is only applied in the cross-dispersion
+    Ratio of input to output spatial pixel scale.
+
+    For spectral data, values greater than 1 indicate that the input
+    pixels have a larger spatial scale, so more output pixels will
+    sample the same input pixel.  For example, a value of 2.0
+    means the output image would have 2 pixels sampling each input
+    spatial pixel. If the input data has units of flux density (MJy/pixel),
+    the output flux per pixel will be half the input flux per pixel.
+    If the input data has units of surface brightness (MJy/sr), the output
+    flux per pixel is not scaled.
+
+    Note that this parameter is only applied in the cross-dispersion
     direction: sampling wavelengths are not affected.
+
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
 
+    .. note::
+        If this parameter is modified from the default value, the extraction
+        aperture for the :ref:`extract_1d <extract_1d_step>` step must
+        also be modified, since it is specified in pixels.
+
 ``--pixel_scale`` (float, default=None)
-    Absolute pixel scale in ``arcsec``. This parameter is only applied in
-    the cross-dispersion direction. When provided, overrides
+    Absolute pixel scale in ``arcsec``. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
+
+    For spectral data, if the input data has units of flux density
+    (MJy/pixel), the output flux per pixel will be scaled by the ratio
+    of the selected output pixel scale to an average input pixel scale.
+    If the input data has units of surface brightness (MJy/sr),
+    the output flux per pixel is not scaled.
+
+    Note that this parameter is only applied in the cross-dispersion
+    direction: sampling wavelengths are not affected.
+
+    .. note::
+        If this parameter is modified from the default value, the extraction
+        aperture for the :ref:`extract_1d <extract_1d_step>` step must
+        also be modified, since it is specified in pixels.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
@@ -84,7 +112,7 @@ image.
 ``--single`` (bool, default=False)
     If set to `True`, resample each input image into a separate output.  If
     `False` (the default), each input is resampled additively (with weights) to
-    a common output
+    a common output.
 
 ``--blendheaders`` (bool, default=True)
     Blend metadata from all input images into the resampled output image.
