@@ -11,6 +11,7 @@ Outlier Detection
    arguments.rst
    outlier_detection_step.rst
    outlier_detection_imaging.rst
+   outlier_detection_coron.rst
    outlier_detection_tso.rst
    outlier_detection_ifu.rst
    outlier_detection_spec.rst
