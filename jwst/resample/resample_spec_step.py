@@ -3,7 +3,7 @@ __all__ = ["ResampleSpecStep"]
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
@@ -118,9 +118,16 @@ class ResampleSpecStep(ResampleStep):
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
-            drizzled_models = resamp.do_drizzle(container)
+            if isinstance(container, ModelContainer):
+                library = ModelLibrary(container, on_disk=False)
+            library = resamp.do_drizzle(library)
+            with library:
+                for i, model in enumerate(library):
+                    container[i] = model
+                    library.shelve(model, modify=False)
+            del library
 
-            for model in drizzled_models:
+            for model in container:
                 self.update_slit_metadata(model)
                 update_s_region_spectral(model)
                 result.slits.append(model)
@@ -158,13 +165,20 @@ class ResampleSpecStep(ResampleStep):
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
 
-        drizzled_models = resamp.do_drizzle(input_models)
+        if isinstance(input_models, ModelContainer):
+            library = ModelLibrary(input_models, on_disk=False)
+        library = resamp.do_drizzle(library)
+        with library:
+            for i, model in enumerate(library):
+                input_models[i] = model
+                library.shelve(model, modify=False)
+        del library
 
-        result = drizzled_models[0]
+        result = input_models[0]
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.asn_pool_name
         result.meta.asn.table_name = input_models.asn_table_name
-        result.meta.bunit_data = drizzled_models[0].meta.bunit_data
+        result.meta.bunit_data = input_models[0].meta.bunit_data
         if self.pixel_scale is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         else:

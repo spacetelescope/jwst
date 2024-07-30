@@ -913,6 +913,10 @@ def compute_image_pixel_area(wcs):
 
 
 def copy_asn_info_from_library(library, output_model):
+    if not hasattr(library, "asn"):
+        # No ASN table, occurs when input comes from ModelContainer in spectroscopic modes
+        # in this case the container should retain the asn information in ResampleSpecStep
+        return
     if (asn_pool := library.asn.get("asn_pool", None)) is not None:
         output_model.meta.asn.pool_name = asn_pool
     if (

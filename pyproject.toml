@@ -34,8 +34,6 @@ dependencies = [
     "scikit-image>=0.19",
     "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
-    # "stcal>=1.7.3,<1.8.0",
-    # FIXME: switch to main (and then released) when stcal is updated
     "stcal @ git+https://github.com/braingram/stcal.git@main",
     "stdatamodels>=2.0.0,<2.1.0",
     "stpipe>=0.6.0,<0.7.0",
