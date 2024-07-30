@@ -16,6 +16,7 @@ log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
+_ONE_MB = 1 << 20
 
 
 def create_cube_median(cube_model, maskpt):
@@ -30,8 +31,98 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
+def create_median_library(resampled_models, maskpt, on_disk=True, buffer_size=1.0):
+    """Create a median image from the singly resampled images.
+    resampled_models is expected to be a ModelLibrary for imaging modes.
+    """
+    # Compute the weight threshold for each input model
+    weight_thresholds = []
+    with resampled_models:
+        for resampled in resampled_models:
+            weight = resampled.wht
+            weight_threshold = compute_weight_threshold(weight, maskpt)
+            weight_thresholds.append(weight_threshold)
+            # close and delete the model, just to explicitly try to keep the memory as clean as possible
+            resampled_models.shelve(resampled, modify=False)
+
+    # compute median over all models
+    if not on_disk:
+        # easier case: all models in library can be loaded into memory at once
+        model_list = []
+        with resampled_models:
+            for resampled in resampled_models:
+                model_list.append(resampled.data)
+                resampled_models.shelve(resampled, modify=False)
+        return np.nanmedian(np.array(model_list), axis=0)
+    else:
+        # set up buffered access to all input models
+        with resampled_models:
+            example_model = resampled_models.borrow(0)
+            shp = example_model.data.shape
+            dtype = example_model.data.dtype
+            nsections, section_nrows = _compute_buffer_indices(example_model, buffer_size)
+            resampled_models.shelve(example_model, modify=False)
+
+        # get spatial sections of library and compute timewise median, one by one
+        resampled_sections = _get_sections_library(resampled_models, nsections, section_nrows, example_model.data.shape[0])
+        median_image_empty = np.empty(shp, dtype) * np.nan
+        return _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty)
+
+
+def _get_sections_library(library, nsections, section_nrows, imrows):
+    """Iterator to return sections from a ModelLibrary.
+
+    Parameters
+    ----------
+    library : ModelLibrary
+        The input data models.
+
+    nsections : int
+        The number of spatial sections in each model
+
+    section_nrows : int
+        The number of rows in each section
+
+    imrows : int
+        The total number of rows in the image
+    """
+    with library:
+        example_model = library.borrow(0)
+        library.shelve(example_model, 0, modify=False)
+    for i in range(nsections):
+        row1 = i * section_nrows
+        row2 = min(row1 + section_nrows, imrows)
+        
+        data_list = np.empty((len(library), row2 - row1, example_model.data.shape[1]), example_model.data.dtype)
+        weight_list = np.empty((len(library), row2 - row1, example_model.data.shape[1]), example_model.wht.dtype)
+        with library:
+            for j, model in enumerate(library):
+                data_list[j] = model.data[row1:row2]
+                weight_list[j] = model.wht[row1:row2]
+                library.shelve(model, j, modify=False)
+        yield (data_list, weight_list, (row1, row2))
+
+
+def _compute_buffer_indices(model, buffer_size=None):
+
+    imrows, imcols = model.data.shape
+    data_item_size = model.data.itemsize
+    #data_item_type = model.data.dtype
+    min_buffer_size = imcols * data_item_size
+    buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
+    section_nrows = min(imrows, int(buffer_size // min_buffer_size))
+    if section_nrows == 0:
+        buffer_size = min_buffer_size
+        log.warning("WARNING: Buffer size is too small to hold a single row."
+                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB")
+        section_nrows = 1
+    nsections = int(np.ceil(imrows / section_nrows))
+    return nsections, section_nrows
+
+
 def create_median(resampled_models, maskpt):
     """Create a median image from the singly resampled images.
+    Expects a ModelContainer, e.g. for spectroscopic modes
     """
     log.info("Computing median")
 
@@ -40,10 +131,14 @@ def create_median(resampled_models, maskpt):
     # Now, set up buffered access to all input models
     resampled_models.set_buffer(1.0)  # Set buffer at 1Mb
     resampled_sections = resampled_models.get_sections()
-    median_image = np.empty((resampled_models.imrows, resampled_models.imcols),
+    median_image_empty = np.empty((resampled_models.imrows, resampled_models.imcols),
                             resampled_models.imtype)
-    median_image[:] = np.nan  # initialize with NaNs
+    median_image_empty[:] = np.nan  # initialize with NaNs
+    return _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty)
 
+
+def _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty):
+    median_image = median_image_empty
     for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
         # Create a mask for each input image, masking out areas where there is
         # no data or the data has very low weight
@@ -118,6 +213,16 @@ def flag_crs_in_models(
         # dq flags will be updated in-place
         flag_model_crs(image, median_data, snr1)
 
+def flag_crs_in_models_library( 
+    input_models,
+    median_data,
+    snr1,
+):
+    with input_models:
+        for image in input_models:
+            # dq flags will be updated in-place
+            flag_model_crs(image, median_data, snr1)
+            input_models.shelve(image)
 
 def flag_crs_in_models_with_resampling(
     input_models,
@@ -143,6 +248,31 @@ def flag_crs_in_models_with_resampling(
         # dq flags will be updated in-place
         flag_resampled_model_crs(image, blot, snr1, snr2, scale1, scale2, backg)
 
+def flag_crs_in_models_with_resampling_library(
+    input_models,
+    median_data,
+    median_wcs,
+    snr1,
+    snr2,
+    scale1,
+    scale2,
+    backg,
+):
+    with input_models:
+        for image in input_models:
+            if 'SPECTRAL' not in image.meta.wcs.output_frame.axes_type:
+                input_pixflux_area = image.meta.photometry.pixelarea_steradians
+                # Set array shape, needed to compute image pixel area
+                image.meta.wcs.array_shape = image.shape
+                input_pixel_area = compute_image_pixel_area(image.meta.wcs)
+                pix_ratio = np.sqrt(input_pixflux_area / input_pixel_area)
+            else:
+                pix_ratio = 1.0
+
+            blot = gwcs_blot(median_data, median_wcs, image.data.shape, image.meta.wcs, pix_ratio)
+            # dq flags will be updated in-place
+            flag_resampled_model_crs(image, blot, snr1, snr2, scale1, scale2, backg)
+            input_models.shelve(image)
 
 def flag_resampled_model_crs(
     image,

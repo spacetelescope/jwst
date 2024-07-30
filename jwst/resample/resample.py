@@ -295,6 +295,7 @@ class ResampleData:
                     output_model.meta.filename = f'{output_root}_{self.asn_id}_outlier_i2d{output_type}'
                 else:
                     output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
+                input_models.shelve(example_image, indices[0], modify=False)
 
                 # Initialize the output with the wcs
                 driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
@@ -846,7 +847,6 @@ def compute_image_pixel_area(wcs):
     spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
 
     ny, nx = wcs.array_shape
-
     ((xmin, xmax), (ymin, ymax)) = wcs.bounding_box
 
     xmin = max(0, int(xmin + 0.5))

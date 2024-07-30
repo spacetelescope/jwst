@@ -3,7 +3,7 @@ from functools import partial
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe import Step
 from jwst.stpipe.utilities import record_step_status
 from jwst.lib.pipe_utils import is_tso
@@ -39,9 +39,10 @@ class OutlierDetectionStep(Step):
 
     Parameters
     -----------
-    input_data : asn file or ~jwst.datamodels.ModelContainer
-        Single filename association table, or a datamodels.ModelContainer.
-
+    input_data : asn file, ~jwst.datamodels.ModelContainer, or ~jwst.datamodels.ModelLibrary
+        Single filename association table, datamodels.ModelContainer, or datamodels.ModelLibrary.
+        For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
+        ModelContainer is expected.
     """
 
     class_alias = "outlier_detection"
@@ -159,9 +160,11 @@ class OutlierDetectionStep(Step):
         else:
             self.log.error("Outlier detection failed for unknown/unsupported ",
                            f"mode: {mode}")
-            return self._set_status(input_data, False)
+            record_step_status(input_data, "outlier_detection", False)
+            return input_data
 
-        return self._set_status(result_models, True)
+        record_step_status(result_models, "outlier_detection", True)
+        return result_models
 
     def _guess_mode(self, input_models):
         # The pipelines should set this mode or ideally these should
@@ -170,13 +173,17 @@ class OutlierDetectionStep(Step):
             return self.mode
 
         # guess mode from input type
-        if not isinstance(input_models, datamodels.JwstDataModel):
+        if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Select which version of OutlierDetection
         # needs to be used depending on the input data
         if isinstance(input_models, ModelContainer):
             single_model = input_models[0]
+        elif isinstance(input_models, ModelLibrary):
+            with input_models:
+                single_model = input_models.borrow(0)
+                input_models.shelve(single_model, modify=False)
         else:
             single_model = input_models
 
@@ -199,32 +206,39 @@ class OutlierDetectionStep(Step):
 
     def _get_asn_id(self, input_models):
         # handle if input_models isn't open
-        if not isinstance(input_models, datamodels.JwstDataModel):
+        if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Setup output path naming if associations are involved.
-        asn_id = None
-        try:
-            asn_id = input_models.meta.asn_table.asn_id
-        except (AttributeError, KeyError):
-            pass
+        if isinstance(input_models, ModelLibrary):
+            asn_id = self._get_asn_id_library(input_models)
+        else:
+            asn_id = None
+            try:
+                asn_id = input_models.meta.asn_table.asn_id
+            except (AttributeError, KeyError):
+                pass
+            return asn_id
+
         if asn_id is None:
             asn_id = self.search_attr('asn_id')
-        if asn_id is not None:
-            _make_output_path = self.search_attr(
-                '_make_output_path', parent_first=True
-            )
 
-            self._make_output_path = partial(
-                _make_output_path,
-                asn_id=asn_id
-            )
+        _make_output_path = self.search_attr(
+            '_make_output_path', parent_first=True
+        )
+
+        self._make_output_path = partial(
+            _make_output_path,
+            asn_id=asn_id,
+            suffix="i2d"
+        )
         return asn_id
+    
+    def _get_asn_id_library(self, input_models):
 
-    def _set_status(self, input_models, status):
-        # this might be called with the input which might be a filename or path
-        if not isinstance(input_models, datamodels.JwstDataModel):
-            input_models = datamodels.open(input_models)
-
-        record_step_status(input_models, "outlier_detection", status)
-        return input_models
+        asn_id = None
+        try:
+            asn_id = input_models.asn.table_name
+        except (AttributeError, KeyError):
+            pass
+        return asn_id

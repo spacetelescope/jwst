@@ -6,7 +6,7 @@ import os
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.utils import flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
@@ -195,7 +195,7 @@ def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
     pristine = ModelContainer([m.copy() for m in container])
-    OutlierDetectionStep.call(container)
+    OutlierDetectionStep.call(container, in_memory=True)
 
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
@@ -203,34 +203,51 @@ def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
         np.testing.assert_allclose(image.dq, uncorrected.dq)
 
 
-def test_outlier_step(we_three_sci, tmp_cwd):
+def test_outlier_step_base(we_three_sci, tmp_cwd):
     """Test whole step with an outlier including saving intermediate and results files"""
-    container = ModelContainer(list(we_three_sci))
+    container = ModelLibrary(list(we_three_sci))
 
     # Drop a CR on the science array
-    container[0].data[12, 12] += 1
+    with container:
+        zeroth = container.borrow(0)
+        zeroth.data[12, 12] += 1
+        container.shelve(zeroth)
 
     # Verify that intermediary files are removed
-    OutlierDetectionStep.call(container)
+    OutlierDetectionStep.call(container, in_memory=True)
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
     assert len(i2d_files) == 0
     assert len(median_files) == 0
 
+    # Save all the data into a separate array before passing into step
+    data_as_cube = []
+    with container:
+        for model in container:
+            data_as_cube.append(model.data)
+            container.shelve(model, modify=False)
+
     result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True
+        container, save_results=True, save_intermediate_results=True, in_memory=True
     )
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    with result:
+        for i, corrected in enumerate(result):
+            np.testing.assert_allclose(data_as_cube[i], corrected.data)
+            result.shelve(corrected, modify=False)
 
     # Verify source is not flagged
-    for r in result:
-        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+    with result:
+        for r in result:
+            assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+            result.shelve(r, modify=False)
 
     # Verify CR is flagged
-    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    with result:
+        zeroth = result.borrow(0)
+        assert zeroth.dq[12, 12] == OUTLIER_DO_NOT_USE
+        result.shelve(zeroth, modify=False)
 
     # Verify that intermediary files are saved at the specified location
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
@@ -251,47 +268,87 @@ def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
         dm0.write(dm0.meta.filename)
 
     # Initialize inputs for the test based on filenames only
-    container = ModelContainer(filenames)
+    # needs to be an asn for ModelLibrary to load it in on_disk mode
+    asn = {
+    'asn_type': 'test',
+    'asn_id': 'o001',
+    'products': [
+        {
+            'name': 'product_a',
+            'members': [
+                {'expname': filenames[0], 'exptype': 'science'},
+                {'expname': filenames[1], 'exptype': 'science'},
+                {'expname': filenames[2], 'exptype': 'science'},
+            ]
+        },
+    ]
+}
+    container = ModelLibrary(asn, on_disk=True)
+
+    # Save all the data into a separate array before passing into step
+    data_as_cube = []
+    with container:
+        for model in container:
+            data_as_cube.append(model.data)
+            container.shelve(model, modify=False)
 
     result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True
+        container, save_results=True, save_intermediate_results=True, in_memory=False
     )
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    with result:
+        for i, corrected in enumerate(result):
+            np.testing.assert_allclose(data_as_cube[i], corrected.data)
+            result.shelve(corrected, modify=False)
 
     # Verify source is not flagged
-    for r in result:
-        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+    with result:
+        for r in result:
+            assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+            result.shelve(r, modify=False)
 
     # Verify CR is flagged
-    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    with result:
+        zeroth = result.borrow(0)
+        assert zeroth.dq[12, 12] == OUTLIER_DO_NOT_USE
+        result.shelve(zeroth, modify=False)
 
 
 def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step with square source with sharp edges, no outliers"""
-    container = ModelContainer(list(we_three_sci))
+    container = ModelLibrary(list(we_three_sci))
 
     # put a square source in all three exposures
-    for ccont in container:
-        ccont.data[5:15, 5:15] += 1e3
+    with container:
+        for ccont in container:
+            ccont.data[5:15, 5:15] += 1e3
+            container.shelve(ccont)
 
-    pristine = container.copy()
-    result = OutlierDetectionStep.call(container)
+    # Save all the data into a separate array before passing into step
+    data_as_cube = []
+    dq_as_cube = []
+    with container:
+        for model in container:
+            data_as_cube.append(model.data)
+            dq_as_cube.append(model.dq)
+            container.shelve(model, modify=False)
+
+    result = OutlierDetectionStep.call(container, in_memory=True)
 
     # Make sure nothing changed in SCI and DQ arrays
-    for image, uncorrected in zip(pristine, container):
-        np.testing.assert_allclose(image.data, uncorrected.data)
-        np.testing.assert_allclose(image.dq, uncorrected.dq)
+    with container:
+        for i, image in enumerate(container):
+            np.testing.assert_allclose(image.data, data_as_cube[i])
+            np.testing.assert_allclose(image.dq, dq_as_cube[i])
+            container.shelve(image, modify=False)
 
     # Make sure nothing changed in SCI and DQ arrays
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
-        np.testing.assert_allclose(image.dq, corrected.dq)
-
-    container.close()
-    pristine.close()
+    with result:
+        for i, corrected in enumerate(result):
+            np.testing.assert_allclose(data_as_cube[i], corrected.data)
+            np.testing.assert_allclose(dq_as_cube[i], corrected.dq)
+            result.shelve(corrected, modify=False)
 
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
@@ -299,26 +356,43 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
     """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
-    container = ModelContainer(
+    container = ModelLibrary(
         we_many_sci(background=bkg, sigma=sig, signal=7.0, exptype=exptype)
     )
 
     # Drop a weak CR on the science array
     # no noise so it should always be above the default threshold of 5
-    container[0].data[12, 12] = bkg + sig * 10
+    with container:
+        zeroth = container.borrow(0)
+        zeroth.data[12, 12] = bkg + sig * 10
+        container.shelve(zeroth)
 
-    result = OutlierDetectionStep.call(container)
+    # Save all the data into a separate array before passing into step
+    data_as_cube = []
+    with container:
+        for model in container:
+            data_as_cube.append(model.data)
+            container.shelve(model, modify=False)
+
+    result = OutlierDetectionStep.call(container, in_memory=True)
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    with result:
+        for i, corrected in enumerate(result):
+            np.testing.assert_allclose(data_as_cube[i], corrected.data)
+            result.shelve(corrected, modify=False)
 
     # Verify source is not flagged
-    for r in result:
-        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+    with result:
+        for r in result:
+            assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+            result.shelve(r, modify=False)
 
     # Verify CR is flagged
-    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    with result:
+        example = result.borrow(0)
+        assert example.dq[12, 12] == OUTLIER_DO_NOT_USE
+        result.shelve(example, modify=False)
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_coron)

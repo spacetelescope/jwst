@@ -8,12 +8,12 @@ import os
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary
 from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight
 from jwst.stpipe.utilities import record_step_status
 
-from .utils import create_median, flag_crs_in_models, flag_crs_in_models_with_resampling
+from .utils import create_median_library, flag_crs_in_models_library, flag_crs_in_models_with_resampling_library
 from ._fileio import remove_file, save_median
 
 log = logging.getLogger(__name__)
@@ -46,10 +46,13 @@ def detect_outliers(
     """
     Flag outliers in imaging data.
 
+    input_models is expected to be a ModelLibrary
+
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """
-    if not isinstance(input_models, ModelContainer):
-        input_models = ModelContainer(input_models, save_open=in_memory)
+    if not isinstance(input_models, ModelLibrary):
+        on_disk = not in_memory
+        input_models = ModelLibrary(input_models, on_disk=on_disk)
 
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
@@ -60,8 +63,11 @@ def detect_outliers(
     if resample_data:
         # Start by creating resampled/mosaic images for
         # each group of exposures
-        output_path = make_output_path(basepath=input_models[0].meta.filename,
-                        suffix='')
+        with input_models:
+            example_model = input_models.borrow(0)
+            output_path = make_output_path(basepath=example_model.meta.filename,
+                        suffix='i2d')
+            input_models.shelve(example_model, modify=False)
         output_path = os.path.dirname(output_path)
         resamp = resample.ResampleData(
             input_models,
@@ -82,23 +88,30 @@ def detect_outliers(
     else:
         # for non-dithered data, the resampled image is just the original image
         drizzled_models = input_models
-        for i in range(len(input_models)):
-            drizzled_models[i].wht = build_driz_weight(
-                input_models[i],
-                weight_type=weight_type,
-                good_bits=good_bits)
-        # copy for when saving median and input is a filename?
-        median_wcs = copy.deepcopy(input_models[0].meta.wcs)
+        with input_models:
+            for i, model in enumerate(input_models):
+                model.wht = build_driz_weight(
+                    model,
+                    weight_type=weight_type,
+                    good_bits=good_bits)
+                # copy for when saving median and input is a filename?
+                if i == 0:
+                    median_wcs = copy.deepcopy(model.meta.wcs)
 
     # Perform median combination on set of drizzled mosaics
-    median_data = create_median(drizzled_models, maskpt)
+    on_disk = not in_memory
+    median_data = create_median_library(drizzled_models, maskpt, on_disk=on_disk)
 
     if save_intermediate_results:
         # make a median model
-        with datamodels.open(drizzled_models[0]) as dm0:
+        with drizzled_models:
+            example_model = drizzled_models.borrow(0)
+            drizzled_models.shelve(example_model, modify=False)
+        with datamodels.open(example_model) as dm0:
             median_model = datamodels.ImageModel(median_data)
             median_model.update(dm0)
             median_model.meta.wcs = median_wcs
+        del example_model
 
         save_median(median_model, make_output_path, asn_id)
         del median_model
@@ -112,7 +125,7 @@ def detect_outliers(
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
     if resample_data:
-        flag_crs_in_models_with_resampling(
+        flag_crs_in_models_with_resampling_library(
             input_models,
             median_data,
             median_wcs,
@@ -123,5 +136,5 @@ def detect_outliers(
             backg,
         )
     else:
-        flag_crs_in_models(input_models, median_data, snr1)
+        flag_crs_in_models_library(input_models, median_data, snr1)
     return input_models
