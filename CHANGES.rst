@@ -1,6 +1,10 @@
 1.15.2 (unreleased)
 ===================
 
+align_refs
+----------
+
+- Compute alignment shifts from the first integration of the science exposure only. [#8643]
 ami_average
 -----------
 
