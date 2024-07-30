@@ -6,7 +6,7 @@ from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (
     Constraint_TargetAcq, Constraint_TSO,
     nissoss_calibrated_filter, nrccoron_valid_detector,
-    nrsfss_valid_detector, nrsifu_valid_detector)
+    nrsfss_valid_detector, nrsifu_valid_detector, niswfss_valid_extcal)
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import (
     ASN_SCHEMA, # noqa F401
@@ -1152,7 +1152,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
-                value='nis_wfss',
+                value='nis_wfss|nis_extcal',
             ),
             DMSAttrConstraint(
                 name='opt_elem',
@@ -1163,6 +1163,11 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='opt_elem2',
                 sources=['pupil'],
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: niswfss_valid_extcal(item) == value,
+                force_unique=False
             ),
         ])
 

@@ -9,7 +9,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     Constraint_WFSC,
     nissoss_calibrated_filter,
-    niswfss_extcal,
+    niswfss_valid_extcal,
     nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
@@ -803,8 +803,8 @@ class Asn_Lv2WFSSNIS(
                 sources=['pupil'],
             ),
             SimpleConstraint(
-                value=False,
-                test=lambda value, item: niswfss_extcal(item) == value,
+                value=True,
+                test=lambda value, item: niswfss_valid_extcal(item) == value,
                 force_unique=False
             ),
             Constraint([

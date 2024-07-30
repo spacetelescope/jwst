@@ -108,6 +108,7 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'mir_mrs',
     'nis_soss',
     'nis_wfss',
+    'nis_extcal',
     'nrc_tsgrism',
     'nrc_wfss',
     'nrs_fixedslit',
@@ -222,6 +223,22 @@ NRS_IFU_VALID_OPTICAL_PATHS = (
     ('g395h', 'f290lp', 'nrs2'),
 )
 
+# Define the valid optical paths vs detector for NIRISS EXTCAL
+# Tuples are (FILTER, PUPIL)
+NIS_EXTCAL_VALID_OPTICAL_PATHS = (
+    ('gr150r', 'f090w'),
+    ('gr150r', 'f115w'),
+    ('gr150r', 'f140w'),
+    ('gr150r', 'f150w'),
+    ('gr150r', 'f158m'),
+    ('gr150r', 'f200w'),
+    ('gr150c', 'f090w'),
+    ('gr150c', 'f115w'),
+    ('gr150c', 'f140w'),
+    ('gr150c', 'f150w'),
+    ('gr150c', 'f158m'),
+    ('gr150c', 'f200w'),
+)
 
 # Define the uncalibrated filters for NIRISS SOSS
 # Data taken with these filters should not be processed beyond
@@ -1180,20 +1197,16 @@ def nissoss_calibrated_filter(item):
     return filter not in NIS_SOSS_UNCALIBRATED_FILTERS
 
 
-def niswfss_extcal(item):
-    """Check that a NIS_EXTCAL exp_type matches filters."""
+def niswfss_valid_extcal(item):
+    """Check that a NIS_EXTCAL exp_type has a valid filter/pupil combo."""
     _, exp_type = item_getattr(item, ['exp_type'])
-    if exp_type == 'nis_extcal':
-        try:
-            _, filter = item_getattr(item, ['filter'])
-            _, pupil = item_getattr(item, ['pupil'])
-            extcal_pupils = ['GR150R', 'GR150C']
-            extcal_filters = ['F090W', 'F115W', 'F140W', 'F150W', 'F158M', 'F200W']
-            if filter in extcal_filters and pupil in extcal_pupils:
-                return True
-            else:
-                return False
-        except KeyError:
-            return False
-    else:
+    if exp_type != 'nis_extcal':
         return False
+
+    try:
+        _, filter = item_getattr(item, ['filter'])
+        _, pupil = item_getattr(item, ['pupil'])
+    except KeyError:
+        return False
+
+    return (filter, pupil) in NIS_EXTCAL_VALID_OPTICAL_PATHS
