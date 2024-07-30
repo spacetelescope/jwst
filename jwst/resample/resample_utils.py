@@ -27,7 +27,7 @@ def make_output_wcs(input_models, ref_wcs=None,
 
     Parameters
     ----------
-    input_models : list of `~jwst.datamodel.JwstDataModel`
+    input_models : `~jwst.datamodel.ModelLibrary`
         Each datamodel must have a ~gwcs.WCS object.
 
     pscale_ratio : float, optional
@@ -67,10 +67,16 @@ def make_output_wcs(input_models, ref_wcs=None,
         WCS object, with defined domain, covering entire set of input frames
     """
     if ref_wcs is None:
-        wcslist = [i.meta.wcs for i in input_models]
-        for w, i in zip(wcslist, input_models):
-            if w.bounding_box is None:
-                w.bounding_box = wcs_bbox_from_shape(i.data.shape)
+        with input_models:
+            wcslist = []
+            for i, model in enumerate(input_models):
+                w = model.meta.wcs
+                if w.bounding_box is None:
+                    w.bounding_box = wcs_bbox_from_shape(model.data.shape)
+                wcslist.append(w)
+                if i == 0:
+                    example_model = model
+                input_models.shelve(model, modify=False)
         naxes = wcslist[0].output_frame.naxes
 
         if naxes != 2:
@@ -81,7 +87,7 @@ def make_output_wcs(input_models, ref_wcs=None,
         output_wcs = util.wcs_from_footprints(
             wcslist,
             ref_wcs=wcslist[0],
-            ref_wcsinfo=input_models[0].meta.wcsinfo.instance,
+            ref_wcsinfo=example_model.meta.wcsinfo.instance,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,
@@ -89,6 +95,7 @@ def make_output_wcs(input_models, ref_wcs=None,
             crpix=crpix,
             crval=crval
         )
+        del example_model
 
     else:
         naxes = ref_wcs.output_frame.naxes

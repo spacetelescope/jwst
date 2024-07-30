@@ -121,21 +121,17 @@ class ResampleData:
                 output_pix_area = output_wcs.pixel_area
 
         else:
-            with self.input_models:
-                models = list(self.input_models)
-                # Define output WCS based on all inputs, including a reference WCS:
-                self.output_wcs = resample_utils.make_output_wcs(
-                    models,
-                    ref_wcs=output_wcs,
-                    pscale_ratio=self.pscale_ratio,
-                    pscale=pscale,
-                    rotation=rotation,
-                    shape=None if output_shape is None else output_shape[::-1],
-                    crpix=crpix,
-                    crval=crval
-                )
-                for i, m in enumerate(models):
-                    self.input_models.shelve(m, i, modify=False)                
+            # Define output WCS based on all inputs, including a reference WCS:
+            self.output_wcs = resample_utils.make_output_wcs(
+                input_models,
+                ref_wcs=output_wcs,
+                pscale_ratio=self.pscale_ratio,
+                pscale=pscale,
+                rotation=rotation,
+                shape=None if output_shape is None else output_shape[::-1],
+                crpix=crpix,
+                crval=crval
+            )               
 
             # Estimate output pixel area in Sr. NOTE: in principle we could
             # use the same algorithm as for when output_wcs is provided by the
@@ -183,9 +179,9 @@ class ResampleData:
         self.blank_output = datamodels.ImageModel(tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
-        with self.input_models:
-            example_model = self.input_models.borrow(0)
-            self.input_models.shelve(example_model, 0, modify=False)
+        with input_models:
+            example_model = input_models.borrow(0)
+            input_models.shelve(example_model, 0, modify=False)
         self.blank_output.update(example_model)
         self.blank_output.meta.wcs = self.output_wcs
         self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
@@ -284,10 +280,10 @@ class ResampleData:
         for group_id, indices in input_models.group_indices.items():
             output_model = self.blank_output
 
-            copy_asn_info_from_library(self.input_models, output_model)
+            copy_asn_info_from_library(input_models, output_model)
 
-            with self.input_models:
-                example_image = self.input_models.borrow(indices[0])
+            with input_models:
+                example_image = input_models.borrow(indices[0])
 
                 # Determine output file type from input exposure filenames
                 # Use this for defining the output filename
@@ -306,7 +302,7 @@ class ResampleData:
 
                 log.info(f"{len(indices)} exposures to drizzle together")
                 for index in indices:
-                    img = self.input_models.borrow(index)
+                    img = input_models.borrow(index)
                     iscale = self._get_intensity_scale(img)
                     log.debug(f'Using intensity scale iscale={iscale}')
 
@@ -339,7 +335,7 @@ class ResampleData:
                         ymax=ymax
                     )
                     del data
-                    self.input_models.shelve(img, index, modify=False)
+                    input_models.shelve(img, index, modify=False)
 
             if not self.in_memory:
                 # FIXME: Is this needed anymore with ModelLibrary?
@@ -357,7 +353,7 @@ class ResampleData:
 
         return ModelLibrary(output_models)
 
-    def resample_many_to_one(self):
+    def resample_many_to_one(self, input_models):
         """Resample and coadd many inputs to a single output.
 
         Used for stage 3 resampling
@@ -365,21 +361,21 @@ class ResampleData:
         output_model = self.blank_output.copy()
         output_model.meta.filename = self.output_filename
         output_model.meta.resample.weight_type = self.weight_type
-        output_model.meta.resample.pointings = len(self.input_models.group_names)
+        output_model.meta.resample.pointings = len(input_models.group_names)
 
         if self.blendheaders:
             self.blend_output_metadata(output_model)
 
         # copy over asn information
-        copy_asn_info_from_library(self.input_models, output_model)
+        copy_asn_info_from_library(input_models, output_model)
 
         # Initialize the output with the wcs
         driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                         kernel=self.kernel, fillval=self.fillval)
 
         log.info("Resampling science data")
-        with self.input_models:
-            for img in self.input_models:
+        with input_models:
+            for img in input_models:
                 iscale = self._get_intensity_scale(img)
                 log.debug(f'Using intensity scale iscale={iscale}')
                 img.meta.iscale = iscale
@@ -410,7 +406,7 @@ class ResampleData:
                     ymax=ymax
                 )
                 del data, inwht
-                self.input_models.shelve(img, modify=False)
+                input_models.shelve(img, modify=False)
 
         # Resample variance arrays in input_models to output_model
         self.resample_variance_arrays(output_model, input_models)
@@ -426,7 +422,7 @@ class ResampleData:
         all_nan = np.all(np.isnan(var_components), axis=0)
         output_model.err[all_nan] = np.nan
 
-        self.update_exposure_times(output_model)
+        self.update_exposure_times(output_model, input_models)
 
         return ModelLibrary([output_model])
 
@@ -508,7 +504,7 @@ class ResampleData:
                     total_weight_flat_var[mask] += weight[mask]
 
                 del model.meta.iscale
-                self.input_models.shelve(model, i, modify=False)
+                input_models.shelve(model, i, modify=False)
 
         # We now have a sum of the weighted resampled variances.
         # Divide by the total weights, squared, and set in the output model.
