@@ -1,6 +1,15 @@
 1.15.2 (unreleased)
 ===================
 
+align_refs
+----------
+
+- Compute alignment shifts from the first integration of the science exposure only. [#8643]
+ami_average
+-----------
+
+- Fix error in step spec that prevents step creation. [#8677]
+
 assign_wcs
 ----------
 
@@ -274,6 +283,8 @@ general
 - Increase minimum required scipy. [#8441]
 
 - Increase minimum required stdatamodels and stpipe. [#8592]
+
+- build with Numpy 2.0 release candidate to address ABI changes [#8527]
 
 lib
 ---
