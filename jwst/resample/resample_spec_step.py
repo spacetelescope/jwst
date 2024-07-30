@@ -118,7 +118,7 @@ class ResampleSpecStep(ResampleStep):
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
-            drizzled_models = resamp.do_drizzle()
+            drizzled_models = resamp.do_drizzle(container)
 
             for model in drizzled_models:
                 self.update_slit_metadata(model)
@@ -158,7 +158,7 @@ class ResampleSpecStep(ResampleStep):
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
 
-        drizzled_models = resamp.do_drizzle()
+        drizzled_models = resamp.do_drizzle(input_models)
 
         result = drizzled_models[0]
         result.meta.cal_step.resample = "COMPLETE"

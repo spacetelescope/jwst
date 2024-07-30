@@ -95,7 +95,7 @@ class ResampleStep(Step):
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
-        result = resamp.do_drizzle()
+        result = resamp.do_drizzle(input_models)
 
         with result:
             for i, model in enumerate(result):

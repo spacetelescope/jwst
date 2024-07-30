@@ -227,6 +227,10 @@ class Spec3Pipeline(Pipeline):
                 # the _cal files are not saved they will not be updated
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
+                if exptype in IFU_EXPTYPES:
+                    self.outlier_detection.mode = 'ifu'
+                else:
+                    self.outlier_detection.mode = 'spec'
                 result = self.outlier_detection(result)
 
                 # interpolate pixels that have a NaN value or are flagged

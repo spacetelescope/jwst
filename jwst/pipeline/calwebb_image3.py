@@ -57,6 +57,7 @@ class Image3Pipeline(Pipeline):
 
         # Configure settings for saving results files
         self.outlier_detection.suffix = 'crf'
+        self.outlier_detection.mode = 'imaging'
         self.outlier_detection.save_results = self.save_results
 
         self.resample.suffix = 'i2d'
