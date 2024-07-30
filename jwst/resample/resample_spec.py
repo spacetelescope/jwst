@@ -206,7 +206,7 @@ class ResampleSpecData(ResampleData):
         else:
             return self.resample_many_to_one(input_models)
 
-    def resample_many_to_many(self):
+    def resample_many_to_many(self, input_models):
         """Resample many inputs to many outputs where outputs have a common frame.
 
         Coadd only different detectors of the same exposure, i.e. map NRCA5 and
