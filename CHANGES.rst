@@ -7,6 +7,11 @@ associations
 - Added association rules to process exp_type=NIS_EXTCAL through
   spec2, and be able to create the corresponding asn files. [#8661]
 
+align_refs
+----------
+
+- Compute alignment shifts from the first integration of the science exposure only. [#8643]
+
 ami_average
 -----------
 
