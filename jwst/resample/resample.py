@@ -68,7 +68,6 @@ class ResampleData:
                 deleted from memory. Default value is `True` to keep
                 all products in memory.
         """
-        self.input_models = input_models
         self.output_dir = None
         self.output_filename = output
         if output is not None and '.fits' not in str(output):
@@ -124,7 +123,7 @@ class ResampleData:
         else:
             # Define output WCS based on all inputs, including a reference WCS:
             self.output_wcs = resample_utils.make_output_wcs(
-                self.input_models,
+                input_models,
                 ref_wcs=output_wcs,
                 pscale_ratio=self.pscale_ratio,
                 pscale=pscale,
@@ -189,15 +188,15 @@ class ResampleData:
 
         self.output_models = ModelContainer(open_models=False)
 
-    def do_drizzle(self):
+    def do_drizzle(self, input_models):
         """Pick the correct drizzling mode based on self.single
         """
         if self.single:
-            return self.resample_many_to_many()
+            return self.resample_many_to_many(input_models)
         else:
-            return self.resample_many_to_one()
+            return self.resample_many_to_one(input_models)
 
-    def blend_output_metadata(self, output_model):
+    def blend_output_metadata(self, output_model, input_models):
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
         output_file = output_model.meta.filename
@@ -210,7 +209,7 @@ class ResampleData:
         log.info('Blending metadata for {}'.format(output_file))
         blendmeta.blendmodels(
             output_model,
-            inputs=self.input_models,
+            inputs=input_models,
             output=output_file,
             ignore=ignore_list
         )
@@ -266,7 +265,7 @@ class ResampleData:
             iscale = 1.0
         return iscale
 
-    def resample_many_to_many(self):
+    def resample_many_to_many(self, input_models):
         """Resample many inputs to many outputs where outputs have a common frame.
 
         Coadd only different detectors of the same exposure, i.e. map NRCA5 and
@@ -275,7 +274,7 @@ class ResampleData:
 
         Used for outlier detection
         """
-        for exposure in self.input_models.models_grouped:
+        for exposure in input_models.models_grouped:
             output_model = self.blank_output
             # Determine output file type from input exposure filenames
             # Use this for defining the output filename
@@ -344,7 +343,7 @@ class ResampleData:
 
         return self.output_models
 
-    def resample_many_to_one(self):
+    def resample_many_to_one(self, input_models):
         """Resample and coadd many inputs to a single output.
 
         Used for stage 3 resampling
@@ -352,17 +351,17 @@ class ResampleData:
         output_model = self.blank_output.copy()
         output_model.meta.filename = self.output_filename
         output_model.meta.resample.weight_type = self.weight_type
-        output_model.meta.resample.pointings = len(self.input_models.group_names)
+        output_model.meta.resample.pointings = len(input_models.group_names)
 
         if self.blendheaders:
-            self.blend_output_metadata(output_model)
+            self.blend_output_metadata(output_model, input_models)
 
         # Initialize the output with the wcs
         driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                         kernel=self.kernel, fillval=self.fillval)
 
         log.info("Resampling science data")
-        for img in self.input_models:
+        for img in input_models:
             iscale = self._get_intensity_scale(img)
             log.debug(f'Using intensity scale iscale={iscale}')
             img.meta.iscale = iscale
@@ -394,8 +393,8 @@ class ResampleData:
             )
             del data, inwht
 
-        # Resample variance arrays in self.input_models to output_model
-        self.resample_variance_arrays(output_model)
+        # Resample variance arrays in input_models to output_model
+        self.resample_variance_arrays(output_model, input_models)
         var_components = [
             output_model.var_rnoise,
             output_model.var_poisson,
@@ -408,16 +407,16 @@ class ResampleData:
         all_nan = np.all(np.isnan(var_components), axis=0)
         output_model.err[all_nan] = np.nan
 
-        self.update_exposure_times(output_model)
+        self.update_exposure_times(output_model, input_models)
         self.output_models.append(output_model)
 
-        for img in self.input_models:
+        for img in input_models:
             del img.meta.iscale
 
         return self.output_models
 
-    def resample_variance_arrays(self, output_model):
-        """Resample variance arrays from self.input_models to the output_model.
+    def resample_variance_arrays(self, output_model, input_models):
+        """Resample variance arrays from input_models to the output_model.
 
         Variance images from each input model are resampled individually and
         added to a weighted sum. If weight_type is 'ivm', the inverse of the
@@ -433,7 +432,7 @@ class ResampleData:
         total_weight_rn_var = np.zeros_like(output_model.data)
         total_weight_pn_var = np.zeros_like(output_model.data)
         total_weight_flat_var = np.zeros_like(output_model.data)
-        for model in self.input_models:
+        for model in input_models:
             # Do the read noise variance first, so it can be
             # used for weights if needed
             rn_var = self._resample_one_variance_array(
@@ -571,14 +570,14 @@ class ResampleData:
         )
         return resampled_error ** 2
 
-    def update_exposure_times(self, output_model):
+    def update_exposure_times(self, output_model, input_models):
         """Modify exposure time metadata in-place"""
         total_exposure_time = 0.
         exposure_times = {'start': [], 'end': []}
         duration = 0.0
         total_measurement_time = 0.0
         measurement_time_failures = []
-        for exposure in self.input_models.models_grouped:
+        for exposure in input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
             if not resample_utils.check_for_tmeasure(exposure[0]):
                 measurement_time_failures.append(1)

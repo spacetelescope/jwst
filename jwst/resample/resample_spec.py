@@ -61,7 +61,6 @@ class ResampleSpecData(ResampleData):
         kwargs : dict
             Other parameters
         """
-        self.input_models = input_models
         self.output_dir = None
         self.output_filename = output
         if output is not None and '.fits' not in str(output):
@@ -89,9 +88,9 @@ class ResampleSpecData(ResampleData):
         self.asn_id = kwargs.get('asn_id', None)
 
         # Get an average input pixel scale for parameter calculations
-        disp_axis = self.input_models[0].meta.wcsinfo.dispersion_direction
+        disp_axis = input_models[0].meta.wcsinfo.dispersion_direction
         self.input_pixscale0 = compute_spectral_pixel_scale(
-            self.input_models[0].meta.wcs, disp_axis=disp_axis)
+            input_models[0].meta.wcs, disp_axis=disp_axis)
         if np.isnan(self.input_pixscale0):
             log.warning('Input pixel scale could not be determined.')
             if pscale is not None:
@@ -99,7 +98,7 @@ class ResampleSpecData(ResampleData):
                             'without an input pixel scale. Setting pscale=None.')
                 pscale = None
 
-        nominal_area = self.input_models[0].meta.photometry.pixelarea_steradians
+        nominal_area = input_models[0].meta.photometry.pixelarea_steradians
         if nominal_area is None:
             log.warning('Nominal pixel area not set in input data.')
             if pscale is not None:
@@ -160,13 +159,13 @@ class ResampleSpecData(ResampleData):
             # These functions internally use self.pscale_ratio to accommodate
             # user settings.
             # Any other customizations (crpix, crval, rotation) are ignored.
-            if resample_utils.is_sky_like(self.input_models[0].meta.wcs.output_frame):
-                if self.input_models[0].meta.instrument.name != "NIRSPEC":
-                    self.output_wcs = self.build_interpolated_output_wcs()
+            if resample_utils.is_sky_like(input_models[0].meta.wcs.output_frame):
+                if input_models[0].meta.instrument.name != "NIRSPEC":
+                    self.output_wcs = self.build_interpolated_output_wcs(input_models)
                 else:
-                    self.output_wcs = self.build_nirspec_output_wcs()
+                    self.output_wcs = self.build_nirspec_output_wcs(input_models)
             else:
-                self.output_wcs = self.build_nirspec_lamp_output_wcs()
+                self.output_wcs = self.build_nirspec_lamp_output_wcs(input_models)
 
             # Use the nominal output pixel area in sr if available,
             # scaling for user-set pixel_scale ratio if needed.
@@ -196,7 +195,7 @@ class ResampleSpecData(ResampleData):
 
         self.output_models = ModelContainer()
 
-    def build_nirspec_output_wcs(self, refmodel=None):
+    def build_nirspec_output_wcs(self, input_models, refmodel=None):
         """
         Create a spatial/spectral WCS covering the footprint of the input.
 
@@ -221,7 +220,7 @@ class ResampleSpecData(ResampleData):
         ----------
         refmodel : `~jwst.datamodels.JwstDataModel`, optional
             The reference input image from which the fiducial WCS is created.
-            If not specified, the first image in self.input_models. If the
+            If not specified, the first image in input_models. If the
             first model is empty (all-NaN or all-zero), the first non-empty
             model is used.
 
@@ -230,13 +229,13 @@ class ResampleSpecData(ResampleData):
         output_wcs : `~gwcs.WCS`
             A gwcs WCS object defining the output frame WCS.
         """
-        all_wcs = [m.meta.wcs for m in self.input_models if m is not refmodel]
+        all_wcs = [m.meta.wcs for m in input_models if m is not refmodel]
         if refmodel:
             all_wcs.insert(0, refmodel.meta.wcs)
         else:
             # Use the first model with a reasonable amount of good data
             # as the reference model
-            for model in self.input_models:
+            for model in input_models:
                 dq_mask = resample_utils.build_mask(model.dq, self.good_bits)
                 good = np.isfinite(model.data) & (model.data != 0) & dq_mask
                 if np.sum(good) > 100 and refmodel is None:
@@ -245,7 +244,7 @@ class ResampleSpecData(ResampleData):
 
             # If no good data was found, use the first model.
             if refmodel is None:
-                refmodel = self.input_models[0]
+                refmodel = input_models[0]
 
         # Make a copy of the data array for internal manipulation
         refmodel_data = refmodel.data.copy()
@@ -481,7 +480,7 @@ class ResampleSpecData(ResampleData):
 
         return min_tan_all, max_tan_all
 
-    def build_interpolated_output_wcs(self):
+    def build_interpolated_output_wcs(self, input_models):
         """
         Create a spatial/spectral WCS output frame using all the input models.
 
@@ -513,7 +512,7 @@ class ResampleSpecData(ResampleData):
         all_ra_slit = []
         all_dec_slit = []
 
-        for im, model in enumerate(self.input_models):
+        for im, model in enumerate(input_models):
             wcs = model.meta.wcs
             bbox = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bbox)
@@ -625,7 +624,7 @@ class ResampleSpecData(ResampleData):
         # Check if the data is MIRI LRS FIXED Slit. If it is then
         # the wavelength array needs to be flipped so that the resampled
         # dispersion direction matches the dispersion direction on the detector.
-        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+        if input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
             wavelength_array = np.flip(wavelength_array, axis=None)
 
         step = 1
@@ -680,7 +679,7 @@ class ResampleSpecData(ResampleData):
         dec_center_final = (dec_max + dec_min) / 2.0
 
         tan = Pix2Sky_TAN()
-        if len(self.input_models) == 1:  # single model use ra_center_pt to be consistent
+        if len(input_models) == 1:  # single model use ra_center_pt to be consistent
             # with how resample was done before
             ra_center_final = ra_center_pt
             dec_center_final = dec_center_pt
@@ -705,7 +704,7 @@ class ResampleSpecData(ResampleData):
 
         # single model use size of x_tan_array
         # to be consistent with method before
-        if len(self.input_models) == 1:
+        if len(input_models) == 1:
             x_size = len(x_tan_array)
 
         # define the output wcs
@@ -736,7 +735,7 @@ class ResampleSpecData(ResampleData):
 
         return output_wcs
 
-    def build_nirspec_lamp_output_wcs(self):
+    def build_nirspec_lamp_output_wcs(self, input_models):
         """
         Create a spatial/spectral WCS output frame for NIRSpec lamp mode
 
@@ -754,7 +753,7 @@ class ResampleSpecData(ResampleData):
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS.
         """
-        model = self.input_models[0]
+        model = input_models[0]
         wcs = model.meta.wcs
         bbox = wcs.bounding_box
         grid = wcstools.grid_from_bounding_box(bbox)
