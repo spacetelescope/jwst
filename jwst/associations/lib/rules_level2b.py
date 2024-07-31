@@ -793,6 +793,11 @@ class Asn_Lv2WFSSNIS(
                     force_reprocess=ListCategory.NONSCIENCE,
                     only_on_match=True,
                 ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: niswfss_valid_extcal(item) == value,
+                    force_unique=False
+                ),
             ], reduce=Constraint.any),
             DMSAttrConstraint(
                 name='instrument',
@@ -801,11 +806,6 @@ class Asn_Lv2WFSSNIS(
             DMSAttrConstraint(
                 name='pupil',
                 sources=['pupil'],
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: niswfss_valid_extcal(item) == value,
-                force_unique=False
             ),
             Constraint([
                 SimpleConstraint(
