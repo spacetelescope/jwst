@@ -295,6 +295,7 @@ class ResampleData:
                 else:
                     output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
                 input_models.shelve(example_image, indices[0], modify=False)
+                del example_image
 
                 # Initialize the output with the wcs
                 driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,

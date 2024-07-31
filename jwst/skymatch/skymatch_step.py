@@ -18,9 +18,6 @@ from astropy.nddata.bitmask import (
 )
 
 from stdatamodels.jwst.datamodels.dqflags import pixel
-from stdatamodels.jwst.datamodels.util import (
-    open as datamodel_open,
-)
 
 from jwst.datamodels import ModelLibrary
 

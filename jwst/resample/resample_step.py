@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import asdf
 
-from jwst.datamodels import ModelLibrary
+from jwst.datamodels import ModelLibrary, ImageModel
 
 from . import resample
 from ..stpipe import Step
@@ -61,20 +61,25 @@ class ResampleStep(Step):
 
         if isinstance(input, ModelLibrary):
             input_models = input
-        else:
+        elif isinstance(input, (str, dict, list)):
             input_models = ModelLibrary(input, on_disk=not self.in_memory)
+        elif isinstance(input, ImageModel):
+            input_models = ModelLibrary([input], on_disk=not self.in_memory)
+            input_models.asn_pool_name = input.meta.asn.pool_name
+            input_models.asn_table_name = input.meta.asn.table_name
+            output = input.meta.filename
+            self.blendheaders = False
+        else:
+            raise RuntimeError(f"Input {input} is not a 2D image.")
 
         try:
-            output = input_models.meta.asn_table.products[0].name
-        except AttributeError:
+            output = input_models.asn["products"][0]["members"][0]["expname"]
+        except KeyError:
             # coron data goes through this path by the time it gets to
             # resampling.
             # TODO: figure out why and make sure asn_table is carried along
             output = None
-        input_models.asn_pool_name = input.meta.asn.pool_name
-        input_models.asn_table_name = input.meta.asn.table_name
-        output = input.meta.filename
-        self.blendheaders = False
+
 
         # Check that input models are 2D images
         with input_models:
@@ -84,6 +89,7 @@ class ResampleStep(Step):
             if len(data_shape) != 2:
                 # resample can only handle 2D images, not 3D cubes, etc
                 raise RuntimeError(f"Input {example_model} is not a 2D image.")
+            del example_model
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()

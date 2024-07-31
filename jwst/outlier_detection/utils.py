@@ -218,11 +218,7 @@ def flag_crs_in_models_library(
     median_data,
     snr1,
 ):
-    with input_models:
-        for image in input_models:
-            # dq flags will be updated in-place
-            flag_model_crs(image, median_data, snr1)
-            input_models.shelve(image)
+    input_models.map_function(lambda image, index: flag_model_crs(image, median_data, snr1), modify=True)
 
 def flag_crs_in_models_with_resampling(
     input_models,

@@ -1,6 +1,5 @@
 import logging
 import warnings
-import os
 
 import numpy as np
 from astropy import coordinates as coord
@@ -13,20 +12,16 @@ from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
-from gwcs.geometry import SphericalToCartesian
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import compute_scale, wrap_ra
 from jwst.datamodels import ModelContainer
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleData
-from . import gwcs_drizzle
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-_S2C = SphericalToCartesian()
 
 __all__ = ["ResampleSpecData"]
 

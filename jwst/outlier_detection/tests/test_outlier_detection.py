@@ -221,21 +221,17 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     assert len(median_files) == 0
 
     # Save all the data into a separate array before passing into step
-    data_as_cube = []
-    with container:
-        for model in container:
-            data_as_cube.append(model.data)
-            container.shelve(model, modify=False)
+    data_as_cube = container.map_function(lambda model, index: model.data, modify=False)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True, in_memory=False
     )
 
     # Make sure nothing changed in SCI array
-    with result:
-        for i, corrected in enumerate(result):
-            np.testing.assert_allclose(data_as_cube[i], corrected.data)
-            result.shelve(corrected, modify=False)
+    result.map_function(
+        lambda model, index: np.testing.assert_allclose(data_as_cube[index], model.data),
+        modify=False,
+    )
 
     # Verify source is not flagged
     with result:
@@ -285,21 +281,17 @@ def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
     container = ModelLibrary(asn, on_disk=True)
 
     # Save all the data into a separate array before passing into step
-    data_as_cube = []
-    with container:
-        for model in container:
-            data_as_cube.append(model.data)
-            container.shelve(model, modify=False)
+    data_as_cube = container.map_function(lambda model, index: model.data, modify=False)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True, in_memory=False
     )
 
     # Make sure nothing changed in SCI array
-    with result:
-        for i, corrected in enumerate(result):
-            np.testing.assert_allclose(data_as_cube[i], corrected.data)
-            result.shelve(corrected, modify=False)
+    result.map_function(
+        lambda model, index: np.testing.assert_allclose(data_as_cube[index], model.data),
+        modify=False,
+    )
 
     # Verify source is not flagged
     with result:
@@ -376,10 +368,10 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
     result = OutlierDetectionStep.call(container, in_memory=True)
 
     # Make sure nothing changed in SCI array
-    with result:
-        for i, corrected in enumerate(result):
-            np.testing.assert_allclose(data_as_cube[i], corrected.data)
-            result.shelve(corrected, modify=False)
+    result.map_function(
+        lambda model, index: np.testing.assert_allclose(data_as_cube[index], model.data),
+        modify=False,
+    )
 
     # Verify source is not flagged
     with result:

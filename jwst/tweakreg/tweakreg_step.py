@@ -14,7 +14,7 @@ import stcal.tweakreg.tweakreg as twk
 
 from jwst.stpipe import record_step_status
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
-from jwst.datamodels import ModelLibrary, ModelContainer
+from jwst.datamodels import ModelLibrary
 
 # LOCAL
 from ..stpipe import Step
@@ -304,20 +304,15 @@ class TweakRegStep(Step):
                                        save_abs_catalog=self.save_abs_catalog,
                                        abs_catalog_output_dir=self.output_dir,
                                             )
+                del ref_image
 
             except twk.TweakregError as e:
                 self.log.warning(str(e))
-                with images:
-                    for model in images:
-                        record_step_status(model, "tweakreg", success=False)
-                        images.shelve(model)
+                record_step_status(images, "tweakreg", success=False)
                 return images
 
         if local_align_failed and not align_to_abs_refcat: 
-            with images:   
-                for model in images:
-                    record_step_status(model, "tweakreg", success=False)
-                    images.shelve(model)
+            record_step_status(images, "tweakreg", success=False)
             return images
 
         # one final pass through all the models to update them based
@@ -373,7 +368,7 @@ class TweakRegStep(Step):
                                 approximation. Reported error is: \n {e.args[0]}"
                             self.log.warning(msg)
                 images.shelve(image_model)
-            record_step_status(images, "tweakreg", success=True)
+        record_step_status(images, "tweakreg", success=True)
         return images
 
 
