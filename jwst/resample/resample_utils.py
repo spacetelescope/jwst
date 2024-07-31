@@ -76,7 +76,7 @@ def make_output_wcs(input_models, ref_wcs=None,
                 wcslist.append(w)
                 if i == 0:
                     example_model = model
-                input_models.shelve(model, modify=False)
+                input_models.shelve(model)
         naxes = wcslist[0].output_frame.naxes
 
         if naxes != 2:

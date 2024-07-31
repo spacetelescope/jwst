@@ -228,7 +228,7 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
             container.shelve(model, modify=False)
 
     result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True, in_memory=True
+        container, save_results=True, save_intermediate_results=True, in_memory=False
     )
 
     # Make sure nothing changed in SCI array
@@ -281,8 +281,7 @@ def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
                 {'expname': filenames[2], 'exptype': 'science'},
             ]
         },
-    ]
-}
+    ]}
     container = ModelLibrary(asn, on_disk=True)
 
     # Save all the data into a separate array before passing into step

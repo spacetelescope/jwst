@@ -131,8 +131,7 @@ class ResampleData:
                 shape=None if output_shape is None else output_shape[::-1],
                 crpix=crpix,
                 crval=crval
-            )               
-
+            )
             # Estimate output pixel area in Sr. NOTE: in principle we could
             # use the same algorithm as for when output_wcs is provided by the
             # user.
