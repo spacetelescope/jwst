@@ -1149,11 +1149,18 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nis_wfss|nis_extcal',
-            ),
+            Constraint([
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_wfss',
+                ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: niswfss_valid_extcal(item) == value,
+                    force_unique=False
+                ),
+            ], reduce=Constraint.any),
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
@@ -1163,11 +1170,6 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='opt_elem2',
                 sources=['pupil'],
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: niswfss_valid_extcal(item) == value,
-                force_unique=False
             ),
         ])
 

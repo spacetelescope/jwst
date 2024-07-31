@@ -784,7 +784,7 @@ class Asn_Lv2WFSSNIS(
                 DMSAttrConstraint(
                     name='exp_type',
                     sources=['exp_type'],
-                    value='nis_wfss|nis_extcal',
+                    value='nis_wfss',
                 ),
                 DMSAttrConstraint(
                     name='image_exp_type',
