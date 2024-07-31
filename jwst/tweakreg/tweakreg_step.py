@@ -123,6 +123,7 @@ class TweakRegStep(Step):
         
         # stpipe general options
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
+        on_disk = boolean(default=False)  # Preserve memory using temporary files
     """
 
     reference_file_types = []
@@ -130,10 +131,8 @@ class TweakRegStep(Step):
     def process(self, input):
         if isinstance(input, ModelLibrary):
             images = input
-        elif isinstance(input, ModelContainer):
-            images = ModelLibrary(input, on_disk=False)
         else:
-            images = ModelLibrary(input, on_disk=True)
+            images = ModelLibrary(input, on_disk=self.on_disk)
 
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")

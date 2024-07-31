@@ -80,6 +80,9 @@ class OutlierDetectionStep(Step):
         self.log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
+        if mode == "imaging":
+            if not isinstance(input_data, ModelLibrary):
+                input_data = ModelLibrary(input_data, on_disk=not self.in_memory)
         asn_id = self._get_asn_id(input_data)
         self.log.info(f"Outlier Detection asn_id: {asn_id}")
 
@@ -235,7 +238,8 @@ class OutlierDetectionStep(Step):
         return asn_id
     
     def _get_asn_id_library(self, input_models):
-
+        """Get the association ID from a ModelLibrary.
+        Does not open any models, so it should respect on_disk status."""
         asn_id = None
         try:
             asn_id = input_models.asn.table_name

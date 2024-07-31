@@ -61,6 +61,9 @@ class SkyMatchStep(Step):
         lsigma = float(min=0.0, default=4.0) # Lower clipping limit, in sigma
         usigma = float(min=0.0, default=4.0) # Upper clipping limit, in sigma
         binwidth = float(min=0.0, default=0.1) # Bin width for 'mode' and 'midpt' `skystat`, in sigma
+
+        # Memory management:
+        on_disk = boolean(default=False) # Preserve memory using temporary files
     """  # noqa: E501
 
     reference_file_types = []
@@ -74,7 +77,7 @@ class SkyMatchStep(Step):
         if isinstance(input, ModelLibrary):
             library = input
         else:
-            library = ModelLibrary(input)
+            library = ModelLibrary(input, on_disk=self.on_disk)
 
         self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 

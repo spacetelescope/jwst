@@ -32,6 +32,7 @@ class Image3Pipeline(Pipeline):
     class_alias = "calwebb_image3"
 
     spec = """
+    on_disk = boolean(default=False)  # Preserve memory using temporary files
     """
 
     # Define alias to steps
@@ -67,25 +68,26 @@ class Image3Pipeline(Pipeline):
 
         # Only load science members from input ASN;
         # background and target-acq members are not needed.
-        input_models = self._datamodels_open(input_data, asn_exptypes=['science'])
+        if isinstance(input_data, ModelLibrary):
+            input_models = input_data
+        else:
+            input_models = ModelLibrary(input_data, asn_exptypes=['science'], on_disk=self.on_disk)
 
-        if output_file is None and isinstance(input_models, ModelLibrary):
+        if self.output_file is None:
             # If input is an association, set the output to the product name.
             self.output_file = input_models.asn["products"][0]["name"]
 
-        if isinstance(input_models, ModelLibrary):
-            with input_models:
-                model = input_models.borrow(0)
-                is_moving = is_moving_target(model)
-                input_models.shelve(model, 0, modify=False)
-            if is_moving:
-                raise Exception("Broken...")  # FIXME
-                input_models = self.assign_mtwcs(input_models)
-            else:
-                input_models = self.tweakreg(input_models)
+        with input_models:
+            model = input_models.borrow(0)
+            is_moving = is_moving_target(model)
+            input_models.shelve(model, 0, modify=False)
+        if is_moving:
+            input_models = self.assign_mtwcs(input_models)
+        else:
+            input_models = self.tweakreg(input_models)
 
-            input_models = self.skymatch(input_models)
-            input_models = self.outlier_detection(input_models)
+        input_models = self.skymatch(input_models)
+        input_models = self.outlier_detection(input_models)
 
         # elif self.skymatch.skymethod == 'match':
         #     self.log.warning("Turning 'skymatch' step off for a single "

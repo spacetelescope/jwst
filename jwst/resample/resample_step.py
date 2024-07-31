@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import asdf
 
-from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.datamodels import ModelLibrary
 
 from . import resample
 from ..stpipe import Step
@@ -61,25 +61,20 @@ class ResampleStep(Step):
 
         if isinstance(input, ModelLibrary):
             input_models = input
-        elif isinstance(input, (str, dict)):
-            input_models = ModelLibrary(input, on_disk=~self.in_memory)
-        elif isinstance(input, (ModelContainer, list)):
-            input_models = ModelLibrary(input, on_disk=False) #cannot instantiate on disk for data already in memory
-
-        if isinstance(input, ModelLibrary):
-            try:
-                output = input_models.meta.asn_table.products[0].name
-            except AttributeError:
-                # coron data goes through this path by the time it gets to
-                # resampling.
-                # TODO: figure out why and make sure asn_table is carried along
-                output = None
         else:
-            input_models = ModelLibrary([input], on_disk=False) #single model will not benefit from on_disk
-            input_models.asn_pool_name = input.meta.asn.pool_name
-            input_models.asn_table_name = input.meta.asn.table_name
-            output = input.meta.filename
-            self.blendheaders = False
+            input_models = ModelLibrary(input, on_disk=not self.in_memory)
+
+        try:
+            output = input_models.meta.asn_table.products[0].name
+        except AttributeError:
+            # coron data goes through this path by the time it gets to
+            # resampling.
+            # TODO: figure out why and make sure asn_table is carried along
+            output = None
+        input_models.asn_pool_name = input.meta.asn.pool_name
+        input_models.asn_table_name = input.meta.asn.table_name
+        output = input.meta.filename
+        self.blendheaders = False
 
         # Check that input models are 2D images
         with input_models:
@@ -98,7 +93,7 @@ class ResampleStep(Step):
         result = resamp.do_drizzle(input_models)
 
         with result:
-            for i, model in enumerate(result):
+            for model in result:
                 model.meta.cal_step.resample = 'COMPLETE'
                 self.update_fits_wcs(model)
                 util.update_s_region_imaging(model)
@@ -112,7 +107,7 @@ class ResampleStep(Step):
                 else:
                     model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
                 model.meta.resample.pixfrac = kwargs['pixfrac']
-                result.shelve(model, 0)
+                result.shelve(model)
 
             if len(result) == 1:
                 model = result.borrow(0)
