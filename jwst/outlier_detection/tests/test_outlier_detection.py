@@ -8,7 +8,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.utils import flag_resampled_model_crs
+from jwst.outlier_detection.utils import flag_resampled_model_crs, create_median_library
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
@@ -252,9 +252,9 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     assert len(median_files) != 0
 
 
-def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
-    """Test whole step with an outlier including saving intermediate and results files"""
-
+@pytest.fixture
+def three_sci_as_asn(we_three_sci, tmp_cwd):
+    """Create an association with the 3 science images"""
     for model in we_three_sci:
         model.save(model.meta.filename)
     filenames = [model.meta.filename for model in we_three_sci]
@@ -278,7 +278,12 @@ def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
             ]
         },
     ]}
-    container = ModelLibrary(asn, on_disk=True)
+    return asn
+
+
+def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
+    """Test whole step with an outlier including saving intermediate and results files"""
+    container = ModelLibrary(three_sci_as_asn, on_disk=True)
 
     # Save all the data into a separate array before passing into step
     data_as_cube = container.map_function(lambda model, index: model.data, modify=False)
@@ -455,3 +460,15 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
 
     # Verify CR is flagged
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
+
+
+def test_create_median_library(three_sci_as_asn, tmp_cwd):
+    """Test creation of median library"""
+    lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
+    lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
+
+    median_on_disk = create_median_library(lib_on_disk, 0.7)
+    median_in_memory = create_median_library(lib_in_memory, 0.7)
+
+    # Make sure the median library is the same for on-disk and in-memory
+    assert np.allclose(median_on_disk, median_in_memory)

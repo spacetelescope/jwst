@@ -25,10 +25,10 @@ __all__ = [
 
 
 # Modules that are not part of stdatamodels
-_jwst_modules = ["container", "source_container"]
+_jwst_modules = ["container", "source_container", "library"]
 
 # Models that are not part of stdatamodels
-_jwst_models = ["ModelContainer", "SourceModelContainer"]
+_jwst_models = ["ModelContainer", "SourceModelContainer", "ModelLibrary"]
 
 # Deprecated modules in stdatamodels
 _deprecated_modules = ['schema']
