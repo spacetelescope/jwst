@@ -47,21 +47,24 @@ def make_rate(input_model, return_cube=False):
         The rate or rateints model.
     """
     # Call the ramp fit step on a copy of the input
-    # Note: the copy is currently needed because ramp fit
-    # closes the input model when it's done, and we need
-    # it to stay open.
+    # Use software default values for parameters
+
     log.info("Creating draft rate file for scene masking")
     step = RampFitStep()
     with LoggingContext(step.log, level=logging.WARNING):
-        # Use software default values for parameters
+        # Note: the copy is currently needed because ramp fit
+        # closes the input model when it's done, and we need
+        # it to stay open.
         rate, rateints = step.run(input_model.copy())
 
     if return_cube:
         output_model = rateints
         rate.close()
+        del rate
     else:
         output_model = rate
         rateints.close()
+        del rateints
 
     return output_model
 
@@ -930,10 +933,8 @@ def do_correction(input_model, fit_method,
             if cleaned_image is None:
                 log.error(f'Cleaning failed for integration {i + 1}, group {j + 1}')
 
-                # re-copy input to make sure any partial changes are thrown away
-                output_model.close()
-                del output_model
-                output_model = input_model.copy()
+                # Restore input data to make sure any partial changes are thrown away
+                output_model.data = input_model.data.copy()
                 return output_model, None, None, None, status
             else:
                 # Restore the background level
