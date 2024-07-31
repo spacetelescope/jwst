@@ -1,6 +1,7 @@
 #
 #  Module for the lastframe correction for MIRI science data sets
 #
+import gc
 import numpy as np
 import logging
 
@@ -10,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model):
+def do_correction(output):
     """
     Short Summary
     -------------
@@ -19,7 +20,7 @@ def do_correction(input_model):
 
     Parameters
     ----------
-    input_model: data model object
+    output: data model object
         science data to be corrected
 
     Returns
@@ -30,10 +31,7 @@ def do_correction(input_model):
     """
 
     # Save some data params for easy use later
-    sci_ngroups = input_model.data.shape[1]
-
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
+    sci_ngroups = output.data.shape[1]
 
     # Update the step status, and if ngroups > 2, set all of the GROUPDQ in
     # the final group to 'DO_NOT_USE'
@@ -47,4 +45,5 @@ def do_correction(input_model):
         log.warning("Step will be skipped")
         output.meta.cal_step.lastframe = 'SKIPPED'
 
+    gc.collect()
     return output

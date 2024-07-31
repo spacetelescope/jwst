@@ -3,7 +3,9 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from .jump import run_detect_jumps
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 import time
+import gc
 
 __all__ = ["JumpStep"]
 
@@ -55,87 +57,92 @@ class JumpStep(Step):
 
     class_alias = 'jump'
 
-    def process(self, input):
+    def process(self, input_model):
 
-        with datamodels.RampModel(input) as input_model:
-            tstart = time.time()
-            # Check for an input model with NGROUPS<=2
-            ngroups = input_model.data.shape[1]
-            if ngroups <= 2:
-                self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
-                self.log.warning('Jump step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.jump = 'SKIPPED'
-                return result
+        # Open the input data model
+        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
 
-            # Retrieve the parameter values
-            rej_thresh = self.rejection_threshold
-            three_grp_rej_thresh = self.three_group_rejection_threshold
-            four_grp_rej_thresh = self.four_group_rejection_threshold
-            max_cores = self.maximum_cores
-            max_jump_to_flag_neighbors = self.max_jump_to_flag_neighbors
-            min_jump_to_flag_neighbors = self.min_jump_to_flag_neighbors
-            flag_4_neighbors = self.flag_4_neighbors
-            after_jump_flag_dn1 = self.after_jump_flag_dn1
-            after_jump_flag_time1 = self.after_jump_flag_time1
-            after_jump_flag_dn2 = self.after_jump_flag_dn2
-            after_jump_flag_time2 = self.after_jump_flag_time2
-            min_sat_area = self.min_sat_area
-            min_jump_area = self.min_jump_area
-            expand_factor = self.expand_factor
-            use_ellipses = self.use_ellipses
-            sat_required_snowball = self.sat_required_snowball
-            expand_large_events = self.expand_large_events
-            self.log.info('CR rejection threshold = %g sigma', rej_thresh)
-            if self.maximum_cores != 'none':
-                self.log.info('Maximum cores to use = %s', max_cores)
+        result, input_model = copy_datamodel(input_model, self.parent)
 
-            # Get the gain and readnoise reference files
-            gain_filename = self.get_reference_file(input_model, 'gain')
-            self.log.info('Using GAIN reference file: %s', gain_filename)
+        tstart = time.time()
+        # Check for an input model with NGROUPS<=2
+        ngroups = result.data.shape[1]
+        if ngroups <= 2:
+            self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
+            self.log.warning('Jump step will be skipped')
+            result.meta.cal_step.jump = 'SKIPPED'
+            gc.collect()
+            return result
 
-            gain_model = datamodels.GainModel(gain_filename)
+        # Retrieve the parameter values
+        rej_thresh = self.rejection_threshold
+        three_grp_rej_thresh = self.three_group_rejection_threshold
+        four_grp_rej_thresh = self.four_group_rejection_threshold
+        max_cores = self.maximum_cores
+        max_jump_to_flag_neighbors = self.max_jump_to_flag_neighbors
+        min_jump_to_flag_neighbors = self.min_jump_to_flag_neighbors
+        flag_4_neighbors = self.flag_4_neighbors
+        after_jump_flag_dn1 = self.after_jump_flag_dn1
+        after_jump_flag_time1 = self.after_jump_flag_time1
+        after_jump_flag_dn2 = self.after_jump_flag_dn2
+        after_jump_flag_time2 = self.after_jump_flag_time2
+        min_sat_area = self.min_sat_area
+        min_jump_area = self.min_jump_area
+        expand_factor = self.expand_factor
+        use_ellipses = self.use_ellipses
+        sat_required_snowball = self.sat_required_snowball
+        expand_large_events = self.expand_large_events
+        self.log.info('CR rejection threshold = %g sigma', rej_thresh)
+        if self.maximum_cores != 'none':
+            self.log.info('Maximum cores to use = %s', max_cores)
 
-            readnoise_filename = self.get_reference_file(input_model,
-                                                         'readnoise')
-            self.log.info('Using READNOISE reference file: %s',
-                          readnoise_filename)
-            readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
-            # Call the jump detection routine
-            result = run_detect_jumps(input_model, gain_model, readnoise_model,
-                                      rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
-                                      max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
-                                      flag_4_neighbors,
-                                      after_jump_flag_dn1,
-                                      after_jump_flag_time1,
-                                      after_jump_flag_dn2,
-                                      after_jump_flag_time2,
-                                      min_sat_area=min_sat_area, min_jump_area=min_jump_area,
-                                      expand_factor=expand_factor, use_ellipses=use_ellipses,
-                                      min_sat_radius_extend=self.min_sat_radius_extend,
-                                      sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand * 2,
-                                      expand_large_events=expand_large_events, find_showers=self.find_showers,
-                                      edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
-                                      extend_min_area=self.extend_min_area,
-                                      extend_inner_radius=self.extend_inner_radius,
-                                      extend_outer_radius=self.extend_outer_radius,
-                                      extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
-                                      time_masked_after_shower=self.time_masked_after_shower,
-                                      min_diffs_single_pass=self.min_diffs_single_pass,
-                                      max_extended_radius=self.max_extended_radius * 2,
-                                      minimum_groups=self.minimum_groups,
-                                      minimum_sigclip_groups=self.minimum_sigclip_groups,
-                                      only_use_ints=self.only_use_ints,
-                                      mask_snowball_persist_next_int=self.mask_snowball_core_next_int,
-                                      snowball_time_masked_next_int=self.snowball_time_masked_next_int
-                                      )
+        # Get the gain and readnoise reference files
+        gain_filename = self.get_reference_file(result, 'gain')
+        self.log.info('Using GAIN reference file: %s', gain_filename)
+
+        gain_model = datamodels.GainModel(gain_filename)
+
+        readnoise_filename = self.get_reference_file(result,
+                                                     'readnoise')
+        self.log.info('Using READNOISE reference file: %s',
+                      readnoise_filename)
+        readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
+        # Call the jump detection routine
+        result = run_detect_jumps(result, gain_model, readnoise_model,
+                                  rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
+                                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
+                                  flag_4_neighbors,
+                                  after_jump_flag_dn1,
+                                  after_jump_flag_time1,
+                                  after_jump_flag_dn2,
+                                  after_jump_flag_time2,
+                                  min_sat_area=min_sat_area, min_jump_area=min_jump_area,
+                                  expand_factor=expand_factor, use_ellipses=use_ellipses,
+                                  min_sat_radius_extend=self.min_sat_radius_extend,
+                                  sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand * 2,
+                                  expand_large_events=expand_large_events, find_showers=self.find_showers,
+                                  edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
+                                  extend_min_area=self.extend_min_area,
+                                  extend_inner_radius=self.extend_inner_radius,
+                                  extend_outer_radius=self.extend_outer_radius,
+                                  extend_ellipse_expand_ratio=self.extend_ellipse_expand_ratio,
+                                  time_masked_after_shower=self.time_masked_after_shower,
+                                  min_diffs_single_pass=self.min_diffs_single_pass,
+                                  max_extended_radius=self.max_extended_radius * 2,
+                                  minimum_groups=self.minimum_groups,
+                                  minimum_sigclip_groups=self.minimum_sigclip_groups,
+                                  only_use_ints=self.only_use_ints,
+                                  mask_snowball_persist_next_int=self.mask_snowball_core_next_int,
+                                  snowball_time_masked_next_int=self.snowball_time_masked_next_int
+                                  )
 
 
-            gain_model.close()
-            readnoise_model.close()
-            tstop = time.time()
-            self.log.info('The execution time in seconds: %f', tstop - tstart)
+        del gain_model
+        del readnoise_model
+        tstop = time.time()
+        self.log.info('The execution time in seconds: %f', tstop - tstart)
 
         result.meta.cal_step.jump = 'COMPLETE'
 
+        gc.collect()
         return result

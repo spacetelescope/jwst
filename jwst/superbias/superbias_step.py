@@ -1,7 +1,9 @@
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import bias_sub
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 __all__ = ["SuperBiasStep"]
 
@@ -15,37 +17,38 @@ class SuperBiasStep(Step):
     class_alias = "superbias"
 
     spec = """
-
     """
 
     reference_file_types = ['superbias']
 
-    def process(self, input):
+    def process(self, input_model):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        input_model = use_datamodel(input_model)
 
-            # Get the name of the superbias reference file to use
-            self.bias_name = self.get_reference_file(input_model, 'superbias')
-            self.log.info('Using SUPERBIAS reference file %s', self.bias_name)
+        result, input_model = copy_datamodel(input_model, self.parent)
 
-            # Check for a valid reference file
-            if self.bias_name == 'N/A':
-                self.log.warning('No SUPERBIAS reference file found')
-                self.log.warning('Superbias step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.superbias = 'SKIPPED'
-                return result
+        # Get the name of the superbias reference file to use
+        self.bias_name = self.get_reference_file(result, 'superbias')
+        self.log.info('Using SUPERBIAS reference file %s', self.bias_name)
 
-            # Open the superbias ref file data model
-            bias_model = datamodels.SuperBiasModel(self.bias_name)
+        # Check for a valid reference file
+        if self.bias_name == 'N/A':
+            self.log.warning('No SUPERBIAS reference file found')
+            self.log.warning('Superbias step will be skipped')
+            result.meta.cal_step.superbias = 'SKIPPED'
+            return result
 
-            # Do the bias subtraction
-            result = bias_sub.do_correction(input_model, bias_model)
+        # Open the superbias ref file data model
+        bias_model = datamodels.SuperBiasModel(self.bias_name)
 
-            # Close the superbias reference file model and
-            # set the step status to complete
-            bias_model.close()
-            result.meta.cal_step.superbias = 'COMPLETE'
+        # Do the bias subtraction
+        result = bias_sub.do_correction(result, bias_model)
 
+        # Close the superbias reference file model and
+        # set the step status to complete
+        del bias_model
+        result.meta.cal_step.superbias = 'COMPLETE'
+
+        gc.collect()
         return result

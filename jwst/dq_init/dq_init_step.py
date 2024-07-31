@@ -1,8 +1,10 @@
 #! /usr/bin/env python
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import dq_initialization
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 
 __all__ = ["DQInitStep"]
@@ -21,6 +23,8 @@ class DQInitStep(Step):
 
     class_alias = "dq_init"
 
+    spec = """
+    """
     reference_file_types = ['mask']
 
     def process(self, input):
@@ -39,8 +43,7 @@ class DQInitStep(Step):
 
         # Try to open the input as a regular RampModel
         try:
-            input_model = datamodels.RampModel(input)
-
+            input_model = use_datamodel(input, model_class=datamodels.RampModel)
             # Check to see if it's Guider raw data
             if input_model.meta.exposure.type in dq_initialization.guider_list:
                 # Reopen as a GuiderRawModel
@@ -60,15 +63,17 @@ class DQInitStep(Step):
             self.log.error("Can't open input")
             raise
 
+        result, input_model = copy_datamodel(input_model, self.parent)
+        del input
+
         # Retrieve the mask reference file name
-        self.mask_filename = self.get_reference_file(input_model, 'mask')
+        self.mask_filename = self.get_reference_file(result, 'mask')
         self.log.info('Using MASK reference file %s', self.mask_filename)
 
         # Check for a valid reference file
         if self.mask_filename == 'N/A':
             self.log.warning('No MASK reference file found')
             self.log.warning('DQ initialization step will be skipped')
-            result = input_model.copy()
             result.meta.cal_step.dq_init = 'SKIPPED'
             return result
 
@@ -76,10 +81,10 @@ class DQInitStep(Step):
         mask_model = datamodels.MaskModel(self.mask_filename)
 
         # Apply the step
-        result = dq_initialization.correct_model(input_model, mask_model)
+        result = dq_initialization.correct_model(result, mask_model)
 
         # Close the data models for the input and ref file
-        input_model.close()
-        mask_model.close()
+        del mask_model
+        gc.collect()
 
         return result

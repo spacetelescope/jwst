@@ -1,3 +1,4 @@
+import gc
 import logging
 
 import numpy as np
@@ -10,13 +11,13 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default=4,
+def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_default=4,
                   pad=8, preserve_refpix=False):
     """Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
     ----------
-    input_model: ramp model
+    output_model: ramp model
         The input science data model.
 
     irs2_model: IRS2 model
@@ -76,9 +77,9 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
 
     # Copy in SCI and PIXELDQ arrays for now; that's all we need. The rest
     # of the input model will be copied to output at the end of the step.
-    data = input_model.data.copy()
-    pixeldq = input_model.pixeldq.copy()
-    input_model.meta.cal_step.refpix = 'not specified yet'
+    data = output_model.data.copy()
+    pixeldq = output_model.pixeldq.copy()
+    output_model.meta.cal_step.refpix = 'not specified yet'
 
     # Load the reference file data.
     # The reference file data are complex, but they're stored as float, with
@@ -90,8 +91,8 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
     if nrows != expected_nrows:
         log.error("Number of rows in reference file = {},"
                   " but it should be {}.".format(nrows, expected_nrows))
-        input_model.meta.cal_step.refpix = 'SKIPPED'
-        return input_model
+        output_model.meta.cal_step.refpix = 'SKIPPED'
+        return output_model
     alpha = np.ones((4, nrows // 2), dtype=np.complex64)
     beta = np.zeros((4, nrows // 2), dtype=np.complex64)
 
@@ -105,20 +106,20 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
     beta[2, :] = float_to_complex(irs2_model.irs2_table.field("beta_2"))
     beta[3, :] = float_to_complex(irs2_model.irs2_table.field("beta_3"))
 
-    scipix_n = input_model.meta.exposure.nrs_normal
+    scipix_n = output_model.meta.exposure.nrs_normal
     if scipix_n is None:
         log.warning("Keyword NRS_NORM not found; using default value %d" %
                     scipix_n_default)
         scipix_n = scipix_n_default
 
-    refpix_r = input_model.meta.exposure.nrs_reference
+    refpix_r = output_model.meta.exposure.nrs_reference
     if refpix_r is None:
         log.warning("Keyword NRS_REF not found; using default value %d" %
                     refpix_r_default)
         refpix_r = refpix_r_default
 
     # Convert from sky (DMS) orientation to detector orientation.
-    detector = input_model.meta.instrument.detector
+    detector = output_model.meta.instrument.detector
     if detector == "NRS1":
         data = np.swapaxes(data, 2, 3)
         pixeldq = np.swapaxes(pixeldq, 0, 1)
@@ -176,7 +177,6 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
             data[integ, :, :, :] = data0
 
     # Convert corrected data back to sky orientation
-    output_model = input_model.copy()
     if not preserve_refpix:
         temp_data = data[:, :, :, nx - ny:]
     else:
@@ -192,6 +192,7 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
     if not preserve_refpix:
         strip_ref_pixels(output_model, irs2_mask)
 
+    gc.collect()
     return output_model
 
 

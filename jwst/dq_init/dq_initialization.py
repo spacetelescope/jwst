@@ -1,4 +1,5 @@
 import logging
+import gc
 
 import numpy as np
 
@@ -38,12 +39,12 @@ def correct_model(input_model, mask_model):
     return output_model
 
 
-def do_dqinit(input_model, mask_model):
+def do_dqinit(output_model, mask_model):
     """Perform the dq_init step on a JWST datamodel
 
     Parameters
     ----------
-    input_model : input JWST datamodel
+    output_model : input JWST datamodel
         The jwst datamodel to be corrected
 
     mask_model : mask datamodel
@@ -56,10 +57,7 @@ def do_dqinit(input_model, mask_model):
     """
 
     # Inflate empty DQ array, if necessary
-    check_dimensions(input_model)
-
-    # Create output model as copy of input
-    output_model = input_model.copy()
+    check_dimensions(output_model)
 
     # Extract subarray from reference data, if necessary
     if reffile_utils.ref_matches_sci(output_model, mask_model):
@@ -72,11 +70,11 @@ def do_dqinit(input_model, mask_model):
         mask_sub_model.close()
 
     # Set model-specific data quality in output
-    if input_model.meta.exposure.type in guider_list:
-        dq = np.bitwise_or(input_model.dq, mask_array)
+    if output_model.meta.exposure.type in guider_list:
+        dq = np.bitwise_or(output_model.dq, mask_array)
         output_model.dq = dq
     else:
-        dq = np.bitwise_or(input_model.pixeldq, mask_array)
+        dq = np.bitwise_or(output_model.pixeldq, mask_array)
         output_model.pixeldq = dq
         # Additionally, propagate mask DO_NOT_USE flags to groupdq to
         # ensure no ramps are fit to bad pixels.
@@ -84,6 +82,7 @@ def do_dqinit(input_model, mask_model):
 
     output_model.meta.cal_step.dq_init = 'COMPLETE'
 
+    gc.collect()
     return output_model
 
 

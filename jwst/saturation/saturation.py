@@ -1,6 +1,7 @@
 
 #  Module for 2d saturation
 #
+import gc
 import logging
 import numpy as np
 from scipy.ndimage import binary_dilation
@@ -22,7 +23,7 @@ NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
 
-def flag_saturation(input_model, ref_model, n_pix_grow_sat):
+def flag_saturation(output_model, ref_model, n_pix_grow_sat):
     """
     Short Summary
     -------------
@@ -30,7 +31,7 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
     ref_model : `~jwst.datamodels.SaturationModel`
@@ -48,22 +49,19 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         the GROUPDQ array
     """
 
-    data = input_model.data
-
-    # Create the output model as a copy of the input
-    output_model = input_model.copy()
     gdq = output_model.groupdq
     pdq = output_model.pixeldq
+    data = output_model.data
 
-    zframe = input_model.zeroframe if input_model.meta.exposure.zero_frame else None
+    zframe = output_model.zeroframe if output_model.meta.exposure.zero_frame else None
 
     # Extract subarray from saturation reference file, if necessary
-    if reffile_utils.ref_matches_sci(input_model, ref_model):
+    if reffile_utils.ref_matches_sci(output_model, ref_model):
         sat_thresh = ref_model.data
         sat_dq = ref_model.dq
     else:
         log.info('Extracting reference file subarray to match science data')
-        ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
+        ref_sub_model = reffile_utils.get_subarray_model(output_model, ref_model)
         sat_thresh = ref_sub_model.data.copy()
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
@@ -81,6 +79,7 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
     if zframe is not None:
         output_model.zeroframe = zframe
 
+    gc.collect()
     return output_model
 
 
@@ -113,27 +112,28 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
         the GROUPDQ array
     """
 
-    data = input_model.data
+    # Create the output model as a copy of the input
+    output_model = input_model.copy()
+    input_model.close()
+    groupdq = output_model.groupdq
+
+    data = output_model.data
     nints = data.shape[0]
     ngroups = data.shape[1]
-    detector = input_model.meta.instrument.detector
-    nframes = input_model.meta.exposure.nframes
+    detector = output_model.meta.instrument.detector
+    nframes = output_model.meta.exposure.nframes
     read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
 
     # create a mask of the appropriate size
-    irs2_mask = x_irs2.make_mask(input_model)
-
-    # Create the output model as a copy of the input
-    output_model = input_model.copy()
-    groupdq = output_model.groupdq
+    irs2_mask = x_irs2.make_mask(output_model)
 
     # Extract subarray from saturation reference file, if necessary
-    if reffile_utils.ref_matches_sci(input_model, ref_model):
+    if reffile_utils.ref_matches_sci(output_model, ref_model):
         sat_thresh = ref_model.data
         sat_dq = ref_model.dq
     else:
         log.info('Extracting reference file subarray to match science data')
-        ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
+        ref_sub_model = reffile_utils.get_subarray_model(output_model, ref_model)
         sat_thresh = ref_sub_model.data.copy()
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
@@ -151,7 +151,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     flagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
     flaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
 
-    if input_model.meta.exposure.zero_frame:
+    if output_model.meta.exposure.zero_frame:
         zflagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
         zflaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
 
@@ -208,8 +208,8 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
         # Process ZEROFRAME.  Instead of setting a ZEROFRAME DQ array, data
         # in the ZEROFRAME that is flagged will be set to 0.
-        if input_model.meta.exposure.zero_frame:
-            zplane = input_model.zeroframe[ints, :, :]
+        if output_model.meta.exposure.zero_frame:
+            zplane = output_model.zeroframe[ints, :, :]
             zdq = np.zeros(groupdq.shape[-2:], dtype=groupdq.dtype)
             ztemp = x_irs2.from_irs2(zplane, irs2_mask, detector)
 

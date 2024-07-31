@@ -1,8 +1,10 @@
 #! /usr/bin/env python
+import gc
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import persistence
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 __all__ = ["PersistenceStep"]
 
@@ -19,24 +21,27 @@ class PersistenceStep(Step):
         flag_pers_cutoff = float(default=40.) # Pixels with persistence correction >= this value in DN will be flagged in the DQ
         save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
+        modify_input = boolean(default=False)
     """
 
     reference_file_types = ["trapdensity", "trappars", "persat"]
 
-    def process(self, input):
+    def process(self, input_model):
 
         if self.input_trapsfilled is not None:
             if (self.input_trapsfilled == "None" or
                     len(self.input_trapsfilled) == 0):
                 self.input_trapsfilled = None
 
-        output_obj = datamodels.RampModel(input).copy()
+        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
 
-        self.trap_density_filename = self.get_reference_file(output_obj,
+        result, input_model = copy_datamodel(input_model, self.parent)
+
+        self.trap_density_filename = self.get_reference_file(result,
                                                              "trapdensity")
-        self.trappars_filename = self.get_reference_file(output_obj,
+        self.trappars_filename = self.get_reference_file(result,
                                                          "trappars")
-        self.persat_filename = self.get_reference_file(output_obj, "persat")
+        self.persat_filename = self.get_reference_file(result, "persat")
 
         # Is any reference file missing?
         missing = False
@@ -58,8 +63,8 @@ class PersistenceStep(Step):
                 for name in missing_reftypes:
                     msg += (" " + name)
             self.log.warning("%s", msg)
-            output_obj.meta.cal_step.persistence = "SKIPPED"
-            return output_obj
+            result.meta.cal_step.persistence = "SKIPPED"
+            return result
 
         if self.input_trapsfilled is None:
             traps_filled_model = None
@@ -71,16 +76,16 @@ class PersistenceStep(Step):
         trappars_model = datamodels.TrapParsModel(self.trappars_filename)
         persat_model = datamodels.PersistenceSatModel(self.persat_filename)
 
-        pers_a = persistence.DataSet(output_obj, traps_filled_model,
+        pers_a = persistence.DataSet(result, traps_filled_model,
                                      self.flag_pers_cutoff,
                                      self.save_persistence,
                                      trap_density_model, trappars_model,
                                      persat_model)
-        (output_obj, traps_filled, output_pers, skipped) = pers_a.do_all()
+        (result, traps_filled, output_pers, skipped) = pers_a.do_all()
         if skipped:
-            output_obj.meta.cal_step.persistence = 'SKIPPED'
+            result.meta.cal_step.persistence = 'SKIPPED'
         else:
-            output_obj.meta.cal_step.persistence = 'COMPLETE'
+            result.meta.cal_step.persistence = 'COMPLETE'
 
         if traps_filled_model is not None:      # input traps_filled
             traps_filled_model.close()
@@ -96,8 +101,9 @@ class PersistenceStep(Step):
             output_pers.close()
 
         # Close reference files.
-        trap_density_model.close()
-        trappars_model.close()
-        persat_model.close()
+        del trap_density_model
+        del trappars_model
+        del persat_model
 
-        return output_obj
+        gc.collect()
+        return result
