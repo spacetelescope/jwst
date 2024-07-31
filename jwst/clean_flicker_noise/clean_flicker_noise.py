@@ -71,16 +71,25 @@ def make_rate(input_model, return_cube=False):
 
 def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=False):
     """
-    Post-process the input rate model, as needed
+    Post-process the input rate model, as needed.
 
     Parameters
     ----------
     input_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
         Input rate model.
 
+    assign_wcs : bool, optional
+        If set and the input does not already have a WCS assigned,
+        the assign_wcs step will be called on the rate model
+
     msaflagopen : bool, optional
-        If set, the msaflagopen step will be additionally be called
-        on the rate model before returning.
+        If set, the msaflagopen step will be called on the rate model.
+        If a WCS is not already present, assign_wcs will be called first.
+
+    flat_dq : bool, optional
+        If set, the flat_field step will be run on the input model. DQ
+        flags are retrieved from the output and added to the input
+        model's DQ array. The rate data is not modified.
 
     Returns
     -------
@@ -90,7 +99,7 @@ def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=
     output_model = input_model
 
     # If needed, assign a WCS
-    if assign_wcs:
+    if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, 'wcs'):
         log.info("Assigning a WCS for scene masking")
         step = AssignWcsStep()
         with LoggingContext(step.log, level=logging.WARNING):
@@ -112,6 +121,8 @@ def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=
 
         # Copy out the flat DQ plane, leave the data as is
         output_model.dq |= flat_corrected_model.dq
+        flat_corrected_model.close()
+        del flat_corrected_model
 
     return output_model
 
@@ -753,7 +764,7 @@ def do_correction(input_model, fit_method,
         assign_wcs = exp_type.startswith('NRS')
         flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
         flat_dq = (exp_type in ['MIR_IMAGE'])
-        if mask_science_regions and not hasattr(image_model.meta, 'wcs'):
+        if mask_science_regions:
             image_model = post_process_rate(
                 image_model, assign_wcs=assign_wcs,
                 msaflagopen=flag_open, flat_dq=flat_dq)
