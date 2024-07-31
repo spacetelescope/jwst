@@ -19,10 +19,9 @@ image.
 ``--pixel_scale_ratio`` (float, default=1.0)
     Ratio of input to output spatial pixel scale.
 
-    For spectral data, values greater than 1 indicate that the input
-    pixels have a larger spatial scale, so more output pixels will
-    sample the same input pixel.  For example, a value of 2.0
-    means the output image would have 2 pixels sampling each input
+    Values greater than 1 indicate that the input pixels have a larger spatial
+    scale, so more output pixels will sample the same input pixel.  For example,
+    a value of 2.0 means the output image would have 2 pixels sampling each input
     spatial pixel. If the input data has units of flux density (MJy/pixel),
     the output flux per pixel will be half the input flux per pixel.
     If the input data has units of surface brightness (MJy/sr), the output
@@ -42,9 +41,9 @@ image.
     Absolute pixel scale in ``arcsec``. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
 
-    For spectral data, if the input data has units of flux density
-    (MJy/pixel), the output flux per pixel will be scaled by the ratio
-    of the selected output pixel scale to an average input pixel scale.
+    If the input data has units of flux density (MJy/pixel), the output flux per
+    pixel will be scaled by the ratio of the selected output pixel scale to an average
+    input pixel scale.
     If the input data has units of surface brightness (MJy/sr),
     the output flux per pixel is not scaled.
 
@@ -58,7 +57,7 @@ image.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
-    second (as opposite to the ``numpy.ndarray`` convention - ``ny`` first and
+    second (opposite to the ``numpy.ndarray`` convention - ``ny`` first and
     ``nx`` second). This value will be assigned to
     ``pixel_shape`` and ``array_shape`` properties of the returned
     WCS object. When supplied from command line, it should be a comma-separated
@@ -69,7 +68,7 @@ image.
         ``output_wcs`` does not have ``bounding_box`` property set.
 
 ``--output_wcs`` (str, default='')
-    File name of a ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
+    File name of an ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
     under the root of the file. The output image size is determined from the
     bounding box of the WCS (if any). Argument ``output_shape`` overrides
     computed image size and it is required when output WCS does not have

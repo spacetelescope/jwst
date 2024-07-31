@@ -48,7 +48,7 @@ image.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
-    second (as opposite to the ``numpy.ndarray`` convention - ``ny`` first and
+    second (opposite to the ``numpy.ndarray`` convention - ``ny`` first and
     ``nx`` second). This value will be assigned to
     ``pixel_shape`` and ``array_shape`` properties of the returned
     WCS object. When supplied from command line, it should be a comma-separated
@@ -59,7 +59,7 @@ image.
         ``output_wcs`` does not have ``bounding_box`` property set.
 
 ``--output_wcs`` (str, default='')
-    File name of a ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
+    File name of an ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
     under the root of the file. The output image size is determined from the
     bounding box of the WCS (if any). Argument ``output_shape`` overrides
     computed image size and it is required when output WCS does not have
