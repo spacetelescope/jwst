@@ -365,7 +365,7 @@ class ResampleData:
         output_model.meta.resample.pointings = len(input_models.group_names)
 
         if self.blendheaders:
-            self.blend_output_metadata(output_model)
+            self.blend_output_metadata(output_model, input_models)
 
         # copy over asn information
         copy_asn_info_from_library(input_models, output_model)
