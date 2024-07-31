@@ -86,7 +86,8 @@ models to the custom catalog file name, the ``tweakreg_step`` also supports two
 other ways of supplying custom source catalogs to the step:
 
 1. Adding ``tweakreg_catalog`` attribute to the ``members`` of the input ASN
-   table - see `~jwst.datamodels.ModelContainer` for more details.
+   table - see `~jwst.datamodels.ModelLibrary` for more details.
+   # FIXME: does this still work as described?
    Catalog file names are relative to ASN file path.
 
 2. Providing a simple two-column text file, specified via step's parameter
@@ -165,17 +166,21 @@ telescope pointing will be identical in all these images and it is assumed
 that the relative positions of (e.g., NIRCam) detectors do not change.
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
-`~jwst.datamodels.ModelContainer`. This grouping is performed automatically
+`~jwst.datamodels.ModelLibrary`. This grouping is performed automatically
 in the ``tweakreg`` step using the
-`~jwst.datamodels.ModelContainer.models_grouped` property, which assigns
+`~jwst.datamodels.ModelLibrary.models_grouped` property, which assigns
 a group ID to each input image model in ``meta.group_id``.
+## FIXME: The ModelLibrary does not have a models_grouped property.
+## However, the models_grouped property of ModelContainer is currently not
+## accessed by tweakreg on master, either. Is this comment outdated,
+## misleading, or incorrect, or am I misunderstanding something?
 
 However, when detector calibrations are not accurate, alignment of groups
 of images may fail (or result in poor alignment). In this case, it may be
 desirable to align each image independently. This can be achieved either by
 setting the ``image_model.meta.group_id`` attribute to a unique string or integer
 value for each image, or by adding the ``group_id`` attribute to the ``members`` of the input ASN
-table - see `~jwst.datamodels.ModelContainer` for more details.
+table - see `~jwst.datamodels.ModelLibrary` for more details.
 
 .. note::
     Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
@@ -427,6 +432,14 @@ in the ``assign_wcs`` step.
   ``sip_inv_degree`` is set to an explicit value. (Default=0.01)
 
 * ``sip_npoints``: Number of points for the SIP fit. (Default=12).
+
+**stpipe general options:**
+
+* ``output_use_model``: A boolean indicating whether to use `DataModel.meta.filename`
+  when saving the results. (Default=True)
+
+* ``on_disk``: A boolean indicating whether to keep models in temporary files on disk
+  while not in use to save memory. (Default=False)
 
 Further Documentation
 ---------------------
