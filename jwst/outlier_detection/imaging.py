@@ -116,12 +116,6 @@ def detect_outliers(
 
         save_median(median_model, make_output_path, asn_id)
         del median_model
-    else:
-        # since we're not saving intermediate results if the drizzled models
-        # were written to disk, remove them
-        if not in_memory:
-            for fn in drizzled_models._models:
-                remove_file(fn)
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image

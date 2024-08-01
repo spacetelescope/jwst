@@ -11,9 +11,23 @@ __all__ = ["ModelLibrary"]
 
 
 class ModelLibrary(AbstractModelLibrary):
+    """
+    FIXME: Add docstring here, including like-for-like replacements for 
+    ModelContainer association attribute accessors.
+
+    ModelContainer: ind = container.ind_asn_type("science")
+    ModelLibrary: ind = library.ind_asn_type("science")
+    """
     @property
     def crds_observatory(self):
         return "jwst"
+    
+    @property
+    def exptypes(self):
+        return [member["exptype"] for member in self._members]
+    
+    def ind_asn_type(self, exptype):
+        return [i for i, member in enumerate(self._members) if member["exptype"] == exptype]
 
     def _model_to_filename(self, model):
         model_filename = model.meta.filename

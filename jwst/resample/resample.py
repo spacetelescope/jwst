@@ -339,7 +339,6 @@ class ResampleData:
                     input_models.shelve(img, index, modify=False)
 
             if not self.in_memory:
-                # FIXME: Is this needed anymore with ModelLibrary?
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
                 if self.output_dir is not None:
@@ -352,7 +351,13 @@ class ResampleData:
             output_model.data *= 0.
             output_model.wht *= 0.
 
-        return ModelLibrary(output_models)
+        if not self.in_memory:
+            # FIXME: here rebuild ModelLibrary as an association from the output files
+            # and return that.
+            # this yields memory savings if there are multiple groups
+            # for now, just pass
+            pass
+        return ModelLibrary(output_models, on_disk=False)
 
     def resample_many_to_one(self, input_models):
         """Resample and coadd many inputs to a single output.
@@ -365,7 +370,16 @@ class ResampleData:
         output_model.meta.resample.pointings = len(input_models.group_names)
 
         if self.blendheaders:
-            self.blend_output_metadata(output_model, input_models)
+            # FIXME: right now this needs a list of input models, all in memory
+            # but it needs to conform with ModelLibrary only loading one into memory at once
+            # for now, just load the models as a list
+            input_list = []
+            with input_models:
+                for i, model in enumerate(input_models):
+                    input_list.append(model)
+                    input_models.shelve(model, i, modify=False)
+            self.blend_output_metadata(output_model, input_list)
+            del input_list
 
         # copy over asn information
         copy_asn_info_from_library(input_models, output_model)

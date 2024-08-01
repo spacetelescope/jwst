@@ -3,9 +3,10 @@ Submodule for performing outlier detection on spectra.
 """
 import copy
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary, SourceModelContainer
 from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec, resample_utils
@@ -69,7 +70,19 @@ def detect_outliers(
             asn_id=asn_id,
         )
         median_wcs = resamp.output_wcs
-        drizzled_models = resamp.do_drizzle(input_models)
+
+        # convert to library for resample, then back to container,
+        # for compatibility with image3 pipeline which uses
+        # ModelLibrary for memory savings
+        library = ModelLibrary(input_models, on_disk=False)
+        library = resamp.do_drizzle(library)
+        drizzled_models = ModelContainer()
+        with library:
+            for i, model in enumerate(library):
+                drizzled_models.append(model.copy())
+                library.shelve(model, modify=False)
+        del library
+
         if save_intermediate_results:
             for model in drizzled_models:
                 model.meta.filename = make_output_path(
