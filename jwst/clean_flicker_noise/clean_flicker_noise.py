@@ -80,7 +80,7 @@ def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=
 
     assign_wcs : bool, optional
         If set and the input does not already have a WCS assigned,
-        the assign_wcs step will be called on the rate model
+        the assign_wcs step will be called on the rate model.
 
     msaflagopen : bool, optional
         If set, the msaflagopen step will be called on the rate model.
@@ -140,7 +140,8 @@ def mask_ifu_slices(input_model, mask):
         Science data model
 
     mask : array-like of bool
-        2D input mask that will be updated
+        2D input mask that will be updated. True indicates background
+        pixels to be used. IFU slice regions will be set to False.
 
     Returns
     -------
@@ -194,10 +195,11 @@ def mask_slits(input_model, mask):
     Parameters
     ----------
     input_model : `~jwst.datamodel.JwstDataModel`
-        Science data model
+        Science data model.
 
     mask : array-like of bool
-        2D input mask that will be updated
+        2D input mask that will be updated. True indicates background
+        pixels to be used. Slit regions will be set to False.
 
     Returns
     -------
@@ -246,19 +248,56 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
 
     Parameters
     ----------
-    image
-    mask
-    sigma_lower
-    sigma_upper
-    fit_histogram
-    lower_half_only
-    verbose
+    image : array-like of float
+        2D image containing signal and background values.
+
+    mask : array-like of bool
+        2D input mask to be updated. True indicates background
+        pixels to be used. Regions containing signal or outliers
+        will be set to False.
+
+    sigma_lower : float, optional
+        The number of standard deviations to use as the lower bound
+        for the clipping limit. Values below this limit are marked
+        False in the mask.
+
+    sigma_upper : float, optional
+        The number of standard deviations to use as the upper bound
+        for the clipping limit. Values above this limit are marked
+        False in the mask.
+
+    fit_histogram :  bool, optional
+        If set, the center value and standard deviation used with
+        `sigma_lower` and `sigma_upper` for clipping outliers is derived
+        from a Gaussian fit to a histogram of values. Otherwise, the
+        center and standard deviation are derived from a simple iterative
+        sigma clipping.
+
+    lower_half_only : bool, optional
+        If set, the data used to compute the center and standard deviation
+        for clipping is the lower half of the distribution only. Values
+        below the median are mirrored around the median value to simulate
+        a symmetric distribution.  This is intended to account for
+        asymmetrical value distributions, with long tails in the upper
+        half of the distribution, due to diffuse emission, for example.
+
+    verbose : bool, optional
+        If set, DEBUG level messages are issued with details on the
+        computed statistics.
     """
     # Sigma limit for basic stats
     sigma_limit = 3.0
 
+    # Check mask for any valid data before proceeding
+    if not np.any(mask):
+        return
+
     # Initial iterative sigma clip
-    mean, median, sigma = sigma_clipped_stats(image, mask=~mask, sigma=sigma_limit)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action="ignore", category=AstropyUserWarning)
+        mean, median, sigma = sigma_clipped_stats(
+            image, mask=~mask, sigma=sigma_limit)
     if fit_histogram:
         center = mean
     else:
@@ -276,7 +315,11 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
              (center - image[lower_half_idx]))) + center
 
         # Redo stats on lower half of distribution
-        mean, median, sigma = sigma_clipped_stats(data_for_stats, sigma=sigma_limit)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                action="ignore", category=AstropyUserWarning)
+            mean, median, sigma = sigma_clipped_stats(
+                data_for_stats, sigma=sigma_limit)
         if fit_histogram:
             center = mean
         else:
@@ -290,31 +333,40 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
 
     # Refine sigma and center from a fit to a histogram, if desired
     if fit_histogram:
-        hist, edges = np.histogram(data_for_stats, bins=2000,
-                                   range=(center - 4. * sigma, center + 4. * sigma))
-        values = (edges[1:] + edges[0:-1]) / 2.
-        ind = np.argmax(hist)
-        mode_estimate = values[ind]
-
-        # Fit a Gaussian profile to the histogram
-        def gaussian(x, g_amp, g_mean, g_sigma):
-            return g_amp * np.exp(-0.5 * ((x - g_mean) / g_sigma) ** 2)
-
-        param_start = (hist[ind], mode_estimate, sigma)
-        bounds = [(0, values[0], 0),
-                  (np.inf, values[-1], values[-1] - values[0])]
         try:
-            param_opt, _ = curve_fit(gaussian, values, hist, p0=param_start,
-                                     bounds=bounds)
-        except RuntimeError:
-            log.error('Gaussian fit failed; using clip center and sigma.')
-            param_opt = None
+            hist, edges = np.histogram(
+                data_for_stats, bins=2000,
+                range=(center - 4. * sigma, center + 4. * sigma))
+        except ValueError:
+            log.error('Histogram failed; using clip center and sigma.')
+            hist, edges, param_opt = None, None, None
+
+        if hist is not None:
+            values = (edges[1:] + edges[0:-1]) / 2.
+            ind = np.argmax(hist)
+            mode_estimate = values[ind]
+
+            # Fit a Gaussian profile to the histogram
+            def gaussian(x, g_amp, g_mean, g_sigma):
+                return g_amp * np.exp(-0.5 * ((x - g_mean) / g_sigma) ** 2)
+
+            param_start = (hist[ind], mode_estimate, sigma)
+            bounds = [(0, values[0], 0),
+                      (np.inf, values[-1], values[-1] - values[0])]
+            try:
+                param_opt, _ = curve_fit(gaussian, values, hist, p0=param_start,
+                                         bounds=bounds)
+            except RuntimeError:
+                log.error('Gaussian fit failed; using clip center and sigma.')
+                param_opt = None
+
+            if verbose:
+                log.debug('From histogram:')
+                log.debug(f'    mode estimate: {mode_estimate:.5g}')
+                log.debug(f'    range of values in histogram: '
+                          f'{values[0]:.5g} to {values[-1]:.5g}')
 
         if verbose:
-            log.debug('From histogram:')
-            log.debug(f'    mode estimate: {mode_estimate:.5g}')
-            log.debug(f'    range of values in histogram: '
-                      f'{values[0]:.5g} to {values[-1]:.5g}')
             log.debug('Gaussian fit results:')
         if param_opt is None:
             if verbose:
@@ -351,11 +403,18 @@ def create_mask(input_model, mask_science_regions=False,
     Parameters
     ----------
     input_model : `~jwst.datamodel.JwstDataModel`
-        Science data model, containing rate data.
+        Science data model, containing rate data with all necessary
+        pre-processing already performed.
 
     mask_science_regions : bool, optional
-        Mask slit/slice regions defined in WCS. Implemented
-        only for NIRSpec science modes.
+        For NIRSpec, mask regions of the image defined by WCS bounding
+        boxes for slits/slices, as well as any regions known to be
+        affected by failed-open MSA shutters. This requires the
+        `assign_wcs` and `msaflagopen` steps to have been run on the
+        input_model.
+        For MIRI imaging, mask regions of the detector not used for science.
+        This requires that NON_SCIENCE flags are set in the DQ array
+        for the input_model.
 
     n_sigma : float, optional
         Sigma threshold for masking outliers.
@@ -413,8 +472,12 @@ def create_mask(input_model, mask_science_regions=False,
         elif exptype == 'nrs_msaspec':
             # check for any slits defined in the fixed slit quadrant:
             # if there is nothing there of interest, mask the whole FS region
-            slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
-            is_fs = [s.quadrant == 5 for s in slit2msa.slits]
+            try:
+                slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+                is_fs = [s.quadrant == 5 for s in slit2msa.slits]
+            except (AttributeError, ValueError, TypeError):
+                log.warning('Slit to MSA transform not found.')
+                is_fs = [False]
             if not any(is_fs):
                 log.info("Masking the fixed slit region for MOS data.")
                 mask[..., NRS_FS_REGION[0]:NRS_FS_REGION[1], :] = False

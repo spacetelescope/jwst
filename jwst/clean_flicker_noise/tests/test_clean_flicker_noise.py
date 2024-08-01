@@ -58,6 +58,16 @@ def make_small_rateints_model(shape):
     return ratemodel
 
 
+def make_nirspec_ifu_model(shape):
+    hdul = create_nirspec_ifu_file(grating='PRISM', filter='CLEAR',
+                                   gwa_xtil=0.35986012, gwa_ytil=0.13448857,
+                                   gwa_tilt=37.1)
+    hdul['SCI'].data = np.ones(shape, dtype=float)
+    rate_model = datamodels.IFUImageModel(hdul)
+    hdul.close()
+    return rate_model
+
+
 @pytest.fixture
 def log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
@@ -66,6 +76,15 @@ def log_watcher(monkeypatch):
     for level in ['debug', 'info', 'warning', 'error']:
         monkeypatch.setattr(logger, level, watcher)
     return watcher
+
+
+class MockUpdate:
+    def __init__(self):
+        self.seen = False
+
+    def __call__(self, input_model, mask):
+        self.seen = True
+        return mask
 
 
 def test_make_rate(log_watcher):
@@ -126,16 +145,127 @@ def test_postprocess_rate_miri(log_watcher):
 @pytest.mark.slow
 def test_mask_ifu_slices():
     shape = (2048, 2048)
-    hdul = create_nirspec_ifu_file(grating='PRISM', filter='CLEAR',
-                                   gwa_xtil=0.35986012, gwa_ytil=0.13448857,
-                                   gwa_tilt=37.1)
-    hdul['SCI'].data = np.ones(shape, dtype=float)
-    rate_model = datamodels.IFUImageModel(hdul)
-    hdul.close()
+    rate_model = make_nirspec_ifu_model(shape)
 
     rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
     mask = np.full_like(rate_model.data, True)
 
     # Mark IFU science regions as False: about 10% of the array
     cfn.mask_ifu_slices(rate_model, mask)
-    assert np.sum(mask) < 0.9 * mask.size
+    assert 0 < np.sum(mask) < 0.9 * mask.size
+
+
+def test_mask_slits():
+    rate_model = make_nirspec_mos_model()
+    rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
+
+    # Mark MOS slits as False: about 1% of the array for
+    # the sample data
+    mask = np.full_like(rate_model.data, True)
+    cfn.mask_slits(rate_model, mask)
+    assert 0 < np.sum(mask) < 0.99 * mask.size
+
+
+@pytest.mark.parametrize('fit_histogram', [True, False])
+@pytest.mark.parametrize('lower_half_only', [True, False])
+def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
+    """Integrity checks for clipping a simple data array."""
+    # Make an array with normal noise
+    shape = (100, 100)
+    rng = np.random.default_rng(seed=123)
+    image = rng.normal(0, 0.01, size=shape)
+    mask = np.full(shape, True)
+
+    # Add a strong high outlier, strong low outlier
+    image[0, 0] += 1
+    image[1, 1] += -1
+
+    # Center found is close to zero, printed when verbose=True
+    log_watcher.message = "center: 0.000"
+    cfn.clip_to_background(
+        image, mask, fit_histogram=fit_histogram,
+        lower_half_only=lower_half_only, verbose=True)
+    log_watcher.assert_seen()
+
+    # All outliers clipped with defaults, as well as a small
+    # percent of the remaining data
+    assert not mask[0, 0]
+    assert not mask[1, 1]
+    assert 0.9998 > (np.sum(mask) / mask.size) > 0.95
+
+    # Upper outlier stays with large sigma_upper
+    mask = np.full(shape, True)
+    cfn.clip_to_background(
+        image, mask, fit_histogram=fit_histogram,
+        lower_half_only=lower_half_only, sigma_upper=1000)
+    assert mask[0, 0]
+    assert not mask[1, 1]
+    assert 0.9999 > (np.sum(mask) / mask.size) > 0.95
+
+    # Lower outlier stays with large sigma_lower
+    mask = np.full(shape, True)
+    cfn.clip_to_background(
+        image, mask, fit_histogram=fit_histogram,
+        lower_half_only=lower_half_only, sigma_lower=1000)
+    assert not mask[0, 0]
+    assert mask[1, 1]
+    assert 0.9999 > (np.sum(mask) / mask.size) > 0.95
+
+
+def test_clip_to_background_fit_fails(log_watcher):
+    shape = (10, 10)
+
+    # histogram failure: all data NaN
+    log_watcher.message = "Histogram failed"
+    image = np.full(shape, np.nan)
+    mask = np.full(shape, True)
+    with pytest.warns(RuntimeWarning):
+        cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
+    assert np.all(mask)
+    log_watcher.assert_seen()
+
+    # if mask is all False, warning is avoided, mask is unchanged
+    mask[:] = False
+    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
+    assert not np.all(mask)
+
+    # fit failure: data is not normal
+    log_watcher.message = "Gaussian fit failed"
+    image = np.full(shape, 0.0)
+    mask = np.full(shape, True)
+    image[5:, 5:] = 0.1
+    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
+    assert np.all(mask)
+    log_watcher.assert_seen()
+
+
+@pytest.mark.parametrize('exptype', ['msaspec', 'ifu'])
+def test_create_mask_nirspec(monkeypatch, exptype):
+    # monkeypatch local functions for speed
+    mock = MockUpdate()
+    if exptype == 'msaspec':
+        # NIRSpec MOS data
+        monkeypatch.setattr(cfn, 'mask_slits', mock)
+        rate_model = make_nirspec_mos_model()
+    else:
+        # NIRSpec IFU data
+        monkeypatch.setattr(cfn, 'mask_ifu_slices', mock)
+        rate_model = make_nirspec_ifu_model((2048, 2038))
+
+    rate_model.data[:] = 1.0
+    mask = cfn.create_mask(rate_model)
+    assert mask.shape == rate_model.data.shape
+
+    # Nothing to mask in uniform data
+    assert np.all(mask)
+
+    # Slit function not called if mask_science_regions not set
+    assert not mock.seen
+
+    # Fixed slit region not blocked
+    assert np.any(mask[cfn.NRS_FS_REGION[0]:cfn.NRS_FS_REGION[1]])
+
+    # Call again but block science regions
+    mask = cfn.create_mask(rate_model, mask_science_regions=True)
+    assert mock.seen
+    assert not np.any(mask[cfn.NRS_FS_REGION[0]:cfn.NRS_FS_REGION[1]])
