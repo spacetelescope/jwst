@@ -595,7 +595,7 @@ class DataSet():
         -------
         """
         # Handle WFSS data separately from regular imaging
-        if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS':
+        if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype in ['NRC_WFSS', 'NIS_EXTCAL']:
             # Loop over the WFSS slits, applying the correct photom ref data
             for slit in self.input.slits:
                 log.info('Working on slit %s' % slit.name)

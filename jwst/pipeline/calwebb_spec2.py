@@ -40,7 +40,7 @@ __all__ = ['Spec2Pipeline']
 # Classify various exposure types.
 NRS_SLIT_TYPES = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
                   'NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
-WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+WFSS_TYPES = ["NIS_WFSS", "NIS_EXTCAL", "NRC_GRISM", "NRC_WFSS"]
 GRISM_TYPES = ['NRC_TSGRISM'] + WFSS_TYPES
 
 

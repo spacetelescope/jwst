@@ -385,7 +385,7 @@ def wfss(input_model, reference_files):
         raise TypeError('The input data model must be an ImageModel.')
 
     # make sure this is a grism image
-    grism_exp = ["NIS_WFSS", "NIS_EXTCAL", ]
+    grism_exp = ["NIS_WFSS", "NIS_EXTCAL"]
     if input_model.meta.exposure.type not in grism_exp:
         raise ValueError('The input exposure is not NIRISS grism')
 

@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
-WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
+WFSS_EXPTYPES = ['NIS_WFSS', 'NIS_EXTCAL', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 # These values are used to indicate whether the input extract1d reference file

@@ -13,7 +13,7 @@ from . import coron, ifu, imaging, tso, spec
 # Categorize all supported modes
 IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
 SLIT_SPEC_MODES = ['NRC_WFSS', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
-                   'NRS_MSASPEC', 'NIS_WFSS']
+                   'NRS_MSASPEC', 'NIS_WFSS', 'NIS_EXTCAL']
 TSO_SPEC_MODES = ['NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM',
                   'NRS_BRIGHTOBJ']
 IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']

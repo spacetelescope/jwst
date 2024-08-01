@@ -32,7 +32,7 @@ __all__ = ['Spec3Pipeline']
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
 IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
-SLITLESS_TYPES = ['NIS_SOSS', 'NIS_WFSS', 'NRC_WFSS']
+SLITLESS_TYPES = ['NIS_SOSS', 'NIS_WFSS', 'NIS_EXTCAL', 'NRC_WFSS']
 
 
 class Spec3Pipeline(Pipeline):

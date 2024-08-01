@@ -123,7 +123,7 @@ class AssignWcsStep(Step):
             try:
                 # A bounding_box is needed for the imaging WCS
                 bbox = wcs_bbox_from_shape(result.data.shape)
-                if result_exptype == 'nis_wfss':
+                if result_exptype == ['nis_wfss', 'nis_extcal']:
                     imaging_func = niriss_imaging
                 else:
                     imaging_func = nircam_imaging
