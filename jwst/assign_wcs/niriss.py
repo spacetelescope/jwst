@@ -485,6 +485,7 @@ def wfss(input_model, reference_files):
 
 exp_type2transform = {'nis_image': imaging,
                       'nis_wfss': wfss,
+                      'nis_extcal': wfss,
                       'nis_soss': niriss_soss,
                       'nis_ami': imaging,
                       'nis_tacq': imaging,
