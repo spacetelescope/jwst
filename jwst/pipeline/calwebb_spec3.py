@@ -5,7 +5,7 @@ import os.path as op
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import SourceModelContainer
+from jwst.datamodels import SourceModelContainer, ModelLibrary
 from jwst.stpipe import query_step_status
 
 from ..associations.lib.rules_level3_base import format_product
@@ -140,7 +140,17 @@ class Spec3Pipeline(Pipeline):
 
         if is_moving_target(input_models[0]):
             self.log.info("Assigning WCS to a Moving Target exposure.")
-            input_models = self.assign_mtwcs(input_models)
+
+            # for compatibility with calwebb_image3, need to convert to ModelLibrary then back here
+            # keep asn metadata from input container - only metadata of individual models is modified
+            # by the assign_mtwcs step
+            library = ModelLibrary(input_models, on_disk=False)
+            library = self.assign_mtwcs(input_models)
+            with library:
+                for i, model in enumerate(library):
+                    input_models[i] = model.copy()
+                    library.shelve(model, modify=False)
+            del library
 
         # If background data are present, call the master background step
         if members_by_type['background']:
