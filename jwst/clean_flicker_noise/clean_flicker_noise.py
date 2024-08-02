@@ -309,7 +309,7 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
 
     # If desired, use only the lower half of the data distribution
     if lower_half_only:
-        lower_half_idx = mask & (image < center)
+        lower_half_idx = mask & (image <= center)
         data_for_stats = np.concatenate(
             ((image[lower_half_idx] - center),
              (center - image[lower_half_idx]))) + center

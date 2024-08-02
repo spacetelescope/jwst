@@ -355,3 +355,46 @@ def test_create_mask_from_rateints():
     assert not mask[1, 1]
     assert not mask[2, 2]
     assert np.sum(mask) == mask.size - 3
+
+
+def test_background_level(log_watcher):
+    shape = (100, 100)
+    image = np.full(shape, 1.0)
+    mask = np.full(shape, True)
+
+    # add an outlier to be clipped
+    image[50, 50] = 1000
+
+    # no background
+    background = cfn.background_level(image, mask, background_method=None)
+    assert background == 0.0
+
+    # median method
+    background = cfn.background_level(image, mask, background_method='median')
+    assert background == 1.0
+
+    # model method
+    background = cfn.background_level(
+        image, mask, background_method='model', background_box_size=(10, 10))
+    assert background.shape == shape
+    assert np.all(background == 1.0)
+
+    # model method with mismatched box size:
+    # warns, but completes successfully
+    log_watcher.message = "does not divide evenly"
+    background = cfn.background_level(
+        image, mask, background_method='model', background_box_size=None)
+    assert background.shape == shape
+    assert np.all(background == 1.0)
+    log_watcher.assert_seen()
+
+    # make image mostly bad, one good region
+    image[:] = np.nan
+    image[20:25, 20:25] = 1.0
+
+    # background fit fails: falls back on median
+    log_watcher.message = "Background fit failed, using median"
+    background = cfn.background_level(
+        image, mask, background_method='model', background_box_size=(10, 10))
+    assert background == 1.0
+    log_watcher.assert_seen()
