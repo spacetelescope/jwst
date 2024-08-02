@@ -59,3 +59,6 @@ class LogWatcher:
 
     def assert_seen(self):
         assert self.seen, f"{self.message} not in logs"
+
+        # reset flag after check
+        self.seen = False
