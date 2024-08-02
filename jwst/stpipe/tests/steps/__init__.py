@@ -194,7 +194,7 @@ class StepWithModel(Step):
     """
 
     def process(self, *args):
-        model = self.open_model(args[0])
+        model = self._datamodels_open(self.make_input_path(args[0]))
         model = ImageModel(model)
         return model
 
