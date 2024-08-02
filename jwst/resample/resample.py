@@ -467,6 +467,7 @@ class ResampleData:
         weighted_pn_var = np.full_like(output_model.data, np.nan)
         weighted_flat_var = np.full_like(output_model.data, np.nan)
         total_weight_rn_var = np.zeros_like(output_model.data)
+        total_weight_pn_var = np.zeros_like(output_model.data)
         total_weight_flat_var = np.zeros_like(output_model.data)
         with input_models:
             for i, model in enumerate(input_models):
@@ -503,24 +504,7 @@ class ResampleData:
                     )
                     total_weight_rn_var[mask] += weight[mask]
 
-                input_models.shelve(model, i, modify=False)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
-            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
-
-            output_variance = (weighted_rn_var
-                               / total_weight_rn_var / total_weight_rn_var)
-            setattr(output_model, "var_rnoise", output_variance)
-            del weighted_rn_var, total_weight_rn_var, output_variance
-
-        # Poisson variance
-        total_weight_pn_var = np.zeros_like(output_model.data)
-        weighted_pn_var = np.full_like(output_model.data, np.nan)
-        with input_models:
-            for i, model in enumerate(input_models):
-
-                # updating only valid new values
+                # Now do poisson and flat variance, updating only valid new values
                 # (zero is a valid value; negative, inf, or NaN are not)
                 pn_var = self._resample_one_variance_array(
                     "var_poisson", model, output_model)
@@ -533,21 +517,6 @@ class ResampleData:
                     )
                     total_weight_pn_var[mask] += weight[mask]
 
-                input_models.shelve(model, i, modify=False)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
-            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
-
-            output_variance = (weighted_pn_var
-                               / total_weight_pn_var / total_weight_pn_var)
-            setattr(output_model, "var_poisson", output_variance)
-            del weighted_pn_var, total_weight_pn_var, output_variance
-
-        # Flat field variance
-        with input_models:
-            for i, model in enumerate(input_models):
-
                 flat_var = self._resample_one_variance_array(
                     "var_flat", model, output_model)
                 if flat_var is not None:
@@ -558,21 +527,32 @@ class ResampleData:
                         axis=0
                     )
                     total_weight_flat_var[mask] += weight[mask]
-
+                
                 del model.meta.iscale
+                del weight
                 input_models.shelve(model, i)
 
-        # We now have a sum of the weighted resampled variances.
-        # Divide by the total weights, squared, and set in the output model.
-        # Zero weight and missing values are NaN in the output.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
-            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
+            # We now have a sum of the weighted resampled variances.
+            # Divide by the total weights, squared, and set in the output model.
+            # Zero weight and missing values are NaN in the output.
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+                warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
 
-            output_variance = (weighted_flat_var
-                               / total_weight_flat_var / total_weight_flat_var)
-            setattr(output_model, "var_flat", output_variance)
-            del weighted_flat_var, total_weight_flat_var, output_variance
+                output_variance = (weighted_rn_var
+                                / total_weight_rn_var / total_weight_rn_var)
+                setattr(output_model, "var_rnoise", output_variance)
+
+                output_variance = (weighted_pn_var
+                                / total_weight_pn_var / total_weight_pn_var)
+                setattr(output_model, "var_poisson", output_variance)
+
+                output_variance = (weighted_flat_var
+                                / total_weight_flat_var / total_weight_flat_var)
+                setattr(output_model, "var_flat", output_variance)
+
+            del weighted_rn_var, weighted_pn_var, weighted_flat_var
+            del total_weight_rn_var, total_weight_pn_var, total_weight_flat_var
 
 
     def _resample_one_variance_array(self, name, input_model, output_model):
