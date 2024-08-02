@@ -43,9 +43,17 @@ class LogWatcher:
     """
     The pytest caplog fixture only works for the root
     logger. We use all sorts of loggers which can lead
-    to random test failures with caplog. This class
-    can be monkeypatched onto a logger method to
-    check for a specific message.
+    to random test failures with caplog.
+
+    This class can be monkeypatched onto a logger method to
+    check for a specific message. When the logger method is
+    called, a `seen` attribute is set in the watcher,
+    if the calling message matches the expected value.
+
+    The `seen` flag can be checked via `assert_seen`. When
+    called, this function will reset the `seen` attribute
+    to False. This allows the same watcher to be reused for
+    multiple function calls.
     """
     def __init__(self, message):
         self.seen = False
@@ -58,6 +66,10 @@ class LogWatcher:
             self.seen = True
 
     def assert_seen(self):
+        """Check if message has been seen.
+
+        After calling, the `seen` attribute is reset to False.
+        """
         assert self.seen, f"{self.message} not in logs"
 
         # reset flag after check
