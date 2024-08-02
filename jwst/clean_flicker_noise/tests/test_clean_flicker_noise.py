@@ -32,9 +32,10 @@ def add_metadata(model, shape):
     model.meta.exposure.nframes = 1
     model.meta.exposure.groupgap = 0
     model.meta.exposure.readpatt = 'FASTR1'
+    model.meta.subarray.slowaxis = 2
 
 
-def make_small_ramp_model(shape):
+def make_small_ramp_model(shape=(3, 5, 10, 10)):
     rampmodel = datamodels.RampModel(shape)
     add_metadata(rampmodel, shape)
 
@@ -45,21 +46,21 @@ def make_small_ramp_model(shape):
     return rampmodel
 
 
-def make_small_rate_model(shape):
+def make_small_rate_model(shape=(3, 5, 10, 10)):
     ratemodel = datamodels.ImageModel(shape[2:])
     add_metadata(ratemodel, shape)
     ratemodel.data[:] = 1.0
     return ratemodel
 
 
-def make_small_rateints_model(shape):
+def make_small_rateints_model(shape=(3, 5, 10, 10)):
     ratemodel = datamodels.CubeModel((shape[0], shape[2], shape[3]))
     add_metadata(ratemodel, shape)
     ratemodel.data[:] = 1.0
     return ratemodel
 
 
-def make_nirspec_ifu_model(shape):
+def make_nirspec_ifu_model(shape=(2048, 2048)):
     hdul = create_nirspec_ifu_file(grating='PRISM', filter='CLEAR',
                                    gwa_xtil=0.35986012, gwa_ytil=0.13448857,
                                    gwa_tilt=37.1)
@@ -81,7 +82,19 @@ def make_nirspec_fs_model():
     hdul['SCI'].data = np.ones((2048, 2048), dtype=float)
     rate_model = datamodels.ImageModel(hdul)
     hdul.close()
+
+    # add the slow axis
+    rate_model.meta.subarray.slowaxis = 1
     return rate_model
+
+
+class MockUpdate:
+    def __init__(self):
+        self.seen = False
+
+    def __call__(self, input_model, mask):
+        self.seen = True
+        return mask
 
 
 @pytest.fixture
@@ -93,15 +106,6 @@ def log_watcher(monkeypatch):
     for level in ['debug', 'info', 'warning', 'error']:
         monkeypatch.setattr(logger, level, watcher)
     return watcher
-
-
-class MockUpdate:
-    def __init__(self):
-        self.seen = False
-
-    def __call__(self, input_model, mask):
-        self.seen = True
-        return mask
 
 
 def test_make_rate(log_watcher):
@@ -145,8 +149,7 @@ def test_postprocess_rate_nirspec(log_watcher):
 
 
 def test_postprocess_rate_miri(log_watcher):
-    shape = (3, 5, 10, 10)
-    rate_model = make_small_rate_model(shape)
+    rate_model = make_small_rate_model()
     assert np.sum(rate_model.dq & datamodels.dqflags.pixel['NON_SCIENCE']) == 0
 
     log_watcher.message = 'Retrieving flat DQ'
@@ -161,8 +164,7 @@ def test_postprocess_rate_miri(log_watcher):
 
 @pytest.mark.slow
 def test_mask_ifu_slices():
-    shape = (2048, 2048)
-    rate_model = make_nirspec_ifu_model(shape)
+    rate_model = make_nirspec_ifu_model()
 
     rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
     mask = np.full_like(rate_model.data, True)
@@ -311,8 +313,7 @@ def test_create_mask_nirspec(monkeypatch, exptype):
 
 def test_create_mask_miri():
     # small MIRI imaging data
-    shape = (3, 5, 10, 10)
-    rate_model = make_small_rate_model(shape)
+    rate_model = make_small_rate_model()
     rate_model.dq[5, 5] = datamodels.dqflags.pixel['NON_SCIENCE']
 
     mask = cfn.create_mask(rate_model)
@@ -329,8 +330,7 @@ def test_create_mask_miri():
 
 def test_create_mask_from_rateints():
     # small rateints data
-    shape = (3, 5, 10, 10)
-    rate_model = make_small_rateints_model(shape)
+    rate_model = make_small_rateints_model()
 
     # Add an outlier in each integration
     for i in range(rate_model.data.shape[0]):
@@ -474,3 +474,288 @@ def test_median_clean():
     # cleaning removes median value, from high stripes
     cleaned_image = cfn.median_clean(image, mask, 2)
     assert np.allclose(cleaned_image, image - 0.1)
+
+
+@pytest.mark.parametrize('mask_science', [True, False])
+def test_do_correction_miri_imaging_ramp(mask_science):
+    ramp_model = make_small_ramp_model()
+    cleaned, mask, bg, noise, status = cfn.do_correction(
+        ramp_model, mask_science_regions=mask_science)
+
+    # uniform data, correction has no effect
+    assert cleaned.data.shape == ramp_model.shape
+    assert np.allclose(cleaned.data, ramp_model.data)
+    assert status == 'COMPLETE'
+
+    # extra models are not created
+    assert mask is None
+    assert bg is None
+    assert noise is None
+
+
+@pytest.mark.parametrize('mask_science', [True, False])
+def test_do_correction_nirspec_rate(mask_science):
+    rate_model = make_nirspec_fs_model()
+    cleaned, mask, bg, noise, status = cfn.do_correction(
+        rate_model, mask_science_regions=mask_science)
+
+    # uniform data, correction has no effect
+    assert cleaned.data.shape == rate_model.data.shape
+    assert np.allclose(cleaned.data, rate_model.data)
+    assert status == 'COMPLETE'
+
+    # extra models are not created
+    assert mask is None
+    assert bg is None
+    assert noise is None
+
+
+@pytest.mark.parametrize('single_mask', [True, False])
+def test_do_correction_rateints(single_mask):
+    rate_model = make_small_rateints_model()
+    cleaned, mask, bg, noise, status = cfn.do_correction(
+        rate_model, single_mask=single_mask, save_mask=True)
+
+    # uniform data, correction has no effect
+    assert cleaned.data.shape == rate_model.shape
+    assert np.allclose(cleaned.data, rate_model.data)
+    assert status == 'COMPLETE'
+
+    if single_mask:
+        assert mask.shape == cleaned.data.shape[-2:]
+    else:
+        assert mask.shape == cleaned.data.shape
+
+
+def test_do_correction_unsupported(log_watcher):
+    ramp_model = make_small_ramp_model()
+    ramp_model.meta.exposure.type = 'MIR_MRS'
+
+    log_watcher.message = "not supported"
+    cleaned, _, _, _, status = cfn.do_correction(ramp_model)
+    assert cleaned is ramp_model
+    assert status == 'SKIPPED'
+    log_watcher.assert_seen()
+
+
+def test_do_correction_fft_not_allowed(log_watcher):
+    ramp_model = make_small_ramp_model()
+
+    # not allowed for MIRI
+    log_watcher.message = "cannot be applied to exp_type"
+    cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method='fft')
+    assert cleaned is ramp_model
+    assert status == 'SKIPPED'
+    log_watcher.assert_seen()
+
+    # not allowed for NIRSpec ALLSLITS
+    ramp_model.meta.exposure.type = 'NRS_FIXEDSLIT'
+    ramp_model.meta.subarray.name = 'ALLSLITS'
+
+    log_watcher.message = "cannot be applied to subarray"
+    cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method='fft')
+    assert cleaned is ramp_model
+    assert status == 'SKIPPED'
+    log_watcher.assert_seen()
+
+
+@pytest.mark.parametrize('none_value', [None, 'none', 'None'])
+def test_do_correction_no_background(none_value):
+    ramp_model = make_small_ramp_model()
+
+    # Don't remove background before fitting noise
+    cleaned, _, _, _, _ = cfn.do_correction(
+        ramp_model, background_method=none_value)
+
+    # Output data is all zero: uniform level is removed
+    assert np.allclose(cleaned.data, 0.0)
+
+
+@pytest.mark.parametrize('ndim', [2, 3])
+def test_do_correction_user_mask(tmp_path, ndim):
+    ramp_model = make_small_ramp_model()
+
+    if ndim == 3:
+        mask = np.full((ramp_model.shape[0],
+                        ramp_model.shape[2],
+                        ramp_model.shape[3]), True)
+        mask_model = datamodels.CubeModel(mask)
+    else:
+        mask = np.full(ramp_model.shape[-2:], True)
+        mask_model = datamodels.ImageModel(mask)
+    user_mask = str(tmp_path / 'mask.fits')
+    mask_model.save(user_mask)
+
+    cleaned, output_mask, _, _, _ = cfn.do_correction(
+        ramp_model, user_mask=user_mask, save_mask=True)
+
+    assert np.all(output_mask.data == mask_model.data)
+    assert np.allclose(cleaned.data, ramp_model.data)
+
+
+@pytest.mark.parametrize('input_type', ['rate', 'rateints', 'ramp'])
+def test_do_correction_user_mask_mismatch(tmp_path, input_type, log_watcher):
+    shape = (3, 5, 20, 20)
+    if input_type == 'rate':
+        model = make_small_rate_model(shape)
+    elif input_type == 'rateints':
+        model = make_small_rateints_model(shape)
+    else:
+        model = make_small_ramp_model(shape)
+
+    mask = np.full((10, 10), True)
+    mask_model = datamodels.ImageModel(mask)
+    user_mask = str(tmp_path / 'mask.fits')
+    mask_model.save(user_mask)
+
+    log_watcher.message = 'Mask does not match'
+    cleaned, output_mask, _, _, status = cfn.do_correction(
+        model, user_mask=user_mask, save_mask=True)
+
+    log_watcher.assert_seen()
+    assert status == 'SKIPPED'
+    assert output_mask is None
+
+
+def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
+    shape = (3, 5, 20, 20)
+    model = make_small_rateints_model(shape)
+
+    mask = np.full((2, 20, 20), True)
+    mask_model = datamodels.CubeModel(mask)
+    user_mask = str(tmp_path / 'mask.fits')
+    mask_model.save(user_mask)
+
+    log_watcher.message = 'Mask does not match'
+    cleaned, output_mask, _, _, status = cfn.do_correction(
+        model, user_mask=user_mask, save_mask=True)
+
+    log_watcher.assert_seen()
+    assert status == 'SKIPPED'
+    assert output_mask is None
+
+
+@pytest.mark.parametrize('single_mask', [True, False])
+def test_do_correction_background_from_rate(single_mask):
+    ramp_model = make_small_ramp_model()
+
+    # Add some noise to the ramp to make rate and ramp
+    # backgrounds slightly different
+    rng = np.random.default_rng(seed=123)
+    ramp_model.data += rng.normal(0, 0.1, size=ramp_model.data.shape)
+
+    # Background from ramp diffs
+    _, _, bg_model_ramp, _, _ = cfn.do_correction(
+        ramp_model, single_mask=single_mask, background_method='median',
+        background_from_rate=False, save_background=True)
+    _, _, bg_model_rate, _, _ = cfn.do_correction(
+        ramp_model, single_mask=single_mask, background_method='median',
+        background_from_rate=True, save_background=True)
+
+    # Background values should be close but not exactly equal
+    assert not np.all(bg_model_ramp.data == bg_model_rate.data)
+    assert np.allclose(bg_model_ramp.data, bg_model_rate.data, atol=0.1)
+
+    # The first group should be zero in both, since there's no
+    # correction applied to the first group
+    assert np.all(bg_model_ramp.data[:, 0] == 0)
+    assert np.all(bg_model_rate.data[:, 0] == 0)
+
+    # Subsequent groups are all the same for background_from_rate, but
+    # will vary for background_from_ramp
+    for integ in range(bg_model_rate.data.shape[0]):
+        assert not np.allclose(bg_model_ramp.data[integ, 2:],
+                               bg_model_ramp.data[integ, 1])
+        if single_mask:
+            # all integrations are also the same
+            assert np.allclose(bg_model_rate.data[integ, 2:],
+                               bg_model_rate.data[0, 1])
+        else:
+            # integrations vary but groups are all the same
+            assert np.allclose(bg_model_rate.data[integ, 2:],
+                               bg_model_rate.data[integ, 1])
+
+
+def test_do_correction_fft_subarray():
+    ramp_model = make_small_ramp_model()
+    ramp_model.meta.exposure.type = 'NRS_FIXEDSLIT'
+    ramp_model.meta.subarray.slowaxis = 1
+
+    cleaned, _, _, noise, _ = cfn.do_correction(
+        ramp_model, fit_method='fft', save_noise=True)
+
+    # uniform data, correction has no effect
+    assert cleaned.data.shape == ramp_model.data.shape
+    assert np.allclose(cleaned.data, ramp_model.data)
+    assert np.allclose(noise.data, 0.0)
+
+
+def test_do_correction_fft_full():
+    rate_model = make_nirspec_fs_model()
+
+    cleaned, _, _, noise, _ = cfn.do_correction(
+        rate_model, fit_method='fft', save_noise=True)
+
+    # uniform data, correction has no effect
+    assert cleaned.data.shape == rate_model.data.shape
+    assert np.allclose(cleaned.data, rate_model.data)
+    assert np.allclose(noise.data, 0.0)
+
+
+def test_do_correction_clean_fails(monkeypatch, log_watcher):
+    ramp_model = make_small_ramp_model()
+    ramp_model.meta.exposure.type = 'NRS_FIXEDSLIT'
+    ramp_model.meta.subarray.slowaxis = 1
+
+    # Add some noise so that input and output are
+    # expected to be different
+    rng = np.random.default_rng(seed=123)
+    ramp_model.data += rng.normal(0, 0.1, size=ramp_model.data.shape)
+    cleaned, _, _, _, status = cfn.do_correction(
+        ramp_model, fit_method='fft')
+    assert not np.allclose(cleaned.data, ramp_model.data)
+    assert status == 'COMPLETE'
+
+    # Mock a None-value returned from cleaning function
+    monkeypatch.setattr(cfn, 'fft_clean_subarray', lambda *args: None)
+
+    # Call again
+    log_watcher.message = "Cleaning failed"
+    cleaned, _, _, _, status = cfn.do_correction(
+        ramp_model, fit_method='fft')
+
+    # Error message issued, status is skipped,
+    # output data is the same as input
+    log_watcher.assert_seen()
+    assert status == 'SKIPPED'
+    assert np.allclose(cleaned.data, ramp_model.data)
+
+
+@pytest.mark.parametrize('save_type', ['noise', 'background'])
+@pytest.mark.parametrize('input_type', ['rate', 'rateints', 'ramp'])
+def test_do_correction_save_intermediate(save_type, input_type):
+    shape = (3, 5, 20, 20)
+    if input_type == 'rate':
+        model = make_small_rate_model(shape)
+    elif input_type == 'rateints':
+        model = make_small_rateints_model(shape)
+    else:
+        model = make_small_ramp_model(shape)
+
+    save_bg = (save_type == 'background')
+    save_noise = (save_type == 'noise')
+    cleaned, _, background, noise, status = cfn.do_correction(
+        model, save_background=save_bg, save_noise=save_noise)
+
+    # Output background model always matches input shape
+    # and datamodel type
+    if save_bg:
+        assert background.data.shape == model.data.shape
+        assert type(background) is type(model)
+    else:
+        assert background is None
+    if save_noise:
+        assert noise.data.shape == model.data.shape
+        assert type(noise) is type(model)
+    else:
+        assert noise is None

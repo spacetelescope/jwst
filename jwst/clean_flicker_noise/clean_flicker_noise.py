@@ -701,10 +701,11 @@ def median_clean(image, mask, axis_to_correct):
     return corrected_image
 
 
-def do_correction(input_model, fit_method,
-                  background_method, background_box_size, background_from_rate,
-                  mask_science_regions, n_sigma, fit_histogram,
-                  single_mask, user_mask, save_mask, save_background, save_noise):
+def do_correction(input_model, fit_method='median', background_method='median',
+                  background_box_size=None, background_from_rate=False,
+                  mask_science_regions=False, n_sigma=2.0, fit_histogram=False,
+                  single_mask=True, user_mask=None, save_mask=False,
+                  save_background=False, save_noise=False):
     """
     Apply the 1/f noise correction.
 
@@ -713,10 +714,10 @@ def do_correction(input_model, fit_method,
     input_model : `~jwst.datamodel.JwstDataModel`
         Science data to be corrected.
 
-    fit_method : {'fft', 'median'}
+    fit_method : {'fft', 'median'}, optional
         The algorithm to use to fit background noise.
 
-    background_method : {'median', 'model', None}
+    background_method : {'median', 'model', None}, optional
         If 'median', the preliminary background to remove and restore
         is a simple median of the background data.  If 'model', the
         background data is fit with a low-resolution model via
@@ -728,17 +729,17 @@ def do_correction(input_model, fit_method,
         `background_method` = 'model'. For best results, use a box size
         that evenly divides the input image shape.
 
-    background_from_rate : bool
+    background_from_rate : bool, optional
         If set, and the input data is a ramp model, the background will be
         fit to the rate images instead of the individual group differences.
         The preliminary background subtracted from each diff before fitting
         noise is then rate background * group time.
 
-    mask_science_regions : bool
+    mask_science_regions : bool, optional
         Mask slit/slice regions defined in WCS. Implemented only for
         NIRSpec science data modes.
 
-    n_sigma : float
+    n_sigma : float, optional
         N-sigma rejection level for finding outliers.
 
     fit_histogram : bool, optional
@@ -746,21 +747,21 @@ def do_correction(input_model, fit_method,
         is derived from a Gaussian fit to a histogram of values.
         Otherwise, a simple iterative sigma clipping is performed.
 
-    single_mask : bool
+    single_mask : bool, optional
         If set, a single mask will be created, regardless of
         the number of input integrations. Otherwise, the mask will
         be a 3D cube, with one plane for each integration.
 
-    user_mask : str or None
+    user_mask : str or None, optional
         Path to user-supplied mask image.
 
-    save_mask : bool
+    save_mask : bool, optional
         Switch to indicate whether the mask should be saved.
 
-    save_background : bool
+    save_background : bool, optional
         Switch to indicate whether the fit background should be saved.
 
-    save_noise : bool
+    save_noise : bool, optional
         Switch to indicate whether the fit noise should be saved.
 
     Returns
@@ -770,6 +771,17 @@ def do_correction(input_model, fit_method,
 
     mask_model : `~jwst.datamodel.JwstDataModel`
         Pixel mask to be saved or None.
+
+    background_model : `~jwst.datamodel.JwstDataModel`
+        Background model to be saved or None.
+
+    noise_model : `~jwst.datamodel.JwstDataModel`
+        Background model to be saved or None.
+
+    status : {'COMPLETE', 'SKIPPED'}
+        Completion status.  If errors were encountered, status = 'SKIPPED'
+        and the output data matches the input data.  Otherwise,
+        status = 'COMPLETE'.
     """
     # Track the completion status, for various failure conditions
     status = 'SKIPPED'
@@ -778,15 +790,6 @@ def do_correction(input_model, fit_method,
     subarray = input_model.meta.subarray.name.upper()
     exp_type = input_model.meta.exposure.type
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
-
-    if exp_type.startswith('MIR'):
-        # MIRI doesn't have f-noise, but it does have a vertical flickering.
-        # Set the axis for median correction to the y-axis.
-        axis_to_correct = 1
-    else:
-        # For NIR detectors, the axis for median correction is the
-        # detector slowaxis.
-        axis_to_correct = abs(input_model.meta.subarray.slowaxis)
 
     # Check for a valid input that we can work on
     message = None
@@ -807,6 +810,16 @@ def do_correction(input_model, fit_method,
         return input_model, None, None, None, status
 
     output_model = input_model.copy()
+
+    # Get axis to correct, by instrument
+    if exp_type.startswith('MIR'):
+        # MIRI doesn't have f-noise, but it does have a vertical flickering.
+        # Set the axis for median correction to the y-axis.
+        axis_to_correct = 1
+    else:
+        # For NIR detectors, the axis for median correction is the
+        # detector slowaxis.
+        axis_to_correct = abs(input_model.meta.subarray.slowaxis)
 
     # Standardize background arguments
     if str(background_method).lower() == 'none':
