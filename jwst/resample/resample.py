@@ -371,11 +371,19 @@ class ResampleData:
 
         if self.blendheaders:
             # FIXME: right now this needs a list of input models, all in memory
-            # but it needs to conform with ModelLibrary only loading one into memory at once
-            # for now, just load the models as a list
+            # for now, just load the models as a list with empty data arrays
+            # but the blend_meta step itself should be refactored to expect a list of metadata objects
+            # instead of a list of datamodels
             input_list = []
             with input_models:
                 for i, model in enumerate(input_models):
+                    model.data = np.empty((1, 1))
+                    model.dq = np.empty((1, 1))
+                    model.err = np.empty((1, 1))
+                    model.wht = np.empty((1, 1))
+                    model.var_rnoise = np.empty((1, 1))
+                    model.var_poisson = np.empty((1, 1))
+                    model.var_flat = np.empty((1, 1))
                     input_list.append(model)
                     input_models.shelve(model, i, modify=False)
             self.blend_output_metadata(output_model, input_list)
