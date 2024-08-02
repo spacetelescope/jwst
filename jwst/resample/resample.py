@@ -439,7 +439,7 @@ class ResampleData:
 
         self.update_exposure_times(output_model, input_models)
 
-        return ModelLibrary([output_model])
+        return ModelLibrary([output_model,], on_disk=False)
 
 
     def resample_variance_arrays(self, output_model, input_models):

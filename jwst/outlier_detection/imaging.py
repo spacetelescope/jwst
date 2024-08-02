@@ -14,7 +14,7 @@ from jwst.resample.resample_utils import build_driz_weight
 from jwst.stpipe.utilities import record_step_status
 
 from .utils import create_median_library, flag_crs_in_models_library, flag_crs_in_models_with_resampling_library
-from ._fileio import remove_file, save_median
+from ._fileio import save_median
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

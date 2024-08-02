@@ -3,10 +3,8 @@ Submodule for performing outlier detection on spectra.
 """
 import copy
 
-import numpy as np
 from stdatamodels.jwst import datamodels
-
-from jwst.datamodels import ModelContainer, ModelLibrary, SourceModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec, resample_utils
