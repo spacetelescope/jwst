@@ -22,6 +22,12 @@ cube_build
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
+emicorr
+-------
+
+- Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
+  to compute a correction. [#8675]
+
 master_background
 -----------------
 
