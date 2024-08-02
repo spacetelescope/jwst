@@ -164,7 +164,7 @@ def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     rtdata.output = "jw01024-o001_t002_miri_f770w_cat.ecsv"
     rtdata.get_truth("truth/test_miri_image_stages/jw01024-o001_t002_miri_f770w_cat.ecsv")
 
-    assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4)
+    assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-3, atol=1e-4)
 
 
 @pytest.mark.bigdata

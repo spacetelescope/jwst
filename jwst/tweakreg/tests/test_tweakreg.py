@@ -14,12 +14,14 @@ from stdatamodels.jwst.datamodels import ImageModel
 from jwst.datamodels import ModelContainer
 from jwst.tweakreg import tweakreg_step
 from jwst.tweakreg import tweakreg_catalog
-from jwst.tweakreg.utils import _wcsinfo_from_wcs_transform
+from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
+from stcal.tweakreg import tweakreg as twk
 
 
 BKG_LEVEL = 0.001
 N_EXAMPLE_SOURCES = 21
 N_CUSTOM_SOURCES = 15
+REFCAT = "GAIADR3"
 
 
 @pytest.fixture
@@ -102,9 +104,9 @@ def test_is_wcs_correction_small(offset, is_good):
         def meta(self):
             return {'original_skycoord': self._original_skycoord}
 
-    correctors = [FakeCorrector(twcs, tweakreg_step._wcs_to_skycoord(wcs))]
+    correctors = [FakeCorrector(twcs, twk._wcs_to_skycoord(wcs))]
 
-    assert step._is_wcs_correction_small(correctors) == is_good
+    assert twk._is_wcs_correction_small(correctors) == is_good
 
 
 def test_expected_failure_bad_starfinder():
@@ -146,6 +148,9 @@ def example_input(example_wcs):
     # add a wcs and wcsinfo
     m0.meta.wcs = example_wcs
     m0.meta.wcsinfo = _wcsinfo_from_wcs_transform(example_wcs)
+    m0.meta.wcsinfo.v3yangle = 0.0
+    m0.meta.wcsinfo.vparity = -1
+    m0.meta.observation.date = "2024-07-10T00:00:00.0"
 
     # and a few 'sources'
     m0.data[:] = BKG_LEVEL
@@ -213,6 +218,7 @@ def test_src_confusion_pars(example_input, alignment_type):
     pars = {
         f"{alignment_type}separation": 1.0,
         f"{alignment_type}tolerance": 1.0,
+        "abs_refcat": REFCAT,
     }
     step = tweakreg_step.TweakRegStep(**pars)
     result = step(example_input)
@@ -327,18 +333,18 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     step = tweakreg_step.TweakRegStep(**kwargs)
 
     # patch _construct_wcs_corrector to check the correct catalog was loaded
-    def patched_construct_wcs_corrector(model, catalog, _seen=[]):
+    def patched_construct_wcs_corrector(wcs, wcsinfo, catalog, group_id, _seen=[]):
         # we don't need to continue
-        if model.meta.group_id == 'a':
+        if group_id == 'a':
             assert len(catalog) == n_custom_sources
-        elif model.meta.group_id == 'b':
+        elif group_id == 'b':
             assert len(catalog) == N_EXAMPLE_SOURCES
-        _seen.append(model)
+        _seen.append(wcs)
         if len(_seen) == 2:
             raise ValueError("done testing")
         return None
 
-    monkeypatch.setattr(tweakreg_step, "_construct_wcs_corrector", patched_construct_wcs_corrector)
+    monkeypatch.setattr(twk, "construct_wcs_corrector", patched_construct_wcs_corrector)
 
     with pytest.raises(ValueError, match="done testing"):
         step(str(asn_path))

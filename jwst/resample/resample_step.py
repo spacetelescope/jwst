@@ -89,7 +89,7 @@ class ResampleStep(Step):
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
-        result = resamp.do_drizzle()
+        result = resamp.do_drizzle(input_models)
 
         for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
