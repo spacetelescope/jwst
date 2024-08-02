@@ -449,3 +449,28 @@ def test_fft_clean_error(array_type, monkeypatch, log_watcher):
     cleaned_image = clean_function(image.copy(), mask, 'NRS1')
     assert cleaned_image is None
     log_watcher.assert_seen()
+
+
+def test_median_clean():
+    shape = (20, 20)
+    mask = np.full(shape, True)
+
+    # zero image should still come out zero
+    image = np.full(shape, 0.0)
+    cleaned_image = cfn.median_clean(image, mask, 1)
+    assert np.allclose(cleaned_image, 0.0)
+
+    # image with regular vertical pattern, centered on 0
+    high = np.full((20, 4), 0.1)
+    low = np.full((20, 4), -0.1)
+    image = np.hstack([high, low, high, low, high])
+
+    # clean along vertical axis -
+    # image should be all zero
+    cleaned_image = cfn.median_clean(image, mask, 1)
+    assert np.allclose(cleaned_image, 0.0)
+
+    # clean along horizontal axis -
+    # cleaning removes median value, from high stripes
+    cleaned_image = cfn.median_clean(image, mask, 2)
+    assert np.allclose(cleaned_image, image - 0.1)
