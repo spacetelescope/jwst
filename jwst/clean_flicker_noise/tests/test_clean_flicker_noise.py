@@ -87,6 +87,7 @@ def make_nirspec_fs_model():
 @pytest.fixture
 def log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
+    # in the clean_flicker_noise module
     watcher = LogWatcher('')
     logger = logging.getLogger('jwst.clean_flicker_noise.clean_flicker_noise')
     for level in ['debug', 'info', 'warning', 'error']:
@@ -392,9 +393,59 @@ def test_background_level(log_watcher):
     image[:] = np.nan
     image[20:25, 20:25] = 1.0
 
-    # background fit fails: falls back on median
+    # background fit fails: falls back on simple median
     log_watcher.message = "Background fit failed, using median"
     background = cfn.background_level(
         image, mask, background_method='model', background_box_size=(10, 10))
     assert background == 1.0
+    log_watcher.assert_seen()
+
+
+@pytest.mark.parametrize('array_type', ['full', 'subarray'])
+@pytest.mark.parametrize('detector', ['NRS1', 'NRS2'])
+def test_fft_clean(array_type, detector):
+    if array_type == 'full':
+        clean_function = cfn.fft_clean_full_frame
+    else:
+        clean_function = cfn.fft_clean_subarray
+
+    shape = (80, 80)
+    mask = np.full(shape, True)
+
+    # zero image should still come out zero
+    image = np.full(shape, 0.0)
+    cleaned_image = clean_function(image.copy(), mask, detector)
+    assert np.allclose(cleaned_image, 0.0)
+
+    # image with regular vertical pattern, centered on 0
+    high = np.full((80, 16), 0.1)
+    low = np.full((80, 16), -0.1)
+    image = np.hstack([high, low, high, low, high])
+    cleaned_image = clean_function(image.copy(), mask, detector)
+
+    # results should be mostly close to zero,
+    # some artifacts at pattern and edge boundaries
+    good_correction = np.abs(cleaned_image) < 0.01
+    assert np.allclose(np.sum(good_correction) / cleaned_image.size, 0.65, atol=0.1)
+
+
+@pytest.mark.parametrize('array_type', ['full', 'subarray'])
+def test_fft_clean_error(array_type, monkeypatch, log_watcher):
+    def raise_error(*args, **kwargs):
+        raise np.linalg.LinAlgError('Linear algebra error')
+
+    if array_type == 'full':
+        clean_function = cfn.fft_clean_full_frame
+        monkeypatch.setattr(cfn.NSClean, 'clean', raise_error)
+    else:
+        clean_function = cfn.fft_clean_subarray
+        monkeypatch.setattr(cfn.NSCleanSubarray, 'clean', raise_error)
+
+    shape = (10, 10)
+    mask = np.full(shape, True)
+    image = np.full(shape, 1.0)
+
+    log_watcher.message = "Error cleaning image"
+    cleaned_image = clean_function(image.copy(), mask, 'NRS1')
+    assert cleaned_image is None
     log_watcher.assert_seen()
