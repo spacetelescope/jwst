@@ -5,8 +5,9 @@ import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
-from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
+from jwst.assign_wcs.tests.test_nirspec import (
+    create_nirspec_ifu_file, create_nirspec_fs_file)
+from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model, get_file_path
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
 from jwst.tests.helpers import LogWatcher
 
@@ -64,6 +65,21 @@ def make_nirspec_ifu_model(shape):
                                    gwa_tilt=37.1)
     hdul['SCI'].data = np.ones(shape, dtype=float)
     rate_model = datamodels.IFUImageModel(hdul)
+    hdul.close()
+    return rate_model
+
+
+def make_nirspec_mos_fs_model():
+    mos_model = make_nirspec_mos_model()
+    mos_model.meta.instrument.msa_metadata_file = get_file_path(
+        'msa_fs_configuration.fits')
+    return mos_model
+
+
+def make_nirspec_fs_model():
+    hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
+    hdul['SCI'].data = np.ones((2048, 2048), dtype=float)
+    rate_model = datamodels.ImageModel(hdul)
     hdul.close()
     return rate_model
 
@@ -152,18 +168,28 @@ def test_mask_ifu_slices():
 
     # Mark IFU science regions as False: about 10% of the array
     cfn.mask_ifu_slices(rate_model, mask)
-    assert 0 < np.sum(mask) < 0.9 * mask.size
+    assert np.allclose(np.sum(mask), 0.9 * mask.size, atol=0.01 * mask.size)
 
 
-def test_mask_slits():
-    rate_model = make_nirspec_mos_model()
+@pytest.mark.parametrize('exptype,blocked',
+                         [('mos', .012), ('mos_fs', .025), ('fs', .05)])
+def test_mask_slits(exptype, blocked):
+    if exptype == 'mos':
+        rate_model = make_nirspec_mos_model()
+    elif exptype == 'mos_fs':
+        rate_model = make_nirspec_mos_fs_model()
+    else:
+        rate_model = make_nirspec_fs_model()
+
+    # Assign a WCS
     rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
 
-    # Mark MOS slits as False: about 1% of the array for
-    # the sample data
+    # Mark slits as False
     mask = np.full_like(rate_model.data, True)
     cfn.mask_slits(rate_model, mask)
-    assert 0 < np.sum(mask) < 0.99 * mask.size
+
+    # Check that the fraction of the array blocked is as expected
+    assert np.allclose(np.sum(mask) / mask.size, 1 - blocked, atol=0.001)
 
 
 @pytest.mark.parametrize('fit_histogram', [True, False])
@@ -191,7 +217,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
     # percent of the remaining data
     assert not mask[0, 0]
     assert not mask[1, 1]
-    assert 0.9998 > (np.sum(mask) / mask.size) > 0.95
+    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
 
     # Upper outlier stays with large sigma_upper
     mask = np.full(shape, True)
@@ -200,7 +226,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
         lower_half_only=lower_half_only, sigma_upper=1000)
     assert mask[0, 0]
     assert not mask[1, 1]
-    assert 0.9999 > (np.sum(mask) / mask.size) > 0.95
+    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
 
     # Lower outlier stays with large sigma_lower
     mask = np.full(shape, True)
@@ -209,7 +235,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
         lower_half_only=lower_half_only, sigma_lower=1000)
     assert not mask[0, 0]
     assert mask[1, 1]
-    assert 0.9999 > (np.sum(mask) / mask.size) > 0.95
+    assert np.allclose(np.sum(mask) / mask.size, 0.98, atol=0.019)
 
 
 def test_clip_to_background_fit_fails(log_watcher):
@@ -239,14 +265,21 @@ def test_clip_to_background_fit_fails(log_watcher):
     log_watcher.assert_seen()
 
 
-@pytest.mark.parametrize('exptype', ['msaspec', 'ifu'])
+@pytest.mark.parametrize('exptype', ['mos', 'mos_fs', 'ifu'])
 def test_create_mask_nirspec(monkeypatch, exptype):
-    # monkeypatch local functions for speed
+    # monkeypatch local functions for speed and check that they are called
+    # (actual behavior tested in separate unit tests)
     mock = MockUpdate()
-    if exptype == 'msaspec':
+    if exptype == 'mos':
         # NIRSpec MOS data
         monkeypatch.setattr(cfn, 'mask_slits', mock)
         rate_model = make_nirspec_mos_model()
+    elif exptype == 'mos_fs':
+        monkeypatch.setattr(cfn, 'mask_slits', mock)
+        rate_model = make_nirspec_mos_fs_model()
+
+        # also assign a WCS so the FS can be detected
+        rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
     else:
         # NIRSpec IFU data
         monkeypatch.setattr(cfn, 'mask_ifu_slices', mock)
@@ -263,9 +296,62 @@ def test_create_mask_nirspec(monkeypatch, exptype):
     assert not mock.seen
 
     # Fixed slit region not blocked
-    assert np.any(mask[cfn.NRS_FS_REGION[0]:cfn.NRS_FS_REGION[1]])
+    assert np.all(mask[cfn.NRS_FS_REGION[0]:cfn.NRS_FS_REGION[1]])
 
     # Call again but block science regions
     mask = cfn.create_mask(rate_model, mask_science_regions=True)
     assert mock.seen
-    assert not np.any(mask[cfn.NRS_FS_REGION[0]:cfn.NRS_FS_REGION[1]])
+    if exptype == 'mos_fs':
+        # FS region still not blocked - may need correction
+        assert np.all(mask[cfn.NRS_FS_REGION[0]:cfn.NRS_FS_REGION[1]])
+    else:
+        assert not np.any(mask[cfn.NRS_FS_REGION[0]:cfn.NRS_FS_REGION[1]])
+
+
+def test_create_mask_miri():
+    # small MIRI imaging data
+    shape = (3, 5, 10, 10)
+    rate_model = make_small_rate_model(shape)
+    rate_model.dq[5, 5] = datamodels.dqflags.pixel['NON_SCIENCE']
+
+    mask = cfn.create_mask(rate_model)
+    assert mask.shape == rate_model.data.shape
+
+    # Nothing to mask in uniform data
+    assert np.all(mask)
+
+    # Call again but block non-science regions
+    mask = cfn.create_mask(rate_model, mask_science_regions=True)
+    assert not mask[5, 5]
+    assert np.sum(mask) == mask.size - 1
+
+
+def test_create_mask_from_rateints():
+    # small rateints data
+    shape = (3, 5, 10, 10)
+    rate_model = make_small_rateints_model(shape)
+
+    # Add an outlier in each integration
+    for i in range(rate_model.data.shape[0]):
+        rate_model.data[i, i, i] += 100
+
+    mask = cfn.create_mask(rate_model)
+    assert mask.shape == rate_model.data.shape
+    assert mask.ndim == 3
+
+    # Outlier is masked in each integration
+    assert not mask[0, 0, 0]
+    assert not mask[1, 1, 1]
+    assert not mask[2, 2, 2]
+    assert np.sum(mask) == mask.size - 3
+
+    # Call again but make a single mask:
+    # bad data mask is or-ed across integrations
+    mask = cfn.create_mask(rate_model, single_mask=True)
+    assert mask.shape == rate_model.data.shape[1:]
+    assert mask.ndim == 2
+
+    assert not mask[0, 0]
+    assert not mask[1, 1]
+    assert not mask[2, 2]
+    assert np.sum(mask) == mask.size - 3
