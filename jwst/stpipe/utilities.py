@@ -36,6 +36,7 @@ import logging
 import os
 import re
 from collections.abc import Sequence
+from jwst.datamodels import ModelLibrary
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -172,6 +173,11 @@ def record_step_status(datamodel, cal_step, success=True):
     if isinstance(datamodel, Sequence):
         for model in datamodel:
             model.meta.cal_step._instance[cal_step] = status
+    elif isinstance(datamodel, ModelLibrary):
+        with datamodel:
+            for model in datamodel:
+                model.meta.cal_step._instance[cal_step] = status
+                datamodel.shelve(model)
     else:
         datamodel.meta.cal_step._instance[cal_step] = status
 

@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 import logging
 
-from stdatamodels.jwst import datamodels
-
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary
+from jwst.stpipe.utilities import record_step_status
 
 from ..stpipe import Step
 from .moving_target_wcs import assign_moving_target_wcs
@@ -32,17 +31,15 @@ class AssignMTWcsStep(Step):
     """
 
     def process(self, input):
-        if isinstance(input, str):
-            input = datamodels.open(input)
 
-        # Can't apply the step if we aren't given a ModelContainer as input
-        if not isinstance(input, ModelContainer):
-            log.warning("Input data type is not supported.")
-            # raise ValueError("Expected input to be an association file name or a ModelContainer.")
-            input.meta.cal_step.assign_mtwcs = 'SKIPPED'
-            return input
-
-        # Apply the step
+        if not isinstance(input, ModelLibrary):
+            try:
+                input = ModelLibrary(input)
+            except Exception:
+                log.warning("Input data type is not supported.")
+                record_step_status(input, "assign_mtwcs", False)
+                return input
+            
         result = assign_moving_target_wcs(input)
-
+        record_step_status(result, "assign_mtwcs", True)
         return result

@@ -1,6 +1,6 @@
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary
 
 from ..stpipe import Pipeline
 from ..lib.exposure_types import is_moving_target
@@ -32,6 +32,7 @@ class Image3Pipeline(Pipeline):
     class_alias = "calwebb_image3"
 
     spec = """
+    on_disk = boolean(default=False)  # Preserve memory using temporary files
     """
 
     # Define alias to steps
@@ -50,14 +51,10 @@ class Image3Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data: Level3 Association, or ~jwst.datamodels.ModelContainer
+        input_data: Level3 Association, or ~jwst.datamodels.ModelLibrary
             The exposures to process
         """
         self.log.info('Starting calwebb_image3 ...')
-
-        # Only load science members from input ASN;
-        # background and target-acq members are not needed.
-        asn_exptypes = ['science']
 
         # Configure settings for saving results files
         self.outlier_detection.suffix = 'crf'
@@ -69,36 +66,40 @@ class Image3Pipeline(Pipeline):
 
         self.source_catalog.save_results = self.save_results
 
-        with datamodels.open(input_data, asn_exptypes=asn_exptypes) as input_models:
+        # Only load science members from input ASN;
+        # background and target-acq members are not needed.
+        if isinstance(input_data, ModelLibrary):
+            input_models = input_data
+        else:
+            input_models = ModelLibrary(input_data, asn_exptypes=['science'], on_disk=self.on_disk)
+
+        if self.output_file is None:
             # If input is an association, set the output to the product name.
-            if self.output_file is None:
-                try:
-                    self.output_file = input_models.meta.asn_table.products[0].name
-                except (AttributeError, IndexError):
-                    pass
+            self.output_file = input_models.asn["products"][0]["name"]
 
-            # Check if input is single or multiple exposures
-            try:
-                has_groups = len(input_models.group_names) >= 1
-            except (AttributeError, TypeError, KeyError):
-                has_groups = False
+        with input_models:
+            model = input_models.borrow(0)
+            is_moving = is_moving_target(model)
+            input_models.shelve(model, 0, modify=False)
+        if is_moving:
+            input_models = self.assign_mtwcs(input_models)
+        else:
+            input_models = self.tweakreg(input_models)
 
-            if isinstance(input_models, ModelContainer) and has_groups:
-                if is_moving_target(input_models):
-                    input_models = self.assign_mtwcs(input_models)
-                else:
-                    input_models = self.tweakreg(input_models)
+        input_models = self.skymatch(input_models)
+        input_models = self.outlier_detection(input_models)
 
-                input_models = self.skymatch(input_models)
-                input_models = self.outlier_detection(input_models)
+        # elif self.skymatch.skymethod == 'match':
+        #     self.log.warning("Turning 'skymatch' step off for a single "
+        #                      "input image when 'skymethod' is 'match'")
 
-            elif self.skymatch.skymethod == 'match':
-                self.log.warning("Turning 'skymatch' step off for a single "
-                                 "input image when 'skymethod' is 'match'")
+        # else:
+        #     # FIXME: here input_models is a DataModel, passing
+        #     # that to skymatch would cause an error when it tries to call
+        #     # ModelContainer(DataModel). This can be seen by running
+        #     # strun calwebb_image3 any_cal.fits --steps.skymatch.method=local
+        #     input_models = self.skymatch(input_models)
 
-            else:
-                input_models = self.skymatch(input_models)
-
-            result = self.resample(input_models)
-            if isinstance(result, datamodels.ImageModel) and result.meta.cal_step.resample == 'COMPLETE':
-                self.source_catalog(result)
+        result = self.resample(input_models)
+        if isinstance(result, datamodels.ImageModel) and result.meta.cal_step.resample == 'COMPLETE':
+            self.source_catalog(result)

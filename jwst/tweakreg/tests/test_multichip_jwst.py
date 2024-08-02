@@ -291,7 +291,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     assert rmse_dec < _REF_RMSE_DEC
 
 
-def test_multichip_alignment_step(monkeypatch):
+def test_multichip_alignment_step_rel(monkeypatch):
 
     monkeypatch.setattr(tweakreg_step.twk, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
@@ -402,24 +402,31 @@ def test_multichip_alignment_step(monkeypatch):
     # Alternatively, disable this '_is_wcs_correction_small' test:
     # step._is_wcs_correction_small = lambda x, y: True
 
-    mr, m1, m2 = step.process(mc)
-    for im in [mr, m1, m2]:
-        assert im.meta.cal_step.tweakreg == 'COMPLETE'
+    result = step.process(mc)
+    with result:
+        for im in result:
+            assert im.meta.cal_step.tweakreg == 'COMPLETE'
+            result.shelve(im)
 
-    wc1 = m1.meta.wcs
-    wc2 = m2.meta.wcs
+    with result:
+        m1 = result.borrow(1)
+        m2 = result.borrow(2)
+        wc1 = m1.meta.wcs
+        wc2 = m2.meta.wcs
 
-    ra1, dec1 = wc1(imcat1['x'], imcat1['y'])
-    ra2, dec2 = wc2(imcat2['x'], imcat2['y'])
-    ra = np.concatenate([ra1, ra2])
-    dec = np.concatenate([dec1, dec2])
-    rra = refcat['RA']
-    rdec = refcat['DEC']
-    rmse_ra = np.sqrt(np.mean((ra - rra)**2))
-    rmse_dec = np.sqrt(np.mean((dec - rdec)**2))
+        ra1, dec1 = wc1(imcat1['x'], imcat1['y'])
+        ra2, dec2 = wc2(imcat2['x'], imcat2['y'])
+        ra = np.concatenate([ra1, ra2])
+        dec = np.concatenate([dec1, dec2])
+        rra = refcat['RA']
+        rdec = refcat['DEC']
+        rmse_ra = np.sqrt(np.mean((ra - rra)**2))
+        rmse_dec = np.sqrt(np.mean((dec - rdec)**2))
 
-    assert rmse_ra < _REF_RMSE_RA
-    assert rmse_dec < _REF_RMSE_DEC
+        assert rmse_ra < _REF_RMSE_RA
+        assert rmse_dec < _REF_RMSE_DEC
+        result.shelve(m1, 1, modify=False)
+        result.shelve(m2, 2, modify=False)
 
 
 def test_multichip_alignment_step_abs(monkeypatch):

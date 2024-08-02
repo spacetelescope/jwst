@@ -5,7 +5,7 @@ from ..stpipe import Pipeline
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 
 from ..model_blender import blendmeta
 
@@ -196,7 +196,12 @@ class Coron3Pipeline(Pipeline):
                     resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images
-        result = self.resample(resample_input)
+        # for compatibility with image3 pipeline use of ModelLibrary,
+        # convert ModelContainer to ModelLibrary and then back
+        resample_library = ModelLibrary(resample_input, on_disk=False)
+
+        # Output is a single datamodel
+        result = self.resample(resample_library)
 
         # Blend the science headers
         try:

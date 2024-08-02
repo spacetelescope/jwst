@@ -196,12 +196,18 @@ def test_tweakreg_step(example_input, with_shift):
     result = step(example_input)
 
     # check that step completed
-    for model in result:
-        assert model.meta.cal_step.tweakreg == 'COMPLETE'
+    with result:
+        for model in result:
+            assert model.meta.cal_step.tweakreg == 'COMPLETE'
+            result.shelve(model, modify=False)
 
-    # and that the wcses differ by a small amount due to the shift above
-    # by projecting one point through each wcs and comparing the difference
-    abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
+        # and that the wcses differ by a small amount due to the shift above
+        # by projecting one point through each wcs and comparing the difference
+        r0 = result.borrow(0)
+        r1 = result.borrow(1)
+        abs_delta = abs(r1.meta.wcs(0, 0)[0] - r0.meta.wcs(0, 0)[0])
+        result.shelve(r0, 0, modify=False)
+        result.shelve(r1, 1, modify=False)
     if with_shift:
         assert abs_delta > 1E-5
     else:
@@ -224,8 +230,10 @@ def test_src_confusion_pars(example_input, alignment_type):
     result = step(example_input)
 
     # check that step was skipped
-    for model in result:
-        assert model.meta.cal_step.tweakreg == 'SKIPPED'
+    with result:
+        for model in result:
+            assert model.meta.cal_step.tweakreg == 'SKIPPED'
+            result.shelve(model)
 
 
 @pytest.fixture()
@@ -330,6 +338,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     kwargs = {'use_custom_catalogs': custom}
     if catfile != "no_catfile":
         kwargs["catfile"] = str(catfile_path)
+
     step = tweakreg_step.TweakRegStep(**kwargs)
 
     # patch _construct_wcs_corrector to check the correct catalog was loaded
@@ -348,6 +357,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
 
     with pytest.raises(ValueError, match="done testing"):
         step(str(asn_path))
+
 
 @pytest.mark.parametrize("with_shift", [True, False])
 def test_sip_approx(example_input, with_shift):
@@ -376,31 +386,36 @@ def test_sip_approx(example_input, with_shift):
     # run the step on the example input modified above
     result = step(example_input)
 
-    # output wcs differs by a small amount due to the shift above:
-    # project one point through each wcs and compare the difference
-    abs_delta = abs(result[1].meta.wcs(0, 0)[0] - result[0].meta.wcs(0, 0)[0])
-    if with_shift:
-        assert abs_delta > 1E-5
-    else:
-        assert abs_delta < 1E-12
+    with result:
+        r0 = result.borrow(0)
+        r1 = result.borrow(1)
+        # output wcs differs by a small amount due to the shift above:
+        # project one point through each wcs and compare the difference
+        abs_delta = abs(r1.meta.wcs(0, 0)[0] - r0.meta.wcs(0, 0)[0])
+        if with_shift:
+            assert abs_delta > 1E-5
+        else:
+            assert abs_delta < 1E-12
 
-    # the first wcs is identical to the input and
-    # does not have SIP approximation keywords --
-    # they are normally set by assign_wcs
-    assert np.allclose(result[0].meta.wcs(0, 0)[0], example_input[0].meta.wcs(0, 0)[0])
-    for key in ['ap_order', 'bp_order']:
-        assert key not in result[0].meta.wcsinfo.instance
+        # the first wcs is identical to the input and
+        # does not have SIP approximation keywords --
+        # they are normally set by assign_wcs
+        assert np.allclose(r0.meta.wcs(0, 0)[0], example_input[0].meta.wcs(0, 0)[0])
+        for key in ['ap_order', 'bp_order']:
+            assert key not in r0.meta.wcsinfo.instance
 
-    # for the second, SIP approximation should be present
-    for key in ['ap_order', 'bp_order']:
-        assert result[1].meta.wcsinfo.instance[key] == 3
+        # for the second, SIP approximation should be present
+        for key in ['ap_order', 'bp_order']:
+            assert r1.meta.wcsinfo.instance[key] == 3
 
-    # evaluate fits wcs and gwcs for the approximation, make sure they agree
-    wcs_info = result[1].meta.wcsinfo.instance
-    grid = grid_from_bounding_box(result[1].meta.wcs.bounding_box)
-    gwcs_ra, gwcs_dec = result[1].meta.wcs(*grid)
-    fits_wcs = WCS(wcs_info)
-    fitswcs_res = fits_wcs.pixel_to_world(*grid)
+        # evaluate fits wcs and gwcs for the approximation, make sure they agree
+        wcs_info = r1.meta.wcsinfo.instance
+        grid = grid_from_bounding_box(r1.meta.wcs.bounding_box)
+        gwcs_ra, gwcs_dec = r1.meta.wcs(*grid)
+        fits_wcs = WCS(wcs_info)
+        fitswcs_res = fits_wcs.pixel_to_world(*grid)
+        result.shelve(r0, 0, modify=False)
+        result.shelve(r1, 1, modify=False)
 
     assert np.allclose(fitswcs_res.ra.deg, gwcs_ra)
     assert np.allclose(fitswcs_res.dec.deg, gwcs_dec)
