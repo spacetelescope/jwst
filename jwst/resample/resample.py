@@ -11,6 +11,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.library.basic_utils import bytes2human
 
 from jwst.datamodels import ModelLibrary
+from jwst.associations.asn_from_list import asn_from_list
 
 from . import gwcs_drizzle
 from jwst.resample import resample_utils
@@ -352,11 +353,10 @@ class ResampleData:
             output_model.wht *= 0.
 
         if not self.in_memory:
-            # FIXME: here rebuild ModelLibrary as an association from the output files
-            # and return that.
+            # rebuild ModelLibrary as an association from the output files
             # this yields memory savings if there are multiple groups
-            # for now, just pass
-            pass
+            asn = asn_from_list(output_models, product_name='outlier_i2d')
+            return ModelLibrary(asn, on_disk=True)
         return ModelLibrary(output_models, on_disk=False)
 
     def resample_many_to_one(self, input_models):
@@ -377,14 +377,16 @@ class ResampleData:
             input_list = []
             with input_models:
                 for i, model in enumerate(input_models):
-                    model.data = np.empty((1, 1))
-                    model.dq = np.empty((1, 1))
-                    model.err = np.empty((1, 1))
-                    model.wht = np.empty((1, 1))
-                    model.var_rnoise = np.empty((1, 1))
-                    model.var_poisson = np.empty((1, 1))
-                    model.var_flat = np.empty((1, 1))
-                    input_list.append(model)
+                    empty_model = type(model)()
+                    empty_model.meta = model.meta
+                    empty_model.data = np.empty((1, 1))
+                    empty_model.dq = np.empty((1, 1))
+                    empty_model.err = np.empty((1, 1))
+                    empty_model.wht = np.empty((1, 1))
+                    empty_model.var_rnoise = np.empty((1, 1))
+                    empty_model.var_poisson = np.empty((1, 1))
+                    empty_model.var_flat = np.empty((1, 1))
+                    input_list.append(empty_model)
                     input_models.shelve(model, i, modify=False)
             self.blend_output_metadata(output_model, input_list)
             del input_list
@@ -429,7 +431,7 @@ class ResampleData:
                     ymax=ymax
                 )
                 del data, inwht
-                input_models.shelve(img, modify=False)
+                input_models.shelve(img)
 
         # Resample variance arrays in input_models to output_model
         self.resample_variance_arrays(output_model, input_models)
@@ -465,7 +467,6 @@ class ResampleData:
         weighted_pn_var = np.full_like(output_model.data, np.nan)
         weighted_flat_var = np.full_like(output_model.data, np.nan)
         total_weight_rn_var = np.zeros_like(output_model.data)
-        total_weight_pn_var = np.zeros_like(output_model.data)
         total_weight_flat_var = np.zeros_like(output_model.data)
         with input_models:
             for i, model in enumerate(input_models):
@@ -502,7 +503,24 @@ class ResampleData:
                     )
                     total_weight_rn_var[mask] += weight[mask]
 
-                # Now do poisson and flat variance, updating only valid new values
+                input_models.shelve(model, i, modify=False)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
+
+            output_variance = (weighted_rn_var
+                               / total_weight_rn_var / total_weight_rn_var)
+            setattr(output_model, "var_rnoise", output_variance)
+            del weighted_rn_var, total_weight_rn_var, output_variance
+
+        # Poisson variance
+        total_weight_pn_var = np.zeros_like(output_model.data)
+        weighted_pn_var = np.full_like(output_model.data, np.nan)
+        with input_models:
+            for i, model in enumerate(input_models):
+
+                # updating only valid new values
                 # (zero is a valid value; negative, inf, or NaN are not)
                 pn_var = self._resample_one_variance_array(
                     "var_poisson", model, output_model)
@@ -514,6 +532,21 @@ class ResampleData:
                         axis=0
                     )
                     total_weight_pn_var[mask] += weight[mask]
+
+                input_models.shelve(model, i, modify=False)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
+
+            output_variance = (weighted_pn_var
+                               / total_weight_pn_var / total_weight_pn_var)
+            setattr(output_model, "var_poisson", output_variance)
+            del weighted_pn_var, total_weight_pn_var, output_variance
+
+        # Flat field variance
+        with input_models:
+            for i, model in enumerate(input_models):
 
                 flat_var = self._resample_one_variance_array(
                     "var_flat", model, output_model)
@@ -527,7 +560,7 @@ class ResampleData:
                     total_weight_flat_var[mask] += weight[mask]
 
                 del model.meta.iscale
-                input_models.shelve(model, i, modify=False)
+                input_models.shelve(model, i)
 
         # We now have a sum of the weighted resampled variances.
         # Divide by the total weights, squared, and set in the output model.
@@ -536,17 +569,11 @@ class ResampleData:
             warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
             warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
 
-            output_variance = (weighted_rn_var
-                               / total_weight_rn_var / total_weight_rn_var)
-            setattr(output_model, "var_rnoise", output_variance)
-
-            output_variance = (weighted_pn_var
-                               / total_weight_pn_var / total_weight_pn_var)
-            setattr(output_model, "var_poisson", output_variance)
-
             output_variance = (weighted_flat_var
                                / total_weight_flat_var / total_weight_flat_var)
             setattr(output_model, "var_flat", output_variance)
+            del weighted_flat_var, total_weight_flat_var, output_variance
+
 
     def _resample_one_variance_array(self, name, input_model, output_model):
         """Resample one variance image from an input model.

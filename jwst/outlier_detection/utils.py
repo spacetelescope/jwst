@@ -31,7 +31,7 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
-def create_median_library(resampled_models, maskpt, on_disk=True, buffer_size=1.0):
+def create_median_library(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
     """Create a median image from the singly resampled images.
     resampled_models is expected to be a ModelLibrary for imaging modes.
     """
@@ -62,9 +62,10 @@ def create_median_library(resampled_models, maskpt, on_disk=True, buffer_size=1.
             dtype = example_model.data.dtype
             nsections, section_nrows = _compute_buffer_indices(example_model, buffer_size)
             resampled_models.shelve(example_model, modify=False)
+            del example_model
 
         # get spatial sections of library and compute timewise median, one by one
-        resampled_sections = _get_sections_library(resampled_models, nsections, section_nrows, example_model.data.shape[0])
+        resampled_sections = _get_sections_library(resampled_models, nsections, section_nrows, shp[0])
         median_image_empty = np.empty(shp, dtype) * np.nan
         return _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty)
 
@@ -88,18 +89,23 @@ def _get_sections_library(library, nsections, section_nrows, imrows):
     """
     with library:
         example_model = library.borrow(0)
+        dtype = example_model.data.dtype
+        dtype_wht = example_model.wht.dtype
+        shp = example_model.data.shape
         library.shelve(example_model, 0, modify=False)
+        del example_model
     for i in range(nsections):
         row1 = i * section_nrows
         row2 = min(row1 + section_nrows, imrows)
         
-        data_list = np.empty((len(library), row2 - row1, example_model.data.shape[1]), example_model.data.dtype)
-        weight_list = np.empty((len(library), row2 - row1, example_model.data.shape[1]), example_model.wht.dtype)
+        data_list = np.empty((len(library), row2 - row1, shp[1]), dtype)
+        weight_list = np.empty((len(library), row2 - row1, shp[1]), dtype_wht)
         with library:
             for j, model in enumerate(library):
                 data_list[j] = model.data[row1:row2]
                 weight_list[j] = model.wht[row1:row2]
                 library.shelve(model, j, modify=False)
+                del model
         yield (data_list, weight_list, (row1, row2))
 
 

@@ -84,6 +84,7 @@ class SourceCatalogStep(Step):
             threshold = self.snr_threshold * bkg.background_rms
             finder = JWSTSourceFinder(threshold, self.npixels,
                                       deblend=self.deblend)
+            del threshold
 
             convolved_data = convolve_data(model.data, self.kernel_fwhm,
                                            mask=coverage_mask)
@@ -96,6 +97,7 @@ class SourceCatalogStep(Step):
             catobj = JWSTSourceCatalog(model, segment_img, convolved_data,
                                        self.kernel_fwhm, aperture_params,
                                        abvega_offset, ci_star_thresholds)
+            del convolved_data
             catalog = catobj.catalog
 
             # add back background to data so input model is unchanged

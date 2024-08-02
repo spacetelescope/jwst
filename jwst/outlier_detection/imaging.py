@@ -108,11 +108,11 @@ def detect_outliers(
         with drizzled_models:
             example_model = drizzled_models.borrow(0)
             drizzled_models.shelve(example_model, modify=False)
-        with datamodels.open(example_model) as dm0:
-            median_model = datamodels.ImageModel(median_data)
-            median_model.update(dm0)
-            median_model.meta.wcs = median_wcs
-        del example_model
+            with datamodels.open(example_model) as dm0:
+                median_model = datamodels.ImageModel(median_data)
+                median_model.update(dm0)
+                median_model.meta.wcs = median_wcs
+            del example_model
 
         save_median(median_model, make_output_path, asn_id)
         del median_model
