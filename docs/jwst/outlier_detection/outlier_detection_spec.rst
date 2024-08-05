@@ -39,12 +39,10 @@ Specifically, this routine performs the following operations (modified from the
      parameter is set to `True`
 #. Blot median image to match each original input image
 
-   - Resampled/blotted images are written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`
    - **If resampling is turned off**, the median image is used for comparison
      with the original input models for detecting outliers
 #. Perform statistical comparison between blotted image and original image to identify outliers
 #. Update input data model DQ arrays with mask of detected outliers
 
 
-.. automodapi:: jwst.outlier_detection.outlier_detection_spec
+.. automodapi:: jwst.outlier_detection.spec
