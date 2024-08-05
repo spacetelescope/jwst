@@ -31,13 +31,17 @@ the times will be computed from the exposure start time, the integration time,
 and the number of integrations.  In either case, the times are
 Modified Julian Date, time scale UTC.
 
-If NaNs exist in the source or background annulus the NaNs are masked out
-and the TSO mode photometry will not will not return NaN.
-This is different than photometry for imaging mode where a NaN value is returned.
-For TSO data  it is  easier for single pixels to be affected in a given integration
-and science analysis will be focused on variability of one source.
-In the imaging case the most likely cause of NaN pixels in the annuli 
-is  NaN-valued central saturated pixels in an image with many sources.
+If NaNs exist in the source or background annulus, they are masked out and the value
+returned is the sum over the real-valued data.
+This is different from the convention for photometry in standard imaging mode:
+in that case, a NaN value is returned if it is present in any of the pixels in
+the source aperture. In the imaging case, the mostly likely cause of NaN pixels
+in the aperture is NaN-valued central pixels for a saturating source in an image
+with many sources. nFor TSO data  it is more likely that  single pixels are  affected
+in a given integration and science analysis will be focused on variability of one source.
+If NaNs are present, the absolute flux will be underestimages, the relative values may still
+be useful.
+
  
 The output table contains these fields:
 
