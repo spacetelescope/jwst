@@ -31,6 +31,24 @@ def run_detector1pipeline(rtdata_module):
 
 
 @pytest.fixture(scope="module")
+def run_detector1_with_clean_flicker_noise(rtdata_module):
+    """Run detector1 pipeline on NIRCam imaging data with noise cleaning."""
+    rtdata_module.get_data("nircam/image/jw01538046001_03105_00001_nrcalong_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files.
+    # Run optional clean_flicker_noise step, saving extra outputs
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--save_calibrated_ramp=True",
+            "--steps.clean_flicker_noise.skip=False",
+            "--steps.clean_flicker_noise.save_results=True",
+            "--steps.clean_flicker_noise.save_mask=True",
+            "--steps.clean_flicker_noise.save_background=True",
+            "--steps.clean_flicker_noise.save_noise=True",
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
 def run_image2pipeline(run_detector1pipeline, rtdata_module):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
@@ -225,3 +243,26 @@ def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
     assert_allclose(y, model.meta.wcsinfo.crpix2 - 1)
     assert_allclose(raout, ra)
     assert_allclose(decout, dec)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix",
+                         ["clean_flicker_noise", "mask",
+                          "flicker_bkg", "flicker_noise",
+                          "ramp", "rate", "rateints"])
+def test_nircam_image_detector1_with_clean_flicker_noise(
+        run_detector1_with_clean_flicker_noise,
+        rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Test detector1 pipeline for NIRCam imaging data with noise cleaning."""
+    rtdata = rtdata_module
+    rtdata.input = "jw01538046001_03105_00001_nrcalong_uncal.fits"
+    output = f"jw01538046001_03105_00001_nrcalong_{suffix}.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_nircam_image_clean_flicker_noise/{output}")
+
+    # Set tolerances so the file comparisons work across architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
