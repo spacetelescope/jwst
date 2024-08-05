@@ -173,6 +173,8 @@ def test_mask_ifu_slices():
     cfn.mask_ifu_slices(rate_model, mask)
     assert np.allclose(np.sum(mask), 0.9 * mask.size, atol=0.01 * mask.size)
 
+    rate_model.close()
+
 
 @pytest.mark.parametrize('exptype,blocked',
                          [('mos', .012), ('mos_fs', .025), ('fs', .05)])
@@ -193,6 +195,8 @@ def test_mask_slits(exptype, blocked):
 
     # Check that the fraction of the array blocked is as expected
     assert np.allclose(np.sum(mask) / mask.size, 1 - blocked, atol=0.001)
+
+    rate_model.close()
 
 
 @pytest.mark.parametrize('fit_histogram', [True, False])
@@ -327,6 +331,7 @@ def test_create_mask_miri():
     assert not mask[5, 5]
     assert np.sum(mask) == mask.size - 1
 
+    rate_model.close()
 
 def test_create_mask_from_rateints():
     # small rateints data
@@ -356,6 +361,8 @@ def test_create_mask_from_rateints():
     assert not mask[1, 1]
     assert not mask[2, 2]
     assert np.sum(mask) == mask.size - 3
+
+    rate_model.close()
 
 
 def test_background_level(log_watcher):
@@ -492,6 +499,9 @@ def test_do_correction_miri_imaging_ramp(mask_science):
     assert bg is None
     assert noise is None
 
+    ramp_model.close()
+    cleaned.close()
+
 
 @pytest.mark.parametrize('mask_science', [True, False])
 def test_do_correction_nirspec_rate(mask_science):
@@ -508,6 +518,9 @@ def test_do_correction_nirspec_rate(mask_science):
     assert mask is None
     assert bg is None
     assert noise is None
+
+    rate_model.close()
+    cleaned.close()
 
 
 @pytest.mark.parametrize('single_mask', [True, False])
@@ -526,6 +539,10 @@ def test_do_correction_rateints(single_mask):
     else:
         assert mask.shape == cleaned.data.shape
 
+    rate_model.close()
+    cleaned.close()
+    mask.close()
+
 
 def test_do_correction_unsupported(log_watcher):
     ramp_model = make_small_ramp_model()
@@ -536,6 +553,8 @@ def test_do_correction_unsupported(log_watcher):
     assert cleaned is ramp_model
     assert status == 'SKIPPED'
     log_watcher.assert_seen()
+
+    ramp_model.close()
 
 
 def test_do_correction_fft_not_allowed(log_watcher):
@@ -558,6 +577,8 @@ def test_do_correction_fft_not_allowed(log_watcher):
     assert status == 'SKIPPED'
     log_watcher.assert_seen()
 
+    ramp_model.close()
+
 
 @pytest.mark.parametrize('none_value', [None, 'none', 'None'])
 def test_do_correction_no_background(none_value):
@@ -569,6 +590,9 @@ def test_do_correction_no_background(none_value):
 
     # Output data is all zero: uniform level is removed
     assert np.allclose(cleaned.data, 0.0)
+
+    ramp_model.close()
+    cleaned.close()
 
 
 @pytest.mark.parametrize('ndim', [2, 3])
@@ -585,12 +609,17 @@ def test_do_correction_user_mask(tmp_path, ndim):
         mask_model = datamodels.ImageModel(mask)
     user_mask = str(tmp_path / 'mask.fits')
     mask_model.save(user_mask)
+    mask_model.close()
 
     cleaned, output_mask, _, _, _ = cfn.do_correction(
         ramp_model, user_mask=user_mask, save_mask=True)
 
     assert np.all(output_mask.data == mask_model.data)
     assert np.allclose(cleaned.data, ramp_model.data)
+
+    ramp_model.close()
+    cleaned.close()
+    output_mask.close()
 
 
 @pytest.mark.parametrize('input_type', ['rate', 'rateints', 'ramp'])
@@ -607,6 +636,7 @@ def test_do_correction_user_mask_mismatch(tmp_path, input_type, log_watcher):
     mask_model = datamodels.ImageModel(mask)
     user_mask = str(tmp_path / 'mask.fits')
     mask_model.save(user_mask)
+    mask_model.close()
 
     log_watcher.message = 'Mask does not match'
     cleaned, output_mask, _, _, status = cfn.do_correction(
@@ -615,6 +645,9 @@ def test_do_correction_user_mask_mismatch(tmp_path, input_type, log_watcher):
     log_watcher.assert_seen()
     assert status == 'SKIPPED'
     assert output_mask is None
+
+    model.close()
+    cleaned.close()
 
 
 def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
@@ -625,6 +658,7 @@ def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
     mask_model = datamodels.CubeModel(mask)
     user_mask = str(tmp_path / 'mask.fits')
     mask_model.save(user_mask)
+    mask_model.close()
 
     log_watcher.message = 'Mask does not match'
     cleaned, output_mask, _, _, status = cfn.do_correction(
@@ -633,6 +667,9 @@ def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
     log_watcher.assert_seen()
     assert status == 'SKIPPED'
     assert output_mask is None
+
+    model.close()
+    cleaned.close()
 
 
 @pytest.mark.parametrize('single_mask', [True, False])
@@ -645,10 +682,10 @@ def test_do_correction_background_from_rate(single_mask):
     ramp_model.data += rng.normal(0, 0.1, size=ramp_model.data.shape)
 
     # Background from ramp diffs
-    _, _, bg_model_ramp, _, _ = cfn.do_correction(
+    c1, _, bg_model_ramp, _, _ = cfn.do_correction(
         ramp_model, single_mask=single_mask, background_method='median',
         background_from_rate=False, save_background=True)
-    _, _, bg_model_rate, _, _ = cfn.do_correction(
+    c2, _, bg_model_rate, _, _ = cfn.do_correction(
         ramp_model, single_mask=single_mask, background_method='median',
         background_from_rate=True, save_background=True)
 
@@ -675,6 +712,12 @@ def test_do_correction_background_from_rate(single_mask):
             assert np.allclose(bg_model_rate.data[integ, 2:],
                                bg_model_rate.data[integ, 1])
 
+    ramp_model.close()
+    bg_model_rate.close()
+    bg_model_ramp.close()
+    c1.close()
+    c2.close()
+
 
 def test_do_correction_fft_subarray():
     ramp_model = make_small_ramp_model()
@@ -689,6 +732,10 @@ def test_do_correction_fft_subarray():
     assert np.allclose(cleaned.data, ramp_model.data)
     assert np.allclose(noise.data, 0.0)
 
+    ramp_model.close()
+    cleaned.close()
+    noise.close()
+
 
 def test_do_correction_fft_full():
     rate_model = make_nirspec_fs_model()
@@ -700,6 +747,10 @@ def test_do_correction_fft_full():
     assert cleaned.data.shape == rate_model.data.shape
     assert np.allclose(cleaned.data, rate_model.data)
     assert np.allclose(noise.data, 0.0)
+
+    rate_model.close()
+    cleaned.close()
+    noise.close()
 
 
 def test_do_correction_clean_fails(monkeypatch, log_watcher):
@@ -730,6 +781,9 @@ def test_do_correction_clean_fails(monkeypatch, log_watcher):
     assert status == 'SKIPPED'
     assert np.allclose(cleaned.data, ramp_model.data)
 
+    ramp_model.close()
+    cleaned.close()
+
 
 @pytest.mark.parametrize('save_type', ['noise', 'background'])
 @pytest.mark.parametrize('input_type', ['rate', 'rateints', 'ramp'])
@@ -752,10 +806,14 @@ def test_do_correction_save_intermediate(save_type, input_type):
     if save_bg:
         assert background.data.shape == model.data.shape
         assert type(background) is type(model)
+        background.close()
     else:
         assert background is None
     if save_noise:
         assert noise.data.shape == model.data.shape
         assert type(noise) is type(model)
+        noise.close()
     else:
         assert noise is None
+
+    model.close()
