@@ -27,7 +27,6 @@ def run_detector1pipeline(rtdata_module):
         "--steps.jump.save_results=True",
         "--steps.ramp_fit.save_results=True",
         "--steps.gain_scale.save_results=True",
-        "--steps.jump.rejection_threshold=200",
     ])
 
 
