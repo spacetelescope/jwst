@@ -27,7 +27,7 @@ log.setLevel(logging.DEBUG)
 NRS_FS_REGION = [922, 1116]
 
 
-def make_rate(input_model, return_cube=False):
+def make_rate(input_model, input_dir='', return_cube=False):
     """
     Make a rate model from a ramp model.
 
@@ -35,6 +35,10 @@ def make_rate(input_model, return_cube=False):
     ----------
     input_model : `~jwst.datamodel.RampModel`
         Input ramp model.
+
+    input_dir : str
+        Path to the input directory.  Used by sub-steps (e.g. assign_wcs
+        for NIRSpec MOS data) to find auxiliary data.
 
     return_cube : bool, optional
         If set, a CubeModel will be returned, with a separate
@@ -51,6 +55,7 @@ def make_rate(input_model, return_cube=False):
 
     log.info("Creating draft rate file for scene masking")
     step = RampFitStep()
+    step.input_dir = input_dir
     with LoggingContext(step.log, level=logging.WARNING):
         # Note: the copy is currently needed because ramp fit
         # closes the input model when it's done, and we need
@@ -69,7 +74,8 @@ def make_rate(input_model, return_cube=False):
     return output_model
 
 
-def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=False):
+def post_process_rate(input_model, input_dir='', assign_wcs=False,
+                      msaflagopen=False, flat_dq=False):
     """
     Post-process the input rate model, as needed.
 
@@ -77,6 +83,10 @@ def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=
     ----------
     input_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
         Input rate model.
+
+    input_dir : str
+        Path to the input directory.  Used by sub-steps (e.g. assign_wcs
+        for NIRSpec MOS data) to find auxiliary data.
 
     assign_wcs : bool, optional
         If set and the input does not already have a WCS assigned,
@@ -102,6 +112,7 @@ def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=
     if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, 'wcs'):
         log.info("Assigning a WCS for scene masking")
         step = AssignWcsStep()
+        step.input_dir = input_dir
         with LoggingContext(step.log, level=logging.WARNING):
             output_model = step.run(output_model)
 
@@ -109,6 +120,7 @@ def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=
     if msaflagopen:
         log.info("Flagging failed-open MSA shutters for scene masking")
         step = MSAFlagOpenStep()
+        step.input_dir = input_dir
         with LoggingContext(step.log, level=logging.WARNING):
             output_model = step.run(output_model)
 
@@ -116,6 +128,7 @@ def post_process_rate(input_model, assign_wcs=False, msaflagopen=False, flat_dq=
     if flat_dq:
         log.info("Retrieving flat DQ values for scene masking")
         step = FlatFieldStep()
+        step.input_dir = input_dir
         with LoggingContext(step.log, level=logging.WARNING):
             flat_corrected_model = step.run(output_model)
 
@@ -701,7 +714,8 @@ def median_clean(image, mask, axis_to_correct):
     return corrected_image
 
 
-def do_correction(input_model, fit_method='median', background_method='median',
+def do_correction(input_model, input_dir=None, fit_method='median',
+                  background_method='median',
                   background_box_size=None, background_from_rate=False,
                   mask_science_regions=False, n_sigma=2.0, fit_histogram=False,
                   single_mask=True, user_mask=None, save_mask=False,
@@ -713,6 +727,10 @@ def do_correction(input_model, fit_method='median', background_method='median',
     ----------
     input_model : `~jwst.datamodel.JwstDataModel`
         Science data to be corrected.
+
+    input_dir : str
+        Path to the input directory.  Used by sub-steps (e.g. assign_wcs
+        for NIRSpec MOS data) to find auxiliary data.
 
     fit_method : {'fft', 'median'}, optional
         The algorithm to use to fit background noise.
@@ -830,7 +848,8 @@ def do_correction(input_model, fit_method='median', background_method='median',
     # Make a rate file if needed
     if user_mask is None or background_from_rate:
         if isinstance(input_model, datamodels.RampModel):
-            image_model = make_rate(input_model, return_cube=(not single_mask))
+            image_model = make_rate(input_model, return_cube=(not single_mask),
+                                    input_dir=input_dir)
         else:
             # input is already a rate file
             image_model = input_model
@@ -843,7 +862,8 @@ def do_correction(input_model, fit_method='median', background_method='median',
         if mask_science_regions:
             image_model = post_process_rate(
                 image_model, assign_wcs=assign_wcs,
-                msaflagopen=flag_open, flat_dq=flat_dq)
+                msaflagopen=flag_open, flat_dq=flat_dq,
+                input_dir=input_dir)
     else:
         image_model = input_model
 

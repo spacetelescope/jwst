@@ -105,7 +105,7 @@ class NSCleanStep(Step):
 
             # Do the NSClean correction
             result = clean_flicker_noise.do_correction(
-                input_model, self.fit_method,
+                input_model, self.input_dir, self.fit_method,
                 self.background_method, self.background_box_size,
                 self.background_from_rate,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
