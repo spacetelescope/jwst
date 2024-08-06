@@ -29,6 +29,11 @@ emicorr
 - Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
   to compute a correction. [#8675]
 
+general
+-------
+
+- Remove the unused ``stsci.image`` dependency. [#8663]
+
 master_background
 -----------------
 
