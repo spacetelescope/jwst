@@ -1717,7 +1717,7 @@ def get_transforms(input_model, slitnames, return_slits=False):
     -------
     wcsobj : `~gwcs.wcs.WCS`
         WCS object deep copied from input_model.meta.wcs
-    trans1 : `~astropy.modeling.core.Model` model
+    trans1 : `~astropy.modeling.core.Model`
         wcs.pipeline[1].transform[1:]
     trans2 : list of `~astropy.modeling.core.Model` models
         wcs.pipeline[2].transform model for each input slit
