@@ -38,7 +38,6 @@ dependencies = [
     "stcal @ git+https://github.com/spacetelescope/stcal.git",
     "stdatamodels>=2.0.0,<2.1.0",
     "stpipe>=0.6.0,<0.7.0",
-    "stsci.image>=2.3.5",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
     "tweakwcs>=0.8.8",
