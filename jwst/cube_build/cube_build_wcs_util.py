@@ -159,7 +159,7 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
     
     for i in range(nslices):
         slice_wcs = nirspec.nrs_wcs_set_input_lite(input, wcsobj, i,
-                                                 [tr1, tr2[i], tr3[i]])
+                                                   [tr1, tr2[i], tr3[i]])
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
                                                step=(1, 1), center=True)
         if coord_system == 'internal_cal':
