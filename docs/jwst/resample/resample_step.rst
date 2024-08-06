@@ -1,7 +1,6 @@
 .. resample_step_:
 
-Python Step Interface: ResampleStep() and ResampleSpecStep()
-============================================================
+Python Step Interface: ResampleStep()
+=====================================
 
 .. automodapi:: jwst.resample.resample_step
-.. automodapi:: jwst.resample.resample_spec_step

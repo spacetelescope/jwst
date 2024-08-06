@@ -1,8 +1,8 @@
-.. _resample_step_args:
+.. _resample_spec_step_args:
 
 Step Arguments
 ==============
-The `resample` step has the following optional arguments that control
+The `resample_spec` step has the following optional arguments that control
 the behavior of the processing and the characteristics of the resampled
 image.
 
@@ -12,39 +12,48 @@ image.
 
 ``--kernel`` (str, default='square')
     The form of the kernel function used to distribute flux onto the output
-    image.  Available kernels are `square`, `gaussian`, `point`,
-    `turbo`, `lanczos2`, and `lanczos3`.
+    image.  Available kernels for spectral data are `square` and `point`.
+    Other drizzle kernels, available for imaging data, do not conserve
+    spectral flux.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
-    Ratio of input to output pixel scale.
-    For imaging data, a value of 0.5 means the output
-    image would have 4 pixels sampling each input pixel.
+    Ratio of input to output spatial pixel scale.
+
+    Values greater than 1 indicate that the input pixels have a larger spatial
+    scale, so more output pixels will sample the same input pixel.  For example,
+    a value of 2.0 means the output image would have 2 pixels sampling each input
+    spatial pixel. If the input data has units of flux density (MJy/pixel),
+    the output flux per pixel will be half the input flux per pixel.
+    If the input data has units of surface brightness (MJy/sr), the output
+    flux per pixel is not scaled.
+
+    Note that this parameter is only applied in the cross-dispersion
+    direction: sampling wavelengths are not affected.
+
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
+
+    .. note::
+        If this parameter is modified from the default value, the extraction
+        aperture for the :ref:`extract_1d <extract_1d_step>` step must
+        also be modified, since it is specified in pixels.
 
 ``--pixel_scale`` (float, default=None)
     Absolute pixel scale in ``arcsec``. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
 
-``--rotation`` (float, default=None)
-    Position angle of output image’s Y-axis relative to North.
-    A value of 0.0 would orient the final output image to be North up.
-    The default of `None` specifies that the images will not be rotated,
-    but will instead be resampled in the default orientation for the camera
-    with the x and y axes of the resampled image corresponding
-    approximately to the detector axes. Ignored when ``pixel_scale``
-    or ``output_wcs`` are provided.
+    If the input data has units of flux density (MJy/pixel), the output flux per
+    pixel will be scaled by the ratio of the selected output pixel scale to an average
+    input pixel scale.
+    If the input data has units of surface brightness (MJy/sr),
+    the output flux per pixel is not scaled.
 
-``--crpix`` (tuple of float, default=None)
-    Position of the reference pixel in the image array in the ``x, y`` order.
-    If ``crpix`` is not specified, it will be set to the center of the bounding
-    box of the returned WCS object. When supplied from command line, it should
-    be a comma-separated list of floats. Ignored when ``output_wcs``
-    is provided.
+    Note that this parameter is only applied in the cross-dispersion
+    direction: sampling wavelengths are not affected.
 
-``--crval`` (tuple of float, default=None)
-    Right ascension and declination of the reference pixel. Automatically
-    computed if not provided. When supplied from command line, it should be a
-    comma-separated list of floats. Ignored when ``output_wcs`` is provided.
+    .. note::
+        If this parameter is modified from the default value, the extraction
+        aperture for the :ref:`extract_1d <extract_1d_step>` step must
+        also be modified, since it is specified in pixels.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
@@ -82,9 +91,8 @@ image.
     - ``array_shape``: shape of the output image in ``numpy`` order: (ny, nx).
 
     .. note::
-        When ``output_wcs`` is specified, WCS-related arguments such as
-        ``pixel_scale_ratio``, ``pixel_scale``, ``rotation``, ``crpix``,
-        and ``crval`` will be ignored.
+        When ``output_wcs`` is specified, WCS-related arguments
+        ``pixel_scale_ratio`` and ``pixel_scale`` will be ignored.
 
 ``--fillval`` (str, default='NAN')
     The value to assign to output pixels that have zero weight or do not
@@ -107,16 +115,6 @@ image.
 
 ``--blendheaders`` (bool, default=True)
     Blend metadata from all input images into the resampled output image.
-
-``--allowed_memory`` (float, default=None)
-    Specifies the fractional amount of free memory to allow when creating the
-    resampled image. If ``None``, the environment variable
-    ``DMODEL_ALLOWED_MEMORY`` is used. If not defined, no check is made. If the
-    resampled image would be larger than specified, an ``OutputTooLargeError``
-    exception will be generated.
-
-    For example, if set to ``0.5``, only resampled images that use less than
-    half the available memory can be created.
 
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during

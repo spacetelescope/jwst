@@ -86,7 +86,7 @@ Specifically, this routine performs the following operations:
      will be ignored and instead the outlier mask will be computed using the following
      formula:
 
-       .. math:: | image\_input - image\_median | > SNR*input_err
+       .. math:: | image\_input - image\_median | > SNR * input\_err
 
    * When resampling is enabled, the comparison uses the original input images, the blotted
      median image, and the derivative of the blotted image to

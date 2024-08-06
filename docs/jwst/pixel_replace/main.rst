@@ -12,7 +12,7 @@ the extracted spectrum.
 
 To avoid this defect in the 1-D spectrum, this step estimates the flux values of pixels
 flagged as ``DO_NOT_USE`` in 2-D extracted spectra using interpolation methods,
-prior to rectification in the :ref:`resample_spec <resample_step>` step.
+prior to rectification in the :ref:`resample_spec <resample_spec_step>` step.
 ``pixel_replace`` inserts these estimates into the 2-D data array,
 unsets the ``DO_NOT_USE`` flag, and sets the ``FLUX_ESTIMATED`` flag for each affected pixel.
 Error values and variance components for the replaced pixels are similarly updated with
