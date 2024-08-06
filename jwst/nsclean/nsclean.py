@@ -92,7 +92,7 @@ def mask_slits(input_model, mask):
         output mask with additional flags for slit pixels
     """
 
-    from jwst.extract_2d.nirspec import _toindex
+    from gwcs.utils import _toindex
 
     log.info("Finding slit/slitlet pixels")
 
