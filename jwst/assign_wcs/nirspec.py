@@ -1710,7 +1710,7 @@ def get_transforms(input_model, slitnames, return_slits=False):
         an observation.
     slitnames : int or str
         Slit.name of all open slits.
-    return_slits : bool
+    return_slits : bool, optional
         Return the open slits
 
     Returns
