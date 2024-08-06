@@ -25,12 +25,12 @@ jobs:
     with:
       upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
       targets: |
-        # Linux wheels
-        - cp3*-manylinux_x86_64
-        # MacOS wheels
-        - cp3*-macosx_x86_64
-        # Until we have arm64 runners, we can't automatically test arm64 wheels
-        - cp3*-macosx_arm64
+        # Linux wheels (except python 313)
+        - cp31[!3]-manylinux_x86_64
+        # MacOS wheels (except python 313)
+        - cp31[!3]-macosx_x86_64
+        # MacOS arm64 wheels (except python 313)
+        - cp31[!3]-macosx_arm64
       sdist: true
       test_command: python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"
     secrets:
