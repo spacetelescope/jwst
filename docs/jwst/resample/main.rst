@@ -1,8 +1,8 @@
 Description
 ===========
 
-:Classes: `jwst.resample.ResampleStep`, `jwst.resample.ResampleSpecStep`
-:Alias: resample, resample_spec
+:Classes: `jwst.resample.ResampleStep`
+:Alias: resample
 
 This routine will resample each input 2D image based on the WCS and
 distortion information, and will combine multiple resampled images
@@ -144,16 +144,6 @@ context array ``con``, one can do something like this:
 
 For convenience, this functionality was implemented in the
 :py:func:`~jwst.resample.resample_utils.decode_context` function.
-
-
-Spectroscopic Data
-------------------
-
-Use the ``resample_spec`` step for spectroscopic data.  The dispersion
-direction is needed for this case, and this is obtained from the
-DISPAXIS keyword.  For the NIRSpec Fixed Slit mode, the ``resample_spec``
-step will be skipped if the input is a rateints product, as 3D input for
-the mode is not supported.
 
 
 References
