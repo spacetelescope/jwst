@@ -1754,8 +1754,10 @@ def nrs_wcs_set_input_lite(input_model, input_wcs, slit_name, wcs_objs,
                            slit_y_low=None, slit_y_high=None):
     
     """
-    Returns a WCS object for a specific slit, slice or shutter, without
-    deep copying the input WCS object.
+    Return a WCS object for a specific slit, slice or shutter
+
+    The lite version of the routine is distinguished from the legacy
+    routine because it does not make a deep copy of the input WCS object.
 
     Parameters
     ----------
