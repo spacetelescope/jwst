@@ -1708,7 +1708,7 @@ def get_transforms(input_model, slitnames, return_slits=False):
     input_model : `~jwst.datamodels.JwstDataModel`
         A data model with a WCS object for the all open slitlets in
         an observation.
-    slitnames : int or str
+    slitnames : list of int or str
         Slit.name of all open slits.
     return_slits : bool, optional
         Return the open slits
