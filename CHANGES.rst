@@ -88,6 +88,13 @@ stpipe
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
 
+tso_photometry
+--------------
+
+- Replaced photutils.aperture do_photometry with photutils.ApertureStats to remove NaNs
+  when performing TSO photometry for non SUB64 WLP8 pupil data. For SUB64 WLP8 changed
+  summing data in the aperture to use np.nansum to ignore NaNs. [#8672]
+
 tweakreg
 --------
 
