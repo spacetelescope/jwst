@@ -6,6 +6,7 @@ Calls create_pipeline() which redirects based on EXP_TYPE.
 """
 import logging
 import numpy as np
+import copy
 
 from astropy.modeling import models
 from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
@@ -1728,8 +1729,6 @@ def get_transforms(input_model, slitnames, return_slits=False):
         Only returned if return_slits is True
     """
     
-    import copy
-
     wcs = copy.deepcopy(input_model.meta.wcs)
 
     trans1 = copy.deepcopy(wcs.pipeline[1].transform[1:])
@@ -1792,7 +1791,6 @@ def nrs_wcs_set_input_lite(input_model, input_wcs, slit_name, wcs_objs,
     if wavelength_range is None:
         _, wavelength_range = spectral_order_wrange_from_model(input_model)
 
-    import copy
     slit_wcs = copy.copy(input_wcs)
 
     slit_wcs.set_transform('sca', 'gwa', wcs_objs[0])
@@ -1836,7 +1834,7 @@ def _nrs_wcs_set_input(input_model, slit_name):
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
-    import copy
+
     wcsobj = input_model.meta.wcs
 
     slit_wcs = copy.deepcopy(wcsobj)
