@@ -36,10 +36,10 @@ returned is the sum over the real-valued data.
 This is different from the convention for photometry in standard imaging mode:
 in that case, a NaN value is returned if it is present in any of the pixels in
 the source aperture. In the imaging case, the mostly likely cause of NaN pixels
-in the aperture is NaN-valued central pixels for a saturating source in an image
-with many sources. nFor TSO data  it is more likely that  single pixels are  affected
+in the aperture is NaN-valued central pixels for a saturated source in an image
+with many sources. For TSO data, it is more likely that  single pixels are affected
 in a given integration and science analysis will be focused on variability of one source.
-If NaNs are present, the absolute flux will be underestimages, the relative values may still
+If NaNs are present, the absolute flux will be underestimated, but the relative values may still
 be useful.
 
  
