@@ -114,7 +114,30 @@ class ResampleStep(Step):
         return result
 
     @staticmethod
-    def _check_list_pars(vals, name, min_vals=None):
+    def check_list_pars(vals, name, min_vals=None):
+        """
+        Validate step parameters that may take a 2-element list.
+
+        Parameters
+        ----------
+        vals : list or None
+            Values to validate.
+        name : str
+            Parameter name.
+        min_vals : list, optional
+            Minimum allowed values for the parameter. Must
+            have 2 values.
+
+        Returns
+        -------
+        values : list
+            The validated list of values.
+
+        Raises
+        ------
+        ValueError
+            If the values do not have expected values.
+        """
         if vals is None:
             return None
         if len(vals) != 2:
@@ -130,7 +153,24 @@ class ResampleStep(Step):
             raise ValueError(f"Both '{name}' values must be either None or not None.")
 
     @staticmethod
-    def _load_custom_wcs(asdf_wcs_file, output_shape):
+    def load_custom_wcs(asdf_wcs_file, output_shape=None):
+        """
+        Load a custom output WCS from an ASDF file.
+
+        Parameters
+        ----------
+        asdf_wcs_file : str
+            Path to an ASDF file containing a GWCS structure.
+        output_shape : tuple of int, optional
+            Array shape for the output data.  If not provided,
+            the custom WCS must specify one of: pixel_shape,
+            array_shape, or bounding_box.
+
+        Returns
+        -------
+        wcs : WCS
+            The output WCS to resample into.
+        """
         if not asdf_wcs_file:
             return None
 
@@ -174,22 +214,22 @@ class ResampleStep(Step):
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders,
-            allowed_memory = self.allowed_memory,
-            in_memory = self.in_memory
+            allowed_memory=self.allowed_memory,
+            in_memory=self.in_memory
         )
 
         # Custom output WCS parameters.
-        kwargs['output_shape'] = self._check_list_pars(
+        kwargs['output_shape'] = self.check_list_pars(
             self.output_shape,
             'output_shape',
             min_vals=[1, 1]
         )
-        kwargs['output_wcs'] = self._load_custom_wcs(
+        kwargs['output_wcs'] = self.load_custom_wcs(
             self.output_wcs,
             kwargs['output_shape']
         )
-        kwargs['crpix'] = self._check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self._check_list_pars(self.crval, 'crval')
+        kwargs['crpix'] = self.check_list_pars(self.crpix, 'crpix')
+        kwargs['crval'] = self.check_list_pars(self.crval, 'crval')
         kwargs['rotation'] = self.rotation
         kwargs['pscale'] = self.pixel_scale
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
