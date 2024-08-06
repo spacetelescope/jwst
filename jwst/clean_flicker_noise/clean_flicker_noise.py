@@ -352,8 +352,9 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
                 range=(center - 4. * sigma, center + 4. * sigma))
         except ValueError:
             log.error('Histogram failed; using clip center and sigma.')
-            hist, edges, param_opt = None, None, None
+            hist, edges = None, None
 
+        param_opt = None
         if hist is not None:
             values = (edges[1:] + edges[0:-1]) / 2.
             ind = np.argmax(hist)
