@@ -1700,9 +1700,10 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
 def get_transforms(input_model, slitnames, return_slits=False):
 
     """
-    Returns a WCS object together with the transforms needed for all
-    slits.  This enables the code to avoid excessive deep copying of
-    of WCS objects.
+    Return a WCS object with necessary transforms for all slits.
+
+    This function enables the JWST pipeline to avoid excessive deep
+    copying of WCS objects in later steps.
 
     Parameters
     ----------
