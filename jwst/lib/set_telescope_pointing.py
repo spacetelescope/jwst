@@ -357,7 +357,7 @@ class Transforms:
         if isinstance(asdf_file, asdf.AsdfFile):
             transforms = asdf_file.tree['transforms']
         else:
-            with asdf.open(asdf_file, copy_arrays=True, lazy_load=False) as af:
+            with asdf.open(asdf_file, memmap=False, lazy_load=False) as af:
                 transforms = af.tree['transforms']
 
         return cls(**transforms)

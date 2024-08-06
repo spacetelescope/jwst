@@ -15,6 +15,7 @@ from jwst.resample.resample_utils import (
     build_mask,
     build_driz_weight,
     decode_context,
+    is_flux_density,
     reproject
 )
 
@@ -202,3 +203,11 @@ def test_reproject(wcs1, wcs2, offset, request):
 def test_reproject_with_garbage_input():
     with pytest.raises(TypeError):
         reproject("foo", "bar")
+
+
+@pytest.mark.parametrize('unit,result',
+                         [('Jy', True), ('MJy', True),
+                          ('MJy/sr', False), ('DN/s', False),
+                          ('bad_unit', False), (None, False)])
+def test_is_flux_density(unit, result):
+    assert is_flux_density(unit) is result

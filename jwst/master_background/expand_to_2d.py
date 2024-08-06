@@ -319,8 +319,6 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
 
     background = input.copy()
     background.data[:, :] = 0.
-    min_wave = np.amin(tab_wavelength)
-    max_wave = np.amax(tab_wavelength)
 
     if input.meta.instrument.name.upper() == "NIRSPEC":
         # Note: the 30 was hardcoded in nirpsec.nrs_ifu_wcs, which the line
@@ -334,17 +332,9 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
             wl_array = ifu_wcs(x, y)[2]
             wl_array[np.isnan(wl_array)] = -1.
 
-            # mask wavelengths not covered by the master background
-            mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
-            wl_array[mask_limit] = -1
-
-            # mask_limit is indices into each WCS slice grid.  Need them in
-            # full frame coordinates, so we use x and y, which are full-frame
-            full_frame_ind = y[mask_limit].astype(int), x[mask_limit].astype(int)
+            # Anywhere science pixels are beyond the wavelength range of the background, zero
+            # background will be used.
             # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-            background.dq[full_frame_ind] = np.bitwise_or(background.dq[full_frame_ind],
-                                                          dqflags.pixel['DO_NOT_USE'])
-
             bkg_surf_bright = np.interp(wl_array, tab_wavelength,
                                         tab_background, left=0., right=0.)
             background.data[y.astype(int), x.astype(int)] = bkg_surf_bright.copy()
@@ -361,13 +351,10 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         # first remove the nans from wl_array and replace with -1
         mask = np.isnan(wl_array)
         wl_array[mask] = -1.
-        # next look at the limits of the wavelength table
-        mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
-        wl_array[mask_limit] = -1
 
+        # Anywhere science pixels are beyond the wavelength range of the background, zero
+        # background will be used.
         # TODO - add another DQ Flag something like NO_BACKGROUND when we have space in dqflags
-        background.dq[mask_limit] = np.bitwise_or(background.dq[mask_limit],
-                                                  dqflags.pixel['DO_NOT_USE'])
         bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
                                     left=0., right=0.)
         background.data[:, :] = bkg_surf_bright.copy()

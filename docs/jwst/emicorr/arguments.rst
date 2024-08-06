@@ -25,3 +25,6 @@ The ``emicorr`` step has the following step-specific arguments.
     This is to tell the code to do correction for the frequencies in
     the list with a reference file created on-the-fly instead of CRDS.
 
+``--use_n_cycles`` (integer, default=3)
+    Number of cycles to use to calculate the phase. To use all
+    integrations, set to None.

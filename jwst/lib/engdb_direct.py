@@ -81,7 +81,7 @@ class EngdbDirect(EngdbABC):
         response.raise_for_status()
 
     @property
-    def default_format(self):
+    def default_format(self):  # noqa: F811
         return self._default_format
 
     @default_format.setter

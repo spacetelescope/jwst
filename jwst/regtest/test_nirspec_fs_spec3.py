@@ -46,24 +46,13 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
-    if output == "s2d":
-        # Compare the calculated wavelengths
+    # Check output wavelength array against its own wcs
+    if suffix == "s2d":
         tolerance = 1e-03
-        dmt = datamodels.open(rtdata.truth)
         dmr = datamodels.open(rtdata.output)
-        if isinstance(dmt, datamodels.MultiSlitModel):
-            names = [s.name for s in dmt.slits]
-            for name in names:
-                st_idx = [(s.wcs, s.wavelength) for s in dmt.slits if s.name==name]
-                w = dmt.slits[st_idx].meta.wcs
-                x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
-                _, _, wave = w(x, y)
-                sr_idx = [(s.wcs, s.wavelength) for s in dmr.slits if s.name==name]
-                wlr = dmr.slits[sr_idx].wavelength
-                assert np.all(np.isclose(wave, wlr, atol=tolerance))
-        else:
-            w = dmt.meta.wcs
-            x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
-            _, _, wave = w(x, y)
-            wlr = dmr.wavelength
-            assert np.all(np.isclose(wave, wlr, atol=tolerance))
+
+        w = dmr.meta.wcs
+        x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
+        _, _, wave = w(x, y)
+        wlr = dmr.wavelength
+        assert np.all(np.isclose(wave, wlr, atol=tolerance))

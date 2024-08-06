@@ -4,7 +4,7 @@
 
 import numpy as np
 import logging
-
+from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -93,6 +93,7 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
     nbins = pars['nbins']
     scale_reference = pars['scale_reference']
     onthefly_corr_freq = pars['onthefly_corr_freq']
+    use_n_cycles = pars['use_n_cycles']
 
     output_model = apply_emicorr(input_model, emicorr_model,
                         onthefly_corr_freq, save_onthefly_reffile,
@@ -100,7 +101,8 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
                         user_supplied_reffile=user_supplied_reffile,
                         nints_to_phase=nints_to_phase,
                         nbins_all=nbins,
-                        scale_reference=scale_reference
+                        scale_reference=scale_reference,
+                        use_n_cycles=use_n_cycles
                         )
 
     return output_model
@@ -109,7 +111,8 @@ def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
 def apply_emicorr(input_model, emicorr_model,
         onthefly_corr_freq, save_onthefly_reffile,
         save_intermediate_results=False, user_supplied_reffile=None,
-        nints_to_phase=None, nbins_all=None, scale_reference=True):
+        nints_to_phase=None, nbins_all=None, scale_reference=True,
+        use_n_cycles=3):
     """
     -> NOTE: This is translated from IDL code fix_miri_emi.pro
 
@@ -166,6 +169,9 @@ def apply_emicorr(input_model, emicorr_model,
     scale_reference : bool
         If True, the reference wavelength will be scaled to the data's phase amplitude
 
+    use_n_cycles : int
+        Only use N cycles to calculate the phase to reduce code running time
+
     Returns
     -------
     output_model : JWST data model
@@ -216,10 +222,6 @@ def apply_emicorr(input_model, emicorr_model,
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
     nints, ngroups, ny, nx = np.shape(output_model.data)
-    if nints_to_phase is None:
-        nints_to_phase = nints
-    elif nints_to_phase > nints:
-        nints_to_phase = nints
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes
     if save_intermediate_results and save_onthefly_reffile is not None:
@@ -265,6 +267,20 @@ def apply_emicorr(input_model, emicorr_model,
         # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
         period_in_pixels = (1./frequency) / 10.0e-6
 
+        if nints_to_phase is None and use_n_cycles is None:  # user wats to use all integrations
+            # use all integrations
+            nints_to_phase = nints
+        elif nints_to_phase is None and use_n_cycles is not None: # user wants to use nints_to_phase
+            # Calculate how many integrations you need to get that many cycles for
+            # a given frequency (rounding up to the nearest Nintegrations)
+            nints_to_phase = (use_n_cycles * period_in_pixels) / (frameclocks * ngroups)
+            nints_to_phase = int(np.ceil(nints_to_phase))
+        elif nints_to_phase is not None and use_n_cycles == 3:
+            # user wants to use nints_to_phase because default value for use_n_cycles is 3
+            # make sure to never use more integrations than data has
+            if nints_to_phase > nints:
+                nints_to_phase = nints
+
         start_time, ref_pix_sample = 0, 3
 
         # Need colstop for phase calculation in case of last refpixel in a row. Technically,
@@ -274,7 +290,7 @@ def apply_emicorr(input_model, emicorr_model,
         colstop = int( xsize/4 + xstart - 1 )
         log.info('doing phase calculation per integration')
 
-        for ninti in range(nints_to_phase):
+        for ninti in range(nints):
             log.debug('  Working on integration: {}'.format(ninti+1))
 
             # Remove source signal and fixed bias from each integration ramp
@@ -332,7 +348,7 @@ def apply_emicorr(input_model, emicorr_model,
                 # point to the first pixel of the next frame (add "end-of-frame" pad)
                 start_time += extra_rowclocks
 
-            # Convert "times" to phase each integration. Nothe times has units of
+            # Convert "times" to phase each integration. Note that times has units of
             # number of 10us from the first data pixel in this integration, so to
             # convert to phase, divide by the waveform *period* in float pixels
             phase_this_int = times_this_int / period_in_pixels
@@ -365,12 +381,15 @@ def apply_emicorr(input_model, emicorr_model,
         # Define the binned waveform amplitude (pa = phase amplitude)
         pa = np.arange(nbins, dtype=float)
         # keep track of n per bin to check for low n
-        nu = np.arange(nbins)
+        nb_over_nbins = [nb/nbins for nb in range(nbins)]
+        nbp1_over_nbins = [(nb + 1)/nbins for nb in range(nbins)]
+        # Construct a phase map and dd map for only the nints_to_phase
+        phase_temp = phaseall[0:nints_to_phase,:,:,:]
+        dd_temp = dd_all[0:nints_to_phase,:,:,:]
         for nb in range(nbins):
-            u = np.where((phaseall > nb/nbins) & (phaseall <= (nb + 1)/nbins) & (np.isfinite(dd_all)))
-            nu[nb] = phaseall[u].size
+            u = np.where((phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb]))
             # calculate the sigma-clipped mean
-            dmean, _, _, _ = iter_stat_sig_clip(dd_all[u])
+            dmean,_,_ = scs(dd_temp[u])
             pa[nb] = dmean   # amplitude in this bin
 
         pa -= np.median(pa)
@@ -431,14 +450,23 @@ def apply_emicorr(input_model, emicorr_model,
 
         # Interleave (straight copy) into 4 amps
         noise = np.ones((nints, ngroups, ny, nx))   # same size as input data
+        noise_x = np.arange(nx4) * 4
         for k in range(4):
-            noise_x = np.arange(nx4)*4 + k
-            noise[..., noise_x] = dd_noise
+            noise[:, :, :, noise_x + k] = dd_noise
+
+        # Safety catch; anywhere the noise value is not finite, set it to zero
+        noise[~np.isfinite(noise)] = 0
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')
         corr_data = orig_data - noise
         output_model.data = corr_data
+
+        # clean up
+        del data
+        del dd_all
+        del times_this_int
+        del phaseall
 
     if save_intermediate_results and save_onthefly_reffile is not None:
         if 'FAST' in readpatt:
@@ -641,74 +669,6 @@ def get_frequency_info(freqs_names_vals, frequency_name):
             if freq_number is not None and phase_amplitudes is not None:
                 break
         return freq_number, phase_amplitudes
-
-
-def iter_stat_sig_clip(data, sigrej=3.0, maxiter=10):
-    """ Compute the mean, mediand and/or sigma of data with iterative sigma clipping.
-    This funtion is based on djs_iterstat.pro (authors therein)
-
-    Parameters
-    ----------
-    data : numpy array
-
-    sigrej : float
-        Sigma for rejection
-
-    maxiter: int
-        Maximum number of sigma rejection iterations
-
-    Returns
-    -------
-    dmean : float
-        Computed mean
-
-    dmedian : float
-        Computed median
-
-    dsigma : float
-        Computed sigma
-
-    dmask : numpy array
-        Mask set to 1 for good points, and 0 for rejected points
-    """
-    # special cases of 0 or 1 data points
-    ngood = np.size(data)
-    dmean, dmedian, dsigma, dmask = 0.0, 0.0, 0.0, np.zeros(np.shape(data))
-    if ngood == 0:
-        log.debug('No data points for sigma clipping')
-        return dmean, dmedian, dsigma, dmask
-    elif ngood == 1:
-        log.debug('Only 1 data point for sigma clipping')
-        return dmean, dmedian, dsigma, dmask
-
-    # Compute the mean + standard deviation of the entire data array,
-    # these values will be returned if there are fewer than 2 good points.
-    dmask = np.ones(ngood, dtype='b') + 1
-    dmean = np.sum(data * dmask) / ngood
-    dsigma = np.sqrt(sum((data - dmean)**2) / (ngood - 1))
-    iiter = 1
-
-    # Iteratively compute the mean + stdev, updating the sigma-rejection thresholds
-    # each iteration
-    nlast = -1
-    while iiter < maxiter and nlast != ngood and ngood >= 2:
-        loval = dmean - sigrej * dsigma
-        hival = dmean + sigrej * dsigma
-        nlast = ngood
-
-        dmask[data < loval] = 0
-        dmask[data > hival] = 0
-        ngood = sum(dmask)
-
-        if ngood >= 2:
-            dmean = np.sum(data*dmask) / ngood
-            dsigma = np.sqrt( sum((data - dmean)**2 * dmask) / (ngood - 1) )
-            dsigma = dsigma
-
-        iiter += 1
-
-    return dmean, dmedian, dsigma, dmask
-
 
 def rebin(arr, newshape):
     """Rebin an array to a new shape.

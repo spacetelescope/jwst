@@ -1,0 +1,29 @@
+exclude: ".*\\.asdf$"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-yaml
+        args: ["--unsafe"]
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: debug-statements
+      - id: detect-private-key
+      # - id: end-of-file-fixer
+      # - id: trailing-whitespace
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 'v0.5.2'
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      # - id: ruff-format
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+      - id: bandit
+        args: ["-r", "-ll", "-x", "jwst/*test*,jwst/**/*test*,jwst/fits_generator", "jwst"]

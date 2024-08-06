@@ -5,19 +5,10 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
+from jwst.stpipe.utilities import record_step_status
 from jwst.lib.pipe_utils import is_tso
 
-from jwst.outlier_detection import outlier_detection
-from jwst.outlier_detection import outlier_detection_ifu
-from jwst.outlier_detection import outlier_detection_spec
-from jwst.outlier_detection import outlier_detection_tso
-
-# Categorize all supported versions of outlier_detection
-outlier_registry = {'imaging': outlier_detection.OutlierDetection,
-                    'ifu': outlier_detection_ifu.OutlierDetectionIFU,
-                    'slitspec': outlier_detection_spec.OutlierDetectionSpec,
-                    'tso': outlier_detection_tso.OutlierDetectionTSO
-                    }
+from . import coron, ifu, imaging, tso, spec
 
 # Categorize all supported modes
 IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
@@ -28,6 +19,14 @@ TSO_SPEC_MODES = ['NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM',
 IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']
 TSO_IMAGE_MODES = ['NRC_TSIMAGE']  # missing MIR_IMAGE with TSOVIST=True, not really addable
 CORON_IMAGE_MODES = ['NRC_CORON', 'MIR_LYOT', 'MIR_4QPM']
+
+_STEP_MODES = {
+    'coron': coron,
+    'ifu': ifu,
+    'imaging': imaging,
+    'tso': tso,
+    'spec': spec,
+}
 
 __all__ = ["OutlierDetectionStep"]
 
@@ -47,14 +46,13 @@ class OutlierDetectionStep(Step):
 
     class_alias = "outlier_detection"
 
-    # The members of spec needs to be a super-set of all parameters needed
-    # by the various versions of the outlier_detection algorithms, and each
-    # version will pick and choose what they need while ignoring the rest.
     spec = """
         weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
+        nlow = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
+        nhigh = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
         maskpt = float(default=0.7)
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
@@ -74,141 +72,159 @@ class OutlierDetectionStep(Step):
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
 
-        with datamodels.open(input_data, save_open=self.in_memory) as input_models:
-            self.input_models = input_models
-            if not isinstance(self.input_models, ModelContainer):
-                self.input_container = False
-            else:
-                self.input_container = True
-            # Setup output path naming if associations are involved.
-            asn_id = None
-            try:
-                asn_id = self.input_models.meta.asn_table.asn_id
-            except (AttributeError, KeyError):
-                pass
-            if asn_id is None:
-                asn_id = self.search_attr('asn_id')
-            if asn_id is not None:
-                _make_output_path = self.search_attr(
-                    '_make_output_path', parent_first=True
-                )
+        # determine the "mode" (if not set by the pipeline)
+        mode = self._guess_mode(input_data)
+        if mode is None:
+            return self._set_status(input_data, False)
+        self.log.info(f"Outlier Detection mode: {mode}")
 
-                self._make_output_path = partial(
-                    _make_output_path,
-                    asn_id=asn_id
-                )
+        # determine the asn_id (if not set by the pipeline)
+        asn_id = self._get_asn_id(input_data)
+        self.log.info(f"Outlier Detection asn_id: {asn_id}")
 
-            # Setup outlier detection parameters
-            pars = {
-                'weight_type': self.weight_type,  # for calling the resample step
-                'wht_type': self.weight_type,  # for calling the resample class directly
-                'pixfrac': self.pixfrac,
-                'kernel': self.kernel,
-                'fillval': self.fillval,
-                'maskpt': self.maskpt,
-                'snr': self.snr,
-                'scale': self.scale,
-                'backg': self.backg,
-                'kernel_size': self.kernel_size,
-                'threshold_percent': self.threshold_percent,
-                'rolling_window_width': self.rolling_window_width,
-                'ifu_second_check': self.ifu_second_check,
-                'allowed_memory': self.allowed_memory,
-                'in_memory': self.in_memory,
-                'save_intermediate_results': self.save_intermediate_results,
-                'resample_data': self.resample_data,
-                'good_bits': self.good_bits,
-                'make_output_path': self.make_output_path,
-            }
+        snr1, snr2 = [float(v) for v in self.snr.split()]
+        scale1, scale2 = [float(v) for v in self.scale.split()]
 
-            # Select which version of OutlierDetection
-            # needs to be used depending on the input data
-            if self.input_container:
-                single_model = self.input_models[0]
-            else:
-                single_model = self.input_models
-            exptype = single_model.meta.exposure.type
-            self.check_input()
-
-            if is_tso(single_model):
-                # force resampling off and use rolling median
-                pars['resample_data'] = False
-                detection_step = outlier_registry['tso']
-            elif exptype in CORON_IMAGE_MODES:
-                # force resampling off but use same workflow as imaging
-                pars['resample_data'] = False
-                detection_step = outlier_registry['imaging']
-            elif exptype in IMAGE_MODES:
-                # imaging with resampling
-                detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 'i2d'
-            elif exptype in SLIT_SPEC_MODES:
-                detection_step = outlier_registry['slitspec']
-                pars['resample_suffix'] = 's2d'
-            elif exptype in IFU_SPEC_MODES:
-                # select algorithm for IFU data
-                detection_step = outlier_registry['ifu']
-            else:
-                self.log.error("Outlier detection failed for unknown/unsupported ",
-                               f"exposure type: {exptype}")
-                self.valid_input = False
-
-            if not self.valid_input:
-                if self.input_container:
-                    for model in self.input_models:
-                        model.meta.cal_step.outlier_detection = "SKIPPED"
-                else:
-                    self.input_models.meta.cal_step.outlier_detection = "SKIPPED"
-                return self.input_models
-
-            self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
-
-            # Set up outlier detection, then do detection
-            step = detection_step(self.input_models, asn_id=asn_id, **pars)
-            step.do_detection()
-
-            state = 'COMPLETE'
-            if self.input_container:
-                for model in self.input_models:
-                    model.meta.cal_step.outlier_detection = state
-            else:
-                self.input_models.meta.cal_step.outlier_detection = state
-            return self.input_models
-
-
-    def check_input(self):
-        """Use this method to determine whether input is valid or not."""
-        if self.input_container:
-            self._check_input_container()
+        if mode == 'tso':
+            result_models = tso.detect_outliers(
+                input_data,
+                self.save_intermediate_results,
+                self.good_bits,
+                self.maskpt,
+                self.rolling_window_width,
+                snr1,
+                asn_id,
+                self.make_output_path,
+            )
+        elif mode == 'coron':
+            result_models = coron.detect_outliers(
+                input_data,
+                self.save_intermediate_results,
+                self.good_bits,
+                self.maskpt,
+                snr1,
+                asn_id,
+                self.make_output_path,
+            )
+        elif mode == 'imaging':
+            result_models = imaging.detect_outliers(
+                input_data,
+                self.save_intermediate_results,
+                self.good_bits,
+                self.maskpt,
+                snr1,
+                snr2,
+                scale1,
+                scale2,
+                self.backg,
+                self.resample_data,
+                self.weight_type,
+                self.pixfrac,
+                self.kernel,
+                self.fillval,
+                self.allowed_memory,
+                self.in_memory,
+                asn_id,
+                self.make_output_path,
+            )
+        elif mode == 'spec':
+            result_models = spec.detect_outliers(
+                input_data,
+                self.save_intermediate_results,
+                self.good_bits,
+                self.maskpt,
+                snr1,
+                snr2,
+                scale1,
+                scale2,
+                self.backg,
+                self.resample_data,
+                self.weight_type,
+                self.pixfrac,
+                self.kernel,
+                self.fillval,
+                self.in_memory,
+                asn_id,
+                self.make_output_path,
+            )
+        elif mode == 'ifu':
+            result_models = ifu.detect_outliers(
+                input_data,
+                self.save_intermediate_results,
+                self.kernel_size,
+                self.ifu_second_check,
+                self.threshold_percent,
+                self.make_output_path,
+            )
         else:
-            self._check_input_cube()
+            self.log.error("Outlier detection failed for unknown/unsupported ",
+                           f"mode: {mode}")
+            return self._set_status(input_data, False)
 
-    def _check_input_container(self):
-        """Check to see whether input is the expected ModelContainer object."""
-        ninputs = len(self.input_models)
-        if not isinstance(self.input_models, ModelContainer):
-            self.log.warning("Input is not a ModelContainer")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
-        elif ninputs < 2:
-            self.log.warning(f"Input only contains {ninputs} exposure")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
-        else:
-            self.valid_input = True
-            self.log.info(f"Performing outlier detection on {ninputs} inputs")
+        return self._set_status(result_models, True)
 
-    def _check_input_cube(self):
-        """Check to see whether input is the expected CubeModel object."""
-        ninputs = self.input_models.shape[0]
-        if type(self.input_models) not in [datamodels.CubeModel, datamodels.SlitModel]:
-            self.log.warning("Input is not the expected CubeModel")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
-        elif ninputs < 2:
-            self.log.warning(f"Input only contains {ninputs} integration")
-            self.log.warning("Outlier detection step will be skipped")
-            self.valid_input = False
+    def _guess_mode(self, input_models):
+        # The pipelines should set this mode or ideally these should
+        # be separate steps (but that would require new crds reference files).
+        if hasattr(self, "mode"):
+            return self.mode
+
+        # guess mode from input type
+        if not isinstance(input_models, datamodels.JwstDataModel):
+            input_models = datamodels.open(input_models, asn_n_members=1)
+
+        # Select which version of OutlierDetection
+        # needs to be used depending on the input data
+        if isinstance(input_models, ModelContainer):
+            single_model = input_models[0]
         else:
-            self.valid_input = True
-            self.log.info(f"Performing outlier detection with {ninputs} inputs")
+            single_model = input_models
+
+        if is_tso(single_model):
+            return 'tso'
+
+        exptype = single_model.meta.exposure.type
+        if exptype in CORON_IMAGE_MODES:
+            return 'coron'
+        if exptype in IMAGE_MODES:
+            return 'imaging'
+        if exptype in SLIT_SPEC_MODES:
+            return 'spec'
+        if exptype in IFU_SPEC_MODES:
+            return 'ifu'
+
+        self.log.error("Outlier detection failed for unknown/unsupported ",
+                       f"exposure type: {exptype}")
+        return None
+
+    def _get_asn_id(self, input_models):
+        # handle if input_models isn't open
+        if not isinstance(input_models, datamodels.JwstDataModel):
+            input_models = datamodels.open(input_models, asn_n_members=1)
+
+        # Setup output path naming if associations are involved.
+        asn_id = None
+        try:
+            asn_id = input_models.meta.asn_table.asn_id
+        except (AttributeError, KeyError):
+            pass
+        if asn_id is None:
+            asn_id = self.search_attr('asn_id')
+        if asn_id is not None:
+            _make_output_path = self.search_attr(
+                '_make_output_path', parent_first=True
+            )
+
+            self._make_output_path = partial(
+                _make_output_path,
+                asn_id=asn_id
+            )
+        return asn_id
+
+    def _set_status(self, input_models, status):
+        # this might be called with the input which might be a filename or path
+        if not isinstance(input_models, datamodels.JwstDataModel):
+            input_models = datamodels.open(input_models)
+
+        record_step_status(input_models, "outlier_detection", status)
+        return input_models

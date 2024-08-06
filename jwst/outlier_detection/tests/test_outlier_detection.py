@@ -8,7 +8,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.outlier_detection import flag_cr
+from jwst.outlier_detection.utils import flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
@@ -42,7 +42,8 @@ def sci_blot_image_pair():
     sci.meta.background.subtracted = False
     sci.meta.background.level = background
 
-    sci.data = np.random.normal(loc=background, size=shape, scale=sigma)
+    rng = np.random.default_rng(720)
+    sci.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci.err = np.zeros(shape) + sigma
     sci.var_rnoise += 0
 
@@ -74,7 +75,15 @@ def test_flag_cr(sci_blot_image_pair):
 
     # run flag_cr() which updates in-place.  Copy sci first.
     data_copy = sci.data.copy()
-    flag_cr(sci, blot)
+    flag_resampled_model_crs(
+        sci,
+        blot.data,
+        5.0,
+        4.0,
+        1.2,
+        0.7,
+        0,
+    )
 
     # Make sure science data array is unchanged after flag_cr()
     np.testing.assert_allclose(sci.data, data_copy)
@@ -133,7 +142,8 @@ def we_many_sci(
 
     # Replace the FITS-type WCS with an Identity WCS
     sci1.meta.wcs = create_fitswcs(sci1)
-    sci1.data = np.random.normal(loc=background, size=shape, scale=sigma)
+    rng = np.random.default_rng(720)
+    sci1.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci1.err = np.zeros(shape) + sigma
     sci1.data[7, 7] += signal
     # update the noise for this source to include the photon/measurement noise
@@ -149,13 +159,29 @@ def we_many_sci(
     all_sci = [sci1]
     for i in range(numsci - 1):
         tsci = sci1.copy()
-        tsci.data = np.random.normal(loc=background, size=shape, scale=sigma)
+        tsci.data = rng.normal(loc=background, size=shape, scale=sigma)
         # Add a source in the center
         tsci.data[7, 7] += signal
         tsci.meta.filename = f"foo{i + 2}_cal.fits"
         all_sci.append(tsci)
 
     return all_sci
+
+
+def container_to_cube(container):
+    """
+    Utility function to convert the test container to a cube
+    for some tests
+    """
+    cube_data = np.array([i.data for i in container])
+    cube_err = np.array([i.err for i in container])
+    cube_dq = np.array([i.dq for i in container])
+    cube_var_noise = np.array([i.var_rnoise for i in container])
+    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
+
+    # update metadata of cube to match the first image
+    cube.meta = container[0].meta
+    return cube
 
 
 @pytest.fixture
@@ -168,18 +194,13 @@ def we_three_sci():
 def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
-    pristine = container.copy()
-    result = OutlierDetectionStep.call(container)
+    pristine = ModelContainer([m.copy() for m in container])
+    OutlierDetectionStep.call(container)
 
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
         np.testing.assert_allclose(image.data, uncorrected.data)
         np.testing.assert_allclose(image.dq, uncorrected.dq)
-
-    # Make sure nothing changed in SCI and DQ arrays
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
-        np.testing.assert_allclose(image.dq, corrected.dq)
 
 
 def test_outlier_step(we_three_sci, tmp_cwd):
@@ -193,10 +214,8 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     OutlierDetectionStep.call(container)
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) == 0
     assert len(median_files) == 0
-    assert len(blot_files) == 0
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
@@ -216,10 +235,8 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     # Verify that intermediary files are saved at the specified location
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) != 0
     assert len(median_files) != 0
-    assert len(blot_files) != 0
 
 
 def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
@@ -319,18 +336,20 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
     # no noise so it should always be above the default threshold of 5
     container[0].data[12, 12] = bkg + sig * 10
 
-    result = OutlierDetectionStep.call(container)
+    # coron3 will provide a CubeModel so convert the container to a cube
+    cube = container_to_cube(container)
+
+    result = OutlierDetectionStep.call(cube)
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    for i, image in enumerate(container):
+        np.testing.assert_allclose(image.data, result.data[i])
 
     # Verify source is not flagged
-    for r in result:
-        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
-    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    assert np.all(result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE)
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
@@ -346,18 +365,10 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     im = we_many_sci(
         numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit
     )
-    cube_data = np.array([i.data for i in im])
-    cube_err = np.array([i.err for i in im])
-    cube_dq = np.array([i.dq for i in im])
-    cube_var_noise = np.array([i.var_rnoise for i in im])
-    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
-
-    # update metadata of cube to match the first image
-    cube.meta = im[0].meta
 
     # Drop a weak CR on the science array
     cr_timestep = 5
-    cube.data[cr_timestep, 12, 12] = bkg + sig * 10
+    im[cr_timestep].data[12, 12] = bkg + sig * 10
 
     # make time variability that has larger total amplitude than
     # the CR signal but deviations frame-by-frame are smaller
@@ -366,10 +377,13 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
         model.data[7, 7] += real_time_variability[i]
         model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
 
+    cube = container_to_cube(im)
+
     result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 
     # Make sure nothing changed in SCI array
-    np.testing.assert_allclose(cube.data, result.data)
+    for i, model in enumerate(im):
+        np.testing.assert_allclose(model.data, result.data[i])
 
     # Verify source is not flagged
     assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
