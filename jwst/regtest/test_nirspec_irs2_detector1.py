@@ -85,7 +85,7 @@ def test_nirspec_irs2_detector1_with_clean_flicker_noise(
 
     output_filename = f"jw01335004001_03101_00002_nrs2_{suffix}.fits"
     rtdata.output = output_filename
-    rtdata.get_truth(f"truth/test_nirspec_irs2_detector1/{output_filename}")
+    rtdata.get_truth(f"truth/test_nirspec_irs2_clean_flicker_noise/{output_filename}")
 
     # Set tolerances so comparisons work across architectures
     fitsdiff_default_kwargs["rtol"] = 1e-4

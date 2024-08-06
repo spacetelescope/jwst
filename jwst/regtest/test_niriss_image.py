@@ -62,7 +62,8 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test detector1 pipeline for NIRISS imaging data with noise cleaning.
     """
-    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+    truth_dir = 'test_niriss_image'
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
 
 @pytest.mark.bigdata
@@ -73,7 +74,8 @@ def test_niriss_image_detector1_with_clean_flicker_noise(
         run_detector1_with_clean_flicker_noise, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on NIRISS imaging data.
     """
-    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+    truth_dir = 'test_niriss_image_clean_flicker_noise'
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
 
 @pytest.mark.bigdata
@@ -108,14 +110,14 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     result.close()
 
 
-def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix):
+def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir):
     """Assertion helper for the above tests"""
     rtdata = rtdata_module
     rtdata.input = "jw01094001002_02107_00001_nis_uncal.fits"
     output = f"jw01094001002_02107_00001_nis_{suffix}.fits"
     rtdata.output = output
 
-    rtdata.get_truth(f"truth/test_niriss_image/{output}")
+    rtdata.get_truth(f"truth/{truth_dir}/{output}")
 
     # Set tolerances so the crf, rscd and rateints file comparisons work across
     # architectures
