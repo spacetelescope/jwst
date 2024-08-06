@@ -1657,7 +1657,7 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
             raise RuntimeError("The assign_wcs step has not been run.")
     for k in range(len(tr2)):
         ifu_wcs = nirspec.nrs_wcs_set_input_lite(output_model, wcsobj, k,
-                                                   [tr1, tr2[k], tr3[k]])
+                                                 [tr1, tr2[k], tr3[k]])
         # example:  bounding_box = ((1600.5, 2048.5),   # X
         #                           (1886.5, 1925.5))   # Y
         truncated = False
