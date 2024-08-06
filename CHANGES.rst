@@ -5,6 +5,7 @@ align_refs
 ----------
 
 - Compute alignment shifts from the first integration of the science exposure only. [#8643]
+
 ami_average
 -----------
 
@@ -70,6 +71,10 @@ resample_spec
 - Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
   targets in the ``calwebb_spec3`` pipeline. [#8596]
 
+- Separate ``resample_spec`` step parameters from ``resample`` step parameters
+  so that the spectral resampling step only exposes parameters that are appropriate
+  for spectral data. [#8622]
+
 scripts
 -------
 
@@ -82,6 +87,13 @@ stpipe
 - Removed setting of the `self.skip` attribute in the `record_step_status()` function;
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
+
+tso_photometry
+--------------
+
+- Replaced photutils.aperture do_photometry with photutils.ApertureStats to remove NaNs
+  when performing TSO photometry for non SUB64 WLP8 pupil data. For SUB64 WLP8 changed
+  summing data in the aperture to use np.nansum to ignore NaNs. [#8672]
 
 tweakreg
 --------
