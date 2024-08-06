@@ -46,5 +46,8 @@ def test_nirspec_irs2_detector1(run_detector1pipeline, rtdata_module,
     rtdata.output = output_filename
     rtdata.get_truth(f"truth/test_nirspec_irs2_detector1/{output_filename}")
 
+    # Set tolerances so comparisons work across architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
