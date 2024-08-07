@@ -50,7 +50,7 @@ class CleanFlickerNoiseStep(Step):
             Input datamodel to be corrected
 
         fit_method : str, optional
-            The background fit algorithm to use.  Options are 'fft' and 'median'.
+            The noise fitting algorithm to use.  Options are 'fft' and 'median'.
 
         background_method : {'median', 'model', None}
             If 'median', the preliminary background to remove and restore

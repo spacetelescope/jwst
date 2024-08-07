@@ -32,7 +32,7 @@ exposure. For MIRI, it is available only for imaging exposures.
 Creation of a scene mask
 ------------------------
 One of the key components of the correction is knowing which pixels can
-be used in fitting the background noise.  The step builds a scene mask
+be used to fit the background noise.  The step builds a scene mask
 on the fly from a draft rate image, generated from the input ramp data,
 which is used to mark usable and unusable pixels. The mask is a 2D
 Boolean array, having the same size as the image, with
@@ -41,16 +41,21 @@ pixels set to True interpreted as being OK to use.
 The process of building the mask varies somewhat depending on the
 observing mode of the image being processed. Some features are common
 to all modes, while others are mode-specific. The following sections
-describe each type of masking that can be applied and at the end there
-is a summary of the types applied to each image mode.
+describe each type of masking that can be applied. At the end, there
+is a summary of the types applied to each instrument mode.
 
 The user-settable step parameter `save_mask` can be used to save the
-mask to a file, if desired (see the
-:ref:`step arguments <_clean_flicker_noise_arguments>`).
+scene mask to a file, if desired (see the
+:ref:`step arguments <clean_flicker_noise_arguments>`).
 
 Note that a user may also supply their own mask image as input to the step,
 in which case the process of creating a mask is skipped. The step parameter
-`user_mask` is used to specify an input mask.
+`user_mask` is used to specify an input mask.  If specified, the input
+mask must contain a datamodel matching the shape of a 'rate' or 'rateints'
+file generated for the input science data (either `~jwst.datamodels.ImageModel`
+or `~jwst.datamodels.CubeModel`).  To generate a custom mask, it may be
+easiest to save the mask output from a default run of the ``clean_flicker_noise``
+step on the input data, then modify it as needed.
 
 NIRSpec IFU Slices
 ^^^^^^^^^^^^^^^^^^
@@ -100,12 +105,12 @@ scene mask.
 Missing Data
 ^^^^^^^^^^^^
 Any pixel in the rate image that has a value of NaN or exactly zero
-is flagged as False in the mask. This includes any reference pixels
-that are present in the exposure.
+is flagged as False in the mask. This typically includes any reference
+pixels that are present in the exposure.
 
 Outliers
 ^^^^^^^^
-For imaging modes, bright, isolated sources must be distinguished
+For imaging modes, bright, compact sources must be distinguished
 from the background and masked in order to fit and remove the
 smooth background level.
 
@@ -115,53 +120,55 @@ signal, due to uncaught cosmic rays, hot pixels, etc.
 
 For both modes, a sigma-clipping routine is employed to find such outliers
 within the input image and set them to False in the mask. All pixels with
-values greater than :math:`median+n_sigma*sigma` are flagged as signal and
-set to False in the scene mask.
-
-In addition, all pixels with values less than :math:`median-3.0*sigma`
-are flagged as bad pixels, and are also set to False in the scene mask.
+values greater than :math:`median+n\_sigma*sigma` are assumed to contain
+signal and are set to False in the scene mask. In addition, all pixels
+with values less than :math:`median-3.0*sigma` are assumed to be bad pixels,
+and are also set to False in the scene mask.
 
 Mode-Specific Masking Steps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The following table indicates which flavors of masking are applied to
-images from each type of observing mode.
+images from each instrument and observing mode.
 
 .. |c| unicode:: U+2713 .. checkmark
 
-+--------------------------+-----+-----+-----+------+--------+
-|                          |     | Mode|     |      |        |
-+--------------------------+-----+-----+-----+------+--------+
-| Masking                  | IFU | MOS |  FS | MIRI | Others |
-+==========================+=====+=====+=====+======+========+
-| IFU Slices\ :sup:`1`     | |c| |     |     |      |        |
-+--------------------------+-----+-----+-----+------+--------+
-| Slits/Slitlets\ :sup:`1` |     | |c| | |c| |      |        |
-+--------------------------+-----+-----+-----+------+--------+
-| MSA_FAILED_OPEN\ :sup:`1`| |c| | |c| | |c| |      |        |
-+--------------------------+-----+-----+-----+------+--------+
-| NON_SCIENCE\ :sup:`1`    |     |     |     | |c|  |        |
-+--------------------------+-----+-----+-----+------+--------+
-| FS Region\ :sup:`1`      | |c| | |c| |     |      |        |
-+--------------------------+-----+-----+-----+------+--------+
-| Missing Data             | |c| | |c| | |c| | |c|  | |c|    |
-+--------------------------+-----+-----+-----+------+--------+
-| Outliers                 | |c| | |c| | |c| | |c|  | |c|    |
-+--------------------------+-----+-----+-----+------+--------+
++--------------------------+-----+-----+-----+-------+--------+--------+
+|                          |    NIRSpec      | MIRI  | NIRCam | NIRISS |
++--------------------------+-----+-----+-----+-------+--------+--------+
+|                          | IFU | MOS |  FS | Image | All    | All    |
++==========================+=====+=====+=====+=======+========+========+
+| IFU Slices\ :sup:`1`     | |c| |     |     |       |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+
+| Slits/Slitlets\ :sup:`1` |     | |c| | |c| |       |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+
+| MSA_FAILED_OPEN\ :sup:`1`| |c| | |c| |     |       |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+
+| NON_SCIENCE\ :sup:`1`    |     |     |     | |c|   |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+
+| FS Region\ :sup:`1`      | |c| | |c| |     |       |        |        |
++--------------------------+-----+-----+-----+-------+--------+--------+
+| Missing Data             | |c| | |c| | |c| | |c|   | |c|    | |c|    |
++--------------------------+-----+-----+-----+-------+--------+--------+
+| Outliers                 | |c| | |c| | |c| | |c|   | |c|    | |c|    |
++--------------------------+-----+-----+-----+-------+--------+--------+
 
-:sup:`1`\ The application of these steps can be turned on and off via
-the step parameter `mask_science_regions`.
+:sup:`1`\ These steps are only applied if the
+:ref:`step parameter <clean_flicker_noise_arguments>`
+`mask_science_regions` is set to True.
 
 Correction Algorithm
-====================
+--------------------
 
 The detailed process for fitting and removing flicker noise is as follows.
+See the :ref:`step arguments <clean_flicker_noise_arguments>` for more
+information on all referenced parameters.
 
 #. From the calibrated ramp input, make a draft rate (`single_mask` = True)
    or rateints (`single_mask` = False) file.
 
 #. Create a scene mask from the rate data.
 
-   #. If `mask_science_region` is set and the input is NIRSpec data,
+   #. If `mask_science_regions` is set and the input is NIRSpec data,
       run :ref:`assign_wcs <assign_wcs_step>` and
       :ref:`msaflagopen <msaflagopen_step>` on the draft rate data,
       then mask any known science areas or failed-open MSA shutters.
@@ -169,13 +176,13 @@ The detailed process for fitting and removing flicker noise is as follows.
       This will mask out regions that are likely to contain significant
       astronomical signal.
 
-   #. If `mask_science_region` is set and the input is MIRI imaging data,
-      run ref:`flat_field <flatfield_step>` on the draft rate data,
+   #. If `mask_science_regions` is set and the input is MIRI imaging data,
+      run :ref:`flat_field <flatfield_step>` on the draft rate data,
       and extract just the DQ plane from the output. Pixels flagged
       as 'NON_SCIENCE' by the flat fielding process are masked.
 
-      This will mask out irrelevant light on the detector from the
-      metering structure.
+      This will mask out regions of the detector under the metering
+      structure.
 
    #. Iteratively sigma clip the data to get a center value (mean or median)
       and sigma value (standard deviation).
@@ -202,8 +209,9 @@ The detailed process for fitting and removing flicker noise is as follows.
          median of the remaining values.
 
       #. If `background_method` = 'model', the background data is fit with
-         a low-resolution model via `~photutils.background.Background2D`.
-         The resolution box size is set by `background_box_size`.
+         a low-resolution model via the photutils
+         `Background2D <https://photutils.readthedocs.io/en/latest/api/photutils.background.Background2D.html>`_
+         utility. The resolution box size is set by `background_box_size`.
 
       #. Subtract the background level from the diff image and clip again
          to `n_sigma` * sigma, with sigma recomputed from the
@@ -211,11 +219,12 @@ The detailed process for fitting and removing flicker noise is as follows.
 
    #. Fit and remove the residual noise in the background-subtracted image.
 
-      #. If `fit_method` = 'fft', the `nsclean` library is called to fit
+      #. If `fit_method` = 'fft', the ``nsclean`` library is called to fit
          and remove the noise in frequency space.
 
       #. If fit_method = 'median', the noise is fit with a simple median
-         along the appropriate detector axis.
+         along the appropriate detector axis and subtracted from the
+         background-subtracted image.
 
    #. Restore the background level to the cleaned, background-subtracted
       diff image.
@@ -226,6 +235,12 @@ The detailed process for fitting and removing flicker noise is as follows.
 References
 ==========
 
-Details on the source of the correlated noise and the algorithm used
-in the ``nsclean`` step to fit and remove it can be found in
-`Rauscher 2023 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`_.
+The FFT cleaning algorithm implementation is based on NSClean,
+developed by Bernard Rauscher. Details on the source of the correlated
+noise and the algorithm used by the ``nsclean`` library to fit and
+remove it can be found in
+`Rauscher 2024 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`_.
+
+The background fitting and median cleaning algorithm are based on
+the image1overf algorithm, developed by Chris Willott, and available
+on GitHub at `chriswillott/jwst <https://github.com/chriswillott/jwst>`_.
