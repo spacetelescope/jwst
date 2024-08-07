@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-
 from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from . import emicorr
@@ -29,9 +28,10 @@ class EmiCorrStep(Step):
 
     reference_file_types = ['emicorr']
 
-    def process(self, input):
+    def process(self, step_input):
+
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with datamodels.open(step_input) as input_model:
 
             # Catch the cases to skip
             instrument = input_model.meta.instrument.name
@@ -47,10 +47,12 @@ class EmiCorrStep(Step):
                 input_model.meta.cal_step.emicorr = 'SKIPPED'
                 return input_model
 
+            # Work on a copy
+            result = input_model.copy()
+
             # Setup parameters
             pars = {
                 'save_intermediate_results': self.save_intermediate_results,
-                'user_supplied_reffile': self.user_supplied_reffile,
                 'nints_to_phase': self.nints_to_phase,
                 'nbins': self.nbins,
                 'scale_reference': self.scale_reference,
@@ -65,13 +67,13 @@ class EmiCorrStep(Step):
                 self.log.info('Correcting with reference file created on-the-fly.')
 
             elif self.user_supplied_reffile is None:
-                emicorr_ref_filename = self.get_reference_file(input_model, 'emicorr')
+                emicorr_ref_filename = self.get_reference_file(result, 'emicorr')
                 # Skip the spep if no reference file is found
                 if emicorr_ref_filename == 'N/A':
                     self.log.warning('No reference file found.')
                     self.log.warning('EMICORR step will be skipped')
-                    input_model.meta.cal_step.emicorr = 'SKIPPED'
-                    return input_model
+                    result.meta.cal_step.emicorr = 'SKIPPED'
+                    return result
                 else:
                     self.log.info('Using CRDS reference file: {}'.format(emicorr_ref_filename))
                     emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
@@ -88,15 +90,17 @@ class EmiCorrStep(Step):
                     save_onthefly_reffile = emicorr_ref_filename
                 else:
                     save_onthefly_reffile = None
-            output_model = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
-            if isinstance(output_model, str) or output_model is None:
+            result = emicorr.do_correction(result, emicorr_model, save_onthefly_reffile, **pars)
+            if isinstance(result, str) or result is None:
                 # in this case output_model=subarray_readpatt configuration
                 self.log.warning('No correction match for this configuration')
                 self.log.warning('Step skipped')
-                input_model.meta.cal_step.emicorr = 'SKIPPED'
-                return input_model
+                result.meta.cal_step.emicorr = 'SKIPPED'
+                return result
 
-            # close and remove the reference file created on-the-fly
-            output_model.meta.cal_step.emicorr = 'COMPLETE'
+            result.meta.cal_step.emicorr = 'COMPLETE'
 
-        return output_model
+            # Cleanup
+            del emicorr_model
+
+        return result

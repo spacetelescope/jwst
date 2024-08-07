@@ -15,15 +15,14 @@ class SuperBiasStep(Step):
     class_alias = "superbias"
 
     spec = """
-
     """
 
     reference_file_types = ['superbias']
 
-    def process(self, input):
+    def process(self, step_input):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        with datamodels.open(step_input) as input_model:
 
             # Get the name of the superbias reference file to use
             self.bias_name = self.get_reference_file(input_model, 'superbias')
@@ -33,19 +32,20 @@ class SuperBiasStep(Step):
             if self.bias_name == 'N/A':
                 self.log.warning('No SUPERBIAS reference file found')
                 self.log.warning('Superbias step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.superbias = 'SKIPPED'
-                return result
+                input_model.meta.cal_step.superbias = 'SKIPPED'
+                return input_model
 
             # Open the superbias ref file data model
             bias_model = datamodels.SuperBiasModel(self.bias_name)
 
-            # Do the bias subtraction
-            result = bias_sub.do_correction(input_model, bias_model)
+            # Work on a copy
+            result = input_model.copy()
 
-            # Close the superbias reference file model and
-            # set the step status to complete
-            bias_model.close()
+            # Do the bias subtraction
+            result = bias_sub.do_correction(result, bias_model)
             result.meta.cal_step.superbias = 'COMPLETE'
+
+            # Cleanup
+            del bias_model
 
         return result

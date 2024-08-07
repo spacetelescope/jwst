@@ -23,10 +23,10 @@ class DarkCurrentStep(Step):
 
     reference_file_types = ['dark']
 
-    def process(self, input):
+    def process(self, step_input):
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        with datamodels.RampModel(step_input) as input_model:
 
             # Get the name of the dark reference file to use
             self.dark_name = self.get_reference_file(input_model, 'dark')
@@ -36,9 +36,11 @@ class DarkCurrentStep(Step):
             if self.dark_name == 'N/A':
                 self.log.warning('No DARK reference file found')
                 self.log.warning('Dark current step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.dark = 'SKIPPED'
-                return result
+                input_model.meta.cal_step.dark = 'SKIPPED'
+                return input_model
+
+            # Work on a copy
+            result = input_model.copy()
 
             # Create name for the intermediate dark, if desired.
             dark_output = self.dark_output
@@ -49,7 +51,7 @@ class DarkCurrentStep(Step):
                 )
 
             # Open the dark ref file data model - based on Instrument
-            instrument = input_model.meta.instrument.name
+            instrument = result.meta.instrument.name
             if instrument == 'MIRI':
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:
@@ -58,20 +60,23 @@ class DarkCurrentStep(Step):
             # Store user-defined average_dark_current in model, if provided
             # A user-defined value will take precedence over any value present
             # in dark reference file
-            self.set_average_dark_current(input_model, dark_model)
+            self.set_average_dark_current(result, dark_model)
 
             # Do the dark correction
-            result = dark_sub.do_correction(
-                input_model, dark_model, dark_output
+            correction = dark_sub.do_correction(
+                result, dark_model, dark_output
             )
 
-            out_data, dark_data = result
+            out_data, dark_data = correction
 
             if dark_data is not None and dark_data.save:
                 save_dark_data_as_dark_model(dark_data, dark_model, instrument)
-            dark_model.close()
 
-            out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
+            out_ramp = dark_output_data_2_ramp_model(out_data, result)
+
+            # Cleanup
+            del dark_model
+            del result
 
         return out_ramp
 
@@ -140,7 +145,7 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
     out_dark_model.close()
 
 
-def dark_output_data_2_ramp_model(out_data, input_model):
+def dark_output_data_2_ramp_model(out_data, out_model):
     """
     Convert computed output data from the dark step to a RampModel.
 
@@ -149,7 +154,7 @@ def dark_output_data_2_ramp_model(out_data, input_model):
     out_data: ScienceData
         Computed science data from the dark current step.
 
-    input_model: RampModel
+    out_model: RampModel
         The input ramp model from which to subtract the dark current.
 
     Return
@@ -161,10 +166,9 @@ def dark_output_data_2_ramp_model(out_data, input_model):
     if out_data.cal_step == "SKIPPED":
         # If processing was skipped in the lower-level routines,
         # just return the unmodified input model
-        input_model.meta.cal_step.dark_sub = "SKIPPED"
-        return input_model
+        out_model.meta.cal_step.dark_sub = "SKIPPED"
+        return out_model
     else:
-        out_model = input_model.copy()
         out_model.meta.cal_step.dark_sub = out_data.cal_step
         out_model.data = out_data.data
         out_model.groupdq = out_data.groupdq

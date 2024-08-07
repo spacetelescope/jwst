@@ -1,8 +1,6 @@
 from stdatamodels.jwst import datamodels
-
 from ..stpipe import Step
 from . import gain_scale
-
 
 __all__ = ["GainScaleStep"]
 
@@ -16,12 +14,14 @@ class GainScaleStep(Step):
 
     class_alias = "gain_scale"
 
+    spec = """
+    """
     reference_file_types = ['gain']
 
-    def process(self, input):
+    def process(self, step_input):
 
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with datamodels.open(step_input) as input_model:
 
             # Is the gain_factor already populated in the input model?
             if input_model.meta.exposure.gain_factor is None:
@@ -35,16 +35,19 @@ class GainScaleStep(Step):
                     self.log.info('GAINFACT not found in gain reference file')
                     self.log.info('Step will be skipped')
                     input_model.meta.cal_step.gain_scale = 'SKIPPED'
-                    gain_model.close()
+                    del gain_model
                     return input_model
                 else:
                     gain_factor = gain_model.meta.exposure.gain_factor
-                    gain_model.close()
+                    del gain_model
 
             else:
                 gain_factor = input_model.meta.exposure.gain_factor
 
+            # Work on a copy
+            result = input_model.copy()
+
             # Do the scaling
-            result = gain_scale.do_correction(input_model, gain_factor)
+            result = gain_scale.do_correction(result, gain_factor)
 
         return result

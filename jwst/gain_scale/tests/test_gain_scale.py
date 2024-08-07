@@ -15,7 +15,8 @@ def test_correction(make_cubemodel):
     """
     datmod = make_cubemodel(2, 50, 50)
     gf = datmod.meta.exposure.gain_factor
-    output = do_correction(datmod, gain_factor=gf)
+    # run on a copy (the detection to make the copy or not would have happened at _step.py)
+    output = do_correction(datmod.copy(), gain_factor=gf)
 
     assert output.meta.cal_step.gain_scale == 'COMPLETE'
     assert np.all(output.data == datmod.data * gf)
