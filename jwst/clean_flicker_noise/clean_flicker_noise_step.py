@@ -30,9 +30,9 @@ class CleanFlickerNoiseStep(Step):
         background_box_size = int_list(min=2, max=2, default=None)  # Background box size for modeled background
         background_from_rate = boolean(default=False)  # Fit background to rate image
         mask_science_regions = boolean(default=False)  # Mask known science regions
-        single_mask = boolean(default=True)  # Make a single mask for all integrations
         n_sigma = float(default=2.0)  # Clipping level for non-background signal
         fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
+        single_mask = boolean(default=True)  # Make a single mask for all integrations
         user_mask = string(default=None)  # Path to user-supplied mask
         save_mask = boolean(default=False)  # Save the created mask
         save_background = boolean(default=False)  # Save the fit background

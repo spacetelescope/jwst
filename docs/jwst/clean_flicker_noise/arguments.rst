@@ -64,11 +64,9 @@ the behavior of the processing.
   If set, the mask constructed by the step will be saved to a file
   with suffix 'mask'.
 
-
 ``--save_background`` (boolean, default=False)
   If set, the background fit to the group diff images will be saved
   to a file with suffix 'flicker_bkg'.
-
 
 ``--save_noise`` (boolean, default=False)
   If set, the residual noise fit and removed from the input data
