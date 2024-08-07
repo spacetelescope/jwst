@@ -28,6 +28,55 @@ def get_file_path(filename):
     return os.path.join(data_path, filename)
 
 
+def make_nirspec_mos_model():
+    im = ImageModel((2048, 2048))
+    im.meta.wcsinfo = {
+        'dec_ref': -0.00601415671349804,
+        'ra_ref': -0.02073605215697509,
+        'roll_ref': -0.0,
+        'v2_ref': -453.5134,
+        'v3_ref': -373.4826,
+        'v3yangle': 0.0,
+        'vparity': -1}
+
+    im.meta.instrument = {
+        'detector': 'NRS1',
+        'filter': 'F100LP',
+        'grating': 'G140M',
+        'name': 'NIRSPEC',
+        'gwa_tilt': 37.0610,
+        'gwa_xtilt': 0.0001,
+        'gwa_ytilt': 0.0001,
+        'msa_metadata_id': 12}
+
+    im.meta.observation = {
+        'program_number': '1234',
+        'date': '2016-09-05',
+        'time': '8:59:37'}
+
+    im.meta.exposure = {
+        'duration': 11.805952,
+        'end_time': 58119.85416,
+        'exposure_time': 11.776,
+        'frame_time': 0.11776,
+        'group_time': 0.11776,
+        'groupgap': 0,
+        'integration_time': 11.776,
+        'nframes': 1,
+        'ngroups': 100,
+        'nints': 1,
+        'nresets_between_ints': 0,
+        'nsamples': 1,
+        'readpatt': 'NRSRAPID',
+        'sample_time': 10.0,
+        'start_time': 58119.8333,
+        'type': 'NRS_MSASPEC',
+        'zero_frame': False}
+    im.meta.instrument.msa_metadata_file = get_file_path('msa_configuration.fits')
+    im.meta.dither.position_number = 1
+    return im
+
+
 def test_or_subarray_with_array():
     """test bitwise or with array and subarray."""
 
@@ -137,52 +186,7 @@ def test_boundingbox_from_indices():
 
 
 def test_msaflagopen_step():
-    im = ImageModel((2048, 2048))
-    im.meta.wcsinfo = {
-        'dec_ref': -0.00601415671349804,
-        'ra_ref': -0.02073605215697509,
-        'roll_ref': -0.0,
-        'v2_ref': -453.5134,
-        'v3_ref': -373.4826,
-        'v3yangle': 0.0,
-        'vparity': -1}
-
-    im.meta.instrument = {
-        'detector': 'NRS1',
-        'filter': 'F100LP',
-        'grating': 'G140M',
-        'name': 'NIRSPEC',
-        'gwa_tilt': 37.0610,
-        'gwa_xtilt': 0.0001,
-        'gwa_ytilt': 0.0001,
-        'msa_metadata_id': 12}
-
-    im.meta.observation = {
-        'program_number': '1234',
-        'date': '2016-09-05',
-        'time': '8:59:37'}
-
-    im.meta.exposure = {
-        'duration': 11.805952,
-        'end_time': 58119.85416,
-        'exposure_time': 11.776,
-        'frame_time': 0.11776,
-        'group_time': 0.11776,
-        'groupgap': 0,
-        'integration_time': 11.776,
-        'nframes': 1,
-        'ngroups': 100,
-        'nints': 1,
-        'nresets_between_ints': 0,
-        'nsamples': 1,
-        'readpatt': 'NRSRAPID',
-        'sample_time': 10.0,
-        'start_time': 58119.8333,
-        'type': 'NRS_MSASPEC',
-        'zero_frame': False}
-    im.meta.instrument.msa_metadata_file = get_file_path('msa_configuration.fits')
-    im.meta.dither.position_number = 1
-
+    im = make_nirspec_mos_model()
     im = AssignWcsStep.call(im)
     result = MSAFlagOpenStep.call(im)
 

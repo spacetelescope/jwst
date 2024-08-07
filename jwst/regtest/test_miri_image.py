@@ -48,6 +48,26 @@ def run_detector1_with_average_dark_current(rtdata_module):
 
 
 @pytest.fixture(scope="module")
+def run_detector1_with_clean_flicker_noise(rtdata_module):
+    """Run detector1 pipeline on MIRI imaging data with noise cleaning."""
+    rtdata_module.get_data("miri/image/jw01024002001_02101_00001_mirimage_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files.
+    # Run optional clean_flicker_noise step,
+    # saving extra outputs and masking to science regions
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--save_calibrated_ramp=True",
+            "--steps.clean_flicker_noise.skip=False",
+            "--steps.clean_flicker_noise.mask_science_regions=True",
+            "--steps.clean_flicker_noise.save_results=True",
+            "--steps.clean_flicker_noise.save_mask=True",
+            "--steps.clean_flicker_noise.save_background=True",
+            "--steps.clean_flicker_noise.save_noise=True",
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
 def run_image2(run_detector1, rtdata_module):
     """Run image2 pipeline on the _rate file, saving intermediate products"""
     rtdata = rtdata_module
@@ -108,6 +128,29 @@ def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_d
 
     # Set tolerances so the crf, rscd and rateints file comparisons work across
     # architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix",
+                         ["clean_flicker_noise", "mask",
+                          "flicker_bkg", "flicker_noise",
+                          "ramp", "rate", "rateints"])
+def test_miri_image_detector1_with_clean_flicker_noise(
+        run_detector1_with_clean_flicker_noise,
+        rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Test detector1 pipeline for MIRI imaging data with noise cleaning."""
+    rtdata = rtdata_module
+    rtdata.input = "jw01024002001_02101_00001_mirimage_uncal.fits"
+    output = f"jw01024002001_02101_00001_mirimage_{suffix}.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_miri_image_clean_flicker_noise/{output}")
+
+    # Set tolerances so the file comparisons work across architectures
     fitsdiff_default_kwargs["rtol"] = 1e-4
     fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

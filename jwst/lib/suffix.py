@@ -159,6 +159,8 @@ _calculated_suffixes = {
  'spec3pipeline',
  'nsclean',
  'nscleanstep',
+ 'clean_flicker_noise',
+ 'cleanflickernoisestep',
  'outlierdetectionstep',
  'groupscalestep',
  'hlspstep',

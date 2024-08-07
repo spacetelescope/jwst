@@ -22,6 +22,7 @@ from ..reset import reset_step
 from ..persistence import persistence_step
 from ..charge_migration import charge_migration_step
 from ..jump import jump_step
+from ..clean_flicker_noise import clean_flicker_noise_step
 from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
@@ -64,6 +65,7 @@ class Detector1Pipeline(Pipeline):
                  'persistence': persistence_step.PersistenceStep,
                  'charge_migration': charge_migration_step.ChargeMigrationStep,
                  'jump': jump_step.JumpStep,
+                 'clean_flicker_noise': clean_flicker_noise_step.CleanFlickerNoiseStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
                  'gain_scale': gain_scale_step.GainScaleStep,
                  }
@@ -127,6 +129,9 @@ class Detector1Pipeline(Pipeline):
 
         # apply the jump step
         input = self.jump(input)
+
+        # apply the clean_flicker_noise step
+        input = self.clean_flicker_noise(input)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
