@@ -1,6 +1,11 @@
 1.15.2 (unreleased)
 ===================
 
+associations
+------------
+
+- remove ``MultilineLogger`` and no longer set it as the default logger. [#8694]
+
 align_refs
 ----------
 
