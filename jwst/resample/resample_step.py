@@ -99,29 +99,15 @@ class ResampleStep(Step):
         kwargs = self.get_drizpars()
 
         # Call the resampling routine
-        resamp = resample.ResampleData(input_models, output=output, **kwargs)
-        result = resamp.do_drizzle(input_models)
+        # resamp = resample.ResampleData(input_models, output=output, **kwargs)
+        # result = resamp.do_drizzle(input_models)
 
-        with result:
-            for model in result:
-                model.meta.cal_step.resample = 'COMPLETE'
-                self.update_fits_wcs(model)
-                util.update_s_region_imaging(model)
-
-                # if pixel_scale exists, it will override pixel_scale_ratio.
-                # calculate the actual value of pixel_scale_ratio based on pixel_scale
-                # because source_catalog uses this value from the header.
-                if self.pixel_scale is None:
-                    model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-                else:
-                    model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-                model.meta.resample.pixfrac = kwargs['pixfrac']
-                result.shelve(model)
-
-            if len(result) == 1:
-                model = result.borrow(0)
-                result.shelve(model, 0, modify=False)
-                return model
+        if self.single:
+            resamp = resample.ResampleJWSTSingle(input_models, output=output, **kwargs)
+        else:
+            resamp = resample.ResampleJWSTCoAdd(input_models, output=output, **kwargs)
+        resamp.run()
+        result = resamp.output_model
 
         return result
 
@@ -232,27 +218,29 @@ class ResampleStep(Step):
             fillval=self.fillval,
             wht_type=self.weight_type,
             good_bits=GOOD_BITS,
-            single=self.single,
             blendheaders=self.blendheaders,
             allowed_memory=self.allowed_memory,
             in_memory=self.in_memory
         )
 
         # Custom output WCS parameters.
-        kwargs['output_shape'] = self.check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
+        wcs_pars = {
+            'output_shape': self.check_list_pars(
+                self.output_shape,
+                'output_shape',
+                min_vals=[1, 1]
+            ),
+            'crpix': self.check_list_pars(self.crpix, 'crpix'),
+            'crval': self.check_list_pars(self.crval, 'crval'),
+            'rotation': self.rotation,
+            'pixel_scale': self.pixel_scale,
+            'pixel_scale_ratio': self.pixel_scale_ratio,
+        }
+        kwargs['wcs_pars'] = wcs_pars
         kwargs['output_wcs'] = self.load_custom_wcs(
             self.output_wcs,
-            kwargs['output_shape']
+            wcs_pars['output_shape']
         )
-        kwargs['crpix'] = self.check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self.check_list_pars(self.crval, 'crval')
-        kwargs['rotation'] = self.rotation
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
 
         # Report values to processing log
         for k, v in kwargs.items():
