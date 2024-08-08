@@ -118,7 +118,8 @@ class AssignWcsStep(Step):
 
             except (ValueError, RuntimeError) as e:
                 log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
-                            f'approximation. Reported error is:\n"{e.args[0]}"')
+                            "approximation. Reported error is:")
+                log.warning(f'"{e.args[0]}"')
         else:  # WFSS modes
             try:
                 # A bounding_box is needed for the imaging WCS
@@ -137,6 +138,7 @@ class AssignWcsStep(Step):
                                  )
             except (ValueError, RuntimeError) as e:
                 log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
-                            f'approximation. Reported error is:\n"{e.args[0]}"')
+                            "approximation. Reported error is:")
+                log.warning(f'"{e.args[0]}"')
 
         return result

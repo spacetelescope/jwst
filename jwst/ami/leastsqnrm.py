@@ -542,7 +542,8 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
     flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
     log.info("fringefitting.leastsqnrm.matrix_operations(): ")
-    log.info(f"\timg {img.shape:} \n\tdqm {dqm.shape:}")
+    log.info(f"\timg {img.shape:}")
+    log.info(f"\tdqm {dqm.shape:}")
     log.info(
         f"\tL x W = {img.shape[0]:d} x {img.shape[1]:d} = {img.shape[0] * img.shape[1]:d}",
     )
@@ -550,7 +551,8 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     log.info(f"\tflatdqm {flatdqm.shape:}")
 
 
-    log.info("\n\ttype(dqm) %s", type(dqm))
+    log.info("")
+    log.info("\ttype(dqm) %s", type(dqm))
     if dqm is not None:
         nanlist = np.where(flatdqm)  # where DO_NOT_USE up.
     else:

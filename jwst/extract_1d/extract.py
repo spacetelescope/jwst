@@ -805,13 +805,12 @@ def sanity_check_limits(
     """
     if (ap_wcs.xstart >= ap_ref.xstop or ap_wcs.xstop <= ap_ref.xstart or
             ap_wcs.ystart >= ap_ref.ystop or ap_wcs.ystop <= ap_ref.ystart):
-        log.warning(
-            f"The WCS bounding box is outside the aperture:\n\t"
-            f"aperture: {ap_ref.xstart}, {ap_ref.xstop}, {ap_ref.ystart}, {ap_ref.ystop}\n\t"
-            f"wcs: {ap_wcs.xstart}, {ap_wcs.xstop}, {ap_wcs.ystart}, {ap_wcs.ystop}\n"
-            f"so the wcs bounding box will be ignored."
-        )
-
+        log.warning("The WCS bounding box is outside the aperture:")
+        log.warning(f"\taperture: {ap_ref.xstart}, {ap_ref.xstop}, "
+                    f"{ap_ref.ystart}, {ap_ref.ystop}")
+        log.warning(f"\twcs: {ap_wcs.xstart}, {ap_wcs.xstop}, "
+                    f"{ap_wcs.ystart}, {ap_wcs.ystop}")
+        log.warning("so the wcs bounding box will be ignored.")
         flag = False
     else:
         flag = True

@@ -230,16 +230,18 @@ class Spec2Pipeline(Pipeline):
                 assign_wcs_exception = exception
             if assign_wcs_exception is not None or \
                calibrated.meta.cal_step.assign_wcs != 'COMPLETE':
-                message = (
-                    'Assign_wcs processing was skipped.'
-                    '\nAborting remaining processing for this exposure.'
-                    '\nNo output product will be created.'
+                messages = (
+                    'Assign_wcs processing was skipped.',
+                    'Aborting remaining processing for this exposure.',
+                    'No output product will be created.'
                 )
                 if self.assign_wcs.skip:
-                    self.log.warning(message)
+                    for message in messages:
+                        self.log.warning(message)
                     return
                 else:
-                    self.log.error(message)
+                    for message in messages:
+                        self.log.error(message)
                     if assign_wcs_exception is not None:
                         raise assign_wcs_exception
                     else:

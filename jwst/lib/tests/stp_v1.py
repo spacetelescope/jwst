@@ -111,12 +111,10 @@ def add_wcs(filename):
         dec = pheader['TARG_DEC']
         roll = 0
 
-        logger.warning(
-            'Cannot retrieve telescope pointing.'
-            '\n{}'
-            '\nUsing TARG_RA={}, TARG_DEC={} and PA_V3=0 '
-            'to set pointing.'.format(exception, ra, dec)
-        )
+        logger.warning('Cannot retrieve telescope pointing.')
+        logger.warning(str(exception))
+        logger.warning(f'Using TARG_RA={ra}, TARG_DEC={dec} and '
+                       f'PA_V3=0 to set pointing.')
 
         local_roll = compute_local_roll(roll, ra, dec, v2ref, v3ref)
         wcsinfo = (ra, dec, local_roll)
@@ -136,10 +134,8 @@ def add_wcs(filename):
         v1_ra_deg, v1_dec_deg, v3_pa_deg = vinfo
         local_roll = compute_local_roll(v3_pa_deg, crval1, crval2, v2ref, v3ref)
 
-        logger.info(
-            'Computed coordinates from quaternions:'
-            '\n\tRA = {} DEC={} PA_V3={}'.format(crval1, crval2, v3_pa_deg)
-        )
+        logger.info('Computed coordinates from quaternions:')
+        logger.info(f'\tRA = {crval1} DEC={crval2} PA_V3={v3_pa_deg}')
 
     pheader['RA_V1'] = v1_ra_deg
     pheader['DEC_V1'] = v1_dec_deg
@@ -339,11 +335,9 @@ def get_pointing(obsstart, obsend, result_type='first'):
     This will need be re-examined when more information is
     available.
     """
-    logger.info(
-        'Determining pointing between observations times (mjd):'
-        '\n\tobsstart = {}'
-        '\n\tobsend = {}'.format(obsstart, obsend)
-    )
+    logger.info('Determining pointing between observations times (mjd):')
+    logger.info(f'\tobsstart = {obsstart}')
+    logger.info(f'\tobsend = {obsend}')
     try:
         engdb = ENGDB_Service()
     except Exception as exception:
