@@ -54,6 +54,14 @@ set_telescope_pointing
 - Refactored separate modes into submodules instead of inheriting from a base class.
   Moved non-JWST-specific code to stcal. [#8613]
 
+ramp_fitting
+------------
+
+- Updated the flow of the detector 1 pipeline when selecting the ``LIKELY`` algorithm
+  for ramp fitting.  The ramps must contain a minimum number of groups (4) and the
+  normal jump detection algorithm must be skipped due to the rmap fitting likelihood
+  algorithm having its own internal jump detection algorithm.[#8631]
+
 resample_spec
 -------------
 
