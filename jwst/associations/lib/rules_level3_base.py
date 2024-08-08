@@ -638,6 +638,10 @@ def dms_product_name_sources(asn):
 
     opt_elem = asn._get_opt_element()
 
+    slit_name = asn._get_slit_name()
+    if slit_name:
+        slit_name = '-' + slit_name
+
     subarray = asn._get_subarray()
     if subarray:
         subarray = '-' + subarray
@@ -646,7 +650,7 @@ def dms_product_name_sources(asn):
         'jw{program}-{acid}'
         '_{source_id}'
         '_{instrument}'
-        '_{opt_elem}{subarray}'
+        '_{opt_elem}{slit_name}{subarray}'
     )
     product_name = format_product(
         product_name_format,
@@ -654,6 +658,7 @@ def dms_product_name_sources(asn):
         acid=asn.acid.id,
         instrument=instrument,
         opt_elem=opt_elem,
+        slit_name=slit_name,
         subarray=subarray,
     )
 
