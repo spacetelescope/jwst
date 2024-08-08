@@ -54,6 +54,15 @@ set_telescope_pointing
 - Refactored separate modes into submodules instead of inheriting from a base class.
   Moved non-JWST-specific code to stcal. [#8613]
 
+ramp_fitting
+------------
+
+- Updating the ramp fitting work flow for the read noise variance calculation
+  for ramps containing CHARGELOSS flags.  When running the ``OLS_C`` ramp
+  fitting algorith, this recalculation is being done in the C-extension, so
+  the step code handling this will produce errors.  The step code now runs only
+  when the ``OLS`` algorithm is selected for ramp fitting.[#8697]
+
 resample_spec
 -------------
 
