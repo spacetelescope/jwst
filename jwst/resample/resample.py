@@ -1,30 +1,353 @@
 import logging
-import os
 import warnings
+import re
 
 import numpy as np
-import psutil
-from drizzle import cdrizzle, util
-from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.library.basic_utils import bytes2human
+from stcal.resample import ResampleModelIO, ResampleCoAdd, ResampleSingle
+from stcal.resample.utils import get_tmeasure
+from drizzle.resample import Drizzle
 
-from jwst.datamodels import ModelContainer
-
-from . import gwcs_drizzle
-from jwst.resample import resample_utils
+from ..datamodels import ModelContainer
 from ..model_blender import blendmeta
+from ..assign_wcs import util
+from .import resample_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["OutputTooLargeError", "ResampleData"]
+__all__ = [
+    "OutputTooLargeError",
+    "ResampleJWSTModelIO",
+    "ResampleJWSTSingle",
+    "ResampleJWSTCoAdd",
+    "ResampleData",
+]
 
 
 class OutputTooLargeError(RuntimeError):
     """Raised when the output is too large for in-memory instantiation"""
 
+
+class ResampleJWSTModelIO(ResampleModelIO):
+    def open_model(self, file_name):
+        return datamodels.open(file_name)
+
+    def get_model_meta(self, file_name, fields):
+        raise NotImplementedError()
+
+    def close_model(self, model):
+        model.close()
+
+    def save_model(self, model):
+        if model.meta.filename:
+            model.write(model.meta.filename, overwrite=True)
+
+    def write_model(self, model, file_name):
+        model.write(file_name, overwrite=True)
+
+    def new_model(self, image_shape=None, file_name=None):
+        """ Return a new model for the resampled output """
+        model = datamodels.ImageModel(image_shape)
+        model.meta.filename = file_name
+        return model
+
+
+class ResampleJWSTCoAdd(ResampleJWSTModelIO, ResampleCoAdd):
+    # resample_array_names = [
+    #     {'attr': 'data', 'variance', 'exptime']
+    def __init__(self, *args, blendheaders=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._blendheaders = blendheaders
+
+    def _compute_output_wcs(self, **wcs_pars):
+        """
+        returns a distortion-free WCS object and its pixel scale.
+        this code should be moved to stcal
+
+        """
+        # Define output WCS based on all inputs, including a reference WCS:
+        output_shape = wcs_pars.get("output_shape", None)
+        output_wcs = resample_utils.make_output_wcs(
+            self._input_models,
+            ref_wcs=None,
+            pscale_ratio=wcs_pars.get("pixel_scale_ratio", 1.0),
+            pscale=wcs_pars.get("pixel_scale", None),
+            rotation=wcs_pars.get("rotation", 0.0),
+            shape=None if output_shape is None else output_shape[::-1],
+            crpix=wcs_pars.get("crpix", None),
+            crval=wcs_pars.get("crval", None),
+        )
+
+        # Estimate output pixel area in Sr. NOTE: in principle we could
+        # use the same algorithm as for when output_wcs is provided by the
+        # user.
+        tr = output_wcs.pipeline[0].transform
+        output_pix_area = (
+            np.deg2rad(tr['cdelt1'].factor.value) *
+            np.deg2rad(tr['cdelt2'].factor.value)
+        )
+        return output_wcs, output_pix_area
+
+    def _check_var_array(self, data_model, array_name):
+        data = getattr(data_model, array_name, None)
+        if data is None or data.size == 0:
+            log.debug(
+                f"No data for '{array_name}' for model "
+                f"{repr(data_model.meta.filename)}. Skipping ..."
+            )
+            return False
+        elif data.shape != data_model.data.shape:
+            log.warning(
+                f"Data shape mismatch for '{array_name}' for model "
+                f"{repr(data_model.meta.filename)}. Skipping ..."
+            )
+            return False
+        return True
+
+    def extra_pre_resample_setup(self):
+        self._var_rnoise_sum = np.full(self._output_array_shape, np.nan)
+        self._var_poisson_sum = np.full(self._output_array_shape, np.nan)
+        self._var_flat_sum = np.full(self._output_array_shape, np.nan)
+        # self._total_weight_var_rnoise = np.zeros(self._output_array_shape)
+        self._total_weight_var_poisson = np.zeros(self._output_array_shape)
+        self._total_weight_var_flat = np.zeros(self._output_array_shape)
+
+    def post_process_resample_model(self, data_model, driz_init_kwargs, add_image_kwargs):
+        log.info("Resampling variance components")
+
+        # create resample objects for the three variance arrays:
+        driz_init_kwargs = {
+            'kernel': self.kernel,
+            'fillval': np.nan,
+            'out_shape': self._output_array_shape,
+            # 'exptime': 1.0,
+            'no_ctx': True,
+        }
+        driz_rnoise = Drizzle(**driz_init_kwargs)
+        driz_poisson = Drizzle(**driz_init_kwargs)
+        driz_flat = Drizzle(**driz_init_kwargs)
+
+        # Resample read-out noise and compute weight map for variance arrays
+        if self._check_var_array(data_model, 'var_rnoise'):
+            data = np.sqrt(data_model.var_rnoise)
+            driz_rnoise.add_image(data, **add_image_kwargs)
+            var = driz_rnoise.out_img
+            np.square(var, out=var)
+
+            weight_mask = var > 0
+
+            # Set the weight for the image from the weight type
+            if self.weight_type == "ivm":
+                weight_mask = var > 0
+                weight = np.ones(self._output_array_shape)
+                weight[weight_mask] = np.reciprocal(var[weight_mask])
+                weight_mask &= (weight > 0.0)
+                # Add the inverse of the resampled variance to a running sum.
+                # Update only pixels (in the running sum) with valid new values:
+                self._var_rnoise_sum[weight_mask] = np.nansum(
+                    [
+                        self._var_rnoise_sum[weight_mask],
+                        weight[weight_mask]
+                    ],
+                    axis=0
+                )
+            elif self.weight_type == "exptime":
+                weight = np.full(
+                    self._output_array_shape,
+                    get_tmeasure(data_model)[0],
+                )
+                weight_mask = np.ones(self._output_array_shape, dtype=bool)
+                self._var_rnoise_sum = np.nansum(
+                    [self._var_rnoise_sum, weight],
+                    axis=0
+                )
+            else:
+                weight = np.ones(self._output_array_shape)
+                weight_mask = np.ones(self._output_array_shape, dtype=bool)
+                self._var_rnoise_sum = np.nansum(
+                    [self._var_rnoise_sum, weight],
+                    axis=0
+                )
+        else:
+            weight = np.ones(self._output_array_shape)
+            weight_mask = np.ones(self._output_array_shape, dtype=bool)
+
+        if self._check_var_array(data_model, 'var_poisson'):
+            data = np.sqrt(data_model.var_poisson)
+            driz_poisson.add_image(data, **add_image_kwargs)
+            var = driz_poisson.out_img
+            np.square(var, out=var)
+
+            mask = (var > 0) & weight_mask
+
+            # Add the inverse of the resampled variance to a running sum.
+            # Update only pixels (in the running sum) with valid new values:
+            self._var_poisson_sum[mask] = np.nansum(
+                [
+                    self._var_poisson_sum[mask],
+                    var[mask] * weight[mask] * weight[mask]
+                ],
+                axis=0
+            )
+            self._total_weight_var_poisson[mask] += weight[mask]
+
+        if self._check_var_array(data_model, 'var_flat'):
+            data = np.sqrt(data_model.var_flat)
+            driz_flat.add_image(data, **add_image_kwargs)
+            var = driz_flat.out_img
+            np.square(var, out=var)
+
+            mask = (var > 0) & weight_mask
+
+            # Add the inverse of the resampled variance to a running sum.
+            # Update only pixels (in the running sum) with valid new values:
+            self._var_flat_sum[mask] = np.nansum(
+                [
+                    self._var_flat_sum[mask],
+                    var[mask] * weight[mask] * weight[mask]
+                ],
+                axis=0
+            )
+            self._total_weight_var_flat[mask] += weight[mask]
+
+    def finalize_resample(self):
+        # We now have a sum of the weighted resampled variances.
+        # Divide by the total weights, squared, and set in the output model.
+        # Zero weight and missing values are NaN in the output.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
+
+            odt = self._output_model.data.dtype
+
+            # readout noise
+            np.reciprocal(self._var_rnoise_sum, out=self._var_rnoise_sum)
+            self._output_model.var_rnoise = self._var_rnoise_sum.astype(dtype=odt)
+
+            # Poisson noise
+            for _ in range(2):
+                np.divide(
+                    self._var_poisson_sum,
+                    self._total_weight_var_poisson,
+                    out=self._var_poisson_sum
+                )
+            self._output_model.var_poisson = self._var_poisson_sum.astype(dtype=odt)
+
+            # flat's noise
+            for _ in range(2):
+                np.divide(
+                    self._var_flat_sum,
+                    self._total_weight_var_flat,
+                    out=self._var_flat_sum
+                )
+            self._output_model.var_flat = self._var_flat_sum.astype(dtype=odt)
+
+            # compute total error:
+            vars = np.array(
+                [
+                    self._var_rnoise_sum,
+                    self._var_poisson_sum,
+                    self._var_flat_sum,
+                ]
+            )
+            all_nan_mask = np.any(np.isnan(vars), axis=0)
+            self._output_model.err = np.sqrt(np.nansum(vars, axis=0)).astype(dtype=odt)
+            self._output_model.err[all_nan_mask] = np.nan
+
+        del vars
+        del self._var_rnoise_sum
+        del self._var_poisson_sum
+        del self._var_flat_sum
+        # del self._total_weight_var_rnoise
+        del self._total_weight_var_poisson
+        del self._total_weight_var_flat
+
+        # update meta for the output model:
+        self._output_model.meta.cal_step.resample = 'COMPLETE'
+        _update_fits_wcsinfo(self._output_model)
+        util.update_s_region_imaging(self._output_model)
+        self._output_model.meta.asn.pool_name = self._input_models.asn_pool_name
+        self._output_model.meta.asn.table_name = self._input_models.asn_table_name
+        self._output_model.meta.resample.pixel_scale_ratio = self._pixel_scale_ratio
+        self._output_model.meta.resample.pixfrac = self.pixfrac
+
+    # TODO: Not sure about funct. signature and also I don't like it needs
+    # to open input files again. Should we store meta of all inputs?
+    # Should blendmeta.blendmodels be redesigned to blend one meta at a time?
+    def blend_output_metadata(self, output_model):
+        """ Create new output metadata based on blending all input metadata. """
+
+        if not self._blendheaders:
+            return
+
+        ignore_list = [
+            'meta.photometry.pixelarea_steradians',
+            'meta.photometry.pixelarea_arcsecsq',
+        ]
+
+        log.info(f'Blending metadata for {self._output_filename}')
+        blendmeta.blendmodels(
+            output_model,
+            inputs=self._input_models,
+            output=self._output_filename,
+            ignore=ignore_list
+        )
+
+
+class ResampleJWSTSingle(ResampleJWSTModelIO, ResampleSingle):
+    pass
+
+
+def _update_fits_wcsinfo(model):
+    """
+    Update FITS WCS keywords of the resampled image.
+    """
+    # Delete any SIP-related keywords first
+    pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
+    regex = re.compile(pattern)
+
+    keys = list(model.meta.wcsinfo.instance.keys())
+    for key in keys:
+        if regex.match(key):
+            del model.meta.wcsinfo.instance[key]
+
+    # Write new PC-matrix-based WCS based on GWCS model
+    transform = model.meta.wcs.forward_transform
+    model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+    model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+    model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+    model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+    model.meta.wcsinfo.ra_ref = transform[6].lon.value
+    model.meta.wcsinfo.dec_ref = transform[6].lat.value
+    model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+    model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+    model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+    model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+    model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+    model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+    model.meta.wcsinfo.ctype1 = "RA---TAN"
+    model.meta.wcsinfo.ctype2 = "DEC--TAN"
+
+    # Remove no longer relevant WCS keywords
+    rm_keys = [
+        'v2_ref',
+        'v3_ref',
+        'ra_ref',
+        'dec_ref',
+        'roll_ref',
+        'v3yangle',
+        'vparity',
+    ]
+    for key in rm_keys:
+        if key in model.meta.wcsinfo.instance:
+            del model.meta.wcsinfo.instance[key]
+
+
+####################################################
+#  Code below was left for spectral data for now   #
+####################################################
 
 class ResampleData:
     """
