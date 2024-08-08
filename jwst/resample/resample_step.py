@@ -86,13 +86,14 @@ class ResampleStep(Step):
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
+        kwargs.pop('blendheaders', None)
 
         # Call the resampling routine
         # resamp = resample.ResampleData(input_models, output=output, **kwargs)
         # result = resamp.do_drizzle(input_models)
 
         if self.single:
-            resamp = resample.ResampleJWSTSingle(input_models, output=output, **kwargs)
+            resamp = resample.ResampleJWSTSingle(input_models, **kwargs)
         else:
             resamp = resample.ResampleJWSTCoAdd(input_models, output=output, **kwargs)
         resamp.run()

@@ -38,7 +38,8 @@ class ResampleJWSTModelIO(ResampleModelIO):
         raise NotImplementedError()
 
     def close_model(self, model):
-        model.close()
+        self.save_model(model)
+        # model.close()
 
     def save_model(self, model):
         if model.meta.filename:
