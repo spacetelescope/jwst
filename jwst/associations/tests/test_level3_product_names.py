@@ -9,7 +9,7 @@ from jwst.associations.tests.helpers import (
     t_path,
 )
 
-from jwst.associations import (AssociationPool, generate)
+from jwst.associations import generate
 from jwst.associations.lib.dms_base import DMSAttrConstraint
 
 
