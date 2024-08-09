@@ -17,6 +17,12 @@ assign_wcs
 - Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
   into stcal. [#8624]
 
+associations
+------------
+
+- Restored slit name to level 3 product names for NIRSpec BOTS and background
+  fixed slit targets. [#8699]
+
 cube_build
 ----------
 
