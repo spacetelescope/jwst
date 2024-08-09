@@ -75,6 +75,11 @@ resample_spec
   so that the spectral resampling step only exposes parameters that are appropriate
   for spectral data. [#8622]
 
+resample_step
+-------------
+
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape``. [#8698]
+
 scripts
 -------
 
