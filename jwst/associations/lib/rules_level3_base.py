@@ -666,8 +666,10 @@ def dms_product_name_sources(asn):
 
 
 def dms_product_name_nrsfs_sources(asn):
-    """Produce source-based product names for
-       NIRSpec fixed-slit observations.
+    """Produce source-based product names for NIRSpec fixed-slit observations.
+
+    For this mode, the product names have a placeholder for the
+    slit name, to be filled in later by the pipeline.
 
     Parameters
     ---------

@@ -118,10 +118,10 @@ def test_multiple_optelems(pool_file):
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             assert m is not None
 
-            # should always be an opt_elem
+            # there should always be an opt_elem
             values = ['-'.join(asn.constraints['opt_elem'].found_values)]
 
-            # may be an opt_elem2, fixed slit or 2, or a subarray
+            # there may also be an opt_elem2, fixed slit or 2, or a subarray
             for extra in ['opt_elem2', 'fxd_slit', 'fxd_slit2', 'subarray']:
 
                 # special rules for fixed slit for NRS FS:
@@ -136,8 +136,8 @@ def test_multiple_optelems(pool_file):
                 try:
                     value = '-'.join(asn.constraints[extra].found_values)
                 except KeyError:
-                    value = ''
-                if value:
+                    value = None
+                if value not in EMPTY:
                     values.append(value)
 
             assert m.groupdict()['opt_elem'] == '-'.join(values)
