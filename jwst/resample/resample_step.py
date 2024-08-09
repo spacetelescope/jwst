@@ -176,9 +176,8 @@ class ResampleStep(Step):
 
         with asdf.open(asdf_wcs_file) as af:
             wcs = deepcopy(af.tree["wcs"])
-            wcs.pixel_area = af.tree.get("pixel_area", None)
-            wcs.pixel_shape = af.tree.get("pixel_shape", None)
-            wcs.array_shape = af.tree.get("array_shape", None)
+            if not hasattr(wcs, "pixel_area"):
+                wcs.pixel_area = af.tree.get("pixel_area", None)
 
         if output_shape is not None:
             wcs.array_shape = output_shape[::-1]
