@@ -78,7 +78,9 @@ resample_spec
 resample_step
 -------------
 
-- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape``. [#8698]
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
+  changed to use values in the top-level ASDF structure if the values in the WCS
+  are ``None``. [#8698]
 
 scripts
 -------
