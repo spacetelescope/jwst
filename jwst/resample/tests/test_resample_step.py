@@ -1128,11 +1128,17 @@ def test_custom_wcs_pscale_resample_nirspec(nirspec_cal, ratio):
 
 @pytest.mark.parametrize('override,value',
                          [('pixel_area', 1e-13), ('pixel_shape', (300, 400)),
-                          ('pixel_area', (400, 300))])
+                          ('array_shape', (400, 300))])
 def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
     # make a valid WCS
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     wcs = im.meta.wcs
+
+    # remove existing shape keys if testing shape overrides
+    if override != 'pixel_area':
+        wcs.pixel_shape = None
+        wcs.bounding_box = None
+
     expected_array_shape = im.data.shape
     expected_pixel_shape = im.data.shape[::-1]
     expected_pixel_area = None
@@ -1148,10 +1154,11 @@ def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
         if key == override:
             assert np.allclose(getattr(loaded_wcs, key), value)
         elif key == 'pixel_shape':
-            assert np.allclose(getattr(loaded_wcs, key), expected_pixel_shape)
+            if override == 'array_shape':
+                assert np.allclose(getattr(loaded_wcs, key), value[::-1])
+            else:
+                assert np.allclose(getattr(loaded_wcs, key), expected_pixel_shape)
         elif key == 'array_shape':
-            # array shape is never in the input WCS, it is set from
-            # pixel shape if provided.
             if override == 'pixel_shape':
                 assert np.allclose(getattr(loaded_wcs, key), value[::-1])
             else:
