@@ -16,10 +16,15 @@ on:
   workflow_dispatch:
     inputs:
       crds_context:
-        description: CRDS context
+        description: CRDS context (leave blank for latest)
         type: string
         required: false
         default: ''
+      crds_server:
+        description: CRDS server
+        type: string
+        required: false
+        default: https://jwst-crds.stsci.edu
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.crds_context }}
@@ -43,7 +48,7 @@ jobs:
     with:
       setenv: |
         CRDS_PATH: /tmp/data/crds_cache
-        CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+        CRDS_SERVER_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
         CRDS_CONTEXT: ${{ needs.crds_context.outputs.context }}
         CRDS_CLIENT_RETRY_COUNT: 3
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
