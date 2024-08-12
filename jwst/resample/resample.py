@@ -1,6 +1,7 @@
 import logging
 import os
 import warnings
+import json
 
 import numpy as np
 import psutil
@@ -353,10 +354,12 @@ class ResampleData:
             output_model.wht *= 0.
 
         if not self.in_memory:
-            # rebuild ModelLibrary as an association from the output files
-            # this yields memory savings if there are multiple groups
+            # build ModelLibrary as an association from the output files
+            # this saves memory if there are multiple groups
             asn = asn_from_list(output_models, product_name='outlier_i2d')
-            return ModelLibrary(asn, on_disk=True)
+            asn_dict = json.loads(asn.dump()[1]) # serializes the asn and converts to dict
+            return ModelLibrary(asn_dict, on_disk=True)
+        # otherwise just build it as a list of in-memory models
         return ModelLibrary(output_models, on_disk=False)
 
     def resample_many_to_one(self, input_models):

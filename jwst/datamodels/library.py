@@ -60,7 +60,7 @@ class ModelLibrary(AbstractModelLibrary):
         try:
             with fits.open(filename) as ff:
                 if "ASDF" in ff:
-                    asdf_yaml = asdf.util.load_yaml(io.BytesIO(ff['ASDF'].data.tobytes()))
+                    asdf_yaml = asdf.util.load_yaml(io.BytesIO(ff['ASDF'].data.tobytes()), tagged=True)
                     if group_id := asdf_yaml.get('meta', {}).get('group_id'):
                         return group_id
                 header = ff["PRIMARY"].header
