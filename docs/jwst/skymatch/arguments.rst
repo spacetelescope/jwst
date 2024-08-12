@@ -70,6 +70,6 @@ The ``skymatch`` step uses the following optional arguments:
 
 **Memory management parameters:**
 
-``on_disk`` (boolean, default=False)
-  Whether to preserve memory using temporary files
+``in_memory`` (boolean, default=True)
+  If False, preserve memory using temporary files
   at the expense of having to run many I/O operations.

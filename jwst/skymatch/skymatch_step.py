@@ -60,7 +60,7 @@ class SkyMatchStep(Step):
         binwidth = float(min=0.0, default=0.1) # Bin width for 'mode' and 'midpt' `skystat`, in sigma
 
         # Memory management:
-        on_disk = boolean(default=False) # Preserve memory using temporary files
+        in_memory = boolean(default=True) # If False, preserve memory using temporary files
     """  # noqa: E501
 
     reference_file_types = []
@@ -74,7 +74,7 @@ class SkyMatchStep(Step):
         if isinstance(input, ModelLibrary):
             library = input
         else:
-            library = ModelLibrary(input, on_disk=self.on_disk)
+            library = ModelLibrary(input, on_disk=not self.in_memory)
 
         self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 
@@ -176,10 +176,10 @@ class SkyMatchStep(Step):
             pix_area=1.0,  # TODO: pixel area
             convf=1.0,  # TODO: conv. factor to brightness
             mask=dqmask,
-            id=image_model.meta.filename,  # file name?
+            id=image_model.meta.filename,
             skystat=self._skystat,
             stepsize=self.stepsize,
-            reduce_memory_usage=False,  # FIXME: this overwrote input files
+            reduce_memory_usage=False,  # this overwrote input files
             meta={'index': index}
         )
 
