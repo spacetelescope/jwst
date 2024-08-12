@@ -192,7 +192,10 @@ class ResampleStep(Step):
             wcs.pixel_shape = output_shape
         elif wcs.pixel_shape is not None:
             wcs.array_shape = wcs.pixel_shape[::-1]
-        elif wcs.array_shape is not None:
+        elif wcs.array_shape is not None:  # pragma: no cover
+            # This branch is not currently reachable under normal
+            # circumstances: the gwcs WCS structure does not preserve
+            # array_shape.
             wcs.pixel_shape = wcs.array_shape[::-1]
         elif wcs.bounding_box is not None:
             wcs.array_shape = tuple(
@@ -202,7 +205,7 @@ class ResampleStep(Step):
         else:
             raise ValueError(
                 "Step argument 'output_shape' is required when custom WCS "
-                "does not have neither of 'array_shape', 'pixel_shape', or "
+                "does not have 'array_shape', 'pixel_shape', or "
                 "'bounding_box' attributes set."
             )
 
