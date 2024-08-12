@@ -84,11 +84,14 @@ set_telescope_pointing
 ramp_fitting
 ------------
 
-- Updating the ramp fitting work flow for the read noise variance calculation
-  for ramps containing CHARGELOSS flags.  When running the ``OLS_C`` ramp
-  fitting algorith, this recalculation is being done in the C-extension, so
-  the step code handling this will produce errors.  The step code now runs only
-  when the ``OLS`` algorithm is selected for ramp fitting.[#8697]
+- The STCAL ramp fitting ``OLS_C`` algorithm has been modified to handle the
+  read noise variance recalculation for CHARGELOSS flagging.  Because of this
+  the JWST ramp fitting step code read noise recalculation should only be run
+  when the ``OLS`` algorithm, which runs the legacy python code for ramp
+  fitting.  Running the step code read noise recalculation when running the
+  ``OLS_C`` algorithm incorrectly runs the recalcuation twice.  Because of this
+  the JWST step code has been modified to account for the change in STCAL.
+  [#8697, spacetelescope/stcal#278]
 
 
 resample_spec
