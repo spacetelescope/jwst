@@ -368,7 +368,8 @@ which has the same structure and content as the calints_ product described above
 
 Resampled 2-D data: ``i2d`` and ``s2d``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Images and spectra that have been resampled by the :ref:`resample <resample_step>` step use a
+Images and spectra that have been resampled by the :ref:`resample <resample_step>`
+or :ref:`resample_spec <resample_spec_step>` steps use a
 different set of data arrays than other science products. Resampled 2-D images are stored in
 ``i2d`` products and resampled 2-D spectra are stored in ``s2d`` products.
 The FITS file structure for ``i2d`` and ``s2d`` products is as follows:
