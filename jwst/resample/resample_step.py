@@ -192,10 +192,7 @@ class ResampleStep(Step):
             wcs.pixel_shape = output_shape
         elif wcs.pixel_shape is not None:
             wcs.array_shape = wcs.pixel_shape[::-1]
-        elif wcs.array_shape is not None:  # pragma: no cover
-            # This branch is not currently reachable under normal
-            # circumstances: the gwcs WCS structure does not preserve
-            # array_shape.
+        elif wcs.array_shape is not None:
             wcs.pixel_shape = wcs.array_shape[::-1]
         elif wcs.bounding_box is not None:
             wcs.array_shape = tuple(
