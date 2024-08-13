@@ -84,14 +84,8 @@ set_telescope_pointing
 ramp_fitting
 ------------
 
-- The STCAL ramp fitting ``OLS_C`` algorithm has been modified to handle the
-  read noise variance recalculation for CHARGELOSS flagging.  Because of this
-  the JWST ramp fitting step code read noise recalculation should only be run
-  when the ``OLS`` algorithm, which runs the legacy python code for ramp
-  fitting.  Running the step code read noise recalculation when running the
-  ``OLS_C`` algorithm incorrectly runs the recalcuation twice.  Because of this
-  the JWST step code has been modified to account for the change in STCAL.
-  [#8697, spacetelescope/stcal#278]
+- Moved the read noise variance recalculation for CHARGELOSS flagging to the C
+  implementation, when the algorithm is ``OLS_C``. [#8697, spacetelescope/stcal#278]
 
 
 resample_spec
@@ -127,6 +121,14 @@ scripts
 
 - Removed many non-working and out-dated scripts. Including
   many scripts that were replaced by ``strun``. [#8619]
+
+set_telescope_pointing
+----------------------
+
+- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+
+- Refactored separate modes into submodules instead of inheriting from a base class.
+  Moved non-JWST-specific code to stcal. [#8613]
 
 stpipe
 ------
