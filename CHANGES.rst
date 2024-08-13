@@ -29,6 +29,17 @@ datamodels
 - Added `ModelLibrary` class to allow passing ``"on-disk"`` models between steps in the
   image3 pipeline. [#8683]
 
+emicorr
+-------
+
+- Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
+  to compute a correction. [#8675]
+
+general
+-------
+
+- Remove the unused ``stsci.image`` dependency. [#8663]
+
 master_background
 -----------------
 
@@ -40,6 +51,11 @@ outlier_detection
 
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
+set_telescope_pointing
+----------------------
+
+- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
 
 - Refactored separate modes into submodules instead of inheriting from a base class.
   Moved non-JWST-specific code to stcal. [#8613]
@@ -77,6 +93,10 @@ resample_spec
 - Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
   targets in the ``calwebb_spec3`` pipeline. [#8596]
 
+- Separate ``resample_spec`` step parameters from ``resample`` step parameters
+  so that the spectral resampling step only exposes parameters that are appropriate
+  for spectral data. [#8622]
+
 scripts
 -------
 
@@ -95,6 +115,13 @@ stpipe
 - Removed setting of the `self.skip` attribute in the `record_step_status()` function;
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
+
+tso_photometry
+--------------
+
+- Replaced photutils.aperture do_photometry with photutils.ApertureStats to remove NaNs
+  when performing TSO photometry for non SUB64 WLP8 pupil data. For SUB64 WLP8 changed
+  summing data in the aperture to use np.nansum to ignore NaNs. [#8672]
 
 tweakreg
 --------

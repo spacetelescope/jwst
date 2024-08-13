@@ -26,7 +26,7 @@ Specifically, this routine performs the following operations:
 
    The core detection algorithm uses the following to generate an outlier mask
 
-   .. math:: | image\_input - image\_median | > SNR*input_\err
+   .. math:: | image\_input - image\_median | > SNR*input\_err
 
 #. Update input data model DQ arrays with mask of detected outliers.
 
