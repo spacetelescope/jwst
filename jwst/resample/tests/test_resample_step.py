@@ -832,7 +832,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
 
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
-    asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(tmp_path / refwcs)
+    asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(refwcs)
 
     result = ResampleStep.call(
         im,
@@ -897,7 +897,7 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     result.meta.wcs.bounding_box = None
     asdf.AsdfFile({"wcs": result.meta.wcs,
-                   "pixel_area": pixel_area}).write_to(tmp_path / refwcs)
+                   "pixel_area": pixel_area}).write_to(refwcs)
 
     result = ResampleStep.call(im, output_wcs=refwcs)
 
@@ -996,7 +996,7 @@ def test_custom_refwcs_resample_nirspec(nirspec_cal, tmp_path, ratio):
 
     # save the wcs from the output
     refwcs = str(tmp_path / "resample_refwcs.asdf")
-    asdf.AsdfFile({"wcs": result.slits[0].meta.wcs}).write_to(tmp_path / refwcs)
+    asdf.AsdfFile({"wcs": result.slits[0].meta.wcs}).write_to(refwcs)
 
     # run again, this time using the created WCS as input
     result = ResampleSpecStep.call(im, output_wcs=refwcs)
@@ -1048,7 +1048,7 @@ def test_custom_refwcs_pixel_shape_nirspec(nirspec_cal, tmp_path):
     pixel_area = 1e-13
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     asdf.AsdfFile({"wcs": result.slits[0].meta.wcs,
-                   "pixel_area": pixel_area}).write_to(tmp_path / refwcs)
+                   "pixel_area": pixel_area}).write_to(refwcs)
 
     # run again, this time using the created WCS as input
     result = ResampleSpecStep.call(im, output_wcs=refwcs)
