@@ -12,11 +12,10 @@ __all__ = ["ModelLibrary"]
 
 class ModelLibrary(AbstractModelLibrary):
     """
-    FIXME: Add docstring here, including like-for-like replacements for 
-    ModelContainer association attribute accessors.
-
-    ModelContainer: ind = container.ind_asn_type("science")
-    ModelLibrary: ind = library.ind_asn_type("science")
+    JWST implementation of the ModelLibrary, a container designed to allow
+    efficient processing of datamodel instances created from an association.
+    See the `stpipe library documentation <https://stpipe.readthedocs.io/en/latest/model_library.html`
+    for details.
     """
     @property
     def crds_observatory(self):
@@ -27,6 +26,23 @@ class ModelLibrary(AbstractModelLibrary):
         return [member["exptype"] for member in self._members]
     
     def ind_asn_type(self, exptype):
+        """
+        Determine the indices of models corresponding to ``asn_exptype``.
+
+        Parameters
+        ----------
+        asn_exptype : str
+            Exposure type as defined in an association, e.g. "science".
+
+        Returns
+        -------
+        ind : list
+            Indices of models in ModelLibrary matching ``asn_exptype``.
+
+        Notes
+        -----
+        Library does NOT need to be open (i.e., this can be caled outside the `with` context)
+        """
         return [i for i, member in enumerate(self._members) if member["exptype"] == exptype]
 
     def _model_to_filename(self, model):

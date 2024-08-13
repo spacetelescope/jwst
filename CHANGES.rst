@@ -11,6 +11,12 @@ ami_average
 
 - Fix error in step spec that prevents step creation. [#8677]
 
+assign_mtwcs
+------------
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
+
 assign_wcs
 ----------
 

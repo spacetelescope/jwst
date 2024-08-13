@@ -102,6 +102,7 @@ class SourceCatalogStep(Step):
 
             # add back background to data so input model is unchanged
             model.data += bkg.background
+            del bkg
 
             if self.save_results:
                 cat_filepath = self.make_output_path(ext='.ecsv')

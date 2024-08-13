@@ -101,5 +101,6 @@ class Image3Pipeline(Pipeline):
         #     input_models = self.skymatch(input_models)
 
         result = self.resample(input_models)
+        del input_models
         if isinstance(result, datamodels.ImageModel) and result.meta.cal_step.resample == 'COMPLETE':
             self.source_catalog(result)

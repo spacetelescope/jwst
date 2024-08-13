@@ -8,7 +8,6 @@ from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
 from ..stpipe import Step
-from jwst.datamodels import ModelContainer
 from jwst.lib.wcs_utils import get_wavelengths
 
 
