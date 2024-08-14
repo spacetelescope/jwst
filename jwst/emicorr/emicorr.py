@@ -449,15 +449,13 @@ def apply_emicorr(output_model, emicorr_model,
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')
-        corr_data = output_model.data - noise
-        output_model.data = corr_data
+        output_model.data -= noise
 
         # clean up
         del data
         del dd_all
         del times_this_int
         del phaseall
-        del corr_data
         del noise
 
     if save_intermediate_results and save_onthefly_reffile is not None:
