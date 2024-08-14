@@ -306,6 +306,7 @@ class ResampleData:
                 log.info(f"{len(indices)} exposures to drizzle together")
                 for index in indices:
                     img = input_models.borrow(index)
+                    img = datamodels.open(img) # must call this explicitly to get area reference file
                     iscale = self._get_intensity_scale(img)
                     log.debug(f'Using intensity scale iscale={iscale}')
 
