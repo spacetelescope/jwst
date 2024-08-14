@@ -199,6 +199,7 @@ class ResampleStep(Step):
                 int(axs[1] + 0.5)
                 for axs in wcs.bounding_box.bounding_box(order="C")
             )
+            wcs.pixel_shape = wcs.array_shape[::-1]
         else:
             raise ValueError(
                 "Step argument 'output_shape' is required when custom WCS "
