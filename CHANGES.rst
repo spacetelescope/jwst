@@ -34,6 +34,8 @@ general
 
 - Remove the unused ``stsci.image`` dependency. [#8663]
 
+- Update required stcal version to 1.8.0. [#8706]
+
 master_background
 -----------------
 
