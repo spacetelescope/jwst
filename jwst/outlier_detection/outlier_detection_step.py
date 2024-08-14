@@ -89,6 +89,8 @@ class OutlierDetectionStep(Step):
         snr1, snr2 = [float(v) for v in self.snr.split()]
         scale1, scale2 = [float(v) for v in self.scale.split()]
 
+        print(self.make_output_path())
+
         if mode == 'tso':
             result_models = tso.detect_outliers(
                 input_data,
@@ -221,20 +223,18 @@ class OutlierDetectionStep(Step):
                 asn_id = input_models.meta.asn_table.asn_id
             except (AttributeError, KeyError):
                 pass
-            return asn_id
 
         if asn_id is None:
             asn_id = self.search_attr('asn_id')
+        if asn_id is not None:
+            _make_output_path = self.search_attr(
+                '_make_output_path', parent_first=True
+            )
 
-        _make_output_path = self.search_attr(
-            '_make_output_path', parent_first=True
-        )
-
-        self._make_output_path = partial(
-            _make_output_path,
-            asn_id=asn_id,
-            suffix="i2d"
-        )
+            self._make_output_path = partial(
+                _make_output_path,
+                asn_id=asn_id
+            )
         return asn_id
     
     def _get_asn_id_library(self, input_models):
