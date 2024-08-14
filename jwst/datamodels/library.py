@@ -32,7 +32,7 @@ class ModelLibrary(AbstractModelLibrary):
         Parameters
         ----------
         asn_exptype : str
-            Exposure type as defined in an association, e.g. "science".
+            Exposure type as defined in an association, e.g. "science". case-insensitive
 
         Returns
         -------
@@ -43,7 +43,7 @@ class ModelLibrary(AbstractModelLibrary):
         -----
         Library does NOT need to be open (i.e., this can be caled outside the `with` context)
         """
-        return [i for i, member in enumerate(self._members) if member["exptype"] == exptype]
+        return [i for i, member in enumerate(self._members) if member["exptype"].lower() == exptype.lower()]
 
     def _model_to_filename(self, model):
         model_filename = model.meta.filename
