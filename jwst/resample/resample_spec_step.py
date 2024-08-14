@@ -95,6 +95,7 @@ class ResampleSpecStep(Step):
             result = self._process_slit(input_models)
 
         # Update ASNTABLE in output
+        result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
         result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
 
@@ -151,9 +152,6 @@ class ResampleSpecStep(Step):
             if self.pixel_scale is not None and pscale_ratio is None:
                 pscale_ratio = resamp.pscale_ratio
 
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
         if self.pixel_scale is None or pscale_ratio is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         else:
@@ -222,9 +220,6 @@ class ResampleSpecStep(Step):
         del library
 
         result = input_models[0]
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
         result.meta.bunit_data = input_models[0].meta.bunit_data
         if self.pixel_scale is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio

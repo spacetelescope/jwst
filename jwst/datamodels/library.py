@@ -126,8 +126,9 @@ class ModelLibrary(AbstractModelLibrary):
         if not hasattr(model.meta, "asn"):
             model.meta["asn"] = {}
 
-        model.meta.asn.table_name = self.asn.get("table_name", "")
-        model.meta.asn.pool_name = self.asn.get("asn_pool", "")
+        for attr in ("table_name", "asn_pool"):
+            if not hasattr(model.meta.asn, attr) and hasattr(self.asn, attr): # do not clobber existing values
+                model.meta.asn.table_name = self.asn.get(attr, "")
 
 
 def _attrs_to_group_id(

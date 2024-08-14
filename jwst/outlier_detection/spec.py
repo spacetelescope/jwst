@@ -117,11 +117,6 @@ def detect_outliers(
         median_model.save(median_model.meta.filename)
         del median_model
 
-    with library:
-        for i, model in enumerate(library):
-            input_models[i] = model
-            library.shelve(model, i, modify=False)
-
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
     if resample_data:
