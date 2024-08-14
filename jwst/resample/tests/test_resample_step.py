@@ -1126,6 +1126,36 @@ def test_custom_wcs_pscale_resample_nirspec(nirspec_cal, ratio):
     result.close()
 
 
+@pytest.mark.parametrize('wcs_attr', ['pixel_shape', 'array_shape', 'bounding_box'])
+def test_custom_wcs_input(tmp_path, nircam_rate, wcs_attr):
+    # make a valid WCS
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    wcs = im.meta.wcs
+
+    # store values in a dictionary
+    wcs_dict = {'array_shape': im.data.shape,
+                'pixel_shape': im.data.shape[::-1],
+                'bounding_box': wcs.bounding_box}
+
+    # Set all attributes to None
+    for attr in ['pixel_shape', 'array_shape', 'bounding_box']:
+        setattr(wcs, attr, None)
+
+    # Set the attribute to the correct value
+    setattr(wcs, wcs_attr, wcs_dict[wcs_attr])
+
+    # write the WCS to an asdf file
+    refwcs = str(tmp_path / 'test_wcs.asdf')
+    asdf.AsdfFile({"wcs": wcs}).write_to(refwcs)
+
+    # load the WCS from the asdf file
+    loaded_wcs = ResampleStep.load_custom_wcs(refwcs)
+
+    # check that the loaded WCS has the correct values
+    for attr in ['pixel_shape', 'array_shape']:
+        assert np.allclose(getattr(loaded_wcs, attr), wcs_dict[attr])
+
+
 @pytest.mark.parametrize('override,value',
                          [('pixel_area', 1e-13), ('pixel_shape', (300, 400)),
                           ('array_shape', (400, 300))])
