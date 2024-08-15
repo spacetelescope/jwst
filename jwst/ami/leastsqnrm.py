@@ -800,6 +800,43 @@ def populate_symmamparray(amps, n=7):
 
     return arr
 
+def t3_amplitudes(amps, n=7)  # RC 8/24
+    """
+    Populate the triple-product amplitude array
+    (NOT closure amplitudes)
+
+    Parameters
+    ----------
+    amps: 1D float array
+        fringe visibility between each pair of holes
+
+    n: integer
+        number of holes
+
+    Returns
+    -------
+    cpamps: 1D float array
+        triple product amplitude array
+    """
+
+    arr = populate_symmamparray(amps, n=n)
+
+    cpamps = np.zeros(int(comb(n, 3)))
+
+    nn = 0
+    for kk in range(n - 2):
+        for ii in range(n - kk - 2):
+            for jj in range(n - kk - ii - 2):
+                cpamps[nn + jj] = (
+                    arr[kk, ii + kk + 1]
+                    * arr[ii + kk + 1, jj + ii + kk + 2]
+                    * arr[jj + ii + kk + 2, kk]
+                )
+
+            nn += jj + 1
+
+    return cpamps
+
 
 def redundant_cps(deltaps, n=7):
     """
