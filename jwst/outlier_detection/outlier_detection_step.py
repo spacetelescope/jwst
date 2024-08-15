@@ -89,8 +89,6 @@ class OutlierDetectionStep(Step):
         snr1, snr2 = [float(v) for v in self.snr.split()]
         scale1, scale2 = [float(v) for v in self.scale.split()]
 
-        print(self.make_output_path())
-
         if mode == 'tso':
             result_models = tso.detect_outliers(
                 input_data,
@@ -215,14 +213,13 @@ class OutlierDetectionStep(Step):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Setup output path naming if associations are involved.
-        if isinstance(input_models, ModelLibrary):
-            asn_id = self._get_asn_id_library(input_models)
-        else:
-            asn_id = None
-            try:
+        try:   
+            if isinstance(input_models, ModelLibrary):
+                asn_id = input_models.asn["asn_id"]
+            else:
                 asn_id = input_models.meta.asn_table.asn_id
-            except (AttributeError, KeyError):
-                pass
+        except (AttributeError, KeyError):
+            asn_id = None
 
         if asn_id is None:
             asn_id = self.search_attr('asn_id')
@@ -235,14 +232,4 @@ class OutlierDetectionStep(Step):
                 _make_output_path,
                 asn_id=asn_id
             )
-        return asn_id
-    
-    def _get_asn_id_library(self, input_models):
-        """Get the association ID from a ModelLibrary.
-        Does not open any models, so it should respect on_disk status."""
-        asn_id = None
-        try:
-            asn_id = input_models.asn.table_name
-        except (AttributeError, KeyError):
-            pass
         return asn_id

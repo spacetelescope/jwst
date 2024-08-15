@@ -103,7 +103,6 @@ class ResampleStep(Step):
                 model.meta.cal_step.resample = 'COMPLETE'
                 self.update_fits_wcs(model)
                 util.update_s_region_imaging(model)
-                resample.copy_asn_info_from_library(input_models, model)
 
                 # if pixel_scale exists, it will override pixel_scale_ratio.
                 # calculate the actual value of pixel_scale_ratio based on pixel_scale

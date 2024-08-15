@@ -74,9 +74,7 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     with result:
         for model in result:
             assert model.meta.cal_step.tweakreg == 'SKIPPED'
-        result.shelve(model, modify=False)
-
-    result.close()
+            result.shelve(model, modify=False)
 
 
 def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix):

@@ -373,16 +373,21 @@ class ResampleData:
         output_model.meta.resample.weight_type = self.weight_type
         output_model.meta.resample.pointings = len(input_models.group_names)
 
+        # copy over asn information
+        copy_asn_info_from_library(input_models, output_model)
+
         if self.blendheaders:
-            # FIXME: right now this needs a list of input models, all in memory
+            # right now this needs a list of input models, all in memory
             # for now, just load the models as a list with empty data arrays
-            # but the blend_meta step itself should be refactored to expect a list of metadata objects
+            # but the blend_meta step itself should eventually be refactored 
+            # to expect a list of metadata objects
             # instead of a list of datamodels
             input_list = []
             with input_models:
                 for i, model in enumerate(input_models):
                     empty_model = type(model)()
                     empty_model.meta = model.meta
+                    copy_asn_info_from_library(input_models, empty_model)
                     empty_model.data = np.empty((1, 1))
                     empty_model.dq = np.empty((1, 1))
                     empty_model.err = np.empty((1, 1))
@@ -394,9 +399,6 @@ class ResampleData:
                     input_models.shelve(model, i, modify=False)
             self.blend_output_metadata(output_model, input_list)
             del input_list
-
-        # copy over asn information
-        copy_asn_info_from_library(input_models, output_model)
 
         # Initialize the output with the wcs
         driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
