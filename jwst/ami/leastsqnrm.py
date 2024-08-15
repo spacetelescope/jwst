@@ -987,7 +987,7 @@ def q4_phases(deltaps, n=7):
     Returns
     -------
     quad_phases: 1D float array
-        closure phases
+        quad phases
     """
     arr = populate_antisymmphasearray(deltaps, n=n)  # fringe phase array
 
