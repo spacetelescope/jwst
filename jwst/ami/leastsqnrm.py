@@ -971,3 +971,38 @@ def closure_amplitudes(amps, n=7):
                 nn = nn + ll + 1
 
     return cas
+
+def q4_phases(deltaps, n=7):
+    """
+    Calculate phases for each set of 4 holes
+
+    Parameters
+    ----------
+    deltaps: 1D float array
+        pistons between each pair of holes
+
+    n: integer
+        number of holes
+
+    Returns
+    -------
+    quad_phases: 1D float array
+        closure phases
+    """
+    arr = populate_antisymmphasearray(deltaps, n=n)  # fringe phase array
+
+    quad_phases = np.zeros(int(comb(n, 4)))
+
+    for ii in range(n - 3):
+        for jj in range(n - ii - 3):
+            for kk in range(n - jj - ii - 3):
+                for ll in range(n - jj - ii - kk - 3):
+                    quad_phases[nn + ll] = (
+                        arr[ii, jj + ii + 1]
+                        + arr[ll + ii + jj + kk + 3, kk + jj + ii + 2]
+                        - arr[ii, kk + ii + jj + 2]
+                        - arr[jj + ii + 1, ll + ii + jj + kk + 3]
+                        )
+                nn = nn + ll + 1
+
+    return quad_phases
