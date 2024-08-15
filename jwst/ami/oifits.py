@@ -79,6 +79,15 @@ class RawOifits:
 
         self.fringe_amplitudes_squared = self.fringe_amplitudes ** 2  # squared visibilities
 
+    def average_observables(self):
+        """
+        Convert visamp, visphase arrays to complex visibilities arrays for averaging cv's
+        Calculate covariance matrices between fringe amplitudes and fringe phases, 
+        and between closure amplutides and closure phases (as well as variance of each).
+        Convert r, theta (modulus, phase) to x,y. Calculate cov(x,y). Rotate resulting
+        2x2 matrix back to r, theta. 
+        """
+
     def make_oifits(self):
         """
         Perform final manipulations of observable arrays, calculate uncertainties, and
@@ -141,6 +150,9 @@ class RawOifits:
 
         # apply sigma-clipping to uncertainties
         # sigma_clipped_stats returns mean, median, stddev. nsigma=3, niters=5
+
+        # HERE: update to use average_observables func
+
         elif self.method == "median":
             _, self.vis2, self.e_vis2 = sigma_clipped_stats(self.fringe_amplitudes_squared, axis=0)
             _, self.visamp, self.e_visamp = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
@@ -253,8 +265,8 @@ class RawOifits:
         m.t3['TARGET_ID'] = 1
         m.t3['TIME'] = 0
         m.t3['MJD'] = observation_date.mjd
-        m.t3['T3AMP'] = self.camp
-        m.t3['T3AMPERR'] = self.e_camp
+        m.t3['T3AMP'] = self.camp # WRONG, CHANGE THIS
+        m.t3['T3AMPERR'] = self.e_camp # WRONG, CHANGE THIS
         m.t3['T3PHI'] = self.closure_phases
         m.t3['T3PHIERR'] = self.e_cp
         m.t3['U1COORD'] = u1coord
