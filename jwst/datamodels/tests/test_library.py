@@ -128,3 +128,14 @@ def test_group_id_override(example_asn_path, asn_group_id, meta_group_id, expect
         model = library.borrow(0)
         assert model.meta.group_id == expected_group_id
         library.shelve(model, 0, modify=False)
+
+
+def test_asn_attributes_assignment(example_library):
+
+    # test that the association attributes are assigned to the models
+    with example_library:
+        for i in range(_N_MODELS):
+            model = example_library.borrow(i)
+            assert hasattr(model.meta.asn, 'pool_name')
+            assert hasattr(model.meta.asn, 'table_name')
+            example_library.shelve(model, i, modify=False)

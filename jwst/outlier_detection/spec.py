@@ -8,7 +8,8 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec, resample_utils
-from .utils import create_median_library, flag_crs_in_models, flag_crs_in_models_with_resampling
+from .utils import create_median, flag_crs_in_models, flag_crs_in_models_with_resampling
+from ._fileio import remove_file
 
 import logging
 log = logging.getLogger(__name__)
@@ -69,8 +70,7 @@ def detect_outliers(
         median_wcs = resamp.output_wcs
 
         # convert to library for resample
-        # for compatibility with image3 pipeline which uses
-        # ModelLibrary for memory savings
+        # for compatibility with image3 pipeline
         library = ModelLibrary(input_models, on_disk=False)
         drizzled_models = resamp.do_drizzle(library)
 
@@ -84,8 +84,17 @@ def detect_outliers(
                     log.info("Writing out resampled spectra...")
                     model.save(model.meta.filename)
                     drizzled_models.shelve(model)
+        else:
+            # since we're not saving intermediate results if the drizzled models
+            # were written to disk, remove them
+            if not in_memory:
+                for fn in drizzled_models._members:
+                    remove_file(fn["expname"])
             
     else:
+        # TODO: there appears not to be any test coverage for this branch
+        # as discovered while testing another ticket. Adding that coverage is beyond
+        # the scope of the ticket, but it should be added in the future.
         drizzled_models = ModelLibrary(input_models)
         with drizzled_models:
             for i, model in enumerate(drizzled_models):
@@ -93,12 +102,13 @@ def detect_outliers(
                     input_models[i],
                     weight_type=weight_type,
                     good_bits=good_bits)
+                drizzled_models.shelve(model)
         # copy for when saving median and input is a filename?
         median_wcs = copy.deepcopy(input_models[0].meta.wcs)
 
     # Perform median combination on set of drizzled mosaics
     # create_median should be called as a method from parent class
-    median_data = create_median_library(drizzled_models, maskpt)
+    median_data = create_median(drizzled_models, maskpt)
 
     if save_intermediate_results:
         # Initialize intermediate products used in the outlier detection

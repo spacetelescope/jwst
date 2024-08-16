@@ -517,7 +517,7 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
 
     # 2nd run.
     step.subtract = subtract
-    result2 = step.run(asn_out_fname)
+    result2 = step.run(result)
 
     # compute expected levels
     if skymethod in ['local', 'global+match']:

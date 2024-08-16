@@ -31,7 +31,7 @@ def assign_moving_target_wcs(input_models):
         raise ValueError("Expected a ModelLibrary object")
 
     # loop over only science exposures in the ModelLibrary
-    ind = input_models.ind_asn_type("science")
+    ind = input_models.indices_for_exptype("science")
     mt_ra = np.empty(len(ind))
     mt_dec = np.empty(len(ind))
     with input_models:
@@ -71,6 +71,7 @@ def assign_moving_target_wcs(input_models):
                 model.meta.wcs = new_wcs
             input_models.shelve(model, i, modify=True)
             
+    record_step_status(input_models, "assign_mtwcs", True)
     return input_models
 
 

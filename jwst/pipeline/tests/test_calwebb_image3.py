@@ -62,8 +62,8 @@ def make_dummy_association(make_dummy_cal_file):
     os.system(f"asn_from_list -o {INPUT_ASN} --product-name {OUTPUT_PRODUCT} -r DMS_Level3_Base {INPUT_FILE} {INPUT_FILE_2}")
 
 
-@pytest.fixture(scope='module')
-def run_image3_pipeline(make_dummy_association):
+@pytest.mark.parametrize("in_memory", [True, False])
+def test_run_image3_pipeline(make_dummy_association, in_memory):
     '''
     Two-product association passed in, run pipeline, skipping most steps
     '''
@@ -81,12 +81,34 @@ def run_image3_pipeline(make_dummy_association):
             "--steps.outlier_detection.skip=true",
             "--steps.resample.skip=true",
             "--steps.source_catalog.skip=true",
-            "--on_disk=True",]
+            f"--in_memory={str(in_memory)}",]
 
     Step.from_cmdline(args)
 
+    _is_run_complete(LOGFILE)
 
-def test_run_complete(run_image3_pipeline):
+
+def test_run_image3_single_file(make_dummy_cal_file):
+
+    logcfg_content = f"[*] \n \
+        level = INFO \n \
+        handler = file:{LOGFILE}"
+    with open(LOGCFG, 'w') as f:
+        f.write(logcfg_content)
+
+    args = ["calwebb_image3", INPUT_FILE, 
+            f"--logcfg={LOGCFG}",
+            "--steps.tweakreg.skip=true",
+            "--steps.skymatch.skip=true",
+            "--steps.outlier_detection.skip=true",
+            "--steps.resample.skip=true",
+            "--steps.source_catalog.skip=true",]
+
+    Step.from_cmdline(args)
+    _is_run_complete(LOGFILE)
+
+
+def _is_run_complete(logfile):
     '''
     Check that the pipeline runs to completion
     '''

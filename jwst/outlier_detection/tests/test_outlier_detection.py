@@ -8,7 +8,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.utils import flag_resampled_model_crs, create_median_library
+from jwst.outlier_detection.utils import _flag_resampled_model_crs, create_median
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
@@ -75,7 +75,7 @@ def test_flag_cr(sci_blot_image_pair):
 
     # run flag_cr() which updates in-place.  Copy sci first.
     data_copy = sci.data.copy()
-    flag_resampled_model_crs(
+    _flag_resampled_model_crs(
         sci,
         blot.data,
         5.0,
@@ -191,11 +191,12 @@ def we_three_sci():
     return we_many_sci(numsci=3)
 
 
-def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
+@pytest.mark.parametrize("do_resample", [True, False])
+def test_outlier_step_no_outliers(we_three_sci, do_resample, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
     pristine = ModelContainer([m.copy() for m in container])
-    OutlierDetectionStep.call(container, in_memory=True)
+    OutlierDetectionStep.call(container, in_memory=True, resample_data=do_resample)
 
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
@@ -214,7 +215,7 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
         container.shelve(zeroth)
 
     # Verify that intermediary files are removed
-    OutlierDetectionStep.call(container, in_memory=True)
+    OutlierDetectionStep.call(container)
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
     assert len(i2d_files) == 0
@@ -224,7 +225,7 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     data_as_cube = container.map_function(lambda model, index: model.data, modify=False)
 
     result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True, in_memory=False
+        container, save_results=True, save_intermediate_results=True
     )
 
     # Make sure nothing changed in SCI array
@@ -326,8 +327,8 @@ def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
     dq_as_cube = []
     with container:
         for model in container:
-            data_as_cube.append(model.data)
-            dq_as_cube.append(model.dq)
+            data_as_cube.append(model.data.copy())
+            dq_as_cube.append(model.dq.copy())
             container.shelve(model, modify=False)
 
     result = OutlierDetectionStep.call(container, in_memory=True)
@@ -367,7 +368,7 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
     data_as_cube = []
     with container:
         for model in container:
-            data_as_cube.append(model.data)
+            data_as_cube.append(model.data.copy())
             container.shelve(model, modify=False)
 
     result = OutlierDetectionStep.call(container, in_memory=True)
@@ -462,13 +463,13 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
 
 
-def test_create_median_library(three_sci_as_asn, tmp_cwd):
-    """Test creation of median library"""
+def test_create_median(three_sci_as_asn, tmp_cwd):
+    """Test creation of median on disk vs in memory"""
     lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
     lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
 
-    median_on_disk = create_median_library(lib_on_disk, 0.7)
-    median_in_memory = create_median_library(lib_in_memory, 0.7)
+    median_on_disk = create_median(lib_on_disk, 0.7)
+    median_in_memory = create_median(lib_in_memory, 0.7)
 
     # Make sure the median library is the same for on-disk and in-memory
     assert np.allclose(median_on_disk, median_in_memory)

@@ -76,13 +76,11 @@ class OutlierDetectionStep(Step):
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
         if mode is None:
-            return self._set_status(input_data, False)
+            record_step_status(input_data, "outlier_detection", False)
+            return input_data
         self.log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
-        if mode == "imaging":
-            if not isinstance(input_data, ModelLibrary):
-                input_data = ModelLibrary(input_data, on_disk=not self.in_memory)
         asn_id = self._get_asn_id(input_data)
         self.log.info(f"Outlier Detection asn_id: {asn_id}")
 

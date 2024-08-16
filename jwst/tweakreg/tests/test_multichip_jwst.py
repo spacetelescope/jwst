@@ -406,7 +406,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
     with result:
         for im in result:
             assert im.meta.cal_step.tweakreg == 'COMPLETE'
-            result.shelve(im)
+            result.shelve(im, modify=False)
 
     with result:
         m1 = result.borrow(1)

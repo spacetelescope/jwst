@@ -197,7 +197,7 @@ class Coron3Pipeline(Pipeline):
 
         # Call the resample step to combine all psf-subtracted target images
         # for compatibility with image3 pipeline use of ModelLibrary,
-        # convert ModelContainer to ModelLibrary and then back
+        # convert ModelContainer to ModelLibrary
         resample_library = ModelLibrary(resample_input, on_disk=False)
 
         # Output is a single datamodel

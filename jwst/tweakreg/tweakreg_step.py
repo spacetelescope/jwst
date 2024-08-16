@@ -123,7 +123,7 @@ class TweakRegStep(Step):
         
         # stpipe general options
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
-        on_disk = boolean(default=False)  # Preserve memory using temporary files
+        in_memory = boolean(default=True)  # If False, preserve memory using temporary files at expense of runtime
     """
 
     reference_file_types = []
@@ -132,7 +132,7 @@ class TweakRegStep(Step):
         if isinstance(input, ModelLibrary):
             images = input
         else:
-            images = ModelLibrary(input, on_disk=self.on_disk)
+            images = ModelLibrary(input, on_disk=not self.in_memory)
 
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
@@ -193,13 +193,12 @@ class TweakRegStep(Step):
         # Build the catalog and corrector for each input images
         with images:
             for (model_index, image_model) in enumerate(images):
-                # now that the model is open, check it's metadata for a custom catalog
+                # now that the model is open, check its metadata for a custom catalog
                 # only if it's not listed in the catdict
                 if use_custom_catalogs and image_model.meta.filename not in catdict:
                     if (image_model.meta.tweakreg_catalog is not None and image_model.meta.tweakreg_catalog.strip()):
                         catdict[image_model.meta.filename] = image_model.meta.tweakreg_catalog
                 if use_custom_catalogs and catdict.get(image_model.meta.filename, None) is not None:
-                    # FIXME this modifies the input_model
                     image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
                     # use user-supplied catalog:
                     self.log.info("Using user-provided input catalog "
@@ -284,32 +283,33 @@ class TweakRegStep(Step):
         # absolute alignment to the reference catalog
         # can (and does) occur after alignment between groups
         if align_to_abs_refcat:
-            try:
-                with images:
+            with images:
+                try:
                     ref_image = images.borrow(0)
+                    correctors = \
+                        twk.absolute_align(correctors, self.abs_refcat,
+                                        ref_wcs=ref_image.meta.wcs,
+                                        ref_wcsinfo=ref_image.meta.wcsinfo.instance,
+                                        epoch=Time(ref_image.meta.observation.date).decimalyear,
+                                        abs_minobj=self.abs_minobj,
+                                        abs_fitgeometry=self.abs_fitgeometry,
+                                        abs_nclip=self.abs_nclip,
+                                        abs_sigma=self.abs_sigma,
+                                        abs_searchrad=self.abs_searchrad,
+                                        abs_use2dhist=self.abs_use2dhist,
+                                        abs_separation=self.abs_separation,
+                                        abs_tolerance=self.abs_tolerance,
+                                        save_abs_catalog=self.save_abs_catalog,
+                                        abs_catalog_output_dir=self.output_dir,
+                                                )
                     images.shelve(ref_image, 0, modify=False)
-                correctors = \
-                    twk.absolute_align(correctors, self.abs_refcat,
-                                       ref_wcs=ref_image.meta.wcs,
-                                       ref_wcsinfo=ref_image.meta.wcsinfo.instance,
-                                       epoch=Time(ref_image.meta.observation.date).decimalyear,
-                                       abs_minobj=self.abs_minobj,
-                                       abs_fitgeometry=self.abs_fitgeometry,
-                                       abs_nclip=self.abs_nclip,
-                                       abs_sigma=self.abs_sigma,
-                                       abs_searchrad=self.abs_searchrad,
-                                       abs_use2dhist=self.abs_use2dhist,
-                                       abs_separation=self.abs_separation,
-                                       abs_tolerance=self.abs_tolerance,
-                                       save_abs_catalog=self.save_abs_catalog,
-                                       abs_catalog_output_dir=self.output_dir,
-                                            )
-                del ref_image
+                    del ref_image
 
-            except twk.TweakregError as e:
-                self.log.warning(str(e))
-                record_step_status(images, "tweakreg", success=False)
-                return images
+                except twk.TweakregError as e:
+                    self.log.warning(str(e))
+                    images.shelve(ref_image, 0, modify=False)
+                    record_step_status(images, "tweakreg", success=False)
+                    return images
 
         if local_align_failed and not align_to_abs_refcat: 
             record_step_status(images, "tweakreg", success=False)
@@ -367,8 +367,8 @@ class TweakRegStep(Step):
                             msg = f"Failed to update 'meta.wcsinfo' with FITS SIP \
                                 approximation. Reported error is: \n {e.args[0]}"
                             self.log.warning(msg)
+                record_step_status(image_model, "tweakreg", success=True)
                 images.shelve(image_model)
-        record_step_status(images, "tweakreg", success=True)
         return images
 
 

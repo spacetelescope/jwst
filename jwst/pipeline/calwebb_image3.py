@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelLibrary
@@ -32,7 +33,7 @@ class Image3Pipeline(Pipeline):
     class_alias = "calwebb_image3"
 
     spec = """
-    on_disk = boolean(default=False)  # Preserve memory using temporary files
+    in_memory = boolean(default=True)  # If False, preserve memory using temporary files at the expense of runtime
     """
 
     # Define alias to steps
@@ -68,39 +69,63 @@ class Image3Pipeline(Pipeline):
 
         # Only load science members from input ASN;
         # background and target-acq members are not needed.
-        if isinstance(input_data, ModelLibrary):
-            input_models = input_data
-        else:
-            input_models = ModelLibrary(input_data, asn_exptypes=['science'], on_disk=self.on_disk)
+        input_models = self._load_input_as_library(input_data)
 
-        if self.output_file is None:
+        if (self.output_file is None) and hasattr(input_models.asn["products"][0], "name"):
             # If input is an association, set the output to the product name.
             self.output_file = input_models.asn["products"][0]["name"]
 
+        # Check if input is single or multiple exposures
+        has_groups = len(input_models) > 1
+
         with input_models:
-            model = input_models.borrow(0)
-            is_moving = is_moving_target(model)
-            input_models.shelve(model, 0, modify=False)
-        if is_moving:
-            input_models = self.assign_mtwcs(input_models)
-        else:
-            input_models = self.tweakreg(input_models)
+            if has_groups:
+                model = input_models.borrow(0)
+                is_moving = is_moving_target(model)
+                input_models.shelve(model, 0, modify=False)
+                if is_moving:
+                    input_models = self.assign_mtwcs(input_models)
+                else:
+                    input_models = self.tweakreg(input_models)
 
-        input_models = self.skymatch(input_models)
-        input_models = self.outlier_detection(input_models)
+                input_models = self.skymatch(input_models)
+                input_models = self.outlier_detection(input_models)
 
-        # elif self.skymatch.skymethod == 'match':
-        #     self.log.warning("Turning 'skymatch' step off for a single "
-        #                      "input image when 'skymethod' is 'match'")
+            elif self.skymatch.skymethod == 'match':
+                self.log.warning("Turning 'skymatch' step off for a single "
+                                 "input image when 'skymethod' is 'match'")
 
-        # else:
-        #     # FIXME: here input_models is a DataModel, passing
-        #     # that to skymatch would cause an error when it tries to call
-        #     # ModelContainer(DataModel). This can be seen by running
-        #     # strun calwebb_image3 any_cal.fits --steps.skymatch.method=local
-        #     input_models = self.skymatch(input_models)
+            else:
+                input_models = self.skymatch(input_models)
 
         result = self.resample(input_models)
         del input_models
         if isinstance(result, datamodels.ImageModel) and result.meta.cal_step.resample == 'COMPLETE':
             self.source_catalog(result)
+
+
+    def _load_input_as_library(self, input):
+        """
+        Load any valid input type into a ModelLibrary, including
+        single datamodels, associations, ModelLibrary instances, and
+        filenames pointing to those types.
+        """
+
+        if isinstance(input, ModelLibrary):
+            return input
+
+        if isinstance(input, (str, dict)):
+            try:
+                # Try opening input as an association
+                return ModelLibrary(input, asn_exptypes=['science'], on_disk=not self.in_memory)
+            except OSError:
+                # Try opening input as a single cal file
+                input = datamodels.open(input)
+                input = [input,]
+                return ModelLibrary(input, asn_exptypes=['science'], on_disk=not self.in_memory)
+        elif isinstance(input, Sequence):
+            return ModelLibrary(input, asn_exptypes=['science'], on_disk=not self.in_memory)
+        elif isinstance(input, datamodels.JwstDataModel):
+            return ModelLibrary([input], asn_exptypes=['science'], on_disk=not self.in_memory)
+        else:
+            raise TypeError(f"Input type {type(input)} not supported.")

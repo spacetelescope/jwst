@@ -36,7 +36,8 @@ import logging
 import os
 import re
 from collections.abc import Sequence
-from jwst.datamodels import ModelLibrary
+from jwst import datamodels
+from pathlib import PurePath
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -156,7 +157,7 @@ def record_step_status(datamodel, cal_step, success=True):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel` instance
+    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`, `~jwst.datamodels.ModelLibrary`, str, or Path instance
         This is the datamodel or container of datamodels to modify in place
 
     cal_step : str
@@ -170,10 +171,13 @@ def record_step_status(datamodel, cal_step, success=True):
     else:
         status = SKIPPED
 
+    if isinstance(datamodel, (str, PurePath)):
+        datamodel = datamodels.open(datamodel)
+
     if isinstance(datamodel, Sequence):
         for model in datamodel:
             model.meta.cal_step._instance[cal_step] = status
-    elif isinstance(datamodel, ModelLibrary):
+    elif isinstance(datamodel, datamodels.ModelLibrary):
         with datamodel:
             for model in datamodel:
                 model.meta.cal_step._instance[cal_step] = status

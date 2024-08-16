@@ -13,8 +13,8 @@ from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight
 from jwst.stpipe.utilities import record_step_status
 
-from .utils import create_median_library, flag_crs_in_models_library, flag_crs_in_models_with_resampling_library
-from ._fileio import save_median
+from .utils import create_median, flag_model_crs, flag_resampled_model_crs
+from ._fileio import remove_file, save_median
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -51,8 +51,7 @@ def detect_outliers(
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """
     if not isinstance(input_models, ModelLibrary):
-        on_disk = not in_memory
-        input_models = ModelLibrary(input_models, on_disk=on_disk)
+        input_models = ModelLibrary(input_models, on_disk=not in_memory)
 
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
@@ -98,38 +97,39 @@ def detect_outliers(
                 # copy for when saving median and input is a filename?
                 if i == 0:
                     median_wcs = copy.deepcopy(model.meta.wcs)
+                input_models.shelve(model, modify=True)
 
     # Perform median combination on set of drizzled mosaics
-    on_disk = not in_memory
-    median_data = create_median_library(drizzled_models, maskpt, on_disk=on_disk)
+    median_data = create_median(drizzled_models, maskpt, on_disk=not in_memory)
 
     if save_intermediate_results:
         # make a median model
         with drizzled_models:
             example_model = drizzled_models.borrow(0)
             drizzled_models.shelve(example_model, modify=False)
-            with datamodels.open(example_model) as dm0:
-                median_model = datamodels.ImageModel(median_data)
-                median_model.update(dm0)
-                median_model.meta.wcs = median_wcs
+            #with datamodels.open(example_model) as dm0:
+            median_model = datamodels.ImageModel(median_data)
+            median_model.update(example_model)
+            median_model.meta.wcs = median_wcs
             del example_model
 
         save_median(median_model, make_output_path, asn_id)
         del median_model
+    else:
+        # since we're not saving intermediate results if the drizzled models
+        # were written to disk, remove them
+        if not in_memory:
+            for fn in drizzled_models._members:
+                remove_file(fn["expname"])
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
-    if resample_data:
-        flag_crs_in_models_with_resampling_library(
-            input_models,
-            median_data,
-            median_wcs,
-            snr1,
-            snr2,
-            scale1,
-            scale2,
-            backg,
-        )
-    else:
-        flag_crs_in_models_library(input_models, median_data, snr1)
+    with input_models:
+        for image in input_models:
+            if resample_data:
+                flag_resampled_model_crs(image, median_data, median_wcs, snr1, snr2, scale1, scale2, backg)
+            else:
+                flag_model_crs(image, median_data, snr1)
+            input_models.shelve(image, modify=True)
+
     return input_models

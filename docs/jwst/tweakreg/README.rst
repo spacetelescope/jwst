@@ -168,12 +168,8 @@ Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
 `~jwst.datamodels.ModelLibrary`. This grouping is performed automatically
 in the ``tweakreg`` step using the
-`~jwst.datamodels.ModelLibrary.models_grouped` property, which assigns
-a group ID to each input image model in ``meta.group_id``.
-## FIXME: The ModelLibrary does not have a models_grouped property.
-## However, the models_grouped property of ModelContainer is currently not
-## accessed by tweakreg on master, either. Is this comment outdated,
-## misleading, or incorrect, or am I misunderstanding something?
+`~jwst.datamodels.ModelLibrary.group_names` property.
+
 
 However, when detector calibrations are not accurate, alignment of groups
 of images may fail (or result in poor alignment). In this case, it may be
@@ -438,8 +434,8 @@ in the ``assign_wcs`` step.
 * ``output_use_model``: A boolean indicating whether to use `DataModel.meta.filename`
   when saving the results. (Default=True)
 
-* ``on_disk``: A boolean indicating whether to keep models in temporary files on disk
-  while not in use to save memory. (Default=False)
+* ``in_memory``: A boolean indicating whether to keep models in memory, or to save
+  temporary files on disk while not in use to save memory. (Default=True)
 
 Further Documentation
 ---------------------

@@ -94,13 +94,15 @@ class SkyMatchStep(Step):
             for group_index, (group_id, group_inds) in enumerate(library.group_indices.items()):
                 sky_images = []
                 for index in group_inds:
+                    print(index)
                     model = library.borrow(index)
-                    sky_images.append(self._imodel2skyim(model, index))
-                    library.shelve(model, index, modify=False)
+                    try:
+                        sky_images.append(self._imodel2skyim(model, index))
+                    finally:
+                        library.shelve(model, index, modify=False)
                 if len(sky_images) == 1:
                     images.extend(sky_images)
                 else:
-                    # FIXME: why does this use a number for group_index?
                     images.append(SkyGroup(sky_images, id=group_index))
 
         # match/compute sky values:
@@ -189,6 +191,19 @@ class SkyMatchStep(Step):
         return sky_im
 
     def _set_sky_background(self, sky_image, library, step_status):
+        """
+        Parameters
+        ----------
+        sky_image : SkyImage
+            SkyImage object containing sky image data and metadata.
+
+        library : ModelLibrary
+            Library of input data models, must be open
+
+        step_status : str
+            Status of the sky subtraction step. Must be one of the following:
+            'COMPLETE', 'SKIPPED'.
+        """
         index = sky_image.meta['index']
         dm = library.borrow(index)
         sky = sky_image.sky

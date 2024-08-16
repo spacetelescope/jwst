@@ -23,25 +23,28 @@ class ModelLibrary(AbstractModelLibrary):
     
     @property
     def exptypes(self):
+        """
+        List of exposure types for all members in the library.
+        """
         return [member["exptype"] for member in self._members]
     
-    def ind_asn_type(self, exptype):
+    def indices_for_exptype(self, exptype):
         """
-        Determine the indices of models corresponding to ``asn_exptype``.
+        Determine the indices of models corresponding to ``exptype``.
 
         Parameters
         ----------
-        asn_exptype : str
+        exptype : str
             Exposure type as defined in an association, e.g. "science". case-insensitive
 
         Returns
         -------
         ind : list
-            Indices of models in ModelLibrary matching ``asn_exptype``.
+            Indices of models in ModelLibrary with member exposure types matching ``exptype``.
 
         Notes
         -----
-        Library does NOT need to be open (i.e., this can be caled outside the `with` context)
+        Library does NOT need to be open (i.e., this can be called outside the `with` context)
         """
         return [i for i, member in enumerate(self._members) if member["exptype"].lower() == exptype.lower()]
 
@@ -126,9 +129,11 @@ class ModelLibrary(AbstractModelLibrary):
         if not hasattr(model.meta, "asn"):
             model.meta["asn"] = {}
 
-        for attr in ("table_name", "asn_pool"):
-            if not hasattr(model.meta.asn, attr) and hasattr(self.asn, attr): # do not clobber existing values
-                model.meta.asn.table_name = self.asn.get(attr, "")
+        if not hasattr(model.meta.asn, "table_name") and hasattr(self.asn, "table_name"): # do not clobber existing values
+            setattr(model.meta.asn, "table_name", getattr(self.asn, "table_name"))
+
+        if not hasattr(model.meta.asn, "pool_name") and hasattr(self.asn, "asn_pool"): # do not clobber existing values
+            setattr(model.meta.asn, "pool_name", getattr(self.asn, "asn_pool"))
 
 
 def _attrs_to_group_id(

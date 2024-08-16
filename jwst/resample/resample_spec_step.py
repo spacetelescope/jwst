@@ -134,8 +134,7 @@ class ResampleSpecStep(Step):
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
-            if isinstance(container, ModelContainer):
-                library = ModelLibrary(container, on_disk=False)
+            library = ModelLibrary(container, on_disk=False)
             library = resamp.do_drizzle(library)
             with library:
                 for i, model in enumerate(library):

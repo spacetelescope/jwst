@@ -41,5 +41,4 @@ class AssignMTWcsStep(Step):
                 return input
             
         result = assign_moving_target_wcs(input)
-        record_step_status(result, "assign_mtwcs", True)
         return result

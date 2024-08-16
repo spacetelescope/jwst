@@ -182,8 +182,9 @@ class ResampleData:
         # update meta data and wcs
         with input_models:
             example_model = input_models.borrow(0)
+            self.blank_output.update(example_model)
             input_models.shelve(example_model, 0, modify=False)
-        self.blank_output.update(example_model)
+            del example_model
         self.blank_output.meta.wcs = self.output_wcs
         self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
         self.blank_output.meta.photometry.pixelarea_arcsecsq = (
@@ -950,7 +951,8 @@ def compute_image_pixel_area(wcs):
 def copy_asn_info_from_library(library, output_model):
     if not hasattr(library, "asn"):
         # No ASN table, occurs when input comes from ModelContainer in spectroscopic modes
-        # in this case the container should retain the asn information in ResampleSpecStep
+        # in this case do nothing; the asn info will be passed along later
+        # by code inside ResampleSpecStep
         return
     if (asn_pool := library.asn.get("asn_pool", None)) is not None:
         output_model.meta.asn.pool_name = asn_pool
