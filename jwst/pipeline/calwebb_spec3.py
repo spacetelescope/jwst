@@ -5,7 +5,7 @@ import os.path as op
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import SourceModelContainer, ModelLibrary
+from jwst.datamodels import SourceModelContainer
 from jwst.stpipe import query_step_status
 
 from ..associations.lib.rules_level3_base import format_product
