@@ -424,9 +424,12 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     dms2detector = dms_to_sca(input_model)
     dms2detector.name = "dms2sca"
     # DETECTOR to GWA transform
-    det2gwa = Identity(2) & detector_to_gwa(
-        reference_files, input_model.meta.instrument.detector, disperser
-    )
+    # det2gwa = Identity(2) & detector_to_gwa(reference_files,
+    #                                         input_model.meta.instrument.detector,
+    #                                         disperser)
+    det2gwa = detector_to_gwa(reference_files,
+                              input_model.meta.instrument.detector,
+                              disperser)
     det2gwa.name = "det2gwa"
 
     # GWA to SLIT
@@ -1613,6 +1616,8 @@ def detector_to_gwa(reference_files, detector, disperser):
     model = models.Shift(1) & models.Shift(1) | \
             models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation
     """
+    '''
+    #model = (fpa | camera | u2dircos | rotation) & Identity(1) | Mapping((3, 0, 1, 2))
     model = fpa | camera | u2dircos | rotation
     return model
 
@@ -1648,7 +1653,8 @@ def dms_to_sca(input_model):
         model = models.Shift(-2047) & models.Shift(-2047) | models.Scale(-1) & models.Scale(-1)
     elif detector == "NRS1":
         model = models.Identity(2)
-    return subarray2full | model
+    # return (subarray2full | model) & Identity(1)
+    return (subarray2full | model)
 
 
 def mask_slit(ymin=-0.55, ymax=0.55):
@@ -2236,7 +2242,7 @@ def _nrs_wcs_set_input(input_model, slit_name):
     wcsobj = input_model.meta.wcs
 
     slit_wcs = copy.deepcopy(wcsobj)
-    slit_wcs.set_transform("sca", "gwa", wcsobj.pipeline[1].transform[1:])
+    # slit_wcs.set_transform('sca', 'gwa', wcsobj.pipeline[1].transform[1:])
     g2s = slit_wcs.pipeline[2].transform
     slit_wcs.set_transform("gwa", "slit_frame", g2s.get_model(slit_name))
 
