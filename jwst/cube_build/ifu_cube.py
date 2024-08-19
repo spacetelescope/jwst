@@ -69,6 +69,7 @@ class IFUCubeData():
         self.cube_pa = pars_cube.get('cube_pa')
         self.nspax_x = pars_cube.get('nspax_x')
         self.nspax_y = pars_cube.get('nspax_y')
+        self.offsets = pars_cube.get('offsets')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
         self.debug_spaxel = pars_cube.get('debug_spaxel')
@@ -1515,9 +1516,12 @@ class IFUCubeData():
         scalerad_det = None
         x_det = None
         y_det = None
-
+        offsets = self.offsets
+        
+        
         if self.instrument == 'MIRI':
-            sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, subtract_background)
+            sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, subtract_background,
+                                                    offsets)
             (x, y, ra, dec, wave_all, slice_no_all, dwave_all, corner_coord_all) = sky_result
 
         elif self.instrument == 'NIRSPEC':
@@ -1692,7 +1696,8 @@ class IFUCubeData():
             softrad_det, scalerad_det, x_det, y_det
     # ______________________________________________________________________
 
-    def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background):
+    def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background,
+                              offsets):
         """Loop over a file and map the detector pixels to the output cube
         The output frame is on the SKY (ra-dec)
 
@@ -1718,6 +1723,17 @@ class IFUCubeData():
         slice_no = None  # Slice number
         dwave = None
         corner_coord = None
+
+        raoffset = 0.0
+        decoffset = 0.0 
+        # pull out ra dec offset if it exists
+        if offsets is not None:
+            filename = input_model.meta.filename
+            index = offsets['filename'].index(filename)
+            raoffset = offsets['raoffset'][index]/3600.0
+            decoffset = offsets['decoffset'][index]/3600.0
+            
+            print('ra and dec offset to apply in degrees', raoffset, decoffset)
 
         # check if background sky matching as been done in mrs_imatch step
         # If it has not been subtracted and the background has not been
@@ -1754,6 +1770,8 @@ class IFUCubeData():
 
         # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
         ra, dec, wave = input_model.meta.wcs(x, y)
+        ra = ra + raoffset
+        dec = dec + decoffset
         valid1 = ~np.isnan(ra)
         ra = ra[valid1]
         dec = dec[valid1]
@@ -1793,6 +1811,16 @@ class IFUCubeData():
                                                           input_model.meta.wcs.output_frame, alpha2,
                                                           beta - dbeta * pixfrac / 2., wave)
 
+            ra1 = ra1 + raoffset
+            ra2 = ra2 + raoffset
+            ra3 = ra3 + raoffset
+            ra4 = ra4 + raoffset
+
+            dec1 = dec1 + decoffset
+            dec2 = dec2 + decoffset
+            dec3 = dec3 + decoffset
+            dec4 = dec4 + decoffset
+            
             corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
 
         sky_result = (x, y, ra, dec, wave, slice_no, dwave, corner_coord)

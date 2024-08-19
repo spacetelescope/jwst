@@ -9,6 +9,7 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 from . import cube_build
 from . import ifu_cube
 from . import data_types
+import asdf
 from ..assign_wcs.util import update_s_region_keyword
 from ..stpipe import Step, record_step_status
 
@@ -64,6 +65,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
+         offset_list = string(default=None)
          debug_spaxel = string(default='-1 -1 -1') # Default not used
        """
 
@@ -236,6 +238,17 @@ class CubeBuildStep (Step):
         self.pars_input['output_type'] = self.output_type
         self.log.info(f'Setting output type to: {self.output_type}')
 
+# ________________________________________________________________________________
+# If an offset file is provided do some basic checks on the file and its contents
+        self.offsets = None
+        
+        if self.offset_list is not None:
+            offsets = self.check_offset_list()
+            
+            if offsets is not None:
+                print(offsets)
+                self.offsets = offsets
+# ________________________________________________________________________________
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
 
@@ -276,6 +289,7 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
+            'offsets':self.offsets,
             'skip_dqflagging': self.skip_dqflagging,
             'suffix': self.suffix,
             'debug_spaxel': self.debug_spaxel}
@@ -530,3 +544,25 @@ class CubeBuildStep (Step):
 # remove duplicates if needed
             self.pars_input['grating'] = list(set(self.pars_input['grating']))
 # ________________________________________________________________________________
+
+    def check_offset_list(self):
+        # first check file is asdf
+        
+        check_asdf = asdf.util.get_file_type(asdf.generic_io.get_file(self.offset_list))
+        if check_asdf == asdf.util.FileType.ASDF:
+            with asdf.open(self.offset_list) as af:
+                offsets = af.tree['offsets']
+                
+        for model in self.input_models:
+            print(model.meta.filename)
+            file_check = model.meta.filename
+            if file_check in offsets['filename']:
+                #print('found file', file_check)
+                continue
+            else:
+                print('In file from association not found in offset list')
+                print(offsets['filename'])
+                return None
+        return offsets 
+            
+              
