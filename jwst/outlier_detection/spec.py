@@ -84,12 +84,6 @@ def detect_outliers(
                     log.info("Writing out resampled spectra...")
                     model.save(model.meta.filename)
                     drizzled_models.shelve(model)
-        else:
-            # since we're not saving intermediate results if the drizzled models
-            # were written to disk, remove them
-            if not in_memory:
-                for fn in drizzled_models._members:
-                    remove_file(fn["expname"])
             
     else:
         # TODO: there appears not to be any test coverage for this branch
@@ -126,6 +120,12 @@ def detect_outliers(
                  median_model.meta.filename))
         median_model.save(median_model.meta.filename)
         del median_model
+    else:
+        # since we're not saving intermediate results if the drizzled models
+        # were written to disk, remove them
+        if not in_memory:
+            for fn in drizzled_models._members:
+                remove_file(fn["expname"])
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
