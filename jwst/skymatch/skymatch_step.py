@@ -94,7 +94,6 @@ class SkyMatchStep(Step):
             for group_index, (group_id, group_inds) in enumerate(library.group_indices.items()):
                 sky_images = []
                 for index in group_inds:
-                    print(index)
                     model = library.borrow(index)
                     try:
                         sky_images.append(self._imodel2skyim(model, index))
