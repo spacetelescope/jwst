@@ -71,7 +71,7 @@ class ResampleStep(Step):
             raise RuntimeError(f"Input {input} is not a 2D image.")
 
         try:
-            output = input_models.asn["products"][0]["members"][0]["expname"]
+            output = input_models.asn["products"][0]["name"]
         except KeyError:
             # coron data goes through this path by the time it gets to
             # resampling.

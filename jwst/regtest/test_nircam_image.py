@@ -131,8 +131,6 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
 @pytest.mark.parametrize("suffix", ["i2d"])
 def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test that resampled i2d looks good for NIRCam imaging"""
-    import os
-    raise ValueError(os.listdir(os.getcwd()))
     rtdata = rtdata_module
     rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
     output = f"jw01538-o046_t024_nircam_clear-f444w_{suffix}.fits"
