@@ -40,7 +40,8 @@ def align_fourierLSQ(reference, target, mask=None):
 
     init_pars = [0., 0., 1.]
     results, _ = optimize.leastsq(shift_subtract, init_pars,
-                                  args=(reference, target, mask))
+                                  args=(reference, target, mask),
+                                  xtol=1E-15, ftol=1E-15)
     return results
 
 
