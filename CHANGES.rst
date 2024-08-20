@@ -23,6 +23,11 @@ cube_build
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
+documentation
+-------------
+
+- Add changelog to documentation. [#8716]
+
 emicorr
 -------
 
