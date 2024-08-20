@@ -65,8 +65,6 @@ class ResampleStep(Step):
             input_models = ModelLibrary(input, on_disk=not self.in_memory)
         elif isinstance(input, ImageModel):
             input_models = ModelLibrary([input], on_disk=not self.in_memory)
-            input_models.asn["asn_pool"] = input.meta.asn.pool_name
-            input_models.asn["table_name"] = input.meta.asn.table_name
             output = input.meta.filename
             self.blendheaders = False
         else:
