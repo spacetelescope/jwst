@@ -65,8 +65,8 @@ class ResampleStep(Step):
             input_models = ModelLibrary(input, on_disk=not self.in_memory)
         elif isinstance(input, ImageModel):
             input_models = ModelLibrary([input], on_disk=not self.in_memory)
-            input_models.asn_pool_name = input.meta.asn.pool_name
-            input_models.asn_table_name = input.meta.asn.table_name
+            input_models.asn["asn_pool"] = input.meta.asn.pool_name
+            input_models.asn["table_name"] = input.meta.asn.table_name
             output = input.meta.filename
             self.blendheaders = False
         else:
@@ -79,7 +79,8 @@ class ResampleStep(Step):
             # resampling.
             # TODO: figure out why and make sure asn_table is carried along
             output = None
-
+        if self.save_results:
+            self.output_file = output
 
         # Check that input models are 2D images
         with input_models:
