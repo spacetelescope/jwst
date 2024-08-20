@@ -1810,7 +1810,7 @@ other
 -----
 
 - Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
-  catching ``ResourceWarning``s. [#7526]
+  catching ``ResourceWarning``. [#7526]
 
 - Remove use of ``codecov`` package. [#7543]
 
