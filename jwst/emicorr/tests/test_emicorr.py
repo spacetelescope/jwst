@@ -133,6 +133,6 @@ def test_rebin():
     data[9] = 2.0
     rebinned_data = emicorr.rebin(data, [7])
 
-    compare_arr = np.array([1., 0.55, 1. , 1., 1.55, 1., 1.])
+    compare_arr = np.array([1., 0.55, 1., 1., 1.55, 1., 1.])
 
     assert compare_arr.all() == rebinned_data.all()
