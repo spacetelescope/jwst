@@ -222,7 +222,7 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     assert len(median_files) == 0
 
     # Save all the data into a separate array before passing into step
-    data_as_cube = container.map_function(lambda model, index: model.data, modify=False)
+    data_as_cube = container.map_function(lambda model, index: model.data.copy(), modify=False)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
@@ -287,7 +287,7 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
     container = ModelLibrary(three_sci_as_asn, on_disk=True)
 
     # Save all the data into a separate array before passing into step
-    data_as_cube = container.map_function(lambda model, index: model.data, modify=False)
+    data_as_cube = container.map_function(lambda model, index: model.data.copy(), modify=False)
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True, in_memory=False

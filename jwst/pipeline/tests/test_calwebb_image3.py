@@ -12,6 +12,8 @@ INPUT_ASN = "dummy_asn.json"
 OUTPUT_PRODUCT = "custom_name"
 LOGFILE = "run_asn.log"
 LOGCFG = "test_logs.cfg"
+LOGCFG_CONTENT = f"[*] \n \
+        handler = file:{LOGFILE}"
 
 
 @pytest.fixture(scope='module')
@@ -68,11 +70,8 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
     Two-product association passed in, run pipeline, skipping most steps
     '''
     # save warnings to logfile so can be checked later
-    logcfg_content = f"[*] \n \
-        level = INFO \n \
-        handler = file:{LOGFILE}"
     with open(LOGCFG, 'w') as f:
-        f.write(logcfg_content)
+        f.write(LOGCFG_CONTENT)
 
     args = ["calwebb_image3", INPUT_ASN, 
             f"--logcfg={LOGCFG}",
@@ -90,11 +89,8 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
 
 def test_run_image3_single_file(make_dummy_cal_file):
 
-    logcfg_content = f"[*] \n \
-        level = INFO \n \
-        handler = file:{LOGFILE}"
     with open(LOGCFG, 'w') as f:
-        f.write(logcfg_content)
+        f.write(LOGCFG_CONTENT)
 
     args = ["calwebb_image3", INPUT_FILE, 
             f"--logcfg={LOGCFG}",
@@ -115,4 +111,4 @@ def _is_run_complete(logfile):
     msg = "Step Image3Pipeline done"
     with open(LOGFILE, 'r') as f:
         log = f.read()
-        assert msg in log
+    assert msg in log

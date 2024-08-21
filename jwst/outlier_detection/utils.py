@@ -33,7 +33,26 @@ def create_cube_median(cube_model, maskpt):
 
 def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
     """Create a median image from the singly resampled images.
-    resampled_models is expected to be a ModelLibrary for imaging modes.
+
+    Parameters
+    ----------
+    resampled_models : ModelLibrary
+        The singly resampled images.
+
+    maskpt : float
+        The weight threshold for masking out low weight pixels.
+
+    on_disk : bool
+        If True, the input models are on disk and will be read in chunks.
+
+    buffer_size : float
+        The size of chunk in MB, per input model, that will be read into memory.
+        This parameter has no effect if on_disk is False.
+
+    Returns
+    -------
+    median_image : ndarray
+        The median image.
     """
     # Compute the weight threshold for each input model
     weight_thresholds = []

@@ -76,27 +76,27 @@ class Image3Pipeline(Pipeline):
             self.output_file = input_models.asn["products"][0]["name"]
 
         # Check if input is single or multiple exposures
-        has_groups = len(input_models) > 1
+        has_groups = len(input_models.group_names) > 1
 
-        with input_models:
-            if has_groups:
+        if has_groups:
+            with input_models:
                 model = input_models.borrow(0)
                 is_moving = is_moving_target(model)
                 input_models.shelve(model, 0, modify=False)
-                if is_moving:
-                    input_models = self.assign_mtwcs(input_models)
-                else:
-                    input_models = self.tweakreg(input_models)
-
-                input_models = self.skymatch(input_models)
-                input_models = self.outlier_detection(input_models)
-
-            elif self.skymatch.skymethod == 'match':
-                self.log.warning("Turning 'skymatch' step off for a single "
-                                 "input image when 'skymethod' is 'match'")
-
+            if is_moving:
+                input_models = self.assign_mtwcs(input_models)
             else:
-                input_models = self.skymatch(input_models)
+                input_models = self.tweakreg(input_models)
+
+            input_models = self.skymatch(input_models)
+            input_models = self.outlier_detection(input_models)
+
+        elif self.skymatch.skymethod == 'match':
+            self.log.warning("Turning 'skymatch' step off for a single "
+                                "input image when 'skymethod' is 'match'")
+
+        else:
+            input_models = self.skymatch(input_models)
 
         result = self.resample(input_models)
         del input_models

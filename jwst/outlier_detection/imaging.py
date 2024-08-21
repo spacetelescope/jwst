@@ -119,7 +119,7 @@ def detect_outliers(
         # since we're not saving intermediate results if the drizzled models
         # were written to disk, remove them
         if not in_memory:
-            for fn in drizzled_models._members:
+            for fn in drizzled_models.asn["products"][0]["members"]:
                 remove_file(fn["expname"])
 
     # Perform outlier detection using statistical comparisons between

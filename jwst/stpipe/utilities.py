@@ -171,9 +171,6 @@ def record_step_status(datamodel, cal_step, success=True):
     else:
         status = SKIPPED
 
-    if isinstance(datamodel, (str, PurePath)):
-        datamodel = datamodels.open(datamodel)
-
     if isinstance(datamodel, Sequence):
         for model in datamodel:
             model.meta.cal_step._instance[cal_step] = status

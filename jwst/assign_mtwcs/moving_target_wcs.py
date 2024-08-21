@@ -69,9 +69,9 @@ def assign_moving_target_wcs(input_models):
                                     model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
                 del model.meta.wcs
                 model.meta.wcs = new_wcs
+            record_step_status(model, "assign_mtwcs", True)
             input_models.shelve(model, i, modify=True)
-            
-    record_step_status(input_models, "assign_mtwcs", True)
+
     return input_models
 
 

@@ -344,6 +344,7 @@ class ResampleData:
                     )
                     del data
                     input_models.shelve(img, index, modify=False)
+                    del img
 
             if not self.in_memory:
                 # Write out model to disk, then return filename

@@ -76,8 +76,7 @@ class OutlierDetectionStep(Step):
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
         if mode is None:
-            record_step_status(input_data, "outlier_detection", False)
-            return input_data
+            return self._set_status(input_data, False)
         self.log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
@@ -161,11 +160,9 @@ class OutlierDetectionStep(Step):
         else:
             self.log.error("Outlier detection failed for unknown/unsupported ",
                            f"mode: {mode}")
-            record_step_status(input_data, "outlier_detection", False)
-            return input_data
+            return self._set_status(input_data, True)
 
-        record_step_status(result_models, "outlier_detection", True)
-        return result_models
+        return self._set_status(result_models, True)
 
     def _guess_mode(self, input_models):
         # The pipelines should set this mode or ideally these should
@@ -231,3 +228,11 @@ class OutlierDetectionStep(Step):
                 asn_id=asn_id
             )
         return asn_id
+    
+    def _set_status(self, input_models, status):
+        # this might be called with the input which might be a filename or path
+        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary)):
+            input_models = datamodels.open(input_models)
+
+        record_step_status(input_models, "outlier_detection", status)
+        return input_models

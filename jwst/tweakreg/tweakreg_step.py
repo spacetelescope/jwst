@@ -284,8 +284,8 @@ class TweakRegStep(Step):
         # can (and does) occur after alignment between groups
         if align_to_abs_refcat:
             with images:
+                ref_image = images.borrow(0)
                 try:
-                    ref_image = images.borrow(0)
                     correctors = \
                         twk.absolute_align(correctors, self.abs_refcat,
                                         ref_wcs=ref_image.meta.wcs,
@@ -303,13 +303,13 @@ class TweakRegStep(Step):
                                         abs_catalog_output_dir=self.output_dir,
                                                 )
                     images.shelve(ref_image, 0, modify=False)
-                    del ref_image
-
                 except twk.TweakregError as e:
                     self.log.warning(str(e))
                     images.shelve(ref_image, 0, modify=False)
                     record_step_status(images, "tweakreg", success=False)
                     return images
+                finally:
+                    del ref_image
 
         if local_align_failed and not align_to_abs_refcat: 
             record_step_status(images, "tweakreg", success=False)
