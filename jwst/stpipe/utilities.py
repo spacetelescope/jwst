@@ -37,7 +37,6 @@ import os
 import re
 from collections.abc import Sequence
 from jwst import datamodels
-from pathlib import PurePath
 
 # Configure logging
 logger = logging.getLogger(__name__)
