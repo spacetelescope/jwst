@@ -93,18 +93,18 @@ def get_ref_file_args(ref_files):
     return [wavemap_o1, wavemap_o2], [specprofile_o1, specprofile_o2], [throughput_o1, throughput_o2], [kernels_o1, kernels_o2]
 
 
-def get_trace_1d(ref_files, transform, order, cols=None):
+def get_trace_1d(ref_files, order, transform=None, cols=None):
     """Get the x, y, wavelength of the trace after applying the transform.
     Parameters
     ----------
     ref_files : dict
         A dictionary of the reference file DataModels.
-    transform : array or list
+    order : int
+        The spectral order for which to return the trace parameters.
+    transform : array or list, optional
         A 3-element list or array describing the rotation and translation
         to apply to the reference files in order to match the
         observation.
-    order : int
-        The spectral order for which to return the trace parameters.
     cols : array[int], optional
         The columns on the detector for which to compute the trace
         parameters. If not given, all columns will be computed.
@@ -127,14 +127,23 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     yref = pastasoss_ref.trace[order - 1].data['Y']
     waveref = pastasoss_ref.trace[order - 1].data['WAVELENGTH']
 
-    # Rotate and shift the positions based on transform.
-    angle, xshift, yshift = transform
-    xrot, yrot = transform_coords(angle, xshift, yshift, xref, yref)
+    # No transform necessary is using pastasoss
+    if transform is None:
+        xtrace = xref
+        ytrace = yref
+        wavetrace = waveref
 
-    # Interpolate y and wavelength to the requested columns.
-    sort = np.argsort(xrot)
-    ytrace = np.interp(xtrace, xrot[sort], yrot[sort])
-    wavetrace = np.interp(xtrace, xrot[sort], waveref[sort])
+    # Transform the trace if using a static PWCPOS
+    else:
+        
+        # Rotate and shift the positions based on transform.
+        angle, xshift, yshift = transform
+        xrot, yrot = transform_coords(angle, xshift, yshift, xref, yref)
+
+        # Interpolate y and wavelength to the requested columns.
+        sort = np.argsort(xrot)
+        ytrace = np.interp(xtrace, xrot[sort], yrot[sort])
+        wavetrace = np.interp(xtrace, xrot[sort], waveref[sort])
 
     return xtrace, ytrace, wavetrace
 
