@@ -45,13 +45,10 @@ def get_ref_file_args(ref_files):
     # Use pastasoss to generate the appropriate wavemap for the given PWCPOS
     (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = get_soss_wavemaps(pwcpos=pwcpos, subarray=subarray, padding=True, padsize=pad)
 
-    # The spectral profiles for order 1 and 2.
+    # The spectral profiles for order 1 and 2 (no transform necessary using pastasoss)
     specprofile_ref = ref_files['specprofile']
-    ovs = specprofile_ref.profile[0].oversampling
-    pad = specprofile_ref.profile[0].padding
-
-    specprofile_o1 = transform_profile(transform, specprofile_ref.profile[0].data, ovs, pad, norm=False)
-    specprofile_o2 = transform_profile(transform, specprofile_ref.profile[1].data, ovs, pad, norm=False)
+    specprofile_o1 = specprofile_ref.profile[0].data
+    specprofile_o2 = specprofile_ref.profile[1].data
 
     # The throughput curves for order 1 and 2.
     spectrace_ref = ref_files['spectrace']
@@ -135,7 +132,7 @@ def get_trace_1d(ref_files, order, transform=None, cols=None):
 
     # Transform the trace if using a static PWCPOS
     else:
-        
+
         # Rotate and shift the positions based on transform.
         angle, xshift, yshift = transform
         xrot, yrot = transform_coords(angle, xshift, yshift, xref, yref)
