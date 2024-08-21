@@ -239,14 +239,15 @@ class CubeBuildStep (Step):
         self.log.info(f'Setting output type to: {self.output_type}')
 
 # ________________________________________________________________________________
-# If an offset file is provided do some basic checks on the file and its contents
+# If an offset file is provided do some basic checks on the file and its contents.
+# The offset list contains a matching list to the files in the association
+# used in calspec3 (or offline cube building).
+# Each row in the offset list contain a filename, ra offset and dec offset.
+# The offset list is an asdf file.
         self.offsets = None
-        
         if self.offset_list is not None:
             offsets = self.check_offset_list()
-            
             if offsets is not None:
-                print(offsets)
                 self.offsets = offsets
 # ________________________________________________________________________________
 # Read in Cube Parameter Reference file
@@ -289,7 +290,7 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
-            'offsets':self.offsets,
+            'offsets': self.offsets,
             'skip_dqflagging': self.skip_dqflagging,
             'suffix': self.suffix,
             'debug_spaxel': self.debug_spaxel}
@@ -546,23 +547,46 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 
     def check_offset_list(self):
-        # first check file is asdf
-        
+        """Read in an optional ra and dec offsets for each file.
+
+        Summary
+        ----------
+        Check that is file is asdf file.
+        check the file has the correct format:
+        For each file in the input  assocation check that there is a corresponding
+        file in the offset file.
+        Also check that each file in the offset list contain a ra offset and dec offset.
+
+       """
+
         check_asdf = asdf.util.get_file_type(asdf.generic_io.get_file(self.offset_list))
         if check_asdf == asdf.util.FileType.ASDF:
             with asdf.open(self.offset_list) as af:
                 offsets = af.tree['offsets']
-                
+
+        format_failure = False
+        # Currently the offset list has to have the following keys: filename, raoffset, decoffset
+        if 'filename' not in offsets.keys():
+            self.log.warning('Filename is not listed in the offset list')
+            format_failure = True
+        if 'raoffset' not in offsets.keys():
+            self.log.warning('raoffset is not listed in the offset list')
+            format_failure = True
+        if 'decoffset' not in offsets.keys():
+            self.log.warning('decoffset is not listed in the offset list')
+            format_failure = True
+        if format_failure:
+            self.log.warning('Offset list does not have the correct format')
+            self.log.warning('No offsets are applied')
+            return None
+
         for model in self.input_models:
-            print(model.meta.filename)
             file_check = model.meta.filename
             if file_check in offsets['filename']:
-                #print('found file', file_check)
+                ra = offsets['raoffset']
+                dec = offsets['decoffset']
                 continue
             else:
-                print('In file from association not found in offset list')
-                print(offsets['filename'])
+                self.log.info('File in assocation is not found in offset list list %s', file_check)
                 return None
-        return offsets 
-            
-              
+        return offsets

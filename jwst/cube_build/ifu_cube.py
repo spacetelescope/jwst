@@ -1316,7 +1316,21 @@ class IFUCubeData():
 
                 input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
                 input_model = datamodels.open(input_file)
-
+# ________________________________________________________________________________
+                # If offsets are provided. Pull in ra and dec offsets.
+                raoffset = 0.0
+                decoffset = 0.0 
+                # pull out ra dec offset if it exists
+                if self.offsets is not None:
+                    filename = input_model.meta.filename
+                    index = self.offsets['filename'].index(filename)
+                    raoffset = self.offsets['raoffset'][index]
+                    decoffset = self.offsets['decoffset'][index]
+                    log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
+                             raoffset, decoffset, filename)
+                    raoffset = raoffset/3600.0 # convert to degress
+                    decoffset = decoffset/3600.0
+# ________________________________________________________________________________
                 # Find the footprint of the image
                 spectral_found = hasattr(input_model.meta.wcsinfo, 'spectral_region')
                 spatial_found = hasattr(input_model.meta.wcsinfo, 's_region')
@@ -1372,15 +1386,15 @@ class IFUCubeData():
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
 
                 # now append this model spatial and spectral corner
-                corner_a.append(ca1)
-                corner_a.append(ca2)
-                corner_a.append(ca3)
-                corner_a.append(ca4)
+                corner_a.append(ca1 + raoffset)
+                corner_a.append(ca2 + raoffset)
+                corner_a.append(ca3 + raoffset)
+                corner_a.append(ca4 + raoffset)
 
-                corner_b.append(cb1)
-                corner_b.append(cb2)
-                corner_b.append(cb3)
-                corner_b.append(cb4)
+                corner_b.append(cb1 + decoffset)
+                corner_b.append(cb2 + decoffset)
+                corner_b.append(cb3 + decoffset)
+                corner_b.append(cb4 + decoffset)
 
                 lambda_min.append(lmin)
                 lambda_max.append(lmax)
@@ -1517,7 +1531,6 @@ class IFUCubeData():
         x_det = None
         y_det = None
         offsets = self.offsets
-        
         
         if self.instrument == 'MIRI':
             sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, subtract_background,
@@ -1713,6 +1726,8 @@ class IFUCubeData():
            needed for MIRI data
         input: datamodel
            input data model
+        offsets: dictionary
+           optional dictionary of ra and dec offsets to apply
 
         Returns
         -------
@@ -1730,10 +1745,12 @@ class IFUCubeData():
         if offsets is not None:
             filename = input_model.meta.filename
             index = offsets['filename'].index(filename)
-            raoffset = offsets['raoffset'][index]/3600.0
-            decoffset = offsets['decoffset'][index]/3600.0
-            
-            print('ra and dec offset to apply in degrees', raoffset, decoffset)
+            raoffset = offsets['raoffset'][index]
+            decoffset = offsets['decoffset'][index]
+            log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
+                     raoffset, decoffset, filename)
+            raoffset = raoffset/3600.0 # convert to degress
+            decoffset = decoffset/3600.0
 
         # check if background sky matching as been done in mrs_imatch step
         # If it has not been subtracted and the background has not been
