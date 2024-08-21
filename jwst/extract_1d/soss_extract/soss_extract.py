@@ -13,6 +13,7 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
 from .atoca import ExtractionEngine, MaskOverlapError
+from .soss_wavemaps import get_soss_wavemaps
 from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
@@ -21,15 +22,12 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def get_ref_file_args(ref_files, transform):
+def get_ref_file_args(ref_files):
     """Prepare the reference files for the extraction engine.
     Parameters
     ----------
     ref_files : dict
         A dictionary of the reference file DataModels.
-    transform :  array or list
-        A 3-element array describing the rotation and translation to apply
-        to the reference files in order to match the observation.
 
     Returns
     -------
@@ -39,24 +37,13 @@ def get_ref_file_args(ref_files, transform):
     """
 
     # The wavelength maps for order 1 and 2.
-    wavemap_ref = ref_files['wavemap']
+    pastasoss_ref = ref_files['pastasoss']
+    pwcpos = pastasoss_ref.map[0].pwcpos        # Make sure the pastasoss_ref object has these attrs
+    subarray = pastasoss_ref.map[0].subarray    # Make sure the pastasoss_ref object has these attrs
+    pad = pastasoss_ref.map[0].padding          # Make sure the pastasoss_ref object has these attrs
 
-    ovs = wavemap_ref.map[0].oversampling
-    pad = wavemap_ref.map[0].padding
-
-    wavemap_o1 = transform_wavemap(transform, wavemap_ref.map[0].data, ovs, pad)
-    wavemap_o2 = transform_wavemap(transform, wavemap_ref.map[1].data, ovs, pad)
-
-    # Make sure all pixels follow the expected direction of the dispersion
-    wavemap_o1, flag_o1 = mask_bad_dispersion_direction(wavemap_o1)
-    wavemap_o2, flag_o2 = mask_bad_dispersion_direction(wavemap_o2)
-
-    # Warn if not all pixels were corrected
-    msg_warning = 'Some pixels in order {} do not follow the expected dispersion axis'
-    if not flag_o1:
-        log.warning(msg_warning.format(1))
-    if not flag_o2:
-        log.warning(msg_warning.format(2))
+    # Use pastasoss to generate the appropriate wavemap for the given PWCPOS
+    (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = get_soss_wavemaps(pwcpos=pwcpos, subarray=subarray, padding=True, padsize=pad)
 
     # The spectral profiles for order 1 and 2.
     specprofile_ref = ref_files['specprofile']
@@ -133,12 +120,12 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     else:
         xtrace = cols
 
-    spectrace_ref = ref_files['spectrace']
+    pastasoss_ref = ref_files['pastasoss']
 
     # Read x, y, wavelength for the relevant order.
-    xref = spectrace_ref.trace[order - 1].data['X']
-    yref = spectrace_ref.trace[order - 1].data['Y']
-    waveref = spectrace_ref.trace[order - 1].data['WAVELENGTH']
+    xref = pastasoss_ref.trace[order - 1].data['X']
+    yref = pastasoss_ref.trace[order - 1].data['Y']
+    waveref = pastasoss_ref.trace[order - 1].data['WAVELENGTH']
 
     # Rotate and shift the positions based on transform.
     angle, xshift, yshift = transform
@@ -1015,7 +1002,7 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
     return fluxes, fluxerrs, npixels
 
 
-def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
+def run_extract1d(input_model, pastasoss_ref_name,
                   specprofile_ref_name, speckernel_ref_name, subarray,
                   soss_filter, soss_kwargs):
     """Run the spectral extraction on NIRISS SOSS data.
@@ -1023,10 +1010,8 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     ----------
     input_model : DataModel
         The input DataModel.
-    spectrace_ref_name : str
-        Name of the spectrace reference file.
-    wavemap_ref_name : str
-        Name of the wavemap reference file.
+    pastasoss_ref_name : str
+        Name of the pastasoss reference file.
     specprofile_ref_name : str
         Name of the specprofile reference file.
     speckernel_ref_name : str
@@ -1052,14 +1037,12 @@ def run_extract1d(input_model, spectrace_ref_name, wavemap_ref_name,
     order_str_2_int = {f'Order {order}': order for order in [1, 2, 3]}
 
     # Read the reference files.
-    spectrace_ref = datamodels.SpecTraceModel(spectrace_ref_name)
-    wavemap_ref = datamodels.WaveMapModel(wavemap_ref_name)
+    pastasoss_ref = datamodels.PastasossModel(pastasoss_ref_name)
     specprofile_ref = datamodels.SpecProfileModel(specprofile_ref_name)
     speckernel_ref = datamodels.SpecKernelModel(speckernel_ref_name)
 
     ref_files = dict()
-    ref_files['spectrace'] = spectrace_ref
-    ref_files['wavemap'] = wavemap_ref
+    ref_files['pastasoss'] = pastasoss_ref
     ref_files['specprofile'] = specprofile_ref
     ref_files['speckernel'] = speckernel_ref
 
