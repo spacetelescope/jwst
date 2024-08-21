@@ -116,6 +116,7 @@ def _get_sections(library, nsections, section_nrows, imrows):
                 data_subset[j] = model.data[row1:row2]
                 weight_subset[j] = model.wht[row1:row2]
                 library.shelve(model, j, modify=False)
+                del model
         yield (data_subset, weight_subset, (row1, row2))
 
 

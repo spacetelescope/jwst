@@ -129,11 +129,11 @@ class ModelLibrary(AbstractModelLibrary):
         if not hasattr(model.meta, "asn"):
             model.meta["asn"] = {}
 
-        if not hasattr(model.meta.asn, "table_name") and hasattr(self.asn, "table_name"): # do not clobber existing values
-            setattr(model.meta.asn, "table_name", getattr(self.asn, "table_name"))
+        if (model.meta.asn.table_name is None) and ("table_name" in self.asn.keys()): # do not clobber existing values
+            setattr(model.meta.asn, "table_name", self.asn["table_name"])
 
-        if not hasattr(model.meta.asn, "pool_name") and hasattr(self.asn, "asn_pool"): # do not clobber existing values
-            setattr(model.meta.asn, "pool_name", getattr(self.asn, "asn_pool"))
+        if (model.meta.asn.pool_name is None) and ("asn_pool" in self.asn.keys()): # do not clobber existing values
+            setattr(model.meta.asn, "pool_name", self.asn["asn_pool"])
 
 
 def _attrs_to_group_id(
