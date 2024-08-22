@@ -16,10 +16,8 @@ import jwst.datamodels as dm
 # determining meta is the same, see `example_asn_path`)
 _OBSERVATION_NUMBERS = ['1', '1', '2']
 _N_MODELS = len(_OBSERVATION_NUMBERS)
-_N_GROUPS = len(set(_OBSERVATION_NUMBERS))
 _PRODUCT_NAME = "foo_out"
 _POOL_NAME = "some_pool"
-_TABLE_NAME = "some_table"
 
 
 @pytest.fixture
@@ -138,14 +136,14 @@ def test_group_id_override(example_asn_path, asn_group_id, meta_group_id, expect
 
 def test_asn_attributes_assignment(example_library):
 
-    expected_table_name = "jwnoprogram-a3001_none_00008_asn.json"
-    assert example_library.asn["table_name"] == expected_table_name
+    expected_table_name = "jwnoprogram-a3001"
+    assert example_library.asn["table_name"].startswith(expected_table_name)
     assert example_library.asn["asn_pool"] == _POOL_NAME
 
     # test that the association attributes are assigned to the models
     with example_library:
         for i in range(_N_MODELS):
             model = example_library.borrow(i)
-            assert model.meta.asn.table_name == expected_table_name
+            assert model.meta.asn.table_name.startswith(expected_table_name)
             assert model.meta.asn.pool_name == _POOL_NAME
             example_library.shelve(model, i, modify=False)

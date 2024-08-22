@@ -102,7 +102,7 @@ class SourceCatalogStep(Step):
             model.data += bkg.background
 
             if self.save_results:
-                # self.output_file = model.meta.filename
+                self.output_file = model.meta.filename
                 cat_filepath = self.make_output_path(ext='.ecsv')
                 catalog.write(cat_filepath, format='ascii.ecsv',
                               overwrite=True)
