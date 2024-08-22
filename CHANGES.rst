@@ -46,6 +46,11 @@ badpix_selfcal
 - Subtract pedestal dark when constructing min array across selfcal exposures
   for MIRI MRS data. [#8771]
 
+calwebb_coron3
+--------------
+
+- Tighten tolerance of psf alignment. [#8717]
+
 calwebb_detector1
 -----------------
 
