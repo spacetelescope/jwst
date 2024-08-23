@@ -129,10 +129,15 @@ class ModelLibrary(AbstractModelLibrary):
         if not hasattr(model.meta, "asn"):
             model.meta["asn"] = {}
 
-        if (model.meta.asn.table_name is None) and ("table_name" in self.asn.keys()): # do not clobber existing values
+        # if (model.meta.asn.table_name is None) and ("table_name" in self.asn.keys()): # do not clobber existing values
+        #     setattr(model.meta.asn, "table_name", self.asn["table_name"])
+
+        # if (model.meta.asn.pool_name is None) and ("asn_pool" in self.asn.keys()): # do not clobber existing values
+        #     setattr(model.meta.asn, "pool_name", self.asn["asn_pool"])
+        if "table_name" in self.asn.keys():
             setattr(model.meta.asn, "table_name", self.asn["table_name"])
 
-        if (model.meta.asn.pool_name is None) and ("asn_pool" in self.asn.keys()): # do not clobber existing values
+        if "asn_pool" in self.asn.keys(): # do not clobber existing values
             setattr(model.meta.asn, "pool_name", self.asn["asn_pool"])
 
 
