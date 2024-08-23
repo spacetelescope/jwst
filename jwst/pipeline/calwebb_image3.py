@@ -71,7 +71,7 @@ class Image3Pipeline(Pipeline):
         # background and target-acq members are not needed.
         input_models = self._load_input_as_library(input_data)
 
-        if (self.output_file is None) and hasattr(input_models.asn["products"][0], "name"):
+        if (self.output_file is None) and "name" in input_models.asn["products"][0]:
             # If input is an association, set the output to the product name.
             self.output_file = input_models.asn["products"][0]["name"]
 

@@ -77,8 +77,8 @@ class ResampleStep(Step):
             # resampling.
             # TODO: figure out why and make sure asn_table is carried along
             output = None
-        if self.save_results:
-            self.output_file = output
+        # if self.save_results:
+        #     self.output_file = output
 
         # Check that input models are 2D images
         with input_models:
