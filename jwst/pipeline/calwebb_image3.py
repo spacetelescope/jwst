@@ -76,7 +76,7 @@ class Image3Pipeline(Pipeline):
             self.output_file = input_models.asn["products"][0]["name"]
 
         # Check if input is single or multiple exposures
-        has_groups = len(input_models.group_names) > 1
+        has_groups = len(input_models.group_names) >= 1
 
         if has_groups:
             with input_models:
