@@ -77,8 +77,6 @@ class ResampleStep(Step):
             # resampling.
             # TODO: figure out why and make sure asn_table is carried along
             output = None
-        # if self.save_results:
-        #     self.output_file = output
 
         # Check that input models are 2D images
         with input_models:
@@ -113,7 +111,7 @@ class ResampleStep(Step):
                 model.meta.resample.pixfrac = kwargs['pixfrac']
                 # update filename to reflect new product
                 # necessary to get source_catalog output names to match i2d filename
-                model.meta.filename = self.output_file
+                # model.meta.filename = self.output_file
                 result.shelve(model)
 
             if len(result) == 1:
