@@ -51,6 +51,7 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from ..lib import pipe_utils, reffile_utils
 from .irs2_subtract_reference import make_irs2_mask
+from .optimized_convolution import apply_conv_kernel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -134,7 +135,7 @@ SUBARRAY_DOESNTFIT = 2
 SUBARRAY_SKIPPED = 3
 
 
-class Dataset():
+class Dataset:
     """Base Class to handle passing stuff from routine to routine
 
     Parameters:
@@ -491,6 +492,21 @@ class NIRDataset(Dataset):
     side_gain: float
         gain to use in applying the side reference pixel correction
 
+    use_conv_kernel : boolean
+        If True an optimized convolution kernel will be used instead of the running median
+
+    conv_kernel_model : `~jwst.datamodels.ConvKernelModel`
+        Data model containing the Fourier coefficients from the reference files
+
+    sigreject: integer
+        Number of sigmas to reject as outliers
+
+    gausssmooth : integer
+        Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
+
+    halfwith : integer
+        Half-width of convolution kernel to build from reference file's coefficients
+
     """
 
     def __init__(self, input_model,
@@ -504,7 +520,12 @@ class NIRDataset(Dataset):
                                          use_side_ref_pixels,
                                          side_smoothing_length,
                                          side_gain,
-                                         odd_even_rows=False)
+                                         odd_even_rows=False,
+                                         use_conv_kernel=False,
+                                         conv_kernel_model=None,
+                                         sigreject=None,
+                                         gausssmooth=None,
+                                         halfwith=None)
 
         # Set appropriate NIR sections
         self.is_irs2 = pipe_utils.is_irs2(input_model)
@@ -1172,25 +1193,32 @@ class NIRDataset(Dataset):
         #  First transform pixeldq array to detector coordinates
         self.DMS_to_detector_dq()
 
-        for integration in range(self.nints):
-            for group in range(self.ngroups):
-                #
-                # Get the reference values from the top and bottom reference
-                # pixels
-                #
-                self.DMS_to_detector(integration, group)
-                thisgroup = self.group
-                refvalues = self.get_refvalues(thisgroup)
-                self.do_top_bottom_correction(thisgroup, refvalues)
-                if self.use_side_ref_pixels:
-                    corrected_group = self.do_side_correction(thisgroup)
-                    self.group = corrected_group
-                else:
-                    self.group = thisgroup
-                #
-                #  Now transform back from detector to DMS coordinates.
-                self.detector_to_DMS(integration, group)
-        log.setLevel(logging.INFO)
+        if self.use_conv_kernel:
+            self.input_model = apply_conv_kernel(self.input_model,
+                                                 self.conv_kernel_model,
+                                                 sigreject=self.sigreject,
+                                                 gausssmooth=self.gaussmooth,
+                                                 halfwith=self.halfwidth)
+        else:
+            for integration in range(self.nints):
+                for group in range(self.ngroups):
+                    #
+                    # Get the reference values from the top and bottom reference
+                    # pixels
+                    #
+                    self.DMS_to_detector(integration, group)
+                    thisgroup = self.group
+                    refvalues = self.get_refvalues(thisgroup)
+                    self.do_top_bottom_correction(thisgroup, refvalues)
+                    if self.use_side_ref_pixels:
+                        corrected_group = self.do_side_correction(thisgroup)
+                        self.group = corrected_group
+                    else:
+                        self.group = thisgroup
+                    #
+                    #  Now transform back from detector to DMS coordinates.
+                    self.detector_to_DMS(integration, group)
+            log.setLevel(logging.INFO)
         return
 
     def do_subarray_corrections(self):
@@ -1923,7 +1951,12 @@ def create_dataset(input_model,
                    use_side_ref_pixels,
                    side_smoothing_length,
                    side_gain,
-                   odd_even_rows):
+                   odd_even_rows,
+                   use_conv_kernel,
+                   conv_kernel_model,
+                   sigreject,
+                   gausssmooth,
+                   halfwith):
     """Create a dataset object from an input model.
 
     Parameters:
@@ -1952,6 +1985,20 @@ def create_dataset(input_model,
         flag that controls whether odd and even-numbered rows are handled
         separately (MIR only)
 
+    use_conv_kernel : bool
+        If True an optimized convolution kernel will be used instead of the running median
+
+    conv_kernel_model : `~jwst.datamodels.ConvKernelModel`
+        Data model containing the Fourier coefficients from the reference files
+
+    sigreject: int
+        Number of sigmas to reject as outliers
+
+    gausssmooth : int
+        Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
+
+    halfwith : int
+        Half-width of convolution kernel to build from reference file's coefficients
     """
     detector = input_model.meta.instrument.detector
 
@@ -1972,104 +2019,189 @@ def create_dataset(input_model,
                            odd_even_columns,
                            use_side_ref_pixels,
                            side_smoothing_length,
-                           side_gain)
+                           side_gain,
+                           use_conv_kernel,
+                           conv_kernel_model,
+                           sigreject,
+                           gausssmooth,
+                           halfwith)
     elif detector == 'NRS2':
         return NRS2Dataset(input_model,
                            odd_even_columns,
                            use_side_ref_pixels,
                            side_smoothing_length,
-                           side_gain)
+                           side_gain,
+                           use_conv_kernel,
+                           conv_kernel_model,
+                           sigreject,
+                           gausssmooth,
+                           halfwith)
     elif detector == 'NRCA1':
         return NRCA1Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCA2':
         return NRCA2Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCA3':
         return NRCA3Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCA4':
         return NRCA4Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCALONG':
         return NRCALONGDataset(input_model,
                                odd_even_columns,
                                use_side_ref_pixels,
                                side_smoothing_length,
-                               side_gain)
+                               side_gain,
+                               use_conv_kernel,
+                               conv_kernel_model,
+                               sigreject,
+                               gausssmooth,
+                               halfwith)
     elif detector == 'NRCB1':
         return NRCB1Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCB2':
         return NRCB2Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCB3':
         return NRCB3Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCB4':
         return NRCB4Dataset(input_model,
                             odd_even_columns,
                             use_side_ref_pixels,
                             side_smoothing_length,
-                            side_gain)
+                            side_gain,
+                            use_conv_kernel,
+                            conv_kernel_model,
+                            sigreject,
+                            gausssmooth,
+                            halfwith)
     elif detector == 'NRCBLONG':
         return NRCBLONGDataset(input_model,
                                odd_even_columns,
                                use_side_ref_pixels,
                                side_smoothing_length,
-                               side_gain)
+                               side_gain,
+                               use_conv_kernel,
+                               conv_kernel_model,
+                               sigreject,
+                               gausssmooth,
+                               halfwith)
     elif detector == 'NIS':
         return NIRISSDataset(input_model,
                              odd_even_columns,
                              use_side_ref_pixels,
                              side_smoothing_length,
-                             side_gain)
+                             side_gain,
+                             use_conv_kernel,
+                             conv_kernel_model,
+                             sigreject,
+                             gausssmooth,
+                             halfwith)
     elif detector == 'GUIDER1':
         return GUIDER1Dataset(input_model,
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
-                              side_gain)
+                              side_gain,
+                              use_conv_kernel,
+                              conv_kernel_model,
+                              sigreject,
+                              gausssmooth,
+                              halfwith)
     elif detector == 'GUIDER2':
         return GUIDER2Dataset(input_model,
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
-                              side_gain)
+                              side_gain,
+                              use_conv_kernel,
+                              conv_kernel_model,
+                              sigreject,
+                              gausssmooth,
+                              halfwith)
     else:
         log.error('Unrecognized detector')
         return NIRDataset(input_model,
                           odd_even_columns,
                           use_side_ref_pixels,
                           side_smoothing_length,
-                          side_gain)
+                          side_gain,
+                          use_conv_kernel,
+                          conv_kernel_model,
+                          sigreject,
+                          gausssmooth,
+                          halfwith)
 
 
 def correct_model(input_model, odd_even_columns,
                   use_side_ref_pixels,
                   side_smoothing_length, side_gain,
-                  odd_even_rows):
+                  odd_even_rows,
+                  use_conv_kernel,
+                  conv_kernel_model,
+                  sigreject,
+                  gausssmooth,
+                  halfwith):
     """Wrapper to do Reference Pixel Correction on a JWST Model.
     Performs the correction on the datamodel
 
@@ -2099,6 +2231,21 @@ def correct_model(input_model, odd_even_columns,
         flag that controls whether odd and even-numbered rows are handled
         separately (MIR only)
 
+    use_conv_kernel : bool
+        If True an optimized convolution kernel will be used instead of the running median
+
+    conv_kernel_model : `~jwst.datamodels.ConvKernelModel`
+        Data model containing the Fourier coefficients from the reference files
+
+    sigreject: int
+        Number of sigmas to reject as outliers
+
+    gausssmooth : int
+        Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
+
+    halfwith : int
+        Half-width of convolution kernel to build from reference file's coefficients
+
     """
     if input_model.meta.instrument.name == 'MIRI':
         if reffile_utils.is_subarray(input_model):
@@ -2110,7 +2257,12 @@ def correct_model(input_model, odd_even_columns,
                                    use_side_ref_pixels,
                                    side_smoothing_length,
                                    side_gain,
-                                   odd_even_rows)
+                                   odd_even_rows,
+                                   use_conv_kernel,
+                                   conv_kernel_model,
+                                   sigreject,
+                                   gausssmooth,
+                                   halfwith)
 
     if input_dataset is None:
         status = SUBARRAY_DOESNTFIT
@@ -2138,7 +2290,6 @@ def reference_pixel_correction(input_dataset):
         Corrected dataset
 
     """
-
     input_dataset.do_corrections()
 
     if input_dataset.input_model.meta.exposure.zero_frame:

@@ -25,6 +25,11 @@ class RefPixStep(Step):
         ovr_corr_mitigation_ftr = float(default=3.0) # Factor to avoid overcorrection of bad reference pixels for IRS2
         preserve_irs2_refpix = boolean(default=False) # Preserve reference pixels in output
         irs2_mean_subtraction = boolean(default=False) # Apply a mean offset subtraction before IRS2 correction
+        use_conv_kernel = boolean(default=True) # For NIR data only, use the convolution kernel instead of the running median
+        sigreject = int(default=4) # Number of sigmas to reject as outliers
+        gausssmooth = int(default=1) # Width of Gaussian smoothing kernel to use as a low-pass filter
+        halfwith = int(default=30) # Half-width of convolution kernel to build
+        user_supplied_reffile = string(default=None)  # ASDF user-supplied reference file
     """
 
     reference_file_types = ['refpix']
@@ -80,12 +85,38 @@ class RefPixStep(Step):
             else:
                 # Not an NRS IRS2 exposure. Do the normal refpix correction.
                 datamodel = input_model.copy()
+
+                # Get the reference file from CRDS or use user-supplied one
+                if input_model.meta.instrument.name == 'MIRI':
+                    conv_kernel_model = None
+                else:
+                    if self.user_supplied_reffile is not None:
+                        conv_kernel_ref_filename = self.get_reference_file(datamodel, 'refpix')
+                        if conv_kernel_ref_filename == 'N/A':
+                            self.log.warning('No reference file found for the optimized convolution kernel.')
+                            self.log.warning('REFPIX step will use a running median')
+                            conv_kernel_model = None
+                        else:
+                            self.log.info('Using CRDS reference file: {}'.format(conv_kernel_ref_filename))
+                            conv_kernel_model = datamodels.ConvKernelModel(conv_kernel_ref_filename)
+                    elif not self.use_conv_kernel:
+                        conv_kernel_model = None
+                    else:
+                        self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
+                        conv_kernel_model = datamodels.ConvKernelModel(self.user_supplied_reffile)
+
                 status = reference_pixels.correct_model(datamodel,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
                                                         self.side_smoothing_length,
                                                         self.side_gain,
-                                                        self.odd_even_rows)
+                                                        self.odd_even_rows,
+                                                        self.use_conv_kernel,
+                                                        conv_kernel_model,
+                                                        self.sigreject,
+                                                        self.gausssmooth,
+                                                        self.halfwith
+                                                        )
 
                 if status == reference_pixels.REFPIX_OK:
                     datamodel.meta.cal_step.refpix = 'COMPLETE'
