@@ -148,6 +148,7 @@ class ResampleJWSTCoAdd(ResampleJWSTModelIO, ResampleCoAdd):
     # resample_array_names = [
     #     {'attr': 'data', 'variance', 'exptime']
     dq_flag_name_map = pixel
+    n_arrays_per_output = 6  # data, weight, 3x variance, error
 
     def __init__(self, *args, blendheaders=True, **kwargs):
         super().__init__(*args, **kwargs)
@@ -155,7 +156,7 @@ class ResampleJWSTCoAdd(ResampleJWSTModelIO, ResampleCoAdd):
 
     # FIXME: this method will be moved completely to stcal once we have a method
     #        that can create output wcs from s_region.
-    def _compute_output_wcs(self, **wcs_pars):
+    def compute_output_wcs(self, **wcs_pars):
         """
         returns a distortion-free WCS object and its pixel scale.
         this code should be moved to stcal
@@ -236,6 +237,37 @@ class ResampleJWSTSingle(ResampleJWSTModelIO, ResampleSingle):
         output_models = super().run()
         ml = ModelLibrary(output_models)
         return ml
+
+    # FIXME: this method will be moved completely to stcal once we have a method
+    #        that can create output wcs from s_region.
+    def compute_output_wcs(self, **wcs_pars):
+        """
+        returns a distortion-free WCS object and its pixel scale.
+        this code should be moved to stcal
+
+        """
+        # Define output WCS based on all inputs, including a reference WCS:
+        output_shape = wcs_pars.get("output_shape", None)
+        output_wcs = resample_utils.make_output_wcs(
+            self._input_models,
+            ref_wcs=None,
+            pscale_ratio=wcs_pars.get("pixel_scale_ratio", 1.0),
+            pscale=wcs_pars.get("pixel_scale", None),
+            rotation=wcs_pars.get("rotation", 0.0),
+            shape=None if output_shape is None else output_shape[::-1],
+            crpix=wcs_pars.get("crpix", None),
+            crval=wcs_pars.get("crval", None),
+        )
+
+        # Estimate output pixel area in Sr. NOTE: in principle we could
+        # use the same algorithm as for when output_wcs is provided by the
+        # user.
+        tr = output_wcs.pipeline[0].transform
+        output_pix_area = (
+            np.deg2rad(tr['cdelt1'].factor.value) *
+            np.deg2rad(tr['cdelt2'].factor.value)
+        )
+        return output_wcs, output_pix_area
 
 
 def _update_fits_wcsinfo(model):
