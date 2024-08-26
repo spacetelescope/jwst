@@ -83,7 +83,7 @@ def create_median(resampled_models, maskpt, on_disk=True, allowed_memory=None):
         available_memory = machine_available_memory * allowed_memory
 
         # buffer_size sets size of chunk in MB that will be read into memory per model
-        buffer_size = available_memory / len(resampled_models) / _ONE_MB
+        buffer_size = available_memory / len(resampled_models.group_names) / _ONE_MB
         log.info(f"Chunk size {buffer_size} MB per model for {len(resampled_models)} models (totaling {allowed_memory * 100}% of available memory)")
 
         with resampled_models:

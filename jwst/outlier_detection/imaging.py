@@ -81,7 +81,7 @@ def detect_outliers(
             good_bits=good_bits,
             in_memory=in_memory,
             asn_id=asn_id,
-            allowed_memory=0.9, #modify for timing tests of create_median
+            allowed_memory=allowed_memory,
         )
         median_wcs = resamp.output_wcs
         drizzled_models = resamp.do_drizzle(input_models)
