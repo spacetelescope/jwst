@@ -509,6 +509,7 @@ class ResampleSpecData(ResampleData):
         all_wavelength = []
         all_ra_slit = []
         all_dec_slit = []
+        xstop = 0
 
         for im, model in enumerate(input_models):
             wcs = model.meta.wcs
@@ -700,10 +701,10 @@ class ResampleSpecData(ResampleData):
         else:
             pix_to_xtan.intercept = -0.5 * (x_size - 1) * pix_to_xtan.slope
 
-        # single model use size of x_tan_array
+        # single model: use size of x_tan_array
         # to be consistent with method before
         if len(input_models) == 1:
-            x_size = len(x_tan_array)
+            x_size = int(np.ceil(xstop))
 
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
@@ -723,7 +724,7 @@ class ResampleSpecData(ResampleData):
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array)))
-        output_array_size[spatial_axis] = int(np.ceil(x_size * self.pscale_ratio))
+        output_array_size[spatial_axis] = x_size
 
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]

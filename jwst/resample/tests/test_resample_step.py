@@ -492,6 +492,72 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
 
 @pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
 @pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
+def test_pixel_scale_ratio_spec_miri_pair(miri_rate_pair, ratio, units):
+    im1, im2 = miri_rate_pair
+    _set_photom_kwd(im1)
+    _set_photom_kwd(im2)
+    im1.meta.bunit_data = units
+    im2.meta.bunit_data = units
+    im1.meta.filename = 'file1.fits'
+    im2.meta.filename = 'file2.fits'
+    im1.data += 1.0
+    im2.data += 1.0
+
+    # Make an input pixel scale equivalent to the specified ratio
+    input_scale = compute_spectral_pixel_scale(im1.meta.wcs, disp_axis=2)
+    pscale = 3600.0 * input_scale / ratio
+
+    result1 = ResampleSpecStep.call([im1, im2])
+    result2 = ResampleSpecStep.call([im1, im2], pixel_scale_ratio=ratio)
+    result3 = ResampleSpecStep.call([im1, im2], pixel_scale=pscale)
+
+    # pixel_scale and pixel_scale_ratio should be equivalent
+    nn = np.isnan(result2.data) | np.isnan(result3.data)
+    assert np.allclose(result2.data[~nn], result3.data[~nn])
+
+    # Check result2 for expected results
+
+    # wavelength size does not change
+    assert result1.data.shape[0] == result2.data.shape[0]
+
+    # spatial dimension is scaled
+    assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
+
+    # data is non-trivial
+    assert np.nansum(result1.data) > 0.0
+    assert np.nansum(result2.data) > 0.0
+
+    # flux is conserved
+    if 'sr' not in units:
+        # flux density conservation: sum over pixels in each row
+        # needs to be about the same, other than the edges
+        # Check the maximum sums, to avoid edges.
+        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
+                           np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
+    else:
+        # surface brightness conservation: mean values are the same
+        assert np.allclose(np.nanmean(result1.data, axis=1),
+                           np.nanmean(result2.data, axis=1), rtol=0.05,
+                           equal_nan=True)
+
+    # output area is updated either way
+    area1 = result1.meta.photometry.pixelarea_steradians
+    area2 = result2.meta.photometry.pixelarea_steradians
+    area3 = result2.meta.photometry.pixelarea_steradians
+    assert np.isclose(area1 / area2, ratio)
+    assert np.isclose(area1 / area3, ratio)
+
+    assert result1.meta.resample.pixel_scale_ratio == 1.0
+    assert result2.meta.resample.pixel_scale_ratio == ratio
+    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
+
+    result1.close()
+    result2.close()
+    result3.close()
+
+
+@pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
+@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
 def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
     for slit in nirspec_cal.slits:
         slit.meta.bunit_data = units
