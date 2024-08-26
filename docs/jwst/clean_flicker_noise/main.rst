@@ -98,7 +98,7 @@ MIRI Imaging Metering Structure
 The MIRI imager has a metering structure covering a large part of the
 detector area. These regions must be masked in order to fit and
 remove the background data in the science areas of the detector.
-Regions marked with DQ value "NON_SCIENCE" by the
+Regions marked with DQ value "DO_NOT_USE" by the
 :ref:`flat_field <flatfield_step>` step are set to False in the
 scene mask.
 
@@ -143,7 +143,7 @@ images from each instrument and observing mode.
 +--------------------------+-----+-----+-----+-------+--------+--------+
 | MSA_FAILED_OPEN\ :sup:`1`| |c| | |c| |     |       |        |        |
 +--------------------------+-----+-----+-----+-------+--------+--------+
-| NON_SCIENCE\ :sup:`1`    |     |     |     | |c|   |        |        |
+| Non-science\ :sup:`1`    |     |     |     | |c|   |        |        |
 +--------------------------+-----+-----+-----+-------+--------+--------+
 | FS Region\ :sup:`1`      | |c| | |c| |     |       |        |        |
 +--------------------------+-----+-----+-----+-------+--------+--------+
@@ -179,7 +179,7 @@ information on all referenced parameters.
    #. If `mask_science_regions` is set and the input is MIRI imaging data,
       run :ref:`flat_field <flatfield_step>` on the draft rate data,
       and extract just the DQ plane from the output. Pixels flagged
-      as 'NON_SCIENCE' by the flat fielding process are masked.
+      as 'DO_NOT_USE' by the flat fielding process are masked.
 
       This will mask out regions of the detector under the metering
       structure.
@@ -222,9 +222,13 @@ information on all referenced parameters.
       #. If `fit_method` = 'fft', the ``nsclean`` library is called to fit
          and remove the noise in frequency space.
 
-      #. If fit_method = 'median', the noise is fit with a simple median
+      #. If `fit_method` = 'median', the noise is fit with a simple median
          along the appropriate detector axis and subtracted from the
          background-subtracted image.
+
+         If `fit_by_channel` = True, and the data is a NIR full-frame exposure,
+         the median value is computed and subtracted independently for each
+         detector channel.
 
    #. Restore the background level to the cleaned, background-subtracted
       diff image.

@@ -679,7 +679,7 @@ def fft_clean_subarray(image, mask, detector):
     return cleaned_image
 
 
-def median_clean(image, mask, axis_to_correct):
+def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     """
     Fit and remove background noise via median values along one image axis.
 
@@ -699,6 +699,10 @@ def median_clean(image, mask, axis_to_correct):
         noise appears along the vertical direction, so `axis_to_correct`
         should be set to 1 (median along the y-axis).
 
+    fit_by_channel : bool, optional
+        If set, flicker noise is fit independently for each detector channel.
+        Ignored for MIRI and for subarray data.
+
     Returns
     -------
     cleaned_image : array-like of float
@@ -706,17 +710,43 @@ def median_clean(image, mask, axis_to_correct):
     """
     # Masked median along slow axis
     masked_image = np.ma.array(image, mask=~mask)
-    stripes = np.ma.median(masked_image, axis=(axis_to_correct - 1), keepdims=True)
-    stripes = np.ma.filled(stripes, fill_value=0.0)
+    corrected_image = image.copy()
+    array_axis = axis_to_correct - 1
 
-    # Remove median stripes
-    corrected_image = image - stripes
+    # If desired, take the median over each channel separately
+    if fit_by_channel and image.shape[array_axis] == 2048:
+        n_output = 4
+        channel_size = 512
+    else:
+        n_output = 1
+        channel_size = image.shape[array_axis]
+
+    # Compute stripes from the median over the background data
+    # in the channel
+    cstart = 0
+    cstop = channel_size
+    for channel in range(n_output):
+        if array_axis == 1:
+            channel_image = masked_image[:, cstart:cstop]
+        else:
+            channel_image = masked_image[cstart:cstop, :]
+        stripes = np.ma.median(channel_image, axis=array_axis, keepdims=True)
+        stripes = np.ma.filled(stripes, fill_value=0.0)
+
+        # Remove median stripes
+        if array_axis == 1:
+            corrected_image[:, cstart:cstop] = image[:, cstart:cstop] - stripes
+        else:
+            corrected_image[cstart:cstop, :] = image[cstart:cstop, :] - stripes
+
+        cstart += channel_size
+        cstop += channel_size
 
     return corrected_image
 
 
 def do_correction(input_model, input_dir=None, fit_method='median',
-                  background_method='median',
+                  fit_by_channel=False, background_method='median',
                   background_box_size=None, background_from_rate=False,
                   mask_science_regions=False, n_sigma=2.0, fit_histogram=False,
                   single_mask=True, user_mask=None, save_mask=False,
@@ -735,6 +765,10 @@ def do_correction(input_model, input_dir=None, fit_method='median',
 
     fit_method : {'fft', 'median'}, optional
         The algorithm to use to fit background noise.
+
+    fit_by_channel : bool, optional
+        If set, flicker noise is fit independently for each detector channel.
+        Ignored for MIRI and for subarray data.
 
     background_method : {'median', 'model', None}, optional
         If 'median', the preliminary background to remove and restore
@@ -845,6 +879,12 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         background_method = None
     if background_method is None:
         background_from_rate = False
+
+    # Check for fit_by_channel argument, and use only if data is full frame
+    if fit_by_channel and (subarray != 'FULL' or exp_type.startswith('MIR')):
+        log.warning("Fit by channel can only be used for full-frame NIR data.")
+        log.warning("Setting fit_by_channel to False.")
+        fit_by_channel = False
 
     # Make a rate file if needed
     if user_mask is None or background_from_rate:
@@ -1035,7 +1075,8 @@ def do_correction(input_model, input_dir=None, fit_method='median',
                     # Clean a subarray image
                     cleaned_image = fft_clean_subarray(bkg_sub, mask, detector)
             else:
-                cleaned_image = median_clean(bkg_sub, mask, axis_to_correct)
+                cleaned_image = median_clean(bkg_sub, mask, axis_to_correct,
+                                             fit_by_channel=fit_by_channel)
 
             # Check for failure
             if cleaned_image is None:

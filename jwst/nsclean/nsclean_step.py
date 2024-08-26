@@ -18,6 +18,7 @@ class NSCleanStep(Step):
 
     spec = """
         fit_method = option('fft', 'median', default='fft')  # Noise fitting algorithm
+        fit_by_channel = boolean(default=False)  # Fit noise separately by amplifier
         background_method = option('median', 'model', None, default=None) # Background fitting algorithm
         background_box_size = int_list(min=2, max=2, default=None)  # Background box size for modeled background
         mask_spectral_regions = boolean(default=True)  # Mask WCS-defined spectral regions
@@ -43,6 +44,10 @@ class NSCleanStep(Step):
         fit_method : str, optional
             The background fit algorithm to use.  Options are 'fft' and 'median';
             'fft' performs the original NSClean implementation.
+
+        fit_by_channel : bool, optional
+            If set, flicker noise is fit independently for each detector channel.
+            Ignored for subarray data.
 
         background_method : {'median', 'model', None}
             If 'median', the preliminary background to remove and restore
@@ -99,7 +104,7 @@ class NSCleanStep(Step):
             # Do the NSClean correction
             background_from_rate = False
             result = clean_flicker_noise.do_correction(
-                input_model, self.input_dir, self.fit_method,
+                input_model, self.input_dir, self.fit_method, self.fit_by_channel,
                 self.background_method, self.background_box_size,
                 background_from_rate,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,

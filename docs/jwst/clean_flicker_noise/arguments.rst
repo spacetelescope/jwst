@@ -9,6 +9,10 @@ the behavior of the processing.
 ``--fit_method`` (str, default='median')
   The noise fitting algorithm to use.  Options are 'fft' and 'median'.
 
+``--fit_by_channel`` (boolean, default=False)
+  If set, flicker noise is fit independently for each detector channel.
+  Ignored for MIRI and for subarray data.
+
 ``--background_method`` (str, default='median')
   If 'median', the preliminary background to remove and restore
   after fitting the noise is a simple median of the background data.
