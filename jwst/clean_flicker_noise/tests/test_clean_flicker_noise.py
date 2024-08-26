@@ -150,12 +150,12 @@ def test_postprocess_rate_nirspec(log_watcher):
 
 def test_postprocess_rate_miri(log_watcher):
     rate_model = make_small_rate_model()
-    assert np.sum(rate_model.dq & datamodels.dqflags.pixel['NON_SCIENCE']) == 0
+    assert np.sum(rate_model.dq & datamodels.dqflags.pixel['DO_NOT_USE']) == 0
 
     log_watcher.message = 'Retrieving flat DQ'
     result = cfn.post_process_rate(rate_model, flat_dq=True)
     log_watcher.assert_seen()
-    assert np.sum(result.dq & datamodels.dqflags.pixel['NON_SCIENCE']) > 0
+    assert np.sum(result.dq & datamodels.dqflags.pixel['DO_NOT_USE']) > 0
     assert np.all(result.data == rate_model.data)
 
     rate_model.close()
@@ -318,7 +318,7 @@ def test_create_mask_nirspec(monkeypatch, exptype):
 def test_create_mask_miri():
     # small MIRI imaging data
     rate_model = make_small_rate_model()
-    rate_model.dq[5, 5] = datamodels.dqflags.pixel['NON_SCIENCE']
+    rate_model.dq[5, 5] = datamodels.dqflags.pixel['DO_NOT_USE']
 
     mask = cfn.create_mask(rate_model)
     assert mask.shape == rate_model.data.shape
@@ -332,6 +332,7 @@ def test_create_mask_miri():
     assert np.sum(mask) == mask.size - 1
 
     rate_model.close()
+
 
 def test_create_mask_from_rateints():
     # small rateints data

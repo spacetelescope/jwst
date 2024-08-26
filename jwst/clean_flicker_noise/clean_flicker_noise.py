@@ -427,7 +427,7 @@ def create_mask(input_model, mask_science_regions=False,
         `assign_wcs` and `msaflagopen` steps to have been run on the
         input_model.
         For MIRI imaging, mask regions of the detector not used for science.
-        This requires that NON_SCIENCE flags are set in the DQ array
+        This requires that DO_NOT_USE flags are set in the DQ array
         for the input_model.
 
     n_sigma : float, optional
@@ -471,7 +471,7 @@ def create_mask(input_model, mask_science_regions=False,
     # If MIRI imaging, mask the non-science regions:
     # they contain irrelevant emission
     if mask_science_regions and exptype in ['mir_image']:
-        non_science = (input_model.dq & dqflags.pixel['NON_SCIENCE']) > 1
+        non_science = (input_model.dq & dqflags.pixel['DO_NOT_USE']) > 0
         mask[non_science] = False
 
     # Mask any NaN pixels or exactly zero value pixels
