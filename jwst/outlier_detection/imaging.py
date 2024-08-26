@@ -81,7 +81,7 @@ def detect_outliers(
             good_bits=good_bits,
             in_memory=in_memory,
             asn_id=asn_id,
-            allowed_memory=allowed_memory,
+            allowed_memory=0.9, #modify for timing tests of create_median
         )
         median_wcs = resamp.output_wcs
         drizzled_models = resamp.do_drizzle(input_models)
@@ -100,7 +100,16 @@ def detect_outliers(
                 input_models.shelve(model, modify=True)
 
     # Perform median combination on set of drizzled mosaics
-    median_data = create_median(drizzled_models, maskpt, on_disk=not in_memory)
+    # from datetime import datetime 
+    # t0 = datetime.now()
+    # print("Starting create_median at time: ", t0.strftime("%H:%M:%S"))
+    median_data = create_median(drizzled_models,
+                                maskpt,
+                                on_disk=not in_memory,
+                                allowed_memory=allowed_memory)
+    # t1 = datetime.now()
+    # print("Finished create_median at time: ", t1.strftime("%H:%M:%S"))
+    # print(f"Execution time for create_median: {(t1 - t0).total_seconds()} s")
 
     if save_intermediate_results:
         # make a median model

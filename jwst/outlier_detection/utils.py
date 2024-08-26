@@ -2,6 +2,7 @@
 The ever-present utils sub-module. A home for all...
 """
 import warnings
+import psutil
 
 import numpy as np
 
@@ -31,7 +32,7 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
-def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
+def create_median(resampled_models, maskpt, on_disk=True, allowed_memory=None):
     """Create a median image from the singly resampled images.
 
     Parameters
@@ -45,8 +46,9 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
     on_disk : bool
         If True, the input models are on disk and will be read in chunks.
 
-    buffer_size : float
-        The size of chunk in MB, per input model, that will be read into memory.
+    allowed_memory : float
+        The fraction of available memory to be used by create_median.
+        If None, use 50% of the machine's available memory.
         This parameter has no effect if on_disk is False.
 
     Returns
@@ -74,6 +76,16 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
         return np.nanmedian(np.array(model_list), axis=0)
     else:
         # set up buffered access to all input models
+        log.info("Computing median in chunks to save memory")
+        if allowed_memory is None:
+            allowed_memory = 0.5
+        machine_available_memory = psutil.virtual_memory().available + psutil.swap_memory().total
+        available_memory = machine_available_memory * allowed_memory
+
+        # buffer_size sets size of chunk in MB that will be read into memory per model
+        buffer_size = available_memory / len(resampled_models) / _ONE_MB
+        log.info(f"Chunk size {buffer_size} MB per model for {len(resampled_models)} models (totaling {allowed_memory * 100}% of available memory)")
+
         with resampled_models:
             example_model = resampled_models.borrow(0)
             shp = example_model.data.shape
@@ -81,6 +93,11 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
             nsections, section_nrows = _compute_buffer_indices(example_model, buffer_size)
             resampled_models.shelve(example_model, modify=False)
             del example_model
+
+        if nsections == 1:
+            log.info("Chunk size is large enough to read entire model at once")
+        else:
+            log.info(f"Data will be read in {nsections} sections of {section_nrows} rows each")
 
         # get spatial sections of library and compute timewise median, one by one
         resampled_sections = _get_sections(resampled_models, nsections, section_nrows, shp[0])
