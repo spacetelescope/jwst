@@ -42,7 +42,7 @@ where the file name fields are:
 :ppppp: program id
 :ooo: observation number
 :vvv: visit number
-:m: ID attempt counter (1-8)
+:m: ID attempt counter (1-9)
 :yyyydddhhmmss: time stamp at the end of the data in the file
 
 Uncalibrated products use the "uncal" file name suffix as shown above, while calibrated
