@@ -176,9 +176,16 @@ class ResampleStep(Step):
 
         with asdf.open(asdf_wcs_file) as af:
             wcs = deepcopy(af.tree["wcs"])
-            wcs.pixel_area = af.tree.get("pixel_area", None)
-            wcs.array_shape = af.tree.get("pixel_shape", None)
-            wcs.array_shape = af.tree.get("array_shape", None)
+            pixel_area = af.tree.get("pixel_area", None)
+            pixel_shape = af.tree.get("pixel_shape", None)
+            array_shape = af.tree.get("array_shape", None)
+
+        if not hasattr(wcs, "pixel_area") or wcs.pixel_area is None:
+            wcs.pixel_area = pixel_area
+        if not hasattr(wcs, "pixel_shape") or wcs.pixel_shape is None:
+            wcs.pixel_shape = pixel_shape
+        if not hasattr(wcs, "array_shape") or wcs.array_shape is None:
+            wcs.array_shape = array_shape
 
         if output_shape is not None:
             wcs.array_shape = output_shape[::-1]
@@ -192,10 +199,11 @@ class ResampleStep(Step):
                 int(axs[1] + 0.5)
                 for axs in wcs.bounding_box.bounding_box(order="C")
             )
+            wcs.pixel_shape = wcs.array_shape[::-1]
         else:
             raise ValueError(
                 "Step argument 'output_shape' is required when custom WCS "
-                "does not have neither of 'array_shape', 'pixel_shape', or "
+                "does not have 'array_shape', 'pixel_shape', or "
                 "'bounding_box' attributes set."
             )
 
