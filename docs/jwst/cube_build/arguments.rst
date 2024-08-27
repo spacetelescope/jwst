@@ -91,6 +91,13 @@ The following arguments control the size and sampling characteristics of the out
 ``nspax_y``
   The odd integer number of spaxels to use in the y dimension of the tangent plane.
 
+``offset_list = [string]``
+  The string contains the name of the file holding ra and dec offsets to apply to each input file. This file
+  must be an asdf file and the it has a specific format. It is assumed the user has determined the ra and dec
+  offsets to apply to the data. For details on how to construct the format of the offset file see creating
+  :ref:`offsets` files. 
+
+
 ``coord_system [string]``
   The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up 
   and east is left. There are two other coordinate systems an IFU cube can be built on:
@@ -122,3 +129,28 @@ A parameter only used for investigating which detector pixels contributed to a c
 
   The string is the x,y,z value of the cube spaxel that is being investigated. The  numbering starts counting at 0.
   To print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
+
+.. _offsets:
+The offset file is an ASDF formated file : <https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each input file in the spec3 assocation used to build the IFU cubes an ra and dec offset is provided. The offsets are in arc seconds. Below is an example of how to make an offset file. It is assumed the user has determined the
+offsets to apply for each file. The offsets are stored in a python dictionary, `offsets`. The items of this dictionary are `filenames`, `raoffset` and `decoffset`. The  cube_building code is expects this dictionary to hold the information
+for storing the file names and the associated ra and dec offsets. 
+
+It is assumed there exists a list of files, ra and dec offsets that are feed to this routine. The ra and dec offsets
+provided in arcseconds. The cube_building code will apply the ra offsets after multiplying by the  
+`num` is the number of files.
+
+import asdf
+offsets = {}
+offsets['filename'] = []
+offsets['raoffset'] = []
+offsets['decoffset'] = []
+for i in range(num):
+   
+    offsets['filename'].append(file[i])
+    offsets['raoffset'].append(ra_center1[i])
+    offsets['decoffset'].append(dec_center1[i])
+    
+af = asdf.AsdfFile({'offsets':offsets})
+af.write_to('offsets.asdf')
+
+The offset asdf filename can be any name, but it must have the `asdf` extension.

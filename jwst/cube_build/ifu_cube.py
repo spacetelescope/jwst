@@ -1861,6 +1861,21 @@ class IFUCubeData():
         x, y, ra, dec, lambda, slice_no
 
         """
+
+        # check if we have an ra and dec offset file
+        raoffset = 0.0
+        decoffset = 0.0 
+        # pull out ra dec offset if it exists
+        if offsets is not None:
+            filename = input_model.meta.filename
+            index = offsets['filename'].index(filename)
+            raoffset = offsets['raoffset'][index]
+            decoffset = offsets['decoffset'][index]
+            log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
+                     raoffset, decoffset, filename)
+            raoffset = raoffset/3600.0 # convert to degress
+            decoffset = decoffset/3600.0
+            
         # initialize the ra,dec, and wavelength arrays
         # we will loop over slice_nos and fill in values
         # the flag_det will be set when a slice_no pixel is filled in
@@ -2009,19 +2024,19 @@ class IFUCubeData():
         valid_data = np.where(flag_det == 1)
         y, x = valid_data
 
-        ra = ra_det[valid_data]
-        dec = dec_det[valid_data]
+        ra = ra_det[valid_data] + raoffset
+        dec = dec_det[valid_data] + decoffset
         wave = lam_det[valid_data]
         slice_no = slice_det[valid_data]
         dwave = dwave_det[valid_data]
-        ra1 = ra1_det[valid_data]
-        ra2 = ra2_det[valid_data]
-        ra3 = ra3_det[valid_data]
-        ra4 = ra4_det[valid_data]
-        dec1 = dec1_det[valid_data]
-        dec2 = dec2_det[valid_data]
-        dec3 = dec3_det[valid_data]
-        dec4 = dec4_det[valid_data]
+        ra1 = ra1_det[valid_data] + raoffset
+        ra2 = ra2_det[valid_data] + raoffset
+        ra3 = ra3_det[valid_data] + raoffset
+        ra4 = ra4_det[valid_data] + raoffset
+        dec1 = dec1_det[valid_data] + decoffset
+        dec2 = dec2_det[valid_data] + decoffset
+        dec3 = dec3_det[valid_data] + decoffset
+        dec4 = dec4_det[valid_data] + decoffset
 
         corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
         sky_result = (x, y, ra, dec, wave, slice_no, dwave, corner_coord)

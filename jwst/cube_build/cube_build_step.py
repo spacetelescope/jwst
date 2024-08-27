@@ -582,6 +582,7 @@ class CubeBuildStep (Step):
 
         for model in self.input_models:
             file_check = model.meta.filename
+            print(file_check)
             if file_check in offsets['filename']:
                 ra = offsets['raoffset']
                 dec = offsets['decoffset']
