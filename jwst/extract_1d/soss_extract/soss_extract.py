@@ -16,20 +16,18 @@ from .atoca import ExtractionEngine, MaskOverlapError
 from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
+from .pastasoss import get_soss_traces
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def get_ref_file_args(ref_files, transform):
+def get_ref_file_args(ref_files):
     """Prepare the reference files for the extraction engine.
     Parameters
     ----------
     ref_files : dict
         A dictionary of the reference file DataModels.
-    transform :  array or list
-        A 3-element array describing the rotation and translation to apply
-        to the reference files in order to match the observation.
 
     Returns
     -------
@@ -39,10 +37,10 @@ def get_ref_file_args(ref_files, transform):
     """
 
     # The wavelength maps for order 1 and 2.
-    wavemap_ref = ref_files['wavemap']
-
-    ovs = wavemap_ref.map[0].oversampling
-    pad = wavemap_ref.map[0].padding
+    pastasoss_ref = ref_files['pastasoss']
+    pwcpos_cmd = pastasoss_ref.meta.pwcpos_cmd
+    ovs = pastasoss_ref.traces[0].oversampling
+    pad = pastasoss_ref.traces[0].padding
 
     wavemap_o1 = transform_wavemap(transform, wavemap_ref.map[0].data, ovs, pad)
     wavemap_o2 = transform_wavemap(transform, wavemap_ref.map[1].data, ovs, pad)

@@ -181,7 +181,7 @@ class Extract1dStep(Step):
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr', 'wavemap', 'spectrace', 'specprofile', 'speckernel']
+    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel']
 
     def process(self, input):
         """Execute the step.

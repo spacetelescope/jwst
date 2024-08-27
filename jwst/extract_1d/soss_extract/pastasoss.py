@@ -5,23 +5,19 @@ import logging
 import numpy as np
 from pkg_resources import resource_filename
 from scipy.interpolate import interp1d
-from ...datamodels import SossTraceModel
+from ...datamodels import PastasossModel
 
 log = logging.getLogger(__name__)
 
 
 def get_wavelengths(
-    refmodel: SossTraceModel, x: np.ndarray, pwcpos: float, order: int
+    refmodel: PastasossModel, x: np.ndarray, pwcpos: float, order: int
 ) -> np.ndarray:
     """Get the associated wavelength values for a given spectral order"""
     if order == 1:
-        wavelengths = wavecal_model_order1_poly(x, pwcpos, wavecal_meta)
+        wavelengths = wavecal_model_order1_poly(refmodel, x, pwcpos)
     elif order == 2:
-        wavelengths = wavecal_model_order2_poly(x, pwcpos, wavecal_meta)
-    else:
-        error_message = f"Order {order} is not supported at this time."
-        log.error(error_message)
-        raise ValueError(error_message)
+        wavelengths = wavecal_model_order2_poly(refmodel, x, pwcpos)
 
     return wavelengths
 
@@ -110,7 +106,7 @@ def wavecal_model_order1_poly(refmodel, x, pwcpos):
     x_scaled = x_scaler(x)
 
     # offset
-    offset = np.ones_like(x) * (pwcpos - PWCPOS_CMD)
+    offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
     offset_scaled = pwcpos_offset_scaler(offset)
 
     # polynomial features
@@ -120,21 +116,21 @@ def wavecal_model_order1_poly(refmodel, x, pwcpos):
     return wavelengths
 
 
-def wavecal_model_order2_poly(x, pwcpos, wavecal_meta: NIRISS_GR700XD_WAVECAL_META):
+def wavecal_model_order2_poly(refmodel: PastasossModel, x, pwcpos):
     """compute order 2 wavelengths"""
     x_scaler = partial(
         min_max_scaler,
         **{
-            "x_min": wavecal_meta.scaler_data_min_[0],
-            "x_max": wavecal_meta.scaler_data_max_[0],
+            "x_min": refmodel.wavecal_models.scale_extents[0][0],
+            "x_max": refmodel.wavecal_models.scale_extents[1][0],
         },
     )
 
     pwcpos_offset_scaler = partial(
         min_max_scaler,
         **{
-            "x_min": wavecal_meta.scaler_data_min_[1],
-            "x_max": wavecal_meta.scaler_data_max_[1],
+            "x_min": refmodel.wavecal_models.scale_extents[0][1],
+            "x_max": refmodel.wavecal_models.scale_extents[1][1],
         },
     )
 
@@ -161,9 +157,6 @@ def wavecal_model_order2_poly(x, pwcpos, wavecal_meta: NIRISS_GR700XD_WAVECAL_ME
     # get pixel columns and then scaled
     x_scaled = x_scaler(x)
 
-    # offset
-    # offset = np.ones_like(x) * (pwcpos - PWCPOS_CMD)
-    # this will need to get changed later...
     offset = np.ones_like(x) * pwcpos
     offset_scaled = pwcpos_offset_scaler(offset)
 
@@ -235,9 +228,36 @@ def rotate(
     return x_new, y_new
 
 
+def find_spectral_order_index(refmodel: PastasossModel, order: int
+) -> int:
+    """Return index of trace and wavecal dict corresponding to order
+
+    Parameters
+    ----------
+    refmodel : datamodel
+        The reference file holding traces and wavelength calibration
+        models, under `refmodel.traces` and `refmodel.wavecal_models`
+    order: int
+        The spectral order to find trace and wavecal model indices for.
+
+    Returns
+    -------
+    int
+        The index to provide the reference file lists of traces and wavecal
+        models to retrieve the arrays for the desired spectral order
+    """
+
+    for i, entry in refmodel.traces:
+        if entry.spectral_order == order:
+            return i
+
+    log.warning(f"Order not found in reference file trace list.")
+    return -1
+
+
 def get_soss_traces(
-    refmodel: SossTraceModel, pwcpos: float,
-        order: str = "12", interp: bool = True
+    refmodel: PastasossModel, pwcpos: float,
+        order: str = "12", subarray: str = "SUBSTRIP256", interp: bool = True
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     This is the primary method for generate the gr700xd trace position given a
@@ -254,7 +274,7 @@ def get_soss_traces(
         The pupil wheel positions angle provided in the FITS header under
         keyword PWCPOS.
     order : str, optional
-        The spectral order to compute the new traces for. Default is '123'.
+        The spectral order to compute the new traces for. Default is '12'.
         Support for order 3 will be added at a later date.
     interp : bool, optional
         Whether to interpolate the rotated positions onto the original x-pixel
@@ -278,41 +298,35 @@ def get_soss_traces(
 
     Examples
     --------
-    >>> x_new, y_new = get_trace_from_reference_transform(2.3)
+    >>> x_new, y_new = get_soss_traces(2.3)
     """
 
     norders = len(order)
 
-    if norders > 3:
-        raise ValueError("order must be: 1,2, 3.")
+    if norders > 2:
+        raise ValueError("Entries in order string must be: 1 or 2 only.")
     if norders > 1:
         # recursively compute the new traces for each order
-        return [get_soss_traces(pwcpos, m) for m in order]
+        return [get_soss_traces(refmodel, pwcpos, m, interp) for m in order]
+    elif order in ["1", "2"]:
+        # reference trace data
+        spectral_order_index = find_spectral_order_index(refmodel, int(order))
+        x, y = refmodel.traces[spectral_order_index].trace.T
+        origin = refmodel.traces[spectral_order_index].pivot_x, refmodel.traces[spectral_order_index].pivot_y
 
-    # This might be an alternative way of writing this
-    # if 'order'+order in REFERENCE_TRACE_FILES.keys():
-    #     ref_file = REFERENCE_TRACE_FILES["order"+order]
-    # This section can definite be refactored in a later version
-    elif order == "1":
-        ref_trace_file = REFERENCE_TRACE_FILES["order1"]
-        wave_cal_model_meta = get_wavecal_meta_for_spectral_order("order1")
+        # Offset for SUBSTRIP96
+        if subarray == 'SUBSTRIP96':
+            y -= 10
+        # rotated reference trace
+        x_new, y_new = rotate(x, y, pwcpos - refmodel.meta.pwcpos_cmd, origin, interp=interp)
 
-    elif order == "2":
-        ref_trace_file = REFERENCE_TRACE_FILES["order2"]
-        wave_cal_model_meta = get_wavecal_meta_for_spectral_order("order2")
+        # wavelength associated to trace at given pwcpos value
+        wavelengths = get_wavelengths(refmodel, x_new, pwcpos)
 
-    elif order == "3":
-        print("The software currently does not support order 3 at this time.")
-        return None
+        # return x_new, y_new, wavelengths
+        return order, x_new, y_new, wavelengths
 
-    # reference trace data
-    x, y, origin = get_reference_trace(ref_trace_file)
-
-    # rotated reference trace
-    x_new, y_new = rotate(x, y, pwcpos - PWCPOS_CMD, origin, interp=interp)
-
-    # wavelength associated to trace at given pwcpos value
-    wavelengths = get_wavelengths(x_new, pwcpos, wave_cal_model_meta)
-
-    # return x_new, y_new, wavelengths
-    return TraceModel(order, x_new, y_new, wavelengths)
+    else:
+        error_message = f"Order {order} is not supported at this time."
+        log.error(error_message)
+        raise ValueError(error_message)
