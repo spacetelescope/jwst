@@ -376,7 +376,7 @@ as follows:
    extended sources (appropriate for background signal), and saving the extended
    source correction arrays for each slit in an internal copy of the data model
 #. If a user-supplied master background spectrum is **not** given, the
-   :ref:`resample_spec <resample_step>` and :ref:`extract_1d <extract_1d_step>`
+   :ref:`resample_spec <resample_spec_step>` and :ref:`extract_1d <extract_1d_step>`
    steps are applied to the calibrated background slits, resulting
    in extracted 1D background spectra
 #. The 1D background spectra are combined, using the

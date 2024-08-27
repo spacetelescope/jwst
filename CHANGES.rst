@@ -1,7 +1,141 @@
-1.15.1 (unreleased)
+1.15.2 (unreleased)
 ===================
 
--
+align_refs
+----------
+
+- Compute alignment shifts from the first integration of the science exposure only. [#8643]
+
+ami_average
+-----------
+
+- Fix error in step spec that prevents step creation. [#8677]
+
+assign_wcs
+----------
+
+- Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
+  into stcal. [#8624]
+
+associations
+------------
+
+- Restored slit name to level 3 product names for NIRSpec BOTS and background
+  fixed slit targets. [#8699]
+
+cube_build
+----------
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+emicorr
+-------
+
+- Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
+  to compute a correction. [#8675]
+
+general
+-------
+
+- Remove the unused ``stsci.image`` dependency. [#8663]
+
+- Update required stcal version to 1.8.0. [#8706]
+
+- Increase minimum required stpipe. [#8713]
+
+master_background
+-----------------
+
+- Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
+  as a background slit, instead of ``"bkg"`` only. [#8600]
+
+outlier_detection
+-----------------
+
+- Fixed failures due to a missing ``wcs.array_shape`` attribute when the
+  ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
+set_telescope_pointing
+----------------------
+
+- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+
+- Refactored separate modes into submodules instead of inheriting from a base class.
+  Moved non-JWST-specific code to stcal. [#8613]
+
+resample_spec
+-------------
+
+- Modified the output NIRSpec spectral WCS to sample the input data linearly in sky
+  coordinates, rather than slit coordinates, in order to conserve spectral
+  flux in default reductions. [#8596]
+
+- Updated handling for the ``pixel_scale_ratio`` parameter to apply only to the
+  spatial dimension, to match the sense of the parameter application to the
+  documented intent, and to conserve spectral flux when applied. [#8596]
+
+- Implemented handling for the ``pixel_scale`` parameter, which was previously
+  ignored for spectral resampling. [#8596]
+
+- Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
+  targets in the ``calwebb_spec3`` pipeline. [#8596]
+
+- Separate ``resample_spec`` step parameters from ``resample`` step parameters
+  so that the spectral resampling step only exposes parameters that are appropriate
+  for spectral data. [#8622]
+
+resample_step
+-------------
+
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
+  changed to use values in the top-level ASDF structure if the values in the WCS
+  are ``None``. [#8698]
+
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
+
+stpipe
+------
+
+- Removed setting of the `self.skip` attribute in the `record_step_status()` function;
+  added a `query_step_status()` function to use as an alternative to checking
+  `self.skip`. [#8600]
+
+tso_photometry
+--------------
+
+- Replaced photutils.aperture do_photometry with photutils.ApertureStats to remove NaNs
+  when performing TSO photometry for non SUB64 WLP8 pupil data. For SUB64 WLP8 changed
+  summing data in the aperture to use np.nansum to ignore NaNs. [#8672]
+
+tweakreg
+--------
+
+- Updated requirement for ``tweakwcs`` to version ``0.8.8`` which fixes a crash
+  in the ``tweakreg`` step due to a ``MalformedPolygonError`` exception being
+  raised by the ``spherical_geometry`` package for some data
+  sets. [#8657, spacetelescope/tweakwcs#205]
+
+- Moved all realignment methods to stcal. [#8624]
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+
+1.15.1 (2024-07-08)
+===================
+
+ramp_fitting
+------------
+
+- Fix bugs in the C algorithm Poisson variance calculation when provided with an average dark current. [stcal#269]
+
+- Use the C extension with multiprocessing. [stcal#268]
+
 
 1.15.0 (2024-06-26)
 ===================
@@ -135,7 +269,7 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
-- Add propagation of background uncertainty when background is subtracted from 
+- Add propagation of background uncertainty when background is subtracted from
   source spectra during non-IFU spectral extraction. [#8532]
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
@@ -143,10 +277,17 @@ extract_1d
 - Fix error in ``_coalesce_bounds`` that returned incorrect spectral or background
   extraction region when one set of pixel limits is entirely contained within
   another [#8586]
-  
+
 - Removed a check for the primary slit for NIRSpec fixed slit mode:
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
+
+- Added functionality to the phase-based aperture correction object to support
+  reuse of aperture correction objects across multiple integrations. [#8609]
+
+- Changed extract.py to attempt to tabulate and reuse an aperture correction
+  object in integrations after the first one.  This can save a very large
+  amount of time in BOTS reductions. [#8609]
 
 extract_2d
 ----------
@@ -156,7 +297,7 @@ extract_2d
 - Added support for slit names that have string values instead of integer
   values, necessary for processing combined NIRSpec MOS and fixed slit
   data products. [#8467]
-  
+
 - Assign slit ``source_xpos`` and ``source_ypos`` attributes here instead of
   in ``wavecorr`` for NIRSpec FS data. [#8569]
 
@@ -187,6 +328,8 @@ general
 - Increase minimum required scipy. [#8441]
 
 - Increase minimum required stdatamodels and stpipe. [#8592]
+
+- build with Numpy 2.0 release candidate to address ABI changes [#8527]
 
 lib
 ---
@@ -265,8 +408,8 @@ outlier_detection
 pathloss
 --------
 
-- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate 
-  wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
+- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate
+  wavelengths for point and uniform sources if the ``wavecorr`` wavelength
   zero-point corrections for point sources have been applied. [#8376]
 
 photom
@@ -307,7 +450,7 @@ pipeline
 
 - Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
   for NIRISS SOSS data [#8575].
-  
+
 - Added hook to the ``calwebb_tso3`` pipeline to skip all subsequent steps
   if the ``extract_1d`` step is skipped. [#8583]
 
@@ -377,7 +520,7 @@ residual_fringe
 srctype
 -------
 
-- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources 
+- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources
   in NIRSpec FS data to enable assigning those attributes in ``extract_2d``. [#8569]
 
 saturation
@@ -423,7 +566,7 @@ wavecorr
 
 - Assign slit ``source_xpos`` and ``source_ypos`` attributes in ``extract_2d``
   instead of in ``wavecorr`` for NIRSpec FS data. [#8569]
-  
+
 wfss_contam
 -----------
 

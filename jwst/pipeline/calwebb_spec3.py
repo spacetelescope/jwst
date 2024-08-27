@@ -6,6 +6,7 @@ import os.path as op
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import SourceModelContainer
+from jwst.stpipe import query_step_status
 
 from ..associations.lib.rules_level3_base import format_product
 from ..exp_to_source import multislit_to_container
@@ -148,7 +149,7 @@ class Spec3Pipeline(Pipeline):
 
             # If the step is skipped, do the container splitting that
             # would've been done in master_background
-            if self.master_background.skip:
+            if query_step_status(source_models, "master_background") == 'SKIPPED':
                 source_models, bkg_models = split_container(input_models)
                 # we don't need the background members
                 bkg_models.close()
@@ -226,6 +227,10 @@ class Spec3Pipeline(Pipeline):
                 # the _cal files are not saved they will not be updated
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
+                if exptype in IFU_EXPTYPES:
+                    self.outlier_detection.mode = 'ifu'
+                else:
+                    self.outlier_detection.mode = 'spec'
                 result = self.outlier_detection(result)
 
                 # interpolate pixels that have a NaN value or are flagged

@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -34,13 +34,12 @@ dependencies = [
     "scikit-image>=0.19",
     "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
-    "stcal>=1.7.1,<1.8.0",
+    "stcal>=1.8.0,<1.9.0",
     "stdatamodels>=2.0.0,<2.1.0",
-    "stpipe>=0.6.0,<0.7.0",
-    "stsci.image>=2.3.5",
+    "stpipe>=0.7.0,<0.8.0",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
-    "tweakwcs>=0.8.6",
+    "tweakwcs>=0.8.8",
     "asdf-astropy>=0.3.0",
     "wiimatch>=0.2.1",
     "packaging>20.0",
@@ -72,39 +71,18 @@ asn_from_list = "jwst.associations.asn_from_list:main"
 asn_gather = "jwst.scripts.asn_gather:main"
 asn_generate = "jwst.associations.main:main"
 asn_make_pool = "jwst.scripts.asn_make_pool:main"
-assign_wcs = "jwst.scripts.assign_wcs:main"
 collect_pipeline_cfgs = "jwst.scripts.collect_pipeline_cfgs:main"
-coron = "jwst.scripts.coron:main"
 create_data = "jwst.scripts.create_data:main"
 csvconvert = "jwst.csv_tools.csvconvert:CSVConvertScript"
-cube_build = "jwst.scripts.cube_build:main"
-dark_current = "jwst.scripts.dark_current:main"
-data_generate = "jwst.scripts.data_generate:main"
-dqinit = "jwst.scripts.dqinit:main"
 exp_to_source = "jwst.exp_to_source.main:Main"
-flatfieldcorr = "jwst.scripts.flatfieldcorr:main"
-fringecorr = "jwst.scripts.fringecorr:main"
-ipc = "jwst.scripts.ipc:main"
-jump = "jwst.scripts.jump:main"
-linearitycorr = "jwst.scripts.linearitycorr:main"
-make_header = "jwst.scripts.make_header:main"
 okify_regtests = "jwst.scripts.okify_regtests:main"
-outlier_detection = "jwst.scripts.outlier_detection:main"
-persistencecorr = "jwst.scripts.persistencecorr:main"
-photomcorr = "jwst.scripts.photomcorr:main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
-rampfitcorr = "jwst.scripts.rampfitcorr:main"
-refpix = "jwst.scripts.refpix:main"
-resample = "jwst.scripts.resample:main"
-saturationcorr = "jwst.scripts.saturationcorr:main"
 schema_editor = "jwst.scripts.schema_editor:main"
 schemadoc = "jwst.scripts.schemadoc:main"
 set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
 "set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
 set_velocity_aberration = "jwst.scripts.set_velocity_aberration:main"
 "set_velocity_aberration.py" = "jwst.scripts.set_velocity_aberration:deprecated_name"
-straylight = "jwst.scripts.straylight:main"
-superbias = "jwst.scripts.superbias:main"
 v1_calculate = "jwst.scripts.v1_calculate:main"
 verify_install_requires = "jwst.scripts.verify_install_requires:main"
 world_coords = "jwst.scripts.world_coords:main"
@@ -144,7 +122,7 @@ requires = [
     "setuptools>=61.2",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "oldest-supported-numpy",
+    "numpy>=2.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -229,7 +207,8 @@ results_root = "jwst-pipeline-results"
 text_file_format = "rst"
 doctest_plus = "enabled"
 doctest_rst = "enabled"
-addopts = ["-p no:legacypath",
+addopts = [
+    "-p no:legacypath",
     "--show-capture=no",
     "--report-crds-context",
 ]
@@ -277,30 +256,33 @@ write_to = "jwst/_version.py"
 exclude = [
     "jwst/extern",
     "docs",
-    "jwst/associations",
-    "jwst/fits_generator",
     ".tox",
     ".eggs",
     "build",
 ]
-lint.ignore = [
-    "E741",
-]
 line-length = 130
 
+lint.ignore = [
+    "E741", # ambiguous variable name (O/0, l/I, etc.)
+    "E722", # Do not use bare `except`
+]
+
 [tool.ruff.lint.per-file-ignores]
-"jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
-    "E402",
+"jwst/**/__init__.py" = [
+    "E402", # module-level import not at top of file
+    "F401", # unused import
+    "F403", # import with *
+    "F405", # ambiguous import from *
 ]
-"jwst/ramp_fitting/tests/compare_crs.py" = [
-    "E402",
+"jwst/fits_generator/*" = [
+    "F821", # undefined name
 ]
-"jwst/ramp_fitting/tests/compare_cr_files.py" = [
-    "E402",
+"jwst/fits_generator/tests/*" = [
+    "F841", # unused variable
 ]
-"jwst/ramp_fitting/tests/create_cube.py" = [
-    "E402",
+"jwst/associations/tests*" = [
+    "F841", # unused variable
 ]
-"jwst/ramp_fitting/tests/mc_3d.py" = [
-    "E402",
+"jwst/ramp_fitting/tests/*" = [
+    "E402", # module-level import not at top of file
 ]

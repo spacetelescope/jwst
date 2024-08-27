@@ -1,5 +1,4 @@
 from collections.abc import MutableMapping
-from copy import deepcopy
 from datetime import datetime, timezone
 import json
 import jsonschema
@@ -199,7 +198,8 @@ class Association(MutableMapping):
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            logger.debug('Validation failed:\n%s', err)
+            logger.debug('Validation failed:')
+            logger.debug(str(err))
             raise AssociationNotValidError('Validation failed') from err
 
         # Validate no path data for expnames

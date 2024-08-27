@@ -5,6 +5,7 @@ import traceback
 import numpy as np
 
 from stdatamodels.jwst import datamodels
+from jwst.stpipe import query_step_status
 
 from ..assign_wcs.util import NoDataOnDetectorError
 from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
@@ -229,16 +230,18 @@ class Spec2Pipeline(Pipeline):
                 assign_wcs_exception = exception
             if assign_wcs_exception is not None or \
                calibrated.meta.cal_step.assign_wcs != 'COMPLETE':
-                message = (
-                    'Assign_wcs processing was skipped.'
-                    '\nAborting remaining processing for this exposure.'
-                    '\nNo output product will be created.'
+                messages = (
+                    'Assign_wcs processing was skipped.',
+                    'Aborting remaining processing for this exposure.',
+                    'No output product will be created.'
                 )
                 if self.assign_wcs.skip:
-                    self.log.warning(message)
+                    for message in messages:
+                        self.log.warning(message)
                     return
                 else:
-                    self.log.error(message)
+                    for message in messages:
+                        self.log.error(message)
                     if assign_wcs_exception is not None:
                         raise assign_wcs_exception
                     else:
@@ -332,7 +335,7 @@ class Spec2Pipeline(Pipeline):
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
             resampled = self.cube_build(resampled)
-            if not self.cube_build.skip:
+            if query_step_status(resampled, "cube_build") == 'COMPLETE':
                 self.save_model(resampled[0], suffix='s3d')
         elif exp_type in ['MIR_LRS-SLITLESS']:
             resampled = calibrated.copy()
@@ -346,7 +349,7 @@ class Spec2Pipeline(Pipeline):
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace(resampled)
         # Extract a 1D spectrum from the 2D/3D data
-        if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
+        if exp_type in ['MIR_MRS', 'NRS_IFU'] and query_step_status(resampled, "cube_build") == 'SKIPPED':
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
 

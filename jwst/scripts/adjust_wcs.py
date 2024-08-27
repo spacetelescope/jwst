@@ -235,8 +235,8 @@ def main():
 
     if wcs_pars == [0.0, 0.0, 0.0, 1.0]:
         logger.info(
-            "All WCS adjustment parameters ('ra_delta', 'dec_delta',"
-            "roll_delta, and scale_factor) have default values"
+            "All WCS adjustment parameters ('ra_delta', 'dec_delta', "
+            "'roll_delta', and 'scale_factor') have default values "
             "(identical transformation)."
         )
         logger.info("Nothing to do. Quitting.")
@@ -265,10 +265,9 @@ def main():
                 npoints=64
             )
         except (ValueError, RuntimeError) as e:
-            logger.warning(
-                "Failed to update 'meta.wcsinfo' with FITS SIP "
-                f'approximation. Reported error is:\n"{e.args[0]}"'
-            )
+            logger.warning("Failed to update 'meta.wcsinfo' with "
+                           "FITS SIP approximation. Reported error is:")
+            logger.warning(f'"{e.args[0]}"')
 
         if options.update:
             data_model.save(fname, overwrite=True)

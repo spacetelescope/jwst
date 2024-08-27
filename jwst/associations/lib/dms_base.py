@@ -2,7 +2,6 @@
 from jwst.associations.lib.counter import Counter
 
 from jwst.associations.exceptions import (
-    AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
@@ -766,7 +765,7 @@ class DMSBaseMixin(ACIDMixin):
             else:
                 values.sort(key=str.lower)
                 value = format_list(values)
-                if value not in _EMPTY:
+                if value not in _EMPTY and value not in slit_names:
                     slit_names.append(value)
 
         # Build the string. Sort the elements in order to
@@ -774,9 +773,7 @@ class DMSBaseMixin(ACIDMixin):
         slit_names.sort(key=str.lower)
         slit_name = '-'.join(slit_names)
 
-        if slit_name == '':
-            slit_name = None
-
+        # Slit name may be empty string
         return slit_name
 
     def _get_subarray(self):

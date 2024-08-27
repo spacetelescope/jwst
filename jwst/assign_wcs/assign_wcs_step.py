@@ -5,8 +5,8 @@ from ..stpipe import Step
 from ..lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs
-from .util import MSAFileError, update_fits_wcsinfo
-from .util import wfss_imaging_wcs, wcs_bbox_from_shape
+from .util import (MSAFileError, wfss_imaging_wcs, 
+                   wcs_bbox_from_shape, update_fits_wcsinfo)
 from .nircam import imaging as nircam_imaging
 from .niriss import imaging as niriss_imaging
 
@@ -118,7 +118,8 @@ class AssignWcsStep(Step):
 
             except (ValueError, RuntimeError) as e:
                 log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
-                            f'approximation. Reported error is:\n"{e.args[0]}"')
+                            "approximation. Reported error is:")
+                log.warning(f'"{e.args[0]}"')
         else:  # WFSS modes
             try:
                 # A bounding_box is needed for the imaging WCS
@@ -137,6 +138,7 @@ class AssignWcsStep(Step):
                                  )
             except (ValueError, RuntimeError) as e:
                 log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
-                            f'approximation. Reported error is:\n"{e.args[0]}"')
+                            "approximation. Reported error is:")
+                log.warning(f'"{e.args[0]}"')
 
         return result

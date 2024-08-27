@@ -36,4 +36,4 @@ a few variations to accomodate the nature of these 3D data.
 #. The input data model DQ arrays are updated with the mask of detected outliers.
 
 
-.. automodapi:: jwst.outlier_detection.outlier_detection_tso
+.. automodapi:: jwst.outlier_detection.tso

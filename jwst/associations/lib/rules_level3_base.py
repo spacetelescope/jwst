@@ -29,9 +29,7 @@ from jwst.associations.lib.constraint import (
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
-    ACQ_EXP_TYPES,
     Constraint_TargetAcq,
-    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
@@ -160,6 +158,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         opt_elem = association._get_opt_element()
 
+        slit_name = association._get_slit_name()
+        if slit_name:
+            slit_name = '-' + slit_name
+
         exposure = association._get_exposure()
         if exposure:
             exposure = '-' + exposure
@@ -172,7 +174,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             'jw{program}-{acid}'
             '_{target}'
             '_{instrument}'
-            '_{opt_elem}{subarray}'
+            '_{opt_elem}{slit_name}{subarray}'
         )
         product_name = product_name.format(
             program=association.data['program'],
@@ -180,6 +182,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             target=target,
             instrument=instrument,
             opt_elem=opt_elem,
+            slit_name=slit_name,
             subarray=subarray,
             exposure=exposure
         )
@@ -635,6 +638,10 @@ def dms_product_name_sources(asn):
 
     opt_elem = asn._get_opt_element()
 
+    slit_name = asn._get_slit_name()
+    if slit_name:
+        slit_name = '-' + slit_name
+
     subarray = asn._get_subarray()
     if subarray:
         subarray = '-' + subarray
@@ -643,7 +650,7 @@ def dms_product_name_sources(asn):
         'jw{program}-{acid}'
         '_{source_id}'
         '_{instrument}'
-        '_{opt_elem}{subarray}'
+        '_{opt_elem}{slit_name}{subarray}'
     )
     product_name = format_product(
         product_name_format,
@@ -651,6 +658,7 @@ def dms_product_name_sources(asn):
         acid=asn.acid.id,
         instrument=instrument,
         opt_elem=opt_elem,
+        slit_name=slit_name,
         subarray=subarray,
     )
 
@@ -658,8 +666,10 @@ def dms_product_name_sources(asn):
 
 
 def dms_product_name_nrsfs_sources(asn):
-    """Produce source-based product names for
-       NIRSpec fixed-slit observations.
+    """Produce source-based product names for NIRSpec fixed-slit observations.
+
+    For this mode, the product names have a placeholder for the
+    slit name, to be filled in later by the pipeline.
 
     Parameters
     ---------
@@ -675,10 +685,6 @@ def dms_product_name_nrsfs_sources(asn):
     instrument = asn._get_instrument()
 
     opt_elem = asn._get_opt_element()
-
-    slit_name = asn._get_slit_name()
-    if slit_name:
-        slit_name = '-' + slit_name
 
     subarray = asn._get_subarray()
     if subarray:
