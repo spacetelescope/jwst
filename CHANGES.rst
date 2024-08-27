@@ -17,6 +17,12 @@ assign_wcs
 - Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
   into stcal. [#8624]
 
+associations
+------------
+
+- Restored slit name to level 3 product names for NIRSpec BOTS and background
+  fixed slit targets. [#8699]
+
 cube_build
 ----------
 
@@ -78,6 +84,13 @@ resample_spec
 - Separate ``resample_spec`` step parameters from ``resample`` step parameters
   so that the spectral resampling step only exposes parameters that are appropriate
   for spectral data. [#8622]
+
+resample_step
+-------------
+
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
+  changed to use values in the top-level ASDF structure if the values in the WCS
+  are ``None``. [#8698]
 
 scripts
 -------
