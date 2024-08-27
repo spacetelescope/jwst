@@ -131,14 +131,17 @@ A parameter only used for investigating which detector pixels contributed to a c
   To print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
 
 .. _offsets:
-The offset file is an ASDF formated file : <https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each input file in the spec3 assocation used to build the IFU cubes an ra and dec offset is provided. The offsets are in arc seconds. Below is an example of how to make an offset file. It is assumed the user has determined the
+The offset file is an ASDF formated file : <https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each
+input file in the spec3 assocation used to build the IFU cubes, an ra and dec offset, in arc seconds, is provided. 
+Below is an example of how to make an ASDF offset file. It is assumed the user has determined the
 offsets to apply for each file. The offsets are stored in a python dictionary, `offsets`. The items of this dictionary are `filenames`, `raoffset` and `decoffset`. The  cube_building code is expects this dictionary to hold the information
 for storing the file names and the associated ra and dec offsets. 
 
 It is assumed there exists a list of files, ra and dec offsets that are feed to this routine. The ra and dec offsets
-provided in arcseconds. The cube_building code will apply the ra offsets after multiplying by the  
+provided in arcseconds. The cube_building code will apply the ra offsets after multiplying by the  cos(crval2), where crval2 is the
+declination center of the IFU cube. 
 `num` is the number of files.
-
+y
 import asdf
 offsets = {}
 offsets['filename'] = []
