@@ -23,6 +23,18 @@ associations
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
 
+calwebb_detector1
+-----------------
+
+- Added the optional ``clean_flicker_noise`` step between ``jump`` and
+  ``ramp_fit``. [#8669]
+
+clean_flicker_noise
+-------------------
+
+- Implemented this new optional step to clean transient flicker noise (e.g. 1/f noise)
+  from group images in ramp data. [#8669]
+
 cube_build
 ----------
 
@@ -50,19 +62,26 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+nsclean
+-------
+
+- Merged implementation with the new ``clean_flicker_noise`` step. This step
+  can still be called from the ``calwebb_spec2`` pipeline on NIRSpec rate
+  data, but it is now deprecated. [#8669]
+
 outlier_detection
 -----------------
 
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
 
+- Refactored separate modes into submodules instead of inheriting from a base class.
+  Moved non-JWST-specific code to stcal. [#8613]
+
 set_telescope_pointing
 ----------------------
 
-- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
-
-- Refactored separate modes into submodules instead of inheriting from a base class.
-  Moved non-JWST-specific code to stcal. [#8613]
+- Replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
 
 resample_spec
 -------------
