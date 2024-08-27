@@ -36,3 +36,4 @@ requirements-min.txt
 .tox/
 .tmp/
 jwst/_version.py
+jwst/_crds_context.py
