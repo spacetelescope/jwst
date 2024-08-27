@@ -89,6 +89,8 @@ def is_nrs_autoflat(datamodel):
 
 def is_moving_target(datamodel):
     """ Determine if a moving target exposure."""
-    if (hasattr(datamodel.meta.target, 'type') and datamodel.meta.target.type is not None and datamodel.meta.target.type.lower() == 'moving'):
+    if (hasattr(datamodel.meta.target, 'type') \
+            and datamodel.meta.target.type is not None \
+            and datamodel.meta.target.type.lower() == 'moving'):
         return True
     return False

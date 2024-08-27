@@ -953,6 +953,17 @@ def compute_image_pixel_area(wcs):
 
 
 def copy_asn_info_from_library(library, output_model):
+    """
+    Transfer association information from the input library to the output model.
+
+    Parameters
+    ----------
+    library : ModelLibrary
+        The input library of data models.
+
+    output_model : DataModel
+        The output data model to which the association information will be copied.
+    """
     if not hasattr(library, "asn"):
         # No ASN table, occurs when input comes from ModelContainer in spectroscopic modes
         # in this case do nothing; the asn info will be passed along later

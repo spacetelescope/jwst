@@ -38,7 +38,7 @@ cube_build
 datamodels
 ----------
 
-- Added `ModelLibrary` class to allow passing ``"on-disk"`` models between steps in the
+- Added `ModelLibrary` class to allow passing on-disk models between steps in the
   image3 pipeline. [#8683]
 
 emicorr
@@ -68,16 +68,16 @@ outlier_detection
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
 
-set_telescope_pointing
-----------------------
-
-- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
-
 - Refactored separate modes into submodules instead of inheriting from a base class.
   Moved non-JWST-specific code to stcal. [#8613]
 
 - For imaging modes, step now uses `ModelLibrary` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
+
+set_telescope_pointing
+----------------------
+
+- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
 
 pipeline
 --------

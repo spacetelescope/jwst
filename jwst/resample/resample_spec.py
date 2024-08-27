@@ -16,7 +16,6 @@ from gwcs.geometry import SphericalToCartesian
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import compute_scale, wrap_ra
-from jwst.datamodels import ModelContainer
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleData
 
@@ -191,7 +190,6 @@ class ResampleSpecData(ResampleData):
             self.blank_output.meta.photometry.pixelarea_arcsecsq = (
                 output_pix_area * np.rad2deg(3600)**2)
 
-        self.output_models = ModelContainer()
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None):
         """
