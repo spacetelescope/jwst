@@ -131,6 +131,8 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat, use_readpatt):
     if use_readpatt:
         read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
         log.info(f"Using read_pattern with nframes {nframes}")
+    else:
+        read_pattern=None
 
     # create a mask of the appropriate size
     irs2_mask = x_irs2.make_mask(input_model)
