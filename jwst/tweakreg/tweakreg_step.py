@@ -364,9 +364,9 @@ class TweakRegStep(Step):
                                 crpix=None
                             )
                         except (ValueError, RuntimeError) as e:
-                            msg = f"Failed to update 'meta.wcsinfo' with FITS SIP \
-                                approximation. Reported error is: \n {e.args[0]}"
-                            self.log.warning(msg)
+                            self.log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
+                                            "approximation. Reported error is:")
+                            self.log.warning(f'"{e.args[0]}"')
                 record_step_status(image_model, "tweakreg", success=True)
                 images.shelve(image_model)
         return images

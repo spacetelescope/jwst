@@ -126,9 +126,7 @@ class ResampleSpecData(ResampleData):
                     log.warning("Unable to compute output pixel area "
                                 "from 'output_wcs'.")
                     output_pix_area = None
-            else:  # pragma: no cover
-                # This clause is not reachable under usual circumstances:
-                # gwcs WCS discards the pixel_area attribute when saved as ASDF
+            else:
                 log.debug(f'Setting output pixel area from wcs.pixel_area: '
                           f'{output_wcs.pixel_area}')
                 output_pix_area = output_wcs.pixel_area
