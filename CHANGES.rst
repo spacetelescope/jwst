@@ -92,6 +92,12 @@ resample_step
   changed to use values in the top-level ASDF structure if the values in the WCS
   are ``None``. [#8698]
 
+saturation
+----------
+
+- Add option for using the readout pattern information to improve saturation flagging
+  in grouped data. [#8731]
+  
 scripts
 -------
 
