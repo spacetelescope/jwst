@@ -484,6 +484,45 @@ def test_median_clean():
     assert np.allclose(cleaned_image, image - 0.1)
 
 
+def test_median_clean_by_channel():
+    shape = (2048, 2048)
+    mask = np.full(shape, True)
+
+    # zero image should still come out zero
+    image = np.full(shape, 0.0)
+    cleaned_image = cfn.median_clean(image, mask, 1, fit_by_channel=True)
+    assert np.allclose(cleaned_image, 0.0)
+
+    # image with regular vertical pattern, centered on 0
+    high = np.full((2048, 16), 0.1)
+    low = np.full((2048, 16), -0.1)
+    image = np.hstack([high, low] * 64)
+
+    # add offset by vertical channel
+    offset = np.zeros_like(image)
+    offset[:512] += 0.2
+    offset[512:1024] += 0.3
+    offset[1024:1536] += 0.4
+    offset[1536:] += 0.5
+    image += offset
+
+    # clean along vertical axis by channel -
+    # image should be all zero
+    cleaned_image = cfn.median_clean(image, mask, 1, fit_by_channel=True)
+    assert np.allclose(cleaned_image, 0.0)
+
+    # clean along vertical axis for the whole image -
+    # vertical pattern is removed, offset by channel stays,
+    # but median value is subtracted
+    cleaned_image = cfn.median_clean(image, mask, 1, fit_by_channel=False)
+    assert np.allclose(cleaned_image, offset - 0.35)
+
+    # clean along horizontal axis -
+    # cleaning removes offset value, leaves vertical pattern
+    cleaned_image = cfn.median_clean(image, mask, 2, fit_by_channel=True)
+    assert np.allclose(cleaned_image, image - offset)
+
+
 @pytest.mark.parametrize('mask_science', [True, False])
 def test_do_correction_miri_imaging_ramp(mask_science):
     ramp_model = make_small_ramp_model()
@@ -556,6 +595,20 @@ def test_do_correction_unsupported(log_watcher):
     log_watcher.assert_seen()
 
     ramp_model.close()
+
+
+def test_do_correction_no_fit_by_channel(log_watcher):
+    ramp_model = make_small_ramp_model()
+
+    # fit_by_channel is only used for NIR data -
+    # log a warning, but step still completes
+    log_watcher.message = "can only be used for full-frame NIR"
+    cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_by_channel=True)
+    assert status == 'COMPLETE'
+    log_watcher.assert_seen()
+
+    ramp_model.close()
+    cleaned.close()
 
 
 def test_do_correction_fft_not_allowed(log_watcher):
