@@ -29,6 +29,11 @@ cube_build
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
+documentation
+-------------
+
+- Add changelog to documentation. [#8716]
+
 emicorr
 -------
 
@@ -1151,7 +1156,7 @@ datamodels
 ----------
 
 - Added support for user-supplied ``group_id`` either via
- ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
+  ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
 
 refpix
 ------
@@ -1356,7 +1361,7 @@ datamodels
 documentation
 -------------
 
-- Fixed a reference to the ``ramp_fitting` module in the user documentation. [#7898]
+- Fixed a reference to the ``ramp_fitting`` module in the user documentation. [#7898]
 
 engdb_tools
 -----------
@@ -1758,6 +1763,7 @@ regtest
 -------
 
 - Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
+
 srctype
 -------
 
@@ -1817,7 +1823,7 @@ other
 -----
 
 - Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
-  catching ``ResourceWarning``s. [#7526]
+  catching ``ResourceWarning``. [#7526]
 
 - Remove use of ``codecov`` package. [#7543]
 
@@ -2492,7 +2498,7 @@ residual_fringe
 ---------------
 
 - Removed reading and saving data as a ModelContainer. Data now read in and saved
-as an IFUImageModel.  [#7051]
+  as an IFUImageModel.  [#7051]
 
 
 set_telescope_pointing
@@ -3554,7 +3560,7 @@ cube_build
 - Fix incorrect spatial footprint for single band MRS IFU cubes [#6478]
 
 dark_current
-----------
+------------
 
 - Refactored the code in preparation for moving the code to STCAL. [#6336]
 
@@ -3596,7 +3602,7 @@ datamodels
 - Added SOSS-specific extraction parameters to core schema; add new
   datamodel to store SOSS model traces and aperture weights [#6422]
 
-- Added the ``MirLrsPathlossModel`` for use in the ``pathloss` step. [#6435]
+- Added the ``MirLrsPathlossModel`` for use in the ``pathloss`` step. [#6435]
 
 - Added new column 'reference_order' to 'planned_star_table' in
   guider_raw and guider_cal schemas [#6368]
@@ -3690,7 +3696,7 @@ lib
 - Move setting of the default method to calc_transforms. [#6482]
 
 linearity
---------
+---------
 
 - Use the common code in STCAL for linearity correction. [#6386]
 
@@ -4673,7 +4679,7 @@ cube_build
   appropriate channel/grating is skipped [#5347]
 
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
-  skip the file in creating an ifucube [*5347]
+  skip the file in creating an ifucube [#5347]
 
 - Refactor DataTypes handling of ModelContainer. [#5409]
 
@@ -6292,7 +6298,7 @@ pipeline
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
 
-- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+- ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
   with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
 
 - Changed the default value of good_pixel from 4 to 6 for all outlier
@@ -7452,7 +7458,7 @@ csv_tools
 ---------
 
 cube_build
----------
+----------
 - Removed spaxel.py and replace class with set of arrays [#2472]
 
 - reworked in mapping of the detector pixel to the sky spaxel so that consistent
@@ -7742,7 +7748,7 @@ csv_tools
 ---------
 
 cube_build
----------
+----------
 
 
 cube_skymatch
