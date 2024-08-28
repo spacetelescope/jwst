@@ -89,10 +89,16 @@ class RefPixStep(Step):
                 # Get the reference file from CRDS or use user-supplied one
                 if input_model.meta.instrument.name == 'MIRI':
                     conv_kernel_model = None
+                elif 'FULL' not in input_model.meta.subarray.name:
+                    conv_kernel_model = None
+                    self.log.info('Optimized Convolution Kernel not applied for subarray data')
                 else:
                     if not self.use_conv_kernel:
                         conv_kernel_model = None
                     else:
+                        import asdf
+                        conv_kernel_model = asdf.open(self.user_supplied_reffile)
+                        '''
                         if self.user_supplied_reffile is None:
                             conv_kernel_ref_filename = self.get_reference_file(datamodel, 'refpix')
                             if conv_kernel_ref_filename == 'N/A':
@@ -105,7 +111,7 @@ class RefPixStep(Step):
                         else:
                             self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
                             conv_kernel_model = datamodels.ConvKernelModel(self.user_supplied_reffile)
-
+                        '''
                 status = reference_pixels.correct_model(datamodel,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
