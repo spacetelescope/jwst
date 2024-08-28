@@ -28,7 +28,7 @@ cube_build
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
-- Fixed a bug when cube_build was called from the mrs_imatch step. [#8728]
+- Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
 
 documentation
 -------------
