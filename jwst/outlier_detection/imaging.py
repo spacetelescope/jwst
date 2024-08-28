@@ -60,8 +60,8 @@ def detect_outliers(
     if resample_data:
         # Start by creating resampled/mosaic images for
         # each group of exposures
-        output_path = make_output_path(basepath=input_models[0].meta.filename,
-                        suffix='')
+        output_path = make_output_path(
+            basepath=input_models[0].meta.filename, suffix='')
         output_path = os.path.dirname(output_path)
         resamp = resample.ResampleData(
             input_models,
