@@ -61,13 +61,17 @@ outlier_detection
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
 
+- Refactored separate modes into submodules instead of inheriting from a base class.
+  Moved non-JWST-specific code to stcal. [#8613]
+
+- Fixed file names and output directory for intermediate resampled spectral
+  images. Intermediate files now have suffix ``outlier_s2d`` and are saved to
+  the output directory alongside final products. [#8735]
+
 set_telescope_pointing
 ----------------------
 
 - replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
-
-- Refactored separate modes into submodules instead of inheriting from a base class.
-  Moved non-JWST-specific code to stcal. [#8613]
 
 resample_spec
 -------------
