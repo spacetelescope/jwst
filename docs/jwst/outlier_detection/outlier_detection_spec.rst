@@ -29,14 +29,14 @@ Specifically, this routine performs the following operations (modified from the
 #. Resample all input images into a :py:class:`~jwst.datamodels.ModelContainer` using
    :py:class:`~jwst.resample.resample_spec.ResampleSpecData`
 
-   - Resampled images are written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`
+   - Resampled images are written out to disk with suffix "outlier_s2d"
+     if the ``save_intermediate_results`` parameter is set to `True`.
    - **If resampling is turned off**, the original unrectified inputs are used to create
-     the median image for cosmic-ray detection
+     the median image for cosmic-ray detection.
 #. Create a median image from (possibly) resampled :py:class:`~jwst.datamodels.ModelContainer`
 
-   - The median image is written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`
+   - The median image is written out to disk with suffix "median"
+     if the ``save_intermediate_results`` parameter is set to `True`
 #. Blot median image to match each original input image
 
    - **If resampling is turned off**, the median image is used for comparison
