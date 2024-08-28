@@ -37,8 +37,8 @@ class MRSIMatchStep(Step):
     def process(self, images):
 
         # Provide warning to user this code is deprecated
-        warnings.warn("mrs_imatch deprecated", RuntimeWarning)
-
+        self.log.warning('mrs_imatch is deprecated')
+        
         chm = {}
         all_models2d = ModelContainer(images)
         for m in all_models2d:
