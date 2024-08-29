@@ -131,6 +131,10 @@ A parameter only used for investigating which detector pixels contributed to a c
   To print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
 
 .. _offsets:
+
+Creating an offset file
+-----------------------
+
 The offset file is an ASDF formated file :`<https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each
 input file in the spec3 assocation used to build the IFU cubes, there is a corresponding  right ascension  and declination offset,
 given arc seconds.
@@ -144,17 +148,19 @@ provided in arcseconds. The cube building code will apply the ra offsets after d
 declination center of the IFU cube. 
 Below `num` is the number of files.
 
-import asdf
-offsets = {}
-offsets['filename'] = []
-offsets['raoffset'] = []
-offsets['decoffset'] = []
-for i in range(num):
-    offsets['filename'].append(file[i])
-    offsets['raoffset'].append(ra_center1[i])
-    offsets['decoffset'].append(dec_center1[i])
-    
-af = asdf.AsdfFile({'offsets':offsets})
-af.write_to('offsets.asdf')
+
+.. code-block:: python
+		
+   import asdf
+   offsets = {}
+   offsets['filename'] = []
+   offsets['raoffset'] = []
+   offsets['decoffset'] = []
+   for i in range(num):
+       offsets['filename'].append(file[i])
+       offsets['raoffset'].append(ra_center1[i])
+       offsets['decoffset'].append(dec_center1[i])
+   af = asdf.AsdfFile({'offsets':offsets})
+   af.write_to('offsets.asdf')
 
 The offset asdf filename can be any name, but it must have the `asdf` extension.
