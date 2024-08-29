@@ -78,7 +78,7 @@ resample_spec
 
 - Updated handling for the ``pixel_scale_ratio`` parameter to apply only to the
   spatial dimension, to match the sense of the parameter application to the
-  documented intent, and to conserve spectral flux when applied. [#8596]
+  documented intent, and to conserve spectral flux when applied. [#8596, #8727]
 
 - Implemented handling for the ``pixel_scale`` parameter, which was previously
   ignored for spectral resampling. [#8596]
