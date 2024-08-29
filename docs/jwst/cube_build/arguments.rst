@@ -144,7 +144,7 @@ for storing the file names and the associated ra and dec offsets. The file names
 
 It is assumed there exists a list of files, ra and dec offsets that are feed to this method. The ra and dec offsets need to be
 in arcseconds. The cube building code will apply the ra offsets after dividing by  cos(crval2), where crval2 is the
-declination center of the IFU cube. 
+declination center of the IFU cube. The offset asdf filename can be any name, but it must have the `asdf` extension.
 Below `num` is the number of files.
 
 
@@ -162,4 +162,4 @@ Below `num` is the number of files.
    af = asdf.AsdfFile({'offsets':offsets})
    af.write_to('offsets.asdf')
 
-The offset asdf filename can be any name, but it must have the `asdf` extension.
+
