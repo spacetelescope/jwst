@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def make_kernels(conv_kernel_model, detector, gausssmooth, halfwith):
+def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
     """
     Make convolution kernels reference file's Fourier coefficients.
 
@@ -23,46 +23,44 @@ def make_kernels(conv_kernel_model, detector, gausssmooth, halfwith):
     detector : str
         Name of the detector of the input data
 
-    gausssmooth : int
+    gaussmooth : int
         Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
 
-    halfwith : int
+    halfwidth : int
         Half-width of convolution kernel to build from reference file's coefficients
 
     Returns:
     --------
 
-    kernel_left: list
-        Contains the kernels appropriate for convolution with the left reference pixels
-
-    kernel_right: list
-        Contains the kernels appropriate for convolution with the right reference pixels
+    kernels: list
+        Contains the kernels appropriate for convolution with the left  and right reference pixels
 
     """
 
     gamma, zeta = get_conv_kernel_coeffs(conv_kernel_model, detector)
+    gamma=None
     if gamma is None or zeta is None:
-        log.info('Optimized convolution kernel coefficients NOT found for detector ', detector)
+        log.info(f'Optimized convolution kernel coefficients NOT found for detector {detector}')
         return None
 
     kernel_left = []
     kernel_right = []
     for chan in range(gamma.shape[0]):
         n = len(gamma[chan]) - 1
-        kernel_left = np.fft.fftshift(np.fft.irfft(gamma[chan]))[n - dn:n + dn + 1]
-        kernel_right = np.fft.fftshift(np.fft.irfft(zeta[chan]))[n - dn:n + dn + 1]
+        kernel_left = np.fft.fftshift(np.fft.irfft(gamma[chan]))[n - halfwidth:n + halfwidth + 1]
+        kernel_right = np.fft.fftshift(np.fft.irfft(zeta[chan]))[n - halfwidth:n + halfwidth + 1]
 
-        x = np.arange(-dn, dn + 1)
-        window = np.exp(-x ** 2 / (2 * gausssmooth ** 2))
+        x = np.arange(-halfwidth, halfwidth + 1)
+        window = np.exp(-x ** 2 / (2 * gaussmooth ** 2))
         window /= np.sum(window)
 
         kernel_right = np.convolve(kernel_right, window, mode='same')
         kernel_left = np.convolve(kernel_left, window, mode='same')
 
-        kernel_right += [kernel_right]
-        kernel_left += [kernel_left]
+        kernel_right += kernel_right
+        kernel_left += kernel_left
 
-    return kernel_left, kernel_right
+    return [kernel_left, kernel_right]
 
 
 def get_conv_kernel_coeffs(conv_kernel_model, detector):
@@ -87,18 +85,22 @@ def get_conv_kernel_coeffs(conv_kernel_model, detector):
     zeta: numpy array
         Fourier coefficients
     """
-
-    conv_kernel_model = conv_kernel_model.to_flat_dict()
+    mdl_dict = conv_kernel_model.to_flat_dict()
     gamma, zeta = None, None
-    for det in conv_kernel_model:
-        if det == detector:
-            gamma = conv_kernel_model[det]['gamma']
-            zeta = conv_kernel_model[det]['zeta']
+    for item in mdl_dict:
+        det = item.split(sep='.')[0]
+        if detector.lower() == det:
+            arr_name = item.split(sep='.')[1]
+            if arr_name == 'gamma':
+                gamma = np.array(mdl_dict[item])
+            elif arr_name == 'zeta':
+                zeta = np.array(mdl_dict[item])
+        if gamma is not None and zeta is not None:
             break
     return gamma, zeta
 
 
-def apply_conv_kernel(datamodel, conv_kernel_model, sigreject=4, gausssmooth=1, halfwith=30):
+def apply_conv_kernel(datamodel, kernels, sigreject=4):
     """
     Apply the convolution kernel.
 
@@ -108,17 +110,12 @@ def apply_conv_kernel(datamodel, conv_kernel_model, sigreject=4, gausssmooth=1, 
     datamodel : `~jwst.datamodel`
         Data model containing the data to be corrected
 
-    conv_kernel_model : `~jwst.datamodels.ConvKernelModel`
-        Data model containing the Fourier coefficients from the reference files
+    kernels : list
+        List containing the left and right kernels
 
     sigreject: int
         Number of sigmas to reject as outliers
 
-    gausssmooth : int
-        Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
-
-    halfwith : int
-        Half-width of convolution kernel to build from reference file's coefficients
 
     Returns:
     --------
@@ -130,10 +127,8 @@ def apply_conv_kernel(datamodel, conv_kernel_model, sigreject=4, gausssmooth=1, 
     data = datamodel.data.copy()[0, :, :, :]
     data = data.astype(float)
     npix = data.shape[-1]
-    detector = datamodel.meta.instrument.detector
 
-    kernels_l, kernels_r = make_kernels(conv_kernel_model, detector, gausssmooth, halfwith)
-
+    kernels_l, kernels_r = kernels
     nchan = len(kernels_l)
 
     # The subtraction below is needed to flag outliers in the reference pixels.

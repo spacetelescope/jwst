@@ -27,8 +27,8 @@ class RefPixStep(Step):
         irs2_mean_subtraction = boolean(default=False) # Apply a mean offset subtraction before IRS2 correction
         use_conv_kernel = boolean(default=True) # For NIR data only, use the convolution kernel instead of the running median
         sigreject = integer(default=4) # Number of sigmas to reject as outliers
-        gausssmooth = integer(default=1) # Width of Gaussian smoothing kernel to use as a low-pass filter
-        halfwith = integer(default=30) # Half-width of convolution kernel to build
+        gaussmooth = integer(default=1) # Width of Gaussian smoothing kernel to use as a low-pass filter
+        halfwidth = integer(default=30) # Half-width of convolution kernel to build
         user_supplied_reffile = string(default=None)  # ASDF user-supplied reference file
     """
 
@@ -96,9 +96,6 @@ class RefPixStep(Step):
                     if not self.use_conv_kernel:
                         conv_kernel_model = None
                     else:
-                        import asdf
-                        conv_kernel_model = asdf.open(self.user_supplied_reffile)
-                        '''
                         if self.user_supplied_reffile is None:
                             conv_kernel_ref_filename = self.get_reference_file(datamodel, 'refpix')
                             if conv_kernel_ref_filename == 'N/A':
@@ -111,19 +108,21 @@ class RefPixStep(Step):
                         else:
                             self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
                             conv_kernel_model = datamodels.ConvKernelModel(self.user_supplied_reffile)
-                        '''
+
+                conv_kernel_params = {
+                    'use_conv_kernel': self.use_conv_kernel,
+                    'conv_kernel_model': conv_kernel_model,
+                    'sigreject': self.sigreject,
+                    'gaussmooth': self.gaussmooth,
+                    'halfwidth': self.halfwidth
+                }
                 status = reference_pixels.correct_model(datamodel,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
                                                         self.side_smoothing_length,
                                                         self.side_gain,
                                                         self.odd_even_rows,
-                                                        self.use_conv_kernel,
-                                                        conv_kernel_model,
-                                                        self.sigreject,
-                                                        self.gausssmooth,
-                                                        self.halfwith
-                                                        )
+                                                        conv_kernel_params)
 
                 if status == reference_pixels.REFPIX_OK:
                     datamodel.meta.cal_step.refpix = 'COMPLETE'
