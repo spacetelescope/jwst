@@ -9,7 +9,6 @@ JWST pipeline step for image intensity matching for MIRI images.
 import numpy as np
 
 from jwst.datamodels import ModelContainer
-import warnings
 from .. stpipe import Step
 from wiimatch.match import match_lsq
 from astropy.stats import sigma_clipped_stats as sigclip
