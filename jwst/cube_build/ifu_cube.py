@@ -114,7 +114,8 @@ class IFUCubeData():
         self.naxis3 = None
         self.cdelt3_normal = None
         self.rot_angle = None  # rotation angle between Ra-Dec and IFU local instrument plane
-
+        self.median_dec = None
+        
         self.a_min = 0
         self.a_max = 0
         self.b_min = 0
@@ -1234,6 +1235,7 @@ class IFUCubeData():
 # _____________________________________________________________________________
         self.cdelt1 = self.spatial_size
         self.cdelt2 = self.spatial_size
+        deg2rad = math.pi / 180.0
         if self.linear_wavelength:
             self.cdelt3 = self.spectral_size
 
@@ -1310,6 +1312,25 @@ class IFUCubeData():
             log.debug(f'Working on data from {this_a}, {this_b}')
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             log.debug('number of files %d', n)
+            
+            # find the median center declination if we have an offset file
+            if self.offsets is not None:
+                decs = []
+                for k in range(n):
+                    input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
+                    input_model = datamodels.open(input_file)
+                    spatial_box = input_model.meta.wcsinfo.s_region
+                    s = spatial_box.split(' ')
+                    cb1 = float(s[4])
+                    cb2 = float(s[6])
+                    cb3 = float(s[8])
+                    cb4 = float(s[10])
+                    m = (cb1 + cb2 + cb3 + cb4)/4
+                    decs.append(m)
+
+                self.median_dec = np.nanmedian(decs)
+                print('Median declination ', self.median_dec)
+                
             for k in range(n):
                 lmin = 0.0
                 lmax = 0.0
@@ -1329,6 +1350,7 @@ class IFUCubeData():
                     log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
                              raoffset, decoffset, filename)
                     raoffset = raoffset/3600.0 # convert to degress
+                    raoffset = raoffset /np.cos(self.median_dec *deg2rad)
                     decoffset = decoffset/3600.0
 # ________________________________________________________________________________
                 # Find the footprint of the image
@@ -1738,6 +1760,7 @@ class IFUCubeData():
         slice_no = None  # Slice number
         dwave = None
         corner_coord = None
+        deg2rad = math.pi / 180.0
 
         raoffset = 0.0
         decoffset = 0.0 
@@ -1750,6 +1773,7 @@ class IFUCubeData():
             log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
                      raoffset, decoffset, filename)
             raoffset = raoffset/3600.0 # convert to degress
+            raoffset = raoffset /np.cos(self.median_dec *deg2rad)
             decoffset = decoffset/3600.0
 
         # check if background sky matching as been done in mrs_imatch step

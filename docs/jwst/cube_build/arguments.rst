@@ -131,24 +131,25 @@ A parameter only used for investigating which detector pixels contributed to a c
   To print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
 
 .. _offsets:
-The offset file is an ASDF formated file : <https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each
-input file in the spec3 assocation used to build the IFU cubes, an ra and dec offset, in arc seconds, is provided. 
+The offset file is an ASDF formated file :`<https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each
+input file in the spec3 assocation used to build the IFU cubes, there is a corresponding  right ascension  and declination offset,
+given arc seconds.
 Below is an example of how to make an ASDF offset file. It is assumed the user has determined the
-offsets to apply for each file. The offsets are stored in a python dictionary, `offsets`. The items of this dictionary are `filenames`, `raoffset` and `decoffset`. The  cube_building code is expects this dictionary to hold the information
-for storing the file names and the associated ra and dec offsets. 
+offsets to apply the data in each file. The offsets are stored in a python dictionary, `offsets`. The items of this dictionary
+are `filenames`, `raoffset` and `decoffset`. The  IFU cube building code  expects this dictionary to hold the information
+for storing the file names and the associated ra and dec offsets. The file names should not contain the directory path.
 
-It is assumed there exists a list of files, ra and dec offsets that are feed to this routine. The ra and dec offsets
-provided in arcseconds. The cube_building code will apply the ra offsets after multiplying by the  cos(crval2), where crval2 is the
+It is assumed there exists a list of files, ra and dec offsets that are feed to this method. The ra and dec offsets
+provided in arcseconds. The cube building code will apply the ra offsets after dividing by  cos(crval2), where crval2 is the
 declination center of the IFU cube. 
-`num` is the number of files.
-y
+Below `num` is the number of files.
+
 import asdf
 offsets = {}
 offsets['filename'] = []
 offsets['raoffset'] = []
 offsets['decoffset'] = []
 for i in range(num):
-   
     offsets['filename'].append(file[i])
     offsets['raoffset'].append(ra_center1[i])
     offsets['decoffset'].append(dec_center1[i])
