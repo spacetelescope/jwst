@@ -5,8 +5,6 @@ import os.path as op
 import re
 import logging
 
-import numpy as np
-
 from asdf import AsdfFile
 from astropy.io import fits
 from stdatamodels import properties
@@ -19,7 +17,6 @@ __doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
-_ONE_MB = 1 << 20
 RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
 
 # Configure logging
@@ -27,7 +24,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class ModelContainer(JwstDataModel, Sequence):
+class ModelContainer(Sequence):
     """
     A container for holding DataModels.
 
@@ -55,10 +52,6 @@ class ModelContainer(JwstDataModel, Sequence):
     asn_n_members : int
         Open only the first N qualifying members.
 
-    iscopy : bool
-        Presume this model is a copy. Members will not be closed
-        when the model is closed/garbage-collected.
-
     Examples
     --------
     >>> container = ModelContainer('example_asn.json')
@@ -80,19 +73,6 @@ class ModelContainer(JwstDataModel, Sequence):
 
     Notes
     -----
-        The optional paramters ``save_open`` and ``return_open`` can be
-        provided to control how the `JwstDataModel` are used by the
-        :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
-        `JwstDataModel` instance in ``init`` will be written out to disk and
-        closed, then only the filename for the `JwstDataModel` will be used to
-        initialize the :py:class:`ModelContainer` object.
-        Subsequent access of each member will then open the `JwstDataModel` file to
-        work with it. If ``return_open`` is also `False`, then the `JwstDataModel`
-        will be closed when access to the `JwstDataModel` is completed. The use of
-        these parameters can minimize the amount of memory used by this object
-        during processing, with these parameters being used
-        by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
-
         When ASN table's members contain attributes listed in
         :py:data:`RECOGNIZED_MEMBER_FIELDS`, :py:class:`ModelContainer` will
         read those attribute values and update the corresponding attributes
@@ -148,13 +128,11 @@ to supply custom catalogs.
     """
     schema_url = None
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None,
-                 iscopy=False, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
 
         super().__init__(init=None, **kwargs)
 
         self._models = []
-        self._iscopy = iscopy
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
         self.asn_table = {}
@@ -163,27 +141,16 @@ to supply custom catalogs.
         self.asn_file_path = None
 
         self._memmap = kwargs.get("memmap", False)
-        self._return_open = kwargs.get('return_open', True)
-        self._save_open = kwargs.get('save_open', True)
 
         if init is None:
             # Don't populate the container with models
             pass
-        elif isinstance(init, fits.HDUList):
-            if self._save_open:
-                model = [datamodel_open(init, memmap=self._memmap)]
-            else:
-                model = init._file.name
-                init.close()
-            self._models.append(model)
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
-                if self._save_open:
-                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
+                self._models.append([datamodel_open(m, memmap=self._memmap) for m in init])
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
-            self._models = init
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
@@ -192,7 +159,6 @@ to supply custom catalogs.
             self._instance = instance
             self._ctx = self
             self._models = init._models
-            self._iscopy = True
         elif is_association(init):
             self.from_asn(init)
         elif isinstance(init, str):
@@ -207,10 +173,7 @@ to supply custom catalogs.
         return len(self._models)
 
     def __getitem__(self, index):
-        m = self._models[index]
-        if not isinstance(m, JwstDataModel) and self._return_open:
-            m = datamodel_open(m, memmap=self._memmap)
-        return m
+        return self._models[index]
 
     def __setitem__(self, index, model):
         self._models[index] = model
@@ -220,8 +183,6 @@ to supply custom catalogs.
 
     def __iter__(self):
         for model in self._models:
-            if not isinstance(model, JwstDataModel) and self._return_open:
-                model = datamodel_open(model, memmap=self._memmap)
             yield model
 
     def insert(self, index, model):
@@ -246,14 +207,10 @@ to supply custom catalogs.
         instance = copy.deepcopy(self._instance, memo=memo)
         result._asdf = AsdfFile(instance)
         result._instance = instance
-        result._iscopy = self._iscopy
         result._schema = self._schema
         result._ctx = result
         for m in self._models:
-            if isinstance(m, JwstDataModel):
-                result.append(m.copy())
-            else:
-                result.append(m)
+            result.append(m.copy())
         return result
 
     @staticmethod
@@ -315,26 +272,17 @@ to supply custom catalogs.
         try:
             for member in sublist:
                 filepath = op.join(asn_dir, member['expname'])
-                update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
-                if update_model or self._save_open:
-                    m = datamodel_open(filepath, memmap=self._memmap)
-                    m.meta.asn.exptype = member['exptype']
-                    for attr, val in member.items():
-                        if attr in RECOGNIZED_MEMBER_FIELDS:
-                            if attr == 'tweakreg_catalog':
-                                if val.strip():
-                                    val = op.join(asn_dir, val)
-                                else:
-                                    val = None
+                m = datamodel_open(filepath, memmap=self._memmap)
+                m.meta.asn.exptype = member['exptype']
+                for attr, val in member.items():
+                    if attr in RECOGNIZED_MEMBER_FIELDS:
+                        if attr == 'tweakreg_catalog':
+                            if val.strip():
+                                val = op.join(asn_dir, val)
+                            else:
+                                val = None
 
-                            setattr(m.meta, attr, val)
-
-                    if not self._save_open:
-                        m.save(filepath, overwrite=True)
-                        m.close()
-                else:
-                    m = filepath
-
+                        setattr(m.meta, attr, val)
                 self._models.append(m)
 
         except IOError:
@@ -357,66 +305,66 @@ to supply custom catalogs.
                 except AttributeError:
                     pass
 
-    def save(self,
-             path=None,
-             dir_path=None,
-             save_model_func=None,
-             **kwargs):
-        """
-        Write out models in container to FITS or ASDF.
+    # def save(self,
+    #          path=None,
+    #          dir_path=None,
+    #          save_model_func=None,
+    #          **kwargs):
+    #     """
+    #     Write out models in container to FITS or ASDF.
 
-        Parameters
-        ----------
-        path : str or func or None
-            - If None, the `meta.filename` is used for each model.
-            - If a string, the string is used as a root and an index is
-              appended.
-            - If a function, the function takes the two arguments:
-              the value of model.meta.filename and the
-              `idx` index, returning constructed file name.
+    #     Parameters
+    #     ----------
+    #     path : str or func or None
+    #         - If None, the `meta.filename` is used for each model.
+    #         - If a string, the string is used as a root and an index is
+    #           appended.
+    #         - If a function, the function takes the two arguments:
+    #           the value of model.meta.filename and the
+    #           `idx` index, returning constructed file name.
 
-        dir_path : str
-            Directory to write out files.  Defaults to current working dir.
-            If directory does not exist, it creates it.  Filenames are pulled
-            from `.meta.filename` of each datamodel in the container.
+    #     dir_path : str
+    #         Directory to write out files.  Defaults to current working dir.
+    #         If directory does not exist, it creates it.  Filenames are pulled
+    #         from `.meta.filename` of each datamodel in the container.
 
-        save_model_func: func or None
-            Alternate function to save each model instead of
-            the models `save` method. Takes one argument, the model,
-            and keyword argument `idx` for an index.
+    #     save_model_func: func or None
+    #         Alternate function to save each model instead of
+    #         the models `save` method. Takes one argument, the model,
+    #         and keyword argument `idx` for an index.
 
-        Returns
-        -------
-        output_paths: [str[, ...]]
-            List of output file paths of where the models were saved.
-        """
-        output_paths = []
-        if path is None:
-            def path(filename, idx=None):
-                return filename
-        elif not callable(path):
-            path = make_file_with_index
+    #     Returns
+    #     -------
+    #     output_paths: [str[, ...]]
+    #         List of output file paths of where the models were saved.
+    #     """
+    #     output_paths = []
+    #     if path is None:
+    #         def path(filename, idx=None):
+    #             return filename
+    #     elif not callable(path):
+    #         path = make_file_with_index
 
-        for idx, model in enumerate(self):
-            if len(self) <= 1:
-                idx = None
-            if save_model_func is None:
-                outpath, filename = op.split(
-                    path(model.meta.filename, idx=idx)
-                )
-                if dir_path:
-                    outpath = dir_path
-                save_path = op.join(outpath, filename)
-                try:
-                    output_paths.append(
-                        model.save(save_path, **kwargs)
-                    )
-                except IOError as err:
-                    raise err
+    #     for idx, model in enumerate(self):
+    #         if len(self) <= 1:
+    #             idx = None
+    #         if save_model_func is None:
+    #             outpath, filename = op.split(
+    #                 path(model.meta.filename, idx=idx)
+    #             )
+    #             if dir_path:
+    #                 outpath = dir_path
+    #             save_path = op.join(outpath, filename)
+    #             try:
+    #                 output_paths.append(
+    #                     model.save(save_path, **kwargs)
+    #                 )
+    #             except IOError as err:
+    #                 raise err
 
-            else:
-                output_paths.append(save_model_func(model, idx=idx))
-        return output_paths
+    #         else:
+    #             output_paths.append(save_model_func(model, idx=idx))
+    #     return output_paths
 
     @property
     def models_grouped(self):
@@ -454,8 +402,6 @@ to supply custom catalogs.
         group_dict = OrderedDict()
         for i, model in enumerate(self._models):
             params = []
-            if not self._save_open:
-                model = datamodel_open(model, memmap=self._memmap)
 
             if (hasattr(model.meta, 'group_id') and
                         model.meta.group_id not in [None, '']):
@@ -480,10 +426,6 @@ to supply custom catalogs.
 
                 group_id = model.meta.group_id
 
-            if not self._save_open and not self._return_open:
-                model.close()
-                model = self._models[i]
-
             if group_id in group_dict:
                 group_dict[group_id].append(model)
             else:
@@ -503,10 +445,9 @@ to supply custom catalogs.
 
     def close(self):
         """Close all datamodels."""
-        if not self._iscopy:
-            for model in self._models:
-                if isinstance(model, JwstDataModel):
-                    model.close()
+        for model in self._models:
+            if isinstance(model, JwstDataModel):
+                model.close()
 
     @property
     def crds_observatory(self):
@@ -518,8 +459,6 @@ to supply custom catalogs.
         -------
         str
         """
-        # Eventually ModelContainer will also be used for Roman, but this
-        # will work for now:
         return "jwst"
 
     def get_crds_parameters(self):
@@ -572,97 +511,26 @@ to supply custom catalogs.
                 ind.append(i)
         return ind
 
-    def set_buffer(self, buffer_size, overlap=None):
-        """Set buffer size for scrolling section-by-section access.
 
-        Parameters
-        ----------
-        buffer_size : float, None
-            Define size of buffer in MB for each section.
-            If `None`, a default buffer size of 1MB will be used.
+# def make_file_with_index(file_path, idx):
+#     """Append an index to a filename
 
-        overlap : int, optional
-            Define the number of rows of overlaps between sections.
-            If `None`, no overlap will be used.
-        """
-        self.overlap = 0 if overlap is None else overlap
-        self.grow = 0
-
-        with datamodel_open(self._models[0]) as model:
-            imrows, imcols = model.data.shape
-            data_item_size = model.data.itemsize
-            data_item_type = model.data.dtype
-            model.close()
-        del model
-        min_buffer_size = imcols * data_item_size
-
-        self.buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
-
-        section_nrows = min(imrows, int(self.buffer_size // min_buffer_size))
-
-        if section_nrows == 0:
-            self.buffer_size = min_buffer_size
-            logger.warning("WARNING: Buffer size is too small to hold a single row."
-                           f"Increasing buffer size to {self.buffer_size / _ONE_MB}MB")
-            section_nrows = 1
-
-        nbr = section_nrows - self.overlap
-        nsec = (imrows - self.overlap) // nbr
-        if (imrows - self.overlap) % nbr > 0:
-            nsec += 1
-
-        self.n_sections = nsec
-        self.nbr = nbr
-        self.section_nrows = section_nrows
-        self.imrows = imrows
-        self.imcols = imcols
-        self.imtype = data_item_type
-
-    def get_sections(self):
-        """Iterator to return the sections from all members of the container."""
-
-        for k in range(self.n_sections):
-            e1 = k * self.nbr
-            e2 = e1 + self.section_nrows
-
-            if k == self.n_sections - 1:  # last section
-                e2 = min(e2, self.imrows)
-                e1 = min(e1, e2 - self.overlap - 1)
-
-            data_list = np.empty((len(self._models), e2 - e1, self.imcols),
-                                 dtype=self.imtype)
-            wht_list = np.empty((len(self._models), e2 - e1, self.imcols),
-                                dtype=self.imtype)
-            for i, model in enumerate(self._models):
-                model = datamodel_open(model, memmap=self._memmap)
-
-                data_list[i, :, :] = model.data[e1:e2].copy()
-                wht_list[i, :, :] = model.wht[e1:e2].copy()
-                model.close()
-                del model
-
-            yield (data_list, wht_list, (e1, e2))
+#     Parameters
+#     ----------
+#     file_path: str
+#         The file to append the index to.
+#     idx: int
+#         An index to append
 
 
-def make_file_with_index(file_path, idx):
-    """Append an index to a filename
-
-    Parameters
-    ----------
-    file_path: str
-        The file to append the index to.
-    idx: int
-        An index to append
-
-
-    Returns
-    -------
-    file_path: str
-        Path with index appended
-    """
-    # Decompose path
-    path_head, path_tail = op.split(file_path)
-    base, ext = op.splitext(path_tail)
-    if idx is not None:
-        base = base + str(idx)
-    return op.join(path_head, base + ext)
+#     Returns
+#     -------
+#     file_path: str
+#         Path with index appended
+#     """
+#     # Decompose path
+#     path_head, path_tail = op.split(file_path)
+#     base, ext = op.splitext(path_tail)
+#     if idx is not None:
+#         base = base + str(idx)
+#     return op.join(path_head, base + ext)
