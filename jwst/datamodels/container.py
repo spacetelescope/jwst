@@ -130,8 +130,6 @@ to supply custom catalogs.
 
     def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
 
-        super().__init__(init=None, **kwargs)
-
         self._models = []
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
@@ -196,6 +194,13 @@ to supply custom catalogs.
 
     def pop(self, index=-1):
         self._models.pop(index)
+
+    def __enter__(self) -> str:
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        for model in self._models:
+            model.close()
 
     def copy(self, memo=None):
         """
@@ -290,9 +295,9 @@ to supply custom catalogs.
             raise
 
         # Pull the whole association table into meta.asn_table
-        self.meta.asn_table = {}
+        self.asn_table = {}
         properties.merge_tree(
-            self.meta.asn_table._instance, asn_data
+            self.asn_table, asn_data
         )
 
         if self.asn_file_path is not None:
