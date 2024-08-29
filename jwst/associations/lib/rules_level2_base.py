@@ -27,6 +27,7 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_SCIENCE_EXP_TYPES,
     PRODUCT_NAME_DEFAULT,
     SPEC2_SCIENCE_EXP_TYPES,
+    nrs_nod_background_overlap
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
@@ -390,98 +391,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # If not background member, or some other candidate type,
         # fail.
         return False
-
-    def make_nod_asns(self):
-        """Make background nod Associations
-
-        For observing modes, such as NIRSpec MSA, exposures can be
-        nodded, such that the object is in a different position in the
-        slitlet. The association creation simply groups these all
-        together as a single association, all exposures marked as
-        `science`. When complete, this method will create separate
-        associations each exposure becoming the single science
-        exposure, and the other exposures then become `background`.
-
-        Returns
-        -------
-        associations : [association[, ...]]
-            List of new associations to be used in place of
-            the current one.
-
-        """
-
-        for product in self['products']:
-            members = product['members']
-
-            # Split out the science vs. non-science
-            # The non-science exposures will get attached
-            # to every resulting association.
-            science_exps = [
-                member
-                for member in members
-                if member['exptype'] == 'science'
-            ]
-            nonscience_exps = [
-                member
-                for member in members
-                if member['exptype'] != 'science'
-            ]
-
-            # Create new associations for each science, using
-            # the other science as background.
-            results = []
-            for science_exp in science_exps:
-                asn = copy.deepcopy(self)
-                asn.data['products'] = None
-
-                product_name = remove_suffix(
-                    splitext(split(science_exp['expname'])[1])[0]
-                )[0]
-                asn.new_product(product_name)
-                new_members = asn.current_product['members']
-                new_members.append(science_exp)
-
-                for other_science in science_exps:
-                    if other_science['expname'] != science_exp['expname']:
-                        if science_exp.item['exp_type'] in ['nrs_fixedslit', 'nrs_msaspec']:
-                            try:
-                                sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
-                                                  int(science_exp.item['subpxpts'])
-                                other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
-                                                    int(other_science.item['subpxpts'])
-                                if sci_prim_dithpt != other_prim_dithpt:
-                                    now_background = Member(other_science)
-                                    now_background['exptype'] = 'background'
-                                    new_members.append(now_background)
-                            #  Catch missing values with KeyError, NULL values with ValueError
-                            except (ValueError, KeyError):
-                                try:
-                                    sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
-                                                      int(science_exp.item['subpxpns'])
-                                    other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
-                                                        int(other_science.item['subpxpns'])
-                                    if sci_prim_dithpt != other_prim_dithpt:
-                                        now_background = Member(other_science)
-                                        now_background['exptype'] = 'background'
-                                        new_members.append(now_background)
-                                except (ValueError, KeyError, ZeroDivisionError):
-                                    if science_exp.item['exp_type'] == 'nrs_msaspec':
-                                        now_background = Member(other_science)
-                                        now_background['exptype'] = 'background'
-                                        new_members.append(now_background)
-                                    else:
-                                        pass
-                        else:
-                            now_background = Member(other_science)
-                            now_background['exptype'] = 'background'
-                            new_members.append(now_background)
-
-                new_members += nonscience_exps
-
-                if asn.is_valid:
-                    results.append(asn)
-
-            return results
 
     def __repr__(self):
         try:
@@ -1060,7 +969,7 @@ class AsnMixin_Lv2Image:
 class AsnMixin_Lv2Nod:
     """Associations that need to create nodding associations
 
-    For some spectragraphic modes, background spectra are taken by
+    For some spectrographic modes, background spectra are taken by
     nodding between different slits, or internal slit positions.
     The main associations rules will collect all the exposures of all the nods
     into a single association. Then, on finalization, this one association
@@ -1068,10 +977,105 @@ class AsnMixin_Lv2Nod:
     as science, and the other nods are treated as background.
     """
 
+    def make_nod_asns(self):
+        """Make background nod Associations
+
+        For observing modes, such as NIRSpec MSA, exposures can be
+        nodded, such that the object is in a different position in the
+        slitlet. The association creation simply groups these all
+        together as a single association, all exposures marked as
+        `science`. When complete, this method will create separate
+        associations each exposure becoming the single science
+        exposure, and the other exposures then become `background`.
+
+        Returns
+        -------
+        associations : [association[, ...]]
+            List of new associations to be used in place of
+            the current one.
+
+        """
+
+        for product in self['products']:
+            members = product['members']
+
+            # Split out the science vs. non-science
+            # The non-science exposures will get attached
+            # to every resulting association.
+            science_exps = [
+                member
+                for member in members
+                if member['exptype'] == 'science'
+            ]
+            nonscience_exps = [
+                member
+                for member in members
+                if member['exptype'] != 'science'
+            ]
+
+            # Create new associations for each science, using
+            # the other science as background.
+            results = []
+            for science_exp in science_exps:
+                asn = copy.deepcopy(self)
+                asn.data['products'] = None
+
+                product_name = remove_suffix(
+                    splitext(split(science_exp['expname'])[1])[0]
+                )[0]
+                asn.new_product(product_name)
+                new_members = asn.current_product['members']
+                new_members.append(science_exp)
+
+                for other_science in science_exps:
+                    if other_science['expname'] != science_exp['expname']:
+                        # check for likely overlap between science
+                        # and background candidate
+                        overlap = nrs_nod_background_overlap(science_exp.item, other_science.item)
+
+                        if science_exp.item['exp_type'] in ['nrs_fixedslit', 'nrs_msaspec']:
+                            try:
+                                sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
+                                                   int(science_exp.item['subpxpts'])
+                                other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
+                                                     int(other_science.item['subpxpts'])
+                                if sci_prim_dithpt != other_prim_dithpt and not overlap:
+                                    now_background = Member(other_science)
+                                    now_background['exptype'] = 'background'
+                                    new_members.append(now_background)
+
+                            #  Catch missing values with KeyError, NULL values with ValueError
+                            except (ValueError, KeyError):
+                                try:
+                                    sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
+                                                       int(science_exp.item['subpxpns'])
+                                    other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
+                                                         int(other_science.item['subpxpns'])
+                                    if sci_prim_dithpt != other_prim_dithpt and not overlap:
+                                        now_background = Member(other_science)
+                                        now_background['exptype'] = 'background'
+                                        new_members.append(now_background)
+                                except (ValueError, KeyError, ZeroDivisionError):
+                                    if science_exp.item['exp_type'] == 'nrs_msaspec' and not overlap:
+                                        now_background = Member(other_science)
+                                        now_background['exptype'] = 'background'
+                                        new_members.append(now_background)
+                        else:
+                            now_background = Member(other_science)
+                            now_background['exptype'] = 'background'
+                            new_members.append(now_background)
+
+                new_members += nonscience_exps
+
+                if asn.is_valid:
+                    results.append(asn)
+
+            return results
+
     def finalize(self):
         """Finalize association
 
-        For some spectragraphic modes, background spectra and taken by
+        For some spectrographic modes, background spectra are taken by
         nodding between different slits, or internal slit positions.
         The main associations rules will collect all the exposures of all the nods
         into a single association. Then, on finalization, this one association
