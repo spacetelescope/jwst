@@ -66,7 +66,7 @@ class ResampleSpecData(ResampleData):
         if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
-        self.output_suffix = 's2d'
+        self.intermediate_suffix = 'outlier_s2d'
 
         self.pscale_ratio = pscale_ratio
         self.single = single
