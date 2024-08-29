@@ -3,11 +3,11 @@ __all__ = ["ResampleSpecStep"]
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
+from jwst.datamodels import ModelContainer, ModelLibrary
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
 from ..stpipe import Step
-from jwst.datamodels import ModelContainer
 from jwst.lib.wcs_utils import get_wavelengths
 
 
@@ -95,6 +95,7 @@ class ResampleSpecStep(Step):
             result = self._process_slit(input_models)
 
         # Update ASNTABLE in output
+        result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
         result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
 
@@ -133,20 +134,20 @@ class ResampleSpecStep(Step):
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
-            drizzled_models = resamp.do_drizzle(container)
-
-            for model in drizzled_models:
-                self.update_slit_metadata(model)
-                update_s_region_spectral(model)
-                result.slits.append(model)
+            library = ModelLibrary(container, on_disk=False)
+            drizzled_library = resamp.do_drizzle(library)
+            with drizzled_library:
+                for i, model in enumerate(drizzled_library):
+                    self.update_slit_metadata(model)
+                    update_s_region_spectral(model)
+                    result.slits.append(model)
+                    drizzled_library.shelve(model, i, modify=False)
+            del library, drizzled_library
 
             # Keep the first computed pixel scale ratio for storage
             if self.pixel_scale is not None and pscale_ratio is None:
                 pscale_ratio = resamp.pscale_ratio
 
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
         if self.pixel_scale is None or pscale_ratio is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         else:
@@ -206,13 +207,14 @@ class ResampleSpecStep(Step):
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
 
-        drizzled_models = resamp.do_drizzle(input_models)
+        library = ModelLibrary(input_models, on_disk=False)
+        drizzled_library = resamp.do_drizzle(library)
+        with drizzled_library:
+            result = drizzled_library.borrow(0)
+            drizzled_library.shelve(result, 0, modify=False)
+        del library, drizzled_library
 
-        result = drizzled_models[0]
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
-        result.meta.bunit_data = drizzled_models[0].meta.bunit_data
+        result.meta.bunit_data = input_models[0].meta.bunit_data
         if self.pixel_scale is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         else:
