@@ -34,7 +34,7 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | :ref:`pixel_replace <pixel_replace_step>`                   | |c| | |c| | |c| | |c| | |c| |      |  |c| |   |c|  |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`resample_spec <resample_step>`                        | |c| | |c| |     | |c| |     |      |      |        |
+| :ref:`resample_spec <resample_spec_step>`                   | |c| | |c| |     | |c| |     |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | :ref:`cube_build <cube_build_step>`                         |     |     | |c| |     | |c| |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
@@ -51,6 +51,9 @@ to observations of a moving target (TARGTYPE='moving').
 :sup:`2`\ The master background subtraction step is applied to NIRSpec MOS
 exposures in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 
+WFSS and SOSS Processing
+------------------------
+
 Notice that NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, receive only minimal
 processing by ``calwebb_spec3``.
 WFSS 2D input data are reorganized into source-based products by the
@@ -65,6 +68,19 @@ This type of processing is intended only for NIRISS SOSS exposures that are not
 obtained in TSO mode.
 TSO mode NIRISS SOSS exposures should be processed with the
 :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
+
+Combined NIRSpec MOS and FS Exposures
+-------------------------------------
+
+It is possible to observe NIRSpec fixed slit targets alongside MSA
+slitlets in NIRSpec MOS exposures.  In this case, the input files produced by the
+:ref:`calwebb_spec2 <calwebb_spec2>` pipeline contain both MOS and FS data. Any
+:ref:`master_background <master_background_step>` corrections applied in this pipeline
+will operate on the fixed slits only, since background corrections for MOS slitlets should
+be applied in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.  After the sources are
+separated in the :ref:`exp_to_source <exp_to_source>` step, each data product will contain
+only a fixed slit or a MOS target, so all further processing follows the standard flow
+for each exposure type.
 
 Arguments
 ---------
@@ -141,7 +157,8 @@ new field in the original product root name, e.g.
 
 When processing non-IFU modes, a resampled/rectified 2D product of type
 "_s2d" is created containing the rectified and combined data for a given
-slit/source, which is the output of the :ref:`resample_spec <resample_step>` step.
+slit/source, which is the output of the :ref:`resample_spec <resample_spec_step>`
+step.
 
 3D resampled and combined spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

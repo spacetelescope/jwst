@@ -2,6 +2,7 @@
 from functools import partial
 
 from ..stpipe import Step
+from jwst.stpipe import record_step_status
 from .. import datamodels
 from .pixel_replace import PixelReplacement
 
@@ -58,7 +59,7 @@ class PixelReplaceStep(Step):
                 self.log.debug('Input is a ModelContainer.')
             else:
                 self.log.error(f'Input is of type {str(type(input_model))} for which')
-                self.log.error('pixel_replace does not have an algorithm.\n')
+                self.log.error('pixel_replace does not have an algorithm.')
                 self.log.error('Pixel replacement will be skipped.')
                 input_model.meta.cal_step.pixel_replace = 'SKIPPED'
                 return input_model
@@ -97,7 +98,7 @@ class PixelReplaceStep(Step):
                         self.log.debug('Input is a {model.meta.model_type}.')
                     else:
                         self.log.error(f'Input is of type {model.meta.model_type} for which')
-                        self.log.error('pixel_replace does not have an algorithm.\n')
+                        self.log.error('pixel_replace does not have an algorithm.')
                         self.log.error('Pixel replacement will be skipped.')
                         model.meta.cal_step.pixel_replace = 'SKIPPED'
                         run_pixel_replace = False
@@ -107,7 +108,7 @@ class PixelReplaceStep(Step):
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
                         output_model[i] = replacement.output
-                        self.record_step_status(output_model[i], 'pixel_replace', success=True)
+                        record_step_status(output_model[i], 'pixel_replace', success=True)
                 return output_model
             # ________________________________________
             # calewbb_spec2 case - single input model
@@ -117,6 +118,6 @@ class PixelReplaceStep(Step):
                 result = input_model.copy()
                 replacement = PixelReplacement(result, **pars)
                 replacement.replace()
-                self.record_step_status(replacement.output, 'pixel_replace', success=True)
+                record_step_status(replacement.output, 'pixel_replace', success=True)
                 result = replacement.output
                 return result

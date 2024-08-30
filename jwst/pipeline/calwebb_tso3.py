@@ -73,7 +73,11 @@ class Tso3Pipeline(Pipeline):
 
         if self.output_file is None:
             self.output_file = input_models.meta.asn_table.products[0].name
+
+        # This asn_id assignment is important as it allows outlier detection
+        # to know the asn_id since that step receives the cube as input.
         self.asn_id = input_models.meta.asn_table.asn_id
+        self.outlier_detection.mode = 'tso'
 
         # Input may consist of multiple exposures, so loop over each of them
         input_exptype = None
@@ -154,17 +158,19 @@ class Tso3Pipeline(Pipeline):
                     x1d_result.int_times[row[0] - 1] = row
 
                 # SOSS F277W may return None - don't bother with that
-                if result is not None:
-                    if input_exptype == 'NIS_SOSS':
-                        # SOSS data have yet to be photometrically calibrated
-                        # Calibrate 1D spectra here.
-                        result = self.photom(result)
+                if (result is None) or (result.meta.cal_step.extract_1d == "SKIPPED"):
+                    continue
 
-                    x1d_result.spec.extend(result.spec)
+                if input_exptype == 'NIS_SOSS':
+                    # SOSS data have yet to be photometrically calibrated
+                    # Calibrate 1D spectra here.
+                    result = self.photom(result)
 
-                    # perform white-light photometry on 1d extracted data
-                    self.log.info("Performing white-light photometry ...")
-                    phot_result_list.append(self.white_light(result))
+                x1d_result.spec.extend(result.spec)
+
+                # perform white-light photometry on 1d extracted data
+                self.log.info("Performing white-light photometry ...")
+                phot_result_list.append(self.white_light(result))
 
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
@@ -172,7 +178,11 @@ class Tso3Pipeline(Pipeline):
 
             # Save the final x1d Multispec model
             x1d_result.meta.cal_step.pixel_replace = state
-            self.save_model(x1d_result, suffix='x1dints')
+            if len(x1d_result.spec) == 0:
+                self.log.warning("extract_1d step could not be completed for any integrations")
+                self.log.warning("x1dints products will not be created.")
+            else:
+                self.save_model(x1d_result, suffix='x1dints')
 
         # Done with all the inputs
         input_models.close()

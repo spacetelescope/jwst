@@ -41,20 +41,13 @@ produces a new wavelength corrected slit frame, ``wavecorr_frame``.
 
 NIRSpec Fixed Slit (FS)
 -----------------------
-Fixed slit data do not have an *a priori* estimate of the source
-location within a given slit, so the estimated source location is
-computed by the ``wavecorr`` step. It uses the target coordinates in
-conjunction with the aperture reference point in V2/V3 space to
-estimate the fractional location of the source within the given slit.
-Note that this computation can only be performed for the primary slit
-in the exposure, which is given in the "FXD_SLIT" keyword. The positions
-of sources in any additional slits cannot be estimated and therefore
-the wavelength correction is only applied to the primary slit.
 
-The estimated position of the source within the primary slit (in the
-dispersion direction) is then used in the same manner as described above
+The source position within the primary slit is estimated based on the 
+target coordinates and aperture reference point during the 
+:ref:`extract_2d <extract_2d_step>` step. This estimated position (in the 
+dispersion direction) is used in the same manner as described above
 for MOS slitlets to update the slit WCS and compute corrected wavelengths
-for the primary slit.
+for the primary slit only. 
 
 Upon successful completion of the step, the status keyword "S_WAVCOR"
 is set to "COMPLETE".

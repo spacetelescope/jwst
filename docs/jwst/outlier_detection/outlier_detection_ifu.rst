@@ -31,4 +31,4 @@ is greater than the input threshold percentage.  Pixels that are found to be out
 
 
 
-.. automodapi:: jwst.outlier_detection.outlier_detection_ifu
+.. automodapi:: jwst.outlier_detection.ifu

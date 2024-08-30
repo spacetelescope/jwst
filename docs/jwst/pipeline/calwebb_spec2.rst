@@ -47,6 +47,8 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +==========================================================+=====+=====+=====+=====+=====+=====+=================+======+========+=====+
 | :ref:`assign_wcs <assign_wcs_step>`                      | |c| | |c| | |c| | |c| | |c| | |c| |       |c|       | |c|  |  |c|   | |c| |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
+| :ref:`badpix_selfcal <badpix_selfcal_step>`\ :sup:`2`    |     |     | |c| |     |     | |c| |                 |      |        |     |
++----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`msaflagopen <msaflagopen_step>`                    |     | |c| | |c| |     |     |     |                 |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`nsclean <nsclean_step>`                            | |c| | |c| | |c| |     |     |     |                 |      |        |     |
@@ -81,7 +83,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`pixel_replace <pixel_replace_step>` \ :sup:`2`     | |c| | |c| | |c| | |c| | |c| |     |                 | |c|  |  |c|   |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
-| :ref:`resample_spec <resample_step>`                     | |c| | |c| |     | |c| |     |     |                 |      |        |     |
+| :ref:`resample_spec <resample_spec_step>`                | |c| | |c| |     | |c| |     |     |                 |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`cube_build <cube_build_step>`                      |     |     | |c| |     |     | |c| |                 |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
@@ -107,12 +109,54 @@ Notice that NIRSpec MOS is the only mode to receive master background subtractio
 in the ``calwebb_spec2`` pipeline. All other spectral modes have master background
 subtraction applied in the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline.
 
-The :ref:`resample_spec <resample_step>` step produces a resampled/rectified product for
-non-IFU modes of some spectroscopic exposures. If the :ref:`resample_spec <resample_step>` step
+The :ref:`resample_spec <resample_spec_step>` step produces a resampled/rectified product for
+non-IFU modes of some spectroscopic exposures. If the :ref:`resample_spec <resample_spec_step>` step
 is not applied to a given exposure, the :ref:`extract_1d <extract_1d_step>` operation will be
 performed on the original (unresampled) data. The :ref:`cube_build <cube_build_step>` step produces
 a resampled/rectified cube for IFU exposures, which is then used as input to
 the :ref:`extract_1d <extract_1d_step>` step.
+
+Combined NIRSpec MOS and FS Exposures
+-------------------------------------
+
+It is possible to observe one or more fixed slit sources as part of a NIRSpec MOS
+observation.  Fixed slits observed this way are mostly handled as if they were
+MOS slitlets: they are assigned a WCS, extracted from the full-frame image, calibrated,
+and appended to the output data products.
+
+However, since FS and MOS modes require different pipeline steps and reference files
+at various points in the ``calwebb_spec2`` pipeline, the processing path is not as
+straightforward as for a standard MOS exposure.  Internal to the pipeline, the data
+product is sorted into MOS slits and FS slits.  MOS slits are processed together first,
+then FS slits are processed through the same steps.  At the end of the processing,
+the calibrated images and spectra are recombined into final data products containing
+all observed slits.
+
+The detailed processing flow is as follows:
+
+- Fixed slits containing primary sources are identified in the input
+  :ref:`MSA metadata file <msa_metadata>` in the :ref:`assign_wcs <assign_wcs_step>`
+  step, via the "fixed_slit" column in the MSA SHUTTER_INFO table.
+- All slits (MOS and FS) are processed together through the :ref:`srctype <srctype_step>` step.
+- MOS slits are processed together through the :ref:`master_background <master_background_step>`,
+  :ref:`wavecorr <wavecorr_step>`, :ref:`flat_field <flatfield_step>`,
+  :ref:`pathloss <pathloss_step>`, :ref:`barshadow <barshadow_step>`, and
+  :ref:`photom <photom_step>` steps.
+- FS slits are processed together through the :ref:`wavecorr <wavecorr_step>`,
+  :ref:`flat_field <flatfield_step>`, :ref:`pathloss <pathloss_step>`, and
+  :ref:`photom <photom_step>` steps.  If intermediate products from these
+  steps are saved, they will have an additional "_fs" suffix appended to
+  their file names.
+- MOS and FS slits are recombined and processed together through the
+  :ref:`resample_spec <resample_spec_step>` step.
+- MOS slits are processed through the :ref:`extract_1d <extract_1d_step>` step,
+  then FS slits are processed through the same step.  The extracted spectra are
+  recombined into a final data product.
+
+The combined, calibrated output product for this mode may be used as input for
+the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline.  Since that pipeline sorts and
+separates the data by source, the fixed slit and MOS targets are independently handled
+through all pipeline steps with no further accommodation necessary.
 
 NIRSpec Lamp Exposures
 ----------------------
@@ -176,49 +220,49 @@ abbreviations used in the table are as follows:
 - NIRSpec MOS = Multi-Object Spectroscopy
 - NIRSpec IFU = Integral Field Unit
 
-+---------------------------------------+------------+--------------+-----------------+--------------+
-|    Pipeline Step                      |         NRS_LAMP          |  NRS_AUTOWAVE   | NRS_AUTOFLAT |
-+---------------------------------------+------------+--------------+-----------------+              +
-|                                       |   LINE     |     FLAT     |                 |  (MOS only)  |
-+=======================================+============+==============+=================+==============+
-| :ref:`assign_wcs <assign_wcs_step>`   |   ALL      |     ALL      |       ALL       |       ALL    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`msaflagopen <msaflagopen_step>` |  MOS, IFU  |   MOS, IFU   |    MOS, IFU     |       MOS    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`nsclean <nsclean_step>`         |  NONE      |    NONE      |      NONE       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`imprint <imprint_step>`         |  NONE      |     IFU      |      NONE       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`background <background_step>`   |  NONE      |    NONE      |      NONE       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`extract_2d <extract_2d_step>`   |  MOS, FS   |   MOS, FS    |    MOS, FS      |       MOS    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`srctype <srctype_step>`         |  NONE      |    NONE      |      NONE       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`wavecorr <wavecorr_step>`       |   ALL      |     ALL      |       ALL       |       ALL    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`flat_field <flatfield_step>`    |            |              |                 |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-|              - D-FLAT                 |   ALL      |     ALL      |       ALL       |              |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-|              - S-FLAT                 |   ALL      |    NONE      |       ALL       |              |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-|              - F-FLAT                 |  NONE      |    NONE      |      NONE       |              |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`pathloss <pathloss_step>`       |  NONE      |    NONE      |      NONE       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`barshadow <barshadow_step>`     |  NONE      |    NONE      |      NONE       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`photom <photom_step>`           |  NONE      |    NONE      |      NONE       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`resample_spec <resample_step>`  |  MOS, FS   |    NONE      |    MOS, FS      |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`cube_build <cube_build_step>`   |   IFU      |    NONE      |       IFU       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`extract_1d <extract_1d_step>`   |   ALL      |    NONE      |       ALL       |      NONE    |
-+---------------------------------------+------------+--------------+-----------------+--------------+
++--------------------------------------------+------------+--------------+-----------------+--------------+
+|    Pipeline Step                           |         NRS_LAMP          |  NRS_AUTOWAVE   | NRS_AUTOFLAT |
++--------------------------------------------+------------+--------------+-----------------+              +
+|                                            |   LINE     |     FLAT     |                 |  (MOS only)  |
++============================================+============+==============+=================+==============+
+| :ref:`assign_wcs <assign_wcs_step>`        |   ALL      |     ALL      |       ALL       |       ALL    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`msaflagopen <msaflagopen_step>`      |  MOS, IFU  |   MOS, IFU   |    MOS, IFU     |       MOS    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`nsclean <nsclean_step>`              |  NONE      |    NONE      |      NONE       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`imprint <imprint_step>`              |  NONE      |     IFU      |      NONE       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`background <background_step>`        |  NONE      |    NONE      |      NONE       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`extract_2d <extract_2d_step>`        |  MOS, FS   |   MOS, FS    |    MOS, FS      |       MOS    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`srctype <srctype_step>`              |  NONE      |    NONE      |      NONE       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`wavecorr <wavecorr_step>`            |   ALL      |     ALL      |       ALL       |       ALL    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`flat_field <flatfield_step>`         |            |              |                 |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+|              - D-FLAT                      |   ALL      |     ALL      |       ALL       |              |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+|              - S-FLAT                      |   ALL      |    NONE      |       ALL       |              |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+|              - F-FLAT                      |  NONE      |    NONE      |      NONE       |              |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`pathloss <pathloss_step>`            |  NONE      |    NONE      |      NONE       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`barshadow <barshadow_step>`          |  NONE      |    NONE      |      NONE       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`photom <photom_step>`                |  NONE      |    NONE      |      NONE       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`resample_spec <resample_spec_step>`  |  MOS, FS   |    NONE      |    MOS, FS      |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`cube_build <cube_build_step>`        |   IFU      |    NONE      |       IFU       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
+| :ref:`extract_1d <extract_1d_step>`        |   ALL      |    NONE      |       ALL       |      NONE    |
++--------------------------------------------+------------+--------------+-----------------+--------------+
 
-In the :ref:`resample_spec <resample_step>` and :ref:`cube_build <cube_build_step>` steps, the spectra are
+In the :ref:`resample_spec <resample_spec_step>` and :ref:`cube_build <cube_build_step>` steps, the spectra are
 transformed to a space of (wavelength, offset along the slit) without applying a tangent plane projection.
 
 Arguments
@@ -260,7 +304,7 @@ in the association.
 If "_rateints" products are used as input, for modes other than NIRSpec Fixed Slit,
 each step applies its algorithm to each integration in the exposure, where appropriate.
 For the NIRSpec Fixed Slit mode the ``calwebb_spec2`` pipeline will currently
-skip both the :ref:`resample_spec <resample_step>` step and the
+skip both the :ref:`resample_spec <resample_spec_step>` step and the
 :ref:`extract_1d <extract_1d_step>` step, because neither step supports
 multiple integration input products for this mode.
 
@@ -304,7 +348,7 @@ The output is a fully calibrated, but unrectified, exposure, using the product
 type suffix "_cal" or "_calints", depending on the type of input,
 e.g. "jw80600012001_02101_00003_mirimage_cal.fits." This is the output of the
 :ref:`photom <photom_step>` step, or whichever step is performed last before applying
-either :ref:`resample_spec <resample_step>`, :ref:`cube_build <cube_build_step>`, or
+either :ref:`resample_spec <resample_spec_step>`, :ref:`cube_build <cube_build_step>`, or
 :ref:`extract_1d <extract_1d_step>`.
 
 The output data model type can be any of the 4 listed above and is completely
@@ -332,12 +376,12 @@ extracted slits/sources.
 :File suffix: _s2d
 
 If the input is a 2D exposure type that gets resampled/rectified by the
-:ref:`resample_spec <resample_step>` step, the rectified 2D spectral product is saved as a
-"_s2d" file. This image is intended for use as a quick-look product only and is
-not used in subsequent processing. The 2D unresampled, calibrated ("_cal")
+:ref:`resample_spec <resample_spec_step>` step, the rectified 2D spectral product
+is saved as a "_s2d" file. This image is intended for use as a quick-look product only
+and is not used in subsequent processing. The 2D unresampled, calibrated ("_cal")
 products are passed along as input to subsequent Stage 3 processing.
 
-If the input to the :ref:`resample_spec <resample_step>` step is a `~jwst.datamodels.MultiSlitModel`,
+If the input to the :ref:`resample_spec <resample_spec_step>` step is a `~jwst.datamodels.MultiSlitModel`,
 then the resampled output will be in the form of a
 `~jwst.datamodels.MultiSlitModel`, which contains an array of individual models,
 one per slit. Otherwise the output will be a single `~jwst.datamodels.SlitModel`.

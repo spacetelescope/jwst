@@ -150,7 +150,7 @@ Need other useful packages in your development environment?
 
 **Note: As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
 For details, refer to the [CRDS PUB Server Freeze
-and Deprecation page](https://jwst-pipeline.readthedocs.io/en/stable/jwst/pub_deprecation.html#pub-deprecation)**
+and Deprecation page](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/pub_deprecation.html#crds-pub-server-freeze-and-deprecation)**
 
 
 CRDS is the system that manages the reference files needed to run the pipeline.
@@ -216,7 +216,10 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.14.0              | B10.2rc1  |          | 1215         | 2024-03-29 |             | First release candidate for B10.2             |
+| 1.15.1              | B11.0rc2  | TBD      | 1242         | 2024-07-08 | TBD         | Second release candidate for B11.0            |
+| 1.15.0              | B11.0rc1  | TBD      | 1241         | 2024-06-26 | TBD         | First release candidate for B11.0             |
+| 1.14.1              |           |          | 1238         | 2024-06-27 |             | PyPI-only release for external users          |
+| 1.14.0              | B10.2.1   | 2024.1.1 | 1238         | 2024-03-29 | 2024-06-12  | Final release candidate for B10.2.1           |
 | 1.13.4              |           |          | 1185         | 2024-01-25 |             | PyPI-only release for external users          |
 | 1.13.3              | B10.1     | 2023.4.0 | 1181         | 2024-01-05 |             | Final release candidate for B10.1             |
 | 1.13.2              | B10.1rc3  | 2023.4.0 | 1181         | 2023-12-21 |             | Third release candidate for B10.1             |

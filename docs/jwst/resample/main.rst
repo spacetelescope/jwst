@@ -1,8 +1,8 @@
 Description
 ===========
 
-:Classes: `jwst.resample.ResampleStep`, `jwst.resample.ResampleSpecStep`
-:Alias: resample, resample_spec
+:Classes: `jwst.resample.ResampleStep`
+:Alias: resample
 
 This routine will resample each input 2D image based on the WCS and
 distortion information, and will combine multiple resampled images
@@ -15,11 +15,9 @@ The ``resample`` step can take as input either:
 #. a single 2D input image
 #. an association table (in json format)
 
-The defined parameters for the drizzle operation itself get
-provided by the DRIZPARS reference file (from CRDS).  The exact values
-used depends on the number of input images being combined and the filter
-being used. Other information may be added as selection criteria later,
-but for now, only basic information is used.
+The parameters for the drizzle operation are provided via ``resample``
+step parameters, which can be overridden by a step parameter reference
+file from CRDS.
 
 The output product gets defined using the WCS information of all inputs,
 even if it is just a single input image. The output WCS defines a
@@ -146,16 +144,6 @@ context array ``con``, one can do something like this:
 
 For convenience, this functionality was implemented in the
 :py:func:`~jwst.resample.resample_utils.decode_context` function.
-
-
-Spectroscopic Data
-------------------
-
-Use the ``resample_spec`` step for spectroscopic data.  The dispersion
-direction is needed for this case, and this is obtained from the
-DISPAXIS keyword.  For the NIRSpec Fixed Slit mode, the ``resample_spec``
-step will be skipped if the input is a rateints product, as 3D input for
-the mode is not supported.
 
 
 References

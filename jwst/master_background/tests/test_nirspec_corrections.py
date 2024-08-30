@@ -52,14 +52,14 @@ def test_fs_correction():
                                  photom_point=ph_ps, photom_uniform=ph_un)
 
     corrected = input.data * (ff_un / ff_ps) * (pl_un / pl_ps) * (ph_ps / ph_un)
-    result = correct_nrs_fs_bkg(input, primary_slit=True)
+    result = correct_nrs_fs_bkg(input)
 
     assert np.allclose(corrected, result.data, rtol=1.e-7)
 
 
 @pytest.mark.parametrize('name,status',
                          [('BKG101', True), ('bkg101', True),
-                          ('background_101', False), ('101', False),
+                          ('background_101', True), ('101', False),
                           (None, False)])
 def test_is_background(name, status):
     """Test check for background slit."""

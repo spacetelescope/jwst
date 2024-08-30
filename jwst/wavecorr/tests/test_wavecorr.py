@@ -7,6 +7,7 @@ from gwcs import wcstools
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models
+from stpipe.crds_client import reference_uri_to_cache_path
 
 import jwst
 from jwst.assign_wcs import AssignWcsStep
@@ -59,7 +60,7 @@ def test_wavecorr():
     # test the round-tripping on the wavelength correction transform
     ref_name = im_wave.meta.ref_file.wavecorr.name
     freference = datamodels.WaveCorrModel(
-        WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+        reference_uri_to_cache_path(ref_name, im.crds_observatory))
 
     lam_uncorr = lam_before * 1e-6
     wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(
@@ -107,47 +108,45 @@ def test_skipped():
 
     # Test an error is raised if assign_wcs or extract_2d were not run.
     im.meta.exposure.type = 'NRS_FIXEDSLIT'
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         WavecorrStep.call(im)
 
     outa = AssignWcsStep.call(im)
+
+    # wcs and other metadata necessary for a good (not skipped) result 
+    dither = {'x_offset': 0.0, 'y_offset': 0.0}
+    outa.meta.dither = dither
+    outa.meta.wcsinfo.v3yangle = 138.78
+    outa.meta.wcsinfo.vparity = -1
+    outa.meta.wcsinfo.v2_ref = 321.87
+    outa.meta.wcsinfo.v3_ref = -477.94
+    outa.meta.wcsinfo.roll_ref = 15.1234
+    outa.meta.instrument.fixed_slit = "S400A1"
+
     oute = Extract2dStep.call(outa)
+
+    # ensure the source position is set as expected by extract2d
+    ind = np.nonzero([s.name == 'S400A1' for s in oute.slits])[0].item()
+    source_pos = (0.004938526981283373, -0.02795306204991911)
+    assert_allclose((oute.slits[ind].source_xpos, oute.slits[ind].source_ypos),source_pos)
+
     outs = SourceTypeStep.call(oute)
 
-    # Test step is skipped if no coverage in CRDS
-    outs.slits[0].meta.observation.date = '2001-08-03'
-    outw = WavecorrStep.call(outs)
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
-
-    outs.meta.observation.date = '2017-08-03'
-    outw = WavecorrStep.call(outs)
-    # Primary name not set
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
-
-    outs.meta.instrument.fixed_slit = "S400A1"
-
-    # Test step is skipped if meta.dither is not populated
-    outw = WavecorrStep.call(outs)
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
-
-    dither = {'x_offset': 0.0, 'y_offset': 0.0}
-    ind = np.nonzero([s.name == 'S400A1' for s in outs.slits])[0].item()
-    outs.slits[ind].meta.dither = dither
-    outs.slits[ind].meta.wcsinfo.v3yangle = 138.78
-    outs.slits[ind].meta.wcsinfo.vparity = -1
-    outs.slits[ind].meta.wcsinfo.v2_ref = 321.87
-    outs.slits[ind].meta.wcsinfo.v3_ref = -477.94
-    outs.slits[ind].meta.wcsinfo.roll_ref = 15.1234
-
-    # Test step is skipped if source is "EXTENDED"
-    outw = WavecorrStep.call(outs)
-    assert out.meta.cal_step.wavecorr == "SKIPPED"
-
+    # primary slit is found by source type step to be EXTENDED
+    # which means its source position is reset to (0, 0)
+    # hack it here to be a point source with the same offset as before here
     outs.slits[ind].source_type = 'POINT'
-    outw = WavecorrStep.call(outs)
+    outs.slits[ind].source_xpos = source_pos[0]
+    outs.slits[ind].source_ypos = source_pos[1]
 
-    source_pos = (0.004938526981283373, -0.02795306204991911)
-    assert_allclose((outw.slits[ind].source_xpos, outw.slits[ind].source_ypos),source_pos)
+    # Test step is skipped if no coverage in CRDS
+    outs.meta.observation.date = '2001-08-03'
+    outw = WavecorrStep.call(outs)
+    assert outw.meta.cal_step.wavecorr == "SKIPPED"
+    outs.meta.observation.date = '2017-08-03'
+
+    # Run the step for real
+    outw = WavecorrStep.call(outs)
 
     # Test if the corrected wavelengths are not monotonically increasing
 
@@ -160,7 +159,7 @@ def test_skipped():
 
     ref_name = outw.meta.ref_file.wavecorr.name
     reffile = datamodels.WaveCorrModel(
-        WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+        reference_uri_to_cache_path(ref_name, im.crds_observatory))
     source_xpos = 0.1
     aperture_name = 'S200A1'
     
@@ -190,8 +189,9 @@ def test_mos_slit_status():
     im_src.slits[0].source_type = 'EXTENDED'
     im_wave = WavecorrStep.call(im_src)
     
-    # check that the step is recorded as completed
-    assert im_wave.meta.cal_step.wavecorr == 'COMPLETE'
+    # check that the step is recorded as skipped,
+    # since no slits were corrected
+    assert im_wave.meta.cal_step.wavecorr == 'SKIPPED'
     
     # check that the step is listed as skipped for extended mos sources
     assert im_wave.slits[0].meta.cal_step.wavecorr == 'SKIPPED'
@@ -247,8 +247,6 @@ def test_wavecorr_fs():
     assert_allclose(result.slits[0].source_xpos, 0.127111, atol=1e-6)
 
     slit = result.slits[0]
-    source_xpos = wavecorr.get_source_xpos(slit, slit.meta.wcs, lam=2)
-    assert_allclose(result.slits[0].source_xpos, source_xpos, atol=1e-6)
 
     mean_correction = np.abs(src_result.slits[0].wavelength - result.slits[0].wavelength)
     assert_allclose(np.nanmean(mean_correction), 0.003, atol=.001)
@@ -260,12 +258,12 @@ def test_wavecorr_fs():
     corrected_wavelength = wavecorr.compute_wavelength(slit.meta.wcs, x, y)
     assert_allclose(slit.wavelength, corrected_wavelength)
 
-    # test the roundtripping on the wavelength correction transform
+    # test the round-tripping on the wavelength correction transform
     ref_name = result.meta.ref_file.wavecorr.name
-    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+    freference = datamodels.WaveCorrModel(reference_uri_to_cache_path(ref_name, im.crds_observatory))
 
     lam_uncorr = lam_before * 1e-6
-    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion, 
+    wave2wavecorr = wavecorr.calculate_wavelength_correction_transform(lam_uncorr, dispersion,
                                                                        freference, slit.source_xpos, 'S200A1')
     lam_corr = wave2wavecorr(lam_uncorr)
     assert_allclose(lam_uncorr, wave2wavecorr.inverse(lam_corr))

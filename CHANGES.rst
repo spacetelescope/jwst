@@ -1,4 +1,152 @@
-1.14.1 (unreleased)
+1.15.2 (unreleased)
+===================
+
+align_refs
+----------
+
+- Compute alignment shifts from the first integration of the science exposure only. [#8643]
+
+ami_average
+-----------
+
+- Fix error in step spec that prevents step creation. [#8677]
+
+assign_wcs
+----------
+
+- Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
+  into stcal. [#8624]
+
+associations
+------------
+
+- Restored slit name to level 3 product names for NIRSpec BOTS and background
+  fixed slit targets. [#8699]
+
+cube_build
+----------
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+documentation
+-------------
+
+- Add changelog to documentation. [#8716]
+
+emicorr
+-------
+
+- Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
+  to compute a correction. [#8675]
+
+general
+-------
+
+- Remove the unused ``stsci.image`` dependency. [#8663]
+
+- Update required stcal version to 1.8.0. [#8706]
+
+- Increase minimum required stpipe. [#8713]
+
+master_background
+-----------------
+
+- Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
+  as a background slit, instead of ``"bkg"`` only. [#8600]
+
+outlier_detection
+-----------------
+
+- Fixed failures due to a missing ``wcs.array_shape`` attribute when the
+  ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
+- Refactored separate modes into submodules instead of inheriting from a base class.
+  Moved non-JWST-specific code to stcal. [#8613]
+
+- Fixed file names and output directory for intermediate resampled spectral
+  images. Intermediate files now have suffix ``outlier_s2d`` and are saved to
+  the output directory alongside final products. [#8735]
+
+set_telescope_pointing
+----------------------
+
+- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+
+resample_spec
+-------------
+
+- Modified the output NIRSpec spectral WCS to sample the input data linearly in sky
+  coordinates, rather than slit coordinates, in order to conserve spectral
+  flux in default reductions. [#8596]
+
+- Updated handling for the ``pixel_scale_ratio`` parameter to apply only to the
+  spatial dimension, to match the sense of the parameter application to the
+  documented intent, and to conserve spectral flux when applied. [#8596, #8727]
+
+- Implemented handling for the ``pixel_scale`` parameter, which was previously
+  ignored for spectral resampling. [#8596]
+
+- Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
+  targets in the ``calwebb_spec3`` pipeline. [#8596]
+
+- Separate ``resample_spec`` step parameters from ``resample`` step parameters
+  so that the spectral resampling step only exposes parameters that are appropriate
+  for spectral data. [#8622]
+
+resample_step
+-------------
+
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
+  changed to use values in the top-level ASDF structure if the values in the WCS
+  are ``None``. [#8698]
+
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
+
+stpipe
+------
+
+- Removed setting of the `self.skip` attribute in the `record_step_status()` function;
+  added a `query_step_status()` function to use as an alternative to checking
+  `self.skip`. [#8600]
+
+tso_photometry
+--------------
+
+- Replaced photutils.aperture do_photometry with photutils.ApertureStats to remove NaNs
+  when performing TSO photometry for non SUB64 WLP8 pupil data. For SUB64 WLP8 changed
+  summing data in the aperture to use np.nansum to ignore NaNs. [#8672]
+
+tweakreg
+--------
+
+- Updated requirement for ``tweakwcs`` to version ``0.8.8`` which fixes a crash
+  in the ``tweakreg`` step due to a ``MalformedPolygonError`` exception being
+  raised by the ``spherical_geometry`` package for some data
+  sets. [#8657, spacetelescope/tweakwcs#205]
+
+- Moved all realignment methods to stcal. [#8624]
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
+
+
+1.15.1 (2024-07-08)
+===================
+
+ramp_fitting
+------------
+
+- Fix bugs in the C algorithm Poisson variance calculation when provided with an average dark current. [stcal#269]
+
+- Use the C extension with multiprocessing. [stcal#268]
+
+
+1.15.0 (2024-06-26)
 ===================
 
 ami
@@ -27,6 +175,13 @@ assign_wcs
 - Update default parameters to increase the accuracy of the SIP approximation
   in the output FITS WCS. [#8529]
 
+- Update MIRI LRS WCS code to introduce an intermediate alpha-beta slit reference frame
+  between pixel coordinates and the v2/v3 frame. [#8475]
+
+- Added handling for fixed slit sources defined in a MSA metadata file, for combined
+  NIRSpec MOS and fixed slit observations. Slits are now appended to the data
+  product in the order they appear in the MSA file. [#8467]
+
 associations
 ------------
 
@@ -42,7 +197,24 @@ associations
 - Added default values for new non-header keywords (``MOSTILNO`` and ``DITHPTIN``)
   to the default values in the ``asn_make_pool`` script. [#8508]
 
-- Create WFSS Pure-Parallel associations [#8528]
+- Create WFSS Pure-Parallel associations. [#8528]
+
+- Add NIRSpec optical path constraints for TSO associations. [#8537]
+
+- Exclude NIRISS SOSS data taken with uncalibrated filter F277W from spec2 and
+  tso3 associations. [#8549]
+
+background_subtraction
+----------------------
+
+- Clarified MIRI MRS default/optional background subtraction steps in the
+  documentation pages.  [#8582]
+
+badpix_selfcal
+--------------
+
+- Added new optional step ``badpix_selfcal`` to the spec2 pipeline to self-calibrate
+  bad pixels in IFU data. [#8500]
 
 combine_1d
 ----------
@@ -65,12 +237,26 @@ documentation
 
 - Added documentation for NIRCam GRISM time series pointing offsets. [#8449]
 
+emicorr
+--------
+
+- Improved running time by introducing a new parameter, use_n_cycles, that can
+  be modified by the user and has a default of 3. Now the user can either provide
+  the number of integrations to phase or the number of cycles to calculate the
+  number of integrations necessary to phase. Additionally fix a bug in applying
+  emicorr to data with nints > 1, and improve runtime in the phase amplitude
+  loop. [#8589]
+
 exp_to_source
 -------------
 
 - Modified slit sorting to use `source_name` as the key, rather than `source_id`,
   in order to support changes in `source_id` handling for NIRSpec MOS exposures
   that contain background and virtual slits. [#8442]
+
+- Update the top-level model exposure type from the slit exposure type,
+  to support processing for combined NIRSpec MOS and fixed slit
+  observations. [#8467]
 
 extract_1d
 ----------
@@ -92,15 +278,37 @@ extract_1d
 - Add propagation of uncertainty when annular backgrounds are subtracted
   from source spectra during IFU spectral extraction. [#8515]
 
-- Add propagation of background uncertainty when background is subtracted from 
+- Add propagation of background uncertainty when background is subtracted from
   source spectra during non-IFU spectral extraction. [#8532]
 
 - Fix error in application of aperture correction to variance arrays. [#8530]
+
+- Fix error in ``_coalesce_bounds`` that returned incorrect spectral or background
+  extraction region when one set of pixel limits is entirely contained within
+  another [#8586]
+
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
+
+- Added functionality to the phase-based aperture correction object to support
+  reuse of aperture correction objects across multiple integrations. [#8609]
+
+- Changed extract.py to attempt to tabulate and reuse an aperture correction
+  object in integrations after the first one.  This can save a very large
+  amount of time in BOTS reductions. [#8609]
 
 extract_2d
 ----------
 
 - Added handling for NIRCam GRISM time series pointing offsets. [#8449]
+
+- Added support for slit names that have string values instead of integer
+  values, necessary for processing combined NIRSpec MOS and fixed slit
+  data products. [#8467]
+
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes here instead of
+  in ``wavecorr`` for NIRSpec FS data. [#8569]
 
 flat_field
 ----------
@@ -111,23 +319,49 @@ flat_field
 - Update NIRSpec flatfield code for all modes to ensure SCI=ERR=NaN wherever the
   DO_NOT_USE flag is set in the DQ array. [#8463]
 
-- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr`` 
+- Updated the NIRSpec flatfield code to use the new format of the ``wavecorr``
   wavelength zero-point corrections for point sources.  [#8376]
+
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
 
 general
 -------
+
+- Require numpy<2.0. [#8565]
 
 - Removed deprecated stdatamodels model types ``DrizProductModel``,
   ``MIRIRampModel``, and ``MultiProductModel``. [#8388]
 
 - Increase minimum required scipy. [#8441]
 
+- Increase minimum required stdatamodels and stpipe. [#8592]
+
+- build with Numpy 2.0 release candidate to address ABI changes [#8527]
+
 lib
 ---
 
 - Updated the ``wcs_utils.get_wavelength`` to use the new format
-  of the ``wavecorr`` wavelength zero-point corrections for point 
+  of the ``wavecorr`` wavelength zero-point corrections for point
   sources in NIRSpec slit data. [#8376]
+
+master_background
+-----------------
+
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
+
+- Disabled support for master background correction for NIRSpec MOS
+  slits in the ``master_background``, called in ``calwebb_spec3``.
+  Master background correction for MOS mode should be performed
+  via ``master_background_mos``, called in ``calwebb_spec2``. [#8467]
+
+- Use zero values for master background outside the background
+  wavelength range instead of NaN to avoid NaN-ing out entire
+  sets of science data when backgrounds are missing. [#8597]
 
 master_background_mos
 ---------------------
@@ -135,6 +369,17 @@ master_background_mos
 - Updated check for NIRSpec MOS background slits to use new naming convention:
   ``slit.source_name`` now contains the string "BKG" instead of
   "background". [#8533]
+
+nsclean
+-------
+
+- Improved run time of NSClean.fit() by using a vector rather than a large,
+  sparse matrix to perform linear algebra operations with a diagonal weight
+  matrix. [#8547]
+
+- Added a check for combined NIRSpec MOS and fixed slit products: if fixed
+  slits are defined in a MOS product, the central fixed slit quadrant
+  is not automatically masked. [#8467]
 
 outlier_detection
 -----------------
@@ -162,11 +407,18 @@ outlier_detection
   to detect outliers in TSO data, with user-defined
   rolling window width via the ``rolling_window_width`` parameter. [#8473]
 
+- Fixed a bug that led to small total flux offsets between input and blotted
+  images if the nominal and actual wcs-computed pixel areas were different. [#8553]
+
+- Deprecate ``nlow`` and ``nhigh`` parameters, which no longer have an effect. [#8603]
+
+- Fix errors in documentation describing arguments. [#8603]
+
 pathloss
 --------
 
-- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate 
-  wavelengths for point and uniform sources if the ``wavecorr`` wavelength 
+- Updated pathloss calculations for NIRSpec fixed slit mode to use the appropriate
+  wavelengths for point and uniform sources if the ``wavecorr`` wavelength
   zero-point corrections for point sources have been applied. [#8376]
 
 photom
@@ -174,6 +426,13 @@ photom
 
 - Ensure that NaNs in MRS photom files are not replaced with ones by
   pipeline code for consistency with other modes [#8453]
+
+- Removed a check for the primary slit for NIRSpec fixed slit mode:
+  all slits containing point sources are now handled consistently,
+  whether they are marked primary or not. [#8467]
+
+- Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
+  was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
 
 pipeline
 --------
@@ -189,11 +448,29 @@ pipeline
   virtual ("v") slits and the construction of output file names for each
   type. [#8442]
 
+- Added new optional step ``badpix_selfcal`` to the ``calwebb_spec2`` to self-calibrate
+  bad pixels in IFU data. [#8500]
+
+- Added ``calwebb_spec2`` pipeline handling for combined NIRSpec MOS and
+  fixed slit observations. Steps that require different reference files
+  for MOS and FS are run twice, first for all MOS slits, then for all
+  FS slits. Final output products (``cal``, ``s2d``, ``x1d``) contain the
+  combined products. [#8467]
+
+- Added a hook to skip ``photom`` step when the ``extract_1d`` step was skipped
+  for NIRISS SOSS data [#8575].
+
+- Added hook to the ``calwebb_tso3`` pipeline to skip all subsequent steps
+  if the ``extract_1d`` step is skipped. [#8583]
+
 pixel_replace
 -------------
 
 - Moved pixel_replace in the calwebb_spec2 pipeline and added it to the calwebb_spec3
   pipeline. In both pipelines it is now executed immediately before resample_spec/cube_build. [#8409]
+
+- Added estimated errors and variances for replaced pixels, following the
+  interpolation scheme used for the data. [#8504]
 
 ramp_fitting
 ------------
@@ -206,6 +483,8 @@ ramp_fitting
   the algorithm "OLS" to use the python implementation of ramp
   fitting or "OLS_C" to use the C extension implementation of
   ramp fitting. [#8503]
+
+- Made "OLS_C" the default algorithm for ramp fitting. [#8607]
 
 refpix
 ------
@@ -224,6 +503,8 @@ resample
 
 - Change `fillval` parameter default from INDEF to NaN [#8488]
 
+- Removed the use of the `drizpars` reference file [#8546]
+
 resample_spec
 -------------
 
@@ -235,10 +516,26 @@ resample_spec
   when the slit was closely aligned with the RA direction
   sky. [#8511]
 
+- Removed the use of the `drizpars` reference file [#8546]
+
+- Fix a bug resulting in incorrect output spectral WCS for NIRSpec data when
+  the first input data set is filled with zero or NaN. [#8562]
+
 residual_fringe
 ---------------
 
 - Use DQ plane to exclude pixels marked as DO_NOT_USE in correction. [#8381]
+
+srctype
+-------
+
+- Reset ``source_xpos`` and ``source_ypos`` values to zero for extended sources
+  in NIRSpec FS data to enable assigning those attributes in ``extract_2d``. [#8569]
+
+saturation
+----------
+
+- Adds a check for saturation bias in group 2 for IRS2 mode nframes > 1. [#8593]
 
 tweakreg
 --------
@@ -270,7 +567,15 @@ wavecorr
 
 - Changed the NIRSpec wavelength correction algorithm to include it in slit WCS
   models and resampling.  Fixed the sign of the wavelength corrections. [#8376]
-  
+
+- Added a check for fixed slits that already have source position information,
+  assigned via a MSA metafile, for combined NIRSpec MOS and fixed slit processing.
+  Point source position is calculated from dither offsets only for standard
+  fixed slit processing. [#8467]
+
+- Assign slit ``source_xpos`` and ``source_ypos`` attributes in ``extract_2d``
+  instead of in ``wavecorr`` for NIRSpec FS data. [#8569]
+
 wfss_contam
 -----------
 
@@ -582,7 +887,6 @@ resample
 
 - Changed deprecated ``stpipe.extern.configobj`` to ``astropy.extern.configobj``. [#8320]
 
-
 residual_fringe
 ---------------
 
@@ -856,7 +1160,7 @@ datamodels
 ----------
 
 - Added support for user-supplied ``group_id`` either via
- ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
+  ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
 
 refpix
 ------
@@ -1061,7 +1365,7 @@ datamodels
 documentation
 -------------
 
-- Fixed a reference to the ``ramp_fitting` module in the user documentation. [#7898]
+- Fixed a reference to the ``ramp_fitting`` module in the user documentation. [#7898]
 
 engdb_tools
 -----------
@@ -1463,6 +1767,7 @@ regtest
 -------
 
 - Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
+
 srctype
 -------
 
@@ -1522,7 +1827,7 @@ other
 -----
 
 - Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
-  catching ``ResourceWarning``s. [#7526]
+  catching ``ResourceWarning``. [#7526]
 
 - Remove use of ``codecov`` package. [#7543]
 
@@ -2197,7 +2502,7 @@ residual_fringe
 ---------------
 
 - Removed reading and saving data as a ModelContainer. Data now read in and saved
-as an IFUImageModel.  [#7051]
+  as an IFUImageModel.  [#7051]
 
 
 set_telescope_pointing
@@ -3259,7 +3564,7 @@ cube_build
 - Fix incorrect spatial footprint for single band MRS IFU cubes [#6478]
 
 dark_current
-----------
+------------
 
 - Refactored the code in preparation for moving the code to STCAL. [#6336]
 
@@ -3301,7 +3606,7 @@ datamodels
 - Added SOSS-specific extraction parameters to core schema; add new
   datamodel to store SOSS model traces and aperture weights [#6422]
 
-- Added the ``MirLrsPathlossModel`` for use in the ``pathloss` step. [#6435]
+- Added the ``MirLrsPathlossModel`` for use in the ``pathloss`` step. [#6435]
 
 - Added new column 'reference_order' to 'planned_star_table' in
   guider_raw and guider_cal schemas [#6368]
@@ -3395,7 +3700,7 @@ lib
 - Move setting of the default method to calc_transforms. [#6482]
 
 linearity
---------
+---------
 
 - Use the common code in STCAL for linearity correction. [#6386]
 
@@ -4378,7 +4683,7 @@ cube_build
   appropriate channel/grating is skipped [#5347]
 
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
-  skip the file in creating an ifucube [*5347]
+  skip the file in creating an ifucube [#5347]
 
 - Refactor DataTypes handling of ModelContainer. [#5409]
 
@@ -5997,7 +6302,7 @@ pipeline
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
 
-- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+- ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
   with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
 
 - Changed the default value of good_pixel from 4 to 6 for all outlier
@@ -7157,7 +7462,7 @@ csv_tools
 ---------
 
 cube_build
----------
+----------
 - Removed spaxel.py and replace class with set of arrays [#2472]
 
 - reworked in mapping of the detector pixel to the sky spaxel so that consistent
@@ -7447,7 +7752,7 @@ csv_tools
 ---------
 
 cube_build
----------
+----------
 
 
 cube_skymatch

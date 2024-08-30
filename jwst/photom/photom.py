@@ -425,6 +425,9 @@ class DataSet():
             raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
 
         elif self.exptype in ['NIS_SOSS']:
+            if isinstance(self.input, datamodels.ImageModel):
+                raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
+
             for spec in self.input.spec:
                 self.specnum += 1
                 self.order = spec.spectral_order
@@ -848,9 +851,8 @@ class DataSet():
                 slit = self.input.slits[self.slitnum]
                 # The NIRSpec fixed-slit primary slit needs special handling if
                 # it contains a point source
-                if self.exptype.upper() == 'NRS_FIXEDSLIT' and \
-                   slit.name == self.input.meta.instrument.fixed_slit and \
-                   slit.source_type.upper() == 'POINT':
+                if (self.exptype.upper() == 'NRS_FIXEDSLIT'
+                        and slit.source_type.upper() == 'POINT'):
 
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source

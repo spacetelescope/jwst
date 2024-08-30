@@ -1,7 +1,7 @@
 .. _outlier-detection-imaging:
 
-Default Outlier Detection Algorithm
-===================================
+Outlier Detection Algorithm for Imaging Data
+============================================
 
 This module serves as the interface for applying ``outlier_detection`` to direct
 image observations, like those taken with MIRI, NIRCam and NIRISS.  The code implements the
@@ -69,8 +69,6 @@ Specifically, this routine performs the following operations:
 
    * The median image is created by combining all grouped mosaic images or
      non-resampled input data (as planes in a ModelContainer) pixel-by-pixel.
-   * The ``nlow`` and ``nhigh`` parameters specify how many low and high values
-     to ignore when computing the median for any given pixel.
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and
      ignored when resampled.
@@ -79,13 +77,18 @@ Specifically, this routine performs the following operations:
 #. By default, the median image is blotted back (inverse of resampling) to
    match each original input image.
 
-   * Blotted images are written out to disk as `_<asn_id>_blot.fits` by default.
    * **If resampling is turned off**, the median image is compared directly to
      each input image.
 
 #. Perform statistical comparison between blotted image and original image to identify outliers.
 
-   * This comparison uses the original input images, the blotted
+   * If resampling is disabled (``resample_data == False``) a large number of parameters
+     will be ignored and instead the outlier mask will be computed using the following
+     formula:
+
+       .. math:: | image\_input - image\_median | > SNR * input\_err
+
+   * When resampling is enabled, the comparison uses the original input images, the blotted
      median image, and the derivative of the blotted image to
      create a cosmic ray mask for each input image.
    * The derivative of the blotted image gets created using the blotted
@@ -201,4 +204,4 @@ Outlier Detection for Slit data
 See the :ref:`IFU outlier detection <outlier-detection-spec>` documentation for
 details.
 
-.. automodapi:: jwst.outlier_detection.outlier_detection
+.. automodapi:: jwst.outlier_detection.imaging

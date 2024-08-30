@@ -21,8 +21,6 @@ a few variations to accomodate the nature of these 3D data.
    * The ``rolling_window_width`` parameter specifies the number of integrations over
      which to compute the median. The default is 25. If the number of integrations
      is less than or equal to ``rolling_window_width``, a simple median is used instead.
-   * The ``nlow`` and ``nhigh`` parameters specify how many low and high values
-     to ignore when computing the median for any given pixel.
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and
      ignored when the median is taken.
@@ -38,4 +36,4 @@ a few variations to accomodate the nature of these 3D data.
 #. The input data model DQ arrays are updated with the mask of detected outliers.
 
 
-.. automodapi:: jwst.outlier_detection.outlier_detection_tso
+.. automodapi:: jwst.outlier_detection.tso

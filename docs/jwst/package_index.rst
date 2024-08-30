@@ -13,6 +13,7 @@ Package Index
    associations/index.rst
    background_step/index.rst
    background_subtraction/index.rst
+   badpix_selfcal/index.rst
    barshadow/index.rst
    charge_migration/index.rst
    combine_1d/index.rst
@@ -53,6 +54,7 @@ Package Index
    references_general/index.rst
    refpix/index.rst
    resample/index.rst
+   resample_spec/index.rst
    reset/index.rst
    residual_fringe/index.rst
    rscd/index.rst

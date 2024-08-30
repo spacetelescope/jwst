@@ -2,27 +2,25 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 import functools
-from math import cos, sin
 import os.path
 import shutil
+from math import cos, sin
 
-import pytest
+import astropy.units as u
+import astropy.coordinates as coords
 import numpy as np
-from numpy.testing import assert_allclose
+import pytest
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy import table
 from astropy import wcs as astwcs
-import astropy.units as u
-import astropy.coordinates as coords
-from gwcs import wcs
-from gwcs import wcstools
+from gwcs import wcs, wcstools
+from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
-from jwst.assign_wcs import nirspec
-from jwst.assign_wcs import assign_wcs_step
+from jwst.assign_wcs import nirspec, assign_wcs_step
 from jwst.assign_wcs.tests import data
 from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
 
@@ -356,13 +354,69 @@ def test_msa_configuration_multiple_returns():
     _compare_slits(slitlet_info[1], ref_slit2)
 
 
+def test_msa_fs_configuration():
+    """
+    Test the get_open_msa_slits function with FS and MSA slits defined.
+    """
+    prog_id = '1234'
+    msa_meta_id = 12
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    dither_position = 1
+    slitlet_info = nirspec.get_open_msa_slits(
+        prog_id, msaconfl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+    # MSA slit: reads in as normal
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
+                             0.13, -0.31716078999999997, -0.18092266)
+    _compare_slits(slitlet_info[0], ref_slit)
+
+    # FS primary: S200A1, shutter id 0, quadrant 5
+    ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x', '95065_3', '3',
+                             1.0, -0.161, -0.229, 53.139904, -27.805002)
+    _compare_slits(slitlet_info[1], ref_slit)
+
+    # The remaining fixed slits may be in the MSA file but not primary:
+    # they should not be defined.
+    fs_slits_defined = ['S200A1']
+    n_fixed = 0
+    for slit in slitlet_info:
+        if slit.quadrant == 5:
+            assert slit.name in fs_slits_defined
+            n_fixed += 1
+    assert n_fixed == len(fs_slits_defined)
+
+
+def test_msa_fs_configuration_unsupported(tmp_path):
+    """
+    Test the get_open_msa_slits function with unsupported FS defined.
+    """
+    # modify an existing MSA file to add a bad row
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
+    shutil.copy(msaconfl, bad_confl)
+
+    with fits.open(bad_confl) as msa_hdu_list:
+        shutter_table = table.Table(msa_hdu_list['SHUTTER_INFO'].data)
+        shutter_table.add_row(shutter_table[-1])
+        msa_hdu_list['SHUTTER_INFO'] = fits.table_to_hdu(shutter_table)
+        msa_hdu_list[2].name = 'SHUTTER_INFO'
+        msa_hdu_list.writeto(bad_confl, overwrite=True)
+
+    prog_id = '1234'
+    msa_meta_id = 12
+    dither_position = 1
+    with pytest.raises(MSAFileError, match='unsupported fixed slit'):
+        nirspec.get_open_msa_slits(
+            prog_id, bad_confl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+
 def test_msa_missing_source(tmp_path):
     """
     Test the get_open_msa_slits function with missing source information.
     """
     # modify an existing MSA file to remove source info
-    msaconfl = get_file_path('msa_configuration.fits')
-    bad_confl = str(tmp_path / 'bad_msa_configuration.fits')
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
     shutil.copy(msaconfl, bad_confl)
 
     with fits.open(bad_confl) as msa_hdu_list:
@@ -384,6 +438,13 @@ def test_msa_missing_source(tmp_path):
                              '1234_VRT55', 'VRT55', 0.0,
                              -0.31716078999999997, -0.18092266, 0.0, 0.0)
     _compare_slits(slitlet_info[0], ref_slit)
+
+    # FS primary: S200A1, virtual source name assigned
+    ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x',
+                             '1234_VRTS200A1', 'VRTS200A1', 0.0,
+                             -0.161, -0.229, 0.0, 0.0)
+    _compare_slits(slitlet_info[1], ref_slit)
+
 
 open_shutters = [[24], [23, 24], [22, 23, 25, 27], [22, 23, 25, 27, 28]]
 main_shutter = [24, 23, 25, 28]

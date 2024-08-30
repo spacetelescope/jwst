@@ -43,13 +43,11 @@ class WavecorrStep(Step):
 
             # Check for existence of WCS
             if isinstance(input_model, datamodels.SlitModel):
-                if not (hasattr(input_model.meta, 'wcs') and input_model.meta.wcs is not None):
-                    raise AttributeError("Input model does not have a WCS object; assign_wcs should "
-                                         "be run before wavecorr.")
+                _check_slit_metadata_attributes(input_model)
+            elif isinstance(input_model, datamodels.MultiSlitModel):
+                _check_slit_metadata_attributes(input_model.slits[0])
             else:
-                if not (hasattr(input_model.slits[0].meta, 'wcs') and input_model.slits[0].meta.wcs is not None):
-                    raise AttributeError("Input model does not have a WCS object; assign_wcs should "
-                                         "be run before wavecorr.")
+                raise ValueError(f"Input model must be a SlitModel or MultiSlitModel, not {type(input_model)}")
 
             # Get the reference file
             reffile = self.get_reference_file(input_model, 'wavecorr')
@@ -64,3 +62,14 @@ class WavecorrStep(Step):
             output_model = wavecorr.do_correction(input_model, reffile)
 
         return output_model
+
+
+def _check_slit_metadata_attributes(slit):
+
+    if not hasattr(slit.meta, 'wcs') and slit.meta.wcs is not None:
+        raise AttributeError("Input model does not have a WCS object; assign_wcs should "
+                             "be run before wavecorr.")
+    
+    if not hasattr(slit, 'source_xpos'):
+        raise AttributeError("Input model does not have source_xpos attribute; "
+                             "extract_2d should be run before wavecorr.")
