@@ -268,10 +268,8 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
     # Make it an exposure type outlier detection expects
     miri_cal.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
-    # Make a couple copies
+    # Make a couple copies, give them unique exposure numbers and filename
     container = ModelContainer([miri_cal, miri_cal.copy(), miri_cal.copy()])
-
-    # Give each image a unique name so output files don't overwrite
     for i, model in enumerate(container):
         model.meta.filename = f'test_{i}_cal.fits'
 

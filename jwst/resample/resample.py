@@ -281,7 +281,6 @@ class ResampleData:
         """
         output_models = []
         for group_id, indices in input_models.group_indices.items():
-            print("indices", indices)
             output_model = self.blank_output
 
             copy_asn_info_from_library(input_models, output_model)
