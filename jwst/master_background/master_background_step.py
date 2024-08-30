@@ -240,8 +240,6 @@ def copy_background_to_surf_bright(spectrum):
 def split_container(container):
     """Divide a ModelContainer with science and background into one of each
     """
-    asn = container.meta.asn_table.instance
-
     background = ModelContainer()
     science = ModelContainer()
 
@@ -252,12 +250,11 @@ def split_container(container):
         background.append(container._models[ind_bkgd])
 
     # Pass along the association table to the output science container
-    science.meta.asn_table = {}
     science.asn_pool_name = container.asn_pool_name
     science.asn_table_name = container.asn_table_name
-    merge_tree(science.meta.asn_table.instance, asn)
+    merge_tree(science.asn_table, container.asn_table)
     # Prune the background members from the table
-    for p in science.meta.asn_table.instance['products']:
+    for p in science.asn_table['products']:
         p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
     return science, background
 

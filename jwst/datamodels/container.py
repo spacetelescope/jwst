@@ -1,11 +1,8 @@
-import copy
 from collections import OrderedDict
 from collections.abc import Sequence
 import os.path as op
 import re
 import logging
-
-from asdf import AsdfFile
 from astropy.io import fits
 from stdatamodels import properties
 
@@ -145,18 +142,20 @@ to supply custom catalogs.
             pass
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
-                self._models.append([datamodel_open(m, memmap=self._memmap) for m in init])
+                for m in init:
+                    self._models.append(datamodel_open(m, memmap=self._memmap))
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
         elif isinstance(init, self.__class__):
-            instance = copy.deepcopy(init._instance)
-            self._schema = init._schema
-            self._shape = init._shape
-            self._asdf = AsdfFile(instance)
-            self._instance = instance
-            self._ctx = self
-            self._models = init._models
+            for m in init:
+                self._models.append(datamodel_open(m, memmap=self._memmap))
+            self.asn_exptypes = init.asn_exptypes
+            self.asn_n_members = init.asn_n_members
+            self.asn_table = init.asn_table
+            self.asn_table_name = init.asn_table_name
+            self.asn_pool_name = init.asn_pool_name
+            self.asn_file_path = init.asn_file_path
         elif is_association(init):
             self.from_asn(init)
         elif isinstance(init, str):
@@ -206,16 +205,9 @@ to supply custom catalogs.
         """
         Returns a deep copy of the models in this model container.
         """
-        result = self.__class__(init=None,
-                                pass_invalid_values=self._pass_invalid_values,
-                                strict_validation=self._strict_validation)
-        instance = copy.deepcopy(self._instance, memo=memo)
-        result._asdf = AsdfFile(instance)
-        result._instance = instance
-        result._schema = self._schema
-        result._ctx = result
+        result = self.__class__(init=None)
         for m in self._models:
-            result.append(m.copy())
+            result.append(m.copy(memo=memo))
         return result
 
     @staticmethod
@@ -310,66 +302,6 @@ to supply custom catalogs.
                 except AttributeError:
                     pass
 
-    # def save(self,
-    #          path=None,
-    #          dir_path=None,
-    #          save_model_func=None,
-    #          **kwargs):
-    #     """
-    #     Write out models in container to FITS or ASDF.
-
-    #     Parameters
-    #     ----------
-    #     path : str or func or None
-    #         - If None, the `meta.filename` is used for each model.
-    #         - If a string, the string is used as a root and an index is
-    #           appended.
-    #         - If a function, the function takes the two arguments:
-    #           the value of model.meta.filename and the
-    #           `idx` index, returning constructed file name.
-
-    #     dir_path : str
-    #         Directory to write out files.  Defaults to current working dir.
-    #         If directory does not exist, it creates it.  Filenames are pulled
-    #         from `.meta.filename` of each datamodel in the container.
-
-    #     save_model_func: func or None
-    #         Alternate function to save each model instead of
-    #         the models `save` method. Takes one argument, the model,
-    #         and keyword argument `idx` for an index.
-
-    #     Returns
-    #     -------
-    #     output_paths: [str[, ...]]
-    #         List of output file paths of where the models were saved.
-    #     """
-    #     output_paths = []
-    #     if path is None:
-    #         def path(filename, idx=None):
-    #             return filename
-    #     elif not callable(path):
-    #         path = make_file_with_index
-
-    #     for idx, model in enumerate(self):
-    #         if len(self) <= 1:
-    #             idx = None
-    #         if save_model_func is None:
-    #             outpath, filename = op.split(
-    #                 path(model.meta.filename, idx=idx)
-    #             )
-    #             if dir_path:
-    #                 outpath = dir_path
-    #             save_path = op.join(outpath, filename)
-    #             try:
-    #                 output_paths.append(
-    #                     model.save(save_path, **kwargs)
-    #                 )
-    #             except IOError as err:
-    #                 raise err
-
-    #         else:
-    #             output_paths.append(save_model_func(model, idx=idx))
-    #     return output_paths
 
     @property
     def models_grouped(self):
@@ -515,27 +447,3 @@ to supply custom catalogs.
             if model.meta.asn.exptype.lower() == asn_exptype:
                 ind.append(i)
         return ind
-
-
-# def make_file_with_index(file_path, idx):
-#     """Append an index to a filename
-
-#     Parameters
-#     ----------
-#     file_path: str
-#         The file to append the index to.
-#     idx: int
-#         An index to append
-
-
-#     Returns
-#     -------
-#     file_path: str
-#         Path with index appended
-#     """
-#     # Decompose path
-#     path_head, path_tail = op.split(file_path)
-#     base, ext = op.splitext(path_tail)
-#     if idx is not None:
-#         base = base + str(idx)
-#     return op.join(path_head, base + ext)

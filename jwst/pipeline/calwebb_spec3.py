@@ -129,12 +129,12 @@ class Spec3Pipeline(Pipeline):
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
         model_type = input_models[0].meta.model_type
-        output_file = input_models.meta.asn_table.products[0].name
+        output_file = input_models.asn_table["products"][0]["name"]
         self.output_file = output_file
 
         # Find all the member types in the product
         members_by_type = defaultdict(list)
-        product = input_models.meta.asn_table.products[0].instance
+        product = input_models.asn_table["products"][0]
         for member in product['members']:
             members_by_type[member['exptype'].lower()].append(member['expname'])
 
@@ -146,7 +146,7 @@ class Spec3Pipeline(Pipeline):
         # If background data are present, call the master background step
         if members_by_type['background']:
             source_models = self.master_background(input_models)
-            source_models.meta.asn_table = input_models.meta.asn_table
+            source_models.asn_table = input_models.asn_table
 
             # If the step is skipped, do the container splitting that
             # would've been done in master_background
