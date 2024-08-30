@@ -73,6 +73,15 @@ set_telescope_pointing
 
 - replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
 
+- Refactored separate modes into submodules instead of inheriting from a base class.
+  Moved non-JWST-specific code to stcal. [#8613]
+
+refpix
+------
+
+- Add optimized convolution kernel instead of the running median for NIR
+  fullframe data. [#8726]
+
 resample_spec
 -------------
 
