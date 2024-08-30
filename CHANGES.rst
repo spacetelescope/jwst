@@ -384,7 +384,7 @@ nsclean
 - Changed subarray mode from operating on the entire array at once to
   operating on sections of the array and smoothly combining these sections.
   Due to the computational costs of matrix operations, this is a large
-  speedup that has little effect on the results. [#]
+  speedup that has little effect on the results. [#8745]
 
 outlier_detection
 -----------------
