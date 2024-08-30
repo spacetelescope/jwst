@@ -73,6 +73,7 @@ class ResampleData:
         if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
+        self.intermediate_suffix = 'outlier_i2d'
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -276,6 +277,7 @@ class ResampleData:
         """
         for exposure in input_models.models_grouped:
             output_model = self.blank_output
+
             # Determine output file type from input exposure filenames
             # Use this for defining the output filename
             indx = exposure[0].meta.filename.rfind('.')
@@ -283,9 +285,13 @@ class ResampleData:
             output_root = '_'.join(exposure[0].meta.filename.replace(
                 output_type, '').split('_')[:-1])
             if self.asn_id is not None:
-                output_model.meta.filename = f'{output_root}_{self.asn_id}_outlier_i2d{output_type}'
+                output_model.meta.filename = (
+                    f'{output_root}_{self.asn_id}_'
+                    f'{self.intermediate_suffix}{output_type}')
             else:
-                output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
+                output_model.meta.filename = (
+                    f'{output_root}_'
+                    f'{self.intermediate_suffix}{output_type}')
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
