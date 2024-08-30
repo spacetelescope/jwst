@@ -75,6 +75,7 @@ class ResampleData:
         if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
+        self.intermediate_suffix = 'outlier_i2d'
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -280,6 +281,7 @@ class ResampleData:
         """
         output_models = []
         for group_id, indices in input_models.group_indices.items():
+            print("indices", indices)
             output_model = self.blank_output
 
             copy_asn_info_from_library(input_models, output_model)
@@ -294,9 +296,13 @@ class ResampleData:
                 output_root = '_'.join(example_image.meta.filename.replace(
                     output_type, '').split('_')[:-1])
                 if self.asn_id is not None:
-                    output_model.meta.filename = f'{output_root}_{self.asn_id}_outlier_i2d{output_type}'
+                    output_model.meta.filename = (
+                        f'{output_root}_{self.asn_id}_'
+                        f'{self.intermediate_suffix}{output_type}')
                 else:
-                    output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
+                    output_model.meta.filename = (
+                        f'{output_root}_'
+                        f'{self.intermediate_suffix}{output_type}')
                 input_models.shelve(example_image, indices[0], modify=False)
                 del example_image
 
