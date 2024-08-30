@@ -88,7 +88,10 @@ def test_flag_cr(sci_blot_image_pair):
     )
 
     # Make sure science data array is unchanged after flag_cr()
-    np.testing.assert_allclose(sci.data, data_copy)
+    # except outliers are NaN
+    dnu = (sci.dq & OUTLIER_DO_NOT_USE).astype(bool)
+    assert np.all(np.isnan(sci.data[dnu]))
+    assert np.allclose(sci.data[~dnu], data_copy[~dnu])
 
     # Verify that both DQ flags are set in the DQ array for all outliers
     assert sci.dq[3, 3] == OUTLIER_DO_NOT_USE
@@ -394,7 +397,7 @@ def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
 
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
-def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
+def test_outlier_step_image_weak_cr_dither(exptype, tmp_cwd):
     """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
@@ -424,7 +427,7 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_coron)
-def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
+def test_outlier_step_image_weak_cr_coron(exptype, tsovisit, tmp_cwd):
     """Test whole step with an outlier for coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
@@ -445,17 +448,17 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
 
     # Make sure nothing changed in SCI array except that
     # outliers are NaN
-    for image, corrected in zip(container, result):
-        dnu = (corrected.dq & OUTLIER_DO_NOT_USE).astype(bool)
-        assert np.all(np.isnan(corrected.data[dnu]))
-        assert np.allclose(image.data[~dnu], corrected.data[~dnu])
+    for i, image in enumerate(container):
+        dnu = (result.dq[i] & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(result.data[i][dnu]))
+        assert np.allclose(image.data[~dnu], result.data[i][~dnu])
 
     # Verify source is not flagged
     assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
-    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
-    assert np.isnan(result[0].data[12, 12])
+    assert result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE
+    assert np.isnan(result.data[0, 12, 12])
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
