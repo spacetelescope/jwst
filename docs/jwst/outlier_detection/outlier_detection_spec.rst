@@ -29,22 +29,20 @@ Specifically, this routine performs the following operations (modified from the
 #. Resample all input images into a :py:class:`~jwst.datamodels.ModelContainer` using
    :py:class:`~jwst.resample.resample_spec.ResampleSpecData`
 
-   - Resampled images are written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`
+   - Resampled images are written out to disk with suffix "outlier_s2d"
+     if the ``save_intermediate_results`` parameter is set to `True`.
    - **If resampling is turned off**, the original unrectified inputs are used to create
-     the median image for cosmic-ray detection
+     the median image for cosmic-ray detection.
 #. Create a median image from (possibly) resampled :py:class:`~jwst.datamodels.ModelContainer`
 
-   - The median image is written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`
+   - The median image is written out to disk with suffix "median"
+     if the ``save_intermediate_results`` parameter is set to `True`
 #. Blot median image to match each original input image
 
-   - Resampled/blotted images are written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`
    - **If resampling is turned off**, the median image is used for comparison
      with the original input models for detecting outliers
 #. Perform statistical comparison between blotted image and original image to identify outliers
 #. Update input data model DQ arrays with mask of detected outliers
 
 
-.. automodapi:: jwst.outlier_detection.outlier_detection_spec
+.. automodapi:: jwst.outlier_detection.spec

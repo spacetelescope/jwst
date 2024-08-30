@@ -59,7 +59,7 @@ class PixelReplaceStep(Step):
                 self.log.debug('Input is a ModelContainer.')
             else:
                 self.log.error(f'Input is of type {str(type(input_model))} for which')
-                self.log.error('pixel_replace does not have an algorithm.\n')
+                self.log.error('pixel_replace does not have an algorithm.')
                 self.log.error('Pixel replacement will be skipped.')
                 input_model.meta.cal_step.pixel_replace = 'SKIPPED'
                 return input_model
@@ -98,7 +98,7 @@ class PixelReplaceStep(Step):
                         self.log.debug('Input is a {model.meta.model_type}.')
                     else:
                         self.log.error(f'Input is of type {model.meta.model_type} for which')
-                        self.log.error('pixel_replace does not have an algorithm.\n')
+                        self.log.error('pixel_replace does not have an algorithm.')
                         self.log.error('Pixel replacement will be skipped.')
                         model.meta.cal_step.pixel_replace = 'SKIPPED'
                         run_pixel_replace = False

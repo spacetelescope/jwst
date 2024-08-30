@@ -10,13 +10,13 @@ from jwst.lib.wcs_utils import get_wavelengths
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
-
+from ..stpipe import Step
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
 
-class ResampleSpecStep(ResampleStep):
+class ResampleSpecStep(Step):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the
     drizzle algorithm.
@@ -28,6 +28,20 @@ class ResampleSpecStep(ResampleStep):
     """
 
     class_alias = "resample_spec"
+
+    spec = """
+        pixfrac = float(min=0.0, max=1.0, default=1.0)  # Pixel shrinkage factor
+        kernel = option('square', 'point', default='square')  # Flux distribution kernel
+        fillval = string(default='NAN')  # Output value for pixels with no weight or flux
+        weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
+        output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
+        pixel_scale_ratio = float(default=1.0)  # Ratio of input to output spatial pixel scale
+        pixel_scale = float(default=None)  # Spatial pixel scale in arcsec
+        output_wcs = string(default='')  # Custom output WCS
+        single = boolean(default=False)  # Resample each input to its own output grid
+        blendheaders = boolean(default=True)  # Blend metadata from inputs into output
+        in_memory = boolean(default=True)  # Keep images in memory
+    """
 
     def process(self, input):
         self.wht_type = self.weight_type
@@ -116,6 +130,7 @@ class ResampleSpecStep(ResampleStep):
 
         result.update(input_models[0])
 
+        pscale_ratio = None
         for container in containers.values():
             # Make sure all input models have consistent NaN and DO_NOT_USE values
             for model in container:
@@ -123,20 +138,60 @@ class ResampleSpecStep(ResampleStep):
 
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
-            drizzled_models = resamp.do_drizzle()
+            drizzled_models = resamp.do_drizzle(container)
 
             for model in drizzled_models:
                 self.update_slit_metadata(model)
                 update_s_region_spectral(model)
                 result.slits.append(model)
 
+            # Keep the first computed pixel scale ratio for storage
+            if self.pixel_scale is not None and pscale_ratio is None:
+                pscale_ratio = resamp.pscale_ratio
+
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.asn_pool_name
         result.meta.asn.table_name = input_models.asn_table_name
-        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        if self.pixel_scale is None or pscale_ratio is None:
+            result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        else:
+            result.meta.resample.pixel_scale_ratio = pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
 
         return result
+
+    def get_drizpars(self):
+        """
+        Load all drizzle-related parameter values into kwargs list.
+        """
+        # Define the keys pulled from step parameters
+        kwargs = dict(
+            pixfrac=self.pixfrac,
+            kernel=self.kernel,
+            fillval=self.fillval,
+            wht_type=self.weight_type,
+            good_bits=GOOD_BITS,
+            single=self.single,
+            blendheaders=self.blendheaders,
+            in_memory=self.in_memory
+        )
+
+        # Custom output WCS parameters
+        kwargs['output_shape'] = ResampleStep.check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = ResampleStep.load_custom_wcs(
+            self.output_wcs, kwargs['output_shape'])
+        kwargs['pscale'] = self.pixel_scale
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+
+        # Report values to processing log
+        for k, v in kwargs.items():
+            self.log.debug('   {}={}'.format(k, v))
+
+        return kwargs
 
     def _process_slit(self, input_models):
         """
@@ -158,14 +213,18 @@ class ResampleSpecStep(ResampleStep):
             match_nans_and_flags(model)
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
-        drizzled_models = resamp.do_drizzle()
+
+        drizzled_models = resamp.do_drizzle(input_models)
 
         result = drizzled_models[0]
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.asn_pool_name
         result.meta.asn.table_name = input_models.asn_table_name
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
-        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        if self.pixel_scale is None:
+            result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        else:
+            result.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
         self.update_slit_metadata(result)
         update_s_region_spectral(result)

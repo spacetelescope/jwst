@@ -1,21 +1,49 @@
 1.15.2 (unreleased)
 ===================
 
+align_refs
+----------
 
-scripts
--------
+- Compute alignment shifts from the first integration of the science exposure only. [#8643]
 
-- Removed many non-working and out-dated scripts. Including
-  many scripts that were replaced by ``strun``. [#8619]
+ami_average
+-----------
+
+- Fix error in step spec that prevents step creation. [#8677]
+
+assign_wcs
+----------
+
+- Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
+  into stcal. [#8624]
+
+associations
+------------
+
+- Restored slit name to level 3 product names for NIRSpec BOTS and background
+  fixed slit targets. [#8699]
 
 cube_build
 ----------
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
+  
+- Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   building a cube. [#8557]
+
+documentation
+-------------
+
+- Add changelog to documentation. [#8716]
+
+emicorr
+-------
+
+- Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
+  to compute a correction. [#8675]
 
 flat_field
 ----------
@@ -23,17 +51,38 @@ flat_field
 - Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
   variance, and DQ extensions for all modes. [#8557]
 
+general
+-------
+
+- Remove the unused ``stsci.image`` dependency. [#8663]
+
+- Update required stcal version to 1.8.0. [#8706]
+
+- Increase minimum required stpipe. [#8713]
+
 master_background
 -----------------
 
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+mrs_imatch
+----------
+
+- Added a deprecation warning and set the default to skip=True for the step. [#8728] 
+
 outlier_detection
 -----------------
 
 - Fixed failures due to a missing ``wcs.array_shape`` attribute when the
   ``outlier_detection`` step was run standalone using e.g. ``strun`` [#8645]
+
+- Refactored separate modes into submodules instead of inheriting from a base class.
+  Moved non-JWST-specific code to stcal. [#8613]
+
+- Fixed file names and output directory for intermediate resampled spectral
+  images. Intermediate files now have suffix ``outlier_s2d`` and are saved to
+  the output directory alongside final products. [#8735]
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
@@ -53,14 +102,47 @@ photom
 resample
 --------
 
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
+  changed to use values in the top-level ASDF structure if the values in the WCS
+  are ``None``. [#8698]
+
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
 
 resample_spec
 -------------
 
+- Modified the output NIRSpec spectral WCS to sample the input data linearly in sky
+  coordinates, rather than slit coordinates, in order to conserve spectral
+  flux in default reductions. [#8596]
+
+- Updated handling for the ``pixel_scale_ratio`` parameter to apply only to the
+  spatial dimension, to match the sense of the parameter application to the
+  documented intent, and to conserve spectral flux when applied. [#8596, #8727]
+
+- Implemented handling for the ``pixel_scale`` parameter, which was previously
+  ignored for spectral resampling. [#8596]
+
+- Fixed a bug resulting in incorrect output slit coordinates for NIRSpec moving
+  targets in the ``calwebb_spec3`` pipeline. [#8596]
+
+- Separate ``resample_spec`` step parameters from ``resample`` step parameters
+  so that the spectral resampling step only exposes parameters that are appropriate
+  for spectral data. [#8622]
+
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
+
+scripts
+-------
+
+- Removed many non-working and out-dated scripts. Including
+  many scripts that were replaced by ``strun``. [#8619]
+
+set_telescope_pointing
+----------------------
+
+- Replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
 
 stpipe
 ------
@@ -69,16 +151,25 @@ stpipe
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
 
+tso_photometry
+--------------
+
+- Replaced photutils.aperture do_photometry with photutils.ApertureStats to remove NaNs
+  when performing TSO photometry for non SUB64 WLP8 pupil data. For SUB64 WLP8 changed
+  summing data in the aperture to use np.nansum to ignore NaNs. [#8672]
+
 tweakreg
 --------
-
-- Removed direct setting of the ``self.skip`` attribute from within the step
-  itself. [#8600]
 
 - Updated requirement for ``tweakwcs`` to version ``0.8.8`` which fixes a crash
   in the ``tweakreg`` step due to a ``MalformedPolygonError`` exception being
   raised by the ``spherical_geometry`` package for some data
   sets. [#8657, spacetelescope/tweakwcs#205]
+
+- Moved all realignment methods to stcal. [#8624]
+
+- Removed direct setting of the ``self.skip`` attribute from within the step
+  itself. [#8600]
 
 
 1.15.1 (2024-07-08)
@@ -283,6 +374,8 @@ general
 - Increase minimum required scipy. [#8441]
 
 - Increase minimum required stdatamodels and stpipe. [#8592]
+
+- build with Numpy 2.0 release candidate to address ABI changes [#8527]
 
 lib
 ---
@@ -1104,7 +1197,7 @@ datamodels
 ----------
 
 - Added support for user-supplied ``group_id`` either via
- ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
+  ``model.meta.group_id`` attribute or as a member of the ASN table. [#7997]
 
 refpix
 ------
@@ -1309,7 +1402,7 @@ datamodels
 documentation
 -------------
 
-- Fixed a reference to the ``ramp_fitting` module in the user documentation. [#7898]
+- Fixed a reference to the ``ramp_fitting`` module in the user documentation. [#7898]
 
 engdb_tools
 -----------
@@ -1711,6 +1804,7 @@ regtest
 -------
 
 - Updated input filenames for NIRCam ``wfss_contam`` tests [#7595]
+
 srctype
 -------
 
@@ -1770,7 +1864,7 @@ other
 -----
 
 - Remove use of deprecated ``pytest-openfiles`` plugin. This has been replaced by
-  catching ``ResourceWarning``s. [#7526]
+  catching ``ResourceWarning``. [#7526]
 
 - Remove use of ``codecov`` package. [#7543]
 
@@ -2445,7 +2539,7 @@ residual_fringe
 ---------------
 
 - Removed reading and saving data as a ModelContainer. Data now read in and saved
-as an IFUImageModel.  [#7051]
+  as an IFUImageModel.  [#7051]
 
 
 set_telescope_pointing
@@ -3507,7 +3601,7 @@ cube_build
 - Fix incorrect spatial footprint for single band MRS IFU cubes [#6478]
 
 dark_current
-----------
+------------
 
 - Refactored the code in preparation for moving the code to STCAL. [#6336]
 
@@ -3549,7 +3643,7 @@ datamodels
 - Added SOSS-specific extraction parameters to core schema; add new
   datamodel to store SOSS model traces and aperture weights [#6422]
 
-- Added the ``MirLrsPathlossModel`` for use in the ``pathloss` step. [#6435]
+- Added the ``MirLrsPathlossModel`` for use in the ``pathloss`` step. [#6435]
 
 - Added new column 'reference_order' to 'planned_star_table' in
   guider_raw and guider_cal schemas [#6368]
@@ -3643,7 +3737,7 @@ lib
 - Move setting of the default method to calc_transforms. [#6482]
 
 linearity
---------
+---------
 
 - Use the common code in STCAL for linearity correction. [#6386]
 
@@ -4626,7 +4720,7 @@ cube_build
   appropriate channel/grating is skipped [#5347]
 
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
-  skip the file in creating an ifucube [*5347]
+  skip the file in creating an ifucube [#5347]
 
 - Refactor DataTypes handling of ModelContainer. [#5409]
 
@@ -6245,7 +6339,7 @@ pipeline
 - ``calwebb_tso3`` was changed to allow processing of exposures
   with ``EXP_TYPE=MIR_IMAGE.`` [#3633]
 
-- - ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
+- ``calwebb_tso3`` was changed to allow tso photometry processing of exposures
   with (``EXP_TYPE=MIR_IMAGE`` and tsovisit = True) or  with (``EXP_TYPE=MIR_IMAGE``) [#3650]
 
 - Changed the default value of good_pixel from 4 to 6 for all outlier
@@ -7405,7 +7499,7 @@ csv_tools
 ---------
 
 cube_build
----------
+----------
 - Removed spaxel.py and replace class with set of arrays [#2472]
 
 - reworked in mapping of the detector pixel to the sky spaxel so that consistent
@@ -7695,7 +7789,7 @@ csv_tools
 ---------
 
 cube_build
----------
+----------
 
 
 cube_skymatch

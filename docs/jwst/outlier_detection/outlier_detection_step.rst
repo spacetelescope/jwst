@@ -29,19 +29,19 @@ input data:
 #. Select outlier detection algorithm based on exposure type
 
    - **Images**: like those taken with NIRCam, will use
-     :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` as described
+     :py:mod:`~jwst.outlier_detection.outlier_detection.OutlierDetection` as described
      in :ref:`outlier-detection-imaging`
    - **Coronagraphic observations**:
-     use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with
-     resampling turned off as described in :ref:`outlier-detection-imaging`
+     use :py:mod:`~jwst.outlier_detection.coron`
+     as described in :ref:`outlier-detection-coron`
    - **Time-Series Observations(TSO)**: both imaging and spectroscopic modes, use
-     :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetectionTSO`
+     :py:mod:`~jwst.outlier_detection.tso`
      as described in :ref:`outlier-detection-tso`
    - **IFU observations**: use
-     :py:class:`~jwst.outlier_detection.outlier_detection_ifu.OutlierDetectionIFU` as
+     :py:mod:`~jwst.outlier_detection.ifu` as
      described in :ref:`outlier-detection-ifu`
    - **Long-slit spectroscopic observations**: use
-     :py:class:`~jwst.outlier_detection.outlier_detection_spec.OutlierDetectionSpec` as
+     :py:mod:`~jwst.outlier_detection.spec` as
      described in :ref:`outlier-detection-spec`
 
 #. Instantiate and run outlier detection class determined for the exposure type

@@ -3,9 +3,8 @@ import os
 import warnings
 
 import numpy as np
-from drizzle import util
-from drizzle import cdrizzle
 import psutil
+from drizzle import cdrizzle, util
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -14,7 +13,7 @@ from stdatamodels.jwst.library.basic_utils import bytes2human
 from jwst.datamodels import ModelContainer
 
 from . import gwcs_drizzle
-from . import resample_utils
+from jwst.resample import resample_utils
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
@@ -69,12 +68,12 @@ class ResampleData:
                 deleted from memory. Default value is `True` to keep
                 all products in memory.
         """
-        self.input_models = input_models
         self.output_dir = None
         self.output_filename = output
         if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
+        self.intermediate_suffix = 'outlier_i2d'
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -125,7 +124,7 @@ class ResampleData:
         else:
             # Define output WCS based on all inputs, including a reference WCS:
             self.output_wcs = resample_utils.make_output_wcs(
-                self.input_models,
+                input_models,
                 ref_wcs=output_wcs,
                 pscale_ratio=self.pscale_ratio,
                 pscale=pscale,
@@ -190,15 +189,15 @@ class ResampleData:
 
         self.output_models = ModelContainer(open_models=False)
 
-    def do_drizzle(self):
+    def do_drizzle(self, input_models):
         """Pick the correct drizzling mode based on self.single
         """
         if self.single:
-            return self.resample_many_to_many()
+            return self.resample_many_to_many(input_models)
         else:
-            return self.resample_many_to_one()
+            return self.resample_many_to_one(input_models)
 
-    def blend_output_metadata(self, output_model):
+    def blend_output_metadata(self, output_model, input_models):
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
         output_file = output_model.meta.filename
@@ -211,12 +210,63 @@ class ResampleData:
         log.info('Blending metadata for {}'.format(output_file))
         blendmeta.blendmodels(
             output_model,
-            inputs=self.input_models,
+            inputs=input_models,
             output=output_file,
             ignore=ignore_list
         )
 
-    def resample_many_to_many(self):
+    def _get_intensity_scale(self, img):
+        """
+        Compute an intensity scale from the input and output pixel area.
+
+        For imaging data, the scaling is used to account for differences
+        between the nominal pixel area and the average pixel area for
+        the input data.
+
+        For spectral data, the scaling is used to account for flux
+        conservation with non-unity pixel scale ratios, when the
+        data units are flux density.
+
+        Parameters
+        ----------
+        img : DataModel
+            The input data model.
+
+        Returns
+        -------
+        iscale : float
+            The scale to apply to the input data before drizzling.
+        """
+        input_pixflux_area = img.meta.photometry.pixelarea_steradians
+        if input_pixflux_area:
+            if 'SPECTRAL' in img.meta.wcs.output_frame.axes_type:
+                # Use the nominal area as is
+                input_pixel_area = input_pixflux_area
+
+                # If input image is in flux density units, correct the
+                # flux for the user-specified change to the spatial dimension
+                if resample_utils.is_flux_density(img.meta.bunit_data):
+                    input_pixel_area *= self.pscale_ratio
+            else:
+                img.meta.wcs.array_shape = img.data.shape
+                input_pixel_area = compute_image_pixel_area(img.meta.wcs)
+                if input_pixel_area is None:
+                    raise ValueError(
+                        "Unable to compute input pixel area from WCS of input "
+                        f"image {repr(img.meta.filename)}."
+                    )
+                if self.input_pixscale0 is None:
+                    self.input_pixscale0 = np.rad2deg(
+                        np.sqrt(input_pixel_area)
+                    )
+                    if self._recalc_pscale_ratio:
+                        self.pscale_ratio = self.pscale / self.input_pixscale0
+            iscale = np.sqrt(input_pixflux_area / input_pixel_area)
+        else:
+            iscale = 1.0
+        return iscale
+
+    def resample_many_to_many(self, input_models):
         """Resample many inputs to many outputs where outputs have a common frame.
 
         Coadd only different detectors of the same exposure, i.e. map NRCA5 and
@@ -225,8 +275,9 @@ class ResampleData:
 
         Used for outlier detection
         """
-        for exposure in self.input_models.models_grouped:
+        for exposure in input_models.models_grouped:
             output_model = self.blank_output
+
             # Determine output file type from input exposure filenames
             # Use this for defining the output filename
             indx = exposure[0].meta.filename.rfind('.')
@@ -234,9 +285,13 @@ class ResampleData:
             output_root = '_'.join(exposure[0].meta.filename.replace(
                 output_type, '').split('_')[:-1])
             if self.asn_id is not None:
-                output_model.meta.filename = f'{output_root}_{self.asn_id}_outlier_i2d{output_type}'
+                output_model.meta.filename = (
+                    f'{output_root}_{self.asn_id}_'
+                    f'{self.intermediate_suffix}{output_type}')
             else:
-                output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
+                output_model.meta.filename = (
+                    f'{output_root}_'
+                    f'{self.intermediate_suffix}{output_type}')
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
@@ -245,28 +300,9 @@ class ResampleData:
             log.info(f"{len(exposure)} exposures to drizzle together")
             for img in exposure:
                 img = datamodels.open(img)
+                iscale = self._get_intensity_scale(img)
+                log.debug(f'Using intensity scale iscale={iscale}')
 
-                input_pixflux_area = img.meta.photometry.pixelarea_steradians
-                if (input_pixflux_area and
-                        'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                    img.meta.wcs.array_shape = img.data.shape
-                    input_pixel_area = compute_image_pixel_area(img.meta.wcs)
-                    if input_pixel_area is None:
-                        raise ValueError(
-                            "Unable to compute input pixel area from WCS of input "
-                            f"image {repr(img.meta.filename)}."
-                        )
-                    if self.input_pixscale0 is None:
-                        self.input_pixscale0 = np.rad2deg(
-                            np.sqrt(input_pixel_area)
-                        )
-                        if self._recalc_pscale_ratio:
-                            self.pscale_ratio = self.pscale / self.input_pixscale0
-                    iscale = np.sqrt(input_pixflux_area / input_pixel_area)
-                else:
-                    iscale = 1.0
-
-                # TODO: should weight_type=None here?
                 inwht = resample_utils.build_driz_weight(
                     img,
                     weight_type=self.weight_type,
@@ -313,7 +349,7 @@ class ResampleData:
 
         return self.output_models
 
-    def resample_many_to_one(self):
+    def resample_many_to_one(self, input_models):
         """Resample and coadd many inputs to a single output.
 
         Used for stage 3 resampling
@@ -321,37 +357,19 @@ class ResampleData:
         output_model = self.blank_output.copy()
         output_model.meta.filename = self.output_filename
         output_model.meta.resample.weight_type = self.weight_type
-        output_model.meta.resample.pointings = len(self.input_models.group_names)
+        output_model.meta.resample.pointings = len(input_models.group_names)
 
         if self.blendheaders:
-            self.blend_output_metadata(output_model)
+            self.blend_output_metadata(output_model, input_models)
 
         # Initialize the output with the wcs
         driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                         kernel=self.kernel, fillval=self.fillval)
 
         log.info("Resampling science data")
-        for img in self.input_models:
-            input_pixflux_area = img.meta.photometry.pixelarea_steradians
-            if (input_pixflux_area and
-                    'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                img.meta.wcs.array_shape = img.data.shape
-                input_pixel_area = compute_image_pixel_area(img.meta.wcs)
-                if input_pixel_area is None:
-                    raise ValueError(
-                        "Unable to compute input pixel area from WCS of input "
-                        f"image {repr(img.meta.filename)}."
-                    )
-                if self.input_pixscale0 is None:
-                    self.input_pixscale0 = np.rad2deg(
-                        np.sqrt(input_pixel_area)
-                    )
-                    if self._recalc_pscale_ratio:
-                        self.pscale_ratio = self.pscale / self.input_pixscale0
-                iscale = np.sqrt(input_pixflux_area / input_pixel_area)
-            else:
-                iscale = 1.0
-
+        for img in input_models:
+            iscale = self._get_intensity_scale(img)
+            log.debug(f'Using intensity scale iscale={iscale}')
             img.meta.iscale = iscale
 
             inwht = resample_utils.build_driz_weight(img,
@@ -381,8 +399,8 @@ class ResampleData:
             )
             del data, inwht
 
-        # Resample variance arrays in self.input_models to output_model
-        self.resample_variance_arrays(output_model)
+        # Resample variance arrays in input_models to output_model
+        self.resample_variance_arrays(output_model, input_models)
         var_components = [
             output_model.var_rnoise,
             output_model.var_poisson,
@@ -395,16 +413,16 @@ class ResampleData:
         all_nan = np.all(np.isnan(var_components), axis=0)
         output_model.err[all_nan] = np.nan
 
-        self.update_exposure_times(output_model)
+        self.update_exposure_times(output_model, input_models)
         self.output_models.append(output_model)
 
-        for img in self.input_models:
+        for img in input_models:
             del img.meta.iscale
 
         return self.output_models
 
-    def resample_variance_arrays(self, output_model):
-        """Resample variance arrays from self.input_models to the output_model.
+    def resample_variance_arrays(self, output_model, input_models):
+        """Resample variance arrays from input_models to the output_model.
 
         Variance images from each input model are resampled individually and
         added to a weighted sum. If weight_type is 'ivm', the inverse of the
@@ -420,7 +438,7 @@ class ResampleData:
         total_weight_rn_var = np.zeros_like(output_model.data)
         total_weight_pn_var = np.zeros_like(output_model.data)
         total_weight_flat_var = np.zeros_like(output_model.data)
-        for model in self.input_models:
+        for model in input_models:
             # Do the read noise variance first, so it can be
             # used for weights if needed
             rn_var = self._resample_one_variance_array(
@@ -558,14 +576,14 @@ class ResampleData:
         )
         return resampled_error ** 2
 
-    def update_exposure_times(self, output_model):
+    def update_exposure_times(self, output_model, input_models):
         """Modify exposure time metadata in-place"""
         total_exposure_time = 0.
         exposure_times = {'start': [], 'end': []}
         duration = 0.0
         total_measurement_time = 0.0
         measurement_time_failures = []
-        for exposure in self.input_models.models_grouped:
+        for exposure in input_models.models_grouped:
             total_exposure_time += exposure[0].meta.exposure.exposure_time
             if not resample_utils.check_for_tmeasure(exposure[0]):
                 measurement_time_failures.append(1)
@@ -829,7 +847,7 @@ def compute_image_pixel_area(wcs):
 
     k = 0
     dxy = [1, -1, -1, 1]
-
+    ra, dec, center = np.nan, np.nan, (np.nan, np.nan)
     while xmin < xmax and ymin < ymax:
         try:
             x, y, image_area, center, b, r, t, l = _get_boundary_points(
@@ -854,7 +872,6 @@ def compute_image_pixel_area(wcs):
             if not (np.all(np.isfinite(ra[sl])) and
                     np.all(np.isfinite(dec[sl]))):
                 limits[k] += dxy[k]
-                ymin, xmax, ymax, xmin = limits
                 k = (k + 1) % 4
                 break
             k = (k + 1) % 4

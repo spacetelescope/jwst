@@ -78,3 +78,4 @@ Package Documentation
    :caption: Package Documentation
 
    jwst/package_index.rst
+   jwst/changes.rst
