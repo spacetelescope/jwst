@@ -55,6 +55,14 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+nsclean
+-------
+
+- Changed subarray mode from operating on the entire array at once to
+  operating on sections of the array and smoothly combining these sections.
+  Due to the computational costs of matrix operations, this is a large
+  speedup that has little effect on the results. [#8745]
+
 outlier_detection
 -----------------
 
@@ -380,11 +388,6 @@ nsclean
 - Added a check for combined NIRSpec MOS and fixed slit products: if fixed
   slits are defined in a MOS product, the central fixed slit quadrant
   is not automatically masked. [#8467]
-
-- Changed subarray mode from operating on the entire array at once to
-  operating on sections of the array and smoothly combining these sections.
-  Due to the computational costs of matrix operations, this is a large
-  speedup that has little effect on the results. [#8745]
 
 outlier_detection
 -----------------
