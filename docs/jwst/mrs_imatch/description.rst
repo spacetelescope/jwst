@@ -9,8 +9,8 @@ Description
 Overview
 --------
 
-This step has been deprecated in JWST calibration pipeline version 11.1.
-The ``mrs_imatch`` step is skipped by default in the calwebb_spec3 pipeline.
+This step has been deprecated  and will be
+skipped by default in the calwebb_spec3 pipeline.
 
 The ``mrs_imatch`` step "matches" image intensities of several input
 2D MIRI MRS images by fitting polynomials to cube intensities (cubes built
