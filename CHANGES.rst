@@ -381,6 +381,11 @@ nsclean
   slits are defined in a MOS product, the central fixed slit quadrant
   is not automatically masked. [#8467]
 
+- Changed subarray mode from operating on the entire array at once to
+  operating on sections of the array and smoothly combining these sections.
+  Due to the computational costs of matrix operations, this is a large
+  speedup that has little effect on the results. [#]
+
 outlier_detection
 -----------------
 

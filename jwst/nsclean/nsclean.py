@@ -1,4 +1,3 @@
-#-*- python -*-
 import logging
 import numpy as np
 import gwcs
@@ -134,8 +133,11 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     # Initialize mask to all True. Subsequent operations will mask
     # out pixels that contain signal.
     # Note: mask will be 3D for BOTS mode data
-    mask = np.full(np.shape(input_model.dq), True)
+    #mask = np.full(np.shape(input_model.dq), True)
 
+    # Similar to above, but don't use reference pixels.
+    mask = (input_model.dq>>31)&1 == 0
+    
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
         mask = mask_ifu_slices(input_model, mask)
@@ -170,12 +172,6 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
         else:
             log.info("Fixed slits found in MSA definition; "
                      "not masking the fixed slit region for MOS data.")
-
-    # Use left/right reference pixel columns (first and last 4). Can only be
-    # applied to data that uses all 2048 columns of the detector.
-    if mask.shape[-1] == 2048:
-        mask[..., :, :5] = True
-        mask[..., :, -4:] = True
 
     # Mask outliers using sigma clipping stats.
     # For BOTS mode, which uses 3D data, loop over each integration separately.
