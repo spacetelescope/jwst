@@ -1191,7 +1191,7 @@ class NIRDataset(Dataset):
         in the superbias subtraction step"""
 
         continue_apply_conv_kernel = False
-        if self.use_conv_kernel:
+        if self.use_conv_kernel and self.conv_kernel_model is not None:
             kernels = make_kernels(self.conv_kernel_model,
                                    self.input_model.meta.instrument.detector,
                                    self.gaussmooth,
@@ -2202,6 +2202,7 @@ def reference_pixel_correction(input_dataset):
     input_dataset.do_corrections()
 
     if input_dataset.input_model.meta.exposure.zero_frame:
+        log.info('Processing the zero frame')
         process_zeroframe_correction(input_dataset)
 
     return
