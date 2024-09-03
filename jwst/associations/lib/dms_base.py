@@ -1141,43 +1141,6 @@ def nrslamp_valid_detector(item):
     return False
 
 
-def nrs_nod_background_overlap(science_item, background_item):
-    """
-    Check that a candidate background nod will not overlap with science.
-
-    Currently, this function only returns True for NIRSpec
-    fixed slit exposures taken with slit S1600A1 in a 5-point
-    nod pattern, when the background candidate is in the
-    closest nod to the science.
-    """
-    try:
-        _, exptype = item_getattr(science_item, ['exp_type'])
-        _, slit = item_getattr(science_item, ['fxd_slit'])
-        _, numdthpt = item_getattr(science_item, ['numdthpt'])
-        _, sci_num = item_getattr(science_item, ['patt_num'])
-        _, bkg_num = item_getattr(background_item, ['patt_num'])
-    except KeyError:
-        return False
-
-    try:
-        numdthpt = int(numdthpt)
-        sci_num = int(sci_num)
-        bkg_num = int(bkg_num)
-    except ValueError:
-        return False
-
-    # Background is currently only expected to overlap severely for
-    # 5 point dithers with fixed slit S1600A1.  Only the nearest
-    # dithers to the science observation need to be excluded.
-    if (exptype == 'nrs_fixedslit'
-            and slit == 's1600a1'
-            and numdthpt == 5
-            and abs(sci_num - bkg_num) <= 1):
-        return True
-
-    return False
-
-
 def nrccoron_valid_detector(item):
     """Check that a coronagraphic mask+detector combo is valid"""
     try:
