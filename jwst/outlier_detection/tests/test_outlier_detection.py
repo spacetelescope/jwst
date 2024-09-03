@@ -6,16 +6,18 @@ import os
 
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.pointing import create_fitswcs
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.outlier_detection import flag_cr
+from jwst.outlier_detection.utils import flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
     TSO_IMAGE_MODES,
     CORON_IMAGE_MODES,
 )
-from jwst.assign_wcs.pointing import create_fitswcs
+from jwst.resample.tests.test_resample_step import miri_rate_model
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -42,7 +44,8 @@ def sci_blot_image_pair():
     sci.meta.background.subtracted = False
     sci.meta.background.level = background
 
-    sci.data = np.random.normal(loc=background, size=shape, scale=sigma)
+    rng = np.random.default_rng(720)
+    sci.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci.err = np.zeros(shape) + sigma
     sci.var_rnoise += 0
 
@@ -74,7 +77,15 @@ def test_flag_cr(sci_blot_image_pair):
 
     # run flag_cr() which updates in-place.  Copy sci first.
     data_copy = sci.data.copy()
-    flag_cr(sci, blot)
+    flag_resampled_model_crs(
+        sci,
+        blot.data,
+        5.0,
+        4.0,
+        1.2,
+        0.7,
+        0,
+    )
 
     # Make sure science data array is unchanged after flag_cr()
     np.testing.assert_allclose(sci.data, data_copy)
@@ -133,7 +144,8 @@ def we_many_sci(
 
     # Replace the FITS-type WCS with an Identity WCS
     sci1.meta.wcs = create_fitswcs(sci1)
-    sci1.data = np.random.normal(loc=background, size=shape, scale=sigma)
+    rng = np.random.default_rng(720)
+    sci1.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci1.err = np.zeros(shape) + sigma
     sci1.data[7, 7] += signal
     # update the noise for this source to include the photon/measurement noise
@@ -149,13 +161,29 @@ def we_many_sci(
     all_sci = [sci1]
     for i in range(numsci - 1):
         tsci = sci1.copy()
-        tsci.data = np.random.normal(loc=background, size=shape, scale=sigma)
+        tsci.data = rng.normal(loc=background, size=shape, scale=sigma)
         # Add a source in the center
         tsci.data[7, 7] += signal
         tsci.meta.filename = f"foo{i + 2}_cal.fits"
         all_sci.append(tsci)
 
     return all_sci
+
+
+def container_to_cube(container):
+    """
+    Utility function to convert the test container to a cube
+    for some tests
+    """
+    cube_data = np.array([i.data for i in container])
+    cube_err = np.array([i.err for i in container])
+    cube_dq = np.array([i.dq for i in container])
+    cube_var_noise = np.array([i.var_rnoise for i in container])
+    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
+
+    # update metadata of cube to match the first image
+    cube.meta = container[0].meta
+    return cube
 
 
 @pytest.fixture
@@ -168,18 +196,13 @@ def we_three_sci():
 def test_outlier_step_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
-    pristine = container.copy()
-    result = OutlierDetectionStep.call(container)
+    pristine = ModelContainer([m.copy() for m in container])
+    OutlierDetectionStep.call(container)
 
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
         np.testing.assert_allclose(image.data, uncorrected.data)
         np.testing.assert_allclose(image.dq, uncorrected.dq)
-
-    # Make sure nothing changed in SCI and DQ arrays
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
-        np.testing.assert_allclose(image.dq, corrected.dq)
 
 
 def test_outlier_step(we_three_sci, tmp_cwd):
@@ -189,14 +212,12 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     # Drop a CR on the science array
     container[0].data[12, 12] += 1
 
-    # Verify that intermediary files are removed
+    # Verify that intermediate files are removed
     OutlierDetectionStep.call(container)
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) == 0
     assert len(median_files) == 0
-    assert len(blot_files) == 0
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
@@ -213,13 +234,102 @@ def test_outlier_step(we_three_sci, tmp_cwd):
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
-    # Verify that intermediary files are saved at the specified location
+    # Verify that intermediate files are saved at the specified location
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
-    blot_files = glob(os.path.join(tmp_cwd, '*blot.fits'))
     assert len(i2d_files) != 0
     assert len(median_files) != 0
-    assert len(blot_files) != 0
+
+
+def test_outlier_step_spec(tmp_cwd, tmp_path):
+    """Test outlier step for spec data including saving intermediate results."""
+    output_dir = tmp_path / 'output'
+    output_dir.mkdir(exist_ok=True)
+    output_dir = str(output_dir)
+
+    # Make a MIRI model and assign a spectral wcs
+    miri_rate = miri_rate_model()
+    miri_cal = AssignWcsStep.call(miri_rate)
+
+    # Make it an exposure type outlier detection expects
+    miri_cal.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+
+    # Make a couple copies
+    container = ModelContainer([miri_cal, miri_cal.copy(), miri_cal.copy()])
+
+    # Give each image a unique name so output files don't overwrite
+    for i, model in enumerate(container):
+        model.meta.filename = f'test_{i}_cal.fits'
+
+    # Drop a CR on the science array in the first image
+    container[0].data[209, 37] += 1
+
+    # Verify that intermediate files are removed when not saved
+    # (s2d files are expected, i2d files are not, but we'll check
+    # for them to make sure the imaging extension didn't creep back in)
+    OutlierDetectionStep.call(container, output_dir=output_dir, save_results=True)
+    for dirname in [output_dir, tmp_cwd]:
+        result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+        i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
+        s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
+        median_files = glob(os.path.join(dirname, '*median.fits'))
+
+        # intermediate files are removed
+        assert len(i2d_files) == 0
+        assert len(s2d_files) == 0
+        assert len(median_files) == 0
+
+        # result files are written to the output directory
+        if dirname == output_dir:
+            assert len(result_files) == len(container)
+        else:
+            assert len(result_files) == 0
+
+    # Call again, but save intermediate to the output path
+    result = OutlierDetectionStep.call(
+        container, save_results=True, save_intermediate_results=True,
+        output_dir=output_dir
+    )
+
+    # Make sure nothing changed in SCI array
+    for image, corrected in zip(container, result):
+        np.testing.assert_allclose(image.data, corrected.data)
+
+    # Verify CR is flagged
+    assert result[0].dq[209, 37] == OUTLIER_DO_NOT_USE
+
+    # Verify that intermediate files are saved at the specified location
+    for dirname in [output_dir, tmp_cwd]:
+        all_files = glob(os.path.join(dirname, '*.fits'))
+        result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+        i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
+        s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
+        median_files = glob(os.path.join(dirname, '*median.fits'))
+        if dirname == output_dir:
+            # result files are written to the output directory
+            assert len(result_files) == len(container)
+
+            # s2d and median files are written to the output directory
+            assert len(s2d_files) == len(container)
+            assert len(median_files) == 1
+
+            # i2d files not written
+            assert len(i2d_files) == 0
+
+            # nothing else was written
+            assert len(all_files) == len(s2d_files) + len(median_files) + len(result_files)
+        else:
+            # nothing should be written to the current directory
+            assert len(result_files) == 0
+            assert len(s2d_files) == 0
+            assert len(median_files) == 0
+            assert len(i2d_files) == 0
+            assert len(all_files) == 0
+
+    miri_rate.close()
+    result.close()
+    for model in container:
+        model.close()
 
 
 def test_outlier_step_on_disk(we_three_sci, tmp_cwd):
@@ -319,18 +429,20 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
     # no noise so it should always be above the default threshold of 5
     container[0].data[12, 12] = bkg + sig * 10
 
-    result = OutlierDetectionStep.call(container)
+    # coron3 will provide a CubeModel so convert the container to a cube
+    cube = container_to_cube(container)
+
+    result = OutlierDetectionStep.call(cube)
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    for i, image in enumerate(container):
+        np.testing.assert_allclose(image.data, result.data[i])
 
     # Verify source is not flagged
-    for r in result:
-        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
-    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    assert np.all(result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE)
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
@@ -358,14 +470,7 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
         model.data[7, 7] += real_time_variability[i]
         model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
 
-    cube_data = np.array([i.data for i in im])
-    cube_err = np.array([i.err for i in im])
-    cube_dq = np.array([i.dq for i in im])
-    cube_var_noise = np.array([i.var_rnoise for i in im])
-    cube = datamodels.CubeModel(data=cube_data, err=cube_err, dq=cube_dq, var_noise=cube_var_noise)
-
-    # update metadata of cube to match the first image
-    cube.meta = im[0].meta
+    cube = container_to_cube(im)
 
     result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 

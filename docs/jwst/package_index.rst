@@ -54,6 +54,7 @@ Package Index
    references_general/index.rst
    refpix/index.rst
    resample/index.rst
+   resample_spec/index.rst
    reset/index.rst
    residual_fringe/index.rst
    rscd/index.rst

@@ -15,51 +15,15 @@ image.
     image.  Available kernels are `square`, `gaussian`, `point`,
     `turbo`, `lanczos2`, and `lanczos3`.
 
-    For spectral data, only the `square` and `point` kernels should be used.
-    The other kernels do not conserve spectral flux.
-
 ``--pixel_scale_ratio`` (float, default=1.0)
     Ratio of input to output pixel scale.
-
     For imaging data, a value of 0.5 means the output
     image would have 4 pixels sampling each input pixel.
-
-    For spectral data, values greater than 1 indicate that the input
-    pixels have a larger spatial scale, so more output pixels will
-    sample the same input pixel.  For example, a value of 2.0
-    means the output image would have 2 pixels sampling each input
-    spatial pixel. If the input data has units of flux density (MJy/pixel),
-    the output flux per pixel will be half the input flux per pixel.
-    If the input data has units of surface brightness (MJy/sr), the output
-    flux per pixel is not scaled.
-
-    Note that this parameter is only applied in the cross-dispersion
-    direction for spectral data: sampling wavelengths are not affected.
-
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
-
-    .. note::
-        If this parameter is modified for spectral data, the extraction
-        aperture for the :ref:`extract_1d <extract_1d_step>` step must
-        also be modified, since it is specified in pixels.
 
 ``--pixel_scale`` (float, default=None)
     Absolute pixel scale in ``arcsec``. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
-
-    For spectral data, if the input data has units of flux density
-    (MJy/pixel), the output flux per pixel will be scaled by the ratio
-    of the selected output pixel scale to an average input pixel scale.
-    If the input data has units of surface brightness (MJy/sr),
-    the output flux per pixel is not scaled.
-
-    Note that this parameter is only applied in the cross-dispersion
-    direction for spectral data: sampling wavelengths are not affected.
-
-    .. note::
-        If this parameter is modified for spectral data, the extraction
-        aperture for the :ref:`extract_1d <extract_1d_step>` step must
-        also be modified, since it is specified in pixels.
 
 ``--rotation`` (float, default=None)
     Position angle of output image’s Y-axis relative to North.
@@ -68,24 +32,23 @@ image.
     but will instead be resampled in the default orientation for the camera
     with the x and y axes of the resampled image corresponding
     approximately to the detector axes. Ignored when ``pixel_scale``
-    or ``output_wcs`` are provided.  Also ignored for all spectral data.
+    or ``output_wcs`` are provided.
 
 ``--crpix`` (tuple of float, default=None)
     Position of the reference pixel in the image array in the ``x, y`` order.
     If ``crpix`` is not specified, it will be set to the center of the bounding
     box of the returned WCS object. When supplied from command line, it should
     be a comma-separated list of floats. Ignored when ``output_wcs``
-    is provided. Also ignored for all spectral data.
+    is provided.
 
 ``--crval`` (tuple of float, default=None)
     Right ascension and declination of the reference pixel. Automatically
     computed if not provided. When supplied from command line, it should be a
     comma-separated list of floats. Ignored when ``output_wcs`` is provided.
-    Also ignored for all spectral data.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
-    second (as opposite to the ``numpy.ndarray`` convention - ``ny`` first and
+    second (opposite to the ``numpy.ndarray`` convention - ``ny`` first and
     ``nx`` second). This value will be assigned to
     ``pixel_shape`` and ``array_shape`` properties of the returned
     WCS object. When supplied from command line, it should be a comma-separated
@@ -96,7 +59,7 @@ image.
         ``output_wcs`` does not have ``bounding_box`` property set.
 
 ``--output_wcs`` (str, default='')
-    File name of a ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
+    File name of an ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
     under the root of the file. The output image size is determined from the
     bounding box of the WCS (if any). Argument ``output_shape`` overrides
     computed image size and it is required when output WCS does not have
@@ -140,7 +103,7 @@ image.
 ``--single`` (bool, default=False)
     If set to `True`, resample each input image into a separate output.  If
     `False` (the default), each input is resampled additively (with weights) to
-    a common output
+    a common output.
 
 ``--blendheaders`` (bool, default=True)
     Blend metadata from all input images into the resampled output image.
@@ -154,8 +117,6 @@ image.
 
     For example, if set to ``0.5``, only resampled images that use less than
     half the available memory can be created.
-
-    This parameter is ignored for spectral data.
 
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during
