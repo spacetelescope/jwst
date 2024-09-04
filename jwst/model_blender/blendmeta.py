@@ -180,8 +180,13 @@ def get_blended_metadata(input_models):
     # from the PRIMARY header of each input
     #
     icache = {}
+    model_type = None
     for i in range(num_files):
         model = input_models[i]
+        if model_type is None:
+            model_type = type(model)
+        elif type(model) != model_type:
+            raise ValueError("blending only works for a single model type")
         inst = model.meta.instrument.name.lower()
 
         if inst not in icache:
