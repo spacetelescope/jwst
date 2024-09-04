@@ -50,19 +50,10 @@ class _KeywordMapping:
                 "The destination name must be a string")
 
         if agg_func is not None:
-            try:
-                for i in agg_func:
-                    if not hasattr(i, '__call__'):
-                        raise TypeError(
-                            "The aggregating function must be a callable " +
-                            "object, None or a sequence of callables")
-                self.agg_func_is_sequence = True
-            except TypeError:
-                if not hasattr(agg_func, '__call__'):
-                    raise TypeError(
-                        "The aggregating function must be a callable object, "
-                        "None or a sequence of callables")
-                self.agg_func_is_sequence = False
+            if not hasattr(agg_func, '__call__'):
+                raise TypeError(
+                    "The aggregating function must be a callable object, "
+                    "None or a sequence of callables")
 
         self.src_kwd = src_kwd
         self.dst_name = dst_name
@@ -183,13 +174,7 @@ def metablender(input_models, spec):
             result = None
             continue
         if mapping.agg_func is not None:
-            if mapping.agg_func_is_sequence:
-                result = []
-                for func in mapping.agg_func:
-                    result.append(func(data[i]))
-                result = tuple(result)
-            else:
-                result = mapping.agg_func(data[i])
+            result = mapping.agg_func(data[i])
             if result is not None:
                 results[mapping.dst_name] = result
 
