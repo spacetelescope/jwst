@@ -9,7 +9,6 @@ from astropy.io import fits
 
 from stdatamodels import fits_support
 from stdatamodels import schema as dm_schema
-from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 
@@ -23,7 +22,7 @@ __doctest_skip__ = ['blendmodels']
 # Primary functional interface for the code
 
 
-def blendmodels(product, inputs, output=None, ignore=None):
+def blendmodels(product, inputs, ignore=None):
     """
     Run main interface for blending metadata from multiple models.
 
@@ -60,10 +59,6 @@ def blendmodels(product, inputs, output=None, ignore=None):
         If provided, the filenames provided in this list will be used to get
         the metadata which will be blended into the final output metadata.
 
-    output : str, optional
-        If provided, update `meta.filename` in the blended `product`
-        to define what file this model will get written out to.
-
     ignore : list of str, None, optional
         A list of string the meta attribute names which, if provided,
         will show which attributes should not be blended.
@@ -85,10 +80,7 @@ def blendmodels(product, inputs, output=None, ignore=None):
     newmeta, newtab = get_blended_metadata(inputs)
 
     # open product to update metadata from input models used to create product
-    if isinstance(product, str):
-        output_model = datamodels.open(product)
-    else:
-        output_model = product
+    output_model = product
 
     '''
     NOTE 17-Jan-2017:
@@ -115,13 +107,6 @@ def blendmodels(product, inputs, output=None, ignore=None):
             except KeyError:
                 # Ignore keys that are in the asdf tree but not in the schema
                 pass
-
-    # Apply any user-specified filename for output product
-    if output:
-        output_model.meta.filename = output
-    else:
-        # Otherwise, determine output filename from metadata
-        output = output_model.meta.filename
 
     # Now, append HDRTAB as new element in datamodel
     newtab_schema = build_tab_schema(newtab)
@@ -161,13 +146,6 @@ def get_blended_metadata(input_models):
     if not isinstance(input_models, list) and \
        not isinstance(input_models, ModelContainer):
         input_models = [input_models]
-
-    # Turn input filenames into a set of metadata objects
-    close_models = False
-    if isinstance(input_models[0], str):
-        # convert `input_models` to a list of datamodels
-        input_models = [datamodels.open(i) for i in input_models]
-        close_models = True
 
     num_files = len(input_models)
 
@@ -216,10 +194,6 @@ def get_blended_metadata(input_models):
         new_table.header['EXTNAME'] = 'HDRTAB'
     else:
         new_table = None
-
-    if close_models:
-        for model in input_models:
-            model.close()
 
     return new_meta, new_table
 

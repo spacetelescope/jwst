@@ -203,9 +203,8 @@ class ResampleData:
 
     def blend_output_metadata(self, output_model, input_models):
         """Create new output metadata based on blending all input metadata."""
-        # Run fitsblender on output product
-        output_file = output_model.meta.filename
-
+        # ignore blending for a few metadata items that
+        # are already defined
         ignore_list = [
             'meta.photometry.pixelarea_steradians',
             'meta.photometry.pixelarea_arcsecsq',
@@ -215,7 +214,6 @@ class ResampleData:
         blendmeta.blendmodels(
             output_model,
             input_models,
-            output=output_file,
             ignore=ignore_list
         )
 
