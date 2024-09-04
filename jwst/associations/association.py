@@ -208,9 +208,9 @@ class Association(MutableMapping):
             for member in members:
                 fpath, fname = os.path.split(member["expname"])
                 if len(fpath) > 0:
-                    err_str = "'expname' contains path, but should only be a filename."
-                    err_str += "  All input files should be in a single directory"
-                    err_str += ", so no path is needed."
+                    err_str = "Input association file contains path information;"
+                    err_str += "  note that this can complicate usage and/or sharing"
+                    err_str += "  of such files."
                     logger.debug(err_str)
                     warnings.warn(err_str, UserWarning)
         return True
