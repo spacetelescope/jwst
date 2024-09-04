@@ -14,11 +14,6 @@ from stdatamodels import properties
 from jwst import __version__
 from . import blender
 
-# Version of rules file format supported by this version of the code
-# All changes should be backwards compatible to older rules versions
-# so any rules file with Version >= __rules_version__ should work
-# with this code
-__rules_version__ = 2.1
 
 __all__ = ['find_keywords_in_section', 'first',
            'interpret_attr_line', 'interpret_entry', 'last', 'maxdate',
