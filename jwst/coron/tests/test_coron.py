@@ -183,7 +183,6 @@ def test_align_models():
     truth_results_sub = np.array(
             [[10.0, 11.7, 12.0], [10.036278, 11.138131, 10.180669]],
     )
-    print(results_sub.shape, truth_results_sub.shape)
 
     npt.assert_allclose(results_sub, truth_results_sub, atol=1e-6)
 
