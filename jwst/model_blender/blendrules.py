@@ -212,7 +212,7 @@ class KwRule():
     Example::
 
       Interpreting rule from
-      {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
+      {'meta.attribute': { 'rule': 'first'}}
       --or--
       {'meta.attribute': 'meta.attribute'}  # Table column specification
 
@@ -228,7 +228,7 @@ class KwRule():
         ==========
         line : dict
             Line should be dict with attribute name as the key, and
-            a dict as the value specifying 'rule' and (optionally)'output'.
+            a dict as the value specifying 'rule'.
         """
         self.rule_spec = line  # dict read in from rules file
         self.rules = []
@@ -317,14 +317,10 @@ def interpret_entry(line, hdr):
     Notes
     -----
     The entry should always be a dict with format:
-    {attribute_name : {'rule':'some_rule', 'output':''}}
+    {attribute_name : {'rule':'some_rule'}}
     -- or (for table column specification)--
     {attribute_name: attribute_name}
-    where
-    'output' is assumed to be the same as attribute_name if not present
-
     """
-    breakpoint()
     # Interpret raw input line
     attr = list(line.keys())[0]
     line_spec = line[attr]
@@ -349,10 +345,7 @@ def interpret_attr_line(attr, line_spec):
 
     kws = [attr]
     if isinstance(line_spec, dict):
-        if 'output' in line_spec:
-            kws2 = [line_spec['output']]
-        else:
-            kws2 = kws
+        kws2 = kws
     else:
         kws2 = [line_spec]
 
