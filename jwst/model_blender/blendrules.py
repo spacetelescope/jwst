@@ -80,7 +80,6 @@ class KeywordRules():
 
         self.rule_objects = []
         self.rules = []
-        self.section_names = []
 
     def interpret_rules(self, hdrs):
         """ Convert specifications for rules from rules file
@@ -217,8 +216,6 @@ class KwRule():
       {'meta.attribute': 'meta.attribute'}  # Table column specification
 
       into rule [('meta.attribute', 'meta.attribute', <function first at 0x7fe505db7668>, 'ignore')]
-      and sname None
-
     """
 
     def __init__(self, line):
@@ -233,7 +230,6 @@ class KwRule():
         self.rule_spec = line  # dict read in from rules file
         self.rules = []
         self.delete_kws = []
-        self.section_name = []
 
     def interpret(self, hdr):
         """Use metadata to interpret rule."""
@@ -241,11 +237,7 @@ class KwRule():
             # If self.rules has already been defined for this rule, do not try
             # to interpret it any further with additional headers
             return
-        irules, sname = interpret_entry(self.rule_spec, hdr)
-
-        # keep track of any section name identified for this rule
-        if sname:
-            self.section_name.append(sname)
+        irules = interpret_entry(self.rule_spec, hdr)
 
         # Now, interpret rule based on presence of kw in hdr
         if irules:
@@ -330,13 +322,12 @@ def interpret_entry(line, hdr):
 
     # Initialize output values
     rules = []
-    section_name = None
 
     # Parse the line
     attr_rules = interpret_attr_line(attr, line_spec)
     rules.extend(attr_rules)
 
-    return rules, section_name
+    return rules
 
 
 def interpret_attr_line(attr, line_spec):
