@@ -20,10 +20,10 @@ from . import blender
 # with this code
 __rules_version__ = 2.1
 
-__all__ = ['find_keywords_in_section', 'first', 'float_one', 'int_one',
+__all__ = ['find_keywords_in_section', 'first',
            'interpret_attr_line', 'interpret_entry', 'last', 'maxdate',
            'maxdatetime', 'maxtime', 'mindate', 'mindatetime', 'mintime',
-           'multi', 'multi1', 'zero', 'KeywordRules', 'KwRule']
+           'multi', 'KeywordRules', 'KwRule']
 
 
 # Custom blending functions
@@ -40,39 +40,6 @@ def multi(vals):
         return uniq_vals[0]
     if num_vals > 1:
         return "MULTIPLE"
-
-
-def multi1(vals):
-    """
-    This will either return the common value from a list of identical values
-    or the single character '?'
-    """
-    uniq_vals = list(set(vals))
-    num_vals = len(uniq_vals)
-    if num_vals == 0:
-        return None
-    if num_vals == 1:
-        return uniq_vals[0]
-    if num_vals > 1:
-        return "?"
-
-
-def float_one(vals):
-    """ Return a constant floating point value of 1.0
-    """
-    return 1.0
-
-
-def int_one(vals):
-    """ Return an integer value of 1
-    """
-    return int(1)
-
-
-def zero(vals):
-    """ Return a value of 0
-    """
-    return 0
 
 
 def first(items):
@@ -133,16 +100,11 @@ def _isotime(time_str):
 # translation dictionary for function entries from rules files
 blender_funcs = {'first': first,
                  'last': last,
-                 'float_one': float_one,
-                 'int_one': int_one,
-                 'zero': zero,
                  'multi': multi,
-                 'multi?': multi1,
                  'mean': np.mean,
                  'sum': np.sum,
                  'max': np.max,
                  'min': np.min,
-                 'stddev': np.std,
                  'mintime': mintime,
                  'maxtime': maxtime,
                  'mindate': mindate,
@@ -159,11 +121,8 @@ class KeywordRules():
             instrument image header.
         """
         self.instrument = model.meta.instrument.name.lower()
-        self.new_header = None
-        self.rules_version = __rules_version__
 
-        self.rules_file = model._schema
-        self.rule_specs = _build_schema_rules_dict(self.rules_file)
+        self.rule_specs = _build_schema_rules_dict(model._schema)
 
         self.rule_objects = []
         self.rules = []
@@ -288,21 +247,6 @@ class KeywordRules():
         else:
             new_table = None
         return new_model, new_table
-
-    def add_rules_kws(self, hdr):
-        """ Update metadata with
-        WARNING
-        -------
-        Needs to be modified to work with metadata.
-
-        Update PRIMARY header with HISTORY cards that report the exact
-        rules used to create this header. Only non-comment lines from the
-        rules file will be reported.
-        """
-        hdr['meta.rules_version'] = (__rules_version__,
-                                     'Version ID for header kw rules file')
-        hdr['meta.blender_version'] = (__version__,
-                                       'Version of blendheader software used')
 
     def index_of(self, kw):
         """ Reports the index of the specified kw."""
