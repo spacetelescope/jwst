@@ -18,23 +18,18 @@ from .. import associations
 from .blendrules import KeywordRules
 
 
-EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
-
 __doctest_skip__ = ['blendmodels']
 
 # Primary functional interface for the code
 
 
-def blendmodels(product, inputs=None, output=None, ignore=None, verbose=False):
+def blendmodels(product, inputs, output=None, ignore=None):
     """
     Run main interface for blending metadata from multiple models.
 
     Blend models that went into creating the original drzfile into a
     new metadata instance with a table that contains attribute values from
     all input datamodels.
-
-    The product will be used to determine the names of the input models,
-    should no filenames be provided in the 'inputs' parameter.
 
     The product will be updated 'in-place' with the new metadata attributes
     and FITS BinTableHDU table.  The blended FITS table, with extname=HDRTAB,
@@ -59,12 +54,8 @@ def blendmodels(product, inputs=None, output=None, ignore=None, verbose=False):
     product : str
         Name of combined product with metadata that needs updating. This can
         be specified as a single filename.
-        When no value for `inputs` has been provided, this file
-        will also evaluate `meta.asn` to determine the names of the input
-        datamodels whose metadata need to be blended to create
-        the new combined metadata.
 
-    inputs : list, optional
+    inputs : list
         This can be either a list of filenames or a list of DataModels objects.
         If provided, the filenames provided in this list will be used to get
         the metadata which will be blended into the final output metadata.
@@ -76,9 +67,6 @@ def blendmodels(product, inputs=None, output=None, ignore=None, verbose=False):
     ignore : list of str, None, optional
         A list of string the meta attribute names which, if provided,
         will show which attributes should not be blended.
-
-    verbose : bool, optional [Default: False]
-        Print out additional messages during processing when specified.
 
     Example
     -------
@@ -92,22 +80,9 @@ def blendmodels(product, inputs=None, output=None, ignore=None, verbose=False):
     >>> asnfile = "jw99999-a3001_20170327t121212_coron3_001_asn.json"
     >>> data = datamodels.open(asnfile)
     >>> input_models = [data[3], data[4]]  # we know the last datasets are SCIENCE
-    >>> blendmodels(data.meta.asn_table.products[0].name, inputs=input_models)
+    >>> blendmodels(data.meta.asn_table.products[0].name, input_models)
     """
-    if inputs in EMPTY_LIST:
-        input_filenames = extract_filenames_from_product(product)
-        inputs = [datamodels.open(i) for i in inputs]  # return datamodels
-    else:
-        if isinstance(inputs, datamodels.JwstDataModel):
-            input_filenames = [i.meta.filename for i in inputs]
-        else:
-            input_filenames = inputs  # assume list of filenames as input
-    if verbose:
-        print('Creating blended metadata from: ')
-        for i in input_filenames:
-            print('\t{}'.format(i))
-
-    newmeta, newtab = get_blended_metadata(inputs, verbose=verbose)
+    newmeta, newtab = get_blended_metadata(inputs)
 
     # open product to update metadata from input models used to create product
     if isinstance(product, str):
@@ -159,7 +134,7 @@ def blendmodels(product, inputs=None, output=None, ignore=None, verbose=False):
     del newmeta, newtab
 
 
-def get_blended_metadata(input_models, verbose=False):
+def get_blended_metadata(input_models):
     """
     Return a blended metadata instance and table based on the input datamodels.
     This will serve as the primary interface for blending datamodels.

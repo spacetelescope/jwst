@@ -51,7 +51,7 @@ The simplest way to run model blender only requires calling a single interface:
 .. code-block:: python
 
   from jwst.model_blender import blendmeta
-  blendmeta.blendmodels(product, inputs=input_list)
+  blendmeta.blendmodels(product, input_list)
 
 where
 

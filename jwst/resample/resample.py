@@ -214,7 +214,7 @@ class ResampleData:
         log.info('Blending metadata for {}'.format(output_file))
         blendmeta.blendmodels(
             output_model,
-            inputs=input_models,
+            input_models,
             output=output_file,
             ignore=ignore_list
         )

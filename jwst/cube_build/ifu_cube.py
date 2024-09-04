@@ -2364,7 +2364,7 @@ class IFUCubeData():
         """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
         output_file = IFUCube.meta.filename
-        blendmeta.blendmodels(IFUCube, inputs=self.input_models_this_cube,
+        blendmeta.blendmodels(IFUCube, self.input_models_this_cube,
                               output=output_file)
 
 

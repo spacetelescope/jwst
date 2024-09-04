@@ -213,7 +213,7 @@ class Coron3Pipeline(Pipeline):
             completed = 'SKIPPED'
         if completed == 'COMPLETE':
             self.log.debug(f'Blending metadata for {result}')
-            blendmeta.blendmodels(result, inputs=targ_files)
+            blendmeta.blendmodels(result, targ_files)
 
         try:
             result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
