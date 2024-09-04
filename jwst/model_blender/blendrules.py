@@ -6,7 +6,6 @@ from collections import OrderedDict
 
 import numpy as np
 from stdatamodels import schema as dm_schema
-from stdatamodels import properties
 
 from . import blender
 
@@ -325,6 +324,7 @@ def interpret_entry(line, hdr):
     'output' is assumed to be the same as attribute_name if not present
 
     """
+    breakpoint()
     # Interpret raw input line
     attr = list(line.keys())[0]
     line_spec = line[attr]
@@ -337,24 +337,8 @@ def interpret_entry(line, hdr):
     section_name = None
 
     # Parse the line
-    if isinstance(hdr[attr], properties.ObjectNode):
-        section_name = attr
-        # Datamodel sections are just parent Nodes for each attribute
-        keys = hdr[section_name].instance.keys()
-        kws = ['{}.{}'.format(section_name, k) for k in keys]
-        #
-        if kws is not None:
-            for kw1 in kws:
-                if attr_column:
-                    # Interpret each attribute as a new column in Table
-                    rules.append((kw1, kw1))
-                else:
-                    # Interpret each attribute in Node with same rule
-                    attr_rules = interpret_attr_line(kw1, line_spec)
-                    rules.extend(attr_rules)
-    else:
-        attr_rules = interpret_attr_line(attr, line_spec)
-        rules.extend(attr_rules)
+    attr_rules = interpret_attr_line(attr, line_spec)
+    rules.extend(attr_rules)
 
     return rules, section_name
 
