@@ -5,20 +5,20 @@
 from collections import OrderedDict
 
 import numpy as np
-from datetime import time
 from astropy.io import fits
-from astropy.time import Time
 from stdatamodels import schema as dm_schema
 from stdatamodels import properties
 
-from jwst import __version__
 from . import blender
 
 
-__all__ = ['find_keywords_in_section', 'first',
-           'interpret_attr_line', 'interpret_entry', 'last', 'maxdate',
-           'maxdatetime', 'maxtime', 'mindate', 'mindatetime', 'mintime',
-           'multi', 'KeywordRules', 'KwRule']
+__all__ = [
+    'find_keywords_in_section',
+    'interpret_attr_line',
+    'interpret_entry',
+    'KeywordRules',
+    'KwRule',
+]
 
 
 # Custom blending functions
@@ -51,47 +51,6 @@ def last(items):
     return None
 
 
-def mindate(items):
-    """Return the minimum date from a list of date strings in yyyy-mm-dd format."""
-    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
-    return str(time_list.min())
-
-
-def maxdate(items):
-    """Return the maximum date from a list of date strings in yyyy-mm-dd format."""
-    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
-    return str(time_list.max())
-
-
-def mindatetime(items):
-    """Return the minimum datetime from a list of datetime strings in ISO-8601 format."""
-    time_list = Time(items, format="isot")
-    return str(time_list.min())
-
-
-def maxdatetime(items):
-    """Return the maximum datetime from a list of datetime strings in ISO-8601 format."""
-    time_list = Time(items, format="isot")
-    return str(time_list.max())
-
-
-def mintime(items):
-    times = [_isotime(time_str) for time_str in items]
-    return min(times).isoformat()
-
-
-def maxtime(items):
-    times = [_isotime(time_str) for time_str in items]
-    return max(times).isoformat()
-
-
-def _isotime(time_str):
-    hms = [float(i) for i in time_str.split(':')]
-    sec_ms = hms[2] - int(hms[2])
-    isotime = time(int(hms[0]), int(hms[1]), int(hms[2]), int(sec_ms * 1000000))
-    return isotime
-
-
 # translation dictionary for function entries from rules files
 blender_funcs = {'first': first,
                  'last': last,
@@ -100,12 +59,15 @@ blender_funcs = {'first': first,
                  'sum': np.sum,
                  'max': np.max,
                  'min': np.min,
-                 'mintime': mintime,
-                 'maxtime': maxtime,
-                 'mindate': mindate,
-                 'maxdate': maxdate,
-                 'mindatetime': mindatetime,
-                 'maxdatetime': maxdatetime}
+                 # retained date/time names for backwards compatibility
+                 # as these all assume ISO8601 format the lexical and
+                 # chronological sorting match
+                 'mintime': min,
+                 'maxtime': max,
+                 'mindate': min,
+                 'maxdate': max,
+                 'mindatetime': min,
+                 'maxdatetime': max}
 
 
 # Classes for managing keyword rules
