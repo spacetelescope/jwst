@@ -244,18 +244,6 @@ def get_blended_metadata(input_models, verbose=False):
     return new_meta, new_table
 
 
-def cat_headers(hdr1, hdr2):
-    """
-    Create new `astropy.io.fits.Header` object from
-    concatenating 2 input Headers
-    """
-    nhdr = hdr1.copy()
-    for c in hdr2.cards:
-        nhdr.append(c)
-
-    return fits.Header(nhdr)
-
-
 def extract_filenames_from_product(product):
     """
     Returns the list of filenames with extensions of input observations that
