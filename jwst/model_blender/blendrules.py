@@ -441,7 +441,7 @@ def interpret_attr_line(attr, line_spec):
             lrule = None
         # build separate rule for each kw
         for kw1, kw2 in zip(kws, kws2):
-            new_rule = (kw1, kw2, lrule, "ignore")
+            new_rule = (kw1, kw2, lrule)
             if new_rule not in rules:
                 rules.append(new_rule)
     else:

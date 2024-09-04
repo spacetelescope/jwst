@@ -40,8 +40,7 @@ class _KeywordMapping:
     entry.
     """
 
-    def __init__(self, src_kwd, dst_name, agg_func=None, error_type="ignore",
-                 error_value=np.nan):
+    def __init__(self, src_kwd, dst_name, agg_func=None):
         if not isinstance(src_kwd, str):
             raise TypeError(
                 "The source keyword name must be a string")
@@ -65,15 +64,9 @@ class _KeywordMapping:
                         "None or a sequence of callables")
                 self.agg_func_is_sequence = False
 
-        if error_type not in ('ignore', 'raise', 'constant'):
-            raise ValueError(
-                "The error type must be either 'ignore', 'raise' or 'constant'")
-
         self.src_kwd = src_kwd
         self.dst_name = dst_name
         self.agg_func = agg_func
-        self.error_type = error_type
-        self.error_value = error_value
 
 
 def metablender(input_models, spec):
@@ -94,7 +87,7 @@ def metablender(input_models, spec):
       aggregated and how.  Each element in the list should be a
       sequence with 2 to 5 elements of the form:
 
-        (*src_keyword*, *dst_name*, *function*, *error_type*, *error_value*)
+        (*src_keyword*, *dst_name*, *function*)
 
       - *src_keyword* is the keyword to pull values from.  It is
         case-insensitive.
@@ -139,24 +132,6 @@ def metablender(input_models, spec):
         minimum and maximum values, use the following as *function*:
         ``(numpy.min, numpy.max)``.
 
-      - *error_type* (optional) defines how missing or syntax-errored
-        values are handled.  It may be one of the following:
-
-        - 'ignore': missing or unparsable values are ignored.  They
-          are not included in the list of values passed to the
-          aggregating function.  In the result *table*, missing values
-          are masked out.
-
-        - 'raise': missing or unparsable values raise a `ValueError`
-          exception.
-
-        - 'constant': missing or unparsable values are replaced with a
-          constant, given by the *error_value* field.
-
-      - *error_value* (optional) is the constant value to be used for
-        missing or unparsable values when *error_type* is set to
-        'constant'.  When not provided, it defaults to `NaN`.
-
     **Returns:**
 
     A 2-tuple of the form (*aggregate_dict*, *table*) where:
@@ -187,12 +162,6 @@ def metablender(input_models, spec):
         for i, mapping in enumerate(mappings):
             if mapping.src_kwd in header:
                 value = model[mapping.src_kwd]
-            elif mapping.error_type == 'raise':
-                raise ValueError(
-                    "%s is missing keyword '%s'" %
-                    (filename, mapping.src_kwd))
-            elif mapping.error_type == 'constant':
-                value = mapping.error_value
             else:
                 value = None
 
