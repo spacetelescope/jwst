@@ -199,14 +199,6 @@ class KeywordRules():
             new_table = None
         return new_model, new_table
 
-    def index_of(self, kw):
-        """ Reports the index of the specified kw."""
-        indx = []
-        for r, i in zip(self.rules, list(range(len(self.rules)))):
-            if r[0] == kw:
-                indx.append(i)
-        return indx
-
 
 class KwRule():
     """
