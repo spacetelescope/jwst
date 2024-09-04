@@ -5,7 +5,6 @@
 from collections import OrderedDict
 
 import numpy as np
-from astropy.io import fits
 from stdatamodels import schema as dm_schema
 from stdatamodels import properties
 
@@ -13,7 +12,6 @@ from . import blender
 
 
 __all__ = [
-    'find_keywords_in_section',
     'interpret_attr_line',
     'interpret_entry',
     'KeywordRules',
@@ -161,7 +159,7 @@ class KeywordRules():
         # extend self.rules with additional rules
         self.rules.extend(k)
 
-    def apply(self, models, tabhdu=False):
+    def apply(self, models):
         """ For a full list of metadata objects, apply the specified rules to
             generate a dictionary of new values and a table using
             blender.
@@ -196,11 +194,7 @@ class KeywordRules():
 
         # Create summary table
         if len(tabcols) > 0:
-            if tabhdu:
-                new_table = fits.BinTableHDU.from_columns(fbtab)
-                new_table.header['EXTNAME'] = 'HDRTAB'
-            else:
-                new_table = fbtab
+            new_table = fbtab
         else:
             new_table = None
         return new_model, new_table
@@ -408,35 +402,3 @@ def interpret_attr_line(attr, line_spec):
                 rules.append(new_rule)
 
     return rules
-
-
-def find_keywords_in_section(hdr, title):
-    """Return a list of keyword names.
-
-    The list will be derived from the section
-        with the specified section title identified in the hdr.
-    """
-    # Identify card indices of start and end of specified section
-    sect_start = None
-    sect_end = None
-    for i, kw in enumerate(hdr.cards):
-        if sect_start is None:
-            if title in str(hdr[i]):
-                sect_start = i
-        else:
-            if '/' in str(hdr[i]) and hdr[i] not in ['N/A', ' ', '']:
-                sect_end = i
-                break
-    if sect_end is None:
-        sect_end = len(hdr)
-    if sect_start is None:
-        return None
-
-    # Now, extract the keyword names from this section
-    # section_keys = hdr.ascard[sect_start+1:sect_end-1].keys()
-    section_keys = list(hdr[sect_start + 1:sect_end - 1].keys())
-    # remove any blank keywords
-    while section_keys.count('') > 0:
-        section_keys.remove('')
-
-    return section_keys
