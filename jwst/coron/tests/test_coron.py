@@ -178,15 +178,12 @@ def test_align_models():
     ref_mod = datamodels.CubeModel(data=ref)
 
     am_results = imageregistration.align_models(ref_mod, targ_mod, mask_mod)
-    results_sub = am_results.data[:3, :2, 2, :3]
+    results_sub = am_results.data[:2, 2, :3]
 
     truth_results_sub = np.array(
-        [
             [[10.0, 11.7, 12.0], [10.036278, 11.138131, 10.180669]],
-            [[10.0, 11.7, 12.0], [10.036278, 11.138131, 10.180669]],
-            [[10.0, 11.7, 12.0], [10.036278, 11.138131, 10.180669]],
-        ]
     )
+    print(results_sub.shape, truth_results_sub.shape)
 
     npt.assert_allclose(results_sub, truth_results_sub, atol=1e-6)
 
@@ -313,7 +310,6 @@ def test_klip():
     target_model = datamodels.CubeModel(data=target_model_data)
 
     refs_model_data = np.array(
-        [
             [
                 [
                     [0.8174741, 0.74938107, 0.73527235, 1.3193785],
@@ -331,28 +327,10 @@ def test_klip():
                     [1.419994, 1.1546139, 0.961317, 0.95088667],
                 ],
             ],
-            [
-                [
-                    [0.8174741, 0.74938107, 0.73527235, 1.3193785],
-                    [1.0032778, 0.8247719, 0.78944355, 0.99227476],
-                    [1.4609907, 1.1605016, 0.9564753, 0.9186427],
-                ],
-                [
-                    [0.86789674, 0.7998908, 0.8557136, 1.2926395],
-                    [0.97756547, 0.7788742, 0.75892323, 0.9819151],
-                    [1.495664, 1.1455023, 1.002115, 0.92159164],
-                ],
-                [
-                    [0.84426856, 0.7719569, 0.8088021, 1.2781427],
-                    [0.98734635, 0.8125992, 0.77424014, 0.9934157],
-                    [1.419994, 1.1546139, 0.961317, 0.95088667],
-                ],
-            ],
-        ],
         dtype=np.float32,
     )
 
-    refs_model = datamodels.QuadModel(data=refs_model_data)
+    refs_model = datamodels.CubeModel(data=refs_model_data)
 
     # Call the KLIP routine
     truncate = 50
