@@ -2,6 +2,7 @@
 Submodule for performing outlier detection on spectra.
 """
 import copy
+import os
 
 from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer, ModelLibrary
@@ -55,8 +56,12 @@ def detect_outliers(
     if resample_data is True:
         # Start by creating resampled/mosaic images for
         #  each group of exposures
+        output_path = make_output_path(
+            basepath=input_models[0].meta.filename, suffix='')
+        output_path = os.path.dirname(output_path)
         resamp = resample_spec.ResampleSpecData(
             input_models,
+            output=output_path,
             single=True,
             blendheaders=False,
             wht_type=weight_type,
@@ -74,21 +79,7 @@ def detect_outliers(
         library = ModelLibrary(input_models, on_disk=False)
         drizzled_models = resamp.do_drizzle(library)
 
-        if save_intermediate_results:
-            with drizzled_models:
-                for model in drizzled_models:
-                    model.meta.filename = make_output_path(
-                        basepath=model.meta.filename,
-                        suffix="_outlier_s2d.fits",
-                    )
-                    log.info("Writing out resampled spectra...")
-                    model.save(model.meta.filename)
-                    drizzled_models.shelve(model)
-            
     else:
-        # TODO: there appears not to be any test coverage for this branch
-        # as discovered while testing another ticket. Adding that coverage is beyond
-        # the scope of the ticket, but it should be added in the future.
         drizzled_models = ModelLibrary(input_models)
         with drizzled_models:
             for i, model in enumerate(drizzled_models):

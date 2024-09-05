@@ -129,11 +129,6 @@ class ModelLibrary(AbstractModelLibrary):
         if not hasattr(model.meta, "asn"):
             model.meta["asn"] = {}
 
-        # if (model.meta.asn.table_name is None) and ("table_name" in self.asn.keys()): # do not clobber existing values
-        #     setattr(model.meta.asn, "table_name", self.asn["table_name"])
-
-        # if (model.meta.asn.pool_name is None) and ("asn_pool" in self.asn.keys()): # do not clobber existing values
-        #     setattr(model.meta.asn, "pool_name", self.asn["asn_pool"])
         if "table_name" in self.asn.keys():
             setattr(model.meta.asn, "table_name", self.asn["table_name"])
 
@@ -153,6 +148,9 @@ def _attrs_to_group_id(
     """
     Combine a number of file metadata values into a ``group_id`` string
     """
+    for val in (program_number, observation_number, visit_number, visit_group, sequence_id, activity_id, exposure_number):
+        if val is None:
+            raise NoGroupID(f"Missing required value for group_id: {val}")
     return (
         f"jw{program_number}{observation_number}{visit_number}"
         f"_{visit_group}{sequence_id}{activity_id}"

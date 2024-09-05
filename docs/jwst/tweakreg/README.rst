@@ -87,7 +87,6 @@ other ways of supplying custom source catalogs to the step:
 
 1. Adding ``tweakreg_catalog`` attribute to the ``members`` of the input ASN
    table - see `~jwst.datamodels.ModelLibrary` for more details.
-   # FIXME: does this still work as described?
    Catalog file names are relative to ASN file path.
 
 2. Providing a simple two-column text file, specified via step's parameter

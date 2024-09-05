@@ -135,17 +135,14 @@ class ResampleSpecStep(Step):
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
 
             library = ModelLibrary(container, on_disk=False)
-            library = resamp.do_drizzle(library)
-            with library:
-                for i, model in enumerate(library):
-                    container[i] = model
-                    library.shelve(model, modify=False)
-            del library
-
-            for model in container:
-                self.update_slit_metadata(model)
-                update_s_region_spectral(model)
-                result.slits.append(model)
+            drizzled_library = resamp.do_drizzle(library)
+            with drizzled_library:
+                for i, model in enumerate(drizzled_library):
+                    self.update_slit_metadata(model)
+                    update_s_region_spectral(model)
+                    result.slits.append(model)
+                    drizzled_library.shelve(model, i, modify=False)
+            del library, drizzled_library
 
             # Keep the first computed pixel scale ratio for storage
             if self.pixel_scale is not None and pscale_ratio is None:
@@ -211,14 +208,12 @@ class ResampleSpecStep(Step):
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
 
         library = ModelLibrary(input_models, on_disk=False)
-        library = resamp.do_drizzle(library)
-        with library:
-            for i, model in enumerate(library):
-                input_models[i] = model
-                library.shelve(model, modify=False)
-        del library
+        drizzled_library = resamp.do_drizzle(library)
+        with drizzled_library:
+            result = drizzled_library.borrow(0)
+            drizzled_library.shelve(result, 0, modify=False)
+        del library, drizzled_library
 
-        result = input_models[0]
         result.meta.bunit_data = input_models[0].meta.bunit_data
         if self.pixel_scale is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
