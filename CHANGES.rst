@@ -49,7 +49,6 @@ datamodels
 - Added `ModelLibrary` class to allow passing on-disk models between steps in the
   image3 pipeline. [#8683]
 
-
 documentation
 -------------
 
