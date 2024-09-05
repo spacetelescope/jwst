@@ -4,9 +4,7 @@ from copy import deepcopy
 
 import asdf
 
-from stdatamodels.jwst import datamodels
-
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary, ImageModel
 from jwst.lib.pipe_utils import match_nans_and_flags
 
 from . import resample
@@ -62,32 +60,39 @@ class ResampleStep(Step):
 
     def process(self, input):
 
-        input = datamodels.open(input)
-
-        if isinstance(input, ModelContainer):
+        if isinstance(input, ModelLibrary):
             input_models = input
-            try:
-                output = input_models.meta.asn_table.products[0].name
-            except AttributeError:
-                # coron data goes through this path by the time it gets to
-                # resampling.
-                # TODO: figure out why and make sure asn_table is carried along
-                output = None
-        else:
-            input_models = ModelContainer([input])
-            input_models.asn_pool_name = input.meta.asn.pool_name
-            input_models.asn_table_name = input.meta.asn.table_name
+        elif isinstance(input, (str, dict, list)):
+            input_models = ModelLibrary(input, on_disk=not self.in_memory)
+        elif isinstance(input, ImageModel):
+            input_models = ModelLibrary([input], on_disk=not self.in_memory)
             output = input.meta.filename
             self.blendheaders = False
+        else:
+            raise RuntimeError(f"Input {input} is not a 2D image.")
+
+        try:
+            output = input_models.asn["products"][0]["name"]
+        except KeyError:
+            # coron data goes through this path by the time it gets to
+            # resampling.
+            # TODO: figure out why and make sure asn_table is carried along
+            output = None
 
         # Check that input models are 2D images
-        if len(input_models[0].data.shape) != 2:
-            # resample can only handle 2D images, not 3D cubes, etc
-            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+        with input_models:
+            example_model = input_models.borrow(0)
+            data_shape = example_model.data.shape
+            input_models.shelve(example_model, 0, modify=False)
+            if len(data_shape) != 2:
+                # resample can only handle 2D images, not 3D cubes, etc
+                raise RuntimeError(f"Input {example_model} is not a 2D image.")
+            del example_model
 
-        # Make sure all input models have consistent NaN and DO_NOT_USE values
-        for model in input_models:
-            match_nans_and_flags(model)
+            # Make sure all input models have consistent NaN and DO_NOT_USE values
+            for model in input_models:
+                match_nans_and_flags(model)
+                input_models.shelve(model)
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
@@ -96,26 +101,27 @@ class ResampleStep(Step):
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
         result = resamp.do_drizzle(input_models)
 
-        for model in result:
-            model.meta.cal_step.resample = 'COMPLETE'
-            self.update_fits_wcs(model)
-            util.update_s_region_imaging(model)
-            model.meta.asn.pool_name = input_models.asn_pool_name
-            model.meta.asn.table_name = input_models.asn_table_name
+        with result:
+            for model in result:
+                model.meta.cal_step.resample = 'COMPLETE'
+                self.update_fits_wcs(model)
+                util.update_s_region_imaging(model)
 
-            # if pixel_scale exists, it will override pixel_scale_ratio.
-            # calculate the actual value of pixel_scale_ratio based on pixel_scale
-            # because source_catalog uses this value from the header.
-            if self.pixel_scale is None:
-                model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-            else:
-                model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-            model.meta.resample.pixfrac = kwargs['pixfrac']
+                # if pixel_scale exists, it will override pixel_scale_ratio.
+                # calculate the actual value of pixel_scale_ratio based on pixel_scale
+                # because source_catalog uses this value from the header.
+                if self.pixel_scale is None:
+                    model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+                else:
+                    model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
+                model.meta.resample.pixfrac = kwargs['pixfrac']
+                result.shelve(model)
 
-        if len(result) == 1:
-            result = result[0]
+            if len(result) == 1:
+                model = result.borrow(0)
+                result.shelve(model, 0, modify=False)
+                return model
 
-        input_models.close()
         return result
 
     @staticmethod
