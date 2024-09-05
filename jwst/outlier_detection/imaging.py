@@ -100,16 +100,7 @@ def detect_outliers(
                 input_models.shelve(model, modify=True)
 
     # Perform median combination on set of drizzled mosaics
-    # from datetime import datetime 
-    # t0 = datetime.now()
-    # print("Starting create_median at time: ", t0.strftime("%H:%M:%S"))
-    median_data = create_median(drizzled_models,
-                                maskpt,
-                                on_disk=not in_memory,
-                                allowed_memory=allowed_memory)
-    # t1 = datetime.now()
-    # print("Finished create_median at time: ", t1.strftime("%H:%M:%S"))
-    # print(f"Execution time for create_median: {(t1 - t0).total_seconds()} s")
+    median_data = create_median(drizzled_models, maskpt, on_disk=not in_memory, allowed_memory=allowed_memory)
 
     if save_intermediate_results:
         # make a median model
