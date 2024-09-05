@@ -91,8 +91,7 @@ def blendmodels(product, inputs, ignore=None):
     '''
 
     # Start by identifying elements of the model which need to be ignored
-    ignore_list = _build_schema_ignore_list(newmeta._schema)
-    ignore_list += ['meta.wcs']  # Necessary since meta.wcs is not in schema
+    ignore_list = ['meta.wcs']  # Necessary since meta.wcs is not in schema
     if ignore:
         ignore_list.extend(ignore)
 
@@ -239,34 +238,3 @@ def convert_dtype(value):
         new_dtype = str(value)
 
     return new_dtype
-
-
-def _build_schema_ignore_list(schema):
-    """ Create a list of metadata that should be ignored when blending.
-
-    Parameters
-    ----------
-    schema : JSON schema fragment
-        The schema in which to search.
-
-    Returns
-    -------
-    results : list
-        List with schema attributes that needs to be ignored
-
-    """
-    def build_rules_list(subschema, path, combiner, ctx, recurse):
-        # Only interpret elements of the meta component of the model
-        if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
-            attr = '.'.join(path)
-            if subschema.get('properties'):
-                return  # Ignore ObjectNodes
-            kwtype = subschema.get('type')
-            if kwtype == 'array':
-                results.append(attr)
-        else:
-            return
-
-    results = []
-    dm_schema.walk_schema(schema, build_rules_list, results)
-    return results

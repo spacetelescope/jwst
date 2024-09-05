@@ -19,8 +19,9 @@ FILENAMES = ['image1_cal.fits', 'image2_cal.fits', 'image3_cal.fits']
 DATETIMES = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
              '2017-11-11T15:15:06.118']
 DATES = ['2017-11-30', '2017-11-11', '2017-12-10']
-INSTRUMENT_NAMES = ['NIRCAM'] * 3
+INSTRUMENT_NAMES = ['NIRCAM'] * N_MODELS
 CORONAGRAPHS = ['4QPM', '4QPM_1065', '4QPM_1140']
+POLYNOMIAL_INFO = [[{'degree': [1]}]] * N_MODELS
 
 
 def _make_data():
@@ -49,6 +50,7 @@ def _make_data():
         'meta.date': DATETIMES,
         'meta.observation.date': DATES,
         'meta.observation.date_beg': DATETIMES,
+        'meta.background.polynomial_info': POLYNOMIAL_INFO,
     }
     output_values = {
         'meta.exposure.start_time': START_TIMES[0],
@@ -105,7 +107,10 @@ def test_blendmeta(blend):
     newmeta, newtab, models, input_values, output_values = blend
 
     for attr in input_values:
-        assert newmeta[attr] == output_values[attr]
+        if attr in output_values:
+            assert newmeta[attr] == output_values[attr]
+        else:
+            assert attr not in newmeta
 
 
 def build_fits_dict(schema):
@@ -154,7 +159,7 @@ def test_blendtab(blend):
     meta_to_fits = dict(map(reversed, fits_to_meta.items()))
     fits_expected = set(
         meta_to_fits[meta]
-        for meta in input_values
+        for meta in output_values
     )
 
     # Ensure all the expected FITS keywords are in the table.

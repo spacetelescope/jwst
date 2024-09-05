@@ -268,6 +268,8 @@ def _build_schema_rules_dict(schema):
                     path = path[:path.index(combiner)]
                     break
             attr = '.'.join(path)
+            if subschema.get('type') == 'array':
+                return  # Ignore ListNodes
             if subschema.get('properties'):
                 return  # Ignore ObjectNodes
 
