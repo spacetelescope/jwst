@@ -243,8 +243,11 @@ The FFT cleaning algorithm implementation is based on NSClean,
 developed by Bernard Rauscher. Details on the source of the correlated
 noise and the algorithm used by the ``nsclean`` library to fit and
 remove it can be found in
-`Rauscher 2024 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`_.
+`Rauscher 2024 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`__.
 
 The background fitting and median cleaning algorithm are based on
 the image1overf algorithm, developed by Chris Willott, and available
-on GitHub at `chriswillott/jwst <https://github.com/chriswillott/jwst>`_.
+on GitHub at `chriswillott/jwst <https://github.com/chriswillott/jwst>`__.
+The algorithm was adapted to the `clean_flicker_noise` step and is released
+under the BSD license for the JWST calibration pipeline by permission
+of the author.
