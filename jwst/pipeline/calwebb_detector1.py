@@ -73,26 +73,15 @@ class Detector1Pipeline(Pipeline):
 
         log.info('Starting calwebb_detector1 ...')
 
-        if self.ramp_fit.algorithm.upper() == "LIKELY":
-            with datamodels.RampModel(input) as ramp:
-                ngroups = ramp.data.shape[1]
-            if ngroups < 4:
-                log_msg = "For the LIKELY ramp fit algorithm NGROUPS must be"
-                log_msg = f"{log_msg} at least 4.  It NGROUPS = {ngroups}."
-                log_msg = f"{log_msg}  Defaulting to OLS_C.  Also, the normal"
-                log_msg = f"{log_msg} pipeline jump detection algorithm will be used."
-                log.info(log_msg)
-                self.ramp_fit.algorithm = "OLS_C"
-                self.jump.skip = False
-            elif self.jump.skip == False:
-                log_msg = "For the LIKELY ramp fit algorithm the normal jump detection"
-                log_msg = f"{log_msg} is skipped, since the LIKELY algorithm uses its"
-                log_msg = f"{log_msg} jump detection algorithm."
-                log.info(log_msg)
-                self.jump.skip = True
-
         # open the input as a RampModel
         input = datamodels.RampModel(input)
+
+        if self.ramp_fit.algorithm.upper() == "LIKELY":
+            ngroups = input.data.shape[1]
+            if ngroups < 4:
+                log.warning(f"For the LIKELY ramp fit algorithm NGROUPS must be"
+                            f" at least 4, but NGROUPS = {ngroups}.")
+                self.ramp_fit.algorithm = "OLS_C"
 
         # propagate output_dir to steps that might need it
         self.dark_current.output_dir = self.output_dir
