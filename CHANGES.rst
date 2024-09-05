@@ -14,6 +14,12 @@ ami_average
 
 - Fix error in step spec that prevents step creation. [#8677]
 
+assign_mtwcs
+------------
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
+
 assign_wcs
 ----------
 
@@ -33,6 +39,12 @@ cube_build
   itself. [#8600]
   
 - Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
+
+datamodels
+----------
+
+- Added `ModelLibrary` class to allow passing on-disk models between steps in the
+  image3 pipeline. [#8683]
 
 documentation
 -------------
@@ -84,10 +96,26 @@ outlier_detection
   images. Intermediate files now have suffix ``outlier_s2d`` and are saved to
   the output directory alongside final products. [#8735]
 
+- For imaging modes, step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
+
 set_telescope_pointing
 ----------------------
 
 - replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+
+pipeline
+--------
+
+- Updated `calwebb_image3` to use `ModelLibrary` instead of `ModelContainer`, added
+  optional `on_disk` parameter to govern whether models in the library should be stored
+  in memory or on disk. [#8683]
+
+resample
+--------
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
 
 resample_spec
 -------------
@@ -123,6 +151,12 @@ scripts
 - Removed many non-working and out-dated scripts. Including
   many scripts that were replaced by ``strun``. [#8619]
 
+skymatch
+--------
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
+
 stpipe
 ------
 
@@ -149,6 +183,9 @@ tweakreg
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
 
 
 1.15.1 (2024-07-08)
