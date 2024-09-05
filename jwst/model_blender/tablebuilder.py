@@ -7,6 +7,8 @@ def _convert_dtype(value):
         # working with a string description
         str_len = int(value[value.find('U') + 1:])
         new_dtype = ['ascii', str_len]
+    elif value == 'bool':
+        new_dtype = 'bool8'
     else:
         new_dtype = str(value)
 
