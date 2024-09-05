@@ -65,7 +65,7 @@ def detect_outliers(
         with input_models:
             example_model = input_models.borrow(0)
             output_path = make_output_path(basepath=example_model.meta.filename,
-                        suffix='i2d')
+                        suffix='')
             input_models.shelve(example_model, modify=False)
             del example_model
         output_path = os.path.dirname(output_path)

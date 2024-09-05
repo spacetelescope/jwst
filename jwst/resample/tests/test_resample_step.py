@@ -37,8 +37,7 @@ def _set_photom_kwd(im):
         )
 
 
-@pytest.fixture
-def miri_rate():
+def miri_rate_model():
     xsize = 72
     ysize = 416
     shape = (ysize, xsize)
@@ -87,6 +86,11 @@ def miri_rate():
         'start_time': 58119.8333,
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
+    return im
+
+@pytest.fixture
+def miri_rate():
+    im = miri_rate_model()
     yield im
     im.close()
 

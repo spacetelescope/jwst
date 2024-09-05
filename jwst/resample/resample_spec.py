@@ -65,6 +65,7 @@ class ResampleSpecData(ResampleData):
         if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
+        self.intermediate_suffix = 'outlier_s2d'
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -77,7 +78,7 @@ class ResampleSpecData(ResampleData):
         self.in_memory = kwargs.get('in_memory', True)
         self._recalc_pscale_ratio = False
 
-        log.info(f"Driz parameter kernal: {self.kernel}")
+        log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
         log.info(f"Driz parameter weight_type: {self.weight_type}")

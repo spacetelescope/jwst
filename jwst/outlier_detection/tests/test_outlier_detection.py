@@ -7,6 +7,8 @@ import os
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.pointing import create_fitswcs
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.utils import _flag_resampled_model_crs, create_median
 from jwst.outlier_detection.outlier_detection_step import (
@@ -15,7 +17,7 @@ from jwst.outlier_detection.outlier_detection_step import (
     TSO_IMAGE_MODES,
     CORON_IMAGE_MODES,
 )
-from jwst.assign_wcs.pointing import create_fitswcs
+from jwst.resample.tests.test_resample_step import miri_rate_model
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -214,7 +216,7 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
         zeroth.data[12, 12] += 1
         container.shelve(zeroth)
 
-    # Verify that intermediary files are removed
+    # Verify that intermediate files are removed
     OutlierDetectionStep.call(container)
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
@@ -246,11 +248,100 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
         assert zeroth.dq[12, 12] == OUTLIER_DO_NOT_USE
         result.shelve(zeroth, modify=False)
 
-    # Verify that intermediary files are saved at the specified location
+    # Verify that intermediate files are saved at the specified location
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
     assert len(i2d_files) != 0
     assert len(median_files) != 0
+
+
+def test_outlier_step_spec(tmp_cwd, tmp_path):
+    """Test outlier step for spec data including saving intermediate results."""
+    output_dir = tmp_path / 'output'
+    output_dir.mkdir(exist_ok=True)
+    output_dir = str(output_dir)
+
+    # Make a MIRI model and assign a spectral wcs
+    miri_rate = miri_rate_model()
+    miri_cal = AssignWcsStep.call(miri_rate)
+
+    # Make it an exposure type outlier detection expects
+    miri_cal.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+
+    # Make a couple copies, give them unique exposure numbers and filename
+    container = ModelContainer([miri_cal, miri_cal.copy(), miri_cal.copy()])
+    for i, model in enumerate(container):
+        model.meta.filename = f'test_{i}_cal.fits'
+
+    # Drop a CR on the science array in the first image
+    container[0].data[209, 37] += 1
+
+    # Verify that intermediate files are removed when not saved
+    # (s2d files are expected, i2d files are not, but we'll check
+    # for them to make sure the imaging extension didn't creep back in)
+    OutlierDetectionStep.call(container, output_dir=output_dir, save_results=True)
+    for dirname in [output_dir, tmp_cwd]:
+        result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+        i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
+        s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
+        median_files = glob(os.path.join(dirname, '*median.fits'))
+
+        # intermediate files are removed
+        assert len(i2d_files) == 0
+        assert len(s2d_files) == 0
+        assert len(median_files) == 0
+
+        # result files are written to the output directory
+        if dirname == output_dir:
+            assert len(result_files) == len(container)
+        else:
+            assert len(result_files) == 0
+
+    # Call again, but save intermediate to the output path
+    result = OutlierDetectionStep.call(
+        container, save_results=True, save_intermediate_results=True,
+        output_dir=output_dir
+    )
+
+    # Make sure nothing changed in SCI array
+    for image, corrected in zip(container, result):
+        np.testing.assert_allclose(image.data, corrected.data)
+
+    # Verify CR is flagged
+    assert result[0].dq[209, 37] == OUTLIER_DO_NOT_USE
+
+    # Verify that intermediate files are saved at the specified location
+    for dirname in [output_dir, tmp_cwd]:
+        all_files = glob(os.path.join(dirname, '*.fits'))
+        result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+        i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
+        s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
+        median_files = glob(os.path.join(dirname, '*median.fits'))
+        if dirname == output_dir:
+            # result files are written to the output directory
+            assert len(result_files) == len(container)
+
+            # s2d and median files are written to the output directory
+            assert len(s2d_files) == len(container)
+            assert len(median_files) == 1
+
+            # i2d files not written
+            assert len(i2d_files) == 0
+
+            # nothing else was written
+            assert len(all_files) == len(s2d_files) + len(median_files) + len(result_files)
+        else:
+            # nothing should be written to the current directory
+            assert len(result_files) == 0
+            assert len(s2d_files) == 0
+            assert len(median_files) == 0
+            assert len(i2d_files) == 0
+            assert len(all_files) == 0
+
+    miri_rate.close()
+    result.close()
+    for model in container:
+        model.close()
 
 
 @pytest.fixture

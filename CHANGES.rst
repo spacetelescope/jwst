@@ -35,16 +35,16 @@ cube_build
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
-documentation
--------------
-
-- Add changelog to documentation. [#8716]
-
 datamodels
 ----------
 
 - Added `ModelLibrary` class to allow passing on-disk models between steps in the
   image3 pipeline. [#8683]
+
+documentation
+-------------
+
+- Add changelog to documentation. [#8716]
 
 emicorr
 -------
@@ -75,6 +75,10 @@ outlier_detection
 
 - Refactored separate modes into submodules instead of inheriting from a base class.
   Moved non-JWST-specific code to stcal. [#8613]
+
+- Fixed file names and output directory for intermediate resampled spectral
+  images. Intermediate files now have suffix ``outlier_s2d`` and are saved to
+  the output directory alongside final products. [#8735]
 
 - For imaging modes, step now uses `ModelLibrary` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]

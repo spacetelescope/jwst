@@ -198,7 +198,7 @@ class OutlierDetectionStep(Step):
         if exptype in IFU_SPEC_MODES:
             return 'ifu'
 
-        self.log.error("Outlier detection failed for unknown/unsupported ",
+        self.log.error(f"Outlier detection failed for unknown/unsupported "
                        f"exposure type: {exptype}")
         return None
 
