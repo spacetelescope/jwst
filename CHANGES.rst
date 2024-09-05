@@ -40,6 +40,10 @@ badpix_selfcal
 - Subtract pedestal dark when constructing min array across selfcal exposures
   for MIRI MRS data. [#8771]
 
+- Excluded nearby background candidates from NIRSpec fixed slit associations
+  for S1600A1 with 5 point dithers, to reduce overlap between background nods
+  and science exposure. [#8744]
+
 cube_build
 ----------
 
