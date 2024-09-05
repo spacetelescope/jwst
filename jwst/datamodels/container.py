@@ -123,7 +123,6 @@ to supply custom catalogs.
             ``models_grouped`` property for more details.
 
     """
-    schema_url = None
 
     def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
 
@@ -198,8 +197,7 @@ to supply custom catalogs.
         return self
 
     def __exit__(self, *args: object) -> None:
-        for model in self._models:
-            model.close()
+        self.close()
 
     def copy(self, memo=None):
         """

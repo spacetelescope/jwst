@@ -271,6 +271,11 @@ dark_current
 - Add log info message when specifying an average_dark_current for noise calculations.
   [#8425]
 
+datamodels
+----------
+
+- https://plwishmaster.stsci.edu:8081/job/RT/job/JWST-Developers-Pull-Requests/1686/
+
 documentation
 -------------
 
