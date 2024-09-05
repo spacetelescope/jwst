@@ -45,7 +45,7 @@ def detect_outliers(
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """
     if not isinstance(input_models, ModelContainer):
-        input_models = ModelContainer(input_models, save_open=in_memory)
+        input_models = ModelContainer(input_models)
 
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
