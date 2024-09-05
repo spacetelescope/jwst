@@ -15,8 +15,8 @@ from jwst.datamodels import ModelLibrary
 from jwst.associations.asn_from_list import asn_from_list
 
 from . import gwcs_drizzle
+from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
-from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -201,22 +201,6 @@ class ResampleData:
         else:
             return self.resample_many_to_one(input_models)
 
-    def blend_output_metadata(self, output_model, input_models):
-        """Create new output metadata based on blending all input metadata."""
-        # ignore blending for a few metadata items that
-        # are already defined
-        ignore_list = [
-            'meta.photometry.pixelarea_steradians',
-            'meta.photometry.pixelarea_arcsecsq',
-        ]
-
-        log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(
-            output_model,
-            input_models,
-            ignore=ignore_list
-        )
-
     def _get_intensity_scale(self, img):
         """
         Compute an intensity scale from the input and output pixel area.
@@ -385,28 +369,13 @@ class ResampleData:
         copy_asn_info_from_library(input_models, output_model)
 
         if self.blendheaders:
-            # right now this needs a list of input models, all in memory
-            # for now, just load the models as a list with empty data arrays
-            # but the blend_meta step itself should eventually be refactored 
-            # to expect a list of metadata objects
-            # instead of a list of datamodels
-            input_list = []
-            with input_models:
-                for i, model in enumerate(input_models):
-                    empty_model = type(model)()
-                    empty_model.meta = model.meta
-                    copy_asn_info_from_library(input_models, empty_model)
-                    empty_model.data = np.empty((1, 1))
-                    empty_model.dq = np.empty((1, 1))
-                    empty_model.err = np.empty((1, 1))
-                    empty_model.wht = np.empty((1, 1))
-                    empty_model.var_rnoise = np.empty((1, 1))
-                    empty_model.var_poisson = np.empty((1, 1))
-                    empty_model.var_flat = np.empty((1, 1))
-                    input_list.append(empty_model)
-                    input_models.shelve(model, i, modify=False)
-            self.blend_output_metadata(output_model, input_list)
-            del input_list
+            blender = ModelBlender(
+                blend_ignore_attrs=[
+                    'meta.photometry.pixelarea_steradians',
+                    'meta.photometry.pixelarea_arcsecsq',
+                    'meta.filename',
+                ]
+            )
 
         # Initialize the output with the wcs
         driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
@@ -415,6 +384,8 @@ class ResampleData:
         log.info("Resampling science data")
         with input_models:
             for img in input_models:
+                if self.blendheaders:
+                    blender.accumulate(img)
                 iscale = self._get_intensity_scale(img)
                 log.debug(f'Using intensity scale iscale={iscale}')
                 img.meta.iscale = iscale
@@ -446,6 +417,9 @@ class ResampleData:
                 )
                 del data, inwht
                 input_models.shelve(img)
+
+        if self.blendheaders:
+            blender.finalize_model(output_model)
 
         # Resample variance arrays in input_models to output_model
         self.resample_variance_arrays(output_model, input_models)
