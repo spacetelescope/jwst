@@ -206,6 +206,8 @@ def flag_resampled_model_crs(
     scale1,
     scale2,
     backg,
+    save_blot=False,
+    make_output_path=None,
 ):
     if 'SPECTRAL' not in input_model.meta.wcs.output_frame.axes_type:
         input_pixflux_area = input_model.meta.photometry.pixelarea_steradians
@@ -217,6 +219,15 @@ def flag_resampled_model_crs(
         pix_ratio = 1.0
 
     blot = gwcs_blot(median_data, median_wcs, input_model.data.shape, input_model.meta.wcs, pix_ratio)
+    if save_blot:
+        if make_output_path is None:
+            raise ValueError("make_output_path must be provided if save_blot is True")
+        model_path = make_output_path(input_model.meta.filename, suffix='blot')
+        blot_model = _make_blot_model(input_model, blot)
+        blot_model.meta.filename = model_path
+        blot_model.save(model_path)
+        log.info(f"Saved model in {model_path}")
+        del blot_model
     # dq flags will be updated in-place
     _flag_resampled_model_crs(input_model, blot, snr1, snr2, scale1, scale2, backg)
 
@@ -260,9 +271,11 @@ def flag_crs_in_models_with_resampling(
     scale1,
     scale2,
     backg,
+    save_blot=False,
+    make_output_path=None,
 ):
     for image in input_models:
-        flag_resampled_model_crs(image, median_data, median_wcs, snr1, snr2, scale1, scale2, backg)
+        flag_resampled_model_crs(image, median_data, median_wcs, snr1, snr2, scale1, scale2, backg, save_blot=save_blot, make_output_path=make_output_path)
 
 
 def flag_model_crs(image, blot, snr):
@@ -276,3 +289,11 @@ def flag_model_crs(image, blot, snr):
     match_nans_and_flags(image)
 
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
+
+
+def _make_blot_model(input_model, blot):
+    blot_model = input_model.copy()
+    blot_model.data = blot
+    blot_model.dq *= 0
+    blot_model.err *= 0.0
+    return blot_model

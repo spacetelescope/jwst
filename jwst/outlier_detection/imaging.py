@@ -127,7 +127,7 @@ def detect_outliers(
     with input_models:
         for image in input_models:
             if resample_data:
-                flag_resampled_model_crs(image, median_data, median_wcs, snr1, snr2, scale1, scale2, backg)
+                flag_resampled_model_crs(image, median_data, median_wcs, snr1, snr2, scale1, scale2, backg, save_blot=save_intermediate_results, make_output_path=make_output_path)
             else:
                 flag_model_crs(image, median_data, snr1)
             input_models.shelve(image, modify=True)

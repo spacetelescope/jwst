@@ -405,6 +405,30 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
         assert zeroth.dq[12, 12] == OUTLIER_DO_NOT_USE
         result.shelve(zeroth, modify=False)
 
+    # Verify intermediate results were written to disk
+    dirname = tmp_cwd
+    all_files = glob(os.path.join(dirname, '*.fits'))
+    input_files = glob(os.path.join(dirname, '*_cal.fits'))
+    result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+    i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
+    s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
+    median_files = glob(os.path.join(dirname, '*median.fits'))
+    blot_files = glob(os.path.join(dirname, '*blot.fits'))
+
+    assert len(result_files) == len(container)
+
+    # i2d, median, blot files are written to the output directory
+    assert len(i2d_files) == len(container)
+    assert len(blot_files) == len(container)
+    assert len(median_files) == 1
+
+    # s2d files not written
+    assert len(s2d_files) == 0
+
+    # nothing else was written
+    assert len(all_files) == len(input_files) + len(i2d_files) + len(median_files) + len(result_files) + len(blot_files)
+
+
 
 def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
     """Test whole step with square source with sharp edges, no outliers"""
