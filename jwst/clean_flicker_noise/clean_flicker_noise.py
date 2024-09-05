@@ -768,7 +768,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
 
     fit_by_channel : bool, optional
         If set, flicker noise is fit independently for each detector channel.
-        Ignored for MIRI and for subarray data.
+        Ignored for MIRI, for subarray data, and for `fit_method` = 'fft'.
 
     background_method : {'median', 'model', None}, optional
         If 'median', the preliminary background to remove and restore

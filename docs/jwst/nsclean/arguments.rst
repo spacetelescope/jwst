@@ -11,7 +11,7 @@ the behavior of the processing.
 
 ``--fit_by_channel`` (boolean, default=False)
   If set, flicker noise is fit independently for each detector channel.
-  Ignored for subarray data.
+  Ignored for subarray data and for `fit_method` = 'fft'.
 
 ``--background_method`` (str, default=None)
   If 'median', the preliminary background to remove and restore

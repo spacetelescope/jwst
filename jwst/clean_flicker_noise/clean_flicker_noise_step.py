@@ -55,7 +55,7 @@ class CleanFlickerNoiseStep(Step):
 
         fit_by_channel : bool, optional
             If set, flicker noise is fit independently for each detector channel.
-            Ignored for MIRI and for subarray data.
+            Ignored for MIRI, for subarray data, and for `fit_method` = 'fft'
 
         background_method : {'median', 'model', None}
             If 'median', the preliminary background to remove and restore
