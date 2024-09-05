@@ -1191,6 +1191,8 @@ class NIRDataset(Dataset):
         in the superbias subtraction step"""
 
         continue_apply_conv_kernel = False
+        # Check if convolution kernels for this detector are in the reference file
+        # and if not, proceed with side-pixel correction as usual
         if self.use_conv_kernel and self.conv_kernel_model is not None:
             kernels = make_kernels(self.conv_kernel_model,
                                    self.input_model.meta.instrument.detector,
@@ -1199,35 +1201,38 @@ class NIRDataset(Dataset):
             if kernels is None:
                 log.info('The REFPIX step will use the running median')
             else:
-                continue_apply_conv_kernel = False
+                continue_apply_conv_kernel = True
+                # Make sure the side pixel correction is off before applying convolution
+                self.use_side_ref_pixels = False
+        #
+        #  First transform pixeldq array to detector coordinates
+        self.DMS_to_detector_dq()
+
+        for integration in range(self.nints):
+            for group in range(self.ngroups):
+                #
+                # Get the reference values from the top and bottom reference
+                # pixels
+                #
+                self.DMS_to_detector(integration, group)
+                thisgroup = self.group
+                refvalues = self.get_refvalues(thisgroup)
+                self.do_top_bottom_correction(thisgroup, refvalues)
+                if self.use_side_ref_pixels:
+                    corrected_group = self.do_side_correction(thisgroup)
+                    self.group = corrected_group
+                else:
+                    self.group = thisgroup
+                #
+                #  Now transform back from detector to DMS coordinates.
+                self.detector_to_DMS(integration, group)
+        #
+        # Apply optimized convolution kernel
         if continue_apply_conv_kernel:
             self.input_model = apply_conv_kernel(self.input_model,
                                                  kernels,
                                                  sigreject=self.sigreject)
-        else:
-            #
-            #  First transform pixeldq array to detector coordinates
-            self.DMS_to_detector_dq()
-
-            for integration in range(self.nints):
-                for group in range(self.ngroups):
-                    #
-                    # Get the reference values from the top and bottom reference
-                    # pixels
-                    #
-                    self.DMS_to_detector(integration, group)
-                    thisgroup = self.group
-                    refvalues = self.get_refvalues(thisgroup)
-                    self.do_top_bottom_correction(thisgroup, refvalues)
-                    if self.use_side_ref_pixels:
-                        corrected_group = self.do_side_correction(thisgroup)
-                        self.group = corrected_group
-                    else:
-                        self.group = thisgroup
-                    #
-                    #  Now transform back from detector to DMS coordinates.
-                    self.detector_to_DMS(integration, group)
-            log.setLevel(logging.INFO)
+        log.setLevel(logging.INFO)
         return
 
     def do_subarray_corrections(self):

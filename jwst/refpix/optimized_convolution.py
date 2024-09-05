@@ -1,6 +1,6 @@
 #
 # Module for using Reference Pixels to improve the 1/f noise, to be
-# used be only for non-IRS2 data
+# used be only for non-IRS2 NIR data
 #
 
 import logging
@@ -38,7 +38,6 @@ def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
     """
 
     gamma, zeta = get_conv_kernel_coeffs(conv_kernel_model, detector)
-    gamma=None
     if gamma is None or zeta is None:
         log.info(f'Optimized convolution kernel coefficients NOT found for detector {detector}')
         return None
@@ -89,7 +88,7 @@ def get_conv_kernel_coeffs(conv_kernel_model, detector):
     gamma, zeta = None, None
     for item in mdl_dict:
         det = item.split(sep='.')[0]
-        if detector.lower() == det:
+        if detector.lower() == det.lower():
             arr_name = item.split(sep='.')[1]
             if arr_name == 'gamma':
                 gamma = np.array(mdl_dict[item])
@@ -123,7 +122,6 @@ def apply_conv_kernel(datamodel, kernels, sigreject=4):
     datamodel : `~jwst.datamodel`
         Data model with convolution
     """
-
     data = datamodel.data.copy()[0, :, :, :]
     data = data.astype(float)
     npix = data.shape[-1]
