@@ -6,6 +6,9 @@ align_refs
 
 - Compute alignment shifts from the first integration of the science exposure only. [#8643]
 
+- Fixed a bug where the aligned PSF was being saved as a 4-D array with the first axis being
+  identical; now it is saved as a 3-D array. [#8747]
+
 ami_average
 -----------
 
@@ -50,6 +53,12 @@ general
 - Update required stcal version to 1.8.0. [#8706]
 
 - Increase minimum required stpipe. [#8713]
+
+klip
+----
+
+- Allowed klip to ingest a single shifted 3-D PSF model instead of a 4-D structure
+  containing one shifted PSF per science integration. [#8747]
 
 master_background
 -----------------
