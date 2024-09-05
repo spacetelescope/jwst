@@ -826,7 +826,7 @@ class IFUCubeData():
 
                 coord1, coord2, corner_coord, wave, dwave, flux, err, slice_no, \
                     rois_pixel, roiw_pixel, weight_pixel, \
-                    softrad_pixel, scalerad_pixel = pixelresult
+                    softrad_pixel, scalerad_pixel, _, _ = pixelresult
 
                 build_cube = True
                 if wave is None:  # there is no valid data on the detector. Pixels are flagged as DO_NOT_USE.
@@ -870,6 +870,9 @@ class IFUCubeData():
                     linear = 0
                     if self.linear_wavelength:
                         linear = 1
+                        x_det = None
+                        y_det = None
+                        debug_cube = -1
                     result = cube_wrapper_driz(instrument, flag_dq_plane,
                                                start_region, end_region,
                                                self.overlap_partial, self.overlap_full,
@@ -878,7 +881,8 @@ class IFUCubeData():
                                                xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
                                                dwave,
                                                self.cdelt3_normal,
-                                               self.cdelt1, self.cdelt2, cdelt3_mean, linear)
+                                               self.cdelt1, self.cdelt2, cdelt3_mean, linear,
+                                               x_det, y_det, debug_cube)
 
                     spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
                     self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
