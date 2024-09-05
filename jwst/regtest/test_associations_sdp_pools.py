@@ -133,7 +133,7 @@ SPECIAL_POOLS = {
         'slow': False,
     },
     'jw01678_20240721t195707_pool': {
-        'args': ['-i', 'o005'],
+        'args': [],
         'xfail': None,
         'slow': False,
     },
