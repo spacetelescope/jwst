@@ -7,6 +7,7 @@ from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 
 from . import cube_build
+from . import ifuoffset.schema.yaml
 from . import ifu_cube
 from . import data_types
 import asdf
@@ -41,7 +42,7 @@ class CubeBuildStep (Step):
 
     spec = """
          channel = option('1','2','3','4','all',default='all') # Channel
-         band = option('short','medium','long','short-medium','short-long','medium-short',
+         band = option('short','medium','long','short-medium','short-long','medium-short', \
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
