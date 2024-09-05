@@ -41,7 +41,7 @@ class CubeBuildStep (Step):
 
     spec = """
          channel = option('1','2','3','4','all',default='all') # Channel
-         band = option('short','medium','long','short-medium','short-long','medium-short', \
+         band = option('short','medium','long','short-medium','short-long','medium-short',
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
          grating   = option('prism','g140m','g140h','g235m','g235h','g395m','g395h','all',default='all') # Grating
          filter   = option('clear','f100lp','f070lp','f170lp','f290lp','all',default='all') # Filter
@@ -65,7 +65,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
-         offset_list = string(default=None)
+         offset_file = string(default=None)
          debug_spaxel = string(default='-1 -1 -1') # Default not used
        """
 
@@ -245,8 +245,8 @@ class CubeBuildStep (Step):
 # Each row in the offset list contain a filename, ra offset and dec offset.
 # The offset list is an asdf file.
         self.offsets = None
-        if self.offset_list is not None:
-            offsets = self.check_offset_list()
+        if self.offset_file is not None:
+            offsets = self.check_offset_file()
             if offsets is not None:
                 self.offsets = offsets
 # ________________________________________________________________________________
@@ -546,7 +546,8 @@ class CubeBuildStep (Step):
             self.pars_input['grating'] = list(set(self.pars_input['grating']))
 # ________________________________________________________________________________
 
-    def check_offset_list(self):
+
+    def check_offset_file(self):
         """Read in an optional ra and dec offsets for each file.
 
         Summary
@@ -559,9 +560,11 @@ class CubeBuildStep (Step):
 
        """
 
-        check_asdf = asdf.util.get_file_type(asdf.generic_io.get_file(self.offset_list))
+        af = asdf.open(self.offset_file, custom_schema = 'ifuoffset_schema.yaml')
+        
+        check_asdf = asdf.util.get_file_type(asdf.generic_io.get_file(self.offset_file))
         if check_asdf == asdf.util.FileType.ASDF:
-            with asdf.open(self.offset_list) as af:
+            with asdf.open(self.offset_file) as af:
                 offsets = af.tree['offsets']
 
         format_failure = False

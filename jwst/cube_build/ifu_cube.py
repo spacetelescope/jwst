@@ -1329,7 +1329,15 @@ class IFUCubeData():
                     decs.append(m)
 
                 self.median_dec = np.nanmedian(decs)
-                print('Median declination ', self.median_dec)
+                # fold in the median_dec information into ra offset
+                noffsets = len(self.offsets['raoffset'])
+                # convert ra and dec offsets to degrees and adjust ra offset for cos(dec) 
+                for im in range(noffsets):
+                    self.offsets['raoffset'][im] = (self.offsets['raoffset'][im]/3600.0)/np.cos(self.median_dec*deg2rad)
+                    self.offsets['decoffset'][im] = self.offsets['decoffset'][im]/3600.0
+
+                print(self.offsets['raoffset'])
+                print(self.offsets['decoffset'])
                 
             for k in range(n):
                 lmin = 0.0
@@ -1347,11 +1355,6 @@ class IFUCubeData():
                     index = self.offsets['filename'].index(filename)
                     raoffset = self.offsets['raoffset'][index]
                     decoffset = self.offsets['decoffset'][index]
-                    log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
-                             raoffset, decoffset, filename)
-                    raoffset = raoffset/3600.0 # convert to degress
-                    raoffset = raoffset /np.cos(self.median_dec *deg2rad)
-                    decoffset = decoffset/3600.0
 # ________________________________________________________________________________
                 # Find the footprint of the image
                 spectral_found = hasattr(input_model.meta.wcsinfo, 'spectral_region')
@@ -1770,11 +1773,9 @@ class IFUCubeData():
             index = offsets['filename'].index(filename)
             raoffset = offsets['raoffset'][index]
             decoffset = offsets['decoffset'][index]
-            log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
-                     raoffset, decoffset, filename)
-            raoffset = raoffset/3600.0 # convert to degress
-            raoffset = raoffset /np.cos(self.median_dec *deg2rad)
-            decoffset = decoffset/3600.0
+            log.info("Ra and dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
+                     raoffset*3600.0*np.cos(self.median_dec*deg2rad),
+                    decoffset*3600.0, filename)
 
         # check if background sky matching as been done in mrs_imatch step
         # If it has not been subtracted and the background has not been
@@ -1897,8 +1898,6 @@ class IFUCubeData():
             decoffset = offsets['decoffset'][index]
             log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
                      raoffset, decoffset, filename)
-            raoffset = raoffset/3600.0 # convert to degress
-            decoffset = decoffset/3600.0
             
         # initialize the ra,dec, and wavelength arrays
         # we will loop over slice_nos and fill in values
