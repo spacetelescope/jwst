@@ -197,19 +197,6 @@ def get_blended_metadata(input_models):
     return new_meta, new_table
 
 
-def extract_filenames_from_product(product):
-    """
-    Returns the list of filenames with extensions of input observations that
-    were used to generate the product.
-    """
-    asn_table = product.meta.asn.table_name
-    asn = associations.load_asn(asn_table)
-    prod = asn['products'][0]
-    fnames = [m['expname'] for m in prod['members']
-              if m['exptype'].upper() == 'SCIENCE']
-    return fnames
-
-
 def build_tab_schema(new_table):
     """Return new schema definition that describes the input table."""
     hdrtab = OrderedDict()
