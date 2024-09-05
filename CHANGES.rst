@@ -467,6 +467,9 @@ outlier_detection
 
 - Fix errors in documentation describing arguments. [#8603]
 
+- Set buffer size for ``create_median`` based on the amount of available memory
+  instead of hard-coding a value, and make it respect ``allowed_memory`` parameter. [#8756]
+
 pathloss
 --------
 
