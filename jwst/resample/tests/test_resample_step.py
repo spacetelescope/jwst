@@ -7,7 +7,7 @@ import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.exp_to_source import multislit_to_container
@@ -37,8 +37,7 @@ def _set_photom_kwd(im):
         )
 
 
-@pytest.fixture
-def miri_rate():
+def miri_rate_model():
     xsize = 72
     ysize = 416
     shape = (ysize, xsize)
@@ -87,6 +86,11 @@ def miri_rate():
         'start_time': 58119.8333,
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
+    return im
+
+@pytest.fixture
+def miri_rate():
+    im = miri_rate_model()
     yield im
     im.close()
 
@@ -492,6 +496,72 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
 
 @pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
 @pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
+def test_pixel_scale_ratio_spec_miri_pair(miri_rate_pair, ratio, units):
+    im1, im2 = miri_rate_pair
+    _set_photom_kwd(im1)
+    _set_photom_kwd(im2)
+    im1.meta.bunit_data = units
+    im2.meta.bunit_data = units
+    im1.meta.filename = 'file1.fits'
+    im2.meta.filename = 'file2.fits'
+    im1.data += 1.0
+    im2.data += 1.0
+
+    # Make an input pixel scale equivalent to the specified ratio
+    input_scale = compute_spectral_pixel_scale(im1.meta.wcs, disp_axis=2)
+    pscale = 3600.0 * input_scale / ratio
+
+    result1 = ResampleSpecStep.call([im1, im2])
+    result2 = ResampleSpecStep.call([im1, im2], pixel_scale_ratio=ratio)
+    result3 = ResampleSpecStep.call([im1, im2], pixel_scale=pscale)
+
+    # pixel_scale and pixel_scale_ratio should be equivalent
+    nn = np.isnan(result2.data) | np.isnan(result3.data)
+    assert np.allclose(result2.data[~nn], result3.data[~nn])
+
+    # Check result2 for expected results
+
+    # wavelength size does not change
+    assert result1.data.shape[0] == result2.data.shape[0]
+
+    # spatial dimension is scaled
+    assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
+
+    # data is non-trivial
+    assert np.nansum(result1.data) > 0.0
+    assert np.nansum(result2.data) > 0.0
+
+    # flux is conserved
+    if 'sr' not in units:
+        # flux density conservation: sum over pixels in each row
+        # needs to be about the same, other than the edges
+        # Check the maximum sums, to avoid edges.
+        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
+                           np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
+    else:
+        # surface brightness conservation: mean values are the same
+        assert np.allclose(np.nanmean(result1.data, axis=1),
+                           np.nanmean(result2.data, axis=1), rtol=0.05,
+                           equal_nan=True)
+
+    # output area is updated either way
+    area1 = result1.meta.photometry.pixelarea_steradians
+    area2 = result2.meta.photometry.pixelarea_steradians
+    area3 = result2.meta.photometry.pixelarea_steradians
+    assert np.isclose(area1 / area2, ratio)
+    assert np.isclose(area1 / area3, ratio)
+
+    assert result1.meta.resample.pixel_scale_ratio == 1.0
+    assert result2.meta.resample.pixel_scale_ratio == ratio
+    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
+
+    result1.close()
+    result2.close()
+    result3.close()
+
+
+@pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
+@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
 def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
     for slit in nirspec_cal.slits:
         slit.meta.bunit_data = units
@@ -567,7 +637,7 @@ def test_weight_type(nircam_rate, tmp_cwd):
     im2.meta.observation.sequence_id = "2"
     im3.meta.observation.sequence_id = "3"
 
-    c = ModelContainer([im1, im2, im3])
+    c = ModelLibrary([im1, im2, im3])
     assert len(c.group_names) == 3
 
     result1 = ResampleStep.call(c, weight_type="ivm", blendheaders=False, save_results=True)
@@ -586,8 +656,10 @@ def test_weight_type(nircam_rate, tmp_cwd):
     # remove measurement time to force use of exposure time
     # this also implicitly shows that measurement time was indeed used above
     expected_ratio = im1.meta.exposure.exposure_time / im1.meta.exposure.measurement_time
-    for im in c:
-        del im.meta.exposure.measurement_time
+    with c:
+        for j, im in enumerate(c):
+            del im.meta.exposure.measurement_time
+            c.shelve(im, j)
 
     result3 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
     assert_allclose(result3.data[100:105, 100:105], 6.667, rtol=1e-2)
@@ -721,9 +793,7 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
     im.err += err
     im.meta.filename = "foo.fits"
 
-    c = ModelContainer()
-    for n in range(n_images):
-        c.append(im.copy())
+    c = ModelLibrary([im.copy() for _ in range(n_images)])
 
     result = ResampleStep.call(c, blendheaders=False, weight_type=weight_type)
 
@@ -744,7 +814,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.var_poisson = np.ones(shape, dtype=im.var_poisson.dtype.type)
     im.var_flat = np.ones(shape, dtype=im.var_flat.dtype.type)
     im.meta.filename = "foo.fits"
-    c = ModelContainer([im])
+    c = ModelLibrary([im])
 
     with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
         result = ResampleStep.call(c, blendheaders=False)

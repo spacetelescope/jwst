@@ -16,7 +16,6 @@ from gwcs.geometry import SphericalToCartesian
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import compute_scale, wrap_ra
-from jwst.datamodels import ModelContainer
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleData
 
@@ -66,6 +65,7 @@ class ResampleSpecData(ResampleData):
         if output is not None and '.fits' not in str(output):
             self.output_dir = output
             self.output_filename = None
+        self.intermediate_suffix = 'outlier_s2d'
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -78,7 +78,7 @@ class ResampleSpecData(ResampleData):
         self.in_memory = kwargs.get('in_memory', True)
         self._recalc_pscale_ratio = False
 
-        log.info(f"Driz parameter kernal: {self.kernel}")
+        log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
         log.info(f"Driz parameter weight_type: {self.weight_type}")
@@ -191,7 +191,6 @@ class ResampleSpecData(ResampleData):
             self.blank_output.meta.photometry.pixelarea_arcsecsq = (
                 output_pix_area * np.rad2deg(3600)**2)
 
-        self.output_models = ModelContainer()
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None):
         """
@@ -509,6 +508,7 @@ class ResampleSpecData(ResampleData):
         all_wavelength = []
         all_ra_slit = []
         all_dec_slit = []
+        xstop = 0
 
         for im, model in enumerate(input_models):
             wcs = model.meta.wcs
@@ -700,10 +700,10 @@ class ResampleSpecData(ResampleData):
         else:
             pix_to_xtan.intercept = -0.5 * (x_size - 1) * pix_to_xtan.slope
 
-        # single model use size of x_tan_array
+        # single model: use size of x_tan_array
         # to be consistent with method before
         if len(input_models) == 1:
-            x_size = len(x_tan_array)
+            x_size = int(np.ceil(xstop))
 
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
@@ -723,7 +723,7 @@ class ResampleSpecData(ResampleData):
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array)))
-        output_array_size[spatial_axis] = int(np.ceil(x_size * self.pscale_ratio))
+        output_array_size[spatial_axis] = x_size
 
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]

@@ -3,7 +3,7 @@ from functools import partial
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe import Step
 from jwst.stpipe.utilities import record_step_status
 from jwst.lib.pipe_utils import is_tso
@@ -39,9 +39,10 @@ class OutlierDetectionStep(Step):
 
     Parameters
     -----------
-    input_data : asn file or ~jwst.datamodels.ModelContainer
-        Single filename association table, or a datamodels.ModelContainer.
-
+    input_data : asn file, ~jwst.datamodels.ModelContainer, or ~jwst.datamodels.ModelLibrary
+        Single filename association table, datamodels.ModelContainer, or datamodels.ModelLibrary.
+        For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
+        ModelContainer is expected.
     """
 
     class_alias = "outlier_detection"
@@ -170,13 +171,17 @@ class OutlierDetectionStep(Step):
             return self.mode
 
         # guess mode from input type
-        if not isinstance(input_models, datamodels.JwstDataModel):
+        if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Select which version of OutlierDetection
         # needs to be used depending on the input data
         if isinstance(input_models, ModelContainer):
             single_model = input_models[0]
+        elif isinstance(input_models, ModelLibrary):
+            with input_models:
+                single_model = input_models.borrow(0)
+                input_models.shelve(single_model, modify=False)
         else:
             single_model = input_models
 
@@ -193,21 +198,24 @@ class OutlierDetectionStep(Step):
         if exptype in IFU_SPEC_MODES:
             return 'ifu'
 
-        self.log.error("Outlier detection failed for unknown/unsupported ",
+        self.log.error(f"Outlier detection failed for unknown/unsupported "
                        f"exposure type: {exptype}")
         return None
 
     def _get_asn_id(self, input_models):
         # handle if input_models isn't open
-        if not isinstance(input_models, datamodels.JwstDataModel):
+        if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Setup output path naming if associations are involved.
-        asn_id = None
-        try:
-            asn_id = input_models.meta.asn_table.asn_id
+        try:   
+            if isinstance(input_models, ModelLibrary):
+                asn_id = input_models.asn["asn_id"]
+            else:
+                asn_id = input_models.meta.asn_table.asn_id
         except (AttributeError, KeyError):
-            pass
+            asn_id = None
+
         if asn_id is None:
             asn_id = self.search_attr('asn_id')
         if asn_id is not None:
@@ -220,10 +228,10 @@ class OutlierDetectionStep(Step):
                 asn_id=asn_id
             )
         return asn_id
-
+    
     def _set_status(self, input_models, status):
         # this might be called with the input which might be a filename or path
-        if not isinstance(input_models, datamodels.JwstDataModel):
+        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary)):
             input_models = datamodels.open(input_models)
 
         record_step_status(input_models, "outlier_detection", status)
