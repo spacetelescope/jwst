@@ -23,6 +23,18 @@ INSTRUMENT_NAMES = ['NIRCAM'] * N_MODELS
 CORONAGRAPHS = ['4QPM', '4QPM_1065', '4QPM_1140']
 POLYNOMIAL_INFO = [[{'degree': [1]}]] * N_MODELS
 
+# even though this won't be in the schema the blender
+# copies the metadata from the first model so the
+# meta from the first model will appear in the result
+UNKNOWN_IN_FIRST = ['foo', 'bar', 'bam']
+
+# but... if the metadata isn't in the first model it
+# won't appear in the output
+UNKNOWN_MISSING_FIRST = [None, 'fizz', 'buzz']
+
+# even if the metadata is defined in the schema
+KNOWN_MISSING_FIRST = [None, '1', '2']
+
 
 def _make_data():
     """Create a set of input models to blendmeta
@@ -51,17 +63,27 @@ def _make_data():
         'meta.observation.date': DATES,
         'meta.observation.date_beg': DATETIMES,
         'meta.background.polynomial_info': POLYNOMIAL_INFO,
+
+        # test a few "quirks" of the blender including...
+        # unknown (not in schema) attribute in the first model
+        'meta.unknown_in_first': UNKNOWN_IN_FIRST,
+        # unknown attribute missing from the first model
+        'meta.unknown_missing_first': UNKNOWN_MISSING_FIRST,
+        # known (in schema) attribute missing from the first model
+        'meta.observation.visit_id': KNOWN_MISSING_FIRST,
     }
     output_values = {
         'meta.exposure.start_time': START_TIMES[0],
         'meta.exposure.exposure_time': np.sum(EXP_TIMES),
         'meta.exposure.end_time': END_TIMES[-1],
-        'meta.filename': FILENAMES[0],
+        # skip filename as it will be ignored below
         'meta.instrument.coronagraph': CORONAGRAPHS[0],
         'meta.instrument.name': INSTRUMENT_NAMES[0],
         'meta.date': DATETIMES[0],
         'meta.observation.date': DATES[1],
-        'meta.observation.date_beg': DATETIMES[1]
+        'meta.observation.date_beg': DATETIMES[1],
+        # this is the only "quirk" that will appear in the output
+        'meta.unknown_in_first': UNKNOWN_IN_FIRST[0],
     }
 
     for i, model in enumerate(models):
@@ -91,7 +113,7 @@ def blend(make_data):
     """
     models, input_values, output_values = make_data
     output = ImageModel()
-    blendmeta.blendmodels(output, models)
+    blendmeta.blendmodels(output, models, ignore=["meta.filename"])
     newmeta = {k: v for k, v in output.to_flat_dict().items() if k.startswith('meta')}
     return newmeta, output.hdrtab, models, input_values, output_values
 
@@ -160,6 +182,7 @@ def test_blendtab(blend):
     fits_expected = set(
         meta_to_fits[meta]
         for meta in output_values
+        if meta in meta_to_fits
     )
 
     # Ensure all the expected FITS keywords are in the table.

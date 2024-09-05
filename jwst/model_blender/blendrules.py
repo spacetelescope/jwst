@@ -318,9 +318,6 @@ def interpret_entry(line, hdr):
     # Interpret raw input line
     attr = list(line.keys())[0]
     line_spec = line[attr]
-    attr_column = True  # Determine whether this rule defines a table column
-    if isinstance(line_spec, dict):
-        attr_column = False  # If not, turn this off
 
     # Initialize output values
     rules = []
