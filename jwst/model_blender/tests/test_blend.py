@@ -88,8 +88,10 @@ def blend(make_data):
         or from the results of `_make_data` directly.
     """
     models, input_values, output_values = make_data
-    newmeta, newtab = blendmeta.get_blended_metadata(models)
-    return newmeta, newtab, models, input_values, output_values
+    output = ImageModel()
+    blendmeta.blendmodels(output, models)
+    newmeta = {k: v for k, v in output.to_flat_dict().items() if k.startswith('meta')}
+    return newmeta, output.hdrtab, models, input_values, output_values
 
 
 def test_blendmeta(blend):
@@ -156,5 +158,5 @@ def test_blendtab(blend):
     )
 
     # Ensure all the expected FITS keywords are in the table.
-    table = Table(newtab.data)
+    table = Table(newtab)
     assert not fits_expected.difference(table.colnames)
