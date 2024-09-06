@@ -8,7 +8,8 @@ def _convert_dtype(value):
         str_len = int(value[value.find('U') + 1:])
         new_dtype = ['ascii', str_len]
     elif value == 'bool':
-        new_dtype = 'bool8'
+        # cast all bool to int8 to avoid issues on write
+        new_dtype = 'int8'
     else:
         new_dtype = str(value)
 
@@ -59,5 +60,5 @@ class TableBuilder:
         for col, items in self.columns.items():
             arrays.append(np.ma.array(items, mask=self.masks[col]))
             table_dtype.append((col, arrays[-1].dtype))
-        # TODO loses masks...
+        # TODO loses masks... but so did the old code?
         return np.rec.fromarrays(arrays, dtype=table_dtype)

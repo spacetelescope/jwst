@@ -74,4 +74,8 @@ class ModelBlender:
         table = self._finalize_table()
         schema = table_to_schema(table)
         model.add_schema_entry('hdrtab', schema)
+
+        # because astropy will silently mangle boolean columns on write
+        # we roundtrip the data through a BinTableHDU here to allow
+        # stdatamodels to correct the data in a way that won't result in mangling
         model.hdrtab = fits_support.from_fits_hdu(fits.BinTableHDU.from_columns(table), schema)
