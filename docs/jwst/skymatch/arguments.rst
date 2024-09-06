@@ -67,3 +67,9 @@ The ``skymatch`` step uses the following optional arguments:
   Bin width, in sigma, used to sample the distribution of pixel
   values in order to compute the sky background using statistics
   that require binning, such as `mode` and `midpt`.
+
+**Memory management parameters:**
+
+``in_memory`` (boolean, default=True)
+  If False, preserve memory using temporary files
+  at the expense of having to run many I/O operations.

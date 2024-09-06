@@ -220,8 +220,10 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
         assert im.meta.background.subtracted is None
 
         # test that output models have original sky levels on failure:
-        for im, lev in zip(result, levels):
-            assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
+        with result:
+            for im, lev in zip(result, levels):
+                assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
+                result.shelve(im, modify=False)
 
         return
 
@@ -243,19 +245,21 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
 
     sub_levels = np.subtract(levels, ref_levels)
 
-    for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
-        # check that meta was set correctly:
-        assert im.meta.background.method == skymethod
-        assert im.meta.background.subtracted == subtract
+    with result:
+        for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
+            # check that meta was set correctly:
+            assert im.meta.background.method == skymethod
+            assert im.meta.background.subtracted == subtract
 
-        # test computed/measured sky values:
-        assert abs(im.meta.background.level - rlev) < 0.01
+            # test computed/measured sky values:
+            assert abs(im.meta.background.level - rlev) < 0.01
 
-        # test
-        if subtract:
-            assert abs(np.mean(im.data[dq_mask]) - slev) < 0.01
-        else:
-            assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
+            # test
+            if subtract:
+                assert abs(np.mean(im.data[dq_mask]) - slev) < 0.01
+            else:
+                assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
+            result.shelve(im, modify=False)
 
 
 @pytest.mark.parametrize(
@@ -334,33 +338,35 @@ def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
 
     sub_levels = np.subtract(levels, ref_levels)
 
-    for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
-        # check that meta was set correctly:
-        assert im.meta.background.method == skymethod
-        assert im.meta.background.subtracted == subtract
+    with result:
+        for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
+            # check that meta was set correctly:
+            assert im.meta.background.method == skymethod
+            assert im.meta.background.subtracted == subtract
 
-        if skymethod in ['local', 'global']:
-            # These two sky methods must fail because they do not take
-            # into account (do not compute) overlap regions and use
-            # entire images:
+            if skymethod in ['local', 'global']:
+                # These two sky methods must fail because they do not take
+                # into account (do not compute) overlap regions and use
+                # entire images:
 
-            # test computed/measured sky values:
-            assert abs(im.meta.background.level - rlev) > 1000  # FAIL
+                # test computed/measured sky values:
+                assert abs(im.meta.background.level - rlev) > 1000  # FAIL
 
-            # test
-            if subtract:
-                assert abs(np.mean(im.data[dq_mask]) - slev) > 1000  # FAIL
+                # test
+                if subtract:
+                    assert abs(np.mean(im.data[dq_mask]) - slev) > 1000  # FAIL
+                else:
+                    assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01  # PASS
             else:
-                assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01  # PASS
-        else:
-            # test computed/measured sky values:
-            assert abs(im.meta.background.level - rlev) < 0.01
+                # test computed/measured sky values:
+                assert abs(im.meta.background.level - rlev) < 0.01
 
-            # test
-            if subtract:
-                assert abs(np.mean(im.data[dq_mask]) - slev) < 0.01
-            else:
-                assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
+                # test
+                if subtract:
+                    assert abs(np.mean(im.data[dq_mask]) - slev) < 0.01
+                else:
+                    assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
+            result.shelve(im, modify=False)
 
 
 def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
@@ -415,7 +421,6 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     # images are rotated and SATURATED pixels in the corners are not in the
     # common intersection of all input images. This is the purpose of this test
     step = SkyMatchStep(
-        minimize_memory=True,
         skymethod='match',
         match_down=True,
         subtract=True,
@@ -426,23 +431,21 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
 
     result = step.run(asn_out_fname)
 
-    assert isinstance(result, str)
-
     ref_levels = np.subtract(levels, min(levels))
     sub_levels = np.subtract(levels, ref_levels)
 
-    result = ModelContainer(result)
+    with result:
+        for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
+            # check that meta was set correctly:
+            assert im.meta.background.method == 'match'
+            assert im.meta.background.subtracted is True
 
-    for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
-        # check that meta was set correctly:
-        assert im.meta.background.method == 'match'
-        assert im.meta.background.subtracted is True
+            # test computed/measured sky values:
+            assert abs(im.meta.background.level - rlev) < 0.01
 
-        # test computed/measured sky values:
-        assert abs(im.meta.background.level - rlev) < 0.01
-
-        # test
-        assert abs(np.mean(im.data[dq_mask]) - slev) < 0.01
+            # test
+            assert abs(np.mean(im.data[dq_mask]) - slev) < 0.01
+            result.shelve(im, modify=False)
 
 
 @pytest.mark.parametrize(
@@ -498,7 +501,6 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     # images are rotated and SATURATED pixels in the corners are not in the
     # common intersection of all input images. This is the purpose of this test
     step = SkyMatchStep(
-        minimize_memory=True,
         skymethod=skymethod,
         match_down=True,
         subtract=subtract,
@@ -529,19 +531,19 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
 
     sub_levels = np.subtract(levels, ref_levels)
 
-    result2 = ModelContainer(result2)
-
     # compare results
-    for im2, lev, rlev, slev in zip(result2, levels, ref_levels, sub_levels):
-        # check that meta was set correctly:
-        assert im2.meta.background.method == skymethod
-        assert im2.meta.background.subtracted == subtract
+    with result2:
+        for im2, lev, rlev, slev in zip(result2, levels, ref_levels, sub_levels):
+            # check that meta was set correctly:
+            assert im2.meta.background.method == skymethod
+            assert im2.meta.background.subtracted == subtract
 
-        # test computed/measured sky values:
-        assert abs(im2.meta.background.level - rlev) < 0.01
+            # test computed/measured sky values:
+            assert abs(im2.meta.background.level - rlev) < 0.01
 
-        # test
-        if subtract:
-            assert abs(np.mean(im2.data[dq_mask]) - slev) < 0.01
-        else:
-            assert abs(np.mean(im2.data[dq_mask]) - lev) < 0.01
+            # test
+            if subtract:
+                assert abs(np.mean(im2.data[dq_mask]) - slev) < 0.01
+            else:
+                assert abs(np.mean(im2.data[dq_mask]) - lev) < 0.01
+            result2.shelve(im2)

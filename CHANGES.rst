@@ -6,10 +6,19 @@ align_refs
 
 - Compute alignment shifts from the first integration of the science exposure only. [#8643]
 
+- Fixed a bug where the aligned PSF was being saved as a 4-D array with the first axis being
+  identical; now it is saved as a 3-D array. [#8747]
+
 ami_average
 -----------
 
 - Fix error in step spec that prevents step creation. [#8677]
+
+assign_mtwcs
+------------
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
 
 assign_wcs
 ----------
@@ -33,6 +42,15 @@ cube_build
   
 - Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
 
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  building a cube. [#8557]
+
+datamodels
+----------
+
+- Added `ModelLibrary` class to allow passing on-disk models between steps in the
+  image3 pipeline. [#8683]
+
 documentation
 -------------
 
@@ -44,6 +62,12 @@ emicorr
 - Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
   to compute a correction. [#8675]
 
+flat_field
+----------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
+  variance, and DQ extensions for all modes. [#8557]
+
 general
 -------
 
@@ -52,6 +76,12 @@ general
 - Update required stcal version to 1.8.0. [#8706]
 
 - Increase minimum required stpipe. [#8713]
+
+klip
+----
+
+- Allowed klip to ingest a single shifted 3-D PSF model instead of a 4-D structure
+  containing one shifted PSF per science integration. [#8747]
 
 master_background
 -----------------
@@ -77,10 +107,43 @@ outlier_detection
   images. Intermediate files now have suffix ``outlier_s2d`` and are saved to
   the output directory alongside final products. [#8735]
 
-set_telescope_pointing
-----------------------
+- For imaging modes, step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
 
-- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+pathloss
+--------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+photom
+------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+pipeline
+--------
+
+- Updated `calwebb_image3` to use `ModelLibrary` instead of `ModelContainer`, added
+  optional `on_disk` parameter to govern whether models in the library should be stored
+  in memory or on disk. [#8683]
+
+resample
+--------
+
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
+  changed to use values in the top-level ASDF structure if the values in the WCS
+  are ``None``. [#8698]
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
 
 resample_spec
 -------------
@@ -103,18 +166,25 @@ resample_spec
   so that the spectral resampling step only exposes parameters that are appropriate
   for spectral data. [#8622]
 
-resample_step
--------------
-
-- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
-  changed to use values in the top-level ASDF structure if the values in the WCS
-  are ``None``. [#8698]
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
 
 scripts
 -------
 
 - Removed many non-working and out-dated scripts. Including
   many scripts that were replaced by ``strun``. [#8619]
+
+set_telescope_pointing
+----------------------
+
+- Replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+
+skymatch
+--------
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
 
 stpipe
 ------
@@ -142,6 +212,9 @@ tweakreg
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
+
+- Step now uses `ModelLibrary` to handle accessing models consistently
+  whether they are in memory or on disk. [#8683]
 
 
 1.15.1 (2024-07-08)
