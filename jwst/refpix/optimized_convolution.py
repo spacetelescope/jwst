@@ -23,10 +23,10 @@ def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
     detector : str
         Name of the detector of the input data
 
-    gaussmooth : int
+    gaussmooth : float
         Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
 
-    halfwidth : int
+    halfwidth : float
         Half-width of convolution kernel to build from reference file's coefficients
 
     Returns:
@@ -99,7 +99,7 @@ def get_conv_kernel_coeffs(conv_kernel_model, detector):
     return gamma, zeta
 
 
-def apply_conv_kernel(datamodel, kernels, sigreject=4):
+def apply_conv_kernel(datamodel, kernels, sigreject=4.0):
     """
     Apply the convolution kernel.
 
@@ -112,7 +112,7 @@ def apply_conv_kernel(datamodel, kernels, sigreject=4):
     kernels : list
         List containing the left and right kernels
 
-    sigreject: int
+    sigreject: float
         Number of sigmas to reject as outliers
 
 

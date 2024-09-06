@@ -22,6 +22,7 @@ def run_detector1pipeline(rtdata_module):
             "--steps.saturation.save_results=True",
             "--steps.superbias.save_results=True",
             "--steps.refpix.save_results=True",
+            "--steps.refpix.use_conv_kernel=False",
             "--steps.linearity.save_results=True",
             "--steps.dark_current.save_results=True",
             "--steps.jump.save_results=True",
