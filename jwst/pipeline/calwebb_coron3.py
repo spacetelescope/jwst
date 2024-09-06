@@ -7,7 +7,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 
-from ..model_blender import blendmeta
+from ..model_blender import ModelBlender
 
 # step imports
 from ..coron import stack_refs_step
@@ -161,8 +161,10 @@ class Coron3Pipeline(Pipeline):
         # Call the sequence of steps: outlier_detection, align_refs, and klip
         # once for each input target exposure
         resample_input = ModelContainer()
+        model_blender = ModelBlender()
         for target_file in targ_files:
             with datamodels.open(target_file) as target:
+                model_blender.accumulate(target)
 
                 # Remove outliers from the target
                 if not skip_outlier_detection:
@@ -213,7 +215,7 @@ class Coron3Pipeline(Pipeline):
             completed = 'SKIPPED'
         if completed == 'COMPLETE':
             self.log.debug(f'Blending metadata for {result}')
-            blendmeta.blendmodels(result, targ_files)
+            model_blender.finalize_model(result)
 
         try:
             result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
