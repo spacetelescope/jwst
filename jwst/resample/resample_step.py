@@ -93,6 +93,7 @@ class ResampleStep(Step):
             for model in input_models:
                 match_nans_and_flags(model)
                 input_models.shelve(model)
+            del model
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
