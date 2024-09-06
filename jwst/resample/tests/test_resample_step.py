@@ -7,7 +7,7 @@ import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.exp_to_source import multislit_to_container
@@ -637,7 +637,7 @@ def test_weight_type(nircam_rate, tmp_cwd):
     im2.meta.observation.sequence_id = "2"
     im3.meta.observation.sequence_id = "3"
 
-    c = ModelContainer([im1, im2, im3])
+    c = ModelLibrary([im1, im2, im3])
     assert len(c.group_names) == 3
 
     result1 = ResampleStep.call(c, weight_type="ivm", blendheaders=False, save_results=True)
@@ -656,8 +656,10 @@ def test_weight_type(nircam_rate, tmp_cwd):
     # remove measurement time to force use of exposure time
     # this also implicitly shows that measurement time was indeed used above
     expected_ratio = im1.meta.exposure.exposure_time / im1.meta.exposure.measurement_time
-    for im in c:
-        del im.meta.exposure.measurement_time
+    with c:
+        for j, im in enumerate(c):
+            del im.meta.exposure.measurement_time
+            c.shelve(im, j)
 
     result3 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
     assert_allclose(result3.data[100:105, 100:105], 6.667, rtol=1e-2)
@@ -791,9 +793,7 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
     im.err += err
     im.meta.filename = "foo.fits"
 
-    c = ModelContainer()
-    for n in range(n_images):
-        c.append(im.copy())
+    c = ModelLibrary([im.copy() for _ in range(n_images)])
 
     result = ResampleStep.call(c, blendheaders=False, weight_type=weight_type)
 
@@ -814,7 +814,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.var_poisson = np.ones(shape, dtype=im.var_poisson.dtype.type)
     im.var_flat = np.ones(shape, dtype=im.var_flat.dtype.type)
     im.meta.filename = "foo.fits"
-    c = ModelContainer([im])
+    c = ModelLibrary([im])
 
     with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
         result = ResampleStep.call(c, blendheaders=False)

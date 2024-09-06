@@ -1,6 +1,7 @@
 import logging
 import os
 import warnings
+import json
 
 import numpy as np
 import psutil
@@ -10,7 +11,8 @@ from spherical_geometry.polygon import SphericalPolygon
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.library.basic_utils import bytes2human
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary
+from jwst.associations.asn_from_list import asn_from_list
 
 from . import gwcs_drizzle
 from jwst.resample import resample_utils
@@ -49,8 +51,8 @@ class ResampleData:
         """
         Parameters
         ----------
-        input_models : list of objects
-            list of data models, one for each input image
+        input_models : library of objects
+            library of data models, one for each input image
 
         output : str
             filename for output
@@ -133,7 +135,6 @@ class ResampleData:
                 crpix=crpix,
                 crval=crval
             )
-
             # Estimate output pixel area in Sr. NOTE: in principle we could
             # use the same algorithm as for when output_wcs is provided by the
             # user.
@@ -180,14 +181,17 @@ class ResampleData:
         self.blank_output = datamodels.ImageModel(tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
-        self.blank_output.update(input_models[0])
+        with input_models:
+            example_model = input_models.borrow(0)
+            self.blank_output.update(example_model)
+            input_models.shelve(example_model, 0, modify=False)
+            del example_model
         self.blank_output.meta.wcs = self.output_wcs
         self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
         self.blank_output.meta.photometry.pixelarea_arcsecsq = (
             output_pix_area * np.rad2deg(3600)**2
         )
 
-        self.output_models = ModelContainer(open_models=False)
 
     def do_drizzle(self, input_models):
         """Pick the correct drizzling mode based on self.single
@@ -275,46 +279,157 @@ class ResampleData:
 
         Used for outlier detection
         """
-        for exposure in input_models.models_grouped:
+        output_models = []
+        for group_id, indices in input_models.group_indices.items():
             output_model = self.blank_output
 
-            # Determine output file type from input exposure filenames
-            # Use this for defining the output filename
-            indx = exposure[0].meta.filename.rfind('.')
-            output_type = exposure[0].meta.filename[indx:]
-            output_root = '_'.join(exposure[0].meta.filename.replace(
-                output_type, '').split('_')[:-1])
-            if self.asn_id is not None:
-                output_model.meta.filename = (
-                    f'{output_root}_{self.asn_id}_'
-                    f'{self.intermediate_suffix}{output_type}')
+            copy_asn_info_from_library(input_models, output_model)
+
+            with input_models:
+                example_image = input_models.borrow(indices[0])
+
+                # Determine output file type from input exposure filenames
+                # Use this for defining the output filename
+                indx = example_image.meta.filename.rfind('.')
+                output_type = example_image.meta.filename[indx:]
+                output_root = '_'.join(example_image.meta.filename.replace(
+                    output_type, '').split('_')[:-1])
+                if self.asn_id is not None:
+                    output_model.meta.filename = (
+                        f'{output_root}_{self.asn_id}_'
+                        f'{self.intermediate_suffix}{output_type}')
+                else:
+                    output_model.meta.filename = (
+                        f'{output_root}_'
+                        f'{self.intermediate_suffix}{output_type}')
+                input_models.shelve(example_image, indices[0], modify=False)
+                del example_image
+
+                # Initialize the output with the wcs
+                driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
+                                                kernel=self.kernel, fillval=self.fillval)
+
+                log.info(f"{len(indices)} exposures to drizzle together")
+                for index in indices:
+                    img = input_models.borrow(index)
+                    if isinstance(img, datamodels.SlitModel):
+                        # must call this explicitly to populate area extension
+                        # although the existence of this extension may not be necessary
+                        img.area = img.area 
+                    iscale = self._get_intensity_scale(img)
+                    log.debug(f'Using intensity scale iscale={iscale}')
+
+                    inwht = resample_utils.build_driz_weight(
+                        img,
+                        weight_type=self.weight_type,
+                        good_bits=self.good_bits
+                    )
+
+                    # apply sky subtraction
+                    blevel = img.meta.background.level
+                    if not img.meta.background.subtracted and blevel is not None:
+                        data = img.data - blevel
+                    else:
+                        data = img.data
+
+                    xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                        data.shape,
+                        img.meta.wcs.bounding_box
+                    )
+
+                    driz.add_image(
+                        data,
+                        img.meta.wcs,
+                        iscale=iscale,
+                        inwht=inwht,
+                        xmin=xmin,
+                        xmax=xmax,
+                        ymin=ymin,
+                        ymax=ymax
+                    )
+                    del data
+                    input_models.shelve(img, index, modify=False)
+                    del img
+
+            if not self.in_memory:
+                # Write out model to disk, then return filename
+                output_name = output_model.meta.filename
+                if self.output_dir is not None:
+                    output_name = os.path.join(self.output_dir, output_name)
+                output_model.save(output_name)
+                log.info(f"Saved model in {output_name}")
+                output_models.append(output_name)
             else:
-                output_model.meta.filename = (
-                    f'{output_root}_'
-                    f'{self.intermediate_suffix}{output_type}')
+                output_models.append(output_model.copy())
+            output_model.data *= 0.
+            output_model.wht *= 0.
 
-            # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                            kernel=self.kernel, fillval=self.fillval)
+        if not self.in_memory:
+            # build ModelLibrary as an association from the output files
+            # this saves memory if there are multiple groups
+            asn = asn_from_list(output_models, product_name='outlier_i2d')
+            asn_dict = json.loads(asn.dump()[1]) # serializes the asn and converts to dict
+            return ModelLibrary(asn_dict, on_disk=True)
+        # otherwise just build it as a list of in-memory models
+        return ModelLibrary(output_models, on_disk=False)
 
-            log.info(f"{len(exposure)} exposures to drizzle together")
-            for img in exposure:
-                img = datamodels.open(img)
+    def resample_many_to_one(self, input_models):
+        """Resample and coadd many inputs to a single output.
+
+        Used for stage 3 resampling
+        """
+        output_model = self.blank_output.copy()
+        output_model.meta.filename = self.output_filename
+        output_model.meta.resample.weight_type = self.weight_type
+        output_model.meta.resample.pointings = len(input_models.group_names)
+
+        # copy over asn information
+        copy_asn_info_from_library(input_models, output_model)
+
+        if self.blendheaders:
+            # right now this needs a list of input models, all in memory
+            # for now, just load the models as a list with empty data arrays
+            # but the blend_meta step itself should eventually be refactored 
+            # to expect a list of metadata objects
+            # instead of a list of datamodels
+            input_list = []
+            with input_models:
+                for i, model in enumerate(input_models):
+                    empty_model = type(model)()
+                    empty_model.meta = model.meta
+                    copy_asn_info_from_library(input_models, empty_model)
+                    empty_model.data = np.empty((1, 1))
+                    empty_model.dq = np.empty((1, 1))
+                    empty_model.err = np.empty((1, 1))
+                    empty_model.wht = np.empty((1, 1))
+                    empty_model.var_rnoise = np.empty((1, 1))
+                    empty_model.var_poisson = np.empty((1, 1))
+                    empty_model.var_flat = np.empty((1, 1))
+                    input_list.append(empty_model)
+                    input_models.shelve(model, i, modify=False)
+            self.blend_output_metadata(output_model, input_list)
+            del input_list
+
+        # Initialize the output with the wcs
+        driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
+                                        kernel=self.kernel, fillval=self.fillval)
+
+        log.info("Resampling science data")
+        with input_models:
+            for img in input_models:
                 iscale = self._get_intensity_scale(img)
                 log.debug(f'Using intensity scale iscale={iscale}')
+                img.meta.iscale = iscale
 
-                inwht = resample_utils.build_driz_weight(
-                    img,
-                    weight_type=self.weight_type,
-                    good_bits=self.good_bits
-                )
-
+                inwht = resample_utils.build_driz_weight(img,
+                                                        weight_type=self.weight_type,
+                                                        good_bits=self.good_bits)
                 # apply sky subtraction
                 blevel = img.meta.background.level
                 if not img.meta.background.subtracted and blevel is not None:
                     data = img.data - blevel
                 else:
-                    data = img.data
+                    data = img.data.copy()
 
                 xmin, xmax, ymin, ymax = resample_utils._resample_range(
                     data.shape,
@@ -331,73 +446,8 @@ class ResampleData:
                     ymin=ymin,
                     ymax=ymax
                 )
-                del data
-                img.close()
-
-            if not self.in_memory:
-                # Write out model to disk, then return filename
-                output_name = output_model.meta.filename
-                if self.output_dir is not None:
-                    output_name = os.path.join(self.output_dir, output_name)
-                output_model.save(output_name)
-                log.info(f"Saved model in {output_name}")
-                self.output_models.append(output_name)
-            else:
-                self.output_models.append(output_model.copy())
-            output_model.data *= 0.
-            output_model.wht *= 0.
-
-        return self.output_models
-
-    def resample_many_to_one(self, input_models):
-        """Resample and coadd many inputs to a single output.
-
-        Used for stage 3 resampling
-        """
-        output_model = self.blank_output.copy()
-        output_model.meta.filename = self.output_filename
-        output_model.meta.resample.weight_type = self.weight_type
-        output_model.meta.resample.pointings = len(input_models.group_names)
-
-        if self.blendheaders:
-            self.blend_output_metadata(output_model, input_models)
-
-        # Initialize the output with the wcs
-        driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                        kernel=self.kernel, fillval=self.fillval)
-
-        log.info("Resampling science data")
-        for img in input_models:
-            iscale = self._get_intensity_scale(img)
-            log.debug(f'Using intensity scale iscale={iscale}')
-            img.meta.iscale = iscale
-
-            inwht = resample_utils.build_driz_weight(img,
-                                                     weight_type=self.weight_type,
-                                                     good_bits=self.good_bits)
-            # apply sky subtraction
-            blevel = img.meta.background.level
-            if not img.meta.background.subtracted and blevel is not None:
-                data = img.data - blevel
-            else:
-                data = img.data.copy()
-
-            xmin, xmax, ymin, ymax = resample_utils._resample_range(
-                data.shape,
-                img.meta.wcs.bounding_box
-            )
-
-            driz.add_image(
-                data,
-                img.meta.wcs,
-                iscale=iscale,
-                inwht=inwht,
-                xmin=xmin,
-                xmax=xmax,
-                ymin=ymin,
-                ymax=ymax
-            )
-            del data, inwht
+                del data, inwht
+                input_models.shelve(img)
 
         # Resample variance arrays in input_models to output_model
         self.resample_variance_arrays(output_model, input_models)
@@ -414,12 +464,9 @@ class ResampleData:
         output_model.err[all_nan] = np.nan
 
         self.update_exposure_times(output_model, input_models)
-        self.output_models.append(output_model)
 
-        for img in input_models:
-            del img.meta.iscale
+        return ModelLibrary([output_model,], on_disk=False)
 
-        return self.output_models
 
     def resample_variance_arrays(self, output_model, input_models):
         """Resample variance arrays from input_models to the output_model.
@@ -438,82 +485,91 @@ class ResampleData:
         total_weight_rn_var = np.zeros_like(output_model.data)
         total_weight_pn_var = np.zeros_like(output_model.data)
         total_weight_flat_var = np.zeros_like(output_model.data)
-        for model in input_models:
-            # Do the read noise variance first, so it can be
-            # used for weights if needed
-            rn_var = self._resample_one_variance_array(
-                "var_rnoise", model, output_model)
+        with input_models:
+            for i, model in enumerate(input_models):
+                # Do the read noise variance first, so it can be
+                # used for weights if needed
+                rn_var = self._resample_one_variance_array(
+                    "var_rnoise", model, output_model)
 
-            # Find valid weighting values in the variance
-            if rn_var is not None:
-                mask = (rn_var > 0) & np.isfinite(rn_var)
-            else:
-                mask = np.full_like(rn_var, False)
-
-            # Set the weight for the image from the weight type
-            weight = np.ones(output_model.data.shape)
-            if self.weight_type == "ivm" and rn_var is not None:
-                weight[mask] = rn_var[mask] ** -1
-            elif self.weight_type == "exptime":
-                if resample_utils.check_for_tmeasure(model):
-                    weight[:] = model.meta.exposure.measurement_time
+                # Find valid weighting values in the variance
+                if rn_var is not None:
+                    mask = (rn_var > 0) & np.isfinite(rn_var)
                 else:
-                    weight[:] = model.meta.exposure.exposure_time
+                    mask = np.full_like(rn_var, False)
 
-            # Weight and add the readnoise variance
-            # Note: floating point overflow is an issue if variance weights
-            # are used - it can't be squared before multiplication
-            if rn_var is not None:
-                mask = (rn_var >= 0) & np.isfinite(rn_var) & (weight > 0)
-                weighted_rn_var[mask] = np.nansum(
-                    [weighted_rn_var[mask],
-                     rn_var[mask] * weight[mask] * weight[mask]],
-                    axis=0
-                )
-                total_weight_rn_var[mask] += weight[mask]
+                # Set the weight for the image from the weight type
+                weight = np.ones(output_model.data.shape)
+                if self.weight_type == "ivm" and rn_var is not None:
+                    weight[mask] = rn_var[mask] ** -1
+                elif self.weight_type == "exptime":
+                    if resample_utils.check_for_tmeasure(model):
+                        weight[:] = model.meta.exposure.measurement_time
+                    else:
+                        weight[:] = model.meta.exposure.exposure_time
 
-            # Now do poisson and flat variance, updating only valid new values
-            # (zero is a valid value; negative, inf, or NaN are not)
-            pn_var = self._resample_one_variance_array(
-                "var_poisson", model, output_model)
-            if pn_var is not None:
-                mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
-                weighted_pn_var[mask] = np.nansum(
-                    [weighted_pn_var[mask],
-                     pn_var[mask] * weight[mask] * weight[mask]],
-                    axis=0
-                )
-                total_weight_pn_var[mask] += weight[mask]
+                # Weight and add the readnoise variance
+                # Note: floating point overflow is an issue if variance weights
+                # are used - it can't be squared before multiplication
+                if rn_var is not None:
+                    mask = (rn_var >= 0) & np.isfinite(rn_var) & (weight > 0)
+                    weighted_rn_var[mask] = np.nansum(
+                        [weighted_rn_var[mask],
+                        rn_var[mask] * weight[mask] * weight[mask]],
+                        axis=0
+                    )
+                    total_weight_rn_var[mask] += weight[mask]
 
-            flat_var = self._resample_one_variance_array(
-                "var_flat", model, output_model)
-            if flat_var is not None:
-                mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
-                weighted_flat_var[mask] = np.nansum(
-                    [weighted_flat_var[mask],
-                     flat_var[mask] * weight[mask] * weight[mask]],
-                    axis=0
-                )
-                total_weight_flat_var[mask] += weight[mask]
+                # Now do poisson and flat variance, updating only valid new values
+                # (zero is a valid value; negative, inf, or NaN are not)
+                pn_var = self._resample_one_variance_array(
+                    "var_poisson", model, output_model)
+                if pn_var is not None:
+                    mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
+                    weighted_pn_var[mask] = np.nansum(
+                        [weighted_pn_var[mask],
+                        pn_var[mask] * weight[mask] * weight[mask]],
+                        axis=0
+                    )
+                    total_weight_pn_var[mask] += weight[mask]
 
-        # We now have a sum of the weighted resampled variances.
-        # Divide by the total weights, squared, and set in the output model.
-        # Zero weight and missing values are NaN in the output.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
-            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
+                flat_var = self._resample_one_variance_array(
+                    "var_flat", model, output_model)
+                if flat_var is not None:
+                    mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
+                    weighted_flat_var[mask] = np.nansum(
+                        [weighted_flat_var[mask],
+                        flat_var[mask] * weight[mask] * weight[mask]],
+                        axis=0
+                    )
+                    total_weight_flat_var[mask] += weight[mask]
+                
+                del model.meta.iscale
+                del weight
+                input_models.shelve(model, i)
 
-            output_variance = (weighted_rn_var
-                               / total_weight_rn_var / total_weight_rn_var)
-            setattr(output_model, "var_rnoise", output_variance)
+            # We now have a sum of the weighted resampled variances.
+            # Divide by the total weights, squared, and set in the output model.
+            # Zero weight and missing values are NaN in the output.
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+                warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
 
-            output_variance = (weighted_pn_var
-                               / total_weight_pn_var / total_weight_pn_var)
-            setattr(output_model, "var_poisson", output_variance)
+                output_variance = (weighted_rn_var
+                                / total_weight_rn_var / total_weight_rn_var)
+                setattr(output_model, "var_rnoise", output_variance)
 
-            output_variance = (weighted_flat_var
-                               / total_weight_flat_var / total_weight_flat_var)
-            setattr(output_model, "var_flat", output_variance)
+                output_variance = (weighted_pn_var
+                                / total_weight_pn_var / total_weight_pn_var)
+                setattr(output_model, "var_poisson", output_variance)
+
+                output_variance = (weighted_flat_var
+                                / total_weight_flat_var / total_weight_flat_var)
+                setattr(output_model, "var_flat", output_variance)
+
+            del weighted_rn_var, weighted_pn_var, weighted_flat_var
+            del total_weight_rn_var, total_weight_pn_var, total_weight_flat_var
+
 
     def _resample_one_variance_array(self, name, input_model, output_model):
         """Resample one variance image from an input model.
@@ -583,16 +639,19 @@ class ResampleData:
         duration = 0.0
         total_measurement_time = 0.0
         measurement_time_failures = []
-        for exposure in input_models.models_grouped:
-            total_exposure_time += exposure[0].meta.exposure.exposure_time
-            if not resample_utils.check_for_tmeasure(exposure[0]):
-                measurement_time_failures.append(1)
-            else:
-                total_measurement_time += exposure[0].meta.exposure.measurement_time
-                measurement_time_failures.append(0)
-            exposure_times['start'].append(exposure[0].meta.exposure.start_time)
-            exposure_times['end'].append(exposure[0].meta.exposure.end_time)
-            duration += exposure[0].meta.exposure.duration
+        with input_models:
+            for _, indices in input_models.group_indices.items():
+                model = input_models.borrow(indices[0])
+                total_exposure_time += model.meta.exposure.exposure_time
+                if not resample_utils.check_for_tmeasure(model):
+                    measurement_time_failures.append(1)
+                else:
+                    total_measurement_time += model.meta.exposure.measurement_time
+                    measurement_time_failures.append(0)
+                exposure_times['start'].append(model.meta.exposure.start_time)
+                exposure_times['end'].append(model.meta.exposure.end_time)
+                duration += model.meta.exposure.duration
+                input_models.shelve(model, indices[0], modify=False)
 
         # Update some basic exposure time values based on output_model
         output_model.meta.exposure.exposure_time = total_exposure_time
@@ -833,7 +892,6 @@ def compute_image_pixel_area(wcs):
     spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
 
     ny, nx = wcs.array_shape
-
     ((xmin, xmax), (ymin, ymax)) = wcs.bounding_box
 
     xmin = max(0, int(xmin + 0.5))
@@ -897,3 +955,28 @@ def compute_image_pixel_area(wcs):
     pix_area = sky_area / image_area
 
     return pix_area
+
+
+def copy_asn_info_from_library(library, output_model):
+    """
+    Transfer association information from the input library to the output model.
+
+    Parameters
+    ----------
+    library : ModelLibrary
+        The input library of data models.
+
+    output_model : DataModel
+        The output data model to which the association information will be copied.
+    """
+    if not hasattr(library, "asn"):
+        # No ASN table, occurs when input comes from ModelContainer in spectroscopic modes
+        # in this case do nothing; the asn info will be passed along later
+        # by code inside ResampleSpecStep
+        return
+    if (asn_pool := library.asn.get("asn_pool", None)) is not None:
+        output_model.meta.asn.pool_name = asn_pool
+    if (
+        asn_table_name := library.asn.get("table_name", None)
+    ) is not None:
+        output_model.meta.asn.table_name = asn_table_name
