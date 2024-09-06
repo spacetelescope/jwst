@@ -6,6 +6,9 @@ from .schemautil import parse_schema
 from .tablebuilder import TableBuilder, table_to_schema
 
 
+__all__ = ['ModelBlender']
+
+
 class ModelBlender:
     def __init__(self, blend_ignore_attrs=None):
         self._first_header_meta = None

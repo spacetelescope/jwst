@@ -7,6 +7,8 @@
 from .blender import ModelBlender
 
 
+__all__ = ['blendmodels']
+
 # Primary functional interface for the code
 
 def blendmodels(product, inputs, ignore=None):

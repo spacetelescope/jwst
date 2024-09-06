@@ -3,6 +3,9 @@ from datetime import time
 import numpy as np
 
 
+__all__ = ['RULE_FUNCTIONS', 'Blender', 'make_blender']
+
+
 def multi(vals):
     """
     This will either return the common value from a list of identical values
