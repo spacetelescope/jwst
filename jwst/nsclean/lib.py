@@ -541,4 +541,4 @@ class NSCleanSubarray:
             return self.model
         else:
             self.data -= self.model  # Overwrite data with cleaned data
-            return(self.data)
+            return self.data
