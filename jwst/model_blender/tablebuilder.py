@@ -34,7 +34,6 @@ class TableBuilder:
     def __init__(self, attr_to_column):
         self.attr_to_column = attr_to_column
         self.columns = {col: [] for col in self.attr_to_column.values()}
-        self.masks = {col: [] for col in self.columns}
         if len(attr_to_column) != len(self.columns):
             raise ValueError(f"Invalid attr_to_column, mapping is not 1-to-1: {attr_to_column}")
 
@@ -47,18 +46,12 @@ class TableBuilder:
 
     def _add_row(self, row):
         for attr, col in self.attr_to_column.items():
-            if attr in row:
-                self.columns[col].append(row[attr])
-                self.masks[col].append(False)
-            else:
-                self.columns[col].append(np.nan)
-                self.masks[col].append(True)
+            self.columns[col].append(row[attr] if attr in row else np.nan)
 
     def build_table(self):
         arrays = []
         table_dtype = []
         for col, items in self.columns.items():
-            arrays.append(np.ma.array(items, mask=self.masks[col]))
+            arrays.append(np.array(items))
             table_dtype.append((col, arrays[-1].dtype))
-        # TODO loses masks... but so did the old code?
         return np.rec.fromarrays(arrays, dtype=table_dtype)
