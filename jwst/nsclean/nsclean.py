@@ -401,13 +401,6 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     exp_type = input_model.meta.exposure.type
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
 
-    # Check for a valid input that we can work on
-    if input_model.meta.subarray.name.upper() == "ALLSLITS":
-        log.warning("Step cannot be applied to ALLSLITS subarray images")
-        log.warning("Step will be skipped")
-        input_model.meta.cal_step.nsclean = 'SKIPPED'
-        return input_model, None
-
     output_model = input_model.copy()
 
     # Check for a user-supplied mask image. If so, use it.
