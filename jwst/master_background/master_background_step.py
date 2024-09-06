@@ -86,6 +86,7 @@ class MasterBackgroundStep(Step):
             if self.user_background:
                 if isinstance(input_data, ModelContainer):
                     input_data, _ = split_container(input_data)
+                    asn_id = input_data.asn_table["asn_id"]
                     del _
                     result = ModelContainer()
                     result.update(input_data)
@@ -100,6 +101,7 @@ class MasterBackgroundStep(Step):
                         model.meta.background.master_background_file = basename(self.user_background)
                 # Use user-supplied master background and subtract it
                 else:
+                    asn_id = input_data.meta.asn_table.asn_id
                     background_2d = expand_to_2d(input_data, self.user_background)
                     background_2d_collection = background_2d
                     result = subtract_2d_background(input_data, background_2d)
@@ -109,14 +111,14 @@ class MasterBackgroundStep(Step):
                 # Save the computed 2d background if requested by user. The user has supplied
                 # the master background so just save the expanded 2d background
                 if self.save_background:
-                    asn_id = input_data.meta.asn_table.asn_id
+                    
                     self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
                     
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
                     input_data, background_data = split_container(input_data)
-                    asn_id = input_data.meta.asn_table.asn_id
+                    asn_id = input_data.asn_table["asn_id"]
 
                     for model in background_data:
                         # Check if the background members are nodded x1d extractions

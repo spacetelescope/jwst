@@ -290,7 +290,10 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
         example_input[0].meta.tweakreg_catalog = ""
 
     # write out the ModelContainer and association (so the association table will be loaded)
-    example_input.save(dir_path=str(custom_catalog_path.parent))
+    #example_input.save(dir_path=str(custom_catalog_path.parent))
+    for model in example_input:
+        model.save(dir_path=str(custom_catalog_path.parent))
+        model.close()
     asn_data = {
         'asn_id': 'foo',
         'asn_pool': 'bar',
