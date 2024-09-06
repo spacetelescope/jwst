@@ -252,7 +252,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
     sigrej : float
         Number of sigma to clip when identifying outliers.  Default 4.
 
-    minpct : float
+    minfrac : float
         Minimum fraction of pixels locally available in the mask in
         order to attempt a correction.  Default 0.05 (i.e., 5%).
         
