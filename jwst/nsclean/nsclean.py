@@ -133,10 +133,11 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     # Initialize mask to all True. Subsequent operations will mask
     # out pixels that contain signal.
     # Note: mask will be 3D for BOTS mode data
-    #mask = np.full(np.shape(input_model.dq), True)
+    mask = np.full(np.shape(input_model.dq), True)
 
-    # Similar to above, but don't use reference pixels.
-    mask = (input_model.dq>>31)&1 == 0
+    # Mask any reference pixels
+    ref_pix = input_model.dq & dqflags.pixel['REFERENCE_PIXEL']
+    mask[ref_pix > 0] = False
     
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
@@ -278,20 +279,19 @@ def clean_subarray(detector, image, mask, npix_iter=512,
     
     if exclude_outliers:
         med = np.median(image[mask])
-        std = 1.4825*np.median(np.abs((image - med)[mask]))
-        outlier = mask&(np.abs(image - med) > sigrej*std)
+        std = 1.4825 * np.median(np.abs((image - med)[mask]))
+        outlier = mask & (np.abs(image - med) > sigrej * std)
         
         mask = mask&(~outlier)
         
         # also get four nearest neighbors of flagged pixels
-        mask[1:] = mask[1:]&(~outlier[:-1])
-        mask[:-1] = mask[:-1]&(~outlier[1:])
-        mask[:, 1:] = mask[:, 1:]&(~outlier[:, :-1])
-        mask[:, :-1] = mask[:, :-1]&(~outlier[:, 1:])
-            
+        mask[1:] = mask[1:] & (~outlier[:-1])
+        mask[:-1] = mask[:-1] & (~outlier[1:])
+        mask[:, 1:] = mask[:, 1:] & (~outlier[:, :-1])
+        mask[:, :-1] = mask[:, :-1] & (~outlier[:, 1:])
 
     # Used to determine the fitting intervals along the slow scan
-    # direction.  Pre-pend a zero so that we sum_mask[i] is equal
+    # direction.  Pre-pend a zero so that sum_mask[i] is equal
     # to np.sum(mask[:i], axis=1).
 
     sum_mask = np.array([0] + list(np.cumsum(np.sum(mask, axis=1))))
@@ -305,9 +305,10 @@ def clean_subarray(detector, image, mask, npix_iter=512,
         # Want npix_iter available pixels in this section.  If
         # there are fewer than 1.5*npix_iter available pixels in
         # the rest of the image, just go to the end.
-        
+        k = 0
         for k in range(i1 + 1, image.shape[0] + 1):
-            if sum_mask[k] - sum_mask[i1] > npix_iter and sum_mask[-1] - sum_mask[i1] > 1.5*npix_iter:
+            if (sum_mask[k] - sum_mask[i1] > npix_iter
+                    and sum_mask[-1] - sum_mask[i1] > 1.5 * npix_iter):
                 break
             
         di = k - i1
@@ -327,7 +328,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
             models += [cleaner.clean(return_model=True)]
         else:
             log.warning("Insufficient reference pixels for NSClean around "
-                        "row %d; no correction will be made here." % (i1))
+                        "row %d; no correction will be made here." % i1)
             models += [np.zeros(image[i1:i1 + di].shape)]
 
         # If we have reached the end of the array, we are finished.
