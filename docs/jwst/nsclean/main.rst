@@ -21,11 +21,6 @@ IFU, MOS, fixed slit, and Bright Object Time Series (BOTS), in both full-frame
 and subarray readouts. Time series (3D) data are corrected one integration
 at a time.
 
-.. note::
-
-   The step is currently not capable of processing images taken using the
-   "ALLSLITS" subarray. Other subarray types are allowed.
-
 Details on the source of the correlated noise and the algorithm used
 in the ``nsclean`` step to fit and remove it can be found in
 `Rauscher 2023 <https://ui.adsabs.harvard.edu/abs/2023arXiv230603250R/abstract>`_.
