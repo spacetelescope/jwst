@@ -16,6 +16,9 @@ def parse_schema(schema):
         type. For example {'meta.observation.time': 'mintime'}
         will combine all 'meta.observation.time' attributes
         using the 'mintime' rule.
+
+    schema_ignores: lsit
+        list of attributes that will not be blended
     """
     def callback(subschema, path, combiner, ctx, recurse):
         if len(path) <= 1:
@@ -24,8 +27,6 @@ def parse_schema(schema):
             return  # ignore non-meta attributes
         if 'items' in path:
             return  # ignore attributes in arrays
-        if subschema.get('type') == 'array':
-            return  # ignore ListNodes
         if subschema.get('properties'):
             return  # ignore ObjectNodes
 
@@ -38,6 +39,10 @@ def parse_schema(schema):
         # construct the metadata attribute path
         attr = '.'.join(path)
 
+        if subschema.get('type') == 'array':
+            ctx['ignores'].append(attr)
+            return  # ignore ListNodes
+
         # if 'blend_rule' is defined, make a 'blend'
         if 'blend_rule' in subschema:
             ctx['blends'][attr] = subschema['blend_rule']
@@ -49,6 +54,7 @@ def parse_schema(schema):
     ctx = {
         'columns': {},
         'blends': {},
+        'ignores': [],
     }
     dm_schema.walk_schema(schema, callback, ctx)
-    return ctx['columns'], ctx['blends']
+    return ctx['columns'], ctx['blends'], ctx['ignores']

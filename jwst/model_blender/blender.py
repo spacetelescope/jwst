@@ -14,22 +14,24 @@ class ModelBlender:
         self._first_header_meta = None
         self._blenders = None
         self._table_builder = None
-        # TODO for now hard-code the polynomial_info ignore
-        self._blend_ignore_attrs = ['meta.wcs', 'meta.background.polynomial_info']
+        self._blend_ignore_attrs = ['meta.wcs']
         if blend_ignore_attrs is not None:
             self._blend_ignore_attrs.extend(blend_ignore_attrs)
 
     def accumulate(self, model):
         if self._first_header_meta is None:
+            # search the schema for other metadata to "blend" and to add to the table
+            attr_to_columns, attr_to_blend_rules, schema_ignores  = parse_schema(model.schema)
+
+            # update ignores list for items in schema that can't be blended
+            self._blend_ignore_attrs.extend(schema_ignores)
+
             # capture the entire contents of the first model metadata
             self._first_header_meta = {
                 attr: v
-                for attr, v in model.to_flat_dict().items()
+                for attr, v in model.to_flat_dict(include_arrays=False).items()
                 if attr.startswith('meta') and not any((attr.startswith(i) for i in self._blend_ignore_attrs))
             }
-
-            # search the schema for other metadata to "blend" and to add to the table
-            attr_to_columns, attr_to_blend_rules = parse_schema(model.schema)
 
             # make "blenders" for the metadata with special rules
             self._blenders = {
@@ -43,7 +45,7 @@ class ModelBlender:
             self._table_builder = TableBuilder(attr_to_columns)
 
         # convert the model to a flat header
-        header = model.to_flat_dict()
+        header = model.to_flat_dict(include_arrays=False)
 
         # add the header to the table
         self._table_builder.header_to_row(header)
