@@ -275,7 +275,16 @@ def flag_crs_in_models_with_resampling(
     make_output_path=None,
 ):
     for image in input_models:
-        flag_resampled_model_crs(image, median_data, median_wcs, snr1, snr2, scale1, scale2, backg, save_blot=save_blot, make_output_path=make_output_path)
+        flag_resampled_model_crs(image,
+                                 median_data,
+                                 median_wcs,
+                                 snr1,
+                                 snr2,
+                                 scale1,
+                                 scale2,
+                                 backg,
+                                 save_blot=save_blot,
+                                 make_output_path=make_output_path)
 
 
 def flag_model_crs(image, blot, snr):
