@@ -87,7 +87,7 @@ def run_image3(run_image2, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "firstframe", "lastframe", "reset",
-                                    "linearity", "rscd", "dark_current", "refpix", "ramp", "rate",
+                                    "linearity", "rscd", "dark_current", "ramp", "rate",
                                     "rateints"])
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""

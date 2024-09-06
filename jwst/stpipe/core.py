@@ -1,16 +1,17 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
+import logging
+
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
-
-from .. import __version_commit__, __version__
-
 from stpipe import crds_client
 from stpipe import Step
 from stpipe import Pipeline
+
+from .. import __version_commit__, __version__
 from ..lib.suffix import remove_suffix
-import logging
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
