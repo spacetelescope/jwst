@@ -102,6 +102,12 @@ class JwstStep(Step):
             log.info(f"Results used jwst version: {__version__}")
         return result
 
+    @wraps(Step.__call__)
+    def __call__(self, *args, **kwargs):
+        if not self.parent:
+            raise Exception("...")
+        return super().__call__(*args, **kwargs)
+
 
 # JwstPipeline needs to inherit from Pipeline, but also
 # be a subclass of JwstStep so that it will pass checks
