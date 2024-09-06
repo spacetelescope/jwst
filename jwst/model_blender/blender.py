@@ -1,3 +1,6 @@
+from astropy.io import fits
+from stdatamodels import fits_support
+
 from .rules import make_blender
 from .schemautil import parse_schema
 from .tablebuilder import TableBuilder, table_to_schema
@@ -10,7 +13,7 @@ class ModelBlender:
         self._table_builder = None
         # TODO for now hard-code the polynomial_info ignore
         self._blend_ignore_attrs = ['meta.wcs', 'meta.background.polynomial_info']
-        if self._blend_ignore_attrs is not None:
+        if blend_ignore_attrs is not None:
             self._blend_ignore_attrs.extend(blend_ignore_attrs)
 
     def accumulate(self, model):
@@ -69,5 +72,6 @@ class ModelBlender:
 
         # patch the table into the output model and the schema
         table = self._finalize_table()
-        model.add_schema_entry('hdrtab', table_to_schema(table))
-        model.hdrtab = table
+        schema = table_to_schema(table)
+        model.add_schema_entry('hdrtab', schema)
+        model.hdrtab = fits_support.from_fits_hdu(fits.BinTableHDU.from_columns(table), schema)

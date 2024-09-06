@@ -59,4 +59,5 @@ class TableBuilder:
         for col, items in self.columns.items():
             arrays.append(np.ma.array(items, mask=self.masks[col]))
             table_dtype.append((col, arrays[-1].dtype))
+        # TODO loses masks...
         return np.rec.fromarrays(arrays, dtype=table_dtype)

@@ -1,7 +1,6 @@
 """Test blend_models"""
 import pytest
 
-from astropy.table import Table
 import numpy as np
 
 from stdatamodels.schema import walk_schema
@@ -21,19 +20,20 @@ DATETIMES = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
 DATES = ['2017-11-30', '2017-11-11', '2017-12-10']
 INSTRUMENT_NAMES = ['NIRCAM'] * N_MODELS
 CORONAGRAPHS = ['4QPM', '4QPM_1065', '4QPM_1140']
-POLYNOMIAL_INFO = [[{'degree': [1]}]] * N_MODELS
+EXP_ONLYS = [True] * N_MODELS
+POLYNOMIAL_INFOS = [[{'degree': [1]}]] * N_MODELS
 
 # even though this won't be in the schema the blender
 # copies the metadata from the first model so the
 # meta from the first model will appear in the result
-UNKNOWN_IN_FIRST = ['foo', 'bar', 'bam']
+UNKNOWN_IN_FIRSTS = ['foo', 'bar', 'bam']
 
 # but... if the metadata isn't in the first model it
 # won't appear in the output
-UNKNOWN_MISSING_FIRST = [None, 'fizz', 'buzz']
+UNKNOWN_MISSING_FIRSTS = [None, 'fizz', 'buzz']
 
 # even if the metadata is defined in the schema
-KNOWN_MISSING_FIRST = [None, '1', '2']
+KNOWN_MISSING_FIRSTS = [None, '1', '2']
 
 
 def _make_data():
@@ -62,15 +62,16 @@ def _make_data():
         'meta.date': DATETIMES,
         'meta.observation.date': DATES,
         'meta.observation.date_beg': DATETIMES,
-        'meta.background.polynomial_info': POLYNOMIAL_INFO,
+        'meta.visit.exp_only': EXP_ONLYS,
+        'meta.background.polynomial_info': POLYNOMIAL_INFOS,
 
         # test a few "quirks" of the blender including...
         # unknown (not in schema) attribute in the first model
-        'meta.unknown_in_first': UNKNOWN_IN_FIRST,
+        'meta.unknown_in_first': UNKNOWN_IN_FIRSTS,
         # unknown attribute missing from the first model
-        'meta.unknown_missing_first': UNKNOWN_MISSING_FIRST,
+        'meta.unknown_missing_first': UNKNOWN_MISSING_FIRSTS,
         # known (in schema) attribute missing from the first model
-        'meta.observation.visit_id': KNOWN_MISSING_FIRST,
+        'meta.observation.visit_id': KNOWN_MISSING_FIRSTS,
     }
     output_values = {
         'meta.exposure.start_time': START_TIMES[0],
@@ -82,8 +83,10 @@ def _make_data():
         'meta.date': DATETIMES[0],
         'meta.observation.date': DATES[1],
         'meta.observation.date_beg': DATETIMES[1],
+        'meta.visit.exp_only': EXP_ONLYS[0],
+
         # this is the only "quirk" that will appear in the output
-        'meta.unknown_in_first': UNKNOWN_IN_FIRST[0],
+        'meta.unknown_in_first': UNKNOWN_IN_FIRSTS[0],
     }
 
     for i, model in enumerate(models):
@@ -186,5 +189,8 @@ def test_blendtab(blend):
     )
 
     # Ensure all the expected FITS keywords are in the table.
-    table = Table(newtab)
-    assert not fits_expected.difference(table.colnames)
+    colnames = set(newtab.dtype.fields)
+    assert not fits_expected.difference(colnames)
+    for col in colnames:
+        if col in input_values:
+            assert newtab[col] == input_values[col]
