@@ -16,7 +16,7 @@ from .atoca import ExtractionEngine, MaskOverlapError
 from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
-from .pastasoss import get_soss_wavemaps
+from .pastasoss import get_soss_wavemaps, get_soss_traces
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -38,7 +38,11 @@ def get_ref_file_args(ref_files):
     """
 
     pastasoss_ref = ref_files['pastasoss']
-    pad = pastasoss_ref.traces[0].padding
+    if hasattr(pastasoss_ref.traces[0], "padding"):
+        pad = pastasoss_ref.traces[0].padding
+    else:
+        pad = 0
+        padding = False
     if pad > 0:
         padding = True
     (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = \
@@ -51,8 +55,28 @@ def get_ref_file_args(ref_files):
     specprofile_o1 = specprofile_ref.profile[0].data
     specprofile_o2 = specprofile_ref.profile[1].data
 
+    prof_shape0, prof_shape1 = specprofile_o1.shape
+    wavemap_shape0, wavemap_shape1 = wavemap_o1.shape
+
+    if prof_shape0 != wavemap_shape0:
+        pad0 = (prof_shape0 - wavemap_shape0) // 2
+        if pad0 > 0:
+            specprofile_o1 = specprofile_o1[pad0: -pad0, :]
+            specprofile_o2 = specprofile_o2[pad0: -pad0, :]
+        elif pad0 < 0:
+            wavemap_o1 = wavemap_o1[pad0: -pad0, :]
+            wavemap_o2 = wavemap_o2[pad0: -pad0, :]
+    if prof_shape1 != wavemap_shape1:
+        pad1 = (prof_shape1 - wavemap_shape1) // 2
+        if pad1 > 0:
+            specprofile_o1 = specprofile_o1[:, pad1: -pad1]
+            specprofile_o2 = specprofile_o2[:, pad1: -pad1]
+        elif pad1 < 0:
+            wavemap_o1 = wavemap_o1[:, pad1: -pad1]
+            wavemap_o2 = wavemap_o2[:, pad1: -pad1]
+
+
     # The throughput curves for order 1 and 2.
-    spectrace_ref = ref_files['spectrace']
     throughput_index_dict = dict()
     for i, throughput in enumerate(pastasoss_ref.throughputs):
         throughput_index_dict[throughput.spectral_order] = i
@@ -114,27 +138,15 @@ def get_trace_1d(ref_files, order):
     """
 
     pastasoss_ref = ref_files['pastasoss']
-    if hasattr(pastasoss_ref.traces[0], "padding"):
-        pad = pastasoss_ref.traces[0].padding
-    else:
-        pad = 20
-    if pad > 0:
-        padding = True
-    else:
-        padding = False
-    _, (spectrace_o1, spectrace_o2) = \
-        get_soss_wavemaps(pastasoss_ref, pwcpos=ref_files['pwcpos'], subarray=ref_files['subarray'],
-                          padding=padding, padsize=pad, spectraces=True)
-    if order == 1:
-        xtrace, ytrace, wavetrace = spectrace_o1
-    elif order == 2:
-        xtrace, ytrace, wavetrace = spectrace_o2
+    if order in [1, 2]:
+        _, xtrace, ytrace, wavetrace = \
+        get_soss_traces(pastasoss_ref, pwcpos=ref_files['pwcpos'], order=str(order), subarray=ref_files['subarray'])
     else:
         errmsg = f"Pastasoss does not currently support order {order}."
         log.error(errmsg)
         raise ValueError(errmsg)
 
-    return xtrace, ytrace, wavetrace
+    return xtrace.astype(int), ytrace, wavetrace
 
 
 def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile, threshold=1e-4):
@@ -713,7 +725,10 @@ def compute_box_weights(ref_files, shape, width=40.):
     if ref_files['subarray'] == 'SUBSTRIP96':
         order_list = [1, 2]
     else:
-        order_list = [1, 2, 3]
+        # Regression in behavior? Used to run on three orders, but
+        # pastasoss does not support order 3
+        # order_list = [1, 2, 3]
+        order_list = [1, 2]
 
     # Extract each order from order list
     box_weights = dict()

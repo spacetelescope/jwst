@@ -54,7 +54,6 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
 
     # Return with the specified shape with zeros where the box is not defined.
     out = np.zeros(shape, dtype=float)
-    breakpoint()
     out[:, cols] = weights
 
     return out

@@ -528,7 +528,7 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=20, spe
         wavemap_2 = wavemap_2[1792 - padsize:1792 + 96 + padsize, :]
 
     # Remove padding if necessary
-    if not padding:
+    if not padding and padsize != 0:
         wavemap_1 = wavemap_1[padsize:-padsize, padsize:-padsize]
         wavemap_2 = wavemap_2[padsize:-padsize, padsize:-padsize]
 
