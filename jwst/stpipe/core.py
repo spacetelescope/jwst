@@ -3,6 +3,7 @@ JWST-specific Step and Pipeline base classes.
 """
 from functools import wraps
 import logging
+import warnings
 
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
@@ -105,7 +106,10 @@ class JwstStep(Step):
     @wraps(Step.__call__)
     def __call__(self, *args, **kwargs):
         if not self.parent:
-            raise Exception("...")
+            warnings.warn(
+                "Step.__call__ is deprecated use either Step.run or Step.call",
+                UserWarning,
+            )
         return super().__call__(*args, **kwargs)
 
 

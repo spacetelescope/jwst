@@ -623,3 +623,9 @@ def test_finalize_logging(monkeypatch):
     monkeypatch.setattr(logging.getLogger("jwst.stpipe.core"), "info", watcher)
     pipeline.run(model)
     assert watcher.seen
+
+
+def test_dunder_call_warning():
+    pipeline = EmptyPipeline()
+    with pytest.warns(UserWarning, match="Step.__call__ is deprecated"):
+        pipeline(None)
