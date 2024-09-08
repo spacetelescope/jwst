@@ -151,15 +151,21 @@ Below `num` is the number of files.
 .. code-block:: python
 		
    import asdf
-   offsets = {}
-   offsets['filename'] = []
-   offsets['raoffset'] = []
-   offsets['decoffset'] = []
+   filename = []
+   raoffset = []
+   decoffset = []
    for i in range(num):
-       offsets['filename'].append(file[i])
-       offsets['raoffset'].append(ra_center1[i])
-       offsets['decoffset'].append(dec_center1[i])
-   af = asdf.AsdfFile({'offsets':offsets})
-   af.write_to('offsets.asdf')
+       filename.append(file[i])
+       raoffset.append(ra_center1[i])
+       decoffset.append(dec_center1[i])
+
+   tree = {
+    "units": str(u.arcsec),
+    "filename": filename,
+    "raoffset": raoffset,
+    "decoffset": decoffset
+    }
+    af = asdf.AsdfFile(tree)
+    af.write_to(input_dir  + 'offsets.asdf')     
 
 

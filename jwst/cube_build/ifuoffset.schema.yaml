@@ -2,29 +2,28 @@
 ---
 $schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
 id: "http://stsci.edu/schemas/yaml-schema/ifuoffset.schema"
-
 title: IFUoffset reference file model
 type: object
 properties:
-  meta:
-    type: object
-    properties:
-      units:
-        description: Units of the ra and dec offset values.
-        anyOf:
-          - type: string
-          - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
-  offsets:
-    description: dictionary defining offsets values
-    type: object
-      items:
-        type: object
-        properties:
-          filename:
-            type: string
-          raoffset:
-            type: number
-          decoffset:
-            type: number
+  units:
+    description: Units of the ra and dec offset values.
+    anyOf:
+      - type: string
+      - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
+  filename:
+    description: list of filenames
+    type: array
+    items:
+      type: string
+  raoffset:
+    description: list of ra offsets
+    type: array
+    items:
+      type: number
+  decoffset:
+    descrition: list of dec offsets
+    type: array
+    items:
+      type: number
 
-required: [meta, offsets]
+required: [filename, raoffset, decoffset, units]

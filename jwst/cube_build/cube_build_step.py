@@ -2,17 +2,16 @@
 """
 
 import time
-
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 
 from . import cube_build
-from . import ifuoffset.schema.yaml
 from . import ifu_cube
 from . import data_types
 import asdf
 from ..assign_wcs.util import update_s_region_keyword
 from ..stpipe import Step, record_step_status
+from pathlib import Path
 
 __all__ = ["CubeBuildStep"]
 
@@ -547,7 +546,6 @@ class CubeBuildStep (Step):
             self.pars_input['grating'] = list(set(self.pars_input['grating']))
 # ________________________________________________________________________________
 
-
     def check_offset_file(self):
         """Read in an optional ra and dec offsets for each file.
 
@@ -561,36 +559,31 @@ class CubeBuildStep (Step):
 
        """
 
-        af = asdf.open(self.offset_file, custom_schema = 'ifuoffset_schema.yaml')
-        
-        check_asdf = asdf.util.get_file_type(asdf.generic_io.get_file(self.offset_file))
-        if check_asdf == asdf.util.FileType.ASDF:
-            with asdf.open(self.offset_file) as af:
-                offsets = af.tree['offsets']
+        # validate the offset file using the schema file
+        DATA_PATH = Path(__file__).parent
+        af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
 
-        format_failure = False
-        # Currently the offset list has to have the following keys: filename, raoffset, decoffset
-        if 'filename' not in offsets.keys():
-            self.log.warning('Filename is not listed in the offset list')
-            format_failure = True
-        if 'raoffset' not in offsets.keys():
-            self.log.warning('raoffset is not listed in the offset list')
-            format_failure = True
-        if 'decoffset' not in offsets.keys():
-            self.log.warning('decoffset is not listed in the offset list')
-            format_failure = True
-        if format_failure:
-            self.log.warning('Offset list does not have the correct format')
-            self.log.warning('No offsets are applied')
+        offset_filename = af['filename']
+        offset_ra = af['raoffset']
+        offset_dec = af['decoffset']
+        offset_unit = af['units']
+
+        if offset_unit != 'arcsec':
+            self.log.error('Provide the offset units in units of arcsec ')
+            self.log.error('Turning off adjusting by offsets ')
             return None
 
         for model in self.input_models:
             file_check = model.meta.filename
-            if file_check in offsets['filename']:
-                ra = offsets['raoffset']
-                dec = offsets['decoffset']
+            if file_check in offset_filename:
                 continue
             else:
-                self.log.info('File in assocation is not found in offset list list %s', file_check)
+                self.log.error('File in assocation is not found in offset list list %s', file_check)
+                self.log.error('Turning off adjusting by offsets')
                 return None
+        offsets = {}
+        offsets['filename'] = offset_filename
+        offsets['raoffset'] = offset_ra
+        offsets['decoffset'] = offset_dec
+
         return offsets

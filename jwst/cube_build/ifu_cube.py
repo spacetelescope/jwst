@@ -1335,9 +1335,6 @@ class IFUCubeData():
                 for im in range(noffsets):
                     self.offsets['raoffset'][im] = (self.offsets['raoffset'][im]/3600.0)/np.cos(self.median_dec*deg2rad)
                     self.offsets['decoffset'][im] = self.offsets['decoffset'][im]/3600.0
-
-                print(self.offsets['raoffset'])
-                print(self.offsets['decoffset'])
                 
             for k in range(n):
                 lmin = 0.0
