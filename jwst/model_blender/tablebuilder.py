@@ -17,6 +17,21 @@ def _convert_dtype(value):
 
 
 def table_to_schema(table):
+    """
+    Convert a "table" (a structured ndarray) to a stdatamodels
+    sub-schema that will allow the "table" to be stored to a fits
+    extension HDRTAB.
+
+    Parameters
+    ----------
+    table: ndarray
+        The structured array containing the data (and datatype).
+
+    Returns
+    -------
+    subschema: dict
+        stdatamodels for the "table" datatype.
+    """
     return {
         'title': 'Combined header table',
         'fits_hdu': 'HDRTAB',
@@ -31,13 +46,47 @@ def table_to_schema(table):
 
 
 class TableBuilder:
+    """
+    Class to incrementally build a metadat "table" (a numpy
+    structured array) containing metadata from several models.
+
+    >>> tb = TableBuilder({"meta.filename": "FN"})
+    >>> tb.header_to_row({"meta.filename": "foo.fits"})
+    >>> tb.build_table()
+    """
     def __init__(self, attr_to_column):
+        """
+        Construct a `TableBuilder` instance using the mapping
+        provided in ``attr_to_column``.
+
+        Parameters
+        ----------
+        attr_to_column: dict
+            A one-to-one mapping of attribute names (as
+            dotted paths like "meta.filename") to column
+            names (strings).
+        """
         self.attr_to_column = attr_to_column
         self.columns = {col: [] for col in self.attr_to_column.values()}
         if len(attr_to_column) != len(self.columns):
             raise ValueError(f"Invalid attr_to_column, mapping is not 1-to-1: {attr_to_column}")
 
     def header_to_row(self, header):
+        """
+        Add a datamodel header metadata dictionary
+        as a row to the table.
+
+        This function will add a complete row for each
+        header. If header is missing a required attribute
+        (as defined in the mapping provided to
+        `TableBuilder.__init__`) the column with this
+        missing value for this row will contain a ``nan``.
+
+        Parameters
+        ----------
+        header: dict
+            Often produced from ``Datamodel.to_flat_dict``.
+        """
         row = {}
         for attr in self.attr_to_column:
             if attr in header:
@@ -49,6 +98,15 @@ class TableBuilder:
             self.columns[col].append(row[attr] if attr in row else np.nan)
 
     def build_table(self):
+        """
+        Build a "table" containing the previously
+        added rows.
+
+        Returns
+        -------
+        table: numpy.ndarray
+            Structured array containing fields with datatypes
+        """
         arrays = []
         table_dtype = []
         for col, items in self.columns.items():

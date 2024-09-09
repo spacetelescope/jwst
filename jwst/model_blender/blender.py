@@ -10,7 +10,36 @@ __all__ = ['ModelBlender']
 
 
 class ModelBlender:
+    """
+    Class to "blend" metadata from several datamodels
+    into:
+
+        - metadata for a combined model
+        - a table with metadata of each datamodel
+
+    Input models can be added to the blender using `ModelBlender.accumulate`
+    and the output/combined model updated using `ModelBlender.finalize_model`.
+
+    >>> blender = ModelBlender()
+    >>> blender.accumulate(input_model_a)  # doctest: +SKIP
+    >>> blender.accumulate(input_model_b)  # doctest: +SKIP
+    >>> blender.finalize_model(combined_model)  # doctest: +SKIP
+
+    """
     def __init__(self, blend_ignore_attrs=None):
+        """
+        Create a new `ModelBlender` using an optional list of
+        attributes to ignore.
+
+        Parameters
+        ----------
+        blend_ignore_attrs: list or None
+            A list of metadata attributes to ignore during blending.
+            These attributes will not be set on the output/combined.
+            These attributes must be strings containing the dotted
+            path of each attribute (for example "meta.filename").
+            (Note that "meta.wcs" will always be ignored).
+        """
         self._first_header_meta = None
         self._blenders = None
         self._table_builder = None
@@ -19,6 +48,16 @@ class ModelBlender:
             self._blend_ignore_attrs.extend(blend_ignore_attrs)
 
     def accumulate(self, model):
+        """
+        Process a datamodel, adding it's metadata to the blended
+        metadata and the metadata table.
+
+        Parameters
+        ----------
+
+        model: `jwst.datamodels.JwstDataModel`
+            The datatamodel to blend.
+        """
         if self._first_header_meta is None:
             # search the schema for other metadata to "blend" and to add to the table
             attr_to_columns, attr_to_blend_rules, schema_ignores  = parse_schema(model.schema)
@@ -74,6 +113,23 @@ class ModelBlender:
         return self._table_builder.build_table()
 
     def finalize_model(self, model):
+        """
+        Add blended metadata and the accumulated metadata table to
+        the provided datamodel. The update process involves:
+
+            - setting the model metadata to the blended metadata values
+            - adding an "hdrtab" attribute (containing the metadata table)
+            - updating the model schema to save "hdrtab"
+
+        The provided model will be update in-place.
+
+        Parameters
+        ----------
+        model: `jwst.datamodels.JwstDataModel`
+            A datamodel that will have its metadata set
+            to the blended metadata and have the metadata
+            table assigned to the "hdrtab" attribute.
+        """
         # update metadata of the output model based on the results
         # of the "blenders"
         for attr, val in self._finalize_metadata().items():
