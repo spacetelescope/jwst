@@ -88,7 +88,10 @@ def test_flag_cr(sci_blot_image_pair):
     )
 
     # Make sure science data array is unchanged after flag_cr()
-    np.testing.assert_allclose(sci.data, data_copy)
+    # except outliers are NaN
+    dnu = (sci.dq & OUTLIER_DO_NOT_USE).astype(bool)
+    assert np.all(np.isnan(sci.data[dnu]))
+    assert np.allclose(sci.data[~dnu], data_copy[~dnu])
 
     # Verify that both DQ flags are set in the DQ array for all outliers
     assert sci.dq[3, 3] == OUTLIER_DO_NOT_USE
@@ -224,21 +227,21 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     assert len(median_files) == 0
 
     # Save all the data into a separate array before passing into step
-    data_as_cube = container.map_function(lambda model, index: model.data.copy(), modify=False)
+    data_as_cube = list(container.map_function(
+        lambda model, index: model.data.copy(), modify=False))
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True
     )
 
-    # Make sure nothing changed in SCI array
-    result.map_function(
-        lambda model, index: np.testing.assert_allclose(data_as_cube[index], model.data),
-        modify=False,
-    )
-
-    # Verify source is not flagged
     with result:
-        for r in result:
+        for i, r in enumerate(result):
+            # Make sure nothing changed in SCI array except outliers are NaN
+            dnu = (r.dq & OUTLIER_DO_NOT_USE).astype(bool)
+            assert np.all(np.isnan(r.data[dnu]))
+            assert np.allclose(data_as_cube[i][~dnu], r.data[~dnu])
+
+            # Verify source is not flagged
             assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
             result.shelve(r, modify=False)
 
@@ -285,11 +288,13 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
         i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
         s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
         median_files = glob(os.path.join(dirname, '*median.fits'))
+        blot_files = glob(os.path.join(dirname, '*blot.fits'))
 
         # intermediate files are removed
         assert len(i2d_files) == 0
         assert len(s2d_files) == 0
         assert len(median_files) == 0
+        assert len(blot_files) == 0
 
         # result files are written to the output directory
         if dirname == output_dir:
@@ -317,25 +322,31 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
         i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
         s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
         median_files = glob(os.path.join(dirname, '*median.fits'))
+        blot_files = glob(os.path.join(dirname, '*blot.fits'))
         if dirname == output_dir:
             # result files are written to the output directory
             assert len(result_files) == len(container)
 
-            # s2d and median files are written to the output directory
+            # s2d, median, and blot files are written to the output directory
             assert len(s2d_files) == len(container)
+            assert len(blot_files) == len(container)
             assert len(median_files) == 1
 
             # i2d files not written
             assert len(i2d_files) == 0
 
             # nothing else was written
-            assert len(all_files) == len(s2d_files) + len(median_files) + len(result_files)
+            assert len(all_files) == len(s2d_files) + \
+                                     len(median_files) + \
+                                     len(result_files) + \
+                                     len(blot_files)
         else:
             # nothing should be written to the current directory
             assert len(result_files) == 0
             assert len(s2d_files) == 0
             assert len(median_files) == 0
             assert len(i2d_files) == 0
+            assert len(blot_files) == 0
             assert len(all_files) == 0
 
     miri_rate.close()
@@ -378,21 +389,21 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
     container = ModelLibrary(three_sci_as_asn, on_disk=True)
 
     # Save all the data into a separate array before passing into step
-    data_as_cube = container.map_function(lambda model, index: model.data.copy(), modify=False)
+    data_as_cube = list(container.map_function(
+        lambda model, index: model.data.copy(), modify=False))
 
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True, in_memory=False
     )
 
-    # Make sure nothing changed in SCI array
-    result.map_function(
-        lambda model, index: np.testing.assert_allclose(data_as_cube[index], model.data),
-        modify=False,
-    )
-
-    # Verify source is not flagged
     with result:
-        for r in result:
+        for i, r in enumerate(result):
+            # Make sure nothing changed in SCI array except outliers are NaN
+            dnu = (r.dq & OUTLIER_DO_NOT_USE).astype(bool)
+            assert np.all(np.isnan(r.data[dnu]))
+            assert np.allclose(data_as_cube[i][~dnu], r.data[~dnu])
+
+            # Verify source is not flagged
             assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
             result.shelve(r, modify=False)
 
@@ -401,6 +412,30 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
         zeroth = result.borrow(0)
         assert zeroth.dq[12, 12] == OUTLIER_DO_NOT_USE
         result.shelve(zeroth, modify=False)
+
+    # Verify intermediate results were written to disk
+    dirname = tmp_cwd
+    all_files = glob(os.path.join(dirname, '*.fits'))
+    input_files = glob(os.path.join(dirname, '*_cal.fits'))
+    result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+    i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
+    s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
+    median_files = glob(os.path.join(dirname, '*median.fits'))
+    blot_files = glob(os.path.join(dirname, '*blot.fits'))
+
+    assert len(result_files) == len(container)
+
+    # i2d, median, blot files are written to the output directory
+    assert len(i2d_files) == len(container)
+    assert len(blot_files) == len(container)
+    assert len(median_files) == 1
+
+    # s2d files not written
+    assert len(s2d_files) == 0
+
+    # nothing else was written
+    assert len(all_files) == len(input_files) + len(i2d_files) + len(median_files) + len(result_files) + len(blot_files)
+
 
 
 def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
@@ -440,7 +475,7 @@ def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
 
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
-def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
+def test_outlier_step_image_weak_cr_dither(exptype, tmp_cwd):
     """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
@@ -464,15 +499,14 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
 
     result = OutlierDetectionStep.call(container, in_memory=True)
 
-    # Make sure nothing changed in SCI array
-    result.map_function(
-        lambda model, index: np.testing.assert_allclose(data_as_cube[index], model.data),
-        modify=False,
-    )
-
-    # Verify source is not flagged
     with result:
-        for r in result:
+        for i, r in enumerate(result):
+            # Make sure nothing changed in SCI array except outliers are NaN
+            dnu = (r.dq & OUTLIER_DO_NOT_USE).astype(bool)
+            assert np.all(np.isnan(r.data[dnu]))
+            assert np.allclose(data_as_cube[i][~dnu], r.data[~dnu])
+
+            # Verify source is not flagged
             assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
             result.shelve(r, modify=False)
 
@@ -484,7 +518,7 @@ def test_outlier_step_image_weak_CR_dither(exptype, tmp_cwd):
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_coron)
-def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
+def test_outlier_step_image_weak_cr_coron(exptype, tsovisit, tmp_cwd):
     """Test whole step with an outlier for coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
@@ -503,15 +537,19 @@ def test_outlier_step_image_weak_CR_coron(exptype, tsovisit, tmp_cwd):
 
     result = OutlierDetectionStep.call(cube)
 
-    # Make sure nothing changed in SCI array
+    # Make sure nothing changed in SCI array except that
+    # outliers are NaN
     for i, image in enumerate(container):
-        np.testing.assert_allclose(image.data, result.data[i])
+        dnu = (result.dq[i] & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(result.data[i][dnu]))
+        assert np.allclose(image.data[~dnu], result.data[i][~dnu])
 
     # Verify source is not flagged
     assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
-    assert np.all(result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE)
+    assert result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE
+    assert np.isnan(result.data[0, 12, 12])
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
@@ -543,9 +581,12 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
 
     result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 
-    # Make sure nothing changed in SCI array
+    # Make sure nothing changed in SCI array except
+    # that outliers are NaN
     for i, model in enumerate(im):
-        np.testing.assert_allclose(model.data, result.data[i])
+        dnu = (result.dq[i] & OUTLIER_DO_NOT_USE).astype(bool)
+        assert np.all(np.isnan(result.data[i][dnu]))
+        assert np.allclose(model.data[~dnu], result.data[i][~dnu])
 
     # Verify source is not flagged
     assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])

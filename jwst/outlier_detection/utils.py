@@ -5,6 +5,7 @@ import warnings
 
 import numpy as np
 
+from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
 from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
 from stdatamodels.jwst import datamodels
@@ -205,6 +206,8 @@ def flag_resampled_model_crs(
     scale1,
     scale2,
     backg,
+    save_blot=False,
+    make_output_path=None,
 ):
     if 'SPECTRAL' not in input_model.meta.wcs.output_frame.axes_type:
         input_pixflux_area = input_model.meta.photometry.pixelarea_steradians
@@ -216,6 +219,15 @@ def flag_resampled_model_crs(
         pix_ratio = 1.0
 
     blot = gwcs_blot(median_data, median_wcs, input_model.data.shape, input_model.meta.wcs, pix_ratio)
+    if save_blot:
+        if make_output_path is None:
+            raise ValueError("make_output_path must be provided if save_blot is True")
+        model_path = make_output_path(input_model.meta.filename, suffix='blot')
+        blot_model = _make_blot_model(input_model, blot)
+        blot_model.meta.filename = model_path
+        blot_model.save(model_path)
+        log.info(f"Saved model in {model_path}")
+        del blot_model
     # dq flags will be updated in-place
     _flag_resampled_model_crs(input_model, blot, snr1, snr2, scale1, scale2, backg)
 
@@ -245,6 +257,10 @@ def _flag_resampled_model_crs(
     input_model.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
 
+    # Make sure all data, error, and variance arrays have
+    # matching NaNs and DQ flags
+    match_nans_and_flags(input_model)
+
 
 def flag_crs_in_models_with_resampling(
     input_models,
@@ -255,13 +271,37 @@ def flag_crs_in_models_with_resampling(
     scale1,
     scale2,
     backg,
+    save_blot=False,
+    make_output_path=None,
 ):
     for image in input_models:
-        flag_resampled_model_crs(image, median_data, median_wcs, snr1, snr2, scale1, scale2, backg)
+        flag_resampled_model_crs(image,
+                                 median_data,
+                                 median_wcs,
+                                 snr1,
+                                 snr2,
+                                 scale1,
+                                 scale2,
+                                 backg,
+                                 save_blot=save_blot,
+                                 make_output_path=make_output_path)
 
 
 def flag_model_crs(image, blot, snr):
     cr_mask = flag_crs(image.data, image.err, blot, snr)
-    # update dq array in-place
+
+    # Update dq array in-place
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
+
+    # Make sure all data, error, and variance arrays have
+    # matching NaNs and DQ flags
+    match_nans_and_flags(image)
+
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
+
+
+def _make_blot_model(input_model, blot):
+    blot_model = type(input_model)()
+    blot_model.data = blot
+    blot_model.update(input_model)
+    return blot_model
