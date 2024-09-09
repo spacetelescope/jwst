@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, CubicSpline
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags, SossWaveGridModel
@@ -105,7 +105,6 @@ def get_ref_file_args(ref_files):
         idx_invalid = ~np.isfinite(wv_cent)
         wv_cent[idx_invalid] = 0.0
         centroid[order] = wv_cent
-
     # Get kernels
     kernels_o1 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[1], ovs, n_pix)
     kernels_o2 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[2], ovs, n_pix)
@@ -138,15 +137,38 @@ def get_trace_1d(ref_files, order):
     """
 
     pastasoss_ref = ref_files['pastasoss']
-    if order in [1, 2]:
-        _, xtrace, ytrace, wavetrace = \
-        get_soss_traces(pastasoss_ref, pwcpos=ref_files['pwcpos'], order=str(order), subarray=ref_files['subarray'])
+    if hasattr(pastasoss_ref.traces[0], "padding"):
+        pad = pastasoss_ref.traces[0].padding
     else:
-        errmsg = f"Pastasoss does not currently support order {order}."
+        pad = 0
+        padding = False
+    if pad > 0:
+        padding = True
+    (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = \
+        get_soss_wavemaps(pastasoss_ref, pwcpos=ref_files['pwcpos'], subarray=ref_files['subarray'],
+                          padding=padding, padsize=pad, spectraces=True)
+    if order == 1:
+        wavemap = wavemap_o1
+        spectrace = spectrace_o1
+        xtrace = np.arange(2048)
+    elif order == 2:
+        wavemap = wavemap_o2
+        spectrace = spectrace_o2
+        xtrace = np.arange(1783)
+    else:
+        errmsg = f"Order {order} is not covered by Pastasoss reference file!"
         log.error(errmsg)
         raise ValueError(errmsg)
 
-    return xtrace.astype(int), ytrace, wavetrace
+    # CubicSpline requires monotonically increasing x arr
+    if spectrace[0][0] - spectrace[0][1] > 0:
+        spectrace = np.flip(spectrace, axis=1)
+
+    trace_interp_y = CubicSpline(spectrace[0], spectrace[1])
+    trace_interp_wave = CubicSpline(spectrace[0], spectrace[2])
+    ytrace = trace_interp_y(xtrace)
+    wavetrace = trace_interp_wave(xtrace)
+    return xtrace, ytrace, wavetrace
 
 
 def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile, threshold=1e-4):
@@ -1205,19 +1227,18 @@ def run_extract1d(input_model, pastasoss_ref_name,
             if i == 0:
                 all_box_weights[order] = []
             all_box_weights[order].append(box_weights[order])
-
         # Copy spectral data for each order into the output model.
         for order in fluxes.keys():
 
             table_size = len(wavelengths[order])
 
             out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
-            out_table['WAVELENGTH'] = wavelengths[order]
-            out_table['FLUX'] = fluxes[order]
-            out_table['FLUX_ERROR'] = fluxerrs[order]
+            out_table['WAVELENGTH'] = wavelengths[order][:table_size]
+            out_table['FLUX'] = fluxes[order][:table_size]
+            out_table['FLUX_ERROR'] = fluxerrs[order][:table_size]
             out_table['DQ'] = np.zeros(table_size)
-            out_table['BACKGROUND'] = col_bkg
-            out_table['NPIXELS'] = npixels[order]
+            out_table['BACKGROUND'] = col_bkg[:table_size]
+            out_table['NPIXELS'] = npixels[order][:table_size]
 
             spec = datamodels.SpecModel(spec_table=out_table)
 
