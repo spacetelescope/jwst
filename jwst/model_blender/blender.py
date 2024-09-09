@@ -66,14 +66,6 @@ class ModelBlender:
             # search the schema for other metadata to "blend" and to add to the table
             attr_to_columns, attr_to_blend_rules, schema_ignores  = parse_schema(model.schema)
 
-            # the previous model blending code accessed every attribute
-            # that will be added to the table. This causes those attributes
-            # to fill in defaults (if they don't have a defined value).
-            # Access all those attributes to allow the new model blender to
-            # behave in the same way.
-            for attr in attr_to_columns:
-                model[attr]
-
             # update ignores list for items in schema that can't be blended
             self._blend_ignore_attrs.extend(schema_ignores)
 
