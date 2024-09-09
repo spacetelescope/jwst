@@ -80,7 +80,8 @@ class Detector1Pipeline(Pipeline):
             ngroups = input.data.shape[1]
             if ngroups < 4:
                 log.warning(f"For the LIKELY ramp fit algorithm NGROUPS must be"
-                            f" at least 4, but NGROUPS = {ngroups}.")
+                            f" at least 4, but NGROUPS = {ngroups}. Switching"
+                            f" algorithm to OLS_C.")
                 self.ramp_fit.algorithm = "OLS_C"
 
         # propagate output_dir to steps that might need it
