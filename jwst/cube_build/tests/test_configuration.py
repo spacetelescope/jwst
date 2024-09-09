@@ -3,11 +3,14 @@ Unit test for Cube Build testing setting up configuration
 """
 
 import pytest
-
+import asdf
 from stdatamodels.jwst import datamodels
+import astropy.units as u
 
+from jwst.cube_build import CubeBuildStep
 from jwst.cube_build import cube_build
 from jwst.cube_build import file_table
+
 
 wcsinfo = {
     'dec_ref': -0.00244536159612126,
@@ -101,6 +104,23 @@ subarray_nirspec = {
 
 
 @pytest.fixture(scope='function')
+def offset_file():
+    """ Generate a offset file """
+
+    filename = ['test1.fits', 'test2.fits']
+    raoffset = [0.0, 0.1]
+    decoffset = [0.0, 0.15]
+    tree = {
+        "units": str(u.arcsec),
+        "filename": filename,
+        "raoffset": raoffset,
+        "decoffset": decoffset
+    }
+    af = asdf.AsdfFile(tree)
+    return af
+
+
+@pytest.fixture(scope='function')
 def miri_ifushort_short():
     """ Generate a IFU image """
 
@@ -111,6 +131,30 @@ def miri_ifushort_short():
     input_model.meta.subarray._instance.update(subarray)
     input_model.meta.cal_step.assign_wcs = 'COMPLETE'
     return input_model
+
+
+@pytest.fixture(scope='function')
+def miri_ifushort_short_2files():
+    """ Generate a IFU image """
+
+    input_model1 = datamodels.IFUImageModel()
+    input_model1.meta.wcsinfo._instance.update(wcsinfo)
+    input_model1.meta.instrument._instance.update(mirifushort_short)
+    input_model1.meta.observation._instance.update(observation)
+    input_model1.meta.subarray._instance.update(subarray)
+    input_model1.meta.cal_step.assign_wcs = 'COMPLETE'
+
+    input_model2 = datamodels.IFUImageModel()
+    input_model2.meta.wcsinfo._instance.update(wcsinfo)
+    input_model2.meta.instrument._instance.update(mirifushort_short)
+    input_model2.meta.observation._instance.update(observation)
+    input_model2.meta.subarray._instance.update(subarray)
+    input_model2.meta.cal_step.assign_wcs = 'COMPLETE'
+
+    input_models = []
+    input_models.append(input_model1)
+    input_models.append(input_model1)
+    return input_models
 
 
 @pytest.fixture(scope='function')
@@ -467,3 +511,35 @@ def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
 
     assert cube_pars['1']['par1'] == ['g140m', 'g235m']
     assert cube_pars['1']['par2'] == ['f100lp', 'f170lp']
+
+
+def test_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
+    """ Test validation of the offset configuration"""
+
+    pars_input = {}
+    pars_input['channel'] = []
+    pars_input['subchannel'] = []
+    pars_input['filter'] = []
+    pars_input['grating'] = []
+    output_type = 'band'
+    weighting = 'drizzle'
+    par_filename = 'None'
+
+    pars = {
+        'channel': pars_input['channel'],
+        'subchannel': pars_input['subchannel'],
+        'grating': pars_input['grating'],
+        'filter': pars_input['filter'],
+        'weighting': weighting,
+        'output_type': output_type}
+
+    cubeinfo = cube_build.CubeData(
+        miri_ifushort_short_2files,
+        par_filename,
+        **pars)
+
+    offsets = CubeBuildStep.check_offset_file(cubeinfo.input_models)
+
+
+    # want to test that offsets is None with it fails or Dictionary when it works
+    
