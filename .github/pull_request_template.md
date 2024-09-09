@@ -8,13 +8,15 @@ Closes #
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
 
-**Checklist for PR authors (skip items if you don't have permissions or they are not applicable)**
-- [ ] added entry in `CHANGES.rst` within the relevant release section
-- [ ] updated or added relevant tests
-- [ ] updated relevant documentation
-- [ ] added relevant milestone
-- [ ] added relevant label(s)
-- [ ] ran regression tests, post a link to the Jenkins job below.
-      [How to run regression tests on a PR](https://github.com/spacetelescope/jwst/wiki/Running-Regression-Tests-Against-PR-Branches)
-- [ ] All comments are resolved
-- [ ] Make sure the JIRA ticket is [resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
+<!-- if you can't perform these tasks due to permissions, please ask a maintainer to do them -->
+## Tasks
+- [ ] **request a review from someone specific**, to avoid making the maintainers review every PR
+- [ ] add a build milestone, i.e. `Build 11.3` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
+- [ ] Does this PR change user-facing code / API?
+  - [ ] add an entry to `CHANGES.rst` within the relevant release section (otherwise add the `no-changelog-entry-needed` label to this PR)
+  - [ ] update or add relevant tests
+  - [ ] update relevant docstrings and / or `docs/` page
+  - [ ] [start a regression test](https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml) and include a link to the running job ([click here for instructions](https://github.com/spacetelescope/RegressionTests/blob/main/docs/running_regression_tests.md))
+    - [ ] Do truth files need to be updated ("okified")?
+      - [ ] **after the reviewer has approved these changes**, run `okify_regtests` to update the truth files
+- [ ] if a JIRA ticket exists, [make sure it is resolved properly](https://github.com/spacetelescope/jwst/wiki/How-to-resolve-JIRA-issues)
