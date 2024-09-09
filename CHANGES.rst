@@ -515,6 +515,8 @@ outlier_detection
 
 - Fix errors in documentation describing arguments. [#8603]
 
+- Re-enabled saving of blot models when `save_intermediate_results` is True. [#8758]
+
 pathloss
 --------
 
