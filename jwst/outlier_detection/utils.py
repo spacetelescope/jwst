@@ -6,6 +6,7 @@ import psutil
 
 import numpy as np
 
+from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
 from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
 from stdatamodels.jwst import datamodels
@@ -262,6 +263,10 @@ def _flag_resampled_model_crs(
     input_model.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
 
+    # Make sure all data, error, and variance arrays have
+    # matching NaNs and DQ flags
+    match_nans_and_flags(input_model)
+
 
 def flag_crs_in_models_with_resampling(
     input_models,
@@ -279,6 +284,12 @@ def flag_crs_in_models_with_resampling(
 
 def flag_model_crs(image, blot, snr):
     cr_mask = flag_crs(image.data, image.err, blot, snr)
-    # update dq array in-place
+
+    # Update dq array in-place
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
+
+    # Make sure all data, error, and variance arrays have
+    # matching NaNs and DQ flags
+    match_nans_and_flags(image)
+
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")

@@ -40,6 +40,9 @@ cube_build
   
 - Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
 
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  building a cube. [#8557]
+
 datamodels
 ----------
 
@@ -56,6 +59,12 @@ emicorr
 
 - Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
   to compute a correction. [#8675]
+
+flat_field
+----------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
+  variance, and DQ extensions for all modes. [#8557]
 
 general
 -------
@@ -99,10 +108,20 @@ outlier_detection
 - For imaging modes, step now uses `ModelLibrary` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
 
-set_telescope_pointing
-----------------------
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
 
-- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+pathloss
+--------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
+
+photom
+------
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
+  variance, and DQ extensions. [#8557]
 
 pipeline
 --------
@@ -114,8 +133,15 @@ pipeline
 resample
 --------
 
+- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
+  changed to use values in the top-level ASDF structure if the values in the WCS
+  are ``None``. [#8698]
+
 - Step now uses `ModelLibrary` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
+
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
 
 resample_spec
 -------------
@@ -138,18 +164,19 @@ resample_spec
   so that the spectral resampling step only exposes parameters that are appropriate
   for spectral data. [#8622]
 
-resample_step
--------------
-
-- Fixed a typo in ``load_custom_wcs`` from ``array_shape`` to ``pixel_shape`` and
-  changed to use values in the top-level ASDF structure if the values in the WCS
-  are ``None``. [#8698]
+- Ensure that NaNs and DO_NOT_USE flags match up in all input data before
+  resampling. [#8557]
 
 scripts
 -------
 
 - Removed many non-working and out-dated scripts. Including
   many scripts that were replaced by ``strun``. [#8619]
+
+set_telescope_pointing
+----------------------
+
+- Replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
 
 skymatch
 --------
