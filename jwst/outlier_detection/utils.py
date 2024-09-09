@@ -303,4 +303,5 @@ def flag_model_crs(image, blot, snr):
 def _make_blot_model(input_model, blot):
     blot_model = type(input_model)()
     blot_model.data = blot
+    blot_model.update(input_model)
     return blot_model
