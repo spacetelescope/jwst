@@ -99,16 +99,20 @@ def test_detector1_mem_usage(rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
     args = ["jwst.pipeline.Detector1Pipeline", rtdata.input]
+
     # starting the monitoring
     tracemalloc.start()
-    # profile Detector1 - results is in MB
+
+    # run Detector1
     Step.from_cmdline(args)
+
     # displaying the memory
     current_mem, peak_mem = tracemalloc.get_traced_memory()
     # convert bytes to GB
     peak_mem *= 1e-9
-    peak_mem = np.round(peak_mem, decimals=0)
-    # stopping the library
+    peak_mem = np.round(peak_mem, decimals=1)
+
+    # stopping the monitoring
     tracemalloc.stop()
 
     # set comparison values in GB
