@@ -561,7 +561,7 @@ class CubeBuildStep (Step):
         DATA_PATH = Path(__file__).parent
         try:
             af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
-        except 
+        except:
             self.log.error('Validation Error for offset file')
             self.log.error('Turning off adjusting by offsets')
             return None
