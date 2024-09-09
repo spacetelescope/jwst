@@ -295,18 +295,24 @@ def clean_subarray(detector, image, mask, npix_iter=512,
     # to np.sum(mask[:i], axis=1).
 
     sum_mask = np.array([0] + list(np.cumsum(np.sum(mask, axis=1))))
+
+    # i1 will be the first row with a nonzero element in the mask
+    # imax will be the last row with a nonzero element in the mask
     
-    i1 = 0
+    nonzero_mask_element = np.sum(mask, axis=1) > 0
+    i1 = np.amin(np.arange(mask.shape[0])[nonzero_mask_element])
+    imax = np.amax(np.arange(mask.shape[0])[nonzero_mask_element])
+        
     i1_vals = []
     di_list = []
     models = []
-    while i1 < image.shape[0] - 1:
+    while i1 <= imax:
 
         # Want npix_iter available pixels in this section.  If
         # there are fewer than 1.5*npix_iter available pixels in
         # the rest of the image, just go to the end.
-        k = 0
-        for k in range(i1 + 1, image.shape[0] + 1):
+        
+        for k in range(i1 + 1, imax + 2):
             if (sum_mask[k] - sum_mask[i1] > npix_iter
                     and sum_mask[-1] - sum_mask[i1] > 1.5 * npix_iter):
                 break
@@ -332,7 +338,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
             models += [np.zeros(image[i1:i1 + di].shape)]
 
         # If we have reached the end of the array, we are finished.
-        if k == image.shape[0]:
+        if k == imax + 1:
             break
 
         # Step forward by half an interval so that we have
@@ -340,8 +346,8 @@ def clean_subarray(detector, image, mask, npix_iter=512,
         
         i1 += max(int(np.round(di/2)), 1)
             
-    model = image*0
-    tot_wgt = image*0
+    model = np.zeros(image.shape)
+    tot_wgt = np.zeros(image.shape)
 
     # When we combine different corrections computed over
     # different intervals, each one the highest weight towards the
@@ -354,7 +360,9 @@ def clean_subarray(detector, image, mask, npix_iter=512,
         wgt = 1.001 - np.abs(np.linspace(-1, 1, di_list[i]))[:, np.newaxis]
         model[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt*models[i]
         tot_wgt[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt
-        
+
+    # don't divide by zero
+    tot_wgt[model == 0] = 1
     model /= tot_wgt
     cleaned_image = image - model
 
