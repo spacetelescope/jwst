@@ -28,18 +28,6 @@ def _isotime(time_str):
     return isotime
 
 
-def bad_mintime(vals):
-    # this introduces floating point error for backwards compatibility
-    # it should be replaced with min
-    return _isotime(min(vals)).isoformat()
-
-
-def bad_maxtime(vals):
-    # this introduces floating point error for backwards compatibility
-    # it should be replaced with max
-    return _isotime(max(vals)).isoformat()
-
-
 RULE_FUNCTIONS = {
     'multi': multi,
     'mean': np.mean,
@@ -47,15 +35,11 @@ RULE_FUNCTIONS = {
     'max': np.max,
     'min': np.min,
 
-    # these intentionally introduce floating point errors
-    # for backwards compatibility but would be more accurate
-    # using the builtin min/max
-    'mintime': bad_mintime,
-    'maxtime': bad_maxtime,
-
      # retained date/time names for backwards compatibility
      # as these all assume ISO8601 format the lexical and
      # chronological sorting match
+    'mintime': min,
+    'maxtime': max,
     'mindate': min,
     'maxdate': max,
     'mindatetime': min,
