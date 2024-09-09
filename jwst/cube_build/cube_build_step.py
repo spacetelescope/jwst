@@ -559,7 +559,12 @@ class CubeBuildStep (Step):
 
         # validate the offset file using the schema file
         DATA_PATH = Path(__file__).parent
-        af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
+        try:
+            af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
+        except 
+            self.log.error('Validation Error for offset file')
+            self.log.error('Turning off adjusting by offsets')
+            return None
 
         offset_filename = af['filename']
         offset_ra = af['raoffset']
