@@ -94,6 +94,7 @@ def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwa
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
 
 
+@pytest.mark.bigdata
 def test_detector1_mem_usage(rtdata_module):
     """Determine the memory usage for Detector 1"""
     rtdata = rtdata_module
