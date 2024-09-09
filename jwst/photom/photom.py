@@ -7,6 +7,7 @@ from astropy import units as u
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
+from .. lib.pipe_utils import match_nans_and_flags
 from .. lib.wcs_utils import get_wavelengths
 from .. lib.dispaxis import get_dispersion_direction
 from . import miri_mrs
@@ -940,6 +941,9 @@ class DataSet():
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
 
+            # Make sure output model has consistent NaN and DO_NOT_USE values
+            match_nans_and_flags(slit)
+
         elif isinstance(self.input, datamodels.MultiSpecModel):
             # Does this block need to address SB columns as well, or will
             # they (presumably) never be populated for SOSS?
@@ -992,6 +996,9 @@ class DataSet():
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
+
+            # Make sure output model has consistent NaN and DO_NOT_USE values
+            match_nans_and_flags(self.input)
 
         return
 
