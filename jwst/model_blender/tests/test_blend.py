@@ -19,6 +19,7 @@ DATETIMES = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
              '2017-11-11T15:15:06.118']
 DATES = ['2017-11-30', '2017-11-11', '2017-12-10']
 INSTRUMENT_NAMES = ['NIRCAM'] * N_MODELS
+DETECTOR_NAMES = ['NRCA1', 'NRCA2', 'NRCA3']
 CORONAGRAPHS = ['4QPM', '4QPM_1065', '4QPM_1140']
 EXP_ONLYS = [True] * N_MODELS
 POLYNOMIAL_INFOS = [[{'degree': [1]}]] * N_MODELS
@@ -59,6 +60,7 @@ def _make_data():
         'meta.filename': FILENAMES,
         'meta.instrument.coronagraph': CORONAGRAPHS,
         'meta.instrument.name': INSTRUMENT_NAMES,
+        'meta.instrument.detector': DETECTOR_NAMES,
         'meta.date': DATETIMES,
         'meta.observation.date': DATES,
         'meta.observation.date_beg': DATETIMES,
@@ -80,6 +82,7 @@ def _make_data():
         # skip filename as it will be ignored below
         'meta.instrument.coronagraph': CORONAGRAPHS[0],
         'meta.instrument.name': INSTRUMENT_NAMES[0],
+        'meta.instrument.detector': 'MULTIPLE',
         'meta.date': DATETIMES[0],
         'meta.observation.date': DATES[1],
         'meta.observation.date_beg': DATETIMES[1],
