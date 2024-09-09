@@ -4,9 +4,10 @@ import pytest
 import numpy as np
 
 from stdatamodels.schema import walk_schema
-from stdatamodels.jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel, CubeModel
 
 from jwst.model_blender import blendmeta
+from jwst.model_blender.blender import ModelBlender
 
 
 # Setup various input meta data
@@ -197,3 +198,10 @@ def test_blendtab(blend):
     for col in colnames:
         if col in input_values:
             assert newtab[col] == input_values[col]
+
+
+def test_wrong_type_failure():
+    blender = ModelBlender()
+    blender.accumulate(ImageModel())
+    with pytest.raises(ValueError, match="model of type"):
+        blender.accumulate(CubeModel())

@@ -81,6 +81,10 @@ model will be the minimum of all input models. If ``blend_rule`` was not defined
 
 .. warning::
 
+   All blended models must be of the same type.
+
+.. warning::
+
    Since model blender copies the metadata of the first model, all metadata
    from that model will be added to combined model. This is true even for
    metadata that is not defined in the schema.

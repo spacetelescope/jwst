@@ -20,6 +20,8 @@ class ModelBlender:
     Input models can be added to the blender using `ModelBlender.accumulate`
     and the output/combined model updated using `ModelBlender.finalize_model`.
 
+    All input/accumulated models must be of the same type.
+
     >>> blender = ModelBlender()
     >>> blender.accumulate(input_model_a)  # doctest: +SKIP
     >>> blender.accumulate(input_model_b)  # doctest: +SKIP
@@ -40,6 +42,7 @@ class ModelBlender:
             path of each attribute (for example "meta.filename").
             (Note that "meta.wcs" will always be ignored).
         """
+        self._model_type = None
         self._first_header_meta = None
         self._blenders = None
         self._table_builder = None
@@ -59,6 +62,7 @@ class ModelBlender:
             The datatamodel to blend.
         """
         if self._first_header_meta is None:
+            self._model_type = type(model)
             # search the schema for other metadata to "blend" and to add to the table
             attr_to_columns, attr_to_blend_rules, schema_ignores  = parse_schema(model.schema)
 
@@ -90,6 +94,12 @@ class ModelBlender:
 
             # make a table builder using the mapping from the schema
             self._table_builder = TableBuilder(attr_to_columns)
+        else:
+            if type(model) != self._model_type:  # noqa: E721
+                raise ValueError(
+                    f"model of type {type(model)} does not match previous type({self._model_type}). "
+                    "ModelBlender only supports blending models of the same model type."
+                )
 
         # convert the model to a flat header
         header = model.to_flat_dict(include_arrays=False)
