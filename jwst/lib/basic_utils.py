@@ -2,7 +2,6 @@
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
-import numpy as np
 
 
 def use_datamodel(input, model_class=None):
@@ -29,6 +28,7 @@ def use_datamodel(input, model_class=None):
         model = model_class(model)
     return model
 
+  
 def copy_datamodel(input, step_parent):
     """Return a copy of the datamodel and set the input to None to recover memory or simply
     return the input if the data is to be modified in-place.
@@ -54,29 +54,6 @@ def copy_datamodel(input, step_parent):
         return model_copy, None
     else:
         return input, None
-
-
-def set_nans_to_donotuse(data, dq):
-    """Set all NaN values in the data that have an even value to
-    DO_NOT_USE.
-
-    Parameters
-    ----------
-    data : numpy array
-        The science data array to find NaN values and
-        check of these have a DQ flag=DO_NOT_USE, or
-        set it if not.
-
-    dq : numpy array
-        The DQ array to be checked.
-
-    Returns
-    -------
-    dq : numpy array
-        The updated DQ array.
-    """
-    dq[np.isnan(data)] |= dqflags.pixel['DO_NOT_USE']
-    return dq
 
 
 class LoggingContext:
