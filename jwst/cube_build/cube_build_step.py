@@ -4,7 +4,6 @@
 import time
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
-
 from . import cube_build
 from . import ifu_cube
 from . import data_types
@@ -237,7 +236,6 @@ class CubeBuildStep (Step):
                 self.output_type = 'channel'
         self.pars_input['output_type'] = self.output_type
         self.log.info(f'Setting output type to: {self.output_type}')
-
 # ________________________________________________________________________________
 # If an offset file is provided do some basic checks on the file and its contents.
 # The offset list contains a matching list to the files in the association
