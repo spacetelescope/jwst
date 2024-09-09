@@ -17,7 +17,7 @@ def parse_schema(schema):
         will combine all 'meta.observation.time' attributes
         using the 'mintime' rule.
 
-    schema_ignores: lsit
+    schema_ignores: list
         list of attributes that will not be blended
     """
     def callback(subschema, path, combiner, ctx, recurse):

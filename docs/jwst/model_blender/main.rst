@@ -5,10 +5,10 @@ Role of Model Blender
 
 Model Blender performs 2 operations:
 
-  - Accumulate, blend and set metadata when combining several models (like
+  - Accumulate, blend and set metadata when combining several models (
     as is done during resampling) using combination rules defined in the datamodel
     schemas.
-  - Record the metadata of input models in a "table" added to the
+  - Record the metadata of input models in a table added to the
     combined model.
 
 One problem with combining data from multiple exposures stems from not being able
@@ -76,7 +76,7 @@ Looking at this sample from the core schema::
             blend_rule: min
 
 Since ``start_time`` uses ``blend_rule: min`` the ``start_time`` for the combined
-model will be the minimum of all input models. If ``blend_rule`` was not defined
+model will be the minimum of all input models. If ``blend_rule`` was not defined, the
 ``start_time`` for the combined model would be the ``start_time`` of the first model.
 
 .. warning::
@@ -97,9 +97,9 @@ Input model metadata Table
 As seen in the above example, ``start_time`` defines ``blend_table: True``.
 This tells model blender to include this attribute in the table added to the
 combined model that lists attributes from input models. If the attribute
-has a ``fits_keyword`` the resulting column will use the keyword for the
+has a ``fits_keyword``, the resulting column will use the keyword for the
 column name (if not defined, the attribute name will be used). So for
-the above example, the resulting table will contain a ``EXPSTART`` column
+the above example, the resulting table will contain an ``EXPSTART`` column
 (and not a ``meta.exposure.start_time`` column) with a row listing
 the ``start_time`` for each input model.
 

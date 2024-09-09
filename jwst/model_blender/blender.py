@@ -45,7 +45,7 @@ class ModelBlender:
             self._blenders = {
                 attr: make_blender(rule)
                 for attr, rule in attr_to_blend_rules.items()
-                # first is implied
+                # 'first' is the default behavior so these rules need not be made explicitly
                 if rule != 'first' and not any((attr.startswith(i) for i in self._blend_ignore_attrs))
             }
 
