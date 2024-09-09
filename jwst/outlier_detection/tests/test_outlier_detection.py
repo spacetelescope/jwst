@@ -288,11 +288,13 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
         i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
         s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
         median_files = glob(os.path.join(dirname, '*median.fits'))
+        blot_files = glob(os.path.join(dirname, '*blot.fits'))
 
         # intermediate files are removed
         assert len(i2d_files) == 0
         assert len(s2d_files) == 0
         assert len(median_files) == 0
+        assert len(blot_files) == 0
 
         # result files are written to the output directory
         if dirname == output_dir:
@@ -320,25 +322,31 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
         i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
         s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
         median_files = glob(os.path.join(dirname, '*median.fits'))
+        blot_files = glob(os.path.join(dirname, '*blot.fits'))
         if dirname == output_dir:
             # result files are written to the output directory
             assert len(result_files) == len(container)
 
-            # s2d and median files are written to the output directory
+            # s2d, median, and blot files are written to the output directory
             assert len(s2d_files) == len(container)
+            assert len(blot_files) == len(container)
             assert len(median_files) == 1
 
             # i2d files not written
             assert len(i2d_files) == 0
 
             # nothing else was written
-            assert len(all_files) == len(s2d_files) + len(median_files) + len(result_files)
+            assert len(all_files) == len(s2d_files) + \
+                                     len(median_files) + \
+                                     len(result_files) + \
+                                     len(blot_files)
         else:
             # nothing should be written to the current directory
             assert len(result_files) == 0
             assert len(s2d_files) == 0
             assert len(median_files) == 0
             assert len(i2d_files) == 0
+            assert len(blot_files) == 0
             assert len(all_files) == 0
 
     miri_rate.close()
