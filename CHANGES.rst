@@ -32,6 +32,8 @@ associations
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
 
+- Update warning message about use of paths in associations. [#8752]
+
 cube_build
 ----------
 
