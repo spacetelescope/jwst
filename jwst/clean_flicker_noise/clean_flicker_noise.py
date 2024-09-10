@@ -713,11 +713,19 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     corrected_image = image.copy()
     array_axis = axis_to_correct - 1
 
-    # If desired, take the median over each channel separately
+    # If desired, take the median over each channel separately.
+
+    # Full frame for the NIR detectors is 2048 x 2048, and there
+    # are 4 channels per detector, divided along the slow axis.
+    # The fit_by_channel option should only be set for full frame
+    # NIR data, but make sure the slow axis has the right size
+    # here anyway.
     if fit_by_channel and image.shape[array_axis] == 2048:
         n_output = 4
         channel_size = 512
     else:
+        # For MIRI data and subarrays, the whole image should
+        # be considered at once, as a single "channel"
         n_output = 1
         channel_size = image.shape[array_axis]
 

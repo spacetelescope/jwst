@@ -104,7 +104,7 @@ scene mask.
 
 Missing Data
 ^^^^^^^^^^^^
-Any pixel in the rate image that has a value of NaN or exactly zero
+Any pixel in the draft rate image that has a value of NaN or exactly zero
 is flagged as False in the mask. This typically includes any reference
 pixels that are present in the exposure.
 
@@ -119,7 +119,7 @@ pixels in the unilluminated areas of the region can still contain anomalous
 signal, due to uncaught cosmic rays, hot pixels, etc.
 
 For both modes, a sigma-clipping routine is employed to find such outliers
-within the input image and set them to False in the mask. All pixels with
+within the draft rate image and set them to False in the mask. All pixels with
 values greater than :math:`median+n\_sigma*sigma` are assumed to contain
 signal and are set to False in the scene mask. In addition, all pixels
 with values less than :math:`median-3.0*sigma` are assumed to be bad pixels,
