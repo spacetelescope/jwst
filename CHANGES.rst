@@ -181,6 +181,8 @@ ramp_fitting
 - Moved the read noise variance recalculation for CHARGELOSS flagging to the C
   implementation, when the algorithm is ``OLS_C``. [#8697, spacetelescope/stcal#278]
 
+- Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765] 
+
 resample
 --------
 
