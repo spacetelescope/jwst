@@ -76,23 +76,19 @@ class JwstStep(Step):
         return asn
 
     def finalize_result(self, result, reference_files_used):
-        crds_context = crds_client.get_context_used('jwst')
-
-        if self.parent is None:
-            log.info(f"Results used CRDS context: {crds_context}")
-            log.info(f"Results used jwst version: {__version__}")
-
         if isinstance(result, JwstDataModel):
             result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
             result.meta.calibration_software_version = __version__
-
 
             if len(reference_files_used) > 0:
                 for ref_name, filename in reference_files_used:
                     if hasattr(result.meta.ref_file, ref_name):
                         getattr(result.meta.ref_file, ref_name).name = filename
                 result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
-                result.meta.ref_file.crds.context_used = crds_context
+                result.meta.ref_file.crds.context_used = crds_client.get_context_used(result.crds_observatory)
+                if self.parent is None:
+                    log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
+
 
     def remove_suffix(self, name):
         return remove_suffix(name)
@@ -102,4 +98,6 @@ class JwstStep(Step):
 # be a subclass of JwstStep so that it will pass checks
 # when constructing a pipeline using JwstStep class methods.
 class JwstPipeline(Pipeline, JwstStep):
-    pass
+    def finalize_result(self, result, reference_files_used):
+        if isinstance(result, JwstDataModel):
+            log.info(f"Results used CRDS context: {crds_client.get_context_used(result.crds_observatory)}")
