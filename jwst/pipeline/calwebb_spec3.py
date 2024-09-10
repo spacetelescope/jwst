@@ -106,6 +106,7 @@ class Spec3Pipeline(Pipeline):
         # being modified. This can affect the filenames of subsequent
         # steps.
         self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
+        self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -235,7 +236,6 @@ class Spec3Pipeline(Pipeline):
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
                 result = self.pixel_replace(result)
-
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:
