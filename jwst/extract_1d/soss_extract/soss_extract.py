@@ -139,11 +139,13 @@ def get_trace_1d(ref_files, order):
     pastasoss_ref = ref_files['pastasoss']
     if hasattr(pastasoss_ref.traces[0], "padding"):
         pad = pastasoss_ref.traces[0].padding
+        if pad > 0:
+            padding = True
+        else:
+            padding = False
     else:
         pad = 0
         padding = False
-    if pad > 0:
-        padding = True
     (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = \
         get_soss_wavemaps(pastasoss_ref, pwcpos=ref_files['pwcpos'], subarray=ref_files['subarray'],
                           padding=padding, padsize=pad, spectraces=True)
