@@ -193,8 +193,6 @@ stpipe
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
 
-- Log jwst version and crds context at the end of step/pipeline runs. [#8760]
-
 tso_photometry
 --------------
 
