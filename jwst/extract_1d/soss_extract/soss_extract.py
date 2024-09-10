@@ -148,15 +148,13 @@ def get_trace_1d(ref_files, order):
         pad = 0
         do_padding = False
 
-    (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = \
+    (_, _), (spectrace_o1, spectrace_o2) = \
         get_soss_wavemaps(pastasoss_ref, pwcpos=ref_files['pwcpos'], subarray=ref_files['subarray'],
                           padding=do_padding, padsize=pad, spectraces=True)
     if order == 1:
-        wavemap = wavemap_o1
         spectrace = spectrace_o1
         xtrace = np.arange(2048)
     elif order == 2:
-        wavemap = wavemap_o2
         spectrace = spectrace_o2
         xtrace = np.arange(1783)
     else:
