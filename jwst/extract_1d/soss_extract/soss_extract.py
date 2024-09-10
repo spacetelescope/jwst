@@ -11,12 +11,11 @@ from ...lib import pipe_utils
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
-from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
 from .atoca import ExtractionEngine, MaskOverlapError
-from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map, mask_bad_dispersion_direction,
+from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
-from .pastasoss import get_soss_wavemaps, get_soss_traces
+from .pastasoss import get_soss_wavemaps
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

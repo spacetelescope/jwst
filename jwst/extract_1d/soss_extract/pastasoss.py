@@ -1,9 +1,7 @@
-from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, Tuple
+from typing import Tuple
 import logging
 import numpy as np
-from pkg_resources import resource_filename
 from scipy.interpolate import interp1d
 from ...datamodels import PastasossModel
 
@@ -251,7 +249,7 @@ def find_spectral_order_index(refmodel: PastasossModel, order: int
         if entry.spectral_order == order:
             return i
 
-    log.warning(f"Order not found in reference file trace list.")
+    log.warning("Order not found in reference file trace list.")
     return -1
 
 
