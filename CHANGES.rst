@@ -94,6 +94,12 @@ emicorr
 - Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
   to compute a correction. [#8675]
 
+extract_1d
+----------
+
+- Updated NIRISS SOSS extraction to utilize ``pastasoss``
+  rotation solution. [#8763]
+
 flat_field
 ----------
 
