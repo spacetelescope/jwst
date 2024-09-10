@@ -6,6 +6,10 @@ from jwst import datamodels as dm
 
 __all__ = ["BadpixSelfcalStep"]
 
+# Define the regions between MRS channels with which to estimate
+# the pedestal dark.  Format is (Y1, Y2, X1, X2)
+PEDESTAL_INDX_MIRIFULONG = (50, 974, 474, 507)
+PEDESTAL_INDX_MIRIFUSHORT = (50, 974, 503, 516)
 
 class BadpixSelfcalStep(Step):
     """
@@ -106,9 +110,13 @@ class BadpixSelfcalStep(Step):
             # If working with MIRI MRS data, subtract any pedestal residual dark
             # using the median of count rates from between the channels
             if (input_sci.meta.instrument.detector.upper() == 'MIRIFUSHORT'):
-                selfcal_3d.append(selfcal_model.data - np.nanmedian(selfcal_model.data[50:1024-50, 503:516]))
+                selfcal_3d.append(selfcal_model.data - np.nanmedian(
+                    selfcal_model.data[PEDESTAL_INDX_MIRIFUSHORT[0]:PEDESTAL_INDX_MIRIFUSHORT[1],
+                    PEDESTAL_INDX_MIRIFUSHORT[2]:PEDESTAL_INDX_MIRIFUSHORT[3]]))
             elif (input_sci.meta.instrument.detector.upper() == 'MIRIFULONG'):
-                selfcal_3d.append(selfcal_model.data - np.nanmedian(selfcal_model.data[50:1024-50, 474:507]))
+                selfcal_3d.append(selfcal_model.data - np.nanmedian(
+                    selfcal_model.data[PEDESTAL_INDX_MIRIFULONG[0]:PEDESTAL_INDX_MIRIFULONG[1],
+                    PEDESTAL_INDX_MIRIFULONG[2]:PEDESTAL_INDX_MIRIFULONG[3]]))
             else:
                 selfcal_3d.append(selfcal_model.data)
 
