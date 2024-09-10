@@ -478,10 +478,9 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
             cleaned_image = clean_full_frame(detector, image, mask)
         else:
             # BOTS and ALLSLITS exposures should be fitting different
-            # ranges of 1/f frequencies.  If the spectral regions are
-            # masked in ALLSLITS mode, we cannot fit the higher
-            # frequencies.
-            if input_model.meta.subarray.name.upper() == "ALLSLITS" and mask_spectral_regions:
+            # ranges of 1/f frequencies.  Be less aggressive with
+            # fitting higher frequencies in ALLSLITS mode.
+            if input_model.meta.subarray.name.upper() == "ALLSLITS":
                 fc = (150, 200, 49943, 49957)
             else:
                 fc = (1061, 1211, 49943, 49957)
