@@ -100,14 +100,12 @@ class Spec3Pipeline(Pipeline):
         self.spectral_leak.save_results = self.save_results
         self.pixel_replace.suffix = 'pixel_replace'
         self.pixel_replace.output_use_model = True
-        self.pixel_replace.save_results = self.save_results
         
         # Overriding the Step.save_model method for the following steps.
         # These steps save intermediate files, resulting in meta.filename
         # being modified. This can affect the filenames of subsequent
         # steps.
         self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
-        self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
