@@ -1,6 +1,7 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
+from functools import wraps
 import logging
 
 from stdatamodels.jwst.datamodels import JwstDataModel
@@ -92,6 +93,13 @@ class JwstStep(Step):
 
     def remove_suffix(self, name):
         return remove_suffix(name)
+
+    @wraps(Step.run)
+    def run(self, *args, **kwargs):
+        result = super().run(*args, **kwargs)
+        if not self.parent:
+            log.info(f"Results used jwst version: {__version__}")
+        return result
 
 
 # JwstPipeline needs to inherit from Pipeline, but also
