@@ -23,7 +23,7 @@ This routine performs the following operations::
   3. For each input file store the  minimum of the pixel neighbor differences
   4. Comparing all the differences from all the input data find the minimum neighbor difference
   5. Normalize minimum difference to local median of difference array
-  6. select outliers by flagging those normailzed minimum values > threshold_percent
+  6. Select outliers by flagging those normalized minimum values > threshold_percent
   7. Updates input ImageModel DQ arrays with mask of detected outliers.
 """
 
@@ -32,6 +32,7 @@ import logging
 import numpy as np
 
 from jwst.datamodels import ModelContainer
+from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe.utilities import record_step_status
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -104,6 +105,7 @@ def detect_outliers(
                       ifu_second_check,
                       make_output_path)
     return input_models
+
 
 def flag_outliers(input_models, idet, uq_det, ndet_files,
                   diffaxis, nx, ny,
@@ -258,6 +260,11 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
             total_bad = num_above + nadditional
             percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
             log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
+
+            # Make sure all error and variance arrays also have matching
+            # NaNs and DQ flags
+            match_nans_and_flags(model)
+
             # update model
             input_models[i] = model
 
@@ -300,4 +307,3 @@ def create_optional_results_model(opt_info):
     opt_model.meta.kernel_ysize = kernsize_y
     opt_model.meta.threshold_percent = threshold_percent
     return opt_model
-
