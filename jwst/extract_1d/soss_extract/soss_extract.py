@@ -40,14 +40,16 @@ def get_ref_file_args(ref_files):
     pastasoss_ref = ref_files['pastasoss']
     if hasattr(pastasoss_ref.traces[0], "padding"):
         pad = pastasoss_ref.traces[0].padding
+        if pad > 0:
+            do_padding = True
+        else:
+            do_padding = False
     else:
         pad = 0
-        padding = False
-    if pad > 0:
-        padding = True
+        do_padding = False
     (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = \
         get_soss_wavemaps(pastasoss_ref, pwcpos=ref_files['pwcpos'], subarray=ref_files['subarray'],
-                          padding=padding, padsize=pad, spectraces=True)
+                          padding=do_padding, padsize=pad, spectraces=True)
 
     # The spectral profiles for order 1 and 2.
     specprofile_ref = ref_files['specprofile']
@@ -140,15 +142,16 @@ def get_trace_1d(ref_files, order):
     if hasattr(pastasoss_ref.traces[0], "padding"):
         pad = pastasoss_ref.traces[0].padding
         if pad > 0:
-            padding = True
+            do_padding = True
         else:
-            padding = False
+            do_padding = False
     else:
         pad = 0
-        padding = False
+        do_padding = False
+
     (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = \
         get_soss_wavemaps(pastasoss_ref, pwcpos=ref_files['pwcpos'], subarray=ref_files['subarray'],
-                          padding=padding, padsize=pad, spectraces=True)
+                          padding=do_padding, padsize=pad, spectraces=True)
     if order == 1:
         wavemap = wavemap_o1
         spectrace = spectrace_o1
