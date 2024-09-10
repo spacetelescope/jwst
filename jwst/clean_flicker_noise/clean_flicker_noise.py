@@ -753,6 +753,71 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     return corrected_image
 
 
+def _check_input(exp_type, subarray, fit_method):
+    """
+    Check for valid input data and options.
+
+    Parameters
+    ----------
+    exp_type : str
+        Exposure type for the input.
+    subarray : str
+        Subarray name for the input.
+    fit_method : str
+        Noise fitting method.
+
+    Returns
+    -------
+    message : str or None
+        The output value is None if the input is valid.  Otherwise, the
+        output is a message describing why the input is not valid.
+    """
+    message = None
+    miri_allowed = ['MIR_IMAGE']
+    if exp_type.startswith('MIR') and exp_type not in miri_allowed:
+        message = f"EXP_TYPE {exp_type} is not supported"
+
+    nsclean_allowed = ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']
+    if fit_method == 'fft':
+        if exp_type not in nsclean_allowed:
+            message = f"Fit method 'fft' cannot be applied to exp_type {exp_type}"
+        elif subarray == 'ALLSLITS':
+            message = f"Fit method 'fft' cannot be applied to subarray {subarray}"
+    return message
+
+
+def _make_intermediate_model(input_model, intermediate_data):
+    """
+    Make a data model to contain intermediate outputs.
+
+    The output model type depends on the shape of the input
+    intermediate data.
+
+    Parameters
+    ----------
+    input_model : ~jwst.datamodel.JwstDataModel`
+        The input data.
+    intermediate_data : array-like
+        The intermediate data to save.
+
+    Returns
+    -------
+    intermediate_model : ~jwst.datamodel.JwstDataModel`
+        A model containing only the intermediate data and top-level
+        metadata matching the input.
+    """
+    if intermediate_data.ndim == 4:
+        intermediate_model = datamodels.RampModel(data=intermediate_data)
+    elif intermediate_data.ndim == 3:
+        intermediate_model = datamodels.CubeModel(data=intermediate_data)
+    else:
+        intermediate_model = datamodels.ImageModel(data=intermediate_data)
+
+    # Copy metadata from input model
+    intermediate_model.update(input_model)
+    return intermediate_model
+
+
 def do_correction(input_model, input_dir=None, fit_method='median',
                   fit_by_channel=False, background_method='median',
                   background_box_size=None, background_from_rate=False,
@@ -853,18 +918,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
 
     # Check for a valid input that we can work on
-    message = None
-    miri_allowed = ['MIR_IMAGE']
-    if exp_type.startswith('MIR') and exp_type not in miri_allowed:
-        message = f"EXP_TYPE {exp_type} is not supported"
-
-    nsclean_allowed = ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']
-    if fit_method == 'fft':
-        if exp_type not in nsclean_allowed:
-            message = f"Fit method 'fft' cannot be applied to exp_type {exp_type}"
-        elif subarray == 'ALLSLITS':
-            message = f"Fit method 'fft' cannot be applied to subarray {subarray}"
-
+    message = _check_input(exp_type, subarray, fit_method)
     if message is not None:
         log.warning(message)
         log.warning("Step will be skipped")
@@ -874,7 +928,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
 
     # Get axis to correct, by instrument
     if exp_type.startswith('MIR'):
-        # MIRI doesn't have f-noise, but it does have a vertical flickering.
+        # MIRI doesn't have 1/f-noise, but it does have a vertical flickering.
         # Set the axis for median correction to the y-axis.
         axis_to_correct = 1
     else:
@@ -934,13 +988,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
 
         # Store the mask image in a model, if requested
         if save_mask:
-            if len(background_mask.shape) == 3:
-                mask_model = datamodels.CubeModel(data=background_mask)
-            else:
-                mask_model = datamodels.ImageModel(data=background_mask)
-
-            # Copy metadata from input
-            mask_model.update(output_model)
+            mask_model = _make_intermediate_model(output_model, background_mask)
         else:
             mask_model = None
 
@@ -1075,6 +1123,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
                     bkg_sub, mask, sigma_lower=n_sigma,
                     sigma_upper=n_sigma, lower_half_only=True)
 
+            # Clean the noise
             if fit_method == 'fft':
                 if bkg_sub.shape == (2048, 2048):
                     # Clean a full-frame image
@@ -1110,7 +1159,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
                     if save_background:
                         background_to_save[i] = background
                 else:
-                    # add the cleaned data diff to the previously cleaned group,
+                    # Add the cleaned data diff to the previously cleaned group,
                     # rather than the noisy input group
                     output_model.data[i, j+1] = output_model.data[i, j] + cleaned_image
                     if save_background:
@@ -1118,30 +1167,15 @@ def do_correction(input_model, input_dir=None, fit_method='median',
 
     # Store the background image in a model, if requested
     if save_background:
-        if background_to_save.ndim == 4:
-            background_model = datamodels.RampModel(data=background_to_save)
-        elif background_to_save.ndim == 3:
-            background_model = datamodels.CubeModel(data=background_to_save)
-        else:
-            background_model = datamodels.ImageModel(data=background_to_save)
-
-        # Copy metadata from input
-        background_model.update(output_model)
+        background_model = _make_intermediate_model(output_model, background_to_save)
     else:
         background_model = None
 
-    # For the noise image, diff the input and output models
+    # Make a fit noise model for diagnostic purposes by
+    # diffing the input and output models
     if save_noise:
         noise_data = output_model.data - input_model.data
-        if input_model.data.ndim == 4:
-            noise_model = datamodels.RampModel(data=noise_data)
-        elif input_model.data.ndim == 3:
-            noise_model = datamodels.CubeModel(data=noise_data)
-        else:
-            noise_model = datamodels.ImageModel(data=noise_data)
-
-        # Copy metadata from input
-        noise_model.update(output_model)
+        noise_model = _make_intermediate_model(output_model, noise_data)
     else:
         noise_model = None
 
