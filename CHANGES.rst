@@ -182,7 +182,7 @@ scripts
 set_telescope_pointing
 ----------------------
 
-- replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
+- Replace usage of ``copy_arrays=True`` with ``memmap=False`` [#8660]
 
 skymatch
 --------
