@@ -53,6 +53,8 @@ class TableBuilder:
     >>> tb = TableBuilder({"meta.filename": "FN"})
     >>> tb.header_to_row({"meta.filename": "foo.fits"})
     >>> tb.build_table()
+    rec.array([('foo.fits',)],
+         dtype=[('FN', '<U8')])
     """
     def __init__(self, attr_to_column):
         """
