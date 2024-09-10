@@ -3,7 +3,7 @@ import numpy as np
 from scipy import optimize
 from scipy.ndimage import fourier_shift
 
-from stdatamodels.jwst.datamodels import QuadModel
+from stdatamodels.jwst.datamodels import CubeModel
 
 import logging
 log = logging.getLogger(__name__)
@@ -212,13 +212,10 @@ def align_models(reference, target, mask):
 
     """
 
-    # Get the number of integrations in the science exposure
-    nrefslices = reference.data.shape[0]
-
-    # Create output QuadModel of required dimensions
-    quad_shape = (nrefslices,
-                  target.shape[0], target.shape[1], target.shape[2])
-    output_model = QuadModel(quad_shape)
+    # Create output CubeModel of required dimensions. Since all science integrations
+    # are assumed to have the same shift, the output is just a shifted copy of the
+    # 3-D PSF cube
+    output_model = CubeModel(target.shape)
     output_model.update(target)
 
     # Compute the shifts of the PSF ("target") images relative to
@@ -228,21 +225,18 @@ def align_models(reference, target, mask):
         target.data.astype(np.float64),
         mask=mask.data, return_aligned=False)
 
-    # Loop over all integrations of the science exposure
-    for k in range(nrefslices):
+    # Apply the shifts to the PSF images
+    output_model.data = fourier_imshift(
+        target.data.astype(np.float64),
+        -shifts)
 
-        # Apply the shifts to the PSF images
-        output_model.data[k] = fourier_imshift(
-            target.data.astype(np.float64),
+    # Apply the same shifts to the PSF error arrays, if they exist
+    if target.err is not None:
+        output_model.err = fourier_imshift(
+            target.err.astype(np.float64),
             -shifts)
 
-        # Apply the same shifts to the PSF error arrays, if they exist
-        if target.err is not None:
-            output_model.err[k] = fourier_imshift(
-                target.err.astype(np.float64),
-                -shifts)
-
-        # TODO: in the future we need to add shifts and other info (such as
-        # slice ID from the reference image to which target was aligned)
-        # to output cube metadata (or property).
+    # TODO: in the future we need to add shifts and other info (such as
+    # slice ID from the reference image to which target was aligned)
+    # to output cube metadata (or property).
     return output_model

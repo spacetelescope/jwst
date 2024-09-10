@@ -15,11 +15,11 @@ Specifically, this routine performs the following operations:
 
 #. Convert input data, as needed, to make sure it is in a format that can be processed.
 
-   * A :py:class:`~jwst.datamodels.ModelContainer` serves as the basic format for
+   * A :py:class:`~jwst.datamodels.ModelLibrary` serves as the basic format for
      all processing performed by
      this step, as each entry will be treated as an element of a stack of images
      to be processed to identify bad-pixels/cosmic-rays and other artifacts.
-   * If the input data is a :py:class:`~jwst.datamodels.CubeModel`, convert it into a ModelContainer.
+   * If the input data is a :py:class:`~jwst.datamodels.CubeModel`, convert it into a ModelLibrary.
      This allows each plane of the cube to be treated as a separate 2D image
      for resampling (if done) and for combining into a median image.
 
@@ -62,20 +62,21 @@ Specifically, this routine performs the following operations:
      if the input model container has an <asn_id>, otherwise the suffix will be ``_outlier_i2d.fits``
      by default.
    * **If resampling is turned off** through the use of the ``resample_data`` parameter,
-     a copy of the unrectified input images (as a ModelContainer)
+     a copy of the unrectified input images (as a ModelLibrary)
      will be used for subsequent processing.
 
 #. Create a median image from all grouped observation mosaics.
 
    * The median image is created by combining all grouped mosaic images or
-     non-resampled input data (as planes in a ModelContainer) pixel-by-pixel.
+     non-resampled input data (as planes in a ModelLibrary) pixel-by-pixel.
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and
      ignored when resampled.
    * The median image is written out to disk as `_<asn_id>_median.fits` by default.
 
 #. By default, the median image is blotted back (inverse of resampling) to
-   match each original input image.
+   match each original input image.  Resampled/blotted images are written out to disk if 
+   the ``save_intermediate_results`` parameter is set to `True`.
 
    * **If resampling is turned off**, the median image is compared directly to
      each input image.
@@ -129,7 +130,7 @@ The outlier detection algorithm can end up using massive amounts of memory
 depending on the number of inputs, the size of each input, and the size of the
 final output product.  Specifically,
 
-#. The input :py:class:`~jwst.datamodels.ModelContainer` or
+#. The input :py:class:`~jwst.datamodels.ModelLibrary` or
    :py:class:`~jwst.datamodels.CubeModel`
    for IFU data, by default, all input exposures would have been kept open in memory to make
    processing more efficient.
@@ -152,56 +153,20 @@ memory usage at the expense of file I/O.  The control over this memory model hap
 with the use of the ``in_memory`` parameter.  The full impact of this parameter
 during processing includes:
 
-#. The ``save_open`` parameter gets set to `False`
-   when opening the input :py:class:`~jwst.datamodels.ModelContainer` object.
-   This forces all input models in the input :py:class:`~jwst.datamodels.ModelContainer` or
-   :py:class:`~jwst.datamodels.CubeModel` to get written out to disk.  The ModelContainer
-   then uses the filename of the input model during subsequent processing.
+#. The input :py:class:`~jwst.datamodels.ModelLibrary` object is loaded with `on_disk=True`.
+   This ensures that input models are loaded into memory one at at time,
+   and saved to a temporary file when not in use; these read-write operations are handled by
+   the :py:class:`~jwst.datamodels.ModelLibrary` object.
 
-#. The ``in_memory`` parameter gets passed to the :py:class:`~jwst.resample.ResampleStep`
-   to set whether or not to keep the resampled images in memory or not.  By default,
-   the outlier detection processing sets this parameter to `False` so that each resampled
-   image gets written out to disk.
+#. The ``on_disk`` status of the :py:class:`~jwst.datamodels.ModelLibrary` gets passed to the
+   :py:class:`~jwst.resample.ResampleStep` as well, to set whether or not to keep the 
+   resampled images in memory or not.
 
 #. Computing the median image works section-by-section by only keeping 1Mb of each input
    in memory at a time.  As a result, only the final output product array for the final
    median image along with a stack of 1Mb image sections are kept in memory.
 
-#. The final resampling step also avoids keeping all inputs in memory by only reading
-   each input into memory 1 at a time as it gets resampled onto the final output product.
-
 These changes result in a minimum amount of memory usage during processing at the obvious
 expense of reading and writing the products from disk.
-
-
-Outlier Detection for Coronagraphic Data
-----------------------------------------
-Coronagraphic data is processed in a near-identical manner to direct imaging data, but
-no resampling occurs.
-
-
-Outlier Detection for TSO data
--------------------------------
-Normal imaging data benefit from combining all integrations into a
-single image. TSO data's value, however, comes from looking for variations from one
-integration to the next.  The outlier detection algorithm, therefore, gets run with 
-a few variations to accomodate the nature of these 3D data. See the 
-:ref:`TSO outlier detection <outlier-detection-tso>` documentation for details.
-
-
-Outlier Detection for IFU data
-------------------------------
-Integral Field Unit (IFU) data is handled as 2D images, similar to direct
-imaging modes. The nature of the detection algorithm, however, is quite
-different and involves measuring the differences between neighboring pixels
-in the spatial (cross-dispersion) direction within the IFU slice images.
-See the :ref:`IFU outlier detection <outlier-detection-ifu>` documentation for
-all the details.
-
-
-Outlier Detection for Slit data
--------------------------------
-See the :ref:`IFU outlier detection <outlier-detection-spec>` documentation for
-details.
 
 .. automodapi:: jwst.outlier_detection.imaging
