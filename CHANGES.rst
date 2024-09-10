@@ -32,6 +32,8 @@ associations
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
 
+- Update warning message about use of paths in associations. [#8752]
+
 calwebb_detector1
 -----------------
 
@@ -209,8 +211,6 @@ stpipe
 - Removed setting of the `self.skip` attribute in the `record_step_status()` function;
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
-
-- Log jwst version and crds context at the end of step/pipeline runs. [#8760]
 
 tso_photometry
 --------------
