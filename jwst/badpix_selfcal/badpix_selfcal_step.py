@@ -103,7 +103,15 @@ class BadpixSelfcalStep(Step):
         selfcal_list = [input_sci] + selfcal_list
         selfcal_3d = []
         for i, selfcal_model in enumerate(selfcal_list):
-            selfcal_3d.append(selfcal_model.data)
+            # If working with MIRI MRS data, subtract any pedestal residual dark
+            # using the median of count rates from between the channels
+            if (input_sci.meta.instrument.detector.upper() == 'MIRIFUSHORT'):
+                selfcal_3d.append(selfcal_model.data - np.nanmedian(selfcal_model.data[50:1024-50, 503:516]))
+            elif (input_sci.meta.instrument.detector.upper() == 'MIRIFULONG'):
+                selfcal_3d.append(selfcal_model.data - np.nanmedian(selfcal_model.data[50:1024-50, 474:507]))
+            else:
+                selfcal_3d.append(selfcal_model.data)
+
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
             minimg = np.nanmin(np.asarray(selfcal_3d), axis=0)
