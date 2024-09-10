@@ -226,6 +226,7 @@ def clean_full_frame(detector, image, mask):
 
 
 def clean_subarray(detector, image, mask, npix_iter=512,
+                   fc=(1061, 1211, 49943, 49957),
                    exclude_outliers=True, sigrej=4, minfrac=0.05):
     """Clean a subarray image.
 
@@ -246,6 +247,15 @@ def clean_subarray(detector, image, mask, npix_iter=512,
         where most pixels are available for fitting.  Previous default
         behavior corresponds to npix_iter of infinity.
 
+    fc : tuple
+        Apodizing filter definition. These parameters are tunable. The
+        defaults happen to work well for NIRSpec BOTS exposures.
+          1) Unity gain for f < fc[0]
+          2) Cosine roll-off from fc[0] to fc[1]
+          3) Zero gain from fc[1] to fc[2]
+          4) Cosine roll-on from fc[2] to fc[3]
+        Default (1061, 1211, 49943, 49957)
+    
     exclude_outliers : bool
         Find and mask outliers in the fit?  Default True
 
@@ -330,7 +340,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
         
         if np.mean(mask[i1:i1 + di]) > minfrac:
             cleaner = NSCleanSubarray(image[i1:i1 + di], mask[i1:i1 + di],
-                                      exclude_outliers=False)
+                                      fc=fc, exclude_outliers=False)
             models += [cleaner.clean(return_model=True)]
         else:
             log.warning("Insufficient reference pixels for NSClean around "
@@ -467,8 +477,17 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
             # Clean a full-frame image
             cleaned_image = clean_full_frame(detector, image, mask)
         else:
+            # BOTS and ALLSLITS exposures should be fitting different
+            # ranges of 1/f frequencies.  If the spectral regions are
+            # masked in ALLSLITS mode, we cannot fit the higher
+            # frequencies.
+            if input_model.meta.subarray.name.upper() == "ALLSLITS" and mask_spectral_regions:
+                fc = (150, 200, 49943, 49957)
+            else:
+                fc = (1061, 1211, 49943, 49957)
+            
             # Clean a subarray image
-            cleaned_image = clean_subarray(detector, image, mask)
+            cleaned_image = clean_subarray(detector, image, mask, fc=fc)
 
         # Check for failure
         if cleaned_image is None:
