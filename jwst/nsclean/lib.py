@@ -518,7 +518,7 @@ class NSCleanSubarray:
             return(rfft)
 
 
-    def clean(self, weight_fit=True):
+    def clean(self, weight_fit=True, return_model=False):
         """
         Clean the data
 
@@ -527,6 +527,9 @@ class NSCleanSubarray:
         weight_fit : bool
             Use weighted least squares as described in the NSClean paper.
             Otherwise, it is a simple unweighted fit.
+        return_model : bool
+            Return the fitted model rather than the corrected data?
+            Default False (return the corrected data, not the model).
 
         Returns
         -------
@@ -534,5 +537,8 @@ class NSCleanSubarray:
             The cleaned data array.
         """ 
         self.fit(weight_fit=weight_fit)  # Fit the background model
-        self.data -= self.model  # Overwrite data with cleaned data
-        return(self.data)
+        if return_model:
+            return self.model
+        else:
+            self.data -= self.model  # Overwrite data with cleaned data
+            return self.data
