@@ -75,7 +75,8 @@ Specifically, this routine performs the following operations:
    * The median image is written out to disk as `_<asn_id>_median.fits` by default.
 
 #. By default, the median image is blotted back (inverse of resampling) to
-   match each original input image.
+   match each original input image.  Resampled/blotted images are written out to disk if 
+   the ``save_intermediate_results`` parameter is set to `True`.
 
    * **If resampling is turned off**, the median image is compared directly to
      each input image.
