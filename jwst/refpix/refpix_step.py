@@ -28,7 +28,7 @@ class RefPixStep(Step):
         use_conv_kernel = boolean(default=True) # For NIR full-frame data, use convolution kernel instead of running median
         sigreject = float(default=4.0) # Number of sigmas to reject as outliers
         gaussmooth = float(default=1.0) # Width of Gaussian smoothing kernel to use as a low-pass filter
-        halfwidth = float(default=30.0) # Half-width of convolution kernel to build
+        halfwidth = integer(default=30) # Half-width of convolution kernel to build
         user_supplied_reffile = string(default=None)  # ASDF user-supplied reference file for convolution kernel
     """
 

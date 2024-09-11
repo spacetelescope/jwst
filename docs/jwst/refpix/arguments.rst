@@ -73,7 +73,7 @@ a low-pass filter. The numerical value is expected to be a float.
 *  ``--halfwidth``
 
 The ``halfwidth`` argument is the half-width of convolution kernel to build. The
-numerical value is expected to be a float.
+numerical value is expected to be an integer.
 
 *  ``--user_supplied_reffile``
 

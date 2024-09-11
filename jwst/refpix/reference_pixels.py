@@ -1170,10 +1170,29 @@ class NIRDataset(Dataset):
 
         """
 
-        left = self.calculate_side_ref_signal(group, 0, 3)
-        right = self.calculate_side_ref_signal(group, 2044, 2047)
-        sidegroup = self.combine_ref_signals(left, right)
-        corrected_group = self.apply_side_correction(group, sidegroup)
+        continue_apply_conv_kernel = False
+        # Check if convolution kernels for this detector are in the reference file
+        # and if not, proceed with side-pixel correction as usual
+        if self.use_conv_kernel and self.conv_kernel_model is not None:
+            kernels = make_kernels(self.conv_kernel_model,
+                                   self.input_model.meta.instrument.detector,
+                                   self.gaussmooth,
+                                   self.halfwidth)
+            if kernels is None:
+                log.info('The REFPIX step will use the running median')
+            else:
+                continue_apply_conv_kernel = True
+        #
+        # Apply optimized convolution kernel
+        if continue_apply_conv_kernel:
+            corrected_group = apply_conv_kernel(group, kernels, self.input_model.data[0, 0, ...],
+                                                sigreject=self.sigreject)
+        else:
+            # use running median
+            left = self.calculate_side_ref_signal(group, 0, 3)
+            right = self.calculate_side_ref_signal(group, 2044, 2047)
+            sidegroup = self.combine_ref_signals(left, right)
+            corrected_group = self.apply_side_correction(group, sidegroup)
         return corrected_group
 
     def do_corrections(self):
@@ -1190,20 +1209,6 @@ class NIRDataset(Dataset):
         First read of each integration is NOT subtracted, as the signal is removed
         in the superbias subtraction step"""
 
-        continue_apply_conv_kernel = False
-        # Check if convolution kernels for this detector are in the reference file
-        # and if not, proceed with side-pixel correction as usual
-        if self.use_conv_kernel and self.conv_kernel_model is not None:
-            kernels = make_kernels(self.conv_kernel_model,
-                                   self.input_model.meta.instrument.detector,
-                                   self.gaussmooth,
-                                   self.halfwidth)
-            if kernels is None:
-                log.info('The REFPIX step will use the running median')
-            else:
-                continue_apply_conv_kernel = True
-                # Make sure the side pixel correction is off before applying convolution
-                self.use_side_ref_pixels = False
         #
         #  First transform pixeldq array to detector coordinates
         self.DMS_to_detector_dq()
@@ -1226,12 +1231,6 @@ class NIRDataset(Dataset):
                 #
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_DMS(integration, group)
-        #
-        # Apply optimized convolution kernel
-        if continue_apply_conv_kernel:
-            self.input_model = apply_conv_kernel(self.input_model,
-                                                 kernels,
-                                                 sigreject=self.sigreject)
         log.setLevel(logging.INFO)
         return
 

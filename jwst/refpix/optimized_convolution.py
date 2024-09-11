@@ -26,7 +26,7 @@ def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
     gaussmooth : float
         Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
 
-    halfwidth : float
+    halfwidth : int
         Half-width of convolution kernel to build from reference file's coefficients
 
     Returns:
@@ -99,30 +99,31 @@ def get_conv_kernel_coeffs(conv_kernel_model, detector):
     return gamma, zeta
 
 
-def apply_conv_kernel(datamodel, kernels, sigreject=4.0):
+def apply_conv_kernel(data, kernels, zeroim, sigreject=4.0):
     """
     Apply the convolution kernel.
 
     Parameters:
     -----------
 
-    datamodel : `~jwst.datamodel`
-        Data model containing the data to be corrected
+    data : 2-D numpy array
+        Data to be corrected
 
     kernels : list
         List containing the left and right kernels
 
+    zeroim : 2-D numpy array
+        First group of first integration, to find outliers
+
     sigreject: float
         Number of sigmas to reject as outliers
-
 
     Returns:
     --------
 
-    datamodel : `~jwst.datamodel`
+    data : 2-D numpy array
         Data model with convolution
     """
-    data = datamodel.data.copy()[0, :, :, :]
     data = data.astype(float)
     npix = data.shape[-1]
 
@@ -130,61 +131,57 @@ def apply_conv_kernel(datamodel, kernels, sigreject=4.0):
     nchan = len(kernels_l)
 
     # The subtraction below is needed to flag outliers in the reference pixels.
-    zeroim = data[0].astype(float)
-    data -= zeroim[np.newaxis, :, :]
+    zeroim = zeroim.astype(float)
+    data -= zeroim
 
-    for i in range(data.shape[0]):
-        L = data[i, :, :4]
-        R = data[i, :, -4:]
+    L = data[:, :4]
+    R = data[:, -4:]
 
-        # Find the approximate standard deviations of the reference pixels
-        # using an outlier-robust median approach. Mask pixels that differ
-        # by more than sigreject sigma from this level.
-        # NOTE: The Median Absolute Deviation (MAD) is calculated as the
-        #   median of the absolute differences between data values and their
-        #   median. For normal distribution MAD is equal to 1.48 times the
-        #   standard deviation but is a more robust estimate of the dispersion
-        #   of data values.The calculation of MAD is straightforward but
-        #   time-consuming, especially if MAD estimates are needed for the
-        #   local environment around every pixel of a large image. The
-        #   calculation is MAD = np.median(np.abs(x-np.median(x))).
-        #   Reference: https://www.interstellarmedium.org/numerical_tools/mad/
-        MAD = 1.48
-        medL = np.median(L)
-        sigL = MAD * np.median(np.abs(L - medL))
-        medR = np.median(R)
-        sigR = MAD * np.median(np.abs(R - medR))
+    # Find the approximate standard deviations of the reference pixels
+    # using an outlier-robust median approach. Mask pixels that differ
+    # by more than sigreject sigma from this level.
+    # NOTE: The Median Absolute Deviation (MAD) is calculated as the
+    #   median of the absolute differences between data values and their
+    #   median. For normal distribution MAD is equal to 1.48 times the
+    #   standard deviation but is a more robust estimate of the dispersion
+    #   of data values.The calculation of MAD is straightforward but
+    #   time-consuming, especially if MAD estimates are needed for the
+    #   local environment around every pixel of a large image. The
+    #   calculation is MAD = np.median(np.abs(x-np.median(x))).
+    #   Reference: https://www.interstellarmedium.org/numerical_tools/mad/
+    MAD = 1.48
+    medL = np.median(L)
+    sigL = MAD * np.median(np.abs(L - medL))
+    medR = np.median(R)
+    sigR = MAD * np.median(np.abs(R - medR))
 
-        # nL and nR are the number of good reference pixels in the left and right
-        # channel in each row. These will be used in lieu of replacing the values
-        # of those pixels directly.
-        goodL = 1 * (np.abs(L - medL) <= sigreject * sigL)
-        nL = np.sum(goodL, axis=1)
-        goodR = 1 * (np.abs(R - medR) <= sigreject * sigR)
-        nR = np.sum(goodR, axis=1)
+    # nL and nR are the number of good reference pixels in the left and right
+    # channel in each row. These will be used in lieu of replacing the values
+    # of those pixels directly.
+    goodL = 1 * (np.abs(L - medL) <= sigreject * sigL)
+    nL = np.sum(goodL, axis=1)
+    goodR = 1 * (np.abs(R - medR) <= sigreject * sigR)
+    nR = np.sum(goodR, axis=1)
 
-        # Average of the left and right channels, replacing masked pixels with zeros.
-        # Appropriate normalization factors will be computed later.
-        L = np.sum(L * goodL, axis=1) / 4
-        R = np.sum(R * goodR, axis=1) / 4
-        for chan in range(nchan):
-            kernel_l = kernels_l[chan]
-            kernel_r = kernels_r[chan]
+    # Average of the left and right channels, replacing masked pixels with zeros.
+    # Appropriate normalization factors will be computed later.
+    L = np.sum(L * goodL, axis=1) / 4
+    R = np.sum(R * goodR, axis=1) / 4
+    for chan in range(nchan):
+        kernel_l = kernels_l[chan]
+        kernel_r = kernels_r[chan]
 
-            # Compute normalizations so that we don't have to directly
-            # replace the values of flagged/masked reference pixels.
-            normL = np.convolve(np.ones(nL.shape), kernel_l, mode='same')
-            normL /= np.convolve(nL / 4, kernel_l, mode='same')
-            normR = np.convolve(np.ones(nR.shape), kernel_r, mode='same')
-            normR /= np.convolve(nR / 4, kernel_r, mode='same')
-            template = np.convolve(L, kernel_l, mode='same') * normL
-            template += np.convolve(R, kernel_r, mode='same') * normR
-            data[i, :, chan * npix * 3 // 4:(chan + 1) * npix * 3 // 4] -= template[:, np.newaxis]
+        # Compute normalizations so that we don't have to directly
+        # replace the values of flagged/masked reference pixels.
+        normL = np.convolve(np.ones(nL.shape), kernel_l, mode='same')
+        normL /= np.convolve(nL / 4, kernel_l, mode='same')
+        normR = np.convolve(np.ones(nR.shape), kernel_r, mode='same')
+        normR /= np.convolve(nR / 4, kernel_r, mode='same')
+        template = np.convolve(L, kernel_l, mode='same') * normL
+        template += np.convolve(R, kernel_r, mode='same') * normR
+        data[:, chan * npix * 3 // 4:(chan + 1) * npix * 3 // 4] -= template[:, np.newaxis]
 
-    # Add the first read back in.
-    data += zeroim[np.newaxis, :, :]
-    datamodel.data[0, :, :, :] = data
-
-    log.info('Optimized convolution kernel applied')
-    return datamodel
+    data += zeroim
+    log.debug('Optimized convolution kernel applied')
+    return data
 
