@@ -31,8 +31,14 @@ associations
 
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
-
+  
 - Update warning message about use of paths in associations. [#8752]
+
+badpix_selfcal
+--------------
+
+- Subtract pedestal dark when constructing min array across selfcal exposures
+  for MIRI MRS data. [#8771]
 
 calwebb_detector1
 -----------------
