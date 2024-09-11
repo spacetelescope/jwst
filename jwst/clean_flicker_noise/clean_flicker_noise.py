@@ -1116,7 +1116,6 @@ def do_correction(input_model, input_dir=None, fit_method='median',
     # Setup for handling 2D, 3D, or 4D inputs
     image_shape = input_model.data.shape[-2:]
     ndim = input_model.data.ndim
-    group_time = 1.0
     if ndim == 2:
         nints = 1
         ngroups = 1
@@ -1126,7 +1125,6 @@ def do_correction(input_model, input_dir=None, fit_method='median',
             ngroups = 1
         else:
             ngroups = input_model.data.shape[1] - 1
-            group_time = input_model.meta.exposure.group_time
 
         # Check for 3D mask
         if background_mask.ndim == 2:
