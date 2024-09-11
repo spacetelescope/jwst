@@ -1,6 +1,5 @@
 import logging
 import numpy as np
-
 import gwcs
 from astropy.stats import sigma_clipped_stats
 
@@ -136,6 +135,10 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     # Note: mask will be 3D for BOTS mode data
     mask = np.full(np.shape(input_model.dq), True)
 
+    # Mask any reference pixels
+    ref_pix = input_model.dq & dqflags.pixel['REFERENCE_PIXEL']
+    mask[ref_pix > 0] = False
+    
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
         mask = mask_ifu_slices(input_model, mask)
@@ -170,12 +173,6 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
         else:
             log.info("Fixed slits found in MSA definition; "
                      "not masking the fixed slit region for MOS data.")
-
-    # Use left/right reference pixel columns (first and last 4). Can only be
-    # applied to data that uses all 2048 columns of the detector.
-    if mask.shape[-1] == 2048:
-        mask[..., :, :5] = True
-        mask[..., :, -4:] = True
 
     # Mask outliers using sigma clipping stats.
     # For BOTS mode, which uses 3D data, loop over each integration separately.
@@ -228,7 +225,9 @@ def clean_full_frame(detector, image, mask):
     return cleaned_image
 
 
-def clean_subarray(detector, image, mask):
+def clean_subarray(detector, image, mask, npix_iter=512,
+                   fc=(1061, 1211, 49943, 49957),
+                   exclude_outliers=True, sigrej=4, minfrac=0.05):
     """Clean a subarray image.
 
     Parameters
@@ -242,6 +241,31 @@ def clean_subarray(detector, image, mask):
     mask : 2D bool array
         The mask that indicates which pixels are to be used in fitting.
 
+    npix_iter : int
+        Number of pixels to process simultaneously.  Default 512.  Should
+        be at least a few hundred to access sub-kHz frequencies in areas
+        where most pixels are available for fitting.  Previous default
+        behavior corresponds to npix_iter of infinity.
+
+    fc : tuple
+        Apodizing filter definition. These parameters are tunable. The
+        defaults happen to work well for NIRSpec BOTS exposures.
+          1) Unity gain for f < fc[0]
+          2) Cosine roll-off from fc[0] to fc[1]
+          3) Zero gain from fc[1] to fc[2]
+          4) Cosine roll-on from fc[2] to fc[3]
+        Default (1061, 1211, 49943, 49957)
+    
+    exclude_outliers : bool
+        Find and mask outliers in the fit?  Default True
+
+    sigrej : float
+        Number of sigma to clip when identifying outliers.  Default 4.
+
+    minfrac : float
+        Minimum fraction of pixels locally available in the mask in
+        order to attempt a correction.  Default 0.05 (i.e., 5%).
+        
     Returns
     -------
     cleaned_image : 2D float array
@@ -257,15 +281,100 @@ def clean_subarray(detector, image, mask):
         image = image.transpose()[::-1]
         mask = mask.transpose()[::-1]
 
-    # Instantiate the cleaner
-    cleaner = NSCleanSubarray(image, mask)
+    # We must do the masking of discrepant pixels here: it just
+    # doesn't work if we wait and do it in the cleaner.  This is
+    # basically copied from lib.py.  Use a robust estimator for
+    # standard deviation, then exclude discrepant pixels and their
+    # four nearest neighbors from the fit.
+    
+    if exclude_outliers:
+        med = np.median(image[mask])
+        std = 1.4825 * np.median(np.abs((image - med)[mask]))
+        outlier = mask & (np.abs(image - med) > sigrej * std)
+        
+        mask = mask&(~outlier)
+        
+        # also get four nearest neighbors of flagged pixels
+        mask[1:] = mask[1:] & (~outlier[:-1])
+        mask[:-1] = mask[:-1] & (~outlier[1:])
+        mask[:, 1:] = mask[:, 1:] & (~outlier[:, :-1])
+        mask[:, :-1] = mask[:, :-1] & (~outlier[:, 1:])
 
-    # Clean the image
-    try:
-        cleaned_image = cleaner.clean()
-    except np.linalg.LinAlgError:
-        log.warning("Error cleaning image; step will be skipped")
-        return None
+    # Used to determine the fitting intervals along the slow scan
+    # direction.  Pre-pend a zero so that sum_mask[i] is equal
+    # to np.sum(mask[:i], axis=1).
+
+    sum_mask = np.array([0] + list(np.cumsum(np.sum(mask, axis=1))))
+
+    # i1 will be the first row with a nonzero element in the mask
+    # imax will be the last row with a nonzero element in the mask
+    
+    nonzero_mask_element = np.sum(mask, axis=1) > 0
+    i1 = np.amin(np.arange(mask.shape[0])[nonzero_mask_element])
+    imax = np.amax(np.arange(mask.shape[0])[nonzero_mask_element])
+        
+    i1_vals = []
+    di_list = []
+    models = []
+    while i1 <= imax:
+
+        # Want npix_iter available pixels in this section.  If
+        # there are fewer than 1.5*npix_iter available pixels in
+        # the rest of the image, just go to the end.
+        
+        for k in range(i1 + 1, imax + 2):
+            if (sum_mask[k] - sum_mask[i1] > npix_iter
+                    and sum_mask[-1] - sum_mask[i1] > 1.5 * npix_iter):
+                break
+            
+        di = k - i1
+
+        i1_vals += [i1]
+        di_list += [di]
+
+        # Fit this section only if at least minpct% of the pixels
+        # are available for finding the background.  Don't flag
+        # outliers section-by-section; we have to do that earlier
+        # over the full array to get reliable values for the mean
+        # and standard deviation.
+        
+        if np.mean(mask[i1:i1 + di]) > minfrac:
+            cleaner = NSCleanSubarray(image[i1:i1 + di], mask[i1:i1 + di],
+                                      fc=fc, exclude_outliers=False)
+            models += [cleaner.clean(return_model=True)]
+        else:
+            log.warning("Insufficient reference pixels for NSClean around "
+                        "row %d; no correction will be made here." % i1)
+            models += [np.zeros(image[i1:i1 + di].shape)]
+
+        # If we have reached the end of the array, we are finished.
+        if k == imax + 1:
+            break
+
+        # Step forward by half an interval so that we have
+        # overlapping fitting regions.
+        
+        i1 += max(int(np.round(di/2)), 1)
+            
+    model = np.zeros(image.shape)
+    tot_wgt = np.zeros(image.shape)
+
+    # When we combine different corrections computed over
+    # different intervals, each one the highest weight towards the
+    # center of its interval and less weight towards the edge.
+    # Use nonzero weights everywhere so that if only one
+    # correction is available it gets unit weight when we
+    # normalize.
+    
+    for i in range(len(models)):
+        wgt = 1.001 - np.abs(np.linspace(-1, 1, di_list[i]))[:, np.newaxis]
+        model[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt*models[i]
+        tot_wgt[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt
+
+    # don't divide by zero
+    tot_wgt[model == 0] = 1
+    model /= tot_wgt
+    cleaned_image = image - model
 
     # Restore the cleaned image to the science frame
     if detector == "NRS1":
@@ -309,13 +418,6 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
     detector = input_model.meta.instrument.detector.upper()
     exp_type = input_model.meta.exposure.type
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
-
-    # Check for a valid input that we can work on
-    if input_model.meta.subarray.name.upper() == "ALLSLITS":
-        log.warning("Step cannot be applied to ALLSLITS subarray images")
-        log.warning("Step will be skipped")
-        input_model.meta.cal_step.nsclean = 'SKIPPED'
-        return input_model, None
 
     output_model = input_model.copy()
 
@@ -375,8 +477,16 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
             # Clean a full-frame image
             cleaned_image = clean_full_frame(detector, image, mask)
         else:
+            # BOTS and ALLSLITS exposures should be fitting different
+            # ranges of 1/f frequencies.  Be less aggressive with
+            # fitting higher frequencies in ALLSLITS mode.
+            if input_model.meta.subarray.name.upper() == "ALLSLITS":
+                fc = (150, 200, 49943, 49957)
+            else:
+                fc = (1061, 1211, 49943, 49957)
+            
             # Clean a subarray image
-            cleaned_image = clean_subarray(detector, image, mask)
+            cleaned_image = clean_subarray(detector, image, mask, fc=fc)
 
         # Check for failure
         if cleaned_image is None:
