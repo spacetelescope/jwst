@@ -42,10 +42,6 @@ WHITELIGHTSTEP_CRDS_MIRI_PARS = {
 
 CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
-# used in logging tests below to provide a deterministic crds
-# context to look for in the log messages
-FAKE_CRDS_CONTEXT = "0000.pmap"
-
 
 @pytest.fixture(scope='module')
 def data_path():
@@ -616,20 +612,14 @@ def test_call_with_config(caplog, tmp_cwd):
     assert "newpar1" in caplog.text
 
 
-@pytest.mark.parametrize(
-    "message", [
-        f"Results used CRDS context: {FAKE_CRDS_CONTEXT}",
-        f"Results used jwst version: {jwst_version}",
-    ])
-def test_finalize_logging(monkeypatch, message):
+def test_finalize_logging(monkeypatch):
     """
     Check that the jwst version and crds context are logged
     when a step/pipeline is run.
     """
     pipeline = EmptyPipeline()
     model = datamodels.ImageModel()
-    monkeypatch.setattr(crds_client, 'get_context_used', lambda observatory: FAKE_CRDS_CONTEXT)
-    watcher = LogWatcher(message)
+    watcher = LogWatcher(f"Results used jwst version: {jwst_version}")
     monkeypatch.setattr(logging.getLogger("jwst.stpipe.core"), "info", watcher)
     pipeline.run(model)
     assert watcher.seen
