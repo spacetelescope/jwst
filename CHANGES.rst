@@ -32,6 +32,8 @@ associations
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
 
+- Update warning message about use of paths in associations. [#8752]
+
 cube_build
 ----------
 
@@ -191,7 +193,7 @@ stpipe
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
 
-- Log jwst version and crds context at the end of step/pipeline runs. [#8760]
+- Log jwst version at end of `Step.run`. [#8769]
 
 tso_photometry
 --------------
@@ -500,6 +502,8 @@ outlier_detection
 - Deprecate ``nlow`` and ``nhigh`` parameters, which no longer have an effect. [#8603]
 
 - Fix errors in documentation describing arguments. [#8603]
+
+- Re-enabled saving of blot models when `save_intermediate_results` is True. [#8758]
 
 pathloss
 --------

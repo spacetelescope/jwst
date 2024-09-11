@@ -130,7 +130,11 @@ def detect_outliers(
             scale1,
             scale2,
             backg,
+            save_blot=save_intermediate_results,
+            make_output_path=make_output_path
         )
     else:
-        flag_crs_in_models(input_models, median_data, snr1)
+        flag_crs_in_models(input_models,
+                           median_data,
+                           snr1)
     return input_models
