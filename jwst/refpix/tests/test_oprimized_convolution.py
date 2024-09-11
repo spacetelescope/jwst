@@ -52,14 +52,14 @@ def test_mk_kernels():
 
 
 def test_apply_conv_kernel():
-    data = np.zeros((1, 1, 2048, 2048)) + 1.999
+    data = np.zeros((3, 3, 2048, 2048)) + 1.999
     instrument, detector = 'NIRCAM', 'NRCB1'
     input_model = mk_data_mdl(data, instrument, detector)
     gaussmooth = 1
     halfwidth = 30
     kernels = make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth)
     sigreject = 4
-    result = apply_conv_kernel(input_model, kernels, sigreject=sigreject)
+    result = apply_conv_kernel(input_model.data[1, 1, ...], kernels, data[0, 0, ...], sigreject=sigreject)
     compare = np.ones((1, 1, 2048, 2048))
-    assert compare.all() == result.data.all()
+    assert compare.all() == result.all()
 
