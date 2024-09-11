@@ -409,9 +409,9 @@ def test_background_level(log_watcher):
     log_watcher.assert_seen()
 
 
-@pytest.mark.parametrize('array_type', ['full', 'subarray'])
+@pytest.mark.parametrize('array_type,fraction_good', [('full', 0.65), ('subarray', 0.37)])
 @pytest.mark.parametrize('detector', ['NRS1', 'NRS2'])
-def test_fft_clean(array_type, detector):
+def test_fft_clean(array_type, fraction_good, detector):
     if array_type == 'full':
         clean_function = cfn.fft_clean_full_frame
     else:
@@ -432,22 +432,19 @@ def test_fft_clean(array_type, detector):
     cleaned_image = clean_function(image.copy(), mask, detector)
 
     # results should be mostly close to zero,
-    # some artifacts at pattern and edge boundaries
+    # some artifacts at pattern and edge boundaries,
+    # edge boundaries are currently worse for subarray correction
     good_correction = np.abs(cleaned_image) < 0.01
-    assert np.allclose(np.sum(good_correction) / cleaned_image.size, 0.65, atol=0.1)
+    assert np.allclose(np.sum(good_correction) / cleaned_image.size,
+                       fraction_good, atol=0.1)
 
 
-@pytest.mark.parametrize('array_type', ['full', 'subarray'])
-def test_fft_clean_error(array_type, monkeypatch, log_watcher):
+def test_fft_clean_error(monkeypatch, log_watcher):
     def raise_error(*args, **kwargs):
         raise np.linalg.LinAlgError('Linear algebra error')
 
-    if array_type == 'full':
-        clean_function = cfn.fft_clean_full_frame
-        monkeypatch.setattr(cfn.NSClean, 'clean', raise_error)
-    else:
-        clean_function = cfn.fft_clean_subarray
-        monkeypatch.setattr(cfn.NSCleanSubarray, 'clean', raise_error)
+    clean_function = cfn.fft_clean_full_frame
+    monkeypatch.setattr(cfn.NSClean, 'clean', raise_error)
 
     shape = (10, 10)
     mask = np.full(shape, True)
@@ -456,6 +453,33 @@ def test_fft_clean_error(array_type, monkeypatch, log_watcher):
     log_watcher.message = "Error cleaning image"
     cleaned_image = clean_function(image.copy(), mask, 'NRS1')
     assert cleaned_image is None
+    log_watcher.assert_seen()
+
+
+def test_fft_subarray_clean_error(monkeypatch, log_watcher):
+    shape = (10, 10)
+    image = np.full(shape, 1.0)
+
+    # Mask is all bad: error message, returns None
+    mask = np.full(shape, False)
+    log_watcher.message = "No good pixels"
+    cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
+    assert cleaned_image is None
+    log_watcher.assert_seen()
+
+    # Mask is nearly all bad except a pixel at the edge:
+    # triggers a linear algebra error
+    mask[0, 0] = True
+    log_watcher.message = "Error cleaning image"
+    cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
+    assert cleaned_image is None
+    log_watcher.assert_seen()
+
+    # Mask is mostly bad: warns but continues
+    mask[5, 5] = True
+    log_watcher.message = "Insufficient reference pixels"
+    cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1', minfrac=0.5)
+    assert np.allclose(cleaned_image, image)
     log_watcher.assert_seen()
 
 
@@ -611,21 +635,13 @@ def test_do_correction_no_fit_by_channel(log_watcher):
     cleaned.close()
 
 
-def test_do_correction_fft_not_allowed(log_watcher):
+@pytest.mark.parametrize('exptype', ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'])
+def test_do_correction_fft_not_allowed(log_watcher, exptype):
     ramp_model = make_small_ramp_model()
+    ramp_model.meta.exposure.type = exptype
 
-    # not allowed for MIRI
-    log_watcher.message = "cannot be applied to exp_type"
-    cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method='fft')
-    assert cleaned is ramp_model
-    assert status == 'SKIPPED'
-    log_watcher.assert_seen()
-
-    # not allowed for NIRSpec ALLSLITS
-    ramp_model.meta.exposure.type = 'NRS_FIXEDSLIT'
-    ramp_model.meta.subarray.name = 'ALLSLITS'
-
-    log_watcher.message = "cannot be applied to subarray"
+    # not allowed for MIRI, NIRCAM, NIRISS
+    log_watcher.message = f"cannot be applied to exp_type {exptype}"
     cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method='fft')
     assert cleaned is ramp_model
     assert status == 'SKIPPED'
@@ -773,10 +789,12 @@ def test_do_correction_background_from_rate(single_mask):
     c2.close()
 
 
-def test_do_correction_fft_subarray():
+@pytest.mark.parametrize('subarray', ['SUBS200A1', 'ALLSLITS'])
+def test_do_correction_fft_subarray(subarray):
     ramp_model = make_small_ramp_model()
     ramp_model.meta.exposure.type = 'NRS_FIXEDSLIT'
     ramp_model.meta.subarray.slowaxis = 1
+    ramp_model.meta.subarray.name = subarray
 
     cleaned, _, _, noise, _ = cfn.do_correction(
         ramp_model, fit_method='fft', save_noise=True)
@@ -822,7 +840,7 @@ def test_do_correction_clean_fails(monkeypatch, log_watcher):
     assert status == 'COMPLETE'
 
     # Mock a None-value returned from cleaning function
-    monkeypatch.setattr(cfn, 'fft_clean_subarray', lambda *args: None)
+    monkeypatch.setattr(cfn, 'fft_clean_subarray', lambda *args, **kwargs: None)
 
     # Call again
     log_watcher.message = "Cleaning failed"

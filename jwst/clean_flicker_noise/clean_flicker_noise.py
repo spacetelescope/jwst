@@ -630,7 +630,9 @@ def fft_clean_full_frame(image, mask, detector):
     return cleaned_image
 
 
-def fft_clean_subarray(image, mask, detector):
+def fft_clean_subarray(image, mask, detector, npix_iter=512,
+                       fc=(1061, 1211, 49943, 49957),
+                       exclude_outliers=True, sigrej=4, minfrac=0.05):
     """
     Fit and remove background noise in frequency space for a subarray image.
 
@@ -644,6 +646,31 @@ def fft_clean_subarray(image, mask, detector):
 
     detector : str
         The name of the detector from which the data originate.
+
+    npix_iter : int
+        Number of pixels to process simultaneously.  Default 512.  Should
+        be at least a few hundred to access sub-kHz frequencies in areas
+        where most pixels are available for fitting.  Previous default
+        behavior corresponds to npix_iter of infinity.
+
+    fc : tuple
+        Apodizing filter definition. These parameters are tunable. The
+        defaults happen to work well for NIRSpec BOTS exposures.
+          1) Unity gain for f < fc[0]
+          2) Cosine roll-off from fc[0] to fc[1]
+          3) Zero gain from fc[1] to fc[2]
+          4) Cosine roll-on from fc[2] to fc[3]
+        Default (1061, 1211, 49943, 49957)
+
+    exclude_outliers : bool
+        Find and mask outliers in the fit?  Default True
+
+    sigrej : float
+        Number of sigma to clip when identifying outliers.  Default 4.
+
+    minfrac : float
+        Minimum fraction of pixels locally available in the mask in
+        order to attempt a correction.  Default 0.05 (i.e., 5%).
 
     Returns
     -------
@@ -660,15 +687,109 @@ def fft_clean_subarray(image, mask, detector):
         image = image.transpose()[::-1]
         mask = mask.transpose()[::-1]
 
-    # Instantiate the cleaner
-    cleaner = NSCleanSubarray(image, mask)
+    # We must do the masking of discrepant pixels here: it just
+    # doesn't work if we wait and do it in the cleaner.  This is
+    # basically copied from lib.py.  Use a robust estimator for
+    # standard deviation, then exclude discrepant pixels and their
+    # four nearest neighbors from the fit.
+    
+    if exclude_outliers:
+        med = np.median(image[mask])
+        std = 1.4825 * np.median(np.abs((image - med)[mask]))
+        outlier = mask & (np.abs(image - med) > sigrej * std)
+        
+        mask = mask & (~outlier)
+        
+        # also get four nearest neighbors of flagged pixels
+        mask[1:] = mask[1:] & (~outlier[:-1])
+        mask[:-1] = mask[:-1] & (~outlier[1:])
+        mask[:, 1:] = mask[:, 1:] & (~outlier[:, :-1])
+        mask[:, :-1] = mask[:, :-1] & (~outlier[:, 1:])
 
-    # Clean the image
-    try:
-        cleaned_image = cleaner.clean()
-    except np.linalg.LinAlgError:
-        log.warning("Error cleaning image; step will be skipped")
+    # Used to determine the fitting intervals along the slow scan
+    # direction.  Pre-pend a zero so that sum_mask[i] is equal
+    # to np.sum(mask[:i], axis=1).
+
+    sum_mask = np.array([0] + list(np.cumsum(np.sum(mask, axis=1))))
+
+    # i1 will be the first row with a nonzero element in the mask
+    # imax will be the last row with a nonzero element in the mask
+    
+    nonzero_mask_element = np.sum(mask, axis=1) > 0
+
+    if np.sum(nonzero_mask_element) == 0:
+        log.warning("No good pixels in mask; step will be skipped")
         return None
+
+    i1 = np.amin(np.arange(mask.shape[0])[nonzero_mask_element])
+    imax = np.amax(np.arange(mask.shape[0])[nonzero_mask_element])
+        
+    i1_vals = []
+    di_list = []
+    models = []
+    while i1 <= imax:
+
+        # Want npix_iter available pixels in this section.  If
+        # there are fewer than 1.5*npix_iter available pixels in
+        # the rest of the image, just go to the end.
+        k = 0
+        for k in range(i1 + 1, imax + 2):
+            if (sum_mask[k] - sum_mask[i1] > npix_iter
+                    and sum_mask[-1] - sum_mask[i1] > 1.5 * npix_iter):
+                break
+            
+        di = k - i1
+
+        i1_vals += [i1]
+        di_list += [di]
+
+        # Fit this section only if at least minpct% of the pixels
+        # are available for finding the background.  Don't flag
+        # outliers section-by-section; we have to do that earlier
+        # over the full array to get reliable values for the mean
+        # and standard deviation.
+        
+        if np.mean(mask[i1:i1 + di]) > minfrac:
+            cleaner = NSCleanSubarray(image[i1:i1 + di], mask[i1:i1 + di],
+                                      fc=fc, exclude_outliers=False)
+            try:
+                models += [cleaner.clean(return_model=True)]
+            except np.linalg.LinAlgError:
+                log.warning("Error cleaning image; step will be skipped")
+                return None
+        else:
+            log.warning("Insufficient reference pixels for NSClean around "
+                        "row %d; no correction will be made here." % i1)
+            models += [np.zeros(image[i1:i1 + di].shape)]
+
+        # If we have reached the end of the array, we are finished.
+        if k == imax + 1:
+            break
+
+        # Step forward by half an interval so that we have
+        # overlapping fitting regions.
+        
+        i1 += max(int(np.round(di/2)), 1)
+            
+    model = np.zeros(image.shape)
+    tot_wgt = np.zeros(image.shape)
+
+    # When we combine different corrections computed over
+    # different intervals, each one the highest weight towards the
+    # center of its interval and less weight towards the edge.
+    # Use nonzero weights everywhere so that if only one
+    # correction is available it gets unit weight when we
+    # normalize.
+    
+    for i in range(len(models)):
+        wgt = 1.001 - np.abs(np.linspace(-1, 1, di_list[i]))[:, np.newaxis]
+        model[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt*models[i]
+        tot_wgt[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt
+
+    # don't divide by zero
+    tot_wgt[model == 0] = 1
+    model /= tot_wgt
+    cleaned_image = image - model
 
     # Restore the cleaned image to the science frame
     if detector == "NRS1":
@@ -781,8 +902,6 @@ def _check_input(exp_type, subarray, fit_method):
     if fit_method == 'fft':
         if exp_type not in nsclean_allowed:
             message = f"Fit method 'fft' cannot be applied to exp_type {exp_type}"
-        elif subarray == 'ALLSLITS':
-            message = f"Fit method 'fft' cannot be applied to subarray {subarray}"
     return message
 
 
@@ -947,6 +1066,14 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         log.warning("Fit by channel can only be used for full-frame NIR data.")
         log.warning("Setting fit_by_channel to False.")
         fit_by_channel = False
+
+    # For a fft correction, ALLSLITS exposures need different
+    # ranges of 1/f frequencies.  Be less aggressive with
+    # fitting higher frequencies in ALLSLITS mode.
+    if subarray == "ALLSLITS":
+        fc = (150, 200, 49943, 49957)
+    else:
+        fc = (1061, 1211, 49943, 49957)
 
     # Make a rate file if needed
     if user_mask is None or background_from_rate:
@@ -1130,7 +1257,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
                     cleaned_image = fft_clean_full_frame(bkg_sub, mask, detector)
                 else:
                     # Clean a subarray image
-                    cleaned_image = fft_clean_subarray(bkg_sub, mask, detector)
+                    cleaned_image = fft_clean_subarray(bkg_sub, mask, detector, fc=fc)
             else:
                 cleaned_image = median_clean(bkg_sub, mask, axis_to_correct,
                                              fit_by_channel=fit_by_channel)

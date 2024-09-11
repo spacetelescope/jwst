@@ -109,6 +109,11 @@ mrs_imatch
 nsclean
 -------
 
+- Changed subarray mode from operating on the entire array at once to
+  operating on sections of the array and smoothly combining these sections.
+  Due to the computational costs of matrix operations, this is a large
+  speedup that has little effect on the results. [#8745]
+
 - Merged implementation with the new ``clean_flicker_noise`` step. This step
   can still be called from the ``calwebb_spec2`` pipeline on NIRSpec rate
   data, but it is now deprecated. [#8669]
@@ -211,6 +216,8 @@ stpipe
 - Removed setting of the `self.skip` attribute in the `record_step_status()` function;
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
+
+- Log jwst version at end of `Step.run`. [#8769]
 
 tso_photometry
 --------------
