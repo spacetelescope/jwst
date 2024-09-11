@@ -1,9 +1,10 @@
 """
 The ever-present utils sub-module. A home for all...
 """
-import warnings
 
 import numpy as np
+import tempfile
+from pathlib import Path
 
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
@@ -18,6 +19,112 @@ log.setLevel(logging.DEBUG)
 DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 _ONE_MB = 1 << 20
+
+
+# not inheriting from MutableSequence here as insert is complicated
+class TempArrayHandler:
+    def __init__(self, tempdir=""):
+        self._temp_dir = tempfile.TemporaryDirectory(dir=tempdir)
+        self._temp_path = Path(self._temp_dir.name)
+        self._filenames = []
+        self._data_shape = None
+        self._data_dtype = None
+
+    @property
+    def closed(self):
+        return not hasattr(self, "_temp_dir")
+
+    def close(self):
+        if self.closed:
+            return
+        self._temp_dir.cleanup()
+        del self._temp_dir
+
+    def __del__(self):
+        self.close()
+
+    def __len__(self):
+        if self.closed:
+            raise Exception("use after close")
+        return len(self._filenames)
+
+    def __getitem__(self, index):
+        if self.closed:
+            raise Exception("use after close")
+        fn = self._filenames[index]
+        return np.load(fn)
+
+    def _validate_input(self, arr):
+        if arr.ndim != 2:
+            raise Exception(f"Only 2D arrays are supported: {arr.ndim}")
+        if self._data_shape is None:
+            self._data_shape = arr.shape
+        else:
+            if arr.shape != self._data_shape:
+                raise Exception(
+                    f"Input shape mismatch: {arr.shape} != {self._data_shape}"
+                )
+        if self._data_dtype is None:
+            self._data_dtype = arr.dtype
+        else:
+            if arr.dtype != self._data_dtype:
+                raise Exception(
+                    f"Input dtype mismatch: {arr.dtype} != {self._data_dtype}"
+                )
+
+    def __setitem__(self, index, value):
+        self._validate_input(value)
+        if self.closed:
+            raise Exception("use after close")
+        fn = self._filenames[index]
+        if fn is None:
+            fn = self._temp_path / f"{index}.npy"
+        np.save(fn, value, False)
+        self._filenames[index] = fn
+
+    def append(self, value):
+        if self.closed:
+            raise Exception("use after close")
+        index = len(self)
+        self._filenames.append(None)
+        self.__setitem__(index, value)
+
+    def median(self, buffer_size=100 << 20):
+        if self.closed:
+            raise Exception("use after close")
+        if not len(self):
+            raise Exception("can't take median of empty list")
+
+        # figure out how big the buffer can be
+        n_arrays = len(self)
+        allowed_memory_per_array = buffer_size // n_arrays
+
+        n_dim_1 = allowed_memory_per_array // (
+            self._data_dtype.itemsize * self._data_shape[0]
+        )
+        if n_dim_1 < 1:
+            # TODO more useful error message
+            raise Exception("Not enough memory")
+        if n_dim_1 >= self._data_shape[1]:
+            return np.nanmedian(self, axis=0)
+
+        buffer = np.empty(
+            (n_arrays, self._data_shape[0], n_dim_1), dtype=self._data_dtype
+        )
+        median = np.empty(self._data_shape, dtype=self._data_dtype)
+
+        e = n_dim_1
+        slices = [slice(0, e)]
+        while e <= self._data_shape[1]:
+            s = e
+            e += n_dim_1
+            slices.append(slice(s, min(e, self._data_shape[1])))
+
+        for s in slices:
+            for i, arr in enumerate(self):
+                buffer[i, :, : (s.stop - s.start)] = arr[:, s]
+            median[:, s] = np.nanmedian(buffer[:, :, : (s.stop - s.start)], axis=0)
+        return median
 
 
 def create_cube_median(cube_model, maskpt):
@@ -55,136 +162,32 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
     median_image : ndarray
         The median image.
     """
+    # initialize storage for median computation
+    if on_disk:
+        # harder case: need special on-disk numpy array handling
+        model_list = TempArrayHandler()
+    else:
+        # easier case: all models in library can be loaded into memory at once
+        model_list = []
+
     # Compute the weight threshold for each input model
-    weight_thresholds = []
     with resampled_models:
         for resampled in resampled_models:
             weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
-            weight_thresholds.append(weight_threshold)
-            resampled_models.shelve(resampled, modify=False)
-
-    # compute median over all models
+            mask = np.less(resampled.wht, weight_threshold)
+            resampled.data[mask] = np.nan
+            model_list.append(resampled.data)
+            # this is still modified if on_disk is False, but doesn't matter because never used again
+            resampled_models.shelve(resampled, modify=False) 
+            del resampled
+    
     if not on_disk:
-        # easier case: all models in library can be loaded into memory at once
-        model_list = []
-        with resampled_models:
-            for resampled in resampled_models:
-                model_list.append(resampled.data)
-                resampled_models.shelve(resampled, modify=False)
-                del resampled
         return np.nanmedian(np.array(model_list), axis=0)
     else:
-        # set up buffered access to all input models
-        with resampled_models:
-            example_model = resampled_models.borrow(0)
-            shp = example_model.data.shape
-            dtype = example_model.data.dtype
-            nsections, section_nrows = _compute_buffer_indices(example_model, buffer_size)
-            resampled_models.shelve(example_model, modify=False)
-            del example_model
-
-        # get spatial sections of library and compute timewise median, one by one
-        resampled_sections = _get_sections(resampled_models, nsections, section_nrows, shp[0])
-        median_image_empty = np.empty(shp, dtype) * np.nan
-        return _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty)
-
-
-def _get_sections(library, nsections, section_nrows, imrows):
-    """Iterator to return sections from a ModelLibrary.
-
-    Parameters
-    ----------
-    library : ModelLibrary
-        The input data models.
-
-    nsections : int
-        The number of spatial sections in each model
-
-    section_nrows : int
-        The number of rows in each section
-
-    imrows : int
-        The total number of rows in the image
-
-    Yields
-    ------
-    data_subset : ndarray
-        array of shape (len(library), section_nrows, ncols) representing a spatial
-        subset of all the data arrays in the library
-
-    weight_subset : ndarray
-        weights corresponding to data_list
-
-    row_range : tuple
-        The range of rows in the image covered by the data arrays
-    """
-    with library:
-        example_model = library.borrow(0)
-        dtype = example_model.data.dtype
-        dtype_wht = example_model.wht.dtype
-        shp = example_model.data.shape
-        library.shelve(example_model, 0, modify=False)
-        del example_model
-    for i in range(nsections):
-        row1 = i * section_nrows
-        row2 = min(row1 + section_nrows, imrows)
-        
-        data_subset = np.empty((len(library), row2 - row1, shp[1]), dtype)
-        weight_subset = np.empty((len(library), row2 - row1, shp[1]), dtype_wht)
-        with library:
-            for j, model in enumerate(library):
-                data_subset[j] = model.data[row1:row2]
-                weight_subset[j] = model.wht[row1:row2]
-                library.shelve(model, j, modify=False)
-                del model
-        yield (data_subset, weight_subset, (row1, row2))
-
-
-def _compute_buffer_indices(model, buffer_size=None):
-
-    imrows, imcols = model.data.shape
-    data_item_size = model.data.itemsize
-    min_buffer_size = imcols * data_item_size
-    buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
-    section_nrows = min(imrows, int(buffer_size // min_buffer_size))
-    if section_nrows == 0:
-        buffer_size = min_buffer_size
-        log.warning("WARNING: Buffer size is too small to hold a single row."
-                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB")
-        section_nrows = 1
-    nsections = int(np.ceil(imrows / section_nrows))
-    return nsections, section_nrows
-
-
-def _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty):
-    median_image = median_image_empty
-    for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
-        # Create a mask for each input image, masking out areas where there is
-        # no data or the data has very low weight
-        badmasks = []
-        for weight, weight_threshold in zip(resampled_weight, weight_thresholds):
-            badmask = np.less(weight, weight_threshold)
-            log.debug("Percentage of pixels with low weight: {}".format(
-                np.sum(badmask) / len(weight.flat) * 100))
-            badmasks.append(badmask)
-
-        # Fill resampled_sci array with nan's where mask values are True
-        for f1, f2 in zip(resampled_sci, badmasks):
-            for elem1, elem2 in zip(f1, f2):
-                elem1[elem2] = np.nan
-
-        del badmasks
-
-        # For a stack of images with "bad" data replaced with Nan
-        # use np.nanmedian to compute the median.
-        with warnings.catch_warnings():
-            warnings.filterwarnings(action="ignore",
-                                    message="All-NaN slice encountered",
-                                    category=RuntimeWarning)
-            median_image[row1:row2] = np.nanmedian(resampled_sci, axis=0)
-        del resampled_sci, resampled_weight
-
-    return median_image
+        # compute median using on-disk arrays
+        median_data = model_list.median(buffer_size=buffer_size*_ONE_MB)
+        model_list.close()
+        return median_data
 
 
 def flag_crs_in_models(
