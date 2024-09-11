@@ -677,7 +677,6 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
     cleaned_image : array-like of float
         The cleaned image.
     """
-
     # Flip the image to detector coords. NRS1 requires a transpose
     # of the axes, while NRS2 requires a transpose and flip.
     if detector == "NRS1":
@@ -874,7 +873,7 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     return corrected_image
 
 
-def _check_input(exp_type, subarray, fit_method):
+def _check_input(exp_type, fit_method):
     """
     Check for valid input data and options.
 
@@ -882,16 +881,13 @@ def _check_input(exp_type, subarray, fit_method):
     ----------
     exp_type : str
         Exposure type for the input.
-    subarray : str
-        Subarray name for the input.
     fit_method : str
         Noise fitting method.
 
     Returns
     -------
-    message : str or None
-        The output value is None if the input is valid.  Otherwise, the
-        output is a message describing why the input is not valid.
+    valid : bool
+        True if the input is valid.
     """
     message = None
     miri_allowed = ['MIR_IMAGE']
@@ -902,7 +898,13 @@ def _check_input(exp_type, subarray, fit_method):
     if fit_method == 'fft':
         if exp_type not in nsclean_allowed:
             message = f"Fit method 'fft' cannot be applied to exp_type {exp_type}"
-    return message
+
+    if message is not None:
+        log.warning(message)
+        log.warning("Step will be skipped")
+        return False
+
+    return True
 
 
 def _make_intermediate_model(input_model, intermediate_data):
@@ -914,7 +916,7 @@ def _make_intermediate_model(input_model, intermediate_data):
 
     Parameters
     ----------
-    input_model : ~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodel.JwstDataModel`
         The input data.
     intermediate_data : array-like
         The intermediate data to save.
@@ -935,6 +937,367 @@ def _make_intermediate_model(input_model, intermediate_data):
     # Copy metadata from input model
     intermediate_model.update(input_model)
     return intermediate_model
+
+
+def _standardize_parameters(
+        exp_type, subarray, slowaxis, background_method, fit_by_channel):
+    """
+    Standardize input parameters.
+
+    Check input parameters against input exposure type and assemble
+    values needed for subsequent correction.
+
+    Parameters
+    ----------
+    exp_type : str
+        Exposure type for the input data.
+    subarray : str
+        Subarray name for the input data.
+    slowaxis : int
+        Detector slow axis.
+    background_method : str
+        Input option for background method.
+    fit_by_channel : bool
+        Input option to fit noise by channel.
+
+    Returns
+    -------
+    axis_to_correct : int
+        Axis along which flicker noise appears for the input
+        exposure type.
+    background_method : str or None
+        Standardized parameter value for background correction.
+    fit_by_channel : bool
+        Standardized parameter value for the input subarray and
+        exposure type.
+    fc : tuple of int
+        Frequency cutoff values for use with FFT correction,
+        by input subarray.
+    """
+    # Get axis to correct, by instrument
+    if exp_type.startswith('MIR'):
+        # MIRI doesn't have 1/f-noise, but it does have a vertical flickering.
+        # Set the axis for median correction to the y-axis.
+        axis_to_correct = 1
+    else:
+        # For NIR detectors, the axis for median correction is the
+        # detector slowaxis.
+        axis_to_correct = abs(slowaxis)
+
+    # Standardize background arguments
+    if str(background_method).lower() == 'none':
+        background_method = None
+
+    # Check for fit_by_channel argument, and use only if data is full frame
+    if fit_by_channel and (subarray != 'FULL' or exp_type.startswith('MIR')):
+        log.warning("Fit by channel can only be used for full-frame NIR data.")
+        log.warning("Setting fit_by_channel to False.")
+        fit_by_channel = False
+
+    # For a fft correction, ALLSLITS exposures need different
+    # ranges of 1/f frequencies.  Be less aggressive with
+    # fitting higher frequencies in ALLSLITS mode.
+    if subarray == "ALLSLITS":
+        fc = (150, 200, 49943, 49957)
+    else:
+        fc = (1061, 1211, 49943, 49957)
+
+    return axis_to_correct, background_method, fit_by_channel, fc
+
+
+def _make_processed_rate_image(
+        input_model, single_mask, input_dir, exp_type, mask_science_regions):
+    """
+    Make a draft rate image and postprocess if needed.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.JwstDataModel`
+        The input data.
+    single_mask : bool
+        If set, a single scene mask is desired, so create
+        a single rate image.  Otherwise, create a rateints
+        cube, with independent rate information for each
+        integration.
+    input_dir : str
+        Path to the input directory.  Used by sub-steps to find auxiliary
+        data.
+    exp_type : str
+        Exposure type for the input data, used to determine
+        which kinds of postprocessing is necessary.
+    mask_science_regions : bool
+        If set, science regions should be masked, so run `assign_wcs`
+        and `msaflagopen` for NIRSpec and `flatfield` for MIRI
+        after creating the draft rate image.
+
+    Returns
+    -------
+    image_model : `~jwst.datamodel.JwstDataModel`
+        The processed rate image or cube.
+    """
+    if isinstance(input_model, datamodels.RampModel):
+        image_model = make_rate(input_model, return_cube=(not single_mask),
+                                input_dir=input_dir)
+    else:
+        # input is already a rate file
+        image_model = input_model
+
+    # If needed, assign a WCS to the rate file,
+    # flag open MSA shutters, or retrieve flat DQ flags
+    assign_wcs = exp_type.startswith('NRS')
+    flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
+    flat_dq = (exp_type in ['MIR_IMAGE'])
+    if mask_science_regions:
+        image_model = post_process_rate(
+            image_model, assign_wcs=assign_wcs,
+            msaflagopen=flag_open, flat_dq=flat_dq,
+            input_dir=input_dir)
+
+    return image_model
+
+
+def _make_scene_mask(
+        user_mask, image_model, mask_science_regions,
+        n_sigma, fit_histogram, single_mask, save_mask):
+    """
+    Make a scene mask from user input or rate image.
+
+    If provided, the user mask is opened as a datamodel and directly
+    returned. Otherwise, the mask is generated from the rate data in
+    `image_model`.
+
+    Parameters
+    ----------
+    user_mask : str or None
+        Path to user-supplied mask image.
+    image_model : `~jwst.datamodel.JwstDataModel`
+        A rate image or cube, processed as needed.
+    mask_science_regions: bool
+        For NIRSpec, mask regions of the image defined by WCS bounding
+        boxes for slits/slices, as well as any regions known to be
+        affected by failed-open MSA shutters.  For MIRI imaging, mask
+        regions of the detector not used for science.
+    n_sigma : float
+        N-sigma rejection level for finding outliers.
+    fit_histogram : bool
+        If set, the 'sigma' used with `n_sigma` for clipping outliers
+        is derived from a Gaussian fit to a histogram of values.
+        Otherwise, a simple iterative sigma clipping is performed.
+    single_mask : bool
+        If set, a single mask will be created, regardless of
+        the number of input integrations. Otherwise, the mask will
+        be a 3D cube, with one plane for each integration.
+    save_mask : bool
+        If set, a mask model is created and returned along with the mask
+        array. If not, the `mask_model` returned is None.
+
+    Returns
+    -------
+    background_mask : array-like of bool
+        Mask array, with True indicating background pixels, False
+        indicating source pixels.
+    mask_model : `~jwst.datamodel.JwstDataModel` or None
+        A datamodel containing the background mask, if `save_mask`
+        is True.
+    """
+    # Check for a user-supplied mask image. If provided, use it.
+    if user_mask is not None:
+        mask_model = datamodels.open(user_mask)
+        background_mask = (mask_model.data.copy()).astype(np.bool_)
+        mask_model.close()
+        del mask_model
+    else:
+        # Create the pixel mask that will be used to indicate which pixels
+        # to include in the 1/f noise measurements. Basically, we're setting
+        # all illuminated pixels to False, so that they do not get used, and
+        # setting all unilluminated pixels to True (so they DO get used).
+        log.info("Creating mask")
+        background_mask = create_mask(
+            image_model,
+            mask_science_regions=mask_science_regions,
+            n_sigma=n_sigma, fit_histogram=fit_histogram,
+            single_mask=single_mask)
+
+    # Store the mask image in a model, if requested
+    if save_mask:
+        mask_model = _make_intermediate_model(image_model, background_mask)
+    else:
+        mask_model = None
+
+    return background_mask, mask_model
+
+
+def _check_data_shapes(input_model, background_mask):
+    """
+    Check data shape for input model and background mask.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.JwstDataModel`
+        The input data model.
+    background_mask : array-like of bool
+        The background mask.
+
+    Returns
+    -------
+    mismatch : bool
+        If True, the background mask does not match the data
+        and the step should be skipped.
+    ndim : int
+        Number of dimensions in the input data.
+    nints : int
+        Number of integrations in the input data.
+    ngroups : int
+        Number of groups in the input data.
+    """
+    mismatch = True
+    image_shape = input_model.data.shape[-2:]
+    ndim = input_model.data.ndim
+    if ndim == 2:
+        nints = 1
+        ngroups = 1
+    else:
+        nints = input_model.data.shape[0]
+        if ndim == 3:
+            ngroups = 1
+        else:
+            ngroups = input_model.data.shape[1] - 1
+
+        # Check for 3D mask
+        if background_mask.ndim == 2:
+            if nints > 1:
+                log.info("Data has multiple integrations, but mask is 2D: "
+                         "the same mask will be used for all integrations.")
+        elif background_mask.shape[0] != nints:
+            log.warning("Mask does not match data shape. Step will be skipped.")
+            return mismatch, ndim, nints, ngroups
+
+    # Check that mask matches 2D data shape
+    if background_mask.shape[-2:] != image_shape:
+        log.warning("Mask does not match data shape. Step will be skipped.")
+        return mismatch, ndim, nints, ngroups
+
+    return False, ndim, nints, ngroups
+
+
+def _clean_one_image(image, mask, background_method, background_box_size,
+                     n_sigma, fit_method, detector, fc, axis_to_correct,
+                     fit_by_channel):
+    """
+    Clean an image by fitting and removing background noise.
+
+    Parameters
+    ----------
+    image : array-like of float
+        The input image.
+    mask : array-like of bool
+        The scene mask.  All non-background signal should be
+        marked as True.
+    background_method : str
+        The method for fitting the background.
+    background_box_size : tuple of int
+        Background box size, used with `background_method`
+        is 'model'.
+    n_sigma : float
+        N-sigma rejection level for outliers.
+    fit_method : str
+        The method for fitting the noise after background
+        signal is removed.
+    detector : str
+        The detector name.
+    fc : tuple of int
+        Frequency cutoff values, used for `fit_method` = 'fft'.
+    axis_to_correct : int
+        Axis along which noise appears, used for
+        `fit_method` = 'median'.
+    fit_by_channel : bool
+        Option to fit noise in detector channels separately,
+        used for `fit_method` = 'median'
+
+    Returns
+    -------
+    cleaned_image : array-like of float
+        The cleaned image.
+    background : array-like of float
+        The background fit and removed prior to cleaning.
+        Used for diagnostic purposes.
+    success : bool
+        True if cleaning proceeded as expected; False if
+        cleaning failed and the step should be skipped.
+    """
+    success = True
+
+    # Make sure data is float32
+    image = image.astype(np.float32)
+
+    # Find and replace/mask NaNs
+    nan_pix = np.isnan(image)
+    image[nan_pix] = 0.0
+    mask[nan_pix] = False
+
+    # If there's no good data remaining in the mask,
+    # skip this image
+    if not np.any(mask):
+        return None, None, success
+
+    # Fit and remove a background level
+    if str(background_method).lower() == 'none':
+        background = 0.0
+        bkg_sub = image
+    else:
+        background = background_level(
+            image, mask, background_method=background_method,
+            background_box_size=background_box_size)
+        log.debug(f'Background level: {np.nanmedian(background):.5g}')
+        bkg_sub = image - background
+
+        # Flag more signal in the background subtracted image,
+        # with sigma set by the lower half of the distribution only
+        clip_to_background(
+            bkg_sub, mask, sigma_lower=n_sigma,
+            sigma_upper=n_sigma, lower_half_only=True)
+
+    # Clean the noise
+    if fit_method == 'fft':
+        if bkg_sub.shape == (2048, 2048):
+            # Clean a full-frame image
+            cleaned_image = fft_clean_full_frame(bkg_sub, mask, detector)
+        else:
+            # Clean a subarray image
+            cleaned_image = fft_clean_subarray(bkg_sub, mask, detector, fc=fc)
+    else:
+        cleaned_image = median_clean(bkg_sub, mask, axis_to_correct,
+                                     fit_by_channel=fit_by_channel)
+    if cleaned_image is None:
+        return None, None, False
+
+    # Restore the background level
+    cleaned_image += background
+
+    # Restore NaNs in cleaned image
+    cleaned_image[nan_pix] = np.nan
+
+    return cleaned_image, background, success
+
+
+def _mask_unusable(mask, dq):
+    """
+    Mask unusable data, according to DQ.
+
+    Currently, JUMP and DO_NOT_USE flags are used.
+    The mask is updated in place
+
+    Parameters
+    ----------
+    mask : array-like of bool
+        Input mask, updated in place.
+    dq : array-like of int
+        DQ flag array matching the mask shape.
+    """
+    dnu = (dq & dqflags.group['DO_NOT_USE']) > 0
+    mask[dnu] = False
+    jump = (dq & dqflags.group['JUMP_DET']) > 0
+    mask[jump] = False
 
 
 def do_correction(input_model, input_dir=None, fit_method='median',
@@ -975,8 +1338,10 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         that evenly divides the input image shape.
 
     mask_science_regions : bool, optional
-        Mask slit/slice regions defined in WCS. Implemented only for
-        NIRSpec science data modes.
+        For NIRSpec, mask regions of the image defined by WCS bounding
+        boxes for slits/slices, as well as any regions known to be
+        affected by failed-open MSA shutters.  For MIRI imaging, mask
+        regions of the detector not used for science.
 
     n_sigma : float, optional
         N-sigma rejection level for finding outliers.
@@ -1028,116 +1393,38 @@ def do_correction(input_model, input_dir=None, fit_method='median',
     detector = input_model.meta.instrument.detector.upper()
     subarray = input_model.meta.subarray.name.upper()
     exp_type = input_model.meta.exposure.type
+    slowaxis = input_model.meta.subarray.slowaxis
     log.info(f'Input exposure type is {exp_type}, detector={detector}')
 
     # Check for a valid input that we can work on
-    message = _check_input(exp_type, subarray, fit_method)
-    if message is not None:
-        log.warning(message)
-        log.warning("Step will be skipped")
+    if not _check_input(exp_type, fit_method):
         return input_model, None, None, None, status
 
     output_model = input_model.copy()
 
-    # Get axis to correct, by instrument
-    if exp_type.startswith('MIR'):
-        # MIRI doesn't have 1/f-noise, but it does have a vertical flickering.
-        # Set the axis for median correction to the y-axis.
-        axis_to_correct = 1
-    else:
-        # For NIR detectors, the axis for median correction is the
-        # detector slowaxis.
-        axis_to_correct = abs(input_model.meta.subarray.slowaxis)
-
-    # Standardize background arguments
-    if str(background_method).lower() == 'none':
-        background_method = None
-
-    # Check for fit_by_channel argument, and use only if data is full frame
-    if fit_by_channel and (subarray != 'FULL' or exp_type.startswith('MIR')):
-        log.warning("Fit by channel can only be used for full-frame NIR data.")
-        log.warning("Setting fit_by_channel to False.")
-        fit_by_channel = False
-
-    # For a fft correction, ALLSLITS exposures need different
-    # ranges of 1/f frequencies.  Be less aggressive with
-    # fitting higher frequencies in ALLSLITS mode.
-    if subarray == "ALLSLITS":
-        fc = (150, 200, 49943, 49957)
-    else:
-        fc = (1061, 1211, 49943, 49957)
+    # Get parameters needed for subsequent corrections, as appropriate
+    # to the input data
+    axis_to_correct, background_method, fit_by_channel, fc = _standardize_parameters(
+            exp_type, subarray, slowaxis, background_method, fit_by_channel)
 
     # Make a rate file if needed
     if user_mask is None:
-        if isinstance(input_model, datamodels.RampModel):
-            image_model = make_rate(input_model, return_cube=(not single_mask),
-                                    input_dir=input_dir)
-        else:
-            # input is already a rate file
-            image_model = input_model
-
-        # If needed, assign a WCS to the rate file,
-        # flag open MSA shutters, or retrieve flat DQ flags
-        assign_wcs = exp_type.startswith('NRS')
-        flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
-        flat_dq = (exp_type in ['MIR_IMAGE'])
-        if mask_science_regions:
-            image_model = post_process_rate(
-                image_model, assign_wcs=assign_wcs,
-                msaflagopen=flag_open, flat_dq=flat_dq,
-                input_dir=input_dir)
+        image_model = _make_processed_rate_image(
+            input_model, single_mask, input_dir, exp_type, mask_science_regions)
     else:
         image_model = input_model
 
-    # Check for a user-supplied mask image. If provided, use it.
-    if user_mask is not None:
-        mask_model = datamodels.open(user_mask)
-        background_mask = (mask_model.data.copy()).astype(np.bool_)
-    else:
-        # Create the pixel mask that will be used to indicate which pixels
-        # to include in the 1/f noise measurements. Basically, we're setting
-        # all illuminated pixels to False, so that they do not get used, and
-        # setting all unilluminated pixels to True (so they DO get used).
-        log.info("Creating mask")
-        background_mask = create_mask(
-            image_model,
-            mask_science_regions=mask_science_regions,
-            n_sigma=n_sigma, fit_histogram=fit_histogram,
-            single_mask=single_mask)
-
-        # Store the mask image in a model, if requested
-        if save_mask:
-            mask_model = _make_intermediate_model(output_model, background_mask)
-        else:
-            mask_model = None
+    # Make a mask model from the user input or the rate data
+    background_mask, mask_model = _make_scene_mask(
+        user_mask, image_model, mask_science_regions,
+        n_sigma, fit_histogram, single_mask, save_mask)
 
     log.info(f"Cleaning image {input_model.meta.filename}")
 
-    # Setup for handling 2D, 3D, or 4D inputs
-    image_shape = input_model.data.shape[-2:]
-    ndim = input_model.data.ndim
-    if ndim == 2:
-        nints = 1
-        ngroups = 1
-    else:
-        nints = input_model.data.shape[0]
-        if ndim == 3:
-            ngroups = 1
-        else:
-            ngroups = input_model.data.shape[1] - 1
-
-        # Check for 3D mask
-        if background_mask.ndim == 2:
-            if nints > 1:
-                log.info("Data has multiple integrations, but mask is 2D: "
-                         "the same mask will be used for all integrations.")
-        elif background_mask.shape[0] != nints:
-            log.warning("Mask does not match data shape. Step will be skipped.")
-            return output_model, None, None, None, status
-
-    # Check that mask matches 2D data shape
-    if background_mask.shape[-2:] != image_shape:
-        log.warning("Mask does not match data shape. Step will be skipped.")
+    # Check data shapes for 2D, 3D, or 4D inputs
+    mismatch, ndim, nints, ngroups = _check_data_shapes(
+        input_model, background_mask)
+    if mismatch:
         return output_model, None, None, None, status
 
     # Close the draft rate model if created - it is no longer needed.
@@ -1174,85 +1461,46 @@ def do_correction(input_model, input_dir=None, fit_method='median',
                 image = input_model.data[i, j+1] - input_model.data[i, j]
                 dq = input_model.groupdq[i, j+1]
 
-                # For ramp data, mask any DNU and JUMP pixels
-                dnu = (dq & dqflags.group['DO_NOT_USE']) > 0
-                mask[dnu] = False
-                jump = (dq & dqflags.group['JUMP_DET']) > 0
-                mask[jump] = False
+                # Mask any DNU and JUMP pixels
+                _mask_unusable(mask, dq)
 
-            # Make sure data is float32
-            image = image.astype(np.float32)
+            # Clean the image
+            cleaned_image, background, success = _clean_one_image(
+                image, mask, background_method, background_box_size, n_sigma,
+                fit_method, detector, fc, axis_to_correct, fit_by_channel)
 
-            # Find and replace/mask NaNs
-            nan_pix = np.isnan(image)
-            image[nan_pix] = 0.0
-            mask[nan_pix] = False
+            if not success:
+                # Cleaning failed for internal reasons - probably the
+                # mask is not a good match to the data.
+                log.error(f'Cleaning failed for integration {i + 1}, group {j + 1}')
 
-            # If there's no good data remaining in the mask,
-            # skip this image
-            if not np.any(mask):
+                # Restore input data to make sure any partial changes
+                # are thrown away
+                output_model.data = input_model.data.copy()
+                return output_model, None, None, None, status
+
+            if cleaned_image is None:
+                # Cleaning did not proceed because the image is bad:
+                # leave it as is but continue correcting the rest
                 log.warning(f'No usable data in integration {i+1}, group {j+1}. '
                             f'Skipping correction for this image.')
                 continue
 
-            # Fit and remove a background level
-            if str(background_method).lower() == 'none':
-                background = 0.0
-                bkg_sub = image
+            # Store the cleaned image in the output model
+            if ndim == 2:
+                output_model.data = cleaned_image
+                if save_background:
+                    background_to_save[:] = background
+            elif ndim == 3:
+                output_model.data[i] = cleaned_image
+                if save_background:
+                    background_to_save[i] = background
             else:
-                background = background_level(
-                    image, mask, background_method=background_method,
-                    background_box_size=background_box_size)
-                log.debug(f'Background level: {np.nanmedian(background):.5g}')
-                bkg_sub = image - background
-
-                # Flag more signal in the background subtracted image,
-                # with sigma set by the lower half of the distribution only
-                clip_to_background(
-                    bkg_sub, mask, sigma_lower=n_sigma,
-                    sigma_upper=n_sigma, lower_half_only=True)
-
-            # Clean the noise
-            if fit_method == 'fft':
-                if bkg_sub.shape == (2048, 2048):
-                    # Clean a full-frame image
-                    cleaned_image = fft_clean_full_frame(bkg_sub, mask, detector)
-                else:
-                    # Clean a subarray image
-                    cleaned_image = fft_clean_subarray(bkg_sub, mask, detector, fc=fc)
-            else:
-                cleaned_image = median_clean(bkg_sub, mask, axis_to_correct,
-                                             fit_by_channel=fit_by_channel)
-
-            # Check for failure
-            if cleaned_image is None:
-                log.error(f'Cleaning failed for integration {i + 1}, group {j + 1}')
-
-                # Restore input data to make sure any partial changes are thrown away
-                output_model.data = input_model.data.copy()
-                return output_model, None, None, None, status
-            else:
-                # Restore the background level
-                cleaned_image += background
-
-                # Restore NaNs in cleaned image
-                cleaned_image[nan_pix] = np.nan
-
-                # Store the cleaned image in the output model
-                if ndim == 2:
-                    output_model.data = cleaned_image
-                    if save_background:
-                        background_to_save[:] = background
-                elif ndim == 3:
-                    output_model.data[i] = cleaned_image
-                    if save_background:
-                        background_to_save[i] = background
-                else:
-                    # Add the cleaned data diff to the previously cleaned group,
-                    # rather than the noisy input group
-                    output_model.data[i, j+1] = output_model.data[i, j] + cleaned_image
-                    if save_background:
-                        background_to_save[i, j+1] = background
+                # Add the cleaned data diff to the previously cleaned group,
+                # rather than the noisy input group
+                output_model.data[i, j+1] = output_model.data[i, j] + cleaned_image
+                if save_background:
+                    background_to_save[i, j+1] = background
 
     # Store the background image in a model, if requested
     if save_background:
