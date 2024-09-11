@@ -66,13 +66,19 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
     # compute median over all models
     if not on_disk:
         # easier case: all models in library can be loaded into memory at once
-        model_list = []
         with resampled_models:
-            for resampled in resampled_models:
-                model_list.append(resampled.data)
-                resampled_models.shelve(resampled, modify=False)
+            for i, resampled in enumerate(resampled_models):
+                # convert to a CubeModel to pass into create_cube_median
+                if i == 0:
+                    cube_shape = (len(resampled_models), resampled.data.shape[0], resampled.data.shape[1])
+                    cube = datamodels.CubeModel(data=np.zeros(cube_shape))
+                    cube.wht = np.zeros(cube_shape)
+
+                cube.data[i] = resampled.data
+                cube.wht[i] = resampled.wht
+                resampled_models.shelve(resampled, i, modify=False)
                 del resampled
-        return np.nanmedian(np.array(model_list), axis=0)
+        return create_cube_median(cube, maskpt)
     else:
         # set up buffered access to all input models
         with resampled_models:
