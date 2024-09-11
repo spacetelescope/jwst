@@ -25,12 +25,6 @@ the behavior of the processing.
   when `background_method` = 'model'. For best results, use a
   box size that evenly divides the input image shape.
 
-``--background_from_rate`` (boolean, default=False)
-  If set, the background will be fit to the rate image instead of
-  the individual ramp differences. The preliminary background
-  subtracted from each diff before fitting noise is then rate
-  background * group time.
-
 ``--mask_science_regions`` (boolean, default=False)
   For NIRSpec, mask regions of the image defined by WCS bounding
   boxes for slits/slices, as well as any regions known to be

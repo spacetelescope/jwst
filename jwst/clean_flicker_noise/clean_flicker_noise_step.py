@@ -29,7 +29,6 @@ class CleanFlickerNoiseStep(Step):
         fit_by_channel = boolean(default=False)  # Fit noise separately by amplifier (NIR only)
         background_method = option('median', 'model', None, default='median') # Background fitting algorithm
         background_box_size = int_list(min=2, max=2, default=None)  # Background box size for modeled background
-        background_from_rate = boolean(default=False)  # Fit background to rate image
         mask_science_regions = boolean(default=False)  # Mask known science regions
         n_sigma = float(default=2.0)  # Clipping level for non-background signal
         fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
@@ -68,12 +67,6 @@ class CleanFlickerNoiseStep(Step):
             Box size for the data grid used by `Background2D` when
             `background_method` = 'model'. For best results, use a box size
             that evenly divides the input image shape.
-
-        background_from_rate : bool, optional
-            If set, and the input data is a ramp model, the background will be
-            fit to the rate image instead of the individual ramp differences.
-            The preliminary background subtracted from each diff before fitting
-            noise is then rate background * group time.
 
         mask_science_regions : bool, optional
             For NIRSpec, mask regions of the image defined by WCS bounding
@@ -118,7 +111,6 @@ class CleanFlickerNoiseStep(Step):
             result = clean_flicker_noise.do_correction(
                 input_model, self.input_dir, self.fit_method, self.fit_by_channel,
                 self.background_method, self.background_box_size,
-                self.background_from_rate,
                 self.mask_science_regions, self.n_sigma, self.fit_histogram,
                 self.single_mask, self.user_mask,
                 self.save_mask, self.save_background, self.save_noise)

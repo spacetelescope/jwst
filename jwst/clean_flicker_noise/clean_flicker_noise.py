@@ -939,7 +939,7 @@ def _make_intermediate_model(input_model, intermediate_data):
 
 def do_correction(input_model, input_dir=None, fit_method='median',
                   fit_by_channel=False, background_method='median',
-                  background_box_size=None, background_from_rate=False,
+                  background_box_size=None,
                   mask_science_regions=False, n_sigma=2.0, fit_histogram=False,
                   single_mask=True, user_mask=None, save_mask=False,
                   save_background=False, save_noise=False):
@@ -973,12 +973,6 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         Box size for the data grid used by `Background2D` when
         `background_method` = 'model'. For best results, use a box size
         that evenly divides the input image shape.
-
-    background_from_rate : bool, optional
-        If set, and the input data is a ramp model, the background will be
-        fit to the rate images instead of the individual group differences.
-        The preliminary background subtracted from each diff before fitting
-        noise is then rate background * group time.
 
     mask_science_regions : bool, optional
         Mask slit/slice regions defined in WCS. Implemented only for
@@ -1058,8 +1052,6 @@ def do_correction(input_model, input_dir=None, fit_method='median',
     # Standardize background arguments
     if str(background_method).lower() == 'none':
         background_method = None
-    if background_method is None:
-        background_from_rate = False
 
     # Check for fit_by_channel argument, and use only if data is full frame
     if fit_by_channel and (subarray != 'FULL' or exp_type.startswith('MIR')):
@@ -1076,7 +1068,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         fc = (1061, 1211, 49943, 49957)
 
     # Make a rate file if needed
-    if user_mask is None or background_from_rate:
+    if user_mask is None:
         if isinstance(input_model, datamodels.RampModel):
             image_model = make_rate(input_model, return_cube=(not single_mask),
                                     input_dir=input_dir)
@@ -1150,28 +1142,6 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         log.warning("Mask does not match data shape. Step will be skipped.")
         return output_model, None, None, None, status
 
-    # Get the background level from the draft rate file if desired
-    if ndim > 3 and background_from_rate:
-        if single_mask:
-            # One rate image, use for all integrations
-            rate_background = background_level(
-                image_model.data, background_mask,
-                background_method=background_method,
-                background_box_size=background_box_size)
-            rate_background *= group_time
-        else:
-            # Compute background for each integration separately
-            rate_background = []
-            for integ in range(nints):
-                rbg = background_level(
-                    image_model.data[integ], background_mask[integ],
-                    background_method=background_method,
-                    background_box_size=background_box_size)
-                rate_background.append(rbg * group_time)
-    else:
-        background_from_rate = False
-        rate_background = None
-
     # Close the draft rate model if created - it is no longer needed.
     if image_model is not input_model:
         image_model.close()
@@ -1232,15 +1202,9 @@ def do_correction(input_model, input_dir=None, fit_method='median',
                 background = 0.0
                 bkg_sub = image
             else:
-                if background_from_rate:
-                    if single_mask:
-                        background = rate_background
-                    else:
-                        background = rate_background[i]
-                else:
-                    background = background_level(
-                        image, mask, background_method=background_method,
-                        background_box_size=background_box_size)
+                background = background_level(
+                    image, mask, background_method=background_method,
+                    background_box_size=background_box_size)
                 log.debug(f'Background level: {np.nanmedian(background):.5g}')
                 bkg_sub = image - background
 

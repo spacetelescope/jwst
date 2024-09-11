@@ -742,53 +742,6 @@ def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
     cleaned.close()
 
 
-@pytest.mark.parametrize('single_mask', [True, False])
-def test_do_correction_background_from_rate(single_mask):
-    ramp_model = make_small_ramp_model()
-
-    # Add some noise to the ramp to make rate and ramp
-    # backgrounds slightly different
-    rng = np.random.default_rng(seed=123)
-    ramp_model.data += rng.normal(0, 0.1, size=ramp_model.data.shape)
-
-    # Background from ramp diffs
-    c1, _, bg_model_ramp, _, _ = cfn.do_correction(
-        ramp_model, single_mask=single_mask, background_method='median',
-        background_from_rate=False, save_background=True)
-    c2, _, bg_model_rate, _, _ = cfn.do_correction(
-        ramp_model, single_mask=single_mask, background_method='median',
-        background_from_rate=True, save_background=True)
-
-    # Background values should be close but not exactly equal
-    assert not np.all(bg_model_ramp.data == bg_model_rate.data)
-    assert np.allclose(bg_model_ramp.data, bg_model_rate.data, atol=0.1)
-
-    # The first group should be zero in both, since there's no
-    # correction applied to the first group
-    assert np.all(bg_model_ramp.data[:, 0] == 0)
-    assert np.all(bg_model_rate.data[:, 0] == 0)
-
-    # Subsequent groups are all the same for background_from_rate, but
-    # will vary for background_from_ramp
-    for integ in range(bg_model_rate.data.shape[0]):
-        assert not np.allclose(bg_model_ramp.data[integ, 2:],
-                               bg_model_ramp.data[integ, 1])
-        if single_mask:
-            # all integrations are also the same
-            assert np.allclose(bg_model_rate.data[integ, 2:],
-                               bg_model_rate.data[0, 1])
-        else:
-            # integrations vary but groups are all the same
-            assert np.allclose(bg_model_rate.data[integ, 2:],
-                               bg_model_rate.data[integ, 1])
-
-    ramp_model.close()
-    bg_model_rate.close()
-    bg_model_ramp.close()
-    c1.close()
-    c2.close()
-
-
 @pytest.mark.parametrize('subarray', ['SUBS200A1', 'ALLSLITS'])
 def test_do_correction_fft_subarray(subarray):
     ramp_model = make_small_ramp_model()

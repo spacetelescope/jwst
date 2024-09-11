@@ -102,11 +102,9 @@ class NSCleanStep(Step):
         with datamodels.open(input) as input_model:
 
             # Do the NSClean correction
-            background_from_rate = False
             result = clean_flicker_noise.do_correction(
                 input_model, self.input_dir, self.fit_method, self.fit_by_channel,
                 self.background_method, self.background_box_size,
-                background_from_rate,
                 self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
                 self.single_mask, self.user_mask,
                 self.save_mask, self.save_background, self.save_noise)
