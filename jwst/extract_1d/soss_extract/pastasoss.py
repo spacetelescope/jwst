@@ -309,7 +309,7 @@ def get_soss_traces(
     elif order in ["1", "2"]:
         # reference trace data
         spectral_order_index = find_spectral_order_index(refmodel, int(order))
-        x, y = refmodel.traces[spectral_order_index].trace.T
+        x, y = refmodel.traces[spectral_order_index].trace.T.copy()
         origin = refmodel.traces[spectral_order_index].pivot_x, refmodel.traces[spectral_order_index].pivot_y
 
         # Offset for SUBSTRIP96
