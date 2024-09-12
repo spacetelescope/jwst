@@ -15,7 +15,7 @@ def blendmodels(product, inputs, ignore=None):
     """
     Blend datamodel metadata.
 
-    Properties
+    Parameters
     ----------
     product: JwstDataModel
         A datamodel that will have its metadata set
