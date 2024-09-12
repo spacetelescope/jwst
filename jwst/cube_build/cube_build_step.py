@@ -567,6 +567,7 @@ class CubeBuildStep (Step):
             self.log.error('Turning off adjusting by offsets')
             return None
 
+
         offset_filename = af['filename']
         offset_ra = af['raoffset']
         offset_dec = af['decoffset']
@@ -575,6 +576,7 @@ class CubeBuildStep (Step):
         if offset_unit != 'arcsec':
             self.log.error('Provide the offset units in units of arcsec ')
             self.log.error('Turning off adjusting by offsets ')
+            af.close()
             return None
 
         for model in self.input_models:
@@ -584,6 +586,7 @@ class CubeBuildStep (Step):
             else:
                 self.log.error('File in assocation is not found in offset list list %s', file_check)
                 self.log.error('Turning off adjusting by offsets')
+                af.close()
                 return None
         offsets = {}
         offsets['filename'] = offset_filename

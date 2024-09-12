@@ -121,6 +121,7 @@ def offset_file(tmp_path_factory):
     }
     af = asdf.AsdfFile(tree)
     af.write_to(filename)
+    af.close()
     return filename
 
 
@@ -128,7 +129,7 @@ def offset_file(tmp_path_factory):
 def offset_file_arcmin(tmp_path_factory):
     """ Generate a offset file with units = arcmin """
 
-    filename = tmp_path_factory.mktemp('offset_arcmin')
+    filename = tmp_path_factory.mktemp('offset')
     filename = filename / 'offset_arcmin.asdf'
     
     testfile = ['test1.fits', 'test2.fits']
