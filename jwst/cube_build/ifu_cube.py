@@ -1866,7 +1866,7 @@ class IFUCubeData():
         return sky_result
 
     # ______________________________________________________________________
-    def map_nirspec_pixel_to_sky(self, input_model):
+    def map_nirspec_pixel_to_sky(self, input_model, offsets):
 
         """Loop over a file and map the detector pixels to the output cube
 
