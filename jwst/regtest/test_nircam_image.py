@@ -72,7 +72,7 @@ def run_image3pipeline(run_image2pipeline, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
-                                    "refpix", "linearity", "trapsfilled",
+                                    "refpix", "linearity",
                                     "dark_current", "jump", "rate",
                                     "flat_field", "cal", "i2d"])
 def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
