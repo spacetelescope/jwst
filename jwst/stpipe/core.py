@@ -107,8 +107,12 @@ class JwstStep(Step):
     def __call__(self, *args, **kwargs):
         if not self.parent:
             warnings.warn(
-                "Step.__call__ is deprecated use either Step.run or Step.call",
-                UserWarning,
+                "Step.__call__ is deprecated. It is equivalent to Step.run "
+                "and is not recommended. See "
+                "https://jwst-pipeline.readthedocs.io/en/latest/jwst/"
+                "user_documentation/running_pipeline_python.html"
+                "#advanced-use-pipeline-run-vs-pipeline-call for more details.",
+                UserWarning
             )
         return super().__call__(*args, **kwargs)
 
