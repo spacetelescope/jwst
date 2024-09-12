@@ -36,6 +36,10 @@ This code works by
 Using model_blender
 ===================
 
+
+Using blendmodels
+-----------------
+
 The simplest way to run model blender only requires calling a single interface:
 
 .. code-block:: python
@@ -52,6 +56,23 @@ where
 The output product will end up with new metadata attribute values and a new ``hdrtab``
 attribute that will produce a ``HDRTAB`` table extension when the product is saved
 to disk.
+
+Using ModelBlender
+------------------
+
+Alternatively, metadata blending can be done incrementally by using `ModelBlender`
+to accumulate metadata from several models and then blending the result into an
+output model.
+
+.. code-block:: python
+
+   from jwst.model_blender import ModelBlender
+   blender = ModelBlender()
+   for model in input_models:
+       blender.accumulate(model)
+   blender.finalize_model(product)
+
+This produces a ``product`` identical to a call to `blendmodels` described above.
 
 
 Customizing the behavior
