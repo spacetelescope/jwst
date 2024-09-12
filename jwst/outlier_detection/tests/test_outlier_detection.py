@@ -600,7 +600,7 @@ def test_create_median(three_sci_as_asn, tmp_cwd):
     lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
     lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
 
-    ## make this test meaningful w.r.t. handling of weights
+    # make this test meaningful w.r.t. handling of weights
     with (lib_on_disk, lib_in_memory):
         for lib in [lib_on_disk, lib_in_memory]:
             for model in lib:

@@ -64,7 +64,7 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
-def create_median(resampled_models, maskpt, on_disk=True):
+def create_median(resampled_models, maskpt):
     """Create a median image from the singly resampled images.
 
     Parameters
@@ -75,32 +75,37 @@ def create_median(resampled_models, maskpt, on_disk=True):
     maskpt : float
         The weight threshold for masking out low weight pixels.
 
-    on_disk : bool
-        If True, the input models are on disk and will be read in chunks.
-
     Returns
     -------
     median_image : ndarray
         The median image.
     """
+    on_disk = resampled_models._on_disk
+    
     # Compute the weight threshold for each input model
     weight_thresholds = []
+    model_list = []
     with resampled_models:
         for resampled in resampled_models:
             weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
-            weight_thresholds.append(weight_threshold)
+            if not on_disk:
+                # handle weights right away for in-memory case
+                data = resampled.data.copy()
+                data[resampled.wht < weight_threshold] = np.nan
+                model_list.append(data)
+                del data
+            else:
+                weight_thresholds.append(weight_threshold)
             resampled_models.shelve(resampled, modify=False)
-
-    # compute median over all models
+        del resampled
+    
+    # easier case: all models in library can be loaded into memory at once
     if not on_disk:
-        # easier case: all models in library can be loaded into memory at once
-        model_list = []
-        with resampled_models:
-            for resampled in resampled_models:
-                model_list.append(resampled.data)
-                resampled_models.shelve(resampled, modify=False)
-                del resampled
-        return np.nanmedian(np.array(model_list), axis=0)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore",
+                                    message="All-NaN slice encountered",
+                                    category=RuntimeWarning)
+            return np.nanmedian(np.array(model_list), axis=0)
     else:
         # set up buffered access to all input models
         # get spatial sections of library and compute timewise median, one by one
