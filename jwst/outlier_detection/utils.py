@@ -57,28 +57,28 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
     """
     # Compute the weight threshold for each input model
     weight_thresholds = []
+    model_list = []
     with resampled_models:
         for resampled in resampled_models:
             weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
-            weight_thresholds.append(weight_threshold)
+            if not on_disk:
+                # handle weights right away for in-memory case
+                data = resampled.data.copy()
+                data[resampled.wht < weight_threshold] = np.nan
+                model_list.append(data)
+                del data
+            else:
+                weight_thresholds.append(weight_threshold)
             resampled_models.shelve(resampled, modify=False)
-
-    # compute median over all models
+        del resampled
+    
+    # easier case: all models in library can be loaded into memory at once
     if not on_disk:
-        # easier case: all models in library can be loaded into memory at once
-        with resampled_models:
-            for i, resampled in enumerate(resampled_models):
-                # convert to a CubeModel to pass into create_cube_median
-                if i == 0:
-                    cube_shape = (len(resampled_models), resampled.data.shape[0], resampled.data.shape[1])
-                    cube = datamodels.CubeModel(data=np.zeros(cube_shape))
-                    cube.wht = np.zeros(cube_shape)
-
-                cube.data[i] = resampled.data
-                cube.wht[i] = resampled.wht
-                resampled_models.shelve(resampled, i, modify=False)
-                del resampled
-        return create_cube_median(cube, maskpt)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore",
+                                    message="All-NaN slice encountered",
+                                    category=RuntimeWarning)
+            return np.nanmedian(np.array(model_list), axis=0)
     else:
         # set up buffered access to all input models
         with resampled_models:
