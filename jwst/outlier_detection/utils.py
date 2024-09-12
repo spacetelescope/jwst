@@ -2,6 +2,7 @@
 The ever-present utils sub-module. A home for all...
 """
 
+import warnings
 import numpy as np
 import tempfile
 from pathlib import Path
@@ -21,124 +22,34 @@ OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 _ONE_MB = 1 << 20
 
 
-class TempArrayHandlerError(Exception):
-    """Generic error for TempArrayHandler."""
-    pass
-
-class UseAfterCloseError(TempArrayHandlerError):
-    def __init__(self, msg="Attempted use after close", *args, **kwargs):
-        super().__init__(msg, *args, **kwargs)
-
-# not inheriting from MutableSequence here as insert is complicated
-class TempArrayHandler:
-    """Handler for operations on a list of 2-D numpy arrays that are too large
-    to all fit in memory at once."""
-    def __init__(self, tempdir: str=""):
+class DiskAppendableArray:
+    
+    def __init__(self, slice_shape, dtype='float32', tempdir="", filestem="data"):
         self._temp_dir = tempfile.TemporaryDirectory(dir=tempdir)
         self._temp_path = Path(self._temp_dir.name)
-        self._filenames = []
-        self._data_shape = None
-        self._data_dtype = None
+        self._slice_shape = slice_shape
+        self._dtype = dtype
+        self._filename = self._temp_path / Path(filestem + ".bits")
+        self._append_count = 0
+        with open(self._filename, 'wb') as f:
+            pass
 
     @property
-    def closed(self):
-        return not hasattr(self, "_temp_dir")
+    def shape(self):
+        return (self._append_count,) + self._slice_shape
+        
+    def append(self, data):
+        if data.shape != self._slice_shape:
+            raise ValueError(f"Data shape {data.shape} does not match slice shape {self._slice_shape}")
+        if data.dtype != self._dtype:
+            raise ValueError(f"Data dtype {data.dtype} does not match array dtype {self._dtype}")
+        with open(self._filename, 'ab') as f:
+            f.write(data.tobytes())
+        self._append_count += 1
 
-    def close(self):
-        if self.closed:
-            return
-        self._temp_dir.cleanup()
-        del self._temp_dir
-
-    def __del__(self):
-        self.close()
-
-    def __len__(self) -> int:
-        if self.closed:
-            raise UseAfterCloseError()
-        return len(self._filenames)
-
-    def __getitem__(self, index: int) -> np.ndarray:
-        if self.closed:
-            raise UseAfterCloseError()
-        fn = self._filenames[index]
-        return np.load(fn)
-
-    def _validate_input(self, arr: np.ndarray):
-        if arr.ndim != 2:
-            raise TempArrayHandlerError(f"Only 2D arrays are supported: {arr.ndim}")
-        if self._data_shape is None:
-            self._data_shape = arr.shape
-        else:
-            if arr.shape != self._data_shape:
-                raise TempArrayHandlerError(
-                    f"Input shape mismatch: {arr.shape} != {self._data_shape}"
-                )
-        if self._data_dtype is None:
-            self._data_dtype = arr.dtype
-        else:
-            if arr.dtype != self._data_dtype:
-                raise TempArrayHandlerError(
-                    f"Input dtype mismatch: {arr.dtype} != {self._data_dtype}"
-                )
-
-    def __setitem__(self, index: int, value: np.ndarray):
-        self._validate_input(value)
-        if self.closed:
-            raise UseAfterCloseError()
-        fn = self._filenames[index]
-        if fn is None:
-            fn = self._temp_path / f"{index}.npy"
-        np.save(fn, value, False)
-        self._filenames[index] = fn
-
-    def append(self, value: np.ndarray):
-        if self.closed:
-            raise UseAfterCloseError()
-        index = len(self)
-        self._filenames.append(None)
-        self.__setitem__(index, value)
-
-    def median(self, buffer_size: int=100 << 20) -> np.ndarray:
-        if self.closed:
-            raise UseAfterCloseError()
-        if not len(self):
-            raise TempArrayHandlerError("Can't take median of empty list")
-
-        # figure out how big the buffer can be
-        n_arrays = len(self)
-        allowed_memory_per_array = buffer_size // n_arrays
-
-        n_dim_1 = allowed_memory_per_array // (
-            self._data_dtype.itemsize * self._data_shape[0]
-        )
-        if n_dim_1 < 1:
-            # TODO more useful error message
-            msg = f"Memory buffer {allowed_memory_per_array} is too small to hold "+ \
-                  f"a single row of length {self._data_shape[0]}"
-            raise TempArrayHandlerError(msg)
-        if n_dim_1 >= self._data_shape[1]:
-            return np.nanmedian(self, axis=0)
-        log.info(f"Computing median in {int(self._data_shape[1]/n_dim_1)} chunks"+ \
-                 f"of size {(n_dim_1, self._data_shape[0])}")
-
-        buffer = np.empty(
-            (n_arrays, self._data_shape[0], n_dim_1), dtype=self._data_dtype
-        )
-        median = np.empty(self._data_shape, dtype=self._data_dtype)
-
-        e = n_dim_1
-        slices = [slice(0, e)]
-        while e <= self._data_shape[1]:
-            s = e
-            e += n_dim_1
-            slices.append(slice(s, min(e, self._data_shape[1])))
-
-        for s in slices:
-            for i, arr in enumerate(self):
-                buffer[i, :, : (s.stop - s.start)] = arr[:, s]
-            median[:, s] = np.nanmedian(buffer[:, :, : (s.stop - s.start)], axis=0)
-        return median
+    def read(self):
+        shp = (self._append_count,) + self._slice_shape
+        return np.fromfile(self._filename, dtype=self._dtype).reshape(shp)
 
 
 def create_cube_median(cube_model, maskpt):
@@ -153,7 +64,7 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
-def create_median(resampled_models, maskpt, on_disk=True, buffer_size=1.0):
+def create_median(resampled_models, maskpt, on_disk=True):
     """Create a median image from the singly resampled images.
 
     Parameters
@@ -167,41 +78,164 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=1.0):
     on_disk : bool
         If True, the input models are on disk and will be read in chunks.
 
-    buffer_size : float
-        The size of chunk in MB, per input model, that will be read into memory.
-        This parameter has no effect if on_disk is False.
+    Returns
+    -------
+    median_image : ndarray
+        The median image.
+    """
+    # Compute the weight threshold for each input model
+    weight_thresholds = []
+    with resampled_models:
+        for resampled in resampled_models:
+            weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
+            weight_thresholds.append(weight_threshold)
+            resampled_models.shelve(resampled, modify=False)
+
+    # compute median over all models
+    if not on_disk:
+        # easier case: all models in library can be loaded into memory at once
+        model_list = []
+        with resampled_models:
+            for resampled in resampled_models:
+                model_list.append(resampled.data)
+                resampled_models.shelve(resampled, modify=False)
+                del resampled
+        return np.nanmedian(np.array(model_list), axis=0)
+    else:
+        # set up buffered access to all input models
+        # get spatial sections of library and compute timewise median, one by one
+        resampled_sections, row_indices = _write_sections(resampled_models, weight_thresholds)
+        return _create_median(resampled_sections, row_indices)
+
+
+def _write_sections(library, weight_thresholds):
+    """Iterator to return sections from a ModelLibrary.
+
+    Parameters
+    ----------
+    library : ModelLibrary
+        The input data models.
+
+    weight_thresholds : list
+        The weight thresholds for masking out low weight pixels.
+
+    Returns
+    -------
+    temp_arrays : list
+        A list of DiskAppendableArray objects, each holding a spatial section
+        of every input model, stacked along the time axis.
+
+    row_indices : list
+        A list of tuples, each containing the start and end row indices of the
+        spatial section in the original data model.
+    """
+
+    with library:
+
+        # get an example model to determine dtype, shape, buffer indices
+        example_model = library.borrow(0)
+        dtype = example_model.data.dtype
+        shp = example_model.data.shape
+        itemsize = example_model.data.itemsize
+        imrows = shp[0]
+
+        # reasonable total buffer size is the size of each input datamodel
+        # since that is the bare minimum that must be loaded into memory in the first place
+        # for now just use the size of model.data
+        total_buffer_size = shp[0] * shp[1] * itemsize
+        per_model_buffer_size = total_buffer_size / len(library)
+        nsections, section_nrows = _compute_buffer_indices(shp, itemsize, per_model_buffer_size)
+        log.info(f"Computing median in {nsections} sections each of size: {total_buffer_size / _ONE_MB} MB")
+        library.shelve(example_model, 0, modify=False)
+        del example_model
+
+        # set up temp file handlers for each section
+        # handle zeroth section separately just to get the tempdir for the rest
+        slice_shape = (section_nrows, shp[1])
+        arr0 = DiskAppendableArray(slice_shape, filestem="section0", dtype=dtype)
+        tempdir = arr0._temp_dir.name
+        temp_arrays = [arr0,]
+        for i in range(1, nsections-1):
+            arr = DiskAppendableArray(slice_shape, tempdir=tempdir, filestem=f"section{i}", dtype=dtype)
+            temp_arrays.append(arr)
+
+        # handle the last section separately because it has a different shape
+        slice_shape_last = (imrows - (nsections-1) * section_nrows, shp[1])
+        arrn = DiskAppendableArray(slice_shape_last, tempdir=tempdir, filestem=f"section{nsections-1}", dtype=dtype)
+        temp_arrays.append(arrn)
+            
+        # now append data from each model to all the sections
+        row_indices = []
+        for j, model in enumerate(library):
+            for i in range(nsections):
+                row1 = i * section_nrows
+                row2 = min(row1 + section_nrows, imrows)
+                if j == 0:
+                    row_indices.append((row1, row2))
+                arr = temp_arrays[i]
+                sci = model.data[row1:row2]
+
+                # handle weight thresholding right here, while array is open
+                thresh = weight_thresholds[j]
+                sci[model.wht[row1:row2] < thresh] = np.nan
+                arr.append(sci)
+
+            library.shelve(model, j, modify=False)
+        del model
+
+    return temp_arrays, row_indices
+
+
+def _compute_buffer_indices(shape, itemsize, buffer_size):
+
+    imrows, imcols = shape
+    min_buffer_size = imcols * itemsize
+    section_nrows = min(imrows, int(buffer_size // min_buffer_size))
+
+    if section_nrows == 0:
+        buffer_size = min_buffer_size
+        log.warning("WARNING: Buffer size is too small to hold a single row."
+                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB")
+        section_nrows = 1
+
+    nsections = int(np.ceil(imrows / section_nrows))
+    return nsections, section_nrows
+
+
+def _create_median(resampled_sections, row_indices):
+    """
+    Parameters
+    ----------
+    resampled_sections : list
+        List of DiskAppendableArray objects, each holding a spatial section
+        of every input model, stacked along the time axis.
+
+    row_indices : list
+        List of tuples, each containing the start and end row indices of the
+        spatial section in the original data model.
 
     Returns
     -------
     median_image : ndarray
         The median image.
     """
-    # initialize storage for median computation
-    if on_disk:
-        # harder case: need special on-disk numpy array handling
-        model_list = TempArrayHandler()
-    else:
-        # easier case: all models in library can be loaded into memory at once
-        model_list = []
 
-    # Compute the weight threshold for each input model
-    with resampled_models:
-        for resampled in resampled_models:
-            weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
-            mask = np.less(resampled.wht, weight_threshold)
-            resampled.data[mask] = np.nan
-            model_list.append(resampled.data)
-            # this is still modified if on_disk is False, but doesn't matter because never used again
-            resampled_models.shelve(resampled, modify=False) 
-            del resampled
-    
-    if not on_disk:
-        return np.nanmedian(np.array(model_list), axis=0)
-    else:
-        # compute median using on-disk arrays
-        median_data = model_list.median(buffer_size=int(buffer_size*_ONE_MB))
-        model_list.close()
-        return median_data
+    dtype = resampled_sections[0]._dtype
+    output_rows = row_indices[-1][1]
+    output_cols = resampled_sections[0].shape[2]
+    median_image = np.empty((output_rows, output_cols), dtype) * np.nan
+
+    for i, disk_arr in enumerate(resampled_sections):
+        row1, row2 = row_indices[i]
+        arr = disk_arr.read()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore",
+                                    message="All-NaN slice encountered",
+                                    category=RuntimeWarning)
+            median_image[row1:row2] = np.nanmedian(arr, axis=0)
+        del arr, disk_arr
+
+    return median_image
 
 
 def flag_crs_in_models(

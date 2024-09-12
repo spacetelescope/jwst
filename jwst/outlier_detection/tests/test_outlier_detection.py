@@ -109,7 +109,7 @@ def we_many_sci(
 ):
     """Provide numsci science images with different noise but identical source
     and same background level"""
-    shape = (20, 20)
+    shape = (21, 20)
 
     sci1 = datamodels.ImageModel(shape)
 
