@@ -21,9 +21,19 @@ OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 _ONE_MB = 1 << 20
 
 
+class TempArrayHandlerError(Exception):
+    """Generic error for TempArrayHandler."""
+    pass
+
+class UseAfterCloseError(TempArrayHandlerError):
+    def __init__(self, msg="Attempted use after close", *args, **kwargs):
+        super().__init__(msg, *args, **kwargs)
+
 # not inheriting from MutableSequence here as insert is complicated
 class TempArrayHandler:
-    def __init__(self, tempdir=""):
+    """Handler for operations on a list of 2-D numpy arrays that are too large
+    to all fit in memory at once."""
+    def __init__(self, tempdir: str=""):
         self._temp_dir = tempfile.TemporaryDirectory(dir=tempdir)
         self._temp_path = Path(self._temp_dir.name)
         self._filenames = []
@@ -43,57 +53,57 @@ class TempArrayHandler:
     def __del__(self):
         self.close()
 
-    def __len__(self):
+    def __len__(self) -> int:
         if self.closed:
-            raise Exception("use after close")
+            raise UseAfterCloseError()
         return len(self._filenames)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> np.ndarray:
         if self.closed:
-            raise Exception("use after close")
+            raise UseAfterCloseError()
         fn = self._filenames[index]
         return np.load(fn)
 
-    def _validate_input(self, arr):
+    def _validate_input(self, arr: np.ndarray):
         if arr.ndim != 2:
-            raise Exception(f"Only 2D arrays are supported: {arr.ndim}")
+            raise TempArrayHandlerError(f"Only 2D arrays are supported: {arr.ndim}")
         if self._data_shape is None:
             self._data_shape = arr.shape
         else:
             if arr.shape != self._data_shape:
-                raise Exception(
+                raise TempArrayHandlerError(
                     f"Input shape mismatch: {arr.shape} != {self._data_shape}"
                 )
         if self._data_dtype is None:
             self._data_dtype = arr.dtype
         else:
             if arr.dtype != self._data_dtype:
-                raise Exception(
+                raise TempArrayHandlerError(
                     f"Input dtype mismatch: {arr.dtype} != {self._data_dtype}"
                 )
 
-    def __setitem__(self, index, value):
+    def __setitem__(self, index: int, value: np.ndarray):
         self._validate_input(value)
         if self.closed:
-            raise Exception("use after close")
+            raise UseAfterCloseError()
         fn = self._filenames[index]
         if fn is None:
             fn = self._temp_path / f"{index}.npy"
         np.save(fn, value, False)
         self._filenames[index] = fn
 
-    def append(self, value):
+    def append(self, value: np.ndarray):
         if self.closed:
-            raise Exception("use after close")
+            raise UseAfterCloseError()
         index = len(self)
         self._filenames.append(None)
         self.__setitem__(index, value)
 
-    def median(self, buffer_size=100 << 20):
+    def median(self, buffer_size: int=100 << 20) -> np.ndarray:
         if self.closed:
-            raise Exception("use after close")
+            raise UseAfterCloseError()
         if not len(self):
-            raise Exception("can't take median of empty list")
+            raise TempArrayHandlerError("Can't take median of empty list")
 
         # figure out how big the buffer can be
         n_arrays = len(self)
@@ -104,9 +114,13 @@ class TempArrayHandler:
         )
         if n_dim_1 < 1:
             # TODO more useful error message
-            raise Exception("Not enough memory")
+            msg = f"Memory buffer {allowed_memory_per_array} is too small to hold "+ \
+                  f"a single row of length {self._data_shape[0]}"
+            raise TempArrayHandlerError(msg)
         if n_dim_1 >= self._data_shape[1]:
             return np.nanmedian(self, axis=0)
+        log.info(f"Computing median in {int(self._data_shape[1]/n_dim_1)} chunks"+ \
+                 f"of size {(n_dim_1, self._data_shape[0])}")
 
         buffer = np.empty(
             (n_arrays, self._data_shape[0], n_dim_1), dtype=self._data_dtype
@@ -139,7 +153,7 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
-def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
+def create_median(resampled_models, maskpt, on_disk=True, buffer_size=1.0):
     """Create a median image from the singly resampled images.
 
     Parameters
@@ -185,7 +199,7 @@ def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
         return np.nanmedian(np.array(model_list), axis=0)
     else:
         # compute median using on-disk arrays
-        median_data = model_list.median(buffer_size=buffer_size*_ONE_MB)
+        median_data = model_list.median(buffer_size=int(buffer_size*_ONE_MB))
         model_list.close()
         return median_data
 
