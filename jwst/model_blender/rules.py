@@ -6,7 +6,7 @@ import numpy as np
 __all__ = ['RULE_FUNCTIONS', 'Blender', 'make_blender']
 
 
-def multi(vals):
+def _multi(vals):
     """
     This will either return the common value from a list of identical values
     or 'MULTIPLE'
@@ -21,7 +21,7 @@ def multi(vals):
         return "MULTIPLE"
 
 RULE_FUNCTIONS = {
-    'multi': multi,
+    'multi': _multi,
     'mean': np.mean,
     'sum': np.sum,
     'max': np.max,
@@ -37,21 +37,77 @@ RULE_FUNCTIONS = {
     'mindatetime': min,
     'maxdatetime': max
 }
+"""
+Mapping of rule names to functions.
+
+Used for `make_blender`.
+
+The following rules are considered deprecated
+and should not be used for new schemas.
+
+  - mintime
+  - maxtime
+  - mindate
+  - maxdate
+  - mindatetime
+  - maxdatetime
+"""
 
 
 class Blender:
+    """
+    Single attribute metadata blender
+    """
     def __init__(self, blend_function):
+        """
+        Create a new metadata attribute blender.
+
+        Parameters
+        ----------
+        blend_function: callable
+            Function to blend accumulated metadata values
+        """
         self.blend_function = blend_function
         self.values = []
 
     def accumulate(self, value):
+        """
+        Add a metadata value for blending.
+
+        Parameters
+        ----------
+        value:
+            Value for this metadata attribute to use
+            when blending.
+        """
         self.values.append(value)
 
     def finalize(self):
+        """
+        Blend the accumulated metadata values.
+
+        Returns
+        -------
+        value:
+            The blended result.
+        """
         if not self.values:
             return None
         return self.blend_function(self.values)
 
 
 def make_blender(rule):
+    """
+    Make a new Blender instance using the provided rule
+
+    Parameters
+    ----------
+    rule: string
+        Name of the blending rule. Must be in ``RULE_FUNCTIONS``.
+
+    Returns
+    -------
+    blender: Blender
+        Blender instance using the provided rule.
+    """
     return Blender(RULE_FUNCTIONS[rule])
