@@ -21,13 +21,6 @@ def multi(vals):
         return "MULTIPLE"
 
 
-def _isotime(time_str):
-    hms = [float(i) for i in time_str.split(':')]
-    sec_ms = hms[2] - int(hms[2])
-    isotime = time(int(hms[0]), int(hms[1]), int(hms[2]), int(sec_ms * 1000000))
-    return isotime
-
-
 RULE_FUNCTIONS = {
     'multi': multi,
     'mean': np.mean,
