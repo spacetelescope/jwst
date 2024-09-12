@@ -94,6 +94,10 @@ class JwstStep(Step):
     def remove_suffix(self, name):
         return remove_suffix(name)
 
+    @classmethod
+    def call(cls, *args, **kwargs):
+        raise Exception("...")
+
     @wraps(Step.run)
     def run(self, *args, **kwargs):
         result = super().run(*args, **kwargs)
