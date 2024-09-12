@@ -16,3 +16,4 @@ Supported rule names and corresponding functions are listed in
 
 .. automodapi:: jwst.model_blender.rules
   :no-inheritance-diagram:
+  :include-all-objects:

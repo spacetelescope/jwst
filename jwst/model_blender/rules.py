@@ -3,7 +3,7 @@ from datetime import time
 import numpy as np
 
 
-__all__ = ['RULE_FUNCTIONS', 'Blender', 'make_blender']
+__all__ = ['RULE_FUNCTIONS', 'AttributeBlender', 'make_blender']
 
 
 def _multi(vals):
@@ -19,6 +19,7 @@ def _multi(vals):
         return uniq_vals[0]
     if num_vals > 1:
         return "MULTIPLE"
+
 
 RULE_FUNCTIONS = {
     'multi': _multi,
@@ -54,7 +55,7 @@ and should not be used for new schemas.
 """
 
 
-class Blender:
+class AttributeBlender:
     """
     Single attribute metadata blender
     """
@@ -98,16 +99,16 @@ class Blender:
 
 def make_blender(rule):
     """
-    Make a new Blender instance using the provided rule
+    Make a `AttributeBlender` instance using the provided rule
 
     Parameters
     ----------
     rule: string
-        Name of the blending rule. Must be in ``RULE_FUNCTIONS``.
+        Name of the blending rule. Must be in `RULE_FUNCTIONS`.
 
     Returns
     -------
-    blender: Blender
+    attr_blender: `AttrBlender`
         Blender instance using the provided rule.
     """
-    return Blender(RULE_FUNCTIONS[rule])
+    return AttributeBlender(RULE_FUNCTIONS[rule])
