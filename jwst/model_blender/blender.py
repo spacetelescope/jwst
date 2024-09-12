@@ -52,14 +52,14 @@ class ModelBlender:
 
     def accumulate(self, model):
         """
-        Process a datamodel, adding it's metadata to the blended
+        Process a datamodel, adding its metadata to the blended
         metadata and the metadata table.
 
         Parameters
         ----------
 
         model: `jwst.datamodels.JwstDataModel`
-            The datatamodel to blend.
+            The datamodel to blend.
         """
         if self._first_header_meta is None:
             self._model_type = type(model)
@@ -123,7 +123,7 @@ class ModelBlender:
             - adding an "hdrtab" attribute (containing the metadata table)
             - updating the model schema to save "hdrtab"
 
-        The provided model will be update in-place.
+        The provided model will be updated in-place.
 
         Parameters
         ----------

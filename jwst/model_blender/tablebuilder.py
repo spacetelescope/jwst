@@ -47,7 +47,7 @@ def table_to_schema(table):
 
 class TableBuilder:
     """
-    Class to incrementally build a metadat "table" (a numpy
+    Class to incrementally build a metadata "table" (a numpy
     structured array) containing metadata from several models.
 
     >>> tb = TableBuilder({"meta.filename": "FN"})
