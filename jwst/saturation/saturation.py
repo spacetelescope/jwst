@@ -41,6 +41,9 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat, use_readpatt):
         as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
         charge spilling.
 
+    use_readpatt: boolean
+        Use grouped read pattern information to assist with flagging
+
     Returns
     -------
     output_model : `~jwst.datamodels.RampModel`
@@ -114,6 +117,9 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat, use_readpatt):
         Number of layers of pixels adjacent to a saturated pixel to also flag
         as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
         charge spilling.
+
+    use_readpatt: boolean
+        Use grouped read pattern information to assist with flagging
 
     Returns
     -------
