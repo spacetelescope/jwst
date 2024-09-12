@@ -2,6 +2,13 @@ from stdatamodels import schema as dm_schema
 
 def parse_schema(schema):
     """
+    Parse an ASDF schema for model blending instructions.
+
+    Parameters
+    ----------
+    schema : dict
+        Dictionary containing an ASDF schema.
+
     Returns
     -------
     attr_to_column: dict

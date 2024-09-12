@@ -20,7 +20,6 @@ def multi(vals):
     if num_vals > 1:
         return "MULTIPLE"
 
-
 RULE_FUNCTIONS = {
     'multi': multi,
     'mean': np.mean,

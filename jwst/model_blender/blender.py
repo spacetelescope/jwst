@@ -11,8 +11,9 @@ __all__ = ['ModelBlender']
 
 class ModelBlender:
     """
-    Class to "blend" metadata from several datamodels
-    into:
+    Class to "blend" metadata from several datamodels.
+
+    Tht output "blended" model will contain:
 
         - metadata for a combined model
         - a table with metadata of each datamodel
@@ -30,8 +31,7 @@ class ModelBlender:
     """
     def __init__(self, blend_ignore_attrs=None):
         """
-        Create a new `ModelBlender` using an optional list of
-        attributes to ignore.
+        Create a new `ModelBlender`.
 
         Parameters
         ----------
@@ -52,7 +52,9 @@ class ModelBlender:
 
     def accumulate(self, model):
         """
-        Process a datamodel, adding its metadata to the blended
+        Blend metadata for model.
+
+        Process model adding its metadata to the blended
         metadata and the metadata table.
 
         Parameters
@@ -119,6 +121,8 @@ class ModelBlender:
 
     def finalize_model(self, model):
         """
+        Update model with the blend results.
+
         Add blended metadata and the accumulated metadata table to
         the provided datamodel. The update process involves:
 

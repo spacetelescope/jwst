@@ -18,6 +18,8 @@ def _convert_dtype(value):
 
 def table_to_schema(table):
     """
+    Construct a schema for a table.
+
     Convert a "table" (a structured ndarray) to a stdatamodels
     sub-schema that will allow the "table" to be stored to a fits
     extension HDRTAB.
@@ -47,7 +49,9 @@ def table_to_schema(table):
 
 class TableBuilder:
     """
-    Class to incrementally build a metadata "table" (a numpy
+    Class to build a metadata table.
+
+    Used to incrementally build a metadata "table" (a numpy
     structured array) containing metadata from several models.
 
     >>> tb = TableBuilder({"meta.filename": "FN"})
@@ -58,8 +62,7 @@ class TableBuilder:
     """
     def __init__(self, attr_to_column):
         """
-        Construct a `TableBuilder` instance using the mapping
-        provided in ``attr_to_column``.
+        Create a new `TableBuilder`.
 
         Parameters
         ----------
@@ -75,8 +78,7 @@ class TableBuilder:
 
     def header_to_row(self, header):
         """
-        Add a datamodel header metadata dictionary
-        as a row to the table.
+        Add metadata in header to the table.
 
         This function will add a complete row for each
         header. If header is missing a required attribute
@@ -101,8 +103,7 @@ class TableBuilder:
 
     def build_table(self):
         """
-        Build a "table" containing the previously
-        added rows.
+        Build the final "table".
 
         Returns
         -------
