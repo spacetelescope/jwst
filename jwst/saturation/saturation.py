@@ -41,7 +41,7 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat, use_readpatt):
         as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
         charge spilling.
 
-    use_readpatt: boolean
+    use_readpatt : bool
         Use grouped read pattern information to assist with flagging
 
     Returns
