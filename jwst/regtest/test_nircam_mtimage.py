@@ -8,11 +8,12 @@ from jwst.stpipe import Step
 
 
 @pytest.mark.bigdata
-def test_nircam_image_moving_target_i2d(rtdata, fitsdiff_default_kwargs):
+@pytest.mark.parametrize("in_memory", [True, False])
+def test_nircam_image_moving_target_i2d(rtdata, fitsdiff_default_kwargs, in_memory):
     """Test resampled i2d of moving target exposures for NIRCam imaging"""
     rtdata.get_asn("nircam/image/mt_asn.json")
     rtdata.output = "mt_assoc_i2d.fits"
-    args = ["calwebb_image3", rtdata.input]
+    args = ["calwebb_image3", rtdata.input, "--in_memory=" + str(in_memory)]
     Step.from_cmdline(args)
     rtdata.get_truth("truth/test_nircam_mtimage/mt_assoc_i2d.fits")
 

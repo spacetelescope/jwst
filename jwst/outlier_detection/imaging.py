@@ -100,14 +100,13 @@ def detect_outliers(
                 input_models.shelve(model, modify=True)
 
     # Perform median combination on set of drizzled mosaics
-    median_data = create_median(drizzled_models, maskpt, on_disk=not in_memory)
+    median_data = create_median(drizzled_models, maskpt)
 
     if save_intermediate_results:
         # make a median model
         with drizzled_models:
             example_model = drizzled_models.borrow(0)
             drizzled_models.shelve(example_model, modify=False)
-            #with datamodels.open(example_model) as dm0:
             median_model = datamodels.ImageModel(median_data)
             median_model.update(example_model)
             median_model.meta.wcs = median_wcs
