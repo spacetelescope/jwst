@@ -410,9 +410,12 @@ class RampFitStep(Step):
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
               
+            # Cork on a copy
+            result = input_model.copy()
+
             max_cores = self.maximum_cores
-            readnoise_filename = self.get_reference_file(input_model, 'readnoise')
-            gain_filename = self.get_reference_file(input_model, 'gain')
+            readnoise_filename = self.get_reference_file(result, 'readnoise')
+            gain_filename = self.get_reference_file(result, 'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
@@ -425,12 +428,12 @@ class RampFitStep(Step):
                 # available later in the gain_scale step, which avoids having to
                 # load the gain ref file again in that step.
                 if gain_model.meta.exposure.gain_factor is not None:
-                    input_model.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
+                    result.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
 
                 # Get gain arrays, subarrays if desired.
-                frames_per_group = input_model.meta.exposure.nframes
+                frames_per_group = result.meta.exposure.nframes
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
-                    input_model, readnoise_model, gain_model, frames_per_group)
+                    result, readnoise_model, gain_model, frames_per_group)
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
@@ -439,22 +442,19 @@ class RampFitStep(Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-            int_times = input_model.int_times
+            int_times = result.int_times
 
-            # Before the ramp_fit() call, copy the input model ("_W" for weighting)
-            # for later reconstruction of the fitting array tuples.
-            input_model_W = copy.copy(input_model)
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
-                input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
+                result, buffsize, self.save_opt, readnoise_2d, gain_2d,
                 self.algorithm, self.weighting, max_cores, dqflags.pixel,
                 suppress_one_group=self.suppress_one_group)
 
             # Create a gdq to modify if there are charge_migrated groups
             if self.algorithm == "OLS":
-                gdq = input_model_W.groupdq.copy()
+                gdq = result.groupdq.copy()
 
                 # Locate groups where that are flagged with CHARGELOSS
                 wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
@@ -468,7 +468,7 @@ class RampFitStep(Step):
                     gdq[where_sat] = np.bitwise_or(gdq[where_sat], dqflags.group['DO_NOT_USE'])
 
                     # Get group_time for readnoise variance calculation
-                    group_time = input_model.meta.exposure.group_time
+                    group_time = result.meta.exposure.group_time
 
                     # Using the modified GROUPDQ array, create new readnoise variance arrays
                     image_var_RN, integ_var_RN, opt_var_RN = \
@@ -531,6 +531,6 @@ class RampFitStep(Step):
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
         # Cleanup
-        del input_model
+        del result
 
         return out_model, int_model
