@@ -31,7 +31,7 @@ class DiskAppendableArray:
         self._dtype = dtype
         self._filename = self._temp_path / Path(filestem + ".bits")
         self._append_count = 0
-        with open(self._filename, 'wb') as f:
+        with open(self._filename, 'wb') as f: # Noqa: F841
             pass
 
     @property
@@ -64,7 +64,7 @@ def create_cube_median(cube_model, maskpt):
     return median
 
 
-def create_median(resampled_models, maskpt):
+def create_median(resampled_models, maskpt, buffer_size=None):
     """Create a median image from the singly resampled images.
 
     Parameters
@@ -75,12 +75,17 @@ def create_median(resampled_models, maskpt):
     maskpt : float
         The weight threshold for masking out low weight pixels.
 
+    buffer_size : int
+        The buffer size for the median computation, units of bytes.
+
     Returns
     -------
     median_image : ndarray
         The median image.
     """
     on_disk = resampled_models._on_disk
+    if on_disk and buffer_size is None:
+        raise ValueError("Buffer size must be provided when resampled models are on disk")
     
     # Compute the weight threshold for each input model
     weight_thresholds = []
@@ -109,11 +114,11 @@ def create_median(resampled_models, maskpt):
     else:
         # set up buffered access to all input models
         # get spatial sections of library and compute timewise median, one by one
-        resampled_sections, row_indices = _write_sections(resampled_models, weight_thresholds)
+        resampled_sections, row_indices = _write_sections(resampled_models, weight_thresholds, buffer_size)
         return _create_median(resampled_sections, row_indices)
 
 
-def _write_sections(library, weight_thresholds):
+def _write_sections(library, weight_thresholds, buffer_size):
     """Iterator to return sections from a ModelLibrary.
 
     Parameters
@@ -123,6 +128,9 @@ def _write_sections(library, weight_thresholds):
 
     weight_thresholds : list
         The weight thresholds for masking out low weight pixels.
+
+    buffer_size : int
+        The buffer size for the median computation, units of bytes.
 
     Returns
     -------
@@ -144,13 +152,8 @@ def _write_sections(library, weight_thresholds):
         itemsize = example_model.data.itemsize
         imrows = shp[0]
 
-        # reasonable total buffer size is the size of each input datamodel
-        # since that is the bare minimum that must be loaded into memory in the first place
-        # for now just use the size of model.data
-        total_buffer_size = shp[0] * shp[1] * itemsize
-        per_model_buffer_size = total_buffer_size / len(library)
-        nsections, section_nrows = _compute_buffer_indices(shp, itemsize, per_model_buffer_size)
-        log.info(f"Computing median in {nsections} sections each of size: {total_buffer_size / _ONE_MB} MB")
+        # compute buffer indices
+        nsections, section_nrows = _compute_buffer_indices((len(library),)+shp, itemsize, buffer_size)
         library.shelve(example_model, 0, modify=False)
         del example_model
 
@@ -192,18 +195,40 @@ def _write_sections(library, weight_thresholds):
 
 
 def _compute_buffer_indices(shape, itemsize, buffer_size):
+    """
+    Parameters
+    ----------
+    shape : tuple
+        The shape of the full input, ie, (n_images, imrows, imcols).
 
-    imrows, imcols = shape
+    itemsize : int
+        The size of a single array element in bytes.
+
+    buffer_size : int
+        The buffer size for the median computation, units of bytes.
+
+    Returns
+    -------
+    nsections : int
+        The number of sections to divide the input data into.
+
+    section_nrows : int
+        The number of rows in each section (except the last one).
+    """
+
+    nimages, imrows, imcols = shape
+    per_model_buffer_size = buffer_size / nimages
     min_buffer_size = imcols * itemsize
-    section_nrows = min(imrows, int(buffer_size // min_buffer_size))
+    section_nrows = min(imrows, int(per_model_buffer_size // min_buffer_size))
 
     if section_nrows == 0:
-        buffer_size = min_buffer_size
+        buffer_size = min_buffer_size * nimages
         log.warning("WARNING: Buffer size is too small to hold a single row."
-                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB")
+                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB per model")
         section_nrows = 1
 
     nsections = int(np.ceil(imrows / section_nrows))
+    log.info(f"Computing median over {nimages} images in {nsections} sections with total memory buffer {buffer_size / _ONE_MB} MB")
     return nsections, section_nrows
 
 

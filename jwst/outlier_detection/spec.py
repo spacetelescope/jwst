@@ -93,7 +93,15 @@ def detect_outliers(
 
     # Perform median combination on set of drizzled mosaics
     # create_median should be called as a method from parent class
-    median_data = create_median(drizzled_models, maskpt)
+    if in_memory:
+        buffer_size = None
+    else:
+        # reasonable buffer size is the size of an input model, since that is
+        # the smallest theoretical memory footprint
+        example_model = input_models[0]
+        buffer_size = example_model.data.size * example_model.data.itemsize
+        del example_model
+    median_data = create_median(drizzled_models, maskpt, buffer_size=buffer_size)
 
     if save_intermediate_results:
         # Initialize intermediate products used in the outlier detection

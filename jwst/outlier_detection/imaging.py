@@ -100,7 +100,18 @@ def detect_outliers(
                 input_models.shelve(model, modify=True)
 
     # Perform median combination on set of drizzled mosaics
-    median_data = create_median(drizzled_models, maskpt)
+    if in_memory:
+        buffer_size = None
+    else:
+        # reasonable buffer size is the size of an input model, since that is
+        # the smallest theoretical memory footprint
+        with input_models:
+            example_model = input_models.borrow(0)
+            buffer_size = example_model.data.size * example_model.data.itemsize
+            input_models.shelve(example_model, modify=False)
+            del example_model
+
+    median_data = create_median(drizzled_models, maskpt, buffer_size=buffer_size)
 
     if save_intermediate_results:
         # make a median model

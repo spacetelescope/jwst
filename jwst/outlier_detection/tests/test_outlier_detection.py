@@ -33,7 +33,7 @@ exptypes_coron = [(exptype, False) for exptype in CORON_IMAGE_MODES]
 @pytest.fixture
 def sci_blot_image_pair():
     """Provide a science and blotted ImageModel pair."""
-    shape = (20, 20)
+    shape = (23, 20)
     sigma = 0.02
     background = 3
 
@@ -608,7 +608,10 @@ def test_create_median(three_sci_as_asn, tmp_cwd):
                 model.wht[4,9] = 0.5
                 lib.shelve(model, modify=True)
 
-    median_on_disk = create_median(lib_on_disk, 0.7)
+    # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
+    # arbitrarily use 5 times that
+    buffer_size = 4 * 20 * 5 
+    median_on_disk = create_median(lib_on_disk, 0.7, buffer_size=buffer_size)
     median_in_memory = create_median(lib_in_memory, 0.7)
 
     assert np.isnan(median_in_memory[4,9])
