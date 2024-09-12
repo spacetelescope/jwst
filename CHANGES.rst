@@ -1,11 +1,6 @@
 1.15.2 (unreleased)
 ===================
 
-associations
-------------
-
-- remove ``MultilineLogger`` and no longer set it as the default logger. [#8694]
-
 align_refs
 ----------
 
@@ -38,6 +33,8 @@ associations
   fixed slit targets. [#8699]
   
 - Update warning message about use of paths in associations. [#8752]
+
+- Remove ``MultilineLogger`` and no longer set it as the default logger. [#8781]
 
 badpix_selfcal
 --------------
