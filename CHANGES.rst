@@ -31,6 +31,14 @@ associations
 
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
+  
+- Update warning message about use of paths in associations. [#8752]
+
+badpix_selfcal
+--------------
+
+- Subtract pedestal dark when constructing min array across selfcal exposures
+  for MIRI MRS data. [#8771]
 
 cube_build
 ----------
@@ -90,7 +98,15 @@ master_background
 mrs_imatch
 ----------
 
-- Added a deprecation warning and set the default to skip=True for the step. [#8728] 
+- Added a deprecation warning and set the default to skip=True for the step. [#8728]
+
+nsclean
+-------
+
+- Changed subarray mode from operating on the entire array at once to
+  operating on sections of the array and smoothly combining these sections.
+  Due to the computational costs of matrix operations, this is a large
+  speedup that has little effect on the results. [#8745]
 
 outlier_detection
 -----------------
@@ -197,7 +213,7 @@ stpipe
   added a `query_step_status()` function to use as an alternative to checking
   `self.skip`. [#8600]
 
-- Log jwst version and crds context at the end of step/pipeline runs. [#8760]
+- Log jwst version at end of `Step.run`. [#8769]
 
 tso_photometry
 --------------
