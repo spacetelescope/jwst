@@ -453,50 +453,51 @@ class RampFitStep(Step):
                 suppress_one_group=self.suppress_one_group)
 
             # Create a gdq to modify if there are charge_migrated groups
-            gdq = input_model_W.groupdq.copy()
+            if self.algorithm == "OLS":
+                gdq = input_model_W.groupdq.copy()
 
-            # Locate groups where that are flagged with CHARGELOSS
-            wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
+                # Locate groups where that are flagged with CHARGELOSS
+                wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
 
-            if len(wh_chargeloss[0]) > 0:
-                # Unflag groups flagged as both CHARGELOSS and DO_NOT_USE
-                gdq[wh_chargeloss] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['CHARGELOSS'])
+                if len(wh_chargeloss[0]) > 0:
+                    # Unflag groups flagged as both CHARGELOSS and DO_NOT_USE
+                    gdq[wh_chargeloss] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['CHARGELOSS'])
 
-                # Flag SATURATED groups as DO_NOT_USE for later segment determination
-                where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
-                gdq[where_sat] = np.bitwise_or(gdq[where_sat], dqflags.group['DO_NOT_USE'])
+                    # Flag SATURATED groups as DO_NOT_USE for later segment determination
+                    where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
+                    gdq[where_sat] = np.bitwise_or(gdq[where_sat], dqflags.group['DO_NOT_USE'])
 
-                # Get group_time for readnoise variance calculation
-                group_time = input_model.meta.exposure.group_time
+                    # Get group_time for readnoise variance calculation
+                    group_time = input_model.meta.exposure.group_time
 
-                # Using the modified GROUPDQ array, create new readnoise variance arrays
-                image_var_RN, integ_var_RN, opt_var_RN = \
-                    compute_RN_variances(gdq, readnoise_2d, gain_2d, group_time)
+                    # Using the modified GROUPDQ array, create new readnoise variance arrays
+                    image_var_RN, integ_var_RN, opt_var_RN = \
+                        compute_RN_variances(gdq, readnoise_2d, gain_2d, group_time)
 
-                # Create new ramp fitting array tuples, by inserting the new
-                # readnoise variances into copies of the original ramp fitting
-                # tuples.
-                image_info_new, integ_info_new = None, None
-                ch_int, ch_grp, ch_row, ch_col = wh_chargeloss
-                if image_info is not None and image_var_RN is not None:
-                    rnoise = image_info[3]
-                    rnoise[ch_row, ch_col] = image_var_RN[ch_row, ch_col]
-                    image_info_new = (image_info[0], image_info[1], image_info[2], rnoise, image_info[4])
+                    # Create new ramp fitting array tuples, by inserting the new
+                    # readnoise variances into copies of the original ramp fitting
+                    # tuples.
+                    image_info_new, integ_info_new = None, None
+                    ch_int, ch_grp, ch_row, ch_col = wh_chargeloss
+                    if image_info is not None and image_var_RN is not None:
+                        rnoise = image_info[3]
+                        rnoise[ch_row, ch_col] = image_var_RN[ch_row, ch_col]
+                        image_info_new = (image_info[0], image_info[1], image_info[2], rnoise, image_info[4])
 
-                if integ_info is not None and integ_var_RN is not None:
-                    rnoise = integ_info[3]
-                    rnoise[ch_int, ch_row, ch_col] = integ_var_RN[ch_int, ch_row, ch_col]
-                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], rnoise, integ_info[4])
+                    if integ_info is not None and integ_var_RN is not None:
+                        rnoise = integ_info[3]
+                        rnoise[ch_int, ch_row, ch_col] = integ_var_RN[ch_int, ch_row, ch_col]
+                        integ_info_new = (integ_info[0], integ_info[1], integ_info[2], rnoise, integ_info[4])
 
-                image_info = image_info_new
-                integ_info = integ_info_new
+                    image_info = image_info_new
+                    integ_info = integ_info_new
 
-                opt_info_new = None
-                if opt_info is not None and opt_var_RN is not None:
-                    opt_info_new = (opt_info[0], opt_info[1], opt_info[2], opt_var_RN,
-                                    opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
+                    opt_info_new = None
+                    if opt_info is not None and opt_var_RN is not None:
+                        opt_info_new = (opt_info[0], opt_info[1], opt_info[2], opt_var_RN,
+                                        opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
 
-                opt_info = opt_info_new
+                    opt_info = opt_info_new
 
         # Save the OLS optional fit product, if it exists.
         if opt_info is not None:

@@ -145,6 +145,12 @@ pipeline
 - Updated `calwebb_image3` to use `ModelLibrary` instead of `ModelContainer`, added
   optional `on_disk` parameter to govern whether models in the library should be stored
   in memory or on disk. [#8683]
+  
+ramp_fitting
+------------
+
+- Moved the read noise variance recalculation for CHARGELOSS flagging to the C
+  implementation, when the algorithm is ``OLS_C``. [#8697, spacetelescope/stcal#278]
 
 resample
 --------
