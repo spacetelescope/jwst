@@ -43,20 +43,19 @@ def create_median(resampled_models, maskpt, buffer_size=10.0):
     maskpt : float
         The weight threshold for masking out low weight pixels.
 
-    on_disk : bool
-        If True, the input models are on disk and will be read in chunks.
-
     buffer_size : float
         The size of chunk in MB, per input model, that will be read into memory.
-        This parameter has no effect if on_disk is False.
+        This parameter has no effect if the input library has its on_disk attribute
+        set to False.
 
     Returns
     -------
     median_image : ndarray
         The median image.
     """
-    # Compute the weight threshold for each input model
     on_disk = resampled_models._on_disk
+    
+    # Compute the weight threshold for each input model
     weight_thresholds = []
     model_list = []
     with resampled_models:
