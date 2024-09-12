@@ -103,21 +103,46 @@ subarray_nirspec = {
 }
 
 
-@pytest.fixture(scope='function')
-def offset_file():
+@pytest.fixture(scope='module')
+def offset_file(tmp_path_factory):
     """ Generate a offset file """
 
-    filename = ['test1.fits', 'test2.fits']
+    filename = tmp_path_factory.mktemp('offset')
+    filename = filename / 'offset.asdf'
+    
+    testfile = ['test1.fits', 'test2.fits']
     raoffset = [0.0, 0.1]
     decoffset = [0.0, 0.15]
     tree = {
         "units": str(u.arcsec),
-        "filename": filename,
+        "filename": testfile,
         "raoffset": raoffset,
         "decoffset": decoffset
     }
     af = asdf.AsdfFile(tree)
-    return af
+    af.write_to(filename)
+    return filename
+
+
+@pytest.fixture(scope='module')
+def offset_file_arcmin(tmp_path_factory):
+    """ Generate a offset file with units = arcmin """
+
+    filename = tmp_path_factory.mktemp('offset_arcmin')
+    filename = filename / 'offset_arcmin.asdf'
+    
+    testfile = ['test1.fits', 'test2.fits']
+    raoffset = [0.0, 0.1]
+    decoffset = [0.0, 0.15]
+    tree = {
+        "units": str(u.arcmin),
+        "filename": testfile,
+        "raoffset": raoffset,
+        "decoffset": decoffset
+    }
+    af = asdf.AsdfFile(tree)
+    af.write_to(filename) 
+    return filename
 
 
 @pytest.fixture(scope='function')
@@ -143,6 +168,7 @@ def miri_ifushort_short_2files():
     input_model1.meta.observation._instance.update(observation)
     input_model1.meta.subarray._instance.update(subarray)
     input_model1.meta.cal_step.assign_wcs = 'COMPLETE'
+    input_model1.meta.filename = 'test1.fits'
 
     input_model2 = datamodels.IFUImageModel()
     input_model2.meta.wcsinfo._instance.update(wcsinfo)
@@ -150,10 +176,11 @@ def miri_ifushort_short_2files():
     input_model2.meta.observation._instance.update(observation)
     input_model2.meta.subarray._instance.update(subarray)
     input_model2.meta.cal_step.assign_wcs = 'COMPLETE'
+    input_model2.meta.filename = 'test2.fits'
 
     input_models = []
     input_models.append(input_model1)
-    input_models.append(input_model1)
+    input_models.append(input_model2)
     return input_models
 
 
@@ -516,30 +543,36 @@ def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
 def test_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
     """ Test validation of the offset configuration"""
 
-    pars_input = {}
-    pars_input['channel'] = []
-    pars_input['subchannel'] = []
-    pars_input['filter'] = []
-    pars_input['grating'] = []
-    output_type = 'band'
-    weighting = 'drizzle'
-    par_filename = 'None'
+    # first test that it is a valid asdf file and has what is needed
+    step = CubeBuildStep()
+    step.input_models = miri_ifushort_short_2files
+    
+    step.offset_file = offset_file
+    offsets = step.check_offset_file()
+    assert isinstance(offsets, dict)
 
-    pars = {
-        'channel': pars_input['channel'],
-        'subchannel': pars_input['subchannel'],
-        'grating': pars_input['grating'],
-        'filter': pars_input['filter'],
-        'weighting': weighting,
-        'output_type': output_type}
+def test2_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
+    """ Test validation of the offset configuration"""
 
-    cubeinfo = cube_build.CubeData(
-        miri_ifushort_short_2files,
-        par_filename,
-        **pars)
-
-    offsets = CubeBuildStep.check_offset_file(cubeinfo.input_models)
+    # Test changing one of the filenames so it is not in the list given
+    # in the offset_file 
+    step = CubeBuildStep()
+    step.input_models = miri_ifushort_short_2files
+    
+    miri_ifushort_short_2files[0].meta.filename = 'test3.fits'
+    step.offset_file = offset_file
+    offsets = step.check_offset_file()
+    assert offsets is None
 
 
-    # want to test that offsets is None with it fails or Dictionary when it works
+def test_offset_file_config2(tmp_cwd, miri_ifushort_short_2files, offset_file_arcmin):
+    """ Test validation of the offset configuration"""
+
+    # test is the if the user set the units to arcmins
+    step = CubeBuildStep()
+    step.input_models = miri_ifushort_short_2files
+    
+    step.offset_file = offset_file_arcmin
+    offsets = step.check_offset_file()
+    assert offsets is None
     

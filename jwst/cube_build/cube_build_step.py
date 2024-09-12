@@ -559,6 +559,7 @@ class CubeBuildStep (Step):
 
         # validate the offset file using the schema file
         DATA_PATH = Path(__file__).parent
+        
         try:
             af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
         except:
@@ -589,4 +590,5 @@ class CubeBuildStep (Step):
         offsets['raoffset'] = offset_ra
         offsets['decoffset'] = offset_dec
 
+        af.close()
         return offsets
