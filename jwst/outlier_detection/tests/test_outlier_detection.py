@@ -608,8 +608,8 @@ def test_create_median(three_sci_as_asn, tmp_cwd):
                 model.wht[4,9] = 0.5
                 lib.shelve(model, modify=True)
 
-    median_on_disk = create_median(lib_on_disk, 0.7, on_disk=True)
-    median_in_memory = create_median(lib_in_memory, 0.7, on_disk=False)
+    median_on_disk = create_median(lib_on_disk, 0.7)
+    median_in_memory = create_median(lib_in_memory, 0.7)
 
     assert np.isnan(median_in_memory[4,9])
 
