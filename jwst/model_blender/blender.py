@@ -70,19 +70,22 @@ class ModelBlender:
             self._blend_ignore_attrs.extend(schema_ignores)
 
             # capture the entire contents of the first model metadata
-            self._first_header_meta = {
-                attr: v
-                for attr, v in model.to_flat_dict(include_arrays=False).items()
-                if attr.startswith('meta') and not any((attr.startswith(i) for i in self._blend_ignore_attrs))
-            }
+            self._first_header_meta = {}
+            for attr, v in model.to_flat_dict(include_arrays=False).items():
+                if not attr.startswith('meta'):
+                    continue
+                if any((attr.startswith(i) for i in self._blend_ignore_attrs)):
+                    continue
+                self._first_header_meta[attr] = v
 
             # make "blenders" for the metadata with special rules
-            self._blenders = {
-                attr: make_blender(rule)
-                for attr, rule in attr_to_blend_rules.items()
-                # 'first' is the default behavior so these rules need not be made explicitly
-                if rule != 'first' and not any((attr.startswith(i) for i in self._blend_ignore_attrs))
-            }
+            self._blenders = {}
+            for attr, rule in attr_to_blend_rules.items():
+                if rule == 'first':
+                    continue
+                if any((attr.startswith(i) for i in self._blend_ignore_attrs)):
+                    continue
+                self._blenders[attr] = make_blender(rule)
 
             # make a table builder using the mapping from the schema
             self._table_builder = TableBuilder(attr_to_columns)
