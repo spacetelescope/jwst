@@ -119,7 +119,8 @@ def create_median(resampled_models, maskpt, buffer_size=None):
 
 
 def _write_sections(library, weight_thresholds, buffer_size):
-    """Iterator to return sections from a ModelLibrary.
+    """Write spatial sections from a ModelLibrary into temporary files
+    grouped along the time axis.
 
     Parameters
     ----------
@@ -224,7 +225,7 @@ def _compute_buffer_indices(shape, itemsize, buffer_size):
     if section_nrows == 0:
         buffer_size = min_buffer_size * nimages
         log.warning("WARNING: Buffer size is too small to hold a single row."
-                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB per model")
+                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB")
         section_nrows = 1
 
     nsections = int(np.ceil(imrows / section_nrows))

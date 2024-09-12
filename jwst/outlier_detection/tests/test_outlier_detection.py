@@ -33,7 +33,7 @@ exptypes_coron = [(exptype, False) for exptype in CORON_IMAGE_MODES]
 @pytest.fixture
 def sci_blot_image_pair():
     """Provide a science and blotted ImageModel pair."""
-    shape = (23, 20)
+    shape = (20, 20)
     sigma = 0.02
     background = 3
 
