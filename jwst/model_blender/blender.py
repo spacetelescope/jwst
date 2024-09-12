@@ -59,7 +59,6 @@ class ModelBlender:
 
         Parameters
         ----------
-
         model: `jwst.datamodels.JwstDataModel`
             The datamodel to blend.
         """
