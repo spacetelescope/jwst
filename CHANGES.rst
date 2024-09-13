@@ -82,7 +82,8 @@ cube_build
 
 - Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
-- Allow the user to provide ra and dec shifts to apply for each file to fine tune the WCS. [#JP-3364]
+- Allow the user to provide ra and dec shifts to apply for each file to fine
+  tune the WCS. [#JP-3364]
 
 datamodels
 ----------

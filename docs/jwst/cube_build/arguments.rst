@@ -91,7 +91,7 @@ The following arguments control the size and sampling characteristics of the out
 ``nspax_y``
   The odd integer number of spaxels to use in the y dimension of the tangent plane.
 
-``offset_list [string]``
+``offset_file [string]``
   The string contains the name of the file holding ra and dec offsets to apply to each input file. This file
   must be an asdf file and the it has a specific format. It is assumed the user has determined the ra and dec
   offsets to apply to the data. For details on how to construct the format of the offset file see
@@ -138,19 +138,19 @@ Creating an offset file
 The offset file is an ASDF formated file :`<https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each
 input file in the spec3 assocation used to build the IFU cubes, the offset files needs to have a corresponding  right ascension  and declination offset given arc seconds.
 Below is an example of how to make an ASDF offset file. It is assumed the user has determined the
-offsets to apply to the data in each file. The offsets are stored in a python dictionary, `offsets`. The items of this dictionary
-are `filenames`, `raoffset` and `decoffset`. The  IFU cube building code  expects this dictionary to hold the information
-for storing the file names and the associated ra and dec offsets. The file names should not contain the directory path.
+offsets to apply to the data in each file. The offsets information is stored in three lists:
+ `filenames`, `raoffset` and `decoffset`.  The units of the ra and dec offsets 
+ are required to be in the offset set file and only the unit, `arcsec`, is allowed. The file names should
+not contain the directory path. The offset asdf filename can be any name, but it must have the `asdf` extension.
 
-It is assumed there exists a list of files, ra and dec offsets that are feed to this method. The ra and dec offsets need to be
-in arcseconds. The cube building code will apply the ra offsets after dividing by  cos(crval2), where crval2 is the
-declination center of the IFU cube. The offset asdf filename can be any name, but it must have the `asdf` extension.
 Below `num` is the number of files.
 
 
 .. code-block:: python
 		
    import asdf
+   import astropy.units as u
+   
    filename = []
    raoffset = []
    decoffset = []
@@ -166,6 +166,7 @@ Below `num` is the number of files.
     "decoffset": decoffset
     }
     af = asdf.AsdfFile(tree)
-    af.write_to(input_dir  + 'offsets.asdf')     
+    af.write_to(input_dir  + 'offsets.asdf')
+    af.close()
 
 
