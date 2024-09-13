@@ -95,6 +95,11 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+model_blender
+-------------
+
+- Allow incremental blending of models. [#8759]
+
 mrs_imatch
 ----------
 
