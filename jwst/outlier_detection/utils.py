@@ -119,13 +119,15 @@ def create_median(resampled_models, maskpt, buffer_size=None):
         raise ValueError("Buffer size for median calculation must be provided when models are on disk")
     
     # Compute weight threshold for each input model and set NaN in data where weight is below threshold
-    model_list = []
     with resampled_models:
-        for resampled in resampled_models:
+        for i, resampled in enumerate(resampled_models):
             weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
             resampled.data[resampled.wht < weight_threshold] = np.nan
             if not on_disk:
-                model_list.append(resampled.data)
+                if i == 0:
+                    model_cube = np.empty((len(resampled_models),) + resampled.data.shape,
+                                         dtype=resampled.data.dtype)
+                model_cube[i] = resampled.data
                 resampled_models.shelve(resampled, modify=False)
             else:
                 resampled_models.shelve(resampled, modify=True)
@@ -137,7 +139,7 @@ def create_median(resampled_models, maskpt, buffer_size=None):
             warnings.filterwarnings(action="ignore",
                                     message="All-NaN slice encountered",
                                     category=RuntimeWarning)
-            return np.nanmedian(np.array(model_list), axis=0)
+            return np.nanmedian(model_cube, axis=0)
     else:
         # set up buffered access to all input models
         # get spatial sections of library and compute timewise median, one by one
