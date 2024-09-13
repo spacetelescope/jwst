@@ -136,13 +136,12 @@ Creating an offset file
 -----------------------
 
 The offset file is an ASDF formated file :`<https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data. For each
-input file in the spec3 assocation used to build the IFU cubes, the offset files needs to have a corresponding  right ascension  and declination offset given arc seconds.
+input file in the spec3 assocation used to build the IFU cubes, the offset files needs to have a corresponding right ascension and declination offset given arc seconds.
 Below is an example of how to make an ASDF offset file. It is assumed the user has determined the
 offsets to apply to the data in each file. The offsets information is stored in three lists:
- `filenames`, `raoffset` and `decoffset`.  The units of the ra and dec offsets 
- are required to be in the offset set file and only the unit, `arcsec`, is allowed. The file names should
+`filenames`, `raoffset` and `decoffset`.  The units of the ra and dec offsets 
+are required to be in the offset file and only the unit, `arcsec`, is allowed. The file names should
 not contain the directory path. The offset asdf filename can be any name, but it must have the `asdf` extension.
-
 Below `num` is the number of files.
 
 
