@@ -34,6 +34,8 @@ associations
   
 - Update warning message about use of paths in associations. [#8752]
 
+- Remove ``MultilineLogger`` and no longer set it as the default logger. [#8781]
+
 badpix_selfcal
 --------------
 
