@@ -23,8 +23,39 @@ _ONE_MB = 1 << 20
 
 
 class DiskAppendableArray:
+    """
+    Creates a temporary file to which to append data, in order to perform
+    timewise operations on a stack of input images without holding all of them
+    in memory.
+    
+    This class is purpose-built for the median computation during outlier detection 
+    and is not very flexible. It is assumed that each data array passed to `append`
+    represents the same spatial segment of the full dataset. It is also assumed that 
+    each data array passed to `append` represents only a single instant in time; 
+    the append operation will stack them along a new axis.
+    
+    The `read` operation is only capable of loading the full array back into memory.
+    When working with large datasets that do not fit in memory, the
+    required workflow is to create many DiskAppendableArray objects, each holding
+    a small spatial segment of the full dataset.
+    """
     
     def __init__(self, slice_shape, dtype='float32', tempdir="", filestem="data"):
+        """
+        Parameters
+        ----------
+        slice_shape : tuple
+            The shape of the spatial section of input data to be appended to the array.
+
+        dtype : str
+            The data type of the array.
+
+        tempdir : str
+            The directory in which to create the temporary files.
+
+        filestem : str
+            The stem of the temporary file name. The extension ".bits" will be added.
+        """
         self._temp_dir = tempfile.TemporaryDirectory(dir=tempdir)
         self._temp_path = Path(self._temp_dir.name)
         self._slice_shape = slice_shape
@@ -84,28 +115,24 @@ def create_median(resampled_models, maskpt, buffer_size=None):
         The median image.
     """
     on_disk = resampled_models._on_disk
-    if on_disk and buffer_size is None:
-        raise ValueError("Buffer size must be provided when resampled models are on disk")
+    if (on_disk) and (buffer_size is None):
+        raise ValueError("Buffer size for median calculation must be provided when models are on disk")
     
-    # Compute the weight threshold for each input model
-    weight_thresholds = []
+    # Compute weight threshold for each input model and set NaN in data where weight is below threshold
     model_list = []
     with resampled_models:
         for resampled in resampled_models:
             weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
+            resampled.data[resampled.wht < weight_threshold] = np.nan
             if not on_disk:
-                # handle weights right away for in-memory case
-                data = resampled.data.copy()
-                data[resampled.wht < weight_threshold] = np.nan
-                model_list.append(data)
-                del data
+                model_list.append(resampled.data)
+                resampled_models.shelve(resampled, modify=False)
             else:
-                weight_thresholds.append(weight_threshold)
-            resampled_models.shelve(resampled, modify=False)
+                resampled_models.shelve(resampled, modify=True)
         del resampled
     
-    # easier case: all models in library can be loaded into memory at once
     if not on_disk:
+        # easier case: all models in library can be loaded into memory at once
         with warnings.catch_warnings():
             warnings.filterwarnings(action="ignore",
                                     message="All-NaN slice encountered",
@@ -114,11 +141,11 @@ def create_median(resampled_models, maskpt, buffer_size=None):
     else:
         # set up buffered access to all input models
         # get spatial sections of library and compute timewise median, one by one
-        resampled_sections, row_indices = _write_sections(resampled_models, weight_thresholds, buffer_size)
+        resampled_sections, row_indices = _write_sections(resampled_models, buffer_size)
         return _create_median(resampled_sections, row_indices)
 
 
-def _write_sections(library, weight_thresholds, buffer_size):
+def _write_sections(library, buffer_size):
     """Write spatial sections from a ModelLibrary into temporary files
     grouped along the time axis.
 
@@ -126,9 +153,6 @@ def _write_sections(library, weight_thresholds, buffer_size):
     ----------
     library : ModelLibrary
         The input data models.
-
-    weight_thresholds : list
-        The weight thresholds for masking out low weight pixels.
 
     buffer_size : int
         The buffer size for the median computation, units of bytes.
@@ -168,10 +192,11 @@ def _write_sections(library, weight_thresholds, buffer_size):
             arr = DiskAppendableArray(slice_shape, tempdir=tempdir, filestem=f"section{i}", dtype=dtype)
             temp_arrays.append(arr)
 
-        # handle the last section separately because it has a different shape
-        slice_shape_last = (imrows - (nsections-1) * section_nrows, shp[1])
-        arrn = DiskAppendableArray(slice_shape_last, tempdir=tempdir, filestem=f"section{nsections-1}", dtype=dtype)
-        temp_arrays.append(arrn)
+        if nsections > 1:
+            # handle the last section separately because it has a different shape
+            slice_shape_last = (imrows - (nsections-1) * section_nrows, shp[1])
+            arrn = DiskAppendableArray(slice_shape_last, tempdir=tempdir, filestem=f"section{nsections-1}", dtype=dtype)
+            temp_arrays.append(arrn)
             
         # now append data from each model to all the sections
         row_indices = []
@@ -182,12 +207,7 @@ def _write_sections(library, weight_thresholds, buffer_size):
                 if j == 0:
                     row_indices.append((row1, row2))
                 arr = temp_arrays[i]
-                sci = model.data[row1:row2]
-
-                # handle weight thresholding right here, while array is open
-                thresh = weight_thresholds[j]
-                sci[model.wht[row1:row2] < thresh] = np.nan
-                arr.append(sci)
+                arr.append(model.data[row1:row2])
 
             library.shelve(model, j, modify=False)
         del model
