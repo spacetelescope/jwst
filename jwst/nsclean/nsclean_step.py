@@ -121,7 +121,7 @@ class NSCleanStep(Step):
             # Save the background, if requested
             if self.save_background and background_model is not None:
                 bg_path = self.make_output_path(
-                    basepath=input_model.meta.filename, suffix='background')
+                    basepath=input_model.meta.filename, suffix='flicker_bkg')
                 self.log.info(f"Saving background file {bg_path}")
                 background_model.save(bg_path)
                 background_model.close()
@@ -129,7 +129,7 @@ class NSCleanStep(Step):
             # Save the noise, if requested
             if self.save_noise and noise_model is not None:
                 noise_path = self.make_output_path(
-                    basepath=input_model.meta.filename, suffix='noise')
+                    basepath=input_model.meta.filename, suffix='flicker_noise')
                 self.log.info(f"Saving noise file {noise_path}")
                 noise_model.save(noise_path)
                 noise_model.close()
