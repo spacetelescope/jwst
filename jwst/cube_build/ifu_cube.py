@@ -1560,7 +1560,7 @@ class IFUCubeData():
             (x, y, ra, dec, wave_all, slice_no_all, dwave_all, corner_coord_all) = sky_result
 
         elif self.instrument == 'NIRSPEC':
-            sky_result = self.map_nirspec_pixel_to_sky(input_model)
+            sky_result = self.map_nirspec_pixel_to_sky(input_model, offsets)
             (x, y, ra, dec, wave_all, slice_no_all, dwave_all, corner_coord_all) = sky_result
 
         # ______________________________________________________________________________
