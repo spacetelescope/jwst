@@ -528,6 +528,9 @@ outlier_detection
 - Fixed a bug that caused different results from the median calculation when the
   `in_memory` parameter was set to `True` vs `False`. [#8777]
 
+- Decrease the amount of file I/O required to compute the median when `in_memory`
+  is set to `False`. [#8782]
+
 pathloss
 --------
 
