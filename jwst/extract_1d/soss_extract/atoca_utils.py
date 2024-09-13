@@ -282,50 +282,6 @@ def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
     return bool_map
 
 
-def mask_bad_dispersion_direction(wave_map, n_max=10, fill_value=0, dispersion_axis=1, dwv_sign=-1):
-    """Change value of the pixels in `wave_map` that do not follow the
-    general dispersion direction.
-
-    Parameters
-    ----------
-    wave_map : array[float]
-        2d-map of the pixel central wavelength
-    n_max : int
-        Maximum number of iterations
-    fill_value : float
-        Value use to replace pixels that do not follow the dispersion direction
-    dispersion_axis : int, optional
-        Which axis is the dispersion axis (0 or 1)
-    dwv_sign : int, optional
-        Direction of increasing wavelengths (-1 or 1)
-
-    Returns
-    -------
-    wave_map : array[float]
-        The corrected wave_map.
-    convergence flag : bool
-        Boolean set to True if all the pixels are now valid, False otherwise.
-    """
-    # Do not modify the input
-    wave_map = wave_map.copy()
-
-    # Make the correction iteratively
-    for i_try in range(n_max):
-        # Check which pixels are good
-        is_good_direction = check_dispersion_direction(wave_map, dispersion_axis, dwv_sign)
-        # Stop iteration if all good, or apply correction where needed.
-        if is_good_direction.all():
-            convergence_flag = True
-            break
-        else:
-            wave_map[~is_good_direction] = fill_value
-    else:
-        # Did not succeed! :(
-        convergence_flag = False
-
-    return wave_map, convergence_flag
-
-
 def oversample_grid(wave_grid, n_os=1):
     """Create an oversampled version of the input 1D wavelength grid.
 
