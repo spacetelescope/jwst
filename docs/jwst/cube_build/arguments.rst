@@ -143,7 +143,31 @@ offsets to apply to the data in each file. The offsets information is stored in 
 `filenames`, `raoffset` and `decoffset`.  The units of the Ra and Dec offsets 
 are required to be in the offset file and only the unit, `arcsec`, is allowed. The file names should
 not contain the directory path. The offset file can have any name, but it must have the `asdf` extension.
-Below `num` is the number of files.
+
+An example of making an offset file for an association containing three files is:
+.. code-block:: python
+		
+   import asdf
+   import astropy.units as u
+   
+   filename = ['file1.fits', 'file2.fits', 'file3.fits']
+   raoffset = [0.0, -1.0, 1.0]
+   decoffset = [0.0, 1.0, -1.0]
+
+   tree = {
+    "units": str(u.arcsec),
+    "filename": filename,
+    "raoffset": raoffset,
+    "decoffset": decoffset
+    }
+    af = asdf.AsdfFile(tree)
+    af.write_to('offsets.asdf')
+    af.close()
+    
+
+
+
+An exmaple of making an offset file for `num` files is
 
 
 .. code-block:: python
@@ -169,27 +193,4 @@ Below `num` is the number of files.
     af.write_to('offsets.asdf')
     af.close()
 
-
-Or lets say there a small number of files in the assocations. The filename, raoffset and decoffset can be set
-in the code. For example, if there are three files in the assocation the offset file can be created as follows: 
-
-.. code-block:: python
-		
-   import asdf
-   import astropy.units as u
-   
-   filename = ['file1.fits', 'file2.fits', 'file3.fits']
-   raoffset = [0.0, -1.0, 1.0]
-   decoffset = [0.0, 1.0, -1.0]
-
-   tree = {
-    "units": str(u.arcsec),
-    "filename": filename,
-    "raoffset": raoffset,
-    "decoffset": decoffset
-    }
-    af = asdf.AsdfFile(tree)
-    af.write_to('offsets.asdf')
-    af.close()
-    
 
