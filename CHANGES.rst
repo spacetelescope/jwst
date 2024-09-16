@@ -31,8 +31,16 @@ associations
 
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
-
+  
 - Update warning message about use of paths in associations. [#8752]
+
+- Remove ``MultilineLogger`` and no longer set it as the default logger. [#8781]
+
+badpix_selfcal
+--------------
+
+- Subtract pedestal dark when constructing min array across selfcal exposures
+  for MIRI MRS data. [#8771]
 
 cube_build
 ----------
@@ -102,10 +110,23 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+model_blender
+-------------
+
+- Allow incremental blending of models. [#8759]
+
 mrs_imatch
 ----------
 
-- Added a deprecation warning and set the default to skip=True for the step. [#8728] 
+- Added a deprecation warning and set the default to skip=True for the step. [#8728]
+
+nsclean
+-------
+
+- Changed subarray mode from operating on the entire array at once to
+  operating on sections of the array and smoothly combining these sections.
+  Due to the computational costs of matrix operations, this is a large
+  speedup that has little effect on the results. [#8745]
 
 outlier_detection
 -----------------
@@ -144,6 +165,12 @@ pipeline
 - Updated `calwebb_image3` to use `ModelLibrary` instead of `ModelContainer`, added
   optional `on_disk` parameter to govern whether models in the library should be stored
   in memory or on disk. [#8683]
+  
+ramp_fitting
+------------
+
+- Moved the read noise variance recalculation for CHARGELOSS flagging to the C
+  implementation, when the algorithm is ``OLS_C``. [#8697, spacetelescope/stcal#278]
 
 resample
 --------
@@ -512,6 +539,9 @@ outlier_detection
 - Fix errors in documentation describing arguments. [#8603]
 
 - Re-enabled saving of blot models when `save_intermediate_results` is True. [#8758]
+
+- Fixed a bug that caused different results from the median calculation when the
+  `in_memory` parameter was set to `True` vs `False`. [#8777]
 
 pathloss
 --------
