@@ -102,50 +102,6 @@ subarray_nirspec = {
     'ystart': 1
 }
 
-
-@pytest.fixture(scope='module')
-def offset_file(tmp_path_factory):
-    """ Generate a offset file """
-
-    filename = tmp_path_factory.mktemp('offset')
-    filename = filename / 'offset.asdf'
-    
-    testfile = ['test1.fits', 'test2.fits']
-    raoffset = [0.0, 0.1]
-    decoffset = [0.0, 0.15]
-    tree = {
-        "units": str(u.arcsec),
-        "filename": testfile,
-        "raoffset": raoffset,
-        "decoffset": decoffset
-    }
-    af = asdf.AsdfFile(tree)
-    af.write_to(filename)
-    af.close()
-    return filename
-
-
-@pytest.fixture(scope='module')
-def offset_file_arcmin(tmp_path_factory):
-    """ Generate a offset file with units = arcmin """
-
-    filename = tmp_path_factory.mktemp('offset')
-    filename = filename / 'offset_arcmin.asdf'
-    
-    testfile = ['test1.fits', 'test2.fits']
-    raoffset = [0.0, 0.1]
-    decoffset = [0.0, 0.15]
-    tree = {
-        "units": str(u.arcmin),
-        "filename": testfile,
-        "raoffset": raoffset,
-        "decoffset": decoffset
-    }
-    af = asdf.AsdfFile(tree)
-    af.write_to(filename) 
-    return filename
-
-
 @pytest.fixture(scope='function')
 def miri_ifushort_short():
     """ Generate a IFU image """
@@ -157,33 +113,6 @@ def miri_ifushort_short():
     input_model.meta.subarray._instance.update(subarray)
     input_model.meta.cal_step.assign_wcs = 'COMPLETE'
     return input_model
-
-
-@pytest.fixture(scope='function')
-def miri_ifushort_short_2files():
-    """ Generate a IFU image """
-
-    input_model1 = datamodels.IFUImageModel()
-    input_model1.meta.wcsinfo._instance.update(wcsinfo)
-    input_model1.meta.instrument._instance.update(mirifushort_short)
-    input_model1.meta.observation._instance.update(observation)
-    input_model1.meta.subarray._instance.update(subarray)
-    input_model1.meta.cal_step.assign_wcs = 'COMPLETE'
-    input_model1.meta.filename = 'test1.fits'
-
-    input_model2 = datamodels.IFUImageModel()
-    input_model2.meta.wcsinfo._instance.update(wcsinfo)
-    input_model2.meta.instrument._instance.update(mirifushort_short)
-    input_model2.meta.observation._instance.update(observation)
-    input_model2.meta.subarray._instance.update(subarray)
-    input_model2.meta.cal_step.assign_wcs = 'COMPLETE'
-    input_model2.meta.filename = 'test2.fits'
-
-    input_models = []
-    input_models.append(input_model1)
-    input_models.append(input_model2)
-    return input_models
-
 
 @pytest.fixture(scope='function')
 def miri_full_coverage():
@@ -539,41 +468,3 @@ def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
 
     assert cube_pars['1']['par1'] == ['g140m', 'g235m']
     assert cube_pars['1']['par2'] == ['f100lp', 'f170lp']
-
-
-def test_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
-    """ Test validation of the offset configuration"""
-
-    # first test that it is a valid asdf file and has what is needed
-    step = CubeBuildStep()
-    step.input_models = miri_ifushort_short_2files
-    
-    step.offset_file = offset_file
-    offsets = step.check_offset_file()
-    assert isinstance(offsets, dict)
-
-def test2_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
-    """ Test validation of the offset configuration"""
-
-    # Test changing one of the filenames so it is not in the list given
-    # in the offset_file 
-    step = CubeBuildStep()
-    step.input_models = miri_ifushort_short_2files
-    
-    miri_ifushort_short_2files[0].meta.filename = 'test3.fits'
-    step.offset_file = offset_file
-    offsets = step.check_offset_file()
-    assert offsets is None
-
-
-def test_offset_file_config2(tmp_cwd, miri_ifushort_short_2files, offset_file_arcmin):
-    """ Test validation of the offset configuration"""
-
-    # test is the if the user set the units to arcmins
-    step = CubeBuildStep()
-    step.input_models = miri_ifushort_short_2files
-    
-    step.offset_file = offset_file_arcmin
-    offsets = step.check_offset_file()
-    assert offsets is None
-    

@@ -167,30 +167,44 @@ An example of making an offset file for an association containing three files is
 
 
 
-An exmaple of making an offset file for `num` files is
+An example of making an offset file for `num` files 
+where the user has set up list called `file` containing the `num` filenames.
+The cooresponding Ra and Dec offsets, both containing num values, are stored in lists called,
+`ra_offset` and `dec_offset`
 
 
 .. code-block:: python
 		
    import asdf
    import astropy.units as u
-   
-   filename = []
-   raoffset = []
-   decoffset = []
-   for i in range(num):
-       filename.append(file[i])
-       raoffset.append(ra_center1[i])
-       decoffset.append(dec_center1[i])
+   def create_offset_asdf(files, ra_offset, dec_offset):
 
-   tree = {
-    "units": str(u.arcsec),
-    "filename": filename,
-    "raoffset": raoffset,
-    "decoffset": decoffset
+       filename = []
+       raoffset = []
+       decoffset = []
+       num = len(files)
+       for i in range(num):
+           filename.append(files[i])
+           raoffset.append(ra_offset[i])
+           decoffset.append(dec_offset[i])
+
+    tree = {
+        "units": str(u.arcsec),
+        "filename": filename,
+        "raoffset": raoffset,
+        "decoffset": decoffset
     }
     af = asdf.AsdfFile(tree)
-    af.write_to('offsets.asdf')
-    af.close()
+    af.write_to( 'offsets.asdf')
 
 
+Set up the lists and call the above function:
+
+.. code-block:: python
+		
+    files = ['test1.fits', 'test2.fits', 'test3.fits']
+    ra_offset = [0.1, 0.12, 0.13]
+    dec_offset = [0.14, 0.15, 0.16]
+    create_offset_asdf(files, ra_offset, dec_offset)    
+
+    

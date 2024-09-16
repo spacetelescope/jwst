@@ -243,6 +243,7 @@ class CubeBuildStep (Step):
 # Each row in the offset list contain a filename, ra offset and dec offset.
 # The offset list is an asdf file.
         self.offsets = None
+        
         if self.offset_file is not None:
             offsets = self.check_offset_file()
             if offsets is not None:
@@ -578,7 +579,8 @@ class CubeBuildStep (Step):
             self.log.error('Turning off adjusting by offsets ')
             af.close()
             return None
-
+        
+        # check that all the file names in input_model are in the offset filename
         for model in self.input_models:
             file_check = model.meta.filename
             if file_check in offset_filename:
@@ -588,10 +590,25 @@ class CubeBuildStep (Step):
                 self.log.error('Turning off adjusting by offsets')
                 af.close()
                 return None
+        # check that all the lists have the same length
+        len_file  = len(offset_filename)
+        len_ra = len(offset_ra)
+        len_dec = len(offset_dec)
+        if (len_file != len_ra or len_ra != len_dec or len_file != len_dec):
+            self.log.error('The offset file does not have the same number of values for filename, offset_ra, offset_dec')
+            self.log.error('Turning off adjusting by offsets')
+            af.close()
+            return None
+
+        # The offset file has passed tests so set the offset dictionary
         offsets = {}
         offsets['filename'] = offset_filename
         offsets['raoffset'] = offset_ra
         offsets['decoffset'] = offset_dec
-
+        n = len(offsets['raoffset'])
+        # convert to degrees
+        for i in range(n):
+            offsets['raoffset'][i] = offsets['raoffset'][i]/3600.0
+            offsets['decoffset'][i] = offsets['decoffset'][i]/3600.0
         af.close()
         return offsets
