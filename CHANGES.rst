@@ -64,6 +64,9 @@ documentation
 
 - Add changelog to documentation. [#8716]
 
+- Updated description of association keyword `expname`: including path information
+  in addition to the filename is discouraged, but allowed. [#8789]
+
 emicorr
 -------
 
