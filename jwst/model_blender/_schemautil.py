@@ -38,9 +38,9 @@ def parse_schema(schema):
             return  # ignore ObjectNodes
 
         # strip trailing path if there's a combiner
-        for combiner in ['anyOf', 'oneOf']:
-            if combiner in path:
-                path = path[:path.index(combiner)]
+        for schema_combiner in ['anyOf', 'oneOf']:
+            if schema_combiner in path:
+                path = path[:path.index(schema_combiner)]
                 break
 
         # construct the metadata attribute path
