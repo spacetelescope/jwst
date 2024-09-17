@@ -1783,7 +1783,7 @@ class IFUCubeData():
             index = offsets['filename'].index(filename)
             raoffset = offsets['raoffset'][index]
             decoffset = offsets['decoffset'][index]
-            log.info("Ra and dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
+            log.info("Ra and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
                      raoffset*3600.0,
                     decoffset*3600.0, filename)
             raoffset = raoffset* units.deg
@@ -1926,8 +1926,9 @@ class IFUCubeData():
             index = offsets['filename'].index(filename)
             raoffset = offsets['raoffset'][index]
             decoffset = offsets['decoffset'][index]
-            log.info("Ra and dec offset (arc seconds) applied to file :%5.2f, %5.2f,  %s",
-                     raoffset, decoffset, filename)
+            log.info("Ra and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
+                     raoffset*3600.0, decoffset*3600.0, filename)
+    
             raoffset = raoffset* units.deg
             decoffset = decoffset* units.deg            
         # initialize the ra,dec, and wavelength arrays

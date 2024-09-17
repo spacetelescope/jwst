@@ -168,10 +168,10 @@ An example of making an offset file for an association containing three files is
 
 
 Below is an  example of making an offset file for `num` files.  
-The user has  set up the  `file` list containing the `num` filenames and the 
-cooresponding Ra and Dec offsets lists, both containing num values. In this example
-these list are called  `ra_offset` and `dec_offset`
-
+The user has set up three lists  `file`, `ra_offset` and `dec_offset`. The  `file` list
+contains the filenames and  the `ra_offset` and `dec_offset` contain the Ra and Dec offsets respectively.
+In this example, all the list have five values. The units of the of Ra and Dec offsets are given in
+the `units` value.
 
 .. code-block:: python
 		
