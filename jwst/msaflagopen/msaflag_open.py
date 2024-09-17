@@ -84,10 +84,10 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
         science data with DQ flags of affected modified
 
     """
-    #
     # Use the machinery in assign_wcs to create a WCS object for the bad shutters
     pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
     wcs = WCS(pipeline)
+
     # Create output as a copy of the input science data model so we can overwrite
     # the wcs with the wcs for the failed open shutters
     # Have to make sure the EXP_TYPE is NRS_MSASPEC so that nrs_wcs_set_input works,
@@ -98,31 +98,30 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     temporary_copy.meta.exposure.type = 'NRS_MSASPEC'
     dq_array = input_datamodel.dq
     for slitlet in failed_slitlets:
-        #
         # Pick the WCS for this slitlet from the WCS of the exposure
         thiswcs = nrs_wcs_set_input(temporary_copy, slitlet.name)
-        #
+
         # Convert the bounding box for this slitlet to a set of indices to use as a slice
         xmin, xmax, ymin, ymax = boundingbox_to_indices(temporary_copy,
                                                         thiswcs.bounding_box)
-        #
+
         # Make a grid of points within the slice
         y_indices, x_indices = np.mgrid[ymin:ymax, xmin:xmax]
-        #
+
         # Calculate the arrays of coordinates for each pixel in the slice
         coordinate_array = thiswcs(x_indices, y_indices)
-        #
+
         # The coordinate_array is a tuple of arrays, one for each output coordinate
         # In this case there should be 3 arrays, one each for RA, Dec and Wavelength
         # For pixels outside the slitlet, the arrays have NaN
-        #
+
         # Make a subarray from these coordinate arrays by setting pixels that aren't
         # NaN to FAILDOPENFLAG, the rest to 0
         dq_subarray = wcs_to_dq(coordinate_array, FAILEDOPENFLAG)
-        #
+
         # bitwise-or this subarray with the slice in the original exposure's DQ array
         dq_array = or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax)
-    #
+
     # Set the dq array of the input datamodel to the corrected dq array
     input_datamodel.dq = dq_array
     return input_datamodel
@@ -148,7 +147,7 @@ def boundingbox_to_indices(data_model, bounding_box):
         Range of indices of overlap between science data array and bounding box
 
     """
-    nrows, ncols = data_model.data.shape
+    nrows, ncols = data_model.data.shape[-2:]
     ((x1, x2), (y1, y2)) = bounding_box
     xmin = int(min(x1, x2))
     xmin = max(xmin, 0)
@@ -243,5 +242,5 @@ def or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax):
     Bitwise-or the slice of the dq array with the section corresponding to the
     failed open shutter
     """
-    dq_array[ymin:ymax, xmin:xmax] = np.bitwise_or(dq_array[ymin:ymax, xmin:xmax], dq_subarray)
+    dq_array[..., ymin:ymax, xmin:xmax] = np.bitwise_or(dq_array[..., ymin:ymax, xmin:xmax], dq_subarray)
     return dq_array

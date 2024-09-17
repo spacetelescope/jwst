@@ -249,11 +249,11 @@ class Spec2Pipeline(Pipeline):
 
         # Steps whose order is the same for all types of input:
 
-        # Self-calibrate to flag bad/warm pixels, and apply flags 
+        # Self-calibrate to flag bad/warm pixels, and apply flags
         # to both background and science exposures.
         # skipped by default for all modes
         result = self.badpix_selfcal(
-            calibrated, members_by_type['selfcal'], members_by_type['background'], 
+            calibrated, members_by_type['selfcal'], members_by_type['background'],
             )
         if isinstance(result, datamodels.JwstDataModel):
             # if step is skipped, unchanged sci exposure is returned
