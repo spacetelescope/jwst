@@ -1,30 +1,38 @@
 from stdatamodels.jwst import datamodels
 
-from jwst.clean_flicker_noise import clean_flicker_noise
 from ..stpipe import Step
+from . import clean_flicker_noise
 
-__all__ = ["NSCleanStep"]
+__all__ = ["CleanFlickerNoiseStep"]
 
 
-class NSCleanStep(Step):
+class CleanFlickerNoiseStep(Step):
     """
-    NSCleanStep: This step performs 1/f noise correction ("cleaning")
-    of NIRSpec images, using the "NSClean" method.
+    CleanFlickerNoiseStep: This step performs flicker noise correction ("cleaning").
 
-    NOTE: This step is a deprecated alias to the ``clean_flicker_noise`` step.
+    Input data is expected to be a ramp file (RampModel), in between
+    jump and ramp fitting steps, or a rate file (ImageModel or CubeModel).
+
+    Correction algorithms implemented are:
+        - `fft`: Background noise is fit in frequency space.
+           Implementation is based on the NSClean algorithm, developed
+           by Bernard Rauscher.
+        - `median`: Background noise is characterized by a median
+          along the detector slow axis. Implementation is based on the
+          `image1overf` algorithm, developed by Chris Willott.
     """
 
-    class_alias = "nsclean"
+    class_alias = "clean_flicker_noise"
 
     spec = """
-        fit_method = option('fft', 'median', default='fft')  # Noise fitting algorithm
-        fit_by_channel = boolean(default=False)  # Fit noise separately by amplifier
-        background_method = option('median', 'model', None, default=None) # Background fitting algorithm
+        fit_method = option('fft', 'median', default='median')  # Noise fitting algorithm
+        fit_by_channel = boolean(default=False)  # Fit noise separately by amplifier (NIR only)
+        background_method = option('median', 'model', None, default='median') # Background fitting algorithm
         background_box_size = int_list(min=2, max=2, default=None)  # Background box size for modeled background
-        mask_spectral_regions = boolean(default=True)  # Mask WCS-defined spectral regions
-        n_sigma = float(default=5.0)  # Clipping level for outliers
+        mask_science_regions = boolean(default=False)  # Mask known science regions
+        n_sigma = float(default=2.0)  # Clipping level for non-background signal
         fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
-        single_mask = boolean(default=False)  # Make a single mask for all integrations
+        single_mask = boolean(default=True)  # Make a single mask for all integrations
         user_mask = string(default=None)  # Path to user-supplied mask
         save_mask = boolean(default=False)  # Save the created mask
         save_background = boolean(default=False)  # Save the fit background
@@ -34,20 +42,19 @@ class NSCleanStep(Step):
 
     def process(self, input):
         """
-        Fit and subtract 1/f background noise from a NIRSpec image
+        Fit and subtract 1/f background noise from a ramp data set.
 
         Parameters
         ----------
-        input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
-            Input datamodel to be corrected.
+        input : DataModel
+            Input datamodel to be corrected
 
         fit_method : str, optional
-            The background fit algorithm to use.  Options are 'fft' and 'median';
-            'fft' performs the original NSClean implementation.
+            The noise fitting algorithm to use.  Options are 'fft' and 'median'.
 
         fit_by_channel : bool, optional
             If set, flicker noise is fit independently for each detector channel.
-            Ignored for subarray data and for `fit_method` = 'fft'.
+            Ignored for MIRI, for subarray data, and for `fit_method` = 'fft'
 
         background_method : {'median', 'model', None}
             If 'median', the preliminary background to remove and restore
@@ -61,8 +68,11 @@ class NSCleanStep(Step):
             `background_method` = 'model'. For best results, use a box size
             that evenly divides the input image shape.
 
-        mask_spectral_regions : bool, optional
-            Mask regions of the image defined by WCS bounding boxes for slits/slices.
+        mask_science_regions : bool, optional
+            For NIRSpec, mask regions of the image defined by WCS bounding
+            boxes for slits/slices, as well as any regions known to be
+            affected by failed-open MSA shutters.  For MIRI imaging, mask
+            regions of the detector not used for science.
 
         n_sigma : float, optional
             Sigma clipping threshold to be used in detecting outliers in the image.
@@ -91,21 +101,17 @@ class NSCleanStep(Step):
 
         Returns
         -------
-        output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
-            The 1/f corrected datamodel.
+        output_model : DataModel
+            The flicker noise corrected datamodel
         """
-        message = ("The 'nsclean' step is a deprecated alias to 'clean_flicker_noise' "
-                   "and will be removed in future builds.")
-        self.log.warning(message)
 
         # Open the input data model
         with datamodels.open(input) as input_model:
 
-            # Do the NSClean correction
             result = clean_flicker_noise.do_correction(
                 input_model, self.input_dir, self.fit_method, self.fit_by_channel,
                 self.background_method, self.background_box_size,
-                self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
+                self.mask_science_regions, self.n_sigma, self.fit_histogram,
                 self.single_mask, self.user_mask,
                 self.save_mask, self.save_background, self.save_noise)
             output_model, mask_model, background_model, noise_model, status = result
@@ -135,6 +141,6 @@ class NSCleanStep(Step):
                 noise_model.close()
 
             # Set the step completion status
-            output_model.meta.cal_step.nsclean = status
+            output_model.meta.cal_step.clean_flicker_noise = status
 
         return output_model
