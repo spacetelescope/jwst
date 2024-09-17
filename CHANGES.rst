@@ -197,6 +197,8 @@ photom
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+
 pipeline
 --------
 
@@ -208,6 +210,8 @@ pipeline
   association members. [#8786]
 
 - Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 ramp_fitting
 ------------
@@ -618,8 +622,6 @@ photom
 - Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
 
-pipeline
---------
 
 pipeline
 --------

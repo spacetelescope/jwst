@@ -1746,9 +1746,9 @@ def _get_transforms(input_model, slitnames, return_slits=False):
     if return_slits:
         g2s = wcs.get_transform('gwa', 'slit_frame')
         open_slits = g2s.slits
-        return wcs, trans1, trans2, slit2slicer, copy.deepcopy(open_slits)
+        return wcs, sca2gwa, gwa2slit, slit2slicer, copy.deepcopy(open_slits)
     else:
-        return wcs, sca2gwa, gwa2slit, trans3
+        return wcs, sca2gwa, gwa2slit, slit2slicer
 
 
 def _nrs_wcs_set_input_lite(input_model, input_wcs, slit_name, transforms,
