@@ -43,64 +43,6 @@ def create_cube_median(cube_model, maskpt):
         overwrite_input=False)
 
 
-class DiskAppendableArray:
-    """
-    Creates a temporary file to which to append data, in order to perform
-    timewise operations on a stack of input images without holding all of them
-    in memory.
-    
-    This class is purpose-built for the median computation during outlier detection 
-    and is not very flexible. It is assumed that each data array passed to `append`
-    represents the same spatial segment of the full dataset. It is also assumed that 
-    each data array passed to `append` represents only a single instant in time; 
-    the append operation will stack them along a new axis.
-    
-    The `read` operation is only capable of loading the full array back into memory.
-    When working with large datasets that do not fit in memory, the
-    required workflow is to create many DiskAppendableArray objects, each holding
-    a small spatial segment of the full dataset.
-    """
-    
-    def __init__(self, slice_shape, dtype='float32', tempdir=""):
-        """
-        Parameters
-        ----------
-        slice_shape : tuple
-            The shape of the spatial section of input data to be appended to the array.
-
-        dtype : str
-            The data type of the array.
-
-        tempdir : str
-            The directory in which to create the temporary files.
-            Default is the current working directory.
-        """
-        self._temp_file = tempfile.NamedTemporaryFile(dir=tempdir)
-        self._filename = self._temp_file.name
-        self._slice_shape = slice_shape
-        self._dtype = dtype
-        self._append_count = 0
-        with open(self._filename, 'wb') as f: # Noqa: F841
-            pass
-
-    @property
-    def shape(self):
-        return (self._append_count,) + self._slice_shape
-        
-    def append(self, data):
-        if data.shape != self._slice_shape:
-            raise ValueError(f"Data shape {data.shape} does not match slice shape {self._slice_shape}")
-        if data.dtype != self._dtype:
-            raise ValueError(f"Data dtype {data.dtype} does not match array dtype {self._dtype}")
-        with open(self._filename, 'ab') as f:
-            f.write(data.tobytes())
-        self._append_count += 1
-
-    def read(self):
-        shp = (self._append_count,) + self._slice_shape
-        return np.fromfile(self._filename, dtype=self._dtype).reshape(shp)
-
-
 def create_median(resampled_models, maskpt, buffer_size=None):
     """Create a median image from the singly resampled images.
 
@@ -133,9 +75,9 @@ def create_median(resampled_models, maskpt, buffer_size=None):
                 if i == 0:
                     # set up temporary storage for spatial sections of all input models
                     shp = (len(resampled_models),) + resampled.data.shape
-                    median_computer = OnDiskTimewiseOperation(shp,
-                                                              dtype=resampled.data.dtype,
-                                                              buffer_size=buffer_size)
+                    median_computer = OnDiskMedian(shp,
+                                                   dtype=resampled.data.dtype,
+                                                   buffer_size=buffer_size)
                 # write spatial sections to disk
                 median_computer.add_image(resampled.data)
             resampled_models.shelve(resampled, i, modify=False)
@@ -150,44 +92,112 @@ def create_median(resampled_models, maskpt, buffer_size=None):
             return _nanmedian3D(model_cube)
     else:
         # retrieve spatial sections from disk one by one and compute timewise median
-        return median_computer.compute_median()
+        med = median_computer.compute_median()
+        median_computer.cleanup()
+        return med
 
 
-class OnDiskTimewiseOperation:
-
-    def __init__(self, shape, tempdir="", dtype='float32', buffer_size=None):
+class DiskAppendableArray:
+    """
+    Creates a temporary file to which to append data, in order to perform
+    timewise operations on a stack of input images without holding all of them
+    in memory.
+    
+    This class is purpose-built for the median computation during outlier detection 
+    and is not very flexible. It is assumed that each data array passed to `append`
+    represents the same spatial segment of the full dataset. It is also assumed that 
+    each data array passed to `append` represents only a single instant in time; 
+    the append operation will stack them along a new axis.
+    
+    The `read` operation is only capable of loading the full array back into memory.
+    When working with large datasets that do not fit in memory, the
+    required workflow is to create many DiskAppendableArray objects, each holding
+    a small spatial segment of the full dataset.
+    """
+    
+    def __init__(self, slice_shape, dtype, tempdir):
         """
-        Class to compute timewise operations on a stack of input images without
-        holding all of them in memory. At present, only the median operation is
-        supported. To extend, create a function definition for the desired
-        operation modeled after the `compute_median` method.
+        Parameters
+        ----------
+        slice_shape : tuple
+            The shape of the spatial section of input data to be appended to the array.
+
+        dtype : str
+            The data type of the array. Must be a valid numpy array datatype.
+
+        tempdir : str
+            The directory in which to create the temporary files.
+            Default is the current working directory.
+        """
+        if len(slice_shape) != 2:
+            raise ValueError(f"Invalid slice_shape {slice_shape}. Only 2-D arrays are supported.")
+        self._temp_file, self._filename = tempfile.mkstemp(dir=tempdir)
+        self._slice_shape = slice_shape
+        self._dtype = np.dtype(dtype)
+        self._append_count = 0
+
+
+    @property
+    def shape(self):
+        return (self._append_count,) + self._slice_shape
+
+
+    def append(self, data):
+        """Add a new slice to the temporary file"""
+        if data.shape != self._slice_shape:
+            raise ValueError(f"Data shape {data.shape} does not match slice shape {self._slice_shape}")
+        if data.dtype != self._dtype:
+            raise ValueError(f"Data dtype {data.dtype} does not match array dtype {self._dtype}")
+        with open(self._filename, "ab") as f:
+            f.write(data.tobytes())
+        self._append_count += 1
+
+
+    def read(self):
+        """Read the 3-D array into memory, then delete the tempfile"""
+        shp = (self._append_count,) + self._slice_shape
+        with open(self._filename, "rb") as f:
+            output = np.fromfile(f, dtype=self._dtype).reshape(shp)
+        return output
+    
+
+    def cleanup(self):
+        Path.unlink(self._filename)
+        return
+
+
+class OnDiskMedian:
+
+    def __init__(self, shape, dtype='float32', tempdir="", buffer_size=None):
+        """
+        Set up temporary files to perform operations on a stack of 2-D input arrays
+        along the stacking axis (e.g., a time axis) without
+        holding all of them in memory. Currently the only supported operation
+        is the median.
 
         Parameters
         ----------
         shape: tuple
             The shape of the entire input, (n_images, imrows, imcols).
 
+        dtype : str
+            The data type of the input data.
+
         tempdir : str
             The parent directory in which to create the temporary directory,
             which itself holds all the DiskAppendableArray tempfiles.
             Default is the current working directory.
 
-        dtype : str
-            The data type of the input data.
-
         buffer_size : int, optional
-            The buffer size for the median computation, units of bytes.
-            If None, the buffer size will be set equal to the size of one input
-            resampled image. This is the largest it can be without increasing
-            the memory footprint of the entire step: we write the drizzled
-            model to disk just before the median calculation handled by this class,
-            meaning we can discard the resampled image from memory before calling
-            compute_median() such that the memory is freed up for the median calculation.
+            The buffer size, units of bytes.
+            Default is the size of one input image.
         """
+        if len(shape) != 3:
+            raise ValueError(f"Invalid input shape {shape}; only three-dimensional data are supported.")
         self._expected_nframes = shape[0]
         self.frame_shape = shape[1:]
-        self.dtype = dtype
-        self.itemsize = np.dtype(dtype).itemsize
+        self.dtype = np.dtype(dtype)
+        self.itemsize = self.dtype.itemsize
         self._temp_dir = tempfile.TemporaryDirectory(dir=tempdir)
         self._temp_path = Path(self._temp_dir.name)
 
@@ -243,9 +253,7 @@ class OnDiskTimewiseOperation:
             if i == self.nsections - 1:
                 # last section has whatever shape is left over
                 shp = (self.frame_shape[0] - (self.nsections-1) * self.section_nrows, self.frame_shape[1])
-            arr = DiskAppendableArray(shp,
-                                      tempdir=self._temp_path,
-                                      dtype=dtype)
+            arr = DiskAppendableArray(shp, dtype, self._temp_path)
             temp_arrays.append(arr)
         return temp_arrays
 
@@ -268,10 +276,18 @@ class OnDiskTimewiseOperation:
             raise ValueError(f"Data shape {data.shape} does not match expected shape {self.frame_shape}")
         if data.dtype != self.dtype:
             raise ValueError(f"Data dtype {data.dtype} does not match expected dtype {self.dtype}")
+        
+
+    def cleanup(self):
+        """Remove the temporary files and directory when finished"""
+        [arr.cleanup() for arr in self._temp_arrays]
+        Path.rmdir(self._temp_path)
+        return
 
 
     def compute_median(self):
-        """Read spatial sections from disk and compute the median."""
+        """Read spatial sections from disk and compute the median across groups
+        (median over number of exposures on a per-pixel basis)"""
         row_indices = [(i * self.section_nrows, min((i+1) * self.section_nrows, self.frame_shape[0]))
                        for i in range(self.nsections)]
 

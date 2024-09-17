@@ -1,5 +1,5 @@
 import pytest
-from jwst.outlier_detection.utils import DiskAppendableArray, OnDiskTimewiseOperation
+from jwst.outlier_detection.utils import DiskAppendableArray, OnDiskMedian
 from pathlib import Path
 import numpy as np
 import os
@@ -8,11 +8,11 @@ import os
 def test_disk_appendable_array(tmp_cwd):
 
     slice_shape = (8,7)
-    dtype = 'float32'
+    dtype = "float32"
     tempdir = tmp_cwd / Path("tmptest")
     os.mkdir(tempdir)
 
-    arr = DiskAppendableArray(slice_shape, dtype=dtype, tempdir=tempdir)
+    arr = DiskAppendableArray(slice_shape, dtype, tempdir)
 
     # check temporary file setup
     assert arr._filename.split("/")[-1] in os.listdir(tempdir)
@@ -44,10 +44,31 @@ def test_disk_appendable_array(tmp_cwd):
     assert np.all(arr_in_memory[1] == candidate1)
     assert np.allclose(arr_in_memory[2], candidate2, equal_nan=True)
 
-    # check cleanup occurs after reassigning arr
-    arr = None
+    # test cleanup 
+    arr.cleanup()
     assert len(os.listdir(tempdir)) == 0
 
+
+def test_disk_appendable_array_bad_inputs(tmp_cwd):
+
+    slice_shape = (8,7)
+    dtype = "float32"
+    tempdir = tmp_cwd / Path("tmptest")
+    
+    # test input directory does not exist
+    with pytest.raises(FileNotFoundError):
+        arr = DiskAppendableArray(slice_shape, dtype, tempdir)
+
+    # make the input directory
+    os.mkdir(tempdir)
+
+    # test slice_shape is not 2-D
+    with pytest.raises(ValueError):
+        arr = DiskAppendableArray((3,5,7), dtype, tempdir)
+
+    # test dtype is not valid
+    with pytest.raises(TypeError):
+        arr = DiskAppendableArray(slice_shape, "float3", tempdir)
 
 
 def test_on_disk_median(tmp_cwd):
@@ -59,7 +80,7 @@ def test_on_disk_median(tmp_cwd):
     os.mkdir(tempdir)
     shape = (library_length,) + frame_shape
 
-    median_computer = OnDiskTimewiseOperation(shape, dtype=dtype, tempdir=tempdir)
+    median_computer = OnDiskMedian(shape, dtype=dtype, tempdir=tempdir)
 
     # test compute buffer indices
     # buffer size equals size of single input model by default
@@ -95,6 +116,7 @@ def test_on_disk_median(tmp_cwd):
     for candidate in [candidate0, candidate1, candidate2]:
         median_computer.add_image(candidate)
     median = median_computer.compute_median()
+    median_computer.cleanup()
     assert median.shape == frame_shape
     assert np.all(median == 2.5)
 
@@ -104,3 +126,13 @@ def test_on_disk_median(tmp_cwd):
     for _ in range(2):
         with pytest.raises(IndexError):
             median_computer.add_image(candidate3)
+
+    # test cleanup of tmpdir and everything else
+    assert not os.path.exists(median_computer._temp_path)
+    assert len(os.listdir(tempdir)) == 0
+    assert len(os.listdir(os.getcwd())) == 1 # this is the "tmptest" directory
+
+
+def test_on_disk_median_bad_inputs(tmp_cwd):
+    # FIXME
+    pass
