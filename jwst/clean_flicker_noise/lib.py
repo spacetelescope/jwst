@@ -517,7 +517,6 @@ class NSCleanSubarray:
         if return_fit:
             return(rfft)
 
-
     def clean(self, weight_fit=True, return_model=False):
         """
         Clean the data
@@ -533,7 +532,7 @@ class NSCleanSubarray:
 
         Returns
         -------
-        data : 2D float array
+        data : array-like of float
             The cleaned data array.
         """ 
         self.fit(weight_fit=weight_fit)  # Fit the background model
