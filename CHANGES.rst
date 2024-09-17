@@ -36,6 +36,10 @@ associations
 
 - Remove ``MultilineLogger`` and no longer set it as the default logger. [#8781]
 
+- Excluded nearby background candidates from NIRSpec fixed slit associations
+  for S1600A1 with 5 point dithers, to reduce overlap between background nods
+  and science exposure. [#8744]
+  
 badpix_selfcal
 --------------
 
