@@ -140,7 +140,7 @@ corresponding right ascension and declination offset given in arc seconds.
 
 Below is an example of how to make an ASDF offset file. It is assumed the user has determined the
 offsets to apply to the data in each file. The offsets information is stored in three lists:
-`filenames`, `raoffset` and `decoffset`.  The units of the Ra and Dec offsets 
+`filename`, `raoffset` and `decoffset`.  The units of the Ra and Dec offsets 
 are required to be in the offset file and only the unit, `arcsec`, is allowed. The file names should
 not contain the directory path. The offset file can have any name, but it must have the `asdf` extension.
 
@@ -171,7 +171,7 @@ Below is an  example of making an offset file for `num` files.
 The user has set up three lists  `file`, `ra_offset` and `dec_offset`. The  `file` list
 contains the filenames and  the `ra_offset` and `dec_offset` contain the Ra and Dec offsets respectively.
 In this example, all the list have five values. The units of the of Ra and Dec offsets are given in
-the `units` value.
+the `units` value and this value must be arc seconds. 
 
 .. code-block:: python
 		
