@@ -167,7 +167,6 @@ An example of making an offset file for an association containing three files is
     
 
 
-
 Below is an  example of making an offset file for `num` files.  
 The user has  set up the  `file` list containing the `num` filenames and the 
 cooresponding Ra and Dec offsets lists, both containing num values. In this example

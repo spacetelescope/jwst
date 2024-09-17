@@ -1316,16 +1316,16 @@ class IFUCubeData():
             log.debug('number of files %d', n)
             
             # find the median center declination if we have an offset file
-            if self.offsets is not None:
-                for k in range(n):
-                    input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
-                    input_model = datamodels.open(input_file)
-                    spatial_box = input_model.meta.wcsinfo.s_region
-                    s = spatial_box.split(' ')
-                    cb1 = float(s[4])
-                    cb2 = float(s[6])
-                    cb3 = float(s[8])
-                    cb4 = float(s[10])
+            #if self.offsets is not None:
+            #    for k in range(n):
+            #        input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
+            #        input_model = datamodels.open(input_file)
+            #        spatial_box = input_model.meta.wcsinfo.s_region
+            #        s = spatial_box.split(' ')
+            #        cb1 = float(s[4])
+            #        cb2 = float(s[6])
+            #        cb3 = float(s[8])
+            #        cb4 = float(s[10])
 
             for k in range(n):
                 lmin = 0.0
@@ -1824,6 +1824,7 @@ class IFUCubeData():
         # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
         ra, dec, wave = input_model.meta.wcs(x, y)
 
+        # offset the central pixel
         if offsets is not None:
             c1 = SkyCoord(ra, dec, unit='deg')
             c1_new = c1.spherical_offsets_by(raoffset, decoffset)
@@ -1869,6 +1870,7 @@ class IFUCubeData():
                                                           input_model.meta.wcs.output_frame, alpha2,
                                                           beta - dbeta * pixfrac / 2., wave)
 
+            # now offset the pixel corners
             if offsets is not None:
                 c1 = SkyCoord(ra1, dec1, unit='deg')
                 c2 = SkyCoord(ra2, dec2, unit='deg')
@@ -1890,7 +1892,6 @@ class IFUCubeData():
 
                 ra4 = c4_new.ra.value
                 dec4 = c4_new.dec.value
-            
             
             corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
 
@@ -2081,7 +2082,6 @@ class IFUCubeData():
         slice_no = slice_det[valid_data]
         dwave = dwave_det[valid_data]
 
-        
         ra = ra_det[valid_data] 
         dec = dec_det[valid_data]
         ra1 = ra1_det[valid_data]
@@ -2093,13 +2093,14 @@ class IFUCubeData():
         dec3 = dec3_det[valid_data]
         dec4 = dec4_det[valid_data]
 
-        if offsets is not None: 
+        if offsets is not None:
+            # central pixel
             c1 = SkyCoord(ra, dec, unit='deg')
-
             c1_new = c1.spherical_offsets_by(raoffset, decoffset)
             ra = c1_new.ra.value
             dec = c1_new.dec.value
 
+            # pixel corners
             c1 = SkyCoord(ra1, dec1, unit='deg')
             c2 = SkyCoord(ra2, dec2, unit='deg')
             c3 = SkyCoord(ra3, dec3, unit='deg')
