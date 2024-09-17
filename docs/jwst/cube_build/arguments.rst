@@ -145,6 +145,7 @@ are required to be in the offset file and only the unit, `arcsec`, is allowed. T
 not contain the directory path. The offset file can have any name, but it must have the `asdf` extension.
 
 An example of making an offset file for an association containing three files is:
+
 .. code-block:: python
 		
    import asdf
@@ -167,10 +168,10 @@ An example of making an offset file for an association containing three files is
 
 
 
-An example of making an offset file for `num` files 
-where the user has set up list called `file` containing the `num` filenames.
-The cooresponding Ra and Dec offsets, both containing num values, are stored in lists called,
-`ra_offset` and `dec_offset`
+Below is an  example of making an offset file for `num` files.  
+The user has  set up the  `file` list containing the `num` filenames and the 
+cooresponding Ra and Dec offsets lists, both containing num values. In this example
+these list are called  `ra_offset` and `dec_offset`
 
 
 .. code-block:: python
@@ -202,9 +203,9 @@ Set up the lists and call the above function:
 
 .. code-block:: python
 		
-    files = ['test1.fits', 'test2.fits', 'test3.fits']
-    ra_offset = [0.1, 0.12, 0.13]
-    dec_offset = [0.14, 0.15, 0.16]
+    files = ['test1.fits', 'test2.fits', 'test3.fits', 'test4,fits', 'test5.fits']
+    ra_offset = [0.1, 0.12, 0.13, 0.11, 0.12]
+    dec_offset = [0.14, 0.15, 0.16, 0.01, 0.1]
     create_offset_asdf(files, ra_offset, dec_offset)    
 
     
