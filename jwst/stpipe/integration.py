@@ -44,6 +44,7 @@ def get_steps():
         ("jwst.step.AlignRefsStep", 'align_refs', False),
         ("jwst.step.KlipStep", 'klip', False),
         ("jwst.step.HlspStep", 'hlsp', False),
+        ("jwst.step.CleanFlickerNoiseStep", 'clean_flicker_noise', False),
         ("jwst.step.CubeBuildStep", 'cube_build', False),
         ("jwst.step.CubeSkyMatchStep", 'cube_skymatch', False),
         ("jwst.step.DarkCurrentStep", 'dark_current', False),
