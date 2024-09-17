@@ -271,10 +271,12 @@ class Spec2Pipeline(Pipeline):
         
         # Apply nsclean to NIRSpec imprint and background members
         for i, imprint_file in enumerate(members_by_type['imprint']):
+            self.nsclean.output_file = os.path.basename(imprint_file)
             imprint_nsclean = self.nsclean(imprint_file)
             members_by_type['imprint'][i] = imprint_nsclean
             
         for i, bkg_file in enumerate(members_by_type['background']):
+            self.nsclean.output_file = os.path.basename(bkg_file)
             bkg_nsclean = self.nsclean(bkg_file)
             members_by_type['background'][i] = bkg_nsclean
 
