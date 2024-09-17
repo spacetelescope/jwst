@@ -32,6 +32,9 @@ def test_nirspec_fs_spec3_moving_target(
     """Test spec3 pipeline on a NIRSpec FS moving target."""
     rtdata = rtdata_module
 
+    import os
+    print(os.listdir(os.getcwd()))
+
     output = f"jw01245-o002_s000000001_nirspec_clear-prism-s200a1-subs200a1_{suffix}.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nirspec_fs_spec3_moving_target/{output}")

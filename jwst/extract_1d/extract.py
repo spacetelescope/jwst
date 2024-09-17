@@ -2853,9 +2853,6 @@ def do_extract1d(
     else:
         meta_source = input_model
 
-    print("META_SOURCE", meta_source)
-    print("META_SOURCE[0]", meta_source[0])
-
     # Setup the output model
     output_model = datamodels.MultiSpecModel()
 

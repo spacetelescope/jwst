@@ -132,6 +132,9 @@ class Spec3Pipeline(Pipeline):
         output_file = input_models.asn_table["products"][0]["name"]
         self.output_file = output_file
 
+        print("self.output_file = ", self.output_file)
+        print("self.outlier_detection.save_model = ", self.outlier_detection.save_model)
+
         # Find all the member types in the product
         members_by_type = defaultdict(list)
         product = input_models.asn_table["products"][0]
