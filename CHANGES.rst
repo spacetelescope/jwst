@@ -42,6 +42,18 @@ badpix_selfcal
 - Subtract pedestal dark when constructing min array across selfcal exposures
   for MIRI MRS data. [#8771]
 
+calwebb_detector1
+-----------------
+
+- Added the optional ``clean_flicker_noise`` step between ``jump`` and
+  ``ramp_fit``. [#8669]
+
+clean_flicker_noise
+-------------------
+
+- Implemented this new optional step to clean transient flicker noise (e.g. 1/f noise)
+  from group images in ramp data. [#8669]
+
 cube_build
 ----------
 
@@ -114,6 +126,10 @@ nsclean
   operating on sections of the array and smoothly combining these sections.
   Due to the computational costs of matrix operations, this is a large
   speedup that has little effect on the results. [#8745]
+
+- Merged implementation with the new ``clean_flicker_noise`` step. This step
+  can still be called from the ``calwebb_spec2`` pipeline on NIRSpec rate
+  data, but it is now deprecated. [#8669]
 
 outlier_detection
 -----------------
