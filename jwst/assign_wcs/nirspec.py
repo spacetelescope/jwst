@@ -1735,7 +1735,7 @@ def _get_transforms(input_model, slitnames, return_slits=False):
     wcs = copy.deepcopy(input_model.meta.wcs)
 
     sca2gwa = copy.deepcopy(wcs.pipeline[1].transform[1:])
-    wcs.set_transform('sca', 'gwa', trans1)
+    wcs.set_transform('sca', 'gwa', sca2gwa)
 
     gwa2slit = [copy.deepcopy(wcs.pipeline[2].transform.get_model(slit_name))
               for slit_name in slitnames]
