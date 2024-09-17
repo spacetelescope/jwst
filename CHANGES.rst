@@ -28,7 +28,7 @@ assign_wcs
 
 - Add helper functions to copy only the necessary parts of the WCS so that
   these parts can be used within loops, avoiding copying the full WCS within
-  a loop [#8587]
+  a loop [#8793]
 
 associations
 ------------
@@ -80,7 +80,7 @@ cube_build
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   building a cube. [#8557]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 datamodels
 ----------
@@ -108,7 +108,7 @@ flat_field
 - Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
   variance, and DQ extensions for all modes. [#8557]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
 
 general
 -------
@@ -135,7 +135,7 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
 
 model_blender
 -------------
@@ -150,7 +150,7 @@ mrs_imatch
 msaflagopen
 -----------
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 nsclean
 -------
@@ -164,7 +164,7 @@ nsclean
   can still be called from the ``calwebb_spec2`` pipeline on NIRSpec rate
   data, but it is now deprecated. [#8669]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 outlier_detection
 -----------------
@@ -191,13 +191,15 @@ pathloss
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
+
 photom
 ------
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 pipeline
 --------
@@ -211,7 +213,12 @@ pipeline
 
 - Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
+
+pixel_replace
+-------------
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 ramp_fitting
 ------------
@@ -607,8 +614,6 @@ pathloss
   wavelengths for point and uniform sources if the ``wavecorr`` wavelength
   zero-point corrections for point sources have been applied. [#8376]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
-
 photom
 ------
 
@@ -660,8 +665,6 @@ pixel_replace
 
 - Added estimated errors and variances for replaced pixels, following the
   interpolation scheme used for the data. [#8504]
-
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 ramp_fitting
 ------------
