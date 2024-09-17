@@ -1,0 +1,2 @@
+# Make GitHub main page ignore .ipynb files when calculating repository Languages
+*.ipynb linguist-vendored

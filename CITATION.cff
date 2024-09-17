@@ -77,6 +77,9 @@ authors:
 - family-names: "Graham"
   given-names: "Brett"
   orcid: "https://orcid.org/0000-0001-6315-4507"
+- family-names: "Molter"
+  given-names: "Edward"
+  orcid: "https://orcid.org/0000-0003-3799-9033"
 title: "JWST Calibration Pipeline"
 version: 1.15.1
 doi: 10.5281/zenodo.7038885
