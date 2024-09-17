@@ -26,12 +26,16 @@ assign_wcs
 - Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
   into stcal. [#8624]
 
+- Add helper functions to copy only the necessary parts of the WCS so that
+  these parts can be used within loops, avoiding copying the full WCS within
+  a loop [#8587]
+
 associations
 ------------
 
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
-  
+
 - Update warning message about use of paths in associations. [#8752]
 
 - Remove ``MultilineLogger`` and no longer set it as the default logger. [#8781]
@@ -70,11 +74,13 @@ cube_build
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
-  
+
 - Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   building a cube. [#8557]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 datamodels
 ----------
@@ -102,6 +108,8 @@ flat_field
 - Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
   variance, and DQ extensions for all modes. [#8557]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+
 general
 -------
 
@@ -127,6 +135,8 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
+
 model_blender
 -------------
 
@@ -136,6 +146,11 @@ mrs_imatch
 ----------
 
 - Added a deprecation warning and set the default to skip=True for the step. [#8728]
+
+msaflagopen
+-----------
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 nsclean
 -------
@@ -148,6 +163,8 @@ nsclean
 - Merged implementation with the new ``clean_flicker_noise`` step. This step
   can still be called from the ``calwebb_spec2`` pipeline on NIRSpec rate
   data, but it is now deprecated. [#8669]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 outlier_detection
 -----------------
@@ -341,10 +358,6 @@ assign_wcs
   NIRSpec MOS and fixed slit observations. Slits are now appended to the data
   product in the order they appear in the MSA file. [#8467]
 
-- Add helper functions to copy only the necessary parts of the WCS so that
-  these parts can be used within loops, avoiding copying the full WCS within
-  a loop [#8587]
-
 associations
 ------------
 
@@ -384,11 +397,6 @@ combine_1d
 
 - Fix weights for combining errors from 1D spectra. [#8520]
 
-cube_build
-----------
- 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
- 
 dark_current
 ------------
 
@@ -494,8 +502,6 @@ flat_field
   all slits containing point sources are now handled consistently,
   whether they are marked primary or not. [#8467]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
- 
 general
 -------
 
@@ -533,9 +539,6 @@ master_background
   wavelength range instead of NaN to avoid NaN-ing out entire
   sets of science data when backgrounds are missing. [#8597]
 
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8338]
-
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 master_background_mos
 ---------------------
@@ -543,11 +546,6 @@ master_background_mos
 - Updated check for NIRSpec MOS background slits to use new naming convention:
   ``slit.source_name`` now contains the string "BKG" instead of
   "background". [#8533]
-
-msaflagopen
------------
-
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 nsclean
 -------
@@ -559,8 +557,6 @@ nsclean
 - Added a check for combined NIRSpec MOS and fixed slit products: if fixed
   slits are defined in a MOS product, the central fixed slit quadrant
   is not automatically masked. [#8467]
-
-- Replaced deep copies of NIRSpec WCS objects within most loops [#8587]
 
 outlier_detection
 -----------------
