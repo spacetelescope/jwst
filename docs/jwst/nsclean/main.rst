@@ -33,6 +33,6 @@ If this step is run as part of the
 association that includes background or imprint images, these
 images will be processed using the same ``nsclean`` parameters 
 as the science image.  If a user supplied mask is provided, it
-will be used for all images in an association, otherwise, separate
+will be used for all images in an association. Otherwise, separate
 masks will be calculated for each image using the same input
 parameters.
