@@ -1632,7 +1632,7 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
     try:
         # Note: the 30 is hardcoded in nirspec.nrs_ifu_wcs, which the line
         # below replaced.
-        wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(output_model, np.arange(30))
+        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(output_model, np.arange(30))
     except (KeyError, AttributeError):
         if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
             log.error("The input file does not appear to have WCS info.")
@@ -1641,7 +1641,7 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
             log.error("This mode %s requires WCS information.", exposure_type)
             raise RuntimeError("The assign_wcs step has not been run.")
     for k in range(len(tr2)):
-        ifu_wcs = nirspec.nrs_wcs_set_input_lite(output_model, wcsobj, k,
+        ifu_wcs = nirspec._nrs_wcs_set_input_lite(output_model, wcsobj, k,
                                                  [tr1, tr2[k], tr3[k]])
         # example:  bounding_box = ((1600.5, 2048.5),   # X
         #                           (1886.5, 1925.5))   # Y

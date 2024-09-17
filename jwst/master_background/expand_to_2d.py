@@ -323,9 +323,9 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
     if input.meta.instrument.name.upper() == "NIRSPEC":
         # Note: the 30 was hardcoded in nirpsec.nrs_ifu_wcs, which the line
         # below replaces.
-        wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(input, np.arange(30))
+        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input, np.arange(30))
         for k in range(len(tr2)):
-            ifu_wcs = nirspec.nrs_wcs_set_input_lite(input, wcsobj, k,
+            ifu_wcs = nirspec._nrs_wcs_set_input_lite(input, wcsobj, k,
                                                      [tr1, tr2[k], tr3[k]])
 
             x, y = grid_from_bounding_box(ifu_wcs.bounding_box)

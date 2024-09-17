@@ -684,12 +684,12 @@ class DataSet():
         # Get the list of wcs's for the IFU slices
         # Note: 30 in the line below is hardcoded in nirspec.nrs.ifu_wcs, which
         # the line below replaces.
-        wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(self.input, np.arange(30))
+        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(self.input, np.arange(30))
 
         # Loop over the slices
         for k in range(len(tr2)):
 
-            ifu_wcs = nirspec.nrs_wcs_set_input_lite(self.input, wcsobj, k,
+            ifu_wcs = nirspec._nrs_wcs_set_input_lite(self.input, wcsobj, k,
                                                      [tr1, tr2[k], tr3[k]])
 
             # Construct array indexes for pixels in this slice

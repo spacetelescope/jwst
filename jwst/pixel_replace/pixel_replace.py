@@ -137,9 +137,9 @@ class PixelReplacement:
                     self.output = new_model
                 else:
                     # fit_profile method - iterate over IFU slices
-                    wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(self.input, np.arange(30))
+                    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(self.input, np.arange(30))
                     for i in range(30):
-                        slice_wcs = nirspec.nrs_wcs_set_input_lite(self.input, wcsobj, i,
+                        slice_wcs = nirspec._nrs_wcs_set_input_lite(self.input, wcsobj, i,
                                                                    [tr1, tr2[i], tr3[i]])
                         _, _, wave = slice_wcs.transform('detector', 'slicer', yy, xx)
                         # Define a mask that is True where this trace is located

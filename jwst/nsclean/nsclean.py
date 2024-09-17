@@ -40,12 +40,12 @@ def mask_ifu_slices(input_model, mask):
     # Get the wcs objects for all IFU slices
     # Note: 30 in the line below is hardcoded in nirspec.nrs.ifu_wcs, which
     # the line below replaces.
-    wcsobj, tr1, tr2, tr3 = nirspec.get_transforms(input_model, np.arange(30))
+    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_model, np.arange(30))
 
     # Loop over the IFU slices, finding the valid region for each
-    for k in range(len(tr2)):        
-        ifu_wcs = nirspec.nrs_wcs_set_input_lite(input_model, wcsobj, k,
-                                                 [tr1, tr2[k], tr3[k]])    
+    for k in range(len(tr2)):
+        ifu_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, k,
+                                                 [tr1, tr2[k], tr3[k]])
 
         # Construct array indexes for pixels in this slice
         x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,
@@ -103,13 +103,13 @@ def mask_slits(input_model, mask):
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
 
     slits = [s.name for s in slit2msa.slits]
-    wcsobj, tr1, tr2, tr3, open_slits = nirspec.get_transforms(input_model, slits, return_slits=True)
+    wcsobj, tr1, tr2, tr3, open_slits = nirspec._get_transforms(input_model, slits, return_slits=True)
 
     for k in range(len(tr2)):
-        slit_wcs = nirspec.nrs_wcs_set_input_lite(input_model, wcsobj, slits[k],
+        slit_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, slits[k],
                                                   [tr1, tr2[k], tr3[k]],
                                                   open_slits=open_slits)
-        
+
         xlo, xhi = _toindex(slit_wcs.bounding_box[0])
         ylo, yhi = _toindex(slit_wcs.bounding_box[1])
         mask[..., ylo:yhi, xlo:xhi] = False
@@ -150,7 +150,7 @@ def create_mask(input_model, mask_spectral_regions, n_sigma):
     # Mask any reference pixels
     ref_pix = input_model.dq & dqflags.pixel['REFERENCE_PIXEL']
     mask[ref_pix > 0] = False
-    
+
     # If IFU, mask all pixels contained in the IFU slices
     if exptype == 'nrs_ifu' and mask_spectral_regions:
         mask = mask_ifu_slices(input_model, mask)
@@ -267,7 +267,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
           3) Zero gain from fc[1] to fc[2]
           4) Cosine roll-on from fc[2] to fc[3]
         Default (1061, 1211, 49943, 49957)
-    
+
     exclude_outliers : bool
         Find and mask outliers in the fit?  Default True
 
@@ -277,7 +277,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
     minfrac : float
         Minimum fraction of pixels locally available in the mask in
         order to attempt a correction.  Default 0.05 (i.e., 5%).
-        
+
     Returns
     -------
     cleaned_image : 2D float array
@@ -298,14 +298,14 @@ def clean_subarray(detector, image, mask, npix_iter=512,
     # basically copied from lib.py.  Use a robust estimator for
     # standard deviation, then exclude discrepant pixels and their
     # four nearest neighbors from the fit.
-    
+
     if exclude_outliers:
         med = np.median(image[mask])
         std = 1.4825 * np.median(np.abs((image - med)[mask]))
         outlier = mask & (np.abs(image - med) > sigrej * std)
-        
+
         mask = mask&(~outlier)
-        
+
         # also get four nearest neighbors of flagged pixels
         mask[1:] = mask[1:] & (~outlier[:-1])
         mask[:-1] = mask[:-1] & (~outlier[1:])
@@ -320,11 +320,11 @@ def clean_subarray(detector, image, mask, npix_iter=512,
 
     # i1 will be the first row with a nonzero element in the mask
     # imax will be the last row with a nonzero element in the mask
-    
+
     nonzero_mask_element = np.sum(mask, axis=1) > 0
     i1 = np.amin(np.arange(mask.shape[0])[nonzero_mask_element])
     imax = np.amax(np.arange(mask.shape[0])[nonzero_mask_element])
-        
+
     i1_vals = []
     di_list = []
     models = []
@@ -333,12 +333,12 @@ def clean_subarray(detector, image, mask, npix_iter=512,
         # Want npix_iter available pixels in this section.  If
         # there are fewer than 1.5*npix_iter available pixels in
         # the rest of the image, just go to the end.
-        
+
         for k in range(i1 + 1, imax + 2):
             if (sum_mask[k] - sum_mask[i1] > npix_iter
                     and sum_mask[-1] - sum_mask[i1] > 1.5 * npix_iter):
                 break
-            
+
         di = k - i1
 
         i1_vals += [i1]
@@ -349,7 +349,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
         # outliers section-by-section; we have to do that earlier
         # over the full array to get reliable values for the mean
         # and standard deviation.
-        
+
         if np.mean(mask[i1:i1 + di]) > minfrac:
             cleaner = NSCleanSubarray(image[i1:i1 + di], mask[i1:i1 + di],
                                       fc=fc, exclude_outliers=False)
@@ -365,9 +365,9 @@ def clean_subarray(detector, image, mask, npix_iter=512,
 
         # Step forward by half an interval so that we have
         # overlapping fitting regions.
-        
+
         i1 += max(int(np.round(di/2)), 1)
-            
+
     model = np.zeros(image.shape)
     tot_wgt = np.zeros(image.shape)
 
@@ -377,7 +377,7 @@ def clean_subarray(detector, image, mask, npix_iter=512,
     # Use nonzero weights everywhere so that if only one
     # correction is available it gets unit weight when we
     # normalize.
-    
+
     for i in range(len(models)):
         wgt = 1.001 - np.abs(np.linspace(-1, 1, di_list[i]))[:, np.newaxis]
         model[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt*models[i]
@@ -496,7 +496,7 @@ def do_correction(input_model, mask_spectral_regions, n_sigma, save_mask, user_m
                 fc = (150, 200, 49943, 49957)
             else:
                 fc = (1061, 1211, 49943, 49957)
-            
+
             # Clean a subarray image
             cleaned_image = clean_subarray(detector, image, mask, fc=fc)
 
