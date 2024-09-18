@@ -15,7 +15,8 @@ from .atoca import ExtractionEngine, MaskOverlapError
 from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
-from .pastasoss import get_soss_wavemaps
+from .pastasoss import get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -146,10 +147,10 @@ def get_trace_1d(ref_files, order):
                           padding=do_padding, padsize=pad, spectraces=True)
     if order == 1:
         spectrace = spectrace_o1
-        xtrace = np.arange(2048)
+        xtrace = np.arange(XTRACE_ORD1_LEN)
     elif order == 2:
         spectrace = spectrace_o2
-        xtrace = np.arange(1783)
+        xtrace = np.arange(XTRACE_ORD2_LEN)
     else:
         errmsg = f"Order {order} is not covered by Pastasoss reference file!"
         log.error(errmsg)
@@ -216,42 +217,6 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tra
     estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
 
     return estimate_spl
-
-
-def _mask_wv_map_centroid_outside(wave_maps, ref_files, transform, y_max, orders=(1, 2)):
-    """Patch to mask wv_map when centroid outside
-    Parameters
-    ----------
-    wave_maps : array or list
-        Wavelength maps
-    ref_files : dict
-        A dictionary of the reference file DataModels.
-    transform : array or list
-        A 3-element list or array describing the rotation and translation
-        to apply to the reference files in order to match the
-        observation.
-    y_max : int
-        Max value of column to check against centroid location
-    orders : tuple[int], optional
-        The spectral orders for each wave_map. If not specified, defaults to (1, 2).
-
-    Returns
-    -------
-    None
-        Modifies wave_maps in place to mask out values where centroid is off the detector.
-    """
-    for wv_map, order in zip(wave_maps, orders):
-        # Get centroid wavelength and y position as a function of columns
-        _, y_pos, wv = get_trace_1d(ref_files, transform, order)
-        # Find min and max wavelengths with centroid inside of detector
-        wv = wv[np.isfinite(y_pos)]
-        y_pos = y_pos[np.isfinite(y_pos)]
-        idx_inside = (0 <= y_pos) & (y_pos <= y_max)
-        wv = wv[idx_inside]
-        # Set to zeros (mask) values outside
-        mask = np.isfinite(wv_map)
-        mask[mask] = (np.min(wv) > wv_map[mask]) | (wv_map[mask] > np.max(wv))
-        wv_map[mask] = 0.
 
 
 def get_native_grid_from_trace(ref_files, spectral_order):
@@ -922,9 +887,6 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
         Pixel mask to apply to the detector image.
     ref_files : dict
         A dictionary of the reference file DataModels.
-    transform : array_like
-        A 3-element list or array describing the rotation and translation to
-        apply to the reference files in order to match the observation.
     subarray : str
         Subarray on which the data were recorded; one of 'SUBSTRIPT96',
         'SUBSTRIP256' or 'FULL'.

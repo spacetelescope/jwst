@@ -7,6 +7,14 @@ from ...datamodels import PastasossModel
 
 log = logging.getLogger(__name__)
 
+SOSS_XDIM = 2048
+SOSS_YDIM = 300
+XTRACE_ORD1_LEN = SOSS_XDIM
+XTRACE_ORD2_LEN = 1783
+WAVEMAP_WLMIN = 0.5
+WAVEMAP_WLMAX = 5.5
+WAVEMAP_NWL = 5001
+SUBARRAY_YMIN = 2048 - 256
 
 def get_wavelengths(
     refmodel: PastasossModel, x: np.ndarray, pwcpos: float, order: int
@@ -404,8 +412,8 @@ def calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=10, ma
     ypad = np.copy(padding)
 
     # No need to compute wavelengths across the entire detector, slightly larger than SUBSTRIP256 will do.
-    dimx, dimy = 2048, 300
-    y_dms = y_dms + (dimy - 2048)  # Adjust y-coordinate to area of interest.
+    dimx, dimy = SOSS_XDIM, SOSS_YDIM
+    y_dms = y_dms + (dimy - SOSS_XDIM)  # Adjust y-coordinate to area of interest.
 
     # Generate the oversampled grid of pixel coordinates.
     x_vec = np.arange((dimx + 2 * xpad) * os) / os - (os - 1) / (2 * os) - xpad
@@ -474,9 +482,9 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=20, spe
     _, order2_x, order2_y, order2_wl = get_soss_traces(refmodel, pwcpos, order='2', subarray=subarray, interp=True)
 
     # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
-    wavemin = 0.5
-    wavemax = 5.5
-    nwave = 5001
+    wavemin = WAVEMAP_WLMIN
+    wavemax = WAVEMAP_WLMAX
+    nwave = WAVEMAP_NWL
     wave_grid = np.linspace(wavemin, wavemax, nwave)
 
     # Extrapolate wavelengths for order 1 trace
@@ -485,21 +493,21 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=20, spe
     spectrace_1 = np.array([xtrace_order1, ytrace_order1, wave_grid])
 
     # Set cutoff for order 2 where it runs off the detector
-    o2_cutoff = 1783
+    o2_cutoff = XTRACE_ORD2_LEN
     w_o2_tmp = order2_wl[:o2_cutoff]
-    w_o2 = np.zeros(2040) * np.nan
+    w_o2 = np.zeros(SOSS_XDIM - 8) * np.nan
     w_o2[:o2_cutoff] = w_o2_tmp
     y_o2_tmp = order2_y[:o2_cutoff]
-    y_o2 = np.zeros(2040) * np.nan
+    y_o2 = np.zeros(SOSS_XDIM - 8) * np.nan
     y_o2[:o2_cutoff] = y_o2_tmp
     x_o2 = np.copy(order1_x)
 
     # Fill for column > 1400 with linear extrapolation
     m = w_o2[o2_cutoff - 1] - w_o2[o2_cutoff - 2]
-    dx = np.arange(2040 - o2_cutoff) + 1
+    dx = np.arange(SOSS_XDIM - 8 - o2_cutoff) + 1
     w_o2[o2_cutoff:] = w_o2[o2_cutoff - 1] + m * dx
     m = y_o2[o2_cutoff - 1] - y_o2[o2_cutoff - 2]
-    dx = np.arange(2040 - o2_cutoff) + 1
+    dx = np.arange(SOSS_XDIM - 8 - o2_cutoff) + 1
     y_o2[o2_cutoff:] = y_o2[o2_cutoff - 1] + m * dx
 
     # Extrapolate wavelengths for order 2 trace
@@ -514,16 +522,16 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=20, spe
     wavemap_2 = calc_2d_wave_map(wave_grid, xtrace_order2, ytrace_order2, np.zeros_like(xtrace_order2), oversample=1, padding=padsize)
 
     # Extrapolate wavemap to FULL frame
-    wavemap_1[:-256 - padsize, :] = wavemap_1[-256 - padsize]
-    wavemap_2[:-256 - padsize, :] = wavemap_2[-256 - padsize]
+    wavemap_1[:SUBARRAY_YMIN - padsize, :] = wavemap_1[SUBARRAY_YMIN - padsize]
+    wavemap_2[:SUBARRAY_YMIN - padsize, :] = wavemap_2[SUBARRAY_YMIN - padsize]
 
     # Trim to subarray
     if subarray == 'SUBSTRIP256':
-        wavemap_1 = wavemap_1[1792 - padsize:2048 + padsize, :]
-        wavemap_2 = wavemap_2[1792 - padsize:2048 + padsize, :]
+        wavemap_1 = wavemap_1[SUBARRAY_YMIN - padsize:SOSS_XDIM + padsize, :]
+        wavemap_2 = wavemap_2[SUBARRAY_YMIN - padsize:SOSS_XDIM + padsize, :]
     if subarray == 'SUBSTRIP96':
-        wavemap_1 = wavemap_1[1792 - padsize:1792 + 96 + padsize, :]
-        wavemap_2 = wavemap_2[1792 - padsize:1792 + 96 + padsize, :]
+        wavemap_1 = wavemap_1[SUBARRAY_YMIN - padsize:SUBARRAY_YMIN + 96 + padsize, :]
+        wavemap_2 = wavemap_2[SUBARRAY_YMIN - padsize:SUBARRAY_YMIN + 96 + padsize, :]
 
     # Remove padding if necessary
     if not padding and padsize != 0:

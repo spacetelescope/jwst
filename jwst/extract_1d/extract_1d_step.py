@@ -174,7 +174,6 @@ class Extract1dStep(Step):
     soss_estimate = input_file(default = None)  # Estimate used to generate the wavelength grid
     soss_rtol = float(default=1.0e-4)  # Relative tolerance needed on a pixel model
     soss_max_grid_size = integer(default=20000)  # Maximum grid size, if wave_grid not specified
-    soss_transform = list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
     soss_tikfac = float(default=None)  # regularization factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="masking")  # method used to handle bad pixels
@@ -443,7 +442,6 @@ class Extract1dStep(Step):
                 soss_kwargs['tikfac'] = self.soss_tikfac
                 soss_kwargs['width'] = self.soss_width
                 soss_kwargs['bad_pix'] = self.soss_bad_pix
-                soss_kwargs['transform'] = self.soss_transform
                 soss_kwargs['subtract_background'] = self.subtract_background
                 soss_kwargs['rtol'] = self.soss_rtol
                 soss_kwargs['max_grid_size'] = self.soss_max_grid_size
