@@ -101,6 +101,8 @@ general
 
 - Increase minimum required stpipe. [#8713]
 
+- Increase minimum required stdatamodels. [#8797]
+
 klip
 ----
 
