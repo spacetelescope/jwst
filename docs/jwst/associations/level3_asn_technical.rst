@@ -135,7 +135,14 @@ members *required*
 association. Each member has the following keywords.
 
 expname *required*
-  The exposure file name
+  The exposure file name.
+
+  It is recommended that this value be set to a filename only,
+  with no path. In this case, the file must be in the same directory as the
+  association file, so the path is not needed.  If valid absolute or relative
+  path data is included, the input file is still found and used by the pipeline,
+  but a warning is raised: the association file in this case may be less portable
+  than if the path data is not included.
 
 exptype *required*
   Type of information represented by the exposure. Possible values are

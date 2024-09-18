@@ -84,13 +84,16 @@ Usage
 
 Users should not need to run the generator. Instead, it is expected that one
 edits an already existing association that accompanies the user's JWST data.
-Care should be taken if editing an association file.  Keep in mind all input
-files listed in the association file are in the same directory as the
-association file and no path information can be put in ``expname``, only the
-file name.  Or, if need be, an association can be created based on the existing
-:ref:`Stage 2 <asn-level2-example>` or :ref:`Stage 3 <asn-level3-example>` examples.
-If, however, the user *does* need to run the generator, :ref:`Association Generator
-<design-generator>` documentation will be helpful.
+
+Care should be taken if editing an association file.  Keep in mind that generally
+all input files listed in the association files are assumed to be in the same
+directory as the association file and no path information is put in ``expname``.
+
+If need be, an association can be created based on the existing
+:ref:`Stage 2 <asn-level2-example>` or :ref:`Stage 3 <asn-level3-example>` examples,
+or using the command line tool :ref:`asn-from-list`.
+If, however, the user *does* need to run the generator, the :ref:`Association Generator
+<design-generator>` description and :ref:`asn-generate` documentation will be helpful.
 
 Once an association is in-hand, one can pass it as input to a pipeline
 routine. For example::
