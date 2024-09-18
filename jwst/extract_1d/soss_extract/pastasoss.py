@@ -324,17 +324,14 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     --------
     >>> x_new, y_new = get_soss_traces(pastasoss_ref_model, 245.6, '1', 'SUBARRAY256')
     """
+    spectral_order_index = find_spectral_order_index(refmodel, order)
 
-    norders = len(order)
-
-    if norders > 2:
-        raise ValueError("Entries in order string must be: 1 or 2 only.")
-    if norders > 1:
-        # recursively compute the new traces for each order
-        return [get_soss_traces(refmodel, pwcpos, m, subarray, interp) for m in order]
-    elif order in ["1", "2"]:
+    if spectral_order_index < 0:
+        error_message = f"Order {order} is not supported at this time."
+        log.error(error_message)
+        raise ValueError(error_message)
+    else:
         # reference trace data
-        spectral_order_index = find_spectral_order_index(refmodel, int(order))
         x, y = refmodel.traces[spectral_order_index].trace.T.copy()
         origin = refmodel.traces[spectral_order_index].pivot_x, refmodel.traces[spectral_order_index].pivot_y
 
@@ -348,11 +345,6 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
         wavelengths = get_wavelengths(refmodel, x_new, pwcpos, int(order))
 
         return order, x_new, y_new, wavelengths
-
-    else:
-        error_message = f"Order {order} is not supported at this time."
-        log.error(error_message)
-        raise ValueError(error_message)
 
 
 def extrapolate_to_wavegrid(w_grid, wavelength, quantity):
