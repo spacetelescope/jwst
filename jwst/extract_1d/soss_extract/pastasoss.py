@@ -324,7 +324,7 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     --------
     >>> x_new, y_new = get_soss_traces(pastasoss_ref_model, 245.6, '1', 'SUBARRAY256')
     """
-    spectral_order_index = find_spectral_order_index(refmodel, order)
+    spectral_order_index = find_spectral_order_index(refmodel, int(order))
 
     if spectral_order_index < 0:
         error_message = f"Order {order} is not supported at this time."
