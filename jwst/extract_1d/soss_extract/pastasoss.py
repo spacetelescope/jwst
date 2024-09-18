@@ -295,8 +295,8 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
         The pupil wheel positions angle provided in the FITS header under
         keyword PWCPOS.
     order : str, optional
-        The spectral order to compute the new traces for. Default is '12'.
-        Support for order 3 will be added at a later date.
+        The spectral order for which a trace is computed. Default is '12'.
+        Order 3 is currently unsupported.
     interp : bool, optional
         Whether to interpolate the rotated positions onto the original x-pixel
         column values. Default is True.
@@ -344,7 +344,6 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
         # wavelength associated to trace at given pwcpos value
         wavelengths = get_wavelengths(refmodel, x_new, pwcpos, int(order))
 
-        # return x_new, y_new, wavelengths
         return order, x_new, y_new, wavelengths
 
     else:
