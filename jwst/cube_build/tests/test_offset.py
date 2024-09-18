@@ -158,8 +158,9 @@ def test2_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
     
     miri_ifushort_short_2files[0].meta.filename = 'test3.fits'
     step.offset_file = offset_file
-    offsets = step.check_offset_file()
-    assert offsets is None
+
+    with pytest.raises(Exception):
+        offsets = step.check_offset_file()
 
 
 def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcmin):
@@ -170,9 +171,8 @@ def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcm
     step.input_models = miri_ifushort_short_2files
     
     step.offset_file = offset_file_arcmin
-    offsets = step.check_offset_file()
-    assert offsets is None
-    
+    with pytest.raises(Exception):
+        offsets = step.check_offset_file()
 
 def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     """ Test offset file has been read in correctly"""
@@ -276,15 +276,15 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     raoffset = [0.0, 0.1]
     decoffset = [0.0, 0.15]
 
-    ravalues = thiscube.offsets['raoffset'] 
+    ravalues = thiscube.offsets['raoffset']
     decvalues = thiscube.offsets['decoffset']
 
     assert thiscube.offsets['filename'] == filename
 
-    assert math.isclose(ravalues[0]*3600.0, raoffset[0], abs_tol=0.0001)
-    assert math.isclose(ravalues[1]*3600.0, raoffset[1], abs_tol=0.0001)
-    assert math.isclose(decvalues[0]*3600.0, decoffset[0], abs_tol=0.0001)
-    assert math.isclose(decvalues[1]*3600.0, decoffset[1], abs_tol=0.0001)
+    assert math.isclose(ravalues[0].value, raoffset[0], abs_tol=0.0001)
+    assert math.isclose(ravalues[1].value, raoffset[1], abs_tol=0.0001)
+    assert math.isclose(decvalues[0].value, decoffset[0], abs_tol=0.0001)
+    assert math.isclose(decvalues[1].value, decoffset[1], abs_tol=0.0001)
 
 
 

@@ -11,7 +11,7 @@ import asdf
 from ..assign_wcs.util import update_s_region_keyword
 from ..stpipe import Step, record_step_status
 from pathlib import Path
-
+from astropy import units 
 __all__ = ["CubeBuildStep"]
 
 
@@ -564,51 +564,41 @@ class CubeBuildStep (Step):
         try:
             af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
         except:
-            self.log.error('Validation Error for offset file')
-            self.log.error('Turning off adjusting by offsets')
-            return None
+            schema_message = ('Validation Error for offset file. Fix the offset file. \n' + \
+                              'The offset file needs to have the same number of elements the filename, raoffset and decoffset lists.\n' +\
+                              'The units need to provided and only arcsec is allowed.')
 
+            raise Exception(schema_message)
 
         offset_filename = af['filename']
         offset_ra = af['raoffset']
         offset_dec = af['decoffset']
-        offset_unit = af['units']
 
-        if offset_unit != 'arcsec':
-            self.log.error('Provide the offset units in units of arcsec ')
-            self.log.error('Turning off adjusting by offsets ')
-            af.close()
-            return None
-        
         # check that all the file names in input_model are in the offset filename
         for model in self.input_models:
             file_check = model.meta.filename
             if file_check in offset_filename:
                 continue
             else:
-                self.log.error('File in assocation is not found in offset list list %s', file_check)
-                self.log.error('Turning off adjusting by offsets')
                 af.close()
-                return None
+                raise Exception('Error in offset file. A file in assocation is not found in offset list list %s', file_check)
+
         # check that all the lists have the same length
         len_file  = len(offset_filename)
         len_ra = len(offset_ra)
         len_dec = len(offset_dec)
         if (len_file != len_ra or len_ra != len_dec or len_file != len_dec):
-            self.log.error('The offset file does not have the same number of values for filename, offset_ra, offset_dec')
-            self.log.error('Turning off adjusting by offsets')
             af.close()
-            return None
+            raise Exception('Offset file error. The offset file does not have the same number of values for filename, offset_ra, offset_dec')
+        
+        offset_ra =   offset_ra* units.arcsec
+        offset_dec =   offset_dec* units.arcsec
 
         # The offset file has passed tests so set the offset dictionary
         offsets = {}
         offsets['filename'] = offset_filename
         offsets['raoffset'] = offset_ra
         offsets['decoffset'] = offset_dec
-        n = len(offsets['raoffset'])
-        # convert to degrees
-        for i in range(n):
-            offsets['raoffset'][i] = offsets['raoffset'][i]/3600.0
-            offsets['decoffset'][i] = offsets['decoffset'][i]/3600.0
+
         af.close()
         return offsets
