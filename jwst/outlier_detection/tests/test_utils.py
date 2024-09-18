@@ -57,18 +57,18 @@ def test_disk_appendable_array_bad_inputs(tmp_cwd):
     
     # test input directory does not exist
     with pytest.raises(FileNotFoundError):
-        arr = DiskAppendableArray(slice_shape, dtype, tempdir)
+        DiskAppendableArray(slice_shape, dtype, tempdir)
 
     # make the input directory
     os.mkdir(tempdir)
 
     # test slice_shape is not 2-D
     with pytest.raises(ValueError):
-        arr = DiskAppendableArray((3,5,7), dtype, tempdir)
+        DiskAppendableArray((3,5,7), dtype, tempdir)
 
     # test dtype is not valid
     with pytest.raises(TypeError):
-        arr = DiskAppendableArray(slice_shape, "float3", tempdir)
+        DiskAppendableArray(slice_shape, "float3", tempdir)
 
 
 def test_on_disk_median(tmp_cwd):

@@ -22,14 +22,27 @@ OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 _ONE_MB = 1 << 20
 
 
-def _nanmedian3D(cube, overwrite_input=True):
-    """Convenience function to compute the median of a cube ignoring warnings
-    and setting memory-efficient flag"""
+def nanmedian3D(cube, overwrite_input=True):
+    """Convenience function to compute the median of a cube ignoring warnings,
+    setting memory-efficient flag, and specifying output type
+    
+    Notes
+    -----
+    np.nanmedian returns float64 unless "out" parameter is specified, and specifying
+    that only changes the dtype of the output but not the internal precision of nanmedian.
+    It appears to be impossible to stop nanmedian from computing with 
+    at least 64-bit precision internally.
+    Pre-allocating the output array, i.e., out=np.empty(cube.shape[1:], dtype=np.float32)
+    actually increases memory usage a bit, so it's better to just convert after the fact.
+    Returning float64 here causes gwcs_blot to segfault down the line 
+    because that function is hard-coded to expect float32. 
+    """
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore",
                                 message="All-NaN slice encountered",
                                 category=RuntimeWarning)
-        return np.nanmedian(cube, axis=0, overwrite_input=overwrite_input)
+
+        return np.nanmedian(cube, axis=0, overwrite_input=overwrite_input).astype(np.float32)
 
 
 def create_cube_median(cube_model, maskpt):
@@ -38,7 +51,7 @@ def create_cube_median(cube_model, maskpt):
     weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
 
     # not safe to use overwrite_input=True here because we are operating on model.data directly
-    return _nanmedian3D(
+    return nanmedian3D(
         np.ma.masked_array(cube_model.data, np.less(cube_model.wht, weight_threshold), fill_value=np.nan),
         overwrite_input=False)
 
@@ -85,11 +98,7 @@ def create_median(resampled_models, maskpt, buffer_size=None):
     
     if not on_disk:
         # easier case: all models in library can be loaded into memory at once
-        with warnings.catch_warnings():
-            warnings.filterwarnings(action="ignore",
-                                    message="All-NaN slice encountered",
-                                    category=RuntimeWarning)
-            return _nanmedian3D(model_cube)
+        return nanmedian3D(model_cube)
     else:
         # retrieve spatial sections from disk one by one and compute timewise median
         med = median_computer.compute_median()
@@ -298,7 +307,7 @@ class OnDiskMedian:
         for i, disk_arr in enumerate(self._temp_arrays):
             row1, row2 = row_indices[i]
             arr = disk_arr.read()
-            median_image[row1:row2] = _nanmedian3D(arr)
+            median_image[row1:row2] = nanmedian3D(arr)
             del arr, disk_arr
 
         return median_image
