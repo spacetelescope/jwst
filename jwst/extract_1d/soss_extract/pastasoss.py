@@ -319,10 +319,6 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     ------
     ValueError
         If `order` is not '1', '2', '3', or a combination of '1', '2', and '3'.
-
-    Examples
-    --------
-    >>> x_new, y_new = get_soss_traces(pastasoss_ref_model, 245.6, '1', 'SUBARRAY256')
     """
     spectral_order_index = find_spectral_order_index(refmodel, int(order))
 
