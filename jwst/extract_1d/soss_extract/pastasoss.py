@@ -52,7 +52,6 @@ def min_max_scaler(x, x_min, x_max):
     and arrays of values. This function will use the min/max values from the
     training data of the wavecal model.
     """
-    # scaling the input x values
     x_scaled = (x - x_min) / (x_max - x_min)
     return x_scaled
 
