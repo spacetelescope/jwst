@@ -4,6 +4,7 @@ from scipy.ndimage import gaussian_filter
 from glob import glob
 import os
 
+from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
@@ -18,6 +19,8 @@ from jwst.outlier_detection.outlier_detection_step import (
     CORON_IMAGE_MODES,
 )
 from jwst.resample.tests.test_resample_step import miri_rate_model
+from jwst.outlier_detection.utils import drizzle_and_median
+from jwst.resample.resample import ResampleData
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -595,27 +598,84 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
 
 
-# def test_drizzle_and_median(three_sci_as_asn, tmp_cwd):
-#     """Test creation of median on disk vs in memory"""
-#     # FIXME: update this test
-#     lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
-#     lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
+def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
+    """Test creation of median on disk vs in memory"""
+    lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
+    lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
 
-#     # make this test meaningful w.r.t. handling of weights
-#     with (lib_on_disk, lib_in_memory):
-#         for lib in [lib_on_disk, lib_in_memory]:
-#             for model in lib:
-#                 model.wht = np.ones_like(model.data)
-#                 model.wht[4,9] = 0.5
-#                 lib.shelve(model, modify=True)
+    # make this test meaningful w.r.t. handling of weights
+    with (lib_on_disk, lib_in_memory):
+        for lib in [lib_on_disk, lib_in_memory]:
+            for model in lib:
+                model.var_rnoise = np.ones_like(model.data)
+                model.var_rnoise[4,9] = 2.0
+                lib.shelve(model, modify=True)
 
-#     # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
-#     # arbitrarily use 5 times that
-#     buffer_size = 4 * 20 * 5 
-#     median_on_disk = drizzle_and_median(lib_on_disk, 0.7, buffer_size=buffer_size)
-#     median_in_memory = drizzle_and_median(lib_in_memory, 0.7)
 
-#     assert np.isnan(median_in_memory[4,9])
+    # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
+    # arbitrarily use 5 times that
+    buffer_size = 4 * 20 * 5 
+    median_on_disk, _ = drizzle_and_median(lib_on_disk,
+                                           make_resamp(lib_on_disk, False),
+                                           0.7,
+                                           buffer_size=buffer_size,
+                                           resample_data=False)
+    median_in_memory, _ = drizzle_and_median(lib_in_memory,
+                                             make_resamp(lib_in_memory, False),
+                                             0.7,
+                                             buffer_size=buffer_size,
+                                             resample_data=False)
 
-#     # Make sure the median library is the same for on-disk and in-memory
-#     assert np.allclose(median_on_disk, median_in_memory, equal_nan=True)
+    assert np.isnan(median_in_memory[4,9])
+
+    # Make sure the median library is the same for on-disk and in-memory
+    assert np.allclose(median_on_disk, median_in_memory, equal_nan=True)
+
+
+def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
+    lib = ModelLibrary(three_sci_as_asn, on_disk=False)
+
+    resamp = make_resamp(lib, True)
+    median, wcs = drizzle_and_median(lib,
+                                     resamp,
+                                     0.7,
+                                     resample_data=True)
+    
+    assert isinstance(wcs, WCS)
+    assert median.shape == (21,20)
+
+    with pytest.raises(ValueError):
+        # should fail if save_intermediate results but no output path
+        drizzle_and_median(lib,
+                           resamp,
+                           0.7,
+                           make_output_path=None,
+                           save_intermediate_results=True)
+        
+    resamp.single = False
+    with pytest.raises(ValueError):
+        # should fail if try to call when resamp.single is False
+        drizzle_and_median(lib,
+                           resamp,
+                           0.7,
+                           make_output_path=None,
+                           save_intermediate_results=True)
+
+
+def make_resamp(input_models, in_memory):
+    """All defaults are same as what is run by default by outlier detection"""
+    resamp = ResampleData(
+        input_models,
+        output="",
+        single=True,
+        blendheaders=False,
+        wht_type="ivm",
+        pixfrac=1.0,
+        kernel="square",
+        fillval="INDEF",
+        good_bits="~DO_NOT_USE",
+        in_memory=in_memory,
+        asn_id="test",
+        allowed_memory=None,
+    )
+    return resamp

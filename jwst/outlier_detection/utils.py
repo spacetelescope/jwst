@@ -63,10 +63,11 @@ def create_cube_median(cube_model, maskpt):
 def drizzle_and_median(input_models,
                        resamp,
                        maskpt,
-                       make_output_path,
+                       make_output_path=None,
                        resample_data=False,
                        in_memory=True,
-                       save_intermediate_results=False):
+                       save_intermediate_results=False,
+                       buffer_size=None):
     """
     Parameters
     ----------
@@ -79,6 +80,8 @@ def drizzle_and_median(input_models,
 
     make_output_path : ?
     """
+    if save_intermediate_results and (make_output_path is None):
+        raise ValueError("make_output_path is required if save_intermediate_results is True")
     if not resamp.single:
         raise ValueError("drizzle_and_median should only be used for resample_many_to_many")
     if resample_data:
@@ -113,7 +116,7 @@ def drizzle_and_median(input_models,
                 else:
                     median_computer = OnDiskMedian(full_shape,
                                                     dtype=drizzled_model.data.dtype,
-                                                    buffer_size=None)
+                                                    buffer_size=buffer_size)
 
             if save_intermediate_results:
                 # write the drizzled model to file
