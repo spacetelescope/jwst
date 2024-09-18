@@ -37,15 +37,12 @@ def get_ref_file_args(ref_files):
     """
 
     pastasoss_ref = ref_files['pastasoss']
-    if hasattr(pastasoss_ref.traces[0], "padding"):
-        pad = pastasoss_ref.traces[0].padding
-        if pad > 0:
-            do_padding = True
-        else:
-            do_padding = False
+    pad = getattr(pastasoss_ref.traces[0], "padding", 0)
+    if pad > 0:
+        do_padding = True
     else:
-        pad = 0
         do_padding = False
+
     (wavemap_o1, wavemap_o2), (spectrace_o1, spectrace_o2) = \
         get_soss_wavemaps(pastasoss_ref, pwcpos=ref_files['pwcpos'], subarray=ref_files['subarray'],
                           padding=do_padding, padsize=pad, spectraces=True)
@@ -138,14 +135,10 @@ def get_trace_1d(ref_files, order):
     """
 
     pastasoss_ref = ref_files['pastasoss']
-    if hasattr(pastasoss_ref.traces[0], "padding"):
-        pad = pastasoss_ref.traces[0].padding
-        if pad > 0:
-            do_padding = True
-        else:
-            do_padding = False
+    pad = getattr(pastasoss_ref.traces[0], "padding", 0)
+    if pad > 0:
+        do_padding = True
     else:
-        pad = 0
         do_padding = False
 
     (_, _), (spectrace_o1, spectrace_o2) = \
