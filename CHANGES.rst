@@ -46,6 +46,11 @@ badpix_selfcal
 - Subtract pedestal dark when constructing min array across selfcal exposures
   for MIRI MRS data. [#8771]
 
+calwebb_coron3
+--------------
+
+- Tighten tolerance of psf alignment. [#8717]
+
 calwebb_detector1
 -----------------
 
@@ -80,6 +85,9 @@ documentation
 
 - Add changelog to documentation. [#8716]
 
+- Updated description of association keyword `expname`: including path information
+  in addition to the filename is discouraged, but allowed. [#8789]
+
 emicorr
 -------
 
@@ -100,6 +108,8 @@ general
 - Update required stcal version to 1.8.0. [#8706]
 
 - Increase minimum required stpipe. [#8713]
+
+- Increase minimum required stdatamodels. [#8797]
 
 klip
 ----
@@ -191,6 +201,8 @@ ramp_fitting
 
 - Moved the read noise variance recalculation for CHARGELOSS flagging to the C
   implementation, when the algorithm is ``OLS_C``. [#8697, spacetelescope/stcal#278]
+
+- Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765] 
 
 resample
 --------
