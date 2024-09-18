@@ -57,7 +57,21 @@ def min_max_scaler(x, x_min, x_max):
 
 
 def wavecal_model_order1_poly(refmodel, x, pwcpos):
-    """compute order 1 wavelengths"""
+    """Compute order 1 wavelengths.
+
+    Parameters
+    ----------
+    refmodel : PastasossModel
+        The reference model holding the wavecal models
+        and scale extents
+    x : float or numpy.ndarray
+        The input pixel values for which the function
+        will estimate wavelengths
+    pwcpos : float
+        The position of the grating wheel; used to determine
+        the difference between current and commanded position
+        to rotate the model
+    """
     x_scaler = partial(
         min_max_scaler,
         **{
@@ -75,7 +89,7 @@ def wavecal_model_order1_poly(refmodel, x, pwcpos):
     )
 
     def get_poly_features(x, offset):
-        """polynomial features for the order 1 wavecal model"""
+        """Polynomial features for the order 1 wavecal model"""
         poly_features = np.array(
             [
                 x,
@@ -120,7 +134,21 @@ def wavecal_model_order1_poly(refmodel, x, pwcpos):
 
 
 def wavecal_model_order2_poly(refmodel, x, pwcpos):
-    """compute order 2 wavelengths"""
+    """Compute order 2 wavelengths.
+
+    Parameters
+    ----------
+    refmodel : PastasossModel
+        The reference model holding the wavecal models
+        and scale extents
+    x : float or numpy.ndarray
+        The input pixel values for which the function
+        will estimate wavelengths
+    pwcpos : float
+        The position of the grating wheel; used to determine
+        the difference between current and commanded position
+        to rotate the model
+    """
     x_scaler = partial(
         min_max_scaler,
         **{
