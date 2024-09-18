@@ -34,6 +34,8 @@ associations
 
 - Update warning message about use of paths in associations. [#8752]
 
+- Added association rule for level 3 image mosaic candidates. [#8798]
+
 cube_build
 ----------
 
