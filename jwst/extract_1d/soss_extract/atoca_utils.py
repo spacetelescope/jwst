@@ -252,36 +252,6 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
     return wave_top, wave_bottom
 
 
-def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
-    """Check that the dispersion axis is increasing in the good direction
-    given by `dwv_sign``
-    Parameters
-    ----------
-    wave_map : array[float]
-        2d-map of the pixel central wavelength
-    dispersion_axis : int, optional
-        Which axis is the dispersion axis (0 or 1)
-    dwv_sign : int, optional
-        Direction of increasing wavelengths (-1 or 1)
-
-    Returns
-    -------
-    bool_map : array[bool]
-        Boolean 2d map of the valid dispersion direction, same shape as `wave_map`
-    """
-
-    # Estimate the direction of increasing wavelength
-    wave_left, wave_right = get_wv_map_bounds(wave_map, dispersion_axis=dispersion_axis)
-    dwv = wave_right - wave_left
-
-    # Return bool map of pixels following the good direction
-    bool_map = (dwv_sign * dwv >= 0)
-    # The bad value could be from left or right so mask both
-    bool_map &= np.roll(bool_map, 1, axis=dispersion_axis)
-
-    return bool_map
-
-
 def oversample_grid(wave_grid, n_os=1):
     """Create an oversampled version of the input 1D wavelength grid.
 
