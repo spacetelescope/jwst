@@ -2,6 +2,8 @@
 The ever-present utils sub-module. A home for all...
 """
 
+import os
+import copy
 import warnings
 import numpy as np
 import tempfile
@@ -9,8 +11,10 @@ from pathlib import Path
 
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
+from jwst.resample.resample_utils import build_driz_weight
 from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
 from stdatamodels.jwst import datamodels
+from ._fileio import save_median
 
 import logging
 log = logging.getLogger(__name__)
@@ -56,54 +60,97 @@ def create_cube_median(cube_model, maskpt):
         overwrite_input=False)
 
 
-def create_median(resampled_models, maskpt, buffer_size=None):
-    """Create a median image from the singly resampled images.
-
+def drizzle_and_median(input_models,
+                       resamp,
+                       maskpt,
+                       make_output_path,
+                       resample_data=False,
+                       in_memory=True,
+                       save_intermediate_results=False):
+    """
     Parameters
     ----------
-    resampled_models : ModelLibrary
-        The singly resampled images.
+    input_models : ModelLibrary
+        The input datamodels
+
+    resamp : ResampleData object
 
     maskpt : float
-        The weight threshold for masking out low weight pixels.
 
-    Returns
-    -------
-    median_image : ndarray
-        The median image.
+    make_output_path : ?
     """
-    on_disk = resampled_models._on_disk
-    
-    # Compute weight threshold for each input model and set NaN in data where weight is below threshold
-    with resampled_models:
-        for i, resampled in enumerate(resampled_models):
-            weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
-            resampled.data[resampled.wht < weight_threshold] = np.nan
-            if not on_disk:
-                if i == 0:
-                    model_cube = np.empty((len(resampled_models),) + resampled.data.shape,
-                                         dtype=resampled.data.dtype)
-                model_cube[i] = resampled.data
-            else:
-                if i == 0:
-                    # set up temporary storage for spatial sections of all input models
-                    shp = (len(resampled_models),) + resampled.data.shape
-                    median_computer = OnDiskMedian(shp,
-                                                   dtype=resampled.data.dtype,
-                                                   buffer_size=buffer_size)
-                # write spatial sections to disk
-                median_computer.add_image(resampled.data)
-            resampled_models.shelve(resampled, i, modify=False)
-        del resampled
-    
-    if not on_disk:
-        # easier case: all models in library can be loaded into memory at once
-        return nanmedian3D(model_cube)
+    if not resamp.single:
+        raise ValueError("drizzle_and_median should only be used for resample_many_to_many")
+    if resample_data:
+        indices_by_group = list(input_models.group_indices.values())
     else:
-        # retrieve spatial sections from disk one by one and compute timewise median
-        med = median_computer.compute_median()
+        indices_by_group = [[i] for i in range(len(input_models))]
+
+    with input_models:
+        for i, indices in enumerate(indices_by_group):
+
+            if resample_data:
+                median_wcs = resamp.output_wcs
+
+                drizzled_model = resamp.resample_group(input_models, indices)
+
+            else:
+                # for non-dithered data, the resampled image is just the original image
+                drizzled_model = input_models.borrow(i)
+                drizzled_model.wht = build_driz_weight(
+                    drizzled_model,
+                    weight_type=resamp.weight_type,
+                    good_bits=resamp.good_bits)
+                input_models.shelve(drizzled_model, i, modify=True)
+                median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
+
+            if i == 0:
+                # allocate either temporary storage or memory for data arrays that go into median
+                ngroups = len(indices_by_group)
+                full_shape = (ngroups,) + drizzled_model.data.shape
+                if in_memory:
+                    data_frames = np.empty(full_shape, dtype=np.float32)
+                else:
+                    median_computer = OnDiskMedian(full_shape,
+                                                    dtype=drizzled_model.data.dtype,
+                                                    buffer_size=None)
+
+            if save_intermediate_results:
+                # write the drizzled model to file
+                output_name = drizzled_model.meta.filename
+                if resamp.output_dir is not None:
+                    output_name = os.path.join(resamp.output_dir, output_name)
+                drizzled_model.save(output_name)
+                log.info(f"Saved model in {output_name}")
+
+            # handle the weights right away, so only data array needs to be saved
+            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
+            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
+
+            # put drizzled models into either storage or memory for median
+            if in_memory:
+                data_frames[i] = drizzled_model.data
+            else:
+                median_computer.add_image(drizzled_model.data)
+
+    # Perform median combination on set of drizzled mosaics
+    if in_memory:
+        median_data = nanmedian3D(data_frames)
+        del data_frames
+    else:
+        median_data = median_computer.compute_median()
         median_computer.cleanup()
-        return med
+
+    if save_intermediate_results:
+        # make a median model
+        median_model = datamodels.ImageModel(median_data)
+        median_model.update(drizzled_model)
+        median_model.meta.wcs = median_wcs
+        save_median(median_model, make_output_path, resamp.asn_id)
+        del median_model
+    del drizzled_model
+
+    return median_data, median_wcs
 
 
 class DiskAppendableArray:
