@@ -249,7 +249,7 @@ class OnDiskMedian:
             section_nrows = 1
 
         nsections = int(np.ceil(imrows / section_nrows))
-        log.info(f"Computing median over {self._expected_nframes} images in {nsections}"
+        log.info(f"Computing median over {self._expected_nframes} images in {nsections} "
                     f"sections with total memory buffer {buffer_size / _ONE_MB} MB")
         return nsections, section_nrows
 
