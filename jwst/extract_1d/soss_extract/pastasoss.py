@@ -68,7 +68,7 @@ def wavecal_model_order1_poly(refmodel, x, pwcpos):
         The input pixel values for which the function
         will estimate wavelengths
     pwcpos : float
-        The position of the grating wheel; used to determine
+        The position of the pupil wheel; used to determine
         the difference between current and commanded position
         to rotate the model
     """
@@ -145,7 +145,7 @@ def wavecal_model_order2_poly(refmodel, x, pwcpos):
         The input pixel values for which the function
         will estimate wavelengths
     pwcpos : float
-        The position of the grating wheel; used to determine
+        The position of the pupil wheel; used to determine
         the difference between current and commanded position
         to rotate the model
     """
@@ -281,8 +281,8 @@ def find_spectral_order_index(refmodel, order):
 
 def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     """
-    This is the primary method for generate the gr700xd trace position given a
-    pupil wheel positions angle provided in the FITS header under keyword
+    This is the primary method for generating the gr700xd trace position given a
+    pupil wheel position angle provided in the FITS header under keyword
     PWCPOS. The traces for a given spectral order are found by perform a
     rotation transformation using the refence trace positions at the commanded
     PWCPOS=245.76 degrees. This methods yield sub-pixel performance and will be
