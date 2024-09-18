@@ -600,12 +600,10 @@ class IFUCubeData():
         for ib in range(number_bands):
             this_par1 = self.list_par1[ib]
             this_par2 = self.list_par2[ib]
-            for input in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
+            for input_model in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
                 # ________________________________________________________________________________
                 # loop over the files that cover the spectral range the cube is for
 
-                #input_model = datamodels.open(input)
-                input_model = input
                 self.input_models_this_cube.append(input_model.copy())
                 # set up input_model to be first file used to copy in basic header info
                 # to ifucube meta data
@@ -777,8 +775,6 @@ class IFUCubeData():
                             result = None
                             del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, result
                 k = k + 1
-                input_model.close()
-                del input_model
             # _______________________________________________________________________
             # done looping over files
 
@@ -1315,24 +1311,11 @@ class IFUCubeData():
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             log.debug('number of files %d', n)
             
-            # find the median center declination if we have an offset file
-            #if self.offsets is not None:
-            #    for k in range(n):
-            #        input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
-            #        input_model = datamodels.open(input_file)
-            #        spatial_box = input_model.meta.wcsinfo.s_region
-            #        s = spatial_box.split(' ')
-            #        cb1 = float(s[4])
-            #        cb2 = float(s[6])
-            #        cb3 = float(s[8])
-            #        cb4 = float(s[10])
-
             for k in range(n):
                 lmin = 0.0
                 lmax = 0.0
+                input_model = self.master_table.FileMap[self.instrument][this_a][this_b][k]
 
-                input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
-                input_model = datamodels.open(input_file)
 # ________________________________________________________________________________
                 # If offsets are provided. Pull in ra and dec offsets.
                 raoffset = 0.0
@@ -1434,7 +1417,6 @@ class IFUCubeData():
 
                 lambda_min.append(lmin)
                 lambda_max.append(lmax)
-                input_model.close()
         # ________________________________________________________________________________
         # done looping over files determine final size of cube
         corner_a = np.array(corner_a)
