@@ -295,8 +295,8 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     pwcpos : float
         The pupil wheel positions angle provided in the FITS header under
         keyword PWCPOS.
-    order : str, optional
-        The spectral order for which a trace is computed. Default is '12'.
+    order : str
+        The spectral order for which a trace is computed.
         Order 3 is currently unsupported.
     subarray : str
         Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
@@ -331,7 +331,7 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
         raise ValueError("Entries in order string must be: 1 or 2 only.")
     if norders > 1:
         # recursively compute the new traces for each order
-        return [get_soss_traces(refmodel, pwcpos, m, interp) for m in order]
+        return [get_soss_traces(refmodel, pwcpos, m, subarray, interp) for m in order]
     elif order in ["1", "2"]:
         # reference trace data
         spectral_order_index = find_spectral_order_index(refmodel, int(order))
