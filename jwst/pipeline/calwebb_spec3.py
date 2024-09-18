@@ -100,7 +100,6 @@ class Spec3Pipeline(Pipeline):
         self.spectral_leak.save_results = self.save_results
         self.pixel_replace.suffix = 'pixel_replace'
         self.pixel_replace.output_use_model = True
-        self.pixel_replace.save_results = self.save_results
         
         # Overriding the Step.save_model method for the following steps.
         # These steps save intermediate files, resulting in meta.filename
@@ -237,7 +236,6 @@ class Spec3Pipeline(Pipeline):
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
                 result = self.pixel_replace(result)
-
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:
