@@ -290,12 +290,16 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
 
     Parameters
     ----------
+    refmodel : PastasossModel
+        The reference file datamodel.
     pwcpos : float
         The pupil wheel positions angle provided in the FITS header under
         keyword PWCPOS.
     order : str, optional
         The spectral order for which a trace is computed. Default is '12'.
         Order 3 is currently unsupported.
+    subarray : str
+        Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
     interp : bool, optional
         Whether to interpolate the rotated positions onto the original x-pixel
         column values. Default is True.
@@ -318,7 +322,7 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
 
     Examples
     --------
-    >>> x_new, y_new = get_soss_traces(2.3)
+    >>> x_new, y_new = get_soss_traces(pastasoss_ref_model, 245.6, '1', 'SUBARRAY256')
     """
 
     norders = len(order)
