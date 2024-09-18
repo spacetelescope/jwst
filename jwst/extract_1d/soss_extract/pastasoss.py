@@ -278,7 +278,8 @@ def find_spectral_order_index(refmodel, order):
 
 
 def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
-    """
+    """Generate the traces given a pupil wheel position.
+
     This is the primary method for generating the gr700xd trace position given a
     pupil wheel position angle provided in the FITS header under keyword
     PWCPOS. The traces for a given spectral order are found by performing a
