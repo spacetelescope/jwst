@@ -1,9 +1,7 @@
 from functools import partial
-from typing import Tuple
 import logging
 import numpy as np
 from scipy.interpolate import interp1d
-from ...datamodels import PastasossModel
 
 log = logging.getLogger(__name__)
 
