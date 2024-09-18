@@ -485,12 +485,12 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         The Tikhonov regularization factor used when solving for
         the uncontaminated flux. If not specified, the optimal Tikhonov factor
         is calculated.
-    n_os : int, optional
-        The oversampling factor of the wavelength grid used when solving for
-        the uncontaminated flux. If not specified, defaults to 2.
     threshold : float
         The threshold value for using pixels based on the spectral profile.
         Default value is 1e-4.
+    n_os : int, optional
+        The oversampling factor of the wavelength grid used when solving for
+        the uncontaminated flux. If not specified, defaults to 2.
     wave_grid : str or SossWaveGridModel or None
         Filename of reference file or SossWaveGridModel containing the wavelength grid used by ATOCA
         to model each pixel valid pixel of the detector. If not given, the grid is determined
@@ -524,8 +524,10 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     # Init list of atoca 1d spectra
     spec_list = []
 
-    # Orders to simulate
-    order_list = ['Order 1', 'Order 2']
+    # Generate list of orders to simulate from pastasoss trace list
+    order_list = []
+    for trace in ref_files['pastasoss'].traces:
+        order_list.append(f"Order {trace.spectral_order}")
 
     # Prepare the reference file arguments.
     ref_file_args = get_ref_file_args(ref_files)
@@ -554,18 +556,6 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         log.debug(f'wave_grid covering from {wave_grid.min()} to {wave_grid.max()}')
     else:
         log.info('Using previously computed or user specified wavelength grid.')
-
-#     # Use estimate to evaluate the contribution from each orders to pixels
-#     # (Used to determine which pixel to model later)
-#     ref_args_estimate = [ref_arg for ref_arg in ref_file_args]
-#     # No convolution needed (so give equivalent of identity)
-#     ref_args_estimate[3] = [np.array([1.]) for _ in order_list]
-#     engine_for_estimate = ExtractionEngine(*ref_args_estimate, wave_grid=wave_grid, mask_trace_profile=mask_trace_profile)
-#     models = {order: engine_for_estimate.rebuild(estimate, i_orders=[idx_ord], fill_value=np.nan)
-#               for idx_ord, order in enumerate(order_list)}
-#     total = np.nansum([models[order] for order in order_list], axis=0)
-#     total = np.where((total != 0), total, np.nan)
-#     contribution = {order: models[order] / total for order in order_list}
 
     # Set the c_kwargs using the minimum value of the kernels
     c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
@@ -681,7 +671,8 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
                                                  tikfac_log_range=tikfac_log_range)
 
         except MaskOverlapError:
-            log.error('Not enough unmasked pixels to model the remaining part of order 2. Model and spectrum will be NaN in that spectral region.')
+            log.error('Not enough unmasked pixels to model the remaining part of order 2.'
+                      'Model and spectrum will be NaN in that spectral region.')
             spec_ord = [_build_null_spec_table(pixel_wave_grid)]
             model = np.nan * np.ones_like(scidata_bkg)
 
@@ -703,14 +694,10 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
 
 def compute_box_weights(ref_files, shape, width=40.):
 
-    # Which orders to compute (for modeling, different than extraction).
-    if ref_files['subarray'] == 'SUBSTRIP96':
-        order_list = [1, 2]
-    else:
-        # Regression in behavior? Used to run on three orders, but
-        # pastasoss does not support order 3
-        # order_list = [1, 2, 3]
-        order_list = [1, 2]
+    # Generate list of orders from pastasoss trace list
+    order_list = []
+    for trace in ref_files['pastasoss'].traces:
+        order_list.append(trace.spectral_order)
 
     # Extract each order from order list
     box_weights = dict()
@@ -720,7 +707,7 @@ def compute_box_weights(ref_files, shape, width=40.):
         # Order string-name is used more often than integer-name
         order = order_str[order_integer]
 
-        log.debug(f'Compute box weights for order {order}.')
+        log.debug(f'Compute box weights for {order}.')
 
         # Define the box aperture
         xtrace, ytrace, wavelengths[order] = get_trace_1d(ref_files, order_integer)
@@ -731,7 +718,6 @@ def compute_box_weights(ref_files, shape, width=40.):
 
 def decontaminate_image(scidata_bkg, tracemodels, subarray):
     """Perform decontamination of the image based on the trace models"""
-
     # Which orders to extract.
     if subarray == 'SUBSTRIP96':
         order_list = [1, 2]
@@ -768,7 +754,6 @@ def decontaminate_image(scidata_bkg, tracemodels, subarray):
 
 
 # TODO Add docstring
-# TODO Add threshold like in model_image? TO use with the rough (but stable) estimate
 def model_single_order(data_order, err_order, ref_file_args, mask_fit,
                        mask_rebuild, order, wave_grid, valid_cols, save_tiktests=False, tikfac_log_range=None):
 
@@ -873,7 +858,6 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
 
 
 # Remove bad pixels that are not modeled for pixel number
-# TODO Update docstring
 def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='model', tracemodels=None):
     """Perform the box-extraction on the image, while using the trace model to
     correct for contamination.
@@ -885,13 +869,9 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
         The uncertainties corresponding to the detector image.
     scimask : array[float]
         Pixel mask to apply to the detector image.
-    ref_files : dict
-        A dictionary of the reference file DataModels.
-    subarray : str
-        Subarray on which the data were recorded; one of 'SUBSTRIPT96',
-        'SUBSTRIP256' or 'FULL'.
-    width : float
-        The width of the aperture used to extract the uncontaminated spectrum.
+    box_weights : dict
+        A dictionary of the weights (for each order) used in the box extraction.
+        The weights for each order are 2d arrays with the same size as the detector.
     bad_pix : str
         How to handle the bad pixels. Options are 'masking' and 'model'.
         'masking' will simply mask the bad pixels, such that the number of pixels
@@ -901,7 +881,7 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
         Dictionary of the modeled detector images for each order.
     Returns
     -------
-    wavelengths, fluxes, fluxerrs, npixels, box_weights : dict
+    fluxes, fluxerrs, npixels : dict
         Each output is a dictionary, with each extracted order as a key.
     """
     # Init models with an empty dictionary if not given
