@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import gc
 import numpy as np
 
 from stcal.ramp_fitting import ramp_fit
@@ -14,15 +13,12 @@ from stdatamodels.jwst.datamodels import dqflags
 from ..stpipe import Step
 
 from ..lib import reffile_utils
-from ..lib.basic_utils import use_datamodel, copy_datamodel
 
 import logging
 import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
 
 __all__ = ["RampFitStep"]
 
@@ -162,7 +158,7 @@ def create_optional_results_model(input_model, opt_info):
         The optional RampFitOutputModel to be returned from the ramp fit step.
     """
     (slope, sigslope, var_poisson, var_rnoise,
-        yint, sigyint, pedestal, weights, crmag) = opt_info
+     yint, sigyint, pedestal, weights, crmag) = opt_info
     opt_model = datamodels.RampFitOutputModel(
         slope=slope,
         sigslope=sigslope,
@@ -246,7 +242,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
             segs_4[num_int, :, rlo:rhi, :] = segs_beg_3
 
             # Find the segment variance due to read noise and convert back to DN
-            var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3 / gain_sect**2
+            var_r4[num_int, :, rlo:rhi, :] = num_r3 * den_r3 / gain_sect ** 2
 
             del den_r3, num_r3, segs_beg_3
             del gdq_sect
@@ -345,7 +341,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
     # For a segment, the variance due to readnoise noise
     # = 12 * readnoise**2 /(nreads_seg**3. - nreads_seg)/(tgroup **2.)
-    num_r3 = 12. * (rn_sect / group_time)**2.  # always >0
+    num_r3 = 12. * (rn_sect / group_time) ** 2.  # always >0
 
     # Reshape for every group, every pixel in section
     num_r3 = np.dstack([num_r3] * ngroups)
@@ -376,7 +372,6 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
 
 class RampFitStep(Step):
-
     """
     This step fits a straight line to the value of counts vs. time to
     determine the mean count rate for each pixel.
@@ -407,11 +402,13 @@ class RampFitStep(Step):
 
     reference_file_types = ['readnoise', 'gain']
 
-    def process(self, input_model):
+    def process(self, step_input):
 
-        with datamodels.RampModel(input_model) as input_model:
-        
-            result, input_model = copy_datamodel(input_model, self.parent)
+        # Open the input data model
+        with datamodels.RampModel(step_input) as input_model:
+
+            # Cork on a copy
+            result = input_model.copy()
 
             max_cores = self.maximum_cores
             readnoise_filename = self.get_reference_file(result, 'readnoise')
@@ -444,9 +441,6 @@ class RampFitStep(Step):
 
             int_times = result.int_times
 
-            # Before the ramp_fit() call, copy the input model ("_W" for weighting)
-            # for later reconstruction of the fitting array tuples.
-            input_model_W = copy.copy(result)
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.
@@ -457,7 +451,7 @@ class RampFitStep(Step):
 
             # Create a gdq to modify if there are charge_migrated groups
             if self.algorithm == "OLS":
-                gdq = input_model_W.groupdq.copy()
+                gdq = result.groupdq.copy()
 
                 # Locate groups where that are flagged with CHARGELOSS
                 wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
@@ -525,7 +519,6 @@ class RampFitStep(Step):
             if ((result.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or
                     (result.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
                      result.meta.instrument.lamp_mode == 'IFU')):
-
                 out_model = datamodels.IFUImageModel(out_model)
 
             int_model = create_integration_model(result, integ_info, int_times)
@@ -533,5 +526,7 @@ class RampFitStep(Step):
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
-        gc.collect()
+        # Cleanup
+        del result
+
         return out_model, int_model
