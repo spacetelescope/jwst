@@ -283,9 +283,9 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     """
     This is the primary method for generating the gr700xd trace position given a
     pupil wheel position angle provided in the FITS header under keyword
-    PWCPOS. The traces for a given spectral order are found by perform a
+    PWCPOS. The traces for a given spectral order are found by performing a
     rotation transformation using the refence trace positions at the commanded
-    PWCPOS=245.76 degrees. This methods yield sub-pixel performance and will be
+    PWCPOS=245.76 degrees. This method yields sub-pixel performance and will be
     improved upon in later interations as more NIRISS/SOSS observations become
     available.
 
