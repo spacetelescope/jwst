@@ -182,6 +182,9 @@ pipeline
 - Updated `calwebb_image3` to use `ModelLibrary` instead of `ModelContainer`, added
   optional `on_disk` parameter to govern whether models in the library should be stored
   in memory or on disk. [#8683]
+
+- Updated ``calwebb_spec2`` to run ``nsclean`` on NIRSpec imprint and background 
+  association members. [#8786]
   
 ramp_fitting
 ------------
