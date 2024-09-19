@@ -111,6 +111,8 @@ general
 
 - Increase minimum required stdatamodels. [#8797]
 
+- bump dependency to use ``stcal 1.9.0`` [#8808]
+
 klip
 ----
 
