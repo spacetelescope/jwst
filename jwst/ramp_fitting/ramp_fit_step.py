@@ -419,9 +419,9 @@ class RampFitStep(Step):
             ngroups = input_model.data.shape[1]
             if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
                 log.info(f"When selecting the LIKELY ramp fitting algorithm the"
-                          " ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"
-                          " but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
-                          " is being changed to OLS_C")
+                         f" ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"
+                         f" but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
+                         f" is being changed to OLS_C")
                 self.algorithm = "OLS_C"
 
             log.info(f"Using READNOISE reference file: {readnoise_filename}")
