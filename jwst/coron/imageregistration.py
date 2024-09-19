@@ -40,7 +40,9 @@ def align_fourierLSQ(reference, target, mask=None):
 
     init_pars = [0., 0., 1.]
     results, _ = optimize.leastsq(shift_subtract, init_pars,
-                                  args=(reference, target, mask))
+                                  args=(reference, target, mask),
+                                  xtol=1E-15, ftol=1E-15,
+                                  )
     return results
 
 
@@ -165,7 +167,7 @@ def align_array(reference, target, mask=None, return_aligned=True):
 
     elif len(target.shape) == 3:
         nslices = target.shape[0]
-        shifts = np.empty((nslices, 3), dtype=float)
+        shifts = np.empty((nslices, 3), dtype=np.float64)
         if return_aligned:
             aligned = np.empty_like(target)
 
@@ -221,19 +223,19 @@ def align_models(reference, target, mask):
     # Compute the shifts of the PSF ("target") images relative to
     # the science ("reference") image in the first integration
     shifts = align_array(
-        reference.data[0].astype(np.float64),
-        target.data.astype(np.float64),
+        reference.data[0],
+        target.data,
         mask=mask.data, return_aligned=False)
 
     # Apply the shifts to the PSF images
     output_model.data = fourier_imshift(
-        target.data.astype(np.float64),
+        target.data,
         -shifts)
 
     # Apply the same shifts to the PSF error arrays, if they exist
     if target.err is not None:
         output_model.err = fourier_imshift(
-            target.err.astype(np.float64),
+            target.err,
             -shifts)
 
     # TODO: in the future we need to add shifts and other info (such as
