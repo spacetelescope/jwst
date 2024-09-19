@@ -3,7 +3,6 @@ Unit test for Cube Build testing setting up configuration
 """
 
 import pytest
-import sys
 import math
 import asdf
 from stdatamodels.jwst import datamodels
@@ -159,8 +158,8 @@ def test2_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
     miri_ifushort_short_2files[0].meta.filename = 'test3.fits'
     step.offset_file = offset_file
 
-    with pytest.raises(Exception):
-        offsets = step.check_offset_file()
+    with pytest.raises(ValueError):
+        step.check_offset_file()
 
 
 def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcmin):
@@ -172,7 +171,7 @@ def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcm
     
     step.offset_file = offset_file_arcmin
     with pytest.raises(Exception):
-        offsets = step.check_offset_file()
+        step.check_offset_file()
 
 def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     """ Test offset file has been read in correctly"""
