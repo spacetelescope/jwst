@@ -583,7 +583,7 @@ class CubeBuildStep (Step):
                 continue
             else:
                 af.close()
-                raise Exception('Error in offset file. A file in assocation is not found in offset list list %s', file_check)
+                raise ValueError('Error in offset file. A file in the assocation is not found in offset list %s', file_check)
 
         # check that all the lists have the same length
         len_file  = len(offset_filename)
@@ -591,7 +591,7 @@ class CubeBuildStep (Step):
         len_dec = len(offset_dec)
         if (len_file != len_ra or len_ra != len_dec or len_file != len_dec):
             af.close()
-            raise Exception('Offset file error. The offset file does not have the same number of values for filename, offset_ra, offset_dec')
+            raise ValueError('The offset file does not have the same number of values for filename, raoffset, decoffset')
         
         offset_ra =   offset_ra* units.arcsec
         offset_dec =   offset_dec* units.arcsec
