@@ -5,6 +5,9 @@ import numpy as np
 import os
 
 
+# filter warnings such that "ResourceWarning: Implictly cleaning up" is raised as error
+# unfortunately need to do this indirectly by finding "finalize" string in PytestUnraisableException
+@pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_disk_appendable_array(tmp_cwd):
 
     slice_shape = (8,7)
@@ -49,6 +52,7 @@ def test_disk_appendable_array(tmp_cwd):
     assert len(os.listdir(tempdir)) == 0
 
 
+@pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_disk_appendable_array_bad_inputs(tmp_cwd):
 
     slice_shape = (8,7)
@@ -71,6 +75,7 @@ def test_disk_appendable_array_bad_inputs(tmp_cwd):
         DiskAppendableArray(slice_shape, "float3", tempdir)
 
 
+@pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_on_disk_median(tmp_cwd):
 
     library_length = 3
@@ -133,6 +138,27 @@ def test_on_disk_median(tmp_cwd):
     assert len(os.listdir(os.getcwd())) == 1 # this is the "tmptest" directory
 
 
+@pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_on_disk_median_bad_inputs(tmp_cwd):
-    # FIXME
-    pass
+
+    library_length = 3
+    frame_shape = (21,20)
+    dtype = 'float32'
+    tempdir = tmp_cwd / Path("tmptest")
+    os.mkdir(tempdir)
+    shape = (library_length,) + frame_shape
+
+    with pytest.raises(ValueError):
+        OnDiskMedian(frame_shape, dtype=dtype, tempdir=tempdir)
+
+    with pytest.raises(TypeError):
+        OnDiskMedian(shape, dtype="float3", tempdir=tempdir)
+
+    with pytest.raises(FileNotFoundError):
+        OnDiskMedian(shape, dtype="float32", tempdir="dne")
+
+    # unreasonable buffer size will get set to minimum
+    min_buffer = np.dtype(dtype).itemsize*frame_shape[1]*library_length
+    median_computer = OnDiskMedian(shape, dtype=dtype, tempdir=tempdir, buffer_size=-1)
+    assert median_computer.buffer_size == min_buffer
+    median_computer.cleanup()

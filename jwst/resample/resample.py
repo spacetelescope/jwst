@@ -351,14 +351,7 @@ class ResampleData:
             output_model = self.resample_group(input_models, indices)
 
             if not self.in_memory:
-                # Here, write out model to disk in a way that is immediately useful to create_median
-                # using the outlier detection utils I just wrote. Have this return the median computer
-                # back to outlier detection
-                # This does mean weights need to be handled here, though...
-
                 # Write out model to disk, then return filename
-                # only do this write to disk if save_intermediate_results is True
-                # this write should occur before handling weights
                 output_name = output_model.meta.filename
                 if self.output_dir is not None:
                     output_name = os.path.join(self.output_dir, output_name)

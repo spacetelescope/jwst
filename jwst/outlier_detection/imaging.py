@@ -82,10 +82,9 @@ def detect_outliers(
     median_data, median_wcs = drizzle_and_median(input_models,
                                                  resamp,
                                                  maskpt,
-                                                 make_output_path,
                                                  resample_data=resample_data,
-                                                 in_memory=in_memory,
-                                                 save_intermediate_results=save_intermediate_results)
+                                                 save_intermediate_results=save_intermediate_results,
+                                                 make_output_path=make_output_path,)
 
 
     # Perform outlier detection using statistical comparisons between

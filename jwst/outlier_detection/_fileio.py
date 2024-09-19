@@ -1,14 +1,6 @@
-import os
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-def remove_file(fn):
-    if isinstance(fn, str) and os.path.isfile(fn):
-        os.remove(fn)
-        log.info(f"Removing file {fn}")
 
 
 def save_median(median_model, make_output_path, asn_id=None):

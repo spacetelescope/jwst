@@ -68,7 +68,6 @@ def detect_outliers(
         in_memory=in_memory,
         asn_id=asn_id,
     )
-    median_wcs = resamp.output_wcs
 
     # convert to library for resample
     # for compatibility with image3 pipeline
@@ -77,10 +76,9 @@ def detect_outliers(
     median_data, median_wcs = drizzle_and_median(library,
                                                  resamp,
                                                  maskpt,
-                                                 make_output_path,
                                                  resample_data=resample_data,
-                                                 in_memory=False,
-                                                 save_intermediate_results=save_intermediate_results)
+                                                 save_intermediate_results=save_intermediate_results,
+                                                 make_output_path=make_output_path)
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image

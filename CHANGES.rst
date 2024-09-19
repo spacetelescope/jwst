@@ -204,6 +204,8 @@ resample
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
 
+- Permit creating drizzled models one at a time in many-to-many mode. [#8782]
+
 resample_spec
 -------------
 

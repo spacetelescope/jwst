@@ -234,7 +234,7 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
         lambda model, index: model.data.copy(), modify=False))
 
     result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True,
+        container, save_results=True, save_intermediate_results=True
     )
 
     with result:
