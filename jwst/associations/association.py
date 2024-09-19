@@ -209,8 +209,8 @@ class Association(MutableMapping):
                 fpath, fname = os.path.split(member["expname"])
                 if len(fpath) > 0:
                     err_str = "Input association file contains path information;"
-                    err_str += "  note that this can complicate usage and/or sharing"
-                    err_str += "  of such files."
+                    err_str += " note that this can complicate usage and/or sharing"
+                    err_str += " of such files."
                     logger.debug(err_str)
                     warnings.warn(err_str, UserWarning)
         return True
