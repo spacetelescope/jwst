@@ -64,7 +64,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
-         offset_file = string(default=None)
+         offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files. 
          debug_spaxel = string(default='-1 -1 -1') # Default not used
        """
 
@@ -239,7 +239,7 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 # If an offset file is provided do some basic checks on the file and its contents.
 # The offset list contains a matching list to the files in the association
-# used in calspec3 (or offline cube building).
+# used in calspec3 (for offline cube building).
 # Each row in the offset list contain a filename, ra offset and dec offset.
 # The offset list is an asdf file.
         self.offsets = None
@@ -546,15 +546,15 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 
     def check_offset_file(self):
-        """Read in an optional ra and dec offsets for each file.
+        """Read in an optional ra and dec offset for each file.
 
         Summary
         ----------
         Check that is file is asdf file.
-        check the file has the correct format:
+        Check the file has the correct format using an local schema file.
+        The schema file, ifuoffset.schema.yaml, is located in the jwst/cube_build directory.
         For each file in the input  assocation check that there is a corresponding
         file in the offset file.
-        Also check that each file in the offset list contain a ra offset and dec offset.
 
        """
 
@@ -565,7 +565,8 @@ class CubeBuildStep (Step):
             af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
         except:
             schema_message = ('Validation Error for offset file. Fix the offset file. \n' + \
-                              'The offset file needs to have the same number of elements the filename, raoffset and decoffset lists.\n' +\
+                              'The offset file needs to have the same number of elements ' + \
+                              'in the three lists: filename, raoffset and decoffset.\n' +\
                               'The units need to provided and only arcsec is allowed.')
 
             raise Exception(schema_message)
@@ -573,7 +574,9 @@ class CubeBuildStep (Step):
         offset_filename = af['filename']
         offset_ra = af['raoffset']
         offset_dec = af['decoffset']
-
+        # Note:
+        # af['units'] is checked by the schema validation. It must be arcsec or a validation error occurs.
+        
         # check that all the file names in input_model are in the offset filename
         for model in self.input_models:
             file_check = model.meta.filename

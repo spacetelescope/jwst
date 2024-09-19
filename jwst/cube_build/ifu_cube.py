@@ -1741,8 +1741,7 @@ class IFUCubeData():
         if offsets is not None:
             raoffset, decoffset = self.find_ra_dec_offset(input_model.meta.filename)
             log.info("Ra and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
-                     raoffset.value,
-                     decoffset.value, input_model.meta.filename)
+                     raoffset.value, decoffset.value, input_model.meta.filename)
 
         # check if background sky matching as been done in mrs_imatch step
         # If it has not been subtracted and the background has not been
@@ -2449,6 +2448,10 @@ class IFUCubeData():
     
     # ********************************************************************************
     def offset_coord(self, ra, dec, raoffset, decoffset):
+        """ Given an ra,dec and ra offset and dec offset, use astropy SkyCoord functions
+            to apply the offsets
+        """
+        
         coord = SkyCoord(ra, dec, unit='deg')
         coord_new = coord.spherical_offsets_by(raoffset, decoffset)
 
