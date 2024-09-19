@@ -40,6 +40,8 @@ associations
   for S1600A1 with 5 point dithers, to reduce overlap between background nods
   and science exposure. [#8744]
   
+- Added association rule for level 3 image mosaic candidates. [#8798]
+
 badpix_selfcal
 --------------
 
