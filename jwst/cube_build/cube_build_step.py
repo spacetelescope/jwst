@@ -240,7 +240,6 @@ class CubeBuildStep (Step):
 # If an offset file is provided do some basic checks on the file and its contents.
 # The offset list contains a matching list to the files in the association
 # used in calspec3 (for offline cube building).
-# Each row in the offset list contain a filename, ra offset and dec offset.
 # The offset list is an asdf file.
         self.offsets = None
         
