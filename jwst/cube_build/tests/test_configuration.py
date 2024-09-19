@@ -3,11 +3,8 @@ Unit test for Cube Build testing setting up configuration
 """
 
 import pytest
-import asdf
 from stdatamodels.jwst import datamodels
-import astropy.units as u
 
-from jwst.cube_build import CubeBuildStep
 from jwst.cube_build import cube_build
 from jwst.cube_build import file_table
 
