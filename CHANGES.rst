@@ -236,6 +236,12 @@ resample_spec
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
 
+saturation
+----------
+
+- Add option for using the readout pattern information to improve saturation flagging
+  in grouped data. [#8731]
+  
 scripts
 -------
 

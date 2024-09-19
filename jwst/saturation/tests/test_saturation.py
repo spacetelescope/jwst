@@ -36,7 +36,7 @@ def test_basic_saturation_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Make sure that groups with signal > saturation limit get flagged
     satindex = np.argmax(output.data[0, :, 4:6, 4:6] == satvalue)
@@ -51,10 +51,51 @@ def test_nirspec_irs2_saturation_flagging(setup_nrs_irs2_cube):
     data.data[0, 4, pixx, pixy] = 67000
 
     # Run saturation detection
-    output = irs2_flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = irs2_flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Make sure that groups with signal > saturation limit get flagged
     assert np.all(output.groupdq[0, 3:, pixx - 1: pixx + 1, pixy - 1: pixy + 1] == dqflags.group['SATURATED'])
+
+
+def test_nirspec_irs2_readpatt(setup_nrs_irs2_cube):
+    """
+    Tests that the readpatt framework (saturation in grouped data) is working for IRS2 processing.
+    """
+    data, satmap = setup_nrs_irs2_cube()
+
+    pixx, pixy = 1000, 1000
+    data.data[0, 0, pixx, pixy] = 500  # Low signal
+    data.data[0, 1, pixx, pixy] = 50000  # Suspiciously high signal
+    data.data[0, 2, pixx, pixy] = 65000  # Signal exceeds saturation limit of 60000
+    data.data[0, 3, pixx, pixy] = 66000
+    data.data[0, 4, pixx, pixy] = 67000
+
+    # Run saturation detection
+    output = irs2_flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=True)
+
+    # Make sure that group 2 gets flagged
+    assert np.all(output.groupdq[0, 1, pixx, pixy] == dqflags.group['SATURATED'])
+
+
+def test_nirspec_nrs_readpatt(setup_nrs_nrs_cube):
+    """
+    Tests that the readpatt framework (saturation in grouped data) is working for regular grouped
+    data (code follows all instruments except NIRSpec IRS2)
+    """
+    data, satmap = setup_nrs_nrs_cube()
+
+    pixx, pixy = 1000, 1000
+    data.data[0, 0, pixx, pixy] = 500  # Low signal
+    data.data[0, 1, pixx, pixy] = 50000  # Suspiciously high signal
+    data.data[0, 2, pixx, pixy] = 65000  # Signal exceeds saturation limit of 60000
+    data.data[0, 3, pixx, pixy] = 66000
+    data.data[0, 4, pixx, pixy] = 67000
+
+    # Run saturation detection
+    output = irs2_flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=True)
+
+    # Make sure that group 2 gets flagged
+    assert np.all(output.groupdq[0, 1, pixx, pixy] == dqflags.group['SATURATED'])
 
 
 def test_irs2_zero_frame(setup_nrs_irs2_cube):
@@ -76,7 +117,7 @@ def test_irs2_zero_frame(setup_nrs_irs2_cube):
     ramp.zeroframe[nint, row, col] = 65000.
     ramp.zeroframe[nint, row + 1, col + 1] = -100.
 
-    output = irs2_flag_saturation(ramp, sat, n_pix_grow_sat=0)
+    output = irs2_flag_saturation(ramp, sat, n_pix_grow_sat=0, use_readpatt=False)
 
     check_zframe = np.ones(dims, dtype=ramp.data.dtype) * 1000.
     check_zframe[nint, row, col] = 0.
@@ -111,7 +152,7 @@ def test_ad_floor_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Check if the right frames are flagged as saturated
     assert np.all(output.groupdq[0, satindxs, 5, 5]
@@ -146,7 +187,7 @@ def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Check if the right frames are flagged as ad_floor
     assert np.all(output.groupdq[0, floorindxs, 5, 5]
@@ -180,7 +221,7 @@ def test_signal_fluctuation_flagging(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Make sure that all groups after first saturated group are flagged
     satindex = np.argmax(output.data[0, :, 5, 5] == satvalue)
@@ -210,7 +251,7 @@ def test_all_groups_saturated(setup_nrc_cube):
     satmap.data[5, 5] = satvalue
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Make sure all groups are flagged
     assert np.all(np.bitwise_and(output.groupdq[0, :, 4:6, 4:6],
@@ -237,7 +278,7 @@ def test_subarray_extraction(setup_miri_cube):
     satmap.dq[550, 100] = dqflags.pixel['NONLINEAR']
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Check for DQ flag in PIXELDQ of subarray image
     assert output.pixeldq[76, 100] == dqflags.pixel['DO_NOT_USE']
@@ -267,7 +308,7 @@ def test_dq_propagation(setup_nrc_cube):
     satmap.dq[5, 5] = dqval2
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Make sure DQ values from data and reference file are added in the output
     assert output.pixeldq[5, 5] == dqval1 + dqval2
@@ -300,7 +341,7 @@ def test_no_sat_check(setup_nrc_cube):
     data.pixeldq[5, 5] = dqflags.pixel['RC']
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Make sure output GROUPDQ does not get flagged as saturated
     # Make sure PIXELDQ is set to NO_SAT_CHECK and original flag
@@ -332,7 +373,7 @@ def test_nans_in_mask(setup_nrc_cube):
     satmap.data[5, 5] = np.nan
 
     # Run the pipeline
-    output = flag_saturation(data, satmap, n_pix_grow_sat=1)
+    output = flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=False)
 
     # Check that output GROUPDQ is not flagged as saturated
     assert np.all(output.groupdq[0, :, 4:6, 4:6] != dqflags.group['SATURATED'])
@@ -493,6 +534,52 @@ def setup_nrs_irs2_cube():
         saturation_model.meta.instrument.name = 'NIRSPEC'
         saturation_model.meta.instrument.detector = 'NRS1'
         saturation_model.meta.author = 'Clare'
+        saturation_model.meta.pedigree = 'Dummy'
+        saturation_model.meta.subarray.xstart = 1
+        saturation_model.meta.subarray.xsize = 2048
+        saturation_model.meta.subarray.ystart = 1
+        saturation_model.meta.subarray.ysize = 2048
+
+        return data_model, saturation_model
+    return _cube
+
+@pytest.fixture(scope='function')
+def setup_nrs_nrs_cube():
+
+    def _cube():
+
+        # create a JWST datamodel for NIRSPEC NRS-mode data
+        data_model = RampModel((1, 5, 3200, 2048))
+        data_model.data = np.ones(((1, 5, 3200, 2048)))
+        data_model.groupdq = np.zeros(((1, 5, 3200, 2048)))
+        data_model.pixeldq = np.zeros(((3200, 2048)))
+        data_model.meta.instrument.name = 'NIRSPEC'
+        data_model.meta.instrument.detector = 'NRS1'
+        data_model.meta.instrument.filter = 'F100LP'
+        data_model.meta.observation.date = '2019-07-19'
+        data_model.meta.observation.time = '23:23:30.912'
+        data_model.meta.exposure.type = 'NRS_LAMP'
+        data_model.meta.subarray.name = 'FULL'
+        data_model.meta.subarray.xstart = 1
+        data_model.meta.subarray.xsize = 2048
+        data_model.meta.subarray.ystart = 1
+        data_model.meta.subarray.ysize = 2048
+        data_model.meta.exposure.nrs_normal = 16
+        data_model.meta.exposure.nrs_reference = 4
+        data_model.meta.exposure.readpatt = 'NRS'
+        data_model.meta.exposure.nframes = 4
+        data_model.meta.exposure.ngroups = 5
+
+        # create a saturation model for the saturation step
+        saturation_model = SaturationModel((2048, 2048))
+        saturation_model.data = np.ones((2048, 2048)) * 60000  # saturation limit for every pixel is 60000
+        saturation_model.meta.description = 'Fake data.'
+        saturation_model.meta.telescope = 'JWST'
+        saturation_model.meta.reftype = 'SaturationModel'
+        saturation_model.meta.useafter = '2015-10-01T00:00:00'
+        saturation_model.meta.instrument.name = 'NIRSPEC'
+        saturation_model.meta.instrument.detector = 'NRS1'
+        saturation_model.meta.author = 'David'
         saturation_model.meta.pedigree = 'Dummy'
         saturation_model.meta.subarray.xstart = 1
         saturation_model.meta.subarray.xsize = 2048
