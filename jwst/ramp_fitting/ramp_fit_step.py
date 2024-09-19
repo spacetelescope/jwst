@@ -5,6 +5,8 @@ import numpy as np
 from stcal.ramp_fitting import ramp_fit
 from stcal.ramp_fitting import utils
 
+from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
+
 from stcal.ramp_fitting.utils import LARGE_VARIANCE
 from stcal.ramp_fitting.utils import LARGE_VARIANCE_THRESHOLD
 
@@ -414,8 +416,16 @@ class RampFitStep(Step):
             readnoise_filename = self.get_reference_file(input_model, 'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
 
-            log.info('Using READNOISE reference file: %s', readnoise_filename)
-            log.info('Using GAIN reference file: %s', gain_filename)
+            ngroups = input_model.data.shape[1]
+            if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
+                log.info(f"When selecting the LIKELY ramp fitting algorithm the"
+                          " ngroups needs to be a minimum of {likely_fit.LIKELY_MIN_NGROUPS},"
+                          " but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
+                          " is being changed to OLS_C")
+                self.algorithm = "OLS_C"
+
+            log.info(f"Using READNOISE reference file: {readnoise_filename}")
+            log.info(f"Using GAIN reference file: {gain_filename}")
 
             with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model, \
                     datamodels.GainModel(gain_filename) as gain_model:
@@ -432,8 +442,8 @@ class RampFitStep(Step):
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
                     input_model, readnoise_model, gain_model, frames_per_group)
 
-            log.info('Using algorithm = %s' % self.algorithm)
-            log.info('Using weighting = %s' % self.weighting)
+            log.info(f"Using algorithm = {self.algorithm}")
+            log.info(f"Using weighting = {self.weighting}")
 
             buffsize = ramp_fit.BUFSIZE
             if self.algorithm == "GLS":
