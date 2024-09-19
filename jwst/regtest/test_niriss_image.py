@@ -45,6 +45,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
     # Run optional clean_flicker_noise step,
     # saving extra outputs and masking to science regions
     args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01094001002_02107_00001_nis_cfn",
             "--save_calibrated_ramp=True",
             "--steps.clean_flicker_noise.skip=False",
             "--steps.clean_flicker_noise.save_results=True",
@@ -67,9 +68,9 @@ def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_k
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["clean_flicker_noise", "mask",
+@pytest.mark.parametrize("suffix", ["cfn_clean_flicker_noise", "mask",
                                     "flicker_bkg", "flicker_noise",
-                                    "ramp", "rate", "rateints"])
+                                    "cfn_ramp", "cfn_rate", "cfn_rateints"])
 def test_niriss_image_detector1_with_clean_flicker_noise(
         run_detector1_with_clean_flicker_noise, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on NIRISS imaging data.

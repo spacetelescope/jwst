@@ -56,6 +56,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
     # Run optional clean_flicker_noise step,
     # saving extra outputs and masking to science regions
     args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01024002001_02101_00001_mirimage_cfn",
             "--save_calibrated_ramp=True",
             "--steps.clean_flicker_noise.skip=False",
             "--steps.clean_flicker_noise.mask_science_regions=True",
@@ -136,9 +137,9 @@ def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_d
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix",
-                         ["clean_flicker_noise", "mask",
+                         ["cfn_clean_flicker_noise", "mask",
                           "flicker_bkg", "flicker_noise",
-                          "ramp", "rate", "rateints"])
+                          "cfn_ramp", "cfn_rate", "cfn_rateints"])
 def test_miri_image_detector1_with_clean_flicker_noise(
         run_detector1_with_clean_flicker_noise,
         rtdata_module, fitsdiff_default_kwargs, suffix):
