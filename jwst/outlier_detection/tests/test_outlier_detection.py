@@ -600,8 +600,18 @@ def test_create_median(three_sci_as_asn, tmp_cwd):
     lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
     lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
 
+    # make this test meaningful w.r.t. handling of weights
+    with (lib_on_disk, lib_in_memory):
+        for lib in [lib_on_disk, lib_in_memory]:
+            for model in lib:
+                model.wht = np.ones_like(model.data)
+                model.wht[4,9] = 0.5
+                lib.shelve(model, modify=True)
+
     median_on_disk = create_median(lib_on_disk, 0.7)
     median_in_memory = create_median(lib_in_memory, 0.7)
 
+    assert np.isnan(median_in_memory[4,9])
+
     # Make sure the median library is the same for on-disk and in-memory
-    assert np.allclose(median_on_disk, median_in_memory)
+    assert np.allclose(median_on_disk, median_in_memory, equal_nan=True)

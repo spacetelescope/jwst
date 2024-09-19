@@ -16,6 +16,7 @@ Package Index
    badpix_selfcal/index.rst
    barshadow/index.rst
    charge_migration/index.rst
+   clean_flicker_noise/index.rst
    combine_1d/index.rst
    cube_build/index.rst
    dark_current/index.rst
