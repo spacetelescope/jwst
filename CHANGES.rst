@@ -187,14 +187,17 @@ pipeline
 
 - Updated ``calwebb_spec2`` to run ``nsclean`` on NIRSpec imprint and background 
   association members. [#8786]
-  
+
+- Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765]
+
 ramp_fitting
 ------------
 
 - Moved the read noise variance recalculation for CHARGELOSS flagging to the C
   implementation, when the algorithm is ``OLS_C``. [#8697, spacetelescope/stcal#278]
 
-- Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765] 
+- Updated the flow of the detector 1 pipeline when selecting the ``LIKELY`` algorithm
+  for ramp fitting.  The ramps must contain a minimum number of groups (4).[#8631]
 
 resample
 --------
