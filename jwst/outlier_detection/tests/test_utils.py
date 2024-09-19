@@ -66,11 +66,11 @@ def test_disk_appendable_array_bad_inputs(tmp_cwd):
     # make the input directory
     os.mkdir(tempdir)
 
-    # test slice_shape is not 2-D
+    # ensure failure if slice_shape is not 2-D
     with pytest.raises(ValueError):
         DiskAppendableArray((3,5,7), dtype, tempdir)
 
-    # test dtype is not valid
+    # ensure failure if dtype is not valid
     with pytest.raises(TypeError):
         DiskAppendableArray(slice_shape, "float3", tempdir)
 
@@ -157,7 +157,7 @@ def test_on_disk_median_bad_inputs(tmp_cwd):
     with pytest.raises(FileNotFoundError):
         OnDiskMedian(shape, dtype="float32", tempdir="dne")
 
-    # unreasonable buffer size will get set to minimum
+    # ensure unreasonable buffer size will get set to minimum reasonable buffer
     min_buffer = np.dtype(dtype).itemsize*frame_shape[1]*library_length
     median_computer = OnDiskMedian(shape, dtype=dtype, tempdir=tempdir, buffer_size=-1)
     assert median_computer.buffer_size == min_buffer

@@ -616,16 +616,17 @@ def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
     # arbitrarily use 5 times that
     buffer_size = 4 * 20 * 5 
     median_on_disk, _ = drizzle_and_median(lib_on_disk,
-                                           make_resamp(lib_on_disk, False),
+                                           make_resamp(lib_on_disk),
                                            0.7,
                                            buffer_size=buffer_size,
                                            resample_data=False)
     median_in_memory, _ = drizzle_and_median(lib_in_memory,
-                                             make_resamp(lib_in_memory, False),
+                                             make_resamp(lib_in_memory),
                                              0.7,
                                              buffer_size=buffer_size,
                                              resample_data=False)
 
+    # Make sure the high-variance (low-weight) pixel is set to NaN
     assert np.isnan(median_in_memory[4,9])
 
     # Make sure the median library is the same for on-disk and in-memory
@@ -635,7 +636,7 @@ def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
 def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
     lib = ModelLibrary(three_sci_as_asn, on_disk=False)
 
-    resamp = make_resamp(lib, True)
+    resamp = make_resamp(lib)
     median, wcs = drizzle_and_median(lib,
                                      resamp,
                                      0.7,
@@ -645,7 +646,7 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
     assert median.shape == (21,20)
 
     with pytest.raises(ValueError):
-        # should fail if save_intermediate results but no output path
+        # ensure failure if save_intermediate results but no output path
         drizzle_and_median(lib,
                            resamp,
                            0.7,
@@ -654,7 +655,7 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
         
     resamp.single = False
     with pytest.raises(ValueError):
-        # should fail if try to call when resamp.single is False
+        # ensure failure if try to call when resamp.single is False
         drizzle_and_median(lib,
                            resamp,
                            0.7,
@@ -662,8 +663,9 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
                            save_intermediate_results=True)
 
 
-def make_resamp(input_models, in_memory):
+def make_resamp(input_models):
     """All defaults are same as what is run by default by outlier detection"""
+    in_memory = not input_models._on_disk
     resamp = ResampleData(
         input_models,
         output="",
