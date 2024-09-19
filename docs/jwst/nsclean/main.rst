@@ -27,3 +27,12 @@ See the :ref:`clean_flicker_noise <clean_flicker_noise_step>`
 documentation for more information, or the
 :ref:`nsclean step arguments <nsclean_arguments>` for the default
 values used for this step.
+
+If this step is run as part of the 
+:ref:`calwebb_spec2 <calwebb_spec2>` pipeline when processing an
+association that includes background or imprint images, these
+images will be processed using the same ``nsclean`` parameters 
+as the science image.  If a user supplied mask is provided, it
+will be used for all images in an association. Otherwise, separate
+masks will be calculated for each image using the same input
+parameters.
