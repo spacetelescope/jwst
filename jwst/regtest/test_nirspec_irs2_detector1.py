@@ -39,6 +39,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
     # Run optional clean_flicker_noise step,
     # saving extra outputs and masking to science regions
     args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01335004001_03101_00002_nrs2_cfn",
             "--save_calibrated_ramp=True",
             "--steps.clean_flicker_noise.skip=False",
             "--steps.clean_flicker_noise.mask_science_regions=True",
@@ -74,9 +75,9 @@ def test_nirspec_irs2_detector1(run_detector1pipeline, rtdata_module,
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["clean_flicker_noise", "mask",
+@pytest.mark.parametrize("suffix", ["cfn_clean_flicker_noise", "mask",
                                     "flicker_bkg", "flicker_noise",
-                                    "ramp", "rate", "rateints"])
+                                    "cfn_ramp", "cfn_rate", "cfn_rateints"])
 def test_nirspec_irs2_detector1_with_clean_flicker_noise(
         run_detector1_with_clean_flicker_noise, rtdata_module,
         fitsdiff_default_kwargs, suffix):
