@@ -63,6 +63,11 @@ calwebb_detector1
 - Added the optional ``clean_flicker_noise`` step between ``jump`` and
   ``ramp_fit``. [#8669]
 
+change_migration
+----------------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 clean_flicker_noise
 -------------------
 
@@ -88,6 +93,11 @@ datamodels
 - Added `ModelLibrary` class to allow passing on-disk models between steps in the
   image3 pipeline. [#8683]
 
+dark_current
+------------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 documentation
 -------------
 
@@ -96,11 +106,23 @@ documentation
 - Updated description of association keyword `expname`: including path information
   in addition to the filename is discouraged, but allowed. [#8789]
 
+dq_init
+--------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 emicorr
 -------
 
 - Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
   to compute a correction. [#8675]
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+first_frame
+-----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 flat_field
 ----------
@@ -109,6 +131,11 @@ flat_field
   variance, and DQ extensions for all modes. [#8557]
 
 - Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
+
+gain_scale
+----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 general
 -------
@@ -123,11 +150,36 @@ general
 
 - bump dependency to use ``stcal 1.9.0`` [#8808]
 
+group_scale
+-----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+ipc
+---
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+jump
+----
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 klip
 ----
 
 - Allowed klip to ingest a single shifted 3-D PSF model instead of a 4-D structure
   containing one shifted PSF per science integration. [#8747]
+
+lastframe
+---------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+linearity
+---------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 master_background
 -----------------
@@ -193,6 +245,11 @@ pathloss
 
 - Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
 
+persistence
+-----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 photom
 ------
 
@@ -229,6 +286,18 @@ ramp_fitting
 - Updated the flow of the detector 1 pipeline when selecting the ``LIKELY`` algorithm
   for ramp fitting.  The ramps must contain a minimum number of groups (4).[#8631]
 
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+refpix
+------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+regtest
+-------
+
+- Added memory usage test for Detector1 pipeline. [#8676]
+
 resample
 --------
 
@@ -241,6 +310,11 @@ resample
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
+
+reset
+-----
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 resample_spec
 -------------
@@ -266,12 +340,19 @@ resample_spec
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
 
+rscd
+----
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 saturation
 ----------
 
 - Add option for using the readout pattern information to improve saturation flagging
   in grouped data. [#8731]
-  
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 scripts
 -------
 
@@ -297,6 +378,11 @@ stpipe
   `self.skip`. [#8600]
 
 - Log jwst version at end of `Step.run`. [#8769]
+
+superbias
+---------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 tso_photometry
 --------------
