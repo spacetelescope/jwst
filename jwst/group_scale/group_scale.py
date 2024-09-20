@@ -40,6 +40,8 @@ def do_correction(model):
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes
+    if not isinstance(type(model.data), float):
+        model.data = (model.data).astype(float)
     model.data *= scale
     model.meta.cal_step.group_scale = 'COMPLETE'
 

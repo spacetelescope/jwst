@@ -28,8 +28,8 @@ def test_rscd_baseline_set_groupdq():
     # get the number of groups to flag
     nflag = 3
 
-    # run the RSCD baseline correction step
-    dm_ramp_rscd = correction_skip_groups(dm_ramp, nflag)
+    # run the RSCD baseline correction step on a copy (the copy is created at the step script)
+    dm_ramp_rscd = correction_skip_groups(dm_ramp.copy(), nflag)
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag for the 2nd integration
@@ -81,14 +81,14 @@ def test_rscd_baseline_too_few_groups():
     data = np.full(csize, 1.0, dtype=np.float32)
     groupdq = np.zeros(csize, dtype=np.uint8)
 
-    # create a JWST datamodel for MIRI data
+    # create a JWST datamodel for MIRI data on a copy (the copy is created at the step script)
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # get the number of groups to flag
     nflag = 3
 
     # run the RSCD baseline correction step
-    dm_ramp_rscd = correction_skip_groups(dm_ramp, nflag)
+    dm_ramp_rscd = correction_skip_groups(dm_ramp.copy(), nflag)
 
     # test that the groupdq flags are not changed for any integration
     dq_diff = (dm_ramp_rscd.groupdq[:, :, :, :]
