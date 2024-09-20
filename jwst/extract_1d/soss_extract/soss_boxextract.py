@@ -37,7 +37,7 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     # Row centers of all pixels.
     rows = np.indices((nrows, len(cols)))[0]
 
-    # Pixels that are entierly inside the box are set to one.
+    # Pixels that are entirely inside the box are set to one.
     cond = (rows <= (centroid - 0.5 + n_pix / 2))
     cond &= ((centroid + 0.5 - n_pix / 2) <= rows)
     weights = cond.astype(float)
