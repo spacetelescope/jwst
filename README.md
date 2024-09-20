@@ -216,6 +216,7 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
+| 1.16.0              | B11.1rc1  | TBD      | 1281         | 2024-09-20 | TBD         | First release candidate for B11.1             |
 | 1.15.1              | B11.0rc2  | TBD      | 1242         | 2024-07-08 | TBD         | Second release candidate for B11.0            |
 | 1.15.0              | B11.0rc1  | TBD      | 1241         | 2024-06-26 | TBD         | First release candidate for B11.0             |
 | 1.14.1              |           |          | 1238         | 2024-06-27 |             | PyPI-only release for external users          |
