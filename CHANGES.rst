@@ -212,7 +212,7 @@ pipeline
   in memory or on disk. [#8683]
 
 - Updated ``calwebb_spec2`` to run ``nsclean`` on NIRSpec imprint and background 
-  association members. [#8786]
+  association members. [#8786, #8809]
 
 - Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765]
 
