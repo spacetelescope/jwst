@@ -122,6 +122,12 @@ emicorr
 
 - Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
+extract_1d
+----------
+
+- Updated NIRISS SOSS extraction to utilize ``pastasoss``
+  rotation solution. [#8763]
+
 first_frame
 -----------
 
