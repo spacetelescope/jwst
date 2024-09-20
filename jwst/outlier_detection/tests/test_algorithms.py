@@ -20,7 +20,9 @@ def test_rolling_median():
 def test_nanmedian3D():
 
     shp = (11, 50, 60)
-    cube = np.random.normal(shp)
+    cube = np.random.normal(size=shp)
+    cube[5, 5:7, 5:8] = np.nan
     med = nanmedian3D(cube)
-    assert np.allclose(med, np.nanmedian(cube))
+
     assert med.dtype == np.float32
+    assert np.allclose(med, np.nanmedian(cube, axis=0), equal_nan=True)

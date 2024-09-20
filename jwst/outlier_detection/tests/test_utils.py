@@ -14,11 +14,12 @@ def test_disk_appendable_array(tmp_cwd):
     dtype = "float32"
     tempdir = tmp_cwd / Path("tmptest")
     os.mkdir(tempdir)
+    fname = tempdir / "test.bin"
 
-    arr = DiskAppendableArray(slice_shape, dtype, tempdir)
+    arr = DiskAppendableArray(slice_shape, dtype, fname)
 
     # check temporary file setup
-    assert arr._filename.split("/")[-1] in os.listdir(tempdir)
+    assert str(arr._filename).split("/")[-1] in os.listdir(tempdir)
     assert len(os.listdir(tempdir)) == 1
     assert arr.shape == (0,) + slice_shape
 
@@ -58,20 +59,25 @@ def test_disk_appendable_array_bad_inputs(tmp_cwd):
     slice_shape = (8,7)
     dtype = "float32"
     tempdir = tmp_cwd / Path("tmptest")
+    fname = "test.bin"
     
     # test input directory does not exist
     with pytest.raises(FileNotFoundError):
-        DiskAppendableArray(slice_shape, dtype, tempdir)
+        DiskAppendableArray(slice_shape, dtype, tempdir / fname)
 
     # make the input directory
     os.mkdir(tempdir)
 
     # ensure failure if slice_shape is not 2-D
     with pytest.raises(ValueError):
-        DiskAppendableArray((3,5,7), dtype, tempdir)
+        DiskAppendableArray((3,5,7), dtype, tempdir / fname)
 
     # ensure failure if dtype is not valid
     with pytest.raises(TypeError):
+        DiskAppendableArray(slice_shape, "float3", tempdir / fname)
+
+    # ensure failure if pass directory instead of filename
+    with pytest.raises(IsADirectoryError):
         DiskAppendableArray(slice_shape, "float3", tempdir)
 
 

@@ -32,7 +32,8 @@ def nanmedian3D(cube, overwrite_input=True):
     memory-intensive. Instead, loop over the median calculation to avoid the
     memory usage of the internal upcasting and temporary array allocation.
     The additional runtime of this loop is indistinguishable from zero,
-    but this loop decreases overall memory usage of the step by as much as half.
+    but this loop cuts overall step memory usage roughly in half for at least one
+    test association.
     """
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore",
@@ -192,7 +193,7 @@ class DiskAppendableArray:
     a small spatial segment of the full dataset.
     """
     
-    def __init__(self, slice_shape, dtype, tempdir):
+    def __init__(self, slice_shape, dtype, filename):
         """
         Parameters
         ----------
@@ -202,13 +203,14 @@ class DiskAppendableArray:
         dtype : str
             The data type of the array. Must be a valid numpy array datatype.
 
-        tempdir : str
-            The directory in which to create the temporary files.
-            Default is the current working directory.
+        filename : str
+            The full file path in which to store the array
         """
         if len(slice_shape) != 2:
             raise ValueError(f"Invalid slice_shape {slice_shape}. Only 2-D arrays are supported.")
-        self._temp_file, self._filename = tempfile.mkstemp(dir=tempdir)
+        self._filename = Path(filename)
+        with open(filename, "wb") as f:   # noqa: F841
+            pass
         self._slice_shape = slice_shape
         self._dtype = np.dtype(dtype)
         self._append_count = 0
@@ -226,7 +228,8 @@ class DiskAppendableArray:
         if data.dtype != self._dtype:
             raise ValueError(f"Data dtype {data.dtype} does not match array dtype {self._dtype}")
         with open(self._filename, "ab") as f:
-            f.write(data.tobytes())
+            data.tofile(f, sep="")
+            #f.write(data.tobytes())
         self._append_count += 1
 
 
@@ -333,7 +336,7 @@ class OnDiskMedian:
             if i == self.nsections - 1:
                 # last section has whatever shape is left over
                 shp = (self.frame_shape[0] - (self.nsections-1) * self.section_nrows, self.frame_shape[1])
-            arr = DiskAppendableArray(shp, dtype, self._temp_path)
+            arr = DiskAppendableArray(shp, dtype, self._temp_path / f"{i}.bin")
             temp_arrays.append(arr)
         return temp_arrays
 
@@ -360,7 +363,7 @@ class OnDiskMedian:
 
     def cleanup(self):
         """Remove the temporary files and directory when finished"""
-        [arr.cleanup() for arr in self._temp_arrays]
+        #[arr.cleanup() for arr in self._temp_arrays]
         self._temp_dir.cleanup()
         return
 
