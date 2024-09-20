@@ -28,6 +28,7 @@ class JwstStep(Step):
     def _datamodels_open(cls, init, **kwargs):
         return datamodels.open(init, **kwargs)
 
+
     def load_as_level2_asn(self, obj):
         """Load object as an association
 
