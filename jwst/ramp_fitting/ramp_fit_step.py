@@ -454,6 +454,10 @@ class RampFitStep(Step):
 
             int_times = result.int_times
 
+            # Before the ramp_fit() call, copy the input model ("_W" for weighting)
+            # for later reconstruction of the fitting array tuples.
+            input_model_W = result.copy()
+
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.
@@ -464,7 +468,7 @@ class RampFitStep(Step):
 
             # Create a gdq to modify if there are charge_migrated groups
             if self.algorithm == "OLS":
-                gdq = result.groupdq.copy()
+                gdq = input_model_W.groupdq.copy()
 
                 # Locate groups where that are flagged with CHARGELOSS
                 wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))

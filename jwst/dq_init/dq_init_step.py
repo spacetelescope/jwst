@@ -46,14 +46,14 @@ class DQInitStep(Step):
             if input_model.meta.exposure.type in dq_initialization.guider_list:
                 # Reopen as a GuiderRawModel
                 input_model.close()
-                input_model = datamodels.GuiderRawModel(input)
+                input_model = datamodels.GuiderRawModel(step_input)
                 self.log.info("Input opened as GuiderRawModel")
 
         except (TypeError, ValueError):
             # If the initial open attempt fails,
             # try to open as a GuiderRawModel
             try:
-                input_model = datamodels.GuiderRawModel(input)
+                input_model = datamodels.GuiderRawModel(step_input)
                 self.log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
                 self.log.error("Unexpected or unknown input model type")
