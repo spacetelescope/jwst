@@ -27,25 +27,22 @@ _ONE_MB = 1 << 20
 
 
 def nanmedian3D(cube, overwrite_input=True):
-    """Convenience function to compute the median of a cube ignoring warnings,
-    setting memory-efficient flag, and specifying output type
-    
-    Notes
-    -----
-    np.nanmedian returns float64 unless "out" parameter is specified, and specifying
-    that only changes the dtype of the output but not the internal precision of nanmedian.
-    It appears to be impossible to stop nanmedian from computing with 
-    at least 64-bit precision internally.
-    Pre-allocating the output array with `out=np.empty(cube.shape[1:], dtype=np.float32)`
-    actually increases memory usage a bit, so it's better to just convert after the fact.
-    Failing to return float32 here causes gwcs_blot to segfault down the line 
-    because that function is hard-coded to expect float32. 
+    """Compute the median of a cube ignoring warnings and with memory efficiency.
+    np.nanmedian always uses at least 64-bit precision internally, and this is too
+    memory-intensive. Instead, loop over the median calculation to avoid the
+    memory usage of the internal upcasting and temporary array allocation.
+    The additional runtime of this loop is indistinguishable from zero,
+    but this loop decreases overall memory usage of the step by as much as half.
     """
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore",
                                 message="All-NaN slice encountered",
                                 category=RuntimeWarning)
-        return np.nanmedian(cube, axis=0, overwrite_input=overwrite_input).astype(np.float32)
+        output_arr = np.empty(cube.shape[1:], dtype=np.float32)
+        for i in range(output_arr.shape[0]):
+            # this for loop looks silly, but see docstring above
+            output_arr[i,:] = np.nanmedian(cube[:,i,:], axis=0, overwrite_input=overwrite_input).astype(np.float32)
+        return output_arr
 
 
 def create_cube_median(cube_model, maskpt):
@@ -248,6 +245,9 @@ class DiskAppendableArray:
 
 class OnDiskMedian:
 
+    # TODO: can/should this class inherit directly from tempfile.TemporaryDirectory?
+    # probably not, because it "has a" tempdir, it is not itself a tempdir
+
     def __init__(self, shape, dtype='float32', tempdir="", buffer_size=None):
         """
         Set up temporary files to perform operations on a stack of 2-D input arrays
@@ -320,7 +320,7 @@ class OnDiskMedian:
         self.buffer_size = buffer_size
 
         nsections = int(np.ceil(imrows / section_nrows))
-        log.info(f"Computing median over {self._expected_nframes} images in {nsections} "
+        log.info(f"Computing median over {self._expected_nframes} groups in {nsections} "
                     f"sections with total memory buffer {buffer_size / _ONE_MB} MB")
         return nsections, section_nrows
 
