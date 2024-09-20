@@ -22,7 +22,7 @@ NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
 
-def flag_saturation(output_model, ref_model, n_pix_grow_sat):
+def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     """
     Short Summary
     -------------
@@ -41,12 +41,18 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat):
         as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
         charge spilling.
 
+    use_readpatt : bool
+        Use grouped read pattern information to assist with flagging
+
     Returns
     -------
     output_model : `~jwst.datamodels.RampModel`
         Data model with saturation, A/D floor, and do not use flags set in
         the GROUPDQ array
     """
+
+    ngroups = output_model.meta.exposure.ngroups
+    nframes = output_model.meta.exposure.nframes
 
     gdq = output_model.groupdq
     pdq = output_model.pixeldq
@@ -65,9 +71,16 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat):
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
+    # Enable use of read_pattern specific treatment if selected
+    if use_readpatt:
+        read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
+        log.info(f"Using read_pattern with nframes {nframes}")
+    else:
+        read_pattern=None
+
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
-        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe)
+        n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
@@ -81,7 +94,7 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat):
     return output_model
 
 
-def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat):
+def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     """
     Short Summary
     -------------
@@ -103,6 +116,9 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat):
         as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
         charge spilling.
 
+    use_readpatt : bool
+        Use grouped read pattern information to assist with flagging
+
     Returns
     -------
     output_model : `~jwst.datamodels.RampModel`
@@ -118,7 +134,13 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat):
     ngroups = data.shape[1]
     detector = output_model.meta.instrument.detector
     nframes = output_model.meta.exposure.nframes
-    read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
+
+    if use_readpatt:
+        read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
+        log.info(f"Using read_pattern with nframes {nframes}")
+    else:
+        read_pattern=None
+
 
     # create a mask of the appropriate size
     irs2_mask = x_irs2.make_mask(output_model)
@@ -158,7 +180,8 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat):
                                         irs2_mask, detector)
             # check for saturation
             flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
-            if group == 2:
+            # Additional checks for group 2 saturation in grouped data
+            if ((group == 2) & (read_pattern is not None)):
                 # Identify groups which we wouldn't expect to saturate by the third group,
                 # on the basis of the first group
                 scigp1 = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector)

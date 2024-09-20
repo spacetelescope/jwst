@@ -18,6 +18,7 @@ class SaturationStep(Step):
 
     spec = """
         n_pix_grow_sat = integer(default=1) # number of layers adjacent pixels to flag
+        use_readpatt = boolean(default=True) # Use grouped read pattern information to assist with flagging
     """
 
     reference_file_types = ['saturation']
@@ -46,9 +47,9 @@ class SaturationStep(Step):
 
             # Do the saturation check
             if pipe_utils.is_irs2(result):
-                result = saturation.irs2_flag_saturation(result, ref_model, self.n_pix_grow_sat)
+                result = saturation.irs2_flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
             else:
-                result = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat)
+                result = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
             result.meta.cal_step.saturation = 'COMPLETE'
 
             # Cleanup
