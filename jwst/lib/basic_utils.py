@@ -1,7 +1,6 @@
 """General utility objects"""
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import dqflags
 
 
 def use_datamodel(input, model_class=None):
