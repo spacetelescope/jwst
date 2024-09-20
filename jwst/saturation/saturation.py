@@ -55,6 +55,8 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     gdq = output_model.groupdq
     pdq = output_model.pixeldq
     data = output_model.data
+    nframes = output_model.meta.exposure.nframes
+    ngroups = output_model.meta.exposure.ngroups
 
     zframe = output_model.zeroframe if output_model.meta.exposure.zero_frame else None
 
@@ -93,7 +95,7 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     return output_model
 
 
-def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat, use_readpatt):
+def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     """
     Short Summary
     -------------
@@ -104,7 +106,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat, use_readpatt):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
     ref_model : `~jwst.datamodels.SaturationModel`
