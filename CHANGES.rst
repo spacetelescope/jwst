@@ -26,12 +26,16 @@ assign_wcs
 - Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
   into stcal. [#8624]
 
+- Add helper functions to copy only the necessary parts of the WCS so that
+  these parts can be used within loops, avoiding copying the full WCS within
+  a loop [#8793]
+
 associations
 ------------
 
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
-  
+
 - Update warning message about use of paths in associations. [#8752]
 
 - Remove ``MultilineLogger`` and no longer set it as the default logger. [#8781]
@@ -70,11 +74,13 @@ cube_build
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
-  
+
 - Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   building a cube. [#8557]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 datamodels
 ----------
@@ -102,6 +108,8 @@ flat_field
 - Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
   variance, and DQ extensions for all modes. [#8557]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
+
 general
 -------
 
@@ -127,6 +135,8 @@ master_background
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
+
 model_blender
 -------------
 
@@ -136,6 +146,11 @@ mrs_imatch
 ----------
 
 - Added a deprecation warning and set the default to skip=True for the step. [#8728]
+
+msaflagopen
+-----------
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 nsclean
 -------
@@ -148,6 +163,8 @@ nsclean
 - Merged implementation with the new ``clean_flicker_noise`` step. This step
   can still be called from the ``calwebb_spec2`` pipeline on NIRSpec rate
   data, but it is now deprecated. [#8669]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 outlier_detection
 -----------------
@@ -174,11 +191,15 @@ pathloss
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
+
 photom
 ------
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 pipeline
 --------
@@ -188,9 +209,16 @@ pipeline
   in memory or on disk. [#8683]
 
 - Updated ``calwebb_spec2`` to run ``nsclean`` on NIRSpec imprint and background 
-  association members. [#8786]
+  association members. [#8786, #8809]
 
 - Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
+
+pixel_replace
+-------------
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 ramp_fitting
 ------------
@@ -524,6 +552,7 @@ master_background
   wavelength range instead of NaN to avoid NaN-ing out entire
   sets of science data when backgrounds are missing. [#8597]
 
+
 master_background_mos
 ---------------------
 
@@ -602,6 +631,7 @@ photom
 
 - Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
+
 
 pipeline
 --------
