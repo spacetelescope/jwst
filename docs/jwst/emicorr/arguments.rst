@@ -12,9 +12,6 @@ The ``emicorr`` step has the following step-specific arguments.
     If True, the reference wavelength will be scaled to the
     data's phase amplitude.
 
-``--user_supplied_reffile`` (boolean, default=None)
-    This is to specify an ASDF-format user-created reference file.
-
 ``--save_intermediate_results``  (string, default=False)
     This is a boolean flag to specify whether to write a step output
     file with the EMI correction, and a reference file with all the
