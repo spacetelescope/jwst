@@ -26,12 +26,16 @@ assign_wcs
 - Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
   into stcal. [#8624]
 
+- Add helper functions to copy only the necessary parts of the WCS so that
+  these parts can be used within loops, avoiding copying the full WCS within
+  a loop [#8793]
+
 associations
 ------------
 
 - Restored slit name to level 3 product names for NIRSpec BOTS and background
   fixed slit targets. [#8699]
-  
+
 - Update warning message about use of paths in associations. [#8752]
 
 - Remove ``MultilineLogger`` and no longer set it as the default logger. [#8781]
@@ -40,6 +44,8 @@ associations
   for S1600A1 with 5 point dithers, to reduce overlap between background nods
   and science exposure. [#8744]
   
+- Added association rule for level 3 image mosaic candidates. [#8798]
+
 badpix_selfcal
 --------------
 
@@ -57,6 +63,11 @@ calwebb_detector1
 - Added the optional ``clean_flicker_noise`` step between ``jump`` and
   ``ramp_fit``. [#8669]
 
+change_migration
+----------------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 clean_flicker_noise
 -------------------
 
@@ -68,17 +79,27 @@ cube_build
 
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
-  
+
 - Fixed a bug when ``cube_build`` was called from the ``mrs_imatch`` step. [#8728]
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   building a cube. [#8557]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
+
+- Allow the user to provide ra and dec shifts to apply for each file to fine
+  tune the WCS. [#8720]
 
 datamodels
 ----------
 
 - Added `ModelLibrary` class to allow passing on-disk models between steps in the
   image3 pipeline. [#8683]
+
+dark_current
+------------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 documentation
 -------------
@@ -88,11 +109,18 @@ documentation
 - Updated description of association keyword `expname`: including path information
   in addition to the filename is discouraged, but allowed. [#8789]
 
+dq_init
+--------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 emicorr
 -------
 
 - Fixed a bug where MIRI EMI correction step would return NaNs when it was unable
   to compute a correction. [#8675]
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 extract_1d
 ----------
@@ -100,11 +128,23 @@ extract_1d
 - Updated NIRISS SOSS extraction to utilize ``pastasoss``
   rotation solution. [#8763]
 
+first_frame
+-----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 flat_field
 ----------
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all science, error,
   variance, and DQ extensions for all modes. [#8557]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
+
+gain_scale
+----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 general
 -------
@@ -117,17 +157,46 @@ general
 
 - Increase minimum required stdatamodels. [#8797]
 
+- bump dependency to use ``stcal 1.9.0`` [#8808]
+
+group_scale
+-----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+ipc
+---
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+jump
+----
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 klip
 ----
 
 - Allowed klip to ingest a single shifted 3-D PSF model instead of a 4-D structure
   containing one shifted PSF per science integration. [#8747]
 
+lastframe
+---------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+linearity
+---------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 master_background
 -----------------
 
 - Either of ``"background"`` or ``"bkg"`` in slit name now defines the slit
   as a background slit, instead of ``"bkg"`` only. [#8600]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
 
 model_blender
 -------------
@@ -138,6 +207,11 @@ mrs_imatch
 ----------
 
 - Added a deprecation warning and set the default to skip=True for the step. [#8728]
+
+msaflagopen
+-----------
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 nsclean
 -------
@@ -150,6 +224,8 @@ nsclean
 - Merged implementation with the new ``clean_flicker_noise`` step. This step
   can still be called from the ``calwebb_spec2`` pipeline on NIRSpec rate
   data, but it is now deprecated. [#8669]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 outlier_detection
 -----------------
@@ -176,11 +252,20 @@ pathloss
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
 
+- Replaced deep copies of NIRSpec WCS objects within most loops [#8793]
+
+persistence
+-----------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 photom
 ------
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
   variance, and DQ extensions. [#8557]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
 pipeline
 --------
@@ -188,14 +273,39 @@ pipeline
 - Updated `calwebb_image3` to use `ModelLibrary` instead of `ModelContainer`, added
   optional `on_disk` parameter to govern whether models in the library should be stored
   in memory or on disk. [#8683]
-  
+
+- Updated ``calwebb_spec2`` to run ``nsclean`` on NIRSpec imprint and background 
+  association members. [#8786, #8809]
+
+- Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765]
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
+
+pixel_replace
+-------------
+
+- Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
+
 ramp_fitting
 ------------
 
 - Moved the read noise variance recalculation for CHARGELOSS flagging to the C
   implementation, when the algorithm is ``OLS_C``. [#8697, spacetelescope/stcal#278]
 
-- Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765] 
+- Updated the flow of the detector 1 pipeline when selecting the ``LIKELY`` algorithm
+  for ramp fitting.  The ramps must contain a minimum number of groups (4).[#8631]
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+refpix
+------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+regtest
+-------
+
+- Added memory usage test for Detector1 pipeline. [#8676]
 
 resample
 --------
@@ -209,6 +319,11 @@ resample
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
+
+reset
+-----
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 resample_spec
 -------------
@@ -233,6 +348,19 @@ resample_spec
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
   resampling. [#8557]
+
+rscd
+----
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
+saturation
+----------
+
+- Add option for using the readout pattern information to improve saturation flagging
+  in grouped data. [#8731]
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 scripts
 -------
@@ -259,6 +387,11 @@ stpipe
   `self.skip`. [#8600]
 
 - Log jwst version at end of `Step.run`. [#8769]
+
+superbias
+---------
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
 tso_photometry
 --------------
@@ -512,6 +645,7 @@ master_background
   wavelength range instead of NaN to avoid NaN-ing out entire
   sets of science data when backgrounds are missing. [#8597]
 
+
 master_background_mos
 ---------------------
 
@@ -587,6 +721,7 @@ photom
 
 - Added a hook to bypass the ``photom`` step when the ``extract_1d`` step
   was bypassed for non-TSO NIRISS SOSS exposures. [#8575]
+
 
 pipeline
 --------

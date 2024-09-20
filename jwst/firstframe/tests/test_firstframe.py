@@ -25,8 +25,9 @@ def test_firstframe_set_groupdq():
     # create a JWST datamodel for MIRI data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
-    # run the first frame correction step
-    dm_ramp_firstframe = do_correction(dm_ramp)
+    # run the first frame correction step on a copy (the detection to make the copy or
+    # not would have happened at _step.py)
+    dm_ramp_firstframe = do_correction(dm_ramp.copy())
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag

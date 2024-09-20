@@ -268,6 +268,28 @@ class Spec2Pipeline(Pipeline):
 
         # apply the "nsclean" 1/f correction to NIRSpec images
         calibrated = self.nsclean(calibrated)
+        
+        # Apply nsclean to NIRSpec imprint and background members
+        if not self.nsclean.skip:
+            save_results = self.nsclean.save_results
+
+            for i, imprint_file in enumerate(members_by_type['imprint']):
+                if save_results:
+                    if isinstance(imprint_file, datamodels.JwstDataModel):
+                        self.nsclean.output_file = imprint_file.meta.filename
+                    else:
+                        self.nsclean.output_file = os.path.basename(imprint_file)
+                imprint_nsclean = self.nsclean(imprint_file)
+                members_by_type['imprint'][i] = imprint_nsclean
+
+            for i, bkg_file in enumerate(members_by_type['background']):
+                if save_results:
+                    if isinstance(bkg_file, datamodels.JwstDataModel):
+                        self.nsclean.output_file = bkg_file.meta.filename
+                    else:
+                        self.nsclean.output_file = os.path.basename(bkg_file)
+                bkg_nsclean = self.nsclean(bkg_file)
+                members_by_type['background'][i] = bkg_nsclean
 
         # Leakcal subtraction (imprint)  occurs before background subtraction on a per-exposure basis.
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
