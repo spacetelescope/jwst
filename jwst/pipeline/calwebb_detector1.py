@@ -137,7 +137,7 @@ class Detector1Pipeline(Pipeline):
         input = self.run_step(self.jump, input)
 
         # apply the clean_flicker_noise step
-        input = self.clean_flicker_noise(input)
+        input = self.run_step(self.clean_flicker_noise, input)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
