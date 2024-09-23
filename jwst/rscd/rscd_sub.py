@@ -80,11 +80,6 @@ def correction_skip_groups(output, group_skip):
         RSCD-corrected science data
     """
 
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
-    input_model.close()
-    del input_model
-
     # Save some data params for easy use later
     sci_nints = output.data.shape[0]       # number of integrations
     sci_ngroups = output.data.shape[1]     # number of groups

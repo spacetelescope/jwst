@@ -51,9 +51,6 @@ class EmiCorrStep(Step):
                 result.meta.cal_step.emicorr = 'SKIPPED'
                 return result
 
-            # Work on a copy
-            result = input_model.copy()
-
             # Setup parameters
             pars = {
                 'save_intermediate_results': self.save_intermediate_results,

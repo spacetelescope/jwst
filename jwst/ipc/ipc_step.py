@@ -56,10 +56,10 @@ class IPCStep(Step):
 
             # Do the ipc correction
             result = ipc_corr.do_correction(result, ipc_model)
-
-            # Close the reference file and update the step status
-            del ipc_model
             result.meta.cal_step.ipc = 'COMPLETE'
+
+            # Cleanup
+            del ipc_model
 
         gc.collect()
         return result
