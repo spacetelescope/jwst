@@ -335,6 +335,13 @@ directory = "set_telescope_pointing"
 name = '``set_telescope_pointing``'
 showcontent = true
 
+# pipeline
+
+[[tool.towncrier.type]]
+directory = "pipeline"
+name = 'Pipeline'
+showcontent = true
+
 # steps
 
 [[tool.towncrier.type]]
@@ -363,6 +370,11 @@ name = 'background (``image2``, ``spec2``)'
 showcontent = true
 
 [[tool.towncrier.type]]
+directory = "badpix_selfcal"
+name = 'badpix_selfcal (``spec2``)'
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "barshadow"
 name = 'barshadow (``spec2`` MOS)'
 showcontent = true
@@ -370,6 +382,11 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "charge_migration"
 name = "charge_migration (``detector1`` NIR)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "clean_flicker_noise"
+name = "clean_flicker_noise (``detector1``)"
 showcontent = true
 
 [[tool.towncrier.type]]
