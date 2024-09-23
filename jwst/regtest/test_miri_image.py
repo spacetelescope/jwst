@@ -2,6 +2,8 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
+import tracemalloc
+import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -111,6 +113,39 @@ def run_image3(run_image2, rtdata_module):
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+def test_detector1_mem_usage(rtdata_module):
+    """Determine the memory usage for Detector 1"""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input]
+
+    # starting the monitoring
+    tracemalloc.start()
+
+    # run Detector1
+    Step.from_cmdline(args)
+
+    # displaying the memory
+    current_mem, peak_mem = tracemalloc.get_traced_memory()
+    # convert bytes to GB
+    peak_mem *= 1e-9
+    peak_mem = np.round(peak_mem, decimals=1)
+
+    # stopping the monitoring
+    tracemalloc.stop()
+
+    # set comparison values in GB
+    mem_threshold = 16.0  # average user's available memory
+    mem_benchmark = 11.0   # benchmark run with build 1.15.1 + 1 additional GB
+
+    # test that max memory is less than threshold
+    assert peak_mem < mem_threshold, "Max memory used is greater than 16 GB!"
+
+    # test that max memory is less or equal to benchmark
+    assert peak_mem <= mem_benchmark, "Max memory used is greater than 11 GB"
 
 
 @pytest.mark.bigdata

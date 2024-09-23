@@ -137,12 +137,14 @@ class JumpStep(Step):
                                       )
 
 
-            del gain_model
-            del readnoise_model
             tstop = time.time()
             self.log.info('The execution time in seconds: %f', tstop - tstart)
 
             result.meta.cal_step.jump = 'COMPLETE'
+
+            # Cleanup
+            del gain_model
+            del readnoise_model
 
         gc.collect()
         return result

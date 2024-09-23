@@ -101,5 +101,5 @@ class RefPixStep(Step):
                 elif status == reference_pixels.SUBARRAY_SKIPPED:
                     result.meta.cal_step.refpix = 'SKIPPED'
 
-            gc.collect()
-            return result
+                gc.collect()
+                return result

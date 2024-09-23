@@ -33,6 +33,7 @@ class JwstStep(Step):
         return model
 
 
+
     def load_as_level2_asn(self, obj):
         """Load object as an association
 

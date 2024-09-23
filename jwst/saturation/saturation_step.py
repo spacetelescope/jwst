@@ -47,6 +47,9 @@ class SaturationStep(Step):
             # Open the reference file data model
             ref_model = datamodels.SaturationModel(self.ref_name)
 
+            # Work on a copy
+            result = input_model.copy()
+
             # Do the saturation check
             if pipe_utils.is_irs2(result):
                 sat = saturation.irs2_flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)

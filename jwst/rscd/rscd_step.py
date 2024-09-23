@@ -58,7 +58,7 @@ class RscdStep(Step):
                 # Do the rscd correction
                 result = rscd_sub.do_correction(result, rscd_model, self.type)
 
-                # Close the reference file
+                # Cleanup
                 del rscd_model
 
             else:

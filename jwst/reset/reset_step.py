@@ -48,10 +48,10 @@ class ResetStep(Step):
 
                 # Do the reset correction subtraction
                 result = reset_sub.do_correction(result, reset_model)
-
-                # Close the reference file and update the step status
-                reset_model.close()
                 result.meta.cal_step.reset = 'COMPLETE'
+                
+                # Cleanup
+                del reset_model
 
             else:
                 self.log.warning('Reset Correction is only for MIRI data')

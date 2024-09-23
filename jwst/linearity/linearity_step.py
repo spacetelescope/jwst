@@ -46,9 +46,10 @@ class LinearityStep(Step):
             # Do the linearity correction
             result = linearity.do_correction(result, lin_model)
 
-            # Close the reference file and update the step status
-            del lin_model
             result.meta.cal_step.linearity = 'COMPLETE'
+
+            # Cleanup
+            del lin_model
 
         gc.collect()
         return result

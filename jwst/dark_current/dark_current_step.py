@@ -73,11 +73,13 @@ class DarkCurrentStep(Step):
 
             if dark_data is not None and dark_data.save:
                 save_dark_data_as_dark_model(dark_data, dark_model, instrument)
+
+            out_ramp = dark_output_data_2_ramp_model(out_data, result)
+
+            # Cleanup
             del dark_model
-
-        out_ramp = dark_output_data_2_ramp_model(out_data, result)
-
-        del result
+            del result
+        
         gc.collect()
         return out_ramp
 

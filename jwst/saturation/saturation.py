@@ -52,11 +52,12 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
         the GROUPDQ array
     """
 
+    ngroups = output_model.meta.exposure.ngroups
+    nframes = output_model.meta.exposure.nframes
+
     gdq = output_model.groupdq
     pdq = output_model.pixeldq
     data = output_model.data
-    nframes = output_model.meta.exposure.nframes
-    ngroups = output_model.meta.exposure.ngroups
 
     zframe = output_model.zeroframe if output_model.meta.exposure.zero_frame else None
 

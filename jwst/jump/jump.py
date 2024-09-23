@@ -36,10 +36,6 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
 
     # extract data and info from input_model to pass to detect_jumps
     frames_per_group = output_model.meta.exposure.nframes
-    data = output_model.data
-    gdq = output_model.groupdq
-    pdq = output_model.pixeldq
-    err = output_model.err
 
     # determine the number of groups that correspond to the after_jump times
     # needed because the group time is not passed to detect_jumps
@@ -62,7 +58,8 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
         readnoise_2d = reffile_utils.get_subarray_data(output_model,
                                                        readnoise_model)
     new_gdq, new_pdq, number_crs, number_extended_events, stddev\
-        = detect_jumps(frames_per_group, data, gdq, pdq, err,
+        = detect_jumps(frames_per_group, output_model.data, output_model.groupdq,
+                                    output_model.pixeldq, output_model.err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
                                     four_grp_thresh, max_cores,
@@ -99,14 +96,15 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
     # determine the number of groups with all pixels set to DO_NOT_USE
     dnu_flag = 1
     num_flagged_grps = 0
-    for integ in range(data.shape[0]):
-        for grp in range(data.shape[1]):
-            if np.all(np.bitwise_and(gdq[integ, grp, :, :], dnu_flag)):
+    datashape = np.shape(output_model.data)
+    for integ in range(datashape[0]):
+        for grp in range(datashape[1]):
+            if np.all(np.bitwise_and(output_model.groupdq[integ, grp, :, :], dnu_flag)):
                 num_flagged_grps += 1
-    total_groups = data.shape[0] * data.shape[1] - num_flagged_grps - data.shape[0]
+    total_groups = datashape[0] * datashape[1] - num_flagged_grps - datashape[0]
     if total_groups >= 1:
         total_time = output_model.meta.exposure.group_time * total_groups
-        total_pixels = data.shape[2] * data.shape[3]
+        total_pixels = datashape[2] * datashape[3]
         output_model.meta.exposure.primary_cosmic_rays = 1000 * number_crs / (total_time * total_pixels)
         output_model.meta.exposure.extended_emission_events = 1e6 * number_extended_events /\
                                                               (total_time * total_pixels)

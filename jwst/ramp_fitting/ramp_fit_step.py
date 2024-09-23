@@ -533,6 +533,7 @@ class RampFitStep(Step):
             if ((result.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or
                     (result.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
                      result.meta.instrument.lamp_mode == 'IFU')):
+
                 out_model = datamodels.IFUImageModel(out_model)
 
             int_model = create_integration_model(result, integ_info, int_times)
