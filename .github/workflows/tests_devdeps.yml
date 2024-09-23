@@ -3,13 +3,13 @@ name: test with development versions
 on:
   push:
     branches:
-      - master
+      - main
       - '*x'
     tags:
       - '*'
   pull_request:
     branches:
-      - master
+      - main
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
