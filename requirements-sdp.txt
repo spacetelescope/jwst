@@ -74,7 +74,7 @@ referencing==0.35.1
 requests==2.32.3
 requests-mock==1.12.1
 rpds-py==0.20.0
-ruff==0.6.6
+ruff==0.6.7
 scikit-image==0.24.0
 scipy==1.14.1
 semantic-version==2.10.0
