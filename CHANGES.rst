@@ -185,19 +185,6 @@ lastframe
 
 - Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
-lib
----
-
-- Created two functions to workaround the memory increase due to
-  datamodel.open. The new functions in the basic_ultis script are
-  ``use_datamodels`` and ``copy_datamodel``. The first function
-  determines if it is necessary to open a datamodel and returns
-  it or simply returns the datamodel given as input. The second
-  function makes a copy of the datamodel depending on whether
-  the step is being run as part of a pipeline or not. Both
-  functions are now called in all steps of the Detector1
-  pipeline. [#8588]
-
 linearity
 ---------
 
