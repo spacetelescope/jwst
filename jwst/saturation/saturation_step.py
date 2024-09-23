@@ -28,35 +28,36 @@ class SaturationStep(Step):
     def process(self, input_model):
 
         # Open the input data model
-        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
-        # Get the name of the saturation reference file
-        self.ref_name = self.get_reference_file(result, 'saturation')
-        self.log.info('Using SATURATION reference file %s', self.ref_name)
+            # Get the name of the saturation reference file
+            self.ref_name = self.get_reference_file(result, 'saturation')
+            self.log.info('Using SATURATION reference file %s', self.ref_name)
 
-        # Check for a valid reference file
-        if self.ref_name == 'N/A':
-            self.log.warning('No SATURATION reference file found')
-            self.log.warning('Saturation step will be skipped')
-            result.meta.cal_step.saturation = 'SKIPPED'
-            gc.collect()
-            return result
+            # Check for a valid reference file
+            if self.ref_name == 'N/A':
+                self.log.warning('No SATURATION reference file found')
+                self.log.warning('Saturation step will be skipped')
+                result.meta.cal_step.saturation = 'SKIPPED'
+                gc.collect()
+                return result
 
-        # Open the reference file data model
-        ref_model = datamodels.SaturationModel(self.ref_name)
-        
-        # Do the saturation check
-        if pipe_utils.is_irs2(result):
-            sat = saturation.irs2_flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
-        else:
-            sat = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
+            # Open the reference file data model
+            ref_model = datamodels.SaturationModel(self.ref_name)
 
-        # Close the reference file and update the step status
-        del ref_model
-        sat.meta.cal_step.saturation = 'COMPLETE'
+            # Do the saturation check
+            if pipe_utils.is_irs2(result):
+                sat = saturation.irs2_flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
+            else:
+                sat = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
 
-        del result
+            sat.meta.cal_step.saturation = 'COMPLETE'
+
+            # Cleanup
+            del ref_model
+            del result
+
         gc.collect()
         return sat

@@ -22,19 +22,19 @@ class LastFrameStep(Step):
     def process(self, input_model):
 
         # Open the input data model
-        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
-        # check the data is MIRI data
-        detector = result.meta.instrument.detector
-        if detector[:3] == 'MIR':
-            # Do the lastframe correction subtraction
-            result = lastframe_sub.do_correction(result)
-        else:
-            self.log.warning('Last Frame Correction is only for MIRI data')
-            self.log.warning('Last frame step will be skipped')
-            result.meta.cal_step.lastframe = 'SKIPPED'
+            # check the data is MIRI data
+            detector = result.meta.instrument.detector
+            if detector[:3] == 'MIR':
+                # Do the lastframe correction subtraction
+                result = lastframe_sub.do_correction(result)
+            else:
+                self.log.warning('Last Frame Correction is only for MIRI data')
+                self.log.warning('Last frame step will be skipped')
+                result.meta.cal_step.lastframe = 'SKIPPED'
 
         gc.collect()
         return result

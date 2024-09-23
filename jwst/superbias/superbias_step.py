@@ -24,9 +24,9 @@ class SuperBiasStep(Step):
     def process(self, input_model):
 
         # Open the input data model
-        input_model = use_datamodel(input_model)
+        with use_datamodel(input_model) as input_model:
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
         # Get the name of the superbias reference file to use
         self.bias_name = self.get_reference_file(result, 'superbias')

@@ -27,7 +27,7 @@ class DQInitStep(Step):
     """
     reference_file_types = ['mask']
 
-    def process(self, input):
+    def process(self, step_input):
         """Perform the dq_init calibration step
 
         Parameters
@@ -43,19 +43,19 @@ class DQInitStep(Step):
 
         # Try to open the input as a regular RampModel
         try:
-            input_model = use_datamodel(input, model_class=datamodels.RampModel)
+            input_model = use_datamodel(step_input, model_class=datamodels.RampModel)
             # Check to see if it's Guider raw data
             if input_model.meta.exposure.type in dq_initialization.guider_list:
                 # Reopen as a GuiderRawModel
                 input_model.close()
-                input_model = datamodels.GuiderRawModel(input)
+                input_model = datamodels.GuiderRawModel(step_input)
                 self.log.info("Input opened as GuiderRawModel")
 
         except (TypeError, ValueError):
             # If the initial open attempt fails,
             # try to open as a GuiderRawModel
             try:
-                input_model = datamodels.GuiderRawModel(input)
+                input_model = datamodels.GuiderRawModel(step_input)
                 self.log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
                 self.log.error("Unexpected or unknown input model type")
@@ -64,7 +64,6 @@ class DQInitStep(Step):
             raise
 
         result, input_model = copy_datamodel(input_model, self.parent)
-        del input
 
         # Retrieve the mask reference file name
         self.mask_filename = self.get_reference_file(result, 'mask')
@@ -83,7 +82,8 @@ class DQInitStep(Step):
         # Apply the step
         result = dq_initialization.correct_model(result, mask_model)
 
-        # Close the data models for the input and ref file
+        # Cleanup
+        del step_input
         del mask_model
         gc.collect()
 

@@ -15,6 +15,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from ..stpipe import Step
 
 from ..lib import reffile_utils
+from jwst.lib.basic_utils import use_datamodel, copy_datamodel
 
 import logging
 import warnings
@@ -404,19 +405,18 @@ class RampFitStep(Step):
 
     reference_file_types = ['readnoise', 'gain']
 
-    def process(self, step_input):
+    def process(self, input_model):
 
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-            # Cork on a copy
-            result = input_model.copy()
+            result, input_model = copy_datamodel(input_model, self.parent)
 
             max_cores = self.maximum_cores
             readnoise_filename = self.get_reference_file(result, 'readnoise')
             gain_filename = self.get_reference_file(result, 'gain')
 
-            ngroups = input_model.data.shape[1]
+            ngroups = result.data.shape[1]
             if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
                 log.info(f"When selecting the LIKELY ramp fitting algorithm the"
                          f" ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"

@@ -24,39 +24,39 @@ class ResetStep(Step):
     def process(self, input_model):
 
         # Open the input data model
-        input_model = use_datamodel(input_model)
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
-        # check the data is MIRI data
-        detector = result.meta.instrument.detector
-        if detector.startswith('MIR'):
+            # check the data is MIRI data
+            detector = result.meta.instrument.detector
+            if detector.startswith('MIR'):
 
-            # Get the name of the reset reference file to use
-            self.reset_name = self.get_reference_file(result, 'reset')
-            self.log.info('Using RESET reference file %s', self.reset_name)
+                # Get the name of the reset reference file to use
+                self.reset_name = self.get_reference_file(result, 'reset')
+                self.log.info('Using RESET reference file %s', self.reset_name)
 
-            # Check for a valid reference file
-            if self.reset_name == 'N/A':
-                self.log.warning('No RESET reference file found')
+                # Check for a valid reference file
+                if self.reset_name == 'N/A':
+                    self.log.warning('No RESET reference file found')
+                    self.log.warning('Reset step will be skipped')
+                    result.meta.cal_step.reset = 'SKIPPED'
+                    return result
+
+                # Open the reset ref file data model
+                reset_model = datamodels.ResetModel(self.reset_name)
+
+                # Do the reset correction subtraction
+                result = reset_sub.do_correction(result, reset_model)
+
+                # Close the reference file and update the step status
+                reset_model.close()
+                result.meta.cal_step.reset = 'COMPLETE'
+
+            else:
+                self.log.warning('Reset Correction is only for MIRI data')
                 self.log.warning('Reset step will be skipped')
                 result.meta.cal_step.reset = 'SKIPPED'
-                return result
-
-            # Open the reset ref file data model
-            reset_model = datamodels.ResetModel(self.reset_name)
-
-            # Do the reset correction subtraction
-            result = reset_sub.do_correction(result, reset_model)
-
-            # Close the reference file and update the step status
-            reset_model.close()
-            result.meta.cal_step.reset = 'COMPLETE'
-
-        else:
-            self.log.warning('Reset Correction is only for MIRI data')
-            self.log.warning('Reset step will be skipped')
-            result.meta.cal_step.reset = 'SKIPPED'
 
         gc.collect()
         return result
