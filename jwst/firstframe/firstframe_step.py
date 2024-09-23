@@ -2,7 +2,6 @@ import gc
 from ..stpipe import Step
 from . import firstframe_sub
 from jwst.lib.basic_utils import use_datamodel, copy_datamodel
-from stdatamodels.jwst import datamodels
 
 
 __all__ = ["FirstFrameStep"]
