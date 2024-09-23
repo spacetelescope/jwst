@@ -1,17 +1,3 @@
-1.16.1 (unreleased)
-===================
-
-outlier_detection
------------------
-
-- Decrease the amount of file I/O required to compute the median when `in_memory`
-  is set to `False`. [#8782]
-
-resample
---------
-
-- Permit creating drizzled models one at a time in many-to-many mode. [#8782]
-
 1.16.0 (2024-09-20)
 ===================
 
