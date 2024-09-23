@@ -443,7 +443,6 @@ def test_fft_clean_error(monkeypatch, log_watcher):
     def raise_error(*args, **kwargs):
         raise np.linalg.LinAlgError('Linear algebra error')
 
-    clean_function = cfn.fft_clean_full_frame
     monkeypatch.setattr(cfn.NSClean, 'clean', raise_error)
 
     shape = (10, 10)
@@ -451,7 +450,7 @@ def test_fft_clean_error(monkeypatch, log_watcher):
     image = np.full(shape, 1.0)
 
     log_watcher.message = "Error cleaning image"
-    cleaned_image = clean_function(image.copy(), mask, 'NRS1')
+    cleaned_image = cfn.fft_clean_full_frame(image.copy(), mask, 'NRS1')
     assert cleaned_image is None
     log_watcher.assert_seen()
 
@@ -467,19 +466,24 @@ def test_fft_subarray_clean_error(monkeypatch, log_watcher):
     assert cleaned_image is None
     log_watcher.assert_seen()
 
-    # Mask is nearly all bad except a pixel at the edge:
-    # triggers a linear algebra error
-    mask[0, 0] = True
-    log_watcher.message = "Error cleaning image"
-    cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
-    assert cleaned_image is None
-    log_watcher.assert_seen()
-
     # Mask is mostly bad: warns but continues
     mask[5, 5] = True
     log_watcher.message = "Insufficient reference pixels"
     cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1', minfrac=0.5)
     assert np.allclose(cleaned_image, image)
+    log_watcher.assert_seen()
+
+    # Trigger a linear algebra error
+    # This may occur when the mask is not completely bad,
+    # but there is insufficient data in some region.
+    def raise_error(*args, **kwargs):
+        raise np.linalg.LinAlgError('Linear algebra error')
+
+    monkeypatch.setattr(cfn.NSCleanSubarray, 'clean', raise_error)
+
+    log_watcher.message = "Error cleaning image"
+    cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
+    assert cleaned_image is None
     log_watcher.assert_seen()
 
 
