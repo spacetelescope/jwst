@@ -1,9 +1,10 @@
 #! /usr/bin/env python
-
 import numpy as np
 
 from stcal.ramp_fitting import ramp_fit
 from stcal.ramp_fitting import utils
+
+from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
 
 from stcal.ramp_fitting.utils import LARGE_VARIANCE
 from stcal.ramp_fitting.utils import LARGE_VARIANCE_THRESHOLD
@@ -16,7 +17,6 @@ from ..stpipe import Step
 from ..lib import reffile_utils
 
 import logging
-import copy
 import warnings
 
 log = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
         gain_2d = reffile_utils.get_subarray_data(model, gain_model)
 
     if reffile_utils.ref_matches_sci(model, readnoise_model):
-        readnoise_2d = readnoise_model.data.copy()
+        readnoise_2d = readnoise_model.data
     else:
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
@@ -385,7 +385,7 @@ class RampFitStep(Step):
     class_alias = "ramp_fit"
 
     spec = """
-        algorithm = option('OLS', 'OLS_C', default='OLS_C') # 'OLS' and 'OLS_C' use the same underlying algorithm, but OLS_C is implemented in C
+        algorithm = option('OLS', 'OLS_C', 'LIKELY', default='OLS_C') # 'OLS' and 'OLS_C' use the same underlying algorithm, but OLS_C is implemented in C
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
@@ -407,15 +407,28 @@ class RampFitStep(Step):
 
     reference_file_types = ['readnoise', 'gain']
 
-    def process(self, input):
+    def process(self, step_input):
 
-        with datamodels.RampModel(input) as input_model:
+        # Open the input data model
+        with datamodels.RampModel(step_input) as input_model:
+              
+            # Cork on a copy
+            result = input_model.copy()
+
             max_cores = self.maximum_cores
-            readnoise_filename = self.get_reference_file(input_model, 'readnoise')
-            gain_filename = self.get_reference_file(input_model, 'gain')
+            readnoise_filename = self.get_reference_file(result, 'readnoise')
+            gain_filename = self.get_reference_file(result, 'gain')
 
-            log.info('Using READNOISE reference file: %s', readnoise_filename)
-            log.info('Using GAIN reference file: %s', gain_filename)
+            ngroups = input_model.data.shape[1]
+            if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
+                log.info(f"When selecting the LIKELY ramp fitting algorithm the"
+                         f" ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"
+                         f" but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
+                         f" is being changed to OLS_C")
+                self.algorithm = "OLS_C"
+
+            log.info(f"Using READNOISE reference file: {readnoise_filename}")
+            log.info(f"Using GAIN reference file: {gain_filename}")
 
             with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model, \
                     datamodels.GainModel(gain_filename) as gain_model:
@@ -425,30 +438,31 @@ class RampFitStep(Step):
                 # available later in the gain_scale step, which avoids having to
                 # load the gain ref file again in that step.
                 if gain_model.meta.exposure.gain_factor is not None:
-                    input_model.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
+                    result.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
 
                 # Get gain arrays, subarrays if desired.
-                frames_per_group = input_model.meta.exposure.nframes
+                frames_per_group = result.meta.exposure.nframes
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
-                    input_model, readnoise_model, gain_model, frames_per_group)
+                    result, readnoise_model, gain_model, frames_per_group)
 
-            log.info('Using algorithm = %s' % self.algorithm)
-            log.info('Using weighting = %s' % self.weighting)
+            log.info(f"Using algorithm = {self.algorithm}")
+            log.info(f"Using weighting = {self.weighting}")
 
             buffsize = ramp_fit.BUFSIZE
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-            int_times = input_model.int_times
+            int_times = result.int_times
 
             # Before the ramp_fit() call, copy the input model ("_W" for weighting)
             # for later reconstruction of the fitting array tuples.
-            input_model_W = copy.copy(input_model)
+            input_model_W = result.copy()
+
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
-                input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
+                result, buffsize, self.save_opt, readnoise_2d, gain_2d,
                 self.algorithm, self.weighting, max_cores, dqflags.pixel,
                 suppress_one_group=self.suppress_one_group)
 
@@ -468,7 +482,7 @@ class RampFitStep(Step):
                     gdq[where_sat] = np.bitwise_or(gdq[where_sat], dqflags.group['DO_NOT_USE'])
 
                     # Get group_time for readnoise variance calculation
-                    group_time = input_model.meta.exposure.group_time
+                    group_time = result.meta.exposure.group_time
 
                     # Using the modified GROUPDQ array, create new readnoise variance arrays
                     image_var_RN, integ_var_RN, opt_var_RN = \
@@ -501,7 +515,7 @@ class RampFitStep(Step):
 
         # Save the OLS optional fit product, if it exists.
         if opt_info is not None:
-            opt_model = create_optional_results_model(input_model, opt_info)
+            opt_model = create_optional_results_model(result, opt_info)
             self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
         '''
         # GLS removed from code, since it's not implemented right now.
@@ -515,19 +529,22 @@ class RampFitStep(Step):
         out_model, int_model = None, None
         # Create models from possibly updated info
         if image_info is not None and integ_info is not None:
-            out_model = create_image_model(input_model, image_info)
+            out_model = create_image_model(result, image_info)
             out_model.meta.bunit_data = 'DN/s'
             out_model.meta.bunit_err = 'DN/s'
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
-            if ((input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or
-                    (input_model.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
-                     input_model.meta.instrument.lamp_mode == 'IFU')):
+            if ((result.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or
+                    (result.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
+                     result.meta.instrument.lamp_mode == 'IFU')):
 
                 out_model = datamodels.IFUImageModel(out_model)
 
-            int_model = create_integration_model(input_model, integ_info, int_times)
+            int_model = create_integration_model(result, integ_info, int_times)
             int_model.meta.bunit_data = 'DN/s'
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
+
+        # Cleanup
+        del result
 
         return out_model, int_model

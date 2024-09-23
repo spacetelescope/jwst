@@ -38,6 +38,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
     # Run detector1 pipeline only on one of the _uncal files.
     # Run optional clean_flicker_noise step, saving extra outputs
     args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01538046001_03105_00001_nrcalong_cfn",
             "--save_calibrated_ramp=True",
             "--steps.clean_flicker_noise.skip=False",
             "--steps.clean_flicker_noise.save_results=True",
@@ -247,9 +248,9 @@ def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix",
-                         ["clean_flicker_noise", "mask",
+                         ["cfn_clean_flicker_noise", "mask",
                           "flicker_bkg", "flicker_noise",
-                          "ramp", "rate", "rateints"])
+                          "cfn_ramp", "cfn_rate", "cfn_rateints"])
 def test_nircam_image_detector1_with_clean_flicker_noise(
         run_detector1_with_clean_flicker_noise,
         rtdata_module, fitsdiff_default_kwargs, suffix):

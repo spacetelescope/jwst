@@ -65,7 +65,6 @@ def test_do_correction():
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     pars = {
         'save_intermediate_results': False,
-        'user_supplied_reffile': None,
         'nints_to_phase': None,
         'nbins': None,
         'scale_reference': True,
@@ -82,9 +81,8 @@ def test_apply_emicorr():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     emicorr_model, onthefly_corr_freq, save_onthefly_reffile = None, [218.3], None
-    outmdl = emicorr.apply_emicorr(input_model, emicorr_model,
-                onthefly_corr_freq, save_onthefly_reffile,
-                save_intermediate_results=False, user_supplied_reffile=None,
+    outmdl = emicorr.apply_emicorr(input_model, emicorr_model, onthefly_corr_freq,
+                save_onthefly_reffile, save_intermediate_results=False,
                 nints_to_phase=None, nbins_all=None, scale_reference=True)
 
     assert outmdl is not None
@@ -135,6 +133,6 @@ def test_rebin():
     data[9] = 2.0
     rebinned_data = emicorr.rebin(data, [7])
 
-    compare_arr = np.array([1., 0.55, 1. , 1., 1.55, 1., 1.])
+    compare_arr = np.array([1., 0.55, 1., 1., 1.55, 1., 1.])
 
     assert compare_arr.all() == rebinned_data.all()

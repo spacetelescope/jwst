@@ -91,6 +91,12 @@ The following arguments control the size and sampling characteristics of the out
 ``nspax_y``
   The odd integer number of spaxels to use in the y dimension of the tangent plane.
 
+``offset_file [string]``
+  The string contains the name of the file holding RA and Dec offsets to apply to each input file. This file
+  must be an asdf file with a specific format. For details on how to construct the offset file see
+  :ref:`offsets`. 
+
+
 ``coord_system [string]``
   The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up 
   and east is left. There are two other coordinate systems an IFU cube can be built on:
@@ -122,3 +128,42 @@ A parameter only used for investigating which detector pixels contributed to a c
 
   The string is the x,y,z value of the cube spaxel that is being investigated. The  numbering starts counting at 0.
   To print information to the screeen about the x = 10, y = 20, z = 35 spaxel the parameter string value is '10 20 35'.
+
+.. _offsets:
+
+Creating an offset file
+-----------------------
+
+The offset file is an ASDF formatted file :`<https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data.
+For each input file in the spec3 association used to build the IFU cubes, the offset file needs to have a
+corresponding right ascension and declination offset given in arc seconds.
+
+Below is an example of how to make an ASDF offset file. It is assumed the user has determined the
+offsets to apply to the data in each file. The offsets information is stored in three lists:
+`filename`, `raoffset` and `decoffset`.  The units of the Ra and Dec offsets 
+are required to be in the offset file and only the unit, `arcsec`, is allowed. The file names should
+not contain the directory path. The offset file can have any name, but it must have the `asdf` extension.
+
+An example of making an offset file for an association containing three files is:
+
+.. code-block:: python
+		
+   import asdf
+   import astropy.units as u
+   
+   filename = ['file1.fits', 'file2.fits', 'file3.fits']
+   raoffset = [0.0, -1.0, 1.0]
+   decoffset = [0.0, 1.0, -1.0]
+
+   tree = {
+    "units": str(u.arcsec),
+    "filename": filename,
+    "raoffset": raoffset,
+    "decoffset": decoffset
+    }
+    af = asdf.AsdfFile(tree)
+    af.write_to('offsets.asdf')
+    af.close()
+    
+
+

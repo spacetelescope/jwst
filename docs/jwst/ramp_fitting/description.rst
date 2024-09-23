@@ -54,6 +54,11 @@ JWST-specific features are described later within this document.
 Upon successful completion of this step, the status keyword S_RAMP will be set
 to "COMPLETE".
 
+There is a new algorithm available for testing in ramp fitting, which is the
+likelihood algorithm.  It is selected by setting ``--ramp_fitting.algorithm=LIKELY``.
+The details are in the ``stcal`` documentation at
+:ref:`Likelihood Algorithm Details <stcal:likelihood_algo>`.
+
 Multiprocessing
 ---------------
 This step has the option of running in multiprocessing mode. In that mode it will

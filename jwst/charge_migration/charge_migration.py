@@ -16,13 +16,13 @@ CHLO = dqflags.group["CHARGELOSS"]
 CHLO_DNU = CHLO + DNU
 
 
-def charge_migration(input_model, signal_threshold):
+def charge_migration(output_model, signal_threshold):
     """
     Correct for chargemigration
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
     signal_threshold : float
@@ -35,11 +35,8 @@ def charge_migration(input_model, signal_threshold):
 
         DO_NOT_USE flags to groups exceeding signal_threshold
     """
-    data = input_model.data
-    gdq = input_model.groupdq
-
-    # Create the output model as a copy of the input
-    output_model = input_model.copy()
+    data = output_model.data
+    gdq = output_model.groupdq
 
     log.info('Using signal_threshold: %.2f', signal_threshold)
 

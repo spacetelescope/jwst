@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def run_detect_jumps(input_model, gain_model, readnoise_model,
+def run_detect_jumps(output_model, gain_model, readnoise_model,
                      rejection_thresh, three_grp_thresh, four_grp_thresh,
                      max_cores, max_jump_to_flag_neighbors,
                      min_jump_to_flag_neighbors, flag_4_neighbors,
@@ -34,35 +34,31 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     # Runs `detect_jumps` in stcal
 
     # extract data and info from input_model to pass to detect_jumps
-    frames_per_group = input_model.meta.exposure.nframes
-    data = input_model.data
-    gdq = input_model.groupdq
-    pdq = input_model.pixeldq
-    err = input_model.err
-    output_model = input_model.copy()
+    frames_per_group = output_model.meta.exposure.nframes
 
     # determine the number of groups that correspond to the after_jump times
     # needed because the group time is not passed to detect_jumps
-    gtime = input_model.meta.exposure.group_time
+    gtime = output_model.meta.exposure.group_time
     after_jump_flag_n1 = int(after_jump_flag_time1 // gtime)
     after_jump_flag_n2 = int(after_jump_flag_time2 // gtime)
     grps_masked_after_shower = int(time_masked_after_shower // gtime)
     snowball_grps_masked_next_int = int(snowball_time_masked_next_int // gtime)
     # Get 2D gain and read noise values from their respective models
-    if reffile_utils.ref_matches_sci(input_model, gain_model):
+    if reffile_utils.ref_matches_sci(output_model, gain_model):
         gain_2d = gain_model.data
     else:
         log.info('Extracting gain subarray to match science data')
-        gain_2d = reffile_utils.get_subarray_data(input_model, gain_model)
+        gain_2d = reffile_utils.get_subarray_data(output_model, gain_model)
 
-    if reffile_utils.ref_matches_sci(input_model, readnoise_model):
+    if reffile_utils.ref_matches_sci(output_model, readnoise_model):
         readnoise_2d = readnoise_model.data
     else:
         log.info('Extracting readnoise subarray to match science data')
-        readnoise_2d = reffile_utils.get_subarray_data(input_model,
+        readnoise_2d = reffile_utils.get_subarray_data(output_model,
                                                        readnoise_model)
     new_gdq, new_pdq, number_crs, number_extended_events, stddev\
-        = detect_jumps(frames_per_group, data, gdq, pdq, err,
+        = detect_jumps(frames_per_group, output_model.data, output_model.groupdq,
+                                    output_model.pixeldq, output_model.err,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
                                     four_grp_thresh, max_cores,
@@ -99,14 +95,15 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
     # determine the number of groups with all pixels set to DO_NOT_USE
     dnu_flag = 1
     num_flagged_grps = 0
-    for integ in range(data.shape[0]):
-        for grp in range(data.shape[1]):
-            if np.all(np.bitwise_and(gdq[integ, grp, :, :], dnu_flag)):
+    datashape = np.shape(output_model.data)
+    for integ in range(datashape[0]):
+        for grp in range(datashape[1]):
+            if np.all(np.bitwise_and(output_model.groupdq[integ, grp, :, :], dnu_flag)):
                 num_flagged_grps += 1
-    total_groups = data.shape[0] * data.shape[1] - num_flagged_grps - data.shape[0]
+    total_groups = datashape[0] * datashape[1] - num_flagged_grps - datashape[0]
     if total_groups >= 1:
         total_time = output_model.meta.exposure.group_time * total_groups
-        total_pixels = data.shape[2] * data.shape[3]
+        total_pixels = datashape[2] * datashape[3]
         output_model.meta.exposure.primary_cosmic_rays = 1000 * number_crs / (total_time * total_pixels)
         output_model.meta.exposure.extended_emission_events = 1e6 * number_extended_events /\
                                                               (total_time * total_pixels)

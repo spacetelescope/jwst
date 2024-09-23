@@ -2,6 +2,8 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
+import tracemalloc
+import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -56,6 +58,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
     # Run optional clean_flicker_noise step,
     # saving extra outputs and masking to science regions
     args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01024002001_02101_00001_mirimage_cfn",
             "--save_calibrated_ramp=True",
             "--steps.clean_flicker_noise.skip=False",
             "--steps.clean_flicker_noise.mask_science_regions=True",
@@ -113,6 +116,39 @@ def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwa
 
 
 @pytest.mark.bigdata
+def test_detector1_mem_usage(rtdata_module):
+    """Determine the memory usage for Detector 1"""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input]
+
+    # starting the monitoring
+    tracemalloc.start()
+
+    # run Detector1
+    Step.from_cmdline(args)
+
+    # displaying the memory
+    current_mem, peak_mem = tracemalloc.get_traced_memory()
+    # convert bytes to GB
+    peak_mem *= 1e-9
+    peak_mem = np.round(peak_mem, decimals=1)
+
+    # stopping the monitoring
+    tracemalloc.stop()
+
+    # set comparison values in GB
+    mem_threshold = 16.0  # average user's available memory
+    mem_benchmark = 11.0   # benchmark run with build 1.15.1 + 1 additional GB
+
+    # test that max memory is less than threshold
+    assert peak_mem < mem_threshold, "Max memory used is greater than 16 GB!"
+
+    # test that max memory is less or equal to benchmark
+    assert peak_mem <= mem_benchmark, "Max memory used is greater than 11 GB"
+
+
+@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dark_current", "ramp", "rate",
                                     "rateints"])
 def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_dark_current,
@@ -136,9 +172,9 @@ def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_d
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix",
-                         ["clean_flicker_noise", "mask",
+                         ["cfn_clean_flicker_noise", "mask",
                           "flicker_bkg", "flicker_noise",
-                          "ramp", "rate", "rateints"])
+                          "cfn_ramp", "cfn_rate", "cfn_rateints"])
 def test_miri_image_detector1_with_clean_flicker_noise(
         run_detector1_with_clean_flicker_noise,
         rtdata_module, fitsdiff_default_kwargs, suffix):

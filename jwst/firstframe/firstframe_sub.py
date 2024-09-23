@@ -1,7 +1,6 @@
 #
 #  Module for the firstframe correction for MIRI science data sets
 #
-
 import numpy as np
 import logging
 
@@ -11,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model):
+def do_correction(output):
     """
     Short Summary
     -------------
@@ -21,7 +20,7 @@ def do_correction(input_model):
 
     Parameters
     ----------
-    input_model: data model object
+    output: data model object
         science data to be corrected
 
     Returns
@@ -32,12 +31,9 @@ def do_correction(input_model):
     """
 
     # Save some data params for easy use later
-    sci_ngroups = input_model.data.shape[1]
+    sci_ngroups = output.data.shape[1]
 
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
-
-    # Update the step status, and if ngroups > 3, set all of the GROUPDQ in
+    # Update the step status, and if ngroups > 3, set all GROUPDQ in
     # the first group to 'DO_NOT_USE'
     if sci_ngroups > 3:
         output.groupdq[:, 0, :, :] = \
