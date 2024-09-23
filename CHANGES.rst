@@ -430,7 +430,6 @@ tweakreg
 - Step now uses `ModelLibrary` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
 
-
 1.15.1 (2024-07-08)
 ===================
 
