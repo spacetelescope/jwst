@@ -35,7 +35,7 @@ cycler==0.12.1
 drizzle==1.15.3
 et-xmlfile==1.1.0
 filelock==3.16.1
-fonttools==4.53.1
+fonttools==4.54.0
 future==1.0.0
 gwcs==0.21.0
 idna==3.10
