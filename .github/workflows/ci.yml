@@ -77,3 +77,5 @@ jobs:
           coverage: codecov
           pytest-results-summary: true
         - linux: py312-xdist
+        - linux: py312-xdist-profile
+          artifact-path: .profiles/*
