@@ -30,6 +30,7 @@ This PR addresses ...
     - ``changes/<PR#>.scripts.rst``
     - ``changes/<PR#>.fits_generator.rst``
     - ``changes/<PR#>.set_telescope_pointing.rst``
+    - ``changes/<PR#>.pipeline.rst``
 
     ## stage 1
     - ``changes/<PR#>.group_scale.rst``
@@ -48,11 +49,13 @@ This PR addresses ...
     - ``changes/<PR#>.dark_current.rst``
     - ``changes/<PR#>.charge_migration.rst``
     - ``changes/<PR#>.jump.rst``
+    - ``changes/<PR#>.clean_flicker_noise.rst``
     - ``changes/<PR#>.ramp_fitting.rst``
     - ``changes/<PR#>.gain_scale.rst``
 
     ## stage 2
     - ``changes/<PR#>.assign_wcs.rst``
+    - ``changes/<PR#>.badpix_selfcal.rst``
     - ``changes/<PR#>.msaflagopen.rst``
     - ``changes/<PR#>.nsclean.rst``
     - ``changes/<PR#>.imprint.rst``
