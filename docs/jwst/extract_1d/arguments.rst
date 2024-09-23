@@ -169,11 +169,6 @@ The ``extract_1d`` step has the following step-specific arguments.
   used when soss_wave_grid is not provided to make sure the computation time or the memory
   used stays reasonable. Default value is 20000.
 
-``--soss_transform``
-  This is a NIRISS-SOSS algorithm-specific parameter; this defines a rotation to
-  apply to the reference files to match the observation. It should be specified as
-  a list of three floats, with default values of None.
-
 ``--soss_tikfac``
   This is a NIRISS-SOSS algorithm-specific parameter; this is the regularization
   factor used in the SOSS extraction. If not specified, ATOCA will calculate a
