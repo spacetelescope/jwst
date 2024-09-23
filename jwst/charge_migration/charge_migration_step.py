@@ -29,21 +29,21 @@ class ChargeMigrationStep(Step):
     def process(self, input_model):
 
         # Open the input data model
-        input_model = use_datamodel(input_model, model_class=datamodels.RampModel)
+        with use_datamodel(input_model, model_class=datamodels.RampModel) as input_model:
 
-        result, input_model = copy_datamodel(input_model, self.parent)
+            result, input_model = copy_datamodel(input_model, self.parent)
 
-        if (result.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
-            log.info('Too few groups per integration; skipping charge_migration')
+            if (result.data.shape[1] < 3):  # skip step if only 1 or 2 groups/integration
+                log.info('Too few groups per integration; skipping charge_migration')
 
-            result.meta.cal_step.charge_migration = 'SKIPPED'
-            return result
+                result.meta.cal_step.charge_migration = 'SKIPPED'
+                return result
 
-        # Retrieve the parameter value(s)
-        signal_threshold = self.signal_threshold
+            # Retrieve the parameter value(s)
+            signal_threshold = self.signal_threshold
 
-        result = charge_migration.charge_migration(result, signal_threshold)
-        result.meta.cal_step.charge_migration = 'COMPLETE'
+            result = charge_migration.charge_migration(result, signal_threshold)
+            result.meta.cal_step.charge_migration = 'COMPLETE'
 
         gc.collect()
         return result
