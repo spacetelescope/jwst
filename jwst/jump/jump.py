@@ -85,10 +85,13 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
                                     minimum_groups=minimum_groups,
                                     minimum_sigclip_groups=minimum_sigclip_groups,
                                     only_use_ints=only_use_ints,
-                                    mask_persist_grps_next_int = mask_snowball_persist_next_int,
-                                    persist_grps_flagged = snowball_grps_masked_next_int
+                                    mask_persist_grps_next_int=mask_snowball_persist_next_int,
+                                    persist_grps_flagged=snowball_grps_masked_next_int
                                     )
 
+    # Cleanup
+    del readnoise_model
+    del readnoise_2d
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = new_gdq

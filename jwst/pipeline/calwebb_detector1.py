@@ -73,40 +73,43 @@ class Detector1Pipeline(Pipeline):
 
     def run_step(self, step, model):
         new_model = step(model)
+        del model
         gc.collect()
         return new_model
 
     # start the actual processing
-    def process(self, input):
+    def process(self, initial_input):
 
         log.info('Starting calwebb_detector1 ...')
 
-        # open the input as a RampModel
-        input = datamodels.RampModel(input)
+        # open the input as a RampModel, make a copy and keep delete the initial variable
+        result = datamodels.RampModel(initial_input)
+        del initial_input
+        gc.collect()
 
         # propagate output_dir to steps that might need it
         self.dark_current.output_dir = self.output_dir
         self.ramp_fit.output_dir = self.output_dir
 
-        instrument = input.meta.instrument.name
+        instrument = result.meta.instrument.name
         if instrument == 'MIRI':
 
             # process MIRI exposures;
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            input = self.run_step(self.group_scale, input)
-            input = self.run_step(self.dq_init, input)
-            input = self.run_step(self.emicorr, input)
-            input = self.run_step(self.saturation, input)
-            input = self.run_step(self.ipc, input)
-            input = self.run_step(self.firstframe, input)
-            input = self.run_step(self.lastframe, input)
-            input = self.run_step(self.reset, input)
-            input = self.run_step(self.linearity, input)
-            input = self.run_step(self.rscd, input)
-            input = self.run_step(self.dark_current, input)
-            input = self.run_step(self.refpix, input)
+            result = self.run_step(self.group_scale, result)
+            result = self.run_step(self.dq_init, result)
+            result = self.run_step(self.emicorr, result)
+            result = self.run_step(self.saturation, result)
+            result = self.run_step(self.ipc, result)
+            result = self.run_step(self.firstframe, result)
+            result = self.run_step(self.lastframe, result)
+            result = self.run_step(self.reset, result)
+            result = self.run_step(self.linearity, result)
+            result = self.run_step(self.rscd, result)
+            result = self.run_step(self.dark_current, result)
+            result = self.run_step(self.refpix, result)
 
             # skip until MIRI team has figured out an algorithm
             # input = self.persistence(input)
@@ -116,32 +119,32 @@ class Detector1Pipeline(Pipeline):
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
-            input = self.run_step(self.group_scale, input)
-            input = self.run_step(self.dq_init, input)
-            input = self.run_step(self.saturation, input)
-            input = self.run_step(self.ipc, input)
-            input = self.run_step(self.superbias, input)
-            input = self.run_step(self.refpix, input)
-            input = self.run_step(self.linearity, input)
+            result = self.run_step(self.group_scale, result)
+            result = self.run_step(self.dq_init, result)
+            result = self.run_step(self.saturation, result)
+            result = self.run_step(self.ipc, result)
+            result = self.run_step(self.superbias, result)
+            result = self.run_step(self.refpix, result)
+            result = self.run_step(self.linearity, result)
 
             # skip persistence for NIRSpec
             if instrument != 'NIRSPEC':
-                input = self.run_step(self.persistence, input)
+                result = self.run_step(self.persistence, result)
 
-            input = self.run_step(self.dark_current, input)
+            result = self.run_step(self.dark_current, result)
 
         # apply the charge_migration step
-        input = self.run_step(self.charge_migration, input)
+        result = self.run_step(self.charge_migration, result)
 
         # apply the jump step
-        input = self.run_step(self.jump, input)
+        result = self.run_step(self.jump, result)
 
         # apply the clean_flicker_noise step
-        input = self.run_step(self.clean_flicker_noise, input)
+        result = self.run_step(self.clean_flicker_noise, result)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
-            self.save_model(input, 'ramp')
+            self.save_model(result, 'ramp')
 
         # apply the ramp_fit step
         # This explicit test on self.ramp_fit.skip is a temporary workaround
@@ -149,15 +152,16 @@ class Detector1Pipeline(Pipeline):
         # objects, but when the step is skipped due to `skip = True`,
         # only the input is returned when the step is invoked.
         if self.ramp_fit.skip:
-            input = self.ramp_fit(input)
+            result = self.run_step(self.ramp_fit, result)
             ints_model = None
         else:
-            input, ints_model = self.ramp_fit(input)
+            result_tuple = self.run_step(self.ramp_fit, result)
+            result, ints_model = result_tuple
 
         # apply the gain_scale step to the exposure-level product
-        if input is not None:
+        if result is not None:
             self.gain_scale.suffix = 'gain_scale'
-            input = self.gain_scale(input)
+            result = self.run_step(self.gain_scale, result)
         else:
             log.info("NoneType returned from ramp_fit.  Gain Scale step skipped.")
 
@@ -169,11 +173,11 @@ class Detector1Pipeline(Pipeline):
             self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving
-        self.setup_output(input)
+        self.setup_output(result)
 
         log.info('... ending calwebb_detector1')
 
-        return input
+        return result
 
     def setup_output(self, input):
         if input is None:
