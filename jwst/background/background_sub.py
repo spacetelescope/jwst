@@ -91,10 +91,18 @@ class ImageSubsetArray:
         if jmax < jmin:
             jmax = jmin
 
+        # To ensure that we mix and match subarray obs, take
+        # the x/y shape from self.data. To ensure we can work
+        # with mismatched NINTS, if we have that third dimension
+        # use the value from other
+        data_shape = copy.deepcopy(self.data.shape)
+        if self.im_dim == 3:
+            data_shape[0] = other.data.shape[0]
+
         # Set up arrays, NaN out data/err for sigma clipping, keep DQ as 0 for bitwise_or
-        data_overlap = np.ones_like(other.data) * np.nan
-        err_overlap = np.ones_like(other.data) * np.nan
-        dq_overlap = np.zeros_like(other.data, dtype=np.uint32)
+        data_overlap = np.ones(data_shape) * np.nan
+        err_overlap = np.ones(data_shape) * np.nan
+        dq_overlap = np.zeros(data_shape, dtype=np.uint32)
 
         if self.im_dim == 2:
             idx = (slice(jmin - other.jmin, jmax - other.jmin),
