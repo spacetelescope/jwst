@@ -139,6 +139,9 @@ def drizzle_and_median(input_models,
             if save_intermediate_results:
                 # write the drizzled model to file
                 output_name = drizzled_model.meta.filename
+                # need unique intermediate filenames for slits in MultiSlitModels
+                if hasattr(drizzled_model, "name") and drizzled_model.name is not None:
+                    output_name = output_name.replace("_outlier_", f"_{drizzled_model.name.lower()}_outlier_")
                 if resamp.output_dir is not None:
                     output_name = os.path.join(resamp.output_dir, output_name)
                 drizzled_model.save(output_name)
@@ -423,6 +426,9 @@ def flag_resampled_model_crs(
         if make_output_path is None:
             raise ValueError("make_output_path must be provided if save_blot is True")
         model_path = make_output_path(input_model.meta.filename, suffix='blot')
+        # for MultiSlitModels, need to insert the slit ID into the filename
+        if hasattr(input_model, "name") and input_model.name is not None:
+            model_path = model_path.replace("_blot", f"_{input_model.name.lower()}_blot")
         blot_model = _make_blot_model(input_model, blot)
         blot_model.meta.filename = model_path
         blot_model.save(model_path)

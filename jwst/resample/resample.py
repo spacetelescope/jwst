@@ -356,7 +356,7 @@ class ResampleData:
                 log.info(f"Saved model in {output_name}")
                 output_models.append(output_name)
             else:
-                output_models.append(output_model.data)
+                output_models.append(output_model)
 
         if not self.in_memory:
             # build ModelLibrary as an association from the output files
