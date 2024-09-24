@@ -3,6 +3,7 @@ The ever-present utils sub-module. A home for all...
 """
 
 import copy
+from functools import partial
 import warnings
 import numpy as np
 import tempfile
@@ -118,7 +119,10 @@ def median_without_resampling(input_models,
 
     if save_intermediate_results:
         # Save median model to fits
-        _fileio.save_median(median_data, median_wcs, drizzled_model, make_output_path)
+        median_model = datamodels.ImageModel(median_data)
+        median_model.update(drizzled_model)
+        median_model.meta.wcs = median_wcs
+        _fileio.save_median(median_model, make_output_path)
     del drizzled_model
 
     return median_data, median_wcs
@@ -180,7 +184,12 @@ def median_with_resampling(input_models,
 
     if save_intermediate_results:
         # Save median model to fits
-        _fileio.save_median(median_data, median_wcs, drizzled_model, make_output_path)
+        median_model = datamodels.ImageModel(median_data)
+        median_model.update(drizzled_model)
+        median_model.meta.wcs = median_wcs
+        # drizzled model already contains asn_id
+        make_output_path = partial(make_output_path, asn_id=None)
+        _fileio.save_median(median_model, make_output_path)
     del drizzled_model
 
     return median_data, median_wcs

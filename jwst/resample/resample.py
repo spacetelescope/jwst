@@ -274,14 +274,9 @@ class ResampleData:
             output_type = example_image.meta.filename[indx:]
             output_root = '_'.join(example_image.meta.filename.replace(
                 output_type, '').split('_')[:-1])
-            if self.asn_id is not None:
-                output_model.meta.filename = (
-                    f'{output_root}_{self.asn_id}_'
-                    f'{self.intermediate_suffix}{output_type}')
-            else:
-                output_model.meta.filename = (
-                    f'{output_root}_'
-                    f'{self.intermediate_suffix}{output_type}')
+            output_model.meta.filename = (
+                f'{output_root}_'
+                f'{self.intermediate_suffix}{output_type}')
             input_models.shelve(example_image, indices[0], modify=False)
             del example_image
 

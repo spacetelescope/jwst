@@ -27,7 +27,6 @@ def detect_outliers(
     good_bits,
     maskpt,
     snr,
-    asn_id,
     make_output_path,
 ):
     """
@@ -56,7 +55,7 @@ def detect_outliers(
         median_model.update(input_model)
         median_model.meta.wcs = input_model.meta.wcs
 
-        save_median(median_model, make_output_path, asn_id)
+        save_median(median_model, make_output_path)
         del median_model
 
     # Perform outlier detection using statistical comparisons between

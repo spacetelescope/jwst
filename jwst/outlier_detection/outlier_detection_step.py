@@ -94,7 +94,6 @@ class OutlierDetectionStep(Step):
                 self.maskpt,
                 self.rolling_window_width,
                 snr1,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'coron':
@@ -104,7 +103,6 @@ class OutlierDetectionStep(Step):
                 self.good_bits,
                 self.maskpt,
                 snr1,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'imaging':
