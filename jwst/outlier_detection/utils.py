@@ -2,7 +2,6 @@
 The ever-present utils sub-module. A home for all...
 """
 
-import os
 import copy
 import warnings
 import numpy as np
@@ -14,7 +13,7 @@ from jwst.resample.resample import compute_image_pixel_area
 from jwst.resample.resample_utils import build_driz_weight
 from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
 from stdatamodels.jwst import datamodels
-from ._fileio import save_median
+from . import _fileio
 
 import logging
 log = logging.getLogger(__name__)
@@ -42,7 +41,7 @@ def nanmedian3D(cube, overwrite_input=True):
         output_arr = np.empty(cube.shape[1:], dtype=np.float32)
         for i in range(output_arr.shape[0]):
             # this for loop looks silly, but see docstring above
-            output_arr[i,:] = np.nanmedian(cube[:,i,:], axis=0, overwrite_input=overwrite_input).astype(np.float32)
+            np.nanmedian(cube[:,i,:], axis=0, overwrite_input=overwrite_input, out=output_arr[i,:])
         return output_arr
 
 
@@ -57,13 +56,80 @@ def create_cube_median(cube_model, maskpt):
         overwrite_input=False)
 
 
-def drizzle_and_median(input_models,
-                       resamp,
-                       maskpt,
-                       resample_data=False,
-                       save_intermediate_results=False,
-                       make_output_path=None,
-                       buffer_size=None):
+def median_without_resampling(input_models,
+                              maskpt,
+                              weight_type,
+                              good_bits,
+                              save_intermediate_results=False,
+                              make_output_path=None,
+                              buffer_size=None):
+    """
+    Shared code between imaging and spec modes for resampling and median computation
+
+    Parameters
+    ----------
+    input_models : ModelLibrary
+        The input datamodels.
+
+    maskpt : float
+        The weight threshold for masking out low weight pixels.
+
+    weight_type : str
+        The type of weighting to use when combining images. Options are:
+        'ivm' (inverse variance) or 'exptime' (exposure time).
+
+    good_bits : int
+        The bit values that are considered good when determining the
+        data quality of the input.
+
+    save_intermediate_results : bool
+        if True, save the drizzled models and median model to fits.
+
+    make_output_path : function
+        The functools.partial instance to pass to save_median. Must be 
+        specified if save_intermediate_results is True. Default None.
+
+    buffer_size : int
+        The size of chunk in bytes that will be read into memory when computing the median.
+        This parameter has no effect if the input library has its on_disk attribute
+        set to False.
+    """
+    in_memory = not input_models._on_disk
+    ngroups = len(input_models)
+
+    with input_models:
+        for i in range(len(input_models)):
+
+            drizzled_model = input_models.borrow(i)
+            drizzled_model.wht = build_driz_weight(drizzled_model,
+                                                    weight_type=weight_type,
+                                                    good_bits=good_bits)
+            median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
+            input_models.shelve(drizzled_model, i, modify=True)
+
+            if save_intermediate_results:
+                # write the drizzled model to file
+                _fileio.save_drizzled(drizzled_model, make_output_path)
+
+            median_computer = _append_to_median_computer(i, drizzled_model, ngroups, maskpt, in_memory, buffer_size)
+
+    # Perform median combination on set of drizzled mosaics
+    median_data = _evaluate_median_computer(median_computer, in_memory)
+
+    if save_intermediate_results:
+        # Save median model to fits
+        _fileio.save_median(median_data, median_wcs, drizzled_model, make_output_path)
+    del drizzled_model
+
+    return median_data, median_wcs
+
+
+def median_with_resampling(input_models,
+                           resamp,
+                           maskpt,
+                           save_intermediate_results=False,
+                           make_output_path=None,
+                           buffer_size=None):
     """
     Shared code between imaging and spec modes for resampling and median computation
 
@@ -78,9 +144,6 @@ def drizzle_and_median(input_models,
     maskpt : float
         The weight threshold for masking out low weight pixels.
 
-    resample_data : bool
-        Whether or not to do resampling.
-
     save_intermediate_results : bool
         if True, save the drizzled models and median model to fits.
 
@@ -93,89 +156,72 @@ def drizzle_and_median(input_models,
         This parameter has no effect if the input library has its on_disk attribute
         set to False.
     """
-
-    # validate inputs
-    if save_intermediate_results and (make_output_path is None):
-        raise ValueError("make_output_path is required if save_intermediate_results is True")
     if not resamp.single:
-        raise ValueError("drizzle_and_median should only be used for resample_many_to_many")
+        raise ValueError("median_with_resampling should only be used for resample_many_to_many")
+    
     in_memory = not input_models._on_disk
-
-    if resample_data:
-        indices_by_group = list(input_models.group_indices.values())
-    else:
-        # treat each input model as if it is the only member of its group
-        indices_by_group = [[i] for i in range(len(input_models))]
+    indices_by_group = list(input_models.group_indices.values())
+    ngroups = len(indices_by_group)
 
     with input_models:
         for i, indices in enumerate(indices_by_group):
 
-            if resample_data:
-                median_wcs = resamp.output_wcs
-                drizzled_model = resamp.resample_group(input_models, indices)
-            else:
-                # for non-dithered data, the resampled image is just the original image
-                drizzled_model = input_models.borrow(i)
-                drizzled_model.wht = build_driz_weight(
-                    drizzled_model,
-                    weight_type=resamp.weight_type,
-                    good_bits=resamp.good_bits)
-                input_models.shelve(drizzled_model, i, modify=True)
-                # copy for when saving median and input is a filename?
-                median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
-
-            if i == 0:
-                ngroups = len(indices_by_group)
-                full_shape = (ngroups,) + drizzled_model.data.shape
-                if in_memory:
-                    # allocate memory for data arrays that go into median
-                    data_frames = np.empty(full_shape, dtype=np.float32)
-                else:
-                    # set up temporary storage for data arrays that go into median
-                    median_computer = OnDiskMedian(full_shape,
-                                                    dtype=drizzled_model.data.dtype,
-                                                    buffer_size=buffer_size)
+            median_wcs = resamp.output_wcs
+            drizzled_model = resamp.resample_group(input_models, indices)
 
             if save_intermediate_results:
                 # write the drizzled model to file
-                output_name = drizzled_model.meta.filename
-                # need unique intermediate filenames for slits in MultiSlitModels
-                if hasattr(drizzled_model, "name") and drizzled_model.name is not None:
-                    output_name = output_name.replace("_outlier_", f"_{drizzled_model.name.lower()}_outlier_")
-                if resamp.output_dir is not None:
-                    output_name = os.path.join(resamp.output_dir, output_name)
-                drizzled_model.save(output_name)
-                log.info(f"Saved model in {output_name}")
+                _fileio.save_drizzled(drizzled_model, make_output_path)
 
-            # handle the weights right away, so only data array needs to be saved
-            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
-            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
-
-            if in_memory:
-                # populate pre-allocated memory with the drizzled data
-                data_frames[i] = drizzled_model.data
-            else:
-                # distribute the drizzled data into the temporary storage
-                median_computer.add_image(drizzled_model.data)
+            median_computer = _append_to_median_computer(i, drizzled_model, ngroups, maskpt, in_memory, buffer_size)
 
     # Perform median combination on set of drizzled mosaics
-    if in_memory:
-        median_data = nanmedian3D(data_frames)
-        del data_frames
-    else:
-        median_data = median_computer.compute_median()
-        median_computer.cleanup()
+    median_data = _evaluate_median_computer(median_computer, in_memory)
 
     if save_intermediate_results:
         # Save median model to fits
-        median_model = datamodels.ImageModel(median_data)
-        median_model.update(drizzled_model)
-        median_model.meta.wcs = median_wcs
-        save_median(median_model, make_output_path, resamp.asn_id)
-        del median_model
+        _fileio.save_median(median_data, median_wcs, drizzled_model, make_output_path)
     del drizzled_model
 
     return median_data, median_wcs
+
+
+def _append_to_median_computer(idx, drizzled_model, ngroups, maskpt, in_memory, buffer_size):
+    
+    if idx == 0:
+        full_shape = (ngroups,) + drizzled_model.data.shape
+        global median_computer
+        if in_memory:
+            # allocate memory for data arrays that go into median
+            median_computer = np.empty(full_shape, dtype=np.float32)
+        else:
+            # set up temporary storage for data arrays that go into median
+            median_computer = OnDiskMedian(full_shape,
+                                            dtype=drizzled_model.data.dtype,
+                                            buffer_size=buffer_size)
+
+    # handle the weights right away, so only data array needs to be saved
+    weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
+    drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
+
+    if in_memory:
+        # populate pre-allocated memory with the drizzled data
+        median_computer[idx] = drizzled_model.data
+    else:
+        # distribute the drizzled data into the temporary storage
+        median_computer.add_image(drizzled_model.data)
+
+    return median_computer
+
+
+def _evaluate_median_computer(median_computer, in_memory):
+    if in_memory:
+        median_data = nanmedian3D(median_computer)
+        del median_computer
+    else:
+        median_data = median_computer.compute_median()
+        median_computer.cleanup()
+    return median_data
 
 
 class DiskAppendableArray:
@@ -232,27 +278,18 @@ class DiskAppendableArray:
             raise ValueError(f"Data dtype {data.dtype} does not match array dtype {self._dtype}")
         with open(self._filename, "ab") as f:
             data.tofile(f, sep="")
-            #f.write(data.tobytes())
         self._append_count += 1
 
 
     def read(self):
-        """Read the 3-D array into memory, then delete the tempfile"""
+        """Read the 3-D array into memory"""
         shp = (self._append_count,) + self._slice_shape
         with open(self._filename, "rb") as f:
             output = np.fromfile(f, dtype=self._dtype).reshape(shp)
         return output
-    
-
-    def cleanup(self):
-        Path.unlink(Path(self._filename))
-        return
 
 
 class OnDiskMedian:
-
-    # TODO: can/should this class inherit directly from tempfile.TemporaryDirectory?
-    # probably not, because it "has a" tempdir, it is not itself a tempdir
 
     def __init__(self, shape, dtype='float32', tempdir="", buffer_size=None):
         """
@@ -366,7 +403,6 @@ class OnDiskMedian:
 
     def cleanup(self):
         """Remove the temporary files and directory when finished"""
-        #[arr.cleanup() for arr in self._temp_arrays]
         self._temp_dir.cleanup()
         return
 
@@ -423,17 +459,7 @@ def flag_resampled_model_crs(
 
     blot = gwcs_blot(median_data, median_wcs, input_model.data.shape, input_model.meta.wcs, pix_ratio)
     if save_blot:
-        if make_output_path is None:
-            raise ValueError("make_output_path must be provided if save_blot is True")
-        model_path = make_output_path(input_model.meta.filename, suffix='blot')
-        # for MultiSlitModels, need to insert the slit ID into the filename
-        if hasattr(input_model, "name") and input_model.name is not None:
-            model_path = model_path.replace("_blot", f"_{input_model.name.lower()}_blot")
-        blot_model = _make_blot_model(input_model, blot)
-        blot_model.meta.filename = model_path
-        blot_model.save(model_path)
-        log.info(f"Saved model in {model_path}")
-        del blot_model
+        _fileio.save_blot(input_model, blot, make_output_path)
     # dq flags will be updated in-place
     _flag_resampled_model_crs(input_model, blot, snr1, snr2, scale1, scale2, backg)
 
@@ -504,10 +530,3 @@ def flag_model_crs(image, blot, snr):
     match_nans_and_flags(image)
 
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
-
-
-def _make_blot_model(input_model, blot):
-    blot_model = type(input_model)()
-    blot_model.data = blot
-    blot_model.update(input_model)
-    return blot_model

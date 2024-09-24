@@ -1,13 +1,14 @@
 """
 Submodule for performing outlier detection on spectra.
 """
-import os
-
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec
-from .utils import flag_crs_in_models, flag_crs_in_models_with_resampling, drizzle_and_median
+from .utils import (flag_crs_in_models,
+                    flag_crs_in_models_with_resampling,
+                    median_with_resampling,
+                    median_without_resampling)
 
 import logging
 log = logging.getLogger(__name__)
@@ -50,35 +51,42 @@ def detect_outliers(
         record_step_status(input_models, "outlier_detection", False)
         return input_models
 
-    # Start by creating resampled/mosaic images for
-    #  each group of exposures
-    output_path = make_output_path(
-        basepath=input_models[0].meta.filename, suffix='')
-    output_path = os.path.dirname(output_path)
-    resamp = resample_spec.ResampleSpecData(
-        input_models,
-        output=output_path,
-        single=True,
-        blendheaders=False,
-        wht_type=weight_type,
-        pixfrac=pixfrac,
-        kernel=kernel,
-        fillval=fillval,
-        good_bits=good_bits,
-        in_memory=in_memory,
-        asn_id=asn_id,
-    )
-
     # convert to library for resample
     # for compatibility with image3 pipeline
     library = ModelLibrary(input_models, on_disk=False)
-    
-    median_data, median_wcs = drizzle_and_median(library,
-                                                 resamp,
-                                                 maskpt,
-                                                 resample_data=resample_data,
-                                                 save_intermediate_results=save_intermediate_results,
-                                                 make_output_path=make_output_path)
+
+    if resample_data is True:
+        # Start by creating resampled/mosaic images for
+        #  each group of exposures
+        resamp = resample_spec.ResampleSpecData(
+            input_models,
+            output=None,
+            single=True,
+            blendheaders=False,
+            wht_type=weight_type,
+            pixfrac=pixfrac,
+            kernel=kernel,
+            fillval=fillval,
+            good_bits=good_bits,
+            in_memory=in_memory,
+            asn_id=asn_id,
+        )
+
+        median_data, median_wcs = median_with_resampling(
+            library,
+            resamp,
+            maskpt,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,)
+    else:
+        median_data, median_wcs = median_without_resampling(
+            library,
+            maskpt,
+            weight_type,
+            good_bits,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,
+        )
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image

@@ -48,10 +48,6 @@ def test_disk_appendable_array(tmp_cwd):
     assert np.all(arr_in_memory[1] == candidate1)
     assert np.allclose(arr_in_memory[2], candidate2, equal_nan=True)
 
-    # test cleanup 
-    arr.cleanup()
-    assert len(os.listdir(tempdir)) == 0
-
 
 @pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_disk_appendable_array_bad_inputs(tmp_cwd):

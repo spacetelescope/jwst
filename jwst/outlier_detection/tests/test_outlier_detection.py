@@ -19,7 +19,7 @@ from jwst.outlier_detection.outlier_detection_step import (
     CORON_IMAGE_MODES,
 )
 from jwst.resample.tests.test_resample_step import miri_rate_model
-from jwst.outlier_detection.utils import drizzle_and_median
+from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
 from jwst.resample.resample import ResampleData
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
@@ -615,16 +615,18 @@ def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
     # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
     # arbitrarily use 5 times that
     buffer_size = 4 * 20 * 5 
-    median_on_disk, _ = drizzle_and_median(lib_on_disk,
-                                           make_resamp(lib_on_disk),
-                                           0.7,
-                                           buffer_size=buffer_size,
-                                           resample_data=False)
-    median_in_memory, _ = drizzle_and_median(lib_in_memory,
-                                             make_resamp(lib_in_memory),
-                                             0.7,
-                                             buffer_size=buffer_size,
-                                             resample_data=False)
+    median_on_disk, _ = median_without_resampling(
+        lib_on_disk,
+        0.7,
+        "ivm",
+        "~DO_NOT_USE",
+        buffer_size=buffer_size,)
+    median_in_memory, _ = median_without_resampling(
+        lib_in_memory,
+        0.7,
+        "ivm",
+        "~DO_NOT_USE",
+        buffer_size=buffer_size,)
 
     # Make sure the high-variance (low-weight) pixel is set to NaN
     assert np.isnan(median_in_memory[4,9])
@@ -637,30 +639,22 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
     lib = ModelLibrary(three_sci_as_asn, on_disk=False)
 
     resamp = make_resamp(lib)
-    median, wcs = drizzle_and_median(lib,
-                                     resamp,
-                                     0.7,
-                                     resample_data=True)
+    median, wcs = median_with_resampling(
+        lib,
+        resamp,
+        0.7)
     
     assert isinstance(wcs, WCS)
     assert median.shape == (21,20)
-
-    with pytest.raises(ValueError):
-        # ensure failure if save_intermediate results but no output path
-        drizzle_and_median(lib,
-                           resamp,
-                           0.7,
-                           make_output_path=None,
-                           save_intermediate_results=True)
         
     resamp.single = False
     with pytest.raises(ValueError):
         # ensure failure if try to call when resamp.single is False
-        drizzle_and_median(lib,
-                           resamp,
-                           0.7,
-                           make_output_path=None,
-                           save_intermediate_results=True)
+        median_with_resampling(
+            lib,
+            resamp,
+            0.7,
+            save_intermediate_results=True)
 
 
 def make_resamp(input_models):

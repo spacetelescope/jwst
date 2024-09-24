@@ -3,13 +3,15 @@ Submodule for performing outlier detection on imaging data.
 """
 
 import logging
-import os
 
 from jwst.datamodels import ModelLibrary
 from jwst.resample import resample
 from jwst.stpipe.utilities import record_step_status
 
-from .utils import flag_model_crs, flag_resampled_model_crs, drizzle_and_median
+from .utils import (flag_model_crs,
+                    flag_resampled_model_crs,
+                    median_without_resampling,
+                    median_with_resampling)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -53,38 +55,36 @@ def detect_outliers(
         log.warning("Outlier detection will be skipped")
         record_step_status(input_models, "outlier_detection", False)
         return input_models
-    
-    with input_models:
-        example_model = input_models.borrow(0)
-        output_path = make_output_path(basepath=example_model.meta.filename,
-                    suffix='')
-        input_models.shelve(example_model, modify=False)
-        del example_model
-    output_path = os.path.dirname(output_path)
         
     # Start by creating resampled/mosaic images for
     # each group of exposures
-    resamp = resample.ResampleData(
-        input_models,
-        output=output_path,
-        single=True,
-        blendheaders=False,
-        wht_type=weight_type,
-        pixfrac=pixfrac,
-        kernel=kernel,
-        fillval=fillval,
-        good_bits=good_bits,
-        in_memory=in_memory,
-        asn_id=asn_id,
-        allowed_memory=allowed_memory,
-    )
-
-    median_data, median_wcs = drizzle_and_median(input_models,
-                                                 resamp,
-                                                 maskpt,
-                                                 resample_data=resample_data,
-                                                 save_intermediate_results=save_intermediate_results,
-                                                 make_output_path=make_output_path,)
+    if resample_data:
+        resamp = resample.ResampleData(
+            input_models,
+            output=None,
+            single=True,
+            blendheaders=False,
+            wht_type=weight_type,
+            pixfrac=pixfrac,
+            kernel=kernel,
+            fillval=fillval,
+            good_bits=good_bits,
+            in_memory=in_memory,
+            asn_id=asn_id,
+            allowed_memory=allowed_memory,
+        )
+        median_data, median_wcs = median_with_resampling(input_models,
+                                                    resamp,
+                                                    maskpt,
+                                                    save_intermediate_results=save_intermediate_results,
+                                                    make_output_path=make_output_path,)
+    else:
+        median_data, median_wcs = median_without_resampling(input_models,
+                                                    maskpt,
+                                                    weight_type,
+                                                    good_bits,
+                                                    save_intermediate_results=save_intermediate_results,
+                                                    make_output_path=make_output_path,)
 
 
     # Perform outlier detection using statistical comparisons between
