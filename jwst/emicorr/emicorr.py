@@ -449,7 +449,7 @@ def apply_emicorr(output_model, emicorr_model,
         # Interleave (straight copy) into 4 amps
         noise_x = np.arange(nx4) * 4
         for k in range(4):
-            output_model.data[:, :, :, noise_x + k] -= dd_noise
+            output_model.data[..., noise_x + k] = output_model.data[..., noise_x + k] - dd_noise
 
         # clean up
         del data
