@@ -1,1 +1,2 @@
 Decrease the amount of file I/O required to compute the median when in_memory is set to False.
+Fix a bug that caused intermediate files to conflict for different slits when a MultiSlitModel was processed.

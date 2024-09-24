@@ -17,22 +17,19 @@ def save_median(median_data, median_wcs, example_model, make_output_path=None):
     median_model = ImageModel(median_data)
     median_model.update(example_model)
     median_model.meta.wcs = median_wcs
-    output_path = intermediate_output_path(example_model, "median", make_output_path)
-    _save_to_path(median_model, output_path, suffix="median")
+    _save_intermediate_output(median_model, "median", make_output_path)
 
 
 def save_drizzled(drizzled_model, make_output_path):
     expected_tail = "outlier_?2d.fits"
     suffix = drizzled_model.meta.filename[-len(expected_tail):-5]
-    output_path = intermediate_output_path(drizzled_model, suffix, make_output_path)
-    _save_to_path(drizzled_model, output_path, suffix=suffix)
+    _save_intermediate_output(drizzled_model, suffix, make_output_path)
 
 
 def save_blot(input_model, blot, make_output_path):
 
     blot_model = _make_blot_model(input_model, blot)
-    output_path = intermediate_output_path(input_model, "blot", make_output_path, suffix_to_remove=r"_cal.*")
-    _save_to_path(blot_model, output_path, suffix="blot")
+    _save_intermediate_output(blot_model, "blot", make_output_path)
 
 
 def _make_blot_model(input_model, blot):
@@ -42,25 +39,20 @@ def _make_blot_model(input_model, blot):
     return blot_model
 
 
-def intermediate_output_path(input_model, suffix, make_output_path, suffix_to_remove=r"_outlier.*"):
+def _save_intermediate_output(model, suffix, make_output_path):
     """Ensure all intermediate outputs from OutlierDetectionStep have consistent file naming conventions"""
-    if hasattr(input_model, "name") and input_model.name is not None:
-        if "_"+input_model.name.lower()+"_" not in input_model.meta.filename:
-            replacement = f"_{input_model.name.lower()}"
+    input_path = model.meta.filename.replace("_outlier_", "_")
+
+    # Add a slit name to the output path for MultiSlitModel input data if it isn't already there
+    if hasattr(model, "name") and model.name is not None:
+        if "_"+model.name.lower() not in model.meta.filename:
+            slit_name = f"{model.name.lower()}"
         else:
-            replacement = ""
+            slit_name = None
     else:
-        replacement = ""
-    basepath = re.sub(suffix_to_remove, replacement, input_model.meta.filename)
+        slit_name = None
 
-    if make_output_path is None:
-        def make_output_path(basepath, suffix):
-            return basepath.replace(".fits", f"_{suffix}.fits")
-
-    return make_output_path(basepath, suffix=suffix)
-
-
-def _save_to_path(model, output_path, suffix=""):
+    output_path = make_output_path(input_path, suffix=suffix, components=slit_name)
     model.meta.filename = output_path
     model.save(output_path)
     log.info(f"Saved {suffix} model in {output_path}")
