@@ -261,7 +261,7 @@ class ResampleData:
 
         indices : list
         """
-        output_model = self.blank_output
+        output_model = self.blank_output.copy()
 
         copy_asn_info_from_library(input_models, output_model)
 
@@ -331,10 +331,7 @@ class ResampleData:
                 input_models.shelve(img, index, modify=False)
                 del img
 
-        out = output_model.copy()
-        output_model.data *= 0.
-        output_model.wht *= 0.
-        return out
+        return output_model
 
     def resample_many_to_many(self, input_models):
         """Resample many inputs to many outputs where outputs have a common frame.

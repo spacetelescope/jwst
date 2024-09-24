@@ -376,7 +376,7 @@ class OnDiskMedian:
 
         output_rows = row_indices[-1][1]
         output_cols = self._temp_arrays[0].shape[2]
-        median_image = np.empty((output_rows, output_cols), self.dtype) * np.nan
+        median_image = np.full((output_rows, output_cols), np.nan, dtype=self.dtype)
 
         for i, disk_arr in enumerate(self._temp_arrays):
             row1, row2 = row_indices[i]
