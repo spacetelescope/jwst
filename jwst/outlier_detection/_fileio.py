@@ -53,6 +53,5 @@ def _save_intermediate_output(model, suffix, make_output_path):
             suffix = f"{model.name.lower()}_{suffix}"
 
     output_path = make_output_path(input_path, suffix=suffix)
-    model.meta.filename = output_path
     model.save(output_path)
     log.info(f"Saved {suffix} model in {output_path}")
