@@ -2,8 +2,6 @@
 Submodule for performing outlier detection on coronagraphy data.
 """
 
-
-from functools import partial
 import logging
 
 import numpy as np

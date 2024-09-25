@@ -1,4 +1,3 @@
-from functools import partial
 import numpy as np
 from jwst.resample.resample_utils import build_mask
 
