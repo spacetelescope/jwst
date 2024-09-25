@@ -48,12 +48,11 @@ def _save_intermediate_output(model, suffix, make_output_path):
     input_path = model.meta.filename.replace("_outlier_", "_")
 
     # Add a slit name to the output path for MultiSlitModel data if not present
-    components = None
     if hasattr(model, "name") and model.name is not None:
         if "_"+model.name.lower() not in input_path:
-            components = f"{model.name.lower()}"
+            suffix = f"{model.name.lower()}_{suffix}"
 
-    output_path = make_output_path(input_path, suffix=suffix, components=components)
+    output_path = make_output_path(input_path, suffix=suffix)
     model.meta.filename = output_path
     model.save(output_path)
     log.info(f"Saved {suffix} model in {output_path}")
