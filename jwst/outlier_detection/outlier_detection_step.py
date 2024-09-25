@@ -80,8 +80,7 @@ class OutlierDetectionStep(Step):
         self.log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
-        asn_id = self._get_asn_id(input_data)
-        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        self._get_asn_id(input_data)
 
         snr1, snr2 = [float(v) for v in self.snr.split()]
         scale1, scale2 = [float(v) for v in self.scale.split()]
@@ -123,7 +122,6 @@ class OutlierDetectionStep(Step):
                 self.fillval,
                 self.allowed_memory,
                 self.in_memory,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'spec':
@@ -143,7 +141,6 @@ class OutlierDetectionStep(Step):
                 self.kernel,
                 self.fillval,
                 self.in_memory,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'ifu':
@@ -225,7 +222,8 @@ class OutlierDetectionStep(Step):
                 _make_output_path,
                 asn_id=asn_id
             )
-        return asn_id
+        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        return
     
     def _set_status(self, input_models, status):
         # this might be called with the input which might be a filename or path

@@ -37,7 +37,6 @@ def detect_outliers(
     fillval,
     allowed_memory,
     in_memory,
-    asn_id,
     make_output_path,
 ):
     """
@@ -70,7 +69,6 @@ def detect_outliers(
             fillval=fillval,
             good_bits=good_bits,
             in_memory=in_memory,
-            asn_id=asn_id,
             allowed_memory=allowed_memory,
         )
         median_data, median_wcs = median_with_resampling(input_models,

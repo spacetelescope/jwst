@@ -1,3 +1,4 @@
+from functools import partial
 import numpy as np
 from jwst.resample.resample_utils import build_mask
 
@@ -52,6 +53,7 @@ def detect_outliers(
         median_model = dm.CubeModel(data=medians)
         with dm.open(weighted_cube) as dm0:
             median_model.update(dm0)
+            make_output_path = partial(make_output_path, asn_id=None)
         save_median(median_model, make_output_path)
         del median_model
 

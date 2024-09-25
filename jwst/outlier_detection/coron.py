@@ -3,6 +3,7 @@ Submodule for performing outlier detection on coronagraphy data.
 """
 
 
+from functools import partial
 import logging
 
 import numpy as np
@@ -55,6 +56,7 @@ def detect_outliers(
         median_model.update(input_model)
         median_model.meta.wcs = input_model.meta.wcs
 
+        make_output_path = partial(make_output_path, asn_id=None)
         save_median(median_model, make_output_path)
         del median_model
 
