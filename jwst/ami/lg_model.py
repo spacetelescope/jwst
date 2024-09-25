@@ -396,8 +396,9 @@ class NrmModel:
         self.fringeamp, self.fringephase = leastsqnrm.tan2visibilities(self.soln)
         self.fringepistons = utils.fringes2pistons(self.fringephase, len(self.ctrs))
         self.redundant_cps = leastsqnrm.redundant_cps(self.fringephase, n=self.N)
-        self.redundant_cpamps = leastsqnrm.redundant_cpamps(self.fringeamp, n=self.N) # RC 8/24
+        self.t3_amplitudes = leastsqnrm.t3_amplitudes(self.fringeamp, n=self.N) # RC 8/24
         self.redundant_cas = leastsqnrm.closure_amplitudes(self.fringeamp, n=self.N)
+        self.q4_phases = leastsqnrm.q4_phases(self.fringephase, n=self.N) # RC 8/24
 
     def create_modelpsf(self):
         """
