@@ -59,7 +59,6 @@ def detect_outliers(
         #  each group of exposures
         resamp = resample_spec.ResampleSpecData(
             input_models,
-            output=None,
             single=True,
             blendheaders=False,
             wht_type=weight_type,

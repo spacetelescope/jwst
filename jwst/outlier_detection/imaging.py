@@ -55,12 +55,9 @@ def detect_outliers(
         record_step_status(input_models, "outlier_detection", False)
         return input_models
         
-    # Start by creating resampled/mosaic images for
-    # each group of exposures
     if resample_data:
         resamp = resample.ResampleData(
             input_models,
-            output=None,
             single=True,
             blendheaders=False,
             wht_type=weight_type,

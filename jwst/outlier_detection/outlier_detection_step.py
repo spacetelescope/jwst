@@ -198,6 +198,9 @@ class OutlierDetectionStep(Step):
         return None
 
     def _get_asn_id(self, input_models):
+        """Find association ID for any allowed input model type,
+        and update make_output_path such that the association ID
+        is included in intermediate and output file names."""
         # handle if input_models isn't open
         if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)

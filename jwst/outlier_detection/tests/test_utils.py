@@ -5,9 +5,6 @@ import numpy as np
 import os
 
 
-# filter warnings such that "ResourceWarning: Implictly cleaning up" is raised as error
-# unfortunately need to do this indirectly by finding "finalize" string in PytestUnraisableException
-@pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_disk_appendable_array(tmp_cwd):
 
     slice_shape = (8,7)
@@ -49,7 +46,6 @@ def test_disk_appendable_array(tmp_cwd):
     assert np.allclose(arr_in_memory[2], candidate2, equal_nan=True)
 
 
-@pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_disk_appendable_array_bad_inputs(tmp_cwd):
 
     slice_shape = (8,7)
@@ -77,6 +73,8 @@ def test_disk_appendable_array_bad_inputs(tmp_cwd):
         DiskAppendableArray(slice_shape, "float3", tempdir)
 
 
+# filter warnings such that "ResourceWarning: Implictly cleaning up" is raised as error
+# unfortunately need to do this indirectly by finding "finalize" string in PytestUnraisableException
 @pytest.mark.filterwarnings("error:.*finalize.*:pytest.PytestUnraisableExceptionWarning")
 def test_on_disk_median(tmp_cwd):
 

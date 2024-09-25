@@ -20,18 +20,17 @@ def model():
 
 
 @pytest.fixture(scope="module")
-def step():
-    return OutlierDetectionStep()
+def make_output_path():
+    return OutlierDetectionStep().make_output_path
 
 
 @pytest.mark.parametrize("asn_id", [None, ASN_ID])
 @pytest.mark.parametrize("slit_id", [None, SLIT_ID])
-def test_save(tmp_cwd, model, step, asn_id, slit_id):
+def test_save(tmp_cwd, model, make_output_path, asn_id, slit_id):
 
     this_model = model.copy()
     if slit_id is not None:
         this_model.name = slit_id
-    make_output_path = step.make_output_path
     make_output_path = partial(make_output_path, asn_id=asn_id)
     _save_intermediate_output(this_model, SUFFIX, make_output_path)
 
