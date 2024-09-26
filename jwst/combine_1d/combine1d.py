@@ -3,6 +3,7 @@
 #
 
 import logging
+import warnings
 
 import numpy as np
 
@@ -10,7 +11,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
 
-from ..extract_1d.spec_wcs import create_spectral_wcs
+from jwst.extract_1d.spec_wcs import create_spectral_wcs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -157,7 +158,7 @@ class OutputSpectrumModel:
                                        input_spectra[0].declination[0],
                                        self.wavelength)
 
-    def accumulate_sums(self, input_spectra):
+    def accumulate_sums(self, input_spectra, sigma_clip=None):
         """Compute a weighted sum of all the input spectra.
 
         Each pixel of each input spectrum will be added to one pixel of
@@ -180,6 +181,8 @@ class OutputSpectrumModel:
         ----------
         input_spectra : list of InputSpectrumModel objects
             List of input spectra.
+        sigma_clip : float, optional
+            Factor for clipping outliers in spectral combination.
         """
 
         # This is the data type for the output spectrum.  We'll use double
@@ -189,21 +192,23 @@ class OutputSpectrumModel:
         dq_dtype = cmb_dtype.fields["DQ"][0]
 
         nelem = self.wavelength.shape[0]
+        nspec = len(input_spectra)
 
-        self.flux = np.zeros(nelem, dtype=np.float64)
-        self.flux_error = np.zeros(nelem, dtype=np.float64)
-        self.surf_bright = np.zeros(nelem, dtype=np.float64)
-        self.sb_error = np.zeros(nelem, dtype=np.float64)
-        self.dq = np.zeros(nelem, dtype=dq_dtype)
-        self.weight = np.zeros(nelem, dtype=np.float64)
-        self.count = np.zeros(nelem, dtype=np.float64)
+        dq = np.zeros(nelem, dtype=dq_dtype)
+
+        flux = np.zeros((nspec, nelem), dtype=np.float64)
+        flux_error = np.zeros((nspec, nelem), dtype=np.float64)
+        surf_bright = np.zeros((nspec, nelem), dtype=np.float64)
+        sb_error = np.zeros((nspec, nelem), dtype=np.float64)
+        weight = np.zeros((nspec, nelem), dtype=np.float64)
+        count = np.zeros((nspec, nelem), dtype=np.float64)
 
         self.flux_unit = input_spectra[0].flux_unit
         self.sb_unit = input_spectra[0].sb_unit
 
         n_nan = 0                                       # initial value
         ninputs = 0
-        for in_spec in input_spectra:
+        for s, in_spec in enumerate(input_spectra):
             ninputs += 1
             if in_spec.name is not None:
                 slit_name = f'{ninputs}, slit {in_spec.name}'
@@ -220,7 +225,8 @@ class OutputSpectrumModel:
             nan_flag = np.isnan(out_pixel)
             n_nan += nan_flag.sum()
             for i in range(len(out_pixel)):
-                if in_spec.dq[i] & datamodels.dqflags.pixel['DO_NOT_USE'] > 0:
+                # Need to check on dq and nan flux because dq is not set for some x1d
+                if (in_spec.dq[i] & datamodels.dqflags.pixel['DO_NOT_USE'] > 0) | np.isnan(in_spec.flux[i]):
                     continue
                 # Round to the nearest pixel.
                 if nan_flag[i]:         # skip if the pixel number is NaN
@@ -228,16 +234,29 @@ class OutputSpectrumModel:
                 k = round(float(out_pixel[i]))
                 if k < 0 or k >= nelem:
                     continue
-                weight = in_spec.weight[i]
-                self.dq[k] |= in_spec.dq[i]
-                self.flux[k] += in_spec.flux[i] * weight
-                self.flux_error[k] += (in_spec.flux_error[i] * weight)**2
-                self.surf_bright[k] += (in_spec.surf_bright[i] * weight)
-                self.sb_error[k] += (in_spec.sb_error[i] * weight)**2
-                self.weight[k] += weight
-                self.count[k] += 1.
+                dq[k] |= in_spec.dq[i]
+                flux[s, k] = in_spec.flux[i]
+                flux_error[s, k] = in_spec.flux_error[i]
+                surf_bright[s, k] = in_spec.surf_bright[i]
+                sb_error[s, k] = in_spec.sb_error[i]
+                weight[s, k] = in_spec.weight[i]
+                count[s, k] = 1.
+
+        (flux, flux_error, surf_bright, sb_error, 
+         weight, count) = self.combine_spectra(flux, flux_error, 
+                                               surf_bright, sb_error, 
+                                               weight, count, sigma_clip=sigma_clip)
+
         if n_nan > 0:
             log.warning("%d output pixel numbers were NaN", n_nan)
+
+        self.flux = flux
+        self.flux_error = flux_error
+        self.surf_bright = surf_bright
+        self.sb_error = sb_error
+        self.dq = dq
+        self.weight = weight
+        self.count = count
 
         # Since the output wavelengths will not usually be exactly the same
         # as the input wavelengths, it's possible that there will be output
@@ -259,18 +278,84 @@ class OutputSpectrumModel:
             self.count = self.count[index]
         del index
 
-        self.normalized = False
+    def combine_spectra(self, flux, flux_error, surf_bright, sb_error, 
+                        weight, count, sigma_clip=None):
+        """Combine accumulated spectra.
 
-    def compute_combination(self):
-        """Compute the combined values."""
+        Parameters
+        ----------
+        flux : ndarray, 2-D
+            Tabulated fluxes for the input spectra in the format 
+            [N spectra, M wavelengths].
+        flux_error : ndarray, 2-D
+            Flux errors of input spectra.
+        surf_bright : ndarray, 2-D
+            Surface brightnesses of input spectra.
+        sb_error : ndarray, 2-D
+            Surface brightness errors for input spectra.
+        weight : ndarray, 2-D
+            Pixel weights for input spectra
+        count : ndarray, 2-D
+            Count of how many values at each index in the input arrays.
+        sigma_clip : float, optional
+            Factor for clipping outliers.  Compares input spectra to the 
+            median and medaian absolute devaition, by default None.
 
-        if not self.normalized:
-            sum_weight = np.where(self.weight > 0., self.weight, 1.)
-            self.surf_bright /= sum_weight
-            self.flux /= sum_weight
-            self.flux_error = np.sqrt(self.flux_error) / sum_weight
-            self.sb_error = np.sqrt(self.sb_error) / sum_weight
-            self.normalized = True
+        Returns
+        -------
+        flux : ndarray, 1-D
+            Combined 1-D fluxes.
+        flux_error : ndarray, 1-D
+            Combined 1-D flux errors.
+        surf_bright : ndarray, 1-D
+            Combined 1-D surface brightnesses.
+        sb_error : ndarray, 1-D
+            Combined 1-D surface brightness errors.
+        weight : ndarray, 1-D
+            Total, per wavelength weights.
+        count : ndarray, 1-D
+            Total count of spectra contributing to each wavelength.
+ 
+        """
+
+        # Catch warnings for all NaN slices in an array.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+
+            if sigma_clip is not None:
+                # Copy the fluxes for modifying
+                flux_2d = np.array(flux * weight)
+
+                # Mask any missing pixels in the input spectra
+                missing = (count < 1) | (flux_2d == 0.0)
+                flux_2d[missing] = np.nan
+                # Calculate median and median absolute deviation
+                med_flux = np.nanmedian(flux_2d, axis=0)
+                mad = np.nanmedian(np.abs(flux_2d - med_flux))
+
+                # Clip any outlier pixels in the input spectra 
+                clipped = np.abs(flux * weight - med_flux) > sigma_clip * mad
+                flux[clipped] = np.nan
+                flux_error[clipped] = np.nan
+                surf_bright[clipped] = np.nan
+                sb_error[clipped] = np.nan
+                count[clipped] = 0
+                weight[clipped] = 0
+
+            # Perform a weighted sum of the input spectra
+            sum_weight = np.nansum(weight, axis=0)
+            sum_weight_nonzero = np.where(sum_weight > 0., sum_weight, 1.)
+
+            flux= np.nansum(flux * weight, axis=0) / sum_weight_nonzero
+            flux_error = np.sqrt(np.nansum((flux_error * weight)**2, axis=0)) / sum_weight_nonzero
+            surf_bright = np.nansum(surf_bright * weight, axis=0) / sum_weight_nonzero
+            sb_error = np.sqrt(np.nansum((sb_error * weight)**2, axis=0)) / sum_weight_nonzero
+            count = np.nansum(count, axis=0)
+
+        self.normalized = True
+        
+        return flux, flux_error, surf_bright, sb_error, sum_weight, count
+        
 
     def create_output_data(self):
         """Create the output data.
@@ -397,7 +482,7 @@ def count_input(input_spectra):
     return wl, n_input_spectra
 
 
-def compute_output_wl(wl, n_input_spectra):
+def compute_output_wl(wl, n_input_spectra, ):
     """Compute output wavelengths.
 
     In summary, the output wavelengths are computed by binning the
@@ -557,7 +642,7 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
-def combine_1d_spectra(input_model, exptime_key):
+def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     """Combine the input spectra.
 
     Parameters
@@ -602,8 +687,7 @@ def combine_1d_spectra(input_model, exptime_key):
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()
         output_spectra[order].assign_wavelengths(input_spectra[order])
-        output_spectra[order].accumulate_sums(input_spectra[order])
-        output_spectra[order].compute_combination()
+        output_spectra[order].accumulate_sums(input_spectra[order], sigma_clip=sigma_clip)
 
     output_model = datamodels.MultiCombinedSpecModel()
 

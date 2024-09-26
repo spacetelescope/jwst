@@ -20,6 +20,7 @@ class Combine1dStep(Step):
 
     spec = """
     exptime_key = string(default="exposure_time") # use for weight
+    sigma_clip = float(default=None) # Factor for clipping outliers
     """
 
     def process(self, input_file):
