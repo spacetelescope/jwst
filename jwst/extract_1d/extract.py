@@ -2846,10 +2846,7 @@ def do_extract1d(
     # Set "meta_source" to either the first model in a container, or the individual input model, for convenience
     # of retrieving meta attributes in subsequent statements
     if was_source_model:
-        if isinstance(input_model, datamodels.SlitModel):  # input_model is SourceContainer with a single SlitModel
-            meta_source = input_model
-        else:
-            meta_source = input_model[0]
+        meta_source = input_model[0]
     else:
         meta_source = input_model
 
@@ -2859,6 +2856,7 @@ def do_extract1d(
     if hasattr(meta_source, "int_times"):
         output_model.int_times = meta_source.int_times.copy()
 
+    print(meta_source)
     output_model.update(meta_source, only='PRIMARY')
 
     # This will be relevant if we're asked to extract a spectrum and the spectral order is zero.
