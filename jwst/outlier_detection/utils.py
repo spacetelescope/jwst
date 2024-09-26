@@ -112,7 +112,9 @@ def median_without_resampling(input_models,
                 # write the drizzled model to file
                 _fileio.save_drizzled(drizzled_model, make_output_path)
 
-            median_computer = _append_to_median_computer(i, drizzled_model, ngroups, maskpt, in_memory, buffer_size)
+            if i == 0:
+                median_computer = _make_median_computer(drizzled_model, ngroups, in_memory, buffer_size)
+            _append_to_median_computer(median_computer, i, drizzled_model, maskpt, in_memory)
 
     # Perform median combination on set of drizzled mosaics
     median_data = _evaluate_median_computer(median_computer, in_memory)
@@ -177,7 +179,9 @@ def median_with_resampling(input_models,
                 # write the drizzled model to file
                 _fileio.save_drizzled(drizzled_model, make_output_path)
 
-            median_computer = _append_to_median_computer(i, drizzled_model, ngroups, maskpt, in_memory, buffer_size)
+            if i == 0:
+                median_computer = _make_median_computer(drizzled_model, ngroups, in_memory, buffer_size)
+            _append_to_median_computer(median_computer, i, drizzled_model, maskpt, in_memory)
 
     # Perform median combination on set of drizzled mosaics
     median_data = _evaluate_median_computer(median_computer, in_memory)
@@ -195,20 +199,22 @@ def median_with_resampling(input_models,
     return median_data, median_wcs
 
 
-def _append_to_median_computer(idx, drizzled_model, ngroups, maskpt, in_memory, buffer_size):
-    
-    if idx == 0:
-        full_shape = (ngroups,) + drizzled_model.data.shape
-        global median_computer
-        if in_memory:
-            # allocate memory for data arrays that go into median
-            median_computer = np.empty(full_shape, dtype=np.float32)
-        else:
-            # set up temporary storage for data arrays that go into median
-            median_computer = OnDiskMedian(full_shape,
-                                            dtype=drizzled_model.data.dtype,
-                                            buffer_size=buffer_size)
+def _make_median_computer(drizzled_model, ngroups, in_memory, buffer_size):
 
+    full_shape = (ngroups,) + drizzled_model.data.shape
+    if in_memory:
+        # allocate memory for data arrays that go into median
+        median_computer = np.empty(full_shape, dtype=np.float32)
+    else:
+        # set up temporary storage for data arrays that go into median
+        median_computer = OnDiskMedian(full_shape,
+                                        dtype=drizzled_model.data.dtype,
+                                        buffer_size=buffer_size)
+    return median_computer
+
+
+def _append_to_median_computer(median_computer, idx, drizzled_model, maskpt, in_memory):
+    
     # handle the weights right away, so only data array needs to be saved
     weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
     drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
@@ -219,8 +225,6 @@ def _append_to_median_computer(idx, drizzled_model, ngroups, maskpt, in_memory, 
     else:
         # distribute the drizzled data into the temporary storage
         median_computer.add_image(drizzled_model.data)
-
-    return median_computer
 
 
 def _evaluate_median_computer(median_computer, in_memory):
