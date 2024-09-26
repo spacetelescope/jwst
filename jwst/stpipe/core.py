@@ -3,6 +3,7 @@ JWST-specific Step and Pipeline base classes.
 """
 from functools import wraps
 import logging
+import warnings
 
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
@@ -101,6 +102,19 @@ class JwstStep(Step):
         if not self.parent:
             log.info(f"Results used jwst version: {__version__}")
         return result
+
+    @wraps(Step.__call__)
+    def __call__(self, *args, **kwargs):
+        if not self.parent:
+            warnings.warn(
+                "Step.__call__ is deprecated. It is equivalent to Step.run "
+                "and is not recommended. See "
+                "https://jwst-pipeline.readthedocs.io/en/latest/jwst/"
+                "user_documentation/running_pipeline_python.html"
+                "#advanced-use-pipeline-run-vs-pipeline-call for more details.",
+                UserWarning
+            )
+        return super().__call__(*args, **kwargs)
 
 
 # JwstPipeline needs to inherit from Pipeline, but also
