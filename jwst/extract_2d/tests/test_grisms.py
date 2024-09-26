@@ -209,7 +209,7 @@ def test_create_box_fits():
     # Add fake data to pass a shape to wfss_imaging_wcs
     im.data = np.zeros((512, 512))
     aswcs = AssignWcsStep()
-    imwcs = aswcs(im)
+    imwcs = aswcs.run(im)
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
@@ -242,7 +242,7 @@ def test_create_box_gwcs():
     # The data array is not relevant
     im.data = np.zeros((512, 512))
     aswcs = AssignWcsStep()
-    imwcs = aswcs(im)
+    imwcs = aswcs.run(im)
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
@@ -268,7 +268,7 @@ def setup_image_cat():
     im.data = np.zeros((512, 512))
     im.meta.source_catalog = source_catalog
     aswcs = AssignWcsStep()
-    imwcs = aswcs(im)
+    imwcs = aswcs.run(im)
     refs = get_reference_files(im)
 
     return imwcs, refs
