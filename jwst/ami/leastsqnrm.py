@@ -800,7 +800,7 @@ def populate_symmamparray(amps, n=7):
 
     return arr
 
-def t3_amplitudes(amps, n=7)  # RC 8/24
+def t3_amplitudes(amps, n=7):
     """
     Populate the triple-product amplitude array
     (NOT closure amplitudes)
@@ -990,7 +990,7 @@ def q4_phases(deltaps, n=7):
         quad phases
     """
     arr = populate_antisymmphasearray(deltaps, n=n)  # fringe phase array
-
+    nn = 0
     quad_phases = np.zeros(int(comb(n, 4)))
 
     for ii in range(n - 3):

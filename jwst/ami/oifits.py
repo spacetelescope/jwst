@@ -14,6 +14,7 @@ from astropy.stats import sigma_clipped_stats
 from astropy.time.core import Time
 
 from stdatamodels.jwst import datamodels
+from . import leastsqnrm
 
 
 class RawOifits:
@@ -95,7 +96,7 @@ class RawOifits:
         return cv_rotated
 
 
-    def average_observables(self):
+    def average_observables(self, averfunc):
         """
         Calculate covariance matrices between fringe amplitudes/fringe phases, 
         and between triple product amps/closure phases, and closure amplitudes/quad phases.
@@ -106,7 +107,7 @@ class RawOifits:
         Input names in nrm differ from implaneia!
 
         """
-        covmats_fringes, covmats_triples, covmats_quads = observable_covariances(nrm, averfunc)
+        covmats_fringes, covmats_triples, covmats_quads = self.observable_covariances(averfunc)
 
         if self.method == 'median':
             _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21. std_fa is just for comparing to covariance
@@ -119,16 +120,16 @@ class RawOifits:
             avg_sqv, _, err_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             avg_pist, _, err_pist = sigma_clipped_stats(self.pistons, axis=0)
         
-        err_fa, err_fp = err_from_covmat(covmats_fringes)
+        err_fa, err_fp = self.err_from_covmat(covmats_fringes)
 
         # calculate triple and quad quantities from **averaged** fringe amps and phases
         avg_t3amp = leastsqnrm.t3_amplitudes(avg_fa, n=self.n_holes)
         avg_cp = leastsqnrm.redundant_cps(avg_fp, n=self.n_holes)
-        err_t3amp, err_cp = err_from_covmat(covmats_triples)
+        err_t3amp, err_cp = self.err_from_covmat(covmats_triples)
         
         avg_ca = leastsqnrm.closure_amplitudes(avg_fa, n=self.n_holes)
         avg_q4phi = leastsqnrm.q4_phases(avg_fp, n=self.n_holes)
-        err_ca, err_q4phi = err_from_covmat(covmats_quads)
+        err_ca, err_q4phi = self.err_from_covmat(covmats_quads)
 
         return avg_sqv, err_sqv, avg_fa, err_fa, avg_fp, err_fp, avg_cp, err_cp, avg_t3amp, err_t3amp, avg_ca, err_ca, avg_q4phi, err_q4phi, avg_pist, err_pist
 
@@ -152,21 +153,21 @@ class RawOifits:
         for bl in np.arange(self.n_baselines):
             fringeamps = self.fringe_amplitudes[:,bl]
             fringephases = self.fringe_phases[:,bl]
-            covmat = cov_r_theta(fringeamps, fringephases, averfunc)
+            covmat = self.cov_r_theta(fringeamps, fringephases, averfunc)
             cov_mat_fringes.append(covmat)
         # loop over 35 triples
         cov_mat_triples = []
         for triple in np.arange(self.n_closure_phases):
             tripamp = self.t3_amplitudes[:,triple]
             triphase = self.closure_phases[:,triple]
-            covmat = cov_r_theta(tripamp, triphase, averfunc)
+            covmat = self.cov_r_theta(tripamp, triphase, averfunc)
             cov_mat_triples.append(covmat)
         # loop over 35 quads
         cov_mat_quads = []
         for quad in np.arange(self.n_closure_amplitudes):
             quadamp = self.closure_amplitudes[:,quad]
             quadphase = self.q4_phases[:,quad]
-            covmat = cov_r_theta(quadamp, quadphase, averfunc)
+            covmat = self.cov_r_theta(quadamp, quadphase, averfunc)
             cov_mat_quads.append(covmat)
 
         # covmats to be written to oifits. store in nrm object?
@@ -185,7 +186,7 @@ class RawOifits:
         xx = rr * np.cos(theta)
         yy = rr * np.sin(theta)
         cov_mat_xy = np.cov(xx, yy)
-        cov_mat_r_theta = rotate_matrix(cov_mat_xy, averfunc(theta))
+        cov_mat_r_theta = self.rotate_matrix(cov_mat_xy, averfunc(theta))
         return cov_mat_r_theta
         
 
@@ -257,10 +258,10 @@ class RawOifits:
 
 
         elif self.method == "median":
-            self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.cp, self.e_cp, self.t3amp, self.e_t3amp, self.ca, self.e_ca, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  average_observables(self, np.median)
+            self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.closure_phases, self.e_cp, self.t3amp, self.e_t3amp, self.camp, self.e_camp, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  self.average_observables(np.median)
 
         else:  # take the mean
-            self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.cp, self.e_cp, self.t3amp, self.e_t3amp, self.ca, self.e_ca, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  average_observables(self, np.mean)
+            self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.closure_phases, self.e_cp, self.t3amp, self.e_t3amp, self.camp, self.e_camp, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  self.average_observables(np.mean)
 
         # prepare arrays for OI_ARRAY ext
         self.staxy = instrument_data.ctrs_inst
