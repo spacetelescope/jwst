@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from collections.abc import Sequence
-import json
 import os.path as op
 import re
 import logging
@@ -10,6 +9,7 @@ from stdatamodels import properties
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst.datamodels.util import is_association
+from stpipe.step import _make_input_path
 
 __doctest_skip__ = ['ModelContainer']
 
@@ -267,7 +267,7 @@ to supply custom catalogs.
             sublist = infiles
         try:
             for member in sublist:
-                filepath = op.join(asn_dir, member['expname'])
+                filepath = _make_input_path(member['expname'], asn_dir)
                 m = datamodel_open(filepath, memmap=self._memmap)
                 m.meta.asn.exptype = member['exptype']
                 for attr, val in member.items():
@@ -300,43 +300,6 @@ to supply custom catalogs.
                     model.meta.asn.pool_name = self.asn_pool_name
                 except AttributeError:
                     pass
-
-
-    # def save(self,
-    #          path=None,
-    #          dir_path=None,
-    #          save_model_func=None,
-    #          **kwargs):
-    #     """
-    #     Save container as .json and .fits files.
-    #     The .json file should reflect the files that are currently in the model list, and not
-    #     necessarily what is in the association table, since containers can be appended
-
-    #     Notes
-    #     -----
-    #     This will lose lots of metadata. Is that behavior okay? The real way to fix
-    #     this would be to modify the asn table every time a model is appended to or
-    #     removed from the container. This would not only be a lot of work but would also
-    #     require API changes to ensure that each model was assigned an exptype when appended
-    #     """
-    #     # write out all the models
-    #     for model in self._models:
-    #         model.save(model.meta.filename, dir_path=dir_path)
-    #         model.close()
-    #     asn_data = {
-    #         'asn_id': self.asn_table['asn_id'],
-    #         'asn_pool': self.asn_table['asn_pool'],
-    #         'products': [
-    #             {
-    #                 'members': [{'expname': m.meta.filename} for m in self._models],
-    #             },
-    #         ],
-    #     }
-
-    #     # write out a basic association table
-    #     asn_path = dir_path / path
-    #     with open(asn_path, 'w') as f:
-    #         json.dump(asn_data, f)
 
 
     @property

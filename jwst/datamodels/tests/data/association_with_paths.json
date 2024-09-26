@@ -13,11 +13,11 @@
             "members": [
                 {
                     "exptype": "SCIENCE",
-                    "expname": "test.fits"
+                    "expname": "data/test.fits"
                 },
                 {
                     "exptype": "SCIENCE",
-                    "expname": "test.fits"
+                    "expname": "data/test.fits"
                 }
             ]
         }
