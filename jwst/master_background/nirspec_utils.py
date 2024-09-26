@@ -76,7 +76,7 @@ def map_to_science_slits(input_model, master_bkg):
     return output_model
 
 
-def create_background_from_multislit(input_model):
+def create_background_from_multislit(input_model, sigma_clip=3):
     """Create a 1D master background spectrum from a set of
     calibrated background MOS slitlets in the input
     MultiSlitModel.
@@ -85,11 +85,15 @@ def create_background_from_multislit(input_model):
     ----------
     input_model : `~jwst.datamodels.MultiSlitModel`
         The input data model containing all slit instances.
+    sigma_clip : None or float
+        Optional factor for sigma clipping outliers when combining background spectra.
 
     Returns
     -------
     master_bkg: `~jwst.datamodels.CombinedSpecModel`
         The 1D master background spectrum created from the inputs.
+    x1d: `jwst.datamodels.MultiSpecModel`
+        The 1D extracted background spectra of the inputs.
     """
     from ..resample import resample_spec_step
     from ..extract_1d import extract_1d_step
@@ -119,13 +123,13 @@ def create_background_from_multislit(input_model):
 
     # Call combine_1d to combine the 1D background spectra
     log.info('Combining 1D background spectra into master background')
-    master_bkg = combine_1d_spectra(x1d, exptime_key='exposure_time')
+    master_bkg = combine_1d_spectra(
+        x1d, exptime_key='exposure_time', sigma_clip=sigma_clip)
 
     del bkg_model
     del resamp
-    del x1d
 
-    return master_bkg
+    return master_bkg, x1d
 
 
 def correct_nrs_ifu_bkg(input_model):
