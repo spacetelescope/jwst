@@ -43,8 +43,8 @@ def _save_intermediate_output(model, suffix, make_output_path):
     to include the asn_id in the output path, so no need to handle it here.
     """
 
-    # make_output_path cannot handle suffix with an underscore inside it,
-    # e.g. _outlier_s2d.fits, so do a manual string replacement
+    # outlier_?2d is not a known suffix, and make_output_path cannot handle an
+    # underscore in an unknown suffix, so do a manual string replacement
     input_path = model.meta.filename.replace("_outlier_", "_")
 
     # Add a slit name to the output path for MultiSlitModel data if not present
