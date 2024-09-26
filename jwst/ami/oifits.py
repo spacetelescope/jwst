@@ -112,15 +112,18 @@ class RawOifits:
         if self.method == 'median':
             _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21. std_fa is just for comparing to covariance
             _, avg_fp, std_fp  = sigma_clipped_stats(self.fringe_phases, axis=0)  # 21
-            _, avg_sqv, err_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
+            _, avg_sqv, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             _, avg_pist, err_pist = sigma_clipped_stats(self.pistons, axis=0)
         else:  # mean
             avg_fa, _, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
             avg_fp, _, std_fp = sigma_clipped_stats(self.fringe_phases, axis=0)
-            avg_sqv, _, err_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
+            avg_sqv, _, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             avg_pist, _, err_pist = sigma_clipped_stats(self.pistons, axis=0)
         
         err_fa, err_fp = self.err_from_covmat(covmats_fringes)
+
+        # calculate squared visibility (fringe) amplitude uncertainties correctly
+        err_sqv = 2 * avg_fa * err_fa
 
         # calculate triple and quad quantities from **averaged** fringe amps and phases
         avg_t3amp = leastsqnrm.t3_amplitudes(avg_fa, n=self.n_holes)
@@ -262,13 +265,23 @@ class RawOifits:
 
         else:  # take the mean
             self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.closure_phases, self.e_cp, self.t3amp, self.e_t3amp, self.camp, self.e_camp, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  self.average_observables(np.mean)
+        
+        # Convert angular quantities from radians to degrees
+        self.visphi = np.rad2deg(self.visphi)
+        self.e_visphi = np.rad2deg(self.e_visphi)
+        self.closure_phases = np.rad2deg(self.closure_phases)
+        self.e_cp = np.rad2deg(self.e_cp)
+        self.q4phi = np.rad2deg(self.q4phi)
+        self.e_q4phi = np.rad2deg(self.e_q4phi)
+        self.pist = np.rad2deg(self.pist)
+        self.e_pist = np.rad2deg(self.e_pist)
+
 
         # prepare arrays for OI_ARRAY ext
         self.staxy = instrument_data.ctrs_inst
-        N_ap = len(self.staxy)
-        tel_name = ["A%i" % x for x in np.arange(N_ap) + 1]
+        tel_name = ["A%i" % x for x in np.arange(self.n_holes) + 1]
         sta_name = tel_name
-        diameter = [0] * N_ap
+        diameter = [0] * self.n_holes
 
         staxyz = []
         for x in self.staxy:
@@ -276,14 +289,14 @@ class RawOifits:
             line = [a[0], a[1], 0]
             staxyz.append(line)
 
-        sta_index = np.arange(N_ap) + 1
+        sta_index = np.arange(self.n_holes) + 1
 
         pscale = instrument_data.pscale_mas / 1000.0  # arcsec
         isz = self.fringe_fitter.scidata.shape[
             1
         ]  # Size of the image to extract NRM data
-        fov = [pscale * isz] * N_ap
-        fovtype = ["RADIUS"] * N_ap
+        fov = [pscale * isz] * self.n_holes
+        fovtype = ["RADIUS"] * self.n_holes
 
         m = datamodels.AmiOIModel()
         self.init_oimodel_arrays(m)
