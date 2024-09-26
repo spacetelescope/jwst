@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 import warnings
 from ..stpipe import Step
 from . import badpix_selfcal
@@ -35,9 +36,12 @@ class BadpixSelfcalStep(Step):
     """
 
     def save_model(self, model, *args, **kwargs):
-        """Override save_model to suppress index 0 when save_model is True
+        """Override save_model to only save the science models
+        and to ignore the index for save_bkg
         """
         kwargs["idx"] = None
+        if isinstance(model, Sequence):
+            model = model[0]
         return Step.save_model(self, model, *args, **kwargs)
 
     def save_bkg(self, bkg_list, suffix="badpix_selfcal_bkg"):
@@ -82,6 +86,7 @@ class BadpixSelfcalStep(Step):
         i.e., true self-calibration.
         """
         input_sci, selfcal_list, bkg_list = _parse_inputs(input, selfcal_list, bkg_list)
+        print(input_sci, selfcal_list, bkg_list)
 
         # ensure that there are background exposures to use, otherwise skip the step
         # unless forced
