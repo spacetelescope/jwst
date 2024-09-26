@@ -89,7 +89,6 @@ class MasterBackgroundStep(Step):
                     asn_id = input_data.asn_table["asn_id"]
                     del _
                     result = ModelContainer()
-                    result.update(input_data)
                     background_2d_collection = ModelContainer()
                     background_2d_collection.update(input_data)
                     for model in input_data:
@@ -101,7 +100,7 @@ class MasterBackgroundStep(Step):
                         model.meta.background.master_background_file = basename(self.user_background)
                 # Use user-supplied master background and subtract it
                 else:
-                    asn_id = input_data.meta.asn_table.asn_id
+                    asn_id = None
                     background_2d = expand_to_2d(input_data, self.user_background)
                     background_2d_collection = background_2d
                     result = subtract_2d_background(input_data, background_2d)
@@ -145,9 +144,7 @@ class MasterBackgroundStep(Step):
                     background_data.close()
 
                     result = ModelContainer()
-                    result.update(input_data)
                     background_2d_collection = ModelContainer()
-                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
@@ -156,14 +153,13 @@ class MasterBackgroundStep(Step):
                     input_data.close()
 
                 else:
-                    result = input_data.copy()
                     input_data.close()
                     self.log.warning(
                         "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
                         input, type(input)
                     )
-                    record_step_status(result, 'master_background', success=False)
-                    return result
+                    record_step_status(input_data, 'master_background', success=False)
+                    return input_data
 
                 # Save the computed background if requested by user
                 if self.save_background:
