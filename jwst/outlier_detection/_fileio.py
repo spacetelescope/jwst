@@ -21,14 +21,16 @@ def save_drizzled(drizzled_model, make_output_path):
     _save_intermediate_output(drizzled_model, suffix, make_output_path)
 
 
-def save_blot(input_model, blot, make_output_path):
-    blot_model = _make_blot_model(input_model, blot)
+def save_blot(input_model, blot, blot_err, make_output_path):
+    blot_model = _make_blot_model(input_model, blot, blot_err)
     _save_intermediate_output(blot_model, "blot", make_output_path)
 
 
-def _make_blot_model(input_model, blot):
+def _make_blot_model(input_model, blot, blot_err):
     blot_model = type(input_model)()
     blot_model.data = blot
+    if blot_err is not None:
+        blot_model.err = blot_err
     blot_model.update(input_model)
     return blot_model
 
