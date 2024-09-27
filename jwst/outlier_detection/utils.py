@@ -40,7 +40,8 @@ def median_without_resampling(input_models,
                               good_bits,
                               save_intermediate_results=False,
                               make_output_path=None,
-                              buffer_size=None):
+                              buffer_size=None,
+                              return_error=False):
     """
     Shared code between imaging and spec modes for resampling and median computation
 
@@ -71,6 +72,10 @@ def median_without_resampling(input_models,
         The size of chunk in bytes that will be read into memory when computing the median.
         This parameter has no effect if the input library has its on_disk attribute
         set to False.
+
+    return_error : bool, optional
+        If set, an approximate median error is computed alongside the
+        median science image.
     """
     in_memory = not input_models._on_disk
     ngroups = len(input_models)
@@ -88,6 +93,7 @@ def median_without_resampling(input_models,
                 input_shape = (ngroups,) + drizzled_data.shape
                 dtype = drizzled_data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
 
             weight_threshold = compute_weight_threshold(weight, maskpt)
             drizzled_data[weight < weight_threshold] = np.nan
@@ -97,6 +103,7 @@ def median_without_resampling(input_models,
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
+    median_err = err_computer.evaluate()
 
     if save_intermediate_results:
         # Save median model to fits
@@ -106,7 +113,10 @@ def median_without_resampling(input_models,
         _fileio.save_median(median_model, make_output_path)
     del drizzled_model
 
-    return median_data, median_wcs
+    if return_error:
+        return median_data, median_wcs, median_err
+    else:
+        return median_data, median_wcs
 
 
 def median_with_resampling(input_models,
@@ -114,7 +124,8 @@ def median_with_resampling(input_models,
                            maskpt,
                            save_intermediate_results=False,
                            make_output_path=None,
-                           buffer_size=None):
+                           buffer_size=None,
+                           return_error=False):
     """
     Shared code between imaging and spec modes for resampling and median computation
 
@@ -140,6 +151,10 @@ def median_with_resampling(input_models,
         The size of chunk in bytes that will be read into memory when computing the median.
         This parameter has no effect if the input library has its on_disk attribute
         set to False.
+
+    return_error : bool, optional
+        If set, an approximate median error is computed alongside the
+        median science image.
     """
     if not resamp.single:
         raise ValueError("median_with_resampling should only be used for resample_many_to_many")
@@ -151,7 +166,8 @@ def median_with_resampling(input_models,
     with input_models:
         for i, indices in enumerate(indices_by_group):
 
-            drizzled_model = resamp.resample_group(input_models, indices)
+            drizzled_model = resamp.resample_group(
+                input_models, indices, compute_error=return_error)
 
             if save_intermediate_results:
                 # write the drizzled model to file
@@ -162,17 +178,23 @@ def median_with_resampling(input_models,
                 input_shape = (ngroups,)+drizzled_model.data.shape
                 dtype = drizzled_model.data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
 
             weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
             drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
+            drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
             computer.append(drizzled_model.data, i)
+            err_computer.append(drizzled_model.err, i)
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
+    median_err = err_computer.evaluate()
 
     if save_intermediate_results:
         # Save median model to fits
         median_model = datamodels.ImageModel(median_data)
+        if return_error:
+            median_model.err = median_err
         median_model.update(drizzled_model)
         median_model.meta.wcs = median_wcs
         # drizzled model already contains asn_id
@@ -180,17 +202,21 @@ def median_with_resampling(input_models,
         _fileio.save_median(median_model, make_output_path)
     del drizzled_model
 
-    return median_data, median_wcs
+    if return_error:
+        return median_data, median_wcs, median_err
+    else:
+        return median_data, median_wcs
 
 
 def flag_crs_in_models(
     input_models,
     median_data,
     snr1,
+    median_err=None
 ):
     for image in input_models:
         # dq flags will be updated in-place
-        flag_model_crs(image, median_data, snr1)
+        flag_model_crs(image, median_data, snr1, median_err=median_err)
     
 
 def flag_resampled_model_crs(
@@ -202,6 +228,7 @@ def flag_resampled_model_crs(
     scale1,
     scale2,
     backg,
+    median_err=None,
     save_blot=False,
     make_output_path=None,
 ):
@@ -214,16 +241,24 @@ def flag_resampled_model_crs(
     else:
         pix_ratio = 1.0
 
-    blot = gwcs_blot(median_data, median_wcs, input_model.data.shape, input_model.meta.wcs, pix_ratio)
+    blot = gwcs_blot(median_data, median_wcs, input_model.data.shape,
+                     input_model.meta.wcs, pix_ratio) #, fillval=np.nan)
+    if median_err is not None:
+        blot_err = gwcs_blot(median_err, median_wcs, input_model.data.shape,
+                             input_model.meta.wcs, pix_ratio) #, fillval=np.nan)
+    else:
+        blot_err = None
     if save_blot:
-        _fileio.save_blot(input_model, blot, make_output_path)
+        _fileio.save_blot(input_model, blot, blot_err, make_output_path)
+
     # dq flags will be updated in-place
-    _flag_resampled_model_crs(input_model, blot, snr1, snr2, scale1, scale2, backg)
+    _flag_resampled_model_crs(input_model, blot, blot_err, snr1, snr2, scale1, scale2, backg)
 
 
 def _flag_resampled_model_crs(
     input_model,
     blot,
+    blot_err,
     snr1,
     snr2,
     scale1,
@@ -240,7 +275,11 @@ def _flag_resampled_model_crs(
         backg = input_model.meta.background.level
         log.debug(f"Adding background level {backg} to blotted image")
 
-    cr_mask = flag_resampled_crs(input_model.data, input_model.err, blot, snr1, snr2, scale1, scale2, backg)
+    if blot_err is not None:
+        err_to_use = blot_err
+    else:
+        err_to_use = input_model.err
+    cr_mask = flag_resampled_crs(input_model.data, err_to_use, blot, snr1, snr2, scale1, scale2, backg)
 
     # update the dq flags in-place
     input_model.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
@@ -260,6 +299,7 @@ def flag_crs_in_models_with_resampling(
     scale1,
     scale2,
     backg,
+    median_err=None,
     save_blot=False,
     make_output_path=None,
 ):
@@ -272,12 +312,17 @@ def flag_crs_in_models_with_resampling(
                                  scale1,
                                  scale2,
                                  backg,
+                                 median_err=median_err,
                                  save_blot=save_blot,
                                  make_output_path=make_output_path)
 
 
-def flag_model_crs(image, blot, snr):
-    cr_mask = flag_crs(image.data, image.err, blot, snr)
+def flag_model_crs(image, blot, snr, median_err=None):
+    if median_err is not None:
+        error_to_use = median_err
+    else:
+        error_to_use = image.err
+    cr_mask = flag_crs(image.data, error_to_use, blot, snr)
 
     # Update dq array in-place
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)

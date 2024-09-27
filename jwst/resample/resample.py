@@ -252,7 +252,7 @@ class ResampleData:
             iscale = 1.0
         return iscale
     
-    def resample_group(self, input_models, indices):
+    def resample_group(self, input_models, indices, compute_error=False):
         """Apply resample_many_to_many for one group
         
         Parameters
@@ -260,6 +260,10 @@ class ResampleData:
         input_models : ModelLibrary
 
         indices : list
+
+        compute_error : bool, optional
+            If set, an approximate error image will be resampled
+            alongside the science image.
         """
         output_model = self.blank_output.copy()
 
@@ -323,6 +327,33 @@ class ResampleData:
                     ymax=ymax
                 )
                 del data
+
+                # make an approximate error image by drizzling it
+                # in the same way the image is handled
+                if compute_error:
+                    resampled_error = np.zeros_like(output_model.data)
+                    outwht = np.zeros_like(output_model.data)
+                    outcon = np.zeros_like(output_model.con)
+                    self.drizzle_arrays(
+                        img.err,
+                        inwht,
+                        img.meta.wcs,
+                        output_model.meta.wcs,
+                        resampled_error,
+                        outwht,
+                        outcon,
+                        iscale=iscale,
+                        pixfrac=self.pixfrac,
+                        kernel=self.kernel,
+                        fillval='NAN',
+                        xmin=xmin,
+                        xmax=xmax,
+                        ymin=ymin,
+                        ymax=ymax
+                    )
+                    output_model.err = resampled_error
+                    del outwht, outcon
+
                 input_models.shelve(img, index, modify=False)
                 del img
 
@@ -359,6 +390,7 @@ class ResampleData:
             asn = asn_from_list(output_models, product_name='outlier_i2d')
             asn_dict = json.loads(asn.dump()[1]) # serializes the asn and converts to dict
             return ModelLibrary(asn_dict, on_disk=True)
+
         # otherwise just build it as a list of in-memory models
         return ModelLibrary(output_models, on_disk=False)
 
@@ -435,7 +467,7 @@ class ResampleData:
             output_model.var_poisson,
             output_model.var_flat
         ]
-        output_model.err = np.sqrt(np.nansum(var_components,axis=0))
+        output_model.err = np.sqrt(np.nansum(var_components, axis=0))
 
         # nansum returns zero for input that is all NaN -
         # set those values to NaN instead
@@ -603,7 +635,7 @@ class ResampleData:
             iscale=iscale,
             pixfrac=self.pixfrac,
             kernel=self.kernel,
-            fillval=np.nan,
+            fillval='NAN',
             xmin=xmin,
             xmax=xmax,
             ymin=ymin,
