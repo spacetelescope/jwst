@@ -108,6 +108,8 @@ def median_without_resampling(input_models,
     if save_intermediate_results:
         # Save median model to fits
         median_model = datamodels.ImageModel(median_data)
+        if return_error:
+            median_model.err = median_err
         median_model.update(drizzled_model)
         median_model.meta.wcs = median_wcs
         _fileio.save_median(median_model, make_output_path)
