@@ -288,6 +288,14 @@ class ResampleData:
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                             kernel=self.kernel, fillval=self.fillval)
 
+            # Also make a temporary model to hold error data
+            error_model, driz_error = None, None
+            if compute_error:
+                error_model = output_model.copy()
+                driz_error = gwcs_drizzle.GWCSDrizzle(
+                    error_model, pixfrac=self.pixfrac,
+                    kernel=self.kernel, fillval=self.fillval)
+
             log.info(f"{len(indices)} exposures to drizzle together")
             for index in indices:
                 img = input_models.borrow(index)
@@ -331,31 +339,24 @@ class ResampleData:
                 # make an approximate error image by drizzling it
                 # in the same way the image is handled
                 if compute_error:
-                    resampled_error = np.zeros_like(output_model.data)
-                    outwht = np.zeros_like(output_model.data)
-                    outcon = np.zeros_like(output_model.con)
-                    self.drizzle_arrays(
+                    driz_error.add_image(
                         img.err,
-                        inwht,
                         img.meta.wcs,
-                        output_model.meta.wcs,
-                        resampled_error,
-                        outwht,
-                        outcon,
                         iscale=iscale,
-                        pixfrac=self.pixfrac,
-                        kernel=self.kernel,
-                        fillval='NAN',
+                        inwht=inwht,
                         xmin=xmin,
                         xmax=xmax,
                         ymin=ymin,
                         ymax=ymax
                     )
-                    output_model.err = resampled_error
-                    del outwht, outcon
 
                 input_models.shelve(img, index, modify=False)
                 del img
+
+        # copy the drizzled error into the output model
+        if compute_error:
+            output_model.err = error_model.data
+            del error_model
 
         return output_model
 
