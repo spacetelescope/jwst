@@ -34,17 +34,17 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-    - uses: pre-commit/action@v3.0.1
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+    - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
   check:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@924441154cf3053034c6513d5e06c69d262fb9a6  # v1.13.0
     with:
       default_python: "3.12"
       envs: |
         - linux: check-dependencies
   latest_crds_contexts:
-    uses: spacetelescope/crds/.github/workflows/contexts.yml@master
+    uses: spacetelescope/crds/.github/workflows/contexts.yml@d96060f99a7ca75969f6652b050243592f4ebaeb  # 12.0.0
   crds_context:
     needs: [ latest_crds_contexts ]
     runs-on: ubuntu-latest
@@ -54,7 +54,7 @@ jobs:
     outputs:
       context: ${{ steps.context.outputs.context }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@924441154cf3053034c6513d5e06c69d262fb9a6  # v1.13.0
     needs: [ crds_context ]
     with:
       setenv: |
