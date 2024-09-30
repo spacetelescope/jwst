@@ -22,7 +22,6 @@ def detect_outliers(
     maskpt,
     rolling_window_width,
     snr,
-    asn_id,
     make_output_path,
 ):
     """
@@ -53,7 +52,7 @@ def detect_outliers(
         median_model = dm.CubeModel(data=medians)
         with dm.open(weighted_cube) as dm0:
             median_model.update(dm0)
-        save_median(median_model, make_output_path, asn_id)
+        save_median(median_model, make_output_path)
         del median_model
 
     # no need for blotting, resample is turned off for TSO

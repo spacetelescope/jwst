@@ -193,7 +193,7 @@ def test_tweakreg_step(example_input, with_shift):
     step = tweakreg_step.TweakRegStep()
 
     # run the step on the example input modified above
-    result = step(example_input)
+    result = step.run(example_input)
 
     # check that step completed
     with result:
@@ -227,7 +227,7 @@ def test_src_confusion_pars(example_input, alignment_type):
         "abs_refcat": REFCAT,
     }
     step = tweakreg_step.TweakRegStep(**pars)
-    result = step(example_input)
+    result = step.run(example_input)
 
     # check that step was skipped
     with result:
@@ -356,7 +356,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
     monkeypatch.setattr(twk, "construct_wcs_corrector", patched_construct_wcs_corrector)
 
     with pytest.raises(ValueError, match="done testing"):
-        step(str(asn_path))
+        step.run(str(asn_path))
 
 
 @pytest.mark.parametrize("with_shift", [True, False])
@@ -384,7 +384,7 @@ def test_sip_approx(example_input, with_shift):
     step.sip_npoints = 12
 
     # run the step on the example input modified above
-    result = step(example_input)
+    result = step.run(example_input)
 
     with result:
         r0 = result.borrow(0)

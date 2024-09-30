@@ -4,13 +4,14 @@ from scipy.ndimage import gaussian_filter
 from glob import glob
 import os
 
+from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.pointing import create_fitswcs
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.utils import _flag_resampled_model_crs, create_median
+from jwst.outlier_detection.utils import _flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
@@ -18,6 +19,8 @@ from jwst.outlier_detection.outlier_detection_step import (
     CORON_IMAGE_MODES,
 )
 from jwst.resample.tests.test_resample_step import miri_rate_model
+from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
+from jwst.resample.resample import ResampleData
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -109,7 +112,7 @@ def we_many_sci(
 ):
     """Provide numsci science images with different noise but identical source
     and same background level"""
-    shape = (20, 20)
+    shape = (21, 20)
 
     sci1 = datamodels.ImageModel(shape)
 
@@ -595,7 +598,7 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
 
 
-def test_create_median(three_sci_as_asn, tmp_cwd):
+def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
     """Test creation of median on disk vs in memory"""
     lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
     lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
@@ -604,14 +607,71 @@ def test_create_median(three_sci_as_asn, tmp_cwd):
     with (lib_on_disk, lib_in_memory):
         for lib in [lib_on_disk, lib_in_memory]:
             for model in lib:
-                model.wht = np.ones_like(model.data)
-                model.wht[4,9] = 0.5
+                model.var_rnoise = np.ones_like(model.data)
+                model.var_rnoise[4,9] = 2.0
                 lib.shelve(model, modify=True)
 
-    median_on_disk = create_median(lib_on_disk, 0.7)
-    median_in_memory = create_median(lib_in_memory, 0.7)
 
+    # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
+    # arbitrarily use 5 times that
+    buffer_size = 4 * 20 * 5 
+    median_on_disk, _ = median_without_resampling(
+        lib_on_disk,
+        0.7,
+        "ivm",
+        "~DO_NOT_USE",
+        buffer_size=buffer_size,)
+    median_in_memory, _ = median_without_resampling(
+        lib_in_memory,
+        0.7,
+        "ivm",
+        "~DO_NOT_USE",
+        buffer_size=buffer_size,)
+
+    # Make sure the high-variance (low-weight) pixel is set to NaN
     assert np.isnan(median_in_memory[4,9])
 
     # Make sure the median library is the same for on-disk and in-memory
     assert np.allclose(median_on_disk, median_in_memory, equal_nan=True)
+
+
+def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
+    lib = ModelLibrary(three_sci_as_asn, on_disk=False)
+
+    resamp = make_resamp(lib)
+    median, wcs = median_with_resampling(
+        lib,
+        resamp,
+        0.7)
+    
+    assert isinstance(wcs, WCS)
+    assert median.shape == (21,20)
+        
+    resamp.single = False
+    with pytest.raises(ValueError):
+        # ensure failure if try to call when resamp.single is False
+        median_with_resampling(
+            lib,
+            resamp,
+            0.7,
+            save_intermediate_results=True)
+
+
+def make_resamp(input_models):
+    """All defaults are same as what is run by default by outlier detection"""
+    in_memory = not input_models._on_disk
+    resamp = ResampleData(
+        input_models,
+        output="",
+        single=True,
+        blendheaders=False,
+        wht_type="ivm",
+        pixfrac=1.0,
+        kernel="square",
+        fillval="INDEF",
+        good_bits="~DO_NOT_USE",
+        in_memory=in_memory,
+        asn_id="test",
+        allowed_memory=None,
+    )
+    return resamp
