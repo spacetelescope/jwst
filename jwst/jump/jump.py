@@ -28,7 +28,8 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                      minimum_sigclip_groups=100,
                      only_use_ints=True,
                      mask_snowball_persist_next_int=True,
-                     snowball_time_masked_next_int=250
+                     snowball_time_masked_next_int=250,
+                     mmflashfrac = 1.0
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -89,7 +90,8 @@ def run_detect_jumps(input_model, gain_model, readnoise_model,
                                     minimum_sigclip_groups=minimum_sigclip_groups,
                                     only_use_ints=only_use_ints,
                                     mask_persist_grps_next_int = mask_snowball_persist_next_int,
-                                    persist_grps_flagged = snowball_grps_masked_next_int
+                                    persist_grps_flagged = snowball_grps_masked_next_int,
+                                    mmflashfrac = mmflashfrac
                                     )
 
 

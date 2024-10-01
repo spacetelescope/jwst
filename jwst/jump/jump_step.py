@@ -49,6 +49,7 @@ class JumpStep(Step):
         minimum_groups = integer(default=3) # The minimum number of groups to perform jump detection using sigma clipping
         minimum_sigclip_groups = integer(default=100) # The minimum number of groups to switch to sigma clipping
         only_use_ints = boolean(default=True) # In sigclip only compare the same group across ints, if False compare all groups
+        mmflashfrac = float(default=1.0) # Fraction of array with jump to trigger flagging entire array as jump
     """
 
     reference_file_types = ['gain', 'readnoise']
@@ -127,7 +128,8 @@ class JumpStep(Step):
                                       minimum_sigclip_groups=self.minimum_sigclip_groups,
                                       only_use_ints=self.only_use_ints,
                                       mask_snowball_persist_next_int=self.mask_snowball_core_next_int,
-                                      snowball_time_masked_next_int=self.snowball_time_masked_next_int
+                                      snowball_time_masked_next_int=self.snowball_time_masked_next_int,
+                                      mmflashfrac=self.mmflashfrac
                                       )
 
 
