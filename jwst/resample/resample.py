@@ -1,6 +1,9 @@
 import logging
 import warnings
 import json
+import re
+import os
+from typing import Any
 
 import numpy as np
 import psutil
@@ -9,8 +12,8 @@ from spherical_geometry.polygon import SphericalPolygon
 from astropy.io import fits
 
 from stdatamodels.jwst import datamodels
-from stcal.resample import ResampleModelIO, ResampleCoAdd, ResampleSingle
-from stcal.resample.utils import get_tmeasure
+from stcal.resample import LibModelAccess, Resample, OutputTooLargeError
+
 from drizzle.resample import Drizzle
 from stdatamodels.jwst.datamodels.dqflags import pixel
 from stdatamodels.properties import ObjectNode
@@ -24,27 +27,29 @@ from jwst.resample import resample_utils
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 __all__ = [
-    "OutputTooLargeError",
-    "ResampleJWSTModelIO",
-    "ResampleJWSTSingle",
-    "ResampleJWSTCoAdd",
     "ResampleData",
+    "OutputTooLargeError",
+    "JWSTLibModelAccess",
+    "ResampleJWST",
 ]
 
 
-class OutputTooLargeError(RuntimeError):
-    """Raised when the output is too large for in-memory instantiation"""
+class JWSTLibModelAccess(LibModelAccess):
+    attributes_path = {
+        "data": "data",
+        "dq": "dq",
+        "var_rnoise": "var_rnoise",
+        "var_poisson": "var_poisson",
+        "var_flat": "var_flat",
 
-
-class ResampleJWSTModelIO(ResampleModelIO):
-    attributes_to_meta = {
         "filename": "meta.filename",
         "group_id": "meta.group_id",
         "s_region": "meta.wcsinfo.s_region",
         "wcsinfo": "meta.wcsinfo",
         "wcs": "meta.wcs",
-        "exptime": "meta.exptime",
+
         "exposure_time": "meta.exposure.exposure_time",
         "start_time": "meta.exposure.start_time",
         "end_time": "meta.exposure.end_time",
@@ -54,226 +59,183 @@ class ResampleJWSTModelIO(ResampleModelIO):
         "elapsed_exposure_time": "meta.exposure.elapsed_exposure_time",
 
         "pixelarea_steradians": "meta.photometry.pixelarea_steradians",
-        "pixelarea_arcsecsq": "meta.photometry.pixelarea_arcsecsq",
 
         "level": "meta.background.level",
         "subtracted": "meta.background.subtracted",
 
         "weight_type": "meta.resample.weight_type",
         "pointings": "meta.resample.pointings",
-        "ncoadds": "meta.resample.ncoadds",
+        "n_coadds": "meta.resample.n_coadds",
     }
 
-    def get_model_attr_value(self, model, attribute_name):
-        m = model
-        meta_name = ResampleJWSTModelIO.attributes_to_meta.get(
-            attribute_name,
-            attribute_name
-        )
-        fields = meta_name.strip().split(".")
+    def __new__(cls, *args, **kwargs):
+        assert set(cls.attributes_path).issuperset(cls.min_supported_attributes)
+        return super().__new__(cls)
+
+    @classmethod
+    def get_model_attr_value(cls, model, attr_path):
+        """ Retrieve a single attribute from the data model. """
+        fields = attr_path.strip().split(".")
         while fields:
-            m = getattr(m, fields.pop(0))
-        if isinstance(m, ObjectNode):
-            return m.instance
-        return m
-
-    def set_model_attr_value(self, model, attribute_name, value):
-        m = model
-        meta_name = ResampleJWSTModelIO.attributes_to_meta.get(
-            attribute_name,
-            attribute_name
-        )
-        fields = meta_name.strip().split(".")
-        while len(fields) > 1:
-            m = getattr(m, fields.pop(0))
-        setattr(m, fields.pop(), value)
-
-    def open_model(cls, file_name):
-        return datamodels.open(file_name)
-
-    def get_model_array(self, model, array_name, **kwargs):
-        if isinstance(model, str):
-            model = self.open_model(file_name=model)
-        if "default" in kwargs:
-            return getattr(model, array_name, kwargs["default"])
-        else:
-            return getattr(model, array_name)
-
-    def set_model_array(self, model, array_name, data):
-        """ model must be an open model - not a file name """
-        setattr(model, array_name, data)
-
-    def get_model_meta(self, model, attributes):
-        meta = {}
-        if isinstance(model, str):
-            if 's_region' in attributes:
-                attributes.pop(attributes.index('s_region'))
-                with fits.open(model) as h:
-                    meta['s_region'] = h[('sci', 1)].header['s_region']
-            if attributes:
-                model = self.open_model(model)
-
-        for f in attributes:
-            meta[f] = self.get_model_attr_value(model, attribute_name=f)
-
-        return meta
-
-    def set_model_meta(self, model, attributes):
-        """ model must be an open model - not a file name """
-        for k, v in attributes.items():
-            self.set_model_attr_value(model, attribute_name=k, value=v)
-
-    def close_model(self, model):
-        self.save_model(model)
-        # model.close()
-
-    def save_model(self, model):
-        if model.meta.filename:
-            model.write(model.meta.filename, overwrite=True)
-
-    def write_model(self, model, file_name, **kwargs):
-        overwrite = kwargs.get("overwrite", False)
-        model.write(file_name, overwrite=overwrite)
-
-    def new_model(self, image_shape=None, file_name=None, copy_meta_from=None):
-        """ Return a new model for the resampled output """
-        model = datamodels.ImageModel(image_shape)
-        model.meta.filename = file_name
-        if copy_meta_from is not None:
-            model.update(copy_meta_from)
+            model = getattr(model, fields.pop(0))
+        if isinstance(model, ObjectNode):
+            return model.instance
         return model
 
+    @classmethod
+    def get_model_attributes(cls, model, attributes=None, quiet=False):
+        """ Retrieve all attributes (data and meta) from the data model. """
+        model_attrib = {}
+        if attributes is None:
+            attributes = cls.attributes_path
+        else:
+            attributes = {a: cls.attributes_path[a] for a in attributes}
 
-class ResampleJWSTCoAdd(ResampleJWSTModelIO, ResampleCoAdd):
-    # resample_array_names = [
-    #     {'attr': 'data', 'variance', 'exptime']
+        for k, v in attributes.items():
+            try:
+                model_attrib[k] = cls.get_model_attr_value(model, v)
+            except AttributeError as e:
+                # TODO: add n_coadds to model's schema
+                if k == "n_coadds":
+                    model_attrib["n_coadds"] = 0
+                    continue
+                if quiet:
+                    continue
+                else:
+                    raise e
+
+        return model_attrib
+
+    def __init__(self, model_library):
+        self._mlib = model_library
+        self.set_active_group(None)
+
+    def iter_model(self, attributes=None):
+        with self._mlib:
+            for model in self._mlib:
+                model_attrib = self.get_model_attributes(model, attributes)
+                yield model_attrib, model
+                self._mlib.shelve(model)
+
+    @property
+    def n_models(self):
+        return len(self._mlib)
+
+    @property
+    def n_groups(self):
+        return len(self._mlib.group_indices)
+
+    @property
+    def group_indices(self):
+        return self._mlib.group_indices
+
+    @property
+    def asn(self):
+        return self._mlib.asn
+
+    def set_active_group(self, group_id=None):
+        self._active_group = group_id
+
+
+class ResampleJWST(Resample):
     dq_flag_name_map = pixel
-    n_arrays_per_output = 6  # data, weight, 3x variance, error
 
-    def __init__(self, *args, blendheaders=True, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, input_models, *args, blendheaders=True,
+                 output_model=None, output_file_name=None, in_memory=True,
+                 **kwargs):
+        if output_model is None:
+            self.resampled_model = datamodels.ImageModel()
+            self._update_output_meta_with_first_model = True
+        else:
+            self.resampled_model = output_model
+            self._update_output_meta_with_first_model = False
+            # convert output_model to dictionary:
+            attributes = Resample.output_model_attributes(
+                accumulate=kwargs.get("accumulate", False),
+                enable_ctx=kwargs.get("enable_ctx", True),
+                enable_var=kwargs.get("enable_var", True),
+            )
+            output_model = JWSTLibModelAccess.get_model_attributes(
+                output_model,
+                attributes=attributes,
+            )
+
+        super().__init__(
+            input_models,
+            *args,
+            output_model=output_model,
+            **kwargs
+        )
+
+        # initialize blendheaders if needed
         self._blendheaders = blendheaders
 
-    # FIXME: this method will be moved completely to stcal once we have a method
-    #        that can create output wcs from s_region.
-    def compute_output_wcs(self, **wcs_pars):
-        """
-        returns a distortion-free WCS object and its pixel scale.
-        this code should be moved to stcal
+    def add_model(self, model_info, image_model):
+        super().add_model(model_info, image_model)
+        if self._update_output_meta_with_first_model:
+            self.resampled_model.update(image_model)
+            self._update_output_meta_with_first_model = False
 
-        """
-        # Define output WCS based on all inputs, including a reference WCS:
-        output_shape = wcs_pars.get("output_shape", None)
-        output_wcs = resample_utils.make_output_wcs(
-            self._input_models,
-            ref_wcs=None,
-            pscale_ratio=wcs_pars.get("pixel_scale_ratio", 1.0),
-            pscale=wcs_pars.get("pixel_scale", None),
-            rotation=wcs_pars.get("rotation", 0.0),
-            shape=None if output_shape is None else output_shape[::-1],
-            crpix=wcs_pars.get("crpix", None),
-            crval=wcs_pars.get("crval", None),
+        # blend headers if needed:
+        # TODO: add blenheaders operation here
+
+    def update_output_model_data(self):
+        # update data and meta for the output model:
+        # * arrays:
+        self.resampled_model.data = self.output_model["data"]
+        self.resampled_model.wht = self.output_model["wht"]
+
+        if self._enable_ctx:
+            self.resampled_model.con = self.output_model["con"]
+
+        if self._enable_var:
+            self.resampled_model.var_rnoise = self.output_model["var_rnoise"]
+            self.resampled_model.var_poisson = self.output_model["var_poisson"]
+            self.resampled_model.var_flat = self.output_model["var_flat"]
+            self.resampled_model.err = self.output_model["err"]
+
+        # * meta:
+        self.resampled_model.meta.wcs = self.output_model["wcs"]
+        self.resampled_model.meta.cal_step.resample = 'COMPLETE'
+        self.resampled_model.meta.resample.pixel_scale_ratio = self._pixel_scale_ratio
+        self.resampled_model.meta.resample.pixfrac = self.pixfrac
+        _update_fits_wcsinfo(self.resampled_model)
+        util.update_s_region_imaging(self.resampled_model)
+
+        self.resampled_model.meta.asn.pool_name = self._input_models.asn.get(
+            "pool_name",
+            None
+        )
+        self.resampled_model.meta.asn.table_name = self._input_models.asn.get(
+            "table_name",
+            None
         )
 
-        # Estimate output pixel area in Sr. NOTE: in principle we could
-        # use the same algorithm as for when output_wcs is provided by the
-        # user.
-        tr = output_wcs.pipeline[0].transform
-        output_pix_area = (
-            np.deg2rad(tr['cdelt1'].factor.value) *
-            np.deg2rad(tr['cdelt2'].factor.value)
-        )
-        return output_wcs, output_pix_area
+        # Update some basic exposure time values based on output_model
+        self.resampled_model.meta.exposure.exposure_time = self.output_model["exposure_time"]
+        self.resampled_model.meta.exposure.start_time = self.output_model["start_time"]
+        self.resampled_model.meta.exposure.end_time = self.output_model["end_time"]
+        if "measurement_time" in self.output_model:
+            self.resampled_model.meta.exposure.measurement_time = self.output_model["measurement_time"]
 
-    # TODO: Not sure about funct. signature and also I don't like it needs
-    # to open input files again. Should we store meta of all inputs?
-    # Should blendmeta.blendmodels be redesigned to blend one meta at a time?
-    def blend_output_metadata(self):
-        """ Create new output metadata based on blending all input metadata. """
+        # Update other exposure time keywords:
+        # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
+        xposure = self.output_model["exposure_time"]
+        self.resampled_model.meta.exposure.effective_exposure_time = xposure
+        # DURATION (identical to TELAPSE, elapsed time)
+        self.resampled_model.meta.exposure.duration = self.output_model["duration"]
+        self.resampled_model.meta.exposure.elapsed_exposure_time = self.output_model["duration"]
 
-        if not self._blendheaders:
-            return
-
-        ignore_list = [
-            'meta.photometry.pixelarea_steradians',
-            'meta.photometry.pixelarea_arcsecsq',
-        ]
-        return
-
-    # FIXME: blendmodels must be redesigned to work with model library but
-    #        most importantly, see if it can be done one at a time when the
-    #        'run()' method is run in order to avoid unnecessary opening/closing
-    #        of data models.
-
-        log.info(f'Blending metadata for {self._output_filename}')
-        blendmeta.blendmodels(
-            self._output_model,
-            inputs=self._input_models,
-            output=self._output_filename,
-            ignore=ignore_list
-        )
-
-    def final_post_processing(self):
-        # update meta for the output model:
-        self._output_model.meta.cal_step.resample = 'COMPLETE'
-        _update_fits_wcsinfo(self._output_model)
-        util.update_s_region_imaging(self._output_model)
-        self._output_model.meta.asn.pool_name = self._input_models.asn.get("pool_name", None)
-        self._output_model.meta.asn.table_name = self._input_models.asn.get("table_name", None)
-        self._output_model.meta.resample.pixel_scale_ratio = self._pixel_scale_ratio
-        self._output_model.meta.resample.pixfrac = self.pixfrac
-        self.blend_output_metadata()
+        # TODO: finalize blend headers if needed
 
     def run(self):
-        output_model = super().run()
-        ml = ModelLibrary([output_model])
-        return ml
-
-
-class ResampleJWSTSingle(ResampleJWSTModelIO, ResampleSingle):
-    dq_flag_name_map = pixel
-
-    def run(self):
-        output_models = super().run()
-        ml = ModelLibrary(output_models)
-        return ml
-
-    # FIXME: this method will be moved completely to stcal once we have a method
-    #        that can create output wcs from s_region.
-    def compute_output_wcs(self, **wcs_pars):
-        """
-        returns a distortion-free WCS object and its pixel scale.
-        this code should be moved to stcal
-
-        """
-        # Define output WCS based on all inputs, including a reference WCS:
-        output_shape = wcs_pars.get("output_shape", None)
-        output_wcs = resample_utils.make_output_wcs(
-            self._input_models,
-            ref_wcs=None,
-            pscale_ratio=wcs_pars.get("pixel_scale_ratio", 1.0),
-            pscale=wcs_pars.get("pixel_scale", None),
-            rotation=wcs_pars.get("rotation", 0.0),
-            shape=None if output_shape is None else output_shape[::-1],
-            crpix=wcs_pars.get("crpix", None),
-            crval=wcs_pars.get("crval", None),
-        )
-
-        # Estimate output pixel area in Sr. NOTE: in principle we could
-        # use the same algorithm as for when output_wcs is provided by the
-        # user.
-        tr = output_wcs.pipeline[0].transform
-        output_pix_area = (
-            np.deg2rad(tr['cdelt1'].factor.value) *
-            np.deg2rad(tr['cdelt2'].factor.value)
-        )
-        return output_wcs, output_pix_area
+        super().run()
+        self.update_output_model_data()
+        return self.resampled_model
 
 
 def _update_fits_wcsinfo(model):
-    """
-    Update FITS WCS keywords of the resampled image.
-    """
+    """ Update FITS WCS keywords of the resampled image. """
     # Delete any SIP-related keywords first
     pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
     regex = re.compile(pattern)
@@ -361,6 +323,7 @@ class ResampleData:
                 deleted from memory. Default value is `True` to keep
                 all products in memory.
         """
+        assert False
         self.output_dir = None
         self.output_filename = output
         if output is not None and '.fits' not in str(output):

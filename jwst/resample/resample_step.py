@@ -1,24 +1,33 @@
-import logging
-import re
 from copy import deepcopy
+import json
+import logging
+import os
+import re
 
 import asdf
-
-from jwst.datamodels import ModelLibrary, ImageModel  # type: ignore[attr-defined]
-from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.datamodels import ModelLibrary, ImageModel
+import gwcs
+from stcal.resample import resampled_wcs_from_models, OutputTooLargeError
 
 from . import resample
+from ..associations.asn_from_list import asn_from_list
 from ..stpipe import Step
-from ..assign_wcs import util
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["ResampleStep"]
-
+__all__ = ["ResampleStep", "MissingFileName"]
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+_OUPUT_EXT = ".fits"
+
+
+class MissingFileName(ValueError):
+    """ Raised when in_memory is False but no output file name has been
+        provided.
+    """
 
 
 class ResampleStep(Step):
@@ -59,58 +68,186 @@ class ResampleStep(Step):
     reference_file_types: list = []
 
     def process(self, input):
+        output_file_name = None
 
-        if isinstance(input, ModelLibrary):
-            input_models = input
-        elif isinstance(input, (str, dict, list)):
-            input_models = ModelLibrary(input, on_disk=not self.in_memory)
-        elif isinstance(input, ImageModel):
-            input_models = ModelLibrary([input], on_disk=not self.in_memory)
-            output = input.meta.filename
+        if isinstance(input, (str, dict, list)):
+            input = ModelLibrary(input, on_disk=not self.in_memory)
+        elif isinstance(input, ImageModel):  # TODO: do we need to support this?
+            input = ModelLibrary([input], on_disk=not self.in_memory)
+            # TODO: I don't get the purpose of this:
+            output_file_name = input.meta.filename  # <-- ?????
             self.blendheaders = False
+        elif not isinstance(input, ModelLibrary):
+            raise RuntimeError(f"Input {repr(input)} is not a 2D image.")
+
+        input_models = resample.JWSTLibModelAccess(input)
+
+        # try to figure output file name.
+        # TODO: review whether this is the intended action - not sure this
+        # code reproduces what's currently in the pipeline but also,
+        # not sure that code makes sense.
+        if output_file_name is not None:
+            output_file_name = output_file_name.strip()
+
+        if output_file_name and output_file_name.endswith(_OUPUT_EXT):
+            self._output_dir = ''
+            self._output_file_name = output_file_name
         else:
-            raise RuntimeError(f"Input {input} is not a 2D image.")
+            self._output_dir = output_file_name
+            self._output_file_name = None
 
         try:
-            output = input_models.asn["products"][0]["name"]
+            output_file_name = input_models.asn["products"][0]["name"]
         except KeyError:
             # coron data goes through this path by the time it gets to
             # resampling.
             # TODO: figure out why and make sure asn_table is carried along
-            output = None
+            pass
 
-        # Check that input models are 2D images
-        with input_models:
-            example_model = input_models.borrow(0)
-            data_shape = example_model.data.shape
-            input_models.shelve(example_model, 0, modify=False)
-            if len(data_shape) != 2:
-                # resample can only handle 2D images, not 3D cubes, etc
-                raise RuntimeError(f"Input {example_model} is not a 2D image.")
-            del example_model
-
-            # Make sure all input models have consistent NaN and DO_NOT_USE values
-            for model in input_models:
-                match_nans_and_flags(model)
-                input_models.shelve(model)
-            del model
+        resampled_models = []
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
-        kwargs.pop('blendheaders', None)
-
-        # Call the resampling routine
-        # resamp = resample.ResampleData(input_models, output=output, **kwargs)
-        # result = resamp.do_drizzle(input_models)
 
         if self.single:
-            resamp = resample.ResampleJWSTSingle(input_models, **kwargs)
-        else:
-            resamp = resample.ResampleJWSTCoAdd(input_models, output=output, **kwargs)
-        resamp.run()
-        result = resamp.output_model
+            output_suffix = "outlier_i2d"
 
-        return result
+            # define output WCS if needed using
+            if kwargs.pop("output_wcs", None) is None:
+                output_shape = (None if self.output_shape is None
+                                else self.output_shape[::-1])
+                kwargs["output_wcs"], *_ = resampled_wcs_from_models(
+                    input_models,
+                    pixel_scale_ratio=self.pixel_scale_ratio,
+                    pixel_scale=self.pixel_scale,
+                    output_shape=output_shape,
+                    rotation=self.rotation,
+                    crpix=self.crpix,
+                    crval=self.crval,
+                )
+
+            group_ids = input_models.group_indices
+
+            # Call the resampling routine for each group of images
+            for group_id in group_ids:
+                input_models.set_active_group(group_id)
+                log.info(f"Resampling images in group {group_id}")
+
+                try:
+                    resampler = resample.ResampleJWST(
+                        input_models,
+                        enable_ctx=False,
+                        enable_var=False,
+                        **kwargs,
+                    )
+                    model = resampler.run()
+
+                except OutputTooLargeError as e:
+                    log.error("Not enough available memory for resample.")
+                    log.error(e.msg)
+                    return input
+
+                except Exception as e:
+                    log.error(
+                        "The following exception occured while resampling."
+                    )
+                    log.error(e.msg)
+                    return input
+
+                # output file name for the resampled model:
+                while resampler.input_file_names:
+                    ref_file_name = resampler.input_file_names.pop()
+                    if ref_file_name:
+                        output_file_name = self.resampled_file_name_from_input(
+                            ref_file_name,
+                            suffix=output_suffix,
+                        )
+                        model.meta.filename = output_file_name
+                        break
+                else:
+                    ref_file_name = None
+                    if not self.in_memory:
+                        raise MissingFileName(
+                            "Unable to determine output file name which is "
+                            "required when in_memory=False."
+                        )
+
+                if self.in_memory:
+                    resampled_models.append(model)
+                else:
+                    # save model to file and append its file name to the output
+                    # list of resampled models:
+                    model.save(
+                        os.path.join(self._output_dir, model.meta.filename)
+                    )
+                    resampled_models.append(model.meta.filename)
+                    log.info(
+                        f"Resampled image model saved to {model.meta.filename}"
+                    )
+
+                resampled_models.append(model.meta.filename)
+                del model
+
+        else:
+            if not self.in_memory and output_file_name is None:
+                raise MissingFileName(
+                    "Unable to determine output file name which is "
+                    "required when in_memory=False."
+                )
+
+            if output_file_name and not output_file_name.endswith(_OUPUT_EXT):
+                sep = '' if output_file_name[-1] == '_' else '_'
+                output_file_name = output_file_name + f"{sep}i2d{_OUPUT_EXT}"
+
+            try:
+                resampler = resample.ResampleJWST(
+                    input_models,
+                    enable_ctx=True,
+                    enable_var=True,
+                    **kwargs,
+                )
+                model = resampler.run()
+            except OutputTooLargeError as e:
+                log.error("Not enough available memory for resample.")
+                log.error(e.msg)
+                return input
+            except Exception as e:
+                log.error("The following exception occured while resampling.")
+                log.error(e.msg)
+                return input
+
+            model.meta.filename = output_file_name
+
+            if self.in_memory:
+                resampled_models.append(model)
+            else:
+                model.save(model.meta.filename)
+                resampled_models.append(model.meta.filename)
+                log.info(
+                    f"Resampled image model saved to {model.meta.filename}"
+                )
+
+            del model
+
+        # make a ModelLibrary obj and save it to asn if requested:
+        if self.in_memory:
+            return ModelLibrary(resampled_models, on_disk=False)
+        else:
+            # build ModelLibrary as an association from the output file names
+            asn = asn_from_list(resampled_models, product_name=output_file_name)
+            # serializes the asn and converts to dict
+            asn_dict = json.loads(asn.dump()[1])
+            return ModelLibrary(asn_dict, on_disk=True)
+
+    def resampled_file_name_from_input(self, input_file_name, suffix):
+        """ Form output file name from input image name """
+        indx = input_file_name.rfind('.')
+        output_type = input_file_name[indx:]
+        output_root = '_'.join(
+            input_file_name.replace(output_type, '').split('_')[:-1]
+        )
+        output_file_name = f'{output_root}_{suffix}{output_type}'
+        return output_file_name
 
     @staticmethod
     def check_list_pars(vals, name, min_vals=None):
@@ -221,7 +358,6 @@ class ResampleStep(Step):
             good_bits=GOOD_BITS,
             blendheaders=self.blendheaders,
             allowed_memory=self.allowed_memory,
-            in_memory=self.in_memory
         )
 
         # Custom output WCS parameters.
@@ -237,11 +373,17 @@ class ResampleStep(Step):
             'pixel_scale': self.pixel_scale,
             'pixel_scale_ratio': self.pixel_scale_ratio,
         }
-        kwargs['wcs_pars'] = wcs_pars
-        kwargs['output_wcs'] = self.load_custom_wcs(
-            self.output_wcs,
-            wcs_pars['output_shape']
-        )
+        kwargs["wcs_pars"] = wcs_pars
+        if isinstance(self.output_wcs, str):
+            kwargs["output_wcs"] = self.load_custom_wcs(
+                self.output_wcs,
+                wcs_pars["output_shape"]
+            )
+        elif isinstance(self.output_wcs, gwcs.WCS):
+            if self.output_shape is not None:
+                self.output_wcs.array_shape = self.output_shape[::-1]
+                self.output_wcs.pixel_shape = self.output_shape
+            kwargs["output_wcs"] = self.output_wcs
 
         # Report values to processing log
         for k, v in kwargs.items():
@@ -280,8 +422,8 @@ class ResampleStep(Step):
         model.meta.wcsinfo.ctype2 = "DEC--TAN"
 
         # Remove no longer relevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
+        rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref",
+                   "v3yangle", "vparity"]
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]
