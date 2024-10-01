@@ -9,6 +9,8 @@ from ..barshadow import barshadow_step
 from ..flatfield import flat_field_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
+from ..resample import resample_spec_step
+from ..extract_1d import extract_1d_step
 from ..stpipe import Pipeline
 
 __all__ = ['MasterBackgroundMosStep']
@@ -60,6 +62,8 @@ class MasterBackgroundMosStep(Pipeline):
         'pathloss': pathloss_step.PathLossStep,
         'barshadow': barshadow_step.BarShadowStep,
         'photom': photom_step.PhotomStep,
+        'resample_spec': resample_spec_step.ResampleSpecStep,
+        'extract_1d': extract_1d_step.Extract1dStep,
     }
 
     # No need to prefetch. This will have been done by the parent step.
