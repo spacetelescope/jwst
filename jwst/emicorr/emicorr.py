@@ -438,25 +438,23 @@ def apply_emicorr(output_model, emicorr_model,
         # This is the phase matched noise model to subtract from each pixel of the input image
         dd_noise = lut[(phaseall * period_in_pixels).astype(int)]
 
-        # Interleave (straight copy) into 4 amps
-        noise = np.zeros((nints, ngroups, ny, nx))   # same size as input data
-        noise_x = np.arange(nx4) * 4
-        for k in range(4):
-            noise[:, :, :, noise_x + k] = dd_noise
-
         # Safety catch; anywhere the noise value is not finite, set it to zero
-        noise[~np.isfinite(noise)] = 0.0
+        dd_noise[~np.isfinite(dd_noise)] = 0.0
 
         # Subtract EMI noise from the input data
         log.info('Subtracting EMI noise from data')
-        output_model.data = output_model.data - noise
+
+        # Interleave (straight copy) into 4 amps
+        noise_x = np.arange(nx4) * 4
+        for k in range(4):
+            output_model.data[..., noise_x + k] = output_model.data[..., noise_x + k] - dd_noise
 
         # clean up
         del data
         del dd_all
         del times_this_int
         del phaseall
-        del noise
+        del dd_noise
 
     if save_intermediate_results and save_onthefly_reffile is not None:
         if 'FAST' in readpatt:
