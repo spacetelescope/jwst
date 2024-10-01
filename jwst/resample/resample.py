@@ -251,6 +251,82 @@ class ResampleData:
         else:
             iscale = 1.0
         return iscale
+    
+    def resample_group(self, input_models, indices):
+        """Apply resample_many_to_many for one group
+        
+        Parameters
+        ----------
+        input_models : ModelLibrary
+
+        indices : list
+        """
+        output_model = self.blank_output.copy()
+
+        copy_asn_info_from_library(input_models, output_model)
+
+        with input_models:
+            example_image = input_models.borrow(indices[0])
+
+            # Determine output file type from input exposure filenames
+            # Use this for defining the output filename
+            indx = example_image.meta.filename.rfind('.')
+            output_type = example_image.meta.filename[indx:]
+            output_root = '_'.join(example_image.meta.filename.replace(
+                output_type, '').split('_')[:-1])
+            output_model.meta.filename = (
+                f'{output_root}_'
+                f'{self.intermediate_suffix}{output_type}')
+            input_models.shelve(example_image, indices[0], modify=False)
+            del example_image
+
+            # Initialize the output with the wcs
+            driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
+                                            kernel=self.kernel, fillval=self.fillval)
+
+            log.info(f"{len(indices)} exposures to drizzle together")
+            for index in indices:
+                img = input_models.borrow(index)
+                if isinstance(img, datamodels.SlitModel):
+                    # must call this explicitly to populate area extension
+                    # although the existence of this extension may not be necessary
+                    img.area = img.area 
+                iscale = self._get_intensity_scale(img)
+                log.debug(f'Using intensity scale iscale={iscale}')
+
+                inwht = resample_utils.build_driz_weight(
+                    img,
+                    weight_type=self.weight_type,
+                    good_bits=self.good_bits
+                )
+
+                # apply sky subtraction
+                blevel = img.meta.background.level
+                if not img.meta.background.subtracted and blevel is not None:
+                    data = img.data - blevel
+                else:
+                    data = img.data
+
+                xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                    data.shape,
+                    img.meta.wcs.bounding_box
+                )
+
+                driz.add_image(
+                    data,
+                    img.meta.wcs,
+                    iscale=iscale,
+                    inwht=inwht,
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax
+                )
+                del data
+                input_models.shelve(img, index, modify=False)
+                del img
+
+        return output_model
 
     def resample_many_to_many(self, input_models):
         """Resample many inputs to many outputs where outputs have a common frame.
@@ -263,75 +339,8 @@ class ResampleData:
         """
         output_models = []
         for group_id, indices in input_models.group_indices.items():
-            output_model = self.blank_output
-
-            copy_asn_info_from_library(input_models, output_model)
-
-            with input_models:
-                example_image = input_models.borrow(indices[0])
-
-                # Determine output file type from input exposure filenames
-                # Use this for defining the output filename
-                indx = example_image.meta.filename.rfind('.')
-                output_type = example_image.meta.filename[indx:]
-                output_root = '_'.join(example_image.meta.filename.replace(
-                    output_type, '').split('_')[:-1])
-                if self.asn_id is not None:
-                    output_model.meta.filename = (
-                        f'{output_root}_{self.asn_id}_'
-                        f'{self.intermediate_suffix}{output_type}')
-                else:
-                    output_model.meta.filename = (
-                        f'{output_root}_'
-                        f'{self.intermediate_suffix}{output_type}')
-                input_models.shelve(example_image, indices[0], modify=False)
-                del example_image
-
-                # Initialize the output with the wcs
-                driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                                kernel=self.kernel, fillval=self.fillval)
-
-                log.info(f"{len(indices)} exposures to drizzle together")
-                for index in indices:
-                    img = input_models.borrow(index)
-                    if isinstance(img, datamodels.SlitModel):
-                        # must call this explicitly to populate area extension
-                        # although the existence of this extension may not be necessary
-                        img.area = img.area 
-                    iscale = self._get_intensity_scale(img)
-                    log.debug(f'Using intensity scale iscale={iscale}')
-
-                    inwht = resample_utils.build_driz_weight(
-                        img,
-                        weight_type=self.weight_type,
-                        good_bits=self.good_bits
-                    )
-
-                    # apply sky subtraction
-                    blevel = img.meta.background.level
-                    if not img.meta.background.subtracted and blevel is not None:
-                        data = img.data - blevel
-                    else:
-                        data = img.data
-
-                    xmin, xmax, ymin, ymax = resample_utils._resample_range(
-                        data.shape,
-                        img.meta.wcs.bounding_box
-                    )
-
-                    driz.add_image(
-                        data,
-                        img.meta.wcs,
-                        iscale=iscale,
-                        inwht=inwht,
-                        xmin=xmin,
-                        xmax=xmax,
-                        ymin=ymin,
-                        ymax=ymax
-                    )
-                    del data
-                    input_models.shelve(img, index, modify=False)
-                    del img
+            
+            output_model = self.resample_group(input_models, indices)
 
             if not self.in_memory:
                 # Write out model to disk, then return filename
@@ -342,9 +351,7 @@ class ResampleData:
                 log.info(f"Saved model in {output_name}")
                 output_models.append(output_name)
             else:
-                output_models.append(output_model.copy())
-            output_model.data *= 0.
-            output_model.wht *= 0.
+                output_models.append(output_model)
 
         if not self.in_memory:
             # build ModelLibrary as an association from the output files

@@ -91,16 +91,24 @@ class ImageSubsetArray:
         if jmax < jmin:
             jmax = jmin
 
+        # To ensure that we can mix and match subarray obs, take
+        # the x/y shape from self.data. To ensure we can work
+        # with mismatched NINTS, if we have that third dimension
+        # use the value from other
+        data_shape = list(self.data.shape)
+        if self.im_dim == 3:
+            data_shape[0] = other.data.shape[0]
+
         # Set up arrays, NaN out data/err for sigma clipping, keep DQ as 0 for bitwise_or
-        data_overlap = np.ones_like(other.data) * np.nan
-        err_overlap = np.ones_like(other.data) * np.nan
-        dq_overlap = np.zeros_like(other.data, dtype=np.uint32)
+        data_overlap = np.full(data_shape, np.nan, dtype=other.data.dtype)
+        err_overlap = np.full(data_shape, np.nan, dtype=other.data.dtype)
+        dq_overlap = np.zeros(data_shape, dtype=np.uint32)
 
         if self.im_dim == 2:
             idx = (slice(jmin - other.jmin, jmax - other.jmin),
                    slice(imin - other.imin, imax - other.imin),
                    )
-        if self.im_dim == 3:
+        else:
             idx = (slice(None, None),
                    slice(jmin - other.jmin, jmax - other.jmin),
                    slice(imin - other.imin, imax - other.imin),
@@ -112,9 +120,9 @@ class ImageSubsetArray:
         dq_cutout = other.dq[idx]
 
         # Put them into the right place in the original image array shape
-        data_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(data_cutout)
-        err_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(err_cutout)
-        dq_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(dq_cutout)
+        data_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(data_cutout)
+        err_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(err_cutout)
+        dq_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(dq_cutout)
 
         return data_overlap, err_overlap, dq_overlap
 
