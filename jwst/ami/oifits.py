@@ -18,7 +18,7 @@ from . import leastsqnrm
 
 
 class RawOifits:
-    def __init__(self, fringefitter, method="median"):
+    def __init__(self, fringefitter, method="mean"):
         """
         Class to store AMI data in the format required to write out to OIFITS files
         Angular quantities of input are in radians from fringe fitting; converted to degrees for saving.
@@ -29,7 +29,7 @@ class RawOifits:
             Object containing nrm_list attribute (list of nrm objects)
             and other info needed for OIFITS files
         method: string
-            Method to average observables: mean or median. Default median.
+            Method to average observables: mean or median. Default mean.
 
         Notes
         -----
@@ -87,6 +87,16 @@ class RawOifits:
     def rotate_matrix(self, cov_mat, theta):
         """
         Rotate a covariance matrix by an angle.
+
+        Parameters
+        ----------
+        cov_mat:
+        theta: float
+            Angle by which to rotate the matrix (radians)
+
+        Returns
+        -------
+
         """
         c, s = np.cos(theta), np.sin(theta)
         R_mat = [[c, -s],
@@ -102,28 +112,35 @@ class RawOifits:
         and between triple product amps/closure phases, and closure amplitudes/quad phases.
         Convert r, theta (modulus, phase) to x,y. Calculate cov(x,y). Rotate resulting
         2x2 matrix back to r, theta. Take sqrt of relevant covariance element to be error.
-        This must be done with phases in radians
-        self.method gives averaging method
-        Input names in nrm differ from implaneia!
+        This must be done with phases in radians.
+
+        Parameters
+        ----------
+        averfunc
+
+        Returns
+        -------
+        avg_sqv, err_sqv, avg_fa, err_fa, avg_fp, err_fp, avg_cp, err_cp, avg_t3amp, err_t3amp, avg_ca, err_ca, avg_q4phi, err_q4phi, avg_pist, err_pist
 
         """
         covmats_fringes, covmats_triples, covmats_quads = self.observable_covariances(averfunc)
 
-        if self.method == 'median':
-            _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21. std_fa is just for comparing to covariance
-            _, avg_fp, std_fp  = sigma_clipped_stats(self.fringe_phases, axis=0)  # 21
-            _, avg_sqv, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
-            _, avg_pist, err_pist = sigma_clipped_stats(self.pistons, axis=0)
-        else:  # mean
+        if self.method == 'mean':
             avg_fa, _, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
             avg_fp, _, std_fp = sigma_clipped_stats(self.fringe_phases, axis=0)
             avg_sqv, _, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             avg_pist, _, err_pist = sigma_clipped_stats(self.pistons, axis=0)
+        else:  # median
+            _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21. std_fa is just for comparing to covariance
+            _, avg_fp, std_fp  = sigma_clipped_stats(self.fringe_phases, axis=0)  # 21
+            _, avg_sqv, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
+            _, avg_pist, err_pist = sigma_clipped_stats(self.pistons, axis=0)
         
+        err_pist = err_pist/np.sqrt(self.nslices) # standard error of the mean
         err_fa, err_fp = self.err_from_covmat(covmats_fringes)
 
         # calculate squared visibility (fringe) amplitude uncertainties correctly
-        err_sqv = 2 * avg_fa * err_fa
+        err_sqv = (2 * avg_fa * err_fa) / np.sqrt(self.nslices)
 
         # calculate triple and quad quantities from **averaged** fringe amps and phases
         avg_t3amp = leastsqnrm.t3_amplitudes(avg_fa, n=self.n_holes)
@@ -139,16 +156,41 @@ class RawOifits:
     def err_from_covmat(self, covmatlist):
         """
         Return sqrt of [0,0] and [1,1] elements of each of a list of covariance matrices,
-        for use as observable errors.
+        divided by sqrt(N_ints), for use as observable errors. (standard error of the mean)
+        If using median, error calculation is questionable because this is NOT the standard
+        error of the median
+        
+        Parameters
+        ----------
+        covmatlist: array
+            array of covariance matrices for each baseline/triple/quad
+            shape e.g. (21,2,2) or (35,2,2)
+
+        Returns
+        -------
+        err_00: array
+            standard errors of the mean of the first observable. shape e.g. (21)
+        err_11: array
+            standard errors of the mean of the second observable. shape e.g. (21)
         """
-        err_00 = np.sqrt(np.array([covmat[0,0] for covmat in covmatlist]))
-        err_11 = np.sqrt(np.array([covmat[1,1] for covmat in covmatlist]))
+        err_00 = np.sqrt(np.array([covmat[0,0] for covmat in covmatlist]))/np.sqrt(self.nslices)
+        err_11 = np.sqrt(np.array([covmat[1,1] for covmat in covmatlist]))/np.sqrt(self.nslices)
 
         return err_00, err_11
 
     def observable_covariances(self, averfunc):
         """
         input: nrm: ObservablesFromText instance
+        Parameters
+        ----------
+        averfunc:
+
+        Returns
+        -------
+        cov_mat_fringes:
+        cov_mat_triples:
+        cov_mat_quads:
+
         """
         # loop over 21 baselines
         cov_mat_fringes = []
@@ -173,18 +215,30 @@ class RawOifits:
             covmat = self.cov_r_theta(quadamp, quadphase, averfunc)
             cov_mat_quads.append(covmat)
 
-        # covmats to be written to oifits. store in nrm object?
-        # store entire matrix... somewhere
+        # covmats to be written to oifits. store in rawoifits object? TBD
         # lists of cov mats have shape e.g. (21, 2, 2) or (35, 2, 2)
+
         return np.array(cov_mat_fringes), np.array(cov_mat_triples), np.array(cov_mat_quads)
 
 
     def cov_r_theta(self, rr, theta, averfunc):
         """
-        rr: complex number modulus, array 
-        theta: complex number phase, array
-        averfunc: np.median or np.mean
-        rotating by **average** phase (over integrations)
+        Calculate covariance in x, y coordinates. Rotate covariance matrix by 
+        **average** phase (over integrations) to get matrix in (r,theta)
+
+        Parameters
+        ----------
+        rr: array
+            complex number modulus 
+        theta: array
+            complex number phase
+        averfunc: np.mean or np.median
+
+        Returns
+        -------
+        cov_mat_r_theta: array (2,2)
+            Covariance matrix in r, theta coordinates
+
         """
         xx = rr * np.cos(theta)
         yy = rr * np.sin(theta)
@@ -239,7 +293,7 @@ class RawOifits:
 
         # Now we are setting up the observables to be written out to OIFITS
         if self.method not in ["mean", "median", "multi"]:
-            self.method = "median"
+            self.method = "mean"  # default to mean
         # set these as attributes (some may exist and be overwritten)
         if self.method == "multi":
             self.vis2 = self.fringe_amplitudes_squared.T
@@ -260,11 +314,11 @@ class RawOifits:
             self.e_pist = np.zeros(self.pist.shape)
 
 
-        elif self.method == "median":
-            self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.closure_phases, self.e_cp, self.t3amp, self.e_t3amp, self.camp, self.e_camp, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  self.average_observables(np.median)
-
-        else:  # take the mean
+        elif self.method == "mean":
             self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.closure_phases, self.e_cp, self.t3amp, self.e_t3amp, self.camp, self.e_camp, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  self.average_observables(np.mean)
+
+        else:  # take the median
+            self.vis2, self.e_vis2, self.visamp, self.e_visamp, self.visphi, self.e_visphi, self.closure_phases, self.e_cp, self.t3amp, self.e_t3amp, self.camp, self.e_camp, self.q4phi, self.e_q4phi, self.pist, self.e_pist =  self.average_observables(np.median)
         
         # Convert angular quantities from radians to degrees
         self.visphi = np.rad2deg(self.visphi)
