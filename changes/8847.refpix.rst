@@ -1,1 +1,0 @@
-Include resample and extract_1d into MOS background pipeline
