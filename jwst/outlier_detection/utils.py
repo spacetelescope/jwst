@@ -85,6 +85,7 @@ def median_without_resampling(input_models,
 
             drizzled_model = input_models.borrow(i)
             drizzled_data = drizzled_model.data.copy()
+            drizzled_err = drizzled_model.err.copy()
             weight = build_driz_weight(drizzled_model,
                                        weight_type=weight_type,
                                        good_bits=good_bits)
@@ -97,7 +98,9 @@ def median_without_resampling(input_models,
 
             weight_threshold = compute_weight_threshold(weight, maskpt)
             drizzled_data[weight < weight_threshold] = np.nan
+            drizzled_err[weight < weight_threshold] = np.nan
             computer.append(drizzled_data, i)
+            err_computer.append(drizzled_err, i)
 
             input_models.shelve(drizzled_model, i, modify=False)
 
