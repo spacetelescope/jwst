@@ -12,9 +12,8 @@ from spherical_geometry.polygon import SphericalPolygon
 from astropy.io import fits
 
 from stdatamodels.jwst import datamodels
-from stcal.resample import LibModelAccess, Resample, OutputTooLargeError
+from stcal.resample import LibModelAccessBase, Resample, OutputTooLargeError
 
-from drizzle.resample import Drizzle
 from stdatamodels.jwst.datamodels.dqflags import pixel
 from stdatamodels.properties import ObjectNode
 
@@ -22,6 +21,7 @@ from jwst.datamodels import ModelLibrary
 from jwst.associations.asn_from_list import asn_from_list
 
 from jwst.model_blender.blender import ModelBlender
+from jwst.assign_wcs import util
 from jwst.resample import resample_utils
 
 log = logging.getLogger(__name__)
@@ -31,12 +31,13 @@ log.setLevel(logging.DEBUG)
 __all__ = [
     "ResampleData",
     "OutputTooLargeError",
-    "JWSTLibModelAccess",
-    "ResampleJWST",
+    "LibModelAccess",
+    "ResampleImage",
+    "is_imaging_wcs",
 ]
 
 
-class JWSTLibModelAccess(LibModelAccess):
+class LibModelAccess(LibModelAccessBase):
     attributes_path = {
         "data": "data",
         "dq": "dq",
@@ -66,6 +67,10 @@ class JWSTLibModelAccess(LibModelAccess):
         "weight_type": "meta.resample.weight_type",
         "pointings": "meta.resample.pointings",
         "n_coadds": "meta.resample.n_coadds",
+
+        # spectroscopy-specific:
+        "instrument_name": "meta.instrument.name",
+        "exposure_type": "meta.exposure.type",
     }
 
     def __new__(cls, *args, **kwargs):
@@ -137,12 +142,11 @@ class JWSTLibModelAccess(LibModelAccess):
         self._active_group = group_id
 
 
-class ResampleJWST(Resample):
+class ResampleImage(Resample):
     dq_flag_name_map = pixel
 
     def __init__(self, input_models, *args, blendheaders=True,
-                 output_model=None, output_file_name=None, in_memory=True,
-                 **kwargs):
+                 output_model=None, **kwargs):
         if output_model is None:
             self.resampled_model = datamodels.ImageModel()
             self._update_output_meta_with_first_model = True
@@ -155,9 +159,18 @@ class ResampleJWST(Resample):
                 enable_ctx=kwargs.get("enable_ctx", True),
                 enable_var=kwargs.get("enable_var", True),
             )
-            output_model = JWSTLibModelAccess.get_model_attributes(
+            output_model = LibModelAccess.get_model_attributes(
                 output_model,
                 attributes=attributes,
+            )
+
+        if blendheaders:
+            self.blender = ModelBlender(
+                blend_ignore_attrs=[
+                    'meta.photometry.pixelarea_steradians',
+                    'meta.photometry.pixelarea_arcsecsq',
+                    'meta.filename',
+                ]
             )
 
         super().__init__(
@@ -177,11 +190,15 @@ class ResampleJWST(Resample):
             self._update_output_meta_with_first_model = False
 
         # blend headers if needed:
-        # TODO: add blenheaders operation here
+        if self._blendheaders:
+            self.blender.accumulate(image_model)
 
     def update_output_model_data(self):
         # update data and meta for the output model:
         # * arrays:
+        if self._blendheaders:
+            self.blender.finalize_model(self.resampled_model)
+
         self.resampled_model.data = self.output_model["data"]
         self.resampled_model.wht = self.output_model["wht"]
 
@@ -199,8 +216,13 @@ class ResampleJWST(Resample):
         self.resampled_model.meta.cal_step.resample = 'COMPLETE'
         self.resampled_model.meta.resample.pixel_scale_ratio = self._pixel_scale_ratio
         self.resampled_model.meta.resample.pixfrac = self.pixfrac
-        _update_fits_wcsinfo(self.resampled_model)
-        util.update_s_region_imaging(self.resampled_model)
+
+        if is_imaging_wcs(self.resampled_model.meta.wcs):
+            # only for an imaging WCS:
+            self.update_fits_wcsinfo(self.resampled_model)
+            util.update_s_region_imaging(self.resampled_model)
+        else:
+            util.update_s_region_spectral(self.resampled_model)
 
         self.resampled_model.meta.asn.pool_name = self._input_models.asn.get(
             "pool_name",
@@ -233,49 +255,55 @@ class ResampleJWST(Resample):
         self.update_output_model_data()
         return self.resampled_model
 
+    @staticmethod
+    def update_fits_wcsinfo(model):
+        """ Update FITS WCS keywords of the resampled image. """
+        # Delete any SIP-related keywords first
+        pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
+        regex = re.compile(pattern)
 
-def _update_fits_wcsinfo(model):
-    """ Update FITS WCS keywords of the resampled image. """
-    # Delete any SIP-related keywords first
-    pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
-    regex = re.compile(pattern)
+        keys = list(model.meta.wcsinfo.instance.keys())
+        for key in keys:
+            if regex.match(key):
+                del model.meta.wcsinfo.instance[key]
 
-    keys = list(model.meta.wcsinfo.instance.keys())
-    for key in keys:
-        if regex.match(key):
-            del model.meta.wcsinfo.instance[key]
+        # Write new PC-matrix-based WCS based on GWCS model
+        transform = model.meta.wcs.forward_transform
+        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+        model.meta.wcsinfo.ra_ref = transform[6].lon.value
+        model.meta.wcsinfo.dec_ref = transform[6].lat.value
+        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+        model.meta.wcsinfo.ctype1 = "RA---TAN"
+        model.meta.wcsinfo.ctype2 = "DEC--TAN"
 
-    # Write new PC-matrix-based WCS based on GWCS model
-    transform = model.meta.wcs.forward_transform
-    model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
-    model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
-    model.meta.wcsinfo.cdelt1 = transform[3].factor.value
-    model.meta.wcsinfo.cdelt2 = transform[4].factor.value
-    model.meta.wcsinfo.ra_ref = transform[6].lon.value
-    model.meta.wcsinfo.dec_ref = transform[6].lat.value
-    model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
-    model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
-    model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
-    model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
-    model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
-    model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
-    model.meta.wcsinfo.ctype1 = "RA---TAN"
-    model.meta.wcsinfo.ctype2 = "DEC--TAN"
+        # Remove no longer relevant WCS keywords
+        rm_keys = [
+            'v2_ref',
+            'v3_ref',
+            'ra_ref',
+            'dec_ref',
+            'roll_ref',
+            'v3yangle',
+            'vparity',
+        ]
+        for key in rm_keys:
+            if key in model.meta.wcsinfo.instance:
+                del model.meta.wcsinfo.instance[key]
 
-    # Remove no longer relevant WCS keywords
-    rm_keys = [
-        'v2_ref',
-        'v3_ref',
-        'ra_ref',
-        'dec_ref',
-        'roll_ref',
-        'v3yangle',
-        'vparity',
-    ]
-    for key in rm_keys:
-        if key in model.meta.wcsinfo.instance:
-            del model.meta.wcsinfo.instance[key]
 
+def is_imaging_wcs(wcs):
+    imaging = all(
+        ax == 'SPATIAL' for ax in wcs.output_frame.axes_type
+    )
+    return imaging
 
 ####################################################
 #  Code below was left for spectral data for now   #

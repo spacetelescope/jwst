@@ -1,13 +1,12 @@
-from copy import deepcopy
 import json
 import logging
 import os
 import re
 
-import asdf
 from jwst.datamodels import ModelLibrary, ImageModel
 import gwcs
 from stcal.resample import resampled_wcs_from_models, OutputTooLargeError
+from stcal.resample.utils import load_custom_wcs
 
 from . import resample
 from ..associations.asn_from_list import asn_from_list
@@ -80,7 +79,7 @@ class ResampleStep(Step):
         elif not isinstance(input, ModelLibrary):
             raise RuntimeError(f"Input {repr(input)} is not a 2D image.")
 
-        input_models = resample.JWSTLibModelAccess(input)
+        input_models = resample.LibModelAccess(input)
 
         # try to figure output file name.
         # TODO: review whether this is the intended action - not sure this
@@ -134,7 +133,7 @@ class ResampleStep(Step):
                 log.info(f"Resampling images in group {group_id}")
 
                 try:
-                    resampler = resample.ResampleJWST(
+                    resampler = resample.ResampleImage(
                         input_models,
                         enable_ctx=False,
                         enable_var=False,
@@ -200,7 +199,7 @@ class ResampleStep(Step):
                 output_file_name = output_file_name + f"{sep}i2d{_OUPUT_EXT}"
 
             try:
-                resampler = resample.ResampleJWST(
+                resampler = resample.ResampleImage(
                     input_models,
                     enable_ctx=True,
                     enable_var=True,
@@ -288,63 +287,6 @@ class ResampleStep(Step):
         else:
             raise ValueError(f"Both '{name}' values must be either None or not None.")
 
-    @staticmethod
-    def load_custom_wcs(asdf_wcs_file, output_shape=None):
-        """
-        Load a custom output WCS from an ASDF file.
-
-        Parameters
-        ----------
-        asdf_wcs_file : str
-            Path to an ASDF file containing a GWCS structure.
-        output_shape : tuple of int, optional
-            Array shape for the output data.  If not provided,
-            the custom WCS must specify one of: pixel_shape,
-            array_shape, or bounding_box.
-
-        Returns
-        -------
-        wcs : WCS
-            The output WCS to resample into.
-        """
-        if not asdf_wcs_file:
-            return None
-
-        with asdf.open(asdf_wcs_file) as af:
-            wcs = deepcopy(af.tree["wcs"])
-            pixel_area = af.tree.get("pixel_area", None)
-            pixel_shape = af.tree.get("pixel_shape", None)
-            array_shape = af.tree.get("array_shape", None)
-
-        if not hasattr(wcs, "pixel_area") or wcs.pixel_area is None:
-            wcs.pixel_area = pixel_area
-        if not hasattr(wcs, "pixel_shape") or wcs.pixel_shape is None:
-            wcs.pixel_shape = pixel_shape
-        if not hasattr(wcs, "array_shape") or wcs.array_shape is None:
-            wcs.array_shape = array_shape
-
-        if output_shape is not None:
-            wcs.array_shape = output_shape[::-1]
-            wcs.pixel_shape = output_shape
-        elif wcs.pixel_shape is not None:
-            wcs.array_shape = wcs.pixel_shape[::-1]
-        elif wcs.array_shape is not None:
-            wcs.pixel_shape = wcs.array_shape[::-1]
-        elif wcs.bounding_box is not None:
-            wcs.array_shape = tuple(
-                int(axs[1] + 0.5)
-                for axs in wcs.bounding_box.bounding_box(order="C")
-            )
-            wcs.pixel_shape = wcs.array_shape[::-1]
-        else:
-            raise ValueError(
-                "Step argument 'output_shape' is required when custom WCS "
-                "does not have 'array_shape', 'pixel_shape', or "
-                "'bounding_box' attributes set."
-            )
-
-        return wcs
-
     def get_drizpars(self):
         """
         Load all drizzle-related parameter values into kwargs list.
@@ -375,7 +317,7 @@ class ResampleStep(Step):
         }
         kwargs["wcs_pars"] = wcs_pars
         if isinstance(self.output_wcs, str):
-            kwargs["output_wcs"] = self.load_custom_wcs(
+            kwargs["output_wcs"] = load_custom_wcs(
                 self.output_wcs,
                 wcs_pars["output_shape"]
             )
