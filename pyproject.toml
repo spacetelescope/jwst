@@ -264,6 +264,8 @@ line-length = 130
 lint.ignore = [
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
+    "ANN101", # Missing type annotation for self in method
+    "ANN102", # Missing type annotation for cls in classmethod    
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -285,6 +287,27 @@ lint.ignore = [
 "jwst/ramp_fitting/tests/*" = [
     "E402", # module-level import not at top of file
 ]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "astropy.*",
+    "gwcs.*",
+    "tweakwcs.*",
+    "stdatamodels.*",
+    "asdf.*",
+    "scipy.*",
+    "drizzle.*",
+    # don't complain about the installed c parts of this library
+    "stcal.ramp_fitting.ols_cas22._fit",
+    "stcal.ramp_fitting.ols_cas22._jump",
+    "stcal.ramp_fitting.slope_fitter",
+]
+ignore_missing_imports = true
 
 [tool.towncrier]
 filename = "CHANGES.rst"
