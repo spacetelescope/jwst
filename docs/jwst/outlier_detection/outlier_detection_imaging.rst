@@ -171,6 +171,10 @@ during processing includes:
    Those sections are then read in one at a time to compute the median image.
 
 These changes result in a minimum amount of memory usage during processing at the obvious
-expense of reading and writing the products from disk.
+expense of reading and writing the products from disk. Note that if a ModelLibrary object
+is input to the step, the memory behavior of the step is read from the ``on_disk`` status
+of the ModelLibrary object, and the ``in_memory`` parameter of the step is ignored.
+When running ``calwebb_image3``, the ``in_memory`` flag should therefore be set at the pipeline level,
+e.g., ``strun calwebb_image3 asn.json --in-memory=True``; the step-specific flag will be ignored.
 
 .. automodapi:: jwst.outlier_detection.imaging

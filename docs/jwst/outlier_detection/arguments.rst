@@ -89,6 +89,8 @@ that control the behavior of the processing:
   Specifies whether or not to load and create all images that are used during
   processing into memory. If ``False``, input files are loaded from disk when
   needed and all intermediate files are stored on disk, rather than in memory.
+  This flag is superseded by the pipeline-level ``--in-memory`` flag, and thus
+  has no effect when running the full level 3 pipeline.
 
 Step Arguments for IFU data
 ===========================
