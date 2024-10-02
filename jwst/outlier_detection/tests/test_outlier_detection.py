@@ -203,6 +203,7 @@ def we_three_sci():
 def test_outlier_step_no_outliers(we_three_sci, do_resample, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
+    container[0].var_rnoise[10, 10] = 1E9
     pristine = ModelContainer([m.copy() for m in container])
     OutlierDetectionStep.call(container, in_memory=True, resample_data=do_resample)
 
@@ -261,7 +262,8 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     assert len(median_files) != 0
 
 
-def test_outlier_step_spec(tmp_cwd, tmp_path):
+@pytest.mark.parametrize('resample', [True, False])
+def test_outlier_step_spec(tmp_cwd, tmp_path, resample):
     """Test outlier step for spec data including saving intermediate results."""
     output_dir = tmp_path / 'output'
     output_dir.mkdir(exist_ok=True)
@@ -274,18 +276,25 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
     # Make it an exposure type outlier detection expects
     miri_cal.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
-    # Make a couple copies, give them unique exposure numbers and filename
-    container = ModelContainer([miri_cal, miri_cal.copy(), miri_cal.copy()])
-    for i, model in enumerate(container):
-        model.meta.filename = f'test_{i}_cal.fits'
+    def make_input():
+        # Make a couple copies, give them unique exposure numbers and filename
+        container = ModelContainer([miri_cal.copy(), miri_cal.copy(), miri_cal.copy()])
+        for i, model in enumerate(container):
+            model.meta.filename = f'test_{i}_cal.fits'
 
-    # Drop a CR on the science array in the first image
-    container[0].data[209, 37] += 1
+        # Drop a CR on the science array in the first image
+        container[0].data[209, 37] += 1
+
+        return container
 
     # Verify that intermediate files are removed when not saved
-    # (s2d files are expected, i2d files are not, but we'll check
-    # for them to make sure the imaging extension didn't creep back in)
-    OutlierDetectionStep.call(container, output_dir=output_dir, save_results=True)
+    # If resampling, s2d files are expected, i2d files are not,
+    # but we'll check for them to make sure the imaging extension
+    # didn't creep back in.
+    container = make_input()
+    OutlierDetectionStep.call(container,
+                              output_dir=output_dir, save_results=True,
+                              resample_data=resample)
     for dirname in [output_dir, tmp_cwd]:
         result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
         i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
@@ -306,9 +315,10 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
             assert len(result_files) == 0
 
     # Call again, but save intermediate to the output path
+    container = make_input()
     result = OutlierDetectionStep.call(
         container, save_results=True, save_intermediate_results=True,
-        output_dir=output_dir
+        output_dir=output_dir, resample_data=resample
     )
 
     # Make sure nothing changed in SCI array
@@ -331,8 +341,13 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
             assert len(result_files) == len(container)
 
             # s2d, median, and blot files are written to the output directory
-            assert len(s2d_files) == len(container)
-            assert len(blot_files) == len(container)
+            if resample:
+                assert len(s2d_files) == len(container)
+                assert len(blot_files) == len(container)
+            else:
+                assert len(s2d_files) == 0
+                assert len(blot_files) == 0
+
             assert len(median_files) == 1
 
             # i2d files not written

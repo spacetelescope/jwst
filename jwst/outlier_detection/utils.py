@@ -78,16 +78,14 @@ def median_without_resampling(input_models,
     with input_models:
         for i in range(len(input_models)):
 
-            drizzled_model = input_models.borrow(i)
-            drizzled_model.wht = build_driz_weight(drizzled_model,
-                                                    weight_type=weight_type,
-                                                    good_bits=good_bits)
-            median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
-            input_models.shelve(drizzled_model, i, modify=True)
+            input_model = input_models.borrow(i)
+            drizzled_model = copy.deepcopy(input_model)
+            input_models.shelve(input_model, i, modify=False)
 
-            if save_intermediate_results:
-                # write the drizzled model to file
-                _fileio.save_drizzled(drizzled_model, make_output_path)
+            drizzled_model.wht = build_driz_weight(drizzled_model,
+                                                   weight_type=weight_type,
+                                                   good_bits=good_bits)
+            median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
 
             if i == 0:
                 input_shape = (ngroups,)+drizzled_model.data.shape
