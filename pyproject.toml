@@ -292,8 +292,27 @@ lint.ignore = [
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
-disable_error_code = ["import-untyped"] # do not check imports
+disable_error_code = [
+    "import-untyped", # do not check imports
+    "attr-defined", # temporarily ignore jwst.datamodels not found errors, find better way later, remove before merge
+] 
 exclude = ["build"]
+
+[[tool.mypy.overrides]]
+# don't complain about the installed c parts of this library
+module = [
+    "jwst.cube_build.cube_match_internal",
+    "jwst.cube_build.cube_match_sky_driz",
+    "jwst.cube_build.cube_match_sky_pointcloud",
+    "jwst.lib.winclip",
+    "jwst.straylight.calc_xart",
+]
+ignore_missing_imports = true
+
+# be sure to remove before merge
+[[tool.mypy.overrides]]
+module = ["jwst.associations.*", "jwst.lib.set_telescope_pointing"]
+ignore_errors = true
 
 [tool.towncrier]
 filename = "CHANGES.rst"

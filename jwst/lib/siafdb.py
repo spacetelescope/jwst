@@ -76,7 +76,7 @@ class SiafDb:
             log_level = logging.ERROR
         try:
             with LoggingContext(logger_pysiaf, level=log_level):
-                import pysiaf
+                import pysiaf # type: ignore[import-not-found]
         except ImportError:
             raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
         self.pysiaf = pysiaf

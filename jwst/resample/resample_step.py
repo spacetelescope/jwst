@@ -56,7 +56,7 @@ class ResampleStep(Step):
         in_memory = boolean(default=True)  # Keep images in memory
     """
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def process(self, input):
 

@@ -8,7 +8,6 @@ import numpy as np
 from dataclasses import dataclass
 from astropy.modeling import polynomial
 from astropy.io import fits
-from gwcs import WCS
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from stdatamodels.jwst.datamodels.apcorr import (

@@ -159,7 +159,7 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     for idx in range(w - 1):
         shifted[idx:-w + idx + 1, idx] = x
     shifted[idx + 1:, idx + 1] = x
-    medians = np.median(shifted, axis=1)
+    medians: np.ndarray = np.median(shifted, axis=1)
     for idx in range(w - 1):
         medians[idx] = np.median(shifted[idx, :idx + 1])
         medians[-idx - 1] = np.median(shifted[-idx - 1, -idx - 1:])
