@@ -84,7 +84,7 @@ class Association(MutableMapping):
     attribute is not specified.
     """
 
-    ioregistry = IORegistry()
+    ioregistry: IORegistry = IORegistry()
     """The association IO registry"""
 
     def __init__(
