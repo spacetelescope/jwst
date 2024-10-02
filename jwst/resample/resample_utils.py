@@ -17,7 +17,13 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-__all__ = ['decode_context']
+__all__ = ['decode_context', 'is_blank']
+
+
+def is_blank(val):
+    """ Determines whether or not a value is considered 'blank'.
+    """
+    return val in [None, '', ' ', 'None', 'INDEF']
 
 
 def make_output_wcs(input_models, ref_wcs=None,
