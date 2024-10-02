@@ -244,10 +244,10 @@ def flag_resampled_model_crs(
         pix_ratio = 1.0
 
     blot = gwcs_blot(median_data, median_wcs, input_model.data.shape,
-                     input_model.meta.wcs, pix_ratio) #, fillval=np.nan)
+                     input_model.meta.wcs, pix_ratio, fillval=np.nan)
     if median_err is not None:
         blot_err = gwcs_blot(median_err, median_wcs, input_model.data.shape,
-                             input_model.meta.wcs, pix_ratio) #, fillval=np.nan)
+                             input_model.meta.wcs, pix_ratio, fillval=np.nan)
     else:
         blot_err = None
     if save_blot:
