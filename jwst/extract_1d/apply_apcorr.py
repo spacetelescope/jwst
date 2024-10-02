@@ -71,6 +71,7 @@ class ApCorrBase(abc.ABC):
         self.tabulated_correction = None
 
     @property
+    @abc.abstractmethod
     def size_key(self):
         ...
 
