@@ -5,6 +5,7 @@ import json
 import math
 import numpy as np
 
+from dataclasses import dataclass
 from typing import Union, Tuple, NamedTuple, List
 from astropy.modeling import polynomial
 from astropy.io import fits
@@ -88,11 +89,12 @@ PARTIAL = "partial match"
 EXACT = "exact match"
 
 
-class Aperture(NamedTuple):  # When python 3.6 is no longer supported, consider converting to DataClass
-    xstart: Union[int, float]
-    xstop: Union[int, float]
-    ystart: Union[int, float]
-    ystop: Union[int, float]
+@dataclass
+class Aperture:
+    xstart: float
+    xstop: float
+    ystart: float
+    ystop: float
 
 
 class Extract1dError(Exception):
@@ -109,7 +111,7 @@ class ContinueError(Exception):
     pass
 
 
-def open_extract1d_ref(refname: str, exptype: str) -> dict:
+def open_extract1d_ref(refname, exptype):
     """Open the extract1d reference file.
 
     Parameters
@@ -174,7 +176,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
     return ref_dict
 
 
-def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
+def open_apcorr_ref(refname, exptype):
     """Determine the appropriate DataModel class to use when opening the input APCORR reference file.
 
     Parameters
@@ -212,16 +214,16 @@ def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
 
 
 def get_extract_parameters(
-        ref_dict: Union[dict, None],
-        input_model: DataModel,
-        slitname: str,
-        sp_order: int,
-        meta: ObjectNode,
-        smoothing_length: Union[int, None],
-        bkg_fit: str,
-        bkg_order: Union[int, None],
-        use_source_posn: Union[bool, None]
-) -> dict:
+        ref_dict,
+        input_model,
+        slitname,
+        sp_order,
+        meta,
+        smoothing_length,
+        bkg_fit,
+        bkg_order,
+        use_source_posn
+):
     """Get extract1d reference file values.
 
     Parameters
@@ -449,7 +451,7 @@ def get_extract_parameters(
     return extract_params
 
 
-def log_initial_parameters(extract_params: dict):
+def log_initial_parameters(extract_params):
     """Log some of the initial extraction parameters.
 
     Parameters
@@ -477,9 +479,7 @@ def log_initial_parameters(extract_params: dict):
     log.debug(f"use_source_posn = {extract_params['use_source_posn']}")
 
 
-def get_aperture(
-        im_shape: tuple, wcs: WCS, extract_params: dict
-) -> Union[Aperture, dict]:
+def get_aperture(im_shape, wcs, extract_params):
     """Get the extraction limits xstart, xstop, ystart, ystop.
 
     Parameters
@@ -521,7 +521,7 @@ def get_aperture(
     return ap_ref
 
 
-def aperture_from_ref(extract_params: dict, im_shape: Tuple[int]) -> Aperture:
+def aperture_from_ref(extract_params, im_shape):
     """Get extraction region from reference file or image shape.
 
     Parameters
@@ -560,9 +560,7 @@ def aperture_from_ref(extract_params: dict, im_shape: Tuple[int]) -> Aperture:
     return ap_ref
 
 
-def update_from_width(
-        ap_ref: Aperture, extract_width: Union[int, None], direction: int
-) -> Aperture:
+def update_from_width(ap_ref, extract_width, direction):
     """Update XD extraction limits based on extract_width.
 
     If extract_width was specified, that value should override
