@@ -78,23 +78,22 @@ def median_without_resampling(input_models,
     with input_models:
         for i in range(len(input_models)):
 
-            input_model = input_models.borrow(i)
-            drizzled_model = copy.deepcopy(input_model)
-            input_models.shelve(input_model, i, modify=False)
-
-            drizzled_model.wht = build_driz_weight(drizzled_model,
-                                                   weight_type=weight_type,
-                                                   good_bits=good_bits)
+            drizzled_model = input_models.borrow(i)
+            drizzled_data = drizzled_model.data.copy()
+            weight = build_driz_weight(drizzled_model,
+                                       weight_type=weight_type,
+                                       good_bits=good_bits)
             median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
+            input_models.shelve(drizzled_model, i, modify=False)
 
             if i == 0:
-                input_shape = (ngroups,)+drizzled_model.data.shape
-                dtype = drizzled_model.data.dtype
+                input_shape = (ngroups,) + drizzled_data.shape
+                dtype = drizzled_data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
 
-            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
-            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
-            computer.append(drizzled_model.data, i)
+            weight_threshold = compute_weight_threshold(weight, maskpt)
+            drizzled_data[weight < weight_threshold] = np.nan
+            computer.append(drizzled_data, i)
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
