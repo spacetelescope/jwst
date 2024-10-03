@@ -89,7 +89,7 @@ def median_without_resampling(input_models,
         library has its on_disk attribute set to False.
 
     return_error : bool, optional
-        If set, an approximate median error is computed alongside the
+        If True, an approximate median error is computed alongside the
         median science image.
 
     Returns
@@ -160,11 +160,8 @@ def median_with_resampling(input_models,
                            return_error=False):
     """Compute a median image with resampling.
 
-    The median is performed across exposures, for both imaging
+    The median is performed across resampled groups, for both imaging
     and spectral modes.
-
-    Shared code between imaging and spec modes for resampling and
-    median computation.
 
     Parameters
     ----------
@@ -190,7 +187,7 @@ def median_with_resampling(input_models,
         library has its on_disk attribute set to False.
 
     return_error : bool, optional
-        If set, an approximate median error is computed alongside the
+        If True, an approximate median error is computed alongside the
         median science image.
 
     Returns

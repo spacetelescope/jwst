@@ -262,7 +262,7 @@ class ResampleData:
         indices : list
 
         compute_error : bool, optional
-            If set, an approximate error image will be resampled
+            If True, an approximate error image will be resampled
             alongside the science image.
         """
         output_model = self.blank_output.copy()
