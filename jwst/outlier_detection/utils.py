@@ -79,24 +79,21 @@ def median_without_resampling(input_models,
         for i in range(len(input_models)):
 
             drizzled_model = input_models.borrow(i)
-            drizzled_model.wht = build_driz_weight(drizzled_model,
-                                                    weight_type=weight_type,
-                                                    good_bits=good_bits)
-            median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
-            input_models.shelve(drizzled_model, i, modify=True)
-
-            if save_intermediate_results:
-                # write the drizzled model to file
-                _fileio.save_drizzled(drizzled_model, make_output_path)
-
+            drizzled_data = drizzled_model.data.copy()
+            weight = build_driz_weight(drizzled_model,
+                                       weight_type=weight_type,
+                                       good_bits=good_bits)
             if i == 0:
-                input_shape = (ngroups,)+drizzled_model.data.shape
-                dtype = drizzled_model.data.dtype
+                median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
+                input_shape = (ngroups,) + drizzled_data.shape
+                dtype = drizzled_data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
 
-            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
-            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
-            computer.append(drizzled_model.data, i)
+            weight_threshold = compute_weight_threshold(weight, maskpt)
+            drizzled_data[weight < weight_threshold] = np.nan
+            computer.append(drizzled_data, i)
+
+            input_models.shelve(drizzled_model, i, modify=False)
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
@@ -154,7 +151,6 @@ def median_with_resampling(input_models,
     with input_models:
         for i, indices in enumerate(indices_by_group):
 
-            median_wcs = resamp.output_wcs
             drizzled_model = resamp.resample_group(input_models, indices)
 
             if save_intermediate_results:
@@ -162,6 +158,7 @@ def median_with_resampling(input_models,
                 _fileio.save_drizzled(drizzled_model, make_output_path)
 
             if i == 0:
+                median_wcs = resamp.output_wcs
                 input_shape = (ngroups,)+drizzled_model.data.shape
                 dtype = drizzled_model.data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
