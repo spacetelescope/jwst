@@ -306,11 +306,6 @@ module = [
 ]
 ignore_missing_imports = true
 
-# # be sure to remove before merge
-# [[tool.mypy.overrides]]
-# module = ["jwst.lib.set_telescope_pointing"]
-# ignore_errors = true
-
 [tool.towncrier]
 filename = "CHANGES.rst"
 directory = "changes"

@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import asdf
 
-from jwst.datamodels import ModelLibrary, ImageModel
+from jwst.datamodels import ModelLibrary, ImageModel  # type: ignore[attr-defined]
 from jwst.lib.pipe_utils import match_nans_and_flags
 
 from . import resample

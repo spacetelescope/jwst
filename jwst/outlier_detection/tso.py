@@ -49,7 +49,7 @@ def detect_outliers(
     # Save median model if pars['save_intermediate_results'] is True
     # this will be a CubeModel with rolling median values.
     if save_intermediate_results:
-        median_model = dm.CubeModel(data=medians)
+        median_model = dm.CubeModel(data=medians)  # type: ignore[name-defined]
         with dm.open(weighted_cube) as dm0:
             median_model.update(dm0)
         save_median(median_model, make_output_path)
@@ -89,7 +89,11 @@ def weight_no_resample(input_model, good_bits):
     return weighted_cube
 
 
-def compute_rolling_median(model: dm.CubeModel, weight_threshold: np.ndarray, w: int=25) -> np.ndarray:
+def compute_rolling_median(
+        model: dm.CubeModel,  # type: ignore[name-defined]
+        weight_threshold: np.ndarray,
+        w: int=25
+) -> np.ndarray:
     '''
     Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
 

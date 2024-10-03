@@ -3,7 +3,7 @@ import os
 import shutil
 from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
-from jwst.datamodels import ImageModel
+from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
 
 
 INPUT_FILE = "dummy_cal.fits"
