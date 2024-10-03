@@ -1,6 +1,5 @@
-"""
-Submodule for performing outlier detection on spectra.
-"""
+"""Perform outlier detection on spectra."""
+
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
@@ -36,8 +35,7 @@ def detect_outliers(
     in_memory,
     make_output_path,
 ):
-    """
-    Flag outliers in spec data.
+    """Flag outliers in spec data.
 
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """
