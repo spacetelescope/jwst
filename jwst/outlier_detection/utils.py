@@ -112,7 +112,10 @@ def median_without_resampling(input_models,
 
             drizzled_model = input_models.borrow(i)
             drizzled_data = drizzled_model.data.copy()
-            drizzled_err = drizzled_model.err.copy()
+            if return_error:
+                drizzled_err = drizzled_model.err.copy()
+            else:
+                drizzled_err = None
             weight = build_driz_weight(drizzled_model,
                                        weight_type=weight_type,
                                        good_bits=good_bits)
@@ -121,19 +124,26 @@ def median_without_resampling(input_models,
                 input_shape = (ngroups,) + drizzled_data.shape
                 dtype = drizzled_data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
-                err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                if return_error:
+                    err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                else:
+                    err_computer = None
 
             weight_threshold = compute_weight_threshold(weight, maskpt)
             drizzled_data[weight < weight_threshold] = np.nan
-            drizzled_err[weight < weight_threshold] = np.nan
             computer.append(drizzled_data, i)
-            err_computer.append(drizzled_err, i)
+            if return_error:
+                drizzled_err[weight < weight_threshold] = np.nan
+                err_computer.append(drizzled_err, i)
 
             input_models.shelve(drizzled_model, i, modify=False)
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
-    median_err = err_computer.evaluate()
+    if return_error:
+        median_err = err_computer.evaluate()
+    else:
+        median_err = None
 
     if save_intermediate_results:
         # Save median model to fits
@@ -224,17 +234,24 @@ def median_with_resampling(input_models,
                 input_shape = (ngroups,)+drizzled_model.data.shape
                 dtype = drizzled_model.data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
-                err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                if return_error:
+                    err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                else:
+                    err_computer = None
 
             weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
             drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
-            drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
             computer.append(drizzled_model.data, i)
-            err_computer.append(drizzled_model.err, i)
+            if return_error:
+                drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
+                err_computer.append(drizzled_model.err, i)
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
-    median_err = err_computer.evaluate()
+    if return_error:
+        median_err = err_computer.evaluate()
+    else:
+        median_err = None
 
     if save_intermediate_results:
         # Save median model to fits
