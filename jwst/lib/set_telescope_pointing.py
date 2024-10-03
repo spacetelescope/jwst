@@ -63,7 +63,7 @@ import dataclasses
 from enum import Enum
 import logging
 from math import (cos, sin, sqrt)
-import typing
+from typing import Callable
 
 from astropy import units as U
 from astropy.table import Table
@@ -205,7 +205,7 @@ class Methods(Enum):
     #: Default algorithm under PCS_MODE TRACK/FINEGUIDE/MOVING.
     TRACK = TRACK_TR_202111
 
-    def __new__(cls: object, value: str, func_name: str, calc_func: str, mnemonics: dict):
+    def __new__(cls, value, func_name, calc_func, mnemonics):
         obj = object.__new__(cls)
         obj._value_ = value
         obj._func_name = func_name
@@ -306,39 +306,43 @@ GuideStarPosition = namedtuple('GuideStarPosition', ['position', 'corner', 'size
 GuideStarPosition.__new__.__defaults__ = ((None,) * 3)
 
 
+def NoneFactory():
+    """Set default of any field in the dataclass to None without mypy getting angry"""
+    return dataclasses.field(default_factory=lambda: None)
+
 # Transforms
 @dataclasses.dataclass
 class Transforms:
     """The matrices used in calculation of the M_eci2siaf transformation
     """
     #: ECI to FGS1
-    m_eci2fgs1: np.array = None
+    m_eci2fgs1: np.ndarray = NoneFactory()
     #: ECI to Guide Star
-    m_eci2gs: np.array = None
+    m_eci2gs: np.ndarray = NoneFactory()
     #: ECI to J-Frame
-    m_eci2j: np.array = None
+    m_eci2j: np.ndarray = NoneFactory()
     #: ECI to SIAF
-    m_eci2siaf: np.array = None
+    m_eci2siaf: np.ndarray = NoneFactory()
     #: ECI to SIFOV
-    m_eci2sifov: np.array = None
+    m_eci2sifov: np.ndarray = NoneFactory()
     #: ECI to V
-    m_eci2v: np.array = None
+    m_eci2v: np.ndarray = NoneFactory()
     #: FGSX to Guide Stars transformation
-    m_fgsx2gs: np.array = None
+    m_fgsx2gs: np.ndarray = NoneFactory()
     #: FGS1 to SIFOV
-    m_fgs12sifov: np.array = None
+    m_fgs12sifov: np.ndarray = NoneFactory()
     #: Velocity aberration
-    m_gs2gsapp: np.array = None
+    m_gs2gsapp: np.ndarray = NoneFactory()
     #: J-Frame to FGS1
-    m_j2fgs1: np.array = None
+    m_j2fgs1: np.ndarray = NoneFactory()
     #: FSM correction
-    m_sifov_fsm_delta: np.array = None
+    m_sifov_fsm_delta: np.ndarray = NoneFactory()
     #: SIFOV to V1
-    m_sifov2v: np.array = None
+    m_sifov2v: np.ndarray = NoneFactory()
     #: V to SIAF
-    m_v2siaf: np.array = None
+    m_v2siaf: np.ndarray = NoneFactory()
     #: Override values. Either another Transforms or dict-like object
-    override: object = None
+    override: object = NoneFactory()
 
     @classmethod
     def from_asdf(cls, asdf_file):
@@ -426,50 +430,50 @@ class TransformParameters:
     #: The V3 position angle to use if the pointing information is not found.
     default_pa_v3: float = 0.
     #: Detector in use.
-    detector: str = None
+    detector: str = NoneFactory()
     #: Do not write out the modified file.
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
-    engdb_url: str = None
+    engdb_url: str = NoneFactory()
     #: Exposure type
-    exp_type: str = None
+    exp_type: str = NoneFactory()
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
-    fgsid: int = None
+    fgsid: int = NoneFactory()
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_units: str = 'arcsec'
     #: Guide star WCS info, typically from the input model.
-    guide_star_wcs: WCSRef = WCSRef()
+    guide_star_wcs: WCSRef = WCSRef(None, None, None)
     #: Transpose the `j2fgs1` matrix.
     j2fgs_transpose: bool = True
     #: The [DX, DY, DZ] barycentri velocity vector
-    jwst_velocity: np.array = None
+    jwst_velocity: np.ndarray = NoneFactory()
     #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
     method: Methods = Methods.default
     #: Observation end time
-    obsend: float = None
+    obsend: float = NoneFactory()
     #: Observation start time
-    obsstart: float = None
+    obsstart: float = NoneFactory()
     #: If set, matrices that should be used instead of the calculated one.
-    override_transforms: Transforms = None
+    override_transforms: Transforms = NoneFactory()
     #: The tracking mode in use.
-    pcs_mode: str = None
+    pcs_mode: str = NoneFactory()
     #: The observatory orientation, represented by the ECI quaternion, and other engineering mnemonics
-    pointing: Pointing = None
+    pointing: Pointing = NoneFactory()
     #: Reduction function to use on values.
-    reduce_func: typing.Callable = None
+    reduce_func: Callable = NoneFactory()
     #: The SIAF information for the input model
-    siaf: SIAF = None
+    siaf: SIAF = NoneFactory()
     #: The SIAF database
-    siaf_db: SiafDb = None
+    siaf_db: SiafDb = NoneFactory()
     #: If no telemetry can be found during the observation,
     #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.
     #: The date of observation (`jwst.datamodels.JwstDataModel.meta.date`)
-    useafter: str = None
+    useafter: str = NoneFactory()
     #: V3 position angle at Guide Star (`jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science`)
-    v3pa_at_gs: float = None
+    v3pa_at_gs: float = NoneFactory()
 
     def as_reprdict(self):
         """Return a dict where all values are REPR of their values"""
@@ -878,7 +882,6 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
             logger.warning('Exception is %s', exception)
             logger.info("Setting ENGQLPTG keyword to PLANNED")
             model.meta.visit.engdb_pointing_quality = "PLANNED"
-            t_pars.pointing = None
     else:
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing: %s', t_pars.pointing)
@@ -2987,7 +2990,7 @@ def gs_ideal_to_subarray(gs_position, aperture, flip=False):
     return x, y
 
 
-def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
+def calc_wcs_guiding(model, t_pars: TransformParameters, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
     """Calculate WCS info for FGS guiding
 
     For Fine Guidance guiding observations, nearly everything
@@ -3028,7 +3031,7 @@ def calc_wcs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, def
     # Retrieve the appropriate mnemonics that represent the X/Y position of guide star
     # in the image.
     if t_pars.exp_type in ['fgs_acq1', 'fgs_acq2']:
-        mnemonics_to_read = FGS_ACQ_MNEMONICS
+        mnemonics_to_read = set(FGS_ACQ_MNEMONICS.keys())
     elif t_pars.exp_type in ['fgs_fineguide', 'fgs_track']:
         mnemonics_to_read = FGS_GUIDED_MNEMONICS
     elif t_pars.exp_type in FGS_ID_EXP_TYPES:
