@@ -203,6 +203,7 @@ def we_three_sci():
 def test_outlier_step_no_outliers(we_three_sci, do_resample, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
+    container[0].var_rnoise[10, 10] = 1E9
     pristine = ModelContainer([m.copy() for m in container])
     OutlierDetectionStep.call(container, in_memory=True, resample_data=do_resample)
 
@@ -261,7 +262,9 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     assert len(median_files) != 0
 
 
-def test_outlier_step_spec(tmp_cwd, tmp_path):
+@pytest.mark.parametrize('resample', [True, False])
+@pytest.mark.parametrize('save_intermediate', [True, False])
+def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
     """Test outlier step for spec data including saving intermediate results."""
     output_dir = tmp_path / 'output'
     output_dir.mkdir(exist_ok=True)
@@ -275,50 +278,33 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
     miri_cal.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
     # Make a couple copies, give them unique exposure numbers and filename
-    container = ModelContainer([miri_cal, miri_cal.copy(), miri_cal.copy()])
+    container = ModelContainer([miri_cal.copy(), miri_cal.copy(), miri_cal.copy()])
     for i, model in enumerate(container):
         model.meta.filename = f'test_{i}_cal.fits'
 
     # Drop a CR on the science array in the first image
     container[0].data[209, 37] += 1
 
-    # Verify that intermediate files are removed when not saved
-    # (s2d files are expected, i2d files are not, but we'll check
-    # for them to make sure the imaging extension didn't creep back in)
-    OutlierDetectionStep.call(container, output_dir=output_dir, save_results=True)
-    for dirname in [output_dir, tmp_cwd]:
-        result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
-        i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
-        s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
-        median_files = glob(os.path.join(dirname, '*median.fits'))
-        blot_files = glob(os.path.join(dirname, '*blot.fits'))
-
-        # intermediate files are removed
-        assert len(i2d_files) == 0
-        assert len(s2d_files) == 0
-        assert len(median_files) == 0
-        assert len(blot_files) == 0
-
-        # result files are written to the output directory
-        if dirname == output_dir:
-            assert len(result_files) == len(container)
-        else:
-            assert len(result_files) == 0
-
-    # Call again, but save intermediate to the output path
+    # Call outlier detection
     result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True,
-        output_dir=output_dir
-    )
+        container, resample_data=resample,
+        output_dir=output_dir, save_results=True,
+        save_intermediate_results=save_intermediate)
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    for image in result:
+        nn = ~np.isnan(image.data)
+        np.testing.assert_allclose(image.data[nn], miri_cal.data[nn])
 
     # Verify CR is flagged
+    assert np.isnan(result[0].data[209, 37])
     assert result[0].dq[209, 37] == OUTLIER_DO_NOT_USE
 
     # Verify that intermediate files are saved at the specified location
+    if save_intermediate:
+        expected_intermediate = len(container)
+    else:
+        expected_intermediate = 0
     for dirname in [output_dir, tmp_cwd]:
         all_files = glob(os.path.join(dirname, '*.fits'))
         result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
@@ -327,24 +313,35 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
         median_files = glob(os.path.join(dirname, '*median.fits'))
         blot_files = glob(os.path.join(dirname, '*blot.fits'))
         if dirname == output_dir:
-            # result files are written to the output directory
+            # Result files are always written to the output directory
             assert len(result_files) == len(container)
 
-            # s2d, median, and blot files are written to the output directory
-            assert len(s2d_files) == len(container)
-            assert len(blot_files) == len(container)
-            assert len(median_files) == 1
+            # s2d and blot files are written to the output directory
+            # if save_intermediate is True and resampling is set
+            if resample:
+                assert len(s2d_files) == expected_intermediate
+                assert len(blot_files) == expected_intermediate
+            else:
+                assert len(s2d_files) == 0
+                assert len(blot_files) == 0
 
-            # i2d files not written
+            # Only one median file is saved if save_intermediate is True,
+            # no matter how many input files there are
+            if save_intermediate:
+                assert len(median_files) == 1
+            else:
+                assert len(median_files) == 0
+
+            # i2d files are never written
             assert len(i2d_files) == 0
 
-            # nothing else was written
-            assert len(all_files) == len(s2d_files) + \
-                                     len(median_files) + \
-                                     len(result_files) + \
-                                     len(blot_files)
+            # Nothing else was written
+            assert len(all_files) == (len(s2d_files)
+                                      + len(median_files)
+                                      + len(result_files)
+                                      + len(blot_files))
         else:
-            # nothing should be written to the current directory
+            # Nothing should be written to the current directory
             assert len(result_files) == 0
             assert len(s2d_files) == 0
             assert len(median_files) == 0
