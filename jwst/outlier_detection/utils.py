@@ -1,6 +1,4 @@
-"""
-The ever-present utils sub-module. A home for all...
-"""
+"""Utilities for outlier detection methods."""
 
 import copy
 from functools import partial
@@ -24,6 +22,21 @@ OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
 
 def create_cube_median(cube_model, maskpt):
+    """Compute the median over a cube of data.
+
+    Parameters
+    ----------
+    cube_model : ~jwst.datamodels.CubeModel
+        The input cube model.
+    maskpt : float
+        The percent threshold for masking bad data.
+
+    Returns
+    -------
+    np.ndarray
+        The median over the first axis of the input cube.
+
+    """
     log.info("Computing median")
 
     weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
@@ -42,8 +55,10 @@ def median_without_resampling(input_models,
                               make_output_path=None,
                               buffer_size=None,
                               return_error=False):
-    """
-    Shared code between imaging and spec modes for resampling and median computation
+    """Compute a median image without resampling.
+
+    The median is performed across input exposures, for both
+    imaging and spectral modes.
 
     Parameters
     ----------
@@ -65,17 +80,29 @@ def median_without_resampling(input_models,
         if True, save the drizzled models and median model to fits.
 
     make_output_path : function
-        The functools.partial instance to pass to save_median. Must be 
+        The functools.partial instance to pass to save_median. Must be
         specified if save_intermediate_results is True. Default None.
 
     buffer_size : int
-        The size of chunk in bytes that will be read into memory when computing the median.
-        This parameter has no effect if the input library has its on_disk attribute
-        set to False.
+        The size of chunk in bytes that will be read into memory when
+        computing the median. This parameter has no effect if the input
+        library has its on_disk attribute set to False.
 
     return_error : bool, optional
         If set, an approximate median error is computed alongside the
         median science image.
+
+    Returns
+    -------
+    median_data : np.ndarray
+        The median data array.
+
+    median_wcs : gwcs.WCS
+        A WCS corresponding to the median data.
+
+    median_error : np.ndarray, optional
+        A median error estimate, returned only if `return_error` is True.
+
     """
     in_memory = not input_models._on_disk
     ngroups = len(input_models)
@@ -131,8 +158,13 @@ def median_with_resampling(input_models,
                            make_output_path=None,
                            buffer_size=None,
                            return_error=False):
-    """
-    Shared code between imaging and spec modes for resampling and median computation
+    """Compute a median image with resampling.
+
+    The median is performed across exposures, for both imaging
+    and spectral modes.
+
+    Shared code between imaging and spec modes for resampling and
+    median computation.
 
     Parameters
     ----------
@@ -149,21 +181,33 @@ def median_with_resampling(input_models,
         if True, save the drizzled models and median model to fits.
 
     make_output_path : function
-        The functools.partial instance to pass to save_median. Must be 
+        The functools.partial instance to pass to save_median. Must be
         specified if save_intermediate_results is True. Default None.
 
     buffer_size : int
-        The size of chunk in bytes that will be read into memory when computing the median.
-        This parameter has no effect if the input library has its on_disk attribute
-        set to False.
+        The size of chunk in bytes that will be read into memory when
+        computing the median. This parameter has no effect if the input
+        library has its on_disk attribute set to False.
 
     return_error : bool, optional
         If set, an approximate median error is computed alongside the
         median science image.
+
+    Returns
+    -------
+    median_data : np.ndarray
+        The median data array.
+
+    median_wcs : gwcs.WCS
+        A WCS corresponding to the median data.
+
+    median_error : np.ndarray, optional
+        A median error estimate, returned only if `return_error` is True.
+
     """
     if not resamp.single:
         raise ValueError("median_with_resampling should only be used for resample_many_to_many")
-    
+
     in_memory = not input_models._on_disk
     indices_by_group = list(input_models.group_indices.values())
     ngroups = len(indices_by_group)
@@ -219,10 +263,11 @@ def flag_crs_in_models(
     snr1,
     median_err=None
 ):
+    """Flag outliers in all input models without resampling."""
     for image in input_models:
         # dq flags will be updated in-place
         flag_model_crs(image, median_data, snr1, median_err=median_err)
-    
+
 
 def flag_resampled_model_crs(
     input_model,
@@ -237,6 +282,7 @@ def flag_resampled_model_crs(
     save_blot=False,
     make_output_path=None,
 ):
+    """Flag outliers in a resampled model."""
     if 'SPECTRAL' not in input_model.meta.wcs.output_frame.axes_type:
         input_pixflux_area = input_model.meta.photometry.pixelarea_steradians
         # Set array shape, needed to compute image pixel area
@@ -270,6 +316,7 @@ def _flag_resampled_model_crs(
     scale2,
     backg,
 ):
+    """Flag outliers via comparison to a blotted image."""
     # If the datamodel has a measured background that has not been subtracted
     # use it instead of the user provided backg.
     # Get background level of science data if it has not been subtracted, so it
@@ -308,6 +355,7 @@ def flag_crs_in_models_with_resampling(
     save_blot=False,
     make_output_path=None,
 ):
+    """Flag outliers in all input models, with resampling."""
     for image in input_models:
         flag_resampled_model_crs(image,
                                  median_data,
@@ -323,6 +371,7 @@ def flag_crs_in_models_with_resampling(
 
 
 def flag_model_crs(image, blot, snr, median_err=None):
+    """Flag outliers in a model."""
     if median_err is not None:
         error_to_use = median_err
     else:
