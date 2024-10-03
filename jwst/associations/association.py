@@ -79,7 +79,7 @@ class Association(MutableMapping):
     GLOBAL_CONSTRAINT = None
     """Global constraints"""
 
-    INVALID_VALUES = None
+    INVALID_VALUES: tuple | None = None
     """Attribute values that indicate the
     attribute is not specified.
     """
