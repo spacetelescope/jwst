@@ -22,22 +22,23 @@ Specifically, this routine performs the following operations (modified from the
    - A :py:class:`~jwst.datamodels.ModelContainer` serves as the basic format 
      for all processing performed by
      this step, as each entry will be treated as an element of a stack of images
-     to be processed to identify bad pixels, cosmic-rays and other artifacts.
+     to be processed to identify bad pixels, cosmic rays and other artifacts.
 
 #. If the ``resample_data`` parameter is set to True, resample all input images
    using :py:class:`~jwst.resample.resample_spec.ResampleSpecData`.
 
-   - Error images are resampled alongside the science data, to create
+   - Error images are resampled alongside the science data to create
      approximate error arrays for each resampled exposure.
    - The resampled data are written out to disk with suffix "outlier_s2d"
      if the ``save_intermediate_results`` parameter is set to `True`.
 
 #. Create a median image from the resampled exposures, or directly from
-   the input exposures, if ``resample_data`` is set to False.
+   the input exposures if ``resample_data`` is set to False.
 
    - The error images for each exposure are also median-combined.
-   - The median data are written out to disk with suffix "median"
-     if the ``save_intermediate_results`` parameter is set to `True`.
+   - The median datamodel, with ``data`` and ``err`` extensions, is
+     written to disk with suffix "median" if the ``save_intermediate_results``
+     parameter is set to `True`.
 
 #. If ``resample_data`` is set to True, blot the median image to match
    each original input image.
