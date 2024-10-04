@@ -71,9 +71,8 @@ class ApCorrBase(abc.ABC):
         self.tabulated_correction = None
 
     @property
-    @abc.abstractmethod
     def size_key(self):
-        ...
+        return None
 
     def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
