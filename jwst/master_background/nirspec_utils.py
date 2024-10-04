@@ -113,7 +113,7 @@ def create_background_from_multislit(input_model):
 
     bkg_model.slits.extend(slits)
 
-    # Apply resample_spec and extract_1d to all background slitlets
+    # Apply pixel_replace, resample_spec and extract_1d to all background slitlets
     log.info('Applying pixel_replace, resampling and 1D extraction to background slits')
     pixrepl = pixel_replace_step.PixelReplaceStep.call(bkg_model)
     resamp = resample_spec_step.ResampleSpecStep.call(pixrepl)
@@ -124,6 +124,7 @@ def create_background_from_multislit(input_model):
     master_bkg = combine_1d_spectra(x1d, exptime_key='exposure_time')
 
     del bkg_model
+    del pixrepl
     del resamp
     del x1d
 
