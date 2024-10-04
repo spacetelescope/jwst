@@ -101,8 +101,10 @@ class JwstStep(Step):
 
         if hasattr(result, 'cal_logs'):
             tmpdict = result.cal_logs.instance
-            tmpdict[self.class_alias] = '\n'.join(self._log_records)
-            result.cal_logs = tmpdict
+        else:
+            tmpdict = dict()
+        tmpdict[self.class_alias] = '\n'.join(self._log_records)
+        result.cal_logs = tmpdict
 
     def remove_suffix(self, name):
         return remove_suffix(name)
@@ -138,9 +140,11 @@ class JwstPipeline(Pipeline, JwstStep):
 
             if hasattr(result, 'cal_logs'):
                 tmpdict = result.cal_logs.instance
-                tmpdict[self.class_alias] = '\n'.join(self._log_records)
+            else:
+                tmpdict = dict()
+            tmpdict[self.class_alias] = '\n'.join(self._log_records)
 
-                for _, step in self.step_defs.items():
-                    if step.class_alias in tmpdict.keys():
-                        del tmpdict[step.class_alias]
-                result.cal_logs = tmpdict
+            for _, step in self.step_defs.items():
+                if step.class_alias in tmpdict.keys():
+                    del tmpdict[step.class_alias]
+            result.cal_logs = tmpdict
