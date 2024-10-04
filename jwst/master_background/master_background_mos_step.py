@@ -9,6 +9,7 @@ from ..barshadow import barshadow_step
 from ..flatfield import flat_field_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
+from ..pixel_replace import pixel_replace_step
 from ..resample import resample_spec_step
 from ..extract_1d import extract_1d_step
 from ..stpipe import Pipeline
@@ -62,6 +63,7 @@ class MasterBackgroundMosStep(Pipeline):
         'pathloss': pathloss_step.PathLossStep,
         'barshadow': barshadow_step.BarShadowStep,
         'photom': photom_step.PhotomStep,
+        'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'extract_1d': extract_1d_step.Extract1dStep,
     }

@@ -91,6 +91,7 @@ def create_background_from_multislit(input_model):
     master_bkg: `~jwst.datamodels.CombinedSpecModel`
         The 1D master background spectrum created from the inputs.
     """
+    from ..pixel_replace import pixel_replace_step
     from ..resample import resample_spec_step
     from ..extract_1d import extract_1d_step
     from ..combine_1d.combine1d import combine_1d_spectra
@@ -113,8 +114,9 @@ def create_background_from_multislit(input_model):
     bkg_model.slits.extend(slits)
 
     # Apply resample_spec and extract_1d to all background slitlets
-    log.info('Applying resampling and 1D extraction to background slits')
-    resamp = resample_spec_step.ResampleSpecStep.call(bkg_model)
+    log.info('Applying pixel_replace, resampling and 1D extraction to background slits')
+    pixrepl = pixel_replace_step.PixelReplaceStep.call(bkg_model)
+    resamp = resample_spec_step.ResampleSpecStep.call(pixrepl)
     x1d = extract_1d_step.Extract1dStep.call(resamp)
 
     # Call combine_1d to combine the 1D background spectra
