@@ -2,6 +2,7 @@ from os.path import basename
 import numpy as np
 from stdatamodels.properties import merge_tree
 from stdatamodels.jwst import datamodels
+from scipy.signal import medfilt
 
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import record_step_status
@@ -25,6 +26,7 @@ class MasterBackgroundStep(Step):
         save_background = boolean(default=False) # Save computed master background
         force_subtract = boolean(default=False) # Force subtracting master background
         output_use_model = boolean(default=True)
+        median_kernel = integer(default=1)
     """
 
     def process(self, input):
@@ -50,6 +52,10 @@ class MasterBackgroundStep(Step):
             Default is False, in which case the step logic determines if the calspec2 background step
             has already been applied and, if so, the master background step is skipped.
             If set to True, the step logic is bypassed and the master background is subtracted.
+
+        median_kernel : integer, optional
+            Optional user-supplied kernel with which to moving-median boxcar filter the master background
+            spectrum.  Must be an odd integer.
 
         Returns
         -------
@@ -139,6 +145,12 @@ class MasterBackgroundStep(Step):
                         background_data,
                         exptime_key='exposure_time',
                     )
+
+                    # If requested, apply a moving-median boxcar filter to the master background spectrum
+                    if (self.median_kernel > 1):
+                        self.log.info('Applying moving-median boxcar of width %i',self.median_kernel)
+                        master_background.spec[0].spec_table['surf_bright'] = medfilt(
+                            master_background.spec[0].spec_table['surf_bright'], kernel_size=[self.median_kernel])
 
                     background_data.close()
 
