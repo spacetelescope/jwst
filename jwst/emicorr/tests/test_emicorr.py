@@ -7,7 +7,7 @@ Unit tests for EMI correction
 
 import numpy as np
 from jwst.emicorr import emicorr, emicorr_step
-from stdatamodels.jwst.datamodels import Level1bModel, EmiModel
+from stdatamodels.jwst.datamodels import RampModel, EmiModel
 
 
 subarray_example_case = {
@@ -33,7 +33,7 @@ emicorr_model = EmiModel(emimdl)
 
 def mk_data_mdl(data, subarray, readpatt, detector):
     # create input_model
-    input_model = Level1bModel(data=data)
+    input_model = RampModel(data=data)
     input_model.meta.instrument.name = 'MIRI'
     input_model.meta.instrument.detector = detector
     input_model.meta.exposure.type = 'MIR_4QPM'
