@@ -9,7 +9,6 @@ from stdatamodels import properties
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst.datamodels.util import is_association
-from stpipe.step import _make_input_path
 
 __doctest_skip__ = ['ModelContainer']
 
@@ -267,7 +266,7 @@ to supply custom catalogs.
             sublist = infiles
         try:
             for member in sublist:
-                filepath = _make_input_path(member['expname'], asn_dir)
+                filepath = op.join(asn_dir, member['expname'])
                 m = datamodel_open(filepath, memmap=self._memmap)
                 m.meta.asn.exptype = member['exptype']
                 for attr, val in member.items():
