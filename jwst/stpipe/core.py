@@ -99,12 +99,12 @@ class JwstStep(Step):
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
-        if hasattr(result, 'cal_logs'):
-            tmpdict = result.cal_logs.instance
-        else:
-            tmpdict = dict()
-        tmpdict[self.class_alias] = '\n'.join(self._log_records)
-        result.cal_logs = tmpdict
+            if hasattr(result, 'cal_logs'):
+                tmpdict = result.cal_logs.instance
+            else:
+                tmpdict = dict()
+            tmpdict[self.class_alias] = '\n'.join(self._log_records)
+            result.cal_logs = tmpdict
 
     def remove_suffix(self, name):
         return remove_suffix(name)
