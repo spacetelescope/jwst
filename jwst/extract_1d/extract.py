@@ -2856,7 +2856,6 @@ def do_extract1d(
     if hasattr(meta_source, "int_times"):
         output_model.int_times = meta_source.int_times.copy()
 
-    print(meta_source)
     output_model.update(meta_source, only='PRIMARY')
 
     # This will be relevant if we're asked to extract a spectrum and the spectral order is zero.

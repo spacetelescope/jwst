@@ -284,7 +284,7 @@ to supply custom catalogs.
             self.close()
             raise
 
-        # Pull the whole association table into meta.asn_table
+        # Pull the whole association table into the asn_table attribute
         self.asn_table = {}
         properties.merge_tree(
             self.asn_table, asn_data

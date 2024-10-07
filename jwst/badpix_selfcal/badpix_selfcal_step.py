@@ -86,7 +86,6 @@ class BadpixSelfcalStep(Step):
         i.e., true self-calibration.
         """
         input_sci, selfcal_list, bkg_list = _parse_inputs(input, selfcal_list, bkg_list)
-        print(input_sci, selfcal_list, bkg_list)
 
         # ensure that there are background exposures to use, otherwise skip the step
         # unless forced
