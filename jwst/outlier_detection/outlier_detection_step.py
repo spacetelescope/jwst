@@ -209,6 +209,8 @@ class OutlierDetectionStep(Step):
         try:   
             if isinstance(input_models, ModelLibrary):
                 asn_id = input_models.asn["asn_id"]
+            elif isinstance(input_models, ModelContainer):
+                asn_id = input_models.asn_table["asn_id"]
             else:
                 asn_id = input_models.meta.asn_table.asn_id
         except (AttributeError, KeyError):
