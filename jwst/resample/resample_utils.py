@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 from astropy import units as u
 import gwcs
+from drizzle.utils import calc_pixmap
 
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
@@ -124,17 +125,11 @@ def shape_from_bounding_box(bounding_box):
 def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
     """ Return a pixel grid map from input frame to output frame.
     """
-    if shape:
-        bb = wcs_bbox_from_shape(shape)
-        log.debug("Bounding box from data shape: {}".format(bb))
-    else:
-        bb = in_wcs.bounding_box
-        log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
+    if shape and not np.array_equiv(shape, in_wcs.array_shape):
+        in_wcs = deepcopy(in_wcs)
+        in_wcs.array_shape = shape
 
-    grid = gwcs.wcstools.grid_from_bounding_box(bb)
-    pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
-
-    return pixmap
+    return calc_pixmap(wcs_from=in_wcs, wcs_to=out_wcs)
 
 
 def reproject(wcs1, wcs2):
