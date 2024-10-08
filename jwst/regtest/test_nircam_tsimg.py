@@ -1,6 +1,5 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-from astropy.table import Table, setdiff
 
 from jwst.stpipe import Step
 
@@ -45,14 +44,10 @@ def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
-def test_nircam_tsimage_stage3_phot(run_pipelines):
+def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
     rtdata = run_pipelines
     rtdata.input = "jw01068-o006_20240401t151322_tso3_00002_asn.json"
     rtdata.output = "jw01068-o006_t004_nircam_f150w2-f164n-sub64p_phot.ecsv"
     rtdata.get_truth("truth/test_nircam_tsimg_stage23/jw01068-o006_t004_nircam_f150w2-f164n-sub64p_phot.ecsv")
 
-    table = Table.read(rtdata.output)
-    table_truth = Table.read(rtdata.truth)
-
-    # setdiff returns a table of length zero if there is no difference
-    assert len(setdiff(table, table_truth)) == 0
+    assert diff_astropy_tables(rtdata.output, rtdata.truth)
