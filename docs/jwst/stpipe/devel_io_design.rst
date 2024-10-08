@@ -177,9 +177,9 @@ ModelContainer vs ModelLibrary
 
 Some steps in the pipeline, namely any steps involved in the Stage 3 Imaging pipeline,
 rely on the :class:`~jwst.datamodels.ModelLibrary` class instead of the
-:class:`~jwst.datamodels.ModelContainer` class to handle association-type data.
+:class:`~jwst.datamodels.ModelContainer` class to process association-type data.
 The `ModelLibrary` class is purpose-built for enabling memory-saving options in the
-image3 pipeline and is not recommended for general use.
+image3 pipeline and is only recommended when working with large associations.
 Additional documentation on the `ModelLibrary` class can be found in the
 `stpipe ModelLibrary documentation <https://stpipe.readthedocs.io/en/latest/model_library.html>`_.
 
@@ -192,22 +192,17 @@ for handling association-type data, but it is no longer a subclass of `JWSTDataM
 following changes in behavior are noteworthy:
 
 * `ModelContainer` no longer has a `save()` method; the `save()` method should be called on
-  individual `DataModel` objects in the container.
+  each of the individual `DataModel` objects in the container instead, as desired.
 * The `ModelContainer` class no longer has a `meta` attribute. The association data is now
   stored in the top-level `asn_table` attribute, along with several other association-relevant
   attributes including `asn_table_name`, `asn_pool_name`, `asn_exptypes`, `asn_n_members`, 
-  `asn_file_path`.
+  `asn_file_path`. Note that `asn_table` is now a dictionary, not an `ObjectNode`.
+* All infrastructure that attempted memory savings in the `ModelContainer` class has been removed.
+  Use the `ModelLibrary` class if memory-saving options are needed.
 * The `ModelContainer` class is still a list-like object.
 * The `ModelContainer` class is still the default class returned by stdatamodels `open()`.
 * The `ModelContainer` class can still be used as a context manager, such that `with open(asn_file.json)`
   still works.
-* All infrastructure that attempted memory savings in the `ModelContainer` class has been removed.
-  Use the `ModelLibrary` class if memory-saving options are needed.
-
-means that the `ModelContainer` class no longer has the `meta` attribute, and the association
-data is now stored in the top-level `asn_table` attribute instead of `meta.asn_table`.
-The `ModelContainer` class is still a list-like
-
 
 Input Source
 ------------

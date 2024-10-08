@@ -63,11 +63,6 @@ def test_miri_mrs_badpix_selfcal(run_pipeline_selfcal, fitsdiff_default_kwargs):
 def test_miri_mrs_badpix_selfcal_bkg(run_pipeline_background, fitsdiff_default_kwargs):
     """Run a test for MIRI MRS data with dedicated background exposures."""
 
-    # THIS IS FAILING BECAUSE IT'S SAVING FOUR FILES WHEN IT SHOULD SAVE ONE
-    # there is only one result_bkgasn_badpix_selfcal.fits file in truth directory
-    # but there are four instances of "saved model in result_bkgasn_badpix_selfcal.fits" in the log file
-    # reason is because of changes to step.save_model in stpipe
-
     rtdata = run_pipeline_background
 
     # Get the truth file
