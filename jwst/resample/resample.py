@@ -5,7 +5,7 @@ import json
 
 import numpy as np
 import psutil
-from drizzle import cdrizzle, util
+from drizzle import cdrizzle
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -251,10 +251,10 @@ class ResampleData:
         else:
             iscale = 1.0
         return iscale
-    
+
     def resample_group(self, input_models, indices, compute_error=False):
         """Apply resample_many_to_many for one group
-        
+
         Parameters
         ----------
         input_models : ModelLibrary
@@ -302,7 +302,7 @@ class ResampleData:
                 if isinstance(img, datamodels.SlitModel):
                     # must call this explicitly to populate area extension
                     # although the existence of this extension may not be necessary
-                    img.area = img.area 
+                    img.area = img.area
                 iscale = self._get_intensity_scale(img)
                 log.debug(f'Using intensity scale iscale={iscale}')
 
@@ -371,7 +371,7 @@ class ResampleData:
         """
         output_models = []
         for group_id, indices in input_models.group_indices.items():
-            
+
             output_model = self.resample_group(input_models, indices)
 
             if not self.in_memory:
@@ -555,7 +555,7 @@ class ResampleData:
                         axis=0
                     )
                     total_weight_flat_var[mask] += weight[mask]
-                
+
                 del model.meta.iscale
                 del weight
                 input_models.shelve(model, i)
@@ -786,7 +786,7 @@ class ResampleData:
         """
 
         # Insure that the fillval parameter gets properly interpreted for use with tdriz
-        if util.is_blank(str(fillval)):
+        if str(fillval).strip() == '':
             fillval = 'NAN'
         else:
             fillval = str(fillval)
