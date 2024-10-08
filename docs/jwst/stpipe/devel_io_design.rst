@@ -163,14 +163,51 @@ Many of the JWST calibration steps and pipelines expect an
 :ref:`Association <associations>` file as input. When opened with
 :meth:`~jwst.stpipe.step.Step.open_model`, a
 :class:`~jwst.datamodels.ModelContainer` is returned. `ModelContainer`
-is, among other features, a list-like object where each element is the
-`DataModel` of each member of the association. The `meta.asn_table` is
+is a list-like object where each element is the
+`DataModel` of each member of the association. The `asn_table` attribute is
 populated with the association data structure, allowing direct access
 to the association itself.  The association file, as well as the files
 listed in the association file, must be in the input directory.
 
 To read in a list of files, or an association file, as an association,
 use the `load_as_level2_asn` or `load_as_level3_asn` methods.
+
+ModelContainer vs ModelLibrary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some steps in the pipeline, namely any steps involved in the Stage 3 Imaging pipeline,
+rely on the :class:`~jwst.datamodels.ModelLibrary` class instead of the
+:class:`~jwst.datamodels.ModelContainer` class to handle association-type data.
+The `ModelLibrary` class is purpose-built for enabling memory-saving options in the
+image3 pipeline and is not recommended for general use.
+Additional documentation on the `ModelLibrary` class can be found in the
+`stpipe ModelLibrary documentation <https://stpipe.readthedocs.io/en/latest/model_library.html>`_.
+
+ModelContainer Changes in JWST 1.17
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In JWST 1.17, the `ModelContainer` class was de-scoped in light of the introduction of the
+`ModelLibrary` class in JWST 1.16. The `ModelContainer` class is still the recommended class
+for handling association-type data, but it is no longer a subclass of `JWSTDataModel`. The
+following changes in behavior are noteworthy:
+
+* `ModelContainer` no longer has a `save()` method; the `save()` method should be called on
+  individual `DataModel` objects in the container.
+* The `ModelContainer` class no longer has a `meta` attribute. The association data is now
+  stored in the top-level `asn_table` attribute, along with several other association-relevant
+  attributes including `asn_table_name`, `asn_pool_name`, `asn_exptypes`, `asn_n_members`, 
+  `asn_file_path`.
+* The `ModelContainer` class is still a list-like object.
+* The `ModelContainer` class is still the default class returned by stdatamodels `open()`.
+* The `ModelContainer` class can still be used as a context manager, such that `with open(asn_file.json)`
+  still works.
+* All infrastructure that attempted memory savings in the `ModelContainer` class has been removed.
+  Use the `ModelLibrary` class if memory-saving options are needed.
+
+means that the `ModelContainer` class no longer has the `meta` attribute, and the association
+data is now stored in the top-level `asn_table` attribute instead of `meta.asn_table`.
+The `ModelContainer` class is still a list-like
+
 
 Input Source
 ------------
