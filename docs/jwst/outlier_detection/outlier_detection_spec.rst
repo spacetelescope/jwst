@@ -13,38 +13,50 @@ Specifically, this routine performs the following operations (modified from the
 
 #. Extract parameter settings from input model and merge them with any user-provided values
 
-   - the same set of parameters available to:
+   - The same set of parameters available to:
      ref:`Default Outlier Detection Algorithm <outlier-detection-imaging>`
-     also applies to this code
+     also applies to this code.
+
 #. Convert input data, as needed, to make sure it is in a format that can be processed
 
    - A :py:class:`~jwst.datamodels.ModelContainer` serves as the basic format 
      for all processing performed by
      this step, as each entry will be treated as an element of a stack of images
-     to be processed to identify bad pixels, cosmic-rays and other artifacts
-   - If the input data is a :py:class:`~jwst.datamodels.CubeModel`, convert it into a 
-     :py:class:`~jwst.datamodels.ModelContainer`.
-     This allows each plane of the cube to be treated as a separate 2D image
-     for resampling (if done) and for combining into a median image.
-#. Resample all input images into a :py:class:`~jwst.datamodels.ModelContainer` using
-   :py:class:`~jwst.resample.resample_spec.ResampleSpecData`
+     to be processed to identify bad pixels, cosmic rays and other artifacts.
 
-   - Resampled images are written out to disk with suffix "outlier_s2d"
+#. If the ``resample_data`` parameter is set to True, resample all input images
+   using :py:class:`~jwst.resample.resample_spec.ResampleSpecData`.
+
+   - Error images are resampled alongside the science data to create
+     approximate error arrays for each resampled exposure.
+   - The resampled data are written out to disk with suffix "outlier_s2d"
      if the ``save_intermediate_results`` parameter is set to `True`.
-   - **If resampling is turned off**, the original unrectified inputs are used to create
-     the median image for cosmic-ray detection.
-#. Create a median image from (possibly) resampled :py:class:`~jwst.datamodels.ModelContainer`
 
-   - The median image is written out to disk with suffix "median"
-     if the ``save_intermediate_results`` parameter is set to `True`
-#. Blot median image to match each original input image
+#. Create a median image from the resampled exposures, or directly from
+   the input exposures if ``resample_data`` is set to False.
 
+   - The error images for each exposure are also median-combined.
+   - The median datamodel, with ``data`` and ``err`` extensions, is
+     written to disk with suffix "median" if the ``save_intermediate_results``
+     parameter is set to `True`.
+
+#. If ``resample_data`` is set to True, blot the median image to match
+   each original input image.
+
+   - The median error image is also blotted to match the input.
    - Resampled/blotted images are written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`
-   - **If resampling is turned off**, the median image is used for comparison
-     with the original input models for detecting outliers
-#. Perform statistical comparison between blotted image and original image to identify outliers
-#. Update input data model DQ arrays with mask of detected outliers
+     parameter is set to `True`.
+
+#. Perform statistical comparison between the median image and the original image
+   to identify outliers.
+
+   - Signal-to-noise thresholding uses the median error image, rather than the
+     input error image, in order to better identify outliers that have both
+     high data values and high error values in the input exposures.
+
+#. Update input data model DQ arrays with mask of detected outliers.
+   Update the SCI, ERR, and VAR arrays with NaN values at the outlier
+   locations.
 
 
 .. automodapi:: jwst.outlier_detection.spec

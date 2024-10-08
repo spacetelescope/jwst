@@ -23,7 +23,7 @@ that control the behavior of the processing:
   The value to assign to resampled image pixels that have zero weight or
   do not receive any flux from any input pixels during drizzling.
   Any floating-point value, given as a string, is valid.
-  A value of 'INDEF' will use the last zero weight flux.
+  The default value of 'NAN' sets NaN values.
 
 ``--nlow``
   Deprecated and has no effect. This parameter will be removed

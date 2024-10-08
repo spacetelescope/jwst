@@ -51,7 +51,7 @@ class OutlierDetectionStep(Step):
         weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
-        fillval = string(default='INDEF')
+        fillval = string(default='NAN')
         nlow = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
         nhigh = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
         maskpt = float(default=0.7)

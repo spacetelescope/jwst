@@ -252,7 +252,7 @@ class ResampleData:
             iscale = 1.0
         return iscale
     
-    def resample_group(self, input_models, indices):
+    def resample_group(self, input_models, indices, compute_error=False):
         """Apply resample_many_to_many for one group
         
         Parameters
@@ -260,6 +260,10 @@ class ResampleData:
         input_models : ModelLibrary
 
         indices : list
+
+        compute_error : bool, optional
+            If True, an approximate error image will be resampled
+            alongside the science image.
         """
         output_model = self.blank_output.copy()
 
@@ -283,6 +287,14 @@ class ResampleData:
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                             kernel=self.kernel, fillval=self.fillval)
+
+            # Also make a temporary model to hold error data
+            error_model, driz_error = None, None
+            if compute_error:
+                error_model = output_model.copy()
+                driz_error = gwcs_drizzle.GWCSDrizzle(
+                    error_model, pixfrac=self.pixfrac,
+                    kernel=self.kernel, fillval=self.fillval)
 
             log.info(f"{len(indices)} exposures to drizzle together")
             for index in indices:
@@ -323,8 +335,28 @@ class ResampleData:
                     ymax=ymax
                 )
                 del data
+
+                # make an approximate error image by drizzling it
+                # in the same way the image is handled
+                if compute_error:
+                    driz_error.add_image(
+                        img.err,
+                        img.meta.wcs,
+                        iscale=iscale,
+                        inwht=inwht,
+                        xmin=xmin,
+                        xmax=xmax,
+                        ymin=ymin,
+                        ymax=ymax
+                    )
+
                 input_models.shelve(img, index, modify=False)
                 del img
+
+        # copy the drizzled error into the output model
+        if compute_error:
+            output_model.err = error_model.data
+            del error_model
 
         return output_model
 
@@ -359,6 +391,7 @@ class ResampleData:
             asn = asn_from_list(output_models, product_name='outlier_i2d')
             asn_dict = json.loads(asn.dump()[1]) # serializes the asn and converts to dict
             return ModelLibrary(asn_dict, on_disk=True)
+
         # otherwise just build it as a list of in-memory models
         return ModelLibrary(output_models, on_disk=False)
 
@@ -435,7 +468,7 @@ class ResampleData:
             output_model.var_poisson,
             output_model.var_flat
         ]
-        output_model.err = np.sqrt(np.nansum(var_components,axis=0))
+        output_model.err = np.sqrt(np.nansum(var_components, axis=0))
 
         # nansum returns zero for input that is all NaN -
         # set those values to NaN instead
@@ -603,7 +636,7 @@ class ResampleData:
             iscale=iscale,
             pixfrac=self.pixfrac,
             kernel=self.kernel,
-            fillval=np.nan,
+            fillval='NAN',
             xmin=xmin,
             xmax=xmax,
             ymin=ymin,
