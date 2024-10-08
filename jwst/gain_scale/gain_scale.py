@@ -5,7 +5,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model, gain_factor):
+def do_correction(output_model, gain_factor):
     """
     Short Summary
     -------------
@@ -15,7 +15,7 @@ def do_correction(input_model, gain_factor):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
+    output_model : `~jwst.datamodels.JwstDataModel`
         Input datamodel to be corrected
 
     Returns
@@ -24,9 +24,6 @@ def do_correction(input_model, gain_factor):
         Output datamodel with rescaled data
 
     """
-
-    # Create output as a copy of the input science data model
-    output_model = input_model.copy()
 
     # Apply the gain factor to the SCI and ERR arrays
     log.info('Rescaling by {0}'.format(gain_factor))

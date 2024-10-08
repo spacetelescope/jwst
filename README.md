@@ -1,7 +1,7 @@
 # JWST Calibration Pipeline
 
-[![Build Status](https://github.com/spacetelescope/jwst/workflows/CI/badge.svg?branch=master)](https://github.com/spacetelescope/jwst/actions)
-[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
+[![Build Status](https://github.com/spacetelescope/jwst/workflows/CI/badge.svg)](https://github.com/spacetelescope/jwst/actions)
+[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
@@ -64,7 +64,7 @@ You can also install a specific version:
 ### Installing the development version from Github
 
 You can install the latest development version (not as well tested) from the
-Github master branch:
+Github main branch:
 
     conda create -n <env_name> python=3.11
     conda activate <env_name>
@@ -178,7 +178,7 @@ environment variable:
 
 ## Documentation
 
-Documentation (built daily from the Github `master` branch) is available at:
+Documentation (built daily from the Github `main` branch) is available at:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
@@ -216,8 +216,9 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.15.1              | B11.0rc2  | TBD      | 1242         | 2024-07-08 | TBD         | Second release candidate for B11.0            |
-| 1.15.0              | B11.0rc1  | TBD      | 1241         | 2024-06-26 | TBD         | First release candidate for B11.0             |
+| 1.16.0              | B11.1rc1  | TBD      | 1281         | 2024-09-20 | TBD         | First release candidate for B11.1             |
+| 1.15.1              | B11.0     | 2024.2.2 | 1242         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |
+| 1.15.0              | B11.0rc1  |          | 1241         | 2024-06-26 |             | First release candidate for B11.0             |
 | 1.14.1              |           |          | 1238         | 2024-06-27 |             | PyPI-only release for external users          |
 | 1.14.0              | B10.2.1   | 2024.1.1 | 1238         | 2024-03-29 | 2024-06-12  | Final release candidate for B10.2.1           |
 | 1.13.4              |           |          | 1185         | 2024-01-25 |             | PyPI-only release for external users          |

@@ -67,7 +67,7 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         search_output_file = boolean(default=False)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
-        in_memory = boolean(default=False)
+        in_memory = boolean(default=False) # ignored if run within the pipeline; set at pipeline level instead
     """
 
     def process(self, input_data):
@@ -80,8 +80,7 @@ class OutlierDetectionStep(Step):
         self.log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
-        asn_id = self._get_asn_id(input_data)
-        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        self._get_asn_id(input_data)
 
         snr1, snr2 = [float(v) for v in self.snr.split()]
         scale1, scale2 = [float(v) for v in self.scale.split()]
@@ -94,7 +93,6 @@ class OutlierDetectionStep(Step):
                 self.maskpt,
                 self.rolling_window_width,
                 snr1,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'coron':
@@ -104,7 +102,6 @@ class OutlierDetectionStep(Step):
                 self.good_bits,
                 self.maskpt,
                 snr1,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'imaging':
@@ -125,7 +122,6 @@ class OutlierDetectionStep(Step):
                 self.fillval,
                 self.allowed_memory,
                 self.in_memory,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'spec':
@@ -145,7 +141,6 @@ class OutlierDetectionStep(Step):
                 self.kernel,
                 self.fillval,
                 self.in_memory,
-                asn_id,
                 self.make_output_path,
             )
         elif mode == 'ifu':
@@ -203,6 +198,9 @@ class OutlierDetectionStep(Step):
         return None
 
     def _get_asn_id(self, input_models):
+        """Find association ID for any allowed input model type,
+        and update make_output_path such that the association ID
+        is included in intermediate and output file names."""
         # handle if input_models isn't open
         if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
@@ -227,7 +225,8 @@ class OutlierDetectionStep(Step):
                 _make_output_path,
                 asn_id=asn_id
             )
-        return asn_id
+        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        return
     
     def _set_status(self, input_models, status):
         # this might be called with the input which might be a filename or path

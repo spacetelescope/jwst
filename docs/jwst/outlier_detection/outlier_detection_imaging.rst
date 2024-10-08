@@ -58,7 +58,8 @@ Specifically, this routine performs the following operations:
      should be used when resampling to create the output mosaic.  Any pixel with a
      DQ value not included in this value (or list of values) will be ignored when
      resampling.
-   * Resampled images will be written out to disk with the suffix ``_<asn_id>_outlier_i2d.fits``
+   * When the ``save_intermediate_results`` parameter is set to True,
+     resampled images will be written out to disk with the suffix ``_<asn_id>_outlier_i2d.fits``
      if the input model container has an <asn_id>, otherwise the suffix will be ``_outlier_i2d.fits``
      by default.
    * **If resampling is turned off** through the use of the ``resample_data`` parameter,
@@ -75,7 +76,8 @@ Specifically, this routine performs the following operations:
    * The median image is written out to disk as `_<asn_id>_median.fits` by default.
 
 #. By default, the median image is blotted back (inverse of resampling) to
-   match each original input image.
+   match each original input image.  Resampled/blotted images are written out to disk if 
+   the ``save_intermediate_results`` parameter is set to `True`.
 
    * **If resampling is turned off**, the median image is compared directly to
      each input image.
@@ -161,11 +163,18 @@ during processing includes:
    :py:class:`~jwst.resample.ResampleStep` as well, to set whether or not to keep the 
    resampled images in memory or not.
 
-#. Computing the median image works section-by-section by only keeping 1Mb of each input
-   in memory at a time.  As a result, only the final output product array for the final
-   median image along with a stack of 1Mb image sections are kept in memory.
+#. Computing the median image works by writing the resampled data frames to appendable files
+   on disk that are split into sections spatially but contain the entire ngroups (i.e., time)
+   axis. The section size is set to use roughly the same amount of memory as a single resampled
+   model, and since the resampled models are discarded from memory after this write operation this
+   choice avoids increasing the memory usage beyond a single resampled model.
+   Those sections are then read in one at a time to compute the median image.
 
 These changes result in a minimum amount of memory usage during processing at the obvious
-expense of reading and writing the products from disk.
+expense of reading and writing the products from disk. Note that if a ModelLibrary object
+is input to the step, the memory behavior of the step is read from the ``on_disk`` status
+of the ModelLibrary object, and the ``in_memory`` parameter of the step is ignored.
+When running ``calwebb_image3``, the ``in_memory`` flag should therefore be set at the pipeline level,
+e.g., ``strun calwebb_image3 asn.json --in-memory=True``; the step-specific flag will be ignored.
 
 .. automodapi:: jwst.outlier_detection.imaging

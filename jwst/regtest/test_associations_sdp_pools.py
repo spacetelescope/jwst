@@ -132,6 +132,11 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': False,
     },
+    'jw01678_20240721t195707_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': False,
+    },
     'jw02064_20230302t112350_pool': {
         'args': [],
         'xfail': None,
@@ -139,6 +144,12 @@ SPECIAL_POOLS = {
     },
     'jw02064_20230302t112350_withids_pool': {
         'args': ['-i', 'o061', 'c1008', 'c1017'],
+        'xfail': None,
+        'slow': False,
+    },
+    # This association tests the Asn_Lv3ImageMosaic rule
+    'jw02739_20230710t150016_pool': {
+        'args': ['-i', 'c1000'],
         'xfail': None,
         'slow': False,
     },
