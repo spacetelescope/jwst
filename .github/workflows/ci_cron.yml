@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   latest_crds_contexts:
-    uses: spacetelescope/crds/.github/workflows/contexts.yml
+    uses: ./.github/workflows/contexts.yml
   crds_context:
     needs: [ latest_crds_contexts ]
     runs-on: ubuntu-latest
