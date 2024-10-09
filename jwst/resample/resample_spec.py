@@ -17,14 +17,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import compute_scale, wrap_ra
 from jwst.resample import resample_utils
-from jwst.resample.resample import (
-    ResampleImage,
-    LibModelAccess,
-)
-from stcal.alignment.util import (
-    compute_scale,
-    wcs_bbox_from_shape,
-)
+from jwst.resample.resample import ResampleData
 
 
 log = logging.getLogger(__name__)
@@ -32,10 +25,10 @@ log.setLevel(logging.DEBUG)
 
 _S2C = SphericalToCartesian()
 
-__all__ = ["ResampleSpec"]
+__all__ = ["ResampleSpecData"]
 
 
-class ResampleSpec(ResampleImage):
+class ResampleSpecData(ResampleData):
     """
     This is the controlling routine for the resampling process for spectral data.
 
@@ -52,12 +45,9 @@ class ResampleSpec(ResampleImage):
          a record of metadata from all input models.
     """
 
-    def __init__(self, input_models, *args, output_model=None, **kwargs):
-    # def __init__(self, input_models, pixfrac=1.0, kernel="square",
-    #              fillval=0.0, wht_type="ivm", good_bits=0,
-    #              output_wcs=None, wcs_pars=None, output_model=None,
-    #              accumulate=False, enable_ctx=True, enable_var=True,
-    #              allowed_memory=None):
+    def __init__(self, input_models, output=None, single=False, blendheaders=False,
+                 pixfrac=1.0, kernel="square", fillval=0, wht_type="ivm",
+                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
         """
         Parameters
         ----------
@@ -70,30 +60,6 @@ class ResampleSpec(ResampleImage):
         kwargs : dict
             Other parameters
         """
-        if output_model is None:
-            self.resampled_model = datamodels.SlitModel()
-            self._update_output_meta_with_first_model = True
-        else:
-            self.resampled_model = output_model
-            self._update_output_meta_with_first_model = False
-            # convert output_model to dictionary:
-            attributes = ResampleImage.output_model_attributes(
-                accumulate=False,
-                enable_ctx=kwargs.get("enable_ctx", True),
-                enable_var=kwargs.get("enable_var", True),
-            )
-            output_model = LibModelAccess.get_model_attributes(
-                output_model,
-                attributes=attributes,
-            )
-
-        super().__init__(
-            input_models,
-            *args,
-            output_model=output_model,
-            **kwargs
-        )
-
         self.output_dir = None
         self.output_filename = output
         if output is not None and '.fits' not in str(output):
@@ -102,6 +68,8 @@ class ResampleSpec(ResampleImage):
         self.intermediate_suffix = 'outlier_s2d'
 
         self.pscale_ratio = pscale_ratio
+        self.single = single
+        self.blendheaders = blendheaders
         self.pixfrac = pixfrac
         self.kernel = kernel
         self.fillval = fillval
@@ -490,7 +458,7 @@ class ResampleSpec(ResampleImage):
 
         # Compute bounding box and output array shape.
         self.data_size = (ny, n_lam)
-        bounding_box = wcs_bbox_from_shape(self.data_size)
+        bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
         output_wcs.array_shape = self.data_size
 
@@ -773,7 +741,7 @@ class ResampleSpec(ResampleImage):
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
-        bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
+        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
@@ -882,7 +850,7 @@ class ResampleSpec(ResampleImage):
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
-        bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
+        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs

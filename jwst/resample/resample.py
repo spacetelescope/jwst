@@ -351,7 +351,6 @@ class ResampleData:
                 deleted from memory. Default value is `True` to keep
                 all products in memory.
         """
-        assert False
         self.output_dir = None
         self.output_filename = output
         if output is not None and '.fits' not in str(output):
