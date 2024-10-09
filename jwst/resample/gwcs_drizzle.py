@@ -1,6 +1,5 @@
 import numpy as np
 
-from drizzle import util
 from drizzle import cdrizzle
 from . import resample_utils
 
@@ -336,9 +335,8 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     output input image.
 
     """
-
     # Insure that the fillval parameter gets properly interpreted for use with tdriz
-    if util.is_blank(str(fillval)):
+    if resample_utils.is_blank(str(fillval)):
         fillval = 'NAN'
     else:
         fillval = str(fillval)
