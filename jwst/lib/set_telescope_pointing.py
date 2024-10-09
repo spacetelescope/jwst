@@ -306,43 +306,39 @@ GuideStarPosition = namedtuple('GuideStarPosition', ['position', 'corner', 'size
 GuideStarPosition.__new__.__defaults__ = ((None,) * 3)
 
 
-def NoneFactory():
-    """Set default of any field in the dataclass to None without mypy getting angry"""
-    return dataclasses.field(default_factory=lambda: None)
-
 # Transforms
 @dataclasses.dataclass
 class Transforms:
     """The matrices used in calculation of the M_eci2siaf transformation
     """
     #: ECI to FGS1
-    m_eci2fgs1: np.ndarray = NoneFactory()
+    m_eci2fgs1: np.ndarray | None = None
     #: ECI to Guide Star
-    m_eci2gs: np.ndarray = NoneFactory()
+    m_eci2gs: np.ndarray | None = None
     #: ECI to J-Frame
-    m_eci2j: np.ndarray = NoneFactory()
+    m_eci2j: np.ndarray | None = None
     #: ECI to SIAF
-    m_eci2siaf: np.ndarray = NoneFactory()
+    m_eci2siaf: np.ndarray | None = None
     #: ECI to SIFOV
-    m_eci2sifov: np.ndarray = NoneFactory()
+    m_eci2sifov: np.ndarray | None = None
     #: ECI to V
-    m_eci2v: np.ndarray = NoneFactory()
+    m_eci2v: np.ndarray | None = None
     #: FGSX to Guide Stars transformation
-    m_fgsx2gs: np.ndarray = NoneFactory()
+    m_fgsx2gs: np.ndarray | None = None
     #: FGS1 to SIFOV
-    m_fgs12sifov: np.ndarray = NoneFactory()
+    m_fgs12sifov: np.ndarray | None = None
     #: Velocity aberration
-    m_gs2gsapp: np.ndarray = NoneFactory()
+    m_gs2gsapp: np.ndarray | None = None
     #: J-Frame to FGS1
-    m_j2fgs1: np.ndarray = NoneFactory()
+    m_j2fgs1: np.ndarray | None = None
     #: FSM correction
-    m_sifov_fsm_delta: np.ndarray = NoneFactory()
+    m_sifov_fsm_delta: np.ndarray | None = None
     #: SIFOV to V1
-    m_sifov2v: np.ndarray = NoneFactory()
+    m_sifov2v: np.ndarray | None = None
     #: V to SIAF
-    m_v2siaf: np.ndarray = NoneFactory()
+    m_v2siaf: np.ndarray | None = None
     #: Override values. Either another Transforms or dict-like object
-    override: object = NoneFactory()
+    override: object | None = None
 
     @classmethod
     def from_asdf(cls, asdf_file):
@@ -430,15 +426,15 @@ class TransformParameters:
     #: The V3 position angle to use if the pointing information is not found.
     default_pa_v3: float = 0.
     #: Detector in use.
-    detector: str = NoneFactory()
+    detector: str | None = None
     #: Do not write out the modified file.
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
-    engdb_url: str = NoneFactory()
+    engdb_url: str | None = None
     #: Exposure type
-    exp_type: str = NoneFactory()
+    exp_type: str | None = None
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
-    fgsid: int = NoneFactory()
+    fgsid: int | None = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
@@ -448,32 +444,32 @@ class TransformParameters:
     #: Transpose the `j2fgs1` matrix.
     j2fgs_transpose: bool = True
     #: The [DX, DY, DZ] barycentri velocity vector
-    jwst_velocity: np.ndarray = NoneFactory()
+    jwst_velocity: np.ndarray | None = None
     #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
     method: Methods = Methods.default
     #: Observation end time
-    obsend: float = NoneFactory()
+    obsend: float | None = None
     #: Observation start time
-    obsstart: float = NoneFactory()
+    obsstart: float | None = None
     #: If set, matrices that should be used instead of the calculated one.
-    override_transforms: Transforms = NoneFactory()
+    override_transforms: Transforms | None = None
     #: The tracking mode in use.
-    pcs_mode: str = NoneFactory()
+    pcs_mode: str | None = None
     #: The observatory orientation, represented by the ECI quaternion, and other engineering mnemonics
-    pointing: Pointing = NoneFactory()
+    pointing: Pointing | None = None
     #: Reduction function to use on values.
-    reduce_func: Callable = NoneFactory()
+    reduce_func: Callable | None = None
     #: The SIAF information for the input model
-    siaf: SIAF = NoneFactory()
+    siaf: SIAF | None = None
     #: The SIAF database
-    siaf_db: SiafDb = NoneFactory()
+    siaf_db: SiafDb | None = None
     #: If no telemetry can be found during the observation,
     #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.
     #: The date of observation (`jwst.datamodels.JwstDataModel.meta.date`)
-    useafter: str = NoneFactory()
+    useafter: str | None = None
     #: V3 position angle at Guide Star (`jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science`)
-    v3pa_at_gs: float = NoneFactory()
+    v3pa_at_gs: float | None = None
 
     def as_reprdict(self):
         """Return a dict where all values are REPR of their values"""
