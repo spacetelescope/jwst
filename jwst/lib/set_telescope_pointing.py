@@ -312,33 +312,33 @@ class Transforms:
     """The matrices used in calculation of the M_eci2siaf transformation
     """
     #: ECI to FGS1
-    m_eci2fgs1: np.ndarray | Any = None
+    m_eci2fgs1: np.ndarray | None = None
     #: ECI to Guide Star
-    m_eci2gs: np.ndarray | Any = None
+    m_eci2gs: np.ndarray | None = None
     #: ECI to J-Frame
     m_eci2j: np.ndarray | Any = None
     #: ECI to SIAF
-    m_eci2siaf: np.ndarray | Any = None
+    m_eci2siaf: np.ndarray | None = None
     #: ECI to SIFOV
-    m_eci2sifov: np.ndarray | Any = None
+    m_eci2sifov: np.ndarray | None = None
     #: ECI to V
     m_eci2v: np.ndarray | Any = None
     #: FGSX to Guide Stars transformation
     m_fgsx2gs: np.ndarray | Any = None
     #: FGS1 to SIFOV
-    m_fgs12sifov: np.ndarray | Any = None
+    m_fgs12sifov: np.ndarray | None = None
     #: Velocity aberration
     m_gs2gsapp: np.ndarray | Any = None
     #: J-Frame to FGS1
     m_j2fgs1: np.ndarray | Any = None
     #: FSM correction
-    m_sifov_fsm_delta: np.ndarray | Any = None
+    m_sifov_fsm_delta: np.ndarray | None = None
     #: SIFOV to V1
-    m_sifov2v: np.ndarray | Any = None
+    m_sifov2v: np.ndarray | None = None
     #: V to SIAF
     m_v2siaf: np.ndarray | Any = None
     #: Override values. Either another Transforms or dict-like object
-    override: object | Any = None
+    override: object | None = None
 
     @classmethod
     def from_asdf(cls, asdf_file):
@@ -426,15 +426,15 @@ class TransformParameters:
     #: The V3 position angle to use if the pointing information is not found.
     default_pa_v3: float = 0.
     #: Detector in use.
-    detector: str | Any = None
+    detector: str = ""
     #: Do not write out the modified file.
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
-    engdb_url: str | Any = None
+    engdb_url: str | None = None
     #: Exposure type
-    exp_type: str | Any = None
+    exp_type: str | None = None
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
-    fgsid: int | Any = None
+    fgsid: int | None = None
     #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
     #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
@@ -444,21 +444,21 @@ class TransformParameters:
     #: Transpose the `j2fgs1` matrix.
     j2fgs_transpose: bool = True
     #: The [DX, DY, DZ] barycentri velocity vector
-    jwst_velocity: np.ndarray | Any = None
+    jwst_velocity: np.ndarray | None = None
     #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
     method: Methods = Methods.default
     #: Observation end time
-    obsend: float | Any = None
+    obsend: float | None = None
     #: Observation start time
-    obsstart: float | Any = None
+    obsstart: float | None = None
     #: If set, matrices that should be used instead of the calculated one.
-    override_transforms: Transforms | Any = None
+    override_transforms: Transforms | None = None
     #: The tracking mode in use.
-    pcs_mode: str | Any = None
+    pcs_mode: str | None = None
     #: The observatory orientation, represented by the ECI quaternion, and other engineering mnemonics
     pointing: Pointing | Any = None
     #: Reduction function to use on values.
-    reduce_func: Callable | Any = None
+    reduce_func: Callable | None = None
     #: The SIAF information for the input model
     siaf: SIAF | Any = None
     #: The SIAF database
@@ -467,9 +467,9 @@ class TransformParameters:
     #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.
     #: The date of observation (`jwst.datamodels.JwstDataModel.meta.date`)
-    useafter: str | Any = None
+    useafter: str | None = None
     #: V3 position angle at Guide Star (`jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science`)
-    v3pa_at_gs: float | Any = None
+    v3pa_at_gs: float | None = None
 
     def as_reprdict(self):
         """Return a dict where all values are REPR of their values"""
