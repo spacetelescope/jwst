@@ -192,7 +192,6 @@ class ResampleData:
             output_pix_area * np.rad2deg(3600)**2
         )
 
-
     def do_drizzle(self, input_models):
         """Pick the correct drizzling mode based on self.single
         """
@@ -389,7 +388,7 @@ class ResampleData:
             # build ModelLibrary as an association from the output files
             # this saves memory if there are multiple groups
             asn = asn_from_list(output_models, product_name='outlier_i2d')
-            asn_dict = json.loads(asn.dump()[1]) # serializes the asn and converts to dict
+            asn_dict = json.loads(asn.dump()[1])  # serializes the asn and converts to dict
             return ModelLibrary(asn_dict, on_disk=True)
 
         # otherwise just build it as a list of in-memory models
@@ -430,9 +429,11 @@ class ResampleData:
                 log.debug(f'Using intensity scale iscale={iscale}')
                 img.meta.iscale = iscale
 
-                inwht = resample_utils.build_driz_weight(img,
-                                                        weight_type=self.weight_type,
-                                                        good_bits=self.good_bits)
+                inwht = resample_utils.build_driz_weight(
+                    img,
+                    weight_type=self.weight_type,
+                    good_bits=self.good_bits,
+                )
                 # apply sky subtraction
                 blevel = img.meta.background.level
                 if not img.meta.background.subtracted and blevel is not None:
@@ -479,14 +480,13 @@ class ResampleData:
 
         return ModelLibrary([output_model,], on_disk=False)
 
-
     def resample_variance_arrays(self, output_model, input_models):
         """Resample variance arrays from input_models to the output_model.
 
         Variance images from each input model are resampled individually and
-        added to a weighted sum. If weight_type is 'ivm', the inverse of the
+        added to a weighted sum. If ``weight_type`` is 'ivm', the inverse of the
         resampled read noise variance is used as the weight for all the variance
-        components. If weight_type is 'exptime', the exposure time is used.
+        components. If ``weight_type`` is 'exptime', the exposure time is used.
 
         The output_model is modified in place.
         """
@@ -526,8 +526,10 @@ class ResampleData:
                 if rn_var is not None:
                     mask = (rn_var >= 0) & np.isfinite(rn_var) & (weight > 0)
                     weighted_rn_var[mask] = np.nansum(
-                        [weighted_rn_var[mask],
-                        rn_var[mask] * weight[mask] * weight[mask]],
+                        [
+                            weighted_rn_var[mask],
+                            rn_var[mask] * weight[mask] * weight[mask]
+                        ],
                         axis=0
                     )
                     total_weight_rn_var[mask] += weight[mask]
@@ -539,8 +541,10 @@ class ResampleData:
                 if pn_var is not None:
                     mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
                     weighted_pn_var[mask] = np.nansum(
-                        [weighted_pn_var[mask],
-                        pn_var[mask] * weight[mask] * weight[mask]],
+                        [
+                            weighted_pn_var[mask],
+                            pn_var[mask] * weight[mask] * weight[mask]
+                        ],
                         axis=0
                     )
                     total_weight_pn_var[mask] += weight[mask]
@@ -550,8 +554,10 @@ class ResampleData:
                 if flat_var is not None:
                     mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
                     weighted_flat_var[mask] = np.nansum(
-                        [weighted_flat_var[mask],
-                        flat_var[mask] * weight[mask] * weight[mask]],
+                        [
+                            weighted_flat_var[mask],
+                            flat_var[mask] * weight[mask] * weight[mask]
+                        ],
                         axis=0
                     )
                     total_weight_flat_var[mask] += weight[mask]
@@ -581,7 +587,6 @@ class ResampleData:
 
             del weighted_rn_var, weighted_pn_var, weighted_flat_var
             del total_weight_rn_var, total_weight_pn_var, total_weight_flat_var
-
 
     def _resample_one_variance_array(self, name, input_model, output_model):
         """Resample one variance image from an input model.
