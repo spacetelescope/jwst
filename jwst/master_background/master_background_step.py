@@ -110,8 +110,8 @@ class MasterBackgroundStep(Step):
                 # Save the computed 2d background if requested by user. The user has supplied
                 # the master background so just save the expanded 2d background
                 if self.save_background:
-                    
-                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+                    print(type(background_2d_collection))
+                    self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
                     
             # Compute master background and subtract it
             else:
@@ -164,7 +164,7 @@ class MasterBackgroundStep(Step):
                 # Save the computed background if requested by user
                 if self.save_background:
                     self.save_model(master_background, suffix='masterbg1d', force=True, asn_id=asn_id)
-                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+                    self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
 
             record_step_status(result, 'master_background', success=True)
 
@@ -222,6 +222,11 @@ class MasterBackgroundStep(Step):
                                   "run again and set force_subtract = True.")
 
         return do_sub
+    
+    def save_container(self, container, suffix="", asn_id="", force=True):
+        """Save all models in container for intermediate background subtraction"""
+        for i, model in enumerate(container):
+            self.save_model(model, suffix=suffix, force=force, asn_id=asn_id, idx=i)
 
 
 def copy_background_to_surf_bright(spectrum):
