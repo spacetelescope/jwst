@@ -35,12 +35,7 @@ class BadpixSelfcalStep(Step):
     """
 
     def save_model(self, model, *args, **kwargs):
-        # """Override save_model to only save the science models
-        # and to ignore the index for save_bkg
-        # """
         kwargs["idx"] = None
-        # if isinstance(model, Sequence):
-        #     model = model[0]
         return Step.save_model(self, model, *args, **kwargs)
 
     def save_bkg(self, bkg_list, suffix="badpix_selfcal_bkg"):

@@ -300,6 +300,66 @@ to supply custom catalogs.
                 except AttributeError:
                     pass
 
+    def save(self,
+             path=None,
+             dir_path=None,
+             save_model_func=None,
+             **kwargs):
+        """
+        Write out models in container to FITS or ASDF.
+
+        Parameters
+        ----------
+        path : str or func or None
+            - If None, the `meta.filename` is used for each model.
+            - If a string, the string is used as a root and an index is
+              appended.
+            - If a function, the function takes the two arguments:
+              the value of model.meta.filename and the
+              `idx` index, returning constructed file name.
+
+        dir_path : str
+            Directory to write out files.  Defaults to current working dir.
+            If directory does not exist, it creates it.  Filenames are pulled
+            from `.meta.filename` of each datamodel in the container.
+
+        save_model_func: func or None
+            Alternate function to save each model instead of
+            the models `save` method. Takes one argument, the model,
+            and keyword argument `idx` for an index.
+
+        Returns
+        -------
+        output_paths: [str[, ...]]
+            List of output file paths of where the models were saved.
+        """
+        output_paths = []
+        if path is None:
+            def path(filename, idx=None):
+                return filename
+        elif not callable(path):
+            path = make_file_with_index
+
+        for idx, model in enumerate(self):
+            if len(self) <= 1:
+                idx = None
+            if save_model_func is None:
+                outpath, filename = op.split(
+                    path(model.meta.filename, idx=idx)
+                )
+                if dir_path:
+                    outpath = dir_path
+                save_path = op.join(outpath, filename)
+                try:
+                    output_paths.append(
+                        model.save(save_path, **kwargs)
+                    )
+                except IOError as err:
+                    raise err
+
+            else:
+                output_paths.append(save_model_func(model, idx=idx))
+        return output_paths
 
     @property
     def models_grouped(self):
@@ -404,7 +464,15 @@ to supply custom catalogs.
         Returns
         -------
         dict
+
+        Notes
+        -----
+        stpipe requires ModelContainer to have a crds_observatory attribute in order
+        to pass through step.run(), but it is never accessed.
         """
+        msg = ("stpipe uses the get_crds_parameters method from the 0th model in the "
+               "ModelContainer. This method is currently not used.")
+        raise NotImplementedError(msg)
         with self._open_first_science_exposure() as model:
             return model.get_crds_parameters()
 
@@ -445,3 +513,26 @@ to supply custom catalogs.
             if model.meta.asn.exptype.lower() == asn_exptype:
                 ind.append(i)
         return ind
+
+def make_file_with_index(file_path, idx):
+    """Append an index to a filename
+
+    Parameters
+    ----------
+    file_path: str
+        The file to append the index to.
+    idx: int
+        An index to append
+
+
+    Returns
+    -------
+    file_path: str
+        Path with index appended
+    """
+    # Decompose path
+    path_head, path_tail = op.split(file_path)
+    base, ext = op.splitext(path_tail)
+    if idx is not None:
+        base = base + str(idx)
+    return op.join(path_head, base + ext)
