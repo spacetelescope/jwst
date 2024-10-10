@@ -15,9 +15,12 @@ from astropy.time.core import Time
 
 from stdatamodels.jwst import datamodels
 
+# should divide by N_integrations to get standard error of the mean, not standard deviation
+sigma_clipped_mean_sem = lambda x: np.array([1,1,1/np.sqrt(x.shape[0])])[:,None] * np.array(sigma_clipped_stats(x,axis=0))
+
 
 class RawOifits:
-    def __init__(self, fringefitter, method="median"):
+    def __init__(self, fringefitter, method="mean"):
         """
         Class to store AMI data in the format required to write out to OIFITS files
         Angular quantities of input are in radians from fringe fitting; converted to degrees for saving.
@@ -28,7 +31,7 @@ class RawOifits:
             Object containing nrm_list attribute (list of nrm objects)
             and other info needed for OIFITS files
         method: string
-            Method to average observables: mean or median. Default median.
+            Method to average observables: mean or median. Default mean.
 
         Notes
         -----
@@ -141,21 +144,22 @@ class RawOifits:
 
         # apply sigma-clipping to uncertainties
         # sigma_clipped_stats returns mean, median, stddev. nsigma=3, niters=5
+        # using a lambda function sigma_clipped_mean_sem to return mean, median, standard error of the mean = stddev/sqrt(N)
         elif self.method == "median":
-            _, self.vis2, self.e_vis2 = sigma_clipped_stats(self.fringe_amplitudes_squared, axis=0)
-            _, self.visamp, self.e_visamp = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
-            _, self.visphi, self.e_visphi = sigma_clipped_stats(self.fringe_phases, axis=0)
-            _, self.closure_phases, self.e_cp = sigma_clipped_stats(self.closure_phases, axis=0)
-            _, self.camp, self.e_camp = sigma_clipped_stats(self.closure_amplitudes, axis=0)
-            _, self.pist, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
+            _, self.vis2, self.e_vis2 = sigma_clipped_mean_sem(self.fringe_amplitudes_squared)
+            _, self.visamp, self.e_visamp = sigma_clipped_mean_sem(self.fringe_amplitudes)
+            _, self.visphi, self.e_visphi = sigma_clipped_mean_sem(self.fringe_phases)
+            _, self.closure_phases, self.e_cp = sigma_clipped_mean_sem(self.closure_phases)
+            _, self.camp, self.e_camp = sigma_clipped_mean_sem(self.closure_amplitudes)
+            _, self.pist, self.e_pist = sigma_clipped_mean_sem(self.pistons)
 
         else:  # take the mean
-            self.vis2, _, self.e_vis2 = sigma_clipped_stats(self.fringe_amplitudes_squared, axis=0)
-            self.visamp, _, self.e_visamp = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
-            self.visphi, _, self.e_visphi = sigma_clipped_stats(self.fringe_phases, axis=0)
-            self.closure_phases, _, self.e_cp = sigma_clipped_stats(self.closure_phases, axis=0)
-            self.camp, _, self.e_camp = sigma_clipped_stats(self.closure_amplitudes, axis=0)
-            self.pist, _, self.e_pist = sigma_clipped_stats(self.pistons, axis=0)
+            self.vis2, _, self.e_vis2 = sigma_clipped_mean_sem(self.fringe_amplitudes_squared)
+            self.visamp, _, self.e_visamp = sigma_clipped_mean_sem(self.fringe_amplitudes)
+            self.visphi, _, self.e_visphi = sigma_clipped_mean_sem(self.fringe_phases)
+            self.closure_phases, _, self.e_cp = sigma_clipped_mean_sem(self.closure_phases)
+            self.camp, _, self.e_camp = sigma_clipped_mean_sem(self.closure_amplitudes)
+            self.pist, _, self.e_pist = sigma_clipped_mean_sem(self.pistons)
 
         # prepare arrays for OI_ARRAY ext
         self.staxy = instrument_data.ctrs_inst
