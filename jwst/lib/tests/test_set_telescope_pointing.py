@@ -12,6 +12,7 @@ import pytest
 pytest.importorskip('pysiaf')
 
 from astropy.io import fits  # noqa: E402
+from astropy.table import Table  # noqa: E402
 from astropy.time import Time  # noqa: E402
 
 from stdatamodels.jwst import datamodels  # noqa: E402
@@ -586,6 +587,46 @@ def test_mirim_tamrs_siaf_values(eng_db_ngas, data_file_nosiaf):
         assert model.meta.wcsinfo.crpix2 == 993.5
 
 
+def test_moving_target_update(caplog, eng_db_ngas, data_file_moving_target):
+    """Test moving target table updates."""
+    with datamodels.open(data_file_moving_target) as model:
+        stp.update_mt_kwds(model)
+
+        expected_ra = 6.200036603575057e-05
+        expected_dec = 1.7711407285091175e-10
+        assert np.isclose(model.meta.wcsinfo.mt_ra, expected_ra)
+        assert np.isclose(model.meta.wcsinfo.mt_dec, expected_dec)
+        assert np.isclose(model.meta.target.ra, expected_ra)
+        assert np.isclose(model.meta.target.dec, expected_dec)
+
+    assert "Moving target RA and Dec updated" in caplog.text
+
+
+def test_moving_target_no_mtt(caplog, eng_db_ngas, data_file):
+    """Test moving target table updates, no table present."""
+    with datamodels.open(data_file) as model:
+        stp.update_mt_kwds(model)
+
+        # No update without table
+        assert model.meta.wcsinfo.mt_ra is None
+        assert model.meta.wcsinfo.mt_dec is None
+
+    assert "Moving target position table not found" in caplog.text
+
+
+def test_moving_target_tnotinrange(caplog, eng_db_ngas, data_file_moving_target):
+    """Test moving target table updates, time not in range."""
+    with datamodels.open(data_file_moving_target) as model:
+        model.meta.exposure.mid_time -= 0.2
+        stp.update_mt_kwds(model)
+
+        # No update without times in range
+        assert model.meta.wcsinfo.mt_ra is None
+        assert model.meta.wcsinfo.mt_dec is None
+
+    assert "is not in the moving_target table range" in caplog.text
+
+
 # ######################
 # Utilities and fixtures
 # ######################
@@ -782,6 +823,46 @@ def data_file_acq1(tmp_path):
     model.meta.ephemeris.velocity_x = -25.021
     model.meta.ephemeris.velocity_y = -16.507
     model.meta.ephemeris.velocity_z = -7.187
+
+    file_path = tmp_path / 'file.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture
+def data_file_moving_target(tmp_path):
+    """Example data from simulation."""
+    # Values are from simulated data file jw00634_nrcblong_mttest_uncal.fits
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = 58738.82598848102
+    model.meta.exposure.end_time = 58738.82747969907
+    model.meta.exposure.mid_time = 58738.82673409005
+    model.meta.target.ra = 0.0
+    model.meta.target.dec = 0.0
+    model.meta.guidestar.gs_ra = 0.0001
+    model.meta.guidestar.gs_dec = 0.0001
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '2019-09-12'
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x = 0.00651191175424979
+    model.meta.ephemeris.velocity_y = 0.160769793796114
+    model.meta.ephemeris.velocity_z = 0.147663026601154
+
+    model.meta.target.type = 'MOVING'
+    model.meta.moving_target = None
+
+    times = ['2019-09-12T19:49:25.405', '2019-09-12T19:50:29.825', '2019-09-12T19:51:34.246']
+    apparent_ra = [0.0, 6.2e-5, 1.24e-4]
+    apparent_dec = [-6.2e-5,  0.0,  3.0e-5]
+    default = [0.0, 0.0, 0.0]
+    col_names = [item['name'] for item in model.schema['properties']['moving_target']['datatype']]
+    mt_table = Table([times, apparent_ra, apparent_dec],
+                     names=('time', 'mt_apparent_RA', 'mt_apparent_Dec'))
+    for column in col_names:
+        if column not in {'time', 'mt_apparent_RA', 'mt_apparent_Dec'}:
+            mt_table.add_column(default, name=column)
+    model.moving_target = mt_table.as_array()
 
     file_path = tmp_path / 'file.fits'
     model.save(file_path)
