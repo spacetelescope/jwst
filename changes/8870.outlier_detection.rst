@@ -1,1 +1,1 @@
-remove deprecated nlow and nhigh parameters from outlier detection step
+Remove deprecated nlow and nhigh parameters from outlier detection step.
