@@ -1,6 +1,5 @@
 import numpy as np
 
-from drizzle import util
 from drizzle import cdrizzle
 from . import resample_utils
 
@@ -338,7 +337,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     """
 
     # Insure that the fillval parameter gets properly interpreted for use with tdriz
-    if util.is_blank(str(fillval)):
+    if str(fillval).strip() == '':
         fillval = 'NAN'
     else:
         fillval = str(fillval)
@@ -382,7 +381,6 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
-    # inwht[np.isnan(pixmap[:,:,0])] = 0.
 
     log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
     log.debug(f"Input Sci shape: {insci.shape}")

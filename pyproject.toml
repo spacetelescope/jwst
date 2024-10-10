@@ -22,7 +22,7 @@ dependencies = [
     "astropy>=5.3",
     "BayesicFitting>=3.0.1",
     "crds>=11.17.14",
-    "drizzle>=1.15.0",
+    "drizzle @ git+https://github.com/mcara/drizzle.git@redesign-api",
     "gwcs>=0.21.0,<0.23.0",
     "numpy>=1.22,<2.0",
     "opencv-python-headless>=4.6.0.66",
