@@ -674,8 +674,9 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
             if n_main_shutter == 1:
                 # Source is marked primary
                 source_id = slitlet['source_id']
-                source_xpos = slitlet['estimated_source_in_shutter_x']
-                source_ypos = slitlet['estimated_source_in_shutter_y']
+                source_xpos = np.nan_to_num(slitlet['estimated_source_in_shutter_x'], nan=0.0)
+                source_ypos = np.nan_to_num(slitlet['estimated_source_in_shutter_y'], nan=0.0)
+
                 log.info(f'Found fixed slit {slitlet_id} with source_id = {source_id}.')
 
                 # Get source info for this slitlet:
@@ -746,8 +747,8 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
         elif n_main_shutter == 1:
             xcen, ycen, quadrant, source_xpos, source_ypos = [
                 (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
-                 s['estimated_source_in_shutter_x'],
-                 s['estimated_source_in_shutter_y'])
+                 np.nan_to_num(s['estimated_source_in_shutter_x'], nan=0.0),
+                 np.nan_to_num(s['estimated_source_in_shutter_y'], nan=0.0))
                 for s in slitlet_rows if s['background'] == 'N'][0]
             shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
 
