@@ -191,15 +191,16 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
 @pytest.mark.bigdata
 def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     """Test optional frame-averaged darks output from DarkCurrentStep"""
-    rtdata.get_data("nircam/image/jw00312007001_02102_00001_nrcblong_ramp.fits")
+    rtdata.get_data("nircam/image/jw01205015001_03101_00001_nrcb1_ramp.fits")
 
+    dark_file = 'jw01205015001_03101_00001_nrcb1_frame_averaged_dark.fits'
     args = ["jwst.dark_current.DarkCurrentStep", rtdata.input,
-            "--dark_output='frame_averaged_darks.fits'",
+            f"--dark_output={dark_file}",
             ]
     Step.from_cmdline(args)
-    rtdata.output = "frame_averaged_darks.fits"
+    rtdata.output = dark_file
 
-    rtdata.get_truth("truth/test_nircam_image/frame_averaged_darks.fits")
+    rtdata.get_truth(f"truth/test_nircam_image/{dark_file}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
