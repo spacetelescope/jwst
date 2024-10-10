@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import copy
 
-from jwst.datamodels import CubeModel, ImageModel
+from jwst.datamodels import CubeModel, ImageModel  # type: ignore[attr-defined]
 
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data

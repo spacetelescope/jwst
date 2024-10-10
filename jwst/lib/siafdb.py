@@ -33,14 +33,14 @@ INSTRUMENT_MAP = {
 # in Level1bModel data models.
 SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
                            "crpix1", "crpix2", "cdelt1", "cdelt2",
-                           "vertices_idl"])
+                           "vertices_idl"],
+                           defaults = (None, None, None, None, 0, 0, 3600, 3600,
+                             (0, 1, 1, 0, 0, 0, 1, 1)))
 # Set default values for the SIAF.
 # Values which are needed by the pipeline are set to None which
 # triggers a ValueError if missing in the SIAF database.
 # Quantities not used by the pipeline get a default value -
 # FITS keywords and aperture vertices.
-SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
-                             (0, 1, 1, 0, 0, 0, 1, 1))
 
 SIAF_REQUIRED = ['V2Ref', 'V3Ref', 'V3IdlYAngle', 'VIdlParity']
 SIAF_OPTIONAL = ['XSciRef', 'YSciRef', 'XSciScale', 'YSciScale']
@@ -76,7 +76,7 @@ class SiafDb:
             log_level = logging.ERROR
         try:
             with LoggingContext(logger_pysiaf, level=log_level):
-                import pysiaf
+                import pysiaf # type: ignore[import-not-found]
         except ImportError:
             raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
         self.pysiaf = pysiaf

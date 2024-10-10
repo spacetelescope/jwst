@@ -63,7 +63,7 @@ class SkyMatchStep(Step):
         in_memory = boolean(default=True) # If False, preserve memory using temporary files
     """  # noqa: E501
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

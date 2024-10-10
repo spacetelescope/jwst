@@ -9,7 +9,7 @@ pytest.importorskip('pysiaf')
 from numpy import array                             # noqa: E402
 from numpy import allclose, isclose                 # noqa: E402
 
-from jwst.datamodels import Level1bModel            # noqa: E402
+from jwst.datamodels import Level1bModel            # type: ignore[attr-defined] # noqa: E402
 from jwst.lib import engdb_mast                     # noqa: E402
 from jwst.lib import engdb_tools                    # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402

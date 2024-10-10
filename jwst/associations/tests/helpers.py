@@ -56,11 +56,11 @@ class BasePoolRule():
 
     # Define the pools and testing parameters related to them.
     # Each entry is a tuple starting with the path of the pool.
-    pools = []
+    pools: list = []
 
     # Define the rules that SHOULD be present.
     # Each entry is the class name of the rule.
-    valid_rules = []
+    valid_rules: list = []
 
     def test_rules_exist(self):
         rules = registry_level3_only()

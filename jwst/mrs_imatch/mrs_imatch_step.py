@@ -31,7 +31,7 @@ class MRSIMatchStep(Step):
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
     """
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def process(self, images):
 

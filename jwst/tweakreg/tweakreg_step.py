@@ -126,7 +126,7 @@ class TweakRegStep(Step):
         in_memory = boolean(default=True)  # If False, preserve memory using temporary files at expense of runtime
     """
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def process(self, input):
         if isinstance(input, ModelLibrary):
