@@ -2,6 +2,7 @@ from jwst.stpipe import (Pipeline, Step)
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel
+from jwst.datamodels import ModelContainer
 
 
 class StepWithReference(Step):
@@ -177,8 +178,12 @@ class StepWithContainer(Step):
 
     def process(self, *args):
         container = []
-        model1 = ImageModel(args[0]).copy()
-        model2 = ImageModel(args[0]).copy()
+        if isinstance(args[0], ModelContainer):
+            model = args[0][0]
+        else:
+            model = args[0]
+        model1 = ImageModel(model).copy()
+        model2 = ImageModel(model).copy()
         model1.meta.filename = 'swc_model1.fits'
         model2.meta.filename = 'swc_model2.fits'
         container.append(model1)
