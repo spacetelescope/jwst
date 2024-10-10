@@ -45,7 +45,7 @@ jobs:
         - linux: check-dependencies
         - linux: check-types
   latest_crds_contexts:
-    uses: spacetelescope/crds/.github/workflows/contexts.yml@94138b4501c9487535fd6b977492fc1a2c319708  # 12.0.2
+    uses: ./.github/workflows/contexts.yml
   crds_context:
     needs: [ latest_crds_contexts ]
     runs-on: ubuntu-latest
