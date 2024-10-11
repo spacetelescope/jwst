@@ -196,8 +196,6 @@ In JWST 1.17, the `ModelContainer` class was de-scoped in light of the introduct
 for handling association-type data, but it is no longer a subclass of `JWSTDataModel`. The
 following changes in behavior are noteworthy:
 
-* `ModelContainer` no longer has a `save()` method; the `save()` method should be called on
-  each of the individual `DataModel` objects in the container instead, as desired.
 * The `ModelContainer` class no longer has a `meta` attribute. The association data is now
   stored in the top-level `asn_table` attribute, along with several other association-relevant
   attributes including `asn_table_name`, `asn_pool_name`, `asn_exptypes`, `asn_n_members`, 

@@ -110,7 +110,6 @@ class MasterBackgroundStep(Step):
                 # Save the computed 2d background if requested by user. The user has supplied
                 # the master background so just save the expanded 2d background
                 if self.save_background:
-                    print(type(background_2d_collection))
                     self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
                     
             # Compute master background and subtract it
