@@ -1,7 +1,7 @@
 .. _outlier_design:
 
 Overview: OutlierDetectionStep
-------------------------------
+==============================
 
 This module provides the sole interface to all methods of performing outlier
 detection on JWST observations.
@@ -50,12 +50,5 @@ input data:
    using parameter values interpreted from inputs.
 
 #. Output models will have DQ arrays updated with flags for identified outliers.
-
-Reference Files
-===============
-
-The ``outlier_detection`` step uses the PARS-OUTLIERDETECTIONSTEP parameter reference file.
-
-.. include:: ../references_general/pars-outlierdetectionstep_reffile.inc
 
 .. automodapi:: jwst.outlier_detection.outlier_detection_step

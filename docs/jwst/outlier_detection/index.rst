@@ -7,7 +7,8 @@ Outlier Detection
 .. toctree::
    :maxdepth: 2
 
-   outlier_detection_step.rst
+   main.rst
+   reference_files.rst
    arguments.rst
    outlier_detection_imaging.rst
    outlier_detection_spec.rst

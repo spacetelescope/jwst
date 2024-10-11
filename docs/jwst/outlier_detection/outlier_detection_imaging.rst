@@ -4,20 +4,19 @@ Outlier Detection Algorithm for Imaging Data
 ============================================
 
 This module serves as the interface for applying ``outlier_detection`` to direct
-image observations, like those taken with MIRI, NIRCam and NIRISS.
+image observations, like those taken with MIRI, NIRCam, and NIRISS.
 A :ref:`Stage 3 association <asn-level3-techspecs>`,
 which is loaded into a :py:class:`~jwst.datamodels.ModelLibrary` object,
 serves as the basic format for all processing performed by this step.
 This routine performs the following operations:
 
-#. Extracts parameter settings from input ModelContainer and merges them with any user-provided values.
+#. Extracts parameter settings from input models and merges them with any user-provided values.
    See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list of parameters.
-
-#. Converts input data, as needed, to make sure it is in a format that can be processed.
 
 #. By default, resample all input images to the same output WCS. The resample process is
    controlled by the ``fillval``, ``pixfrac``, ``kernel``, ad ``good_bits`` parameters;
    see the :ref:`outlier detection arguments <outlier_detection_step_args>` for more information.
+   Resampling can be turned off with the ``resample_data`` parameter.
 
    * Compute an output WCS that is large enough to encompass all the input images.
    * Resample all images from the *same exposure* onto this output WCS to create a mosaic of all the chips
@@ -32,13 +31,11 @@ This routine performs the following operations:
      specified by the ``fillval`` parameter.
 
 #. If the ``save_intermediate_results`` parameter is set to True, write the resampled images to disk
-   with the suffix ``_outlier_i2d.fits``.
-   * **If resampling is turned off** through the use of the ``resample_data`` parameter,
-     a copy of the unrectified input images (as a ModelLibrary)
-     will be used for subsequent processing.
+   with the suffix ``_outlier_i2d.fits``. These are not saved if ``resample_data`` is set to False because
+   they would be copies of the input models.
 
-#. If resampling is turned off through the use of the ``resample_data`` parameter, skip the resampling
-  and use the input data itself in place of the resampled data for subsequent processing.
+#. If resampling is turned off, use the input data itself in place of the resampled data
+   for subsequent processing.
 
 #. Construct and apply a bad pixel mask to the resampled data based on the drizzled weights.
    The ``weight_type`` parameter indicates the type of weighting image to apply with the bad pixel mask.
@@ -60,7 +57,7 @@ This routine performs the following operations:
 
        .. math:: | image\_input - image\_median | > SNR * input\_err
 
-   * Add user-specified background value to the median image to match the original background levels
+   * Add a user-specified background value to the median image to match the original background levels
      of the input mosaic. This is controlled by the ``backg`` parameter.
    * Compute the spatial derivative of the blotted median images by computing the absolute value
      of the difference between each pixel and its four surrounding neighbors, recording the largest
@@ -69,8 +66,8 @@ This routine performs the following operations:
    * Flag cosmic rays and other blemishes (such as satellite trails) based on the derivative image.
      Where the difference is larger than can be explained by a combination of noise statistics,
      the flattening effect of taking the median, and an error in the shift
-     (the latter two effects are estimated using the image derivative), the suspect pixel is masked.
-   * Flag cosmic rays using the following rule:
+     (the latter two effects are estimated using the image derivative), the suspect pixel is considered
+     an outlier. The following rule is used:
 
      .. math:: | image\_input - image\_blotted | > scale*image\_deriv + SNR*noise
 
@@ -87,7 +84,7 @@ This routine performs the following operations:
 
 Memory Saving Options
 ---------------------
-The outlier detection algorithm can end up using massive amounts of memory
+The outlier detection algorithm for imaging can end up using massive amounts of memory
 depending on the number of inputs, the size of each input, and the size of the
 final output product.  Specifically,
 

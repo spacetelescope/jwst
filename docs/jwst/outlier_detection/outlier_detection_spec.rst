@@ -4,8 +4,9 @@ Outlier Detection for Slit-like Spectroscopic Data
 ==================================================
 
 This module serves as the interface for applying ``outlier_detection`` to slit-like
-spectroscopic observations. The algorithm shares many similarities with the
+spectroscopic observations. The algorithm is very similar to the
 :ref:`imaging algorithm <outlier-detection-imaging>`, and much of the same code is used.
+Please refer to those docs for more information.
 A :ref:`Stage 3 association <asn-level3-techspecs>`,
 which is loaded into a :py:class:`~jwst.datamodels.ModelContainer` object,
 serves as the input and output to this step, and the :py:class:`~jwst.datamodels.ModelContainer`

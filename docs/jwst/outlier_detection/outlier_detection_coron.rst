@@ -11,8 +11,8 @@ for all processing performed by this step. This routine performs the following o
    See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list
    of parameters.
 
-#. Create a median image over the `groups` (~time) axis, preserving the spatial (x,y) dimensions
-   of the cube.
+#. Create a median image over the `groups` (exposures, planes of cube) axis,
+   preserving the spatial (x,y) dimensions of the cube.
 
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and

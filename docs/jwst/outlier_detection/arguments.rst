@@ -3,18 +3,45 @@
 Outlier Detection Step Arguments
 ================================
 
+The `outlier_detection` step for non-IFU data has the following optional arguments
+that control the behavior of the processing.
 For more details about step arguments (including datatypes, possible values
 and defaults) see :py:obj:`jwst.outlier_detection.OutlierDetectionStep.spec`.
 
-Step Arguments for Non-IFU data
--------------------------------
-The `outlier_detection` step for non-IFU data has the following optional arguments
-that control the behavior of the processing:
+
+General Step Arguments
+----------------------
+The following arguments apply to all modes unless otherwise specified:
+
+``--save_intermediate_results``
+  Specifies whether or not to save any intermediate products created
+  during step processing.
+
+``--good_bits``
+  The DQ bit values from the input image DQ arrays
+  that should be considered 'good'. Any pixel with a DQ value not included
+  in this value (or list of values) will be ignored when resampling and flagged
+  when building the weight mask. See DQ flag :ref:`dq_parameter_specification` for details.
+  Has no effect for IFU data.
+
+``--snr``
+  The signal-to-noise values to use for bad pixel identification.
+  Since cosmic rays often extend across several pixels the user
+  must specify two cut-off values for determining whether a pixel should
+  be masked: the first for detecting the primary cosmic ray, and the
+  second (typically lower threshold) for masking lower-level bad pixels
+  adjacent to those found in the first pass.  Valid values are a pair of
+  floating-point values in a single string (for example "5.0 4.0").
+  Has no effect for IFU data.
+
+
+Step Arguments for Imaging and Slit-like Spectroscopic data
+-----------------------------------------------------------
 
 ``--weight_type``
-  The type of data weighting to use during resampling. Available options are ``ivm``
-  (default) for computing and using an inverse-variance map and ``exptime`` for
-  weighting by the exposure time.
+  The type of data weighting to apply to the resampled data. Available options are ``ivm``
+  (default) to compute and use an inverse-variance map, and ``exptime`` to
+  weight by the exposure time.
 
 ``--pixfrac``
   The pixel fraction used during resampling; valid values go from 0.0 to 1.0.
@@ -36,15 +63,6 @@ that control the behavior of the processing:
   The percent of maximum weight to use as lower-limit for valid data;
   valid values go from 0.0 to 1.0.
 
-``--snr``
-  The signal-to-noise values to use for bad pixel identification.
-  Since cosmic rays often extend across several pixels the user
-  must specify two cut-off values for determining whether a pixel should
-  be masked: the first for detecting the primary cosmic ray, and the
-  second (typically lower threshold) for masking lower-level bad pixels
-  adjacent to those found in the first pass.  Valid values are a pair of
-  floating-point values in a single string (for example "5.0 4.0").
-
 ``--scale``
   The scaling factor applied to derivative used to identify bad pixels.
   Since cosmic rays often extend across several pixels the user
@@ -57,20 +75,9 @@ that control the behavior of the processing:
 ``--backg``
   User-specified background value to apply to the median image.
 
-``--rolling_window_width``
-  Number of integrations over which to take the median when using rolling-window
-  median for TSO observations. The default is 25. If the number of integrations
-  is less than or equal to ``rolling_window_width``, a simple median is used instead.
-
 ``--resample_data``
   Specifies whether or not to resample the input images when
   performing outlier detection.
-
-``--good_bits``
-  The DQ bit values from the input image DQ arrays
-  that should be considered 'good'. Any pixel with a DQ value not included
-  in this value (or list of values) will be ignored when resampling and building the
-  weight mask. See DQ flag :ref:`dq_parameter_specification` for details.
 
 ``--allowed_memory``
   Specifies the fractional amount of
@@ -78,15 +85,19 @@ that control the behavior of the processing:
   environment variable ``DMODEL_ALLOWED_MEMORY`` is used. If not defined, no
   check is made. If the resampled image would be larger than specified, an
   ``OutputTooLargeError`` exception will be generated.
-
   For example, if set to ``0.5``, only resampled images that use less than half
   the available memory can be created.
+
+``--in_memory``
+  Specifies whether or not to load and create all images that are used during
+  processing into memory. If ``False``, input files are loaded from disk when
+  needed and all intermediate files are stored on disk, rather than in memory.
+  Has no effect for spectroscopic data, and is superseded by the pipeline-level
+  ``in_memory`` parameter set by ``calwebb_image3``.
 
 
 Step Arguments for IFU data
 ---------------------------
-The `outlier_detection` step for IFU data has the following optional arguments
-that control the behavior of the processing:
 
 ``--kernel_size``
   The size of the kernel to use to normalize the pixel differences. The kernel size
@@ -95,16 +106,22 @@ that control the behavior of the processing:
 
 ``--threshold_percent``
   The threshold (in percent) of the normalized minimum pixel difference used to identify bad pixels.
-  Pixels with a normalized minimum pixel difference above this percentage are flagged as outliers.
+  Pixels with a normalized minimum difference above this percentage are flagged as outliers.
+
+``--ifu_second_check``
+  Perform a secondary check searching for outliers. This will set outliers
+  where ever the difference array of adjacent pixels is a Nan.
 
 
-General Step Arguments
-----------------------
-``--save_intermediate_results``
-  Specifies whether or not to save any intermediate products created
-  during step processing.
+Step Arguments for TSO data
+---------------------------
 
-``--in_memory``
-  Specifies whether or not to load and create all images that are used during
-  processing into memory. If ``False``, input files are loaded from disk when
-  needed and all intermediate files are stored on disk, rather than in memory.
+``--rolling_window_width``
+  Number of integrations over which to take the median when using rolling-window
+  median for TSO observations. The default is 25. If the number of integrations
+  is less than or equal to ``rolling_window_width``, a simple median is used instead.
+
+
+Step Arguments for Coronagraphic data
+-------------------------------------
+General step arguments apply to coronagraphic data. No additional arguments are used.
