@@ -183,6 +183,11 @@ image3 pipeline and is only recommended when working with large associations.
 Additional documentation on the `ModelLibrary` class can be found in the
 `stpipe ModelLibrary documentation <https://stpipe.readthedocs.io/en/latest/model_library.html>`_.
 
+Developers should keep in mind that a `list` is a perfectly valid input and output to a
+pipeline or step, and if association metadata is not needed, using a list is preferred
+to using a ModelContainer in most cases. Initializing a ModelContainer from a list of
+models (as opposed to an association or dictionary) is supported but almost never necessary.
+
 ModelContainer Changes in JWST 1.17
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
