@@ -289,7 +289,6 @@ lint.ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
