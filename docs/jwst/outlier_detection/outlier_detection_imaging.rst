@@ -14,7 +14,7 @@ This routine performs the following operations:
    See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list of parameters.
 
 #. By default, resample all input images to the same output WCS. The resample process is
-   controlled by the ``fillval``, ``pixfrac``, ``kernel``, ad ``good_bits`` parameters;
+   controlled by the ``fillval``, ``pixfrac``, ``kernel``, and ``good_bits`` parameters;
    see the :ref:`outlier detection arguments <outlier_detection_step_args>` for more information.
    Resampling can be turned off with the ``resample_data`` parameter.
 

@@ -3,7 +3,7 @@
 Outlier Detection Step Arguments
 ================================
 
-The `outlier_detection` step for non-IFU data has the following optional arguments
+The `outlier_detection` step has the following optional arguments
 that control the behavior of the processing.
 For more details about step arguments (including datatypes, possible values
 and defaults) see :py:obj:`jwst.outlier_detection.OutlierDetectionStep.spec`.
