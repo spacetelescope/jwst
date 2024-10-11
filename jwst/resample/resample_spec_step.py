@@ -6,11 +6,12 @@ from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
+from stcal.resample.utils import load_custom_wcs
 
-from . import resample_spec, ResampleStep
-from ..exp_to_source import multislit_to_container
-from ..assign_wcs.util import update_s_region_spectral
-from ..stpipe import Step
+from jwst.resample import resample_spec, ResampleStep
+from jwst.exp_to_source import multislit_to_container
+from jwst.assign_wcs.util import update_s_region_spectral
+from jwst.stpipe import Step
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
@@ -39,9 +40,6 @@ class ResampleSpecStep(Step):
         pixel_scale_ratio = float(default=1.0)  # Ratio of input to output spatial pixel scale
         pixel_scale = float(default=None)  # Spatial pixel scale in arcsec
         output_wcs = string(default='')  # Custom output WCS
-        single = boolean(default=False)  # Resample each input to its own output grid
-        blendheaders = boolean(default=True)  # Blend metadata from inputs into output
-        in_memory = boolean(default=True)  # Keep images in memory
     """
 
     def process(self, input):
@@ -173,9 +171,6 @@ class ResampleSpecStep(Step):
             fillval=self.fillval,
             wht_type=self.weight_type,
             good_bits=GOOD_BITS,
-            single=self.single,
-            blendheaders=self.blendheaders,
-            in_memory=self.in_memory
         )
 
         # Custom output WCS parameters
@@ -184,8 +179,10 @@ class ResampleSpecStep(Step):
             'output_shape',
             min_vals=[1, 1]
         )
-        kwargs['output_wcs'] = ResampleStep.load_custom_wcs(
-            self.output_wcs, kwargs['output_shape'])
+        kwargs['output_wcs'] = load_custom_wcs(
+            self.output_wcs,
+            kwargs['output_shape']
+        )
         kwargs['pscale'] = self.pixel_scale
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
 

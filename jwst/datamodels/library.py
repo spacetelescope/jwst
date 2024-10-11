@@ -20,14 +20,14 @@ class ModelLibrary(AbstractModelLibrary):
     @property
     def crds_observatory(self):
         return "jwst"
-    
+
     @property
     def exptypes(self):
         """
         List of exposure types for all members in the library.
         """
         return [member["exptype"] for member in self._members]
-    
+
     def indices_for_exptype(self, exptype):
         """
         Determine the indices of models corresponding to ``exptype``.
