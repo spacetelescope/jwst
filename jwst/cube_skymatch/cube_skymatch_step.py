@@ -52,7 +52,7 @@ class CubeSkyMatchStep(Step):
         binwidth = float(min=0.0, default=0.1) # Bin width for 'mode' and 'midpt' `skystat`, in sigma
     """
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def process(self, input1, input2):
         cube_models = ModelContainer(input1)

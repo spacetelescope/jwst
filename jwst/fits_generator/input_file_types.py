@@ -453,8 +453,8 @@ input_file_types = [
     InputAPTFile
     ]
 
-file_type_names = [
+type_names = [
     x.type_name for x in input_file_types]
 
-file_type_names[-1] = 'or ' + file_type_names[-1]
-file_type_names = ', '.join(file_type_names)
+type_names[-1] = 'or ' + type_names[-1]
+file_type_names = ', '.join(type_names)
