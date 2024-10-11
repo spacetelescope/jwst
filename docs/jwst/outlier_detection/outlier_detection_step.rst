@@ -1,10 +1,14 @@
 .. _outlier_design:
 
-Python Step Design: OutlierDetectionStep
------------------------------------------
+Overview: OutlierDetectionStep
+------------------------------
 
 This module provides the sole interface to all methods of performing outlier
-detection on JWST observations.  The ``outlier_detection`` step supports multiple
+detection on JWST observations.
+Processing multiple datasets together allows for the identification of bad pixels
+or cosmic-rays that remain in each of the input images, many times at levels which
+were not detectable by the :ref:`jump <jump_step>` step.
+The ``outlier_detection`` step supports multiple
 algorithms and determines the appropriate algorithm for the type of observation
 being processed.  This step supports:
 
@@ -19,16 +23,14 @@ being processed.  This step supports:
 This step uses the following logic to apply the appropriate algorithm to the
 input data:
 
-#. Interpret inputs (ASN table, ModelContainer or CubeModel)
+#. Interpret inputs (Association, ModelContainer, ModelLibrary, or CubeModel)
    to identify all input observations to be processed
-
-#. Read in type of exposures in input by interpreting ``meta.exposure.type`` from inputs
 
 #. Read in parameters set by user
 
-#. Select outlier detection algorithm based on exposure type
+#. Select outlier detection algorithm based on exposure type in input model ``meta.exposure.type``:
 
-   - **Images**: like those taken with NIRCam, will use
+   - **Images**: will use
      :py:mod:`~jwst.outlier_detection.outlier_detection.OutlierDetection` as described
      in :ref:`outlier-detection-imaging`
    - **Coronagraphic observations**:
@@ -47,7 +49,13 @@ input data:
 #. Instantiate and run outlier detection class determined for the exposure type
    using parameter values interpreted from inputs.
 
-#. Return input models with DQ arrays updated with flags for identified outliers
+#. Output models will have DQ arrays updated with flags for identified outliers.
 
+Reference Files
+===============
+
+The ``outlier_detection`` step uses the PARS-OUTLIERDETECTIONSTEP parameter reference file.
+
+.. include:: ../references_general/pars-outlierdetectionstep_reffile.inc
 
 .. automodapi:: jwst.outlier_detection.outlier_detection_step

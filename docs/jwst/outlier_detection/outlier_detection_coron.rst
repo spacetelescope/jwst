@@ -4,19 +4,15 @@ Outlier Detection for Coronagraphic Data
 ========================================
 
 This module serves as the interface for applying ``outlier_detection`` to coronagraphic
-image observations.
-
-Specifically, this routine performs the following operations:
+image observations. A :py:class:`~jwst.datamodels.CubeModel` serves as the basic format
+for all processing performed by this step. This routine performs the following operations:
 
 #. Extract parameter settings from input model and merge them with any user-provided values.
    See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list
    of parameters.
 
-#. Convert input data, as needed, to make sure it is in a format that can be processed.
-   A :py:class:`~jwst.datamodels.CubeModel` serves as the basic format for all processing
-   performed by this step.
-
-#. Create a median image preserving the spatial dimensions of the cube.
+#. Create a median image over the `groups` (~time) axis, preserving the spatial (x,y) dimensions
+   of the cube.
 
    * The ``maskpt`` parameter sets the percentage of the weight image values to
      use, and any pixel with a weight below this value gets flagged as "bad" and
