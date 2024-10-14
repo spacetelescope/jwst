@@ -18,10 +18,11 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 @pytest.mark.bigdata
 def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test using predefined interpolated flat"""
-    output_file = 'jw01251004001_03107_00001_nrs1_flat_from_user_model.fits'
-    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_assign_wcs.fits')) as data:
+    basename = 'jw01251004001_03107_00001_nrs1'
+    output_file = f'{basename}_flat_from_user_model.fits'
+    with dm.open(rtdata.get_data(f'nirspec/ifu/{basename}_assign_wcs.fits')) as data:
         with dm.open(rtdata.get_data(
-                'nirspec/ifu/jw01251004001_03107_00001_nrs1_interpolatedflat.fits')) as user_supplied_flat:
+                f'nirspec/ifu/{basename}_interpolatedflat.fits')) as user_supplied_flat:
 
             # Call the flat field function directly with a user flat
             nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
@@ -37,14 +38,15 @@ def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
-    output_file = 'jw01251004001_03107_00001_nrs1_flat_from_user_file.fits'
+    basename = 'jw01251004001_03107_00001_nrs1'
+    output_file = f'{basename}_flat_from_user_file.fits'
 
-    data = rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_assign_wcs.fits')
-    user_supplied_flat = rtdata.get_data(
-        'nirspec/ifu/jw01251004001_03107_00001_nrs1_interpolatedflat.fits')
+    data = rtdata.get_data(f'nirspec/ifu/{basename}_assign_wcs.fits')
+    user_supplied_flat = rtdata.get_data(f'nirspec/ifu/{basename}_interpolatedflat.fits')
 
     # Call the step with a user flat
-    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat)
+    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat,
+                                           save_results=False)
     rtdata.output = output_file
     data_flat_fielded.write(rtdata.output)
     del data_flat_fielded
