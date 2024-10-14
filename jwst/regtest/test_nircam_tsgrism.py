@@ -1,9 +1,23 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
+from pathlib import Path
 
+from jwst.lib import engdb_tools
 from jwst.lib.set_telescope_pointing import add_wcs
 from jwst.stpipe import Step
+from jwst.lib.tests.engdb_mock import EngDB_Mocker
+
+# Get the mock databases
+DATA_PATH = Path(__file__).parents[1] / 'lib' / 'tests' / 'data'
+ENGDB_PATH = DATA_PATH / 'engdb'
+
+@pytest.fixture
+def engdb():
+    """Setup the mock engineering database"""
+    with EngDB_Mocker(db_path=ENGDB_PATH):
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
+        yield engdb
 
 
 @pytest.fixture(scope="module")
@@ -100,23 +114,18 @@ def test_nircam_tsgrism_stage3_whtlt(run_pipelines):
 
 
 @pytest.mark.bigdata
-def test_nircam_setpointing_tsgrism(rtdata, fitsdiff_default_kwargs):
+def test_nircam_setpointing_tsgrism(rtdata, engdb, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b NIRCam file.
     """
-    # Get SIAF PRD database file
-    siaf_path = rtdata.get_data("common/prd.db")
-    rtdata.get_data("nircam/tsgrism/jw00721012001_03103_00001-seg001_nrcalong_uncal.fits")
+    rtdata.get_data("nircam/tsgrism/jw02459001001_03103_00001-seg001_nrcalong_uncal.fits")
     # The add_wcs function overwrites its input
     rtdata.output = rtdata.input
 
     # Call the WCS routine, using the ENGDB_Service
-    try:
-        add_wcs(rtdata.input, siaf_path=siaf_path)
-    except ValueError:
-        pytest.skip('Engineering Database not available.')
+    add_wcs(rtdata.input)
 
-    rtdata.get_truth("truth/test_nircam_setpointing/jw00721012001_03103_00001-seg001_nrcalong_uncal.fits")
+    rtdata.get_truth("truth/test_nircam_setpointing/jw02459001001_03103_00001-seg001_nrcalong_uncal.fits")
 
     fitsdiff_default_kwargs['rtol'] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
