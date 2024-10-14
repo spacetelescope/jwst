@@ -64,18 +64,14 @@ def test_nircam_setpointing_tsimg(rtdata, engdb, fitsdiff_default_kwargs):
     NIRCam TSO imaging file.
     """
     # Get SIAF PRD database file
-    siaf_path = rtdata.get_data("common/prd.db")
-    rtdata.get_data("nircam/tsimg/jw00312006001_02102_00001-seg001_nrcb1_uncal.fits")
+    rtdata.get_data("nircam/tsimg/jw06780001001_02103_00001-seg002_nrcblong_uncal.fits")
     # The add_wcs function overwrites its input, so output = input
     rtdata.output = rtdata.input
 
     # Call the WCS routine, using the ENGDB_Service
-    try:
-        add_wcs(rtdata.input, engdb_url='http://localhost', siaf_path=siaf_path)
-    except ValueError:
-        pytest.skip('Engineering Database not available.')
+    add_wcs(rtdata.input)
 
-    rtdata.get_truth("truth/test_nircam_setpointing/jw00312006001_02102_00001-seg001_nrcb1_uncal.fits")
+    rtdata.get_truth("truth/test_nircam_setpointing/jw06780001001_02103_00001-seg002_nrcblong_uncal.fits")
 
     fitsdiff_default_kwargs['rtol'] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

@@ -18,16 +18,16 @@ def test_miri_setpointing(rtdata, engdb, fitsdiff_default_kwargs):
     """
 
     # Get the input level-1b file
-    rtdata.get_data("miri/image/jw80600010001_02101_00001_mirimage_uncal.fits")
+    rtdata.get_data("miri/mrs/jw01282004001_02101_00001_mirifulong_uncal.fits")
 
     # The add_wcs function overwrites its input, so output = input
     rtdata.output = rtdata.input
 
     # Call the WCS routine, using the ENGDB_Service
-    add_wcs(rtdata.input, allow_default=True, engdb_url='http://localhost', prd='PRDOPSSOC-055')
+    add_wcs(rtdata.input)
 
     # Compare the results
-    rtdata.get_truth("truth/test_miri_setpointing/jw80600010001_02101_00001_mirimage_uncal.fits")
+    rtdata.get_truth("truth/test_miri_setpointing/jw01282004001_02101_00001_mirifulong_uncal.fits")
     fitsdiff_default_kwargs['rtol'] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
