@@ -1,14 +1,9 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-from pathlib import Path
 
 from jwst.lib import engdb_tools
 from jwst.lib.set_telescope_pointing import add_wcs
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
-
-# Get the mock databases
-DATA_PATH = Path(__file__).parents[1] / 'lib' / 'tests' / 'data'
-ENGDB_PATH = DATA_PATH / 'engdb'
 
 
 @pytest.mark.bigdata
@@ -31,14 +26,3 @@ def test_miri_setpointing(rtdata, engdb, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs['rtol'] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
-
-
-# ########
-# Fixtures
-# ########
-@pytest.fixture
-def engdb():
-    """Setup the mock engineering database"""
-    with EngDB_Mocker(db_path=ENGDB_PATH):
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
-        yield engdb
