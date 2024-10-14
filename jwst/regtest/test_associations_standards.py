@@ -34,7 +34,7 @@ LV3_ONLY_ARGS = [
 ]
 
 # Produce general associations
-DEF_ARGS = []
+DEF_ARGS: list = []
 
 # Define the standards
 

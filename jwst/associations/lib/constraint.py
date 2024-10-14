@@ -56,7 +56,7 @@ class SimpleConstraintABC(abc.ABC):
     """
 
     # Attributes to show in the string representation.
-    _str_attrs = ('name', 'value')
+    _str_attrs: tuple = ('name', 'value')
 
     def __new__(cls, *args, **kwargs):
         """Force creation of the constraint attribute dict before anything else."""
