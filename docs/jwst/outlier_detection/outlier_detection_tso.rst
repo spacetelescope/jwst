@@ -30,6 +30,7 @@ processing performed by this step. This routine performs the following operation
 
 #. Perform a statistical comparison frame-by-frame between the rolling-median cube and 
    the input data. The formula used is the same as for imaging data without resampling:
-  .. math:: | image\_input - image\_median | > SNR * input\_err
+   
+   .. math:: | image\_input - image\_median | > SNR * input\_err
 
 #. Update the data model DQ arrays with the mask of detected outliers.
