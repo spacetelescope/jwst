@@ -264,6 +264,8 @@ line-length = 130
 lint.ignore = [
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
+    "ANN101", # Missing type annotation for self in method
+    "ANN102", # Missing type annotation for cls in classmethod    
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -285,6 +287,23 @@ lint.ignore = [
 "jwst/ramp_fitting/tests/*" = [
     "E402", # module-level import not at top of file
 ]
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+disable_error_code = "import-untyped" # do not check imports
+exclude = ["build"]
+
+[[tool.mypy.overrides]]
+# don't complain about the installed c parts of this library
+module = [
+    "jwst.cube_build.cube_match_internal",
+    "jwst.cube_build.cube_match_sky_driz",
+    "jwst.cube_build.cube_match_sky_pointcloud",
+    "jwst.lib.winclip",
+    "jwst.straylight.calc_xart",
+]
+ignore_missing_imports = true
 
 [tool.towncrier]
 filename = "CHANGES.rst"

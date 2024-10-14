@@ -22,11 +22,11 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 
 # Mark expected failures. Key is the pool name
 # and value is the reason message.
-EXPECTED_FAILS = {
+EXPECTED_FAILS: dict = {
 }
 
 # Pools that require special handling
-SPECIAL_DEFAULT = {
+SPECIAL_DEFAULT: dict = {
     'args': [],
     'xfail': None,
     'slow': False,
