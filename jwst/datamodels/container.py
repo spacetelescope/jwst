@@ -193,10 +193,10 @@ to supply custom catalogs.
     def pop(self, index=-1):
         self._models.pop(index)
 
-    def __enter__(self) -> str:
+    def __enter__(self):
         return self
 
-    def __exit__(self, *args: object) -> None:
+    def __exit__(self, *args):
         self.close()
 
     def copy(self, memo=None):
