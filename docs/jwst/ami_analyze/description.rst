@@ -36,7 +36,7 @@ other options:
                     rotation search values. The default setting of '-3 3 1'
                     results in search values of [-3, -2, -1, 0, 1, 2, 3].
 
-:--bandpass: Synphot spectrum or suitable array to override filter/source 
+:--bandpass: ASDF file containing suitable array to override filter/source 
              (default=None)
 
 :--usebp: If True, exclude pixels marked DO_NOT_USE from fringe fitting 
@@ -47,10 +47,72 @@ other options:
 :--chooseholes: If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
                 (default=None)
 
-:--affine2d: User-defined Affine2d object (default=None)
+:--affine2d: ASDF file containing user-defined affine parameters (default=None)
 
 :--run_bpfix: Run Fourier bad pixel fix on cropped data (default=True)
-            
+
+
+Creating ASDF files
+^^^^^^^^^^^^^^^^^^^
+The optional arguments `bandpass` and `affine2d` must be written to `ASDF <https://asdf-standard.readthedocs.io/>`_ 
+files to be used by the step. The step expects the contents to be stored with particular keys but the format is not currently
+enforced by a schema; incorrect ASDF file contents will cause the step to revert back to the defaults for each argument.
+
+Examples of how to create ASDF files containing the properly formatted information for each of the arguments follows.
+
+.. code-block:: python
+
+   # Create a F380M filter + A0V source bandpass ASDF file
+
+   import asdf
+   from jwst.ami import utils
+
+   filt='F380M'
+   src = 'A0V'
+   nspecbin=19
+
+   filt_spec = utils.get_filt_spec(filt)
+   src_spec = utils.get_src_spec(src)
+
+   bandpass = utils.combine_src_filt(filt_spec, 
+                                  src_spec, 
+                                  trim=0.01, 
+                                  nlambda=nspecbin)
+
+   # this bandpass has shape (19, 2); each row is [throughput, wavelength]
+
+   asdf_name = 'bandpass_f380m_a0v.asdf'
+
+   tree = {"bandpass": bandpass}
+
+   with open(asdf_name, 'wb') as fh:
+        af = asdf.AsdfFile(tree)
+        af.write_to(fh)
+   af.close()
+
+
+.. code-block:: python
+
+   # Create an affine transform ASDF file to use for the model
+
+   import asdf
+   tree = {
+   'mx': 1., # dimensionless x-magnification
+   'my': 1., # dimensionless y-magnification
+   'sx': 0., # dimensionless x shear
+   'sy': 0., # dimensionless y shear
+   'xo': 0., # x-offset in pupil space
+   'yo': 0., # y-offset in pupil space
+   'rotradccw': None }
+
+   affineasdf = 'affine.asdf'
+
+   with open(affineasdf, 'wb') as fh:
+        af = asdf.AsdfFile(tree)
+        af.write_to(fh)
+   af.close()
+
+
 
 Inputs
 ------
