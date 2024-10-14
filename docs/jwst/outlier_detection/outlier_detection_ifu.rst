@@ -1,6 +1,6 @@
 .. _outlier-detection-ifu:
 
-Outlier Detection for IFU Data
+Integral Field Unit (IFU) Data
 ==============================
 
 This module serves as the interface for applying ``outlier_detection`` to IFU
@@ -33,7 +33,7 @@ This routine performs the following operations:
 #. Normalizes the minimum difference array by the local median.
 
 #. Selects outliers by flagging those normalized minimum values larger than the ``threshold_percent``
-    parameter.
+   parameter.
 
 #. Updates input ImageModel DQ arrays with mask of detected outliers.
 
@@ -45,5 +45,3 @@ The pixels varied from usable to unusable, and at times, back to usable  on a ti
 also have bad pixels that vary with time, though the time variation is still under study.
 The outlier detection step is designed to flag these pixels as outliers, in addition
 to cosmic ray hits that were not flagged by the jump step.
-
-.. automodapi:: jwst.outlier_detection.ifu

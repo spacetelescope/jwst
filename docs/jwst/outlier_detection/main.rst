@@ -1,7 +1,7 @@
 .. _outlier_design:
 
-Overview: OutlierDetectionStep
-==============================
+Overview
+========
 
 This module provides the sole interface to all methods of performing outlier
 detection on JWST observations.
@@ -12,13 +12,17 @@ The ``outlier_detection`` step supports multiple
 algorithms and determines the appropriate algorithm for the type of observation
 being processed.  This step supports:
 
-#. **Image modes**: 'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
-#. **Spectroscopic modes**: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
-#. **Time-Series-Observation (TSO) Spectroscopic modes**: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ'
-#. **TSO Image modes**: 'NRC_TSIMAGE'
-#. **IFU Spectroscopic modes**: 'MIR_MRS', 'NRS_IFU'
-#. **Coronagraphic Image modes**: 'MIR_LYOT', 'MIR_4QPM', 'NRC_CORON'
-
+* **Image modes**: 'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
+  - See :ref:`outlier-detection-imaging` for algorithm details
+* **Slit-like Spectroscopic modes**: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
+   - See :ref:`outlier-detection-spec` for algorithm details
+* **Time-Series-Observation (TSO) modes**: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ',
+  'NRC_TSIMAGE'
+   - See :ref:`outlier-detection-tso` for algorithm details
+* **IFU Spectroscopic modes**: 'MIR_MRS', 'NRS_IFU'
+   - See :ref:`outlier-detection-ifu` for algorithm details
+* **Coronagraphic Image modes**: 'MIR_LYOT', 'MIR_4QPM', 'NRC_CORON'
+   - See :ref:`outlier-detection-coron` for algorithm details
 
 This step uses the following logic to apply the appropriate algorithm to the
 input data:
@@ -26,25 +30,10 @@ input data:
 #. Interpret inputs (Association, ModelContainer, ModelLibrary, or CubeModel)
    to identify all input observations to be processed
 
-#. Read in parameters set by user
+#. Read in parameters set by user. See :ref:`outlier_detection_step_args` for the full list
+   of parameters.
 
-#. Select outlier detection algorithm based on exposure type in input model ``meta.exposure.type``:
-
-   - **Images**: will use
-     :py:mod:`~jwst.outlier_detection.outlier_detection.OutlierDetection` as described
-     in :ref:`outlier-detection-imaging`
-   - **Coronagraphic observations**:
-     use :py:mod:`~jwst.outlier_detection.coron`
-     as described in :ref:`outlier-detection-coron`
-   - **Time-Series Observations(TSO)**: will use
-     :py:mod:`~jwst.outlier_detection.tso` for both imaging and spectroscopic modes
-     as described in :ref:`outlier-detection-tso` 
-   - **IFU observations**: use
-     :py:mod:`~jwst.outlier_detection.ifu` as
-     described in :ref:`outlier-detection-ifu`
-   - **Long-slit spectroscopic observations**: use
-     :py:mod:`~jwst.outlier_detection.spec` as
-     described in :ref:`outlier-detection-spec`
+#. Select outlier detection algorithm based on exposure type in input model ``meta.exposure.type``.
 
 #. Instantiate and run outlier detection class determined for the exposure type
    using parameter values interpreted from inputs.

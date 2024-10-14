@@ -1,7 +1,7 @@
 .. _outlier-detection-spec:
 
-Outlier Detection for Slit-like Spectroscopic Data
-==================================================
+Slit-like Spectroscopic Data
+============================
 
 This module serves as the interface for applying ``outlier_detection`` to slit-like
 spectroscopic observations. The algorithm is very similar to the
@@ -22,5 +22,3 @@ This routine performs identical operations to the imaging mode, with the followi
    "outlier_i2d" if the ``save_intermediate_results`` parameter is set to `True`.
 
 #. The ``in_memory`` parameter has no effect, and all operations are performed in memory.
-
-.. automodapi:: jwst.outlier_detection.spec

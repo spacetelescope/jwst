@@ -1,7 +1,7 @@
 .. _outlier-detection-imaging:
 
-Outlier Detection Algorithm for Imaging Data
-============================================
+Imaging Data
+============
 
 This module serves as the interface for applying ``outlier_detection`` to direct
 image observations, like those taken with MIRI, NIRCam, and NIRISS.
@@ -59,7 +59,7 @@ This routine performs the following operations:
 
    * Add a user-specified background value to the median image to match the original background levels
      of the input mosaic. This is controlled by the ``backg`` parameter.
-   * Compute the spatial derivative of the blotted median images by computing the absolute value
+   * Compute the spatial derivative of each pixel in the blotted median images by computing the absolute value
      of the difference between each pixel and its four surrounding neighbors, recording the largest
      absolute difference as the derivative. The derivative is multiplied by the ``scale`` parameter,
      allowing user flexibility in determining how aggressively to flag outliers at this stage.
@@ -84,7 +84,7 @@ This routine performs the following operations:
 
 Memory Saving Options
 ---------------------
-The outlier detection algorithm for imaging can end up using massive amounts of memory
+The outlier detection algorithm for imaging can require a lot of memory
 depending on the number of inputs, the size of each input, and the size of the
 final output product.  Specifically,
 
@@ -102,7 +102,8 @@ final output product.  Specifically,
    requires keeping all resampled outputs fully in memory at the same time.
 
 This has been addressed by implementing an overall memory model for outlier detection that
-includes options to minimize memory usage at the expense of file I/O. Control over this memory model happens
+includes options to minimize memory usage at the expense of temporary file I/O and runtime.
+Control over this memory model happens
 with the use of the ``in_memory`` parameter. The full impact of setting this parameter
 to `False` includes:
 
@@ -112,7 +113,7 @@ to `False` includes:
    the :py:class:`~jwst.datamodels.ModelLibrary` object.
 
 #. Computing the median image works by writing the resampled data frames to appendable files
-   on disk that are split into sections spatially but contain the entire ngroups
+   on disk that are split into sections spatially but contain the entire ``groups``
    axis. The section size is set to use roughly the same amount of memory as a single resampled
    model, and since the resampled models are discarded from memory by the time the median calculation
    happens, this choice avoids increasing the overall memory usage of the step.
@@ -123,6 +124,4 @@ longer because many read and write operations are needed. Note that if a ModelLi
 is input to the step, the memory behavior of the step is read from the ``on_disk`` status
 of the ModelLibrary object, and the ``in_memory`` parameter of the step is ignored.
 When running ``calwebb_image3``, the ``in_memory`` flag should be set at the pipeline level,
-e.g., ``strun calwebb_image3 asn.json --in-memory=True``; the step-specific flag will be ignored.
-
-.. automodapi:: jwst.outlier_detection.imaging
+e.g., ``strun calwebb_image3 asn.json --in-memory=False``; the step-specific flag will be ignored.

@@ -1,7 +1,7 @@
 .. _outlier-detection-tso:
 
-Outlier Detection for TSO Data
-==============================
+Time-Series Observations (TSO) Data
+===================================
 
 This module serves as the interface for applying ``outlier_detection`` to time
 series observations. Normal imaging data benefit from combining all integrations into a
@@ -18,8 +18,7 @@ processing performed by this step. This routine performs the following operation
    This is true automatically for a CubeModel.
 
 #. Apply a bad pixel mask to the input data based on the input DQ arrays and the ``good_bits``
-   parameter. The ``good_bits`` parameter is a list of DQ flag values that should be considered
-   ok when creating the mask.
+   parameter.
 
 #. Compute a median cube by combining all planes in the CubeModel pixel-by-pixel using a
    rolling-median algorithm, in order to flag outliers integration-by-integration but
@@ -27,14 +26,10 @@ processing performed by this step. This routine performs the following operation
    number of integrations over which to compute the median.
 
 #. If the ``save_intermediate_results`` parameter is set to True, write the rolling-median
-    CubeModel to disk with the suffix ``_median.fits``.
+   CubeModel to disk with the suffix ``_median.fits``.
 
 #. Perform a statistical comparison frame-by-frame between the rolling-median cube and 
    the input data. The formula used is the same as for imaging data without resampling:
-
   .. math:: | image\_input - image\_median | > SNR * input\_err
 
 #. Update the data model DQ arrays with the mask of detected outliers.
-
-
-.. automodapi:: jwst.outlier_detection.tso

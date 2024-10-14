@@ -1,9 +1,9 @@
 .. _outlier_detection_step_args:
 
-Outlier Detection Step Arguments
-================================
+Step Arguments
+==============
 
-The `outlier_detection` step has the following optional arguments
+The outlier detection step has the following optional arguments
 that control the behavior of the processing.
 For more details about step arguments (including datatypes, possible values
 and defaults) see :py:obj:`jwst.outlier_detection.OutlierDetectionStep.spec`.
@@ -26,7 +26,7 @@ The following arguments apply to all modes unless otherwise specified:
 
 ``--snr``
   The signal-to-noise values to use for bad pixel identification.
-  Since cosmic rays often extend across several pixels the user
+  Since cosmic rays often extend across several pixels, the user
   must specify two cut-off values for determining whether a pixel should
   be masked: the first for detecting the primary cosmic ray, and the
   second (typically lower threshold) for masking lower-level bad pixels
