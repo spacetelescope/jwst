@@ -1,6 +1,6 @@
 import pytest
 from jwst.outlier_detection._fileio import _save_intermediate_output
-from jwst.datamodels import ImageModel
+from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
 from jwst.step import OutlierDetectionStep
 import os
 import numpy as np
