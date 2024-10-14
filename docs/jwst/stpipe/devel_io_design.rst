@@ -173,7 +173,7 @@ To read in a list of files, or an association file, as an association,
 use the `load_as_level2_asn` or `load_as_level3_asn` methods.
 
 ModelContainer vs ModelLibrary
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``````````````````````````````
 
 Some steps in the pipeline, namely any steps involved in the Stage 3 Imaging pipeline,
 rely on the :class:`~jwst.datamodels.ModelLibrary` class instead of the
@@ -189,7 +189,7 @@ to using a ModelContainer in most cases. Initializing a ModelContainer from a li
 models (as opposed to an association or dictionary) is supported but almost never necessary.
 
 ModelContainer Changes in JWST 1.17
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```````````````````````````````````
 
 In JWST 1.17, the `ModelContainer` class was de-scoped in light of the introduction of the
 `ModelLibrary` class in JWST 1.16. The `ModelContainer` class is still the recommended class
