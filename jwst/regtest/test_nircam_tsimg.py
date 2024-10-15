@@ -60,7 +60,7 @@ def test_nircam_setpointing_tsimg(rtdata, fitsdiff_default_kwargs):
     Regression test of the set_telescope_pointing script on a level-1b
     NIRCam TSO imaging file.
     """
-    # Get SIAF PRD database file
+
     rtdata.get_data("nircam/tsimg/jw06780001001_02103_00001-seg002_nrcblong_uncal.fits")
     # The add_wcs function overwrites its input, so output = input
     rtdata.output = rtdata.input
