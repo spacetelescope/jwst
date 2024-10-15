@@ -34,7 +34,7 @@ _jwst_models = ["ModelContainer", "SourceModelContainer", "ModelLibrary"]
 _deprecated_modules = ['schema']
 
 # Deprecated models in stdatamodels
-_deprecated_models = []
+_deprecated_models: list[str] = []
 
 # Import all submodules from stdatamodels.jwst.datamodels
 for attr in dir(stdatamodels.jwst.datamodels):

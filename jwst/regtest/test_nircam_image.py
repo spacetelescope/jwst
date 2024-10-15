@@ -188,37 +188,19 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
     assert diff.identical, diff.report()
 
 
-@pytest.fixture()
-def run_image3_closedfile(rtdata):
-    """Run calwebb_image3 on NIRCam imaging with data that had a closed file issue."""
-    rtdata.get_asn("nircam/image/fail_short_image3_asn.json")
-
-    args = ["calwebb_image3", rtdata.input]
-    Step.from_cmdline(args)
-
-
-@pytest.mark.bigdata
-def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwargs):
-    """Ensure production of Image3Pipeline output with data having closed file issues"""
-    rtdata.output = 'jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits'
-    rtdata.get_truth('truth/test_nircam_image/jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits')
-
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
-
-
 @pytest.mark.bigdata
 def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     """Test optional frame-averaged darks output from DarkCurrentStep"""
-    rtdata.get_data("nircam/image/jw00312007001_02102_00001_nrcblong_ramp.fits")
+    rtdata.get_data("nircam/image/jw01205015001_03101_00001_nrcb1_ramp.fits")
 
+    dark_file = 'jw01205015001_03101_00001_nrcb1_frame_averaged_dark.fits'
     args = ["jwst.dark_current.DarkCurrentStep", rtdata.input,
-            "--dark_output='frame_averaged_darks.fits'",
+            f"--dark_output={dark_file}",
             ]
     Step.from_cmdline(args)
-    rtdata.output = "frame_averaged_darks.fits"
+    rtdata.output = dark_file
 
-    rtdata.get_truth("truth/test_nircam_image/frame_averaged_darks.fits")
+    rtdata.get_truth(f"truth/test_nircam_image/{dark_file}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

@@ -1,9 +1,6 @@
 import abc
 
-from typing import Tuple, Union, Type
 from scipy.interpolate import RectBivariateSpline, interp1d
-from astropy.io import fits
-from stdatamodels import DataModel
 from stdatamodels.jwst.datamodels import MultiSlitModel
 
 from ..assign_wcs.util import compute_scale
@@ -55,10 +52,8 @@ class ApCorrBase(abc.ABC):
         }
     }
 
-    size_key = None
-
-    def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunit: str,
-                 location: Tuple[float, float, float] = None, slit_name: str = None, **match_kwargs):
+    def __init__(self, input_model, apcorr_table, sizeunit,
+                 location = None, slit_name = None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
@@ -74,6 +69,10 @@ class ApCorrBase(abc.ABC):
         self._convert_size_units()
         self.apcorr_func = self.approximate()
         self.tabulated_correction = None
+
+    @property
+    def size_key(self):
+        return None
 
     def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
@@ -102,7 +101,7 @@ class ApCorrBase(abc.ABC):
                     'pixels.'
                 )
 
-    def _get_match_keys(self) -> dict:
+    def _get_match_keys(self):
         """Get column keys needed for reducing the reference table based on input."""
         instrument = self.model.meta.instrument.name.upper()
         exptype = self.model.meta.exposure.type.upper()
@@ -113,7 +112,7 @@ class ApCorrBase(abc.ABC):
             if key in exptype:
                 return relevant_pars[key]
 
-    def _get_match_pars(self) -> dict:
+    def _get_match_pars(self):
         """Get meta parameters required for reference table row-selection."""
         match_pars = {}
 
@@ -125,7 +124,7 @@ class ApCorrBase(abc.ABC):
 
         return match_pars
 
-    def _reduce_reftable(self) -> fits.FITS_record:
+    def _reduce_reftable(self):
         """Reduce full reference table to a single matched row."""
         table = self._reference_table.copy()
 
@@ -145,7 +144,7 @@ class ApCorrBase(abc.ABC):
         """Generate an approximate aperture correction function based on input data."""
         pass
 
-    def apply(self, spec_table: fits.FITS_rec):
+    def apply(self, spec_table):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
 
         Parameters
@@ -181,14 +180,14 @@ class ApCorrPhase(ApCorrBase):
     """
     size_key = 'size'
 
-    def __init__(self, *args, pixphase: float = 0.5, **kwargs):
+    def __init__(self, *args, pixphase = 0.5, **kwargs):
         self.phase = pixphase  # In the future we'll attempt to measure the pixel phase from inputs.
 
         super().__init__(*args, **kwargs)
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
-        def _approx_func(wavelength: float, size: float, pixel_phase: float) -> RectBivariateSpline:
+        def _approx_func(wavelength, size, pixel_phase):
             """Create a 'custom' approximation function that approximates the aperture correction in two stages based on
             input data.
 
@@ -228,7 +227,7 @@ class ApCorrPhase(ApCorrBase):
     def measure_phase(self):  # Future method in determining pixel phase
         pass
 
-    def tabulate_correction(self, spec_table: fits.FITS_rec):
+    def tabulate_correction(self, spec_table):
         """Tabulate the interpolated aperture correction value.
         
          This will save time when applying it later, especially if it is to be applied to multiple integrations.  
@@ -255,7 +254,7 @@ class ApCorrPhase(ApCorrBase):
 
         self.tabulated_correction = np.asarray(coefs)
 
-    def apply(self, spec_table: fits.FITS_rec, use_tabulated=False):
+    def apply(self, spec_table, use_tabulated=False):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
 
         Parameters
@@ -297,8 +296,8 @@ class ApCorrPhase(ApCorrBase):
 class ApCorrRadial(ApCorrBase):
     """Aperture correction class used with spectral data produced from an extraction aperture radius."""
 
-    def __init__(self, input_model: DataModel, apcorr_table,
-                 location: Tuple[float, float, float] = None):
+    def __init__(self, input_model, apcorr_table,
+                 location = None):
 
         self.correction = None
         self.model = input_model
@@ -329,7 +328,7 @@ class ApCorrRadial(ApCorrBase):
                     'pixels.'
                 )
 
-    def apply(self, spec_table: fits.FITS_rec):
+    def apply(self, spec_table):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
 
         Parameters
@@ -410,7 +409,7 @@ class ApCorr(ApCorrBase):
         return RectBivariateSpline(size, wavelength, apcorr.T, ky=1, kx=1)
 
 
-def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhase], Type[ApCorrRadial]]:
+def select_apcorr(input_model):
     """Select appropriate Aperture correction class based on input DataModel.
 
     Parameters
