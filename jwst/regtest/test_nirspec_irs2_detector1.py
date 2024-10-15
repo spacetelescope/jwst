@@ -7,6 +7,8 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
+from stcal.testing_helpers import MemoryThreshold
+
 
 @pytest.fixture(scope="module")
 def run_detector1pipeline(rtdata_module):
@@ -93,3 +95,29 @@ def test_nirspec_irs2_detector1_with_clean_flicker_noise(
     fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_mem_usage(rtdata_module):
+    """Determine the memory usage of Detector1 and the jump step"""
+    # set up the input data
+    rtdata = rtdata_module
+    rtdata.get_data("nirspec/irs2/jw01335004001_03101_00002_nrs2_uncal.fits")
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
+            "--steps.dark_current.save_results=True"]
+
+    # run Detecto21 while tracking memory usage
+    expected_mem = '15 GB'
+    with MemoryThreshold(expected_mem):
+        Step.from_cmdline(args)
+
+    # run jump while tracking memory usage
+    expected_mem = '5 GB'
+    rtdata.output = "jw01335004001_03101_00002_nrs2_dark_current.fits"
+    # the truth is set up so there is no error when calling rdata.output, no comparison is made
+    rtdata.get_truth("nirspec/irs2/jw01335004001_03101_00002_nrs2_uncal.fits")
+    args = ["jump", rtdata.output]
+    with MemoryThreshold(expected_mem):
+        Step.from_cmdline(args)
+
+
