@@ -34,7 +34,7 @@ def create_cube_median(cube_model, maskpt):
     Returns
     -------
     np.ndarray
-        The median over the first axis of the input cube.
+        The median over the zeroth axis of the input cube.
 
     """
     log.info("Computing median")
