@@ -795,7 +795,7 @@ def update_s_region_imaging(model):
     """
     Update the ``S_REGION`` keyword using ``WCS.footprint``.
     """
-    s_region = compute_s_region_imaging(model.meta.wcs, shape=model.data.shape)
+    s_region = compute_s_region_imaging(model.meta.wcs, shape=model.data.shape, center=False)
     if s_region is not None:
         model.meta.wcsinfo.s_region = s_region
 

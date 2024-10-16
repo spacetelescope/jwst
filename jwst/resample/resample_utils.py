@@ -67,8 +67,8 @@ def make_output_wcs(input_models, ref_wcs=None,
         WCS object, with defined domain, covering entire set of input frames
     """
     if ref_wcs is None:
+        sregion_list = []
         with input_models:
-            sregion_list = []
             for i, model in enumerate(input_models):
                 sregion_list.append(model.meta.wcsinfo.s_region)
                 if i == 0:
