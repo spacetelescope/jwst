@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 
-import jwst.datamodels as dm
+from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from stcal.outlier_detection.utils import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
@@ -12,7 +12,7 @@ def badpix_selfcal(minimg: np.ndarray,
                    flagfrac_lower: float = 0.001,
                    flagfrac_upper: float = 0.001,
                    kernel_size: int = 15,
-                   dispaxis=None) -> np.ndarray:
+                   dispaxis=None) -> tuple:
     """
     Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
 
@@ -59,18 +59,17 @@ def badpix_selfcal(minimg: np.ndarray,
     flag_low, flag_high = np.nanpercentile(minimg_hpf, [flagfrac_lower * 100, (1 - flagfrac_upper) * 100])
     bad = (minimg_hpf > flag_high) | (minimg_hpf < flag_low)
     flagged_indices = np.where(bad)
-
     return flagged_indices
 
 
-def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> dm.IFUImageModel:
+def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUImageModel:
     """
     Apply the flagged indices to the input model. Sets the flagged pixels to NaN
     and the DQ flag to DO_NOT_USE + OTHER_BAD_PIXEL
 
     Parameters
     ----------
-    input_model : dm.IFUImageModel
+    input_model : IFUImageModel
         Input science data to be corrected
     flagged_indices : np.ndarray
         Indices of the flagged pixels,
@@ -78,7 +77,7 @@ def apply_flags(input_model: dm.IFUImageModel, flagged_indices: np.ndarray) -> d
 
     Returns
     -------
-    output_model : dm.IFUImageModel
+    output_model : IFUImageModel
         Flagged data model
     """
 

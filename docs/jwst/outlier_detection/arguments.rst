@@ -25,14 +25,6 @@ that control the behavior of the processing:
   Any floating-point value, given as a string, is valid.
   A value of 'INDEF' will use the last zero weight flux.
 
-``--nlow``
-  Deprecated and has no effect. This parameter will be removed
-  in a future version.
-
-``--nhigh``
-  Deprecated and has no effect. This parameter will be removed
-  in a future version.
-
 ``--maskpt``
   The percent of maximum weight to use as lower-limit for valid data;
   valid values go from 0.0 to 1.0.
