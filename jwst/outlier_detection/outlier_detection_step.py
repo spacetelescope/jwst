@@ -20,14 +20,6 @@ IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']
 TSO_IMAGE_MODES = ['NRC_TSIMAGE']  # missing MIR_IMAGE with TSOVIST=True, not really addable
 CORON_IMAGE_MODES = ['NRC_CORON', 'MIR_LYOT', 'MIR_4QPM']
 
-_STEP_MODES = {
-    'coron': coron,
-    'ifu': ifu,
-    'imaging': imaging,
-    'tso': tso,
-    'spec': spec,
-}
-
 __all__ = ["OutlierDetectionStep"]
 
 
@@ -52,8 +44,6 @@ class OutlierDetectionStep(Step):
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
-        nlow = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
-        nhigh = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
         maskpt = float(default=0.7)
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')

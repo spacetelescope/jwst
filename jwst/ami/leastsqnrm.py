@@ -613,7 +613,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
     if linfit:
         try:
-            from linearfit import linearfit
+            from linearfit import linearfit  # type: ignore[import-not-found]
 
             # dependent variables
             M = np.asmatrix(flatimg)
