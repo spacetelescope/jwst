@@ -553,13 +553,13 @@ def test_outlier_step_image_weak_cr_coron(exptype, tsovisit, tmp_cwd):
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
-def test_outlier_step_weak_cr_tso(exptype, tsovisit):
+@pytest.mark.parametrize("rolling_window_width", [7, 0])
+def test_outlier_step_weak_cr_tso(exptype, tsovisit, rolling_window_width):
     '''Test outlier detection with rolling median on time-varying source
-    This test fails if rolling_window_width is set to 100, i.e., take simple median
+    This test fails if rolling_window_width is set to 0, i.e., take simple median
     '''
     bkg = 1.5
     sig = 0.02
-    rolling_window_width = 7
     numsci = 50
     signal = 7.0
     im = we_many_sci(
@@ -588,8 +588,13 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
         assert np.all(np.isnan(result.data[i][dnu]))
         assert np.allclose(model.data[~dnu], result.data[i][~dnu])
 
-    # Verify source is not flagged
-    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+    # Verify source is not flagged for rolling median
+    if rolling_window_width == 7:
+        assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+    # But this fails for simple median
+    elif rolling_window_width == 0:
+        with pytest.raises(AssertionError):
+            assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE

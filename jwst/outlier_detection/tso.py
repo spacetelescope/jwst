@@ -4,7 +4,7 @@ from jwst.resample.resample_utils import build_mask
 from jwst import datamodels as dm
 
 from stcal.outlier_detection.utils import compute_weight_threshold
-from .utils import flag_model_crs
+from .utils import flag_model_crs, nanmedian3D
 from ._fileio import save_median
 
 import logging
@@ -41,7 +41,7 @@ def detect_outliers(
         medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_window_width)
 
     else:
-        medians = np.nanmedian(weighted_cube.data, axis=0)
+        medians = nanmedian3D(weighted_cube.data, overwrite_input=False)
         # this is a 2-D array, need to repeat it into the time axis
         # for consistent shape with rolling median case
         medians = np.broadcast_to(medians, weighted_cube.shape)
