@@ -68,16 +68,15 @@ def make_output_wcs(input_models, ref_wcs=None,
     """
     if ref_wcs is None:
         with input_models:
-            wcslist = []
+            sregion_list = []
             for i, model in enumerate(input_models):
-                w = model.meta.wcs
-                if w.bounding_box is None:
-                    w.bounding_box = wcs_bbox_from_shape(model.data.shape)
-                wcslist.append(w)
+                sregion_list.append(model.meta.wcsinfo.s_region)
                 if i == 0:
                     example_model = model
+                    ref_wcs=example_model.meta.wcs
+                    ref_wcsinfo = example_model.meta.wcsinfo.instance
                 input_models.shelve(model)
-        naxes = wcslist[0].output_frame.naxes
+        naxes = ref_wcs.output_frame.naxes
 
         if naxes != 2:
             msg = ("Output WCS needs 2 spatial axes "
@@ -85,9 +84,9 @@ def make_output_wcs(input_models, ref_wcs=None,
             raise RuntimeError(msg)
 
         output_wcs = util.wcs_from_footprints(
-            wcslist,
-            ref_wcs=wcslist[0],
-            ref_wcsinfo=example_model.meta.wcsinfo.instance,
+            sregion_list,
+            ref_wcs,
+            ref_wcsinfo,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,
