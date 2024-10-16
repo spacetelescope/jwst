@@ -210,6 +210,7 @@ addopts = [
     "-p no:legacypath",
     "--show-capture=no",
     "--report-crds-context",
+    "--color=yes",
 ]
 filterwarnings = [
     "error::ResourceWarning",
