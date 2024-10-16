@@ -62,12 +62,6 @@ class GWCSDrizzle(Drizzle):
 
         self.pixfrac = pixfrac
 
-        self.sciext = "SCI"
-        self.whtext = "WHT"
-        self.conext = "CON"
-
-        self.out_units = "cps"
-
         self.outexptime = product.meta.exposure.measurement_time or 0.0
 
         self.outsci = product.data
@@ -82,16 +76,12 @@ class GWCSDrizzle(Drizzle):
         if not self.outwcs:
             raise ValueError("Either an existing file or wcs must be supplied")
 
-        if self.outexptime == 0.0:
-            ctx = None
-            begin_ctx_id = 0
-        else:
-            ctx = product.con
-            if ctx.ndim == 2:
-                begin_ctx_id = 1
-            elif ctx.ndim == 3:
-                begin_ctx_id = ctx.shape[0] + 1
-            else:
+        ctx = product.con
+        begin_ctx_id = 0
+        if ctx is not None:
+            if ctx.size == 0:
+                ctx = None
+            elif ctx.ndim not in [2, 3]:
                 # TODO: this message seems odd
                 raise ValueError(
                     f"Drizzle context image has wrong dimensions: {product}"
