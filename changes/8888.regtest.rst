@@ -1,1 +1,1 @@
-Memory usage tests for NRS detector1 data, which includes snowball flagging, and memory usage test for jump step
+Memory usage tests for NRS detector1 data, which includes snowball flagging, and memory usage test for jump step.
