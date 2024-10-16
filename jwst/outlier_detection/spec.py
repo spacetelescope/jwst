@@ -1,16 +1,14 @@
 """
 Submodule for performing outlier detection on spectra.
 """
-import copy
-import os
-
-from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
-from ..resample import resample_spec, resample_utils
-from .utils import create_median, flag_crs_in_models, flag_crs_in_models_with_resampling
-from ._fileio import remove_file
+from ..resample import resample_spec
+from .utils import (flag_crs_in_models,
+                    flag_crs_in_models_with_resampling,
+                    median_with_resampling,
+                    median_without_resampling)
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,7 +34,6 @@ def detect_outliers(
     kernel,
     fillval,
     in_memory,
-    asn_id,
     make_output_path,
 ):
     """
@@ -53,15 +50,15 @@ def detect_outliers(
         record_step_status(input_models, "outlier_detection", False)
         return input_models
 
+    # convert to library for resample
+    # for compatibility with image3 pipeline
+    library = ModelLibrary(input_models, on_disk=False)
+
     if resample_data is True:
         # Start by creating resampled/mosaic images for
         #  each group of exposures
-        output_path = make_output_path(
-            basepath=input_models[0].meta.filename, suffix='')
-        output_path = os.path.dirname(output_path)
         resamp = resample_spec.ResampleSpecData(
             input_models,
-            output=output_path,
             single=True,
             blendheaders=False,
             wht_type=weight_type,
@@ -69,54 +66,23 @@ def detect_outliers(
             kernel=kernel,
             fillval=fillval,
             good_bits=good_bits,
-            in_memory=in_memory,
-            asn_id=asn_id,
-        )
-        median_wcs = resamp.output_wcs
-
-        # convert to library for resample
-        # for compatibility with image3 pipeline
-        library = ModelLibrary(input_models, on_disk=False)
-        drizzled_models = resamp.do_drizzle(library)
-
-    else:
-        drizzled_models = ModelLibrary(input_models)
-        with drizzled_models:
-            for i, model in enumerate(drizzled_models):
-                model.wht = resample_utils.build_driz_weight(
-                    input_models[i],
-                    weight_type=weight_type,
-                    good_bits=good_bits)
-                drizzled_models.shelve(model)
-        # copy for when saving median and input is a filename?
-        median_wcs = copy.deepcopy(input_models[0].meta.wcs)
-
-    # Perform median combination on set of drizzled mosaics
-    # create_median should be called as a method from parent class
-    median_data = create_median(drizzled_models, maskpt)
-
-    if save_intermediate_results:
-        # Initialize intermediate products used in the outlier detection
-        median_model = datamodels.ImageModel(median_data)
-        with drizzled_models:
-            example_model = drizzled_models.borrow(0)
-            drizzled_models.shelve(example_model, 0, modify=False)
-        median_model.meta = example_model.meta
-        median_model.meta.filename = make_output_path(
-            basepath=input_models[0].meta.filename,
-            suffix='median'
         )
 
-        log.info("Writing out MEDIAN image to: {}".format(
-                 median_model.meta.filename))
-        median_model.save(median_model.meta.filename)
-        del median_model
+        median_data, median_wcs = median_with_resampling(
+            library,
+            resamp,
+            maskpt,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,)
     else:
-        # since we're not saving intermediate results if the drizzled models
-        # were written to disk, remove them
-        if not in_memory:
-            for fn in drizzled_models._members:
-                remove_file(fn["expname"])
+        median_data, median_wcs = median_without_resampling(
+            library,
+            maskpt,
+            weight_type,
+            good_bits,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,
+        )
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image

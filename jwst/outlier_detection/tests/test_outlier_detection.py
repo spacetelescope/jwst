@@ -4,13 +4,14 @@ from scipy.ndimage import gaussian_filter
 from glob import glob
 import os
 
+from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.pointing import create_fitswcs
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.utils import _flag_resampled_model_crs, create_median
+from jwst.outlier_detection.utils import _flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
     TSO_SPEC_MODES,
@@ -18,6 +19,8 @@ from jwst.outlier_detection.outlier_detection_step import (
     CORON_IMAGE_MODES,
 )
 from jwst.resample.tests.test_resample_step import miri_rate_model
+from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
+from jwst.resample.resample import ResampleData
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -109,7 +112,7 @@ def we_many_sci(
 ):
     """Provide numsci science images with different noise but identical source
     and same background level"""
-    shape = (20, 20)
+    shape = (21, 20)
 
     sci1 = datamodels.ImageModel(shape)
 
@@ -200,6 +203,7 @@ def we_three_sci():
 def test_outlier_step_no_outliers(we_three_sci, do_resample, tmp_cwd):
     """Test whole step, no outliers"""
     container = ModelContainer(list(we_three_sci))
+    container[0].var_rnoise[10, 10] = 1E9
     pristine = ModelContainer([m.copy() for m in container])
     OutlierDetectionStep.call(container, in_memory=True, resample_data=do_resample)
 
@@ -258,7 +262,9 @@ def test_outlier_step_base(we_three_sci, tmp_cwd):
     assert len(median_files) != 0
 
 
-def test_outlier_step_spec(tmp_cwd, tmp_path):
+@pytest.mark.parametrize('resample', [True, False])
+@pytest.mark.parametrize('save_intermediate', [True, False])
+def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
     """Test outlier step for spec data including saving intermediate results."""
     output_dir = tmp_path / 'output'
     output_dir.mkdir(exist_ok=True)
@@ -272,50 +278,33 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
     miri_cal.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
     # Make a couple copies, give them unique exposure numbers and filename
-    container = ModelContainer([miri_cal, miri_cal.copy(), miri_cal.copy()])
+    container = ModelContainer([miri_cal.copy(), miri_cal.copy(), miri_cal.copy()])
     for i, model in enumerate(container):
         model.meta.filename = f'test_{i}_cal.fits'
 
     # Drop a CR on the science array in the first image
     container[0].data[209, 37] += 1
 
-    # Verify that intermediate files are removed when not saved
-    # (s2d files are expected, i2d files are not, but we'll check
-    # for them to make sure the imaging extension didn't creep back in)
-    OutlierDetectionStep.call(container, output_dir=output_dir, save_results=True)
-    for dirname in [output_dir, tmp_cwd]:
-        result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
-        i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
-        s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
-        median_files = glob(os.path.join(dirname, '*median.fits'))
-        blot_files = glob(os.path.join(dirname, '*blot.fits'))
-
-        # intermediate files are removed
-        assert len(i2d_files) == 0
-        assert len(s2d_files) == 0
-        assert len(median_files) == 0
-        assert len(blot_files) == 0
-
-        # result files are written to the output directory
-        if dirname == output_dir:
-            assert len(result_files) == len(container)
-        else:
-            assert len(result_files) == 0
-
-    # Call again, but save intermediate to the output path
+    # Call outlier detection
     result = OutlierDetectionStep.call(
-        container, save_results=True, save_intermediate_results=True,
-        output_dir=output_dir
-    )
+        container, resample_data=resample,
+        output_dir=output_dir, save_results=True,
+        save_intermediate_results=save_intermediate)
 
     # Make sure nothing changed in SCI array
-    for image, corrected in zip(container, result):
-        np.testing.assert_allclose(image.data, corrected.data)
+    for image in result:
+        nn = ~np.isnan(image.data)
+        np.testing.assert_allclose(image.data[nn], miri_cal.data[nn])
 
     # Verify CR is flagged
+    assert np.isnan(result[0].data[209, 37])
     assert result[0].dq[209, 37] == OUTLIER_DO_NOT_USE
 
     # Verify that intermediate files are saved at the specified location
+    if save_intermediate:
+        expected_intermediate = len(container)
+    else:
+        expected_intermediate = 0
     for dirname in [output_dir, tmp_cwd]:
         all_files = glob(os.path.join(dirname, '*.fits'))
         result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
@@ -324,24 +313,35 @@ def test_outlier_step_spec(tmp_cwd, tmp_path):
         median_files = glob(os.path.join(dirname, '*median.fits'))
         blot_files = glob(os.path.join(dirname, '*blot.fits'))
         if dirname == output_dir:
-            # result files are written to the output directory
+            # Result files are always written to the output directory
             assert len(result_files) == len(container)
 
-            # s2d, median, and blot files are written to the output directory
-            assert len(s2d_files) == len(container)
-            assert len(blot_files) == len(container)
-            assert len(median_files) == 1
+            # s2d and blot files are written to the output directory
+            # if save_intermediate is True and resampling is set
+            if resample:
+                assert len(s2d_files) == expected_intermediate
+                assert len(blot_files) == expected_intermediate
+            else:
+                assert len(s2d_files) == 0
+                assert len(blot_files) == 0
 
-            # i2d files not written
+            # Only one median file is saved if save_intermediate is True,
+            # no matter how many input files there are
+            if save_intermediate:
+                assert len(median_files) == 1
+            else:
+                assert len(median_files) == 0
+
+            # i2d files are never written
             assert len(i2d_files) == 0
 
-            # nothing else was written
-            assert len(all_files) == len(s2d_files) + \
-                                     len(median_files) + \
-                                     len(result_files) + \
-                                     len(blot_files)
+            # Nothing else was written
+            assert len(all_files) == (len(s2d_files)
+                                      + len(median_files)
+                                      + len(result_files)
+                                      + len(blot_files))
         else:
-            # nothing should be written to the current directory
+            # Nothing should be written to the current directory
             assert len(result_files) == 0
             assert len(s2d_files) == 0
             assert len(median_files) == 0
@@ -595,13 +595,80 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
 
 
-def test_create_median(three_sci_as_asn, tmp_cwd):
+def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
     """Test creation of median on disk vs in memory"""
     lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
     lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
 
-    median_on_disk = create_median(lib_on_disk, 0.7)
-    median_in_memory = create_median(lib_in_memory, 0.7)
+    # make this test meaningful w.r.t. handling of weights
+    with (lib_on_disk, lib_in_memory):
+        for lib in [lib_on_disk, lib_in_memory]:
+            for model in lib:
+                model.var_rnoise = np.ones_like(model.data)
+                model.var_rnoise[4,9] = 2.0
+                lib.shelve(model, modify=True)
+
+
+    # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
+    # arbitrarily use 5 times that
+    buffer_size = 4 * 20 * 5 
+    median_on_disk, _ = median_without_resampling(
+        lib_on_disk,
+        0.7,
+        "ivm",
+        "~DO_NOT_USE",
+        buffer_size=buffer_size,)
+    median_in_memory, _ = median_without_resampling(
+        lib_in_memory,
+        0.7,
+        "ivm",
+        "~DO_NOT_USE",
+        buffer_size=buffer_size,)
+
+    # Make sure the high-variance (low-weight) pixel is set to NaN
+    assert np.isnan(median_in_memory[4,9])
 
     # Make sure the median library is the same for on-disk and in-memory
-    assert np.allclose(median_on_disk, median_in_memory)
+    assert np.allclose(median_on_disk, median_in_memory, equal_nan=True)
+
+
+def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
+    lib = ModelLibrary(three_sci_as_asn, on_disk=False)
+
+    resamp = make_resamp(lib)
+    median, wcs = median_with_resampling(
+        lib,
+        resamp,
+        0.7)
+    
+    assert isinstance(wcs, WCS)
+    assert median.shape == (21,20)
+        
+    resamp.single = False
+    with pytest.raises(ValueError):
+        # ensure failure if try to call when resamp.single is False
+        median_with_resampling(
+            lib,
+            resamp,
+            0.7,
+            save_intermediate_results=True)
+
+
+def make_resamp(input_models):
+    """All defaults are same as what is run by default by outlier detection"""
+    in_memory = not input_models._on_disk
+    resamp = ResampleData(
+        input_models,
+        output="",
+        single=True,
+        blendheaders=False,
+        wht_type="ivm",
+        pixfrac=1.0,
+        kernel="square",
+        fillval="INDEF",
+        good_bits="~DO_NOT_USE",
+        in_memory=in_memory,
+        asn_id="test",
+        allowed_memory=None,
+    )
+    return resamp

@@ -69,7 +69,7 @@ Installing the Development Version from Github
 ----------------------------------------------
 
 You can install the latest development version (not as well tested) from the
-Github master branch:
+Github main branch:
 
     | >> conda create -n <env_name> python=3.11
     | >> conda activate <env_name>
@@ -93,7 +93,7 @@ environment of choice and then reinstall:
 
 This will ensure that all dependency packages are also upgraded. This also
 applies when using the development version of jwst - to upgrade and grab recent
-changes, uninstall and re-install the master branch from Github:
+changes, uninstall and re-install the main branch from Github:
 
     | >> pip uninstall jwst
     | >> pip install git+https://github.com/spacetelescope/jwst

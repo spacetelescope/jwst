@@ -25,14 +25,6 @@ that control the behavior of the processing:
   Any floating-point value, given as a string, is valid.
   A value of 'INDEF' will use the last zero weight flux.
 
-``--nlow``
-  Deprecated and has no effect. This parameter will be removed
-  in a future version.
-
-``--nhigh``
-  Deprecated and has no effect. This parameter will be removed
-  in a future version.
-
 ``--maskpt``
   The percent of maximum weight to use as lower-limit for valid data;
   valid values go from 0.0 to 1.0.
@@ -89,6 +81,8 @@ that control the behavior of the processing:
   Specifies whether or not to load and create all images that are used during
   processing into memory. If ``False``, input files are loaded from disk when
   needed and all intermediate files are stored on disk, rather than in memory.
+  This flag is superseded by the pipeline-level ``--in-memory`` flag, and thus
+  has no effect when running the full level 3 pipeline.
 
 Step Arguments for IFU data
 ===========================

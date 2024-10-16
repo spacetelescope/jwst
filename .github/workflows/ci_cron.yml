@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   latest_crds_contexts:
-    uses: spacetelescope/crds/.github/workflows/contexts.yml@master
+    uses: ./.github/workflows/contexts.yml
   crds_context:
     needs: [ latest_crds_contexts ]
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
       context: ${{ steps.context.outputs.context }}
   test:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run scheduled tests')))
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@924441154cf3053034c6513d5e06c69d262fb9a6  # v1.13.0
     needs: [ crds_context ]
     with:
       setenv: |

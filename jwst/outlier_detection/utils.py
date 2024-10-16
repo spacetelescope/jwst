@@ -1,14 +1,18 @@
 """
 The ever-present utils sub-module. A home for all...
 """
-import warnings
 
+import copy
+from functools import partial
 import numpy as np
 
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
+from jwst.resample.resample_utils import build_driz_weight
 from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
+from stcal.outlier_detection.median import MedianComputer, nanmedian3D
 from stdatamodels.jwst import datamodels
+from . import _fileio
 
 import logging
 log = logging.getLogger(__name__)
@@ -17,7 +21,6 @@ log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
-_ONE_MB = 1 << 20
 
 
 def create_cube_median(cube_model, maskpt):
@@ -25,166 +28,159 @@ def create_cube_median(cube_model, maskpt):
 
     weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
 
-    median = np.nanmedian(
+    # not safe to use overwrite_input=True here because we are operating on model.data directly
+    return nanmedian3D(
         np.ma.masked_array(cube_model.data, np.less(cube_model.wht, weight_threshold), fill_value=np.nan),
-        axis=0,
-    )
-    return median
+        overwrite_input=False)
 
 
-def create_median(resampled_models, maskpt, on_disk=True, buffer_size=10.0):
-    """Create a median image from the singly resampled images.
+def median_without_resampling(input_models,
+                              maskpt,
+                              weight_type,
+                              good_bits,
+                              save_intermediate_results=False,
+                              make_output_path=None,
+                              buffer_size=None):
+    """
+    Shared code between imaging and spec modes for resampling and median computation
 
     Parameters
     ----------
-    resampled_models : ModelLibrary
-        The singly resampled images.
+    input_models : ModelLibrary
+        The input datamodels.
 
     maskpt : float
         The weight threshold for masking out low weight pixels.
 
-    on_disk : bool
-        If True, the input models are on disk and will be read in chunks.
+    weight_type : str
+        The type of weighting to use when combining images. Options are:
+        'ivm' (inverse variance) or 'exptime' (exposure time).
 
-    buffer_size : float
-        The size of chunk in MB, per input model, that will be read into memory.
-        This parameter has no effect if on_disk is False.
+    good_bits : int
+        The bit values that are considered good when determining the
+        data quality of the input.
 
-    Returns
-    -------
-    median_image : ndarray
-        The median image.
+    save_intermediate_results : bool
+        if True, save the drizzled models and median model to fits.
+
+    make_output_path : function
+        The functools.partial instance to pass to save_median. Must be 
+        specified if save_intermediate_results is True. Default None.
+
+    buffer_size : int
+        The size of chunk in bytes that will be read into memory when computing the median.
+        This parameter has no effect if the input library has its on_disk attribute
+        set to False.
     """
-    # Compute the weight threshold for each input model
-    weight_thresholds = []
-    with resampled_models:
-        for resampled in resampled_models:
-            weight_threshold = compute_weight_threshold(resampled.wht, maskpt)
-            weight_thresholds.append(weight_threshold)
-            resampled_models.shelve(resampled, modify=False)
+    in_memory = not input_models._on_disk
+    ngroups = len(input_models)
 
-    # compute median over all models
-    if not on_disk:
-        # easier case: all models in library can be loaded into memory at once
-        model_list = []
-        with resampled_models:
-            for resampled in resampled_models:
-                model_list.append(resampled.data)
-                resampled_models.shelve(resampled, modify=False)
-                del resampled
-        return np.nanmedian(np.array(model_list), axis=0)
-    else:
-        # set up buffered access to all input models
-        with resampled_models:
-            example_model = resampled_models.borrow(0)
-            shp = example_model.data.shape
-            dtype = example_model.data.dtype
-            nsections, section_nrows = _compute_buffer_indices(example_model, buffer_size)
-            resampled_models.shelve(example_model, modify=False)
-            del example_model
+    with input_models:
+        for i in range(len(input_models)):
 
-        # get spatial sections of library and compute timewise median, one by one
-        resampled_sections = _get_sections(resampled_models, nsections, section_nrows, shp[0])
-        median_image_empty = np.empty(shp, dtype) * np.nan
-        return _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty)
+            drizzled_model = input_models.borrow(i)
+            drizzled_data = drizzled_model.data.copy()
+            weight = build_driz_weight(drizzled_model,
+                                       weight_type=weight_type,
+                                       good_bits=good_bits)
+            if i == 0:
+                median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
+                input_shape = (ngroups,) + drizzled_data.shape
+                dtype = drizzled_data.dtype
+                computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+
+            weight_threshold = compute_weight_threshold(weight, maskpt)
+            drizzled_data[weight < weight_threshold] = np.nan
+            computer.append(drizzled_data, i)
+
+            input_models.shelve(drizzled_model, i, modify=False)
+
+    # Perform median combination on set of drizzled mosaics
+    median_data = computer.evaluate()
+
+    if save_intermediate_results:
+        # Save median model to fits
+        median_model = datamodels.ImageModel(median_data)
+        median_model.update(drizzled_model)
+        median_model.meta.wcs = median_wcs
+        _fileio.save_median(median_model, make_output_path)
+    del drizzled_model
+
+    return median_data, median_wcs
 
 
-def _get_sections(library, nsections, section_nrows, imrows):
-    """Iterator to return sections from a ModelLibrary.
+def median_with_resampling(input_models,
+                           resamp,
+                           maskpt,
+                           save_intermediate_results=False,
+                           make_output_path=None,
+                           buffer_size=None):
+    """
+    Shared code between imaging and spec modes for resampling and median computation
 
     Parameters
     ----------
-    library : ModelLibrary
-        The input data models.
+    input_models : ModelLibrary
+        The input datamodels.
 
-    nsections : int
-        The number of spatial sections in each model
+    resamp : resample.resample.ResampleData object
+        The controlling object for the resampling process.
 
-    section_nrows : int
-        The number of rows in each section
+    maskpt : float
+        The weight threshold for masking out low weight pixels.
 
-    imrows : int
-        The total number of rows in the image
+    save_intermediate_results : bool
+        if True, save the drizzled models and median model to fits.
 
-    Yields
-    ------
-    data_subset : ndarray
-        array of shape (len(library), section_nrows, ncols) representing a spatial
-        subset of all the data arrays in the library
+    make_output_path : function
+        The functools.partial instance to pass to save_median. Must be 
+        specified if save_intermediate_results is True. Default None.
 
-    weight_subset : ndarray
-        weights corresponding to data_list
-
-    row_range : tuple
-        The range of rows in the image covered by the data arrays
+    buffer_size : int
+        The size of chunk in bytes that will be read into memory when computing the median.
+        This parameter has no effect if the input library has its on_disk attribute
+        set to False.
     """
-    with library:
-        example_model = library.borrow(0)
-        dtype = example_model.data.dtype
-        dtype_wht = example_model.wht.dtype
-        shp = example_model.data.shape
-        library.shelve(example_model, 0, modify=False)
-        del example_model
-    for i in range(nsections):
-        row1 = i * section_nrows
-        row2 = min(row1 + section_nrows, imrows)
-        
-        data_subset = np.empty((len(library), row2 - row1, shp[1]), dtype)
-        weight_subset = np.empty((len(library), row2 - row1, shp[1]), dtype_wht)
-        with library:
-            for j, model in enumerate(library):
-                data_subset[j] = model.data[row1:row2]
-                weight_subset[j] = model.wht[row1:row2]
-                library.shelve(model, j, modify=False)
-                del model
-        yield (data_subset, weight_subset, (row1, row2))
+    if not resamp.single:
+        raise ValueError("median_with_resampling should only be used for resample_many_to_many")
+    
+    in_memory = not input_models._on_disk
+    indices_by_group = list(input_models.group_indices.values())
+    ngroups = len(indices_by_group)
 
+    with input_models:
+        for i, indices in enumerate(indices_by_group):
 
-def _compute_buffer_indices(model, buffer_size=None):
+            drizzled_model = resamp.resample_group(input_models, indices)
 
-    imrows, imcols = model.data.shape
-    data_item_size = model.data.itemsize
-    min_buffer_size = imcols * data_item_size
-    buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
-    section_nrows = min(imrows, int(buffer_size // min_buffer_size))
-    if section_nrows == 0:
-        buffer_size = min_buffer_size
-        log.warning("WARNING: Buffer size is too small to hold a single row."
-                        f"Increasing buffer size to {buffer_size / _ONE_MB}MB")
-        section_nrows = 1
-    nsections = int(np.ceil(imrows / section_nrows))
-    return nsections, section_nrows
+            if save_intermediate_results:
+                # write the drizzled model to file
+                _fileio.save_drizzled(drizzled_model, make_output_path)
 
+            if i == 0:
+                median_wcs = resamp.output_wcs
+                input_shape = (ngroups,)+drizzled_model.data.shape
+                dtype = drizzled_model.data.dtype
+                computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
 
-def _create_median(resampled_sections, resampled_models, weight_thresholds, median_image_empty):
-    median_image = median_image_empty
-    for (resampled_sci, resampled_weight, (row1, row2)) in resampled_sections:
-        # Create a mask for each input image, masking out areas where there is
-        # no data or the data has very low weight
-        badmasks = []
-        for weight, weight_threshold in zip(resampled_weight, weight_thresholds):
-            badmask = np.less(weight, weight_threshold)
-            log.debug("Percentage of pixels with low weight: {}".format(
-                np.sum(badmask) / len(weight.flat) * 100))
-            badmasks.append(badmask)
+            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
+            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
+            computer.append(drizzled_model.data, i)
 
-        # Fill resampled_sci array with nan's where mask values are True
-        for f1, f2 in zip(resampled_sci, badmasks):
-            for elem1, elem2 in zip(f1, f2):
-                elem1[elem2] = np.nan
+    # Perform median combination on set of drizzled mosaics
+    median_data = computer.evaluate()
 
-        del badmasks
+    if save_intermediate_results:
+        # Save median model to fits
+        median_model = datamodels.ImageModel(median_data)
+        median_model.update(drizzled_model)
+        median_model.meta.wcs = median_wcs
+        # drizzled model already contains asn_id
+        make_output_path = partial(make_output_path, asn_id=None)
+        _fileio.save_median(median_model, make_output_path)
+    del drizzled_model
 
-        # For a stack of images with "bad" data replaced with Nan
-        # use np.nanmedian to compute the median.
-        with warnings.catch_warnings():
-            warnings.filterwarnings(action="ignore",
-                                    message="All-NaN slice encountered",
-                                    category=RuntimeWarning)
-            median_image[row1:row2] = np.nanmedian(resampled_sci, axis=0)
-        del resampled_sci, resampled_weight
-
-    return median_image
+    return median_data, median_wcs
 
 
 def flag_crs_in_models(
@@ -220,14 +216,7 @@ def flag_resampled_model_crs(
 
     blot = gwcs_blot(median_data, median_wcs, input_model.data.shape, input_model.meta.wcs, pix_ratio)
     if save_blot:
-        if make_output_path is None:
-            raise ValueError("make_output_path must be provided if save_blot is True")
-        model_path = make_output_path(input_model.meta.filename, suffix='blot')
-        blot_model = _make_blot_model(input_model, blot)
-        blot_model.meta.filename = model_path
-        blot_model.save(model_path)
-        log.info(f"Saved model in {model_path}")
-        del blot_model
+        _fileio.save_blot(input_model, blot, make_output_path)
     # dq flags will be updated in-place
     _flag_resampled_model_crs(input_model, blot, snr1, snr2, scale1, scale2, backg)
 
@@ -298,10 +287,3 @@ def flag_model_crs(image, blot, snr):
     match_nans_and_flags(image)
 
     log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
-
-
-def _make_blot_model(input_model, blot):
-    blot_model = type(input_model)()
-    blot_model.data = blot
-    blot_model.update(input_model)
-    return blot_model
