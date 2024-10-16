@@ -76,6 +76,8 @@ NIR Detector Data
        (set by the step parameter ``side_gain``, which defaults to 1.0) is
        subtracted from the full group on a row-by-row basis.  Note that the ``odd_even_rows``
        parameter is ignored for NIR data when the side reference pixels are processed.
+       If the ``--use_conv_kernel`` option is set, the side-pixel correction will be
+       turned off and instead, an optimized convolution kernel will be used.
     #. Transform the data back to the JWST focal plane, or DMS, frame.
 
 MIR Detector Data
