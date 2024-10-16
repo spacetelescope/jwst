@@ -152,13 +152,14 @@ class MasterBackgroundStep(Step):
                     input_data.close()
 
                 else:
+                    result = input_data.copy()
                     input_data.close()
                     self.log.warning(
                         "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
                         input, type(input)
                     )
-                    record_step_status(input_data, 'master_background', success=False)
-                    return input_data
+                    record_step_status(result, 'master_background', success=False)
+                    return result
 
                 # Save the computed background if requested by user
                 if self.save_background:

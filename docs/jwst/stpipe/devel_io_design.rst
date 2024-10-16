@@ -202,8 +202,10 @@ following changes in behavior are noteworthy:
   `asn_file_path`. Note that `asn_table` is now a dictionary, not an `ObjectNode`.
 * All infrastructure that attempted memory savings in the `ModelContainer` class has been removed.
   Use the `ModelLibrary` class if memory-saving options are needed.
-* The `ModelContainer` class is still a list-like object.
-* The `ModelContainer` class is still the default class returned by stdatamodels `open()`.
+* A `ModelContainer` object can no longer hold a list of `ModelContainer` objects.
+* The `ModelContainer` class is still list-like, and can be indexed and sliced like a list.
+* The `ModelContainer` class is still the default class returned by stdatamodels `open()`
+  for association-type input data, e.g. a .json file or dict.
 * The `ModelContainer` class can still be used as a context manager, such that `with open(asn_file.json)`
   still works.
 
