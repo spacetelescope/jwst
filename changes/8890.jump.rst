@@ -1,0 +1,2 @@
+Add maximum_shower_amplitude parameter to MIRI cosmic rays showers routine
+to fix accidental flagging of bright science pixels.
