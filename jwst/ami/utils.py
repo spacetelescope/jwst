@@ -1322,16 +1322,12 @@ def handle_bandpass(bandpass, throughput_model):
         Array of weights, wavelengths used to generate model
     """
     if bandpass is not None:
-        log.info(
-            "User-defined bandpass provided: OVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES"
-        )
         # bandpass can be user-defined synphot object or appropriate array
         if isinstance(bandpass, synphot.spectrum.SpectralElement):
             log.info("User-defined synphot spectrum provided")
             wl, wt = bandpass._get_arrays(bandpass.waveset)
             bandpass = np.array((wt, wl)).T
         else:
-            log.info("User-defined bandpass array provided")
             bandpass = np.array(bandpass)
 
     else:
