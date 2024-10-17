@@ -1,4 +1,3 @@
-import numpy as np
 
 from drizzle.resample import Drizzle
 from . import resample_utils
@@ -33,6 +32,9 @@ class GWCSDrizzle(Drizzle):
             provided, the WCS is taken from product.
 
         wt_scl : str, optional
+            .. note::
+                This parameter is no longer used.
+
             How each input image should be scaled. The choices are `exptime`,
             which scales each image by its exposure time, or `expsq`, which scales
             each image by the exposure time squared.  If not set, then each
@@ -55,8 +57,6 @@ class GWCSDrizzle(Drizzle):
             The value a pixel is set to in the output if the input image does
             not overlap it. The default value of NAN sets NaN values.
         """
-
-
         # Initialize the object fields
         self._product = product
 
@@ -100,17 +100,18 @@ class GWCSDrizzle(Drizzle):
             disable_ctx=disable_ctx
         )
 
+        # Since the context array is dynamic, it must be re-assigned
+        # back to the product's `con` attribute.
         product.con = self.out_ctx
 
-    # Since the context array is dynamic, it must be re-assigned
-    # back to the product's `con` attribute.
     @property
     def outcon(self):
         """Return the context array"""
         return self.out_ctx
 
-    def add_image(self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0,
-                  expin=1.0, in_units="cps", wt_scl=1.0, iscale=1.0):
+    def add_image(self, insci, inwcs, pixmap=None, inwht=None,
+                  xmin=0, xmax=0, ymin=0, ymax=0,
+                  expin=1.0, in_units="cps", iscale=1.0):
         """
         Combine an input image with the output drizzled image.
 
@@ -133,6 +134,10 @@ class GWCSDrizzle(Drizzle):
             A 2d numpy array containing the pixel by pixel weighting.
             Must have the same dimensions as insci. If none is supplied,
             the weighting is set to one.
+
+        pixmap : array, optional
+            A 3D array that maps input image coordinates onto the output
+            array. If provided, it can improve performance.
 
         xmin : int, optional
             This and the following three parameters set a bounding rectangle
@@ -176,11 +181,12 @@ class GWCSDrizzle(Drizzle):
         """
         # Compute the mapping between the input and output pixel coordinates
         # for use in drizzle.cdrizzle.tdriz
-        pixmap = resample_utils.calc_gwcs_pixmap(
-            inwcs,
-            self.outwcs,
-            insci.shape
-        )
+        if pixmap is None:
+            pixmap = resample_utils.calc_gwcs_pixmap(
+                inwcs,
+                self.outwcs,
+                insci.shape
+            )
 
         log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
         log.debug(f"Input Sci shape: {insci.shape}")
@@ -195,7 +201,7 @@ class GWCSDrizzle(Drizzle):
             pixmap=pixmap,
             scale=iscale,
             weight_map=inwht,
-            wht_scale=wt_scl,  # hard-coded for JWST count-rate data
+            wht_scale=1.0,  # hard-coded for JWST count-rate data
             pixfrac=self.pixfrac,
             in_units=in_units,
             xmin=xmin,
