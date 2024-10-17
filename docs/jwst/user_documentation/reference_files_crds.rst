@@ -150,7 +150,7 @@ For example:
 
 ::
 
-    rm -rf $CRDS_PATH/*
+    rm -r $CRDS_PATH
 
 For more information on CRDS configuration, see the
 `CRDS user guide
