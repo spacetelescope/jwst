@@ -5,7 +5,7 @@ import json
 
 import numpy as np
 import psutil
-from drizzle import cdrizzle
+from drizzle.resample import Drizzle
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -284,8 +284,13 @@ class ResampleData:
             del example_image
 
             # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                            kernel=self.kernel, fillval=self.fillval)
+            driz = gwcs_drizzle.GWCSDrizzle(
+                output_model,
+                pixfrac=self.pixfrac,
+                kernel=self.kernel,
+                fillval=self.fillval,
+                disable_ctx=True,
+            )
 
             # Also make a temporary model to hold error data
             error_model, driz_error = None, None
@@ -322,10 +327,15 @@ class ResampleData:
                     data.shape,
                     img.meta.wcs.bounding_box
                 )
-
+                pixmap = resample_utils.calc_gwcs_pixmap(
+                    img.meta.wcs,
+                    output_model.meta.wcs,
+                    img.data.shape,
+                )
                 driz.add_image(
                     data,
                     img.meta.wcs,
+                    pixmap=pixmap,
                     iscale=iscale,
                     inwht=inwht,
                     xmin=xmin,
@@ -341,6 +351,7 @@ class ResampleData:
                     driz_error.add_image(
                         img.err,
                         img.meta.wcs,
+                        pixmap=pixmap,
                         iscale=iscale,
                         inwht=inwht,
                         xmin=xmin,
@@ -354,8 +365,12 @@ class ResampleData:
 
         # copy the drizzled error into the output model
         if compute_error:
-            output_model.err = error_model.data
+            output_model.err[:, :] = driz.out_img
             del error_model
+        # Since the context array is dynamic, it must be re-assigned
+        # back to the product's `con` attribute.
+        output_model.data[:, :] = driz.out_img
+        output_model.wht[:, :] = driz.out_wht
 
         return output_model
 
@@ -417,8 +432,12 @@ class ResampleData:
             )
 
         # Initialize the output with the wcs
-        driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                        kernel=self.kernel, fillval=self.fillval)
+        driz = gwcs_drizzle.GWCSDrizzle(
+            output_model,
+            pixfrac=self.pixfrac,
+            kernel=self.kernel,
+            fillval=self.fillval,
+        )
 
         log.info("Resampling science data")
         with input_models:
@@ -458,6 +477,12 @@ class ResampleData:
                 )
                 del data, inwht
                 input_models.shelve(img)
+
+        # Since the context array is dynamic, it must be re-assigned
+        # back to the product's `con` attribute.
+        output_model.data[:, :] = driz.out_img
+        output_model.wht[:, :] = driz.out_wht
+        output_model.con = driz.out_ctx
 
         if self.blendheaders:
             blender.finalize_model(output_model)
@@ -499,10 +524,35 @@ class ResampleData:
         total_weight_flat_var = np.zeros_like(output_model.data)
         with input_models:
             for i, model in enumerate(input_models):
+                # compute pixmap and inwht arrays common to all variance arrays:
+                inwht = resample_utils.build_driz_weight(
+                    model,
+                    weight_type=self.weight_type,  # weights match science
+                    good_bits=self.good_bits,
+                )
+                pixmap = resample_utils.calc_gwcs_pixmap(
+                    model.meta.wcs,
+                    output_model.meta.wcs,
+                    model.data.shape,
+                )
+                xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                    model.data.shape,
+                    model.meta.wcs.bounding_box,
+                )
+
                 # Do the read noise variance first, so it can be
                 # used for weights if needed
                 rn_var = self._resample_one_variance_array(
-                    "var_rnoise", model, output_model)
+                    "var_rnoise",
+                    input_model=model,
+                    output_shape=output_model.data.shape,
+                    inwht=inwht,
+                    pixmap=pixmap,
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax
+                )
 
                 # Find valid weighting values in the variance
                 if rn_var is not None:
@@ -537,7 +587,16 @@ class ResampleData:
                 # Now do poisson and flat variance, updating only valid new values
                 # (zero is a valid value; negative, inf, or NaN are not)
                 pn_var = self._resample_one_variance_array(
-                    "var_poisson", model, output_model)
+                    "var_poisson",
+                    input_model=model,
+                    output_shape=output_model.data.shape,
+                    inwht=inwht,
+                    pixmap=pixmap,
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax
+                )
                 if pn_var is not None:
                     mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
                     weighted_pn_var[mask] = np.nansum(
@@ -550,7 +609,16 @@ class ResampleData:
                     total_weight_pn_var[mask] += weight[mask]
 
                 flat_var = self._resample_one_variance_array(
-                    "var_flat", model, output_model)
+                    "var_flat",
+                    input_model=model,
+                    output_shape=output_model.data.shape,
+                    inwht=inwht,
+                    pixmap=pixmap,
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax
+                )
                 if flat_var is not None:
                     mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
                     weighted_flat_var[mask] = np.nansum(
@@ -588,7 +656,9 @@ class ResampleData:
             del weighted_rn_var, weighted_pn_var, weighted_flat_var
             del total_weight_rn_var, total_weight_pn_var, total_weight_flat_var
 
-    def _resample_one_variance_array(self, name, input_model, output_model):
+    def _resample_one_variance_array(self, name, input_model, output_shape,
+                                     inwht, pixmap,
+                                     xmin=None, xmax=None, ymin=None, ymax=None):
         """Resample one variance image from an input model.
 
         The error image is passed to drizzle instead of the variance, to
@@ -611,43 +681,45 @@ class ResampleData:
             )
             return
 
-        # Make input weight map
-        inwht = resample_utils.build_driz_weight(
-            input_model,
-            weight_type=self.weight_type,  # weights match science
-            good_bits=self.good_bits
-        )
-
-        resampled_error = np.zeros_like(output_model.data)
-        outwht = np.zeros_like(output_model.data)
-        outcon = np.zeros_like(output_model.con)
-
-        xmin, xmax, ymin, ymax = resample_utils._resample_range(
-            variance.shape,
-            input_model.meta.wcs.bounding_box
-        )
-
         iscale = input_model.meta.iscale
 
         # Resample the error array. Fill "unpopulated" pixels with NaNs.
-        self.drizzle_arrays(
-            np.sqrt(variance),
-            inwht,
-            input_model.meta.wcs,
-            output_model.meta.wcs,
-            resampled_error,
-            outwht,
-            outcon,
-            iscale=iscale,
-            pixfrac=self.pixfrac,
+        driz = Drizzle(
             kernel=self.kernel,
-            fillval='NAN',
+            fillval=np.nan,
+            out_shape=output_shape,
+            out_img=None,
+            out_wht=None,
+            out_ctx=None,
+            exptime=0,
+            begin_ctx_id=0,
+            max_ctx_id=1,
+            disable_ctx=True
+        )
+
+        log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
+        log.debug(f"Input Sci shape: {variance.shape}")
+        log.debug(f"Output Sci shape: {output_shape}")
+
+        # Call 'drizzle' to perform image combination
+        log.info(f"Drizzling {variance.shape} --> {output_shape}")
+
+        driz.add_image(
+            data=np.sqrt(variance),
+            exptime=input_model.meta.exposure.exposure_time,
+            pixmap=pixmap,
+            scale=iscale,
+            weight_map=inwht,
+            wht_scale=1.0,  # hard-coded for JWST count-rate data
+            pixfrac=self.pixfrac,
+            in_units="cps",
             xmin=xmin,
             xmax=xmax,
             ymin=ymin,
-            ymax=ymax
+            ymax=ymax,
         )
-        return resampled_error ** 2
+
+        return driz.out_img ** 2
 
     def update_exposure_times(self, output_model, input_models):
         """Modify exposure time metadata in-place"""
@@ -684,168 +756,6 @@ class ResampleData:
         # DURATION (identical to TELAPSE, elapsed time)
         output_model.meta.exposure.duration = duration
         output_model.meta.exposure.elapsed_exposure_time = duration
-
-    @staticmethod
-    def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht,
-                       outcon, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
-                       iscale=1.0, pixfrac=1.0, kernel='square',
-                       fillval="NAN", wtscale=1.0):
-        """
-        Low level routine for performing 'drizzle' operation on one image.
-
-        The interface is compatible with STScI code. All images are Python
-        ndarrays, instead of filenames. File handling (input and output) is
-        performed by the calling routine.
-
-        Parameters
-        ----------
-
-        insci : 2d array
-            A 2d numpy array containing the input image to be drizzled.
-
-        inwht : 2d array
-            A 2d numpy array containing the pixel by pixel weighting.
-            Must have the same dimensions as insci. If none is supplied,
-            the weighting is set to one.
-
-        input_wcs : gwcs.WCS object
-            The world coordinate system of the input image.
-
-        output_wcs : gwcs.WCS object
-            The world coordinate system of the output image.
-
-        outsci : 2d array
-            A 2d numpy array containing the output image produced by
-            drizzling. On the first call it should be set to zero.
-            Subsequent calls it will hold the intermediate results.  This
-            is modified in-place.
-
-        outwht : 2d array
-            A 2d numpy array containing the output counts. On the first
-            call it should be set to zero. On subsequent calls it will
-            hold the intermediate results.  This is modified in-place.
-
-        outcon : 2d or 3d array, optional
-            A 2d or 3d numpy array holding a bitmap of which image was an input
-            for each output pixel. Should be integer zero on first call.
-            Subsequent calls hold intermediate results.  This is modified
-            in-place.
-
-        uniqid : int, optional
-            The id number of the input image. Should be one the first time
-            this function is called and incremented by one on each subsequent
-            call.
-
-        xmin : int, optional
-            This and the following three parameters set a bounding rectangle
-            on the input image. Only pixels on the input image inside this
-            rectangle will have their flux added to the output image. Xmin
-            sets the minimum value of the x dimension. The x dimension is the
-            dimension that varies quickest on the image. All four parameters
-            are zero based, counting starts at zero.
-
-        xmax : int, optional
-            Sets the maximum value of the x dimension on the bounding box
-            of the input image. If ``xmax = 0``, no maximum will
-            be set in the x dimension (all pixels in a row of the input image
-            will be resampled).
-
-        ymin : int, optional
-            Sets the minimum value in the y dimension on the bounding box. The
-            y dimension varies less rapidly than the x and represents the line
-            index on the input image.
-
-        ymax : int, optional
-            Sets the maximum value in the y dimension. If ``ymax = 0``,
-            no maximum will be set in the y dimension (all pixels in a column
-            of the input image will be resampled).
-
-        iscale : float, optional
-            A scale factor to be applied to pixel intensities of the
-            input image before resampling.
-
-        pixfrac : float, optional
-            The fraction of a pixel that the pixel flux is confined to. The
-            default value of 1 has the pixel flux evenly spread across the image.
-            A value of 0.5 confines it to half a pixel in the linear dimension,
-            so the flux is confined to a quarter of the pixel area when the square
-            kernel is used.
-
-        kernel: str, optional
-            The name of the kernel used to combine the input. The choice of
-            kernel controls the distribution of flux over the kernel. The kernel
-            names are: "square", "gaussian", "point", "turbo", "lanczos2",
-            and "lanczos3". The square kernel is the default.
-
-        fillval: str, optional
-            The value a pixel is set to in the output if the input image does
-            not overlap it. The default value of NAN sets NaN values.
-
-        Returns
-        -------
-        A tuple with three values: a version string, the number of pixels
-        on the input image that do not overlap the output image, and the
-        number of complete lines on the input image that do not overlap the
-        output input image.
-
-        """
-
-        # Insure that the fillval parameter gets properly interpreted for use with tdriz
-        if str(fillval).strip() == '':
-            fillval = 'NAN'
-        else:
-            fillval = str(fillval)
-
-        if insci.dtype > np.float32:
-            insci = insci.astype(np.float32)
-
-        # Add input weight image if it was not passed in
-        if inwht is None:
-            inwht = np.ones_like(insci)
-
-        # Compute what plane of the context image this input would
-        # correspond to:
-        planeid = int((uniqid - 1) / 32)
-
-        # Check if the context image has this many planes
-        if outcon.ndim == 3:
-            nplanes = outcon.shape[0]
-        elif outcon.ndim == 2:
-            nplanes = 1
-        else:
-            nplanes = 0
-
-        if nplanes <= planeid:
-            raise IndexError("Not enough planes in drizzle context image")
-
-        # Alias context image to the requested plane if 3d
-        if outcon.ndim == 3:
-            outcon = outcon[planeid]
-
-        # Compute the mapping between the input and output pixel coordinates
-        # for use in drizzle.cdrizzle.tdriz
-        pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
-
-        log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
-        log.debug(f"Input Sci shape: {insci.shape}")
-        log.debug(f"Output Sci shape: {outsci.shape}")
-
-        log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
-
-        _vers, _nmiss, _nskip = cdrizzle.tdriz(
-            insci, inwht, pixmap,
-            outsci, outwht, outcon,
-            uniqid=uniqid,
-            xmin=xmin, xmax=xmax,
-            ymin=ymin, ymax=ymax,
-            scale=iscale,
-            pixfrac=pixfrac,
-            kernel=kernel,
-            in_units="cps",
-            expscale=1.0,
-            wtscale=wtscale,
-            fillstr=fillval
-        )
 
 
 def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
