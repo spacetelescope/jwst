@@ -439,9 +439,17 @@ class ResampleData:
             fillval=self.fillval,
         )
 
-        log.info("Resampling science data")
+        self._init_variance_arrays(output_model)
+        self._init_exptime_counters()
+
+        log.info("Resampling science and variance data")
+
+        leading_group_idx = [v[0] for v in input_models.group_indices.values()]
+
         with input_models:
-            for img in input_models:
+            for idx, img in enumerate(input_models):
+                if idx in leading_group_idx:
+                    self._update_exptime(img)
                 if self.blendheaders:
                     blender.accumulate(img)
                 iscale = self._get_intensity_scale(img)
@@ -460,22 +468,42 @@ class ResampleData:
                 else:
                     data = img.data.copy()
 
-                xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                in_image_limits = resample_utils._resample_range(
                     data.shape,
                     img.meta.wcs.bounding_box
+                )
+                xmin, xmax, ymin, ymax = in_image_limits
+
+                pixmap = resample_utils.calc_gwcs_pixmap(
+                    img.meta.wcs,
+                    output_model.meta.wcs,
+                    data.shape,
                 )
 
                 driz.add_image(
                     data,
                     img.meta.wcs,
+                    pixmap=pixmap,
                     iscale=iscale,
                     inwht=inwht,
                     xmin=xmin,
                     xmax=xmax,
                     ymin=ymin,
-                    ymax=ymax
+                    ymax=ymax,
                 )
+
+                # Resample variance arrays in input_models to output_model
+                self._resample_variance_arrays(
+                    model=img,
+                    inwht=inwht,
+                    pixmap=pixmap,
+                    in_image_limits=in_image_limits,
+                    output_shape=output_model.meta.wcs.array_shape,
+                )
+
                 del data, inwht
+                del img.meta.iscale
+
                 input_models.shelve(img)
 
         # Since the context array is dynamic, it must be re-assigned
@@ -487,8 +515,9 @@ class ResampleData:
         if self.blendheaders:
             blender.finalize_model(output_model)
 
-        # Resample variance arrays in input_models to output_model
-        self.resample_variance_arrays(output_model, input_models)
+        # compute final variances:
+        self._compute_resample_variance_totals(output_model)
+
         var_components = [
             output_model.var_rnoise,
             output_model.var_poisson,
@@ -501,9 +530,145 @@ class ResampleData:
         all_nan = np.all(np.isnan(var_components), axis=0)
         output_model.err[all_nan] = np.nan
 
-        self.update_exposure_times(output_model, input_models)
+        self._get_exptime_totals(output_model)
 
         return ModelLibrary([output_model,], on_disk=False)
+
+    def _init_variance_arrays(self, output_model):
+        self._weighted_rn_var = np.full_like(output_model.data, np.nan)
+        self._weighted_pn_var = np.full_like(output_model.data, np.nan)
+        self._weighted_flat_var = np.full_like(output_model.data, np.nan)
+        self._total_weight_rn_var = np.zeros_like(output_model.data)
+        self._total_weight_pn_var = np.zeros_like(output_model.data)
+        self._total_weight_flat_var = np.zeros_like(output_model.data)
+
+    def _resample_variance_arrays(self, model, inwht, pixmap, in_image_limits,
+                                  output_shape):
+        xmin, xmax, ymin, ymax = in_image_limits
+
+        # Do the read noise variance first, so it can be
+        # used for weights if needed
+        rn_var = self._resample_one_variance_array(
+            "var_rnoise",
+            input_model=model,
+            output_shape=output_shape,
+            inwht=inwht,
+            pixmap=pixmap,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax
+        )
+
+        # Find valid weighting values in the variance
+        if rn_var is not None:
+            mask = (rn_var > 0) & np.isfinite(rn_var)
+        else:
+            mask = np.full_like(rn_var, False)
+
+        # Set the weight for the image from the weight type
+        weight = np.ones(output_shape)
+        if self.weight_type == "ivm" and rn_var is not None:
+            weight[mask] = rn_var[mask] ** -1
+        elif self.weight_type == "exptime":
+            if resample_utils.check_for_tmeasure(model):
+                weight[:] = model.meta.exposure.measurement_time
+            else:
+                weight[:] = model.meta.exposure.exposure_time
+
+        # Weight and add the readnoise variance
+        # Note: floating point overflow is an issue if variance weights
+        # are used - it can't be squared before multiplication
+        if rn_var is not None:
+            mask = (rn_var >= 0) & np.isfinite(rn_var) & (weight > 0)
+            self._weighted_rn_var[mask] = np.nansum(
+                [
+                    self._weighted_rn_var[mask],
+                    rn_var[mask] * weight[mask] * weight[mask]
+                ],
+                axis=0
+            )
+            self._total_weight_rn_var[mask] += weight[mask]
+
+        # Now do poisson and flat variance, updating only valid new values
+        # (zero is a valid value; negative, inf, or NaN are not)
+        pn_var = self._resample_one_variance_array(
+            "var_poisson",
+            input_model=model,
+            output_shape=output_shape,
+            inwht=inwht,
+            pixmap=pixmap,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax
+        )
+        if pn_var is not None:
+            mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
+            self._weighted_pn_var[mask] = np.nansum(
+                [
+                    self._weighted_pn_var[mask],
+                    pn_var[mask] * weight[mask] * weight[mask]
+                ],
+                axis=0
+            )
+            self._total_weight_pn_var[mask] += weight[mask]
+
+        flat_var = self._resample_one_variance_array(
+            "var_flat",
+            input_model=model,
+            output_shape=output_shape,
+            inwht=inwht,
+            pixmap=pixmap,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax
+        )
+        if flat_var is not None:
+            mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
+            self._weighted_flat_var[mask] = np.nansum(
+                [
+                    self._weighted_flat_var[mask],
+                    flat_var[mask] * weight[mask] * weight[mask]
+                ],
+                axis=0
+            )
+            self._total_weight_flat_var[mask] += weight[mask]
+
+    def _compute_resample_variance_totals(self, output_model):
+        # Divide by the total weights, squared, and set in the output model.
+        # Zero weight and missing values are NaN in the output.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
+
+            output_variance = (
+                self._weighted_rn_var / self._total_weight_rn_var /
+                self._total_weight_rn_var
+            )
+            setattr(output_model, "var_rnoise", output_variance)
+
+            output_variance = (
+                self._weighted_pn_var / self._total_weight_pn_var /
+                self._total_weight_pn_var
+            )
+            setattr(output_model, "var_poisson", output_variance)
+
+            output_variance = (
+                self._weighted_flat_var / self._total_weight_flat_var /
+                self._total_weight_flat_var
+            )
+            setattr(output_model, "var_flat", output_variance)
+
+        del (
+            self._weighted_rn_var,
+            self._weighted_pn_var,
+            self._weighted_flat_var,
+            self._total_weight_rn_var,
+            self._total_weight_pn_var,
+            self._total_weight_flat_var,
+        )
 
     def resample_variance_arrays(self, output_model, input_models):
         """Resample variance arrays from input_models to the output_model.
@@ -515,13 +680,10 @@ class ResampleData:
 
         The output_model is modified in place.
         """
+        self._init_variance_arrays(output_model)
+        output_shape = output_model.meta.wcs.array_shape
         log.info("Resampling variance components")
-        weighted_rn_var = np.full_like(output_model.data, np.nan)
-        weighted_pn_var = np.full_like(output_model.data, np.nan)
-        weighted_flat_var = np.full_like(output_model.data, np.nan)
-        total_weight_rn_var = np.zeros_like(output_model.data)
-        total_weight_pn_var = np.zeros_like(output_model.data)
-        total_weight_flat_var = np.zeros_like(output_model.data)
+
         with input_models:
             for i, model in enumerate(input_models):
                 # compute pixmap and inwht arrays common to all variance arrays:
@@ -535,126 +697,24 @@ class ResampleData:
                     output_model.meta.wcs,
                     model.data.shape,
                 )
-                xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                in_image_limits = resample_utils._resample_range(
                     model.data.shape,
                     model.meta.wcs.bounding_box,
                 )
-
-                # Do the read noise variance first, so it can be
-                # used for weights if needed
-                rn_var = self._resample_one_variance_array(
-                    "var_rnoise",
-                    input_model=model,
-                    output_shape=output_model.data.shape,
+                self._resample_variance_arrays(
+                    model=model,
                     inwht=inwht,
                     pixmap=pixmap,
-                    xmin=xmin,
-                    xmax=xmax,
-                    ymin=ymin,
-                    ymax=ymax
+                    in_image_limits=in_image_limits,
+                    output_shape=output_shape,
                 )
-
-                # Find valid weighting values in the variance
-                if rn_var is not None:
-                    mask = (rn_var > 0) & np.isfinite(rn_var)
-                else:
-                    mask = np.full_like(rn_var, False)
-
-                # Set the weight for the image from the weight type
-                weight = np.ones(output_model.data.shape)
-                if self.weight_type == "ivm" and rn_var is not None:
-                    weight[mask] = rn_var[mask] ** -1
-                elif self.weight_type == "exptime":
-                    if resample_utils.check_for_tmeasure(model):
-                        weight[:] = model.meta.exposure.measurement_time
-                    else:
-                        weight[:] = model.meta.exposure.exposure_time
-
-                # Weight and add the readnoise variance
-                # Note: floating point overflow is an issue if variance weights
-                # are used - it can't be squared before multiplication
-                if rn_var is not None:
-                    mask = (rn_var >= 0) & np.isfinite(rn_var) & (weight > 0)
-                    weighted_rn_var[mask] = np.nansum(
-                        [
-                            weighted_rn_var[mask],
-                            rn_var[mask] * weight[mask] * weight[mask]
-                        ],
-                        axis=0
-                    )
-                    total_weight_rn_var[mask] += weight[mask]
-
-                # Now do poisson and flat variance, updating only valid new values
-                # (zero is a valid value; negative, inf, or NaN are not)
-                pn_var = self._resample_one_variance_array(
-                    "var_poisson",
-                    input_model=model,
-                    output_shape=output_model.data.shape,
-                    inwht=inwht,
-                    pixmap=pixmap,
-                    xmin=xmin,
-                    xmax=xmax,
-                    ymin=ymin,
-                    ymax=ymax
-                )
-                if pn_var is not None:
-                    mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
-                    weighted_pn_var[mask] = np.nansum(
-                        [
-                            weighted_pn_var[mask],
-                            pn_var[mask] * weight[mask] * weight[mask]
-                        ],
-                        axis=0
-                    )
-                    total_weight_pn_var[mask] += weight[mask]
-
-                flat_var = self._resample_one_variance_array(
-                    "var_flat",
-                    input_model=model,
-                    output_shape=output_model.data.shape,
-                    inwht=inwht,
-                    pixmap=pixmap,
-                    xmin=xmin,
-                    xmax=xmax,
-                    ymin=ymin,
-                    ymax=ymax
-                )
-                if flat_var is not None:
-                    mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
-                    weighted_flat_var[mask] = np.nansum(
-                        [
-                            weighted_flat_var[mask],
-                            flat_var[mask] * weight[mask] * weight[mask]
-                        ],
-                        axis=0
-                    )
-                    total_weight_flat_var[mask] += weight[mask]
 
                 del model.meta.iscale
-                del weight
+                del inwht
                 input_models.shelve(model, i)
 
             # We now have a sum of the weighted resampled variances.
-            # Divide by the total weights, squared, and set in the output model.
-            # Zero weight and missing values are NaN in the output.
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
-                warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
-
-                output_variance = (weighted_rn_var
-                                / total_weight_rn_var / total_weight_rn_var)
-                setattr(output_model, "var_rnoise", output_variance)
-
-                output_variance = (weighted_pn_var
-                                / total_weight_pn_var / total_weight_pn_var)
-                setattr(output_model, "var_poisson", output_variance)
-
-                output_variance = (weighted_flat_var
-                                / total_weight_flat_var / total_weight_flat_var)
-                setattr(output_model, "var_flat", output_variance)
-
-            del weighted_rn_var, weighted_pn_var, weighted_flat_var
-            del total_weight_rn_var, total_weight_pn_var, total_weight_flat_var
+            self._compute_resample_variance_totals(output_model)
 
     def _resample_one_variance_array(self, name, input_model, output_shape,
                                      inwht, pixmap,
@@ -721,41 +781,56 @@ class ResampleData:
 
         return driz.out_img ** 2
 
-    def update_exposure_times(self, output_model, input_models):
-        """Modify exposure time metadata in-place"""
-        total_exposure_time = 0.
-        exposure_times = {'start': [], 'end': []}
-        duration = 0.0
-        total_measurement_time = 0.0
-        measurement_time_failures = []
-        with input_models:
-            for _, indices in input_models.group_indices.items():
-                model = input_models.borrow(indices[0])
-                total_exposure_time += model.meta.exposure.exposure_time
-                if not resample_utils.check_for_tmeasure(model):
-                    measurement_time_failures.append(1)
-                else:
-                    total_measurement_time += model.meta.exposure.measurement_time
-                    measurement_time_failures.append(0)
-                exposure_times['start'].append(model.meta.exposure.start_time)
-                exposure_times['end'].append(model.meta.exposure.end_time)
-                duration += model.meta.exposure.duration
-                input_models.shelve(model, indices[0], modify=False)
+    def _init_exptime_counters(self):
+        self._total_exposure_time = 0.
+        self._exposure_times = {'start': [], 'end': []}
+        self._duration = 0.0
+        self._total_measurement_time = 0.0
+        self._measurement_time_failures = []
 
+    def _update_exptime(self, model):
+        self._total_exposure_time += model.meta.exposure.exposure_time
+        if not resample_utils.check_for_tmeasure(model):
+            self._measurement_time_failures.append(1)
+        else:
+            self._total_measurement_time += model.meta.exposure.measurement_time
+            self._measurement_time_failures.append(0)
+        self._exposure_times['start'].append(model.meta.exposure.start_time)
+        self._exposure_times['end'].append(model.meta.exposure.end_time)
+        self._duration += model.meta.exposure.duration
+
+    def _get_exptime_totals(self, output_model):
         # Update some basic exposure time values based on output_model
-        output_model.meta.exposure.exposure_time = total_exposure_time
-        if not any(measurement_time_failures):
-            output_model.meta.exposure.measurement_time = total_measurement_time
-        output_model.meta.exposure.start_time = min(exposure_times['start'])
-        output_model.meta.exposure.end_time = max(exposure_times['end'])
+        output_model.meta.exposure.exposure_time = self._total_exposure_time
+        if not any(self._measurement_time_failures):
+            output_model.meta.exposure.measurement_time = self._total_measurement_time
+        output_model.meta.exposure.start_time = min(self._exposure_times['start'])
+        output_model.meta.exposure.end_time = max(self._exposure_times['end'])
 
         # Update other exposure time keywords:
         # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
-        xposure = total_exposure_time
+        xposure = self._total_exposure_time
         output_model.meta.exposure.effective_exposure_time = xposure
         # DURATION (identical to TELAPSE, elapsed time)
-        output_model.meta.exposure.duration = duration
-        output_model.meta.exposure.elapsed_exposure_time = duration
+        output_model.meta.exposure.duration = self._duration
+        output_model.meta.exposure.elapsed_exposure_time = self._duration
+
+        del (
+            self._total_exposure_time,
+            self._exposure_times,
+            self._duration,
+            self._total_measurement_time,
+            self._measurement_time_failures,
+        )
+
+    def update_exposure_times(self, output_model, input_models):
+        """Modify exposure time metadata in-place"""
+        self._init_exptime_counters()
+        with input_models:
+            for _, indices in input_models.group_indices.items():
+                model = input_models.borrow(indices[0])
+                self._update_exptime(model)
+        self._get_exptime_totals(output_model)
 
 
 def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
