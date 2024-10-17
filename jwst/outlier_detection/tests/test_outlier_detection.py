@@ -6,6 +6,7 @@ import os
 
 from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
+from stcal.alignment.util import compute_s_region_imaging
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
@@ -150,6 +151,7 @@ def we_many_sci(
 
     # Replace the FITS-type WCS with an Identity WCS
     sci1.meta.wcs = create_fitswcs(sci1)
+    sci1.meta.wcsinfo.s_region = compute_s_region_imaging(sci1.meta.wcs, shape=shape, center=False)
     rng = np.random.default_rng(720)
     sci1.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci1.err = np.zeros(shape) + sigma
