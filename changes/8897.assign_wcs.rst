@@ -1,1 +1,1 @@
-Fix half-pixel error in s_region for imaging data
+Use pixel vertices to define s_region instead of pixel centers."
