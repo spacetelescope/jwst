@@ -144,6 +144,14 @@ and while using the `test` server:
     export CRDS_PATH=$HOME/crds_cache/jwst_test
     export CRDS_SERVER_URL=https://jwst-test-crds.stsci.edu
 
+If your cache does become corrupted, the best way to fix it is simply to remove
+the local cache and allow subsequent pipeline runs to repopulate it as needed.
+For example:
+
+::
+
+    rm -rf $CRDS_PATH/*
+
 For more information on CRDS configuration, see the
 `CRDS user guide
 <https://jwst-crds.stsci.edu/static/users_guide/environment.html>`__
