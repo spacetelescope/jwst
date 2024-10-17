@@ -15,8 +15,8 @@ def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, monkeypatch):
         that's missing an MSAMETFL. Exception should be raised.
     """
 
-    # Get the input file
-    rtdata.get_data('nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits')
+    # Get the input file, don't get the MSA file
+    rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
 
     # Run the calwebb_spec2 pipeline
     args = ["calwebb_spec2", rtdata.input]
@@ -41,8 +41,8 @@ def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, monkeypatch
         that's missing an MSAMETFL. Exception should NOT be raised.
     """
 
-    # Get the input file
-    rtdata.get_data('nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits')
+    # Get the input file, don't get the MSA file
+    rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
 
     # Run the calwebb_spec2 pipeline
     args = ["calwebb_spec2",
@@ -69,7 +69,7 @@ def test_nirspec_assignwcs_skip(rtdata, fitsdiff_default_kwargs, caplog):
     """
 
     # Get the input file
-    rtdata.get_data('nirspec/mos/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod.fits')
+    rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
 
     # Run the calwebb_spec2 pipeline
     args = ["calwebb_spec2",
@@ -90,7 +90,7 @@ def test_nirspec_nrs2_nodata_api(rtdata, fitsdiff_default_kwargs):
     """
 
     # Get the input file
-    rtdata.get_data('nirspec/ifu/jw84700006001_02101_00001_nrs2_rate.fits')
+    rtdata.get_data('nirspec/ifu/jw01128009001_0310c_00004_nrs2_rate.fits')
 
     # Call the Spec2Pipeline
     step = Spec2Pipeline()
@@ -109,7 +109,7 @@ def test_nirspec_nrs2_nodata_strun(rtdata, fitsdiff_default_kwargs, caplog):
     """
 
     # Get the input file
-    rtdata.get_data('nirspec/ifu/jw84700006001_02101_00001_nrs2_rate.fits')
+    rtdata.get_data('nirspec/ifu/jw01128009001_0310c_00004_nrs2_rate.fits')
 
     # Call the Spec2Pipeline
     cmd = [

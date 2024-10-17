@@ -4,12 +4,16 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
-ROOT = 'nrs_verify_nrs1'
+# Input is jw01970001001_02102_00001_nrs1_uncal.fits, a verify-only image
+# preceding an IFU observation, with EXP_TYPE=NRS_IMAGE.
+# There is currently no data with EXP_TYPE=NRS_VERIFY available in
+# the archive.
+ROOT = 'jw01970002001_03101_00001_nrs1'
 
 
 @pytest.fixture(scope='module')
 def run_detector1(rtdata_module):
-    """Run NRS_VERIFY through detector1"""
+    """Run a verify-only NIRSpec image through detector1."""
     rtdata = rtdata_module
     rtdata.get_data(f'nirspec/imaging/{ROOT}_uncal.fits')
 
@@ -28,28 +32,15 @@ def run_detector1(rtdata_module):
 
 @pytest.fixture(scope='module')
 def run_image2(run_detector1, rtdata_module):
-    """Run NRS_VERIFY through image2"""
+    """Run a verify-only NIRSpec image through image2."""
     rtdata = rtdata_module
-
-    # Get some predefined references due to insufficient coverage
-    # from CRDS.
-    refs = ['jwst_nirspec_fpa_0005.asdf', 'jwst_nirspec_flat_0061.fits', 'jwst_nirspec_area_0001.fits']
-    for ref in refs:
-        rtdata.get_data(f'nirspec/imaging/{ref}')
-
     rtdata.input = f'{ROOT}_rate.fits'
 
     args = [
         'calwebb_image2', rtdata.input,
         '--steps.assign_wcs.save_results=true',
-        '--steps.assign_wcs.override_fpa=jwst_nirspec_fpa_0005.asdf',
         '--steps.flat_field.save_results=true',
-        '--steps.flat_field.override_flat=jwst_nirspec_flat_0061.fits',
-        '--steps.flat_field.override_sflat=N/A',
-        '--steps.flat_field.override_fflat=N/A',
-        '--steps.flat_field.override_dflat=N/A',
-        '--steps.photom.save_results=true',
-        '--steps.photom.override_area=jwst_nirspec_area_0001.fits',
+        '--steps.photom.save_results=true'
     ]
     Step.from_cmdline(args)
 
@@ -61,7 +52,7 @@ def run_image2(run_detector1, rtdata_module):
         'dark_current', 'jump', 'rate',
     ])
 def test_verify_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Test results of the detector1 and image2 processing"""
+    """Test results of the detector1 processing."""
     rtdata = rtdata_module
     output = f'{ROOT}_{suffix}.fits'
     rtdata.output = output
@@ -80,7 +71,7 @@ def test_verify_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs,
         'assign_wcs', 'flat_field', 'cal',
     ])
 def test_verify_image2(run_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Test results of the detector1 and image2 processing"""
+    """Test results of the image2 processing."""
     rtdata = rtdata_module
     output = f'{ROOT}_{suffix}.fits'
     rtdata.output = output
