@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from collections.abc import Sequence
+import copy
 import os.path as op
 import re
 import logging
@@ -15,10 +16,17 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
-DUMMY_ASN_TABLE = {
+EMPTY_ASN_TABLE = {
     "asn_id": None,
     "asn_pool": None,
-    "products": [{"name": None}]
+    "products": [
+        {"name": "",
+        "members": [
+            {"exptype": "",
+            "expname": ""}
+            ]
+        }
+    ]
 }
 
 # Configure logging
@@ -134,7 +142,7 @@ to supply custom catalogs.
         self._models = []
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
-        self.asn_table = DUMMY_ASN_TABLE
+        self.asn_table = copy.deepcopy(EMPTY_ASN_TABLE)
         self.asn_table_name = None
         self.asn_pool_name = None
         self.asn_file_path = None
@@ -307,6 +315,7 @@ to supply custom catalogs.
 
     def save(self,
              path=None,
+             save_model_func=None,
              **kwargs):
         """
         Write out models in container to FITS or ASDF.
@@ -317,6 +326,11 @@ to supply custom catalogs.
             - If None, the `meta.filename` is used for each model.
             - If a string, the string is used as a root and an index is
               appended.
+
+        save_model_func: func or None
+            Alternate function to save each model instead of
+            the models `save` method. Takes one argument, the model,
+            and keyword argument `idx` for an index.
 
         kwargs : dict
             Additional parameters to be passed to the `save` method of each
@@ -329,15 +343,21 @@ to supply custom catalogs.
         """
         output_paths = []
         for idx, model in enumerate(self):
-            if len(self) <= 1 or path is None:
-                idx = None
-            if path is None:
-                save_path = model.meta.filename
+            print(model)
+            print(model.meta.filename)
+            print(save_model_func)
+            if save_model_func is None:
+                if path is None:
+                    save_path = model.meta.filename
+                else:
+                    if len(self) <= 1:
+                        idx = None
+                    save_path = path+str(idx)+".fits"
+                output_paths.append(
+                    model.save(save_path, **kwargs)
+                    )
             else:
-                save_path = path+str(idx)+".fits"
-            output_paths.append(
-                model.save(save_path, **kwargs)
-                )
+                output_paths.append(save_model_func(model, idx=idx))
         return output_paths
 
     @property

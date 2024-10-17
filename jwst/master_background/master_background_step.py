@@ -116,6 +116,13 @@ class MasterBackgroundStep(Step):
             else:
                 if isinstance(input_data, ModelContainer):
                     input_data, background_data = split_container(input_data)
+                    if len(background_data) == 0:
+                        msg = ("No background data found in input container, "
+                               "and no user-supplied background provided.  Skipping step.")
+                        self.log.warning(msg)
+                        result = input_data.copy()
+                        record_step_status(result, 'master_background', success=False)
+                        return result
                     asn_id = input_data.asn_table["asn_id"]
 
                     for model in background_data:
