@@ -197,7 +197,10 @@ class Extract1dStep(Step):
         """
 
         # Open the input and figure out what type of model it is
-        input_model = datamodels.open(input)
+        if isinstance(input, ModelContainer):
+            input_model = input
+        else:
+            input_model = datamodels.open(input)
 
         was_source_model = False  # default value
         if isinstance(input_model, datamodels.CubeModel):

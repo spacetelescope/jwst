@@ -35,8 +35,7 @@ class BadpixSelfcalStep(Step):
     """
 
     def save_model(self, model, *args, **kwargs):
-        """Override save_model to suppress index 0 when save_model is True
-        """
+        """Override save_model to suppress index 0 when save_model is True"""
         kwargs["idx"] = None
         return Step.save_model(self, model, *args, **kwargs)
 

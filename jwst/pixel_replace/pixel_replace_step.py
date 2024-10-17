@@ -52,8 +52,11 @@ class PixelReplaceStep(Step):
         with datamodels.open(input) as input_model:
             # If more than one 2d spectrum exists in input, call replacement
 
-            if input_model.meta.model_type in ['MultiSlitModel', 'SlitModel',
-                                               'ImageModel', 'IFUImageModel', 'CubeModel']:
+            if isinstance(input_model, (datamodels.MultiSlitModel,
+                                        datamodels.SlitModel,
+                                        datamodels.ImageModel, 
+                                        datamodels.IFUImageModel,
+                                        datamodels.CubeModel)):
                 self.log.debug('Input is a {input_model.meta.model_type}.')
             elif isinstance(input_model, datamodels.ModelContainer):
                 self.log.debug('Input is a ModelContainer.')
@@ -77,7 +80,7 @@ class PixelReplaceStep(Step):
                 # Setup output path naming if associations are involved.
                 asn_id = None
                 try:
-                    asn_id = input_model.meta.asn_table.asn_id
+                    asn_id = input_model.asn_table["asn_id"]
                 except (AttributeError, KeyError):
                     pass
                 if asn_id is None:
