@@ -92,8 +92,9 @@ Step Arguments for Imaging and Slit-like Spectroscopic data
   Specifies whether or not to load and create all images that are used during
   processing into memory. If ``False``, input files are loaded from disk when
   needed and all intermediate files are stored on disk, rather than in memory.
-  Has no effect for spectroscopic data, and is superseded by the pipeline-level
-  ``in_memory`` parameter set by ``calwebb_image3``.
+  Has no effect for spectroscopic data. For imaging data this parameter is 
+  superseded by the pipeline-level ``in_memory`` parameter set by
+  ``calwebb_image3``.
 
 
 Step Arguments for IFU data
