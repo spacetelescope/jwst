@@ -1,0 +1,1 @@
+reorganize outlier detection documentation
