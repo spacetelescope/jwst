@@ -1,6 +1,5 @@
-"""
-Submodule for performing outlier detection on spectra.
-"""
+"""Perform outlier detection on spectra."""
+
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
@@ -36,8 +35,7 @@ def detect_outliers(
     in_memory,
     make_output_path,
 ):
-    """
-    Flag outliers in spec data.
+    """Flag outliers in spec data.
 
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """
@@ -68,20 +66,22 @@ def detect_outliers(
             good_bits=good_bits,
         )
 
-        median_data, median_wcs = median_with_resampling(
+        median_data, median_wcs, median_err = median_with_resampling(
             library,
             resamp,
             maskpt,
             save_intermediate_results=save_intermediate_results,
-            make_output_path=make_output_path,)
+            make_output_path=make_output_path,
+            return_error=True)
     else:
-        median_data, median_wcs = median_without_resampling(
+        median_data, median_wcs, median_err = median_without_resampling(
             library,
             maskpt,
             weight_type,
             good_bits,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
+            return_error=True
         )
 
     # Perform outlier detection using statistical comparisons between
@@ -96,11 +96,13 @@ def detect_outliers(
             scale1,
             scale2,
             backg,
+            median_err=median_err,
             save_blot=save_intermediate_results,
             make_output_path=make_output_path
         )
     else:
         flag_crs_in_models(input_models,
                            median_data,
-                           snr1)
+                           snr1,
+                           median_err=median_err)
     return input_models
