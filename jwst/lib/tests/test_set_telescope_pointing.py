@@ -9,7 +9,6 @@ from tempfile import TemporaryDirectory
 import warnings
 
 import pytest
-pytest.importorskip('pysiaf')
 
 from astropy.io import fits  # noqa: E402
 from astropy.table import Table  # noqa: E402
@@ -18,7 +17,6 @@ from astropy.time import Time  # noqa: E402
 from stdatamodels.jwst import datamodels  # noqa: E402
 
 from jwst.lib import engdb_mast  # noqa: E402
-from jwst.lib import engdb_tools  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
 from jwst.lib import siafdb  # noqa: E402
 from jwst.tests.helpers import word_precision_check  # noqa: E402
@@ -634,6 +632,28 @@ def data_file(tmp_path):
     model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
     model.meta.aperture.name = "MIRIM_FULL"
     model.meta.observation.date = '2017-01-01'
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x = -25.021
+    model.meta.ephemeris.velocity_y = -16.507
+    model.meta.ephemeris.velocity_z = -7.187
+
+    file_path = tmp_path / 'file.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture
+def data_file_strict(tmp_path):
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = Time('2023-01-01T00:00:03').mjd
+    model.meta.exposure.end_time = Time('2023-01-01T00:00:03').mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
+    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '2023-01-01'
     model.meta.exposure.type = "MIR_IMAGE"
     model.meta.ephemeris.velocity_x = -25.021
     model.meta.ephemeris.velocity_y = -16.507
