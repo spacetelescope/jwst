@@ -446,6 +446,38 @@ def test_msa_missing_source(tmp_path):
     _compare_slits(slitlet_info[1], ref_slit)
 
 
+def test_msa_nan_source_posn(tmp_path):
+    """
+    Test the get_open_msa_slits function with nan values for source position.
+    """
+    # modify an existing MSA file to remove source info
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    bad_confl = str(tmp_path / 'nan_msa_fs_configuration.fits')
+    shutil.copy(msaconfl, bad_confl)
+
+    with fits.open(bad_confl) as msa_hdu_list:
+        shutter_table = table.Table(msa_hdu_list['SHUTTER_INFO'].data)
+        shutter_table[-5:]['estimated_source_in_shutter_x'] = np.nan
+        msa_hdu_list['SHUTTER_INFO'] = fits.table_to_hdu(shutter_table)
+        msa_hdu_list[2].name = 'SHUTTER_INFO'
+        msa_hdu_list.writeto(bad_confl, overwrite=True)
+
+    prog_id = '1234'
+    msa_meta_id = 12
+    dither_position = 1
+
+    slitlet_info = nirspec.get_open_msa_slits(
+        prog_id, bad_confl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+    # MSA slit: virtual source name assigned
+    ref_slit = trmodels.Slit(name='S200A1', shutter_id=0, dither_position=1, xcen=0, ycen=0,
+                             ymin=-0.5, ymax=0.5, quadrant=5, source_id=3, shutter_state='x',
+                             source_name='95065_3', source_alias='3', stellarity=1.0,
+                             source_xpos=0.0, source_ypos=-0.2290000021457672,
+                             source_ra=53.139904, source_dec=-27.805002)
+    _compare_slits(slitlet_info[1], ref_slit)
+
+
 open_shutters = [[24], [23, 24], [22, 23, 25, 27], [22, 23, 25, 27, 28]]
 main_shutter = [24, 23, 25, 28]
 result = ["x", "x1", "110x01", "110101x"]
