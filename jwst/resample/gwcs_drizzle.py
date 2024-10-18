@@ -67,16 +67,19 @@ class GWCSDrizzle(Drizzle):
         if not self.outwcs:
             raise ValueError("Either an existing file or wcs must be supplied")
 
-        ctx = product.con
         begin_ctx_id = 0
-        if ctx is not None:
-            if ctx.size == 0:
-                ctx = None
-            elif ctx.ndim not in [2, 3]:
-                # TODO: this message seems odd
-                raise ValueError(
-                    f"Drizzle context image has wrong dimensions: {product}"
-                )
+        if disable_ctx:
+            ctx = None
+        else:
+            ctx = product.con
+            if ctx is not None:
+                if ctx.size == 0:
+                    ctx = None
+                elif ctx.ndim not in [2, 3]:
+                    # TODO: this message seems odd
+                    raise ValueError(
+                        f"Drizzle context image has wrong dimensions: {product}"
+                    )
 
         super().__init__(
             kernel=kernel,
@@ -93,7 +96,8 @@ class GWCSDrizzle(Drizzle):
 
         # Since the context array is dynamic, it must be re-assigned
         # back to the product's `con` attribute.
-        product.con = self.out_ctx
+        if not disable_ctx:
+            product.con = self.out_ctx
 
     def add_image(self, insci, inwcs, pixmap=None, inwht=None,
                   xmin=0, xmax=0, ymin=0, ymax=0,
