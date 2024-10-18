@@ -19,6 +19,7 @@ def run_detector1pipeline(rtdata_module):
     Step.from_cmdline([
         "calwebb_detector1",
         rtdata.input,
+        "--steps.group_scale.save_results=True",
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
         "--steps.superbias.save_results=True",
@@ -54,7 +55,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ['dq_init', 'saturation', 'superbias',
+@pytest.mark.parametrize("suffix", ['group_scale', 'dq_init', 'saturation', 'superbias',
                                     'refpix', 'linearity', 'dark_current', 'jump',
                                     '0_ramp_fit', 'gain_scale',
                                     'rate'])
