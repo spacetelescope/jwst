@@ -180,6 +180,16 @@ class MasterBackgroundMosStep(Pipeline):
                 del pars[par]
             getattr(self, step).update_pars(pars)
 
+    def _get_steps_params(self):
+        """Get substep parameters to pass on"""
+        pixrep_pars = getattr(self, 'pixel_replace').get_pars()
+        resamp_pars = getattr(self, 'resample_spec').get_pars()
+        extr1d_pars = getattr(self, 'extract_1d').get_pars()
+        params = {'pixel_replace': pixrep_pars,
+                  'resample_spec': resamp_pars,
+                  'extract_1d': extr1d_pars}
+        return params
+
     def _classify_slits(self, data):
         """Determine how many Slits are background and source types
 
@@ -252,7 +262,8 @@ class MasterBackgroundMosStep(Pipeline):
                 master_background = user_background
             else:
                 self.log.debug('Calculating 1D master background')
-                master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
+                params = self._get_steps_params()
+                master_background = nirspec_utils.create_background_from_multislit(pre_calibrated, params)
             if master_background is None:
                 self.log.debug('No master background could be calculated. Returning None')
                 return None, None

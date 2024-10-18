@@ -76,7 +76,7 @@ def map_to_science_slits(input_model, master_bkg):
     return output_model
 
 
-def create_background_from_multislit(input_model):
+def create_background_from_multislit(input_model, params):
     """Create a 1D master background spectrum from a set of
     calibrated background MOS slitlets in the input
     MultiSlitModel.
@@ -85,6 +85,9 @@ def create_background_from_multislit(input_model):
     ----------
     input_model : `~jwst.datamodels.MultiSlitModel`
         The input data model containing all slit instances.
+
+    params : dict
+        Dictionary containing a dictionary of the step parameters to set
 
     Returns
     -------
@@ -113,11 +116,19 @@ def create_background_from_multislit(input_model):
 
     bkg_model.slits.extend(slits)
 
+    # update step parameters
+    pr = pixel_replace_step.PixelReplaceStep()
+    pr.update_pars(params['pixel_replace'])
+    rs = resample_spec_step.ResampleSpecStep()
+    rs.update_pars(params['resample_spec'])
+    e1d = extract_1d_step.Extract1dStep()
+    e1d.update_pars(params['extract_1d'])
+
     # Apply pixel_replace, resample_spec and extract_1d to all background slitlets
     log.info('Applying pixel_replace, resampling and 1D extraction to background slits')
-    pixrepl = pixel_replace_step.PixelReplaceStep.call(bkg_model)
-    resamp = resample_spec_step.ResampleSpecStep.call(pixrepl)
-    x1d = extract_1d_step.Extract1dStep.call(resamp)
+    pixrepl = pr.call(bkg_model)
+    resamp = rs.call(pixrepl)
+    x1d = e1d.call(resamp)
 
     # Call combine_1d to combine the 1D background spectra
     log.info('Combining 1D background spectra into master background')
