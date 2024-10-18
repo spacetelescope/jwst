@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 import warnings
 
 import pytest
+pytest.importorskip('pysiaf')
 
 from astropy.io import fits  # noqa: E402
 from astropy.table import Table  # noqa: E402
@@ -37,7 +38,6 @@ TARG_DEC = -87.0
 
 # Get the mock databases
 DATA_PATH = Path(__file__).parent / 'data'
-siaf_path = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
 
 Q_EXPECTED = np.array([0.37671179, 0.70705936, -0.57895271, 0.15155541])
 J2FGS_EXPECTED = np.array([
@@ -130,12 +130,12 @@ def test_allow_any_file(file_case, allow_any_file):
         warnings.filterwarnings("ignore", "model_type not found")
         if not allow and not allow_any_file:
             with pytest.raises(TypeError):
-                stp.add_wcs(path, siaf_path=siaf_path, allow_any_file=allow_any_file, dry_run=True)
+                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
         else:
             # Expected error when trying to actually add the wcs.
             # The provided files do not have sufficient info to do the calculations.
             with pytest.raises(AttributeError):
-                stp.add_wcs(path, siaf_path=siaf_path, allow_any_file=allow_any_file, dry_run=True)
+                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
 
 
 @pytest.mark.parametrize(
@@ -261,7 +261,6 @@ def test_strict_pointing(data_file_strict):
         stp.add_wcs(data_file_strict, tolerance=0)
 
 
-
 def test_get_pointing():
     """Ensure that the averaging works."""
 
@@ -321,7 +320,7 @@ def test_add_wcs_default(data_file, tmp_path):
 
     try:
         stp.add_wcs(
-            data_file, siaf_path=siaf_path, tolerance=0, allow_default=True
+            data_file, tolerance=0, allow_default=True
         )
     except ValueError:
         pass  # This is what we want for the test.
@@ -353,7 +352,7 @@ def test_add_wcs_default_fgsacq(tmp_path):
         expected_name = 'add_wcs_default_acq1.fits'
         try:
             stp.update_wcs(
-                model, siaf_path=siaf_path, tolerance=0, allow_default=True
+                model, tolerance=0, allow_default=True
             )
         except ValueError:
             pass  # This is what we want for the test.
@@ -375,8 +374,30 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
     with pytest.raises(ValueError):
         stp.add_wcs(
-            data_file_nosiaf, siaf_path=siaf_path, tolerance=0, allow_default=True
+            data_file_nosiaf, tolerance=0, allow_default=True
         )
+
+
+def test_add_wcs_with_db(data_file, tmp_path):
+    """Test using the database"""
+    expected_name = 'add_wcs_with_db.fits'
+
+    stp.add_wcs(data_file)
+
+    # Tests
+    with datamodels.Level1bModel(data_file) as model:
+
+        # Save for post-test comparison and update
+        model.save(tmp_path / expected_name)
+
+        with datamodels.open(DATA_PATH / expected_name) as expected:
+            for meta in METAS_EQUALITY:
+                assert model[meta] == expected[meta]
+
+            for meta in METAS_ISCLOSE:
+                assert np.isclose(model[meta], expected[meta])
+
+            assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
 @pytest.mark.parametrize('fgsid', [1, 2])
@@ -392,7 +413,7 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
     # Execute the operation.
     try:
-        stp.add_wcs(data_file_fromsim, siaf_path=siaf_path, engdb_url=engdb_mast.MAST_BASE_URL,
+        stp.add_wcs(data_file_fromsim, engdb_url=engdb_mast.MAST_BASE_URL,
                     fgsid=fgsid)
     except ValueError as exception:
         pytest.xfail(f'No telemetry exists. Update test to use existing telemetry. Exception: {exception}')
@@ -413,6 +434,29 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
+def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
+    """Test using the database"""
+    expected_name = 'add_wcs_method_full_nosiafdb.fits'
+
+    # Calculate
+    stp.add_wcs(data_file, method=stp.Methods.OPS_TR_202111)
+
+    # Tests
+    with datamodels.Level1bModel(data_file) as model:
+
+        # Save for post-test comparison and update
+        model.save(tmp_path / expected_name)
+
+        with datamodels.open(DATA_PATH / expected_name) as expected:
+            for meta in METAS_EQUALITY:
+                assert model[meta] == expected[meta]
+
+            for meta in METAS_ISCLOSE:
+                assert np.isclose(model[meta], expected[meta])
+
+            assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
+
+
 def test_default_siaf_values(data_file_nosiaf):
     """
     Test that FITS WCS default values were set.
@@ -425,7 +469,7 @@ def test_default_siaf_values(data_file_nosiaf):
         model.meta.aperture.name = "MIRIM_TAFULL"
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "MIR_IMAGE"
-        stp.update_wcs(model, siaf_path=siaf_path, allow_default=False)
+        stp.update_wcs(model, allow_default=False)
         assert model.meta.wcsinfo.crpix1 == 24.5
         assert model.meta.wcsinfo.crpix2 == 24.5
         assert model.meta.wcsinfo.cdelt1 == 3.0693922222222226e-05
@@ -443,7 +487,7 @@ def test_tsgrism_siaf_values(data_file_nosiaf):
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "NRC_TSGRISM"
         model.meta.visit.tsovisit = True
-        stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
+        stp.update_wcs(model)
         assert model.meta.wcsinfo.siaf_xref_sci == 858.0
         assert model.meta.wcsinfo.siaf_yref_sci == 35
 
@@ -458,7 +502,7 @@ def test_mirim_tamrs_siaf_values(data_file_nosiaf):
         model.meta.aperture.name = 'MIRIM_TAMRS'
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "MIR_TACQ"
-        stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
+        stp.update_wcs(model)
         assert model.meta.wcsinfo.crpix1 == 997.5
         assert model.meta.wcsinfo.crpix2 == 993.5
 
@@ -540,7 +584,7 @@ def make_t_pars(detector='any', fgsid_telem=1, fgsid_user=None):
     t_pars.siaf = siafdb.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                               crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
                               vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
-    t_pars.siaf_db = siafdb.SiafDb(siaf_path)
+    t_pars.siaf_db = siafdb.SiafDb()
 
     return t_pars
 
@@ -646,14 +690,14 @@ def data_file(tmp_path):
 @pytest.fixture
 def data_file_strict(tmp_path):
     model = datamodels.Level1bModel()
-    model.meta.exposure.start_time = Time('2023-01-01T00:00:03').mjd
-    model.meta.exposure.end_time = Time('2023-01-01T00:00:03').mjd
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = STARTTIME.mjd
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
     model.meta.guidestar.gs_ra = TARG_RA + 0.0001
     model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
     model.meta.aperture.name = "MIRIM_FULL"
-    model.meta.observation.date = '2023-01-01'
+    model.meta.observation.date = '2017-01-01'
     model.meta.exposure.type = "MIR_IMAGE"
     model.meta.ephemeris.velocity_x = -25.021
     model.meta.ephemeris.velocity_y = -16.507
