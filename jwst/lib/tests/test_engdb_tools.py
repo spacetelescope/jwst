@@ -15,7 +15,6 @@ import requests
 from astropy.time import Time
 
 from jwst.lib import engdb_direct, engdb_tools
-from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
 GOOD_STARTTIME = '2021-01-25'
@@ -57,9 +56,7 @@ def is_alive(url):
 @pytest.fixture
 def engdb():
     """Setup the service to operate through the mock service"""
-    with EngDB_Mocker():
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
-        yield engdb
+    yield engdb_tools.ENGDB_Service()
 
 
 @pytest.mark.skipif(
