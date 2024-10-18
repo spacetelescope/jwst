@@ -5,7 +5,6 @@ import os.path as op
 import re
 import logging
 from astropy.io import fits
-from stdatamodels import properties
 
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
@@ -156,6 +155,11 @@ to supply custom catalogs.
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 for m in init:
                     self._models.append(datamodel_open(m, memmap=self._memmap))
+                # set asn_table_name and product name to first datamodel stem since they were not provided
+                root = op.basename(self._models[0].meta.filename).split(".")[0]
+                default_name = "_".join(root.split("_")[:-1]) # remove old suffix
+                self.asn_table_name = default_name
+                self.asn_table['products'][0]['name'] = default_name
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
@@ -298,10 +302,7 @@ to supply custom catalogs.
             raise
 
         # Pull the whole association table into the asn_table attribute
-        self.asn_table = {}
-        properties.merge_tree(
-            self.asn_table, asn_data
-        )
+        self.asn_table = copy.deepcopy(asn_data)
 
         if self.asn_file_path is not None:
             self.asn_table_name = op.basename(self.asn_file_path)
@@ -343,9 +344,6 @@ to supply custom catalogs.
         """
         output_paths = []
         for idx, model in enumerate(self):
-            print(model)
-            print(model.meta.filename)
-            print(save_model_func)
             if save_model_func is None:
                 if path is None:
                     save_path = model.meta.filename
