@@ -10,6 +10,7 @@ file.
 """
 import numpy as np
 import pytest
+import re
 
 
 from astropy.io import fits
@@ -244,3 +245,31 @@ def test_wfss_sip():
     util.wfss_imaging_wcs(wfss_model, nircam.imaging, bbox=((1, 1024), (1, 1024)))
     for key in ['a_order', 'b_order', 'crpix1', 'crpix2', 'crval1', 'crval2', 'cd1_1']:
         assert key in wfss_model.meta.wcsinfo.instance
+
+
+def _sregion_to_footprint(s_region):
+    """
+    Parameters
+    ----------
+    s_region : str
+        The S_REGION header keyword
+
+    Returns
+    -------
+    footprint : np.array
+        A 2D array of the footprint of the region, shape (N, 2)
+    """
+    no_prefix = re.sub(r"[a-zA-Z]", "", s_region)
+    return np.array(no_prefix.split(), dtype=float).reshape(-1, 2)
+
+
+def test_update_s_region_imaging():
+    """Ensure the s_region keyword matches output of wcs.footprint()"""
+    model = ImageModel(create_hdul())
+    model.meta.wcs = create_imaging_wcs()
+    util.update_s_region_imaging(model)
+
+    s_region = model.meta.wcsinfo.s_region
+    footprint = model.meta.wcs.footprint().flatten()
+    footprint_sregion = _sregion_to_footprint(s_region).flatten()
+    assert np.allclose(footprint, footprint_sregion, rtol=1e-9)

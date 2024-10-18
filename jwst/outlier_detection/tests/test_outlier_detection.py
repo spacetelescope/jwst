@@ -84,6 +84,7 @@ def test_flag_cr(sci_blot_image_pair):
     _flag_resampled_model_crs(
         sci,
         blot.data,
+        None,
         5.0,
         4.0,
         1.2,
