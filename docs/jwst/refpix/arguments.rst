@@ -52,3 +52,30 @@ in IRS2 mode will be processed along with the normal pixels and preserved
 in the output.  This option is intended for calibration or diagnostic reductions
 only. For normal science operation, this argument should always be False,
 so that interleaved pixels are stripped before continuing processing.
+
+*  ``--use_conv_kernel``
+
+If the ``use_conv_kernel`` argument is set to False, all NIR full-frame data,
+will be processed using the running median and the side-pixel correction. The
+default value is set to True, which turns off the side-pixed correction and
+use an optimized convolution kernel instead of the running median.
+
+*  ``--sigreject``
+
+The ``sigreject`` argument is the number of sigmas to reject as outliers in the
+optimized convolution kernel algorithm. The value is expected to be a float.
+
+*  ``--gaussmooth``
+
+The ``gaussmooth`` argument is the width of Gaussian smoothing kernel to use as
+a low-pass filter. The numerical value is expected to be a float.
+
+*  ``--halfwidth``
+
+The ``halfwidth`` argument is the half-width of convolution kernel to build. The
+numerical value is expected to be an integer.
+
+*  ``--user_supplied_reffile``
+
+The ``user_supplied_reffile`` argument is the name of the ASDF user-supplied
+reference file for the optimized convolution kernel algorithm.
