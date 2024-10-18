@@ -18,8 +18,8 @@ def run_spec2_mbkg(rtdata_module):
     rtdata = rtdata_module
 
     # Get data
-    rtdata.get_data('nirspec/mos/jw01180025001_01_msa.fits')
-    rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
+    rtdata.get_data('nirspec/mos/jw01448011001_01_msa.fits')
+    rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_rate.fits')
 
     # Run the pipeline
     step_params = {
@@ -39,16 +39,18 @@ def run_spec2_mbkg_user(rtdata_module):
     rtdata = rtdata_module
 
     # Get data
-    rtdata.get_data('nirspec/mos/nrs_mos_3pointnod_1_msa.fits')
-    rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_masterbg1d.fits')
-    rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_rate.fits')
+    user_bg = 'jw01448011001_02101_00001_nrs2_user_bg.fits'
+    rtdata.get_data('nirspec/mos/jw01448011001_01_msa.fits')
+    rtdata.get_data(f'nirspec/mos/{user_bg}')
+    rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_rate.fits')
 
     # Run the pipeline
     step_params = {
         'step': 'calwebb_spec2',
         'args': [
             '--steps.master_background_mos.skip=false',
-            '--steps.master_background_mos.user_background=jw00626030001_02103_00001_nrs1_masterbg1d.fits'
+            f'--steps.master_background_mos.user_background={user_bg}',
+            f'--output_file={user_bg}'
         ]
     }
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
@@ -57,7 +59,7 @@ def run_spec2_mbkg_user(rtdata_module):
 
 def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
-    with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
         corrected = mbs.run(data)
         corrected_again = mbs.run(data)
@@ -72,7 +74,7 @@ def test_masterbkg_rerun(rtdata):
 
 def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
-    with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
         corrected = mbs.run(data)
 
@@ -94,6 +96,11 @@ def test_masterbkg_corrpars(rtdata):
 def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""
     rtdata = run_spec2_mbkg
+
+    # Adjust tolerance for machine precision with float32 drizzle code
+    if suffix == "s2d":
+        fitsdiff_default_kwargs["rtol"] = 1e-2
+        fitsdiff_default_kwargs["atol"] = 2e-4
     rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/test_nirspec_mos_mbkg')
 
 
@@ -104,7 +111,17 @@ def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
 def test_nirspec_mos_mbkg_user(suffix, run_spec2_mbkg_user, fitsdiff_default_kwargs):
     """Run spec2 with master background and user-supplied mbkg"""
     rtdata = run_spec2_mbkg_user
-    rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/test_nirspec_mos_mbkg_user')
+
+    output_filename = f"jw01448011001_02101_00001_nrs2_user_bg_{suffix}.fits"
+    rtdata.output = output_filename
+    rtdata.get_truth(f"truth/test_nirspec_mos_mbkg_user/{output_filename}")
+
+    # Adjust tolerance for machine precision with float32 drizzle code
+    if suffix == "s2d":
+        fitsdiff_default_kwargs["rtol"] = 1e-2
+        fitsdiff_default_kwargs["atol"] = 2e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
 
 def test_nirspec_fs_mbkg_user(rtdata, fitsdiff_default_kwargs):
