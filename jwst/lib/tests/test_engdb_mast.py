@@ -1,5 +1,4 @@
 """Test the MAST Engineering interface"""
-import os
 import pytest
 import requests
 
