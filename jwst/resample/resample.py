@@ -297,8 +297,12 @@ class ResampleData:
             if compute_error:
                 error_model = output_model.copy()
                 driz_error = gwcs_drizzle.GWCSDrizzle(
-                    error_model, pixfrac=self.pixfrac,
-                    kernel=self.kernel, fillval=self.fillval)
+                    error_model,
+                    pixfrac=self.pixfrac,
+                    kernel=self.kernel,
+                    fillval=self.fillval,
+                    disable_ctx=True,
+                )
 
             log.info(f"{len(indices)} exposures to drizzle together")
             for index in indices:
@@ -341,7 +345,7 @@ class ResampleData:
                     xmin=xmin,
                     xmax=xmax,
                     ymin=ymin,
-                    ymax=ymax
+                    ymax=ymax,
                 )
                 del data
 
@@ -357,20 +361,20 @@ class ResampleData:
                         xmin=xmin,
                         xmax=xmax,
                         ymin=ymin,
-                        ymax=ymax
+                        ymax=ymax,
                     )
 
                 input_models.shelve(img, index, modify=False)
                 del img
 
-        # copy the drizzled error into the output model
-        if compute_error:
-            output_model.err[:, :] = driz.out_img
-            del error_model
         # Since the context array is dynamic, it must be re-assigned
         # back to the product's `con` attribute.
         output_model.data[:, :] = driz.out_img
         output_model.wht[:, :] = driz.out_wht
+        # copy the drizzled error into the output model
+        if compute_error:
+            output_model.err[:, :] = driz_error.out_img
+            del error_model
 
         return output_model
 
