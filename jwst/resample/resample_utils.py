@@ -124,13 +124,6 @@ def shape_from_bounding_box(bounding_box):
 def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
     """ Return a pixel grid map from input frame to output frame.
     """
-    # from drizzle.utils import calc_pixmap
-    # if shape is not None and not np.array_equiv(shape, in_wcs.array_shape):
-    #     in_wcs = deepcopy(in_wcs)
-    #     in_wcs.array_shape = shape
-
-    # return calc_pixmap(wcs_from=in_wcs, wcs_to=out_wcs)
-
     if shape:
         bb = wcs_bbox_from_shape(shape)
         log.debug("Bounding box from data shape: {}".format(bb))

@@ -514,7 +514,8 @@ class ResampleData:
         # back to the product's `con` attribute.
         output_model.data[:, :] = driz.out_img
         output_model.wht[:, :] = driz.out_wht
-        output_model.con = driz.out_ctx
+        if driz.out_ctx is not None:
+            output_model.con = driz.out_ctx
 
         if self.blendheaders:
             blender.finalize_model(output_model)
