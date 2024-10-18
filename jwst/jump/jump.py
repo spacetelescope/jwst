@@ -29,7 +29,7 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
                      only_use_ints=True,
                      mask_snowball_persist_next_int=True,
                      snowball_time_masked_next_int=250,
-                     max_shower_amplitude=2
+                     max_shower_amplitude=4
                      ):
 
     # Runs `detect_jumps` in stcal
@@ -44,6 +44,8 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
     after_jump_flag_n2 = int(after_jump_flag_time2 // gtime)
     grps_masked_after_shower = int(time_masked_after_shower // gtime)
     snowball_grps_masked_next_int = int(snowball_time_masked_next_int // gtime)
+    # Likewise, convert a max MIRI shower amplitude in DN/s to DN/group
+    max_shower_amplitude = max_shower_amplitude * gtime
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(output_model, gain_model):
         gain_2d = gain_model.data
