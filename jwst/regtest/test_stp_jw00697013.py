@@ -24,7 +24,6 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.lib import siafdb
 from jwst.lib.file_utils import pushdir
 import jwst.lib.set_telescope_pointing as stp
-from jwst.lib.tests import engdb_mock
 
 # Requires pysiaf
 pytest.importorskip('pysiaf')

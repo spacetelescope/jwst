@@ -213,31 +213,14 @@ def test_update_wcs(update_wcs, attr):
 # Utilities
 # ---------
 @pytest.fixture(scope='module')
-def update_wcs(multi_engdb, make_level1b):
+def update_wcs(mast, make_level1b):
     """Update the model wcs info"""
-    engdb = multi_engdb
+    engdb = mast
     model, expected = make_level1b
 
     stp.update_wcs(model, engdb_url=engdb.base_url)
 
     return model, expected
-
-
-@pytest.fixture(scope='module')
-def engdb_jw01029(request, rtdata_module):
-    """Setup the test engineering database"""
-    rtdata = rtdata_module
-    if not request.config.getoption('--bigdata'):
-        pytest.skip('"--bigdata" not specified')
-
-    db_path = Path('engdb_jw0109')
-    db_path.mkdir()
-    with pushdir(db_path):
-        for path in rtdata.data_glob('fgs/pointing/engdb_jw01029'):
-            rtdata.get_data(path)
-    with EngDB_Mocker(db_path=db_path):
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
-        yield engdb
 
 
 @pytest.fixture(scope='module')
@@ -248,12 +231,6 @@ def mast():
     except RuntimeError as exception:
         pytest.skip(f'Live MAST Engineering Service not available: {exception}')
     yield engdb
-
-
-@pytest.fixture(params=['engdb_jw01029', 'mast'], scope='module')
-def multi_engdb(request):
-    """Allow a test to use multiple database fixtures"""
-    return request.getfixturevalue(request.param)
 
 
 @pytest.fixture(scope='module', params=[META_FGS1, META_FGS2])

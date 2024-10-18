@@ -4,9 +4,8 @@ Test the engdblog step
 import os
 import pytest
 from tempfile import TemporaryDirectory
-
+from jwst.lib import engdb_mast
 from jwst.engdblog import EngDBLogStep
-from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 
 def test_engdblogstep(caplog, engdb):
@@ -73,5 +72,5 @@ def test_multi_mnemonics(caplog, engdb):
 # #####################
 @pytest.fixture
 def engdb():
-    with EngDB_Mocker() as mocker:  # noqa: F841
-        yield
+    engdb = engdb_mast.EngdbMast()
+    yield engdb

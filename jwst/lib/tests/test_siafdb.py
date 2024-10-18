@@ -6,7 +6,6 @@ import pytest
 
 from jwst.lib import siafdb
 
-pytest.importorskip('pysiaf')
 import pysiaf  # type: ignore[import-not-found]  # noqa: E402
 
 # Database paths
@@ -44,7 +43,7 @@ def test_create(source, prd, xml_path, exception, jail_environ):
         source_actual = None
 
     with exception:
-        siaf_db = siafdb.SiafDb(source_actual, prd)
+        siaf_db = siafdb.SiafDb()
         assert str(siaf_db.xml_path) == str(xml_path)
 
 
@@ -71,7 +70,7 @@ def test_create(source, prd, xml_path, exception, jail_environ):
 )
 def test_get_wcs(aperture, to_detector, expected):
     """Test retrieval of wcs information."""
-    siaf_db = siafdb.SiafDb(SIAFXML_PATH)
+    siaf_db = siafdb.SiafDb()
     siaf = siaf_db.get_wcs(aperture, to_detector=to_detector)
     assert siaf == expected
 
@@ -98,17 +97,3 @@ def test_nearest_prd(prd, expected, exception):
         prd_to_use, _ = siafdb.nearest_prd(pysiaf, prd)
         if expected != 'ANYPRD':
             assert prd_to_use == expected
-
-
-@pytest.mark.parametrize('source, prd, expected', [
-    (None, None, XML_DATA_SIAFXML_PATH / 'SIAFXML'),
-    (None, 'PRDOPSSOC-055', XML_DATA_SIAFXML_PATH / 'SIAFXML'),
-    (SIAFXML_PATH, None, SIAFXML_PATH)
-])
-def test_xml_data_overrides(source, prd, expected, jail_environ):
-    """Test cases where XML_DATA should be used and not used."""
-    os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
-
-    siaf_db = siafdb.SiafDb(source=source, prd=prd)
-
-    assert siaf_db.xml_path == expected
