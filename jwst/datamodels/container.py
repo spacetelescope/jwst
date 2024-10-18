@@ -156,10 +156,14 @@ to supply custom catalogs.
                 for m in init:
                     self._models.append(datamodel_open(m, memmap=self._memmap))
                 # set asn_table_name and product name to first datamodel stem since they were not provided
-                root = op.basename(self._models[0].meta.filename).split(".")[0]
-                default_name = "_".join(root.split("_")[:-1]) # remove old suffix
+                fname = self._models[0].meta.filename
+                if fname is not None:
+                    root = op.basename(fname).split(".")[0]
+                    default_name = "_".join(root.split("_")[:-1]) # remove old suffix
+                else:
+                    default_name = ""
                 self.asn_table_name = default_name
-                self.asn_table['products'][0]['name'] = default_name
+                self.asn_table["products"][0]["name"] = default_name
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
