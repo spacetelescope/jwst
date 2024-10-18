@@ -76,9 +76,10 @@ class GWCSDrizzle(Drizzle):
                 if ctx.size == 0:
                     ctx = None
                 elif ctx.ndim not in [2, 3]:
-                    # TODO: this message seems odd
                     raise ValueError(
-                        f"Drizzle context image has wrong dimensions: {product}"
+                        "Provided (via product.con) context image has wrong "
+                        "dimensions: expected a 2D or 3D array but got a "
+                        f"{ctx.ndim}D array."
                     )
 
         super().__init__(
