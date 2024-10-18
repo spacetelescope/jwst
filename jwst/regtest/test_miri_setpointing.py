@@ -1,9 +1,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-
-from jwst.lib import engdb_tools
 from jwst.lib.set_telescope_pointing import add_wcs
-from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 
 @pytest.mark.bigdata
