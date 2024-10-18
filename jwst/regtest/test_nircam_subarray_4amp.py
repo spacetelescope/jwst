@@ -6,9 +6,9 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
 
 """
-jw01409034001_02102_00001_nrca3_uncal.fits       the input (uncal) file
-jw01409034001_02102_00001_nrca3_rate.fits        rate file
-jw01409034001_02102_00001_nrca3_rateints.fits    rateints file
+jw02459005001_03103_00001-seg001_nrca3_uncal.fits       the input (uncal) file
+jw02459005001_03103_00001-seg001_nrca3_rate.fits        rate file
+jw02459005001_03103_00001-seg001_nrca3_rateints.fits    rateints file
 """
 
 
@@ -16,7 +16,7 @@ jw01409034001_02102_00001_nrca3_rateints.fits    rateints file
 def run_pipeline(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRCAM subarray data."""
     rtdata = rtdata_module
-    rtdata.get_data("nircam/subarray/jw01409034001_02102_00001_nrca3_uncal.fits")
+    rtdata.get_data("nircam/subarray/jw02459005001_03103_00001-seg001_nrca3_uncal.fits")
 
     args = ["jwst.pipeline.Detector1Pipeline", rtdata.input]
     Step.from_cmdline(args)
@@ -26,8 +26,8 @@ def run_pipeline(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", [
-    'jw01409034001_02102_00001_nrca3_rate.fits',
-    'jw01409034001_02102_00001_nrca3_rateints.fits'],
+    'jw02459005001_03103_00001-seg001_nrca3_rate.fits',
+    'jw02459005001_03103_00001-seg001_nrca3_rateints.fits'],
     ids=['rate', 'rateints'])
 def test_nircam_detector1_subarray(run_pipeline, fitsdiff_default_kwargs, output):
     """
