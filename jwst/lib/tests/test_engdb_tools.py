@@ -17,10 +17,10 @@ from astropy.time import Time
 from jwst.lib import engdb_direct, engdb_tools
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
-GOOD_STARTTIME = '2021-01-25'
-GOOD_ENDTIME = '2021-01-26'
+GOOD_STARTTIME = '2022-01-25 23:29:02.188'
+GOOD_ENDTIME = '2022-01-26'
 
-SHORT_STARTTIME = '2021-01-26 02:29:02.188'
+SHORT_STARTTIME = '2022-01-26 02:29:02.188'
 
 BAD_SERVER = 'https://www.stsci.edu'
 BAD_MNEMONIC = 'No_Such_MNEMONIC'
@@ -108,11 +108,11 @@ def test_values(engdb):
     records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 2
+    assert len(records) == 2
     values = engdb.get_values(
         GOOD_MNEMONIC, GOOD_STARTTIME, SHORT_STARTTIME
     )
-    assert len(values) == 1
+    assert len(values) == 10547
     assert values[0] == 0
 
 
@@ -120,7 +120,7 @@ def test_values_with_bracket(engdb):
     records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 2
+    assert len(records) == 2
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
         include_bracket_values=True
@@ -146,7 +146,10 @@ def test_novalues(engdb):
 
 
 def test_meta(engdb):
-    response = engdb.get_meta(GOOD_MNEMONIC)
+    try:
+        response = engdb.get_meta(GOOD_MNEMONIC)
+    except NotImplementedError:
+        pytest.skip('Test only valid with Direct EngDB connection.')
     assert response['Count'] == 1
     assert response['TlmMnemonics'][0]['TlmMnemonic'] == GOOD_MNEMONIC
 
