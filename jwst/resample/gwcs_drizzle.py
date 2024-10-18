@@ -12,7 +12,7 @@ class GWCSDrizzle(Drizzle):
     Combine images using the drizzle algorithm
 
     """
-    def __init__(self, product, outwcs=None, wt_scl=None,
+    def __init__(self, product, outwcs=None,
                  pixfrac=1.0, kernel="square", fillval="NAN",
                  disable_ctx=False, n_max_images=None):
         """
@@ -30,15 +30,6 @@ class GWCSDrizzle(Drizzle):
         outwcs : `gwcs.WCS`
             The world coordinate system (WCS) of the resampled image.  If not
             provided, the WCS is taken from product.
-
-        wt_scl : str, optional
-            .. note::
-                This parameter is no longer used.
-
-            How each input image should be scaled. The choices are `exptime`,
-            which scales each image by its exposure time, or `expsq`, which scales
-            each image by the exposure time squared.  If not set, then each
-            input image is scaled by its own weight map.
 
         pixfrac : float, optional
             The fraction of a pixel that the pixel flux is confined to. The
@@ -103,11 +94,6 @@ class GWCSDrizzle(Drizzle):
         # Since the context array is dynamic, it must be re-assigned
         # back to the product's `con` attribute.
         product.con = self.out_ctx
-
-    @property
-    def outcon(self):
-        """Return the context array"""
-        return self.out_ctx
 
     def add_image(self, insci, inwcs, pixmap=None, inwht=None,
                   xmin=0, xmax=0, ymin=0, ymax=0,
