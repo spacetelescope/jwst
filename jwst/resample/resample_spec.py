@@ -78,6 +78,12 @@ class ResampleSpecData(ResampleData):
         self.in_memory = kwargs.get('in_memory', True)
         self._recalc_pscale_ratio = False
 
+        # TODO: self._iscales is used to store computed iscale for each
+        # input model.
+        # It is used only by self.resample_variance_arrays().
+        # if that method no longer needs to be supported, we can remove this.
+        self._iscales = {}
+
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
@@ -136,7 +142,6 @@ class ResampleSpecData(ResampleData):
                 self.pscale_ratio = nominal_area / output_pix_area
             else:
                 self.pscale_ratio = 1.0
-
             # Set the output shape if specified
             if output_shape is not None:
                 self.output_wcs.array_shape = output_shape[::-1]
@@ -186,11 +191,12 @@ class ResampleSpecData(ResampleData):
         # update meta data and wcs
         self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
+
+        self.output_pix_area = output_pix_area
         if output_pix_area is not None:
             self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
             self.blank_output.meta.photometry.pixelarea_arcsecsq = (
                 output_pix_area * np.rad2deg(3600)**2)
-
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None):
         """

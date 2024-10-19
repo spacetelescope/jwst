@@ -14,9 +14,9 @@ from stdatamodels.jwst.library.basic_utils import bytes2human
 from jwst.datamodels import ModelLibrary
 from jwst.associations.asn_from_list import asn_from_list
 
-from . import gwcs_drizzle
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
+from jwst.resample.gwcs_drizzle import GWCSDrizzle
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -89,6 +89,12 @@ class ResampleData:
         self.input_pixscale0 = None  # computed pixel scale of the first image (deg)
         self._recalc_pscale_ratio = pscale is not None
 
+        # TODO: self._iscales is used to store computed iscale for each
+        # input model.
+        # It is used only by self.resample_variance_arrays().
+        # if that method no longer needs to be supported, we can remove this.
+        self._iscales = {}
+
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
@@ -115,13 +121,13 @@ class ResampleData:
                 self.output_wcs.array_shape = output_shape[::-1]
 
             if output_wcs.pixel_area is None:
-                output_pix_area = compute_image_pixel_area(self.output_wcs)
-                if output_pix_area is None:
+                self.output_pix_area = compute_image_pixel_area(self.output_wcs)
+                if self.output_pix_area is None:
                     raise ValueError(
                         "Unable to compute output pixel area from 'output_wcs'."
                     )
             else:
-                output_pix_area = output_wcs.pixel_area
+                self.output_pix_area = output_wcs.pixel_area
 
         else:
             # Define output WCS based on all inputs, including a reference WCS:
@@ -139,18 +145,18 @@ class ResampleData:
             # use the same algorithm as for when output_wcs is provided by the
             # user.
             tr = self.output_wcs.pipeline[0].transform
-            output_pix_area = (
+            self.output_pix_area = (
                 np.deg2rad(tr['cdelt1'].factor.value) *
                 np.deg2rad(tr['cdelt2'].factor.value)
             )
 
         if pscale is None:
-            pscale = np.rad2deg(np.sqrt(output_pix_area))
+            pscale = np.rad2deg(np.sqrt(self.output_pix_area))
             log.info(f'Computed output pixel scale: {3600.0 * pscale} arcsec.')
 
         self.pscale = pscale  # in deg
 
-        log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
+        log.debug(f"Output mosaic size: {tuple(self.output_wcs.pixel_shape)}")
 
         allowed_memory = kwargs['allowed_memory']
         if allowed_memory is None:
@@ -174,23 +180,25 @@ class ResampleData:
 
         if not can_allocate:
             raise OutputTooLargeError(
-                f'Combined ImageModel size {self.output_wcs.array_shape} '
+                f'Combined ImageModel size {self.output_array_shape} '
                 f'requires {bytes2human(required_memory)}. '
                 f'Model cannot be instantiated.'
             )
-        self.blank_output = datamodels.ImageModel(tuple(self.output_wcs.array_shape))
+
+    def _create_output_model(self, ref_input_model=None):
+        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        output_model = datamodels.ImageModel(None)  # tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
-        with input_models:
-            example_model = input_models.borrow(0)
-            self.blank_output.update(example_model)
-            input_models.shelve(example_model, 0, modify=False)
-            del example_model
-        self.blank_output.meta.wcs = self.output_wcs
-        self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
-        self.blank_output.meta.photometry.pixelarea_arcsecsq = (
-            output_pix_area * np.rad2deg(3600)**2
-        )
+        if ref_input_model is not None:
+            output_model.update(ref_input_model)
+        output_model.meta.wcs = self.output_wcs
+        if self.output_pix_area is not None:
+            output_model.meta.photometry.pixelarea_steradians = self.output_pix_area
+            output_model.meta.photometry.pixelarea_arcsecsq = (
+                self.output_pix_area * np.rad2deg(3600)**2
+            )
+        return output_model
 
     def do_drizzle(self, input_models):
         """Pick the correct drizzling mode based on self.single
@@ -264,80 +272,96 @@ class ResampleData:
             If True, an approximate error image will be resampled
             alongside the science image.
         """
-        output_model = self.blank_output.copy()
+        output_model = None
 
-        copy_asn_info_from_library(input_models, output_model)
+        # Initialize the output with the wcs
+        driz = GWCSDrizzle(
+            self.output_wcs,
+            kernel=self.kernel,
+            fillval=self.fillval,
+            disable_ctx=True,
+        )
 
-        with input_models:
-            example_image = input_models.borrow(indices[0])
-
-            # Determine output file type from input exposure filenames
-            # Use this for defining the output filename
-            indx = example_image.meta.filename.rfind('.')
-            output_type = example_image.meta.filename[indx:]
-            output_root = '_'.join(example_image.meta.filename.replace(
-                output_type, '').split('_')[:-1])
-            output_model.meta.filename = (
-                f'{output_root}_'
-                f'{self.intermediate_suffix}{output_type}')
-            input_models.shelve(example_image, indices[0], modify=False)
-            del example_image
-
-            # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(
-                output_model,
+        # Also make a temporary model to hold error data
+        if compute_error:
+            driz_error = GWCSDrizzle(
+                self.output_wcs,
                 pixfrac=self.pixfrac,
                 kernel=self.kernel,
                 fillval=self.fillval,
                 disable_ctx=True,
             )
 
-            # Also make a temporary model to hold error data
-            error_model, driz_error = None, None
+        log.info(f"{len(indices)} exposures to drizzle together")
+        for index in indices:
+            img = input_models.borrow(index)
+            if output_model is None:
+                output_model = self._create_output_model(
+                    ref_input_model=img
+                )
+                # Determine output file type from input exposure filenames
+                # Use this for defining the output filename
+                indx = img.meta.filename.rfind('.')
+                output_type = img.meta.filename[indx:]
+                output_root = '_'.join(img.meta.filename.replace(
+                    output_type,
+                    ''
+                ).split('_')[:-1])
+                output_model.meta.filename = (
+                    f'{output_root}_'
+                    f'{self.intermediate_suffix}{output_type}'
+                )
+                copy_asn_info_from_library(input_models, output_model)
+
+            if isinstance(img, datamodels.SlitModel):
+                # must call this explicitly to populate area extension
+                # although the existence of this extension may not be necessary
+                img.area = img.area
+
+            iscale = self._get_intensity_scale(img)
+            self._iscales[index] = iscale
+            log.debug(f'Using intensity scale iscale={iscale}')
+
+            inwht = resample_utils.build_driz_weight(
+                img,
+                weight_type=self.weight_type,
+                good_bits=self.good_bits
+            )
+
+            # apply sky subtraction
+            blevel = img.meta.background.level
+            if not img.meta.background.subtracted and blevel is not None:
+                data = img.data - blevel
+            else:
+                data = img.data
+
+            xmin, xmax, ymin, ymax = resample_utils._resample_range(
+                data.shape,
+                img.meta.wcs.bounding_box
+            )
+            pixmap = resample_utils.calc_gwcs_pixmap(
+                img.meta.wcs,
+                self.output_wcs,
+                img.data.shape,
+            )
+            driz.add_image(
+                data,
+                img.meta.wcs,
+                pixmap=pixmap,
+                iscale=iscale,
+                inwht=inwht,
+                xmin=xmin,
+                xmax=xmax,
+                ymin=ymin,
+                ymax=ymax,
+            )
+            del data
+
+            # make an approximate error image by drizzling it
+            # in the same way the image is handled
             if compute_error:
-                error_model = output_model.copy()
-                driz_error = gwcs_drizzle.GWCSDrizzle(
-                    error_model,
-                    pixfrac=self.pixfrac,
-                    kernel=self.kernel,
-                    fillval=self.fillval,
-                    disable_ctx=True,
-                )
-
-            log.info(f"{len(indices)} exposures to drizzle together")
-            for index in indices:
-                img = input_models.borrow(index)
-                if isinstance(img, datamodels.SlitModel):
-                    # must call this explicitly to populate area extension
-                    # although the existence of this extension may not be necessary
-                    img.area = img.area
-                iscale = self._get_intensity_scale(img)
-                log.debug(f'Using intensity scale iscale={iscale}')
-
-                inwht = resample_utils.build_driz_weight(
-                    img,
-                    weight_type=self.weight_type,
-                    good_bits=self.good_bits
-                )
-
-                # apply sky subtraction
-                blevel = img.meta.background.level
-                if not img.meta.background.subtracted and blevel is not None:
-                    data = img.data - blevel
-                else:
-                    data = img.data
-
-                xmin, xmax, ymin, ymax = resample_utils._resample_range(
-                    data.shape,
-                    img.meta.wcs.bounding_box
-                )
-                pixmap = resample_utils.calc_gwcs_pixmap(
-                    img.meta.wcs,
-                    output_model.meta.wcs,
-                    img.data.shape,
-                )
-                driz.add_image(
-                    data,
+                driz_error.add_image(
+                    img.err,
                     img.meta.wcs,
                     pixmap=pixmap,
                     iscale=iscale,
@@ -347,34 +371,17 @@ class ResampleData:
                     ymin=ymin,
                     ymax=ymax,
                 )
-                del data
 
-                # make an approximate error image by drizzling it
-                # in the same way the image is handled
-                if compute_error:
-                    driz_error.add_image(
-                        img.err,
-                        img.meta.wcs,
-                        pixmap=pixmap,
-                        iscale=iscale,
-                        inwht=inwht,
-                        xmin=xmin,
-                        xmax=xmax,
-                        ymin=ymin,
-                        ymax=ymax,
-                    )
+            input_models.shelve(img, index, modify=False)
+            del img
 
-                input_models.shelve(img, index, modify=False)
-                del img
-
-        # Since the context array is dynamic, it must be re-assigned
-        # back to the product's `con` attribute.
-        output_model.data[:, :] = driz.out_img
-        output_model.wht[:, :] = driz.out_wht
+        output_model.data = driz.out_img
+        output_model.wht = driz.out_wht
+        del driz
         # copy the drizzled error into the output model
         if compute_error:
-            output_model.err[:, :] = driz_error.out_img
-            del error_model
+            output_model.err = driz_error.out_img
+            del driz_error
 
         return output_model
 
@@ -403,28 +410,22 @@ class ResampleData:
             else:
                 output_models.append(output_model)
 
-        if not self.in_memory:
+        if self.in_memory:
+            # build ModelLibrary as a list of in-memory models
+            return ModelLibrary(output_models, on_disk=False)
+        else:
             # build ModelLibrary as an association from the output files
             # this saves memory if there are multiple groups
             asn = asn_from_list(output_models, product_name='outlier_i2d')
             asn_dict = json.loads(asn.dump()[1])  # serializes the asn and converts to dict
             return ModelLibrary(asn_dict, on_disk=True)
 
-        # otherwise just build it as a list of in-memory models
-        return ModelLibrary(output_models, on_disk=False)
-
     def resample_many_to_one(self, input_models):
         """Resample and coadd many inputs to a single output.
 
         Used for stage 3 resampling
         """
-        output_model = self.blank_output.copy()
-        output_model.meta.filename = self.output_filename
-        output_model.meta.resample.weight_type = self.weight_type
-        output_model.meta.resample.pointings = len(input_models.group_names)
-
-        # copy over asn information
-        copy_asn_info_from_library(input_models, output_model)
+        output_model = None
 
         if self.blendheaders:
             blender = ModelBlender(
@@ -436,14 +437,14 @@ class ResampleData:
             )
 
         # Initialize the output with the wcs
-        driz = gwcs_drizzle.GWCSDrizzle(
-            output_model,
+        driz = GWCSDrizzle(
+            self.output_wcs,
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
         )
 
-        self._init_variance_arrays(output_model)
+        self._init_variance_arrays()
         self._init_exptime_counters()
 
         log.info("Resampling science and variance data")
@@ -452,19 +453,35 @@ class ResampleData:
 
         with input_models:
             for idx, img in enumerate(input_models):
+                if output_model is None:
+                    output_model = self._create_output_model(
+                        ref_input_model=img
+                    )
+                    # Determine output file type from input exposure filenames
+                    # Use this for defining the output filename
+                    output_model.meta.filename = self.output_filename
+                    output_model.meta.resample.weight_type = self.weight_type
+                    output_model.meta.resample.pointings = len(input_models.group_names)
+
+                    # copy over asn information
+                    copy_asn_info_from_library(input_models, output_model)
+
                 if idx in leading_group_idx:
                     self._update_exptime(img)
+
                 if self.blendheaders:
                     blender.accumulate(img)
+
                 iscale = self._get_intensity_scale(img)
+                self._iscales[idx] = iscale
                 log.debug(f'Using intensity scale iscale={iscale}')
-                img.meta.iscale = iscale
 
                 inwht = resample_utils.build_driz_weight(
                     img,
                     weight_type=self.weight_type,
                     good_bits=self.good_bits,
                 )
+
                 # apply sky subtraction
                 blevel = img.meta.background.level
                 if not img.meta.background.subtracted and blevel is not None:
@@ -499,6 +516,7 @@ class ResampleData:
                 # Resample variance arrays in input_models to output_model
                 self._resample_variance_arrays(
                     model=img,
+                    iscale=iscale,
                     inwht=inwht,
                     pixmap=pixmap,
                     in_image_limits=in_image_limits,
@@ -506,19 +524,17 @@ class ResampleData:
                 )
 
                 del data, inwht
-                del img.meta.iscale
 
                 input_models.shelve(img)
 
         # Since the context array is dynamic, it must be re-assigned
         # back to the product's `con` attribute.
-        output_model.data[:, :] = driz.out_img
-        output_model.wht[:, :] = driz.out_wht
+        output_model.data = driz.out_img
+        output_model.wht = driz.out_wht
         if driz.out_ctx is not None:
             output_model.con = driz.out_ctx
 
-        if self.blendheaders:
-            blender.finalize_model(output_model)
+        del driz
 
         # compute final variances:
         self._compute_resample_variance_totals(output_model)
@@ -535,20 +551,24 @@ class ResampleData:
         all_nan = np.all(np.isnan(var_components), axis=0)
         output_model.err[all_nan] = np.nan
 
+        if self.blendheaders:
+            blender.finalize_model(output_model)
+
         self._get_exptime_totals(output_model)
 
         return ModelLibrary([output_model,], on_disk=False)
 
-    def _init_variance_arrays(self, output_model):
-        self._weighted_rn_var = np.full_like(output_model.data, np.nan)
-        self._weighted_pn_var = np.full_like(output_model.data, np.nan)
-        self._weighted_flat_var = np.full_like(output_model.data, np.nan)
-        self._total_weight_rn_var = np.zeros_like(output_model.data)
-        self._total_weight_pn_var = np.zeros_like(output_model.data)
-        self._total_weight_flat_var = np.zeros_like(output_model.data)
+    def _init_variance_arrays(self):
+        shape = tuple(self.output_wcs.array_shape)
+        self._weighted_rn_var = np.full(shape, np.nan, dtype=np.float32)
+        self._weighted_pn_var = np.full(shape, np.nan, dtype=np.float32)
+        self._weighted_flat_var = np.full(shape, np.nan, dtype=np.float32)
+        self._total_weight_rn_var = np.zeros(shape, dtype=np.float32)
+        self._total_weight_pn_var = np.zeros(shape, dtype=np.float32)
+        self._total_weight_flat_var = np.zeros(shape, dtype=np.float32)
 
-    def _resample_variance_arrays(self, model, inwht, pixmap, in_image_limits,
-                                  output_shape):
+    def _resample_variance_arrays(self, model, iscale, inwht, pixmap,
+                                  in_image_limits, output_shape):
         xmin, xmax, ymin, ymax = in_image_limits
 
         # Do the read noise variance first, so it can be
@@ -556,13 +576,13 @@ class ResampleData:
         rn_var = self._resample_one_variance_array(
             "var_rnoise",
             input_model=model,
-            output_shape=output_shape,
+            iscale=iscale,
             inwht=inwht,
             pixmap=pixmap,
             xmin=xmin,
             xmax=xmax,
             ymin=ymin,
-            ymax=ymax
+            ymax=ymax,
         )
 
         # Find valid weighting values in the variance
@@ -600,13 +620,13 @@ class ResampleData:
         pn_var = self._resample_one_variance_array(
             "var_poisson",
             input_model=model,
-            output_shape=output_shape,
+            iscale=iscale,
             inwht=inwht,
             pixmap=pixmap,
             xmin=xmin,
             xmax=xmax,
             ymin=ymin,
-            ymax=ymax
+            ymax=ymax,
         )
         if pn_var is not None:
             mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
@@ -622,13 +642,13 @@ class ResampleData:
         flat_var = self._resample_one_variance_array(
             "var_flat",
             input_model=model,
-            output_shape=output_shape,
+            iscale=iscale,
             inwht=inwht,
             pixmap=pixmap,
             xmin=xmin,
             xmax=xmax,
             ymin=ymin,
-            ymax=ymax
+            ymax=ymax,
         )
         if flat_var is not None:
             mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
@@ -685,7 +705,7 @@ class ResampleData:
 
         The output_model is modified in place.
         """
-        self._init_variance_arrays(output_model)
+        self._init_variance_arrays()
         output_shape = output_model.meta.wcs.array_shape
         log.info("Resampling variance components")
 
@@ -706,22 +726,23 @@ class ResampleData:
                     model.data.shape,
                     model.meta.wcs.bounding_box,
                 )
+                iscale = self._iscales[i]
                 self._resample_variance_arrays(
                     model=model,
+                    iscale=iscale,
                     inwht=inwht,
                     pixmap=pixmap,
                     in_image_limits=in_image_limits,
                     output_shape=output_shape,
                 )
 
-                del model.meta.iscale
                 del inwht
                 input_models.shelve(model, i)
 
             # We now have a sum of the weighted resampled variances.
             self._compute_resample_variance_totals(output_model)
 
-    def _resample_one_variance_array(self, name, input_model, output_shape,
+    def _resample_one_variance_array(self, name, input_model, iscale,
                                      inwht, pixmap,
                                      xmin=None, xmax=None, ymin=None, ymax=None):
         """Resample one variance image from an input model.
@@ -746,7 +767,7 @@ class ResampleData:
             )
             return
 
-        iscale = input_model.meta.iscale
+        output_shape = tuple(self.output_wcs.array_shape)
 
         # Resample the error array. Fill "unpopulated" pixels with NaNs.
         driz = Drizzle(

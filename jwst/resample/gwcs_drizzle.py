@@ -12,9 +12,8 @@ class GWCSDrizzle(Drizzle):
     Combine images using the drizzle algorithm
 
     """
-    def __init__(self, product, outwcs=None,
-                 pixfrac=1.0, kernel="square", fillval="NAN",
-                 disable_ctx=False, n_max_images=None):
+    def __init__(self, output_wcs=None, pixfrac=1.0, kernel="square",
+                 fillval="NAN", disable_ctx=False, n_max_images=None):
         """
         Create a new Drizzle output object and set the drizzle parameters.
 
@@ -48,57 +47,21 @@ class GWCSDrizzle(Drizzle):
             The value a pixel is set to in the output if the input image does
             not overlap it. The default value of NAN sets NaN values.
         """
-        # Initialize the object fields
-        self._product = product
-
+        self.output_wcs = output_wcs
         self.pixfrac = pixfrac
-
-        self.outexptime = product.meta.exposure.measurement_time or 0.0
-
-        self.outsci = product.data
-        self.outwht = product.wht
-
-        if outwcs:
-            self.outwcs = outwcs
-        else:
-            self.outwcs = product.meta.wcs
-
-        # Check field values
-        if not self.outwcs:
-            raise ValueError("Either an existing file or wcs must be supplied")
-
-        begin_ctx_id = 0
-        if disable_ctx:
-            ctx = None
-        else:
-            ctx = product.con
-            if ctx is not None:
-                if ctx.size == 0:
-                    ctx = None
-                elif ctx.ndim not in [2, 3]:
-                    raise ValueError(
-                        "Provided (via product.con) context image has wrong "
-                        "dimensions: expected a 2D or 3D array but got a "
-                        f"{ctx.ndim}D array."
-                    )
 
         super().__init__(
             kernel=kernel,
             fillval=fillval,
-            out_shape=None,
-            out_img=product.data,
-            out_wht=product.wht,
-            out_ctx=ctx,
-            exptime=self.outexptime,
-            begin_ctx_id=begin_ctx_id,
+            out_shape=output_wcs.array_shape,
+            out_img=None,
+            out_wht=None,
+            out_ctx=None,
+            exptime=0.0,
+            begin_ctx_id=0,
             max_ctx_id=n_max_images,
             disable_ctx=disable_ctx
         )
-
-        # Since the context array is dynamic, it must be re-assigned
-        # back to the product's `con` attribute.
-        if not disable_ctx:
-            product.con = self.out_ctx
 
     def add_image(self, insci, inwcs, pixmap=None, inwht=None,
                   xmin=0, xmax=0, ymin=0, ymax=0,
@@ -175,16 +138,16 @@ class GWCSDrizzle(Drizzle):
         if pixmap is None:
             pixmap = resample_utils.calc_gwcs_pixmap(
                 inwcs,
-                self.outwcs,
+                self.output_wcs,
                 insci.shape
             )
 
         log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
         log.debug(f"Input Sci shape: {insci.shape}")
-        log.debug(f"Output Sci shape: {self.outsci.shape}")
+        log.debug(f"Output Sci shape: {self.out_img.shape}")
 
         # Call 'drizzle' to perform image combination
-        log.info(f"Drizzling {insci.shape} --> {self.outsci.shape}")
+        log.info(f"Drizzling {insci.shape} --> {self.out_img.shape}")
 
         super().add_image(
             data=insci,
