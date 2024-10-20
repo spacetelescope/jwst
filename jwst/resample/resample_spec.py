@@ -180,6 +180,8 @@ class ResampleSpecData(ResampleData):
                 output_pix_area = None
 
         self.output_pix_area = output_pix_area
+        self.out_arr_shape = tuple(self.output_wcs.array_shape)
+        log.debug(f"Output mosaic size: {self.out_arr_shape}")
 
         if pscale is None:
             log.info(f'Specified output pixel scale ratio: {self.pscale_ratio}.')

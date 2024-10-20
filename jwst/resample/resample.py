@@ -16,7 +16,6 @@ from jwst.associations.asn_from_list import asn_from_list
 
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
-from jwst.resample.gwcs_drizzle import GWCSDrizzle
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -150,6 +149,9 @@ class ResampleData:
                 np.deg2rad(tr['cdelt2'].factor.value)
             )
 
+        self.out_arr_shape = tuple(self.output_wcs.array_shape)
+        log.debug(f"Output mosaic size: {self.out_arr_shape}")
+
         if pscale is None:
             pscale = np.rad2deg(np.sqrt(self.output_pix_area))
             log.info(f'Computed output pixel scale: {3600.0 * pscale} arcsec.')
@@ -170,7 +172,7 @@ class ResampleData:
             available_memory = psutil.virtual_memory().available + psutil.swap_memory().total
 
             # compute the output array size
-            required_memory = np.prod(self.output_wcs.array_shape) * dtype.itemsize
+            required_memory = np.prod(self.out_arr_shape) * dtype.itemsize
 
             # compare used to available
             used_fraction = required_memory / available_memory
@@ -275,23 +277,20 @@ class ResampleData:
         output_model = None
 
         # Initialize the output with the wcs
-        driz = GWCSDrizzle(
-            self.output_wcs,
+        driz = Drizzle(
+            out_shape=self.out_arr_shape,
             kernel=self.kernel,
             fillval=self.fillval,
             disable_ctx=True,
         )
-
         # Also make a temporary model to hold error data
         if compute_error:
-            driz_error = GWCSDrizzle(
-                self.output_wcs,
-                pixfrac=self.pixfrac,
+            driz_error = Drizzle(
+                out_shape=self.out_arr_shape,
                 kernel=self.kernel,
                 fillval=self.fillval,
                 disable_ctx=True,
             )
-
         log.info(f"{len(indices)} exposures to drizzle together")
         for index in indices:
             img = input_models.borrow(index)
@@ -344,12 +343,16 @@ class ResampleData:
                 self.output_wcs,
                 img.data.shape,
             )
+
             driz.add_image(
-                data,
-                img.meta.wcs,
+                data=data,
+                exptime=img.meta.exposure.exposure_time,  # GWCSDrizzle.add_image param default was 1.0
                 pixmap=pixmap,
-                iscale=iscale,
-                inwht=inwht,
+                scale=iscale,
+                weight_map=inwht,
+                wht_scale=1.0,  # hard-coded for JWST count-rate data
+                pixfrac=self.pixfrac,
+                in_units="cps",  # GWCSDrizzle.add_image param default
                 xmin=xmin,
                 xmax=xmax,
                 ymin=ymin,
@@ -361,17 +364,19 @@ class ResampleData:
             # in the same way the image is handled
             if compute_error:
                 driz_error.add_image(
-                    img.err,
-                    img.meta.wcs,
+                    data=img.err,
+                    exptime=img.meta.exposure.exposure_time,  # GWCSDrizzle.add_image param default
                     pixmap=pixmap,
-                    iscale=iscale,
-                    inwht=inwht,
+                    scale=iscale,
+                    weight_map=inwht,
+                    wht_scale=1.0,  # hard-coded for JWST count-rate data
+                    pixfrac=self.pixfrac,
+                    in_units="cps",  # GWCSDrizzle.add_image param default
                     xmin=xmin,
                     xmax=xmax,
                     ymin=ymin,
                     ymax=ymax,
                 )
-
             input_models.shelve(img, index, modify=False)
             del img
 
@@ -436,14 +441,13 @@ class ResampleData:
                 ]
             )
 
-        # Initialize the output with the wcs
-        driz = GWCSDrizzle(
-            self.output_wcs,
-            pixfrac=self.pixfrac,
+        driz = Drizzle(
+            out_shape=self.out_arr_shape,
             kernel=self.kernel,
             fillval=self.fillval,
+            max_ctx_id=len(input_models),
+            disable_ctx=False,
         )
-
         self._init_variance_arrays()
         self._init_exptime_counters()
 
@@ -502,17 +506,19 @@ class ResampleData:
                 )
 
                 driz.add_image(
-                    data,
-                    img.meta.wcs,
+                    data=data,
+                    exptime=img.meta.exposure.exposure_time,  # GWCSDrizzle.add_image param default
                     pixmap=pixmap,
-                    iscale=iscale,
-                    inwht=inwht,
+                    scale=iscale,
+                    weight_map=inwht,
+                    wht_scale=1.0,  # hard-coded for JWST count-rate data
+                    pixfrac=self.pixfrac,
+                    in_units="cps",  # GWCSDrizzle.add_image param default
                     xmin=xmin,
                     xmax=xmax,
                     ymin=ymin,
                     ymax=ymax,
                 )
-
                 # Resample variance arrays in input_models to output_model
                 self._resample_variance_arrays(
                     model=img,
@@ -520,7 +526,7 @@ class ResampleData:
                     inwht=inwht,
                     pixmap=pixmap,
                     in_image_limits=in_image_limits,
-                    output_shape=output_model.meta.wcs.array_shape,
+                    output_shape=self.out_arr_shape,
                 )
 
                 del data, inwht
@@ -559,7 +565,7 @@ class ResampleData:
         return ModelLibrary([output_model,], on_disk=False)
 
     def _init_variance_arrays(self):
-        shape = tuple(self.output_wcs.array_shape)
+        shape = self.out_arr_shape
         self._weighted_rn_var = np.full(shape, np.nan, dtype=np.float32)
         self._weighted_pn_var = np.full(shape, np.nan, dtype=np.float32)
         self._weighted_flat_var = np.full(shape, np.nan, dtype=np.float32)
@@ -706,7 +712,7 @@ class ResampleData:
         The output_model is modified in place.
         """
         self._init_variance_arrays()
-        output_shape = output_model.meta.wcs.array_shape
+        output_shape = self.out_arr_shape
         log.info("Resampling variance components")
 
         with input_models:
@@ -767,19 +773,13 @@ class ResampleData:
             )
             return
 
-        output_shape = tuple(self.output_wcs.array_shape)
+        output_shape = self.out_arr_shape
 
         # Resample the error array. Fill "unpopulated" pixels with NaNs.
         driz = Drizzle(
+            out_shape=output_shape,
             kernel=self.kernel,
             fillval=np.nan,
-            out_shape=output_shape,
-            out_img=None,
-            out_wht=None,
-            out_ctx=None,
-            exptime=0,
-            begin_ctx_id=0,
-            max_ctx_id=1,
             disable_ctx=True
         )
 
