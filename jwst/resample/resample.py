@@ -149,8 +149,8 @@ class ResampleData:
                 np.deg2rad(tr['cdelt2'].factor.value)
             )
 
-        self.out_arr_shape = tuple(self.output_wcs.array_shape)
-        log.debug(f"Output mosaic size: {self.out_arr_shape}")
+        self.output_array_shape = tuple(self.output_wcs.array_shape)
+        log.debug(f"Output mosaic size: {self.output_array_shape}")
 
         if pscale is None:
             pscale = np.rad2deg(np.sqrt(self.output_pix_area))
@@ -172,7 +172,7 @@ class ResampleData:
             available_memory = psutil.virtual_memory().available + psutil.swap_memory().total
 
             # compute the output array size
-            required_memory = np.prod(self.out_arr_shape) * dtype.itemsize
+            required_memory = np.prod(self.output_array_shape) * dtype.itemsize
 
             # compare used to available
             used_fraction = required_memory / available_memory
@@ -278,7 +278,7 @@ class ResampleData:
 
         # Initialize the output with the wcs
         driz = Drizzle(
-            out_shape=self.out_arr_shape,
+            out_shape=self.output_array_shape,
             kernel=self.kernel,
             fillval=self.fillval,
             disable_ctx=True,
@@ -286,7 +286,7 @@ class ResampleData:
         # Also make a temporary model to hold error data
         if compute_error:
             driz_error = Drizzle(
-                out_shape=self.out_arr_shape,
+                out_shape=self.output_array_shape,
                 kernel=self.kernel,
                 fillval=self.fillval,
                 disable_ctx=True,
@@ -442,7 +442,7 @@ class ResampleData:
             )
 
         driz = Drizzle(
-            out_shape=self.out_arr_shape,
+            out_shape=self.output_array_shape,
             kernel=self.kernel,
             fillval=self.fillval,
             max_ctx_id=len(input_models),
@@ -526,7 +526,7 @@ class ResampleData:
                     inwht=inwht,
                     pixmap=pixmap,
                     in_image_limits=in_image_limits,
-                    output_shape=self.out_arr_shape,
+                    output_shape=self.output_array_shape,
                 )
 
                 del data, inwht
@@ -565,7 +565,7 @@ class ResampleData:
         return ModelLibrary([output_model,], on_disk=False)
 
     def _init_variance_arrays(self):
-        shape = self.out_arr_shape
+        shape = self.output_array_shape
         self._weighted_rn_var = np.full(shape, np.nan, dtype=np.float32)
         self._weighted_pn_var = np.full(shape, np.nan, dtype=np.float32)
         self._weighted_flat_var = np.full(shape, np.nan, dtype=np.float32)
@@ -712,7 +712,7 @@ class ResampleData:
         The output_model is modified in place.
         """
         self._init_variance_arrays()
-        output_shape = self.out_arr_shape
+        output_shape = self.output_array_shape
         log.info("Resampling variance components")
 
         with input_models:
@@ -773,7 +773,7 @@ class ResampleData:
             )
             return
 
-        output_shape = self.out_arr_shape
+        output_shape = self.output_array_shape
 
         # Resample the error array. Fill "unpopulated" pixels with NaNs.
         driz = Drizzle(
