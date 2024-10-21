@@ -335,32 +335,45 @@ class ResampleSpecData(ResampleData):
             raise ValueError("Not enough data to construct output WCS.")
 
         # Find the spatial extent in x/y tangent
-        min_tan, max_tan = self._max_spatial_extent(all_wcs, undist2sky.inverse, swap_xy)
-        diff = np.abs(max_tan - min_tan)
-        if swap_xy:
-            pix_to_tan_slope = np.abs(pix_to_ytan.slope)
-            slope_sign = np.sign(pix_to_ytan.slope)
-        else:
-            pix_to_tan_slope = np.abs(pix_to_xtan.slope)
-            slope_sign = np.sign(pix_to_xtan.slope)
+        min_tan_y, max_tan_y = self._max_spatial_extent(
+            all_wcs, undist2sky.inverse, True)
+        min_tan_x, max_tan_x = self._max_spatial_extent(
+            all_wcs, undist2sky.inverse, False)
+        diff_y = np.abs(max_tan_y - min_tan_y)
+        diff_x = np.abs(max_tan_x - min_tan_x)
+
+        pix_to_tan_slope_y = np.abs(pix_to_ytan.slope)
+        slope_sign_y = np.sign(pix_to_ytan.slope)
+        pix_to_tan_slope_x = np.abs(pix_to_xtan.slope)
+        slope_sign_x = np.sign(pix_to_xtan.slope)
 
         # Image size in spatial dimension from the maximum slope
         # and tangent offset span, plus one pixel to make sure
         # we catch all the data
-        ny = int(np.ceil(diff / pix_to_tan_slope)) + 1
+        if swap_xy:
+            ny = int(np.ceil(diff_y / pix_to_tan_slope_y)) + 1
+        else:
+            ny = int(np.ceil(diff_x / pix_to_tan_slope_x)) + 1
 
         # Correct the intercept for the new minimum value.
         # Also account for integer pixel size to make sure the
         # data is centered in the array.
-        offset = ny/2 * pix_to_tan_slope - diff/2
-        if slope_sign > 0:
-            zero_value = min_tan
+        offset_y  = ny/2 * pix_to_tan_slope_y - diff_y/2
+        offset_x  = ny/2 * pix_to_tan_slope_x - diff_x/2
+
+        if slope_sign_y > 0:
+            zero_value_y = min_tan_y
         else:
-            zero_value = max_tan
-        if swap_xy:
-            pix_to_ytan.intercept = zero_value - slope_sign * offset
+            zero_value_y = max_tan_y
+
+        if slope_sign_x > 0:
+            zero_value_x = min_tan_x
         else:
-            pix_to_xtan.intercept = zero_value - slope_sign * offset
+            zero_value_x = max_tan_x
+
+
+        pix_to_ytan.intercept = zero_value_y - slope_sign_y * offset_y
+        pix_to_xtan.intercept = zero_value_x - slope_sign_x * offset_x
 
         # Now set up the final transforms
 
@@ -447,7 +460,7 @@ class ResampleSpecData(ResampleData):
 
         return output_wcs
 
-    def _max_spatial_extent(self, wcs_list, transform, swap_xy):
+    def _max_spatial_extent(self, wcs_list, transform, return_y):
         """
         Compute min & max spatial coordinates for all nods in the "virtual"
         slit frame.
@@ -462,7 +475,7 @@ class ResampleSpecData(ResampleData):
             dec = dec[good]
 
             xtan, ytan = transform(ra, dec)
-            if swap_xy:
+            if return_y:
                 tan_all = ytan
             else:
                 tan_all = xtan
