@@ -107,6 +107,10 @@ def median_without_resampling(input_models,
     in_memory = not input_models._on_disk
     ngroups = len(input_models)
 
+    if save_intermediate_results:
+        # create an empty image model for the median data
+        median_model = datamodels.ImageModel(None)
+
     with input_models:
         for i in range(len(input_models)):
 
@@ -128,6 +132,10 @@ def median_without_resampling(input_models,
                     err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
                 else:
                     err_computer = None
+                if save_intermediate_results:
+                    # update median model's meta with meta from the first model:
+                    median_model.update(drizzled_model)
+                    median_model.meta.wcs = median_wcs
 
             weight_threshold = compute_weight_threshold(weight, maskpt)
             drizzled_data[weight < weight_threshold] = np.nan
@@ -137,6 +145,7 @@ def median_without_resampling(input_models,
                 err_computer.append(drizzled_err, i)
 
             input_models.shelve(drizzled_model, i, modify=False)
+            del drizzled_model
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
@@ -147,13 +156,11 @@ def median_without_resampling(input_models,
 
     if save_intermediate_results:
         # Save median model to fits
-        median_model = datamodels.ImageModel(median_data)
+        median_model.data = median_data
         if return_error:
             median_model.err = median_err
-        median_model.update(drizzled_model)
-        median_model.meta.wcs = median_wcs
         _fileio.save_median(median_model, make_output_path)
-    del drizzled_model
+
 
     if return_error:
         return median_data, median_wcs, median_err
@@ -219,6 +226,10 @@ def median_with_resampling(input_models,
     indices_by_group = list(input_models.group_indices.values())
     ngroups = len(indices_by_group)
 
+    if save_intermediate_results:
+        # create an empty image model for the median data
+        median_model = datamodels.ImageModel(None)
+
     with input_models:
         for i, indices in enumerate(indices_by_group):
 
@@ -238,6 +249,10 @@ def median_with_resampling(input_models,
                     err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
                 else:
                     err_computer = None
+                if save_intermediate_results:
+                    # update median model's meta with meta from the first model:
+                    median_model.update(drizzled_model)
+                    median_model.meta.wcs = median_wcs
 
             weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
             drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
@@ -245,6 +260,7 @@ def median_with_resampling(input_models,
             if return_error:
                 drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
                 err_computer.append(drizzled_model.err, i)
+            del drizzled_model
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
@@ -255,15 +271,12 @@ def median_with_resampling(input_models,
 
     if save_intermediate_results:
         # Save median model to fits
-        median_model = datamodels.ImageModel(median_data)
+        median_model.data = median_data
         if return_error:
             median_model.err = median_err
-        median_model.update(drizzled_model)
-        median_model.meta.wcs = median_wcs
         # drizzled model already contains asn_id
         make_output_path = partial(make_output_path, asn_id=None)
         _fileio.save_median(median_model, make_output_path)
-    del drizzled_model
 
     if return_error:
         return median_data, median_wcs, median_err
