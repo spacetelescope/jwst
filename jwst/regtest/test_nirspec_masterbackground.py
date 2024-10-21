@@ -128,16 +128,16 @@ def test_nirspec_fs_mbkg_user(rtdata, fitsdiff_default_kwargs):
     """Run a test for NIRSpec FS data with a user-supplied background file."""
 
     # Get user-supplied background
-    user_background = "v2_nrs_bkg_user_clean_x1d.fits"
+    user_background = "jw01309-o022_b000000021_nirspec_f290lp-g395h-s200a1-allslits_x1d.fits"
     rtdata.get_data(f"nirspec/fs/{user_background}")
 
     # Get input data
-    rtdata.get_data("nirspec/fs/nrs_sci+bkg_cal.fits")
+    rtdata.get_data("nirspec/fs/jw01309022001_04102_00001_nrs1_cal.fits")
 
-    MasterBackgroundStep.call(rtdata.input, save_results=True, suffix='master_background',
+    MasterBackgroundStep.call(rtdata.input, save_results=True, suffix='mbsub',
                               user_background=user_background)
 
-    output = "nrs_sci+bkg_master_background.fits"
+    output = "jw01309022001_04102_00001_nrs1_mbsub.fits"
     rtdata.output = output
 
     # Get the truth file
