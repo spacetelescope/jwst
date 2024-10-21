@@ -161,7 +161,6 @@ def median_without_resampling(input_models,
             median_model.err = median_err
         _fileio.save_median(median_model, make_output_path)
 
-
     if return_error:
         return median_data, median_wcs, median_err
     else:
