@@ -277,12 +277,15 @@ class MasterBackgroundMosStep(Pipeline):
                 self.log.info('Creating MOS master background from background slitlets')
                 self._set_steps_params()
                 bkg_model = self._extend_bg_slits(pre_calibrated)
-                bkg_model = self.pixel_replace(bkg_model)
-                bkg_model = self.resample_spec(bkg_model)
-                bkg_model = self.extract_1d(bkg_model)
-                # Call combine_1d to combine the 1D background spectra
-                master_background = nirspec_utils.create_background_from_multislit(bkg_model)
-                del bkg_model
+                if bkg_model is not None:
+                    bkg_model = self.pixel_replace(bkg_model)
+                    bkg_model = self.resample_spec(bkg_model)
+                    bkg_model = self.extract_1d(bkg_model)
+                    # Call combine_1d to combine the 1D background spectra
+                    master_background = nirspec_utils.create_background_from_multislit(bkg_model)
+                    del bkg_model
+                else:
+                    master_background = None
             if master_background is None:
                 self.log.debug('No master background could be calculated. Returning None')
                 return None, None
