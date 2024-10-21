@@ -76,7 +76,7 @@ def map_to_science_slits(input_model, master_bkg):
     return output_model
 
 
-def create_background_from_multislit(input_model, params):
+def create_background_from_multislit(input_model):
     """Create a 1D master background spectrum from a set of
     calibrated background MOS slitlets in the input
     MultiSlitModel.
@@ -86,58 +86,16 @@ def create_background_from_multislit(input_model, params):
     input_model : `~jwst.datamodels.MultiSlitModel`
         The input data model containing all slit instances.
 
-    params : dict
-        Dictionary containing a dictionary of the step parameters to set
-
     Returns
     -------
     master_bkg: `~jwst.datamodels.CombinedSpecModel`
         The 1D master background spectrum created from the inputs.
     """
-    from ..pixel_replace import pixel_replace_step
-    from ..resample import resample_spec_step
-    from ..extract_1d import extract_1d_step
     from ..combine_1d.combine1d import combine_1d_spectra
-
-    log.info('Creating MOS master background from background slitlets')
-
-    # Copy dedicated background slitlets to a temporary model
-    bkg_model = datamodels.MultiSlitModel()
-    bkg_model.update(input_model)
-    slits = []
-    for slit in input_model.slits:
-        if is_background_msa_slit(slit):
-            log.info(f'Using background slitlet {slit.source_name}')
-            slits.append(slit)
-
-    if len(slits) == 0:
-        log.warning('No background slitlets found; skipping master bkg correction')
-        return None
-
-    bkg_model.slits.extend(slits)
-
-    # update step parameters
-    pr = pixel_replace_step.PixelReplaceStep()
-    pr.update_pars(params['pixel_replace'])
-    rs = resample_spec_step.ResampleSpecStep()
-    rs.update_pars(params['resample_spec'])
-    e1d = extract_1d_step.Extract1dStep()
-    e1d.update_pars(params['extract_1d'])
-
-    # Apply pixel_replace, resample_spec and extract_1d to all background slitlets
-    log.info('Applying pixel_replace, resampling and 1D extraction to background slits')
-    pixrepl = pr.call(bkg_model)
-    resamp = rs.call(pixrepl)
-    x1d = e1d.call(resamp)
 
     # Call combine_1d to combine the 1D background spectra
     log.info('Combining 1D background spectra into master background')
-    master_bkg = combine_1d_spectra(x1d, exptime_key='exposure_time')
-
-    del bkg_model
-    del pixrepl
-    del resamp
-    del x1d
+    master_bkg = combine_1d_spectra(input_model, exptime_key='exposure_time')
 
     return master_bkg
 

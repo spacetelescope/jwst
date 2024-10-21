@@ -180,15 +180,28 @@ class MasterBackgroundMosStep(Pipeline):
                 del pars[par]
             getattr(self, step).update_pars(pars)
 
-    def _get_steps_params(self):
+    def _set_steps_params(self):
         """Get substep parameters to pass on"""
-        pixrep_pars = getattr(self, 'pixel_replace').get_pars()
-        resamp_pars = getattr(self, 'resample_spec').get_pars()
-        extr1d_pars = getattr(self, 'extract_1d').get_pars()
-        params = {'pixel_replace': pixrep_pars,
-                  'resample_spec': resamp_pars,
-                  'extract_1d': extr1d_pars}
-        return params
+        steps = ['pixel_replace', 'resample_spec', 'extract_1d']
+
+        for step in steps:
+            pars = getattr(self, step).get_pars()
+            getattr(self, step).update_pars(pars)
+
+    def _extend_bg_slits(self, pre_calibrated):
+        # Copy dedicated background slitlets to a temporary model
+        bkg_model = datamodels.MultiSlitModel()
+        bkg_model.update(pre_calibrated)
+        slits = []
+        for slit in pre_calibrated.slits:
+            if nirspec_utils.is_background_msa_slit(slit):
+                self.log.info(f'Using background slitlet {slit.source_name}')
+                slits.append(slit)
+        if len(slits) == 0:
+            self.log.warning('No background slitlets found; skipping master bkg correction')
+            return None
+        bkg_model.slits.extend(slits)
+        return bkg_model
 
     def _classify_slits(self, data):
         """Determine how many Slits are background and source types
@@ -261,9 +274,15 @@ class MasterBackgroundMosStep(Pipeline):
                 self.log.debug(f'User background provided {user_background}')
                 master_background = user_background
             else:
-                self.log.debug('Calculating 1D master background')
-                params = self._get_steps_params()
-                master_background = nirspec_utils.create_background_from_multislit(pre_calibrated, params)
+                self.log.info('Creating MOS master background from background slitlets')
+                self._set_steps_params()
+                bkg_model = self._extend_bg_slits(pre_calibrated)
+                bkg_model = self.pixel_replace(bkg_model)
+                bkg_model = self.resample_spec(bkg_model)
+                bkg_model = self.extract_1d(bkg_model)
+                # Call combine_1d to combine the 1D background spectra
+                master_background = nirspec_utils.create_background_from_multislit(bkg_model)
+                del bkg_model
             if master_background is None:
                 self.log.debug('No master background could be calculated. Returning None')
                 return None, None
