@@ -18,12 +18,13 @@ for all processing performed by this step. This routine performs the following o
    preserving the spatial (x,y) dimensions of the cube.
 
    * The ``maskpt`` parameter sets the percentage of the weight image values to
-     use, and any pixel with a weight below this value gets flagged as "bad" and
-     ignored when resampled.
+     use, and any pixel with a weight below this value gets flagged as "bad".
 
 #. Perform statistical comparison between median image and original image to identify outliers.
 
    The core detection algorithm uses the following to generate an outlier mask
+
    .. math:: | image\_input - image\_median | > SNR*input\_err
 
-#. Update input data model DQ arrays with mask of detected outliers.
+#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+   of identified outliers.

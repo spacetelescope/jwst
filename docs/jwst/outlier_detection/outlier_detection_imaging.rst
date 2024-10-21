@@ -10,7 +10,7 @@ which is loaded into a :py:class:`~jwst.datamodels.ModelLibrary` object,
 serves as the basic format for all processing performed by this step.
 This routine performs the following operations:
 
-#. Extracts parameter settings from input models and merges them with any user-provided values.
+#. Extract parameter settings for the input models and merge them with any user-provided values.
    See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list of parameters.
 
 #. By default, resample all input images to the same output WCS. The resample process is
@@ -19,8 +19,8 @@ This routine performs the following operations:
    Resampling can be turned off with the ``resample_data`` parameter.
 
    * Compute an output WCS that is large enough to encompass all the input images.
-   * Resample all images from the *same exposure* onto this output WCS to create a mosaic of all the chips
-     for that exposure.  This product is referred to as a "grouped mosaic" since it groups all the chips
+   * Resample all images from the *same exposure* onto this output WCS to create a mosaic of all the detectors
+     for that exposure.  This product is referred to as a "grouped mosaic" since it groups all the detectors
      from the same exposure into a single image. Each dither position will result in
      a separate grouped mosaic, so only a single exposure ever contributes to each pixel in these mosaics.
      An explanation of how all NIRCam multiple detector group mosaics are
@@ -71,8 +71,7 @@ This routine performs the following operations:
 
      .. math:: | image\_input - image\_blotted | > scale*image\_deriv + SNR*noise
 
-     The noise in this equation is calculated using a combination of the detector read
-     noise and the poisson noise of the blotted median image plus the sky background.
+     The noise in this equation is the value of the input model's ``err`` extension.
      The SNR in this equation is the ``snr`` parameter, which encodes two values that
      determine whether a pixel should be masked:
      the first value detects the primary cosmic ray, and the second masks
@@ -80,7 +79,8 @@ This routine performs the following operations:
      cosmic rays often extend across several pixels, the adjacent pixels make
      use of a slightly lower SNR threshold.
 
-#. Update input data model DQ arrays with mask of detected outliers.
+#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+   of identified outliers.
 
 Memory Saving Options
 ---------------------
@@ -92,7 +92,7 @@ final output product.  Specifically,
    processing more efficient.
 
 #. The resample step creates an output product that is the
-   same size as the final output product, which for imaging modes can span all chips in the detector
+   same size as the final output product, which for imaging modes can span all detectors
    while also accounting for all dithers. Although only a single resampled image is needed in 
    memory at a time, for some Level 3 products, each resampled image can be on the order of several
    gigabytes in size.
@@ -101,7 +101,7 @@ final output product.  Specifically,
    the sky in memory in order to perform the median computation. The simplest (and fastest) implementation
    requires keeping all resampled outputs fully in memory at the same time.
 
-This has been addressed by implementing an overall memory model for outlier detection that
+These concerns have been addressed by implementing an overall memory model for outlier detection that
 includes options to minimize memory usage at the expense of temporary file I/O and runtime.
 Control over this memory model happens
 with the use of the ``in_memory`` parameter. The full impact of setting this parameter

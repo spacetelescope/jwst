@@ -29,6 +29,7 @@ class OutlierDetectionStep(Step):
     Input images can be listed in an input association file or dictionary,
     or already opened with a ModelContainer or ModelLibrary.
     DQ arrays are modified in place.
+    SCI, ERR, and VAR arrays are updated with NaN values matching the DQ flags.
 
     Parameters
     -----------
@@ -44,7 +45,7 @@ class OutlierDetectionStep(Step):
         weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
-        fillval = string(default='INDEF')
+        fillval = string(default='NAN')
         maskpt = float(default=0.7)
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')

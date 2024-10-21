@@ -4,7 +4,9 @@ Time-Series Observations (TSO) Data
 ===================================
 
 This module serves as the interface for applying ``outlier_detection`` to time
-series observations. Normal imaging data benefit from combining all integrations into a
+series observations.
+
+Normal imaging data benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
 integration to the next.  The outlier detection algorithm, therefore, gets run with 
 a few variations to accomodate the nature of these 3D data.
@@ -33,4 +35,5 @@ processing performed by this step. This routine performs the following operation
    
    .. math:: | image\_input - image\_median | > SNR * input\_err
 
-#. Update the data model DQ arrays with the mask of detected outliers.
+#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+   of identified outliers.

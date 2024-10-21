@@ -5,15 +5,16 @@ Overview
 
 This module provides the sole interface to all methods of performing outlier
 detection on JWST observations.
+
 Processing multiple datasets together allows for the identification of bad pixels
-or cosmic rays that remain in each of the input images, many times at levels which
+or cosmic rays that remain in each of the input images, often at levels which
 were not detectable by the :ref:`jump <jump_step>` step.
 The ``outlier_detection`` step supports multiple
 algorithms and determines the appropriate algorithm for the type of observation
 being processed.  This step supports:
 
 * **Image modes**: 'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
-  - See :ref:`outlier-detection-imaging` for algorithm details
+   - See :ref:`outlier-detection-imaging` for algorithm details
 * **Slit-like Spectroscopic modes**: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
    - See :ref:`outlier-detection-spec` for algorithm details
 * **Time-Series-Observation (TSO) modes**: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ', 'NRC_TSIMAGE'
@@ -37,6 +38,7 @@ input data:
 #. Instantiate and run outlier detection class determined for the exposure type
    using parameter values interpreted from inputs.
 
-#. Output models will have DQ arrays updated with flags for identified outliers.
+#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+   of identified outliers.
 
 .. automodapi:: jwst.outlier_detection.outlier_detection_step
