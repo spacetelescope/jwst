@@ -83,7 +83,7 @@ def make_output_wcs(input_models, ref_wcs=None,
                    f"but the supplied WCS has {naxes} axes.")
             raise RuntimeError(msg)
 
-        output_wcs = util.wcs_from_footprints(
+        output_wcs = util.wcs_from_sregions(
             sregion_list,
             ref_wcs,
             ref_wcsinfo,
