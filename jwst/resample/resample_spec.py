@@ -335,10 +335,8 @@ class ResampleSpecData(ResampleData):
             raise ValueError("Not enough data to construct output WCS.")
 
         # Find the spatial extent in x/y tangent
-        min_tan_y, max_tan_y = self._max_spatial_extent(
-            all_wcs, undist2sky.inverse, True)
-        min_tan_x, max_tan_x = self._max_spatial_extent(
-            all_wcs, undist2sky.inverse, False)
+        min_tan_x, max_tan_x, min_tan_y, max_tan_y = self._max_spatial_extent(
+            all_wcs, undist2sky.inverse)
         diff_y = np.abs(max_tan_y - min_tan_y)
         diff_x = np.abs(max_tan_x - min_tan_x)
 
@@ -460,12 +458,13 @@ class ResampleSpecData(ResampleData):
 
         return output_wcs
 
-    def _max_spatial_extent(self, wcs_list, transform, return_y):
+    def _max_spatial_extent(self, wcs_list, transform):
         """
         Compute min & max spatial coordinates for all nods in the "virtual"
         slit frame.
         """
-        min_tan_all, max_tan_all = np.inf, -np.inf
+        limits_x = [np.inf, -np.inf]
+        limits_y = [np.inf, -np.inf]
         for wcs in wcs_list:
             x, y = wcstools.grid_from_bounding_box(wcs.bounding_box)
             ra, dec, _ = wcs(x, y)
@@ -475,20 +474,16 @@ class ResampleSpecData(ResampleData):
             dec = dec[good]
 
             xtan, ytan = transform(ra, dec)
-            if return_y:
-                tan_all = ytan
-            else:
-                tan_all = xtan
+            for tan_all, limits in zip([xtan, ytan], [limits_x, limits_y]):
+                min_tan = np.min(tan_all)
+                max_tan = np.max(tan_all)
 
-            min_tan = np.min(tan_all)
-            max_tan = np.max(tan_all)
+                if min_tan < limits[0]:
+                    limits[0] = min_tan
+                if max_tan > limits[1]:
+                    limits[1] = max_tan
 
-            if min_tan < min_tan_all:
-                min_tan_all = min_tan
-            if max_tan > max_tan_all:
-                max_tan_all = max_tan
-
-        return min_tan_all, max_tan_all
+        return *limits_x, *limits_y
 
     def build_interpolated_output_wcs(self, input_models):
         """
