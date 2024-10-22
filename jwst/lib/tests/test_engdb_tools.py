@@ -68,6 +68,7 @@ def test_environmental(jail_environ):
     try:
         engdb = engdb_tools.ENGDB_Service()
     except Exception:
+        os.unsetenv('ENG_BASE_URL')
         pytest.skip('Alternate engineering db not available for test.')
     assert engdb.base_url == ALTERNATE_URL
 
