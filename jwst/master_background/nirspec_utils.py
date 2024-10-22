@@ -1,6 +1,8 @@
 import logging
 import warnings
 
+from scipy.signal import medfilt
+
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -76,7 +78,7 @@ def map_to_science_slits(input_model, master_bkg):
     return output_model
 
 
-def create_background_from_multislit(input_model, sigma_clip=3):
+def create_background_from_multislit(input_model, sigma_clip=3, median_kernel=1):
     """Create a 1D master background spectrum from a set of
     calibrated background MOS slitlets in the input
     MultiSlitModel.
@@ -85,8 +87,12 @@ def create_background_from_multislit(input_model, sigma_clip=3):
     ----------
     input_model : `~jwst.datamodels.MultiSlitModel`
         The input data model containing all slit instances.
-    sigma_clip : None or float
+    sigma_clip : None or float, optional
         Optional factor for sigma clipping outliers when combining background spectra.
+    median_kernel : integer, optional
+        Optional user-supplied kernel with which to moving-median boxcar filter the master background
+        spectrum.  Must be an odd integer, even integers will be rounded down to the nearest
+        odd integer.
 
     Returns
     -------
@@ -125,6 +131,20 @@ def create_background_from_multislit(input_model, sigma_clip=3):
     log.info('Combining 1D background spectra into master background')
     master_bkg = combine_1d_spectra(
         x1d, exptime_key='exposure_time', sigma_clip=sigma_clip)
+    
+    # If requested, apply a moving-median boxcar filter to the master background spectrum
+    # Round down even kernel sizes because only odd kernel sizes are supported.
+    if median_kernel % 2 == 0:
+        median_kernel -= 1
+        log.info('Even median filter kernels are not supported.'
+                        f'Rounding the median kernel size down to {median_kernel}.')
+    
+    if (median_kernel > 1):
+        log.info(f'Applying moving-median boxcar of width {median_kernel}.')
+        master_bkg.spec[0].spec_table['surf_bright'] = medfilt(
+            master_bkg.spec[0].spec_table['surf_bright'], 
+            kernel_size=[median_kernel]
+        )
 
     del bkg_model
     del resamp
