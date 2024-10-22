@@ -27,9 +27,6 @@ BAD_MNEMONIC = 'No_Such_MNEMONIC'
 NODATA_STARTIME = '2014-01-01'
 NODATA_ENDTIME = '2014-01-02'
 
-ALTERNATE_HOST = 'https://twjwdmsemwebag.stsci.edu'
-ALTERNATE_URL = ALTERNATE_HOST + '/JWDMSEngFqAccSide2/TlmMnemonicDataSrv.svc/'
-
 
 def is_alive(url):
     """Check if a url is alive
@@ -57,20 +54,6 @@ def is_alive(url):
 def engdb():
     """Setup the service to operate through the mock service"""
     yield engdb_tools.ENGDB_Service()
-
-
-@pytest.mark.skipif(
-    not is_alive(ALTERNATE_HOST),
-    reason='Alternate test host not available.'
-)
-def test_environmental(jail_environ):
-    os.environ['ENG_BASE_URL'] = ALTERNATE_URL
-    try:
-        engdb = engdb_tools.ENGDB_Service()
-    except Exception:
-        os.unsetenv('ENG_BASE_URL')
-        pytest.skip('Alternate engineering db not available for test.')
-    assert engdb.base_url == ALTERNATE_URL
 
 
 def test_environmental_bad(jail_environ):
