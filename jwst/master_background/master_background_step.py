@@ -22,11 +22,11 @@ class MasterBackgroundStep(Step):
     class_alias = "master_background"
 
     spec = """
+        median_kernel = integer(default=1) # Moving-median boxcar size to filter the master background spectrum
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
         force_subtract = boolean(default=False) # Force subtracting master background
         output_use_model = boolean(default=True)
-        median_kernel = integer(default=1)
     """
 
     def process(self, input):
@@ -38,6 +38,10 @@ class MasterBackgroundStep(Step):
         input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`, association
             Input target datamodel(s) to which master background subtraction is
             to be applied
+            
+        median_kernel : integer, optional
+            Optional user-supplied kernel with which to moving-median boxcar filter the master background
+            spectrum.  Must be an odd integer.
 
         user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
             Optional user-supplied master background 1D spectrum, path to file
@@ -52,10 +56,6 @@ class MasterBackgroundStep(Step):
             Default is False, in which case the step logic determines if the calspec2 background step
             has already been applied and, if so, the master background step is skipped.
             If set to True, the step logic is bypassed and the master background is subtracted.
-
-        median_kernel : integer, optional
-            Optional user-supplied kernel with which to moving-median boxcar filter the master background
-            spectrum.  Must be an odd integer.
 
         Returns
         -------
@@ -147,10 +147,18 @@ class MasterBackgroundStep(Step):
                     )
 
                     # If requested, apply a moving-median boxcar filter to the master background spectrum
+                    # Round down even kernel sizes because only odd kernel sizes are supported.
+                    if self.median_kernal % 2 == 0:
+                        self.median_kernal -= 1
+                        self.log.info('Even median filter kernels are not supported.'
+                                      f'Rounding the median kernel size down to {self.median_kernel}.')
+                    
                     if (self.median_kernel > 1):
-                        self.log.info('Applying moving-median boxcar of width %i',self.median_kernel)
+                        self.log.info(f'Applying moving-median boxcar of width {self.median_kernel}.')
                         master_background.spec[0].spec_table['surf_bright'] = medfilt(
-                            master_background.spec[0].spec_table['surf_bright'], kernel_size=[self.median_kernel])
+                            master_background.spec[0].spec_table['surf_bright'], 
+                            kernel_size=[self.median_kernel]
+                        )
 
                     background_data.close()
 
