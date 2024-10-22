@@ -460,8 +460,7 @@ class ResampleSpecData(ResampleData):
 
     def _max_spatial_extent(self, wcs_list, transform):
         """
-        Compute min & max spatial coordinates for all nods in the "virtual"
-        slit frame.
+        Compute spatial coordinate limits for all nods in the tangent plane.
         """
         limits_x = [np.inf, -np.inf]
         limits_y = [np.inf, -np.inf]
