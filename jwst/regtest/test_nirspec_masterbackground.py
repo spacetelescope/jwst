@@ -151,16 +151,16 @@ def test_nirspec_fs_mbkg_user(rtdata, fitsdiff_default_kwargs):
 def test_nirspec_ifu_mbkg_user(rtdata, fitsdiff_default_kwargs):
     """Test NIRSpec IFU data with a user-supplied background file."""
     # Get user-supplied background
-    user_background = "prism_bkg_x1d.fits"
+    user_background = "jw01252-o002_t005_nirspec_prism-clear_x1d.fits"
     rtdata.get_data(f"nirspec/ifu/{user_background}")
 
     # Get input data
-    rtdata.get_data("nirspec/ifu/prism_sci_bkg_cal.fits")
+    rtdata.get_data("nirspec/ifu/jw01252001001_03101_00001_nrs1_cal.fits")
 
     MasterBackgroundStep.call(rtdata.input, user_background=user_background,
-                              save_results=True, suffix='master_background')
+                              save_results=True, suffix='mbsub')
 
-    output = "prism_sci_bkg_master_background.fits"
+    output = "jw01252001001_03101_00001_nrs1_mbsub.fits"
     rtdata.output = output
 
     # Get the truth file
@@ -173,18 +173,18 @@ def test_nirspec_ifu_mbkg_user(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.parametrize(
     'output_file',
-    ['ifu_prism_source_on_NRS1_master_background.fits',
-     'ifu_prism_source_off_NRS1_o001_masterbg1d.fits',
-     'ifu_prism_source_on_NRS1_o001_masterbg2d.fits'],
+    ['jw01252001001_03101_00001_nrs1_mbsub.fits',
+     'jw01252-o002_t005_nirspec_prism-clear_o001_masterbg1d.fits',
+     'jw01252001001_03101_00001_nrs1_o001_masterbg2d.fits'],
     ids=["on-source", "off-source", "on-source2d"]
 )
 def test_nirspec_ifu_mbkg_nod(rtdata, fitsdiff_default_kwargs, output_file):
     """Test NIRSpec IFU prism nodded data."""
     # Get input data
-    rtdata.get_asn("nirspec/ifu/nirspec_spec3_asn.json")
+    rtdata.get_asn("nirspec/ifu/jw01252-o001_spec3_00003_asn_with_bg.json")
 
     MasterBackgroundStep.call(rtdata.input, save_background=True, save_results=True,
-                              suffix='master_background')
+                              suffix='mbsub')
 
     rtdata.output = output_file
 
