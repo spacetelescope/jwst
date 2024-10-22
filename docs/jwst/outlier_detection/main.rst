@@ -40,5 +40,3 @@ input data:
 
 #. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
    of identified outliers.
-
-.. automodapi:: jwst.outlier_detection.outlier_detection_step
