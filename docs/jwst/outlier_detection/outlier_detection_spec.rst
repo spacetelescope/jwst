@@ -1,62 +1,32 @@
 .. _outlier-detection-spec:
 
-Outlier Detection for Slit-like Spectroscopic Data
-==================================================
+Slit-like Spectroscopic Data
+============================
 
 This module serves as the interface for applying ``outlier_detection`` to slit-like
-spectroscopic observations.  The code implements the
-basic outlier detection algorithm used with HST data, as adapted to JWST
-spectroscopic observations.
+spectroscopic observations. The algorithm is very similar to the
+:ref:`imaging algorithm <outlier-detection-imaging>`, and much of the same code is used.
+Please refer to those docs for more information.
+A :ref:`Stage 3 association <asn-level3-techspecs>`,
+which is loaded into a :py:class:`~jwst.datamodels.ModelContainer` object,
+serves as the input and output to this step, and the :py:class:`~jwst.datamodels.ModelContainer`
+is converted into a :py:class:`~jwst.datamodels.ModelLibrary` object to allow sharing code
+with the imaging mode.
 
-Specifically, this routine performs the following operations (modified from the
-:ref:`Default Outlier Detection Algorithm <outlier-detection-imaging>` ):
+This routine performs identical operations to the imaging mode, with the following exceptions:
 
-#. Extract parameter settings from input model and merge them with any user-provided values
+#. Error thresholding is handled differently: the error arrays are resampled and median-combined
+   along with the data arrays, and the median error image is used to identify outliers
+   instead of the input error images for each exposure. This median error image is included
+   alongside the median datamodel (in the ``err`` extension) if ``save_intermediate_results``
+   is `True`.
 
-   - The same set of parameters available to:
-     ref:`Default Outlier Detection Algorithm <outlier-detection-imaging>`
-     also applies to this code.
+#. Resampling is handled by a different class, :py:class:`~jwst.resample.resample_spec.ResampleSpecData`
+   instead of :py:class:`~jwst.resample.resample.ResampleData`.
 
-#. Convert input data, as needed, to make sure it is in a format that can be processed
+#. The resampled images are written out to disk with suffix "outlier_s2d" instead of 
+   "outlier_i2d" if the ``save_intermediate_results`` parameter is set to `True`.
 
-   - A :py:class:`~jwst.datamodels.ModelContainer` serves as the basic format 
-     for all processing performed by
-     this step, as each entry will be treated as an element of a stack of images
-     to be processed to identify bad pixels, cosmic rays and other artifacts.
-
-#. If the ``resample_data`` parameter is set to True, resample all input images
-   using :py:class:`~jwst.resample.resample_spec.ResampleSpecData`.
-
-   - Error images are resampled alongside the science data to create
-     approximate error arrays for each resampled exposure.
-   - The resampled data are written out to disk with suffix "outlier_s2d"
-     if the ``save_intermediate_results`` parameter is set to `True`.
-
-#. Create a median image from the resampled exposures, or directly from
-   the input exposures if ``resample_data`` is set to False.
-
-   - The error images for each exposure are also median-combined.
-   - The median datamodel, with ``data`` and ``err`` extensions, is
-     written to disk with suffix "median" if the ``save_intermediate_results``
-     parameter is set to `True`.
-
-#. If ``resample_data`` is set to True, blot the median image to match
-   each original input image.
-
-   - The median error image is also blotted to match the input.
-   - Resampled/blotted images are written out to disk if the ``save_intermediate_results``
-     parameter is set to `True`.
-
-#. Perform statistical comparison between the median image and the original image
-   to identify outliers.
-
-   - Signal-to-noise thresholding uses the median error image, rather than the
-     input error image, in order to better identify outliers that have both
-     high data values and high error values in the input exposures.
-
-#. Update input data model DQ arrays with mask of detected outliers.
-   Update the SCI, ERR, and VAR arrays with NaN values at the outlier
-   locations.
-
+#. The ``in_memory`` parameter has no effect, and all operations are performed in memory.
 
 .. automodapi:: jwst.outlier_detection.spec
