@@ -30,7 +30,14 @@ def to_container(model):
                 'var_poisson', 'var_rnoise', 'var_flat'
         ]:
             try:
-                setattr(image, attribute, model.getarray_noinit(attribute)[plane])
+                arr = model.getarray_noinit(attribute)
+                if arr.ndim == 3:
+                    setattr(image, attribute, arr[plane])
+                elif arr.ndim == 2:
+                    setattr(image, attribute, arr)
+                else:
+                    msg = f"Unexpected array shape for extension {attribute}: {arr.shape}"
+                    raise ValueError(msg)
             except AttributeError:
                 pass
         image.update(model)
