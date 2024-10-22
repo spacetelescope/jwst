@@ -159,7 +159,7 @@ class OutlierDetectionStep(Step):
             return self.mode
 
         # guess mode from input type
-        if isinstance(input_models, (str, dict)):
+        if isinstance(input_models, (str, dict, list)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Select which version of OutlierDetection
@@ -202,6 +202,8 @@ class OutlierDetectionStep(Step):
         try:   
             if isinstance(input_models, ModelLibrary):
                 asn_id = input_models.asn["asn_id"]
+            elif isinstance(input_models, ModelContainer):
+                asn_id = input_models.asn_table["asn_id"]
             else:
                 asn_id = input_models.meta.asn_table.asn_id
         except (AttributeError, KeyError):
@@ -223,7 +225,7 @@ class OutlierDetectionStep(Step):
     
     def _set_status(self, input_models, status):
         # this might be called with the input which might be a filename or path
-        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary)):
+        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
             input_models = datamodels.open(input_models)
 
         record_step_status(input_models, "outlier_detection", status)
