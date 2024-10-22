@@ -2434,6 +2434,12 @@ class IFUCubeData():
                 "meta.filename",
             ],
         )
+        # For moving targets, set RA, Dec equal to the average
+        if hasattr(self.input_models_this_cube[0].meta.wcsinfo, "mt_avra"):
+            IFUCube.meta.wcsinfo.mt_ra = self.input_models_this_cube[0].meta.wcsinfo.mt_avra
+            IFUCube.meta.wcsinfo.mt_dec = self.input_models_this_cube[0].meta.wcsinfo.mt_avdec
+            IFUCube.meta.target.ra = self.input_models_this_cube[0].meta.wcsinfo.mt_avra
+            IFUCube.meta.target.dec = self.input_models_this_cube[0].meta.wcsinfo.mt_avdec
 
     # ********************************************************************************
     def find_ra_dec_offset(self, filename):
