@@ -2,8 +2,7 @@
 """
 import logging
 
-from collections import OrderedDict
-from collections.abc import Callable
+from collections import defaultdict
 
 from stdatamodels.properties import merge_tree
 from stdatamodels.jwst.datamodels import MultiExposureModel
@@ -31,7 +30,7 @@ def exp_to_source(inputs):
         instance contains slits belonging to the same source.
         The key is the ID of each source, i.e. ``source_id``.
     """
-    result = DefaultOrderedDict(MultiExposureModel)
+    result = defaultdict(MultiExposureModel)
 
     for exposure in inputs:
         log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
@@ -111,47 +110,3 @@ def multislit_to_container(inputs):
         containers[id] = SourceModelContainer(containers[id])
 
     return containers
-
-
-class DefaultOrderedDict(OrderedDict):
-    # Source http://stackoverflow.com/a/6190500/562769
-    def __init__(self, default_factory=None, *a, **kw):
-        if (default_factory is not None and
-                not isinstance(default_factory, Callable)):
-            raise TypeError('first argument must be callable')
-        OrderedDict.__init__(self, *a, **kw)
-        self.default_factory = default_factory
-
-    def __getitem__(self, key):
-        try:
-            return OrderedDict.__getitem__(self, key)
-        except KeyError:
-            return self.__missing__(key)
-
-    def __missing__(self, key):
-        if self.default_factory is None:
-            raise KeyError(key)
-        self[key] = value = self.default_factory()
-        return value
-
-    def __reduce__(self):
-        if self.default_factory is None:
-            args = tuple()
-        else:
-            args = self.default_factory,
-        return type(self), args, None, None, self.items()
-
-    def copy(self):
-        return self.__copy__()
-
-    def __copy__(self):
-        return type(self)(self.default_factory, self)
-
-    def __deepcopy__(self, memo):
-        import copy
-        return type(self)(self.default_factory,
-                          copy.deepcopy(self.items()))
-
-    def __repr__(self):
-        return 'OrderedDefaultDict(%s, %s)' % (self.default_factory,
-                                               OrderedDict.__repr__(self))
