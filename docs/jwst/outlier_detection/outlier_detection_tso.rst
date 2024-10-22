@@ -1,39 +1,39 @@
 .. _outlier-detection-tso:
 
-Outlier Detection for TSO Data
-==============================
+Time-Series Observations (TSO) Data
+===================================
 
-Time-series observations (TSO) result in input data stored as a 3D CubeModel
-where each plane in the cube represents a separate integration without changing the
-pointing.  Normal imaging data benefit from combining all integrations into a
+This module serves as the interface for applying ``outlier_detection`` to time
+series observations.
+
+Normal imaging data benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
 integration to the next.  The outlier detection algorithm, therefore, gets run with 
 a few variations to accomodate the nature of these 3D data.
+A :py:class:`~jwst.datamodels.CubeModel` object serves as the basic format for all
+processing performed by this step. This routine performs the following operations:
 
-#. Input data is converted into a CubeModel (3D data array) if a ModelContainer
+#. Convert input data into a CubeModel (3D data array) if a ModelContainer
    of 2D data arrays is provided.
 
-#. The median image is created without resampling the input data
+#. Do not attempt resampling; data are assumed to be aligned and have an identical WCS.
+   This is true automatically for a CubeModel.
 
-   * The median image is created by combining all planes in the 
-     CubeModel pixel-by-pixel using a rolling-median algorithm, in order
-     to flag outliers integration-by-integration but preserve real time variability.
-   * The ``rolling_window_width`` parameter specifies the number of integrations over
-     which to compute the median. The default is 25. If the number of integrations
-     is less than or equal to ``rolling_window_width``, a simple median is used instead.
-   * The ``maskpt`` parameter sets the percentage of the weight image values to
-     use, and any pixel with a weight below this value gets flagged as "bad" and
-     ignored when the median is taken.
-   * The rolling-median CubeModel (3D data array) is written out to disk as `_<asn_id>_median.fits`
-     if the ``save_intermediate_results`` parameter is set to True.
-   * All integrations are aligned already, so no resampling or shifting needs to be performed
+#. Apply a bad pixel mask to the input data based on the input DQ arrays and the ``good_bits``
+   parameter.
 
-#. A matched median gets created by combining the single median frame with the 
-   noise model for each input integration.
+#. Compute a median cube by combining all planes in the CubeModel pixel-by-pixel using a
+   rolling-median algorithm, in order to flag outliers integration-by-integration but
+   preserve real time variability. The ``rolling_window_width`` parameter specifies the
+   number of integrations over which to compute the median.
 
-#. A statistical comparison is performed between the matched median with each input integration.  
+#. If the ``save_intermediate_results`` parameter is set to True, write the rolling-median
+   CubeModel to disk with the suffix ``_median.fits``.
 
-#. The input data model DQ arrays are updated with the mask of detected outliers.
+#. Perform a statistical comparison frame-by-frame between the rolling-median cube and 
+   the input data. The formula used is the same as for imaging data without resampling:
+   
+   .. math:: | image\_input - image\_median | > SNR * input\_err
 
-
-.. automodapi:: jwst.outlier_detection.tso
+#. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
+   of identified outliers.
