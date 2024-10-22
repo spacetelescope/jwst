@@ -148,8 +148,8 @@ class MasterBackgroundStep(Step):
 
                     # If requested, apply a moving-median boxcar filter to the master background spectrum
                     # Round down even kernel sizes because only odd kernel sizes are supported.
-                    if self.median_kernal % 2 == 0:
-                        self.median_kernal -= 1
+                    if self.median_kernel % 2 == 0:
+                        self.median_kernel -= 1
                         self.log.info('Even median filter kernels are not supported.'
                                       f'Rounding the median kernel size down to {self.median_kernel}.')
                     
