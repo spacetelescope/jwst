@@ -44,5 +44,5 @@ This routine performs the following operations:
 #. Select outliers by flagging those normalized minimum values larger than the ``threshold_percent``
    parameter.
 
-#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+#. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.

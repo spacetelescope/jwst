@@ -29,7 +29,8 @@ class OutlierDetectionStep(Step):
     Input images can be listed in an input association file or dictionary,
     or already opened with a ModelContainer or ModelLibrary.
     DQ arrays are modified in place.
-    SCI, ERR, and VAR arrays are updated with NaN values matching the DQ flags.
+    SCI, ERR, VAR_RNOISE, VAR_FLAT, and VAR_POISSON arrays are updated with
+    NaN values matching the DQ flags.
 
     Parameters
     -----------

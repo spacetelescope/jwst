@@ -1,4 +1,4 @@
 Reference Files
 ===============
 
-The ``outlier_detection`` step uses the PARS-OUTLIERDETECTIONSTEP parameter reference file.
+The ``outlier_detection`` does not use any reference files.

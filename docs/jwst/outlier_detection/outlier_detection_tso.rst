@@ -35,5 +35,5 @@ processing performed by this step. This routine performs the following operation
    
    .. math:: | image\_input - image\_median | > SNR * input\_err
 
-#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+#. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.

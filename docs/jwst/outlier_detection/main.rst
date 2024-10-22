@@ -38,5 +38,5 @@ input data:
 #. Instantiate and run outlier detection class determined for the exposure type
    using parameter values interpreted from inputs.
 
-#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+#. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.

@@ -79,7 +79,7 @@ This routine performs the following operations:
      cosmic rays often extend across several pixels, the adjacent pixels make
      use of a slightly lower SNR threshold.
 
-#. Update DQ arrays with flags and set SCI, ERR, and VAR arrays to NaN at the location
+#. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.
 
 Memory Saving Options
