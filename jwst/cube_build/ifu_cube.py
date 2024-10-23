@@ -679,6 +679,8 @@ class IFUCubeData():
                         linear = 0
                         if self.linear_wavelength:
                             linear = 1
+                        if debug_cube_index >= 0:
+                            log.info(f"Input filename: {input_model.meta.filename}")
                         result = cube_wrapper_driz(instrument, flag_dq_plane,
                                                    start_region, end_region,
                                                    self.overlap_partial, self.overlap_full,

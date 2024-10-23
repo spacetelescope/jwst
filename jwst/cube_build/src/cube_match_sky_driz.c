@@ -287,7 +287,7 @@ int match_driz(double *xc, double *yc, double *zc,
 		// Keep print statement in code - used for debugging
 		if (index_cube == debug_cube_index){
 		  printf("spaxel, flux, x, y [count starting at 0]  %i %f %f %f  \n ", index_cube,
-			 x_det[k], y_det[k], flux[k]);
+			 flux[k], x_det[k], y_det[k]);
 		}
 		
 		
