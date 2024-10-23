@@ -89,7 +89,7 @@ class DataTypes():
             self.output_name = 'Temp'
             self.input_models = input_models
             if not single:  # find the name of the output file from the association
-                self.output_name = input_models.meta.asn_table.products[0].name
+                self.output_name = input_models.asn_table["products"][0]["name"]
         else:
             # close files opened above
             self.close()
