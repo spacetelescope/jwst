@@ -25,6 +25,11 @@ class RefPixStep(Step):
         ovr_corr_mitigation_ftr = float(default=3.0) # Factor to avoid overcorrection of bad reference pixels for IRS2
         preserve_irs2_refpix = boolean(default=False) # Preserve reference pixels in output
         irs2_mean_subtraction = boolean(default=False) # Apply a mean offset subtraction before IRS2 correction
+        use_conv_kernel = boolean(default=False) # For NIR full-frame data, use convolution kernel instead of running median
+        sigreject = float(default=4.0) # Number of sigmas to reject as outliers
+        gaussmooth = float(default=1.0) # Width of Gaussian smoothing kernel to use as a low-pass filter
+        halfwidth = integer(default=30) # Half-width of convolution kernel to build
+        user_supplied_reffile = string(default=None)  # ASDF user-supplied reference file for convolution kernel
     """
 
     reference_file_types = ['refpix']
@@ -81,12 +86,44 @@ class RefPixStep(Step):
 
             else:
                 # Not an NRS IRS2 exposure. Do the normal refpix correction.
+
+                # Get the reference file from CRDS or use user-supplied one
+                if input_model.meta.instrument.name == 'MIRI':
+                    conv_kernel_model = None
+                elif 'FULL' not in input_model.meta.subarray.name:
+                    conv_kernel_model = None
+                    self.log.info('Optimized Convolution Kernel not applied for subarray data')
+                else:
+                    if not self.use_conv_kernel:
+                        conv_kernel_model = None
+                    else:
+                        if self.user_supplied_reffile is None:
+                            conv_kernel_ref_filename = self.get_reference_file(result, 'refpix')
+                            if conv_kernel_ref_filename == 'N/A':
+                                self.log.warning('No reference file found for the optimized convolution kernel.')
+                                self.log.warning('REFPIX step will use a running median')
+                                conv_kernel_model = None
+                            else:
+                                self.log.info('Using CRDS reference file: {}'.format(conv_kernel_ref_filename))
+                                conv_kernel_model = datamodels.ConvKernelModel(conv_kernel_ref_filename)
+                        else:
+                            self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
+                            conv_kernel_model = datamodels.ConvKernelModel(self.user_supplied_reffile)
+
+                conv_kernel_params = {
+                    'use_conv_kernel': self.use_conv_kernel,
+                    'conv_kernel_model': conv_kernel_model,
+                    'sigreject': self.sigreject,
+                    'gaussmooth': self.gaussmooth,
+                    'halfwidth': self.halfwidth
+                }
                 status = reference_pixels.correct_model(result,
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
                                                         self.side_smoothing_length,
                                                         self.side_gain,
-                                                        self.odd_even_rows)
+                                                        self.odd_even_rows,
+                                                        conv_kernel_params)
 
                 if status == reference_pixels.REFPIX_OK:
                     result.meta.cal_step.refpix = 'COMPLETE'
