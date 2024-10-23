@@ -97,14 +97,14 @@ class Coron3Pipeline(Pipeline):
 
         # This asn_id assignment is important as it allows outlier detection
         # to know the asn_id since that step receives the cube as input.
-        self.asn_id = input_models.meta.asn_table.asn_id
+        self.asn_id = input_models.asn_table["asn_id"]
 
         # Store the output file for future use
-        self.output_file = input_models.meta.asn_table.products[0].name
+        self.output_file = input_models.asn_table["products"][0]["name"]
 
         # Find all the member types in the product
         members_by_type = defaultdict(list)
-        prod = input_models.meta.asn_table.products[0].instance
+        prod = input_models.asn_table["products"][0]
 
         for member in prod['members']:
             members_by_type[member['exptype'].lower()].append(member['expname'])
@@ -225,7 +225,7 @@ class Coron3Pipeline(Pipeline):
             model_blender.finalize_model(result)
 
         try:
-            result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
+            result.meta.asn.pool_name = input_models.asn_pool_name
             result.meta.asn.table_name = op.basename(user_input)
         except AttributeError:
             self.log.debug('Cannot set association information on final')

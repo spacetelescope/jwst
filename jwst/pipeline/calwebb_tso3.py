@@ -72,11 +72,11 @@ class Tso3Pipeline(Pipeline):
             return
 
         if self.output_file is None:
-            self.output_file = input_models.meta.asn_table.products[0].name
+            self.output_file = input_models.asn_table["products"][0]["name"]
 
         # This asn_id assignment is important as it allows outlier detection
         # to know the asn_id since that step receives the cube as input.
-        self.asn_id = input_models.meta.asn_table.asn_id
+        self.asn_id = input_models.asn_table["asn_id"]
         self.outlier_detection.mode = 'tso'
 
         # Input may consist of multiple exposures, so loop over each of them
@@ -100,13 +100,13 @@ class Tso3Pipeline(Pipeline):
                 original_filename = cube.meta.filename
 
                 # ensure output filename will not have duplicate asn_id
-                if "_"+input_models.meta.asn_table.asn_id in original_filename:
+                if "_"+self.asn_id in original_filename:
                     original_filename = original_filename.replace(
-                        "_"+input_models.meta.asn_table.asn_id, ''
+                        "_"+self.asn_id, ''
                     )
                 self.save_model(
                     cube, output_file=original_filename, suffix='crfints',
-                    asn_id=input_models.meta.asn_table.asn_id
+                    asn_id=self.asn_id
                 )
                 cube.meta.filename = original_filename
             input_models[i] = cube
@@ -173,7 +173,7 @@ class Tso3Pipeline(Pipeline):
                 phot_result_list.append(self.white_light(result))
 
             # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
+            x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
