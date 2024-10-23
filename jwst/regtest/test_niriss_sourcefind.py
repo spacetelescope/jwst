@@ -24,6 +24,9 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
             'minsep_fwhm': 2.5,
             'sigma_radius': 2.5,
         })
+    output_name = f"{stem}_{starfinder}_cat.ecsv"
+    catalog.write(output_name, format='ascii.ecsv')
+    rtdata.output = output_name
     rtdata.get_truth(f"truth/test_niriss_sourcefind/{stem}_{starfinder}_cat.ecsv")
     catalog_truth = ascii.read(rtdata.truth)
 
