@@ -1,8 +1,6 @@
 import logging
 import warnings
 
-from stdatamodels.jwst import datamodels
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -91,39 +89,11 @@ def create_background_from_multislit(input_model):
     master_bkg: `~jwst.datamodels.CombinedSpecModel`
         The 1D master background spectrum created from the inputs.
     """
-    from ..resample import resample_spec_step
-    from ..extract_1d import extract_1d_step
     from ..combine_1d.combine1d import combine_1d_spectra
-
-    log.info('Creating MOS master background from background slitlets')
-
-    # Copy dedicated background slitlets to a temporary model
-    bkg_model = datamodels.MultiSlitModel()
-    bkg_model.update(input_model)
-    slits = []
-    for slit in input_model.slits:
-        if is_background_msa_slit(slit):
-            log.info(f'Using background slitlet {slit.source_name}')
-            slits.append(slit)
-
-    if len(slits) == 0:
-        log.warning('No background slitlets found; skipping master bkg correction')
-        return None
-
-    bkg_model.slits.extend(slits)
-
-    # Apply resample_spec and extract_1d to all background slitlets
-    log.info('Applying resampling and 1D extraction to background slits')
-    resamp = resample_spec_step.ResampleSpecStep.call(bkg_model)
-    x1d = extract_1d_step.Extract1dStep.call(resamp)
 
     # Call combine_1d to combine the 1D background spectra
     log.info('Combining 1D background spectra into master background')
-    master_bkg = combine_1d_spectra(x1d, exptime_key='exposure_time')
-
-    del bkg_model
-    del resamp
-    del x1d
+    master_bkg = combine_1d_spectra(input_model, exptime_key='exposure_time')
 
     return master_bkg
 

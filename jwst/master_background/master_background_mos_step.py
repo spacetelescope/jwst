@@ -9,6 +9,9 @@ from ..barshadow import barshadow_step
 from ..flatfield import flat_field_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
+from ..pixel_replace import pixel_replace_step
+from ..resample import resample_spec_step
+from ..extract_1d import extract_1d_step
 from ..stpipe import Pipeline
 
 __all__ = ['MasterBackgroundMosStep']
@@ -60,6 +63,9 @@ class MasterBackgroundMosStep(Pipeline):
         'pathloss': pathloss_step.PathLossStep,
         'barshadow': barshadow_step.BarShadowStep,
         'photom': photom_step.PhotomStep,
+        'pixel_replace': pixel_replace_step.PixelReplaceStep,
+        'resample_spec': resample_spec_step.ResampleSpecStep,
+        'extract_1d': extract_1d_step.Extract1dStep,
     }
 
     # No need to prefetch. This will have been done by the parent step.
@@ -174,6 +180,29 @@ class MasterBackgroundMosStep(Pipeline):
                 del pars[par]
             getattr(self, step).update_pars(pars)
 
+    def _set_steps_params(self):
+        """Get substep parameters to pass on"""
+        steps = ['pixel_replace', 'resample_spec', 'extract_1d']
+
+        for step in steps:
+            pars = getattr(self, step).get_pars()
+            getattr(self, step).update_pars(pars)
+
+    def _extend_bg_slits(self, pre_calibrated):
+        # Copy dedicated background slitlets to a temporary model
+        bkg_model = datamodels.MultiSlitModel()
+        bkg_model.update(pre_calibrated)
+        slits = []
+        for slit in pre_calibrated.slits:
+            if nirspec_utils.is_background_msa_slit(slit):
+                self.log.info(f'Using background slitlet {slit.source_name}')
+                slits.append(slit)
+        if len(slits) == 0:
+            self.log.warning('No background slitlets found; skipping master bkg correction')
+            return None
+        bkg_model.slits.extend(slits)
+        return bkg_model
+
     def _classify_slits(self, data):
         """Determine how many Slits are background and source types
 
@@ -245,8 +274,18 @@ class MasterBackgroundMosStep(Pipeline):
                 self.log.debug(f'User background provided {user_background}')
                 master_background = user_background
             else:
-                self.log.debug('Calculating 1D master background')
-                master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
+                self.log.info('Creating MOS master background from background slitlets')
+                self._set_steps_params()
+                bkg_model = self._extend_bg_slits(pre_calibrated)
+                if bkg_model is not None:
+                    bkg_model = self.pixel_replace(bkg_model)
+                    bkg_model = self.resample_spec(bkg_model)
+                    bkg_model = self.extract_1d(bkg_model)
+                    # Call combine_1d to combine the 1D background spectra
+                    master_background = nirspec_utils.create_background_from_multislit(bkg_model)
+                    del bkg_model
+                else:
+                    master_background = None
             if master_background is None:
                 self.log.debug('No master background could be calculated. Returning None')
                 return None, None
