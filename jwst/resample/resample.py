@@ -88,12 +88,6 @@ class ResampleData:
         self.input_pixscale0 = None  # computed pixel scale of the first image (deg)
         self._recalc_pscale_ratio = pscale is not None
 
-        # TODO: self._iscales is used to store computed iscale for each
-        # input model.
-        # It is used only by self.resample_variance_arrays().
-        # if that method no longer needs to be supported, we can remove this.
-        self._iscales = {}
-
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
@@ -318,7 +312,6 @@ class ResampleData:
                 img.area = img.area
 
             iscale = self._get_intensity_scale(img)
-            self._iscales[index] = iscale
             log.debug(f'Using intensity scale iscale={iscale}')
 
             inwht = resample_utils.build_driz_weight(
@@ -477,7 +470,6 @@ class ResampleData:
                     blender.accumulate(img)
 
                 iscale = self._get_intensity_scale(img)
-                self._iscales[idx] = iscale
                 log.debug(f'Using intensity scale iscale={iscale}')
 
                 inwht = resample_utils.build_driz_weight(
@@ -700,53 +692,6 @@ class ResampleData:
             self._total_weight_pn_var,
             self._total_weight_flat_var,
         )
-
-    def resample_variance_arrays(self, output_model, input_models):
-        """Resample variance arrays from input_models to the output_model.
-
-        Variance images from each input model are resampled individually and
-        added to a weighted sum. If ``weight_type`` is 'ivm', the inverse of the
-        resampled read noise variance is used as the weight for all the variance
-        components. If ``weight_type`` is 'exptime', the exposure time is used.
-
-        The output_model is modified in place.
-        """
-        self._init_variance_arrays()
-        output_shape = self.output_array_shape
-        log.info("Resampling variance components")
-
-        with input_models:
-            for i, model in enumerate(input_models):
-                # compute pixmap and inwht arrays common to all variance arrays:
-                inwht = resample_utils.build_driz_weight(
-                    model,
-                    weight_type=self.weight_type,  # weights match science
-                    good_bits=self.good_bits,
-                )
-                pixmap = resample_utils.calc_gwcs_pixmap(
-                    model.meta.wcs,
-                    output_model.meta.wcs,
-                    model.data.shape,
-                )
-                in_image_limits = resample_utils._resample_range(
-                    model.data.shape,
-                    model.meta.wcs.bounding_box,
-                )
-                iscale = self._iscales[i]
-                self._resample_variance_arrays(
-                    model=model,
-                    iscale=iscale,
-                    inwht=inwht,
-                    pixmap=pixmap,
-                    in_image_limits=in_image_limits,
-                    output_shape=output_shape,
-                )
-
-                del inwht
-                input_models.shelve(model, i)
-
-            # We now have a sum of the weighted resampled variances.
-            self._compute_resample_variance_totals(output_model)
 
     def _resample_one_variance_array(self, name, input_model, iscale,
                                      inwht, pixmap,

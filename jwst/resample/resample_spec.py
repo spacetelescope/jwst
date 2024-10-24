@@ -78,12 +78,6 @@ class ResampleSpecData(ResampleData):
         self.in_memory = kwargs.get('in_memory', True)
         self._recalc_pscale_ratio = False
 
-        # TODO: self._iscales is used to store computed iscale for each
-        # input model.
-        # It is used only by self.resample_variance_arrays().
-        # if that method no longer needs to be supported, we can remove this.
-        self._iscales = {}
-
         log.info(f"Driz parameter kernel: {self.kernel}")
         log.info(f"Driz parameter pixfrac: {self.pixfrac}")
         log.info(f"Driz parameter fillval: {self.fillval}")
