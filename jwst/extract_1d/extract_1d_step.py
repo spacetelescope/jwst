@@ -4,6 +4,7 @@ from jwst.datamodels import ModelContainer, SourceModelContainer
 
 from ..stpipe import Step
 from . import extract
+from . import psf_extract
 from .soss_extract import soss_extract
 
 __all__ = ["Extract1dStep"]
@@ -52,6 +53,9 @@ class Extract1dStep(Step):
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
+
+    psf_extraction : bool or None
+        If True, a optiminal psf extraction is performed. 
 
     use_source_posn : bool or None
         If True, the source and background extraction positions specified in
@@ -158,6 +162,7 @@ class Extract1dStep(Step):
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
+    psf_extraction = boolean(default=None) # Perform psf extraction
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
@@ -180,7 +185,7 @@ class Extract1dStep(Step):
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel']
+    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel', 'specwcs']
 
     def process(self, input):
         """Execute the step.
@@ -240,6 +245,8 @@ class Extract1dStep(Step):
         else:
             exp_type = None
 
+        print('************ exp_type ************', exp_type)
+        print(isinstance(input_model, ModelContainer)) 
         if self.ifu_rfcorr:
             if exp_type != "MIR_MRS":
                 self.log.warning("The option to apply a residual refringe correction is"
@@ -255,6 +262,17 @@ class Extract1dStep(Step):
                 self.log.warning("The option to change the source type is"
                                  f" not supported for {input_model.meta.exposure.type} data.")
 
+        # Check if doing PSF extraction. Only works on LRS data at this time
+        if self.psf_extraction:
+            # the input_model could be a container or a single model
+            # for now we are assuming a single model of LRS data 
+            print(type(input_model)) # cal file could have other nod position subtracted
+            print(input_model.meta.exposure.type)
+            #psf_ref_name = self.get_reference_file(input_model, 'psf')
+            psf_ref_name = '/Users/morrison/PSF_extract/MIRI_LRS_SLIT_EPSF_20240602_WAVE.fits'
+            specwcs_ref_name = self.get_reference_file(input_model, 'specwcs')
+            psf_extract.psf_extraction(input_model, psf_ref_name, specwcs_ref_name)
+            
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
         if isinstance(input_model, ModelContainer):
@@ -490,6 +508,7 @@ class Extract1dStep(Step):
                     extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
                 else:
+                    print(' **setting up reference files for extract1d') 
                     extract_ref = self.get_reference_file(input_model, 'extract1d')
                     self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
