@@ -10,11 +10,14 @@ from jwst.stpipe import Step
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
-    """Run the calwebb_spec2 pipeline on a NIRSpec lamp exposure."""
+    """Run the calwebb_spec2 pipeline on a NIRSpec lamp exposure.
+
+    Input data has EXP_TYPE = NRS_AUTOWAVE, OPMODE = FIXEDSLIT
+    """
     rtdata = rtdata_module
 
     # Get the input exposure
-    rtdata.get_data('nirspec/lamp/jw84600010001_02101_00004_nrs2_rate.fits')
+    rtdata.get_data('nirspec/lamp/jw01125001001_03104_00010_nrs2_rate.fits')
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["jwst.pipeline.Spec2Pipeline", rtdata.input,
@@ -30,8 +33,7 @@ def run_pipeline(rtdata_module):
 @pytest.mark.parametrize("suffix", [
     "assign_wcs", "extract_2d", "flat_field", "cal", "s2d", "x1d"])
 def test_nirspec_lamp_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
-    """Regression test of the calwebb_spec2 pipeline on a
-       NIRSpec lamp exposure in Fixed-Slit mode."""
+    """Regression test for calwebb_spec2 on NIRSpec lamp in Fixed-Slit mode."""
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
