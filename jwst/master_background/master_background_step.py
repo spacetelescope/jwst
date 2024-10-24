@@ -118,7 +118,7 @@ class MasterBackgroundStep(Step):
                 if self.save_background:
                     asn_id = input_data.meta.asn_table.asn_id
                     self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
-                    
+
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
@@ -153,11 +153,11 @@ class MasterBackgroundStep(Step):
                         self.median_kernel -= 1
                         self.log.info('Even median filter kernels are not supported.'
                                       f'Rounding the median kernel size down to {self.median_kernel}.')
-                    
+
                     if (self.median_kernel > 1):
                         self.log.info(f'Applying moving-median boxcar of width {self.median_kernel}.')
                         master_background.spec[0].spec_table['surf_bright'] = medfilt(
-                            master_background.spec[0].spec_table['surf_bright'], 
+                            master_background.spec[0].spec_table['surf_bright'],
                             kernel_size=[self.median_kernel]
                         )
 

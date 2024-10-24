@@ -242,9 +242,9 @@ class OutputSpectrumModel:
                 weight[s, k] = in_spec.weight[i]
                 count[s, k] = 1.
 
-        (flux, flux_error, surf_bright, sb_error, 
-         weight, count) = self.combine_spectra(flux, flux_error, 
-                                               surf_bright, sb_error, 
+        (flux, flux_error, surf_bright, sb_error,
+         weight, count) = self.combine_spectra(flux, flux_error,
+                                               surf_bright, sb_error,
                                                weight, count, sigma_clip=sigma_clip)
 
         if n_nan > 0:
@@ -278,7 +278,7 @@ class OutputSpectrumModel:
             self.count = self.count[index]
         del index
 
-    def combine_spectra(self, flux, flux_error, surf_bright, sb_error, 
+    def combine_spectra(self, flux, flux_error, surf_bright, sb_error,
                         weight, count, sigma_clip=None):
         """Combine accumulated spectra.
 
@@ -333,7 +333,7 @@ class OutputSpectrumModel:
                 med_flux = np.nanmedian(flux_2d, axis=0)
                 mad = np.nanmedian(np.abs(flux_2d - med_flux))
 
-                # Clip any outlier pixels in the input spectra 
+                # Clip any outlier pixels in the input spectra
                 clipped = np.abs(flux * weight - med_flux) > sigma_clip * mad
                 flux[clipped] = np.nan
                 flux_error[clipped] = np.nan
@@ -353,9 +353,9 @@ class OutputSpectrumModel:
             count = np.nansum(count, axis=0)
 
         self.normalized = True
-        
+
         return flux, flux_error, surf_bright, sb_error, sum_weight, count
-        
+
 
     def create_output_data(self):
         """Create the output data.

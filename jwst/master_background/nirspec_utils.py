@@ -131,18 +131,18 @@ def create_background_from_multislit(input_model, sigma_clip=3, median_kernel=1)
     log.info('Combining 1D background spectra into master background')
     master_bkg = combine_1d_spectra(
         x1d, exptime_key='exposure_time', sigma_clip=sigma_clip)
-    
+
     # If requested, apply a moving-median boxcar filter to the master background spectrum
     # Round down even kernel sizes because only odd kernel sizes are supported.
     if median_kernel % 2 == 0:
         median_kernel -= 1
         log.info('Even median filter kernels are not supported.'
                         f'Rounding the median kernel size down to {median_kernel}.')
-    
+
     if (median_kernel > 1):
         log.info(f'Applying moving-median boxcar of width {median_kernel}.')
         master_bkg.spec[0].spec_table['surf_bright'] = medfilt(
-            master_bkg.spec[0].spec_table['surf_bright'], 
+            master_bkg.spec[0].spec_table['surf_bright'],
             kernel_size=[median_kernel]
         )
 
