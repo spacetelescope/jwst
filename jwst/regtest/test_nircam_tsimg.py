@@ -1,8 +1,6 @@
 from pathlib import Path
 import pytest
-
 from astropy.io.fits.diff import FITSDiff
-from astropy.table import Table, setdiff
 
 from jwst.lib import engdb_tools
 from jwst.lib.set_telescope_pointing import add_wcs
@@ -18,8 +16,7 @@ def run_pipelines(rtdata_module):
 
     # Run the calwebb_tso-image2 pipeline on each of the 2 inputs
     rate_files = [
-        "nircam/tsimg/jw00312006001_02102_00001-seg001_nrcb1_rateints.fits",
-        "nircam/tsimg/jw00312006001_02102_00001-seg002_nrcb1_rateints.fits"
+        "nircam/tsimg/jw01068006001_03103_00001-seg001_nrcb1_rateints.fits",
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
@@ -28,7 +25,7 @@ def run_pipelines(rtdata_module):
 
     # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
-    rtdata.get_data("nircam/tsimg/jw00312-o006_20191225t115310_tso3_001_asn.json")
+    rtdata.get_data("nircam/tsimg/jw01068-o006_20240401t151322_tso3_00002_asn.json")
     args = ["calwebb_tso3", rtdata.input]
     Step.from_cmdline(args)
 
@@ -40,8 +37,8 @@ def run_pipelines(rtdata_module):
 def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-image2 pipeline performed on NIRCam TSIMG data."""
     rtdata = run_pipelines
-    rtdata.input = "jw00312006001_02102_00001-seg001_nrcb1_rateints.fits"
-    output = "jw00312006001_02102_00001-seg001_nrcb1_" + suffix + ".fits"
+    rtdata.input = "jw01068006001_03103_00001-seg001_nrcb1_rateints.fits"
+    output = "jw01068006001_03103_00001-seg001_nrcb1_" + suffix + ".fits"
     rtdata.output = output
 
     rtdata.get_truth("truth/test_nircam_tsimg_stage23/" + output)
@@ -51,17 +48,13 @@ def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
-def test_nircam_tsimage_stage3_phot(run_pipelines):
+def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
     rtdata = run_pipelines
-    rtdata.input = "jw00312-o006_20191225t115310_tso3_001_asn.json"
-    rtdata.output = "jw00312-o006_t001_nircam_f210m-clear-sub64p_phot.ecsv"
-    rtdata.get_truth("truth/test_nircam_tsimg_stage23/jw00312-o006_t001_nircam_f210m-clear-sub64p_phot.ecsv")
+    rtdata.input = "jw01068-o006_20240401t151322_tso3_00002_asn.json"
+    rtdata.output = "jw01068-o006_t004_nircam_f150w2-f164n-sub64p_phot.ecsv"
+    rtdata.get_truth("truth/test_nircam_tsimg_stage23/jw01068-o006_t004_nircam_f150w2-f164n-sub64p_phot.ecsv")
 
-    table = Table.read(rtdata.output)
-    table_truth = Table.read(rtdata.truth)
-
-    # setdiff returns a table of length zero if there is no difference
-    assert len(setdiff(table, table_truth)) == 0
+    assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
 @pytest.mark.bigdata
