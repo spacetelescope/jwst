@@ -20,6 +20,9 @@ def run_tso_spec2_pipeline(rtdata_module, request):
     rtdata = rtdata_module
 
     # Get the input exposure
+    # Input data is from jw02420001001_04101_00001-seg001_nrs1_rateints.fits,
+    # modified to truncate the data to the first 100 integrations, for
+    # faster processing.
     rtdata.get_data('nirspec/tso/jw02420001001_04101_00001-first100_nrs1_rateints.fits')
 
     # Run the calwebb_spec2 pipeline;

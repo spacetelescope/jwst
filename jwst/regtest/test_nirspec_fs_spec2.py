@@ -130,7 +130,8 @@ def test_nirspec_fs_spec2_pixel_replace(run_pipeline_pixel_replace, fitsdiff_def
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+    basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
+    with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -148,7 +149,8 @@ def test_pathloss_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+    basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
+    with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -168,7 +170,8 @@ def test_pathloss_inverse(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+    basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
+    with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
         pls.source_type = 'extended'
         pls.run(data)
@@ -189,7 +192,7 @@ def test_nirspec_fs_rateints_spec2(rtdata_module):
     """
     rtdata = rtdata_module
 
-    rtdata.get_data("nirspec/fs/jw01128004001_03102_00001_nrs1_new_rateints.fits")
+    rtdata.get_data("nirspec/fs/jw01128004001_03102_00001_nrs1_rateints.fits")
 
     # Run the spec2 pipeline on a (3D) _rateints file
     args = ["calwebb_spec2", rtdata.input]
