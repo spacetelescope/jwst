@@ -1,0 +1,1 @@
+Fixed ami/oifits.py to use standard error of the mean, rather than standard deviation, when estimating errors for interferometric observables.
