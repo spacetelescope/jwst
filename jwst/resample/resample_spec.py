@@ -136,7 +136,6 @@ class ResampleSpecData(ResampleData):
                 self.pscale_ratio = nominal_area / output_pix_area
             else:
                 self.pscale_ratio = 1.0
-
             # Set the output shape if specified
             if output_shape is not None:
                 self.output_wcs.array_shape = output_shape[::-1]
@@ -174,23 +173,30 @@ class ResampleSpecData(ResampleData):
             else:
                 output_pix_area = None
 
+        self.output_pix_area = output_pix_area
+        self.output_array_shape = tuple(self.output_wcs.array_shape)
+        log.debug(f"Output mosaic size: {self.output_array_shape}")
+
         if pscale is None:
             log.info(f'Specified output pixel scale ratio: {self.pscale_ratio}.')
             pscale = compute_spectral_pixel_scale(
                 self.output_wcs, disp_axis=disp_axis)
             log.info(f'Computed output pixel scale: {3600.0 * pscale:.5g} arcsec.')
 
-        # Output model
-        self.blank_output = datamodels.SlitModel(tuple(self.output_wcs.array_shape))
+    def _create_output_model(self, ref_input_model=None):
+        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        output_model = datamodels.SlitModel(None)
 
         # update meta data and wcs
-        self.blank_output.update(input_models[0])
-        self.blank_output.meta.wcs = self.output_wcs
-        if output_pix_area is not None:
-            self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
-            self.blank_output.meta.photometry.pixelarea_arcsecsq = (
-                output_pix_area * np.rad2deg(3600)**2)
-
+        if ref_input_model is not None:
+            output_model.update(ref_input_model)
+        output_model.meta.wcs = self.output_wcs
+        if self.output_pix_area is not None:
+            output_model.meta.photometry.pixelarea_steradians = self.output_pix_area
+            output_model.meta.photometry.pixelarea_arcsecsq = (
+                self.output_pix_area * np.rad2deg(3600)**2
+            )
+        return output_model
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None):
         """
