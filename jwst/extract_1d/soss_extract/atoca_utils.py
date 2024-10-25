@@ -237,17 +237,13 @@ def oversample_grid(wave_grid, n_os):
     return np.unique(wave_grid_os)
 
 
-def extrapolate_grid(wave_grid, wave_range, poly_ord):
-    """
-    TODO: It looks like these while loops and if statements can be removed and
-    replaced by something that operates on the whole array at once
-    e.g. the p.linspace function in numpy.polynomial.polynomial (see link below)
-    TODO: np.polyfit is considered legacy now, should be replaced by
-    https://numpy.org/doc/stable/reference/routines.polynomials-package.html
-
-    Extrapolate the given 1D wavelength grid to cover a given range of values
+def extrapolate_grid(wave_grid, wave_range, poly_ord=1):
+    """Extrapolate the given 1D wavelength grid to cover a given range of values
     by fitting the derivative with a polynomial of a given order and using it to
     compute subsequent values at both ends of the grid.
+
+    TODO: np.polyfit is considered legacy now, should be replaced by
+    https://numpy.org/doc/stable/reference/routines.polynomials-package.html
 
     Parameters
     ----------
@@ -263,11 +259,13 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
     wave_grid_ext : array[float]
         The extrapolated 1D wavelength grid.
     """
-
     # Define delta_wave as a function of wavelength by fitting a polynomial.
     delta_wave = np.diff(wave_grid)
     pars = np.polyfit(wave_grid[:-1], delta_wave, poly_ord)
     f_delta = np.poly1d(pars)
+
+    # Set a minimum delta value to avoid running forever
+    min_delta = delta_wave.min()/10
 
     # Extrapolate out-of-bound values on the left-side of the grid.
     grid_left = []
@@ -278,12 +276,14 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
 
         # Iterate until the end of wave_range is reached.
         while True:
-            next_val = grid_left[-1] - f_delta(grid_left[-1])
+            next_delta = f_delta(grid_left[-1])
+            next_val = grid_left[-1] - next_delta
 
+            grid_left.append(next_val)
             if next_val < wave_range[0]:
                 break
-            else:
-                grid_left.append(next_val)
+            if next_delta < min_delta:
+                raise RuntimeError('Extrapolation failed to converge.')
 
         # Sort extrapolated vales (and keep only unique).
         grid_left = np.unique(grid_left)
@@ -297,13 +297,15 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
 
         # Iterate until the end of wave_range is reached.
         while True:
-            next_val = grid_right[-1] + f_delta(grid_right[-1])
+            next_delta = f_delta(grid_right[-1])
+            next_val = grid_right[-1] + next_delta
 
+            grid_right.append(next_val)
             if next_val > wave_range[-1]:
                 break
-            else:
-                grid_right.append(next_val)
-
+            if next_delta < min_delta:
+                raise RuntimeError('Extrapolation failed to converge.')
+                
         # Sort extrapolated vales (and keep only unique).
         grid_right = np.unique(grid_right)
 

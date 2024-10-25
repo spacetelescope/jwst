@@ -160,3 +160,25 @@ def test_oversample_irregular(os_factor):
         au.oversample_grid(fib_unq, n_os[:-1])
 
 
+@pytest.mark.parametrize("wave_range", [(2.1, 2.9), (1.8, 3.5)])
+def test_extrapolate_grid(wave_range):
+
+    # give wavelengths some non-linearity
+    n=50
+    wavelengths = np.linspace(2.0, 3.0, n) + np.sin(np.linspace(0, np.pi/2, n))
+    poly_ord = 1
+    extrapolated = au.extrapolate_grid(wavelengths, wave_range, poly_ord)
+    
+    assert extrapolated.max() > wave_range[1]
+    assert extrapolated.min() < wave_range[0]
+    assert np.all(extrapolated[1:] >= extrapolated[:-1])
+
+
+def test_extrapolate_catch_failed_converge():
+    # give wavelengths some non-linearity
+    n=50
+    wavelengths = np.linspace(2.0, 3.0, n) + np.sin(np.linspace(0, np.pi/2, n))
+    wave_range = wavelengths.min(), wavelengths.max()+2.0
+    poly_ord = 1
+    with pytest.raises(RuntimeError):
+        au.extrapolate_grid(wavelengths, wave_range, poly_ord)
