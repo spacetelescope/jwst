@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from scipy.interpolate import make_interp_spline
 from scipy.interpolate import UnivariateSpline, CubicSpline
 
 from stdatamodels.jwst import datamodels
@@ -12,7 +13,7 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
 from .atoca import ExtractionEngine, MaskOverlapError
-from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map,
+from .atoca_utils import (WebbKernel, grid_from_map,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 from .pastasoss import get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
@@ -80,10 +81,13 @@ def get_ref_file_args(ref_files):
     for i, throughput in enumerate(pastasoss_ref.throughputs):
         throughput_index_dict[throughput.spectral_order] = i
 
-    throughput_o1 = ThroughputSOSS(pastasoss_ref.throughputs[throughput_index_dict[1]].wavelength[:],
-                                   pastasoss_ref.throughputs[throughput_index_dict[1]].throughput[:])
-    throughput_o2 = ThroughputSOSS(pastasoss_ref.throughputs[throughput_index_dict[2]].wavelength[:],
-                                   pastasoss_ref.throughputs[throughput_index_dict[2]].throughput[:])
+    # TODO: check that replacing legacy interp1d with make_interp_spline works right
+    throughput_o1 = make_interp_spline(pastasoss_ref.throughputs[throughput_index_dict[1]].wavelength[:],
+                                   pastasoss_ref.throughputs[throughput_index_dict[1]].throughput[:],
+                                   k=3, fill_value=0.0, bounds_error=False)
+    throughput_o2 = make_interp_spline(pastasoss_ref.throughputs[throughput_index_dict[2]].wavelength[:],
+                                   pastasoss_ref.throughputs[throughput_index_dict[2]].throughput[:],
+                                   k=3, fill_value=0.0, bounds_error=False)
 
     # The spectral kernels.
     speckernel_ref = ref_files['speckernel']

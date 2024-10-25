@@ -376,7 +376,6 @@ class _BaseOverlap:
 
         self.kernels = kernels_new
 
-        return
 
     def get_mask_wave(self, i_order):
         """Generate mask bounded by limits of wavelength grid
@@ -1716,9 +1715,9 @@ class ExtractionEngine(_BaseOverlap):
         # else, need hi_i + 1
         k_last[~cond & ~ma] = hi[~cond & ~ma] + 1
 
-        # Generate array of all k_i. Set to -1 if not valid
-        k_n, bad = atoca_utils.arange_2d(k_first, k_last + 1, dtype=int)
-        k_n[bad] = -1
+        # Generate array of all k_i. Set to max value of uint16 if not valid
+        k_n = atoca_utils.arange_2d(k_first, k_last + 1)
+        bad = k_n == np.iinfo(k_n.dtype).max
 
         # Number of valid k per pixel
         n_k = np.sum(~bad, axis=-1)

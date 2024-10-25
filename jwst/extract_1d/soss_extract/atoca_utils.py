@@ -7,7 +7,7 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 """
 
 import numpy as np
-from scipy.sparse import find, diags, csr_matrix
+from scipy.sparse import diags, csr_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
 from scipy.optimize import minimize_scalar, brentq
@@ -16,38 +16,26 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-# ==============================================================================
-# Code for generating indices on the oversampled wavelength grid.
-# ==============================================================================
 
-
-def arange_2d(starts, stops, dtype=None):
-    """Create a 2D array containing a series of ranges. The ranges do not have
-    to be of equal length.
+def arange_2d(starts, stops):
+    """
+    Code for generating indices on the oversampled wavelength grid.
+    Creates a 2D array containing a series of ranges.
+    The ranges do not have to be of equal length.
 
     Parameters
     ----------
-    starts : int or array[int]
+    starts : array[int]
         Start values for each range.
-    stops : int or array[int]
+    stops : array[int]
         End values for each range.
-    dtype : str
-        Type of the output values.
 
     Returns
     -------
-    out : array[int]
-        2D array of ranges.
-    mask : array[bool]
-        Mask indicating valid elements.
+    out : array[uint16]
+        2D array of ranges with invalid values set to max uint16 value, 65535
     """
-
-    # Ensure starts and stops are arrays.
-    starts = np.asarray(starts)
-    stops = np.asarray(stops)
-
-    # Check input for starts and stops is valid.
-    if starts.shape != stops.shape and starts.shape != ():
+    if starts.shape != stops.shape:
         msg = ('Shapes of starts and stops are not compatible, '
                'they must either have the same shape or starts must be scalar.')
         log.critical(msg)
@@ -58,34 +46,25 @@ def arange_2d(starts, stops, dtype=None):
         log.critical(msg)
         raise ValueError(msg)
 
-    # If starts was given as a scalar match its shape to stops.
-    if starts.shape == ():
-        starts = starts * np.ones_like(stops)
-
     # Compute the length of each range.
     lengths = (stops - starts).astype(int)
 
-    # Initialize the output arrays.
+    # Initialize the output arrays with invalid value
     nrows = len(stops)
     ncols = np.amax(lengths)
-    out = np.ones((nrows, ncols), dtype=dtype)
-    mask = np.ones((nrows, ncols), dtype='bool')
+    out = np.ones((nrows, ncols), dtype=np.uint16)*np.iinfo(np.uint16).max
 
     # Compute the indices.
     for irow in range(nrows):
         out[irow, :lengths[irow]] = np.arange(starts[irow], stops[irow])
-        mask[irow, :lengths[irow]] = False
-
-    return out, mask
-
-
-# ==============================================================================
-# Code for converting to a sparse matrix and back.
-# ==============================================================================
+    return out
 
 
 def sparse_k(val, k, n_k):
-    """Transform a 2D array `val` to a sparse matrix.
+    """
+    TODO: ensure test coverage. Probably sufficient to have test for compute_weights
+    in atoca.py
+    Transform a 2D array `val` to a sparse matrix.
 
     Parameters
     ----------
@@ -114,56 +93,11 @@ def sparse_k(val, k, n_k):
     col = k[k >= 0]
     data = val[k >= 0]
 
-    mat = csr_matrix((data, (row, col)), shape=(n_i, n_k))
-
-    return mat
-
-
-def unsparse(matrix, fill_value=np.nan):
-    """Convert a sparse matrix to a 2D array of values and a 2D array of position.
-
-    Parameters
-    ----------
-    matrix : csr_matrix
-        The input sparse matrix.
-    fill_value : float
-        Value to fill 2D array for undefined positions; default to np.nan
-
-    Returns
-    ------
-    out : 2d array
-        values of the matrix. The shape of the array is given by:
-        (matrix.shape[0], maximum number of defined value in a column).
-    col_out : 2d array
-        position of the columns. Same shape as `out`.
-    """
-
-    col, row, val = find(matrix.T)
-    n_row, n_col = matrix.shape
-
-    good_rows, counts = np.unique(row, return_counts=True)
-
-    # Define the new position in columns
-    i_col = np.indices((n_row, counts.max()))[1]
-    i_col = i_col[good_rows]
-    i_col = i_col[i_col < counts[:, None]]
-
-    # Create outputs and assign values
-    col_out = np.ones((n_row, counts.max()), dtype=int) * -1
-    col_out[row, i_col] = col
-    out = np.ones((n_row, counts.max())) * fill_value
-    out[row, i_col] = val
-
-    return out, col_out
-
-
-# ==============================================================================
-# Code for building wavelength grids.
-# ==============================================================================
+    return csr_matrix((data, (row, col)), shape=(n_i, n_k))
 
 
 def get_wave_p_or_m(wave_map, dispersion_axis=1):
-    """ Compute upper and lower boundaries of a pixel map,
+    """Compute upper and lower boundaries of a pixel map,
     given the pixel central value.
     Parameters
     ----------
@@ -209,6 +143,19 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
         Wavelength of top edge for each pixel
     wave_bottom : array[float]
         Wavelength of bottom edge for each pixel
+
+    Notes
+    -----
+    Handling of invalid pixels may lead to unexpected results as follows:
+    Bad pixels are completely ignored when computing pixel-to-pixel differences, so
+    wv_map=[2,4,6,NaN,NaN,12,14,16] will give wave_top=[1,3,5,0,0,9,13,15]
+    because the difference at index 5 was calculated as 12-(12-6)/2=9,
+    i.e., as though index 2 and 5 were next to each other.
+    A human (or a smarter linear interpolation) would figure out the slope is 2 and
+    determine the value of wave_top[5] should most likely be 11.
+
+    TODO: the above note probably doesn't matter in practice, but see if SOSS team wants
+    to change this behavior.
     """
     if dispersion_axis == 1:
         # Simpler to use transpose
@@ -222,25 +169,25 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
     wave_top = np.zeros_like(wave_map)
     wave_bottom = np.zeros_like(wave_map)
 
-    (n_row, n_col) = wave_map.shape
+    # for loop is needed to compute diff in just one spatial direction
+    # while skipping invalid values- not trivial to do with array comprehension even
+    # using masked arrays
+    n_col = wave_map.shape[1]
     for idx in range(n_col):
         wave_col = wave_map[:, idx]
 
         # Compute the change in wavelength for valid cols
-        idx_valid = np.isfinite(wave_col)
-        idx_valid &= (wave_col >= 0)
+        idx_valid = np.isfinite(wave_col) & (wave_col >= 0)
         wv_col_valid = wave_col[idx_valid]
-        delta_wave = np.diff(wv_col_valid)
+        delta_wave = np.diff(wv_col_valid) / 2
 
-        # Init values
-        wv_col_top = np.zeros_like(wv_col_valid)
-        wv_col_bottom = np.zeros_like(wv_col_valid)
+        # handle edge effects using a constant-difference rule
+        delta_wave_top = np.insert(delta_wave,0,delta_wave[0])
+        delta_wave_bottom = np.append(delta_wave,delta_wave[-1])
 
         # Compute the wavelength values on the top and bottom edges of each pixel.
-        wv_col_top[1:] = wv_col_valid[:-1] + delta_wave / 2  # TODO check this logic.
-        wv_col_top[0] = wv_col_valid[0] - delta_wave[0] / 2
-        wv_col_bottom[:-1] = wv_col_valid[:-1] + delta_wave / 2
-        wv_col_bottom[-1] = wv_col_valid[-1] + delta_wave[-1] / 2
+        wv_col_top = wv_col_valid - delta_wave_top
+        wv_col_bottom = wv_col_valid + delta_wave_bottom
 
         wave_top[idx_valid, idx] = wv_col_top
         wave_bottom[idx_valid, idx] = wv_col_bottom
@@ -253,7 +200,10 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
 
 
 def oversample_grid(wave_grid, n_os=1):
-    """Create an oversampled version of the input 1D wavelength grid.
+    """
+    TODO: can this be replaced by np.interp or similar?
+    
+    Create an oversampled version of the input 1D wavelength grid.
 
     Parameters
     ----------
@@ -304,13 +254,18 @@ def oversample_grid(wave_grid, n_os=1):
         wave_grid_os = np.concatenate([wave_grid_os, sub_grid])
 
     # Take only unique values and sort them.
-    wave_grid_os = np.unique(wave_grid_os)
-
-    return wave_grid_os
+    return np.unique(wave_grid_os)
 
 
 def extrapolate_grid(wave_grid, wave_range, poly_ord):
-    """Extrapolate the given 1D wavelength grid to cover a given range of values
+    """
+    TODO: It looks like these while loops and if statements can be removed and
+    replaced by something that operates on the whole array at once
+    e.g. the p.linspace function in numpy.polynomial.polynomial (see link below)
+    TODO: np.polyfit is considered legacy now, should be replaced by
+    https://numpy.org/doc/stable/reference/routines.polynomials-package.html
+
+    Extrapolate the given 1D wavelength grid to cover a given range of values
     by fitting the derivative with a polynomial of a given order and using it to
     compute subsequent values at both ends of the grid.
 
@@ -373,9 +328,7 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
         grid_right = np.unique(grid_right)
 
     # Combine the extrapolated sections with the original grid.
-    wave_grid_ext = np.concatenate([grid_left, wave_grid, grid_right])
-
-    return wave_grid_ext
+    return np.concatenate([grid_left, wave_grid, grid_right])
 
 
 def _grid_from_map(wave_map, trace_profile):
@@ -469,9 +422,7 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
         out = grid
 
     # Apply oversampling
-    grid_os = oversample_grid(out, n_os=n_os)
-
-    return grid_os
+    return oversample_grid(out, n_os=n_os)
 
 
 def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=None):
@@ -599,7 +550,10 @@ def _trim_grids(all_grids, grid_range=None):
 
 def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
                                 max_iter=10, rtol=10e-6, tol=0.0, max_total_size=1000000):
-    """Return an irregular oversampled grid needed to reach a
+    """
+    TODO: can this be a class? e.g., class AdaptiveGrid?
+
+    Return an irregular oversampled grid needed to reach a
     given precision when integrating over each intervals of `grid`.
     The grid is built by subdividing iteratively each intervals that
     did not reach the required precision.
@@ -713,11 +667,7 @@ def _romberg_diff(b, c, k):
     R(n, m) : float or array[float]
         Difference between integral estimates of Rombergs method.
     """
-
-    tmp = 4.0**k
-    diff = (tmp * c - b) / (tmp - 1.0)
-
-    return diff
+    return (4.0**k * c - b) / (4.0**k - 1.0)
 
 
 def _difftrap(fct, intervals, numtraps):
@@ -784,114 +734,6 @@ def _difftrap(fct, intervals, numtraps):
         ordsum = np.sum(fct(points), axis=0)
 
     return ordsum
-
-
-def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
-    """Refine parts of a grid to reach a specified integration precision
-    based on Romberg integration of a callable function or method.
-    Returns the number of nodes needed in each intervals of
-    the input grid to reach the specified tolerance over the integral
-    of `fct` (a function of one variable).
-
-    Note: This function is based on scipy.integrate.quadrature.romberg. The
-    difference between it and the scipy version is that it is vectorized to deal
-    with multiple intervals separately. It also returns the number of nodes
-    needed to reached the required precision instead of returning the value of
-    the integral.
-
-    Parameters
-    ----------
-    grid : array[float]
-        Grid for integration. Each section of this grid is treated as a
-        separate integral; if grid has length N, N-1 integrals are optimized.
-    fct : callable
-        Function to be integrated.
-    divmax : int
-        Maximum order of extrapolation.
-    tol : float
-        The desired absolute tolerance.
-    rtol : float
-        The desired relative tolerance.
-
-    Returns
-    -------
-    n_grid : array[int]
-        Number of nodes needed on each distinct intervals in the grid to reach
-        the specified tolerance.
-    residual : array[float]
-        Estimate of the error in each intervals. Same length as n_grid.
-    """
-
-    # Initialize some variables.
-    n_intervals = len(grid) - 1
-    i_bad = np.arange(n_intervals)
-    n_grid = np.repeat(-1, n_intervals)
-    residual = np.repeat(np.nan, n_intervals)
-
-    # Change the 1D grid into a 2D set of intervals.
-    intervals = np.array([grid[:-1], grid[1:]])
-    intrange = np.diff(grid)
-    err = np.inf
-
-    # First estimate without subdivision.
-    numtraps = 1
-    ordsum = _difftrap(fct, intervals, numtraps)
-    results = intrange * ordsum
-    last_row = [results]
-
-    for i_div in range(1, divmax + 1):
-
-        # Increase the number of trapezoids by factors of 2.
-        numtraps *= 2
-
-        # Evaluate trapz integration for intervals that are not converged.
-        ordsum += _difftrap(fct, intervals[:, i_bad], numtraps)
-        row = [intrange[i_bad] * ordsum / numtraps]
-
-        # Compute Romberg for each of the computed sub grids.
-        for k in range(i_div):
-            romb_k = _romberg_diff(last_row[k], row[k], k + 1)
-            row = np.vstack([row, romb_k])
-
-        # Save R(n,n) and R(n-1, n-1) from Romberg method.
-        results = row[i_div]
-        lastresults = last_row[i_div - 1]
-
-        # Estimate error.
-        err = np.abs(results - lastresults)
-
-        # Find intervals that are converged.
-        conv = (err < tol) | (err < rtol * np.abs(results))
-
-        # Save number of nodes for these intervals.
-        n_grid[i_bad[conv]] = numtraps
-
-        # Save residuals.
-        residual[i_bad] = err
-
-        # Stop if all intervals have converged.
-        if conv.all():
-            break
-
-        # Find intervals not converged.
-        i_bad = i_bad[~conv]
-
-        # Save last_row and ordsum for the next iteration for non-converged
-        # intervals.
-        ordsum = ordsum[~conv]
-        last_row = row[:, ~conv]
-
-    else:
-        # Warn that convergence is not reached everywhere.
-        log.warning(f"divmax {divmax} exceeded. Latest difference = {err.max()}")
-
-    # Make sure all values of n_grid where assigned during the process.
-    if (n_grid == -1).any():
-        msg = f"Values where not assigned at grid position: {np.where(n_grid == -1)}"
-        log.critical(msg)
-        raise ValueError(msg)
-
-    return n_grid, residual
 
 
 def estim_integration_err(grid, fct):
@@ -988,7 +830,7 @@ def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
     # Init some flags
     max_size_reached = (grid.size >= max_grid_size)
 
-    # Iterate until precision is reached of max_iter
+    # Iterate until precision is reached or max_iter
     for _ in range(max_iter):
 
         # Estimate error using Romberg integration
@@ -1033,30 +875,6 @@ def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
         grid = np.unique(grid)
 
     return grid, is_converged
-
-
-# ==============================================================================
-# Code for handling the throughput and kernels.
-# ==============================================================================
-
-
-class ThroughputSOSS(interp1d):
-
-    def __init__(self, wavelength, throughput):
-        """Create an instance of scipy.interpolate.interp1d to handle the
-        throughput values.
-
-        Parameters
-        ----------
-        wavelength : array[float]
-            A wavelength array.
-        throughput : array[float]
-            The throughput values corresponding to the wavelengths.
-        """
-
-        # Interpolate
-        super().__init__(wavelength, throughput, kind='cubic', fill_value=0,
-                         bounds_error=False)
 
 
 class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need further adjustment.
@@ -1258,13 +1076,11 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         return webbker
 
 
-# ==============================================================================
-# Code for building the convolution matrix (c matrix).
-# ==============================================================================
-
-
 def gaussians(x, x0, sig, amp=None):
-    """Gaussian function
+    """
+    TODO: can this be replaced by something in scipy or numpy,
+    e.g., scipy.signal.windows.gaussian?
+    Gaussian function
 
     Parameters
     ----------
@@ -1282,14 +1098,9 @@ def gaussians(x, x0, sig, amp=None):
     values : array[float]
         Array of gaussian values for input x.
     """
-
-    # Amplitude term
     if amp is None:
         amp = 1. / np.sqrt(2. * np.pi * sig**2.)
-
-    values = amp * np.exp(-0.5 * ((x - x0) / sig) ** 2.)
-
-    return values
+    return amp * np.exp(-0.5 * ((x - x0) / sig) ** 2.)
 
 
 def fwhm2sigma(fwhm):
@@ -1305,14 +1116,11 @@ def fwhm2sigma(fwhm):
     sigma : float
         Standard deviation of a gaussian.
     """
-
-    sigma = fwhm / np.sqrt(8. * np.log(2.))
-
-    return sigma
+    return fwhm / np.sqrt(8. * np.log(2.))
 
 
 def to_2d(kernel, grid_range):
-    """ Build a 2d kernel array with a constant 1D kernel (input)
+    """Build a 2d kernel array with a constant 1D kernel (input)
 
     Parameters
     ----------
@@ -1335,9 +1143,7 @@ def to_2d(kernel, grid_range):
     n_k_c = b - a
 
     # Return a 2D array with this length
-    kernel_2d = np.tile(kernel, (n_k_c, 1)).T
-
-    return kernel_2d
+    return np.tile(kernel, (n_k_c, 1)).T
 
 
 def _get_wings(fct, grid, h_len, i_a, i_b):
@@ -1408,7 +1214,10 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
 
 
 def trpz_weight(grid, length, shape, i_a, i_b):
-    """Compute weights due to trapezoidal integration
+    """
+    TODO: add to some integration class?
+
+    Compute weights due to trapezoidal integration
 
     Parameters
     ----------
@@ -1457,7 +1266,10 @@ def trpz_weight(grid, length, shape, i_a, i_b):
 
 
 def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
-    """Build a compact kernel 2d array based on a kernel function
+    """
+    TODO: can't scipy do this?
+
+    Build a compact kernel 2d array based on a kernel function
     and a grid to project the kernel
 
     Parameters
@@ -1775,7 +1587,11 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
 
 
 class NyquistKer:
-    """Define a gaussian convolution kernel at the nyquist
+    """
+    TODO: look into whether custom Gaussian function is needed, or if
+    something like scipy.ndimage.gaussian_filter1d could be used.
+
+    Define a gaussian convolution kernel at the nyquist
     sampling. For a given point on the grid x_i, the kernel
     is given by a gaussian with
     FWHM = n_sampling * (dx_(i-1) + dx_i) / 2.
@@ -1835,11 +1651,6 @@ class NyquistKer:
         return gaussians(x, x0, sig)
 
 
-# ==============================================================================
-# Code for doing Tikhonov regularisation.
-# ==============================================================================
-
-
 def finite_diff(x):
     """Returns the finite difference matrix operator based on x.
 
@@ -1892,9 +1703,7 @@ def finite_second_d(grid):
     second_d = finite_diff(grid[:-1]).dot(first_d)
 
     # don't forget the delta lambda
-    second_d = diags(1. / d_grid[:-1]).dot(second_d)
-
-    return second_d
+    return diags(1. / d_grid[:-1]).dot(second_d)
 
 
 def finite_first_d(grid):
@@ -1920,13 +1729,14 @@ def finite_first_d(grid):
     d_grid = d_matrix.dot(grid)
 
     # First derivative operator
-    first_d = diags(1. / d_grid).dot(d_matrix)
-
-    return first_d
+    return diags(1. / d_grid).dot(d_matrix)
 
 
 def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0):
-    """Wrapper to return the tikhonov matrix given a grid and the derivative degree.
+    """
+    TODO: can all this Tikhonov stuff go into the classes?
+
+    Wrapper to return the tikhonov matrix given a grid and the derivative degree.
 
     Parameters
     ----------
@@ -2099,9 +1909,7 @@ def _get_interp_idx_array(idx, relative_range, max_length):
     abs_range[-1] = np.min([abs_range[-1], max_length])
 
     # Convert to slice
-    out = np.arange(*abs_range, 1)
-
-    return out
+    return np.arange(*abs_range, 1)
 
 
 def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
@@ -2315,12 +2123,12 @@ class TikhoTests(dict):
                 self[chi2_type]
             except KeyError:
                 self[chi2_type] = self.compute_chi2(loss=loss)
-#         # Save different loss function for chi2
-#         self['chi2_soft_l1'] = self.compute_chi2(loss='soft_l1')
-#         self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
+
 
     def compute_chi2(self, tests=None, n_points=None, loss='linear'):
-        """ Calculates the reduced chi squared statistic
+        """
+        TODO: is there a scipy builtin that does this?
+        Calculates the reduced chi squared statistic
 
         Parameters
         ----------
@@ -2358,7 +2166,9 @@ class TikhoTests(dict):
         return chi2
 
     def get_chi2_derivative(self, key=None):
-        """ Compute derivative of the chi2 with respect to log10(factors)
+        """
+        TODO: is there a scipy builtin that does this?
+        Compute derivative of the chi2 with respect to log10(factors)
 
         Parameters
         ----------
@@ -2506,6 +2316,9 @@ class TikhoTests(dict):
 
 class Tikhonov:
     """
+    TODO: can we avoid all of this by using scipy.optimize.least_squares
+    like this? https://stackoverflow.com/questions/62768131/how-to-add-tikhonov-regularization-in-scipy-optimize-least-squares 
+
     Tikhonov regularization to solve the ill-posed problem A.x = b, where
     A is accidentally singular or close to singularity. Tikhonov regularization
     adds a regularization term in the equation and aim to minimize the
