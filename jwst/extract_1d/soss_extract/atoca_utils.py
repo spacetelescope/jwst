@@ -199,10 +199,8 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
     return wave_top, wave_bottom
 
 
-def oversample_grid(wave_grid, n_os=1):
+def oversample_grid(wave_grid, n_os):
     """
-    TODO: can this be replaced by np.interp or similar?
-    
     Create an oversampled version of the input 1D wavelength grid.
 
     Parameters
@@ -220,38 +218,20 @@ def oversample_grid(wave_grid, n_os=1):
         The oversampled wavelength grid.
     """
 
-    # Convert n_os to an array.
+    # Convert n_os to an array of size len(wave_grid) - 1.
     n_os = np.asarray(n_os)
-
-    # n_os needs to have the dimension: len(wave_grid) - 1.
     if n_os.ndim == 0:
-
-        # A scalar was given, repeat the value.
         n_os = np.repeat(n_os, len(wave_grid) - 1)
-
     elif len(n_os) != (len(wave_grid) - 1):
-        # An array of incorrect size was given.
         msg = 'n_os must be a scalar or an array of size len(wave_grid) - 1.'
         log.critical(msg)
         raise ValueError(msg)
-
-    # Grid intervals.
-    delta_wave = np.diff(wave_grid)
-
-    # Initialize the new oversampled wavelength grid.
-    wave_grid_os = wave_grid.copy()
-
-    # Iterate over oversampling factors to generate new grid points.
-    for i_os in range(1, n_os.max()):
-
-        # Consider only intervals that are not complete yet.
-        mask = n_os > i_os
-
-        # Compute the new grid points.
-        sub_grid = wave_grid[:-1][mask] + (i_os * delta_wave[mask] / n_os[mask])
-
-        # Add the grid points to the oversampled wavelength grid.
-        wave_grid_os = np.concatenate([wave_grid_os, sub_grid])
+    
+    # Compute the oversampled grid.
+    intervals = 1/n_os
+    intervals = np.insert(np.repeat(intervals, n_os),0,0)
+    grid = np.cumsum(intervals)
+    wave_grid_os = np.interp(grid, np.arange(wave_grid.size), wave_grid)
 
     # Take only unique values and sort them.
     return np.unique(wave_grid_os)
@@ -381,10 +361,8 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
     wave_range : list[float]
         Minimum and maximum boundary of the grid to generate, in microns.
         Wave_range must include some wavelengths of wave_map.
-    n_os : int or list[int]
-        Oversampling of the grid compare to the pixel sampling. Can be
-        specified for each order if a list is given. If a single value is given
-        it will be used for all orders.
+    n_os : int
+        Oversampling of the grid compare to the pixel sampling.
     poly_ord : int
         Order of the polynomial use to extrapolate the grid.
 
