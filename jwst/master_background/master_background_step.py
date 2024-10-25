@@ -152,12 +152,16 @@ class MasterBackgroundStep(Step):
                     if self.median_kernel % 2 == 0:
                         self.median_kernel -= 1
                         self.log.info('Even median filter kernels are not supported.'
-                                      f'Rounding the median kernel size down to {self.median_kernel}.')
+                                      f' Rounding the median kernel size down to {self.median_kernel}.')
 
                     if (self.median_kernel > 1):
                         self.log.info(f'Applying moving-median boxcar of width {self.median_kernel}.')
                         master_background.spec[0].spec_table['surf_bright'] = medfilt(
                             master_background.spec[0].spec_table['surf_bright'],
+                            kernel_size=[self.median_kernel]
+                        )
+                        master_background.spec[0].spec_table['flux'] = medfilt(
+                            master_background.spec[0].spec_table['flux'],
                             kernel_size=[self.median_kernel]
                         )
 

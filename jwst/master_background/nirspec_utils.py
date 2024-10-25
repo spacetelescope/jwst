@@ -137,12 +137,16 @@ def create_background_from_multislit(input_model, sigma_clip=3, median_kernel=1)
     if median_kernel % 2 == 0:
         median_kernel -= 1
         log.info('Even median filter kernels are not supported.'
-                        f'Rounding the median kernel size down to {median_kernel}.')
+                        f' Rounding the median kernel size down to {median_kernel}.')
 
     if (median_kernel > 1):
         log.info(f'Applying moving-median boxcar of width {median_kernel}.')
         master_bkg.spec[0].spec_table['surf_bright'] = medfilt(
             master_bkg.spec[0].spec_table['surf_bright'],
+            kernel_size=[median_kernel]
+        )
+        master_bkg.spec[0].spec_table['flux'] = medfilt(
+            master_bkg.spec[0].spec_table['flux'],
             kernel_size=[median_kernel]
         )
 
