@@ -10,9 +10,9 @@ def run_pipeline(rtdata_module):
 
     rtdata = rtdata_module
 
-    rtdata.get_asn("miri/lrs/miri_lrs_mbkg_dedicated_spec3_asn.json")
+    rtdata.get_asn("miri/lrs/jw01529-o003_spec3_with_bg_00001_asn.json")
 
-    MasterBackgroundStep.call(rtdata.input, save_results=True, suffix='master_background')
+    MasterBackgroundStep.call(rtdata.input, save_results=True, suffix='mbsub')
 
     return rtdata
 
@@ -22,12 +22,12 @@ def test_miri_lrs_dedicated_mbkg(run_pipeline, fitsdiff_default_kwargs):
     """Run a test for MIRI LRS data with dedicated background exposures."""
 
     rtdata = run_pipeline
-    rtdata.output = "miri_lrs_seq2_exp2_master_background.fits"
+    rtdata.output = "jw01529003001_03103_00011_mirimage_mbsub.fits"
 
     # Get the truth file
     rtdata.get_truth(os.path.join(
         "truth/test_miri_lrs_dedicated_mbkg",
-        "miri_lrs_seq2_exp2_master_background.fits"))
+        "jw01529003001_03103_00011_mirimage_mbsub.fits"))
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
