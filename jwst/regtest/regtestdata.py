@@ -31,7 +31,7 @@ class RegtestData:
     """Defines data paths on Artifactory and data retrieval methods"""
 
     def __init__(self, env="dev", inputs_root="jwst-pipeline",
-                 results_root="jwst-pipeline-results", docopy=True,
+                 results_root="jwst-pipeline-results/regression-tests/runs/", docopy=True,
                  input=None, input_remote=None, output=None, truth=None,
                  truth_remote=None, remote_results_path=None, test_name=None,
                  traceback=None, okify_op='file_copy', **kwargs):
