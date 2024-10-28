@@ -6,6 +6,7 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
 
+import warnings
 import numpy as np
 from scipy.sparse import diags, csr_matrix
 from scipy.sparse.linalg import spsolve
@@ -283,8 +284,9 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord=1):
     grid_left = []
     if wave_range[0] < wave_grid.min():
 
-        # Compute the first extrapolated grid point.
-        grid_left = [wave_grid.min() - f_delta(wave_grid.min())]
+        # Initialize extrapolated grid with the first value of input grid.
+        # This point gets double-counted in the final grid, but then unique is called.
+        grid_left = [wave_grid.min(),]
 
         # Iterate until the end of wave_range is reached.
         while True:
@@ -304,8 +306,9 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord=1):
     grid_right = []
     if wave_range[-1] > wave_grid.max():
 
-        # Compute the first extrapolated grid point.
-        grid_right = [wave_grid.max() + f_delta(wave_grid.max())]
+        # Initialize extrapolated grid with the last value of input grid.
+        # This point gets double-counted in the final grid, but then unique is called.
+        grid_right = [wave_grid.max(),]
 
         # Iterate until the end of wave_range is reached.
         while True:
@@ -318,7 +321,7 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord=1):
             if next_delta < min_delta:
                 raise RuntimeError('Extrapolation failed to converge.')
                 
-        # Sort extrapolated vales (and keep only unique).
+        # Sort extrapolated values (and keep only unique)
         grid_right = np.unique(grid_right)
 
     # Combine the extrapolated sections with the original grid.
@@ -344,26 +347,28 @@ def _grid_from_map(wave_map, trace_profile):
         Column indices used.
     """
 
-    # Use only valid columns.
-    mask = (trace_profile > 0).any(axis=0) & (wave_map > 0).any(axis=0)
+    # Use only valid values by setting weights to zero
+    trace_profile[trace_profile < 0] = 0
+    trace_profile[wave_map <= 0] = 0
 
-    # Get central wavelength using PSF as weights.
-    num = (trace_profile * wave_map).sum(axis=0)
-    denom = trace_profile.sum(axis=0)
-    center_wv = num[mask] / denom[mask]
+    # handle case where all values are invalid for a given wavelength
+    # np.average cannot process sum(weights) = 0, so set them to unity then set NaN afterward
+    bad_wls = np.sum(trace_profile, axis=0) == 0
+    trace_profile[:,bad_wls] = 1
+    center_wv = np.average(wave_map, weights=trace_profile, axis=0)
+    center_wv[bad_wls] = np.nan
+    center_wv = center_wv[~np.isnan(center_wv)]
 
     # Make sure the wavelength values are in ascending order.
-    sort = np.argsort(center_wv)
-    grid = center_wv[sort]
-
-    icols, = np.where(mask)
-    return grid, icols[sort]
+    return np.sort(center_wv)
 
 
 def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1):
     """Define a wavelength grid by taking the central wavelength at each columns
     given by the center of mass of the spatial profile (so one wavelength per
     column). If wave_range is outside of the wave_map, extrapolate.
+    TODO: question for SOSS team: I doubt it matters much, but is the current
+    behavior of wave_range ok or should it be inclusive?
 
     Parameters
     ----------
@@ -374,6 +379,10 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1):
     wave_range : list[float]
         Minimum and maximum boundary of the grid to generate, in microns.
         Wave_range must include some wavelengths of wave_map.
+        Note wave_range is exclusive, in the sense that wave_range[0] and wave_range[1]
+        will not be between min(output) and mad(output). Instead, min(output) will be
+        the smallest value in the extrapolated grid that is greater than wave_range[0]
+        and max(output) will be the largest value that is less than wave_range[1].
     n_os : int
         Oversampling of the grid compare to the pixel sampling.
 
@@ -382,39 +391,36 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1):
     grid_os : array[float]
         Wavelength grid with oversampling applied
     """
-    import matplotlib.pyplot as plt
-    plt.imshow(wave_map, origin = 'lower')
-    plt.show()
-    plt.imshow(trace_profile, origin = 'lower')
-    plt.show()
+    if wave_map.shape != trace_profile.shape:
+        msg = 'wave_map and trace_profile must have the same shape.'
+        log.critical(msg)
+        raise ValueError(msg)
 
     # Different treatment if wave_range is given.
     if wave_range is None:
-        out, _ = _grid_from_map(wave_map, trace_profile)
+        grid = _grid_from_map(wave_map, trace_profile)
     else:
         # Get an initial estimate of the grid.
-        grid, icols = _grid_from_map(wave_map, trace_profile)
+        grid = _grid_from_map(wave_map, trace_profile)
 
-        # Make sure grid is between the range
-        mask = (wave_range[0] <= grid) & (grid <= wave_range[-1])
+        # Extrapolate values out of the wv_map if needed
+        grid = extrapolate_grid(grid, wave_range, poly_ord=1)
+
+        # Constrain grid to be within wave_range
+        grid = grid[grid>=wave_range[0]]
+        grid = grid[grid<=wave_range[-1]]
 
         # Check if grid and wv_range are compatible
-        if not mask.any():
+        if len(grid) == 0:
             msg = "Invalid wave_map or wv_range."
             log.critical(msg)
             raise ValueError(msg)
 
-        grid, icols = grid[mask], icols[mask]
-
-        # Extrapolate values out of the wv_map if needed
-        # if not needed, this will return the original grid
-        out = extrapolate_grid(grid, wave_range, poly_ord=1)
-
     # Apply oversampling
-    return oversample_grid(out, n_os=n_os)
+    return oversample_grid(grid, n_os=n_os)
 
 
-def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=None):
+def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=2):
     """Create a wavelength grid specific to NIRISS SOSS mode observations.
     Assumes 2 orders are given, use grid_from_map if only one order is needed.
 
@@ -422,16 +428,20 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
     ----------
     wave_maps : array[float]
         Array containing the pixel wavelengths for order 1 and 2.
+
     trace_profiles : array[float]
         Array containing the spatial profiles for order 1 and 2.
+
     wave_min : float
         Minimum wavelength the output grid should cover.
+
     wave_max : float
         Maximum wavelength the output grid should cover.
+
     n_os : int or list[int]
         Oversampling of the grid compared to the pixel sampling. Can be
         specified for each order if a list is given. If a single value is given
-        it will be used for all orders.
+        it will be used for all orders. Default is 2 for all orders.
 
     Returns
     -------
@@ -439,37 +449,44 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
         Wavelength grid optimized for extracting SOSS spectra across
         order 1 and order 2.
     """
-
-    # Check n_os input, default value is 2 for all orders.
-    if n_os is None:
-        n_os = [2, 2]
-    elif np.ndim(n_os) == 0:
+    if np.ndim(n_os) == 0:
         n_os = [n_os, n_os]
     elif len(n_os) != 2:
         msg = (f"n_os must be an integer or a 2 element list or array of "
                f"integers, got {n_os} instead")
         log.critical(msg)
         raise ValueError(msg)
+    if (wave_maps.shape[0] != 2) or (trace_profiles.shape[0] != 2):
+        msg = 'wave_maps and trace_profiles must have shape (2, detector_x, detector_y).'
+        log.critical(msg)
+        raise ValueError(msg)
+    
+    wave_maps[wave_maps <= 0] = np.nan
+    trace_profiles[trace_profiles < 0] = 0
+    if np.any(np.isnan(wave_maps)):
+        msg = 'Encountered NaN values in wave_maps, ignoring them.'
+        log.warning(msg)
 
     # Generate a wavelength range for each order.
     # Order 1 covers the reddest part of the spectrum,
     # so apply wave_max on order 1 and vice versa for order 2.
+    # TODO: This doesn't know about throughput, so it's possible these min/max wavelengths
+    # would be chosen such that the algorithm attemps to extract a wavelength from an order
+    # that has very low (but non-zero) throughput at that wavelength
 
-    # Take the most restrictive wave_min for order 1
-    wave_min_o1 = np.maximum(wave_maps[0].min(), wave_min)
+    # current test data has min(wave_map) != min(wave_grid) because of throughput!
+    # how to fix this?
 
-    # Take the most restrictive wave_max for order 2.
-    wave_max_o2 = np.minimum(wave_maps[1].max(), wave_max)
-
-    # Now generate range for each orders
-    range_list = [[wave_min_o1, wave_max],
-                  [wave_min, wave_max_o2]]
+    wave_min_o1 = np.maximum(np.nanmin(wave_maps[0]), wave_min)
+    wave_max_o2 = np.minimum(np.nanmax(wave_maps[1]), wave_max)
 
     # Use grid_from_map to construct separate oversampled grids for both orders.
     wave_grid_o1 = grid_from_map(wave_maps[0], trace_profiles[0],
-                                 wave_range=range_list[0], n_os=n_os[0])
+                                 wave_range=[wave_min_o1, wave_max],
+                                 n_os=n_os[0])
     wave_grid_o2 = grid_from_map(wave_maps[1], trace_profiles[1],
-                                 wave_range=range_list[1], n_os=n_os[1])
+                                 wave_range=[wave_min, wave_max_o2],
+                                 n_os=n_os[1])
 
     # Keep only wavelengths in order 1 that aren't covered by order 2.
     mask = wave_grid_o1 > wave_grid_o2.max()
@@ -479,9 +496,7 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
     wave_grid_soss = np.concatenate([wave_grid_o1, wave_grid_o2])
 
     # Sort values (and keep only unique).
-    wave_grid_soss = np.unique(wave_grid_soss)
-
-    return wave_grid_soss
+    return np.unique(wave_grid_soss)
 
 
 def _trim_grids(all_grids, grid_range=None):
@@ -2121,7 +2136,7 @@ class TikhoTests(dict):
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
         if test_dict is None:
-            print('Unable to get the number of data points. Setting `n_points` to 1')
+            log.warning('Unable to get the number of data points. Setting `n_points` to 1')
             n_points = 1
         else:
             n_points = len(test_dict['error'][0].squeeze())
@@ -2473,7 +2488,7 @@ class Tikhonov:
             message = '{}/{}'.format(i_fac, len(factors))
             log.info(message)
 
-        # Final print
+        # Final message output
         message = '{}/{}'.format(i_fac + 1, len(factors))
         log.info(message)
 

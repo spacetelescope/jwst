@@ -28,16 +28,38 @@ def test_arange_2d():
         au.arange_2d(starts, stops_too_small)
 
 
-FIBONACCI = np.array([1,1,2,3,5,8,13], dtype=float)
-@pytest.fixture(scope="module")
+# wavelengths have min, max (1.5, 4.0) and a bit of non-linearity
+WAVELENGTHS = np.linspace(1.5, 3.0, 50) + np.sin(np.linspace(0, np.pi/2, 50))
+@pytest.fixture(scope="function")
 def wave_map():
     wave_map = np.array([
-        FIBONACCI,
-        FIBONACCI+1,
-
+        WAVELENGTHS,
+        WAVELENGTHS+0.2,
+        WAVELENGTHS+0.2,
+        WAVELENGTHS+0.2,
+        WAVELENGTHS+0.4,
     ])
     wave_map[1,3] = -1 #test skip of bad value
     return wave_map
+
+
+@pytest.fixture(scope="function")
+def wave_map_o2(wave_map):
+    return np.copy(wave_map) - 1.0
+    
+
+@pytest.fixture(scope="function")
+def trace_profile(wave_map):
+    thrpt = np.array([0.01, 0.95, 1.0, 0.8, 0.01])
+    trace_profile = np.ones_like(wave_map)
+    return trace_profile*thrpt[:,None]
+
+
+@pytest.fixture(scope="function")
+def trace_profile_o2(wave_map_o2):
+    thrpt = np.array([0.001, 0.01, 0.01, 0.2, 0.99])
+    trace_profile = np.ones_like(wave_map_o2)
+    return trace_profile*thrpt[:,None]
 
 
 @pytest.mark.parametrize("dispersion_axis", [0,1])
@@ -56,14 +78,14 @@ def test_get_wv_map_bounds(wave_map, dispersion_axis):
         wave_top = wave_top.T
         wave_bottom = wave_bottom.T
 
-    diff = (FIBONACCI[1:]-FIBONACCI[:-1])/2
+    diff = (WAVELENGTHS[1:]-WAVELENGTHS[:-1])/2
     diff_lower = np.insert(diff,0,diff[0])
     diff_upper = np.append(diff,diff[-1])
-    wave_top_expected = FIBONACCI-diff_lower
-    wave_bottom_expected = FIBONACCI+diff_upper
+    wave_top_expected = WAVELENGTHS-diff_lower
+    wave_bottom_expected = WAVELENGTHS+diff_upper
 
     # basic test
-    assert wave_top.shape == wave_bottom.shape == (2,)+FIBONACCI.shape
+    assert wave_top.shape == wave_bottom.shape == (wave_map.shape[0],)+WAVELENGTHS.shape
     assert np.allclose(wave_top[0], wave_top_expected)
     assert np.allclose(wave_bottom[0], wave_bottom_expected)
 
@@ -109,6 +131,7 @@ def test_get_wave_p_or_m_not_ascending(wave_map):
         au.get_wave_p_or_m(wave_map, dispersion_axis=1)
 
 
+FIBONACCI = np.array([1,1,2,3,5,8,13,21,35], dtype=float)
 @pytest.mark.parametrize("n_os", [1,5])
 def test_oversample_grid(n_os):
 
@@ -160,8 +183,6 @@ def test_oversample_irregular(os_factor):
         au.oversample_grid(fib_unq, n_os[:-1])
 
 
-# wavelengths have min, max (2.0, 4.0) and a bit of non-linearity
-WAVELENGTHS = np.linspace(2.0, 3.0, 50) + np.sin(np.linspace(0, np.pi/2, 50))
 @pytest.mark.parametrize("wave_range", [(2.1, 3.9), (1.8, 4.5)])
 def test_extrapolate_grid(wave_range):
 
@@ -178,7 +199,7 @@ def test_extrapolate_grid(wave_range):
 
 def test_extrapolate_catch_failed_converge():
     # give wavelengths some non-linearity
-    wave_range = WAVELENGTHS.min(), WAVELENGTHS.max()+2.0
+    wave_range = WAVELENGTHS.min(), WAVELENGTHS.max()+4.0
     with pytest.raises(RuntimeError):
         au.extrapolate_grid(WAVELENGTHS, wave_range, 1)
 
@@ -190,9 +211,90 @@ def test_extrapolate_bad_inputs():
         au.extrapolate_grid(WAVELENGTHS, (4.1, 4.2))
 
 
-def test_grid_from_map(wave_map):
+def test_grid_from_map(wave_map, trace_profile):
+    """Covers expected behavior of grid_from_map, including coverage of a previous bug
+    where bad wavelengths were not being ignored properly"""
 
-    pass
-    #wave_grid = au.grid_from_map(wave_map, trace_profile)
+    wave_grid = au.grid_from_map(wave_map, trace_profile, wave_range=None)
+
+    # expected output is very near WAVELENGTHS+0.2 because that's what all the high-weight
+    # rows of the wave_map are set to.
+    assert np.allclose(wave_grid, wave_map[2])
+
+    # test custom wave_range
+    wave_range = [wave_map[2,2], wave_map[2,-2]+0.01]
+    wave_grid = au.grid_from_map(wave_map, trace_profile, wave_range=wave_range)
+    assert np.allclose(wave_grid, wave_map[2,2:-1])
+
+    # test custom wave_range with extrapolation
+    wave_range = [wave_map[2,2], wave_map[2,-1]+1]
+    wave_grid = au.grid_from_map(wave_map, trace_profile, wave_range=wave_range)
+    assert len(wave_grid) > len(wave_map[2,2:])
+    n_inside = wave_map[2,2:].size
+    assert np.allclose(wave_grid[:n_inside], wave_map[2,2:])
+
+    with pytest.raises(ValueError):
+        au.grid_from_map(wave_map, trace_profile, wave_range=[0.5,0.9])
+
+
+@pytest.mark.parametrize("n_os", ([4,1], 1))
+def test_get_soss_grid(n_os, wave_map, trace_profile, wave_map_o2, trace_profile_o2):
+    """
+    wave_map has min, max wavelength of 1.5, 4.0 but throughput makes this 1.7, 4.2
+    wave_map_o2 has min, max wavelength of 0.5, 3.0 but throughput makes this 0.9, 3.4
+    """
+
+    # choices of wave_min, wave_max force extrapolation on low end 
+    # and also makes sure both orders matter
+    wave_min = 0.55
+    wave_max = 4.0
+    wave_maps = np.array([wave_map, wave_map_o2])
+    trace_profiles = np.array([trace_profile, trace_profile_o2])
+    wave_grid = au.get_soss_grid(wave_maps, trace_profiles, wave_min, wave_max, n_os)
+
+    delta_lower = wave_grid[1]-wave_grid[0]
+    delta_upper = wave_grid[-1]-wave_grid[-2]
+
+    # ensure no duplicates and strictly ascending
+    assert wave_grid.size == np.unique(wave_grid).size
+    assert np.all(wave_grid[1:] > wave_grid[:-1])
+
+    # esnure grid is within bounds but just abutting bounds
+    assert wave_grid.min() >= wave_min
+    assert wave_grid.min() <= wave_min + delta_lower
+    assert wave_grid.max() <= wave_max
+    assert wave_grid.max() >= wave_max - delta_upper
+
+    # ensure oversample factor changes for different n_os
+    # this is a bit complicated because the wavelength spacing is nonlinear in wave_map
+    # by a factor of 2 to begin with, so check that the ratio of the wavelength spacing
+    # in the upper vs lower end of the wl ranges look approx like what was input, modulo
+    # the oversample factor of the two orders
+    if n_os == 1:
+        n_os = [1,1]
+    og_spacing_lower = WAVELENGTHS[1]-WAVELENGTHS[0]
+    og_spacing_upper = WAVELENGTHS[-1]-WAVELENGTHS[-2]
+    expected_ratio = int((n_os[0]/n_os[1])*(np.around(og_spacing_lower/og_spacing_upper)))
+
+    spacing_lower = np.mean(wave_grid[1:6]-wave_grid[:5])
+    spacing_upper = np.mean(wave_grid[-5:]-wave_grid[-6:-1])
+    actual_ratio = int(np.around((spacing_lower/spacing_upper)))
     
+    # for n=1 case we expect 2, for n=(4,1) case we expect 8
+    assert expected_ratio == actual_ratio
+
+
+def test_get_soss_grid_bad_inputs(wave_map, trace_profile):
+    with pytest.raises(ValueError):
+        # test bad input shapes
+        au.get_soss_grid(wave_map, trace_profile, 0.5, 0.9, 1)
+
+    wave_maps = np.array([wave_map, wave_map])
+    trace_profiles = np.array([trace_profile, trace_profile])
+
+    with pytest.raises(ValueError):
+        # test bad n_os shape
+        au.get_soss_grid(wave_maps, trace_profiles, 0.5, 0.9, [1,1,1])
+
+
 
