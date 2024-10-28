@@ -36,8 +36,9 @@ def run_detector1(rtdata_module):
 
     Step.from_cmdline(args)
 
+
 @pytest.fixture(scope="module")
-def run_detector1_multi(rtdata_module):
+def run_detector1_multi_rate(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRISS imaging data."""
     rtdata = rtdata_module
 
@@ -56,6 +57,32 @@ def run_detector1_multi(rtdata_module):
             "--steps.charge_migration.save_results=True",
             "--steps.jump.save_results=True",
             "--steps.ramp_fit.maximum_cores=2", # Multiprocessing
+            ]
+
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1_multi_jump(rtdata_module):
+    """Run calwebb_detector1 pipeline on NIRISS imaging data."""
+    rtdata = rtdata_module
+
+    rtdata.get_data("niriss/imaging/jw01094001002_02107_00001_nis_uncal.fits")
+
+    # Run detector1 pipeline on an _uncal files
+    args = ["calwebb_detector1", rtdata.input,
+            "--steps.persistence.save_trapsfilled=False",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.superbias.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.charge_migration.skip=False",
+            "--steps.charge_migration.save_results=True",
+            "--steps.jump.save_results=True",
+            "--steps.jump.maximum_cores=2", # Multiprocessing
+            "--steps.ramp_fit.skip=True",
             ]
 
     Step.from_cmdline(args)
@@ -136,8 +163,8 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
             result.shelve(model, modify=False)
 
 
-def test_niriss_image_detector1_multi(
-        run_detector1_multi, rtdata_module, fitsdiff_default_kwargs):
+def test_niriss_image_detector1_multi_rate(
+        run_detector1_multi_rate, rtdata_module, fitsdiff_default_kwargs):
     """
     Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
     on two processors.
@@ -145,6 +172,17 @@ def test_niriss_image_detector1_multi(
     truth_dir = 'test_niriss_image'
     # fitsdiff_default_kwargs["numdiffs"] = 10
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate", truth_dir)
+
+
+def test_niriss_image_detector1_multi_jump(
+        run_detector1_multi_jump, rtdata_module, fitsdiff_default_kwargs):
+    """
+    Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
+    on two processors.
+    """
+    truth_dir = 'test_niriss_image'
+    # fitsdiff_default_kwargs["numdiffs"] = 10
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "jump", truth_dir)
 
 
 def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir):
