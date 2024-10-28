@@ -160,25 +160,39 @@ def test_oversample_irregular(os_factor):
         au.oversample_grid(fib_unq, n_os[:-1])
 
 
-@pytest.mark.parametrize("wave_range", [(2.1, 2.9), (1.8, 3.5)])
+# wavelengths have min, max (2.0, 4.0) and a bit of non-linearity
+WAVELENGTHS = np.linspace(2.0, 3.0, 50) + np.sin(np.linspace(0, np.pi/2, 50))
+@pytest.mark.parametrize("wave_range", [(2.1, 3.9), (1.8, 4.5)])
 def test_extrapolate_grid(wave_range):
 
-    # give wavelengths some non-linearity
-    n=50
-    wavelengths = np.linspace(2.0, 3.0, n) + np.sin(np.linspace(0, np.pi/2, n))
-    poly_ord = 1
-    extrapolated = au.extrapolate_grid(wavelengths, wave_range, poly_ord)
+    extrapolated = au.extrapolate_grid(WAVELENGTHS, wave_range, 1)
     
     assert extrapolated.max() > wave_range[1]
     assert extrapolated.min() < wave_range[0]
     assert np.all(extrapolated[1:] >= extrapolated[:-1])
 
+    # if interpolation not needed on either side, should return the original
+    if wave_range == (2.1, 3.9):
+        assert extrapolated is WAVELENGTHS
+
 
 def test_extrapolate_catch_failed_converge():
     # give wavelengths some non-linearity
-    n=50
-    wavelengths = np.linspace(2.0, 3.0, n) + np.sin(np.linspace(0, np.pi/2, n))
-    wave_range = wavelengths.min(), wavelengths.max()+2.0
-    poly_ord = 1
+    wave_range = WAVELENGTHS.min(), WAVELENGTHS.max()+2.0
     with pytest.raises(RuntimeError):
-        au.extrapolate_grid(wavelengths, wave_range, poly_ord)
+        au.extrapolate_grid(WAVELENGTHS, wave_range, 1)
+
+
+def test_extrapolate_bad_inputs():
+    with pytest.raises(ValueError):
+        au.extrapolate_grid(WAVELENGTHS, (2.9, 2.1))
+    with pytest.raises(ValueError):
+        au.extrapolate_grid(WAVELENGTHS, (4.1, 4.2))
+
+
+def test_grid_from_map(wave_map):
+
+    pass
+    #wave_grid = au.grid_from_map(wave_map, trace_profile)
+    
+

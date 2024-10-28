@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from scipy.interpolate import make_interp_spline
+
 from scipy.interpolate import UnivariateSpline, CubicSpline
 
 from stdatamodels.jwst import datamodels
@@ -13,7 +13,7 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
 from .atoca import ExtractionEngine, MaskOverlapError
-from .atoca_utils import (WebbKernel, grid_from_map,
+from .atoca_utils import (ThroughputSOSS, WebbKernel, grid_from_map,
                           make_combined_adaptive_grid, get_wave_p_or_m, oversample_grid)
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
 from .pastasoss import get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
@@ -82,12 +82,17 @@ def get_ref_file_args(ref_files):
         throughput_index_dict[throughput.spectral_order] = i
 
     # TODO: check that replacing legacy interp1d with make_interp_spline works right
-    throughput_o1 = make_interp_spline(pastasoss_ref.throughputs[throughput_index_dict[1]].wavelength[:],
-                                   pastasoss_ref.throughputs[throughput_index_dict[1]].throughput[:],
-                                   k=3, fill_value=0.0, bounds_error=False)
-    throughput_o2 = make_interp_spline(pastasoss_ref.throughputs[throughput_index_dict[2]].wavelength[:],
-                                   pastasoss_ref.throughputs[throughput_index_dict[2]].throughput[:],
-                                   k=3, fill_value=0.0, bounds_error=False)
+    # this is equivalent to order 3 interpolation with scipy interp1d except that
+    # fill_value=0.0 has been removed because make_interp_spline does not support it
+    # was the fill_value ever used? since this is a throughput there's likely nothing wrong with it
+    # What are the appropriate boundary conditions to pass to make_interp_spline bc_type?
+    # since expectation is all zeros outside range, first derivative should be zero at boundaries
+    # one idea is to retain ThroughputSOSS class and make it return a function that calls
+    # output of make_interp_spline when inside range and returns zero outside range
+    throughput_o1 = ThroughputSOSS(pastasoss_ref.throughputs[throughput_index_dict[1]].wavelength[:],
+                                   pastasoss_ref.throughputs[throughput_index_dict[1]].throughput[:])
+    throughput_o2 = ThroughputSOSS(pastasoss_ref.throughputs[throughput_index_dict[2]].wavelength[:],
+                                   pastasoss_ref.throughputs[throughput_index_dict[2]].throughput[:])
 
     # The spectral kernels.
     speckernel_ref = ref_files['speckernel']

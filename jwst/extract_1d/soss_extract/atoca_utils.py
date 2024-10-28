@@ -11,6 +11,7 @@ from scipy.sparse import diags, csr_matrix
 from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
 from scipy.optimize import minimize_scalar, brentq
+from scipy.interpolate import make_interp_spline
 import logging
 
 log = logging.getLogger(__name__)
@@ -259,6 +260,17 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord=1):
     wave_grid_ext : array[float]
         The extrapolated 1D wavelength grid.
     """
+    if wave_range[0] >= wave_range[-1]:
+        msg = 'wave_range must be in order [short, long].'
+        log.critical(msg)
+        raise ValueError(msg)
+    if wave_range[0] > wave_grid.max() or wave_range[-1] < wave_grid.min():
+        msg = 'wave_range must overlap with wave_grid.'
+        log.critical(msg)
+        raise ValueError(msg)
+    if wave_range[0] > wave_grid.min() and wave_range[-1] < wave_grid.max():
+        return wave_grid
+
     # Define delta_wave as a function of wavelength by fitting a polynomial.
     delta_wave = np.diff(wave_grid)
     pars = np.polyfit(wave_grid[:-1], delta_wave, poly_ord)
@@ -348,11 +360,10 @@ def _grid_from_map(wave_map, trace_profile):
     return grid, icols[sort]
 
 
-def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
+def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1):
     """Define a wavelength grid by taking the central wavelength at each columns
     given by the center of mass of the spatial profile (so one wavelength per
-    column). If wave_range is outside of the wave_map, extrapolate with a
-    polynomial of order poly_ord.
+    column). If wave_range is outside of the wave_map, extrapolate.
 
     Parameters
     ----------
@@ -365,14 +376,17 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
         Wave_range must include some wavelengths of wave_map.
     n_os : int
         Oversampling of the grid compare to the pixel sampling.
-    poly_ord : int
-        Order of the polynomial use to extrapolate the grid.
 
     Returns
     -------
     grid_os : array[float]
         Wavelength grid with oversampling applied
     """
+    import matplotlib.pyplot as plt
+    plt.imshow(wave_map, origin = 'lower')
+    plt.show()
+    plt.imshow(trace_profile, origin = 'lower')
+    plt.show()
 
     # Different treatment if wave_range is given.
     if wave_range is None:
@@ -380,9 +394,6 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
     else:
         # Get an initial estimate of the grid.
         grid, icols = _grid_from_map(wave_map, trace_profile)
-
-        # Check if extrapolation needed. If so, out_col must be False.
-        extrapolate = (wave_range[0] < grid.min()) | (wave_range[1] > grid.max())
 
         # Make sure grid is between the range
         mask = (wave_range[0] <= grid) & (grid <= wave_range[-1])
@@ -396,10 +407,8 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
         grid, icols = grid[mask], icols[mask]
 
         # Extrapolate values out of the wv_map if needed
-        if extrapolate:
-            grid = extrapolate_grid(grid, wave_range, poly_ord)
-
-        out = grid
+        # if not needed, this will return the original grid
+        out = extrapolate_grid(grid, wave_range, poly_ord=1)
 
     # Apply oversampling
     return oversample_grid(out, n_os=n_os)
@@ -855,6 +864,39 @@ def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
         grid = np.unique(grid)
 
     return grid, is_converged
+
+
+def ThroughputSOSS(wavelength, throughput):
+    """
+    Parameters
+    ----------
+    wavelength : array[float]
+        A wavelength array.
+
+    throughput : array[float]
+        The throughput values corresponding to the wavelengths.
+
+    Returns
+    -------
+    interpolator : callable
+        A function that interpolates the throughput values. Accepts an array
+        of wavelengths and returns the interpolated throughput values.
+
+    Notes
+    -----
+    Clamped boundary condition corresponds to a first derivative of zero,
+    which ensures a smooth curve given zero-padding outside the range.
+    """
+    wl_min, wl_max = np.min(wavelength), np.max(wavelength)
+    spline = make_interp_spline(wavelength, throughput, k=3, bc_type=("clamped", "clamped"))
+
+    def interpolator(wl):
+        thru = np.zeros_like(wl)
+        inside = (wl > wl_min) & (wl < wl_max)
+        thru[inside] = spline(wl[inside])
+        return thru
+
+    return interpolator
 
 
 class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need further adjustment.
