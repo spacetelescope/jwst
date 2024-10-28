@@ -556,6 +556,7 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
                                 max_iter=10, rtol=10e-6, tol=0.0, max_total_size=1000000):
     """
     TODO: can this be a class? e.g., class AdaptiveGrid?
+    TODO: why aren't any of the same helper functions used here as in get_soss_grid?
 
     Return an irregular oversampled grid needed to reach a
     given precision when integrating over each intervals of `grid`.

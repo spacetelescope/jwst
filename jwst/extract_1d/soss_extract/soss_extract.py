@@ -81,14 +81,6 @@ def get_ref_file_args(ref_files):
     for i, throughput in enumerate(pastasoss_ref.throughputs):
         throughput_index_dict[throughput.spectral_order] = i
 
-    # TODO: check that replacing legacy interp1d with make_interp_spline works right
-    # this is equivalent to order 3 interpolation with scipy interp1d except that
-    # fill_value=0.0 has been removed because make_interp_spline does not support it
-    # was the fill_value ever used? since this is a throughput there's likely nothing wrong with it
-    # What are the appropriate boundary conditions to pass to make_interp_spline bc_type?
-    # since expectation is all zeros outside range, first derivative should be zero at boundaries
-    # one idea is to retain ThroughputSOSS class and make it return a function that calls
-    # output of make_interp_spline when inside range and returns zero outside range
     throughput_o1 = ThroughputSOSS(pastasoss_ref.throughputs[throughput_index_dict[1]].wavelength[:],
                                    pastasoss_ref.throughputs[throughput_index_dict[1]].throughput[:])
     throughput_o2 = ThroughputSOSS(pastasoss_ref.throughputs[throughput_index_dict[2]].wavelength[:],
@@ -267,6 +259,7 @@ def get_native_grid_from_trace(ref_files, spectral_order):
 
 def get_grid_from_trace(ref_files, spectral_order, n_os=1):
     """
+    TODO: is this partially or fully redundant with atoca_utils.grid_from_map?
     Make a 1d-grid of the pixels boundary and ready for ATOCA ExtractionEngine,
     based on the wavelength solution.
     Parameters

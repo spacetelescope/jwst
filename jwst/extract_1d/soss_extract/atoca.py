@@ -561,7 +561,9 @@ class _BaseOverlap:
         return self.wave_grid[index]
 
     def get_w(self, i_order):
-        """Dummy method to init this class"""
+        """Dummy method to init this class
+        TODO: so is this an abstract base class? is it ever actually subclassed more than once?
+        """
 
         return np.array([]), np.array([])
 
@@ -963,7 +965,10 @@ class _BaseOverlap:
         return
 
     def get_tikho_matrix(self, **kwargs):
-        """Return the Tikhonov matrix.
+        """
+        #TODO: why is there also an atoca_utils.get_tikho_matrix function?
+
+        Return the Tikhonov matrix.
         Generate it with `set_tikho_matrix` method
         if not defined yet. If so, all arguments are passed
         to `set_tikho_matrix`. The result is saved as an attribute.
@@ -1319,6 +1324,9 @@ class _BaseOverlap:
               There will be only one matrix multiplication:
               (P/sig).(w.T.lambda.c_n).
 
+        TODO: is there any way to avoid the need for this __call__ method given
+        that it's only a thin wrapper to the Tikhonov class?
+
         Parameters
         ----------
         tikhonov : bool, optional
@@ -1377,117 +1385,6 @@ class _BaseOverlap:
             spectrum = self._solve(matrix, result)
 
         return spectrum
-
-    def bin_to_pixel(self, i_order=0, grid_pix=None, grid_f_k=None, convolved_spectrum=None,
-                     spectrum=None, bounds_error=False, throughput=None, **kwargs):
-        """Integrate the convolved_spectrum (f_k_c) over a pixel grid using the trapezoidal rule.
-        The convolved spectrum (f_k_c) is interpolated using scipy.interpolate.interp1d and the
-        kwargs and bounds_error are passed to interp1d.
-        i_order : int, optional
-            index of the order to be integrated, default is 0, so
-            the first order specified.
-        grid_pix : tuple or array, optional
-            If a tuple of 2 arrays is given, assume it is the lower and upper
-            integration ranges. If 1d-array, assume it is the center
-            of the pixels. If not given, the wavelength map and the psf map
-            of `i_order` will be used to compute a pixel grid.
-        grid_f_k : 1d array, optional
-            grid on which the convolved flux is projected.
-            Default is the wavelength grid for `i_order`.
-        convolved_spectrum : 1d array, optional
-            Convolved flux (f_k_c) to be integrated. If not given, `spectrum`
-            will be used (and convolved to `i_order` resolution)
-        spectrum : 1d array, optional
-            non-convolved flux (f_k, result of the `extract` method).
-            Not used if `convolved_spectrum` is specified.
-        bounds_error : bool, optional
-            passed to interp1d function to interpolate the convolved_spectrum.
-            Default is False
-        throughput : callable, optional
-            Spectral throughput for a given order (ì_ord).
-            Default is given by the list of throughput saved as
-            the attribute `t_list`.
-        kwargs : iterable, optional
-            If provided, will be passed to interp1d function.
-
-        Returns
-        -------
-        pix_center, bin_val : array[float]
-            The pixel centers and the associated integrated values.
-        """
-        # Take the value from the order if not given...
-
-        # ... for the flux grid ...
-        if grid_f_k is None:
-            grid_f_k = self.wave_grid_c(i_order)
-
-        # ... for the convolved flux ...
-        if convolved_spectrum is None:
-            # Use the spectrum (f_k) if the convolved_spectrum (f_k_c) not given.
-            if spectrum is None:
-                raise ValueError("`spectrum` or `convolved_spectrum` must be specified.")
-            else:
-                # Convolve the spectrum (f_k).
-                convolved_spectrum = self.kernels[i_order].dot(spectrum)
-
-        # ... and for the pixel bins
-        if grid_pix is None:
-            pix_center, _ = self.grid_from_map(i_order)
-
-            # Get pixels borders (plus and minus)
-            pix_p, pix_m = atoca_utils.get_wave_p_or_m(pix_center)
-
-        else:  # Else, unpack grid_pix
-
-            # Could be a scalar or a 2-elements object)
-            if len(grid_pix) == 2:
-
-                # 2-elements object, so we have the borders
-                pix_m, pix_p = grid_pix
-
-                # Need to compute pixel center
-                d_pix = (pix_p - pix_m)
-                pix_center = grid_pix[0] + d_pix
-            else:
-
-                # 1-element object, so we have the pix centers
-                pix_center = grid_pix
-
-                # Need to compute the borders
-                pix_p, pix_m = atoca_utils.get_wave_p_or_m(pix_center)
-
-        # Set the throughput to object attribute
-        # if not given
-        if throughput is None:
-
-            # Need to interpolate
-            x, y = self.wave_grid, self.throughput[i_order]
-            throughput = interp1d(x, y)
-
-        # Apply throughput on flux
-        convolved_spectrum = convolved_spectrum * throughput(grid_f_k)
-
-        # Interpolate
-        kwargs['bounds_error'] = bounds_error
-        fct_f_k = interp1d(grid_f_k, convolved_spectrum, **kwargs)
-
-        # Intergrate over each bins
-        bin_val = []
-        for x1, x2 in zip(pix_m, pix_p):
-
-            # Grid points that fall inside the pixel range
-            i_grid = (x1 < grid_f_k) & (grid_f_k < x2)
-            x_grid = grid_f_k[i_grid]
-
-            # Add boundaries values to the integration grid
-            x_grid = np.concatenate([[x1], x_grid, [x2]])
-
-            # Integrate
-            integrand = fct_f_k(x_grid) * x_grid
-            bin_val.append(np.trapezoid(integrand, x_grid))
-
-        # Convert to array and return with the pixel centers.
-        return pix_center, np.array(bin_val)
 
 
 class ExtractionEngine(_BaseOverlap):
@@ -1641,6 +1538,8 @@ class ExtractionEngine(_BaseOverlap):
     def get_w(self, i_order):
         """Compute integration weights for each grid points and each pixels.
         Depends on the order `n`.
+        TODO: is this the same order as the spectral order? if so, can we ignore
+        a bunch of the cases in this function and just keep orders 1 and 2?
 
         Parameters
         ----------

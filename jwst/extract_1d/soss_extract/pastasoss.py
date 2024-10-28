@@ -14,7 +14,7 @@ WAVEMAP_WLMAX = 5.5
 WAVEMAP_NWL = 5001
 SUBARRAY_YMIN = 2048 - 256
 
-def get_wavelengths(refmodel, x, pwcpos, order):
+def _get_wavelengths(refmodel, x, pwcpos, order):
     """Get the associated wavelength values for a given spectral order"""
     if order == 1:
         wavelengths = wavecal_model_order1_poly(refmodel, x, pwcpos)
@@ -24,7 +24,7 @@ def get_wavelengths(refmodel, x, pwcpos, order):
     return wavelengths
 
 
-def min_max_scaler(x, x_min, x_max):
+def _min_max_scaler(x, x_min, x_max):
     """
     Apply min-max scaling to input values.
 
@@ -57,6 +57,9 @@ def min_max_scaler(x, x_min, x_max):
 def wavecal_model_order1_poly(refmodel, x, pwcpos):
     """Compute order 1 wavelengths.
 
+    TODO: surely there are numpy or scipy builtins to avoid having to write
+    out this polynomial expansion by hand?
+
     Parameters
     ----------
     refmodel : PastasossModel
@@ -71,7 +74,7 @@ def wavecal_model_order1_poly(refmodel, x, pwcpos):
         to rotate the model
     """
     x_scaler = partial(
-        min_max_scaler,
+        _min_max_scaler,
         **{
             "x_min": refmodel.wavecal_models[0].scale_extents[0][0],
             "x_max": refmodel.wavecal_models[0].scale_extents[1][0],
@@ -79,7 +82,7 @@ def wavecal_model_order1_poly(refmodel, x, pwcpos):
     )
 
     pwcpos_offset_scaler = partial(
-        min_max_scaler,
+        _min_max_scaler,
         **{
             "x_min": refmodel.wavecal_models[0].scale_extents[0][1],
             "x_max": refmodel.wavecal_models[0].scale_extents[1][1],
@@ -148,7 +151,7 @@ def wavecal_model_order2_poly(refmodel, x, pwcpos):
         to rotate the model
     """
     x_scaler = partial(
-        min_max_scaler,
+        _min_max_scaler,
         **{
             "x_min": refmodel.wavecal_models[1].scale_extents[0][0],
             "x_max": refmodel.wavecal_models[1].scale_extents[1][0],
@@ -156,7 +159,7 @@ def wavecal_model_order2_poly(refmodel, x, pwcpos):
     )
 
     pwcpos_offset_scaler = partial(
-        min_max_scaler,
+        _min_max_scaler,
         **{
             "x_min": refmodel.wavecal_models[1].scale_extents[0][1],
             "x_max": refmodel.wavecal_models[1].scale_extents[1][1],
@@ -196,9 +199,12 @@ def wavecal_model_order2_poly(refmodel, x, pwcpos):
     return wavelengths
 
 
-def rotate(x, y, angle, origin=(0, 0), interp=True):
+def _rotate(x, y, angle, origin=(0, 0), interp=True):
     """
     Applies a rotation transformation to a set of 2D points.
+
+    TODO: surely there are scipy builtins for this? is there
+    any difference between this and ndimage.rotate or something?
 
     Parameters
     ----------
@@ -223,7 +229,7 @@ def rotate(x, y, angle, origin=(0, 0), interp=True):
     --------
     >>> x = np.array([0, 1, 2, 3])
     >>> y = np.array([0, 1, 2, 3])
-    >>> x_rot, y_rot = rotate(x, y, 90)
+    >>> x_rot, y_rot = _rotate(x, y, 90)
     """
 
     # shift to rotate about center
@@ -251,7 +257,7 @@ def rotate(x, y, angle, origin=(0, 0), interp=True):
     return x_new, y_new
 
 
-def find_spectral_order_index(refmodel, order):
+def _find_spectral_order_index(refmodel, order):
     """Return index of trace and wavecal dict corresponding to order
 
     Parameters
@@ -277,7 +283,7 @@ def find_spectral_order_index(refmodel, order):
     return -1
 
 
-def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
+def _get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     """Generate the traces given a pupil wheel position.
 
     This is the primary method for generating the gr700xd trace position given a
@@ -320,7 +326,7 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     ValueError
         If `order` is not '1', '2', '3', or a combination of '1', '2', and '3'.
     """
-    spectral_order_index = find_spectral_order_index(refmodel, int(order))
+    spectral_order_index = _find_spectral_order_index(refmodel, int(order))
 
     if spectral_order_index < 0:
         error_message = f"Order {order} is not supported at this time."
@@ -335,15 +341,15 @@ def get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
         if subarray == 'SUBSTRIP96':
             y -= 10
         # rotated reference trace
-        x_new, y_new = rotate(x, y, pwcpos - refmodel.meta.pwcpos_cmd, origin, interp=interp)
+        x_new, y_new = _rotate(x, y, pwcpos - refmodel.meta.pwcpos_cmd, origin, interp=interp)
 
         # wavelength associated to trace at given pwcpos value
-        wavelengths = get_wavelengths(refmodel, x_new, pwcpos, int(order))
+        wavelengths = _get_wavelengths(refmodel, x_new, pwcpos, int(order))
 
         return order, x_new, y_new, wavelengths
 
 
-def extrapolate_to_wavegrid(w_grid, wavelength, quantity):
+def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
     """
     Extrapolates quantities on the right and the left of a given array of quantity
 
@@ -385,7 +391,7 @@ def extrapolate_to_wavegrid(w_grid, wavelength, quantity):
     return q_grid
 
 
-def calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, maxiter=5, dtol=1e-2):
+def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, maxiter=5, dtol=1e-2):
     """Compute the 2D wavelength map on the detector.
 
     Parameters
@@ -483,8 +489,8 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     Array, Array
         The 2D wavemaps and corresponding 1D spectraces
     """
-    _, order1_x, order1_y, order1_wl = get_soss_traces(refmodel, pwcpos, order='1', subarray=subarray, interp=True)
-    _, order2_x, order2_y, order2_wl = get_soss_traces(refmodel, pwcpos, order='2', subarray=subarray, interp=True)
+    _, order1_x, order1_y, order1_wl = _get_soss_traces(refmodel, pwcpos, order='1', subarray=subarray, interp=True)
+    _, order2_x, order2_y, order2_wl = _get_soss_traces(refmodel, pwcpos, order='2', subarray=subarray, interp=True)
 
     # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
     wavemin = WAVEMAP_WLMIN
@@ -493,8 +499,8 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     wave_grid = np.linspace(wavemin, wavemax, nwave)
 
     # Extrapolate wavelengths for order 1 trace
-    xtrace_order1 = extrapolate_to_wavegrid(wave_grid, order1_wl, order1_x)
-    ytrace_order1 = extrapolate_to_wavegrid(wave_grid, order1_wl, order1_y)
+    xtrace_order1 = _extrapolate_to_wavegrid(wave_grid, order1_wl, order1_x)
+    ytrace_order1 = _extrapolate_to_wavegrid(wave_grid, order1_wl, order1_y)
     spectrace_1 = np.array([xtrace_order1, ytrace_order1, wave_grid])
 
     # Set cutoff for order 2 where it runs off the detector
@@ -517,15 +523,15 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     y_o2[o2_cutoff:] = y_o2[o2_cutoff - 1] + m * dx
 
     # Extrapolate wavelengths for order 2 trace
-    xtrace_order2 = extrapolate_to_wavegrid(wave_grid, w_o2, x_o2)
-    ytrace_order2 = extrapolate_to_wavegrid(wave_grid, w_o2, y_o2)
+    xtrace_order2 = _extrapolate_to_wavegrid(wave_grid, w_o2, x_o2)
+    ytrace_order2 = _extrapolate_to_wavegrid(wave_grid, w_o2, y_o2)
     spectrace_2 = np.array([xtrace_order2, ytrace_order2, wave_grid])
 
     # Make wavemap from wavelength solution for order 1
-    wavemap_1 = calc_2d_wave_map(wave_grid, xtrace_order1, ytrace_order1, np.zeros_like(xtrace_order1), oversample=1, padding=padsize)
+    wavemap_1 = _calc_2d_wave_map(wave_grid, xtrace_order1, ytrace_order1, np.zeros_like(xtrace_order1), oversample=1, padding=padsize)
 
     # Make wavemap from wavelength solution for order 2
-    wavemap_2 = calc_2d_wave_map(wave_grid, xtrace_order2, ytrace_order2, np.zeros_like(xtrace_order2), oversample=1, padding=padsize)
+    wavemap_2 = _calc_2d_wave_map(wave_grid, xtrace_order2, ytrace_order2, np.zeros_like(xtrace_order2), oversample=1, padding=padsize)
 
     # Extrapolate wavemap to FULL frame
     wavemap_1[:SUBARRAY_YMIN - padsize, :] = wavemap_1[SUBARRAY_YMIN - padsize]
