@@ -1,0 +1,1 @@
+move regression test run directories on Artifactory to ``regression-tests/runs/``
