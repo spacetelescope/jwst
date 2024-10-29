@@ -6,7 +6,6 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
 
-import warnings
 import numpy as np
 from scipy.sparse import diags, csr_matrix
 from scipy.sparse.linalg import spsolve
@@ -35,7 +34,7 @@ def arange_2d(starts, stops):
     Returns
     -------
     out : array[uint16]
-        2D array of ranges with invalid values set to max uint16 value, 65535
+        2D array of ranges with invalid values set to -1
     """
     if starts.shape != stops.shape:
         msg = ('Shapes of starts and stops are not compatible, '
@@ -54,7 +53,7 @@ def arange_2d(starts, stops):
     # Initialize the output arrays with invalid value
     nrows = len(stops)
     ncols = np.amax(lengths)
-    out = np.ones((nrows, ncols), dtype=np.uint16)*np.iinfo(np.uint16).max
+    out = np.ones((nrows, ncols), dtype=np.int16)*-1
 
     # Compute the indices.
     for irow in range(nrows):
@@ -557,6 +556,7 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
     """
     TODO: can this be a class? e.g., class AdaptiveGrid?
     TODO: why aren't any of the same helper functions used here as in get_soss_grid?
+    q: why are there multiple grids passed in here in the first place
 
     Return an irregular oversampled grid needed to reach a
     given precision when integrating over each intervals of `grid`.
