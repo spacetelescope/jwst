@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model,
+def do_correction(output,
                   bright_use_group1=False):
     """
     Short Summary
@@ -43,7 +43,7 @@ def do_correction(input_model,
             # do not set DO_NOT_USE in the case where saturation happens
             # after group2 and before group3
             # in this case, the first frame effect is small compared to the 
-            # signal in frame2-frame1
+            # signal in group2-group1
             # input_model.
             svals = (((output.groupdq[:, 1, :, :] & dqflags.group['SATURATED']) == 0) 
                      & ((output.groupdq[:, 2, :, :] & dqflags.group['SATURATED']) > 0))
