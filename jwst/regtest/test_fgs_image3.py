@@ -21,13 +21,7 @@ def test_fgs_image3(run_fgs_image3, rtdata_module, fitsdiff_default_kwargs, suff
     rtdata = rtdata_module
     output = f"jw01029-o001_t009_fgs_clear_{suffix}.fits"
     rtdata.output = output
-
     rtdata.get_truth(f"truth/test_fgs_image3/{output}")
-
-    # Adjust tolerance for machine precision with float32 drizzle code
-    if suffix == "i2d":
-        fitsdiff_default_kwargs["rtol"] = 3e-3
-        fitsdiff_default_kwargs["atol"] = 2e-2
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
