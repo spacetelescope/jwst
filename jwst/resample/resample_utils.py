@@ -175,7 +175,7 @@ def reproject(wcs1, wcs2):
         if isinstance(wcs, gwcs.WCS):
             return wcs.forward_transform
         elif isinstance(wcs, fitswcs.WCS):
-            return wcs.pixel_to_world
+            return wcs.pixel_to_world_values
         elif isinstance(wcs, Model):
             return wcs
 
@@ -183,7 +183,7 @@ def reproject(wcs1, wcs2):
         if isinstance(wcs, gwcs.WCS):
             return wcs.backward_transform
         elif isinstance(wcs, fitswcs.WCS):
-            return wcs.world_to_pixel
+            return wcs.world_to_pixel_values
         elif isinstance(wcs, Model):
             return wcs
 
