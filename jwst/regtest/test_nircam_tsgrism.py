@@ -104,19 +104,14 @@ def test_nircam_setpointing_tsgrism(rtdata, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b NIRCam file.
     """
-    # Get SIAF PRD database file
-    siaf_path = rtdata.get_data("common/prd.db")
-    rtdata.get_data("nircam/tsgrism/jw00721012001_03103_00001-seg001_nrcalong_uncal.fits")
+    rtdata.get_data("nircam/tsgrism/jw02459001001_03103_00001-seg001_nrcalong_uncal.fits")
     # The add_wcs function overwrites its input
     rtdata.output = rtdata.input
 
-    # Call the WCS routine, using the ENGDB_Service
-    try:
-        add_wcs(rtdata.input, siaf_path=siaf_path)
-    except ValueError:
-        pytest.skip('Engineering Database not available.')
+    # Call the WCS routine
+    add_wcs(rtdata.input)
 
-    rtdata.get_truth("truth/test_nircam_setpointing/jw00721012001_03103_00001-seg001_nrcalong_uncal.fits")
+    rtdata.get_truth("truth/test_nircam_setpointing/jw02459001001_03103_00001-seg001_nrcalong_uncal.fits")
 
     fitsdiff_default_kwargs['rtol'] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
