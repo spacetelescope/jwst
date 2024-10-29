@@ -37,6 +37,7 @@ def do_correction(output, bright_use_group1=False):
 
     # Update the step status, and if ngroups > 3, set all GROUPDQ in
     # the first group to 'DO_NOT_USE'
+    # bright_use_group1 = False
     if sci_ngroups > 3:
         if bright_use_group1:
             # do not set DO_NOT_USE in the case where saturation happens
@@ -56,9 +57,9 @@ def do_correction(output, bright_use_group1=False):
                 f"FirstFrame Sub: bright_first_frame set, #{np.sum(svals)} bright pixels using first frame"
             )
         else:
-            output.groupdq[:, 0, :, :] = np.bitwise_or(
-                output.groupdq[:, 0, :, :], dqflags.group["DO_NOT_USE"]
-            )
+            output.groupdq[:, 0, :, :] = \
+                np.bitwise_or(output.groupdq[:, 0, :, :], dqflags.group['DO_NOT_USE'])
+
         log.debug("FirstFrame Sub: resetting GROUPDQ in first frame to DO_NOT_USE")
         output.meta.cal_step.firstframe = "COMPLETE"
     else:  # too few groups
