@@ -83,7 +83,7 @@ LEVEL2B_EXPTYPES.extend(IMAGE2_NONSCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 
 # Association Candidates that should have more than one observations
-MULTI_OBS_AC_TYPES = ['group', 'background']
+MULTI_OBS_AC_TYPES = ['group', 'background', 'mosaic']
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
@@ -97,7 +97,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     INVALID_VALUES = _EMPTY
 
     # Make sequences type-dependent
-    _sequences = defaultdict(Counter)
+    _sequences: defaultdict = defaultdict(Counter)
 
     def __init__(self, *args, **kwargs):
 

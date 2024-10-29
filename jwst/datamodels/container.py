@@ -1,15 +1,10 @@
-import copy
 from collections import OrderedDict
 from collections.abc import Sequence
+import copy
 import os.path as op
 import re
 import logging
-
-import numpy as np
-
-from asdf import AsdfFile
 from astropy.io import fits
-from stdatamodels import properties
 
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
@@ -19,15 +14,26 @@ __doctest_skip__ = ['ModelContainer']
 
 __all__ = ['ModelContainer']
 
-_ONE_MB = 1 << 20
 RECOGNIZED_MEMBER_FIELDS = ['tweakreg_catalog', 'group_id']
+EMPTY_ASN_TABLE = {
+    "asn_id": None,
+    "asn_pool": None,
+    "products": [
+        {"name": "",
+        "members": [
+            {"exptype": "",
+            "expname": ""}
+            ]
+        }
+    ]
+}
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class ModelContainer(JwstDataModel, Sequence):
+class ModelContainer(Sequence):
     """
     A container for holding DataModels.
 
@@ -55,10 +61,6 @@ class ModelContainer(JwstDataModel, Sequence):
     asn_n_members : int
         Open only the first N qualifying members.
 
-    iscopy : bool
-        Presume this model is a copy. Members will not be closed
-        when the model is closed/garbage-collected.
-
     Examples
     --------
     >>> container = ModelContainer('example_asn.json')
@@ -80,19 +82,6 @@ class ModelContainer(JwstDataModel, Sequence):
 
     Notes
     -----
-        The optional paramters ``save_open`` and ``return_open`` can be
-        provided to control how the `JwstDataModel` are used by the
-        :py:class:`ModelContainer`. If ``save_open`` is set to `False`, each input
-        `JwstDataModel` instance in ``init`` will be written out to disk and
-        closed, then only the filename for the `JwstDataModel` will be used to
-        initialize the :py:class:`ModelContainer` object.
-        Subsequent access of each member will then open the `JwstDataModel` file to
-        work with it. If ``return_open`` is also `False`, then the `JwstDataModel`
-        will be closed when access to the `JwstDataModel` is completed. The use of
-        these parameters can minimize the amount of memory used by this object
-        during processing, with these parameters being used
-        by :py:class:`~jwst.outlier_detection.OutlierDetectionStep`.
-
         When ASN table's members contain attributes listed in
         :py:data:`RECOGNIZED_MEMBER_FIELDS`, :py:class:`ModelContainer` will
         read those attribute values and update the corresponding attributes
@@ -146,53 +135,47 @@ to supply custom catalogs.
             ``models_grouped`` property for more details.
 
     """
-    schema_url = None
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None,
-                 iscopy=False, **kwargs):
-
-        super().__init__(init=None, **kwargs)
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
 
         self._models = []
-        self._iscopy = iscopy
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
-        self.asn_table = {}
+        self.asn_table = copy.deepcopy(EMPTY_ASN_TABLE)
         self.asn_table_name = None
         self.asn_pool_name = None
         self.asn_file_path = None
 
         self._memmap = kwargs.get("memmap", False)
-        self._return_open = kwargs.get('return_open', True)
-        self._save_open = kwargs.get('save_open', True)
 
         if init is None:
             # Don't populate the container with models
             pass
-        elif isinstance(init, fits.HDUList):
-            if self._save_open:
-                model = [datamodel_open(init, memmap=self._memmap)]
-            else:
-                model = init._file.name
-                init.close()
-            self._models.append(model)
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
-                if self._save_open:
-                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
+                for m in init:
+                    self._models.append(datamodel_open(m, memmap=self._memmap))
+                # set asn_table_name and product name to first datamodel stem since they were not provided
+                fname = self._models[0].meta.filename
+                if fname is not None:
+                    root = op.basename(fname).split(".")[0]
+                    default_name = "_".join(root.split("_")[:-1]) # remove old suffix
+                else:
+                    default_name = ""
+                self.asn_table_name = default_name
+                self.asn_table["products"][0]["name"] = default_name
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
-            self._models = init
         elif isinstance(init, self.__class__):
-            instance = copy.deepcopy(init._instance)
-            self._schema = init._schema
-            self._shape = init._shape
-            self._asdf = AsdfFile(instance)
-            self._instance = instance
-            self._ctx = self
-            self._models = init._models
-            self._iscopy = True
+            for m in init:
+                self._models.append(datamodel_open(m, memmap=self._memmap))
+            self.asn_exptypes = init.asn_exptypes
+            self.asn_n_members = init.asn_n_members
+            self.asn_table = init.asn_table
+            self.asn_table_name = init.asn_table_name
+            self.asn_pool_name = init.asn_pool_name
+            self.asn_file_path = init.asn_file_path
         elif is_association(init):
             self.from_asn(init)
         elif isinstance(init, str):
@@ -207,10 +190,7 @@ to supply custom catalogs.
         return len(self._models)
 
     def __getitem__(self, index):
-        m = self._models[index]
-        if not isinstance(m, JwstDataModel) and self._return_open:
-            m = datamodel_open(m, memmap=self._memmap)
-        return m
+        return self._models[index]
 
     def __setitem__(self, index, model):
         self._models[index] = model
@@ -220,8 +200,6 @@ to supply custom catalogs.
 
     def __iter__(self):
         for model in self._models:
-            if not isinstance(model, JwstDataModel) and self._return_open:
-                model = datamodel_open(model, memmap=self._memmap)
             yield model
 
     def insert(self, index, model):
@@ -236,24 +214,19 @@ to supply custom catalogs.
     def pop(self, index=-1):
         self._models.pop(index)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
     def copy(self, memo=None):
         """
         Returns a deep copy of the models in this model container.
         """
-        result = self.__class__(init=None,
-                                pass_invalid_values=self._pass_invalid_values,
-                                strict_validation=self._strict_validation)
-        instance = copy.deepcopy(self._instance, memo=memo)
-        result._asdf = AsdfFile(instance)
-        result._instance = instance
-        result._iscopy = self._iscopy
-        result._schema = self._schema
-        result._ctx = result
+        result = self.__class__(init=None)
         for m in self._models:
-            if isinstance(m, JwstDataModel):
-                result.append(m.copy())
-            else:
-                result.append(m)
+            result.append(m.copy(memo=memo))
         return result
 
     @staticmethod
@@ -315,37 +288,25 @@ to supply custom catalogs.
         try:
             for member in sublist:
                 filepath = op.join(asn_dir, member['expname'])
-                update_model = any(attr in member for attr in RECOGNIZED_MEMBER_FIELDS)
-                if update_model or self._save_open:
-                    m = datamodel_open(filepath, memmap=self._memmap)
-                    m.meta.asn.exptype = member['exptype']
-                    for attr, val in member.items():
-                        if attr in RECOGNIZED_MEMBER_FIELDS:
-                            if attr == 'tweakreg_catalog':
-                                if val.strip():
-                                    val = op.join(asn_dir, val)
-                                else:
-                                    val = None
+                m = datamodel_open(filepath, memmap=self._memmap)
+                m.meta.asn.exptype = member['exptype']
+                for attr, val in member.items():
+                    if attr in RECOGNIZED_MEMBER_FIELDS:
+                        if attr == 'tweakreg_catalog':
+                            if val.strip():
+                                val = op.join(asn_dir, val)
+                            else:
+                                val = None
 
-                            setattr(m.meta, attr, val)
-
-                    if not self._save_open:
-                        m.save(filepath, overwrite=True)
-                        m.close()
-                else:
-                    m = filepath
-
+                        setattr(m.meta, attr, val)
                 self._models.append(m)
 
         except IOError:
             self.close()
             raise
 
-        # Pull the whole association table into meta.asn_table
-        self.meta.asn_table = {}
-        properties.merge_tree(
-            self.meta.asn_table._instance, asn_data
-        )
+        # Pull the whole association table into the asn_table attribute
+        self.asn_table = copy.deepcopy(asn_data)
 
         if self.asn_file_path is not None:
             self.asn_table_name = op.basename(self.asn_file_path)
@@ -359,7 +320,6 @@ to supply custom catalogs.
 
     def save(self,
              path=None,
-             dir_path=None,
              save_model_func=None,
              **kwargs):
         """
@@ -367,23 +327,19 @@ to supply custom catalogs.
 
         Parameters
         ----------
-        path : str or func or None
+        path : str or None
             - If None, the `meta.filename` is used for each model.
             - If a string, the string is used as a root and an index is
               appended.
-            - If a function, the function takes the two arguments:
-              the value of model.meta.filename and the
-              `idx` index, returning constructed file name.
-
-        dir_path : str
-            Directory to write out files.  Defaults to current working dir.
-            If directory does not exist, it creates it.  Filenames are pulled
-            from `.meta.filename` of each datamodel in the container.
 
         save_model_func: func or None
             Alternate function to save each model instead of
             the models `save` method. Takes one argument, the model,
             and keyword argument `idx` for an index.
+
+        kwargs : dict
+            Additional parameters to be passed to the `save` method of each
+            model.
 
         Returns
         -------
@@ -391,29 +347,17 @@ to supply custom catalogs.
             List of output file paths of where the models were saved.
         """
         output_paths = []
-        if path is None:
-            def path(filename, idx=None):
-                return filename
-        elif not callable(path):
-            path = make_file_with_index
-
         for idx, model in enumerate(self):
-            if len(self) <= 1:
-                idx = None
             if save_model_func is None:
-                outpath, filename = op.split(
-                    path(model.meta.filename, idx=idx)
-                )
-                if dir_path:
-                    outpath = dir_path
-                save_path = op.join(outpath, filename)
-                try:
-                    output_paths.append(
-                        model.save(save_path, **kwargs)
+                if path is None:
+                    save_path = model.meta.filename
+                else:
+                    if len(self) <= 1:
+                        idx = None
+                    save_path = path+str(idx)+".fits"
+                output_paths.append(
+                    model.save(save_path, **kwargs)
                     )
-                except IOError as err:
-                    raise err
-
             else:
                 output_paths.append(save_model_func(model, idx=idx))
         return output_paths
@@ -454,8 +398,6 @@ to supply custom catalogs.
         group_dict = OrderedDict()
         for i, model in enumerate(self._models):
             params = []
-            if not self._save_open:
-                model = datamodel_open(model, memmap=self._memmap)
 
             if (hasattr(model.meta, 'group_id') and
                         model.meta.group_id not in [None, '']):
@@ -480,10 +422,6 @@ to supply custom catalogs.
 
                 group_id = model.meta.group_id
 
-            if not self._save_open and not self._return_open:
-                model.close()
-                model = self._models[i]
-
             if group_id in group_dict:
                 group_dict[group_id].append(model)
             else:
@@ -503,10 +441,9 @@ to supply custom catalogs.
 
     def close(self):
         """Close all datamodels."""
-        if not self._iscopy:
-            for model in self._models:
-                if isinstance(model, JwstDataModel):
-                    model.close()
+        for model in self._models:
+            if isinstance(model, JwstDataModel):
+                model.close()
 
     @property
     def crds_observatory(self):
@@ -518,8 +455,6 @@ to supply custom catalogs.
         -------
         str
         """
-        # Eventually ModelContainer will also be used for Roman, but this
-        # will work for now:
         return "jwst"
 
     def get_crds_parameters(self):
@@ -530,27 +465,15 @@ to supply custom catalogs.
         Returns
         -------
         dict
-        """
-        with self._open_first_science_exposure() as model:
-            return model.get_crds_parameters()
 
-    def _open_first_science_exposure(self):
+        Notes
+        -----
+        stpipe requires ModelContainer to have a crds_observatory attribute in order
+        to pass through step.run(), but it is never accessed.
         """
-        Open first model with exptype SCIENCE, or the first model
-        if none exists.
-
-        Returns
-        -------
-        stdatamodels.JwstDataModel
-        """
-        for exposure in self.meta.asn_table.products[0].members:
-            if exposure.exptype.upper() == "SCIENCE":
-                first_exposure = exposure.expname
-                break
-        else:
-            first_exposure = self.meta.asn_table.products[0].members[0].expname
-
-        return datamodel_open(first_exposure)
+        msg = ("stpipe uses the get_crds_parameters method from the 0th model in the "
+               "ModelContainer. This method is currently not used.")
+        raise NotImplementedError(msg)
 
     def ind_asn_type(self, asn_exptype):
         """
@@ -571,98 +494,3 @@ to supply custom catalogs.
             if model.meta.asn.exptype.lower() == asn_exptype:
                 ind.append(i)
         return ind
-
-    def set_buffer(self, buffer_size, overlap=None):
-        """Set buffer size for scrolling section-by-section access.
-
-        Parameters
-        ----------
-        buffer_size : float, None
-            Define size of buffer in MB for each section.
-            If `None`, a default buffer size of 1MB will be used.
-
-        overlap : int, optional
-            Define the number of rows of overlaps between sections.
-            If `None`, no overlap will be used.
-        """
-        self.overlap = 0 if overlap is None else overlap
-        self.grow = 0
-
-        with datamodel_open(self._models[0]) as model:
-            imrows, imcols = model.data.shape
-            data_item_size = model.data.itemsize
-            data_item_type = model.data.dtype
-            model.close()
-        del model
-        min_buffer_size = imcols * data_item_size
-
-        self.buffer_size = min_buffer_size if buffer_size is None else (buffer_size * _ONE_MB)
-
-        section_nrows = min(imrows, int(self.buffer_size // min_buffer_size))
-
-        if section_nrows == 0:
-            self.buffer_size = min_buffer_size
-            logger.warning("WARNING: Buffer size is too small to hold a single row."
-                           f"Increasing buffer size to {self.buffer_size / _ONE_MB}MB")
-            section_nrows = 1
-
-        nbr = section_nrows - self.overlap
-        nsec = (imrows - self.overlap) // nbr
-        if (imrows - self.overlap) % nbr > 0:
-            nsec += 1
-
-        self.n_sections = nsec
-        self.nbr = nbr
-        self.section_nrows = section_nrows
-        self.imrows = imrows
-        self.imcols = imcols
-        self.imtype = data_item_type
-
-    def get_sections(self):
-        """Iterator to return the sections from all members of the container."""
-
-        for k in range(self.n_sections):
-            e1 = k * self.nbr
-            e2 = e1 + self.section_nrows
-
-            if k == self.n_sections - 1:  # last section
-                e2 = min(e2, self.imrows)
-                e1 = min(e1, e2 - self.overlap - 1)
-
-            data_list = np.empty((len(self._models), e2 - e1, self.imcols),
-                                 dtype=self.imtype)
-            wht_list = np.empty((len(self._models), e2 - e1, self.imcols),
-                                dtype=self.imtype)
-            for i, model in enumerate(self._models):
-                model = datamodel_open(model, memmap=self._memmap)
-
-                data_list[i, :, :] = model.data[e1:e2].copy()
-                wht_list[i, :, :] = model.wht[e1:e2].copy()
-                model.close()
-                del model
-
-            yield (data_list, wht_list, (e1, e2))
-
-
-def make_file_with_index(file_path, idx):
-    """Append an index to a filename
-
-    Parameters
-    ----------
-    file_path: str
-        The file to append the index to.
-    idx: int
-        An index to append
-
-
-    Returns
-    -------
-    file_path: str
-        Path with index appended
-    """
-    # Decompose path
-    path_head, path_tail = op.split(file_path)
-    base, ext = op.splitext(path_tail)
-    if idx is not None:
-        base = base + str(idx)
-    return op.join(path_head, base + ext)

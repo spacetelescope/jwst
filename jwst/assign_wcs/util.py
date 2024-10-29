@@ -99,7 +99,7 @@ def reproject(wcs1, wcs2):
 
 
 def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
-                  disp_axis: int = None, pscale_ratio: float = None) -> float:
+                  disp_axis: int | None = None, pscale_ratio: float | None = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -137,8 +137,8 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
 
     coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
-    xscale = np.abs(coords[0].separation(coords[1]).value)
-    yscale = np.abs(coords[0].separation(coords[2]).value)
+    xscale: float = np.abs(coords[0].separation(coords[1]).value)
+    yscale: float = np.abs(coords[0].separation(coords[2]).value)
 
     if pscale_ratio is not None:
         xscale *= pscale_ratio
@@ -149,7 +149,8 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
         # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
         return yscale if disp_axis == 1 else xscale
 
-    return np.sqrt(xscale * yscale)
+    scale: float = np.sqrt(xscale * yscale)
+    return scale
 
 
 def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> List[float]:
@@ -794,7 +795,7 @@ def update_s_region_imaging(model):
     """
     Update the ``S_REGION`` keyword using ``WCS.footprint``.
     """
-    s_region = compute_s_region_imaging(model.meta.wcs, shape=model.data.shape)
+    s_region = compute_s_region_imaging(model.meta.wcs, shape=model.data.shape, center=False)
     if s_region is not None:
         model.meta.wcsinfo.s_region = s_region
 

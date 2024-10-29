@@ -48,6 +48,14 @@ has the alias ``calwebb_detector1`` and can be run as
 
 A full list of pipeline aliases can be found in :ref:`Pipeline Stages <pipelines>`.
 
+
+.. note::
+
+   When using an **alias** with strun (for example ``strun resample``) you may
+   need to provide the ``jwst`` package name if you have other packages installed
+   that also use the same **alias**. The package name is provided prior to the
+   **alias** separated by ``::`` (for example ``strun jwst::resample``).
+
 .. _exit_status:
 
 Exit Status

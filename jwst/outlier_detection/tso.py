@@ -4,7 +4,7 @@ from jwst.resample.resample_utils import build_mask
 from jwst import datamodels as dm
 
 from stcal.outlier_detection.utils import compute_weight_threshold
-from .utils import flag_model_crs
+from .utils import flag_model_crs, nanmedian3D
 from ._fileio import save_median
 
 import logging
@@ -41,7 +41,7 @@ def detect_outliers(
         medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_window_width)
 
     else:
-        medians = np.nanmedian(weighted_cube.data, axis=0)
+        medians = nanmedian3D(weighted_cube.data, overwrite_input=False)
         # this is a 2-D array, need to repeat it into the time axis
         # for consistent shape with rolling median case
         medians = np.broadcast_to(medians, weighted_cube.shape)
@@ -49,7 +49,7 @@ def detect_outliers(
     # Save median model if pars['save_intermediate_results'] is True
     # this will be a CubeModel with rolling median values.
     if save_intermediate_results:
-        median_model = dm.CubeModel(data=medians)
+        median_model = dm.CubeModel(data=medians)  # type: ignore[name-defined]
         with dm.open(weighted_cube) as dm0:
             median_model.update(dm0)
         save_median(median_model, make_output_path)
@@ -89,7 +89,11 @@ def weight_no_resample(input_model, good_bits):
     return weighted_cube
 
 
-def compute_rolling_median(model: dm.CubeModel, weight_threshold: np.ndarray, w: int=25) -> np.ndarray:
+def compute_rolling_median(
+        model: dm.CubeModel,  # type: ignore[name-defined]
+        weight_threshold: np.ndarray,
+        w: int=25
+) -> np.ndarray:
     '''
     Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
 
@@ -159,7 +163,7 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     for idx in range(w - 1):
         shifted[idx:-w + idx + 1, idx] = x
     shifted[idx + 1:, idx + 1] = x
-    medians = np.median(shifted, axis=1)
+    medians: np.ndarray = np.median(shifted, axis=1)
     for idx in range(w - 1):
         medians[idx] = np.median(shifted[idx, :idx + 1])
         medians[-idx - 1] = np.median(shifted[-idx - 1, -idx - 1:])

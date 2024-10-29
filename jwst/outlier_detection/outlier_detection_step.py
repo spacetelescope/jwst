@@ -20,22 +20,17 @@ IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']
 TSO_IMAGE_MODES = ['NRC_TSIMAGE']  # missing MIR_IMAGE with TSOVIST=True, not really addable
 CORON_IMAGE_MODES = ['NRC_CORON', 'MIR_LYOT', 'MIR_4QPM']
 
-_STEP_MODES = {
-    'coron': coron,
-    'ifu': ifu,
-    'imaging': imaging,
-    'tso': tso,
-    'spec': spec,
-}
-
 __all__ = ["OutlierDetectionStep"]
 
 
 class OutlierDetectionStep(Step):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
 
-    Input images can be listed in an input association file or already opened
-    with a ModelContainer.  DQ arrays are modified in place.
+    Input images can be listed in an input association file or dictionary,
+    or already opened with a ModelContainer or ModelLibrary.
+    DQ arrays are modified in place.
+    SCI, ERR, VAR_RNOISE, VAR_FLAT, and VAR_POISSON arrays are updated with
+    NaN values matching the DQ flags.
 
     Parameters
     -----------
@@ -51,9 +46,7 @@ class OutlierDetectionStep(Step):
         weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
-        fillval = string(default='INDEF')
-        nlow = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
-        nhigh = integer(default=0)  # DEPRECATED this setting has no effect and will be removed
+        fillval = string(default='NAN')
         maskpt = float(default=0.7)
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
@@ -67,7 +60,7 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         search_output_file = boolean(default=False)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
-        in_memory = boolean(default=False)
+        in_memory = boolean(default=False) # ignored if run within the pipeline; set at pipeline level instead
     """
 
     def process(self, input_data):
@@ -166,7 +159,7 @@ class OutlierDetectionStep(Step):
             return self.mode
 
         # guess mode from input type
-        if isinstance(input_models, (str, dict)):
+        if isinstance(input_models, (str, dict, list)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Select which version of OutlierDetection
@@ -209,6 +202,8 @@ class OutlierDetectionStep(Step):
         try:   
             if isinstance(input_models, ModelLibrary):
                 asn_id = input_models.asn["asn_id"]
+            elif isinstance(input_models, ModelContainer):
+                asn_id = input_models.asn_table["asn_id"]
             else:
                 asn_id = input_models.meta.asn_table.asn_id
         except (AttributeError, KeyError):
@@ -230,7 +225,7 @@ class OutlierDetectionStep(Step):
     
     def _set_status(self, input_models, status):
         # this might be called with the input which might be a filename or path
-        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary)):
+        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
             input_models = datamodels.open(input_models)
 
         record_step_status(input_models, "outlier_detection", status)

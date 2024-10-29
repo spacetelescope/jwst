@@ -22,7 +22,7 @@ dependencies = [
     "astropy>=5.3",
     "BayesicFitting>=3.0.1",
     "crds>=11.17.14",
-    "drizzle>=1.15.0",
+    "drizzle>=2.0.0",
     "gwcs>=0.21.0,<0.23.0",
     "numpy>=1.22,<2.0",
     "opencv-python-headless>=4.6.0.66",
@@ -34,9 +34,9 @@ dependencies = [
     "scikit-image>=0.19",
     "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
-    "stcal>=1.9.0,<1.10.0",
-    "stdatamodels>=2.1.0,<2.2.0",
-    "stpipe>=0.7.0,<0.8.0",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
     "tweakwcs>=0.8.8",
@@ -111,6 +111,7 @@ test = [
     "colorama>=0.4.1",
     "readchar>=3.0",
     "ruff",
+    "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
     "pytest-doctestplus>=0.10.0",
@@ -210,6 +211,7 @@ addopts = [
     "-p no:legacypath",
     "--show-capture=no",
     "--report-crds-context",
+    "--color=yes",
 ]
 filterwarnings = [
     "error::ResourceWarning",
@@ -264,6 +266,8 @@ line-length = 130
 lint.ignore = [
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
+    "ANN101", # Missing type annotation for self in method
+    "ANN102", # Missing type annotation for cls in classmethod
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -285,6 +289,23 @@ lint.ignore = [
 "jwst/ramp_fitting/tests/*" = [
     "E402", # module-level import not at top of file
 ]
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+disable_error_code = "import-untyped" # do not check imports
+exclude = ["build"]
+
+[[tool.mypy.overrides]]
+# don't complain about the installed c parts of this library
+module = [
+    "jwst.cube_build.cube_match_internal",
+    "jwst.cube_build.cube_match_sky_driz",
+    "jwst.cube_build.cube_match_sky_pointcloud",
+    "jwst.lib.winclip",
+    "jwst.straylight.calc_xart",
+]
+ignore_missing_imports = true
 
 [tool.towncrier]
 filename = "CHANGES.rst"
