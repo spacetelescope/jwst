@@ -13,11 +13,11 @@ class FirstFrameStep(Step):
     first group.
     """
 
+    class_alias = "firstframe"
+
     spec = """
         bright_use_group1 = boolean(default=False) # do not flag group1 if group2 is not saturated and group3 is saturated   
     """
-
-    class_alias = "firstframe"
 
     def process(self, step_input):
 
