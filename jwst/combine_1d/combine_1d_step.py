@@ -27,6 +27,7 @@ class Combine1dStep(Step):
 
         with datamodels.open(input_file) as input_model:
             result = combine1d.combine_1d_spectra(input_model,
-                                                  self.exptime_key)
+                                                  self.exptime_key,
+                                                  sigma_clip=self.sigma_clip)
 
         return result
