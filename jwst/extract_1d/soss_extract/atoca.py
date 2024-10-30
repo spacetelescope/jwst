@@ -32,11 +32,11 @@ class MaskOverlapError(Exception):
         super().__init__(self.message)
 
 
-class ExtractionEngine():
+class ExtractionEngine:
     """
     Run the ATOCA algorithm (Darveau-Bernier 2021, in prep).
 
-    TODO: fix the below, which came from _BaseOverlap class
+    TODO: merge the docstring below, which came from _BaseOverlap class, into this docstring
     Base class for the ATOCA algorithm (Darveau-Bernier 2021, in prep).
     Used to perform an overlapping extraction of the form:
     (B_T * B) * f = (data/sig)_T * B
@@ -52,38 +52,30 @@ class ExtractionEngine():
     These depends of the type of interpolation used.
 
     This version models the pixels of the detector using an oversampled trapezoidal integration.
-    TODO: Merge with BaseOverlap class for readability
-    TODO: the following arguments can be simplified
-        mask - never used, always superseded by mask_trace_profile
-        wave_grid - always passed in explicitly; no need to have a default
-        wave_bounds - never used, default is always computed from wave_map
-        n_os - apparently never used because wave_grid is always explicit
-
-
-    TODO: I don't understand why data is not a required argument. If the data are only
-    needed when ExtractionEngine.__call__ happens, then the data should be input there somehow
     """
     # The desired data-type for computations, e.g., 'float32'. 'float64' is recommended.
     dtype = 'float64'
 
     def __init__(self, wave_map, trace_profile, throughput, kernels,
-                 orders=None, global_mask=None, mask_trace_profile=None,
-                 wave_grid=None, wave_bounds=None, n_os=2,
-                 threshold=1e-3, c_kwargs=None):
+                 wave_grid, mask_trace_profile,
+                 orders=[1,2], threshold=1e-3, c_kwargs=None):
         """
         Parameters
         ----------
-        trace_profile : (N_ord, N, M) list or array of 2-D arrays
-            A list or array of the spatial profile for each order
-            on the detector. It has to have the same (N, M) as `data`.
         wave_map : (N_ord, N, M) list or array of 2-D arrays
             A list or array of the central wavelength position for each
             order on the detector.
             It has to have the same (N, M) as `data`.
+
+        trace_profile : (N_ord, N, M) list or array of 2-D arrays
+            A list or array of the spatial profile for each order
+            on the detector. It has to have the same (N, M) as `data`.
+
         throughput : (N_ord [, N_k]) list of array or callable
             A list of functions or array of the throughput at each order.
             If callable, the functions depend on the wavelength.
             If array, projected on `wave_grid`.
+
         kernels : array, callable or sparse matrix
             Convolution kernel to be applied on spectrum (f_k) for each orders.
             Can be array of the shape (N_ker, N_k_c).
@@ -96,161 +88,91 @@ class ExtractionEngine():
             If sparse, the shape has to be (N_k_c, N_k) and it will
             be used directly. N_ker is the length of the effective kernel
             and N_k_c is the length of the spectrum (f_k) convolved.
-        data : (N, M) array_like, optional
-            A 2-D array of real values representing the detector image.
-        error : (N, M) array_like, optional
-            Estimate of the error on each pixel. Default is one everywhere.
-        mask : (N, M) array_like boolean, optional
-            Boolean Mask of the detector pixels to mask for every extraction.
-            Should not be related to a specific order (if so, use `mask_trace_profile` instead).
-        mask_trace_profile : (N_ord, N, M) list or array of 2-D arrays[bool], optional
+
+        wave_grid : (N_k) array_like, required.
+            The grid on which f(lambda) will be projected.
+
+        mask_trace_profile : (N_ord, N, M) list or array of 2-D arrays[bool], required.
             A list or array of the pixel that need to be used for extraction,
             for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
-            If not given, `threshold` will be applied on spatial profiles to define the masks.
+
         orders : list, optional
             List of orders considered. Default is orders = [1, 2]
-        wave_grid : (N_k) array_like, optional
-            The grid on which f(lambda) will be projected.
-            Default still has to be improved.
-        wave_bounds : list or array-like (N_ord, 2), optional
-            Boundary wavelengths covered by each orders.
-            Default is the wavelength covered by `wave_map`.
-        n_os : int, optional
-            Oversampling rate. If `wave_grid`is None, it will be used to
-            generate a grid. Default is 2.
+
         threshold : float, optional:
             The contribution of any order on a pixel is considered significant if
             its estimated spatial profile is greater than this threshold value.
             If it is not properly modeled (not covered by the wavelength grid),
             it will be masked. Default is 1e-3.
+
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
             If dictionary, the same c_kwargs will be used for each order.
         """
 
-        # Get wavelength at the boundary of each pixel
-        wave_p, wave_m = [], []
-        for wave in wave_map:  # For each order
-            lp, lm = atoca_utils.get_wave_p_or_m(wave)  # Lambda plus or minus
-            # Make sure it is the good precision
-            wave_p.append(lp.astype(self.dtype))
-            wave_m.append(lm.astype(self.dtype))
-
-        # Save values
-        self.wave_p, self.wave_m = wave_p, wave_m
-
-        # If no orders specified extract on orders 1 and 2.
-        if orders is None:
-            orders = [1, 2]
-
-        ###########################
-        # Save basic parameters
-        ###########################
-
-        # Spectral orders and number of orders.
-        self.data_shape = wave_map[0].shape
-        self.orders = orders
-        self.n_orders = len(orders)
+        # Set the attributes and ensure everything has correct dtype
+        self.wave_map = np.array(wave_map).astype(self.dtype)
+        self.trace_profile = np.array(trace_profile).astype(self.dtype)
+        self.mask_trace_profile = np.array(mask_trace_profile).astype(bool)
         self.threshold = threshold
+        self.data_shape = self.wave_map[0].shape
 
-        # Raise error if the number of orders is not consistent.
-        if self.n_orders != len(wave_map):
-            msg = ("The number of orders specified {} and the number of "
-                   "wavelength maps provided {} do not match.")
-            log.critical(msg.format(self.n_orders, len(wave_map)))
-            raise ValueError(msg.format(self.n_orders, len(wave_map)))
-
-        # Detector image.
-        self.data = np.full(self.data_shape, fill_value=np.nan)
-
-        # Error map of each pixels.
-        self.error = np.ones(self.data_shape)
-
-        # Set all reference file quantities to None.
-        self.wave_map = None
-        self.trace_profile = None
-        self.throughput = None
-        self.kernels = None
-
-        # Set the wavelength map and trace_profile for each order.
-        self.update_wave_map(wave_map)
-        self.update_trace_profile(trace_profile)
-
-        # Set the mask based on trace profiles and save
-        if mask_trace_profile is None:
-            # No mask (False everywhere)
-            log.warning('mask_trace_profile was not given. All detector pixels will be modeled. '
-                        'It is preferable to limit the number of modeled pixels by specifying the region '
-                        'of interest with mask_trace_profile.')
-            mask_trace_profile = np.array([np.zeros(self.data_shape, dtype=bool) for _ in orders])
-        self.mask_trace_profile = mask_trace_profile
-
-        # Generate a wavelength grid if none was provided.
-        if wave_grid is None:
-            if self.n_orders == 2:
-                wave_grid = atoca_utils.get_soss_grid(wave_map, trace_profile, n_os=n_os)
-            else:
-                wave_grid, _ = self.grid_from_map()
-        else:
-            # Check if the input wave_grid is sorted and strictly increasing.
-            is_sorted = (np.diff(wave_grid) > 0).all()
-
-            # If not, sort it and make it unique
-            if not is_sorted:
-                log.warning('`wave_grid` is not strictly increasing. It will be sorted and unique.')
-                wave_grid = np.unique(wave_grid)
-
-        # Set the wavelength grid and its size.
+        # Set wave_grid. Ensure it is sorted and strictly increasing.
+        is_sorted = (np.diff(wave_grid) > 0).all()
+        if not is_sorted:
+            log.warning('`wave_grid` is not strictly increasing. It will be sorted and made unique.')
+            wave_grid = np.unique(wave_grid)
         self.wave_grid = wave_grid.astype(self.dtype).copy()
         self.n_wavepoints = len(wave_grid)
 
-        # Set the throughput for each order.
-        self.update_throughput(throughput)
+        # Get wavelengths at the boundaries of each pixel for all orders
+        wave_p, wave_m = [], []
+        for wave in self.wave_map:
+            lp, lm = atoca_utils.get_wave_p_or_m(wave)
+            wave_p.append(lp)
+            wave_m.append(lm)
+        self.wave_p = np.array(wave_p).astype(self.dtype)
+        self.wave_m = np.array(wave_m).astype(self.dtype)
 
-        ###################################
-        # Build detector mask
-        ###################################
+        # Set orders and ensure that the number of orders is consistent with wave_map length
+        self.orders = orders
+        self.n_orders = len(self.orders)
+        if self.n_orders != len(self.wave_map):
+            msg = ("The number of orders specified {} and the number of "
+                   "wavelength maps provided {} do not match.")
+            log.critical(msg.format(self.n_orders, len(self.wave_map)))
+            raise ValueError(msg.format(self.n_orders, len(self.wave_map)))
 
-        # Assign a first estimate of i_bounds to be able to compute mask.
-        self.i_bounds = [[0, len(wave_grid)] for _ in range(self.n_orders)]
+        # Set a first estimate of i_bounds to estimate mask
+        self.i_bounds = [[0, len(self.wave_grid)] for _ in range(self.n_orders)]
 
-        # First estimate of a global mask and masks for each orders
-        self.mask, self.mask_ord = self._get_masks(global_mask)
+        # Estimate a global mask and masks for each orders
+        self.mask, self.mask_ord = self._get_masks()
+        # Save mask here as the general mask,  since `mask` attribute can be changed.
+        self.general_mask = self.mask.copy()
 
         # Ensure there are adequate good pixels left in each order
         good_pixels_in_order = np.sum(np.sum(~self.mask_ord, axis=-1), axis=-1)
         min_good_pixels = 25  # hard-code to qualitatively reasonable value
         if np.any(good_pixels_in_order < min_good_pixels):
-            raise MaskOverlapError('At least one order has no valid pixels (mask_trace_profile and mask_wave do not overlap)')
+            msg = (f'At least one order has less than {min_good_pixels} valid pixels. '
+                   '(mask_trace_profile and mask_wave have insufficient overlap')
+            raise MaskOverlapError(msg)
 
-        # Correct i_bounds if it was not specified
-        self.i_bounds = self._get_i_bnds(wave_bounds)
+        # Update i_bounds based on masked wavelengths
+        self.i_bnds = self._get_i_bnds()
 
-        # Re-build global mask and masks for each orders
-        self.mask, self.mask_ord = self._get_masks(global_mask)
+        # if throughput is given as callable, turn it into an array of proper shape
+        self.update_throughput(throughput)
 
-        # Save mask here as the general mask,
-        # since `mask` attribute can be changed.
-        self.general_mask = self.mask.copy()
-
-        ####################################
-        # Build convolution matrix
-        ####################################
-        self.update_kernels(kernels, c_kwargs)
-
-        #############################
-        # Compute integration weights
-        #############################
-        # The weights depend on the integration method used solve
-        # the integral of the flux over a pixel and are encoded
-        # in the class method `get_w()`.
+        # turn kernels into sparse matrix
+        self._create_kernels(kernels, c_kwargs)
+        
+        # Compute integration weights. see method self.get_w() for details.
         self.weights, self.weights_k_idx = self.compute_weights()
 
-        #########################
-        # Save remaining inputs
-        #########################
-        # Init the pixel mapping (b_n) matrices. Matrices that transforms the 1D spectrum to a the image pixels.
+        # Initialize the pixel mapping (b_n) matrices
         self.pixel_mapping = [None for _ in range(self.n_orders)]
         self.i_grid = None
         self.tikho_mat = None
@@ -264,6 +186,7 @@ class ExtractionEngine():
         ----------
         args : str or list[str]
             All attributes to return.
+
         i_order : None or int, optional
             Index of order to extract. If specified, it will
             be applied to all attributes in args, so it cannot
@@ -284,52 +207,15 @@ class ExtractionEngine():
 
         return out
 
-    def update_wave_map(self, wave_map):
-        """Update internal wave_map
-        TODO: can this be removed?
-        Parameters
-        ----------
-        wave_map : array[float]
-            Wavelength maps for each order
-
-        Returns
-        -------
-        None
-        """
-        dtype = self.dtype
-        self.wave_map = [wave_n.astype(dtype).copy() for wave_n in wave_map]
-
-
-    def update_trace_profile(self, trace_profile):
-        """Update internal trace_profiles
-        TODO: can this be removed?
-        Parameters
-        ----------
-        trace_profile : array[float]
-            Trace profiles for each order
-
-        Returns
-        -------
-        None
-        """
-        dtype = self.dtype
-
-        # Update the trace_profile profile.
-        self.trace_profile = [trace_profile_n.astype(dtype).copy() for trace_profile_n in trace_profile]
-
 
     def update_throughput(self, throughput):
         """Update internal throughput values
-        TODO: can this be removed?
+
         Parameters
         ----------
         throughput : array[float] or callable
             Throughput values for each order, given either as an array
             or as a callable function with self.wave_grid as input.
-
-        Returns
-        -------
-        None
         """
 
         # Update the throughput values.
@@ -352,43 +238,36 @@ class ExtractionEngine():
                 raise ValueError(msg)
 
         # Set the attribute to the new values.
-        self.throughput = throughput_new
+        self.throughput = np.array(throughput_new).astype(self.dtype)
 
 
-    def update_kernels(self, kernels, c_kwargs):
-        """Update internal kernels
-        TODO: can this be removed?
+    def _create_kernels(self, kernels, c_kwargs):
+        """Make sparse matrix from input kernels
+
         Parameters
         ----------
         kernels : array, callable or sparse matrix
             Convolution kernel to be applied on the spectrum (f_k) for each order.
+
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
             If dictionary, the same c_kwargs will be used for each order.
-
-        Returns
-        -------
-        None
         """
 
-        # Check the c_kwargs inputs
-        # If not given
+        # If c_kwargs not given, use the kernels min_value attribute.
+        # It is a way to make sure that the full kernel is used.
         if c_kwargs is None:
-            # Then use the kernels min_value attribute.
-            # It is a way to make sure that the full kernel
-            # is used.
             c_kwargs = []
             for ker in kernels:
-                # If the min_value not specified, then
-                # simply take the get_c_matrix defaults
                 try:
                     kwargs_ker = {'thresh': ker.min_value}
                 except AttributeError:
+                    # take the get_c_matrix defaults
                     kwargs_ker = dict()
                 c_kwargs.append(kwargs_ker)
 
-        # ...or same for each orders if only a dictionary was given
+        # ...or same for all orders if only a dictionary was given
         elif isinstance(c_kwargs, dict):
             c_kwargs = [c_kwargs for _ in kernels]
 
@@ -406,21 +285,15 @@ class ExtractionEngine():
         self.kernels = kernels_new
 
 
-    def _get_masks(self, global_mask):
+    def _get_masks(self):
         """Compute a general mask on the detector and for each order.
-        Depends on the spatial profile, the wavelength grid
-        and the user defined mask (optional). These are all specified
-        when initializing the object.
-
-        Parameters
-        ----------
-        global_mask : array[bool]
-            Boolean mask of the detector pixels to mask for every extraction.
+        Depends on the trace profile and the wavelength grid.
 
         Returns
         -------
         general_mask : array[bool]
             Mask that combines global_mask, wavelength mask, trace_profile mask
+
         mask_ord : array[bool]
             Mask applied to each order
         """
@@ -430,18 +303,11 @@ class ExtractionEngine():
         needed_attr = self.get_attributes(*args)
         threshold, n_orders, mask_trace_profile, trace_profile = needed_attr
 
-        # Convert list to array (easier for coding)
-        mask_trace_profile = np.array(mask_trace_profile)
-
         # Mask pixels not covered by the wavelength grid.
         mask_wave = np.array([self.get_mask_wave(i_order) for i_order in range(n_orders)])
 
         # Apply user defined mask.
-        if global_mask is None:
-            mask_ord = np.any([mask_trace_profile, mask_wave], axis=0)
-        else:
-            mask = [global_mask for _ in range(n_orders)]  # For each orders
-            mask_ord = np.any([mask_trace_profile, mask_wave, mask], axis=0)
+        mask_ord = np.any([mask_trace_profile, mask_wave], axis=0)
 
         # Find pixels that are masked in each order.
         general_mask = np.all(mask_ord, axis=0)
@@ -459,6 +325,7 @@ class ExtractionEngine():
 
         return general_mask, mask_ord
 
+
     def update_mask(self, mask):
         """Update `mask` attribute by combining the `general_mask`
         attribute with the input `mask`. Every time the mask is
@@ -470,64 +337,40 @@ class ExtractionEngine():
         mask : array[bool]
             New mask to be combined with internal general_mask and
             saved in self.mask.
-
-        Returns
-        -------
-        None
         """
-
-        # Get general mask
-        general_mask = self.general_mask
-
-        # Complete with the input mask
-        new_mask = (general_mask | mask)
-
-        # Update attribute
-        self.mask = new_mask
-
-        # Correct i_bounds if it was not specified
-        # self.update_i_bnds()
+        self.mask = (self.general_mask | mask)
 
         # Re-compute weights
         self.weights, self.weights_k_idx = self.compute_weights()
 
 
-    def _get_i_bnds(self, wave_bounds=None):
-        """Define wavelength boundaries for each order using the order's mask.
-        Parameters
-        ----------
-        wave_bounds : list[float], optional
-            Minimum and maximum values of masked wavelength map. If not given,
-            calculated from internal wave_map and mask_ord for each order.
+    def _get_i_bnds(self):
+        """Define wavelength boundaries for each order using the order's mask
+        and the wavelength map.
+
         Returns
         -------
         list[float]
             Wavelength boundaries for each order
         """
 
-        wave_grid = self.wave_grid
-        i_bounds = self.i_bounds
+        # Figure out boundary wavelengths
+        wave_bounds = []
+        for i in range(self.n_orders):
+            wave = self.wave_map[i][~self.mask_ord[i]]
+            wave_bounds.append([wave.min(), wave.max()])
 
-        # Check if wave_bounds given
-        if wave_bounds is None:
-            wave_bounds = []
-            for i in range(self.n_orders):
-                wave = self.wave_map[i][~self.mask_ord[i]]
-                wave_bounds.append([wave.min(), wave.max()])
-
-        # What we need is the boundary position
-        # on the wavelength grid.
+        # Determine the boundary position on the wavelength grid.
         i_bnds_new = []
-        for bounds, i_bnds in zip(wave_bounds, i_bounds):
+        for bounds, i_bnds in zip(wave_bounds, self.i_bounds):
 
-            a = np.min(np.where(wave_grid >= bounds[0])[0])
-            b = np.max(np.where(wave_grid <= bounds[1])[0]) + 1
+            print(bounds, i_bnds)
+            a = np.min(np.where(self.wave_grid >= bounds[0])[0])
+            b = np.max(np.where(self.wave_grid <= bounds[1])[0]) + 1
 
             # Take the most restrictive bound
             a = np.maximum(a, i_bnds[0])
             b = np.minimum(b, i_bnds[1])
-
-            # Keep value
             i_bnds_new.append([a, b])
 
         return i_bnds_new
@@ -603,7 +446,6 @@ class ExtractionEngine():
         if self.w_t_wave_c is None:
             self.w_t_wave_c = [[] for _ in range(self.n_orders)]
 
-        # Assign value
         self.w_t_wave_c[i_order] = product.copy()
 
 
@@ -616,73 +458,19 @@ class ExtractionEngine():
         wave_map, trace_profile = self.get_attributes(*attrs, i_order=i_order)
 
         wave_grid, icol = atoca_utils._grid_from_map(wave_map, trace_profile)
-
         wave_grid = wave_grid.astype(self.dtype)
-
         return wave_grid, icol
 
-    def estimate_noise(self, i_order=0, data=None, error=None, mask=None):
-        """Relative noise estimate over columns.
 
-        Parameters
-        ----------
-        i_order : int, optional
-            index of diffraction order. Default is 0
-        data : 2d array, optional
-            map of the detector image
-            Default is `self.data`.
-        error : 2d array, optional
-            map of the estimate of the detector noise.
-            Default is `self.sig`
-        mask : 2d array, optional
-            Bool map of the masked pixels for order `i_order`.
-            Default is `self.mask_ord[i_order]`
-
-        Returns
-        ------
-        wave_grid : array[float]
-            The wavelength grid.
-        noise : array[float]
-            The associated noise array.
+    def get_pixel_mapping(self, i_order, error=None, same=False, quick=False):
         """
-
-        # Use object attributes if not given
-        if data is None:
-            data = self.data
-
-        if error is None:
-            error = self.error
-
-        if mask is None:
-            mask = self.mask_ord[i_order]
-
-        # Compute noise estimate only on the trace (mask the rest)
-        noise = np.ma.array(error, mask=mask)
-
-        # RMS over columns
-        noise = np.sqrt((noise**2).sum(axis=0))
-
-        # Relative
-        noise /= np.ma.array(data, mask=mask).sum(axis=0)
-
-        # Convert to array with nans
-        noise = noise.filled(fill_value=np.nan)
-
-        # Get associated wavelengths
-        wave_grid, i_col = self.grid_from_map(i_order)
-
-        # Return sorted according to wavelengths
-        return wave_grid, noise[i_col]
-
-    def get_pixel_mapping(self, i_order, same=False, error=True, quick=False):
-        """Compute the matrix `b_n = (P/sig).w.T.lambda.c_n` ,
+        Compute the matrix `b_n = (P/sig).w.T.lambda.c_n` ,
         where `P` is the spatial profile matrix (diag),
         `w` is the integrations weights matrix,
         `T` is the throughput matrix (diag),
         `lambda` is the convolved wavelength grid matrix (diag),
         `c_n` is the convolution kernel.
-        The model of the detector at order n (`model_n`)
-        is given by the system:
+        The model of the detector at order n (`model_n`) is given by the system:
         model_n = b_n.c_n.f ,
         where f is the incoming flux projected on the wavelength grid.
         This methods updates the `b_n_list` attribute.
@@ -691,15 +479,16 @@ class ExtractionEngine():
         ----------
         i_order: integer
             Label of the order (depending on the initiation of the object).
+
+        error: (N, M) array_like or None, optional.
+            Estimate of the error on each pixel. Same shape as `data`.
+            If None, the error is set to 1, which means the method will return
+            b_n instead of b_n/sigma. Default is None.
+
         same: bool, optional
             Do not recompute b_n. Take the last b_n computed.
             Useful to speed up code. Default is False.
-        error: bool or (N, M) array_like, optional
-            If 2-d array, `sig` is the new error estimation map.
-            It is the same shape as `sig` initiation input. If bool,
-            whether to apply sigma or not. The method will return
-            b_n/sigma if True or array_like and b_n if False. If True,
-            the default object attribute `sig` will be used.
+
         quick: bool, optional
             If True, only perform one matrix multiplication
             instead of the whole system: (P/sig).(w.T.lambda.c_n)
@@ -721,17 +510,9 @@ class ExtractionEngine():
         else:
             # Special treatment for error map
             # Can be bool or array.
-            if error is False:
+            if error is None:
                 # Sigma will have no effect
                 error = np.ones(self.data_shape)
-            else:
-                if error is not True:
-                    # Sigma must be an array so
-                    # update object attribute
-                    self.error = error.copy()
-
-                # Take sigma from object
-                error = self.error
 
             # Get needed attributes ...
             attrs = ['wave_grid', 'mask']
@@ -775,34 +556,21 @@ class ExtractionEngine():
 
         return pixel_mapping
 
-    def build_sys(self, data=None, error=True, mask=None, trace_profile=None, throughput=None):
-        """Build linear system arising from the logL maximisation.
+
+    def build_sys(self, data, error):
+        """
+        Build linear system arising from the logL maximisation.
         TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
               There will be only one matrix multiplication:
               (P/sig).(w.T.lambda.c_n).
+
         Parameters
         ----------
-        data : (N, M) array_like, optional
+        data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-            Default is the object attribute `data`.
-        error : bool or (N, M) array_like, optional
+
+        error : (N, M) array_like
             Estimate of the error on each pixel.
-            If 2-d array, `sig` is the new error estimation map.
-            It is the same shape as `sig` initiation input. If bool,
-            whether to apply sigma or not. The method will return
-            b_n/sigma if True or array_like and b_n if False. If True,
-            the default object attribute `sig` will be use.
-        mask : (N, M) array_like boolean, optional
-            Additional mask for a given exposure. Will be added
-            to the object general mask.
-        trace_profile : (N_ord, N, M) list or array of 2-D arrays, optional
-            A list or array of the spatial profile for each order
-            on the detector. It has to have the same (N, M) as `data`.
-            Default is the object attribute `p_list`
-        throughput : (N_ord [, N_k]) list or array of functions, optional
-            A list or array of the throughput at each order.
-            The functions depend on the wavelength
-            Default is the object attribute `t_list`
 
         Returns
         ------
@@ -810,7 +578,7 @@ class ExtractionEngine():
         """
 
         # Get the detector model
-        b_matrix, data = self.get_detector_model(data, error, mask, trace_profile, throughput)
+        b_matrix, data = self.get_detector_model(data, error)
 
         # (B_T * B) * f = (data/sig)_T * B
         # (matrix ) * f = result
@@ -819,34 +587,22 @@ class ExtractionEngine():
 
         return matrix, result.toarray().squeeze()
 
-    def get_detector_model(self, data=None, error=True, mask=None, trace_profile=None, throughput=None):
-        """Get the linear model of the detector pixel, B.dot(flux) = pixels
+
+    def get_detector_model(self, data, error):
+        """
+        TODO: are mask, trace_profile, throughput ever passed in here?
+        Get the linear model of the detector pixel, B.dot(flux) = pixels
         TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
               There will be only one matrix multiplication:
               (P/sig).(w.T.lambda.c_n).
+
         Parameters
         ----------
-        data : (N, M) array_like, optional
+        data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-            Default is the object attribute `data`.
-        error: bool or (N, M) array_like, optional
+
+        error: (N, M) array_like
             Estimate of the error on each pixel.
-            If 2-d array, `sig` is the new error estimation map.
-            It is the same shape as `sig` initiation input. If bool,
-            whether to apply sigma or not. The method will return
-            b_n/sigma if True or array_like and b_n if False. If True,
-            the default object attribute `sig` will be use.
-        mask : (N, M) array_like boolean, optional
-            Additional mask for a given exposure. Will be added
-            to the object general mask.
-        trace_profile : (N_ord, N, M) list or array of 2-D arrays, optional
-            A list or array of the spatial profile for each order
-            on the detector. It has to have the same (N, M) as `data`.
-            Default is the object attribute `p_list`
-        throughput : (N_ord [, N_k]) list or array of functions, optional
-            A list or array of the throughput at each order.
-            The functions depend on the wavelength
-            Default is the object attribute `t_list`
 
         Returns
         ------
@@ -854,129 +610,49 @@ class ExtractionEngine():
             From the linear equation B.dot(flux) = pix_array
         """
 
-        # Check if inputs are suited for quick mode;
-        # Quick mode if `t_list` is not specified.
-        quick = (throughput is None)
-
-        # and if mask doesn't change
-        quick &= (mask is None)
-        quick &= (self.w_t_wave_c is not None)  # Pre-computed
-
-        # Use data from object as default
-        if data is None:
-            data = self.data
-        else:
-            # Update data
-            self.data = data
-
-        # Update mask if given
-        if mask is not None:
-            self.update_mask(mask)
-
-        # Take (updated) mask from object
-        mask = self.mask
-
-        # Get some dimensions infos
-        n_wavepoints, n_orders = self.n_wavepoints, self.n_orders
-
-        # Update trace_profile maps and throughput values.
-        if trace_profile is not None:
-            self.update_trace_profile(trace_profile)
-
-        if throughput is not None:
-            self.update_throughput(throughput)
-
-        # Calculations
+        # Check if `w_t_wave_c` is pre-computed
+        quick = (self.w_t_wave_c is not None)
 
         # Build matrix B
         # Initiate with empty matrix
-        n_i = (~mask).sum()  # n good pixels
-        b_matrix = csr_matrix((n_i, n_wavepoints))
+        n_i = (~self.mask).sum()  # n good pixels
+        b_matrix = csr_matrix((n_i, self.n_wavepoints))
 
         # Sum over orders
-        for i_order in range(n_orders):
+        for i_order in range(self.n_orders):
 
             # Get sparse pixel mapping matrix.
-            b_matrix += self.get_pixel_mapping(i_order, error=error, quick=quick)
+            b_matrix += self.get_pixel_mapping(i_order, error, quick=quick)
 
         # Build detector pixels' array
-        # Fisrt get `error` which have been update`
-        # when calling `get_pixel_mapping`
-        error = self.error
-
         # Take only valid pixels and apply `error` on data
-        data = data[~mask] / error[~mask]
+        data = data[~self.mask] / error[~self.mask]
 
         return b_matrix, csr_matrix(data)
 
-    def set_tikho_matrix(self, t_mat=None, t_mat_func=None, fargs=None, fkwargs=None):
-        """Set the tikhonov matrix attribute.
-        The matrix can be directly specified as an input, or
-        it can be built using `t_mat_func`
 
-        Parameters
-        ----------
-        t_mat : matrix-like, optional
-            Tikhonov regularization matrix. scipy.sparse matrix
-            are recommended.
-        t_mat_func : callable, optional
-            Function used to generate `t_mat` if not specified.
-            Will take `fargs` and `fkwargs`as input.
-            Use the `atoca_utils.get_tikho_matrix` as default.
-        fargs : tuple, optional
-            Arguments passed to `t_mat_func`. Default is `(self.wave_grid, )`.
-        fkwargs : dict, optional
-            Keyword arguments passed to `t_mat_func`. Default is
-            `{'n_derivative': 1, 'd_grid': True, 'estimate': None, 'pwr_law': 0}`
-
-        Returns
-        -------
-        None
+    @property
+    def tikho_mat(self):
         """
-
-        # Generate the matrix with the function
-        if t_mat is None:
-
-            # Default function if not specified
-            if t_mat_func is None:
-                # Use the `atoca_utils.get_tikho_matrix`
-                # The default arguments will return the 1rst derivative
-                # as the tikhonov matrix
-                t_mat_func = atoca_utils.get_tikho_matrix
-
-            # Default args
-            if fargs is None:
-                # The argument for `atoca_utils.get_tikho_matrix` is the wavelength grid
-                fargs = (self.wave_grid, )
-            if fkwargs is None:
-                # The kwargs for `atoca_utils.get_tikho_matrix` are
-                # n_derivative = 1, d_grid = True, estimate = None, pwr_law = 0
-                fkwargs = {'n_derivative': 1, 'd_grid': True, 'estimate': None, 'pwr_law': 0}
-
-            # Call function
-            t_mat = t_mat_func(*fargs, **fkwargs)
-
-        # Set attribute
-        self.tikho_mat = t_mat
-
-
-    def get_tikho_matrix(self, **kwargs):
-        """
-        #TODO: why is there also an atoca_utils.get_tikho_matrix function?
-
         Return the Tikhonov matrix.
-        Generate it with `set_tikho_matrix` method
-        if not defined yet. If so, all arguments are passed
-        to `set_tikho_matrix`. The result is saved as an attribute.
+        Generate it with `atoca_utils.get_tikho_matrix` method if not defined yet.
         """
+        if self._tikho_mat is not None:
+            return self._tikho_mat
 
-        if self.tikho_mat is None:
-            self.set_tikho_matrix(**kwargs)
+        fkwargs = {'n_derivative': 1, 'd_grid': True, 'estimate': None, 'pwr_law': 0}
+        self._tikho_mat = atoca_utils.get_tikho_matrix(self.wave_grid, **fkwargs)
+        return self._tikho_mat
 
-        return self.tikho_mat
+
+    @tikho_mat.setter
+    def tikho_mat(self, t_mat):
+        self._tikho_mat = t_mat
+
 
     def estimate_tikho_factors(self, flux_estimate):
-        """Estimate an initial guess of the Tikhonov factor. The output factor will
+        """
+        Estimate an initial guess of the Tikhonov factor. The output factor will
         be used to find the best Tikhonov factor. The flux_estimate is used to generate
         a factor_guess. The user should construct a grid with this output in log space,
         e.g. np.logspace(np.log10(flux_estimate)-4, np.log10(flux_estimate)+4, 9).
@@ -1001,11 +677,8 @@ class ExtractionEngine():
         # Project the estimate on the wavelength grid
         estimate_on_grid = flux_estimate(wave_grid)
 
-        # Get the tikhonov matrix
-        tikho_matrix = self.get_tikho_matrix()
-
         # Estimate the norm-2 of the regularization term
-        reg_estimate = tikho_matrix.dot(estimate_on_grid)
+        reg_estimate = self.tikho_mat.dot(estimate_on_grid)
         reg_estimate = np.nansum(np.array(reg_estimate) ** 2)
 
         # Estimate of the factor
@@ -1015,8 +688,8 @@ class ExtractionEngine():
 
         return factor_guess
 
-    def get_tikho_tests(self, factors, tikho=None, tikho_kwargs=None, data=None,
-                        error=None, mask=None, trace_profile=None, throughput=None):
+
+    def get_tikho_tests(self, factors, data, error):
         """
         Test different factors for Tikhonov regularization.
 
@@ -1024,31 +697,12 @@ class ExtractionEngine():
         ----------
         factors : 1D list or array-like
             Factors to be tested.
-        tikho : Tikhonov object, optional
-            Tikhonov regularization object (see regularization.Tikhonov).
-            If not given, an object will be initiated using the linear system
-            from `build_sys` method and kwargs will be passed.
-        tikho_kwargs :
-            passed to init Tikhonov object. Possible options
-            are `t_mat` and `grid`
-        data : (N, M) array_like, optional
+
+        data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-            Default is the object attribute `data`.
-        error : (N, M) array_like, optional
-            Estimate of the error on each pixel`
-            Same shape as `data`.
-            Default is the object attribute `sig`.
-        mask : (N, M) array_like boolean, optional
-            Additional mask for a given exposure. Will be added
-            to the object general mask.
-        trace_profile : (N_ord, N, M) list or array of 2-D arrays, optional
-            A list or array of the spatial profile for each order
-            on the detector. It has to have the same (N, M) as `data`.
-            Default is the object attribute `p_list`
-        throughput : (N_ord [, N_k]) list or array of functions, optional
-            A list or array of the throughput at each order.
-            The functions depend on the wavelength
-            Default is the object attribute `t_list`
+
+        error : (N, M) array_like
+            Estimate of the error on each pixel. Same shape as `data`.
 
         Returns
         ------
@@ -1056,13 +710,9 @@ class ExtractionEngine():
         """
 
         # Build the system to solve
-        b_matrix, pix_array = self.get_detector_model(data, error, mask, trace_profile, throughput)
+        b_matrix, pix_array = self.get_detector_model(data, error)
 
-        if tikho is None:
-            t_mat = self.get_tikho_matrix()
-            if tikho_kwargs is None:
-                tikho_kwargs = {}
-            tikho = atoca_utils.Tikhonov(b_matrix, pix_array, t_mat, **tikho_kwargs)
+        tikho = atoca_utils.Tikhonov(b_matrix, pix_array, self.t_mat)
 
         # Test all factors
         tests = tikho.test_factors(factors)
@@ -1075,8 +725,10 @@ class ExtractionEngine():
 
         return tests
 
-    def best_tikho_factor(self, tests=None, fit_mode='all', mode_kwargs=None):
+
+    def best_tikho_factor(self, tests, fit_mode):
         """
+        TODO: why does function with same name exist here and in atoca_utils?
         Compute the best scale factor for Tikhonov regularization.
         It is determined by taking the factor giving the lowest reduced chi2 on
         the detector, the highest curvature of the l-curve or when the improvement
@@ -1084,32 +736,26 @@ class ExtractionEngine():
 
         Parameters
         ----------
-        tests : dictionary, optional
+        tests : dictionary
             Results of Tikhonov extraction tests for different factors.
             Must have the keys "factors" and "-logl".
-            If not specified, the tests from self.tikho.tests are used.
-        fit_mode : string, optional
+
+        fit_mode : string
             Which mode is used to find the best Tikhonov factor. Options are
             'all', 'curvature', 'chi2', 'd_chi2'. If 'all' is chosen, the best of the
             three other options will be selected.
-        mode_kwargs : dictionary-like
-            Dictionary of keyword arguments to be passed to TikhoTests.best_tikho_factor().
-            Example: mode_kwargs = {'curvature': curvature_kwargs}.
-            Here, curvature_kwargs is also a dictionary.
 
         Returns
         -------
         best_fac : float
             The best Tikhonov factor.
+
         best_mode : str
             The mode used to determine the best factor.
+
         results : dict
             A dictionary holding the factors computed for each mode requested.
         """
-
-        # Use pre-run tests if not specified
-        if tests is None:
-            tests = self.tikho_tests
 
         # TODO Find a way to identify when the solution becomes unstable
         #      and do nnot use these in the search for the best tikhonov factor.
@@ -1138,30 +784,17 @@ class ExtractionEngine():
             # Single mode
             list_mode = [fit_mode]
 
-        # Init the mode_kwargs if None were given
-        if mode_kwargs is None:
-            mode_kwargs = dict()
-
-        # Fill the missing value in mode_kwargs
-        for mode in list_mode:
-            try:
-                # Try the mode
-                mode_kwargs[mode]
-            except KeyError:
-                # Init with empty dictionary if it was not given
-                mode_kwargs[mode] = dict()
-
         # Evaluate best factor with different methods
         results = dict()
         for mode in list_mode:
-            best_fac = tests.best_tikho_factor(mode=mode, **mode_kwargs[mode])
+            best_fac = tests.best_tikho_factor(mode=mode)
             results[mode] = best_fac
 
         if fit_mode == 'all':
             # Choose the best factor.
-            # In a well behave case, the results should be ordered as 'chi2', 'd_chi2', 'curvature'
+            # In a well-behaved case, the results should be ordered as 'chi2', 'd_chi2', 'curvature'
             # and 'd_chi2' will be the best criterion determine the best factor.
-            # 'chi2' usually overfitting the solution and 'curvature' may oversmooth the solution
+            # 'chi2' usually overfits the solution and 'curvature' may oversmooth the solution
             if results['curvature'] <= results['chi2'] or results['d_chi2'] <= results['chi2']:
                 # In this case, 'chi2' is likely to not overfit the solution, so must be favored
                 best_mode = 'chi2'
@@ -1184,20 +817,22 @@ class ExtractionEngine():
 
         return best_fac, best_mode, results
 
-    def rebuild(self, spectrum=None, i_orders=None, same=False, fill_value=0.0):
-        """Build current model image of the detector.
+
+    def rebuild(self, spectrum, same=False, fill_value=0.0):
+        """
+        Build current model image of the detector.
+
         Parameters
         ----------
-        spectrum : callable or array-like, optional
+        spectrum : callable or array-like
             flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
-            If not provided, will find via self.__call__().
-        i_orders : list[int], optional
-            Indices of orders to model. Default is all available orders.
+
         same : bool, optional
             If True, do not recompute the pixel_mapping matrix (b_n)
             and instead use the most recent pixel_mapping to speed up the computation.
             Default is False.
+
         fill_value : float or np.nan, optional
             Pixel value where the detector is masked. Default is 0.0.
 
@@ -1206,73 +841,56 @@ class ExtractionEngine():
         array[float]
             The modeled detector image.
         """
-
-        # If no spectrum given compute it.
-        if spectrum is None:
-            spectrum = self.__call__()
-
         # If flux is callable, evaluate on the wavelength grid.
         if callable(spectrum):
             spectrum = spectrum(self.wave_grid)
 
-        # Iterate over all orders by default.
-        if i_orders is None:
-            i_orders = range(self.n_orders)
-
-        # Get required class attribute.
-        mask = self.mask
+        # Iterate over all orders
+        i_orders = range(self.n_orders)
 
         # Evaluate the detector model.
         model = np.zeros(self.data_shape)
         for i_order in i_orders:
 
             # Compute the pixel mapping matrix (b_n) for the current order.
-            pixel_mapping = self.get_pixel_mapping(i_order, error=False, same=same)
+            pixel_mapping = self.get_pixel_mapping(i_order, error=None, same=same)
 
             # Evaluate the model of the current order.
-            model[~mask] += pixel_mapping.dot(spectrum)
+            model[~self.mask] += pixel_mapping.dot(spectrum)
 
         # Assign masked values
-        model[mask] = fill_value
-
+        model[self.mask] = fill_value
         return model
 
-    def compute_likelihood(self, spectrum=None, same=False):
+
+    def compute_likelihood(self, spectrum, data, error):
         """Return the log likelihood associated with a particular spectrum.
 
         Parameters
         ----------
-        spectrum : array[float] or callable, optional
+        spectrum : array[float] or callable
             Flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
-            If not given it will be computed by calling self.__call__().
-        same : bool, optional
-            If True, do not recompute the pixel_mapping matrix (b_n)
-            and instead use the most recent pixel_mapping to speed up the computation.
-            Default is False.
+
+        data : (N, M) array_like
+            A 2-D array of real values representing the detector image.
+
+        error : (N, M) array_like
+            Estimate of the error on each pixel.
+            Same shape as `data`.
 
         Returns
         -------
         array[float]
             The log-likelihood of the spectrum.
         """
-
-        # If no spectrum given compute it.
-        if spectrum is None:
-            spectrum = self.__call__()
-
         # Evaluate the model image for the spectrum.
-        model = self.rebuild(spectrum, same=same)
-
-        # Get data and error attributes.
-        data = self.data
-        error = self.error
-        mask = self.mask
+        model = self.rebuild(spectrum, same=False)
 
         # Compute the log-likelihood for the spectrum.
         with np.errstate(divide='ignore'):
             logl = (model - data) / error
-        return -np.nansum((logl[~mask])**2)
+        return -np.nansum((logl[~self.mask])**2)
 
 
     @staticmethod
@@ -1311,7 +929,7 @@ class ExtractionEngine():
 
         return tikho.solve(**kwargs)
 
-    def __call__(self, tikhonov=False, tikho_kwargs=None, factor=None, **kwargs):
+    def __call__(self, data, error, tikhonov=False, factor=None):
         """
         Extract underlying flux on the detector.
         All parameters are passed to `build_sys` method.
@@ -1324,56 +942,38 @@ class ExtractionEngine():
 
         Parameters
         ----------
+        data : (N, M) array_like
+            A 2-D array of real values representing the detector image.
+
+        error : (N, M) array_like
+            Estimate of the error on each pixel`
+            Same shape as `data`.
+
         tikhonov : bool, optional
             Whether to use Tikhonov extraction
             Default is False.
-        tikho_kwargs : dictionary or None, optional
-            Arguments passed to `tikho_solve`.
+
         factor : the Tikhonov factor to use if tikhonov is True
-        data : (N, M) array_like, optional
-            A 2-D array of real values representing the detector image.
-            Default is the object attribute `data`.
-        error : (N, M) array_like, optional
-            Estimate of the error on each pixel`
-            Same shape as `data`.
-            Default is the object attribute `sig`.
-        mask : (N, M) array_like boolean, optional
-            Additional mask for a given exposure. Will be added
-            to the object general mask.
-        trace_profile : (N_ord, N, M) list or array of 2-D arrays, optional
-            A list or array of the spatial profile for each order
-            on the detector. It has to have the same (N, M) as `data`.
-            Default is the object attribute `p_list`
-        throughput : (N_ord [, N_k]) list or array of functions, optional
-            A list or array of the throughput at each order.
-            The functions depend on the wavelength
-            Default is the object attribute `t_list`
 
         Returns
         -----
         spectrum (f_k): solution of the linear system
         """
-
         # Solve with the specified solver.
         if tikhonov:
             # Build the system to solve
-            b_matrix, pix_array = self.get_detector_model(**kwargs)
+            b_matrix, pix_array = self.get_detector_model(data, error)
 
             if factor is None:
                 msg = "Please specify tikhonov `factor`."
                 log.critical(msg)
                 raise ValueError(msg)
 
-            t_mat = self.get_tikho_matrix()
-
-            if tikho_kwargs is None:
-                tikho_kwargs = {}
-
-            spectrum = self._solve_tikho(b_matrix, pix_array, t_mat, factor=factor, **tikho_kwargs)
+            spectrum = self._solve_tikho(b_matrix, pix_array, self.tikho_mat, factor=factor)
 
         else:
             # Build the system to solve
-            matrix, result = self.build_sys(**kwargs)
+            matrix, result = self.build_sys(data, error)
 
             # Only solve for valid range `i_grid` (on the detector).
             # It will be a singular matrix otherwise.
@@ -1402,16 +1002,13 @@ class ExtractionEngine():
 
         log.debug('Computing lowest and highest indices of wave_grid.')
 
-        # Get needed attributes
-        mask = self.mask
-
         # ... order dependent attributes
         attrs = ['wave_p', 'wave_m', 'mask_ord']
         wave_p, wave_m, mask_ord = self.get_attributes(*attrs, i_order=i_order)
 
         # Compute only for valid pixels
-        wave_p = wave_p[~mask]
-        wave_m = wave_m[~mask]
+        wave_p = wave_p[~self.mask]
+        wave_m = wave_m[~self.mask]
 
         # Find lower (lo) index in the pixel
         lo = np.searchsorted(grid, wave_m, side='right')
@@ -1420,7 +1017,7 @@ class ExtractionEngine():
         hi = np.searchsorted(grid, wave_p) - 1
 
         # Set invalid pixels for this order to lo=-1 and hi=-2
-        ma = mask_ord[~mask]
+        ma = mask_ord[~self.mask]
         lo[ma], hi[ma] = -1, -2
 
         return lo, hi   
@@ -1428,6 +1025,7 @@ class ExtractionEngine():
 
     def get_mask_wave(self, i_order):
         """Generate mask bounded by limits of wavelength grid
+
         Parameters
         ----------
         i_order : int

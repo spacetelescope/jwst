@@ -205,13 +205,11 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tra
 
     # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
     ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [np.array([1.])]
-    kwargs = {'wave_grid': wave_grid,
-              'orders': [1],
-              'mask_trace_profile': [mask]}
-    engine = ExtractionEngine(*ref_file_args, **kwargs)
+    kwargs = {'orders': [1],}
+    engine = ExtractionEngine(*ref_file_args, wave_grid, [mask], **kwargs)
 
     # Extract estimate
-    spec_estimate = engine.__call__(data=scidata_bkg, error=scierr)
+    spec_estimate = engine.__call__(scidata_bkg, scierr)
 
     # Interpolate
     idx = np.isfinite(spec_estimate)
@@ -538,10 +536,10 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     scimask = scimask | ~(scierr > 0)
 
     # Define mask based on box aperture (we want to model each contaminated pixels that will be extracted)
-    mask_trace_profile = [~(box_weights[order] > 0) for order in order_list]
+    mask_trace_profile = [(~(box_weights[order] > 0)) | (refmask) for order in order_list]
 
     # Define mask of pixel to model (all pixels inside box aperture)
-    global_mask = np.all(mask_trace_profile, axis=0) | refmask
+    global_mask = np.all(mask_trace_profile, axis=0).astype(bool)
 
     # Rough estimate of the underlying flux
     # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
@@ -566,7 +564,6 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     engine = ExtractionEngine(*ref_file_args,
                               wave_grid=wave_grid,
                               mask_trace_profile=mask_trace_profile,
-                              global_mask=scimask,
                               threshold=threshold,
                               c_kwargs=c_kwargs)
 
@@ -608,10 +605,10 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
     # Run the extract method of the Engine.
-    f_k = engine.__call__(data=scidata_bkg, error=scierr, tikhonov=True, factor=tikfac)
+    f_k = engine.__call__(scidata_bkg, scierr, tikhonov=True, factor=tikfac)
 
     # Compute the log-likelihood of the best fit.
-    logl = engine.compute_likelihood(f_k, same=False)
+    logl = engine.compute_likelihood(f_k, scidata_bkg, scierr)
 
     log.info('Optimal solution has a log-likelihood of {}'.format(logl))
 
@@ -777,11 +774,12 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
         # Initialize the engine
         engine = ExtractionEngine(*ref_file_args,
                                   wave_grid=wave_grid,
+                                  mask_trace_profile=[mask_fit],
                                   orders=[order],
-                                  mask_trace_profile=[mask_fit])
+                                  )
 
         # Extract estimate
-        spec_estimate = engine.__call__(data=data_order, error=err_order)
+        spec_estimate = engine.__call__(data_order, err_order)
 
         # Interpolate
         idx = np.isfinite(spec_estimate)
@@ -797,8 +795,8 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
     # Initialize the Engine.
     engine = ExtractionEngine(*ref_file_args,
                               wave_grid=wave_grid_os,
-                              orders=[order],
-                              mask_trace_profile=[mask_fit])
+                              mask_trace_profile=[mask_fit],
+                              orders=[order],)
 
     # Find the tikhonov factor.
     # Initial pass with tikfac_range.
@@ -819,7 +817,7 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
     all_tests = append_tiktests(all_tests, tiktests)
 
     # Run the extract method of the Engine.
-    f_k_final = engine.__call__(data=data_order, error=err_order, tikhonov=True, factor=tikfac)
+    f_k_final = engine.__call__(data_order, err_order, tikhonov=True, factor=tikfac)
 
     # Save binned spectra in a list of SingleSpecModels for optional output
     spec_list = []
@@ -841,8 +839,8 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
     # Initialize the Engine.
     engine = ExtractionEngine(*ref_file_args,
                               wave_grid=wave_grid_os,
-                              orders=[order],
-                              mask_trace_profile=[mask_rebuild])
+                              mask_trace_profile=[mask_rebuild],
+                              orders=[order],)
 
     # Project on detector and save in dictionary
     model = engine.rebuild(f_k_final, fill_value=np.nan)
