@@ -5,7 +5,7 @@ resample_spec
 -------------
 
 - Update NIRSpec spectral resampling to add a missing correction factor in resampled
-  WCS tangent plane transformation.
+  WCS tangent plane transformation. [#8933]
 
 1.16.0 (2024-09-20)
 ===================
