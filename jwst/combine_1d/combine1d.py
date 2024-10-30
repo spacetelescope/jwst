@@ -285,7 +285,7 @@ class OutputSpectrumModel:
         Parameters
         ----------
         flux : ndarray, 2-D
-            Tabulated fluxes for the input spectra in the format 
+            Tabulated fluxes for the input spectra in the format
             [N spectra, M wavelengths].
         flux_error : ndarray, 2-D
             Flux errors of input spectra.
@@ -298,7 +298,7 @@ class OutputSpectrumModel:
         count : ndarray, 2-D
             Count of how many values at each index in the input arrays.
         sigma_clip : float, optional
-            Factor for clipping outliers.  Compares input spectra to the 
+            Factor for clipping outliers.  Compares input spectra to the
             median and medaian absolute devaition, by default None.
 
         Returns
@@ -315,7 +315,6 @@ class OutputSpectrumModel:
             Total, per wavelength weights.
         count : ndarray, 1-D
             Total count of spectra contributing to each wavelength.
- 
         """
 
         # Catch warnings for all NaN slices in an array.

@@ -38,7 +38,7 @@ class MasterBackgroundStep(Step):
         input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`, association
             Input target datamodel(s) to which master background subtraction is
             to be applied
-            
+
         median_kernel : integer, optional
             Optional user-supplied kernel with which to moving-median boxcar filter the master background
             spectrum.  Must be an odd integer, even integers will be rounded down to the nearest
@@ -118,7 +118,7 @@ class MasterBackgroundStep(Step):
                 # the master background so just save the expanded 2d background
                 if self.save_background:
                     self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
-                    
+
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
@@ -254,7 +254,7 @@ class MasterBackgroundStep(Step):
                                   "run again and set force_subtract = True.")
 
         return do_sub
-    
+
     def save_container(self, container, suffix="", asn_id="", force=True):
         """Save all models in container for intermediate background subtraction"""
         for i, model in enumerate(container):

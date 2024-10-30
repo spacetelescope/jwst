@@ -40,8 +40,8 @@ def nirspec_rate():
     im = datamodels.ImageModel(shape)
     im.var_rnoise += 1
     im.meta.target = {
-        'ra': 100.1237, 
-        'dec': 39.86, 
+        'ra': 100.1237,
+        'dec': 39.86,
         'source_type_apt': 'EXTENDED'}
     im.meta.wcsinfo = {
         'dec_ref': 40,
@@ -124,15 +124,15 @@ def nirspec_cal_pair(nirspec_rate):
 def nirspec_asn(nirspec_cal_pair, tmp_cwd):
     """Create an association with the mock data"""
     sci, im2 = nirspec_cal_pair
-    
+
     sci_filename = sci.meta.filename
     sci.save(sci_filename)
-    
+
     x1d = Extract1dStep.call(im2)
-    
+
     # Add a CR to the x1d
     x1d.spec[0].spec_table['SURF_BRIGHT'][10] += 10
-    
+
     x1d_filename = im2.meta.filename.replace('cal', 'x1d')
     x1d.meta.filename = x1d_filename
     x1d.save(x1d_filename)
@@ -152,7 +152,7 @@ def nirspec_asn(nirspec_cal_pair, tmp_cwd):
             ]
         },
     ]}
-    
+
     # Save the association
     new_data = json.dumps(asn)
     asn_file = 'asn.json'
@@ -208,7 +208,7 @@ def test_master_background_medfilt(tmp_cwd, nirspec_asn):
     result = MasterBackgroundStep.call(
         container,
     )
-    
+
     # Run with a median filter using kernel size 4. This should be rounded
     # down to 3 otherwise medfilt will throw an error.
     result_medfilt = MasterBackgroundStep.call(
@@ -218,13 +218,13 @@ def test_master_background_medfilt(tmp_cwd, nirspec_asn):
     # Check that the background correction was run in both cases
     assert query_step_status(result, "master_background") == 'COMPLETE'
     assert query_step_status(result_medfilt, "master_background") == 'COMPLETE'
-    
+
     # Check that there is a difference between the median filter on and off
     data_nofilt = result[0].slits[0].data
     data_medfilt = result_medfilt[0].slits[0].data
     assert not np.all(data_nofilt == data_medfilt)
-    
-    # Check that once filtered any pixels where the background correction 
+
+    # Check that once filtered any pixels where the background correction
     # was applied have zero flux
     bkg_sub_pixels = data_medfilt[data_medfilt != 1]
     assert np.allclose(bkg_sub_pixels, 0)
