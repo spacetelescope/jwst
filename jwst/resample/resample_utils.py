@@ -32,10 +32,11 @@ def make_output_wcs(input_models, ref_wcs=None,
         have a ``meta.wcs.s_region`` attribute.
 
     ref_wcs : gwcs.WCS, None, optional
-        Reference WCS to use as a template for the output WCS. If not provided,
-        the reference WCS will be taken as the WCS of the first input model.
+        Custom WCS to use as the output WCS. If not provided,
+        the reference WCS will be taken as the WCS of the first input model, with
+        its bounding box adjusted to encompass all input frames.
 
-    pscale_ratio : float, optional
+    pscale_ratio : float, None, optional
         Ratio of input to output pixel scale. Ignored when ``pscale``
         is provided.
 
