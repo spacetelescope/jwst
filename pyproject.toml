@@ -157,7 +157,8 @@ namespaces = false
 ]
 "jwst.lib" = [
     "tests/data/*.asdf",
-    "tests/data/*.db",
+    "tests/data/**/*.db",
+    "tests/data/**/*.xml",
     "tests/data/*.ecsv",
     "tests/data/*.fits",
 ]
