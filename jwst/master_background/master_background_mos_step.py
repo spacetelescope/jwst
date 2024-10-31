@@ -125,7 +125,8 @@ class MasterBackgroundMosStep(Pipeline):
             if self.user_background:
                 self.log.info(f'Calculating master background from user-supplied background {self.user_background}')
                 user_background = datamodels.open(self.user_background)
-                master_background, mb_multislit = self._calc_master_background(data_model, user_background)
+                master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
+                    data_model, user_background)
             elif self.use_correction_pars:
                 self.log.info('Using pre-calculated correction parameters.')
                 master_background = self.correction_pars['masterbkg_1d']
@@ -163,7 +164,8 @@ class MasterBackgroundMosStep(Pipeline):
             if self.save_background:
                 self.save_model(master_background, suffix='masterbg1d', force=True)
                 self.save_model(mb_multislit, suffix='masterbg2d', force=True)
-                self.save_model(bkg_x1d_spectra, suffix='bkgx1d', force=True)
+                if bkg_x1d_spectra is not None:
+                    self.save_model(bkg_x1d_spectra, suffix='bkgx1d', force=True)
 
         return result
 
