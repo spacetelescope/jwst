@@ -152,20 +152,23 @@ class Extract1dStep(Step):
     class_alias = "extract_1d"
 
     spec = """
+    log_increment = integer(default=50)  # increment for multi-integration log messages
+    use_source_posn = boolean(default=None)  # use source coords to center extractions?
+    apply_apcorr = boolean(default=True)  # apply aperture corrections?
+
+    subtract_background = boolean(default=None)  # subtract background?
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold
-    log_increment = integer(default=50)  # increment for multi-integration log messages
-    subtract_background = boolean(default=None)  # subtract background?
-    use_source_posn = boolean(default=None)  # use source coords to center extractions?
+    
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
-    apply_apcorr = boolean(default=True)  # apply aperture corrections?
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
+    
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -215,7 +218,7 @@ class Extract1dStep(Step):
         elif isinstance(input_model, ModelContainer):
             self.log.debug('Input is a ModelContainer')
         elif isinstance(input_model, datamodels.MultiSlitModel):
-            #  If input is a 3D rateints (which is unsupported) skip the step
+            #  If input is a 3D calints (which is unsupported) skip the step
             if len((input_model[0]).shape) == 3:
                 self.log.warning('3D input is unsupported; step will be skipped')
                 input_model.meta.cal_step.extract_1d = 'SKIPPED'
@@ -398,7 +401,7 @@ class Extract1dStep(Step):
         # ______________________________________________________________________
         # Data that is not a ModelContainer (IFUCube and other single models)
         else:
-            # Data is NRISS SOSS observation.
+            # Data is NIRISS SOSS observation.
             if input_model.meta.exposure.type == 'NIS_SOSS':
 
                 self.log.info(
