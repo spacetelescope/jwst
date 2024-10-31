@@ -28,7 +28,12 @@ def make_output_wcs(input_models, ref_wcs=None,
     Parameters
     ----------
     input_models : `~jwst.datamodel.ModelLibrary`
-        Each datamodel must have a ~gwcs.WCS object.
+        The datamodels to combine into a single output WCS. Each datamodel must
+        have a ``meta.wcs.s_region`` attribute.
+
+    ref_wcs : gwcs.WCS, None, optional
+        Reference WCS to use as a template for the output WCS. If not provided,
+        the reference WCS will be taken as the WCS of the first input model.
 
     pscale_ratio : float, optional
         Ratio of input to output pixel scale. Ignored when ``pscale``
@@ -73,7 +78,7 @@ def make_output_wcs(input_models, ref_wcs=None,
                 sregion_list.append(model.meta.wcsinfo.s_region)
                 if i == 0:
                     example_model = model
-                    ref_wcs=example_model.meta.wcs
+                    ref_wcs = example_model.meta.wcs
                     ref_wcsinfo = example_model.meta.wcsinfo.instance
                 input_models.shelve(model)
         naxes = ref_wcs.output_frame.naxes

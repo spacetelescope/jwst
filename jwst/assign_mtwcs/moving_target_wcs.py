@@ -18,6 +18,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelLibrary
 from jwst.stpipe.utilities import record_step_status
+from jwst.assign_wcs.util import update_s_region_keyword
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -69,6 +70,7 @@ def assign_moving_target_wcs(input_models):
                                     model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
                 del model.meta.wcs
                 model.meta.wcs = new_wcs
+                update_s_region_keyword(model, new_wcs.footprint())
             record_step_status(model, "assign_mtwcs", True)
             input_models.shelve(model, i, modify=True)
 
