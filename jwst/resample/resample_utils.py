@@ -164,40 +164,28 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    # try:
-    #     # forward_transform = wcs1.pixel_to_world_values
-    #     # backward_transform = wcs2.world_to_pixel_values
-    #     forward_transform = wcs1.forward_transform
-    #     backward_transform = wcs2.backward_transform
-    # except AttributeError as err:
-    #     raise TypeError("Input should be a WCS") from err
-    def _get_forward(wcs):
-        if isinstance(wcs, gwcs.WCS):
-            return wcs.forward_transform
-        elif isinstance(wcs, fitswcs.WCS):
-            return wcs.pixel_to_world_values
-        elif isinstance(wcs, Model):
-            return wcs
+    try:
+        # Here we want to use the WCS API functions so that a Sliced WCS
+        # will work as well. However, the API functions do not accept
+        # keyword arguments and `with_bounding_box=False` cannot be passsed.
+        # We delete the bounding box on a copy of the WCS - yes, inefficient.
+        forward_transform = wcs1.pixel_to_world_values
+        wcs_no_bbox = deepcopy(wcs2)
+        wcs_no_bbox.bounding_box = None
+        backward_transform = wcs_no_bbox.world_to_pixel_values
+    except AttributeError as err:
+        raise TypeError("Input should be a WCS") from err
 
-    def _get_backward(wcs):
-        if isinstance(wcs, gwcs.WCS):
-            return wcs.backward_transform
-        elif isinstance(wcs, fitswcs.WCS):
-            return wcs.world_to_pixel_values
-        elif isinstance(wcs, Model):
-            return wcs
 
     def _reproject(x, y):
-        #sky = forward_transform(x, y)
-        sky = _get_forward(wcs1)(x, y)
+        sky = forward_transform(x, y)
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
         # Filter out RuntimeWarnings due to computed NaNs in the WCS
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            #det = backward_transform(*tuple(flat_sky))
-            det = _get_backward(wcs2)(*tuple(flat_sky))
+            det = backward_transform(*tuple(flat_sky))
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
