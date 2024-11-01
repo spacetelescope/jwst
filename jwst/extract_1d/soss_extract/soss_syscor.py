@@ -6,49 +6,40 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def soss_background(scidata, scimask, bkg_mask=None):
+def soss_background(scidata, scimask, bkg_mask):
     """Compute a columnwise background for a SOSS observation.
 
     Parameters
     ----------
     scidata : array[float]
         The image of the SOSS trace.
+
     scimask : array[bool]
         Boolean mask of pixels to be excluded.
+
     bkg_mask : array[bool]
         Boolean mask of pixels to be excluded because they are in
-        the trace, typically constructed with make_profile_mask.
+        the trace, typically constructed with make_background_mask.
 
     Returns
     -------
     scidata_bkg : array[float]
         Background-subtracted image
+
     col_bkg : array[float]
         Column-wise background values
-    npix_bkg : array[float]
-        Number of pixels used to calculate each column value in col_bkg
     """
 
     # Check the validity of the input.
     data_shape = scidata.shape
 
-    if scimask.shape != data_shape:
-        msg = 'scidata and scimask must have the same shape.'
+    if (scimask.shape != data_shape) or (bkg_mask.shape != data_shape):
+        msg = 'scidata, scimask, and bkg_mask must all have the same shape.'
         log.critical(msg)
         raise ValueError(msg)
 
-    if bkg_mask is not None:
-        if bkg_mask.shape != data_shape:
-            msg = 'scidata and bkg_mask must have the same shape.'
-            log.critical(msg)
-            raise ValueError(msg)
-
     # Combine the masks and create a masked array.
-    if bkg_mask is not None:
-        mask = scimask | bkg_mask
-    else:
-        mask = scimask
-
+    mask = scimask | bkg_mask
     scidata_masked = np.ma.array(scidata, mask=mask)
 
     # Mask additional pixels using sigma-clipping.
@@ -58,15 +49,14 @@ def soss_background(scidata, scimask, bkg_mask=None):
     # Compute the mean for each column and record the number of pixels used.
     col_bkg = scidata_clipped.mean(axis=0)
     col_bkg = np.where(np.all(scidata_clipped.mask, axis=0), 0., col_bkg)
-    npix_bkg = (~scidata_clipped.mask).sum(axis=0)
 
     # Background subtract the science data.
     scidata_bkg = scidata - col_bkg
 
-    return scidata_bkg, col_bkg, npix_bkg
+    return scidata_bkg, col_bkg
 
 
-def make_background_mask(deepstack, width=28):
+def make_background_mask(deepstack, width):
     """Build a mask of the pixels considered to contain the majority of the
     flux, and should therefore not be used to compute the background.
 
@@ -75,6 +65,7 @@ def make_background_mask(deepstack, width=28):
     deepstack : array[float]
         Deep image of the trace constructed by combining
         individual integrations of the observation.
+
     width : int
         Width, in pixels, of the trace to exclude with the mask
         (i.e. width/256 for a SUBSTRIP256 observation).
@@ -84,11 +75,10 @@ def make_background_mask(deepstack, width=28):
     bkg_mask : array[bool]
         Pixel mask in the trace based on the deepstack or
         non-finite in the image.
-    :rtype: array[bool]
     """
 
     # Get the dimensions of the input image.
-    nrows, ncols = np.shape(deepstack)
+    nrows, _ = np.shape(deepstack)
 
     # Set the appropriate quantile for masking based on the subarray size.
     if nrows == 96:  # SUBSTRIP96
@@ -108,6 +98,4 @@ def make_background_mask(deepstack, width=28):
 
     # Mask pixels above the threshold value.
     with np.errstate(invalid='ignore'):
-        bkg_mask = (deepstack > threshold) | ~np.isfinite(deepstack)
-
-    return bkg_mask
+        return (deepstack > threshold) | ~np.isfinite(deepstack)

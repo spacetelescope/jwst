@@ -71,7 +71,7 @@ def test_get_wv_map_bounds(wave_map, dispersion_axis):
         wave_flip = wave_map.T
     else:
         wave_flip = wave_map
-    wave_top, wave_bottom = au.get_wv_map_bounds(wave_flip, dispersion_axis=dispersion_axis)
+    wave_top, wave_bottom = au._get_wv_map_bounds(wave_flip, dispersion_axis=dispersion_axis)
 
     # flip the results back so we can re-use the same tests
     if dispersion_axis == 0:
@@ -95,7 +95,7 @@ def test_get_wv_map_bounds(wave_map, dispersion_axis):
 
     # test bad input error raises
     with pytest.raises(ValueError):
-        au.get_wv_map_bounds(wave_flip, dispersion_axis=2)
+        au._get_wv_map_bounds(wave_flip, dispersion_axis=2)
 
 
 
@@ -184,9 +184,9 @@ def test_oversample_irregular(os_factor):
 
 
 @pytest.mark.parametrize("wave_range", [(2.1, 3.9), (1.8, 4.5)])
-def test_extrapolate_grid(wave_range):
+def test__extrapolate_grid(wave_range):
 
-    extrapolated = au.extrapolate_grid(WAVELENGTHS, wave_range, 1)
+    extrapolated = au._extrapolate_grid(WAVELENGTHS, wave_range, 1)
     
     assert extrapolated.max() > wave_range[1]
     assert extrapolated.min() < wave_range[0]
@@ -201,14 +201,14 @@ def test_extrapolate_catch_failed_converge():
     # give wavelengths some non-linearity
     wave_range = WAVELENGTHS.min(), WAVELENGTHS.max()+4.0
     with pytest.raises(RuntimeError):
-        au.extrapolate_grid(WAVELENGTHS, wave_range, 1)
+        au._extrapolate_grid(WAVELENGTHS, wave_range, 1)
 
 
 def test_extrapolate_bad_inputs():
     with pytest.raises(ValueError):
-        au.extrapolate_grid(WAVELENGTHS, (2.9, 2.1))
+        au._extrapolate_grid(WAVELENGTHS, (2.9, 2.1))
     with pytest.raises(ValueError):
-        au.extrapolate_grid(WAVELENGTHS, (4.1, 4.2))
+        au._extrapolate_grid(WAVELENGTHS, (4.1, 4.2))
 
 
 def test_grid_from_map(wave_map, trace_profile):
@@ -238,7 +238,7 @@ def test_grid_from_map(wave_map, trace_profile):
 
 
 @pytest.mark.parametrize("n_os", ([4,1], 1))
-def test_get_soss_grid(n_os, wave_map, trace_profile, wave_map_o2, trace_profile_o2):
+def test__get_soss_grid(n_os, wave_map, trace_profile, wave_map_o2, trace_profile_o2):
     """
     wave_map has min, max wavelength of 1.5, 4.0 but throughput makes this 1.7, 4.2
     wave_map_o2 has min, max wavelength of 0.5, 3.0 but throughput makes this 0.9, 3.4
@@ -250,7 +250,7 @@ def test_get_soss_grid(n_os, wave_map, trace_profile, wave_map_o2, trace_profile
     wave_max = 4.0
     wave_maps = np.array([wave_map, wave_map_o2])
     trace_profiles = np.array([trace_profile, trace_profile_o2])
-    wave_grid = au.get_soss_grid(wave_maps, trace_profiles, wave_min, wave_max, n_os)
+    wave_grid = au._get_soss_grid(wave_maps, trace_profiles, wave_min, wave_max, n_os)
 
     delta_lower = wave_grid[1]-wave_grid[0]
     delta_upper = wave_grid[-1]-wave_grid[-2]
@@ -284,17 +284,17 @@ def test_get_soss_grid(n_os, wave_map, trace_profile, wave_map_o2, trace_profile
     assert expected_ratio == actual_ratio
 
 
-def test_get_soss_grid_bad_inputs(wave_map, trace_profile):
+def test__get_soss_grid_bad_inputs(wave_map, trace_profile):
     with pytest.raises(ValueError):
         # test bad input shapes
-        au.get_soss_grid(wave_map, trace_profile, 0.5, 0.9, 1)
+        au._get_soss_grid(wave_map, trace_profile, 0.5, 0.9, 1)
 
     wave_maps = np.array([wave_map, wave_map])
     trace_profiles = np.array([trace_profile, trace_profile])
 
     with pytest.raises(ValueError):
         # test bad n_os shape
-        au.get_soss_grid(wave_maps, trace_profiles, 0.5, 0.9, [1,1,1])
+        au._get_soss_grid(wave_maps, trace_profiles, 0.5, 0.9, [1,1,1])
 
 
 

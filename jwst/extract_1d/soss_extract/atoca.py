@@ -364,7 +364,6 @@ class ExtractionEngine:
         i_bnds_new = []
         for bounds, i_bnds in zip(wave_bounds, self.i_bounds):
 
-            print(bounds, i_bnds)
             a = np.min(np.where(self.wave_grid >= bounds[0])[0])
             b = np.max(np.where(self.wave_grid <= bounds[1])[0]) + 1
 
@@ -383,6 +382,7 @@ class ExtractionEngine:
         # Get old and new boundaries.
         i_bnds_old = self.i_bounds
         i_bnds_new = self._get_i_bnds()
+        print(i_bnds_old, i_bnds_new)
 
         for i_order in range(self.n_orders):
 
@@ -462,7 +462,7 @@ class ExtractionEngine:
         return wave_grid, icol
 
 
-    def get_pixel_mapping(self, i_order, error=None, same=False, quick=False):
+    def get_pixel_mapping(self, i_order, error=None, quick=False):
         """
         Compute the matrix `b_n = (P/sig).w.T.lambda.c_n` ,
         where `P` is the spatial profile matrix (diag),
@@ -485,10 +485,6 @@ class ExtractionEngine:
             If None, the error is set to 1, which means the method will return
             b_n instead of b_n/sigma. Default is None.
 
-        same: bool, optional
-            Do not recompute b_n. Take the last b_n computed.
-            Useful to speed up code. Default is False.
-
         quick: bool, optional
             If True, only perform one matrix multiplication
             instead of the whole system: (P/sig).(w.T.lambda.c_n)
@@ -499,60 +495,51 @@ class ExtractionEngine:
             Sparse matrix of b_n coefficients
         """
 
-        # Force to compute if b_n never computed.
-        if self.pixel_mapping[i_order] is None:
-            same = False
+        # Special treatment for error map
+        # Can be bool or array.
+        if error is None:
+            # Sigma will have no effect
+            error = np.ones(self.data_shape)
 
-        # Take the last b_n computed if nothing changes
-        if same:
-            pixel_mapping = self.pixel_mapping[i_order]
+        # Get needed attributes ...
+        attrs = ['wave_grid', 'mask']
+        wave_grid, mask = self.get_attributes(*attrs)
+
+        # ... order dependent attributes
+        attrs = ['trace_profile', 'throughput', 'kernels', 'weights', 'i_bounds']
+        trace_profile_n, throughput_n, kernel_n, weights_n, i_bnds = self.get_attributes(*attrs, i_order=i_order)
+
+        # Keep only valid pixels (P and sig are still 2-D)
+        # And apply directly 1/sig here (quicker)
+        trace_profile_n = trace_profile_n[~mask] / error[~mask]
+
+        # Compute b_n
+        # Quick mode if only `p_n` or `sig` has changed
+        if quick:
+            # Get pre-computed (right) part of the equation
+            right = self.w_t_wave_c[i_order]
+
+            # Apply new p_n
+            pixel_mapping = diags(trace_profile_n).dot(right)
 
         else:
-            # Special treatment for error map
-            # Can be bool or array.
-            if error is None:
-                # Sigma will have no effect
-                error = np.ones(self.data_shape)
+            # First (T * lam) for the convolve axis (n_k_c)
+            product = (throughput_n * wave_grid)[slice(*i_bnds)]
 
-            # Get needed attributes ...
-            attrs = ['wave_grid', 'mask']
-            wave_grid, mask = self.get_attributes(*attrs)
+            # then convolution
+            product = diags(product).dot(kernel_n)
 
-            # ... order dependent attributes
-            attrs = ['trace_profile', 'throughput', 'kernels', 'weights', 'i_bounds']
-            trace_profile_n, throughput_n, kernel_n, weights_n, i_bnds = self.get_attributes(*attrs, i_order=i_order)
+            # then weights
+            product = weights_n.dot(product)
 
-            # Keep only valid pixels (P and sig are still 2-D)
-            # And apply directly 1/sig here (quicker)
-            trace_profile_n = trace_profile_n[~mask] / error[~mask]
+            # Save this product for quick mode
+            self._set_w_t_wave_c(i_order, product)
 
-            # Compute b_n
-            # Quick mode if only `p_n` or `sig` has changed
-            if quick:
-                # Get pre-computed (right) part of the equation
-                right = self.w_t_wave_c[i_order]
+            # Then spatial profile
+            pixel_mapping = diags(trace_profile_n).dot(product)
 
-                # Apply new p_n
-                pixel_mapping = diags(trace_profile_n).dot(right)
-
-            else:
-                # First (T * lam) for the convolve axis (n_k_c)
-                product = (throughput_n * wave_grid)[slice(*i_bnds)]
-
-                # then convolution
-                product = diags(product).dot(kernel_n)
-
-                # then weights
-                product = weights_n.dot(product)
-
-                # Save this product for quick mode
-                self._set_w_t_wave_c(i_order, product)
-
-                # Then spatial profile
-                pixel_mapping = diags(trace_profile_n).dot(product)
-
-            # Save new pixel mapping matrix.
-            self.pixel_mapping[i_order] = pixel_mapping
+        # Save new pixel mapping matrix.
+        self.pixel_mapping[i_order] = pixel_mapping
 
         return pixel_mapping
 
@@ -706,7 +693,8 @@ class ExtractionEngine:
 
         Returns
         ------
-        dictionary of the tests results
+        tests : dict
+            dictionary of the test results
         """
 
         # Build the system to solve
@@ -719,9 +707,6 @@ class ExtractionEngine:
 
         # Save also grid
         tests["grid"] = self.wave_grid
-
-        # Save as attribute
-        self.tikho_tests = tests
 
         return tests
 
@@ -749,12 +734,6 @@ class ExtractionEngine:
         -------
         best_fac : float
             The best Tikhonov factor.
-
-        best_mode : str
-            The mode used to determine the best factor.
-
-        results : dict
-            A dictionary holding the factors computed for each mode requested.
         """
 
         # TODO Find a way to identify when the solution becomes unstable
@@ -812,13 +791,12 @@ class ExtractionEngine:
 
         # Get the factor of the chosen mode
         best_fac = results[best_mode]
-
         log.debug(f'Mode chosen to find regularization factor is {best_mode}')
 
-        return best_fac, best_mode, results
+        return best_fac
 
 
-    def rebuild(self, spectrum, same=False, fill_value=0.0):
+    def rebuild(self, spectrum, fill_value=0.0):
         """
         Build current model image of the detector.
 
@@ -827,11 +805,6 @@ class ExtractionEngine:
         spectrum : callable or array-like
             flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
-
-        same : bool, optional
-            If True, do not recompute the pixel_mapping matrix (b_n)
-            and instead use the most recent pixel_mapping to speed up the computation.
-            Default is False.
 
         fill_value : float or np.nan, optional
             Pixel value where the detector is masked. Default is 0.0.
@@ -853,7 +826,7 @@ class ExtractionEngine:
         for i_order in i_orders:
 
             # Compute the pixel mapping matrix (b_n) for the current order.
-            pixel_mapping = self.get_pixel_mapping(i_order, error=None, same=same)
+            pixel_mapping = self.get_pixel_mapping(i_order, error=None)
 
             # Evaluate the model of the current order.
             model[~self.mask] += pixel_mapping.dot(spectrum)
@@ -885,7 +858,7 @@ class ExtractionEngine:
             The log-likelihood of the spectrum.
         """
         # Evaluate the model image for the spectrum.
-        model = self.rebuild(spectrum, same=False)
+        model = self.rebuild(spectrum)
 
         # Compute the log-likelihood for the spectrum.
         with np.errstate(divide='ignore'):
@@ -1019,6 +992,12 @@ class ExtractionEngine:
         # Set invalid pixels for this order to lo=-1 and hi=-2
         ma = mask_ord[~self.mask]
         lo[ma], hi[ma] = -1, -2
+
+        print("grid", np.min(grid), np.max(grid), grid.size)
+        # grid 0.8515140811891634 2.204728219634399 1408 on PR branch
+        # grid 0.8480011181377183 2.2057149524019297 1413 on main
+        # the grid could be the problem!
+        # try reverting all changes to atoca_utils.grid_from_map and dependencies
 
         return lo, hi   
 

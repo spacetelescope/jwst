@@ -552,6 +552,4 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
 
     if spectraces:
         return np.array([wavemap_1, wavemap_2]), np.array([spectrace_1, spectrace_2])
-
-    else:
-        return np.array([wavemap_1, wavemap_2])
+    return np.array([wavemap_1, wavemap_2])

@@ -5,8 +5,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def get_box_weights(centroid, n_pix, shape, cols=None):
-    """ Return the weights of a box aperture given the centroid and the width of
+def get_box_weights(centroid, n_pix, shape, cols):
+    """
+    Return the weights of a box aperture given the centroid and the width of
     the box in pixels. All pixels will have the same weights except at the ends
     of the box aperture.
 
@@ -14,10 +15,13 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     ----------
     centroid : array[float]
         Position of the centroid (in rows). Same shape as `cols`
+
     n_pix : float
         Width of the extraction box in pixels.
+
     shape : Tuple(int, int)
         Shape of the output image. (n_row, n_column)
+
     cols : array[int]
         Column indices of good columns. Used if the centroid is defined
         for specific columns or a sub-range of columns.
@@ -27,12 +31,7 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     weights : array[float]
         An array of pixel weights to use with the box extraction.
     """
-
-    nrows, ncols = shape
-
-    # Use all columns if not specified
-    if cols is None:
-        cols = np.arange(ncols)
+    nrows, _ = shape
 
     # Row centers of all pixels.
     rows = np.indices((nrows, len(cols)))[0]
@@ -59,38 +58,37 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     return out
 
 
-def box_extract(scidata, scierr, scimask, box_weights, cols=None):
-    """ Perform a box extraction.
+def box_extract(scidata, scierr, scimask, box_weights):
+    """
+    Perform a box extraction.
 
     Parameters
     ----------
     scidata : array[float]
         2d array of science data with shape (n_row, n_columns)
+
     scierr : array[float]
         2d array of uncertainty map with same shape as scidata
+
     scimask : array[bool]
         2d boolean array of masked pixels with same shape as scidata
+
     box_weights : array[float]
         2d array of pre-computed weights for box extraction,
         with same shape as scidata
-    cols : array[int]
-        1d integer array of column numbers to extract
 
     Returns
     -------
     cols : array[int]
         Indices of extracted columns
+
     flux : array[float]
         The flux in each column
+
     flux_var : array[float]
         The variance of the flux in each column
     """
-
-    nrows, ncols = scidata.shape
-
-    # Use all columns if not specified
-    if cols is None:
-        cols = np.arange(ncols)
+    cols = np.arange(scidata.shape[1])
 
     # Keep only required columns and make a copy.
     data = scidata[:, cols].copy()
@@ -137,6 +135,9 @@ def box_extract(scidata, scierr, scimask, box_weights, cols=None):
 
 def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     """
+    TODO: how similar is this to other places where we interpolate errors?
+    Could this be replaced with some algorithm involving smoothing of the error map?
+
     Function to estimate pixel error empirically using the corresponding error
     of the nearest pixel value (`data`). Intended to be used in a box extraction
     when the bad pixels are modeled.
@@ -145,12 +146,16 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     ----------
     err : 2d array[float]
         Uncertainty map of the pixels.
+
     data : 2d array[float]
         Pixel values.
+
     pix_to_estim : 2d array[bool]
         Map of the pixels where the uncertainty needs to be estimated.
+
     valid_pix : 2d array[bool]
         Map of valid pixels to be used to find the error empirically.
+
     Returns
     -------
     err_filled : 2d array[float]
@@ -161,9 +166,6 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     err_valid = err[valid_pix]
     data_valid = data[valid_pix]
 
-    #
-    # Use np.searchsorted for efficiency
-    #
     # Need to sort the arrays used to find similar values
     idx_sort = np.argsort(data_valid)
     err_valid = err_valid[idx_sort]
