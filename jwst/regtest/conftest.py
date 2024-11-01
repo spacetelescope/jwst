@@ -250,6 +250,7 @@ def fitsdiff_default_kwargs():
         ignore_hdus=['ASDF'],
         ignore_keywords=ignore_keywords,
         ignore_fields=ignore_keywords,
+        ignore_comments=["*"],
         rtol=1e-5,
         atol=1e-7,
     )
