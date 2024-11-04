@@ -77,7 +77,6 @@ csvconvert = "jwst.csv_tools.csvconvert:CSVConvertScript"
 exp_to_source = "jwst.exp_to_source.main:Main"
 okify_regtests = "jwst.scripts.okify_regtests:main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
-schema_editor = "jwst.scripts.schema_editor:main"
 schemadoc = "jwst.scripts.schemadoc:main"
 set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
 "set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
@@ -157,7 +156,8 @@ namespaces = false
 ]
 "jwst.lib" = [
     "tests/data/*.asdf",
-    "tests/data/*.db",
+    "tests/data/**/*.db",
+    "tests/data/**/*.xml",
     "tests/data/*.ecsv",
     "tests/data/*.fits",
 ]
