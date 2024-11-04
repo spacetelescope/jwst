@@ -6,6 +6,7 @@ import math
 import numpy as np
 from stdatamodels import DataModel
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
 from typing import Union, Tuple, NamedTuple, List
 from astropy.modeling import polynomial
 from astropy.io import fits
@@ -75,7 +76,7 @@ def locn_from_wcs(
         return
 
     bb = wcs.bounding_box  # ((x0, x1), (y0, y1))
-    print('****** ',bb)
+
     if bb is None:
         if slit is None:
             shape = input_model.data.shape
@@ -83,7 +84,6 @@ def locn_from_wcs(
             shape = slit.data.shape
         bb = wcs_bbox_from_shape(shape)
 
-    print('dispaxis', dispaxis) 
     if dispaxis == HORIZONTAL:
         # Width (height) in the cross-dispersion direction, from the start of the 2-D cutout (or of the full image)
         # to the upper limit of the bounding box.
@@ -110,7 +110,6 @@ def locn_from_wcs(
     fwd_transform = wcs(x, y)
     middle_wl = np.nanmean(fwd_transform[2])
 
-    print('middle wl', middle_wl)
     if input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC',
                                               'NRS_BRIGHTOBJ']:
         if slit is None:
@@ -333,6 +332,8 @@ def setup_data(
 #        integ: int
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray,
            np.ndarray]:
+
+    #TODO JEM match what is needed with TIM B new extraction method. 
     """Pull out the data from the slit to perform extraction
 
     Parameters
@@ -351,8 +352,6 @@ def setup_data(
         `integ` is the integration number.  If the integration number is
         not relevant (i.e. the data array is 2-D), `integ` should be -1.
 
-
-
     """
 
     # hook for lrs_slitless data 
@@ -364,14 +363,15 @@ def setup_data(
     #    var_flat = input_model.var_flat[integ]
     #    input_dq = input_model.dq[integ]
 
-    bbox = input_model.meta,wcs.bounding_box
+    bbox = input_model.meta.wcs.bounding_box
     x0, x1 = bbox[0]
     y0, y1 = bbox[1]
     i1, i2, j1, j2 = (int(np.ceil(y0)), int(np.ceil(y1)), int(np.round(x0)), int(np.round(x1)))
-    data = model.data[i1:i2, j1:j2]
-    var_poisson = model.var_poisson[i1:i2, j1:j2]
-    var_rnoise = model.var_rnoise[i1:i2, j1:j2]
-    dq = model.dq[i1:i2, j1:j2]
+    data = input_model.data[i1:i2, j1:j2]
+    var_poisson = input_model.var_poisson[i1:i2, j1:j2]
+    var_rnoise = input_model.var_rnoise[i1:i2, j1:j2]
+    var_flat = input_model.var_flat[i1:i2, j1:j2]
+    dq = input_model.dq[i1:i2, j1:j2]
     
     #  Ensure variance arrays have been populated. If not, zero fill.
     if np.shape(var_poisson) != np.shape(data):

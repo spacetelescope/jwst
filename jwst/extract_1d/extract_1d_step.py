@@ -55,7 +55,11 @@ class Extract1dStep(Step):
         extract_1d reference file.
 
     psf_extraction : bool or None
-        If True, a optiminal psf extraction is performed. 
+        If True, a optimal psf extraction is performed. Currently this option
+        only works for MIRI LRS Fixed and Slitless data. 
+
+    save_spatial_profile: bool or None
+        If True and psf_extraction is True save the spatial profile to disk
 
     use_source_posn : bool or None
         If True, the source and background extraction positions specified in
@@ -163,6 +167,7 @@ class Extract1dStep(Step):
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
     psf_extraction = boolean(default=None) # Perform psf extraction
+    save_spatial_profile = boolean(default=False) # If doing psf extraction, then save the spatial profile to disk
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
@@ -185,6 +190,7 @@ class Extract1dStep(Step):
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
+    # TODO JEM - add PSF once that type is in CRDS
     reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel', 'specwcs']
 
     def process(self, input):
@@ -243,10 +249,10 @@ class Extract1dStep(Step):
         elif isinstance(input_model, ModelContainer):
             exp_type = input_model[0].meta.exposure.type
         else:
-            exp_type = None
+            # TODO JEM CAN I do this or will it break other modes
+            #exp_type = None to supprt PSF extraction commented out exp_type = None
+            exp_type = input_model.meta.exposure.type
 
-        print('************ exp_type ************', exp_type)
-        print(isinstance(input_model, ModelContainer)) 
         if self.ifu_rfcorr:
             if exp_type != "MIR_MRS":
                 self.log.warning("The option to apply a residual refringe correction is"
@@ -263,15 +269,22 @@ class Extract1dStep(Step):
                                  f" not supported for {input_model.meta.exposure.type} data.")
 
         # Check if doing PSF extraction. Only works on LRS data at this time
+
         if self.psf_extraction:
-            # the input_model could be a container or a single model
-            # for now we are assuming a single model of LRS data 
-            print(type(input_model)) # cal file could have other nod position subtracted
-            print(input_model.meta.exposure.type)
-            #psf_ref_name = self.get_reference_file(input_model, 'psf')
-            psf_ref_name = '/Users/morrison/PSF_extract/MIRI_LRS_SLIT_EPSF_20240602_WAVE.fits'
-            specwcs_ref_name = self.get_reference_file(input_model, 'specwcs')
-            psf_extract.psf_extraction(input_model, psf_ref_name, specwcs_ref_name)
+            if exp_type != 'MIR_LRS-FIXEDSLIT':
+                  self.log.info ('PSF extraction is not possible with this mode %s', exp_type)
+                  self.psf_extraction = False
+            else: 
+                # the input_model could be a container or a single model
+
+                # once the reference file is in CRDS we can use get_reference_file. For
+                # how hard coding it because PSF is not a reference file type. 
+                #psf_ref_name = self.get_reference_file(input_model, 'psf')
+                # UNTIL WE GET THIS IN CRDS GET REFERENCE FILE FROM JEM 
+                psf_ref_name = 'MIRI_LRS_SLIT_EPSF_20240602_WAVE_1D.fits'
+                specwcs_ref_name = self.get_reference_file(input_model, 'specwcs')
+                psf_extract.psf_extraction(input_model, psf_ref_name, specwcs_ref_name,
+                                           self.save_spatial_profile)
             
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
