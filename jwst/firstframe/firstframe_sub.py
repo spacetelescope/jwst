@@ -37,14 +37,11 @@ def do_correction(output, bright_use_group1=False):
 
     # Update the step status, and if ngroups > 3, set all GROUPDQ in
     # the first group to 'DO_NOT_USE'
-    # bright_use_group1 = False
     if sci_ngroups > 3:
         if bright_use_group1:
-            # do not set DO_NOT_USE in the case where saturation happens
-            # after group2 and before group3
-            # in this case, the first frame effect is small compared to the
+            # do not set DO_NOT_USE in the case where saturation happens after group2 and
+            # before group3 in this case, the first frame effect is small compared to the
             # signal in group2-group1
-            # input_model.
             svals = ((output.groupdq[:, 1, :, :] & dqflags.group["SATURATED"]) == 0) & (
                 (output.groupdq[:, 2, :, :] & dqflags.group["SATURATED"]) > 0
             )
