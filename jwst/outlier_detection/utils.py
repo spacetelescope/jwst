@@ -1,6 +1,4 @@
-"""
-The ever-present utils sub-module. A home for all...
-"""
+"""Utilities for outlier detection methods."""
 
 import copy
 from functools import partial
@@ -24,6 +22,21 @@ OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
 
 def create_cube_median(cube_model, maskpt):
+    """Compute the median over a cube of data.
+
+    Parameters
+    ----------
+    cube_model : ~jwst.datamodels.CubeModel
+        The input cube model.
+    maskpt : float
+        The percent threshold for masking bad data.
+
+    Returns
+    -------
+    np.ndarray
+        The median over the zeroth axis of the input cube.
+
+    """
     log.info("Computing median")
 
     weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
@@ -40,9 +53,12 @@ def median_without_resampling(input_models,
                               good_bits,
                               save_intermediate_results=False,
                               make_output_path=None,
-                              buffer_size=None):
-    """
-    Shared code between imaging and spec modes for resampling and median computation
+                              buffer_size=None,
+                              return_error=False):
+    """Compute a median image without resampling.
+
+    The median is performed across input exposures, for both
+    imaging and spectral modes.
 
     Parameters
     ----------
@@ -64,52 +80,91 @@ def median_without_resampling(input_models,
         if True, save the drizzled models and median model to fits.
 
     make_output_path : function
-        The functools.partial instance to pass to save_median. Must be 
+        The functools.partial instance to pass to save_median. Must be
         specified if save_intermediate_results is True. Default None.
 
     buffer_size : int
-        The size of chunk in bytes that will be read into memory when computing the median.
-        This parameter has no effect if the input library has its on_disk attribute
-        set to False.
+        The size of chunk in bytes that will be read into memory when
+        computing the median. This parameter has no effect if the input
+        library has its on_disk attribute set to False.
+
+    return_error : bool, optional
+        If True, an approximate median error is computed alongside the
+        median science image.
+
+    Returns
+    -------
+    median_data : np.ndarray
+        The median data array.
+
+    median_wcs : gwcs.WCS
+        A WCS corresponding to the median data.
+
+    median_error : np.ndarray, optional
+        A median error estimate, returned only if `return_error` is True.
+
     """
     in_memory = not input_models._on_disk
     ngroups = len(input_models)
+
+    if save_intermediate_results:
+        # create an empty image model for the median data
+        median_model = datamodels.ImageModel(None)
 
     with input_models:
         for i in range(len(input_models)):
 
             drizzled_model = input_models.borrow(i)
-            drizzled_model.wht = build_driz_weight(drizzled_model,
-                                                    weight_type=weight_type,
-                                                    good_bits=good_bits)
-            median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
-            input_models.shelve(drizzled_model, i, modify=True)
-
-            if save_intermediate_results:
-                # write the drizzled model to file
-                _fileio.save_drizzled(drizzled_model, make_output_path)
-
+            drizzled_data = drizzled_model.data.copy()
+            if return_error:
+                drizzled_err = drizzled_model.err.copy()
+            else:
+                drizzled_err = None
+            weight = build_driz_weight(drizzled_model,
+                                       weight_type=weight_type,
+                                       good_bits=good_bits)
             if i == 0:
-                input_shape = (ngroups,)+drizzled_model.data.shape
-                dtype = drizzled_model.data.dtype
+                median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
+                input_shape = (ngroups,) + drizzled_data.shape
+                dtype = drizzled_data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                if return_error:
+                    err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                else:
+                    err_computer = None
+                if save_intermediate_results:
+                    # update median model's meta with meta from the first model:
+                    median_model.update(drizzled_model)
+                    median_model.meta.wcs = median_wcs
 
-            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
-            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
-            computer.append(drizzled_model.data, i)
+            weight_threshold = compute_weight_threshold(weight, maskpt)
+            drizzled_data[weight < weight_threshold] = np.nan
+            computer.append(drizzled_data, i)
+            if return_error:
+                drizzled_err[weight < weight_threshold] = np.nan
+                err_computer.append(drizzled_err, i)
+
+            input_models.shelve(drizzled_model, i, modify=False)
+            del drizzled_model
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
+    if return_error:
+        median_err = err_computer.evaluate()
+    else:
+        median_err = None
 
     if save_intermediate_results:
         # Save median model to fits
-        median_model = datamodels.ImageModel(median_data)
-        median_model.update(drizzled_model)
-        median_model.meta.wcs = median_wcs
+        median_model.data = median_data
+        if return_error:
+            median_model.err = median_err
         _fileio.save_median(median_model, make_output_path)
-    del drizzled_model
 
-    return median_data, median_wcs
+    if return_error:
+        return median_data, median_wcs, median_err
+    else:
+        return median_data, median_wcs
 
 
 def median_with_resampling(input_models,
@@ -117,9 +172,12 @@ def median_with_resampling(input_models,
                            maskpt,
                            save_intermediate_results=False,
                            make_output_path=None,
-                           buffer_size=None):
-    """
-    Shared code between imaging and spec modes for resampling and median computation
+                           buffer_size=None,
+                           return_error=False):
+    """Compute a median image with resampling.
+
+    The median is performed across resampled groups, for both imaging
+    and spectral modes.
 
     Parameters
     ----------
@@ -136,65 +194,106 @@ def median_with_resampling(input_models,
         if True, save the drizzled models and median model to fits.
 
     make_output_path : function
-        The functools.partial instance to pass to save_median. Must be 
+        The functools.partial instance to pass to save_median. Must be
         specified if save_intermediate_results is True. Default None.
 
     buffer_size : int
-        The size of chunk in bytes that will be read into memory when computing the median.
-        This parameter has no effect if the input library has its on_disk attribute
-        set to False.
+        The size of chunk in bytes that will be read into memory when
+        computing the median. This parameter has no effect if the input
+        library has its on_disk attribute set to False.
+
+    return_error : bool, optional
+        If True, an approximate median error is computed alongside the
+        median science image.
+
+    Returns
+    -------
+    median_data : np.ndarray
+        The median data array.
+
+    median_wcs : gwcs.WCS
+        A WCS corresponding to the median data.
+
+    median_error : np.ndarray, optional
+        A median error estimate, returned only if `return_error` is True.
+
     """
     if not resamp.single:
         raise ValueError("median_with_resampling should only be used for resample_many_to_many")
-    
+
     in_memory = not input_models._on_disk
     indices_by_group = list(input_models.group_indices.values())
     ngroups = len(indices_by_group)
 
+    if save_intermediate_results:
+        # create an empty image model for the median data
+        median_model = datamodels.ImageModel(None)
+
     with input_models:
         for i, indices in enumerate(indices_by_group):
 
-            median_wcs = resamp.output_wcs
-            drizzled_model = resamp.resample_group(input_models, indices)
+            drizzled_model = resamp.resample_group(
+                input_models, indices, compute_error=return_error)
 
             if save_intermediate_results:
                 # write the drizzled model to file
                 _fileio.save_drizzled(drizzled_model, make_output_path)
 
             if i == 0:
+                median_wcs = resamp.output_wcs
                 input_shape = (ngroups,)+drizzled_model.data.shape
                 dtype = drizzled_model.data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                if return_error:
+                    err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+                else:
+                    err_computer = None
+                if save_intermediate_results:
+                    # update median model's meta with meta from the first model:
+                    median_model.update(drizzled_model)
+                    median_model.meta.wcs = median_wcs
 
             weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
             drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
             computer.append(drizzled_model.data, i)
+            if return_error:
+                drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
+                err_computer.append(drizzled_model.err, i)
+            del drizzled_model
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
+    if return_error:
+        median_err = err_computer.evaluate()
+    else:
+        median_err = None
 
     if save_intermediate_results:
         # Save median model to fits
-        median_model = datamodels.ImageModel(median_data)
-        median_model.update(drizzled_model)
-        median_model.meta.wcs = median_wcs
+        median_model.data = median_data
+        if return_error:
+            median_model.err = median_err
         # drizzled model already contains asn_id
         make_output_path = partial(make_output_path, asn_id=None)
         _fileio.save_median(median_model, make_output_path)
-    del drizzled_model
 
-    return median_data, median_wcs
+    if return_error:
+        return median_data, median_wcs, median_err
+    else:
+        return median_data, median_wcs
 
 
 def flag_crs_in_models(
     input_models,
     median_data,
     snr1,
+    median_err=None
 ):
+    """Flag outliers in all input models without resampling."""
     for image in input_models:
         # dq flags will be updated in-place
-        flag_model_crs(image, median_data, snr1)
-    
+        flag_model_crs(image, median_data, snr1, median_err=median_err)
+
 
 def flag_resampled_model_crs(
     input_model,
@@ -205,9 +304,11 @@ def flag_resampled_model_crs(
     scale1,
     scale2,
     backg,
+    median_err=None,
     save_blot=False,
     make_output_path=None,
 ):
+    """Flag outliers in a resampled model."""
     if 'SPECTRAL' not in input_model.meta.wcs.output_frame.axes_type:
         input_pixflux_area = input_model.meta.photometry.pixelarea_steradians
         # Set array shape, needed to compute image pixel area
@@ -217,22 +318,31 @@ def flag_resampled_model_crs(
     else:
         pix_ratio = 1.0
 
-    blot = gwcs_blot(median_data, median_wcs, input_model.data.shape, input_model.meta.wcs, pix_ratio)
+    blot = gwcs_blot(median_data, median_wcs, input_model.data.shape,
+                     input_model.meta.wcs, pix_ratio, fillval=np.nan)
+    if median_err is not None:
+        blot_err = gwcs_blot(median_err, median_wcs, input_model.data.shape,
+                             input_model.meta.wcs, pix_ratio, fillval=np.nan)
+    else:
+        blot_err = None
     if save_blot:
-        _fileio.save_blot(input_model, blot, make_output_path)
+        _fileio.save_blot(input_model, blot, blot_err, make_output_path)
+
     # dq flags will be updated in-place
-    _flag_resampled_model_crs(input_model, blot, snr1, snr2, scale1, scale2, backg)
+    _flag_resampled_model_crs(input_model, blot, blot_err, snr1, snr2, scale1, scale2, backg)
 
 
 def _flag_resampled_model_crs(
     input_model,
     blot,
+    blot_err,
     snr1,
     snr2,
     scale1,
     scale2,
     backg,
 ):
+    """Flag outliers via comparison to a blotted image."""
     # If the datamodel has a measured background that has not been subtracted
     # use it instead of the user provided backg.
     # Get background level of science data if it has not been subtracted, so it
@@ -243,7 +353,11 @@ def _flag_resampled_model_crs(
         backg = input_model.meta.background.level
         log.debug(f"Adding background level {backg} to blotted image")
 
-    cr_mask = flag_resampled_crs(input_model.data, input_model.err, blot, snr1, snr2, scale1, scale2, backg)
+    if blot_err is not None:
+        err_to_use = blot_err
+    else:
+        err_to_use = input_model.err
+    cr_mask = flag_resampled_crs(input_model.data, err_to_use, blot, snr1, snr2, scale1, scale2, backg)
 
     # update the dq flags in-place
     input_model.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
@@ -263,9 +377,11 @@ def flag_crs_in_models_with_resampling(
     scale1,
     scale2,
     backg,
+    median_err=None,
     save_blot=False,
     make_output_path=None,
 ):
+    """Flag outliers in all input models, with resampling."""
     for image in input_models:
         flag_resampled_model_crs(image,
                                  median_data,
@@ -275,12 +391,18 @@ def flag_crs_in_models_with_resampling(
                                  scale1,
                                  scale2,
                                  backg,
+                                 median_err=median_err,
                                  save_blot=save_blot,
                                  make_output_path=make_output_path)
 
 
-def flag_model_crs(image, blot, snr):
-    cr_mask = flag_crs(image.data, image.err, blot, snr)
+def flag_model_crs(image, blot, snr, median_err=None):
+    """Flag outliers in a model."""
+    if median_err is not None:
+        error_to_use = median_err
+    else:
+        error_to_use = image.err
+    cr_mask = flag_crs(image.data, error_to_use, blot, snr)
 
     # Update dq array in-place
     image.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)

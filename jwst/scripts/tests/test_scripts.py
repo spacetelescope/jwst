@@ -11,7 +11,6 @@ SCRIPTS = [
     'create_data',
     'okify_regtests',
     'pointing_summary',
-    'schema_editor',
     'schemadoc',
     'set_telescope_pointing',
     'set_telescope_pointing.py',
