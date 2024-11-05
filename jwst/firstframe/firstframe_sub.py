@@ -51,7 +51,7 @@ def do_correction(output, bright_use_group1=False):
             )
             output.groupdq[:, 0, :, :] = tvals
             log.info(
-                f"FirstFrame Sub: bright_first_frame set, #{np.sum(svals)} bright pixels using first frame"
+                f"FirstFrame Sub: bright_first_frame set, #{np.sum(svals)} bright pixels group1 not set to DO_NOT_USE"
             )
         else:
             output.groupdq[:, 0, :, :] = np.bitwise_or(
