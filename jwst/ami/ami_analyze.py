@@ -126,15 +126,17 @@ def apply_LG_plus(
     # Throughput (combined filter and source spectrum) calculated here
     bandpass = utils.handle_bandpass(bandpass, throughput_model)
 
-    rotsearch_d = np.append(
+    
+
+    if affine2d is None:
+        rotsearch_d = np.append(
         np.arange(
             rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]
         ),
         rotsearch_parameters[1],
-    )
+        )
 
-    log.info(f"Initial values to use for rotation search: {rotsearch_d}")
-    if affine2d is None:
+        log.info(f"Initial values to use for rotation search: {rotsearch_d}")
         # affine2d object, can be overridden by user input affine.
         # do rotation search on uncropped median image (assuming rotation constant over exposure)
         # replace remaining NaNs in median image with median of surrounding 8 (non-NaN) pixels
@@ -173,6 +175,9 @@ def apply_LG_plus(
             oversample,
             holeshape,
         )
+        log.info(f'Found rotation: {affine2d.rotradccw:.4f} rad ({np.rad2deg(affine2d.rotradccw):.4f} deg)')
+        # the affine2d returned here has only rotation...
+        # to use rotation and scaling/shear, do some matrix multiplication here??
 
     niriss = instrument_data.NIRISS(filt,
                                     nrm_model,
