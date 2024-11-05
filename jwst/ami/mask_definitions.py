@@ -175,5 +175,5 @@ def jwst_g7s6c(chooseholes=None):
 
     """
 
-    f2f = 0.82 * m  # m flat to flat
+    f2f = 0.8 * m  # m flat to flat
     return f2f, jwst_g7s6_centers_asbuilt(chooseholes=chooseholes)
