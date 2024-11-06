@@ -211,8 +211,7 @@ def get_extract_parameters(
         a list of slits.
 
     slitname : str
-        The name of the slit, or "ANY", or for NIRISS SOSS data this will
-        be the subarray name.
+        The name of the slit, or "ANY"
 
     sp_order : int
         The spectral order number.
@@ -1119,13 +1118,7 @@ class ExtractBase(abc.ABC):
 
         self.wcs = None  # initial value
 
-        if input_model.meta.exposure.type == "NIS_SOSS":
-            if hasattr(input_model.meta, 'wcs'):
-                try:
-                    self.wcs = niriss.niriss_soss_set_input(input_model, self.spectral_order)
-                except ValueError:
-                    raise InvalidSpectralOrderNumberError(f"Spectral order {self.spectral_order} is not valid")
-        elif slit is None:
+        if slit is None:
             if hasattr(input_model.meta, 'wcs'):
                 self.wcs = input_model.meta.wcs
         elif hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
@@ -2174,7 +2167,8 @@ def do_extract1d(
     if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
 
         is_multiple_slits = True
-        if was_source_model:  # SourceContainer has a single list of SlitModels
+        if was_source_model:
+            # SourceContainer has a single list of SlitModels
             log.debug("Input is a Source Model.")
             if isinstance(input_model, datamodels.SlitModel):
                 # If input is a single SlitModel, as opposed to a list of SlitModels,
@@ -2190,7 +2184,8 @@ def do_extract1d(
             if not isinstance(input_model, datamodels.SlitModel):
                 input_model = input_model[0]
 
-        elif isinstance(input_model, datamodels.MultiSlitModel):  # A simple MultiSlitModel, not in a container
+        else:
+            # A simple MultiSlitModel, not in a container
             log.debug("Input is a MultiSlitModel.")
             slits = input_model.slits
 
@@ -2238,32 +2233,17 @@ def do_extract1d(
         if slitname is None:
             slitname = ANY
 
-        if slitname == 'NIS_SOSS':
-            slitname = input_model.meta.subarray.name
-
-        # Loop over these spectral order numbers.
-        if input_model.meta.exposure.type == "NIS_SOSS":
-            # This list of spectral order numbers may need to be assigned differently for other exposure types.
-            spectral_order_list = [1, 2, 3]
-        else:
-            spectral_order_list = ["not set yet"]  # For this case, we'll call get_spectral_order to get the order.
-
         if isinstance(input_model, datamodels.ImageModel):
             if hasattr(input_model, "name"):
                 slitname = input_model.name
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
 
-            for sp_order in spectral_order_list:
-                if sp_order == "not set yet":
-                    sp_order = get_spectral_order(input_model)
-
-                if sp_order == 0 and not prism_mode:
-                    log.info("Spectral order 0 is a direct image, skipping ...")
-                    continue
-
+            sp_order = get_spectral_order(input_model)
+            if sp_order == 0 and not prism_mode:
+                log.info("Spectral order 0 is a direct image, skipping ...")
+            else:
                 log.info(f'Processing spectral order {sp_order}')
-
                 try:
                     output_model = create_extraction(
                         extract_ref_dict, slit, slitname, sp_order,
@@ -2273,14 +2253,11 @@ def do_extract1d(
                         is_multiple_slits
                     )
                 except ContinueError:
-                    continue
+                    pass
 
         elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
-            # SOSS uses this branch in both calspec2 and caltso3, where in both cases
-            # the input is a single CubeModel, because caltso3 loops over exposures
-
             # This branch will be invoked for inputs that are a CubeModel, which typically includes
-            # NIRSpec BrightObj (fixed slit) and NIRISS SOSS modes, as well as inputs that are a
+            # NIRSpec BrightObj (fixed slit) mode, as well as inputs that are a
             # single SlitModel, which typically includes data from a single resampled/combined slit
             # instance from level-3 processing of NIRSpec fixed slits and MOS modes.
 
@@ -2296,16 +2273,11 @@ def do_extract1d(
                 else:
                     slitname = input_model.meta.instrument.fixed_slit
 
-            # Loop over all spectral orders available for extraction
             prev_offset = OFFSET_NOT_ASSIGNED_YET
-            for sp_order in spectral_order_list:
-                if sp_order == "not set yet":
-                    sp_order = get_spectral_order(input_model)
-
-                    if sp_order == 0 and not prism_mode:
-                        log.info("Spectral order 0 is a direct image, skipping ...")
-                        continue
-
+            sp_order = get_spectral_order(input_model)
+            if sp_order == 0 and not prism_mode:
+                log.info("Spectral order 0 is a direct image, skipping ...")
+            else:
                 log.info(f'Processing spectral order {sp_order}')
 
                 try:
@@ -2317,7 +2289,7 @@ def do_extract1d(
                         is_multiple_slits
                     )
                 except ContinueError:
-                    continue
+                    pass
 
         else:
             log.error("The input file is not supported for this step.")
@@ -3064,16 +3036,16 @@ def create_extraction(extract_ref_dict,
         del npixels_temp
 
         # Convert to flux density.
-        # The input units will normally be MJy / sr, but for NIRSpec and NIRISS SOSS point-source spectra the units
-        # will be MJy.
+        # The input units will normally be MJy / sr, but for NIRSpec
+        # point-source spectra the units will be MJy.
         input_units_are_megajanskys = (
             photom_has_been_run
             and source_type == 'POINT'
-            and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
+            and instrument == 'NIRSPEC'
         )
 
         if photom_has_been_run:
-            # for NIRSpec data and NIRISS SOSS, point source
+            # for NIRSpec point sources
             if input_units_are_megajanskys:
                 flux = temp_flux * 1.e6  # MJy --> Jy
                 f_var_poisson *= 1.e12  # MJy**2 --> Jy**2
