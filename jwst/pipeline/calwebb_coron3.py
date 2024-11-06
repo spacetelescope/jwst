@@ -151,7 +151,7 @@ class Coron3Pipeline(Pipeline):
         # Perform outlier detection on the PSFs.
         if not skip_outlier_detection:
             for model in psf_models:
-                self.outlier_detection(model)
+                self.outlier_detection.run(model)
                 # step may have been skipped for this model;
                 # turn back on for next model
                 self.outlier_detection.skip = False
@@ -159,7 +159,7 @@ class Coron3Pipeline(Pipeline):
             self.log.info('Outlier detection skipped for PSF\'s')
 
         # Stack all the PSF images into a single CubeModel
-        psf_stack = self.stack_refs(psf_models)
+        psf_stack = self.stack_refs.run(psf_models)
         psf_models.close()
 
         # Save the resulting PSF stack
@@ -175,13 +175,13 @@ class Coron3Pipeline(Pipeline):
 
                 # Remove outliers from the target
                 if not skip_outlier_detection:
-                    target = self.outlier_detection(target)
+                    target = self.outlier_detection.run(target)
                     # step may have been skipped for this model;
                     # turn back on for next model
                     self.outlier_detection.skip = False
 
                 # Call align_refs
-                psf_aligned = self.align_refs(target, psf_stack)
+                psf_aligned = self.align_refs.run(target, psf_stack)
 
                 # Save the alignment results
                 self.save_model(
@@ -190,7 +190,7 @@ class Coron3Pipeline(Pipeline):
                 )
 
                 # Call KLIP
-                psf_sub = self.klip(target, psf_aligned)
+                psf_sub = self.klip.run(target, psf_aligned)
                 psf_aligned.close()
 
                 # Save the psf subtraction results
@@ -210,7 +210,7 @@ class Coron3Pipeline(Pipeline):
         resample_library = ModelLibrary(resample_input, on_disk=False)
 
         # Output is a single datamodel
-        result = self.resample(resample_library)
+        result = self.resample.run(resample_library)
 
         # Blend the science headers
         try:

@@ -225,7 +225,7 @@ class Spec2Pipeline(Pipeline):
             # `assign_wcs` is the critical step. Without it, processing cannot proceed.
             assign_wcs_exception = None
             try:
-                calibrated = self.assign_wcs(science)
+                calibrated = self.assign_wcs.run(science)
             except Exception as exception:
                 assign_wcs_exception = exception
             if assign_wcs_exception is not None or \
@@ -252,7 +252,7 @@ class Spec2Pipeline(Pipeline):
         # Self-calibrate to flag bad/warm pixels, and apply flags
         # to both background and science exposures.
         # skipped by default for all modes
-        result = self.badpix_selfcal(
+        result = self.badpix_selfcal.run(
             calibrated, members_by_type['selfcal'], members_by_type['background'],
             )
         if isinstance(result, datamodels.JwstDataModel):
@@ -264,10 +264,10 @@ class Spec2Pipeline(Pipeline):
             members_by_type['background'] = bkg_outlier_flagged
 
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
-        calibrated = self.msa_flagging(calibrated)
+        calibrated = self.msa_flagging.run(calibrated)
 
         # apply the "nsclean" 1/f correction to NIRSpec images
-        calibrated = self.nsclean(calibrated)
+        calibrated = self.nsclean.run(calibrated)
         
         # Apply nsclean to NIRSpec imprint and background members
         if not self.nsclean.skip:
@@ -279,7 +279,7 @@ class Spec2Pipeline(Pipeline):
                         self.nsclean.output_file = imprint_file.meta.filename
                     else:
                         self.nsclean.output_file = os.path.basename(imprint_file)
-                imprint_nsclean = self.nsclean(imprint_file)
+                imprint_nsclean = self.nsclean.run(imprint_file)
                 members_by_type['imprint'][i] = imprint_nsclean
 
             for i, bkg_file in enumerate(members_by_type['background']):
@@ -288,21 +288,21 @@ class Spec2Pipeline(Pipeline):
                         self.nsclean.output_file = bkg_file.meta.filename
                     else:
                         self.nsclean.output_file = os.path.basename(bkg_file)
-                bkg_nsclean = self.nsclean(bkg_file)
+                bkg_nsclean = self.nsclean.run(bkg_file)
                 members_by_type['background'][i] = bkg_nsclean
 
         # Leakcal subtraction (imprint)  occurs before background subtraction on a per-exposure basis.
         # If there is only one `imprint` member, this imprint exposure is subtracted from all the
         # science and background exposures.  Otherwise, there will be as many `imprint` members as
         # there are science plus background members.
-        calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
+        calibrated = self.imprint_subtract.run(calibrated, members_by_type['imprint'])
 
         # for each background image subtract an associated leak cal
         for i, bkg_file in enumerate(members_by_type['background']):
-            bkg_imprint_sub = self.imprint_subtract(bkg_file, members_by_type['imprint'])
+            bkg_imprint_sub = self.imprint_subtract.run(bkg_file, members_by_type['imprint'])
             members_by_type['background'][i] = bkg_imprint_sub
 
-        calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
+        calibrated = self.bkg_subtract.run(calibrated, members_by_type['background'])
 
         # The order of the next few steps is tricky, depending on mode:
         # WFSS/Grism data need flat_field before extract_2d, but other modes
@@ -334,8 +334,8 @@ class Spec2Pipeline(Pipeline):
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace(resampled)
-            resampled = self.resample_spec(resampled)
+            resampled = self.pixel_replace.run(resampled)
+            resampled = self.resample_spec.run(resampled)
 
         elif is_nrs_slit_linelamp(calibrated):
 
@@ -343,8 +343,8 @@ class Spec2Pipeline(Pipeline):
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace(resampled)
-            resampled = self.resample_spec(resampled)
+            resampled = self.pixel_replace.run(resampled)
+            resampled = self.resample_spec.run(resampled)
 
         elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):
 
@@ -355,21 +355,21 @@ class Spec2Pipeline(Pipeline):
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace(resampled)
-            resampled = self.cube_build(resampled)
+            resampled = self.pixel_replace.run(resampled)
+            resampled = self.cube_build.run(resampled)
             if query_step_status(resampled, "cube_build") == 'COMPLETE':
                 self.save_model(resampled[0], suffix='s3d')
         elif exp_type in ['MIR_LRS-SLITLESS']:
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace(resampled)
+            resampled = self.pixel_replace.run(resampled)
         else:
             # will be run if set in parameter ref file or by user
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
-            resampled = self.pixel_replace(resampled)
+            resampled = self.pixel_replace.run(resampled)
         # Extract a 1D spectrum from the 2D/3D data
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and query_step_status(resampled, "cube_build") == 'SKIPPED':
             # Skip extract_1d for IFU modes where no cube was built
@@ -384,7 +384,7 @@ class Spec2Pipeline(Pipeline):
                 self.photom.suffix = 'x1d'
             self.extract_1d.save_results = False
             x1d = resampled.copy()
-            x1d = self.extract_1d(x1d)
+            x1d = self.extract_1d.run(x1d)
 
             # Possible that no fit was possible - if so, skip photom
             if (x1d is None) or (x1d.meta.cal_step.extract_1d == "SKIPPED"):
@@ -401,7 +401,7 @@ class Spec2Pipeline(Pipeline):
                 x1d = resampled.copy()
         else:
             x1d = resampled.copy()
-            x1d = self.extract_1d(x1d)
+            x1d = self.extract_1d.run(x1d)
 
         resampled.close()
         if x1d is not None:
@@ -510,7 +510,7 @@ class Spec2Pipeline(Pipeline):
         """
 
         # Apply flat-field correction
-        calibrated = self.flat_field(data)
+        calibrated = self.flat_field.run(data)
 
         # Create and save a WFSS e-/sec image, if requested
         if self.save_wfss_esec:
@@ -547,14 +547,14 @@ class Spec2Pipeline(Pipeline):
 
         # Continue with remaining calibration steps, using the original
         # DN/sec image
-        calibrated = self.extract_2d(calibrated)
-        calibrated = self.srctype(calibrated)
-        calibrated = self.straylight(calibrated)
-        calibrated = self.fringe(calibrated)
-        calibrated = self.pathloss(calibrated)
-        calibrated = self.barshadow(calibrated)
-        calibrated = self.wfss_contam(calibrated)
-        calibrated = self.photom(calibrated)
+        calibrated = self.extract_2d.run(calibrated)
+        calibrated = self.srctype.run(calibrated)
+        calibrated = self.straylight.run(calibrated)
+        calibrated = self.fringe.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
+        calibrated = self.barshadow.run(calibrated)
+        calibrated = self.wfss_contam.run(calibrated)
+        calibrated = self.photom.run(calibrated)
         return calibrated
 
     def _process_nirspec_slits(self, data):
@@ -568,14 +568,14 @@ class Spec2Pipeline(Pipeline):
         Note that NIRSpec MOS and FS need srctype and wavecorr before
         flat_field.
         """
-        calibrated = self.extract_2d(data)
-        calibrated = self.srctype(calibrated)
-        calibrated = self.master_background_mos(calibrated)
-        calibrated = self.wavecorr(calibrated)
-        calibrated = self.flat_field(calibrated)
-        calibrated = self.pathloss(calibrated)
-        calibrated = self.barshadow(calibrated)
-        calibrated = self.photom(calibrated)
+        calibrated = self.extract_2d.run(data)
+        calibrated = self.srctype.run(calibrated)
+        calibrated = self.master_background_mos.run(calibrated)
+        calibrated = self.wavecorr.run(calibrated)
+        calibrated = self.flat_field.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
+        calibrated = self.barshadow.run(calibrated)
+        calibrated = self.photom.run(calibrated)
 
         return calibrated
 
@@ -592,8 +592,8 @@ class Spec2Pipeline(Pipeline):
         Note that NIRSpec MOS and FS need srctype and wavecorr before
         flat_field. Also have to deal with master background operations.
         """
-        calibrated = self.extract_2d(data)
-        calibrated = self.srctype(calibrated)
+        calibrated = self.extract_2d.run(data)
+        calibrated = self.srctype.run(calibrated)
 
         # Split the datamodel into 2 pieces: one with MOS slits and
         # the other with FS slits
@@ -609,12 +609,12 @@ class Spec2Pipeline(Pipeline):
         # First process MOS slits through all remaining steps
         calib_mos.update(calibrated)
         if len(calib_mos.slits) > 0:
-            calib_mos = self.master_background_mos(calib_mos)
-            calib_mos = self.wavecorr(calib_mos)
-            calib_mos = self.flat_field(calib_mos)
-            calib_mos = self.pathloss(calib_mos)
-            calib_mos = self.barshadow(calib_mos)
-            calib_mos = self.photom(calib_mos)
+            calib_mos = self.master_background_mos.run(calib_mos)
+            calib_mos = self.wavecorr.run(calib_mos)
+            calib_mos = self.flat_field.run(calib_mos)
+            calib_mos = self.pathloss.run(calib_mos)
+            calib_mos = self.barshadow.run(calib_mos)
+            calib_mos = self.photom.run(calib_mos)
 
         # Now repeat for FS slits
         if len(calib_fss.slits) > 0:
@@ -631,7 +631,7 @@ class Spec2Pipeline(Pipeline):
                 step.suffix = f'{current_suffix}_fs'
 
                 # Run step
-                calib_fss = step(calib_fss)
+                calib_fss = step.run(calib_fss)
 
                 # Reset suffix
                 step.suffix = current_suffix
@@ -655,25 +655,25 @@ class Spec2Pipeline(Pipeline):
         New SOSS extraction requires input to extract_1d step in units
         of DN/s, with photom step to be run afterwards.
         """
-        calibrated = self.srctype(data)
-        calibrated = self.flat_field(calibrated)
-        calibrated = self.straylight(calibrated)
-        calibrated = self.fringe(calibrated)
-        calibrated = self.pathloss(calibrated)
-        calibrated = self.barshadow(calibrated)
+        calibrated = self.srctype.run(data)
+        calibrated = self.flat_field.run(calibrated)
+        calibrated = self.straylight.run(calibrated)
+        calibrated = self.fringe.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
+        calibrated = self.barshadow.run(calibrated)
 
         return calibrated
 
     def _process_common(self, data):
         """Common spectral processing"""
-        calibrated = self.srctype(data)
-        calibrated = self.straylight(calibrated)
-        calibrated = self.flat_field(calibrated)
-        calibrated = self.fringe(calibrated)
-        calibrated = self.pathloss(calibrated)
-        calibrated = self.barshadow(calibrated)
-        calibrated = self.photom(calibrated)
-        calibrated = self.residual_fringe(calibrated)  # only run on MIRI_MRS data
+        calibrated = self.srctype.run(data)
+        calibrated = self.straylight.run(calibrated)
+        calibrated = self.flat_field.run(calibrated)
+        calibrated = self.fringe.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
+        calibrated = self.barshadow.run(calibrated)
+        calibrated = self.photom.run(calibrated)
+        calibrated = self.residual_fringe.run(calibrated)  # only run on MIRI_MRS data
 
         return calibrated
 
@@ -707,13 +707,13 @@ class Spec2Pipeline(Pipeline):
         self.extract_1d.save_results = False
         if len(resamp_mos.slits) > 0:
             self.log.info(f'Extracting {len(resamp_mos.slits)} MSA slitlets')
-            x1d = self.extract_1d(resamp_mos)
+            x1d = self.extract_1d.run(resamp_mos)
 
         # Extract the FS slits
         if len(resamp_fss.slits) > 0:
             self.log.info(f'Extracting {len(resamp_fss.slits)} fixed slits')
             resamp_fss.meta.exposure.type = "NRS_FIXEDSLIT"
-            x1d_fss = self.extract_1d(resamp_fss)
+            x1d_fss = self.extract_1d.run(resamp_fss)
             if x1d is None:
                 x1d = x1d_fss
                 x1d.meta.exposure.type = "NRS_MSASPEC"
