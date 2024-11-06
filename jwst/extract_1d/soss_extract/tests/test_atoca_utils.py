@@ -9,7 +9,7 @@ def test_arange_2d():
     stops = np.ones(starts.shape)*7
     out = au.arange_2d(starts, stops)
 
-    bad = 65535
+    bad = -1
     expected_out = np.array([
         [3,4,5,6],
         [4,5,6,bad],
@@ -184,7 +184,7 @@ def test_oversample_irregular(os_factor):
 
 
 @pytest.mark.parametrize("wave_range", [(2.1, 3.9), (1.8, 4.5)])
-def test__extrapolate_grid(wave_range):
+def test_extrapolate_grid(wave_range):
 
     extrapolated = au._extrapolate_grid(WAVELENGTHS, wave_range, 1)
     
@@ -237,64 +237,224 @@ def test_grid_from_map(wave_map, trace_profile):
         au.grid_from_map(wave_map, trace_profile, wave_range=[0.5,0.9])
 
 
-@pytest.mark.parametrize("n_os", ([4,1], 1))
-def test__get_soss_grid(n_os, wave_map, trace_profile, wave_map_o2, trace_profile_o2):
+def xsinx(x):
+    return x*np.sin(x)
+
+
+def test_estim_integration_error():
     """
-    wave_map has min, max wavelength of 1.5, 4.0 but throughput makes this 1.7, 4.2
-    wave_map_o2 has min, max wavelength of 0.5, 3.0 but throughput makes this 0.9, 3.4
+    Use as truth the x sin(x) from 0 to pi, has an analytic solution == pi.
+    TODO: Find something more meaningful to test here
     """
 
-    # choices of wave_min, wave_max force extrapolation on low end 
-    # and also makes sure both orders matter
-    wave_min = 0.55
-    wave_max = 4.0
-    wave_maps = np.array([wave_map, wave_map_o2])
-    trace_profiles = np.array([trace_profile, trace_profile_o2])
-    wave_grid = au._get_soss_grid(wave_maps, trace_profiles, wave_min, wave_max, n_os)
+    n = 11
+    grid = np.linspace(0, np.pi, n)
+    rel_err = au._estim_integration_err(grid, xsinx)
 
-    delta_lower = wave_grid[1]-wave_grid[0]
-    delta_upper = wave_grid[-1]-wave_grid[-2]
+    assert len(rel_err) == n-1
+    assert np.all(rel_err >= 0)
+    assert np.all(rel_err < 1)
 
-    # ensure no duplicates and strictly ascending
-    assert wave_grid.size == np.unique(wave_grid).size
-    assert np.all(wave_grid[1:] > wave_grid[:-1])
 
-    # esnure grid is within bounds but just abutting bounds
-    assert wave_grid.min() >= wave_min
-    assert wave_grid.min() <= wave_min + delta_lower
-    assert wave_grid.max() <= wave_max
-    assert wave_grid.max() >= wave_max - delta_upper
+@pytest.mark.parametrize("max_iter, rtol", [(1,1e-3), (10, 1e-9), (10, 1e-3), (1, 1e-9)])
+def test_adapt_grid(max_iter, rtol):
+    """
+    Use as truth the x sin(x) from 0 to pi, has an analytic solution == pi.
+    """
 
-    # ensure oversample factor changes for different n_os
-    # this is a bit complicated because the wavelength spacing is nonlinear in wave_map
-    # by a factor of 2 to begin with, so check that the ratio of the wavelength spacing
-    # in the upper vs lower end of the wl ranges look approx like what was input, modulo
-    # the oversample factor of the two orders
-    if n_os == 1:
-        n_os = [1,1]
-    og_spacing_lower = WAVELENGTHS[1]-WAVELENGTHS[0]
-    og_spacing_upper = WAVELENGTHS[-1]-WAVELENGTHS[-2]
-    expected_ratio = int((n_os[0]/n_os[1])*(np.around(og_spacing_lower/og_spacing_upper)))
+    input_grid = np.linspace(0, np.pi, 11)
+    input_grid_diff = input_grid[1] - input_grid[0]
+    max_grid_size = 100
+    grid, is_converged = au._adapt_grid(input_grid,
+                                        xsinx,
+                                        max_grid_size,
+                                        max_iter=max_iter,
+                                        rtol=rtol)
 
-    spacing_lower = np.mean(wave_grid[1:6]-wave_grid[:5])
-    spacing_upper = np.mean(wave_grid[-5:]-wave_grid[-6:-1])
-    actual_ratio = int(np.around((spacing_lower/spacing_upper)))
+    # ensure grid respects max_grid_size and max_iter in all cases
+    assert len(grid) <= max_grid_size
+    grid_diff = grid[1:] - grid[:-1]
+    assert np.min(grid_diff) >= input_grid_diff/(2**max_iter)
+
+    numerical_integral = np.trapz(xsinx(grid), grid)
+
+    # ensure this converges for at least one of our test cases
+    if max_iter == 10 and rtol == 1e-3:
+        assert is_converged
+
+    if is_converged:
+        # test error of the answer is smaller than rtol
+        assert np.isclose(numerical_integral, np.pi, rtol=rtol)
+        # test that success was a stop condition
+        assert len(grid) < max_grid_size
+
+    # test stop conditions
+    elif max_iter == 10:
+        # ensure hitting max_grid_size returns an array of exactly length max_grid_size
+        assert len(grid) == max_grid_size
+    elif max_iter == 1:
+        # ensure hitting max_iter can stop iteration before max_grid_size reached
+        assert len(grid) <= 2*len(input_grid)
+
+
+def test_adapt_grid_bad_inputs():
+    with pytest.raises(ValueError):
+        # input grid larger than max_grid_size
+        au._adapt_grid(np.array([1,2,3]), xsinx, 2)
+
+
+def test_trim_grids():
+
+    grid_range = (-3, 3)
+    grid0 = np.linspace(-3, 0, 4) # kept entirely.
+    grid1 = np.linspace(-3, 0, 16) # removed entirely. Finer spacing doesn't matter, preceded by grid0
+    grid2 = np.linspace(0, 3, 5) # kept from 0 to 3
+    grid3 = np.linspace(-4, 4, 5) # removed entirely. Outside of grid_range and the rest is superseded
+
+    all_grids = [grid0, grid1, grid2, grid3]
+    trimmed_grids = au._trim_grids(all_grids, grid_range)
     
-    # for n=1 case we expect 2, for n=(4,1) case we expect 8
-    assert expected_ratio == actual_ratio
+    assert len(trimmed_grids) == len(all_grids)
+    assert trimmed_grids[0].size == grid0.size
+    assert trimmed_grids[1].size == 0
+    assert trimmed_grids[2].size == grid2.size
+    assert trimmed_grids[3].size == 0
 
 
-def test__get_soss_grid_bad_inputs(wave_map, trace_profile):
+def test_make_combined_adaptive_grid():
+    """see also tests of _adapt_grid and _trim_grids for more detailed tests"""
+
+    grid_range = (0, np.pi)
+    grid0 = np.linspace(0, np.pi/2, 6) # kept entirely.
+    grid1 = np.linspace(0, np.pi/2, 15) # removed entirely. Finer spacing doesn't matter, preceded by grid0
+    grid2 = np.linspace(np.pi/2, np.pi, 11) # kept from pi/2 to pi
+    
+    # purposely make same lower index for grid2 as upper index for grid0 to test uniqueness of output
+
+    all_grids = [grid0, grid1, grid2]
+    all_estimate = [xsinx, xsinx, xsinx]
+
+    rtol = 1e-3
+    combined_grid = au.make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
+                                max_iter=10, rtol=rtol, max_total_size=100)
+    
+    numerical_integral = np.trapz(xsinx(combined_grid), combined_grid)
+
+    assert np.unique(combined_grid).size == combined_grid.size
+    assert np.isclose(numerical_integral, np.pi, rtol=rtol)
+
+
+def test_throughput_soss():
+
+    wavelengths = np.linspace(2,5,10)
+    throughputs = np.ones_like(wavelengths)
+    interpolator = au.ThroughputSOSS(wavelengths, throughputs)
+
+    # test that it returns 1 for all wavelengths inside range
+    interp = interpolator(wavelengths)
+    assert np.allclose(interp[1:-1], throughputs[1:-1])
+    assert interp[0] == 0
+    assert interp[-1] == 0
+
+    # test that it returns 0 for all wavelengths outside range
+    wavelengths_outside = np.linspace(1,1.5,5)
+    interp = interpolator(wavelengths_outside)
+    assert np.all(interp == 0)
+
+    # test ValueError raise for shape mismatch
     with pytest.raises(ValueError):
-        # test bad input shapes
-        au._get_soss_grid(wave_map, trace_profile, 0.5, 0.9, 1)
+        au.ThroughputSOSS(wavelengths, throughputs[:-1])
 
-    wave_maps = np.array([wave_map, wave_map])
-    trace_profiles = np.array([trace_profile, trace_profile])
 
+@pytest.fixture(scope="module")
+def kernel_init():
+    """
+    Toy model of the JWST kernel. The kernel is a triangle function
+    with maximum at the center, uniform in wavelength.
+    """
+    n_os = 3
+    n_pix = 5 # full width of kernel
+    n_wave = 20
+    wave_range = (2.0, 5.0)
+    wavelengths = np.linspace(*wave_range, n_wave)
+    kernel_width = n_os*n_pix - (n_os - 1)
+    ctr_idx = kernel_width//2
+
+    wave_kernel = np.ones((kernel_width, wavelengths.size), dtype=float)*wavelengths[None,:]
+    triangle_function = ctr_idx - np.abs(ctr_idx - np.arange(0, kernel_width))
+    kernel = np.ones((kernel_width, wavelengths.size), dtype=float)*triangle_function[:,None]
+    kernel/=np.max(kernel)
+
+    return wave_kernel, kernel, n_pix
+
+
+def test_webb_kernel(kernel_init):
+
+    min_trace = 2.5
+    max_trace = 3.5
+    n_trace = 100
+    wave_trace = np.linspace(min_trace, max_trace, n_trace)
+    (wave_kernel, kernel, n_pix) = kernel_init
+
+    # instantiate the kernel object
+    kern = au.WebbKernel(wave_kernel, kernel, wave_trace, n_pix)
+
+    # basic ensure that the input is stored and shapes
+    assert kern.n_pix == n_pix
+    assert kern.wave_kernels.shape == kern.kernels.shape
+    
+    # test that kernel and wave_kernel have been clipped to only keep wavelengths on detector
+    assert np.all(kern.wave_kernels >= min_trace)
+    assert np.all(kern.wave_kernels <= max_trace)
+    assert kern.wave_kernels.shape[0] == wave_kernel.shape[0]
+    assert kern.wave_kernels.shape[1] < wave_kernel.shape[1]
+
+    # test that pixels is mirrored around the center and has zero at center
+    assert kern.pixels.size == wave_kernel.shape[0]
+    assert np.allclose(kern.pixels + kern.pixels[::-1], 0)
+    assert kern.pixels[kern.pixels.size//2] == 0
+
+    # test that wave_center has same shape as wavelength axis of wave_kernel
+    # but contains values that are in wave_trace
+    assert kern.wave_center.size == kern.wave_kernels.shape[1]
+    assert all(np.isin(kern.wave_center, wave_trace))
+    
+    # test min value
+    assert kern.min_value > 0
+    assert np.isin(kern.min_value, kern.kernels)
+    assert isinstance(kern.min_value, float)
+    
+    # test the polynomial fit has the proper shape. hard-coded to a first-order, i.e., linear fit
+    # since the throughput is constant in wavelength, the slopes should be close to zero
+    # and the y-intercepts should be close to kern.wave_center
+    # especially with so few points. just go with 10 percent, should catch egregious changes
+    assert kern.poly.shape == (kern.wave_kernels.shape[1], 2)
+    assert np.allclose(kern.poly[:,0], 0, atol=1e-1)
+    assert np.allclose(kern.poly[:,1], kern.wave_center, atol=1e-1)
+
+    # test interpolation function, which takes in a pixel and a wavelength and returns a throughput
+    # this should return the triangle function at all wavelengths and zero outside range
+    wl_test = np.linspace(min_trace, max_trace, 10)
+    pixels_test = np.array([-3, -1.5, -1, 0, 1, 1.5, 2, 3])
+    expected = np.array([0, 0.25, 0.5, 1, 0.5, 0.25, 0, 0])
+    interp = kern.f_ker(pixels_test, wl_test)
+    
+    assert interp.shape == (pixels_test.size, wl_test.size)
+    diff = interp[:,1:] - interp[:,:-1]
+    assert np.allclose(diff, 0)
+    assert np.allclose(interp[:,0], expected, rtol=1e-3)
+
+    # call the kernel object directly
+    # this takes a wavelength and a central wavelength of the kernel, 
+    # then converts to pixels to use self.f_ker internally
+    wl_spacing = wave_trace[1] - wave_trace[0]
+    assert np.allclose(kern(wl_test, wl_test), 1)
+    assert np.allclose(kern(wl_test, wl_test - wl_spacing), 0.5)
+
+    # test that clipping to minimum value works right
+    wl_on_edge = wl_test + (2*wl_spacing - 0.0001)
+    assert np.allclose(kern(wl_test, wl_on_edge), kern.min_value)
+
+    # both inputs need to be same shape
     with pytest.raises(ValueError):
-        # test bad n_os shape
-        au._get_soss_grid(wave_maps, trace_profiles, 0.5, 0.9, [1,1,1])
-
-
-
+        kern(wl_test, wl_test[:-1])

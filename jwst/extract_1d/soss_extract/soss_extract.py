@@ -24,6 +24,8 @@ log.setLevel(logging.DEBUG)
 
 ORDER2_SHORT_CUTOFF = 0.58
 
+# TODO: replace all .__call__ with just an actual call to the object
+
 
 def get_ref_file_args(ref_files):
     """
@@ -92,7 +94,7 @@ def get_ref_file_args(ref_files):
 
     # The spectral kernels.
     speckernel_ref = ref_files['speckernel']
-    ovs = speckernel_ref.meta.spectral_oversampling
+    # ovs = speckernel_ref.meta.spectral_oversampling
     n_pix = 2 * speckernel_ref.meta.halfwidth + 1
 
     # Take the centroid of each trace as a grid to project the WebbKernel
@@ -100,19 +102,20 @@ def get_ref_file_args(ref_files):
     wave_maps = [wavemap_o1, wavemap_o2]
     centroid = dict()
     for wv_map, order in zip(wave_maps, [1, 2]):
-        # Needs the same number of columns as the detector. Put zeros where not defined.
-        wv_cent = np.zeros((1, wv_map.shape[1]))
+        wv_cent = np.zeros((wv_map.shape[1]))
+
         # Get central wavelength as a function of columns
         col, _, wv = _get_trace_1d(ref_files, order)
-        wv_cent[:, col] = wv
+        wv_cent[col] = wv
+
         # Set invalid values to zero
         idx_invalid = ~np.isfinite(wv_cent)
         wv_cent[idx_invalid] = 0.0
         centroid[order] = wv_cent
 
     # Get kernels
-    kernels_o1 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[1], ovs, n_pix)
-    kernels_o2 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[2], ovs, n_pix)
+    kernels_o1 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[1], n_pix)
+    kernels_o2 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[2], n_pix)
 
     # Make sure that the kernels cover the wavelength maps
     speckernel_wv_range = [np.min(speckernel_ref.wavelengths), np.max(speckernel_ref.wavelengths)]

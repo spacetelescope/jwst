@@ -420,7 +420,8 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1):
 
 
 def _trim_grids(all_grids, grid_range):
-    """ Remove all parts of the grids that are not in range
+    """
+    Remove all parts of the grids that are not in range
     or that are already covered by grids with higher priority,
     i.e. preceding in the list.
     """
@@ -444,24 +445,19 @@ def _trim_grids(all_grids, grid_range):
             is_below = grid < np.min(conca_grid)
             is_above = grid > np.max(conca_grid)
 
-            # Do nothing yet if it surrounds the previous grid
-            if is_below.any() and is_above.any():
-                msg = 'Grid surrounds another grid, better to split in 2 parts.'
-                log.warning(msg)
-
             # Remove values already covered, but keep one
             # index past the limit
-            elif is_below.any():
+            if is_below.any():
                 idx = np.max(np.nonzero(is_below))
                 idx = np.min([idx + 1, len(grid) - 1])
                 grid = grid[:idx + 1]
-            elif is_above.any():
+            if is_above.any():
                 idx = np.min(np.nonzero(is_above))
                 idx = np.max([idx - 1, 0])
                 grid = grid[idx:]
 
             # If all is covered, no need to do it again, so empty grid.
-            else:
+            if not is_below.any() and not is_above.any():
                 grid = np.array([])
 
         # Save trimmed grid
@@ -470,11 +466,10 @@ def _trim_grids(all_grids, grid_range):
     return grids_trimmed
 
 
-def make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
+def make_combined_adaptive_grid(all_grids, all_estimates, grid_range,
                                 max_iter=10, rtol=10e-6, max_total_size=1000000):
     """
     TODO: can this be a class? e.g., class AdaptiveGrid?
-    TODO: why aren't any of the same helper functions used here as in _get_soss_grid?
     q: why are there multiple grids passed in here in the first place
 
     Return an irregular oversampled grid needed to reach a
@@ -486,10 +481,10 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
 
     Parameters
     ----------
-    all_grid : list[array]
+    all_grids : list[array]
         List of grid (arrays) to pass to _adapt_grid, in order of importance.
 
-    all_estimate : list[callable]
+    all_estimates : list[callable]
         List of function (callable) to estimate the precision needed to oversample the grid.
         Must match the corresponding `grid` in `all_grid`.
 
@@ -499,7 +494,7 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
     max_iter : int, optional
         Number of times the intervals can be subdivided. The smallest
         subdivison of the grid if max_iter is reached will then be given
-        by delta_grid / 2^max_iter. Needs to be greater then zero.
+        by delta_grid / 2^max_iter. Needs to be greater than zero.
         Default is 10.
 
     rtol : float, optional
@@ -514,8 +509,6 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
         Oversampled combined grid which minimizes the integration error based on
         Romberg's method
     """
-    # Save parameters for _adapt_grid
-    kwargs = dict(max_iter=max_iter, rtol=rtol)
 
     # Remove unneeded parts of the grids
     all_grids = _trim_grids(all_grids, grid_range)
@@ -527,8 +520,6 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
     combined_grid = np.array([])  # Init with empty array
     for i_grid, grid in enumerate(all_grids):
 
-        estimate = all_estimate[i_grid]
-
         # Get the max_grid_size, considering the other grids
         # First, remove length already used
         max_grid_size = max_total_size - combined_grid.size
@@ -537,19 +528,23 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
             if i_size > i_grid:
                 max_grid_size = max_grid_size - size
         # Make sure it is at least the size of the native grid.
-        kwargs['max_grid_size'] = np.max([max_grid_size, all_sizes[i_grid]])
+        max_grid_size = np.max([max_grid_size, all_sizes[i_grid]])
 
         # Oversample the grid based on tolerance required
-        grid, is_converged = _adapt_grid(grid, estimate, **kwargs)
+        grid, is_converged = _adapt_grid(grid,
+                                         all_estimates[i_grid],
+                                         max_grid_size=max_grid_size,
+                                         max_iter=max_iter,
+                                         rtol=rtol)
 
         # Update grid sizes
         all_sizes[i_grid] = grid.size
 
         # Check convergence
         if not is_converged:
-            msg = 'Precision cannot be garanteed:'
-            if grid.size < kwargs['max_grid_size']:
-                msg += (f' smallest subdivision 1/{2 ** kwargs["max_iter"]:2.1e}'
+            msg = 'Precision cannot be guaranteed:'
+            if grid.size < max_grid_size:
+                msg += (f' smallest subdivision 1/{2 ** max_iter:2.1e}'
                         f' was reached for grid index = {i_grid}')
             else:
                 total_size = np.sum(all_sizes)
@@ -558,25 +553,13 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
                 msg += f' = {total_size} was reached for grid index = {i_grid}.'
             log.warning(msg)
 
-        # Remove regions already covered in the output grid
-        if len(combined_grid) > 0:
-            idx_covered = (np.min(combined_grid) <= grid)
-            idx_covered &= (grid <= np.max(combined_grid))
-            grid = grid[~idx_covered]
-
         # Combine grids
         combined_grid = np.concatenate([combined_grid, grid])
 
     # Sort values (and keep only unique).
-    combined_grid = np.unique(combined_grid)
-
-    # Final trim to make sure it respects the range
-    if grid_range is not None:
-        idx_in_range = (grid_range[0] <= combined_grid)
-        idx_in_range &= (combined_grid <= grid_range[-1])
-        combined_grid = combined_grid[idx_in_range]
-
-    return combined_grid
+    # This is necessary because trim_grids allows lowest index of one grid to
+    # equal highest index of another grid.
+    return np.unique(combined_grid)
 
 
 def _romberg_diff(b, c, k):
@@ -667,7 +650,8 @@ def _difftrap(fct, intervals, numtraps):
 
 
 def _estim_integration_err(grid, fct):
-    """Estimate the integration error on each intervals
+    """
+    Estimate the integration error on each intervals
     of the grid using 1rst order Romberg integration.
 
     Parameters
@@ -676,12 +660,17 @@ def _estim_integration_err(grid, fct):
         Grid for integration. Each sections of this grid are treated
         as separate integrals. So if grid has length N; N-1 integrals are
         tested.
+
     fct: callable
         Function to be integrated.
 
     Returns
     -------
-    err, rel_err: error and relative error of each integrations, with length = length(grid) - 1
+    err:
+        absolute error of each integration, with length = length(grid) - 1
+
+    rel_err:
+        relative error of each integration, with length = length(grid) - 1
     """
 
     # Change the 1D grid into a 2D set of intervals.
@@ -711,13 +700,26 @@ def _estim_integration_err(grid, fct):
     return err, rel_err
 
 
-def _adapt_grid(grid, fct, max_iter=10, rtol=10e-6, max_grid_size=None):
-    """Return an irregular oversampled grid needed to reach a
+def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
+    """
+    Return an irregular oversampled grid needed to reach a
     given precision when integrating over each intervals of `grid`.
     The grid is built by subdividing iteratively each intervals that
     did not reach the required precision.
     The precision is computed based on the estimate of the integrals
     using a first order Romberg integration.
+
+    TODO: the reliance on rel_err alone is not very robust. (on main,
+    an absolute tolerance can be specified but is always set to zero.)
+    for a simple test case, sometimes no matter how many times
+    you subdivide you still get the same relative error.
+    See test_adapt_grid in test_atoca_utils.py
+    The reason seems to be that you aren't comparing to the actual truth,
+    but instead an imperfect approx of the truth. The rel. difference between
+    those estimates is not necessarily going to improve even as the absolute
+    error does.  For now, setting absolute error to be a small value,
+    but it's not obvious in practice how to set this default because it depends 
+    on the units of the output spectrum.
 
     Parameters
     ----------
@@ -729,6 +731,9 @@ def _adapt_grid(grid, fct, max_iter=10, rtol=10e-6, max_grid_size=None):
     fct: callable
         Function to be integrated. Must be a function of `grid`
 
+    max_grid_size: int, required.
+        maximum size of the output grid.
+
     max_iter: int, optional
         Number of times the intervals can be subdivided. The smallest
         subdivison of the grid if max_iter is reached will then be given
@@ -738,8 +743,8 @@ def _adapt_grid(grid, fct, max_iter=10, rtol=10e-6, max_grid_size=None):
     rtol: float, optional
         The desired relative tolerance. Default is 10e-6, so 10 ppm.
 
-    max_grid_size: int, optional
-        maximum size of the output grid. Default is None, so no constraint.
+    atol: float, optional
+        The desired absolute tolerance. Default is 1e-6.
 
     Returns
     -------
@@ -758,30 +763,27 @@ def _adapt_grid(grid, fct, max_iter=10, rtol=10e-6, max_grid_size=None):
     [1] 'Romberg's method' https://en.wikipedia.org/wiki/Romberg%27s_method
 
     """
-    # No limit of max_grid_size not given
-    if max_grid_size is None:
-        max_grid_size = np.inf
-
     # Init some flags
     max_size_reached = (grid.size >= max_grid_size)
+    if max_size_reached:
+        raise ValueError('max_grid_size is too small for the input grid.')
 
     # Iterate until precision is reached or max_iter
     for _ in range(max_iter):
 
         # Estimate error using Romberg integration
-        err, rel_err = _estim_integration_err(grid, fct)
+        abs_err, rel_err = _estim_integration_err(grid, fct)
 
         # Check where precision is reached
-        converged = rel_err < rtol
+        converged = (rel_err < rtol) | (abs_err < atol)
         is_converged = converged.all()
 
-        # Check if max grid size was reached
+        # Stop iterating if max grid size was reached
         if max_size_reached or is_converged:
-            # Then stop iteration
             break
 
         # Intervals that didn't reach the precision will be subdivided
-        n_oversample = np.full(err.shape, 2, dtype=int)
+        n_oversample = np.full(rel_err.shape, 2, dtype=int)
         # No subdivision for the converged ones
         n_oversample[converged] = 1
 
@@ -790,6 +792,8 @@ def _adapt_grid(grid, fct, max_iter=10, rtol=10e-6, max_grid_size=None):
         # to reach the maximum size
         os_grid_size = n_oversample.sum()
         if os_grid_size > max_grid_size:
+            max_size_reached = True
+
             # How many nodes can be added to reach max?
             n_nodes_remaining = max_grid_size - grid.size
 
@@ -797,17 +801,11 @@ def _adapt_grid(grid, fct, max_iter=10, rtol=10e-6, max_grid_size=None):
             idx_largest_err = np.argsort(rel_err)[-n_nodes_remaining:]
 
             # Build new oversample array and assign only largest errors
-            n_oversample = np.ones(err.shape, dtype=int)
+            n_oversample = np.ones(rel_err.shape, dtype=int)
             n_oversample[idx_largest_err] = 2
 
-            # Flag to stop iterations
-            max_size_reached = True
-
-        # Generate oversampled grid (subdivide)
+        # Generate oversampled grid (subdivide). Returns sorted and unique grid.
         grid = oversample_grid(grid, n_os=n_oversample)
-
-        # Make sure sorted and unique.
-        grid = np.unique(grid)
 
     return grid, is_converged
 
@@ -830,61 +828,56 @@ def ThroughputSOSS(wavelength, throughput):
 
     Notes
     -----
-    Clamped boundary condition corresponds to a first derivative of zero,
-    which ensures a smooth curve given zero-padding outside the range.
+    Throughput is always zero at min, max of wavelength.
     """
+    wavelength = np.sort(wavelength)
     wl_min, wl_max = np.min(wavelength), np.max(wavelength)
-    spline = make_interp_spline(wavelength, throughput, k=3, bc_type=("clamped", "clamped"))
-
-    def interpolator(wl):
-        thru = np.zeros_like(wl)
-        inside = (wl > wl_min) & (wl < wl_max)
-        thru[inside] = spline(wl[inside])
-        return thru
-
+    throughput[0] = 0.0
+    throughput[-1] = 0.0
+    interp = make_interp_spline(wavelength, throughput, k=3, bc_type=("clamped", "clamped"))
+    def interpolator(wv):
+        wv = np.clip(wv, wl_min, wl_max)
+        return interp(wv)
     return interpolator
 
 
 class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need further adjustment.
 
-    def __init__(self, wave_kernels, kernels, wave_map, n_os, n_pix,  # TODO kernels may need to be flipped?
-                 bounds_error=False, fill_value="extrapolate"):
-        """A handler for the kernel values.
+    def __init__(self, wave_kernels, kernels, wave_trace, n_pix):  # TODO kernels may need to be flipped?)
+        """
+        Initialize the kernel object.
 
         Parameters
         ----------
         wave_kernels : array[float]
-            Kernels for wavelength array.
+            Wavelength array for the kernel. Must have same shape as kernels.
+
         kernels : array[float]
-            Kernels for throughput array.
-        wave_map : array[float]
-            Wavelength map of the detector. Since WebbPSF returns kernels in
-            the pixel space, we need a wave_map to convert to wavelength space.
-        n_os : int
-            Oversampling of the kernels.
+            Kernel for throughput array.
+            Dimensions are (wavelength, oversampled pixels).
+            Center (~max throughput) of the kernel is at the center of the 2nd axis.
+
+        wave_trace : array[float]
+            1-D trace of the detector central wavelengths for the given order.
+            Since WebbPSF returns kernels in the pixel space, this is used to
+            convert to wavelength space.
+
         n_pix : int
-            Length of the kernels in pixels.
-        bounds_error : bool
-            If True, raise an error when trying to call the function out of the
-            interpolation range. If False, the values will be extrapolated.
-        fill_value : str
-            How to extrapolate when needed. Only default "extrapolate"
-            currently implemented.
+            Number of detector pixels spanned by the kernel. Second axis of kernels
+            has shape (n_os * n_pix) - (n_os - 1), where n_os is the
+            spectral oversampling factor.
         """
+        self.n_pix = n_pix
 
-        # Mask where wv_map is equal to 0
-        wave_map = np.ma.array(wave_map, mask=(wave_map == 0))
+        # Mask where trace is equal to 0
+        wave_trace = np.ma.array(wave_trace, mask=(wave_trace == 0))
 
-        # Force wv_map to have the red wavelengths
-        # at the end of the detector
-        if np.diff(wave_map, axis=-1).mean() < 0:
-            wave_map = np.flip(wave_map, axis=-1)
+        # Force trace to have the red wavelengths at the end of the detector
+        if np.diff(wave_trace).mean() < 0:
+            wave_trace = np.flip(wave_trace)
 
-        # Number of columns
-        ncols = wave_map.shape[-1]
-
-        # Create oversampled pixel position array
-        pixels = np.arange(-(n_pix // 2), n_pix // 2 + (1 / n_os), (1 / n_os))
+        # Create oversampled pixel position array. Center index should have value 0.
+        self.pixels = np.linspace(-(n_pix // 2), n_pix // 2, wave_kernels.shape[0])
 
         # `wave_kernel` has only the value of the central wavelength
         # of the kernel at each points because it's a function
@@ -892,27 +885,25 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         wave_center = wave_kernels[0, :]
 
         # Use the wavelength solution to create a mapping between pixels and wavelengths
-        # First find the all kernels that fall on the detector.
-        wave_min = np.amin(wave_map[wave_map > 0])
-        wave_max = np.amax(wave_map[wave_map > 0])
+        wave_min = np.amin(wave_trace[wave_trace > 0])
+        wave_max = np.amax(wave_trace[wave_trace > 0])
         i_min = np.searchsorted(wave_center, wave_min)
         i_max = np.searchsorted(wave_center, wave_max) - 1
 
-        # Use the next kernels at each extremities to define the
-        # boundaries of the interpolation to use in the class
-        # RectBivariateSpline (at the end)
+        # i_min, i_max correspond to the min, max indices of the kernel that are represented
+        # on the detector. Use those to define the boundaries of the interpolation to use
+        # in the RectBivariateSpline interpolation
         bbox = [None, None,
                 wave_center[np.maximum(i_min - 1, 0)],
                 wave_center[np.minimum(i_max + 1, len(wave_center) - 1)]]
-        #######################
 
         # Keep only kernels that fall on the detector.
-        kernels = kernels[:, i_min:i_max + 1].copy()
+        self.kernels = kernels[:, i_min:i_max + 1].copy()
         wave_kernels = wave_kernels[:, i_min:i_max + 1].copy()
-        wave_center = np.array(wave_kernels[0, :])
+        wave_center = np.array(wave_kernels[0])
 
         # Save minimum kernel value (greater than zero)
-        kernels_min = np.min(kernels[(kernels > 0.0)])
+        self.min_value = np.min(self.kernels[(self.kernels > 0.0)])
 
         # Then find the pixel closest to each kernel center
         # and use the surrounding pixels (columns)
@@ -927,56 +918,50 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
             wv = np.ma.masked_all(i_surround.shape)
 
             # Closest pixel wv
-            i_row, i_col = np.unravel_index(
-                np.argmin(np.abs(wave_map - wv_c)), wave_map.shape
-            )
+            i_col = np.argmin(np.abs(wave_trace - wv_c))
             # Update wavelength center value
             # (take the nearest pixel center value)
-            wave_center[i_cen] = wave_map[i_row, i_col]
+            wave_center[i_cen] = wave_trace[i_col]
 
             # Surrounding columns
             index = i_col + i_surround
 
             # Make sure it's on the detector
-            i_good = (index >= 0) & (index < ncols)
+            i_good = (index >= 0) & (index < wave_trace.size)
 
             # Assign wv values
-            wv[i_good] = wave_map[i_row, index[i_good]]
+            wv[i_good] = wave_trace[index[i_good]]
 
             # Fit n=1 polynomial
             poly_i = np.polyfit(i_surround[~wv.mask], wv[~wv.mask], 1)
 
             # Project on os pixel grid
-            wave_kernels[:, i_cen] = np.poly1d(poly_i)(pixels)
+            wave_kernels[:, i_cen] = np.poly1d(poly_i)(self.pixels)
 
             # Save coeffs
             poly.append(poly_i)
 
-        # Save attributes
-        self.n_pix = n_pix
-        self.n_os = n_os
+        # Save computed attributes
         self.wave_kernels = wave_kernels
-        self.kernels = kernels
-        self.pixels = pixels
         self.wave_center = wave_center
         self.poly = np.array(poly)
-        self.fill_value = fill_value
-        self.bounds_error = bounds_error
-        self.min_value = kernels_min
 
-        # 2d Interpolate
-        self.f_ker = RectBivariateSpline(pixels, wave_center, kernels, bbox=bbox)
+        # 2D Interpolate
+        self.f_ker = RectBivariateSpline(self.pixels, self.wave_center, self.kernels, bbox=bbox)
 
     def __call__(self, wave, wave_c):
-        """Returns the kernel value, given the wavelength and the kernel central
-         wavelength.
+        """
+        Returns the kernel value, given the wavelength and the kernel central
+        wavelength. Wavelengths that are out of bounds will be extrapolated.
 
         Parameters
         ----------
         wave : array[float]
             Wavelength where the kernel is projected.
+
         wave_c : array[float]
             Central wavelength of the kernel.
+
         Returns
         -------
         out : array[float]
@@ -985,33 +970,16 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
 
         wave_center = self.wave_center
         poly = self.poly
-        fill_value = self.fill_value
-        bounds_error = self.bounds_error
         n_wv_c = len(wave_center)
-        f_ker = self.f_ker
-        n_pix = self.n_pix
-        min_value = self.min_value
 
-        # #################################
-        # First, convert wv value in pixels
-        # using a linear interpolation
-        # #################################
+        # First, convert wavelength value into pixels using self.poly to interpolate
 
         # Find corresponding interval
         i_wv_c = np.searchsorted(wave_center, wave_c) - 1
 
-        # Deal with values out of bounds
-        if bounds_error:
-            message = "Value of wv center out of interpolation range"
-            log.critical(message)
-            raise ValueError(message)
-        elif fill_value == "extrapolate":
-            i_wv_c[i_wv_c < 0] = 0
-            i_wv_c[i_wv_c >= (n_wv_c - 1)] = n_wv_c - 2
-        else:
-            message = f"`fill_value`={fill_value} is not an valid option."
-            log.critical(message)
-            raise ValueError(message)
+        # Extrapolate values out of bounds
+        i_wv_c[i_wv_c < 0] = 0
+        i_wv_c[i_wv_c >= (n_wv_c - 1)] = n_wv_c - 2
 
         # Compute coefficients that interpolate along wv_centers
         d_wv_c = wave_center[i_wv_c + 1] - wave_center[i_wv_c]
@@ -1027,19 +995,13 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         # Compute pixel values
         pix = a_pix * wave + b_pix
 
-        # ######################################
-        # Second, compute kernel value on the
-        # interpolation grid (pixel x wv_center)
-        # ######################################
+        # Second, compute kernel value on the interpolation grid (pixel x wv_center)
+        webbker = self.f_ker(pix, wave_c, grid=False)
 
-        webbker = f_ker(pix, wave_c, grid=False)
-
-        # Make sure it's not negative and greater than the min value
-        webbker = np.clip(webbker, min_value, None)
-
-        # and put out-of-range values to zero.
-        webbker[pix > n_pix // 2] = 0
-        webbker[pix < -(n_pix // 2)] = 0
+        # Make sure it's not negative and greater than the min value, set pixels outside range to zero
+        webbker = np.clip(webbker, self.min_value, None)
+        webbker[pix > self.n_pix // 2] = 0
+        webbker[pix < -(self.n_pix // 2)] = 0
 
         return webbker
 

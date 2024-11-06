@@ -993,7 +993,7 @@ class ExtractionEngine:
         ma = mask_ord[~self.mask]
         lo[ma], hi[ma] = -1, -2
 
-        print("grid", np.min(grid), np.max(grid), grid.size)
+        # print("grid", np.min(grid), np.max(grid), grid.size)
         # grid 0.8515140811891634 2.204728219634399 1408 on PR branch
         # grid 0.8480011181377183 2.2057149524019297 1413 on main
         # the grid could be the problem!
