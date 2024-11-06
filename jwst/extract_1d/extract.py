@@ -7,7 +7,6 @@ import numpy as np
 
 from dataclasses import dataclass
 from astropy.modeling import polynomial
-from astropy.io import fits
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from stdatamodels.jwst.datamodels.apcorr import (
@@ -39,7 +38,6 @@ WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 # These values are used to indicate whether the input extract1d reference file
 # (if any) is JSON, IMAGE or ASDF (added for IFU data)
 FILE_TYPE_JSON = "JSON"
-FILE_TYPE_IMAGE = "IMAGE"
 FILE_TYPE_ASDF = "ASDF"
 FILE_TYPE_OTHER = "N/A"
 
@@ -127,13 +125,9 @@ def open_extract1d_ref(refname, exptype):
         If the extract1d reference file is in asdf format, the ref_dict will
         be a dictionary  containing two keys: ref_dict['ref_file_type'] = 'ASDF'
         and ref_dict['ref_model'].
-        If the reference file is an image, ref_dict will be a
-        dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
-        and ref_dict['ref_model'].  The latter will be the open file
-        handle for the jwst.datamodels object for the extract1d file.
     """
 
-    # the extract1d reference file can be 1 of three types:  'json', 'fits', or  'asdf'
+    # the extract1d reference file can be 1 of 2 types:  'json' or  'asdf'
     refname_type = refname[-4:].lower()
     if refname == "N/A":
         ref_dict = None
@@ -150,24 +144,14 @@ def open_extract1d_ref(refname, exptype):
                 fd.close()
                 log.error("Extract1d json reference file has an error, run a json validator off line and fix the file")
                 raise RuntimeError("Invalid json extract 1d reference file, run json validator off line and fix file.")
-        elif refname_type == 'fits':
-            try:
-                fd = fits.open(refname)
-                extract_model = datamodels.MultiExtract1dImageModel(refname)
-                ref_dict = {'ref_file_type': FILE_TYPE_IMAGE, 'ref_model': extract_model}
-                fd.close()
-            except OSError:
-                log.error("Extract1d fits reference file has an error")
-                raise RuntimeError("Invalid fits extract 1d reference file- fix reference file.")
-
         elif refname_type == 'asdf':
             extract_model = datamodels.Extract1dIFUModel(refname)
             ref_dict = dict()
             ref_dict['ref_file_type'] = FILE_TYPE_ASDF
             ref_dict['ref_model'] = extract_model
         else:
-            log.error("Invalid Extract 1d reference file, must be json, fits or asdf.")
-            raise RuntimeError("Invalid Extract 1d reference file, must be json, fits or asdf.")
+            log.error("Invalid Extract 1d reference file, must be json or asdf.")
+            raise RuntimeError("Invalid Extract 1d reference file, must be json or asdf.")
 
     return ref_dict
 
@@ -226,9 +210,7 @@ def get_extract_parameters(
     ----------
     ref_dict : dict or None
         For an extract1d reference file in JSON format, `ref_dict` will be the entire
-        contents of the file.  For an EXTRACT1D reference image, `ref_dict` will have
-        just two entries, 'ref_file_type' (a string) and 'ref_model', a
-        JWST data model for a collection of images.  If there is no
+        contents of the file.  If there is no
         extract1d reference file, `ref_dict` will be None.
 
     input_model : data model
@@ -404,45 +386,8 @@ def get_extract_parameters(
 
                     break
 
-    elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
-        # Note that we will use the supplied image-format extract1d reference file,
-        # without regard for the distinction between point source and
-        # extended source.
-        extract_params['ref_file_type'] = ref_dict['ref_file_type']
-        im = None
-
-        for im in ref_dict['ref_model'].images:
-            if im.name == slitname or im.name == ANY or slitname == ANY:
-                extract_params['match'] = PARTIAL
-
-                if im.spectral_order == sp_order or im.spectral_order >= ANY_ORDER:
-                    extract_params['match'] = EXACT
-                    extract_params['spectral_order'] = sp_order
-                    break
-
-        if extract_params['match'] == EXACT:
-            extract_params['ref_image'] = im
-            # Note that extract_params['dispaxis'] is not assigned.  This will be done later, possibly slit by slit.
-            if smoothing_length is None:
-                extract_params['smoothing_length'] = im.smoothing_length
-            else:
-                # The user-supplied value takes precedence.
-                extract_params['smoothing_length'] = smoothing_length
-
-            if use_source_posn is None:
-                extract_params['use_source_posn'] = False
-            else:
-                extract_params['use_source_posn'] = use_source_posn
-
-            extract_params['position_correction'] = 0
-
-            if -1 in extract_params['ref_image'].data:
-                extract_params['subtract_background'] = True
-            else:
-                extract_params['subtract_background'] = False
-
     else:
-        log.error("Reference file type {ref_dict['ref_file_type']} not recognized")
+        log.error(f"Reference file type {ref_dict['ref_file_type']} not recognized")
 
     return extract_params
 
@@ -495,9 +440,6 @@ def get_aperture(im_shape, wcs, extract_params):
     ap_ref : Aperture NamedTuple or an empty dict
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
-    if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
-        return {}
-
     ap_ref = aperture_from_ref(extract_params, im_shape)
     ap_ref, truncated = update_from_shape(ap_ref, im_shape)
 
@@ -1980,502 +1922,6 @@ class ExtractModel(ExtractBase):
                 background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq)
 
 
-class ImageExtractModel(ExtractBase):
-    """This uses an image that specifies the extraction region.
-
-    Extended summary
-    ----------------
-    One of the requirements for this step is that for an extended target,
-    the entire aperture is supposed to be extracted (with no background
-    subtraction).  It doesn't make any sense to use an image reference file
-    to extract the entire aperture; a trivially simple JSON reference file
-    would do.  Therefore, we assume that if the user specified a reference
-    file in image format, the user actually wanted that reference file
-    to be used, so we will ignore the requirement and extract as specified
-    by the reference image.
-    """
-
-    def __init__(self, *base_args, **base_kwargs):
-        """Extract using a reference image to define the extraction and
-           background regions.
-
-        Parameters
-        ----------
-        *base_args, **base_kwargs :
-            See ExtractionBase for more.
-
-        """
-        super().__init__(*base_args, **base_kwargs)
-
-    def nominal_locn(self, middle, middle_wl):
-        """Find the nominal cross-dispersion location of the target spectrum.
-
-        This version is for the case that the reference file is an image.
-
-        Parameters
-        ----------
-        middle: int
-            The zero-indexed pixel number of the point in the dispersion
-            direction at which `locn_from_wcs` determined the actual
-            location (in the cross-dispersion direction) of the target
-            spectrum.
-
-        middle_wl: float
-            The wavelength at pixel `middle`.  This is not used in this
-            version.
-
-        Returns
-        -------
-        location: float or None
-            The nominal cross-dispersion location (i.e. unmodified by
-            source position offset) of the target spectrum.
-            The value will be None if `middle` is outside the reference
-            image or if the reference image does not specify any pixels
-            to extract at `middle`.
-
-        """
-        shape = self.ref_image.data.shape
-        middle_line = None
-        location = None
-
-        if self.dispaxis == HORIZONTAL:
-            if 0 <= middle < shape[1]:
-                middle_line = self.ref_image.data[:, middle]
-        else:
-            if 0 <= middle < shape[0]:
-                middle_line = self.ref_image.data[middle, :]
-
-        if middle_line is None:
-            log.warning(
-                f"Can't determine nominal location of spectrum because middle = {middle} is off the image."
-            )
-
-            return
-
-        mask_target = np.where(middle_line > 0., 1., 0.)
-        x = np.arange(len(middle_line), dtype=np.float64)
-
-        numerator = (x * mask_target).sum()
-        denominator = mask_target.sum()
-
-        if denominator > 0.:
-            location = numerator / denominator
-
-        return location
-
-    def add_position_correction(self, shape):
-        """Shift the reference image (in-place).
-
-        Parameters
-        ----------
-        shape : tuple
-            Not sure if needed yet?
-
-        """
-        if self.position_correction == 0:
-            return
-
-        log.info(f"Applying source offset of {self.position_correction:.2f}")
-
-        # Shift the image in the cross-dispersion direction.
-        ref = self.ref_image.data.copy()
-        shift = self.position_correction
-        ishift = round(shift)
-
-        if ishift != shift:
-            log.info(f"Rounding source offset of {shift} to {ishift}")
-
-        if self.dispaxis == HORIZONTAL:
-            if abs(ishift) >= ref.shape[0]:
-                log.warning(f"Nod offset {ishift} is too large, skipping ...")
-
-                return
-
-            self.ref_image.data[:, :] = 0.
-
-            if ishift > 0:
-                self.ref_image.data[ishift:, :] = ref[:-ishift, :]
-            else:
-                ishift = -ishift
-                self.ref_image.data[:-ishift, :] = ref[ishift:, :]
-        else:
-            if abs(ishift) >= ref.shape[1]:
-                log.warning(f"Nod offset {ishift} is too large, skipping ...")
-
-                return
-
-            self.ref_image.data[:, :] = 0.
-
-            if ishift > 0:
-                self.ref_image.data[:, ishift:] = ref[:, :-ishift]
-            else:
-                ishift = -ishift
-                self.ref_image.data[:, :-ishift] = ref[:, ishift:]
-
-    def log_extraction_parameters(self):
-        """Log the updated extraction parameters."""
-        log.debug("Using a reference image that defines extraction regions.")
-        log.debug(f"dispaxis = {self.dispaxis}")
-        log.debug(f"spectral order = {self.spectral_order}")
-        log.debug(f"smoothing_length = {self.smoothing_length}")
-        log.debug(f"position_correction = {self.position_correction}")
-
-    def extract(self, data, var_poisson, var_rnoise, var_flat, wl_array):
-        """
-        Do the actual extraction, for the case that the extract1d reference file
-        is an image.
-
-        Parameters
-        ----------
-        data : ndarray, 2-D
-            Science data array.
-
-        var_poisson : ndarray, 2-D
-            Poisson noise variance array to be extracted following data extraction method.
-
-        var_rnoise : ndarray, 2-D
-            Read noise variance array to be extracted following data extraction method.
-
-        var_flat : ndarray, 2-D
-            Flat noise variance array to be extracted following data extraction method.
-
-        wl_array : ndarray, 2-D, or None
-            Wavelengths corresponding to `data`, or None if no WAVELENGTH
-            extension was found in the input file.
-
-        Returns
-        -------
-        ra, dec : float
-            ra and dec are the right ascension and declination respectively
-            at the nominal center of the slit.
-
-        wavelength : ndarray, 1-D
-            The wavelength in micrometers at each pixel.
-
-        temp_flux : ndarray, 1-D
-            The sum of the data values in the extraction region minus the
-            sum of the data values in the background regions (scaled by the
-            ratio of the numbers of pixels), for each pixel.
-            The data values are in units of surface brightness, so this
-            value isn't really the flux, it's an intermediate value.
-            Multiply `temp_flux` by the solid angle of a pixel to get the
-            flux for a point source (column "flux").  Divide `temp_flux` by
-            `npixels` (to compute the average) to get the array for the
-            "surf_bright" (surface brightness) output column.
-
-        f_var_poisson : ndarray, 1-D
-            The extracted poisson variance values to go along with the
-            temp_flux array.
-
-        f_var_rnoise : ndarray, 1-D
-            The extracted read noise variance values to go along with the
-            temp_flux array.
-
-        f_var_flat : ndarray, 1-D
-            The extracted flat field variance values to go along with the
-            temp_flux array.
-
-        background : ndarray, 1-D
-            The background count rate that was subtracted from the sum of
-            the source data values to get `temp_flux`.
-
-        b_var_poisson : ndarray, 1-D
-            The extracted poisson variance values to go along with the
-            background array.
-
-        b_var_rnoise : ndarray, 1-D
-            The extracted read noise variance values to go along with the
-            background array.
-
-        b_var_flat : ndarray, 1-D
-            The extracted flat field variance values to go along with the
-            background array.
-
-        npixels : ndarray, 1-D, float64
-            The number of pixels that were added together to get `temp_flux`.
-
-        dq : ndarray, 1-D, uint32
-        """
-        shape = data.shape
-        ref = self.match_shape(shape)  # Truncate or expand reference image to match the science data.
-
-        # This is the axis along which to add up the data.
-        if self.dispaxis == HORIZONTAL:
-            axis = 0
-        else:
-            axis = 1
-
-        # The values of these arrays will be just 0 or 1.
-        # If ref did not define any background pixels, however, mask_bkg will be None.
-        (mask_target, mask_bkg) = self.separate_target_and_background(ref)
-
-        # This is the number of pixels in the cross-dispersion direction, in the target extraction region.
-        n_target = mask_target.sum(axis=axis, dtype=float)
-
-        # Extract the data.
-        gross = (data * mask_target).sum(axis=axis, dtype=float)
-        f_var_poisson = (var_poisson * mask_target).sum(axis=axis, dtype=float)
-        f_var_rnoise = (var_rnoise * mask_target).sum(axis=axis, dtype=float)
-        f_var_flat = (var_flat * mask_target).sum(axis=axis, dtype=float)
-
-        # Compute the number of pixels that were added together to get gross.
-        temp = np.ones_like(data)
-        npixels = (temp * mask_target).sum(axis=axis, dtype=float)
-
-        if self.subtract_background is not None:
-            if not self.subtract_background:
-                if mask_bkg is not None:
-                    log.info("Background subtraction was turned off - skipping it.")
-                mask_bkg = None
-            else:
-                if mask_bkg is None:
-                    log.info("Skipping background subtraction because background regions are not defined.")
-
-        # Extract the background.
-        if mask_bkg is not None:
-            n_bkg = mask_bkg.sum(axis=axis, dtype=float)
-            n_bkg = np.where(n_bkg == 0., -1., n_bkg)  # -1 is used as a flag, and also to avoid dividing by zero.
-
-            background = (data * mask_bkg).sum(axis=axis, dtype=float)
-            b_var_poisson = (var_poisson * mask_bkg).sum(axis=axis, dtype=float)
-            b_var_rnoise = (var_rnoise * mask_bkg).sum(axis=axis, dtype=float)
-            b_var_flat = (var_flat * mask_bkg).sum(axis=axis, dtype=float)
-
-            scalefactor = n_target / n_bkg
-            scalefactor = np.where(n_bkg > 0., scalefactor, 0.)
-
-            background *= scalefactor
-
-            if self.smoothing_length > 1:
-                background = extract1d.bxcar(background, self.smoothing_length)  # Boxcar smoothing.
-                background = np.where(n_bkg > 0., background, 0.)
-                b_var_poisson = extract1d.bxcar(b_var_poisson, self.smoothing_length)
-                b_var_poisson = np.where(n_bkg > 0., b_var_poisson, 0.)
-                b_var_rnoise = extract1d.bxcar(b_var_rnoise, self.smoothing_length)
-                b_var_rnoise = np.where(n_bkg > 0., b_var_rnoise, 0.)
-                b_var_flat = extract1d.bxcar(b_var_flat, self.smoothing_length)
-                b_var_flat = np.where(n_bkg > 0., b_var_flat, 0.)
-
-            temp_flux = gross - background
-        else:
-            background = np.zeros_like(gross)
-            b_var_poisson = np.zeros_like(gross)
-            b_var_rnoise = np.zeros_like(gross)
-            b_var_flat = np.zeros_like(gross)
-            temp_flux = gross.copy()
-
-        del gross
-
-        # Since we're now calling get_wavelengths from lib.wcs_utils, wl_array should be populated, and we should be
-        # able to remove some of this code.
-        if wl_array is None or len(wl_array) == 0:
-            got_wavelength = False
-        else:
-            got_wavelength = True  # may be reset below
-
-        # If wl_array has all 0 values, interpret that to mean that the wavelength attribute was not populated.
-        if not got_wavelength or wl_array.min() == 0. and wl_array.max() == 0.:
-            got_wavelength = False
-
-        # Used for computing the celestial coordinates and the 1-D array of wavelengths.
-        flag = (mask_target > 0.)
-        grid = np.indices(shape)
-        masked_grid = flag.astype(float) * grid[axis]
-        g_sum = masked_grid.sum(axis=axis)
-        f_sum = flag.sum(axis=axis, dtype=float)
-        f_sum_zero = np.where(f_sum <= 0.)
-        f_sum[f_sum_zero] = 1.  # to avoid dividing by zero
-
-        spectral_trace = g_sum / f_sum
-
-        del f_sum, g_sum, masked_grid, grid, flag
-
-        # We want x_array and y_array to be 1-D arrays, with the X values initially running from 0 at the left edge of
-        # the input cutout to the right edge, and the Y values being near the middle of the spectral extraction region.
-        # So the locations (x_array[i], y_array[i]) should be the spectral trace.
-        # Near the left and right edges, there might not be any non-zero values in mask_target, so a slice will be
-        # extracted from both x_array and y_array in order to exclude pixels that are not within the extraction region.
-        if self.dispaxis == HORIZONTAL:
-            x_array = np.arange(shape[1], dtype=float)
-            y_array = spectral_trace
-        else:
-            x_array = spectral_trace
-            y_array = np.arange(shape[0], dtype=float)
-
-        # Trim off the ends, if there's no data there.
-        # Save trim_slc.
-        mask = np.where(n_target > 0.)
-
-        if len(mask[0]) > 0:
-            trim_slc = slice(mask[0][0], mask[0][-1] + 1)
-            temp_flux = temp_flux[trim_slc]
-            background = background[trim_slc]
-            f_var_poisson = f_var_poisson[trim_slc]
-            f_var_rnoise = f_var_rnoise[trim_slc]
-            f_var_flat = f_var_flat[trim_slc]
-            b_var_poisson = b_var_poisson[trim_slc]
-            b_var_rnoise = b_var_rnoise[trim_slc]
-            b_var_flat = b_var_flat[trim_slc]
-            npixels = npixels[trim_slc]
-            x_array = x_array[trim_slc]
-            y_array = y_array[trim_slc]
-
-        if got_wavelength:
-            indx = np.around(x_array).astype(int)
-            indy = np.around(y_array).astype(int)
-            indx = np.where(indx < 0, 0, indx)
-            indx = np.where(indx >= shape[1], shape[1] - 1, indx)
-            indy = np.where(indy < 0, 0, indy)
-            indy = np.where(indy >= shape[0], shape[0] - 1, indy)
-            wavelength = wl_array[indy, indx]
-
-        ra = dec = wcs_wl = None
-
-        if self.wcs is not None:
-            stuff = self.wcs(x_array, y_array)
-            ra = stuff[0]
-            dec = stuff[1]
-            wcs_wl = stuff[2]
-
-            # We need one right ascension and one declination, representing the direction of pointing.
-            middle = ra.shape[0] // 2  # ra and dec have same shape
-            mask = np.isnan(ra)
-            not_nan = np.logical_not(mask)
-
-            if not_nan[middle]:
-                log.debug("Using midpoint of spectral trace for RA and Dec.")
-
-                ra = ra[middle]
-            else:
-                if np.any(not_nan):
-                    log.warning("Midpoint of coordinate array is NaN; "
-                                "using the average of non-NaN min and max values.")
-
-                    ra = (np.nanmin(ra) + np.nanmax(ra)) / 2.
-                else:
-                    log.warning("All right ascension values are NaN; assigning dummy value -999.")
-                    ra = -999.
-
-            mask = np.isnan(dec)
-            not_nan = np.logical_not(mask)
-
-            if not_nan[middle]:
-                dec = dec[middle]
-            else:
-                if np.any(not_nan):
-                    dec = (np.nanmin(dec) + np.nanmax(dec)) / 2.
-                else:
-                    log.warning("All declination values are NaN; assigning dummy value -999.")
-                    dec = -999.
-
-        if not got_wavelength:
-            wavelength = wcs_wl  # from wcs, or None
-
-        if wavelength is None:
-            if self.dispaxis == HORIZONTAL:
-                wavelength = np.arange(shape[1], dtype=float)
-            else:
-                wavelength = np.arange(shape[0], dtype=float)
-
-            wavelength = wavelength[trim_slc]
-
-        dq = np.zeros(temp_flux.shape, dtype=np.uint32)
-        nan_mask = np.isnan(wavelength)
-        n_nan = nan_mask.sum(dtype=np.intp)
-
-        if n_nan > 0:
-            log.debug(f"{n_nan} NaNs in wavelength array")
-
-            wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq)
-            temp_flux = temp_flux[nan_slc]
-            background = background[nan_slc]
-            npixels = npixels[nan_slc]
-            f_var_poisson = f_var_poisson[nan_slc]
-            f_var_rnoise = f_var_rnoise[nan_slc]
-            f_var_flat = f_var_flat[nan_slc]
-            b_var_poisson = b_var_poisson[nan_slc]
-            b_var_rnoise = b_var_rnoise[nan_slc]
-            b_var_flat = b_var_flat[nan_slc]
-        return (ra, dec, wavelength,
-                temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-                background, b_var_poisson, b_var_rnoise, b_var_flat,
-                npixels, dq)
-
-    def match_shape(self, shape):
-        """Truncate or expand reference image to match the science data.
-
-        Extended summary
-        ----------------
-        The science data may be 2-D or 3-D, but the reference image only
-        needs to be 2-D.
-
-        Parameters
-        ----------
-        shape : tuple
-            The shape of the science data.
-
-        Returns
-        -------
-        ndarray, 2-D
-            This is either the reference image (the data array, not the
-            complete data model), or an array of the same type, either
-            larger or smaller than the actual reference image, but matching
-            the science data array both in size and location on the
-            detector.
-
-        """
-        ref = self.ref_image.data
-        ref_shape = ref.shape
-
-        if shape == ref_shape:
-            return ref
-
-        # This is the shape of the last two axes of the science data.
-        buf = np.zeros((shape[-2], shape[-1]), dtype=ref.dtype)
-        y_max = min(shape[-2], ref_shape[0])
-        x_max = min(shape[-1], ref_shape[1])
-        slc0 = slice(0, y_max)
-        slc1 = slice(0, x_max)
-        buf[slc0, slc1] = ref[slc0, slc1].copy()
-
-        return buf
-
-    @staticmethod
-    def separate_target_and_background(ref):
-        """Create masks for target and background.
-
-        Parameters
-        ----------
-        ref : ndarray, 2-D
-            This is the reference image as returned by `match_shape`,
-            i.e. it might be a subset of the original reference image.
-
-        Returns
-        -------
-        mask_target : ndarray, 2-D
-            This is an array of the same type and shape as the science
-            image, but with values of only 0 or 1.  A value of 1 indicates
-            that the corresponding pixel in the science data array should
-            be included when adding up values to make the 1-D spectrum,
-            and a value of 0 means that it should not be included.
-
-        mask_bkg : ndarray, 2-D, or None.
-            This is like `mask_target` but for background regions.
-            A negative value in the reference image flags a pixel that
-            should be included in the background region(s).  If there is
-            no pixel in the reference image with a negative value,
-            `mask_bkg` will be set to None.
-
-        """
-        mask_target = np.where(ref > 0., 1., 0.)
-        mask_bkg = None
-
-        if np.any(ref < 0.):
-            mask_bkg = np.where(ref < 0., 1., 0.)
-
-        return mask_target, mask_bkg
-
-
 def run_extract1d(
         input_model,
         extract_ref_name,
@@ -2649,19 +2095,15 @@ def ref_dict_sanity_check(ref_dict):
         return ref_dict
 
     if 'ref_file_type' not in ref_dict:  # We can make an educated guess as to what this must be.
-        if 'ref_model' in ref_dict:
-            log.info("Assuming extract1d reference file type is image")
-            ref_dict['ref_file_type'] = FILE_TYPE_IMAGE
-        else:
-            log.info("Assuming extract1d reference file type is JSON")
-            ref_dict['ref_file_type'] = FILE_TYPE_JSON
+        log.info("Assuming extract1d reference file type is JSON")
+        ref_dict['ref_file_type'] = FILE_TYPE_JSON
 
-            if 'apertures' not in ref_dict:
-                raise RuntimeError("Key 'apertures' must be present in the extract1d reference file")
+        if 'apertures' not in ref_dict:
+            raise RuntimeError("Key 'apertures' must be present in the extract1d reference file")
 
-            for aper in ref_dict['apertures']:
-                if 'id' not in aper:
-                    log.warning(f"Key 'id' not found in aperture {aper} in extract1d reference file")
+        for aper in ref_dict['apertures']:
+            if 'id' not in aper:
+                log.warning(f"Key 'id' not found in aperture {aper} in extract1d reference file")
 
     return ref_dict
 
@@ -2705,8 +2147,6 @@ def do_extract1d(
         (i.e. ref_dict['ref_file_type'] = "JSON")
         from a asdf-format reference file
         (i.e. ref_dict['ref_file_type'] = "ASDF")
-        or parameters relevant for a reference image
-        (i.e. ref_dict['ref_file_type'] = "IMAGE").
 
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
@@ -3411,14 +2851,10 @@ def extract_one_slit(input_model, slit, integ, prev_offset, extract_params):
     wl_array = get_wavelengths(input_model if slit is None else slit, exp_type, extract_params['spectral_order'])
     data = replace_bad_values(data, input_dq, wl_array)
 
-    if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:  # The reference file is an image.
-        extract_model = ImageExtractModel(input_model=input_model, slit=slit, **extract_params)
-        ap = None
-    else:
-        # If there is an extract1d reference file (there doesn't have to be), it's in JSON format.
-        extract_model = ExtractModel(input_model=input_model, slit=slit, **extract_params)
-        ap = get_aperture(data.shape, extract_model.wcs, extract_params)
-        extract_model.update_extraction_limits(ap)
+    # If there is an extract1d reference file (there doesn't have to be), it's in JSON format.
+    extract_model = ExtractModel(input_model=input_model, slit=slit, **extract_params)
+    ap = get_aperture(data.shape, extract_model.wcs, extract_params)
+    extract_model.update_extraction_limits(ap)
 
     if extract_model.use_source_posn:
         if prev_offset == OFFSET_NOT_ASSIGNED_YET:  # Only call this method for the first integration.
