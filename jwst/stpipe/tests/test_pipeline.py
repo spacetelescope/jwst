@@ -94,9 +94,9 @@ class MyPipeline(Pipeline):
             self.flat_filename = join(dirname(__file__), "data", "flat.fits")
         flat = datamodels.open(self.flat_filename)
         calibrated = []
-        calibrated.append(self.flat_field(science, flat))
-        combined = self.combine(calibrated)
-        self.display(combined)
+        calibrated.append(self.flat_field.run(science, flat))
+        combined = self.combine.run(calibrated)
+        self.display.run(combined)
         dm = datamodels.ImageModel(combined)
         self.save_model(dm)
         science.close()
