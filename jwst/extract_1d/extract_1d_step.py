@@ -224,15 +224,11 @@ class Extract1dStep(Step):
         else:
             input_model = datamodels.open(input)
 
-        was_source_model = False  # default value
         if isinstance(input_model, (datamodels.CubeModel, datamodels.ImageModel,
                                     datamodels.SlitModel, datamodels.IFUCubeModel,
-                                    ModelContainer)):
+                                    ModelContainer, SourceModelContainer)):
             # Acceptable input type, just log it
             self.log.debug(f'Input is a {str(type(input_model))}.')
-        elif isinstance(input_model, SourceModelContainer):
-            self.log.debug('Input is a SourceModelContainer')
-            was_source_model = True
         elif isinstance(input_model, datamodels.MultiSlitModel):
             # If input is multislit, with 3D calints, skip the step
             self.log.debug('Input is a MultiSlitModel')
@@ -407,8 +403,7 @@ class Extract1dStep(Step):
                     self.bkg_order,
                     self.log_increment,
                     self.subtract_background,
-                    self.use_source_posn,
-                    was_source_model=was_source_model,
+                    self.use_source_posn
                 )
                 # Set the step flag to complete in each model
                 extracted.meta.cal_step.extract_1d = 'COMPLETE'

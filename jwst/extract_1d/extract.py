@@ -4,8 +4,9 @@ import copy
 import json
 import math
 import numpy as np
-
 from dataclasses import dataclass
+from json.decoder import JSONDecodeError
+
 from astropy.modeling import polynomial
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -14,18 +15,13 @@ from stdatamodels.jwst.datamodels.apcorr import (
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
 
-from jwst.datamodels import SourceModelContainer
+from jwst.assign_wcs.util import wcs_bbox_from_shape
+from jwst.datamodels import ModelContainer
+from jwst.lib import pipe_utils
+from jwst.lib.wcs_utils import get_wavelengths
+from jwst.extract_1d import extract1d, spec_wcs
+from jwst.extract_1d.apply_apcorr import select_apcorr
 
-
-from ..assign_wcs import niriss  # for specifying spectral order number
-from ..assign_wcs.util import wcs_bbox_from_shape
-from ..lib import pipe_utils
-from ..lib.wcs_utils import get_wavelengths
-from . import extract1d
-from . import spec_wcs
-from .apply_apcorr import select_apcorr
-
-from json.decoder import JSONDecodeError
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -39,7 +35,6 @@ IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
 # These values are used to indicate whether the input extract1d reference file
 # (if any) is JSON, IMAGE or ASDF (added for IFU data)
 FILE_TYPE_JSON = "JSON"
-FILE_TYPE_ASDF = "ASDF"
 FILE_TYPE_OTHER = "N/A"
 
 # This is to prevent calling offset_from_offset multiple times for multi-integration data.
@@ -106,23 +101,21 @@ class ContinueError(Exception):
     pass
 
 
-def open_extract1d_ref(refname, exptype):
+def open_extract1d_ref(refname):
     """Open the extract1d reference file.
 
     Parameters
     ----------
     refname : str
-        The name of the extract1d reference file.  This file is expected to be
-        a JSON file or ASDF file  giving extraction information, or a file
-        containing one or more images that are to be used as masks that
-        define the extraction region and optionally background regions.
+        The name of the extract1d reference file, or 'N/A'.
+        If specified, this file is expected to be a JSON file
+        giving extraction information.
 
     Returns
     -------
-    ref_dict : dict
-        If the extract1d reference file is in JSON format, ref_dict will be the
-        dictionary returned by json.load(), except that the file type
-        ('JSON') will also be included with key 'ref_file_type'.
+    ref_dict : dict or None
+        If the extract1d reference file is specified, ref_dict will be the
+        dictionary returned by json.load().
     """
 
     refname_type = refname[-4:].lower()
@@ -134,7 +127,6 @@ def open_extract1d_ref(refname, exptype):
             fd = open(refname)
             try:
                 ref_dict = json.load(fd)
-                ref_dict['ref_file_type'] = FILE_TYPE_JSON
                 fd.close()
             except (UnicodeDecodeError, JSONDecodeError):
                 # Input file does not load correctly as json file.
@@ -267,7 +259,6 @@ def get_extract_parameters(
     extract_params = {'match': NO_MATCH}  # initial value
     if ref_dict is None:
         # There is no extract1d reference file; use "reasonable" default values.
-        extract_params['ref_file_type'] = FILE_TYPE_OTHER
         extract_params['match'] = EXACT
         shape = input_model.data.shape
         extract_params['spectral_order'] = sp_order
@@ -292,9 +283,7 @@ def get_extract_parameters(
         extract_params['independent_var'] = 'pixel'
         # Note that extract_params['dispaxis'] is not assigned.  This will be done later, possibly slit by slit.
 
-    elif ref_dict['ref_file_type'] == FILE_TYPE_JSON:
-        extract_params['ref_file_type'] = ref_dict['ref_file_type']
-
+    else:
         for aper in ref_dict['apertures']:
             if ('id' in aper and aper['id'] != "dummy" and
                     (aper['id'] == slitname or aper['id'] == "ANY" or
@@ -377,9 +366,6 @@ def get_extract_parameters(
                         extract_params['smoothing_length'] = smoothing_length
 
                     break
-
-    else:
-        log.error(f"Reference file type {ref_dict['ref_file_type']} not recognized")
 
     return extract_params
 
@@ -973,7 +959,6 @@ class ExtractBase(abc.ABC):
             subtract_background = None,
             use_source_posn = None,
             match = None,
-            ref_file_type = None
     ):
         """
         Parameters
@@ -1062,7 +1047,6 @@ class ExtractBase(abc.ABC):
         self.ystart = ystart
         self.ystop = ystop
         self.match = match
-        self.ref_file_type = ref_file_type
 
         # xstart, xstop, ystart, or ystop may be overridden with src_coeff, they may be limited by the input image size
         # or by the WCS bounding box, or they may be modified if extract_width was specified (because extract_width
@@ -1920,12 +1904,9 @@ def run_extract1d(
         bkg_order,
         log_increment,
         subtract_background,
-        use_source_posn,
-        was_source_model,
+        use_source_posn
 ):
     """Extract 1-D spectra.
-
-    This just reads the reference files (if any) and calls do_extract1d.
 
     Parameters
     ----------
@@ -1967,192 +1948,41 @@ def run_extract1d(
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
 
-    was_source_model : bool
-        True if and only if `input_model` is actually one SlitModel
-        obtained by iterating over a SourceModelContainer.  The default
-        is False.
-
     Returns
     -------
     output_model : data model
         A new MultiSpecModel containing the extracted spectra.
 
     """
-    # Read and interpret the extract1d reference file.
-    try:
-        ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type)
-    except AttributeError:  # Input is a ModelContainer of some type
-        ref_dict = open_extract1d_ref(extract_ref_name, input_model[0].meta.exposure.type)
-
-    apcorr_ref_model = None
-
-    if apcorr_ref_name is not None and apcorr_ref_name != 'N/A':
-        try:
-            apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model.meta.exposure.type)
-        except AttributeError:  # SourceModelContainers don't have exposure nodes
-            apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model[0].meta.exposure.type)
-
-    # This item is a flag to let us know that do_extract1d was called from run_extract1d; that is, we don't expect this
-    # key to be present in ref_dict if do_extract1d was called directly.
-    # If this key is not in ref_dict, or if it is but it's True, then we'll set S_EXTR1D to 'COMPLETE'.
-    if ref_dict is not None:
-        ref_dict['need_to_set_to_complete'] = False
-
-    output_model = do_extract1d(
-        input_model,
-        ref_dict,
-        apcorr_ref_model,
-        smoothing_length,
-        bkg_fit,
-        bkg_order,
-        log_increment,
-        subtract_background,
-        use_source_posn,
-        was_source_model,
-    )
-
-    if apcorr_ref_model is not None:
-        apcorr_ref_model.close()
-
-    # Remove target.source_type from the output model, so that it
-    # doesn't force creation of an empty SCI extension in the output
-    # x1d product just to hold this keyword.
-    output_model.meta.target.source_type = None
-
-    return output_model
-
-
-def ref_dict_sanity_check(ref_dict):
-    """Check for required entries.
-
-    Parameters
-    ----------
-    ref_dict : dict or None
-        The contents of the extract1d reference file.
-
-    Returns
-    -------
-    ref_dict : dict or None
-
-    """
-    if ref_dict is None:
-        return ref_dict
-
-    if 'ref_file_type' not in ref_dict:  # We can make an educated guess as to what this must be.
-        log.info("Assuming extract1d reference file type is JSON")
-        ref_dict['ref_file_type'] = FILE_TYPE_JSON
-
-        if 'apertures' not in ref_dict:
-            raise RuntimeError("Key 'apertures' must be present in the extract1d reference file")
-
-        for aper in ref_dict['apertures']:
-            if 'id' not in aper:
-                log.warning(f"Key 'id' not found in aperture {aper} in extract1d reference file")
-
-    return ref_dict
-
-
-def do_extract1d(
-        input_model,
-        extract_ref_dict,
-        apcorr_ref_model = None,
-        smoothing_length = None,
-        bkg_fit = "poly",
-        bkg_order = None,
-        log_increment = 50,
-        subtract_background = None,
-        use_source_posn = None,
-        was_source_model = False
-):
-    """Extract 1-D spectra.
-
-    In the pipeline, this function would be called by run_extract1d.
-    This exists as a separate function to allow a user to call this step
-    in a Python script, passing in a dictionary of parameters in order to
-    bypass reading reference files.
-
-    Parameters
-    ----------
-    input_model : data model
-        The input science model.
-
-    extract_ref_dict : dict, or None
-        The contents of the extract1d reference file, or None in order to use
-        default values.  If `ref_dict` is not None, use key 'ref_file_type'
-        to specify whether the parameters are those that could be read
-        from a JSON-format reference file
-        (i.e. ref_dict['ref_file_type'] = "JSON")
-        from a asdf-format reference file
-        (i.e. ref_dict['ref_file_type'] = "ASDF")
-
-    apcorr_ref_model : `~fits.FITS_rec`, datamodel or  None
-        Table of aperture correction values from the APCORR reference file.
-
-    smoothing_length : int or None
-        Width of a boxcar function for smoothing the background regions.
-
-    bkg_fit : str
-        Type of fitting to perform on background values in each column
-        (or row, if the dispersion is vertical).
-
-    bkg_order : int or None
-        Polynomial order for fitting to each column (or row, if the
-        dispersion is vertical) of background.
-
-    log_increment : int
-        if `log_increment` is greater than 0 and the input data are
-        multi-integration, a message will be written to the log every
-        `log_increment` integrations.
-
-    subtract_background : bool or None
-        User supplied flag indicating whether the background should be
-        subtracted.
-        If None, the value in the extract_1d reference file will be used.
-        If not None, this parameter overrides the value in the
-        extract_1d reference file.
-
-    use_source_posn : bool or None
-        If True, the target and background positions specified in the
-        reference file (or the default position, if there is no reference
-        file) will be shifted to account for source position offset.
-
-    was_source_model : bool
-        True if and only if `input_model` is actually one SlitModel
-        obtained by iterating over a SourceModelContainer.  The default
-        is False.
-
-
-    Returns
-    -------
-    output_model : data model
-        A new MultiSpecModel containing the extracted spectra.
-    """
-
-    extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
-
-    if isinstance(input_model, SourceModelContainer):
-        # log.debug('Input is a SourceModelContainer')
-        was_source_model = True
-
-    # Set "meta_source" to either the first model in a container, or the individual input model, for convenience
+    # Set "meta_source" to either the first model in a container,
+    # or the individual input model, for convenience
     # of retrieving meta attributes in subsequent statements
-    if was_source_model:
+    if isinstance(input_model, ModelContainer):
         meta_source = input_model[0]
     else:
         meta_source = input_model
 
-    # Setup the output model
-    output_model = datamodels.MultiSpecModel()
+    # Get the exposure type
+    exp_type = meta_source.meta.exposure.type
 
+    # Read in the extract1d reference file.
+    extract_ref_dict = open_extract1d_ref(extract_ref_name)
+
+    # Read in the aperture correction reference file
+    apcorr_ref_model = None
+    if apcorr_ref_name is not None and apcorr_ref_name != 'N/A':
+        apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, exp_type)
+
+    # Set up the output model
+    output_model = datamodels.MultiSpecModel()
     if hasattr(meta_source, "int_times"):
         output_model.int_times = meta_source.int_times.copy()
-
     output_model.update(meta_source, only='PRIMARY')
 
-    # This will be relevant if we're asked to extract a spectrum and the spectral order is zero.
+    # This will be relevant if we're asked to extract a spectrum
+    # and the spectral order is zero.
     # That's only OK if the disperser is a prism.
     prism_mode = is_prism(meta_source)
-    exp_type = meta_source.meta.exposure.type
 
     # use_source_posn doesn't apply to WFSS, so turn it off if it's currently on
     if use_source_posn:
@@ -2160,33 +1990,16 @@ def do_extract1d(
             use_source_posn = False
             log.warning(
                 f"Correcting for source position is not supported for exp_type = "
-                f"{meta_source.meta.exposure.type}, so use_source_posn will be set to False",
+                f"{exp_type}, so use_source_posn will be set to False",
             )
 
     # Handle inputs that contain one or more slit models
-    if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
+    if isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)):
 
         is_multiple_slits = True
-        if was_source_model:
-            # SourceContainer has a single list of SlitModels
-            log.debug("Input is a Source Model.")
-            if isinstance(input_model, datamodels.SlitModel):
-                # If input is a single SlitModel, as opposed to a list of SlitModels,
-                # put it into a list so that it's iterable later on
-                log.debug("Input SourceContainer holds one SlitModel.")
-                slits = [input_model]
-            else:
-                log.debug("Input SourceContainer holds a list of SlitModels.")
-                slits = input_model
-
-            # The subsequent work on data uses the individual SlitModels, but there are many places where meta
-            # attributes are retrieved from input_model, so set this to allow that to work.
-            if not isinstance(input_model, datamodels.SlitModel):
-                input_model = input_model[0]
-
+        if isinstance(input_model, ModelContainer):
+            slits = input_model
         else:
-            # A simple MultiSlitModel, not in a container
-            log.debug("Input is a MultiSlitModel.")
             slits = input_model.slits
 
         # Save original use_source_posn value, because it can get
@@ -2214,7 +2027,7 @@ def do_extract1d(
                 output_model = create_extraction(
                     extract_ref_dict, slit, slitname, sp_order,
                     smoothing_length, bkg_fit, bkg_order, use_source_posn,
-                    prev_offset, exp_type, subtract_background, input_model,
+                    prev_offset, exp_type, subtract_background, meta_source,
                     output_model, apcorr_ref_model, log_increment,
                     is_multiple_slits
                 )
@@ -2226,10 +2039,10 @@ def do_extract1d(
         slit = None
         is_multiple_slits = False
 
-        # These default values for slitname are not really slit names, and slitname may be assigned a better value
-        # below, in the sections for input_model being an ImageModel or a SlitModel.
-        slitname = input_model.meta.exposure.type
-
+        # These default values for slitname are not really slit names,
+        # and slitname may be assigned a better value below, in the
+        # sections for input_model being an ImageModel or a SlitModel.
+        slitname = exp_type
         if slitname is None:
             slitname = ANY
 
@@ -2263,11 +2076,12 @@ def do_extract1d(
 
             # Replace the default value for slitname with a more accurate value, if possible.
             # For NRS_BRIGHTOBJ, the slit name comes from the slit model info
-            if input_model.meta.exposure.type == 'NRS_BRIGHTOBJ' and hasattr(input_model, "name"):
+            if exp_type == 'NRS_BRIGHTOBJ' and hasattr(input_model, "name"):
                 slitname = input_model.name
 
-            # For NRS_FIXEDSLIT, the slit name comes from the FXD_SLIT keyword in the model meta
-            if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
+            # For NRS_FIXEDSLIT, the slit name comes from the FXD_SLIT keyword
+            # in the model meta if not present in the input model
+            if exp_type == 'NRS_FIXEDSLIT':
                 if hasattr(input_model, "name") and input_model.name is not None:
                     slitname = input_model.name
                 else:
@@ -2305,10 +2119,13 @@ def do_extract1d(
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
 
-    if (extract_ref_dict is None
-            or 'need_to_set_to_complete' not in extract_ref_dict
-            or extract_ref_dict['need_to_set_to_complete']):
-        output_model.meta.cal_step.extract_1d = 'COMPLETE'
+    if apcorr_ref_model is not None:
+        apcorr_ref_model.close()
+
+    # Remove target.source_type from the output model, so that it
+    # doesn't force creation of an empty SCI extension in the output
+    # x1d product just to hold this keyword.
+    output_model.meta.target.source_type = None
 
     return output_model
 
