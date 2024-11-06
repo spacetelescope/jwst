@@ -5,6 +5,7 @@ from jwst.datamodels import ModelContainer, SourceModelContainer
 from ..stpipe import Step
 from . import extract
 from .soss_extract import soss_extract
+from .ifu import ifu_extract1d
 
 __all__ = ["Extract1dStep"]
 
@@ -63,15 +64,15 @@ class Extract1dStep(Step):
         If both `smoothing_length` and `bkg_order` are not None, the
         boxcar smoothing will be done first.
 
-    bkg_sigma_clip : float
-        Background sigma clipping value to use on background to remove outliers
-        and maximize the quality of the 1d spectrum
-
     center_xy : int or None
         A list of 2 pixel coordinate values at which to place the center
         of the IFU extraction aperture, overriding any centering done by the step.
         Two values, in x,y order, are used for extraction from IFU cubes.
         Default is None.
+
+    bkg_sigma_clip : float
+        Background sigma clipping value to use on background to remove outliers
+        and maximize the quality of the 1d spectrum. Used for IFU mode only.
 
     ifu_autocen : bool
         Switch to turn on auto-centering for point source spectral extraction
@@ -157,9 +158,9 @@ class Extract1dStep(Step):
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
-    bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold
     
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
+    bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
@@ -355,6 +356,41 @@ class Extract1dStep(Step):
                 )
                 atoca_outputs.save(soss_modelname)
 
+        elif exp_type in extract.IFU_EXPTYPES:
+            # Call the IFU specific extraction
+            result = ModelContainer()
+            for model in input_model:
+                # Get the reference file names
+                extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
+                    model, exp_type)
+
+                try:
+                    source_type = model.meta.target.source_type
+                except AttributeError:
+                    source_type = "UNKNOWN"
+                if source_type is None:
+                    source_type = "UNKNOWN"
+
+                if self.ifu_set_srctype is not None and exp_type == 'MIR_MRS':
+                    source_type = self.ifu_set_srctype
+                    self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
+
+                extracted = ifu_extract1d(
+                    model, extract_ref, source_type, self.subtract_background,
+                    self.bkg_sigma_clip, apcorr_ref, self.center_xy,
+                    self.ifu_autocen, self.ifu_rfcorr, self.ifu_rscale,
+                    self.ifu_covar_scale
+                )
+
+                # Set the step flag to complete in each model
+                extracted.meta.cal_step.extract_1d = 'COMPLETE'
+                result.append(extracted)
+                del extracted
+
+            # If only one result, return the model instead of the container
+            if len(result) == 1:
+                result = result[0]
+
         else:
             result = ModelContainer()
             for model in input_model:
@@ -369,16 +405,9 @@ class Extract1dStep(Step):
                     self.smoothing_length,
                     self.bkg_fit,
                     self.bkg_order,
-                    self.bkg_sigma_clip,
                     self.log_increment,
                     self.subtract_background,
                     self.use_source_posn,
-                    self.center_xy,
-                    self.ifu_autocen,
-                    self.ifu_rfcorr,
-                    self.ifu_set_srctype,
-                    self.ifu_rscale,
-                    self.ifu_covar_scale,
                     was_source_model=was_source_model,
                 )
                 # Set the step flag to complete in each model

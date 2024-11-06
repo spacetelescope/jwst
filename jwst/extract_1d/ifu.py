@@ -1,21 +1,21 @@
 import logging
+
 import numpy as np
+from astropy import stats
+from astropy.stats import sigma_clipped_stats as sigclip
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 RectangularAperture, aperture_photometry)
+from photutils.detection import DAOStarFinder
+from scipy.interpolate import interp1d
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from .apply_apcorr import select_apcorr
-from ..assign_wcs.util import compute_scale
-from astropy import stats
-
-from . import spec_wcs
-from scipy.interpolate import interp1d
-
-from astropy.stats import sigma_clipped_stats as sigclip
-from photutils.detection import DAOStarFinder
-from ..residual_fringe import utils as rfutils
+from jwst.assign_wcs.util import compute_scale
+from jwst.extract_1d import spec_wcs
+from jwst.extract_1d.apply_apcorr import select_apcorr
+from jwst.extract_1d.extract import open_apcorr_ref
+from jwst.residual_fringe import utils as rfutils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -29,8 +29,8 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 HUGE_DIST = 1.e10
 
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
-                  bkg_sigma_clip, apcorr_ref_model=None, center_xy=None,
+def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
+                  bkg_sigma_clip, apcorr_ref_file=None, center_xy=None,
                   ifu_autocen=False, ifu_rfcorr=False, ifu_rscale=None, ifu_covar_scale=1.0):
     """Extract a 1-D spectrum from an IFU cube.
 
@@ -39,8 +39,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     input_model : JWST data model for an IFU cube (IFUCubeModel)
         The input model.
 
-    ref_dict : dict
-        The contents of the extract1d reference file.
+    ref_file : str
+        File name for the extract1d reference file, in ASDF format.
 
     source_type : string
         "POINT" or "EXTENDED"
@@ -54,8 +54,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     bkg_sigma_clip : float
         Background sigma clipping value to use to remove noise/outliers in background
 
-    apcorr_ref_model : apcorr datamodel or None
-        Aperture correction table.
+    apcorr_ref_file : str or None
+        File name for aperture correction refrence file.
 
     center_xy : float or None
         A list of 2 pixel coordinate values at which to place the center
@@ -111,7 +111,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     if slitname is None:
         slitname = "ANY"
 
-    extract_params = get_extract_parameters(ref_dict, bkg_sigma_clip, slitname)
+    extract_params = get_extract_parameters(ref_file, bkg_sigma_clip)
 
     # Add info about IFU auto-centroiding, residual fringe correction and extraction radius scale
     # to extract_params for use later
@@ -280,9 +280,10 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     spec.extraction_x = x_center
     spec.extraction_y = y_center
 
-    if source_type == 'POINT' and apcorr_ref_model is not None:
-        log.info('Applying Aperture correction.')
+    if source_type == 'POINT' and apcorr_ref_file is not None and apcorr_ref_file != 'N/A':
+        apcorr_ref_model = open_apcorr_ref(apcorr_ref_file, input_model.meta.exposure.type)
 
+        log.info('Applying Aperture correction.')
         if instrument == 'NIRSPEC':
             wl = np.median(wavelength)
         else:
@@ -309,19 +310,21 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     # See output_model.spec[0].meta.wcs instead.
     output_model.meta.wcs = None
 
+    output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
+
     return output_model
 
 
-def get_extract_parameters(ref_dict, bkg_sigma_clip):
+def get_extract_parameters(ref_file, bkg_sigma_clip):
     """Read extraction parameters for an IFU.
 
     Parameters
     ----------
-    ref_dict : dict
-        The contents of the extract1d reference file.
+    ref_file : dict
+        File name for the extract1d reference file, in ASDF format
 
-    slitname : str
-        The name of the slit, or "ANY".
+    bkg_sigma_clip : float
+        Background sigma clipping value to use to remove noise/outliers in background.
 
     Returns
     -------
@@ -333,7 +336,7 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip):
     # for consistency put the bkg_sigma_clip in dictionary: extract_params
     extract_params['bkg_sigma_clip'] = bkg_sigma_clip
 
-    refmodel = ref_dict['ref_model']
+    refmodel = datamodels.Extract1dIFUModel(ref_file)
     subtract_background = refmodel.meta.subtract_background
     method = refmodel.meta.method
     subpixels = refmodel.meta.subpixels
@@ -531,9 +534,6 @@ def extract_ifu(input_model, source_type, extract_params):
     subpixels = extract_params['subpixels']
     subtract_background = extract_params['subtract_background']
 
-    radius = None
-    inner_bkg = None
-    outer_bkg = None
     width = None
     height = None
     theta = None
@@ -613,7 +613,6 @@ def extract_ifu(input_model, source_type, extract_params):
     # get aperture for extended it will not change with wavelength
     if source_type == 'EXTENDED':
         aperture = RectangularAperture(position, width, height, theta)
-        annulus = None
 
     for k in range(shape[0]):  # looping over wavelength
         inner_bkg = None
@@ -640,7 +639,6 @@ def extract_ifu(input_model, source_type, extract_params):
         normalization = 1.
         temp_weightmap = weightmap[k, :, :]
         temp_weightmap[temp_weightmap > 1] = 1
-        aperture_area = 0
         annulus_area = 0
 
         # Make a boolean mask to ignore voxels with no valid data
