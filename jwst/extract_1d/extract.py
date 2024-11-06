@@ -22,7 +22,6 @@ from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
 from ..lib.wcs_utils import get_wavelengths
 from . import extract1d
-from . import ifu
 from . import spec_wcs
 from .apply_apcorr import select_apcorr
 
@@ -31,9 +30,11 @@ from json.decoder import JSONDecodeError
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-# WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
+
+IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
+"""Exposure types to be regarded as IFU spectroscopy."""
 
 # These values are used to indicate whether the input extract1d reference file
 # (if any) is JSON, IMAGE or ASDF (added for IFU data)
@@ -122,16 +123,13 @@ def open_extract1d_ref(refname, exptype):
         If the extract1d reference file is in JSON format, ref_dict will be the
         dictionary returned by json.load(), except that the file type
         ('JSON') will also be included with key 'ref_file_type'.
-        If the extract1d reference file is in asdf format, the ref_dict will
-        be a dictionary  containing two keys: ref_dict['ref_file_type'] = 'ASDF'
-        and ref_dict['ref_model'].
     """
 
-    # the extract1d reference file can be 1 of 2 types:  'json' or  'asdf'
     refname_type = refname[-4:].lower()
     if refname == "N/A":
         ref_dict = None
     else:
+        # If specified, the extract1d reference file can only be in json format
         if refname_type == 'json':
             fd = open(refname)
             try:
@@ -144,11 +142,6 @@ def open_extract1d_ref(refname, exptype):
                 fd.close()
                 log.error("Extract1d json reference file has an error, run a json validator off line and fix the file")
                 raise RuntimeError("Invalid json extract 1d reference file, run json validator off line and fix file.")
-        elif refname_type == 'asdf':
-            extract_model = datamodels.Extract1dIFUModel(refname)
-            ref_dict = dict()
-            ref_dict['ref_file_type'] = FILE_TYPE_ASDF
-            ref_dict['ref_model'] = extract_model
         else:
             log.error("Invalid Extract 1d reference file, must be json or asdf.")
             raise RuntimeError("Invalid Extract 1d reference file, must be json or asdf.")
@@ -366,7 +359,7 @@ def get_extract_parameters(
                     if use_source_posn is None:  # no value set on command line
                         if use_source_posn_aper is None:  # no value set in ref file
                             # Use a suitable default
-                            if meta.exposure.type in ['MIR_LRS-FIXEDSLIT', 'MIR_MRS', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']:
+                            if meta.exposure.type in ['MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC']:
                                 use_source_posn = True
                                 log.info(f"Turning on source position correction for exp_type = {meta.exposure.type}")
                             else:
@@ -460,7 +453,7 @@ def get_aperture(im_shape, wcs, extract_params):
 
 
 def aperture_from_ref(extract_params, im_shape):
-    """Get extraction region from reference file or image shape.
+    """Get extraction region from reference file.
 
     Parameters
     ----------
@@ -537,9 +530,12 @@ def update_from_width(ap_ref, extract_width, direction):
         return ap_ref  # OK as is
 
     # An integral value corresponds to the center of a pixel.
-    # If the extraction limits were not specified via polynomial coefficients, assign_polynomial_limits will create
-    # polynomial functions using values from an Aperture, and these lower and upper limits will be expanded by 0.5 to
-    # give polynomials (constant functions) for the lower and upper edges of the bounding pixels.
+    # If the extraction limits were not specified via polynomial
+    # coefficients, assign_polynomial_limits will create
+    # polynomial functions using values from an Aperture, and these
+    # lower and upper limits will be expanded by 0.5 to
+    # give polynomials (constant functions) for the lower and upper
+    # edges of the bounding pixels.
 
     width = float(extract_width)
 
@@ -1929,16 +1925,9 @@ def run_extract1d(
         smoothing_length,
         bkg_fit,
         bkg_order,
-        bkg_sigma_clip,
         log_increment,
         subtract_background,
         use_source_posn,
-        center_xy,
-        ifu_autocen,
-        ifu_rfcorr,
-        ifu_set_srctype,
-        ifu_rscale,
-        ifu_covar_scale,
         was_source_model,
 ):
     """Extract 1-D spectra.
@@ -1953,6 +1942,9 @@ def run_extract1d(
     extract_ref_name : str
         The name of the extract1d reference file, or "N/A".
 
+    apcorr_ref_name : str
+        Name of the APCORR reference file. Default is None
+
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
 
@@ -1964,9 +1956,6 @@ def run_extract1d(
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background. Only used if `bkg_fit`
         is `poly`.
-
-    bkg_sigma_clip : float
-        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -1985,41 +1974,10 @@ def run_extract1d(
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
 
-    center_xy : int or None
-        A list of 2 pixel coordinate values at which to place the center
-        of the extraction aperture for IFU data, overriding any centering
-        done by the step.  Two values, in x,y order, are used for extraction
-        from IFU cubes. Default is None.
-
-    ifu_autocen : bool
-        Switch to turn on auto-centering for point source spectral extraction
-        in IFU mode.  Default is False.
-
-    ifu_rfcorr : bool
-        Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is False.
-
-    ifu_set_srctype : str
-        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
-
-    ifu_rscale: float
-        For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
-        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
-        default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
-        radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
-        extraction radius.
-
-    ifu_covar_scale : float
-        Scaling factor by which to multiply the ERR values in extracted spectra to account
-        for covariance between adjacent spaxels in the IFU data cube.
-
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
         is False.
-
-    apcorr_ref_name : str
-        Name of the APCORR reference file. Default is None
 
     Returns
     -------
@@ -2054,16 +2012,9 @@ def run_extract1d(
         smoothing_length,
         bkg_fit,
         bkg_order,
-        bkg_sigma_clip,
         log_increment,
         subtract_background,
         use_source_posn,
-        center_xy,
-        ifu_autocen,
-        ifu_rfcorr,
-        ifu_set_srctype,
-        ifu_rscale,
-        ifu_covar_scale,
         was_source_model,
     )
 
@@ -2115,16 +2066,9 @@ def do_extract1d(
         smoothing_length = None,
         bkg_fit = "poly",
         bkg_order = None,
-        bkg_sigma_clip = 0,
         log_increment = 50,
         subtract_background = None,
         use_source_posn = None,
-        center_xy = None,
-        ifu_autocen = None,
-        ifu_rfcorr = None,
-        ifu_set_srctype = None,
-        ifu_rscale = None,
-        ifu_covar_scale = 1.0,
         was_source_model = False
 ):
     """Extract 1-D spectra.
@@ -2148,6 +2092,9 @@ def do_extract1d(
         from a asdf-format reference file
         (i.e. ref_dict['ref_file_type'] = "ASDF")
 
+    apcorr_ref_model : `~fits.FITS_rec`, datamodel or  None
+        Table of aperture correction values from the APCORR reference file.
+
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
 
@@ -2158,9 +2105,6 @@ def do_extract1d(
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.
-
-    bkg_sigma_clip : float
-        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -2179,41 +2123,11 @@ def do_extract1d(
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
 
-    center_xy : int or None
-        A list of 2 pixel coordinate values at which to place the center
-        of the IFU extraction aperture, overriding any centering done by the step.
-        Two values, in x,y order, are used for extraction from IFU cubes.
-        Default is None.
-
-    ifu_autocen : bool
-        Switch to turn on auto-centering for point source spectral extraction
-        in IFU mode.  Default is False.
-
-    ifu_rfcorr : bool
-        Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is False.
-
-    ifu_set_srctype : str
-        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
-
-    ifu_rscale: float
-        For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
-        FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
-        default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
-        radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
-        extraction radius.
-
-    ifu_covar_scale : float
-        Scaling factor by which to multiply the ERR values in extracted spectra to account
-        for covariance between adjacent spaxels in the IFU data cube.
-
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
-    apcorr_ref_model : `~fits.FITS_rec`, datamodel or  None
-        Table of aperture correction values from the APCORR reference file.
 
     Returns
     -------
@@ -2405,23 +2319,6 @@ def do_extract1d(
                 except ContinueError:
                     continue
 
-        elif isinstance(input_model, datamodels.IFUCubeModel):
-            try:
-                source_type = input_model.meta.target.source_type
-            except AttributeError:
-                source_type = "UNKNOWN"
-
-            if source_type is None:
-                source_type = "UNKNOWN"
-
-            if ifu_set_srctype is not None and input_model.meta.exposure.type == 'MIR_MRS':
-                source_type = ifu_set_srctype
-                log.info(f"Overriding source type and setting it to = {ifu_set_srctype}")
-            output_model = ifu.ifu_extract1d(
-                input_model, extract_ref_dict, source_type, subtract_background,
-                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale, ifu_covar_scale
-            )
-
         else:
             log.error("The input file is not supported for this step.")
             raise RuntimeError("Can't extract a spectrum from this file.")
@@ -2435,10 +2332,6 @@ def do_extract1d(
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
-
-    # If the extract1d reference file is an image, explicitly close it.
-    if extract_ref_dict is not None and 'ref_model' in extract_ref_dict:
-        extract_ref_dict['ref_model'].close()
 
     if (extract_ref_dict is None
             or 'need_to_set_to_complete' not in extract_ref_dict
