@@ -204,6 +204,115 @@ class Extract1dStep(Step):
 
         return extract_ref, apcorr_ref
 
+    def _extract_soss(self, model):
+        """Extract NIRISS SOSS spectra."""
+        # Set the filter configuration
+        if model.meta.instrument.filter == 'CLEAR':
+            self.log.info('Exposure is through the GR700XD + CLEAR (science).')
+            soss_filter = 'CLEAR'
+        else:
+            self.log.error('The SOSS extraction is implemented for the CLEAR filter only. '
+                           f'Requested filter is {model.meta.instrument.filter}.')
+            self.log.error('extract_1d will be skipped.')
+            model.meta.cal_step.extract_1d = 'SKIPPED'
+            return model
+
+        # Set the subarray mode being processed
+        if model.meta.subarray.name == 'SUBSTRIP256':
+            self.log.info('Exposure is in the SUBSTRIP256 subarray.')
+            self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
+            subarray = 'SUBSTRIP256'
+        elif model.meta.subarray.name == 'SUBSTRIP96':
+            self.log.info('Exposure is in the SUBSTRIP96 subarray.')
+            self.log.info('Traces of orders 1 and 2 will be modelled but only order 1 '
+                          'will be decontaminated before extraction.')
+            subarray = 'SUBSTRIP96'
+        else:
+            self.log.error('The SOSS extraction is implemented for the SUBSTRIP256 '
+                           'and SUBSTRIP96 subarrays only. Subarray is currently '
+                           f'{model.meta.subarray.name}.')
+            self.log.error('Extract1dStep will be skipped.')
+            model.meta.cal_step.extract_1d = 'SKIPPED'
+            return model
+
+        # Load reference files.
+        pastasoss_ref_name = self.get_reference_file(model, 'pastasoss')
+        specprofile_ref_name = self.get_reference_file(model, 'specprofile')
+        speckernel_ref_name = self.get_reference_file(model, 'speckernel')
+
+        # Build SOSS kwargs dictionary.
+        soss_kwargs = dict()
+        soss_kwargs['threshold'] = self.soss_threshold
+        soss_kwargs['n_os'] = self.soss_n_os
+        soss_kwargs['tikfac'] = self.soss_tikfac
+        soss_kwargs['width'] = self.soss_width
+        soss_kwargs['bad_pix'] = self.soss_bad_pix
+        soss_kwargs['subtract_background'] = self.subtract_background
+        soss_kwargs['rtol'] = self.soss_rtol
+        soss_kwargs['max_grid_size'] = self.soss_max_grid_size
+        soss_kwargs['wave_grid_in'] = self.soss_wave_grid_in
+        soss_kwargs['wave_grid_out'] = self.soss_wave_grid_out
+        soss_kwargs['estimate'] = self.soss_estimate
+        soss_kwargs['atoca'] = self.soss_atoca
+        # Set flag to output the model and the tikhonov tests
+        soss_kwargs['model'] = True if self.soss_modelname else False
+
+        # Run the extraction.
+        result, ref_outputs, atoca_outputs = soss_extract.run_extract1d(
+            model,
+            pastasoss_ref_name,
+            specprofile_ref_name,
+            speckernel_ref_name,
+            subarray,
+            soss_filter,
+            soss_kwargs)
+
+        # Set the step flag to complete
+        if result is None:
+            return None
+        else:
+            result.meta.cal_step.extract_1d = 'COMPLETE'
+            result.meta.target.source_type = None
+
+            model.close()
+
+            if self.soss_modelname:
+                soss_modelname = self.make_output_path(
+                    basepath=self.soss_modelname,
+                    suffix='SossExtractModel'
+                )
+                ref_outputs.save(soss_modelname)
+
+        if self.soss_modelname:
+            soss_modelname = self.make_output_path(
+                basepath=self.soss_modelname,
+                suffix='AtocaSpectra'
+            )
+            atoca_outputs.save(soss_modelname)
+
+        return result
+
+    def _extract_ifu(self, model, exp_type, extract_ref, apcorr_ref):
+        """Extract IFU spectra from a single datamodel."""
+        try:
+            source_type = model.meta.target.source_type
+        except AttributeError:
+            source_type = "UNKNOWN"
+        if source_type is None:
+            source_type = "UNKNOWN"
+
+        if self.ifu_set_srctype is not None and exp_type == 'MIR_MRS':
+            source_type = self.ifu_set_srctype
+            self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
+
+        result = ifu_extract1d(
+            model, extract_ref, source_type, self.subtract_background,
+            self.bkg_sigma_clip, apcorr_ref, self.center_xy,
+            self.ifu_autocen, self.ifu_rfcorr, self.ifu_rscale,
+            self.ifu_covar_scale
+        )
+        return result
+
     def process(self, input):
         """Execute the step.
 
@@ -267,125 +376,7 @@ class Extract1dStep(Step):
 
             # There is only one input model for this mode
             model = input_model[0]
-
-            # Set the filter configuration
-            if model.meta.instrument.filter == 'CLEAR':
-                self.log.info('Exposure is through the GR700XD + CLEAR (science).')
-                soss_filter = 'CLEAR'
-            else:
-                self.log.error('The SOSS extraction is implemented for the CLEAR filter only. '
-                               f'Requested filter is {model.meta.instrument.filter}.')
-                self.log.error('extract_1d will be skipped.')
-                model.meta.cal_step.extract_1d = 'SKIPPED'
-                return model
-
-            # Set the subarray mode being processed
-            if model.meta.subarray.name == 'SUBSTRIP256':
-                self.log.info('Exposure is in the SUBSTRIP256 subarray.')
-                self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
-                subarray = 'SUBSTRIP256'
-            elif model.meta.subarray.name == 'SUBSTRIP96':
-                self.log.info('Exposure is in the SUBSTRIP96 subarray.')
-                self.log.info('Traces of orders 1 and 2 will be modelled but only order 1 '
-                              'will be decontaminated before extraction.')
-                subarray = 'SUBSTRIP96'
-            else:
-                self.log.error('The SOSS extraction is implemented for the SUBSTRIP256 '
-                               'and SUBSTRIP96 subarrays only. Subarray is currently '
-                               f'{model.meta.subarray.name}.')
-                self.log.error('Extract1dStep will be skipped.')
-                model.meta.cal_step.extract_1d = 'SKIPPED'
-                return model
-
-            # Load reference files.
-            pastasoss_ref_name = self.get_reference_file(model, 'pastasoss')
-            specprofile_ref_name = self.get_reference_file(model, 'specprofile')
-            speckernel_ref_name = self.get_reference_file(model, 'speckernel')
-
-            # Build SOSS kwargs dictionary.
-            soss_kwargs = dict()
-            soss_kwargs['threshold'] = self.soss_threshold
-            soss_kwargs['n_os'] = self.soss_n_os
-            soss_kwargs['tikfac'] = self.soss_tikfac
-            soss_kwargs['width'] = self.soss_width
-            soss_kwargs['bad_pix'] = self.soss_bad_pix
-            soss_kwargs['subtract_background'] = self.subtract_background
-            soss_kwargs['rtol'] = self.soss_rtol
-            soss_kwargs['max_grid_size'] = self.soss_max_grid_size
-            soss_kwargs['wave_grid_in'] = self.soss_wave_grid_in
-            soss_kwargs['wave_grid_out'] = self.soss_wave_grid_out
-            soss_kwargs['estimate'] = self.soss_estimate
-            soss_kwargs['atoca'] = self.soss_atoca
-            # Set flag to output the model and the tikhonov tests
-            soss_kwargs['model'] = True if self.soss_modelname else False
-
-            # Run the extraction.
-            result, ref_outputs, atoca_outputs = soss_extract.run_extract1d(
-                model,
-                pastasoss_ref_name,
-                specprofile_ref_name,
-                speckernel_ref_name,
-                subarray,
-                soss_filter,
-                soss_kwargs)
-
-            # Set the step flag to complete
-            if result is None:
-                return None
-            else:
-                result.meta.cal_step.extract_1d = 'COMPLETE'
-                result.meta.target.source_type = None
-
-                model.close()
-
-                if self.soss_modelname:
-                    soss_modelname = self.make_output_path(
-                        basepath=self.soss_modelname,
-                        suffix='SossExtractModel'
-                    )
-                    ref_outputs.save(soss_modelname)
-
-            if self.soss_modelname:
-                soss_modelname = self.make_output_path(
-                    basepath=self.soss_modelname,
-                    suffix='AtocaSpectra'
-                )
-                atoca_outputs.save(soss_modelname)
-
-        elif exp_type in extract.IFU_EXPTYPES:
-            # Call the IFU specific extraction
-            result = ModelContainer()
-            for model in input_model:
-                # Get the reference file names
-                extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
-                    model, exp_type)
-
-                try:
-                    source_type = model.meta.target.source_type
-                except AttributeError:
-                    source_type = "UNKNOWN"
-                if source_type is None:
-                    source_type = "UNKNOWN"
-
-                if self.ifu_set_srctype is not None and exp_type == 'MIR_MRS':
-                    source_type = self.ifu_set_srctype
-                    self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
-
-                extracted = ifu_extract1d(
-                    model, extract_ref, source_type, self.subtract_background,
-                    self.bkg_sigma_clip, apcorr_ref, self.center_xy,
-                    self.ifu_autocen, self.ifu_rfcorr, self.ifu_rscale,
-                    self.ifu_covar_scale
-                )
-
-                # Set the step flag to complete in each model
-                extracted.meta.cal_step.extract_1d = 'COMPLETE'
-                result.append(extracted)
-                del extracted
-
-            # If only one result, return the model instead of the container
-            if len(result) == 1:
-                result = result[0]
+            result = self._extract_soss(model)
 
         else:
             result = ModelContainer()
@@ -394,17 +385,23 @@ class Extract1dStep(Step):
                 extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
                     model, exp_type)
 
-                extracted = extract.run_extract1d(
-                    model,
-                    extract_ref,
-                    apcorr_ref,
-                    self.smoothing_length,
-                    self.bkg_fit,
-                    self.bkg_order,
-                    self.log_increment,
-                    self.subtract_background,
-                    self.use_source_posn
-                )
+                if exp_type in extract.IFU_EXPTYPES:
+                    # Call the IFU specific extraction routine
+                    extracted = self._extract_ifu(model, exp_type, extract_ref, apcorr_ref)
+                else:
+                    # Call the general extraction routine
+                    extracted = extract.run_extract1d(
+                        model,
+                        extract_ref,
+                        apcorr_ref,
+                        self.smoothing_length,
+                        self.bkg_fit,
+                        self.bkg_order,
+                        self.log_increment,
+                        self.subtract_background,
+                        self.use_source_posn
+                    )
+
                 # Set the step flag to complete in each model
                 extracted.meta.cal_step.extract_1d = 'COMPLETE'
                 result.append(extracted)
