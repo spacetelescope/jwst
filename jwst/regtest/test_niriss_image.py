@@ -38,7 +38,7 @@ def run_detector1(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_multi_rate(rtdata_module):
+def run_detector1_multiprocess_rate(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRISS imaging data."""
     rtdata = rtdata_module
 
@@ -63,7 +63,7 @@ def run_detector1_multi_rate(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_multi_jump(rtdata_module):
+def run_detector1_multiprocess_jump(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRISS imaging data."""
     rtdata = rtdata_module
 
@@ -163,8 +163,8 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
             result.shelve(model, modify=False)
 
 
-def test_niriss_image_detector1_multi_rate(
-        run_detector1_multi_rate, rtdata_module, fitsdiff_default_kwargs):
+def test_niriss_image_detector1_multiprocess_rate(
+        run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
     """
     Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
     on two processors.
@@ -174,8 +174,8 @@ def test_niriss_image_detector1_multi_rate(
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate", truth_dir)
 
 
-def test_niriss_image_detector1_multi_jump(
-        run_detector1_multi_jump, rtdata_module, fitsdiff_default_kwargs):
+def test_niriss_image_detector1_multiprocess_jump(
+        run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
     """
     Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
     on two processors.
