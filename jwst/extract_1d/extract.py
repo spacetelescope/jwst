@@ -194,9 +194,9 @@ def get_extract_parameters(
     Parameters
     ----------
     ref_dict : dict or None
-        For an extract1d reference file in JSON format, `ref_dict` will be the entire
-        contents of the file.  If there is no
-        extract1d reference file, `ref_dict` will be None.
+        For an extract1d reference file in JSON format, `ref_dict` will be
+        the entire contents of the file.  If there is no extract1d reference
+        file, `ref_dict` will be None.
 
     input_model : data model
         This can be either the input science file or one SlitModel out of
@@ -281,7 +281,8 @@ def get_extract_parameters(
 
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
-        # Note that extract_params['dispaxis'] is not assigned.  This will be done later, possibly slit by slit.
+        # Note that extract_params['dispaxis'] is not assigned.
+        # This will be done later, possibly slit by slit.
 
     else:
         for aper in ref_dict['apertures']:
@@ -289,24 +290,25 @@ def get_extract_parameters(
                     (aper['id'] == slitname or aper['id'] == "ANY" or
                      slitname == "ANY")):
                 extract_params['match'] = PARTIAL
+
                 # region_type is retained for backward compatibility; it is
                 # not required to be present.
+                region_type = aper.get("region_type", "target")
+                if region_type != "target":
+                    continue
+
                 # spectral_order is a secondary selection criterion.  The
                 # default is the expected value, so if the key is not present
                 # in the JSON file, the current aperture will be selected.
                 # If the current aperture in the JSON file has
                 # "spectral_order": "ANY", that aperture will be selected.
-                region_type = aper.get("region_type", "target")
-
-                if region_type != "target":
-                    continue
-
                 spectral_order = aper.get("spectral_order", sp_order)
 
                 if spectral_order == sp_order or spectral_order == ANY:
                     extract_params['match'] = EXACT
                     extract_params['spectral_order'] = sp_order
-                    # Note: extract_params['dispaxis'] is not assigned. This is done later, possibly slit by slit.
+                    # Note: extract_params['dispaxis'] is not assigned.
+                    # This is done later, possibly slit by slit.
                     if meta.target.source_type == "EXTENDED":
                         shape = input_model.data.shape
                         extract_params['xstart'] = aper.get('xstart', 0)
@@ -2155,10 +2157,12 @@ def populate_time_keywords(input_model, output_model):
     else:  # e.g. MultiSlit data
         num_integ = 1
 
-    # This assumes that the spec attribute of output_model has already been created, and spectra have been appended.
+    # This assumes that the spec attribute of output_model has already been created,
+    # and spectra have been appended.
     n_output_spec = len(output_model.spec)
 
-    # num_j is the number of spectra per integration, e.g. the number of fixed-slit spectra, MSA spectra, or different
+    # num_j is the number of spectra per integration, e.g. the number
+    # of fixed-slit spectra, MSA spectra, or different
     # spectral orders; num_integ is the number of integrations.
     # The total number of output spectra is n_output_spec = num_integ * num_j
     num_j = n_output_spec // num_integ
@@ -2205,11 +2209,13 @@ def populate_time_keywords(input_model, output_model):
                 output_model.spec[(j * num_integ) + k].int_num = k + 1  # set int_num to (k+1) - 1-indexed integration
         return
 
-    # If we have a single plane (e.g. ImageModel or MultiSlitModel), we will only populate the keywords if the
-    # corresponding uncal file had one integration.
-    # If the data were or might have been segmented, we use the first and last integration numbers to determine whether
-    # the data were in fact averaged over integrations, and if so, we should not populate the int_times-related header
-    # keywords.
+    # If we have a single plane (e.g. ImageModel or MultiSlitModel),
+    # we will only populate the keywords if the corresponding uncal file
+    # had one integration.
+    # If the data were or might have been segmented, we use the first and
+    # last integration numbers to determine whether the data were in fact
+    # averaged over integrations, and if so, we should not populate the
+    # int_times-related header keywords.
     skip = False  # initial value
 
     if isinstance(input_model, (datamodels.MultiSlitModel, datamodels.ImageModel)):
@@ -2708,22 +2714,23 @@ def nans_at_endpoints(wavelength, dq):
     return new_wl, new_dq, slc
 
 
-def create_extraction(extract_ref_dict,
-                      slit,
-                      slitname,
-                      sp_order,
-                      smoothing_length,
-                      bkg_fit,
-                      bkg_order,
-                      use_source_posn,
-                      prev_offset,
-                      exp_type,
-                      subtract_background,
-                      input_model,
-                      output_model,
-                      apcorr_ref_model,
-                      log_increment,
-                      is_multiple_slits
+def create_extraction(
+        extract_ref_dict,
+        slit,
+        slitname,
+        sp_order,
+        smoothing_length,
+        bkg_fit,
+        bkg_order,
+        use_source_posn,
+        prev_offset,
+        exp_type,
+        subtract_background,
+        input_model,
+        output_model,
+        apcorr_ref_model,
+        log_increment,
+        is_multiple_slits
 ):
     if slit is None:
         meta_source = input_model
@@ -2806,7 +2813,6 @@ def create_extraction(extract_ref_dict,
         raise ContinueError()
 
     extract_params['dispaxis'] = meta_source.meta.wcsinfo.dispersion_direction
-
     if extract_params['dispaxis'] is None:
         log.warning("The dispersion direction information is missing, so skipping ...")
         raise ContinueError()
@@ -2823,7 +2829,8 @@ def create_extraction(extract_ref_dict,
         integrations = range(shape[0])
 
     ra_last = dec_last = wl_last = apcorr = None
-    
+
+    progress_msg_printed = False
     for integ in integrations:
         try:
             ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, \
@@ -2996,15 +3003,14 @@ def create_extraction(extract_ref_dict,
             elif integ == 0:
                 if input_model.data.shape[0] == 1:
                     log.info("1 integration done")
+                    progress_msg_printed = True
                 else:
                     log.info("... 1 integration done")
             elif integ == input_model.data.shape[0] - 1:
                 log.info(f"All {input_model.data.shape[0]} integrations done")
+                progress_msg_printed = True
             else:
                 log.info(f"... {integ + 1} integrations done")
-            progress_msg_printed = True
-        else:
-            progress_msg_printed = False
 
     if not progress_msg_printed:
         if input_model.data.shape[0] == 1:
