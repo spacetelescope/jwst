@@ -391,7 +391,7 @@ class Spec2Pipeline(Pipeline):
                 self.log.warning("Extract_1d did not return a DataModel - skipping photom.")
             else:
                 self.photom.save_results = self.save_results
-                x1d = self.photom(x1d)
+                x1d = self.photom.run(x1d)
         elif exp_type == 'NRS_MSASPEC':
             # Special handling for MSA spectra, to handle mixed-in
             # fixed slits separately
