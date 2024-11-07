@@ -33,7 +33,7 @@ def run_detector1(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_multi_rate(rtdata_module):
+def run_detector1_multiprocess_rate(rtdata_module):
     """Run detector1 pipeline on MIRI imaging data."""
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
@@ -56,7 +56,7 @@ def run_detector1_multi_rate(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_multi_jump(rtdata_module):
+def run_detector1_multiprocess_jump(rtdata_module):
     """Run detector1 pipeline on MIRI imaging data."""
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
@@ -161,12 +161,12 @@ def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwa
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
 
 
-def test_miri_image_detector1_multi_rate(run_detector1_multi_rate, rtdata_module, fitsdiff_default_kwargs):
+def test_miri_image_detector1_multiprocess_rate(run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
 
-def test_miri_image_detector1_multi_jump(run_detector1_multi_jump, rtdata_module, fitsdiff_default_kwargs):
+def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
