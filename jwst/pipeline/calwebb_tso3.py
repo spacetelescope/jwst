@@ -91,7 +91,7 @@ class Tso3Pipeline(Pipeline):
                 break
 
             self.log.info("Performing outlier detection on input images ...")
-            cube = self.outlier_detection(cube)
+            cube = self.outlier_detection.run(cube)
 
             # Save crfints products
             if cube.meta.cal_step.outlier_detection == 'COMPLETE':
@@ -124,7 +124,7 @@ class Tso3Pipeline(Pipeline):
 
             for cube in input_models:
                 # Extract Photometry from imaging data
-                phot_result_list.append(self.tso_photometry(cube))
+                phot_result_list.append(self.tso_photometry.run(cube))
 
         # Spectroscopy
         else:
@@ -147,12 +147,12 @@ class Tso3Pipeline(Pipeline):
             for cube in input_models:
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
-                cube = self.pixel_replace(cube)
+                cube = self.pixel_replace.run(cube)
                 state = cube.meta.cal_step.pixel_replace
                 # Process spectroscopic TSO data
                 # extract 1D
                 self.log.info("Extracting 1-D spectra ...")
-                result = self.extract_1d(cube)
+                result = self.extract_1d.run(cube)
                 for row in cube.int_times:
                     # Subtract one to assign 1-indexed int_nums to int_times array locations
                     x1d_result.int_times[row[0] - 1] = row
@@ -164,13 +164,13 @@ class Tso3Pipeline(Pipeline):
                 if input_exptype == 'NIS_SOSS':
                     # SOSS data have yet to be photometrically calibrated
                     # Calibrate 1D spectra here.
-                    result = self.photom(result)
+                    result = self.photom.run(result)
 
                 x1d_result.spec.extend(result.spec)
 
                 # perform white-light photometry on 1d extracted data
                 self.log.info("Performing white-light photometry ...")
-                phot_result_list.append(self.white_light(result))
+                phot_result_list.append(self.white_light.run(result))
 
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
