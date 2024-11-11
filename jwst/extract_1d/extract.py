@@ -283,17 +283,13 @@ def get_extract_parameters(
                     extract_params['spectral_order'] = sp_order
                     # Note: extract_params['dispaxis'] is not assigned.
                     # This is done later, possibly slit by slit.
-                    if meta.target.source_type == "EXTENDED":
-                        shape = input_model.data.shape
-                        extract_params['xstart'] = aper.get('xstart', 0)
-                        extract_params['xstop'] = aper.get('xstop', shape[-1] - 1)
-                        extract_params['ystart'] = aper.get('ystart', 0)
-                        extract_params['ystop'] = aper.get('ystop', shape[-2] - 1)
-                    else:
-                        extract_params['xstart'] = aper.get('xstart')
-                        extract_params['xstop'] = aper.get('xstop')
-                        extract_params['ystart'] = aper.get('ystart')
-                        extract_params['ystop'] = aper.get('ystop')
+
+                    # Set default start/stop by shape if not specified
+                    shape = input_model.data.shape
+                    extract_params['xstart'] = aper.get('xstart', 0)
+                    extract_params['xstop'] = aper.get('xstop', shape[-1] - 1)
+                    extract_params['ystart'] = aper.get('ystart', 0)
+                    extract_params['ystop'] = aper.get('ystop', shape[-2] - 1)
 
                     extract_params['src_coeff'] = aper.get('src_coeff')
                     extract_params['bkg_coeff'] = aper.get('bkg_coeff')
@@ -922,7 +918,7 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
     profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1
 
     if allow_partial:
-        for partial_pixel_weight in [idx - lower_limit, upper_limit - idx]:
+        for partial_pixel_weight in [lower_limit - idx, idx - upper_limit]:
             test = (partial_pixel_weight > 0) & (partial_pixel_weight < 1)
             profile[test] = partial_pixel_weight[test]
 
@@ -991,12 +987,12 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff'):
         # center of array if not
         if extract_params['dispaxis'] == HORIZONTAL:
             nominal_middle = (ystart + ystop) / 2.0
-            lower_limit = nominal_middle - extract_params['extract_width'] / 2.0
-            upper_limit = nominal_middle + extract_params['extract_width'] / 2.0
         else:
             nominal_middle = (xstart + xstop) / 2.0
-            lower_limit = nominal_middle - extract_params['extract_width'] / 2.0
-            upper_limit = nominal_middle + extract_params['extract_width'] / 2.0
+
+        width = extract_params['extract_width']
+        lower_limit = nominal_middle - (width - 1.0) / 2.0
+        upper_limit = lower_limit + width - 1
 
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
         log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f}')
