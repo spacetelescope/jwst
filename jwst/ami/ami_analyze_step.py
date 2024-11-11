@@ -182,9 +182,17 @@ class AmiAnalyzeStep(Step):
                 bandpass = self.override_bandpass()
 
             if affine2d is not None:
-                # if it is None, handled in apply_LG_plus
-                affine2d = self.override_affine2d()
-
+                if affine2d == 'commissioning':
+                    affine2d = utils.Affine2d(mx= 9.92820e-01,
+                        my=9.98540e-01,
+                        sx=6.18605e-03,
+                        sy=-7.27008e-03,
+                        xo=0,
+                        yo=0,
+                        name='commisioning')
+                else:
+                    affine2d = self.override_affine2d()
+            # and if it is None, rotation search done in apply_LG_plus
 
             # Get the name of the NRM reference file to use
             nrm_reffile = self.get_reference_file(input_model, 'nrm')
