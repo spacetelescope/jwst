@@ -334,7 +334,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
 
         # Number of contributing pixels at each wavelength.
 
-        npixels = np.array([np.sum(profile_2d != 0, axis=0)])
+        npixels = np.array([np.sum(profile_2d, axis=0)])
 
         # And compute the variance on the sum, same shape as f.
         # Need to decompose this into read noise, photon noise, and flat noise.
@@ -397,7 +397,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
 
         # Number of contributing pixels at each wavelength for each source.
 
-        npixels = np.sum(pixwgt[..., -nobjects:] != 0, axis=1).T
+        npixels = np.sum(pixwgt[..., -nobjects:], axis=1).T
 
         if order > -1:
             bkg_2d = np.sum(coefs[:, np.newaxis, :order + 1] * coefmatrix[..., :order + 1], axis=-1).T
@@ -440,7 +440,9 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
     else:
         raise ValueError("Extraction method %s not supported with %d input profiles." % (extraction_type, nobjects))
 
-    fluxes[npixels == 0] = np.nan
+    no_data = np.isclose(npixels, 0)
+    for output in [fluxes, var_phnoise, var_rn, var_flat]:
+        output[no_data] = np.nan
 
     return (fluxes, var_phnoise, var_rn, var_flat,
             bkg, var_bkg_phnoise, var_bkg_rn, var_bkg_flat, npixels, model)
