@@ -441,8 +441,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         raise ValueError("Extraction method %s not supported with %d input profiles." % (extraction_type, nobjects))
 
     no_data = np.isclose(npixels, 0)
-    for output in [fluxes, var_phnoise, var_rn, var_flat]:
-        output[no_data] = np.nan
+    fluxes[no_data] = np.nan
 
     return (fluxes, var_phnoise, var_rn, var_flat,
             bkg, var_bkg_phnoise, var_bkg_rn, var_bkg_flat, npixels, model)
