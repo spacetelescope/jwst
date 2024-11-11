@@ -217,7 +217,7 @@ def _estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tr
     mask = ((spat_pros[1] >= threshold) | mask_trace_profile | scimask)
 
     # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
-    ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [np.array([1.])]
+    ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [None]
     kwargs = {'orders': [1],}
     engine = ExtractionEngine(*ref_file_args, wave_grid, [mask], **kwargs)
 

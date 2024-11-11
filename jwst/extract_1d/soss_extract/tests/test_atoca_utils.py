@@ -249,7 +249,7 @@ def test_estim_integration_error():
 
     n = 11
     grid = np.linspace(0, np.pi, n)
-    rel_err = au._estim_integration_err(grid, xsinx)
+    err, rel_err = au._estim_integration_err(grid, xsinx)
 
     assert len(rel_err) == n-1
     assert np.all(rel_err >= 0)
@@ -373,7 +373,7 @@ def kernel_init():
     with maximum at the center, uniform in wavelength.
     """
     n_os = 3
-    n_pix = 5 # full width of kernel
+    n_pix = 15 # full width of kernel
     n_wave = 20
     wave_range = (2.0, 5.0)
     wavelengths = np.linspace(*wave_range, n_wave)
@@ -434,9 +434,11 @@ def test_webb_kernel(kernel_init):
 
     # test interpolation function, which takes in a pixel and a wavelength and returns a throughput
     # this should return the triangle function at all wavelengths and zero outside range
+    pix_half = n_pix//2
     wl_test = np.linspace(min_trace, max_trace, 10)
-    pixels_test = np.array([-3, -1.5, -1, 0, 1, 1.5, 2, 3])
-    expected = np.array([0, 0.25, 0.5, 1, 0.5, 0.25, 0, 0])
+    pixels_test = np.array([-pix_half-1, -pix_half/2, 0,
+                            pix_half/2, pix_half, pix_half+1])
+    expected = np.array([0, 0.5, 1, 0.5, 0, 0])
     interp = kern.f_ker(pixels_test, wl_test)
     
     assert interp.shape == (pixels_test.size, wl_test.size)
@@ -447,14 +449,73 @@ def test_webb_kernel(kernel_init):
     # call the kernel object directly
     # this takes a wavelength and a central wavelength of the kernel, 
     # then converts to pixels to use self.f_ker internally
-    wl_spacing = wave_trace[1] - wave_trace[0]
+    assert kern(wl_test, wl_test).ndim == 1
     assert np.allclose(kern(wl_test, wl_test), 1)
-    assert np.allclose(kern(wl_test, wl_test - wl_spacing), 0.5)
+    # expect one wl spacing to correspond to one kernel pixel
+    wl_spacing = wave_trace[1] - wave_trace[0]
+    expected = 1 - 1/pix_half
+    assert np.allclose(kern(wl_test, wl_test - wl_spacing), expected)
 
     # test that clipping to minimum value works right
-    wl_on_edge = wl_test + (2*wl_spacing - 0.0001)
+    wl_on_edge = wl_test + (pix_half*wl_spacing - 0.0001)
     assert np.allclose(kern(wl_test, wl_on_edge), kern.min_value)
 
     # both inputs need to be same shape
     with pytest.raises(ValueError):
         kern(wl_test, wl_test[:-1])
+
+
+@pytest.fixture(scope="module")
+def kernel(kernel_init):
+    (wave_kernel, kernel, n_pix) = kernel_init
+    min_trace = 2.5
+    max_trace = 3.5
+    n_trace = 100
+    wave_trace = np.linspace(min_trace, max_trace, n_trace)
+    return au.WebbKernel(wave_kernel, kernel, wave_trace, n_pix)
+
+
+def test_fct_to_array(kernel):
+
+    thresh = 1e-5
+    grid = np.linspace(2.0, 4.0, 50)
+    grid_range = [0, grid.size]
+
+    kern_array = au._fct_to_array(kernel, grid, grid_range, thresh)
+    assert kern_array.ndim == 2
+    # test that kernel is set to unity at its center
+
+    #TODO: need to define a more realistic kernel because this one doesn't have any wings
+
+
+def test_sparse_c():
+    """Here kernel must be a 2-D array already, of shape (N_ker, N_k_convolved)"""
+
+    kern_array = np.array([])
+
+    matrix = au._sparse_c(kern_array, n_k, i_zero)
+
+
+def test_get_c_matrix(kernel):
+    """See also test_fct_to_array and test_sparse_c for more detailed tests
+    of functions called by this one"""
+
+
+    #TODO: what to use for grid? is it / can it be the same as wave_trace?
+    # I think it can be the same but does not need to be, and would be a better
+    # test if it were different, because the kernel is an interpolator that was
+    # created using wavelengths that are included in wave_trace.
+    matrix = au.get_c_matrix(kernel, grid, i_bounds=None, thresh=1e-5)
+
+    # test with WebbKernel as the kernel
+    # ensure normalized
+    # ensure sparse
+
+
+    # test where input kernel is a 2-D array instead of callable
+
+
+    # test where i_bounds is not None
+
+
+    # Test invalid kernel input (wrong dimensions)

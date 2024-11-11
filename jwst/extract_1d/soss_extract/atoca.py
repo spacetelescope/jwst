@@ -76,18 +76,18 @@ class ExtractionEngine:
             If callable, the functions depend on the wavelength.
             If array, projected on `wave_grid`.
 
-        kernels : array, callable or sparse matrix
+        kernels : callable, sparse matrix, or None.
             Convolution kernel to be applied on spectrum (f_k) for each orders.
-            Can be array of the shape (N_ker, N_k_c).
             Can be a callable with the form f(x, x0) where x0 is
             the position of the center of the kernel. In this case, it must
             return a 1D array (len(x)), so a kernel value
-            for each pairs of (x, x0). If array or callable,
+            for each pairs of (x, x0). If callable,
             it will be passed to `convolution.get_c_matrix` function
             and the `c_kwargs` can be passed to this function.
             If sparse, the shape has to be (N_k_c, N_k) and it will
             be used directly. N_ker is the length of the effective kernel
             and N_k_c is the length of the spectrum (f_k) convolved.
+            If None, the kernel is set to 1, i.e., do not do any convolution.
 
         wave_grid : (N_k) array_like, required.
             The grid on which f(lambda) will be projected.
@@ -244,10 +244,14 @@ class ExtractionEngine:
     def _create_kernels(self, kernels, c_kwargs):
         """Make sparse matrix from input kernels
 
+        TODO: the only kwarg ever passed in here appears to be thresh, which already gets
+        handled internally... so can we remove all kwargs handling here?
+
         Parameters
         ----------
-        kernels : array, callable or sparse matrix
+        kernels : callable, sparse matrix, or None
             Convolution kernel to be applied on the spectrum (f_k) for each order.
+            If None, kernel is set to 1, i.e., do not do any convolution.
 
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
@@ -261,7 +265,7 @@ class ExtractionEngine:
             c_kwargs = []
             for ker in kernels:
                 try:
-                    kwargs_ker = {'thresh': ker.min_value}
+                    kwargs_ker = {'thresh': ker.min_value} 
                 except AttributeError:
                     # take the get_c_matrix defaults
                     kwargs_ker = dict()
@@ -274,8 +278,9 @@ class ExtractionEngine:
         # Define convolution sparse matrix.
         kernels_new = []
         for i_order, kernel_n in enumerate(kernels):
-
-            if not issparse(kernel_n):
+            if kernel_n is None:
+                kernel_n = 1
+            elif not issparse(kernel_n):
                 kernel_n = atoca_utils.get_c_matrix(kernel_n, self.wave_grid,
                                                     i_bounds=self.i_bounds[i_order],
                                                     **c_kwargs[i_order])
