@@ -65,11 +65,6 @@ class Extract1dError(Exception):
     pass
 
 
-class InvalidSpectralOrderNumberError(Extract1dError):
-    """The spectral order number was invalid or off the detector."""
-    pass
-
-
 # Create custom error to pass continue from a function inside of a loop
 class ContinueError(Exception):
     pass
@@ -482,15 +477,6 @@ def run_extract1d(
     # and the spectral order is zero.
     # That's only OK if the disperser is a prism.
     prism_mode = is_prism(meta_source)
-
-    # use_source_posn doesn't apply to WFSS, so turn it off if it's currently on
-    if use_source_posn:
-        if exp_type in WFSS_EXPTYPES:
-            use_source_posn = False
-            log.warning(
-                f"Correcting for source position is not supported for exp_type = "
-                f"{exp_type}, so use_source_posn will be set to False",
-            )
 
     # Handle inputs that contain one or more slit models
     if isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)):
@@ -1247,9 +1233,10 @@ def create_extraction(
             source_type = input_model.meta.target.source_type
 
     # Turn off use_source_posn if the source is not POINT
-    if source_type != 'POINT':
+    if source_type != 'POINT' or exp_type in WFSS_EXPTYPES:
         use_source_posn = False
-        log.info(f"Setting use_source_posn to False for source type {source_type}")
+        log.info(f"Setting use_source_posn to False for exposure type {exp_type}, "
+                 f"source type {source_type}")
 
     if photom_has_been_run:
         pixel_solid_angle = data_model.meta.photometry.pixelarea_steradians
@@ -1260,16 +1247,8 @@ def create_extraction(
         pixel_solid_angle = 1.  # not needed
 
     extract_params = get_extract_parameters(
-        extract_ref_dict,
-        data_model,
-        slitname,
-        sp_order,
-        input_model.meta,
-        smoothing_length,
-        bkg_fit,
-        bkg_order,
-        use_source_posn
-    )
+        extract_ref_dict, data_model, slitname, sp_order, input_model.meta,
+        smoothing_length, bkg_fit,bkg_order, use_source_posn)
 
     if subtract_background is not None:
         extract_params['subtract_background'] = subtract_background
@@ -1347,19 +1326,15 @@ def create_extraction(
     # Extract each integration
     apcorr = None
     for integ in integrations:
-        try:
-            (temp_flux, f_var_poisson, f_var_rnoise,
-                f_var_flat, background, b_var_poisson, b_var_rnoise,
-                b_var_flat, npixels, flux_model) = extract_one_slit(
-                    data_model,
-                    integ,
-                    profile,
-                    bg_profile,
-                    extract_params
-                )
-        except InvalidSpectralOrderNumberError as e:
-            log.info(f'{str(e)}, skipping ...')
-            raise ContinueError()
+        (temp_flux, f_var_poisson, f_var_rnoise,
+            f_var_flat, background, b_var_poisson, b_var_rnoise,
+            b_var_flat, npixels, flux_model) = extract_one_slit(
+                data_model,
+                integ,
+                profile,
+                bg_profile,
+                extract_params
+        )
 
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
