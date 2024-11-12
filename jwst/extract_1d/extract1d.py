@@ -103,7 +103,7 @@ def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
 
 def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
               weights=None, profile_bg=None, extraction_type='boxcar',
-              bg_smooth_length=0, fit_bkg=False, bkg_fit_type="poly", bkg_order=0):
+              bg_smooth_length=0, fit_bkg=False, bkg_fit_type='poly', bkg_order=0):
     """Extract the spectrum, optionally subtracting background.
 
     Parameters:
@@ -166,12 +166,12 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         The extracted spectrum/spectra.  Units are currently arbitrary.
         The first dimension is the same as the length of profiles_2d
 
-    var_phnoise : ndarray, n-D, float64
-        The variances of the extracted spectrum/spectra due to photon noise.
-        Units are the same as flux^2, shape is the same as flux.
-
     var_rn : ndarray, n-D, float64
         The variances of the extracted spectrum/spectra due to read noise.
+        Units are the same as flux^2, shape is the same as flux.
+
+    var_phnoise : ndarray, n-D, float64
+        The variances of the extracted spectrum/spectra due to photon noise.
         Units are the same as flux^2, shape is the same as flux.
 
     var_flat : ndarray, n-D, float64
@@ -443,5 +443,5 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
     no_data = np.isclose(npixels, 0)
     fluxes[no_data] = np.nan
 
-    return (fluxes, var_phnoise, var_rn, var_flat,
-            bkg, var_bkg_phnoise, var_bkg_rn, var_bkg_flat, npixels, model)
+    return (fluxes, var_rn, var_phnoise, var_flat,
+            bkg, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, npixels, model)
