@@ -1,1 +1,1 @@
-Include resample, pixel_replace, and extract_1d into MOS background pipeline
+Include resample, pixel_replace, extract_1d, and combine_1d into MOS background pipeline
