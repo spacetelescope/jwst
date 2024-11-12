@@ -136,7 +136,6 @@ class ResampleSpecData(ResampleData):
                 self.pscale_ratio = nominal_area / output_pix_area
             else:
                 self.pscale_ratio = 1.0
-
             # Set the output shape if specified
             if output_shape is not None:
                 self.output_wcs.array_shape = output_shape[::-1]
@@ -174,23 +173,30 @@ class ResampleSpecData(ResampleData):
             else:
                 output_pix_area = None
 
+        self.output_pix_area = output_pix_area
+        self.output_array_shape = tuple(self.output_wcs.array_shape)
+        log.debug(f"Output mosaic size: {self.output_array_shape}")
+
         if pscale is None:
             log.info(f'Specified output pixel scale ratio: {self.pscale_ratio}.')
             pscale = compute_spectral_pixel_scale(
                 self.output_wcs, disp_axis=disp_axis)
             log.info(f'Computed output pixel scale: {3600.0 * pscale:.5g} arcsec.')
 
-        # Output model
-        self.blank_output = datamodels.SlitModel(tuple(self.output_wcs.array_shape))
+    def _create_output_model(self, ref_input_model=None):
+        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        output_model = datamodels.SlitModel(None)
 
         # update meta data and wcs
-        self.blank_output.update(input_models[0])
-        self.blank_output.meta.wcs = self.output_wcs
-        if output_pix_area is not None:
-            self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
-            self.blank_output.meta.photometry.pixelarea_arcsecsq = (
-                output_pix_area * np.rad2deg(3600)**2)
-
+        if ref_input_model is not None:
+            output_model.update(ref_input_model)
+        output_model.meta.wcs = self.output_wcs
+        if self.output_pix_area is not None:
+            output_model.meta.photometry.pixelarea_steradians = self.output_pix_area
+            output_model.meta.photometry.pixelarea_arcsecsq = (
+                self.output_pix_area * np.rad2deg(3600)**2
+            )
+        return output_model
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None):
         """
@@ -335,32 +341,43 @@ class ResampleSpecData(ResampleData):
             raise ValueError("Not enough data to construct output WCS.")
 
         # Find the spatial extent in x/y tangent
-        min_tan, max_tan = self._max_spatial_extent(all_wcs, undist2sky.inverse, swap_xy)
-        diff = np.abs(max_tan - min_tan)
-        if swap_xy:
-            pix_to_tan_slope = np.abs(pix_to_ytan.slope)
-            slope_sign = np.sign(pix_to_ytan.slope)
-        else:
-            pix_to_tan_slope = np.abs(pix_to_xtan.slope)
-            slope_sign = np.sign(pix_to_xtan.slope)
+        min_tan_x, max_tan_x, min_tan_y, max_tan_y = self._max_spatial_extent(
+            all_wcs, undist2sky.inverse)
+        diff_y = np.abs(max_tan_y - min_tan_y)
+        diff_x = np.abs(max_tan_x - min_tan_x)
+
+        pix_to_tan_slope_y = np.abs(pix_to_ytan.slope)
+        slope_sign_y = np.sign(pix_to_ytan.slope)
+        pix_to_tan_slope_x = np.abs(pix_to_xtan.slope)
+        slope_sign_x = np.sign(pix_to_xtan.slope)
 
         # Image size in spatial dimension from the maximum slope
         # and tangent offset span, plus one pixel to make sure
         # we catch all the data
-        ny = int(np.ceil(diff / pix_to_tan_slope)) + 1
+        if swap_xy:
+            ny = int(np.ceil(diff_y / pix_to_tan_slope_y)) + 1
+        else:
+            ny = int(np.ceil(diff_x / pix_to_tan_slope_x)) + 1
 
         # Correct the intercept for the new minimum value.
         # Also account for integer pixel size to make sure the
         # data is centered in the array.
-        offset = ny/2 * pix_to_tan_slope - diff/2
-        if slope_sign > 0:
-            zero_value = min_tan
+        offset_y  = ny/2 * pix_to_tan_slope_y - diff_y/2
+        offset_x  = ny/2 * pix_to_tan_slope_x - diff_x/2
+
+        if slope_sign_y > 0:
+            zero_value_y = min_tan_y
         else:
-            zero_value = max_tan
-        if swap_xy:
-            pix_to_ytan.intercept = zero_value - slope_sign * offset
+            zero_value_y = max_tan_y
+
+        if slope_sign_x > 0:
+            zero_value_x = min_tan_x
         else:
-            pix_to_xtan.intercept = zero_value - slope_sign * offset
+            zero_value_x = max_tan_x
+
+
+        pix_to_ytan.intercept = zero_value_y - slope_sign_y * offset_y
+        pix_to_xtan.intercept = zero_value_x - slope_sign_x * offset_x
 
         # Now set up the final transforms
 
@@ -447,12 +464,12 @@ class ResampleSpecData(ResampleData):
 
         return output_wcs
 
-    def _max_spatial_extent(self, wcs_list, transform, swap_xy):
+    def _max_spatial_extent(self, wcs_list, transform):
         """
-        Compute min & max spatial coordinates for all nods in the "virtual"
-        slit frame.
+        Compute spatial coordinate limits for all nods in the tangent plane.
         """
-        min_tan_all, max_tan_all = np.inf, -np.inf
+        limits_x = [np.inf, -np.inf]
+        limits_y = [np.inf, -np.inf]
         for wcs in wcs_list:
             x, y = wcstools.grid_from_bounding_box(wcs.bounding_box)
             ra, dec, _ = wcs(x, y)
@@ -462,20 +479,16 @@ class ResampleSpecData(ResampleData):
             dec = dec[good]
 
             xtan, ytan = transform(ra, dec)
-            if swap_xy:
-                tan_all = ytan
-            else:
-                tan_all = xtan
+            for tan_all, limits in zip([xtan, ytan], [limits_x, limits_y]):
+                min_tan = np.min(tan_all)
+                max_tan = np.max(tan_all)
 
-            min_tan = np.min(tan_all)
-            max_tan = np.max(tan_all)
+                if min_tan < limits[0]:
+                    limits[0] = min_tan
+                if max_tan > limits[1]:
+                    limits[1] = max_tan
 
-            if min_tan < min_tan_all:
-                min_tan_all = min_tan
-            if max_tan > max_tan_all:
-                max_tan_all = max_tan
-
-        return min_tan_all, max_tan_all
+        return *limits_x, *limits_y
 
     def build_interpolated_output_wcs(self, input_models):
         """

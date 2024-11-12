@@ -30,7 +30,14 @@ def to_container(model):
                 'var_poisson', 'var_rnoise', 'var_flat'
         ]:
             try:
-                setattr(image, attribute, model.getarray_noinit(attribute)[plane])
+                arr = model.getarray_noinit(attribute)
+                if arr.ndim == 3:
+                    setattr(image, attribute, arr[plane])
+                elif arr.ndim == 2:
+                    setattr(image, attribute, arr)
+                else:
+                    msg = f"Unexpected array shape for extension {attribute}: {arr.shape}"
+                    raise ValueError(msg)
             except AttributeError:
                 pass
         image.update(model)
@@ -90,14 +97,14 @@ class Coron3Pipeline(Pipeline):
 
         # This asn_id assignment is important as it allows outlier detection
         # to know the asn_id since that step receives the cube as input.
-        self.asn_id = input_models.meta.asn_table.asn_id
+        self.asn_id = input_models.asn_table["asn_id"]
 
         # Store the output file for future use
-        self.output_file = input_models.meta.asn_table.products[0].name
+        self.output_file = input_models.asn_table["products"][0]["name"]
 
         # Find all the member types in the product
         members_by_type = defaultdict(list)
-        prod = input_models.meta.asn_table.products[0].instance
+        prod = input_models.asn_table["products"][0]
 
         for member in prod['members']:
             members_by_type[member['exptype'].lower()].append(member['expname'])
@@ -144,7 +151,7 @@ class Coron3Pipeline(Pipeline):
         # Perform outlier detection on the PSFs.
         if not skip_outlier_detection:
             for model in psf_models:
-                self.outlier_detection(model)
+                self.outlier_detection.run(model)
                 # step may have been skipped for this model;
                 # turn back on for next model
                 self.outlier_detection.skip = False
@@ -152,7 +159,7 @@ class Coron3Pipeline(Pipeline):
             self.log.info('Outlier detection skipped for PSF\'s')
 
         # Stack all the PSF images into a single CubeModel
-        psf_stack = self.stack_refs(psf_models)
+        psf_stack = self.stack_refs.run(psf_models)
         psf_models.close()
 
         # Save the resulting PSF stack
@@ -168,13 +175,13 @@ class Coron3Pipeline(Pipeline):
 
                 # Remove outliers from the target
                 if not skip_outlier_detection:
-                    target = self.outlier_detection(target)
+                    target = self.outlier_detection.run(target)
                     # step may have been skipped for this model;
                     # turn back on for next model
                     self.outlier_detection.skip = False
 
                 # Call align_refs
-                psf_aligned = self.align_refs(target, psf_stack)
+                psf_aligned = self.align_refs.run(target, psf_stack)
 
                 # Save the alignment results
                 self.save_model(
@@ -183,7 +190,7 @@ class Coron3Pipeline(Pipeline):
                 )
 
                 # Call KLIP
-                psf_sub = self.klip(target, psf_aligned)
+                psf_sub = self.klip.run(target, psf_aligned)
                 psf_aligned.close()
 
                 # Save the psf subtraction results
@@ -203,7 +210,7 @@ class Coron3Pipeline(Pipeline):
         resample_library = ModelLibrary(resample_input, on_disk=False)
 
         # Output is a single datamodel
-        result = self.resample(resample_library)
+        result = self.resample.run(resample_library)
 
         # Blend the science headers
         try:
@@ -218,7 +225,7 @@ class Coron3Pipeline(Pipeline):
             model_blender.finalize_model(result)
 
         try:
-            result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
+            result.meta.asn.pool_name = input_models.asn_pool_name
             result.meta.asn.table_name = op.basename(user_input)
         except AttributeError:
             self.log.debug('Cannot set association information on final')

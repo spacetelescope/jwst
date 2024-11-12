@@ -355,7 +355,7 @@ def count_input(input_spectra):
         # only include spectra that have more than 1 data point
         if len(input_wl) > 1:
             if wl is None:
-                wl = input_wl
+                wl = input_wl.copy()
             else:
                 wl = np.hstack((input_wl, wl))
     wl.sort()

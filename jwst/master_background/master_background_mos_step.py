@@ -264,10 +264,10 @@ class MasterBackgroundMosStep(Pipeline):
             self.barshadow.source_type = 'EXTENDED'
             self.photom.source_type = 'EXTENDED'
 
-            pre_calibrated = self.flat_field(data)
-            pre_calibrated = self.pathloss(pre_calibrated)
-            pre_calibrated = self.barshadow(pre_calibrated)
-            pre_calibrated = self.photom(pre_calibrated)
+            pre_calibrated = self.flat_field.run(data)
+            pre_calibrated = self.pathloss.run(pre_calibrated)
+            pre_calibrated = self.barshadow.run(pre_calibrated)
+            pre_calibrated = self.photom.run(pre_calibrated)
 
             # Create the 1D, fully calibrated master background.
             if user_background:
@@ -308,9 +308,9 @@ class MasterBackgroundMosStep(Pipeline):
             self.flat_field.use_correction_pars = True
             self.flat_field.inverse = True
 
-            mb_multislit = self.photom(mb_multislit)
-            mb_multislit = self.barshadow(mb_multislit)
-            mb_multislit = self.pathloss(mb_multislit)
-            mb_multislit = self.flat_field(mb_multislit)
+            mb_multislit = self.photom.run(mb_multislit)
+            mb_multislit = self.barshadow.run(mb_multislit)
+            mb_multislit = self.pathloss.run(mb_multislit)
+            mb_multislit = self.flat_field.run(mb_multislit)
 
         return master_background, mb_multislit

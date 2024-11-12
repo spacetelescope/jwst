@@ -2,6 +2,7 @@ from jwst.stpipe import (Pipeline, Step)
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel
+from jwst.datamodels import ModelContainer
 
 
 class StepWithReference(Step):
@@ -22,7 +23,7 @@ class PipeWithReference(Pipeline):
     step_defs = {'step_with_reference': StepWithReference}
 
     def process(self, data):
-        result = self.step_with_reference(data)
+        result = self.step_with_reference.run(data)
 
         return result
 
@@ -177,8 +178,12 @@ class StepWithContainer(Step):
 
     def process(self, *args):
         container = []
-        model1 = ImageModel(args[0]).copy()
-        model2 = ImageModel(args[0]).copy()
+        if isinstance(args[0], ModelContainer):
+            model = args[0][0]
+        else:
+            model = args[0]
+        model1 = ImageModel(model).copy()
+        model2 = ImageModel(model).copy()
         model1.meta.filename = 'swc_model1.fits'
         model2.meta.filename = 'swc_model2.fits'
         container.append(model1)
@@ -231,13 +236,13 @@ class ProperPipeline(Pipeline):
         model = ImageModel(args[0])
 
         self.stepwithmodel.suffix = 'swm'
-        r = self.stepwithmodel(model)
+        r = self.stepwithmodel.run(model)
         self.another_stepwithmodel.suffix = 'aswm'
-        r = self.another_stepwithmodel(r)
+        r = self.another_stepwithmodel.run(r)
         self.stepwithcontainer.suffix = 'swc'
-        r = self.stepwithcontainer(r)
+        r = self.stepwithcontainer.run(r)
         self.withdefaultsstep.suffix = 'wds'
-        r = self.withdefaultsstep(r)
+        r = self.withdefaultsstep.run(r)
 
         return r
 
@@ -256,8 +261,8 @@ class SavePipeline(Pipeline):
     def process(self, *args):
         model = ImageModel(args[0])
 
-        r = self.stepwithmodel(model)
-        r = self.savestep(r)
+        r = self.stepwithmodel.run(model)
+        r = self.savestep.run(r)
 
         return r
 
@@ -275,4 +280,4 @@ class MakeListPipeline(Pipeline):
 
     def process(self, *args):
 
-        return self.make_list(*args)
+        return self.make_list.run(*args)
