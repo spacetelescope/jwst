@@ -182,14 +182,14 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         Background level that would be obtained for each source if performing
         a 1-D extraction on the 2D background.
 
+    var_bkg_rn : ndarray, n-D, float64
+        As above, for read noise.  Nonzero because read noise adds an error term
+        to the derived background level.
+
     var_bkg_phnoise : ndarray, n-D, float64
         The variances of the extracted spectrum/spectra due to background photon
         noise. Units are the same as flux^2, shape is the same as flux.  This
         background contribution is already included in var_phnoise.
-
-    var_bkg_rn : ndarray, n-D, float64
-        As above, for read noise.  Nonzero because read noise adds an error term
-        to the derived background level.
 
     var_bkg_flat : ndarray, n-D, float64
         As above, for the flatfield.
@@ -352,7 +352,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
             bkg = np.zeros((nobjects, image.shape[1]))
 
     # This is optimal extraction (well, profile-based extraction).  It
-    # is "optimal extraction" if the weightes are the inverse variances,
+    # is "optimal extraction" if the weights are the inverse variances,
     # but you must be careful about biases in this case.
 
     elif extraction_type == 'optimal':

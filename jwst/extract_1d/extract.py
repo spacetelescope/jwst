@@ -889,7 +889,7 @@ def copy_keyword_info(slit, slitname, spec):
 
 def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partial=True):
     # Both limits are inclusive
-    profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1
+    profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1.0
 
     if allow_partial:
         for partial_pixel_weight in [lower_limit - idx, idx - upper_limit]:
@@ -949,8 +949,16 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
             else:
                 upper = create_poly(coeff_list)
 
-                lower_limit_region = lower(ival)
-                upper_limit_region = upper(ival)
+                # NOTE: source coefficients currently have a different
+                # definition for pixel inclusion than the start/stop input.
+                # Source coefficients define 0 at the center of the pixel,
+                # start/stop defines 0 at the start of the lower pixel and
+                # includes the upper pixel. Here, we are setting limits
+                # in the spatial profile according to the more commonly used
+                # start/stop definition, so we need to modify the lower and
+                # upper limits from polynomial coefficients to match.
+                lower_limit_region = lower(ival) + 0.5
+                upper_limit_region = upper(ival) - 0.5
 
                 _set_weight_from_limits(profile, dval, lower_limit_region,
                                         upper_limit_region,
@@ -1348,7 +1356,6 @@ def create_extraction(
                 extract_params
         )
 
-        # todo - check on background assumptions
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
         surf_bright = temp_flux / npixels_temp  # may be reset below
