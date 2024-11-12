@@ -106,17 +106,20 @@ def correction_skip_groups(output, group_skip):
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
-    # If ngroups > group_skip+3, set all of the GROUPDQ  in 0: group_skip to 'DO_NOT_USE'
-    # for integrations 1 and higher. Currently no correction is applied to first integration
-    if sci_int_start == 1:
-        output.groupdq[1:, 0:group_skip, :, :] = \
-            np.bitwise_or(output.groupdq[1:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
-        log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
+    # The RSCD correction is applied to integrations 2 and higher.
+    # For segmented data the first integration in the file may not be the first integration in the
+    # exposure. The value in meta.exposure.integration_start holds the value of the first integration
+    # in the file.
+    # If a correction is to be done and if  ngroups > group_skip+3, then  set all of the GROUPDQ
+    # in 0: group_skip to 'DO_NOT_USE'
 
-    else: # we have segmented data 
-        output.groupdq[:, 0:group_skip, :, :] = \
-            np.bitwise_or(output.groupdq[:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
-        log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
+    int_start = 1
+    if sci_int_start !=1: # we have segmented data
+        int_start = 0
+        
+    output.groupdq[int_start:, 0:group_skip, :, :] = \
+        np.bitwise_or(output.groupdq[int_start:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
+    log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
     output.meta.cal_step.rscd = 'COMPLETE'
 
     return output
