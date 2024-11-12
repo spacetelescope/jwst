@@ -1306,8 +1306,8 @@ def create_extraction(
     center_y = np.average(yidx, weights=profile)
     center_x = np.average(xidx, weights=profile)
     coords = data_model.meta.wcs(center_x, center_y)
-    ra = coords[0]
-    dec = coords[1]
+    ra = float(coords[0])
+    dec = float(coords[1])
 
     # Log the parameters before extracting
     log_initial_parameters(extract_params)
@@ -1326,8 +1326,8 @@ def create_extraction(
     # Extract each integration
     apcorr = None
     for integ in integrations:
-        (temp_flux, f_var_poisson, f_var_rnoise,
-            f_var_flat, background, b_var_poisson, b_var_rnoise,
+        (temp_flux, f_var_rnoise, f_var_poisson,
+            f_var_flat, background, b_var_rnoise, b_var_poisson,
             b_var_flat, npixels, flux_model) = extract_one_slit(
                 data_model,
                 integ,
