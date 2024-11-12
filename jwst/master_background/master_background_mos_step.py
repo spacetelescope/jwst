@@ -12,7 +12,7 @@ from ..photom import photom_step
 from ..pixel_replace import pixel_replace_step
 from ..resample import resample_spec_step
 from ..extract_1d import extract_1d_step
-from ..combine_1d.combine1d import combine_1d_spectra
+from ..combine_1d import combine_1d_step
 from ..stpipe import Pipeline
 
 __all__ = ['MasterBackgroundMosStep']
@@ -67,7 +67,7 @@ class MasterBackgroundMosStep(Pipeline):
         'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'extract_1d': extract_1d_step.Extract1dStep,
-        'combine_1d': combine_1d_spectra
+        'combine_1d': combine_1d_step.Combine1dStep
     }
 
     # No need to prefetch. This will have been done by the parent step.
@@ -277,13 +277,13 @@ class MasterBackgroundMosStep(Pipeline):
                 master_background = user_background
             else:
                 self.log.info('Creating MOS master background from background slitlets')
-                self._set_steps_params()
+                self._set_mospipe_steps_params()
                 bkg_model = self._extend_bg_slits(pre_calibrated)
                 if bkg_model is not None:
                     bkg_model = self.pixel_replace(bkg_model)
                     bkg_model = self.resample_spec(bkg_model)
                     bkg_model = self.extract_1d(bkg_model)
-                    master_background = self.combine_1d_spectra(bkg_model, exptime_key='exposure_time')
+                    master_background = self.combine_1d(bkg_model)
                     del bkg_model
                 else:
                     master_background = None
