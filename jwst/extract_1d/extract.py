@@ -887,11 +887,6 @@ def copy_keyword_info(slit, slitname, spec):
         spec.shutter_state = slit.shutter_state
 
 
-def source_location(input_model, slit):
-    targ_ra, targ_dec = utils.get_target_coordinates(input_model, slit)
-    return utils.locn_from_wcs(input_model, slit, targ_ra, targ_dec)
-
-
 def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partial=True):
     # Both limits are inclusive
     profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1
@@ -899,7 +894,7 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
     if allow_partial:
         for partial_pixel_weight in [lower_limit - idx, idx - upper_limit]:
             test = (partial_pixel_weight > 0) & (partial_pixel_weight < 1)
-            profile[test] = partial_pixel_weight[test]
+            profile[test] = 1 - partial_pixel_weight[test]
 
 
 def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
@@ -911,7 +906,8 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
     else:
         dval = xidx
 
-    # Get start/stop values from parameters if present
+    # Get start/stop values from parameters if present,
+    # or default to data shape
     xstart = extract_params.get('xstart', 0)
     xstop = extract_params.get('xstop', shape[1] - 1)
     ystart = extract_params.get('ystart', 0)
@@ -1000,6 +996,14 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
         log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f}')
 
+    # Set weights to zero outside left and right limits
+    if extract_params['dispaxis'] == HORIZONTAL:
+        profile[:, :int(round(xstart))] = 0
+        profile[:, int(round(xstop)) + 1:] = 0
+    else:
+        profile[:int(round(ystart)), :] = 0
+        profile[int(round(ystop)) + 1:, :] = 0
+
     # Make sure profile weights are zero where wavelengths are invalid
     profile[~np.isfinite(wl_array)] = 0.0
 
@@ -1011,7 +1015,9 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
 
 def shift_by_source_location(input_model, slit, nominal_profile, extract_params):
     # Get source location offset
-    location_info = source_location(input_model, slit)
+    targ_ra, targ_dec = utils.get_target_coordinates(input_model, slit)
+    location_info = utils.locn_from_wcs(input_model, slit, targ_ra, targ_dec)
+
     if location_info is not None:
         middle_pix, middle_wl, location = location_info
         log.info(f"Computed source location is {location:.2f}, "
@@ -1282,6 +1288,11 @@ def create_extraction(
     profile, lower_limit, upper_limit = box_profile(data_shape, extract_params, wl_array,
                                                     return_limits=True)
 
+    # Get the effective left and right limits from the profile weights
+    nonzero_weight = np.where(np.sum(profile, axis=extract_params['dispaxis'] - 1) > 0)
+    left_limit = nonzero_weight[0][0]
+    right_limit = nonzero_weight[0][-1]
+
     # Make a background profile if necessary
     # (will also include source shifts)
     if (extract_params['subtract_background']
@@ -1292,8 +1303,9 @@ def create_extraction(
         bg_profile = None
 
     # Get 1D wavelength corresponding to the spatial profile
-    masked_wl = np.ma.masked_array(wl_array, mask=np.isnan(wl_array))
-    masked_weights = np.ma.masked_array(profile, mask=np.isnan(wl_array))
+    mask = np.isnan(wl_array) | (profile == 0)
+    masked_wl = np.ma.masked_array(wl_array, mask=mask)
+    masked_weights = np.ma.masked_array(profile, mask=mask)
     if extract_params['dispaxis'] == HORIZONTAL:
         wavelength = np.average(masked_wl, weights=masked_weights, axis=0).filled(np.nan)
     else:
@@ -1336,6 +1348,7 @@ def create_extraction(
                 extract_params
         )
 
+        # todo - check on background assumptions
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
         surf_bright = temp_flux / npixels_temp  # may be reset below
@@ -1392,9 +1405,10 @@ def create_extraction(
         dq[np.isnan(flux)] = datamodels.dqflags.pixel['DO_NOT_USE']
 
         # Make a table of the values, trimming to points with valid wavelengths only
+        wavelength = wavelength[valid]
         otab = np.array(
             list(
-                zip(wavelength[valid], flux[valid], error[valid],
+                zip(wavelength, flux[valid], error[valid],
                     f_var_poisson[valid], f_var_rnoise[valid], f_var_flat[valid],
                     surf_bright[valid], sb_error[valid], sb_var_poisson[valid],
                     sb_var_rnoise[valid], sb_var_flat[valid],
@@ -1429,15 +1443,15 @@ def create_extraction(
         spec.dispersion_direction = extract_params['dispaxis']
 
         if spec.dispersion_direction == HORIZONTAL:
-            spec.extraction_xstart = extract_params['xstart'] + 1
-            spec.extraction_xstop = extract_params['xstop'] + 1
+            spec.extraction_xstart = left_limit + 1
+            spec.extraction_xstop = right_limit + 1
             spec.extraction_ystart = lower_limit + 1
             spec.extraction_ystop = upper_limit + 1
         else:
             spec.extraction_xstart = lower_limit + 1
             spec.extraction_xstop = upper_limit + 1
-            spec.extraction_ystart = extract_params['ystart'] + 1
-            spec.extraction_ystop = extract_params['ystop'] + 1
+            spec.extraction_ystart = left_limit + 1
+            spec.extraction_ystop = right_limit + 1
 
         copy_keyword_info(data_model, slitname, spec)
 
