@@ -23,9 +23,6 @@ log.setLevel(logging.DEBUG)
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
-IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
-"""Exposure types to be regarded as IFU spectroscopy."""
-
 ANY = "ANY"
 """Wildcard for slit name.
 
@@ -104,8 +101,8 @@ def open_extract1d_ref(refname):
                 log.error("Extract1d json reference file has an error, run a json validator off line and fix the file")
                 raise RuntimeError("Invalid json extract 1d reference file, run json validator off line and fix file.")
         else:
-            log.error("Invalid Extract 1d reference file, must be json or asdf.")
-            raise RuntimeError("Invalid Extract 1d reference file, must be json or asdf.")
+            log.error("Invalid Extract 1d reference file, must be json.")
+            raise RuntimeError("Invalid Extract 1d reference file, must be json.")
 
     return ref_dict
 
@@ -156,7 +153,8 @@ def get_extract_parameters(
         smoothing_length,
         bkg_fit,
         bkg_order,
-        use_source_posn
+        use_source_posn,
+        subtract_background
 ):
     """Get extract1d reference file values.
 
@@ -216,6 +214,9 @@ def get_extract_parameters(
         If None, the value specified in `ref_dict` will be used, or it will
         be set to True if not found in `ref_dict`.
 
+    subtract_background : bool
+        If False, all background parameters will be ignored.
+
     Returns
     -------
     extract_params : dict
@@ -241,7 +242,7 @@ def get_extract_parameters(
         extract_params['smoothing_length'] = 0  # because no background sub.
         extract_params['bkg_fit'] = None  # because no background sub.
         extract_params['bkg_order'] = 0  # because no background sub.
-        extract_params['subtract_background'] = False
+        extract_params['subtract_background'] = subtract_background
 
         if use_source_posn is None:
             extract_params['use_source_posn'] = False
@@ -289,7 +290,7 @@ def get_extract_parameters(
                     extract_params['src_coeff'] = aper.get('src_coeff')
                     extract_params['bkg_coeff'] = aper.get('bkg_coeff')
                     if extract_params['bkg_coeff'] is not None:
-                        extract_params['subtract_background'] = True
+                        extract_params['subtract_background'] = subtract_background
                         if bkg_fit is not None:
                             extract_params['bkg_fit'] = bkg_fit
                         else:
@@ -966,7 +967,7 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
                 mean_lower = np.mean(lower_limit_region)
                 mean_upper = np.mean(upper_limit_region)
                 log.info(f'Mean aperture start/stop from {coefficients}: '
-                         f'{mean_lower:.2f} -> {mean_upper:.2f}')
+                         f'{mean_lower:.2f} -> {mean_upper:.2f} (inclusive)')
 
                 if lower_limit is None:
                     lower_limit = mean_lower
@@ -990,7 +991,7 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
         upper_limit = lower_limit + width - 1
 
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
-        log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f}')
+        log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
 
     else:
         # Limits from start/stop only
@@ -1002,7 +1003,7 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
             upper_limit = xstop
 
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
-        log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f}')
+        log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
 
     # Set weights to zero outside left and right limits
     if extract_params['dispaxis'] == HORIZONTAL:
@@ -1011,9 +1012,6 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
     else:
         profile[:int(round(ystart)), :] = 0
         profile[int(round(ystop)) + 1:, :] = 0
-
-    # Make sure profile weights are zero where wavelengths are invalid
-    profile[~np.isfinite(wl_array)] = 0.0
 
     if return_limits:
         return profile, lower_limit, upper_limit
@@ -1060,22 +1058,79 @@ def shift_by_source_location(input_model, slit, nominal_profile, extract_params)
                 extract_params[params] += offset
 
 
+def define_aperture(input_model, slit, extract_params, exp_type):
+    if slit is None:
+        data_model = input_model
+    else:
+        data_model = slit
+    data_shape = data_model.data.shape[-2:]
+
+    # Get a wavelength array for the data
+    wl_array = get_wavelengths(data_model, exp_type, extract_params['spectral_order'])
+
+    # Shift aperture definitions by source position if needed
+    # Extract parameters are updated in place
+    if extract_params['use_source_posn']:
+        nominal_profile = box_profile(data_shape, extract_params, wl_array)
+        shift_by_source_location(input_model, slit, nominal_profile, extract_params)
+
+    # Make a spatial profile, including source shifts if necessary
+    profile, lower_limit, upper_limit = box_profile(data_shape, extract_params, wl_array,
+                                                    return_limits=True)
+
+    # Make sure profile weights are zero where wavelengths are invalid
+    profile[~np.isfinite(wl_array)] = 0.0
+
+    # Get the effective left and right limits from the profile weights
+    nonzero_weight = np.where(np.sum(profile, axis=extract_params['dispaxis'] - 1) > 0)
+    left_limit = nonzero_weight[0][0]
+    right_limit = nonzero_weight[0][-1]
+
+    # Make a background profile if necessary
+    # (will also include source shifts)
+    if (extract_params['subtract_background']
+            and extract_params['bkg_coeff'] is not None):
+        bg_profile = box_profile(data_shape, extract_params, wl_array,
+                                 coefficients='bkg_coeff')
+    else:
+        bg_profile = None
+
+    # Get 1D wavelength corresponding to the spatial profile
+    mask = np.isnan(wl_array) | (profile == 0)
+    masked_wl = np.ma.masked_array(wl_array, mask=mask)
+    masked_weights = np.ma.masked_array(profile, mask=mask)
+    if extract_params['dispaxis'] == HORIZONTAL:
+        wavelength = np.average(masked_wl, weights=masked_weights, axis=0).filled(np.nan)
+    else:
+        wavelength = np.average(masked_wl, weights=masked_weights, axis=1).filled(np.nan)
+
+    # Get RA and Dec corresponding to the center of the array,
+    # weighted by the spatial profile
+    yidx, xidx = np.mgrid[:data_shape[0], :data_shape[1]]
+    center_y = np.average(yidx, weights=profile)
+    center_x = np.average(xidx, weights=profile)
+    coords = data_model.meta.wcs(center_x, center_y)
+    ra = float(coords[0])
+    dec = float(coords[1])
+
+    # Return limits as a tuple with 4 elements: lower, upper, left, right
+    limits = (lower_limit, upper_limit, left_limit, right_limit)
+
+    return ra, dec, wavelength, profile, bg_profile, limits
+
+
 def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
     """Extract data for one slit, or spectral order, or integration.
 
     Parameters
     ----------
-    input_model : data model
-        The input science model.
-
-    slit : one slit from a MultiSlitModel (or similar), or None
-        If slit is None, the data array is input_model.data; otherwise,
-        the data array is slit.data.
-        In the former case, if `integ` is zero or larger, the spectrum
-        will be extracted from the 2-D slice input_model.data[integ].
+    data_model : data model
+        The input science model. May be a single slit from a MultiSlitModel
+        (or similar), or a single data type, like an ImageModel, SlitModel,
+        or CubeModel.
 
     integ : int
-        For the case that input_model is a SlitModel or a CubeModel,
+        For the case that data_model is a SlitModel or a CubeModel,
         `integ` is the integration number.  If the integration number is
         not relevant (i.e. the data array is 2-D), `integ` should be -1.
 
@@ -1087,39 +1142,40 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
 
     bg_profile : ndarray of float or None
         Background profile indicating any background regions to use, following
-        the same format as the spatial profile.
+        the same format as the spatial profile. Ignored if
+        extract_params['subtract_background'] is False.
 
     extract_params : dict
         Parameters read from the extract1d reference file.
 
     Returns
     -------
-    temp_flux : ndarray, 1-D, float64
+    sum_flux : ndarray, 1-D, float64
         The sum of the data values in the extraction region minus the sum
         of the data values in the background regions (scaled by the ratio
         of the numbers of pixels), for each pixel.
-        The data values are in units of surface brightness, so this value
-        isn't really the flux, it's an intermediate value.  Multiply
-        `temp_flux` by the solid angle of a pixel to get the flux for a
-        point source (column "flux").  Divide `temp_flux` by `npixels` (to
+        The data values are usually in units of surface brightness,
+        so this value isn't the flux, it's an intermediate value.
+        Multiply `sum_flux` by the solid angle of a pixel to get the flux for a
+        point source (column "flux").  Divide `sum_flux` by `npixels` (to
         compute the average) to get the array for the "surf_bright"
         (surface brightness) output column.
 
     f_var_poisson : ndarray, 1-D
         The extracted poisson variance values to go along with the
-        temp_flux array.
+        sum_flux array.
 
     f_var_rnoise : ndarray, 1-D
         The extracted read noise variance values to go along with the
-        temp_flux array.
+        sum_flux array.
 
     f_var_flat : ndarray, 1-D
         The extracted flat field variance values to go along with the
-        temp_flux array.
+        sum_flux array.
 
     background : ndarray, 1-D
         The background count rate that was subtracted from the sum of
-        the source data values to get `temp_flux`.
+        the source data values to get `sum_flux`.
 
     b_var_poisson : ndarray, 1-D
         The extracted poisson variance values to go along with the
@@ -1134,7 +1190,9 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
         background array.
 
     npixels : ndarray, 1-D, float64
-        The number of pixels that were added together to get `temp_flux`.
+        The number of pixels that were added together to get `sum_flux`,
+        including any fractional pixels included via non-integer weights
+        in the input profile.
 
     """
     # Get the data and variance arrays
@@ -1262,10 +1320,9 @@ def create_extraction(
 
     extract_params = get_extract_parameters(
         extract_ref_dict, data_model, slitname, sp_order, input_model.meta,
-        smoothing_length, bkg_fit,bkg_order, use_source_posn)
-
-    if subtract_background is not None:
-        extract_params['subtract_background'] = subtract_background
+        smoothing_length, bkg_fit,bkg_order, use_source_posn,
+        subtract_background
+    )
 
     if extract_params['match'] == NO_MATCH:
         log.critical('Missing extraction parameters.')
@@ -1280,60 +1337,18 @@ def create_extraction(
         raise ContinueError()
 
     # Set up profile and wavelength array, to be used for every integration
-    shape = data_model.data.shape
-    data_shape = shape[-2:]
+    (ra, dec, wavelength, profile, bg_profile, limits) = define_aperture(
+        input_model, slit, extract_params, exp_type)
 
-    # Get a wavelength array for the data
-    wl_array = get_wavelengths(data_model, exp_type, extract_params['spectral_order'])
-
-    # Shift aperture definitions by source position if needed
-    # Extract parameters are updated in place
-    if extract_params['use_source_posn']:
-        nominal_profile = box_profile(data_shape, extract_params, wl_array)
-        shift_by_source_location(input_model, slit, nominal_profile, extract_params)
-
-    # Make a spatial profile, including source shifts if necessary
-    profile, lower_limit, upper_limit = box_profile(data_shape, extract_params, wl_array,
-                                                    return_limits=True)
-
-    # Get the effective left and right limits from the profile weights
-    nonzero_weight = np.where(np.sum(profile, axis=extract_params['dispaxis'] - 1) > 0)
-    left_limit = nonzero_weight[0][0]
-    right_limit = nonzero_weight[0][-1]
-
-    # Make a background profile if necessary
-    # (will also include source shifts)
-    if (extract_params['subtract_background']
-            and extract_params['bkg_coeff'] is not None):
-        bg_profile = box_profile(data_shape, extract_params, wl_array,
-                                 coefficients='bkg_coeff')
-    else:
-        bg_profile = None
-
-    # Get 1D wavelength corresponding to the spatial profile
-    mask = np.isnan(wl_array) | (profile == 0)
-    masked_wl = np.ma.masked_array(wl_array, mask=mask)
-    masked_weights = np.ma.masked_array(profile, mask=mask)
-    if extract_params['dispaxis'] == HORIZONTAL:
-        wavelength = np.average(masked_wl, weights=masked_weights, axis=0).filled(np.nan)
-    else:
-        wavelength = np.average(masked_wl, weights=masked_weights, axis=1).filled(np.nan)
     valid = ~np.isnan(wavelength)
-
-    # Get RA and Dec corresponding to the center of the array,
-    # weighted by the spatial profile
-    yidx, xidx = np.mgrid[:data_shape[0], :data_shape[1]]
-    center_y = np.average(yidx, weights=profile)
-    center_x = np.average(xidx, weights=profile)
-    coords = data_model.meta.wcs(center_x, center_y)
-    ra = float(coords[0])
-    dec = float(coords[1])
+    wavelength = wavelength[valid]
 
     # Log the parameters before extracting
     log_initial_parameters(extract_params)
 
     # Set up integration iterations and progress messages
     progress_msg_printed = True
+    shape = data_model.data.shape
     if len(shape) == 3 and shape[0] == 1:
         integrations = [0]
     elif len(shape) == 2:
@@ -1346,7 +1361,7 @@ def create_extraction(
     # Extract each integration
     apcorr = None
     for integ in integrations:
-        (temp_flux, f_var_rnoise, f_var_poisson,
+        (sum_flux, f_var_rnoise, f_var_poisson,
             f_var_flat, background, b_var_rnoise, b_var_poisson,
             b_var_flat, npixels, flux_model) = extract_one_slit(
                 data_model,
@@ -1358,7 +1373,7 @@ def create_extraction(
 
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
-        surf_bright = temp_flux / npixels_temp  # may be reset below
+        surf_bright = sum_flux / npixels_temp  # may be reset below
         sb_var_poisson = f_var_poisson / npixels_temp / npixels_temp
         sb_var_rnoise = f_var_rnoise / npixels_temp / npixels_temp
         sb_var_flat = f_var_flat / npixels_temp / npixels_temp
@@ -1381,7 +1396,7 @@ def create_extraction(
         if photom_has_been_run:
             # for NIRSpec point sources
             if input_units_are_megajanskys:
-                flux = temp_flux * 1.e6  # MJy --> Jy
+                flux = sum_flux * 1.e6  # MJy --> Jy
                 f_var_poisson *= 1.e12  # MJy**2 --> Jy**2
                 f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
                 f_var_flat *= 1.e12  # MJy**2 --> Jy**2
@@ -1394,25 +1409,24 @@ def create_extraction(
                 b_var_rnoise = b_var_rnoise / pixel_solid_angle / pixel_solid_angle
                 b_var_flat = b_var_flat / pixel_solid_angle / pixel_solid_angle
             else:
-                flux = temp_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
+                flux = sum_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
                 f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
                 f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
                 f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
         else:
-            flux = temp_flux  # count rate
+            flux = sum_flux  # count rate
 
-        del temp_flux
+        del sum_flux
 
         error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
         sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
         berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
 
         # Set DQ from the flux value
-        dq = np.zeros(wavelength.shape, dtype=np.uint32)
+        dq = np.zeros(flux.shape, dtype=np.uint32)
         dq[np.isnan(flux)] = datamodels.dqflags.pixel['DO_NOT_USE']
 
         # Make a table of the values, trimming to points with valid wavelengths only
-        wavelength = wavelength[valid]
         otab = np.array(
             list(
                 zip(wavelength, flux[valid], error[valid],
@@ -1449,6 +1463,8 @@ def create_extraction(
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params['dispaxis']
 
+        # Record aperture limits as x/y start/stop values
+        lower_limit, upper_limit, left_limit, right_limit = limits
         if spec.dispersion_direction == HORIZONTAL:
             spec.extraction_xstart = left_limit + 1
             spec.extraction_xstop = right_limit + 1
@@ -1464,8 +1480,10 @@ def create_extraction(
 
         if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
             log.info('Applying Aperture correction.')
-            # NIRSpec needs to use a wavelength in the middle of the range rather then the beginning of the range
-            # for calculating the pixel scale since some wavelengths at the edges of the range won't map to the sky
+            # NIRSpec needs to use a wavelength in the middle of
+            # the range rather than the beginning of the range
+            # for calculating the pixel scale since some wavelengths
+            # at the edges of the range won't map to the sky
             if instrument == 'NIRSPEC':
                 wl = np.median(wavelength)
             else:

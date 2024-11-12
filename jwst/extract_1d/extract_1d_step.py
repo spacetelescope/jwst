@@ -385,7 +385,7 @@ class Extract1dStep(Step):
                 extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
                     model, exp_type)
 
-                if exp_type in extract.IFU_EXPTYPES:
+                if isinstance(model, datamodels.IFUCubeModel):
                     # Call the IFU specific extraction routine
                     extracted = self._extract_ifu(model, exp_type, extract_ref, apcorr_ref)
                 else:
