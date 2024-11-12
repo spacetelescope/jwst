@@ -74,30 +74,6 @@ def map_to_science_slits(input_model, master_bkg):
     return output_model
 
 
-def create_background_from_multislit(input_model):
-    """Create a 1D master background spectrum from a set of
-    calibrated background MOS slitlets in the input
-    MultiSlitModel.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodels.MultiSlitModel`
-        The input data model containing all slit instances.
-
-    Returns
-    -------
-    master_bkg: `~jwst.datamodels.CombinedSpecModel`
-        The 1D master background spectrum created from the inputs.
-    """
-    from ..combine_1d.combine1d import combine_1d_spectra
-
-    # Call combine_1d to combine the 1D background spectra
-    log.info('Combining 1D background spectra into master background')
-    master_bkg = combine_1d_spectra(input_model, exptime_key='exposure_time')
-
-    return master_bkg
-
-
 def correct_nrs_ifu_bkg(input_model):
     """Apply point source vs. uniform source pathloss adjustments
     to a NIRSpec IFU 2D master background array.

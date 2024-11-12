@@ -12,6 +12,7 @@ from ..photom import photom_step
 from ..pixel_replace import pixel_replace_step
 from ..resample import resample_spec_step
 from ..extract_1d import extract_1d_step
+from ..combine_1d.combine1d import combine_1d_spectra
 from ..stpipe import Pipeline
 
 __all__ = ['MasterBackgroundMosStep']
@@ -66,6 +67,7 @@ class MasterBackgroundMosStep(Pipeline):
         'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'extract_1d': extract_1d_step.Extract1dStep,
+        'combine_1d': combine_1d_spectra
     }
 
     # No need to prefetch. This will have been done by the parent step.
@@ -180,9 +182,9 @@ class MasterBackgroundMosStep(Pipeline):
                 del pars[par]
             getattr(self, step).update_pars(pars)
 
-    def _set_steps_params(self):
-        """Get substep parameters to pass on"""
-        steps = ['pixel_replace', 'resample_spec', 'extract_1d']
+    def _set_mospipe_steps_params(self):
+        """Get substep parameters for MOS pipeline to pass on"""
+        steps = ['pixel_replace', 'resample_spec', 'extract_1d', 'combine_1d']
 
         for step in steps:
             pars = getattr(self, step).get_pars()
@@ -281,8 +283,7 @@ class MasterBackgroundMosStep(Pipeline):
                     bkg_model = self.pixel_replace(bkg_model)
                     bkg_model = self.resample_spec(bkg_model)
                     bkg_model = self.extract_1d(bkg_model)
-                    # Call combine_1d to combine the 1D background spectra
-                    master_background = nirspec_utils.create_background_from_multislit(bkg_model)
+                    master_background = self.combine_1d_spectra(bkg_model, exptime_key='exposure_time')
                     del bkg_model
                 else:
                     master_background = None
