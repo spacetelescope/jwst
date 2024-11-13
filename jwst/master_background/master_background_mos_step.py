@@ -164,11 +164,12 @@ class MasterBackgroundMosStep(Pipeline):
         return result
 
     def set_pars_from_parent(self):
-        """Set substep parameters from the parents substeps"""
+        """Set substep parameters from the parents substeps when needed"""
         if not self.parent:
             return
 
-        steps = ['barshadow', 'flat_field', 'pathloss', 'photom']
+        steps = ['barshadow', 'flat_field', 'pathloss', 'photom',
+                 'pixel_replace', 'resample_spec', 'extract_1d', 'combine_1d']
         pars_to_ignore = {
             'barshadow': ['source_type'],
             'flat_field': ['save_interpolated_flat'],
@@ -177,17 +178,12 @@ class MasterBackgroundMosStep(Pipeline):
         }
 
         for step in steps:
-            pars = getattr(self.parent, step).get_pars()
-            for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
-                del pars[par]
-            getattr(self, step).update_pars(pars)
-
-    def _set_mospipe_steps_params(self):
-        """Get substep parameters for MOS pipeline to pass on"""
-        steps = ['pixel_replace', 'resample_spec', 'extract_1d', 'combine_1d']
-
-        for step in steps:
-            pars = getattr(self, step).get_pars()
+            if step in pars_to_ignore:
+                pars = getattr(self.parent, step).get_pars()
+                for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
+                    del pars[par]
+            else:
+                pars = getattr(self, step).get_pars()
             getattr(self, step).update_pars(pars)
 
     def _extend_bg_slits(self, pre_calibrated):
@@ -277,7 +273,6 @@ class MasterBackgroundMosStep(Pipeline):
                 master_background = user_background
             else:
                 self.log.info('Creating MOS master background from background slitlets')
-                self._set_mospipe_steps_params()
                 bkg_model = self._extend_bg_slits(pre_calibrated)
                 if bkg_model is not None:
                     bkg_model = self.pixel_replace(bkg_model)
