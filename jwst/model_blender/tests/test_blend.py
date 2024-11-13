@@ -200,7 +200,7 @@ def test_blendtab(blend):
     # Ensure all the expected FITS keywords are in the table.
     colnames = set(newtab.dtype.fields)
     assert not fits_expected.difference(colnames)
-    assert not MISSING_COLUMN in colnames
+    assert MISSING_COLUMN not in colnames
     for col in colnames:
         if col in input_values:
             assert newtab[col] == input_values[col]
