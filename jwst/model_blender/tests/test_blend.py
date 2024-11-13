@@ -37,6 +37,11 @@ UNKNOWN_MISSING_FIRSTS = [None, 'fizz', 'buzz']
 # even if the metadata is defined in the schema
 KNOWN_MISSING_FIRSTS = [None, '1', '2']
 
+# None of the below test data defines this attribute.
+# It is expected to be missing from the resulting
+# table (as is checked below).
+MISSING_COLUMN = "TIME-OBS"
+
 
 def _make_data():
     """Create a set of input models to blendmeta
@@ -195,6 +200,7 @@ def test_blendtab(blend):
     # Ensure all the expected FITS keywords are in the table.
     colnames = set(newtab.dtype.fields)
     assert not fits_expected.difference(colnames)
+    assert not MISSING_COLUMN in colnames
     for col in colnames:
         if col in input_values:
             assert newtab[col] == input_values[col]
