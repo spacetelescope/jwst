@@ -1336,7 +1336,8 @@ def create_extraction(
         log.warning("The dispersion direction information is missing, so skipping ...")
         raise ContinueError()
 
-    # Set up profile and wavelength array, to be used for every integration
+    # Set up spatial profiles and wavelength array,
+    # to be used for every integration
     (ra, dec, wavelength, profile, bg_profile, limits) = define_aperture(
         input_model, slit, extract_params, exp_type)
 

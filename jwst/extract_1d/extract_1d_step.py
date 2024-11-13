@@ -294,13 +294,7 @@ class Extract1dStep(Step):
 
     def _extract_ifu(self, model, exp_type, extract_ref, apcorr_ref):
         """Extract IFU spectra from a single datamodel."""
-        try:
-            source_type = model.meta.target.source_type
-        except AttributeError:
-            source_type = "UNKNOWN"
-        if source_type is None:
-            source_type = "UNKNOWN"
-
+        source_type = model.meta.target.source_type
         if self.ifu_set_srctype is not None and exp_type == 'MIR_MRS':
             source_type = self.ifu_set_srctype
             self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
