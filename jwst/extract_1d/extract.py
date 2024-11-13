@@ -242,7 +242,7 @@ def get_extract_parameters(
         extract_params['smoothing_length'] = 0  # because no background sub.
         extract_params['bkg_fit'] = None  # because no background sub.
         extract_params['bkg_order'] = 0  # because no background sub.
-        extract_params['subtract_background'] = subtract_background
+        extract_params['subtract_background'] = False
 
         if use_source_posn is None:
             extract_params['use_source_posn'] = False
@@ -289,8 +289,9 @@ def get_extract_parameters(
 
                     extract_params['src_coeff'] = aper.get('src_coeff')
                     extract_params['bkg_coeff'] = aper.get('bkg_coeff')
-                    if extract_params['bkg_coeff'] is not None:
-                        extract_params['subtract_background'] = subtract_background
+                    if (extract_params['bkg_coeff'] is not None
+                            and subtract_background is not False):
+                        extract_params['subtract_background'] = True
                         if bkg_fit is not None:
                             extract_params['bkg_fit'] = bkg_fit
                         else:
@@ -1344,6 +1345,30 @@ def create_extraction(
     valid = ~np.isnan(wavelength)
     wavelength = wavelength[valid]
 
+    # Set up aperture correction, to be used for every integration
+    apcorr_available = False
+    if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
+        # NIRSpec needs to use a wavelength in the middle of the
+        # range rather than the beginning of the range
+        # for calculating the pixel scale since some wavelengths at the
+        # edges of the range won't map to the sky
+        if instrument == 'NIRSPEC':
+            wl = np.median(wavelength)
+        else:
+            wl = wavelength.min()
+
+        kwargs = {'location': (ra, dec, wl)}
+        if not isinstance(input_model, datamodels.ImageModel):
+            kwargs['slit_name'] = slitname
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+                kwargs['slit'] = slitname
+
+        apcorr_model = select_apcorr(input_model)
+        apcorr = apcorr_model(input_model, apcorr_ref_model.apcorr_table,
+                              apcorr_ref_model.sizeunit, **kwargs)
+    else:
+        apcorr = None
+
     # Log the parameters before extracting
     log_initial_parameters(extract_params)
 
@@ -1360,7 +1385,6 @@ def create_extraction(
         progress_msg_printed = False
 
     # Extract each integration
-    apcorr = None
     for integ in integrations:
         (sum_flux, f_var_rnoise, f_var_poisson,
             f_var_flat, background, b_var_rnoise, b_var_poisson,
@@ -1479,25 +1503,11 @@ def create_extraction(
 
         copy_keyword_info(data_model, slitname, spec)
 
-        if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
+        if apcorr is not None:
             log.info('Applying Aperture correction.')
-            # NIRSpec needs to use a wavelength in the middle of
-            # the range rather than the beginning of the range
-            # for calculating the pixel scale since some wavelengths
-            # at the edges of the range won't map to the sky
-            if instrument == 'NIRSPEC':
-                wl = np.median(wavelength)
-            else:
-                wl = wavelength.min()
-
-            # Determine whether we have a tabulated aperture correction
-            # available to save time.
-
-            apcorr_available = False
-            if apcorr is not None:
-                if hasattr(apcorr, 'tabulated_correction'):
-                    if apcorr.tabulated_correction is not None:
-                        apcorr_available = True
+            if hasattr(apcorr, 'tabulated_correction'):
+                if apcorr.tabulated_correction is not None:
+                    apcorr_available = True
 
             # See whether we can reuse the previous aperture correction
             # object.  If so, just apply the pre-computed correction to
@@ -1505,27 +1515,7 @@ def create_extraction(
             if apcorr_available:
                 # re-use the last aperture correction
                 apcorr.apply(spec.spec_table, use_tabulated=True)
-
             else:
-                if isinstance(input_model, datamodels.ImageModel):
-                    apcorr = select_apcorr(input_model)(
-                        input_model,
-                        apcorr_ref_model.apcorr_table,
-                        apcorr_ref_model.sizeunit,
-                        location=(ra, dec, wl)
-                    )
-                else:
-                    match_kwargs = {'location': (ra, dec, wl)}
-                    if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-                        match_kwargs['slit'] = slitname
-
-                    apcorr = select_apcorr(input_model)(
-                        input_model,
-                        apcorr_ref_model.apcorr_table,
-                        apcorr_ref_model.sizeunit,
-                        slit_name=slitname,
-                        **match_kwargs
-                    )
                 # Attempt to tabulate the aperture correction for later use.
                 # If this fails, fall back on the old method.
                 try:
