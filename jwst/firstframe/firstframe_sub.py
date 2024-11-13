@@ -33,7 +33,7 @@ def do_correction(output, bright_use_group1=False):
     """
 
     # Save some data params for easy use later
-    sci_ngroups = output.data.shape[1]
+    sci_ngroups = output.meta.exposure.ngroups
 
     # Update the step status, and if ngroups > 3, set all GROUPDQ in
     # the first group to 'DO_NOT_USE'
