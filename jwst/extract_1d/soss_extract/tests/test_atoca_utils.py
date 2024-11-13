@@ -373,7 +373,7 @@ def kernel_init():
     with maximum at the center, uniform in wavelength.
     """
     n_os = 3
-    n_pix = 15 # full width of kernel
+    n_pix = 25 # full width of kernel
     n_wave = 20
     wave_range = (2.0, 5.0)
     wavelengths = np.linspace(*wave_range, n_wave)
@@ -482,18 +482,37 @@ def test_fct_to_array(kernel):
     grid_range = [0, grid.size]
 
     kern_array = au._fct_to_array(kernel, grid, grid_range, thresh)
+
+    # check shape
     assert kern_array.ndim == 2
-    # test that kernel is set to unity at its center
+    assert kern_array.shape[1] == grid.size
+    assert kern_array.shape[0]%2 == 1
 
-    #TODO: need to define a more realistic kernel because this one doesn't have any wings
+    # test that the max is at the center
+    kern_slice = kern_array[:,kern_array.shape[1]//2]
+    assert kern_slice[kern_slice.size//2] == np.max(kern_slice)
+
+    # test that weights have been applied at edges
+    kern_center = kern_array[kern_array.shape[0]//2]
+    assert np.isclose(kern_center[0], kern_center[1]/2)
+    assert np.isclose(kern_center[-1], kern_center[-2]/2)
 
 
-def test_sparse_c():
+@pytest.fixture(scope="module")
+def kern_array(kernel):
+
+    return au._fct_to_array(kernel, np.linspace(2.0, 4.0, 50), [0, 50], 1e-5)
+
+
+def test_sparse_c(kern_array):
     """Here kernel must be a 2-D array already, of shape (N_ker, N_k_convolved)"""
 
-    kern_array = np.array([])
-
+    # test typical case n_k = n_kc and i=0
+    n_k = kern_array.shape[1]
+    i_zero = 0
     matrix = au._sparse_c(kern_array, n_k, i_zero)
+
+    # TODO: add more here
 
 
 def test_get_c_matrix(kernel):
@@ -519,3 +538,40 @@ def test_get_c_matrix(kernel):
 
 
     # Test invalid kernel input (wrong dimensions)
+
+
+def test_finite_first_diff():
+
+    wave_grid = np.linspace(0, 2*np.pi, 100)
+    test_0 = np.ones_like(wave_grid)
+    test_sin = np.sin(wave_grid)
+
+    first_d = au.finite_first_d(wave_grid)
+    assert first_d.size == (wave_grid.size - 1)*2
+
+    # test trivial example returning zeros for constant
+    f0 = first_d.dot(test_0)
+    assert np.allclose(f0, 0)
+
+    # test derivative of sin returns cos
+    wave_between = (wave_grid[1:] + wave_grid[:-1])/2
+    f_sin = first_d.dot(test_sin)
+    assert np.allclose(f_sin, np.cos(wave_between), atol=1e-3)
+
+
+@pytest.fixture(scope="module")
+def tikhoTests():
+    """Make a TikhoTests dictionary"""
+
+
+    return au.TikhoTests({'factors': factors,
+                          'solution': sln,
+                          'error': err,
+                          'reg': reg,
+                          'grid': wave_grid})
+
+
+
+def test_tikho_tests(tikhoTests):
+
+    assert False

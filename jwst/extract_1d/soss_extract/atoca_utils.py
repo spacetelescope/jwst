@@ -1173,8 +1173,6 @@ def _fct_to_array(fct, grid, grid_range, thresh):
 
     # Add wings: Generate a 2D array of the grid iteratively until
     # thresh is reached everywhere.
-    # TODO: surely we can make this faster? avoid a while loop by figuring out
-    # where threshold will be reached a priori somehow?
     length = 1
     h_len = 0  # Half length
     while True:
@@ -1207,6 +1205,9 @@ def _sparse_c(ker, n_k, i_zero):
     """
     Convert a convolution kernel in compact form (N_ker, N_k_convolved)
     to sparse form (N_k_convolved, N_k)
+
+    TODO: why is all the formalism for defining the diagonal necessary? why can't csr_matrix be
+    called directly? there must be a reason, but add documentation!
 
     Parameters
     ----------
@@ -1258,13 +1259,12 @@ def _sparse_c(ker, n_k, i_zero):
 def get_c_matrix(kernel, grid, i_bounds=None, thresh=1e-5):
     """
     Return a convolution matrix
-    Can return a sparse matrix (N_k_convolved, N_k)
-    or a matrix in the compact form (N_ker, N_k_convolved).
+    Returns a sparse matrix (N_k_convolved, N_k).
     N_k is the length of the grid on which the convolution
     will be applied, N_k_convolved is the length of the
     grid after convolution and N_ker is the maximum length of
-    the kernel. If the default sparse matrix option is chosen,
-    the convolution can be applied on an array f | f = fct(grid)
+    the kernel.
+    The convolution can be applied on an array f | f = fct(grid)
     by a simple matrix multiplication:
     f_convolved = c_matrix.dot(f)
 
@@ -1339,47 +1339,12 @@ def _finite_diff(x):
         the result is the same as np.diff(x)
     """
     n_x = len(x)
-
-    # Build matrix
     diff_matrix = diags([-1.], shape=(n_x - 1, n_x))
     diff_matrix += diags([1.], 1, shape=(n_x - 1, n_x))
-
     return diff_matrix
 
 
-def _finite_second_d(grid):
-    """Returns the second derivative operator based on grid
-
-    Parameters
-    ----------
-    grid : array[float]
-        1D array where the second derivative will be computed.
-
-    Returns
-    -------
-    second_d : array[float]
-        Operator to compute the second derivative, so that
-        f" = second_d.dot(f), where f is a function
-        projected on `grid`.
-    """
-
-    # Finite difference operator
-    d_matrix = _finite_diff(grid)
-
-    # Delta lambda
-    d_grid = d_matrix.dot(grid)
-
-    # First derivative operator
-    first_d = diags(1. / d_grid).dot(d_matrix)
-
-    # Second derivative operator
-    second_d = _finite_diff(grid[:-1]).dot(first_d)
-
-    # don't forget the delta lambda
-    return diags(1. / d_grid[:-1]).dot(second_d)
-
-
-def _finite_first_d(grid):
+def finite_first_d(grid):
     """Returns the first derivative operator based on grid
 
     Parameters
@@ -1390,7 +1355,7 @@ def _finite_first_d(grid):
     Returns
     -------
     first_d : array[float]
-        Operator to compute the second derivative, so that
+        Operator to compute the first derivative, so that
         f' = first_d.dot(f), where f is a function
         projected on `grid`.
     """
@@ -1405,86 +1370,6 @@ def _finite_first_d(grid):
     return diags(1. / d_grid).dot(d_matrix)
 
 
-def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0):
-    """
-    TODO: can all this Tikhonov stuff go into the classes?
-
-    Wrapper to return the tikhonov matrix given a grid and the derivative degree.
-
-    Parameters
-    ----------
-    grid : array[float]
-        1D grid where the Tikhonov matrix is projected
-    n_derivative : int, optional
-        Degree of derivative. Possible values are 1 or 2
-    d_grid : bool, optional
-        Whether to divide the differential operator by the grid differences,
-        which corresponds to an actual approximation of the derivative or not.
-    estimate : callable (preferably scipy.interpolate.UnivariateSpline), optional
-        Estimate of the solution on which the tikhonov matrix is applied.
-        Must be a function of `grid`. If UnivariateSpline, then the derivatives
-        are given directly (so best option), otherwise the tikhonov matrix will be
-        applied to `estimate(grid)`. Note that it is better to use `d_grid=True`
-    pwr_law: float, optional
-        Power law applied to the scale differentiated estimate, so the estimate
-        of tikhonov_matrix.dot(solution). It will be applied as follows:
-        norm_factor * scale_factor.dot(tikhonov_matrix)
-        where scale_factor = 1/(estimate_derivative)**pwr_law
-        and norm_factor = 1/sum(scale_factor)
-    Returns
-    -------
-    t_mat : array[float]
-        The tikhonov matrix.
-    """
-    if d_grid:
-        input_grid = grid
-    else:
-        input_grid = np.arange(len(grid))
-
-    if n_derivative == 1:
-        t_mat = _finite_first_d(input_grid)
-    elif n_derivative == 2:
-        t_mat = _finite_second_d(input_grid)
-    else:
-        msg = "`n_derivative` must be 1 or 2."
-        log.critical(msg)
-        raise ValueError(msg)
-
-    if estimate is not None:
-        if hasattr(estimate, 'derivative'):
-            # Get the derivatives directly from the spline
-            if n_derivative == 1:
-                derivative = estimate.derivative(n=n_derivative)
-                tikho_factor_scale = derivative(grid[:-1])
-            elif n_derivative == 2:
-                derivative = estimate.derivative(n=n_derivative)
-                tikho_factor_scale = derivative(grid[1:-1])
-        else:
-            # Apply tikho matrix on estimate
-            tikho_factor_scale = t_mat.dot(estimate(grid))
-
-        # Make sure all positive
-        tikho_factor_scale = np.abs(tikho_factor_scale)
-        # Apply power law
-        # (similar to 'kunasz1973'?)
-        tikho_factor_scale = np.power(tikho_factor_scale, -pwr_law)
-        # Normalize
-        valid = np.isfinite(tikho_factor_scale)
-        tikho_factor_scale /= np.sum(tikho_factor_scale[valid])
-
-        # If some values are not finite, set to the max value
-        # so it will be more regularized
-        valid = np.isfinite(tikho_factor_scale)
-        if not valid.all():
-            value = np.max(tikho_factor_scale[valid])
-            tikho_factor_scale[~valid] = value
-
-        # Apply to tikhonov matrix
-        t_mat = diags(tikho_factor_scale).dot(t_mat)
-
-    return t_mat
-
-
 def _curvature_finite(factors, log_reg2, log_chi2):
     """Compute the curvature in log space using finite differences
 
@@ -1492,8 +1377,10 @@ def _curvature_finite(factors, log_reg2, log_chi2):
     ----------
     factors : array[float]
         Regularisation factors (not in log).
+
     log_reg2 : array[float]
         norm-2 of the regularisation term (in log10).
+
     log_chi2 : array[float]
         norm-2 of the chi2 term (in log10).
 
@@ -1501,8 +1388,8 @@ def _curvature_finite(factors, log_reg2, log_chi2):
     -------
     factors : array[float]
         Sorted and cut version of input factors array.
-    curvature : array[float]
 
+    curvature : array[float]
     """
     # Make sure it is sorted according to the factors
     idx = np.argsort(factors)
@@ -1585,7 +1472,7 @@ def _get_interp_idx_array(idx, relative_range, max_length):
     return np.arange(*abs_range, 1)
 
 
-def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
+def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=[-2,4]):
     """ Find minimum of a grid using akima spline interpolation to get a finer estimate
 
     Parameters
@@ -1605,9 +1492,6 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
     min_fac : float
         The factor with minimized error/curvature.
     """
-
-    if interp_index is None:
-        interp_index = [-2, 4]
 
     # Only keep finite values
     idx_finite = np.isfinite(val_to_minimize)
@@ -1650,23 +1534,26 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
     return min_fac
 
 
-def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
+def _find_intersect(factors, y_val, thresh, interpolate=True, search_range=[0,3]):
     """ Find the root of y_val - thresh (so the intersection between thresh and y_val)
     Parameters
     ----------
     factors : array[float]
         1D array of Tikhonov factors for which value array is calculated
+
     y_val : array[float]
         1D array of values.
+
     thresh: float
         Threshold use in 'd_chi2' mode. Find the highest factor where the
         derivative of the chi2 derivative is below thresh.
-    interpolate: bool, optional
+
+    interpolate: bool, optional, default True.
         If True, use interpolation to find a finer minimum;
         otherwise, return minimum value in array.
-    search_range : iterable[int], optional
+
+    search_range : iterable[int], optional, default [0,3]
         Relative range of grid indices around the value to interpolate.
-        If not specified, defaults to [0,3].
 
     Returns
     -------
@@ -1674,9 +1561,6 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
         Factor corresponding to the best approximation of the intersection
         point.
     """
-
-    if search_range is None:
-        search_range = [0, 3]
 
     # Only keep finite values
     idx_finite = np.isfinite(y_val)
@@ -1755,12 +1639,18 @@ class TikhoTests(dict):
         by default.
     """
 
-    DEFAULT_TRESH_DERIVATIVE = (('chi2', 1e-5),
+    DEFAULT_THRESH_DERIVATIVE = (('chi2', 1e-5),
                                 ('chi2_soft_l1', 1e-4),
                                 ('chi2_cauchy', 1e-3))
 
-    def __init__(self, test_dict=None, default_chi2='chi2_cauchy'):
+    def __init__(self, test_dict, default_chi2='chi2_cauchy'):
         """
+        TODO: always instantiated with a dict, no reason for optional
+        always uses default chi2 option, no need to make optional or support other options
+
+        Dict always has the following five keys:
+        'factors', 'solution', 'error', 'reg', 'grid'
+
         Parameters
         ----------
         test_dict : dict
@@ -1771,18 +1661,14 @@ class TikhoTests(dict):
         """
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
-        if test_dict is None:
-            log.warning('Unable to get the number of data points. Setting `n_points` to 1')
-            n_points = 1
-        else:
-            n_points = len(test_dict['error'][0].squeeze())
+        n_points = len(test_dict['error'][0].squeeze())
 
         # Save attributes
         self.n_points = n_points
         self.default_chi2 = default_chi2
         self.default_thresh = {chi2_type: thresh
                                for (chi2_type, thresh)
-                               in self.DEFAULT_TRESH_DERIVATIVE}
+                               in self.DEFAULT_THRESH_DERIVATIVE}
 
         # Initialize so it behaves like a dictionary
         super().__init__(test_dict)
@@ -1795,58 +1681,42 @@ class TikhoTests(dict):
                 # Save the chi2
                 self[chi2_type]
             except KeyError:
-                self[chi2_type] = self._compute_chi2(loss=loss)
+                self[chi2_type] = self._compute_chi2(loss)
 
 
-    def _compute_chi2(self, tests=None, loss='linear'):
+    def _compute_chi2(self, loss):
         """
         TODO: is there a scipy builtin that does this?
         Calculates the reduced chi squared statistic
 
         Parameters
         ----------
-        tests : dict, optional
-            Dictionary from which we take the error array; if not provided,
-            self is used
-        n_points : int, optional
-            Number of data points; if not provided, self.n_points is used
+        loss: str
+            Type of loss function to use. Options are 'linear', 'soft_l1', 'cauchy'.
 
         Returns
         -------
         float
             Sum of the squared error array divided by the number of data points
         """
-        # If not given, take the tests from the object
-        if tests is None:
-            tests = self
-
-        # Get the loss function
-        if isinstance(loss, str):
-            try:
-                loss = LOSS_FUNCTIONS[loss]
-            except KeyError as e:
-                keys = [key for key in LOSS_FUNCTIONS.keys()]
-                msg = f'loss={loss} not a valid key. Must be one of {keys} or callable.'
-                raise e(msg)
-        elif not callable(loss):
-            raise ValueError('Invalid value for loss.')
+        # retrieve loss function
+        try:
+            loss = LOSS_FUNCTIONS[loss]
+        except KeyError as e:
+            keys = [key for key in LOSS_FUNCTIONS.keys()]
+            msg = f'loss={loss} not a valid key. Must be one of {keys} or callable.'
+            raise e(msg)
 
         # Compute the reduced chi^2 for all tests
-        chi2 = np.nanmean(loss(tests['error']**2), axis=-1)
+        chi2 = np.nanmean(loss(self['error']**2), axis=-1)
         # Remove residual dimensions
-        chi2 = chi2.squeeze()
+        return chi2.squeeze()
 
-        return chi2
 
-    def get_chi2_derivative(self, key=None):
+    def _get_chi2_derivative(self):
         """
         TODO: is there a scipy builtin that does this?
         Compute derivative of the chi2 with respect to log10(factors)
-
-        Parameters
-        ----------
-        key: str
-            which chi2 is used for computations. Default is self.default_chi2.
 
         Returns
         -------
@@ -1855,8 +1725,7 @@ class TikhoTests(dict):
         d_chi2 : array[float]
             derivative of chi squared array with respect to log10(factors)
         """
-        if key is None:
-            key = self.default_chi2
+        key = self.default_chi2
 
         # Compute finite derivative
         fac_log = np.log10(self['factors'])
@@ -1868,27 +1737,24 @@ class TikhoTests(dict):
 
         return factors_leftd, d_chi2
 
-    def compute_curvature(self, tests=None, key=None):
 
-        if key is None:
-            key = self.default_chi2
-
-        # If not given, take the tests from the object
-        if tests is None:
-            tests = self
+    def _compute_curvature(self):
+        """
+        TODO: add docstring
+        TODO: can this be combined with _curvature_finite?
+        """
+        key = self.default_chi2
 
         # Compute the curvature...
         # Get the norm-2 of the regularisation term
-        reg2 = np.nansum(tests['reg'] ** 2, axis=-1)
+        reg2 = np.nansum(self['reg'] ** 2, axis=-1)
 
-        factors, curv = _curvature_finite(tests['factors'],
+        return _curvature_finite(self['factors'],
                                          np.log10(self[key]),
                                          np.log10(reg2))
 
-        return factors, curv
 
-    def best_tikho_factor(self, tests=None, interpolate=True, interp_index=None,
-                          mode='curvature', key=None, thresh=None):
+    def best_tikho_factor(self, mode='curvature'):
         """
         TODO: why is there a function with identical name in atoca.py ExtractionEngine?
         this one is called by the other one...
@@ -1897,61 +1763,42 @@ class TikhoTests(dict):
         It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
         depending on the chosen mode.
+
         Parameters
         ----------
-        tests : dictionary, optional
-            Results of tikhonov extraction tests for different factors.
-            Must have the keys "factors" and "-logl". If not specified,
-            the tests from self.tikho.tests are used.
-        interpolate : bool, optional
-            If True, use spline interpolation to find a finer minimum.
-            Default is true.
-        interp_index : list, optional
-            Relative range of grid indices around the minimum value to
-            interpolate across. If not specified, defaults to [-2,4].
         mode : string
             How to find the best factor: 'chi2', 'curvature' or 'd_chi2'.
-        thresh : float
-            Threshold for use in 'd_chi2' mode. Find the highest factor where
-            the derivative of the chi2 derivative is below thresh.
 
         Returns
         -------
         float
             Best scale factor as determined by the selected algorithm
         """
-        if key is None:
-            key = self.default_chi2
-
-        if thresh is None:
-            thresh = self.default_thresh[key]
-
-        # Use pre-run tests if not specified
-        if tests is None:
-            tests = self
+        key = self.default_chi2
+        thresh = self.default_thresh[key]
 
         # Number of factors
-        n_fac = len(tests['factors'])
+        n_fac = len(self['factors'])
 
         # Determine the mode (what do we minimize?)
         if mode == 'curvature' and n_fac > 2:
             # Compute the curvature
-            factors, curv = tests.compute_curvature()
+            factors, curv = self._compute_curvature()
 
             # Find min factor
-            best_fac = _minimize_on_grid(factors, curv, interpolate, interp_index)
+            best_fac = _minimize_on_grid(factors, curv)
 
         elif mode == 'chi2':
             # Simply take the chi2 and factors
-            factors = tests['factors']
-            y_val = tests[key]
+            factors = self['factors']
+            y_val = self[key]
 
             # Find min factor
-            best_fac = _minimize_on_grid(factors, y_val, interpolate, interp_index)
+            best_fac = _minimize_on_grid(factors, y_val)
 
         elif mode == 'd_chi2' and n_fac > 1:
             # Compute the derivative of the chi2
-            factors, y_val = tests.get_chi2_derivative()
+            factors, y_val = self._get_chi2_derivative()
 
             # Remove values for the higher factors that
             # are not already below thresh. If not _find_intersect
@@ -1973,11 +1820,12 @@ class TikhoTests(dict):
                 idx = slice(None)
 
             # Find intersection with threshold
-            best_fac = _find_intersect(factors[idx], y_val[idx], thresh, interpolate, interp_index)
+            best_fac = _find_intersect(factors[idx], y_val[idx], thresh)
 
         elif mode in ['curvature', 'd_chi2', 'chi2']:
-            best_fac = np.max(tests['factors'])
-            msg = (f'Could not compute {mode} because number of factor={n_fac}. '
+            best_fac = np.max(self['factors'])
+            msg = (f'Could not compute {mode} because number of factors {n_fac} '
+                   'is too small for that mode.'
                    f'Setting best factor to max factor: {best_fac:.5e}')
             log.warning(msg)
 
@@ -2138,10 +1986,12 @@ class Tikhonov:
         reg = np.array(reg)
 
         # Save in a dictionary
+        print(factors)
+        print(sln)
+        print(err)
+        print(reg)
 
-        tests = TikhoTests({'factors': factors,
+        return TikhoTests({'factors': factors,
                             'solution': sln,
                             'error': err,
                             'reg': reg})
-
-        return tests

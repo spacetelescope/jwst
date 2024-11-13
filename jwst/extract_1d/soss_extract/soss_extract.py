@@ -24,8 +24,6 @@ log.setLevel(logging.DEBUG)
 
 ORDER2_SHORT_CUTOFF = 0.58
 
-# TODO: replace all .__call__ with just an actual call to the object
-
 
 def get_ref_file_args(ref_files):
     """
@@ -222,7 +220,7 @@ def _estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tr
     engine = ExtractionEngine(*ref_file_args, wave_grid, [mask], **kwargs)
 
     # Extract estimate
-    spec_estimate = engine.__call__(scidata_bkg, scierr)
+    spec_estimate = engine(scidata_bkg, scierr)
 
     # Interpolate
     idx = np.isfinite(spec_estimate)
@@ -608,14 +606,14 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         guess_factor = engine.estimate_tikho_factors(estimate)
         log_guess = np.log10(guess_factor)
         factors = np.logspace(log_guess - 4, log_guess + 4, 10)
-        all_tests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
-        tikfac= engine.best_tikho_factor(tests=all_tests, fit_mode='all')
+        all_tests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
+        tikfac= engine.best_tikho_factor(all_tests, fit_mode='all')
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
-        tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr)
-        tikfac = engine.best_tikho_factor(tests=tiktests, fit_mode='d_chi2')
+        tiktests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
+        tikfac = engine.best_tikho_factor(tiktests, fit_mode='d_chi2')
         # Add all theses tests to previous ones
         all_tests = _append_tiktests(all_tests, tiktests)
 
@@ -637,7 +635,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
     # Run the extract method of the Engine.
-    f_k = engine.__call__(scidata_bkg, scierr, tikhonov=True, factor=tikfac)
+    f_k = engine(scidata_bkg, scierr, tikhonov=True, factor=tikfac)
 
     # Compute the log-likelihood of the best fit.
     logl = engine.compute_likelihood(f_k, scidata_bkg, scierr)
@@ -811,18 +809,18 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
     # Find the tikhonov factor.
     # Initial pass with tikfac_range.
     factors = np.logspace(tikfac_log_range[0], tikfac_log_range[-1] + 8, 10)
-    all_tests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
+    all_tests = engine.get_tikho_tests(factors, data_order, err_order)
     tikfac = engine.best_tikho_factor(tests=all_tests, fit_mode='all')
 
     # Refine across 4 orders of magnitude.
     tikfac = np.log10(tikfac)
     factors = np.logspace(tikfac - 2, tikfac + 2, 20)
-    tiktests = engine.get_tikho_tests(factors, data=data_order, error=err_order)
-    tikfac = engine.best_tikho_factor(tests=tiktests, fit_mode='d_chi2')
+    tiktests = engine.get_tikho_tests(factors, data_order, err_order)
+    tikfac = engine.best_tikho_factor(tiktests, fit_mode='d_chi2')
     all_tests = _append_tiktests(all_tests, tiktests)
 
     # Run the extract method of the Engine.
-    f_k_final = engine.__call__(data_order, err_order, tikhonov=True, factor=tikfac)
+    f_k_final = engine(data_order, err_order, tikhonov=True, factor=tikfac)
 
     # Save binned spectra in a list of SingleSpecModels for optional output
     spec_list = []

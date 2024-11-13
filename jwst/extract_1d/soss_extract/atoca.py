@@ -632,8 +632,7 @@ class ExtractionEngine:
         if self._tikho_mat is not None:
             return self._tikho_mat
 
-        fkwargs = {'n_derivative': 1, 'd_grid': True, 'estimate': None, 'pwr_law': 0}
-        self._tikho_mat = atoca_utils.get_tikho_matrix(self.wave_grid, **fkwargs)
+        self._tikho_mat = atoca_utils.finite_first_d(self.wave_grid)
         return self._tikho_mat
 
 
