@@ -65,7 +65,9 @@ def extract_defaults():
                'xstart': 0,
                'xstop': 49,
                'ystart': 0,
-               'ystop': 49}
+               'ystop': 49,
+               'psf': 'N/A',
+               'specwcs': 'N/A'}
     return default
 
 
