@@ -87,7 +87,7 @@ def locn_from_wcs(input_model, slit, targ_ra, targ_dec):
 
     Returns
     -------
-    middle : int
+    middle : int or None
         Pixel coordinate in the dispersion direction within the 2-D
         cutout (or the entire input image) at the middle of the WCS
         bounding box.  This is the point at which to determine the
@@ -95,16 +95,16 @@ def locn_from_wcs(input_model, slit, targ_ra, targ_dec):
         spectrum.  The offset will then be the difference between
         `locn` (below) and the nominal location.
 
-    middle_wl : float
+    middle_wl : float or None
         The wavelength at pixel `middle`.
 
-    locn : float
+    locn : float or None
         Pixel coordinate in the cross-dispersion direction within the
         2-D cutout (or the entire input image) that has right ascension
         and declination coordinates corresponding to the target location.
         The spectral extraction region should be centered here.
 
-    None will be returned if there was not sufficient information
+    None values will be returned if there was insufficient information
     available, e.g. if the wavelength attribute or wcs function is not
     defined.
     """
@@ -179,10 +179,10 @@ def locn_from_wcs(input_model, slit, targ_ra, targ_dec):
             x_y = wcs.backward_transform(dithra, dithdec, middle_wl)
         except AttributeError:
             log.warning("Dithered pointing location not found in wcsinfo.")
-            return
+            return None, None, None
     else:
         log.warning(f"Source position cannot be found for EXP_TYPE {exp_type}")
-        return
+        return None, None, None
 
     # locn is the XD location of the spectrum:
     if dispaxis == HORIZONTAL:
@@ -192,7 +192,7 @@ def locn_from_wcs(input_model, slit, targ_ra, targ_dec):
 
     if np.isnan(locn):
         log.warning('Source position could not be determined from WCS.')
-        return
+        return None, None, None
 
     # todo - review this
     if locn < lower or locn > upper and targ_ra > 340.:
@@ -216,6 +216,6 @@ def locn_from_wcs(input_model, slit, targ_ra, targ_dec):
     if locn < lower or locn > upper:
         log.warning(f"WCS implies the target is at {locn:.2f}, which is outside the bounding box,")
         log.warning("so we can't get spectrum location using the WCS")
-        locn = None
+        return None, None, None
 
     return middle, middle_wl, locn
