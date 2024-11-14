@@ -1,9 +1,6 @@
 """
 Test for extract_1d._fit_background_model
 """
-import math
-from copy import deepcopy
-
 import numpy as np
 import pytest
 
