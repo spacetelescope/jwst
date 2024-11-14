@@ -121,6 +121,41 @@ To setup to use the server, use the following settings:
     export CRDS_PATH=$HOME/crds_cache/
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
+CRDS Cache Configuration for Developers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For most pipeline users, the above settings will suffice for establishing a consistent
+local cache.  For pipeline developers or testers, however, it is important to be aware
+that if you need to switch between CRDS servers (e.g. the `ops` and `test` servers), you
+will need to establish a separate cache for each server.  Using the same cache for
+more than one server will lead to a corrupted local cache.
+
+For example, the recommended configuration for developers while using the `ops` server is :
+
+::
+
+    export CRDS_PATH=$HOME/crds_cache/jwst_ops
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+and while using the `test` server:
+
+::
+
+    export CRDS_PATH=$HOME/crds_cache/jwst_test
+    export CRDS_SERVER_URL=https://jwst-test-crds.stsci.edu
+
+If your cache does become corrupted, the best way to fix it is simply to remove
+the local cache and allow subsequent pipeline runs to repopulate it as needed.
+For example:
+
+::
+
+    rm -r $CRDS_PATH
+
+For more information on CRDS configuration, see the
+`CRDS user guide
+<https://jwst-crds.stsci.edu/static/users_guide/environment.html>`__
+posted to the JWST CRDS server.
 
 .. _python_crds_variables:
 

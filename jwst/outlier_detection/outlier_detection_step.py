@@ -26,8 +26,11 @@ __all__ = ["OutlierDetectionStep"]
 class OutlierDetectionStep(Step):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
 
-    Input images can be listed in an input association file or already opened
-    with a ModelContainer.  DQ arrays are modified in place.
+    Input images can be listed in an input association file or dictionary,
+    or already opened with a ModelContainer or ModelLibrary.
+    DQ arrays are modified in place.
+    SCI, ERR, VAR_RNOISE, VAR_FLAT, and VAR_POISSON arrays are updated with
+    NaN values matching the DQ flags.
 
     Parameters
     -----------
@@ -43,7 +46,7 @@ class OutlierDetectionStep(Step):
         weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
-        fillval = string(default='INDEF')
+        fillval = string(default='NAN')
         maskpt = float(default=0.7)
         snr = string(default='5.0 4.0')
         scale = string(default='1.2 0.7')
@@ -156,7 +159,7 @@ class OutlierDetectionStep(Step):
             return self.mode
 
         # guess mode from input type
-        if isinstance(input_models, (str, dict)):
+        if isinstance(input_models, (str, dict, list)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Select which version of OutlierDetection
@@ -199,6 +202,8 @@ class OutlierDetectionStep(Step):
         try:   
             if isinstance(input_models, ModelLibrary):
                 asn_id = input_models.asn["asn_id"]
+            elif isinstance(input_models, ModelContainer):
+                asn_id = input_models.asn_table["asn_id"]
             else:
                 asn_id = input_models.meta.asn_table.asn_id
         except (AttributeError, KeyError):
@@ -220,7 +225,7 @@ class OutlierDetectionStep(Step):
     
     def _set_status(self, input_models, status):
         # this might be called with the input which might be a filename or path
-        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary)):
+        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
             input_models = datamodels.open(input_models)
 
         record_step_status(input_models, "outlier_detection", status)

@@ -133,6 +133,8 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
         Size of input data on x axis
     ny : int
         Since of inut data on y axis
+    kern_size : tuple
+        Size of the kernel to use for median filtering
     threshold_percent : float
         Percent for flagging outliers. Flags pixels where the minimum difference between
         adjacent pixels for all the input data for a detector is above this percentage. The
@@ -143,6 +145,9 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
     ifu_second_check : boolean
         If True then perform a secondary check searching for outliers. This will set outliers
         where ever the difference array of adjacent pixels is a Nan.
+    make_output_path : function
+        The functools.partial instance to pass to save_median. Has no effect if
+        save_intermediate_results is False.
     """
 
     # set up array to hold group differences

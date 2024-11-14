@@ -22,7 +22,7 @@ dependencies = [
     "astropy>=5.3",
     "BayesicFitting>=3.0.1",
     "crds>=11.17.14",
-    "drizzle>=1.15.0",
+    "drizzle>=2.0.0",
     "gwcs>=0.21.0,<0.23.0",
     "numpy>=1.22,<2.0",
     "opencv-python-headless>=4.6.0.66",
@@ -35,8 +35,8 @@ dependencies = [
     "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    "stdatamodels>=2.1.0,<2.2.0",
-    "stpipe>=0.7.0,<0.8.0",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
     "tweakwcs>=0.8.8",
@@ -77,7 +77,6 @@ csvconvert = "jwst.csv_tools.csvconvert:CSVConvertScript"
 exp_to_source = "jwst.exp_to_source.main:Main"
 okify_regtests = "jwst.scripts.okify_regtests:main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
-schema_editor = "jwst.scripts.schema_editor:main"
 schemadoc = "jwst.scripts.schemadoc:main"
 set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
 "set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
@@ -111,6 +110,7 @@ test = [
     "colorama>=0.4.1",
     "readchar>=3.0",
     "ruff",
+    "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
     "pytest-doctestplus>=0.10.0",
@@ -156,7 +156,8 @@ namespaces = false
 ]
 "jwst.lib" = [
     "tests/data/*.asdf",
-    "tests/data/*.db",
+    "tests/data/**/*.db",
+    "tests/data/**/*.xml",
     "tests/data/*.ecsv",
     "tests/data/*.fits",
 ]
@@ -210,6 +211,7 @@ addopts = [
     "-p no:legacypath",
     "--show-capture=no",
     "--report-crds-context",
+    "--color=yes",
 ]
 filterwarnings = [
     "error::ResourceWarning",
@@ -265,7 +267,7 @@ lint.ignore = [
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
     "ANN101", # Missing type annotation for self in method
-    "ANN102", # Missing type annotation for cls in classmethod    
+    "ANN102", # Missing type annotation for cls in classmethod
 ]
 
 [tool.ruff.lint.per-file-ignores]

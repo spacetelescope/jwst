@@ -74,7 +74,7 @@ class Ami3Pipeline(Pipeline):
 
             # Do the LG analysis for this image
             log.debug('Do LG processing for member %s', input_file)
-            result1, result2, result3 = self.ami_analyze(input_file)
+            result1, result2, result3 = self.ami_analyze.run(input_file)
 
             # Save the averaged LG analysis results to a file
             result1.meta.asn.pool_name = asn['asn_pool']
@@ -90,7 +90,7 @@ class Ami3Pipeline(Pipeline):
 
             # Do the LG analysis for this image
             log.debug('Do LG processing for member %s', input_file)
-            result1, result2, result3 = self.ami_analyze(input_file)
+            result1, result2, result3 = self.ami_analyze.run(input_file)
 
             # Save the LG analysis results to a file
             result1.meta.asn.pool_name = asn['asn_pool']
@@ -104,7 +104,7 @@ class Ami3Pipeline(Pipeline):
         # assuming one ref star exposure per targ exposure
         if (len(psf_files) > 0) & (len(targ_files) > 0): 
             for (targ, psf) in zip(targ_lg,psf_lg):
-                result = self.ami_normalize(targ, psf)
+                result = self.ami_normalize.run(targ, psf)
                 # Save the result
                 result.meta.asn.pool_name = asn['asn_pool']
                 result.meta.asn.table_name = op.basename(asn.filename)

@@ -6,6 +6,7 @@ import os
 
 from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
+from stcal.alignment.util import compute_s_region_imaging
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
@@ -83,6 +84,7 @@ def test_flag_cr(sci_blot_image_pair):
     _flag_resampled_model_crs(
         sci,
         blot.data,
+        None,
         5.0,
         4.0,
         1.2,
@@ -150,6 +152,7 @@ def we_many_sci(
 
     # Replace the FITS-type WCS with an Identity WCS
     sci1.meta.wcs = create_fitswcs(sci1)
+    sci1.meta.wcsinfo.s_region = compute_s_region_imaging(sci1.meta.wcs, shape=shape, center=False)
     rng = np.random.default_rng(720)
     sci1.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci1.err = np.zeros(shape) + sigma
@@ -553,13 +556,13 @@ def test_outlier_step_image_weak_cr_coron(exptype, tsovisit, tmp_cwd):
 
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
-def test_outlier_step_weak_cr_tso(exptype, tsovisit):
+@pytest.mark.parametrize("rolling_window_width", [7, 0])
+def test_outlier_step_weak_cr_tso(exptype, tsovisit, rolling_window_width):
     '''Test outlier detection with rolling median on time-varying source
-    This test fails if rolling_window_width is set to 100, i.e., take simple median
+    This test fails if rolling_window_width is set to 0, i.e., take simple median
     '''
     bkg = 1.5
     sig = 0.02
-    rolling_window_width = 7
     numsci = 50
     signal = 7.0
     im = we_many_sci(
@@ -588,8 +591,13 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit):
         assert np.all(np.isnan(result.data[i][dnu]))
         assert np.allclose(model.data[~dnu], result.data[i][~dnu])
 
-    # Verify source is not flagged
-    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+    # Verify source is not flagged for rolling median
+    if rolling_window_width == 7:
+        assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+    # But this fails for simple median
+    elif rolling_window_width == 0:
+        with pytest.raises(AssertionError):
+            assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
