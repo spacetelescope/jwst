@@ -102,7 +102,7 @@ def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
 
 
 def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
-              weights=None, profile_bg=None, extraction_type='boxcar',
+              weights=None, profile_bg=None, extraction_type='box',
               bg_smooth_length=0, fit_bkg=False, bkg_fit_type='poly', bkg_order=0):
     """Extract the spectrum, optionally subtracting background.
 
@@ -113,12 +113,12 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         is the second index.
 
     profiles_2d : list of 2-D ndarrays.
-        These arrays contain the weights for the extraction.  A boxcar
+        These arrays contain the weights for the extraction.  A box
         extraction will add up the flux multiplied by these weights; an
         optimal extraction will fit an amplitude to the weight map at each
         column in the dispersion direction.  These arrays should be the
         same shape as image, with one array for each object to extract.
-        Boxcar extraction only works if exactly one profile is supplied
+        Box extraction only works if exactly one profile is supplied
         (i.e. this is a one-element list).
 
     variance_rn : 2-D ndarray
@@ -139,11 +139,11 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         background is to be estimated.
 
     extraction_type : string
-        Type of spectral extraction.  Currently must be either "boxcar"
+        Type of spectral extraction.  Currently must be either "box"
         or "optimal".
 
     bg_smooth_length : int
-        Smoothing length for boxcar smoothing of the background along the
+        Smoothing length for box smoothing of the background along the
         dispersion direction.  Should be odd, >=1.
 
     fit_bkg : bool
@@ -222,11 +222,11 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
 
     # This is the case of a background fit independent of a flux fit.
     # This is done only if we have a background region to fit, the
-    # boolean variable to fit is set, and we are using boxcar extraction.
+    # boolean variable to fit is set, and we are using box extraction.
     # Inverse variance weights should be used with care, as they have the
     # potential to introduce biases.
 
-    if profile_bg is not None and fit_bkg and extraction_type == 'boxcar':
+    if profile_bg is not None and fit_bkg and extraction_type == 'box':
         bkg_2d = image.copy()
 
         # Smooth the image, if desired, for computing a background.
@@ -313,9 +313,9 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
     else:
         image_sub = image.copy()
 
-    # This is the case of boxcar extraction.
+    # This is the case of box extraction.
 
-    if extraction_type == 'boxcar' and len(profiles_2d) == 1:
+    if extraction_type == 'box' and len(profiles_2d) == 1:
 
         # This only makes sense with a single profile, i.e., pulling out
         # a single spectrum.
