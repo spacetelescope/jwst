@@ -14,7 +14,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.assign_wcs.util import compute_scale
 from jwst.extract_1d import spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
-from jwst.extract_1d.extract import open_apcorr_ref
+from jwst.extract_1d.extract import read_apcorr_ref
 from jwst.residual_fringe import utils as rfutils
 
 log = logging.getLogger(__name__)
@@ -281,7 +281,7 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     spec.extraction_y = y_center
 
     if source_type == 'POINT' and apcorr_ref_file is not None and apcorr_ref_file != 'N/A':
-        apcorr_ref_model = open_apcorr_ref(apcorr_ref_file, input_model.meta.exposure.type)
+        apcorr_ref_model = read_apcorr_ref(apcorr_ref_file, input_model.meta.exposure.type)
 
         log.info('Applying Aperture correction.')
         if instrument == 'NIRSPEC':
