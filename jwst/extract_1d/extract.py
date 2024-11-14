@@ -243,6 +243,7 @@ def get_extract_parameters(
         extract_params['bkg_fit'] = None  # because no background sub.
         extract_params['bkg_order'] = 0  # because no background sub.
         extract_params['subtract_background'] = False
+        extract_params['extraction_type'] = 'box'
 
         if use_source_posn is None:
             extract_params['use_source_posn'] = False
@@ -334,6 +335,9 @@ def get_extract_parameters(
                         # If the user supplied a value, use that value.
                         extract_params['smoothing_length'] = smoothing_length
 
+                    # Default extraction type to box
+                    extract_params['extraction_type'] = 'box'
+
                     break
 
     return extract_params
@@ -365,6 +369,7 @@ def log_initial_parameters(extract_params):
     log.debug(f"smoothing_length = {extract_params['smoothing_length']}")
     log.debug(f"independent_var = {extract_params['independent_var']}")
     log.debug(f"use_source_posn = {extract_params['use_source_posn']}")
+    log.debug(f"extraction_type = {extract_params['extraction_type']}")
 
 
 def create_poly(coeff):
@@ -900,7 +905,7 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
 
 
 def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
-                return_limits=False):
+                label='aperture', return_limits=False):
     # Get pixel index values for the array
     yidx, xidx = np.mgrid[:shape[0], :shape[1]]
     if extract_params['dispaxis'] == HORIZONTAL:
@@ -921,7 +926,7 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
     else:
         allow_partial = True
 
-    # Set nominal aperture region, in this priority order:
+    # Set aperture region, in this priority order:
     # 1. src_coeff upper and lower limits (or bkg_coeff, for background profile)
     # 2. center of start/stop values +/- extraction width
     # 3. start/stop values
@@ -967,7 +972,7 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
                                         allow_partial=allow_partial)
                 mean_lower = np.mean(lower_limit_region)
                 mean_upper = np.mean(upper_limit_region)
-                log.info(f'Mean aperture start/stop from {coefficients}: '
+                log.info(f'Mean {label} start/stop from {coefficients}: '
                          f'{mean_lower:.2f} -> {mean_upper:.2f} (inclusive)')
 
                 if lower_limit is None:
@@ -992,7 +997,8 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
         upper_limit = lower_limit + width - 1
 
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
-        log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
+        log.info(f'{label.capitalize()} start/stop: '
+                 f'{lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
 
     else:
         # Limits from start/stop only
@@ -1004,7 +1010,8 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
             upper_limit = xstop
 
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
-        log.info(f'Aperture start/stop: {lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
+        log.info(f'{label.capitalize()} start/stop: '
+                 f'{lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
 
     # Set weights to zero outside left and right limits
     if extract_params['dispaxis'] == HORIZONTAL:
@@ -1020,43 +1027,55 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
         return profile
 
 
-def shift_by_source_location(input_model, slit, nominal_profile, extract_params):
-    # Get source location offset
-    targ_ra, targ_dec = utils.get_target_coordinates(input_model, slit)
-    location_info = utils.locn_from_wcs(input_model, slit, targ_ra, targ_dec)
-
-    if location_info is not None:
-        middle_pix, middle_wl, location = location_info
-        log.info(f"Computed source location is {location:.2f}, "
-                 f"at pixel {middle_pix}, wavelength {middle_wl:.2f}")
-
-        # Get the center of the nominal aperture
-        if extract_params['dispaxis'] == HORIZONTAL:
-            nominal_location = np.average(
-                np.arange(nominal_profile.shape[0]),
-                weights=nominal_profile[:, middle_pix])
+def aperture_center(profile, dispaxis=1, middle_pix=None):
+    if middle_pix is not None and np.sum(profile) > 0:
+        spec_center = middle_pix
+        if dispaxis == HORIZONTAL:
+            slit_center = np.average(np.arange(profile.shape[0]),
+                                     weights=profile[:, middle_pix])
         else:
-            nominal_location = np.average(
-                np.arange(nominal_profile.shape[1]),
-                weights=nominal_profile[middle_pix, :])
-        offset = location - nominal_location
-        log.info(f"Nominal location is {nominal_location:.2f}, "
-                 f"so offset is {offset:.2f} pixels")
-
-        # Shift aperture limits by the difference between the
-        # source location and the nominal center
-        coeff_params = ['src_coeff', 'bkg_coeff']
-        for params in coeff_params:
-            if extract_params[params] is not None:
-                for coeff_list in extract_params[params]:
-                    coeff_list[0] += offset
-        if extract_params['dispaxis'] == HORIZONTAL:
-            start_stop_params = ['ystart', 'ystop']
+            slit_center = np.average(np.arange(profile.shape[1]),
+                                     weights=profile[middle_pix, :])
+    else:
+        yidx, xidx = np.mgrid[:profile.shape[0], :profile.shape[1]]
+        if np.sum(profile) > 0:
+            center_y = np.average(yidx, weights=profile)
+            center_x = np.average(xidx, weights=profile)
         else:
-            start_stop_params = ['xstart', 'xstop']
-        for params in start_stop_params:
-            if extract_params[params] is not None:
-                extract_params[params] += offset
+            center_y = profile.shape[0] // 2
+            center_x = profile.shape[1] // 2
+        if dispaxis == HORIZONTAL:
+            spec_center = center_y
+            slit_center = center_x
+        else:
+            spec_center = center_x
+            slit_center = center_y
+
+    # if dispaxis == 1 (default), this returns center_x, center_y
+    return slit_center, spec_center
+
+
+def shift_by_source_location(location, nominal_location, extract_params):
+
+    # Get the center of the nominal aperture
+    offset = location - nominal_location
+    log.info(f"Nominal location is {nominal_location:.2f}, "
+             f"so offset is {offset:.2f} pixels")
+
+    # Shift aperture limits by the difference between the
+    # source location and the nominal center
+    coeff_params = ['src_coeff', 'bkg_coeff']
+    for params in coeff_params:
+        if extract_params[params] is not None:
+            for coeff_list in extract_params[params]:
+                coeff_list[0] += offset
+    if extract_params['dispaxis'] == HORIZONTAL:
+        start_stop_params = ['ystart', 'ystop']
+    else:
+        start_stop_params = ['xstart', 'xstop']
+    for params in start_stop_params:
+        if extract_params[params] is not None:
+            extract_params[params] += offset
 
 
 def define_aperture(input_model, slit, extract_params, exp_type):
@@ -1072,8 +1091,24 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     # Shift aperture definitions by source position if needed
     # Extract parameters are updated in place
     if extract_params['use_source_posn']:
-        nominal_profile = box_profile(data_shape, extract_params, wl_array)
-        shift_by_source_location(input_model, slit, nominal_profile, extract_params)
+        # Source location from WCS
+        targ_ra, targ_dec = utils.get_target_coordinates(input_model, slit)
+        middle_pix, middle_wl, location = utils.locn_from_wcs(input_model, slit, targ_ra, targ_dec)
+
+        if location is not None:
+            log.info(f"Computed source location is {location:.2f}, "
+                     f"at pixel {middle_pix}, wavelength {middle_wl:.2f}")
+
+            # Nominal location from extract params + located middle
+            nominal_profile = box_profile(data_shape, extract_params, wl_array,
+                                          label='nominal aperture')
+            nominal_location, _ = aperture_center(
+                nominal_profile, extract_params['dispaxis'], middle_pix=middle_pix)
+
+            # Offet extract parameters by location - nominal
+            shift_by_source_location(location, nominal_location, extract_params)
+    else:
+        middle_pix, middle_wl, location = None, None, None
 
     # Make a spatial profile, including source shifts if necessary
     profile, lower_limit, upper_limit = box_profile(data_shape, extract_params, wl_array,
@@ -1083,9 +1118,13 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     profile[~np.isfinite(wl_array)] = 0.0
 
     # Get the effective left and right limits from the profile weights
-    nonzero_weight = np.where(np.sum(profile, axis=extract_params['dispaxis'] - 1) > 0)
-    left_limit = nonzero_weight[0][0]
-    right_limit = nonzero_weight[0][-1]
+    nonzero_weight = np.where(np.sum(profile, axis=extract_params['dispaxis'] - 1) > 0)[0]
+    if len(nonzero_weight) > 0:
+        left_limit = nonzero_weight[0]
+        right_limit = nonzero_weight[-1]
+    else:
+        left_limit = None
+        right_limit = None
 
     # Make a background profile if necessary
     # (will also include source shifts)
@@ -1107,9 +1146,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
     # Get RA and Dec corresponding to the center of the array,
     # weighted by the spatial profile
-    yidx, xidx = np.mgrid[:data_shape[0], :data_shape[1]]
-    center_y = np.average(yidx, weights=profile)
-    center_x = np.average(xidx, weights=profile)
+    center_x, center_y = aperture_center(profile, 1)
     coords = data_model.meta.wcs(center_x, center_y)
     ra = float(coords[0])
     dec = float(coords[1])
@@ -1230,7 +1267,8 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
                                  bg_smooth_length=extract_params['smoothing_length'],
                                  fit_bkg=extract_params['subtract_background'],
                                  bkg_fit_type=extract_params['bkg_fit'],
-                                 bkg_order=extract_params['bkg_order'])
+                                 bkg_order=extract_params['bkg_order'],
+                                 extraction_type=extract_params['extraction_type'])
 
     # Extraction routine can return multiple spectra;
     # here, we just want the first result
@@ -1344,6 +1382,9 @@ def create_extraction(
 
     valid = ~np.isnan(wavelength)
     wavelength = wavelength[valid]
+    if np.sum(valid) == 0:
+        log.error("Spectrum is empty; no valid data.")
+        raise ContinueError()
 
     # Set up aperture correction, to be used for every integration
     apcorr_available = False
