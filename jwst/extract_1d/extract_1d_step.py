@@ -25,6 +25,12 @@ class Extract1dStep(Step):
         Switch to select whether to apply an APERTURE correction during
         the Extract1dStep. Default is True.
 
+    extraction_type : str
+        If 'box', a standard extraction is performed, summing over an
+        aperture box. If 'optimal', a PSF-based extraction is performed.
+        Currently, optimal extraction is only available for MIRI LRS Fixed
+        Slit data.
+
     use_source_posn : bool or None
         If True, the source and background extraction positions specified in
         the extract1d reference file (or the default position, if there is no
@@ -161,6 +167,7 @@ class Extract1dStep(Step):
     subtract_background = boolean(default=None)  # subtract background?
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
 
+    extraction_type = option("box", "optimal", default="box") # Perform box or optimal extraction
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     position_offset = float(default=0)  # number of pixels to shift source trace in the cross-dispersion direction
     smoothing_length = integer(default=None)  # background smoothing size
@@ -192,7 +199,8 @@ class Extract1dStep(Step):
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel']
+    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile',
+                            'speckernel', 'specwcs'] #, 'psf']
 
     def _get_extract_reference_files_by_mode(self, model, exp_type):
         """Get extraction reference files with special handling by exposure type."""
@@ -213,7 +221,15 @@ class Extract1dStep(Step):
         if apcorr_ref != 'N/A':
             self.log.info(f'Using APCORR file {apcorr_ref}')
 
-        return extract_ref, apcorr_ref
+        if exp_type in extract.OPTIMAL_EXPTYPES:
+            specwcs_ref = self.get_reference_file(model, 'specwcs')
+            #psf_ref = self.get_reference_file(model, 'psf')
+            psf_ref = "MIRI_LRS_SLIT_EPSF_20240602_WAVE_1D.fits"
+        else:
+            specwcs_ref = 'N/A'
+            psf_ref = 'N/A'
+
+        return extract_ref, apcorr_ref, specwcs_ref, psf_ref
 
     def _extract_soss(self, model):
         """Extract NIRISS SOSS spectra."""
@@ -403,8 +419,8 @@ class Extract1dStep(Step):
             result = ModelContainer()
             for model in input_model:
                 # Get the reference file names
-                extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
-                    model, exp_type)
+                extract_ref, apcorr_ref, specwcs_ref, psf_ref = \
+                    self._get_extract_reference_files_by_mode(model, exp_type)
 
                 profile = None
                 scene_model = None
@@ -417,6 +433,9 @@ class Extract1dStep(Step):
                         model,
                         extract_ref,
                         apcorr_ref,
+                        specwcs_ref,
+                        psf_ref,
+                        self.extraction_type,
                         self.smoothing_length,
                         self.bkg_fit,
                         self.bkg_order,
