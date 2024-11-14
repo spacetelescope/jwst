@@ -377,6 +377,7 @@ class ResampleSpecData(ResampleData):
 
         pix_to_ytan.intercept = zero_value_y - slope_sign_y * offset_y
         pix_to_xtan.intercept = zero_value_x - slope_sign_x * offset_x
+
         # Now set up the final transforms
 
         # For wavelengths, extrapolate 1/2 pixel at the edges and
