@@ -2,11 +2,7 @@ import os
 import pytest
 
 from astropy.io.fits.diff import FITSDiff
-import numpy as np
 
-import stdatamodels.jwst.datamodels as dm
-
-from jwst.extract_1d import Extract1dStep
 from jwst.stpipe import Step
 
 
