@@ -348,6 +348,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
             var_phnoise += var_bkg_phnoise
             var_flat += var_bkg_flat
             bkg = np.array([np.sum(bkg_2d * profile_2d, axis=0)])
+            bkg[~np.isfinite(bkg)] = 0.0
         else:
             bkg = np.zeros((nobjects, image.shape[1]))
 
@@ -423,6 +424,9 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
                                         for i in range(nobjects)])
             var_bkg_flat = np.array([var_flat[i] - np.sum(wgt_nobkg[i] ** 2 * variance_flat, axis=0)
                                      for i in range(nobjects)])
+
+            # Make sure background values are finite
+            bkg[~np.isfinite(bkg)] = 0.0
 
             # We did our best to estimate the background contribution to the variance
             # in this case.  Don't let it go negative.
