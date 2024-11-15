@@ -1,7 +1,7 @@
 Step Arguments
 ==============
 
-The ``combine_1d`` step has twp step-specific arguments:
+The ``combine_1d`` step has two step-specific arguments:
 
 ``--exptime_key``
   This is a case-insensitive string that identifies the metadata element
