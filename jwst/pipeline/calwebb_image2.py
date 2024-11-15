@@ -150,12 +150,12 @@ class Image2Pipeline(Pipeline):
                 self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['background'])
+            input = self.bkg_subtract.run(input, members_by_type['background'])
 
         # work on slope images
-        input = self.assign_wcs(input)
-        input = self.flat_field(input)
-        input = self.photom(input)
+        input = self.assign_wcs.run(input)
+        input = self.flat_field.run(input)
+        input = self.photom.run(input)
 
         # Resample individual exposures, but only if it's one of the
         # regular 2D science image types
@@ -163,7 +163,7 @@ class Image2Pipeline(Pipeline):
                 len(input.data.shape) == 2:
             self.resample.save_results = self.save_results
             self.resample.suffix = 'i2d'
-            self.resample(input)
+            self.resample.run(input)
 
         # That's all folks
         self.log.info(

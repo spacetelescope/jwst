@@ -362,8 +362,8 @@ class ResampleSpecData(ResampleData):
         # Correct the intercept for the new minimum value.
         # Also account for integer pixel size to make sure the
         # data is centered in the array.
-        offset_y  = ny/2 * pix_to_tan_slope_y - diff_y/2
-        offset_x  = ny/2 * pix_to_tan_slope_x - diff_x/2
+        offset_y = ny / 2 * pix_to_tan_slope_y - diff_y / 2
+        offset_x = ny / 2 * pix_to_tan_slope_x - diff_x / 2
 
         if slope_sign_y > 0:
             zero_value_y = min_tan_y
@@ -374,7 +374,6 @@ class ResampleSpecData(ResampleData):
             zero_value_x = min_tan_x
         else:
             zero_value_x = max_tan_x
-
 
         pix_to_ytan.intercept = zero_value_y - slope_sign_y * offset_y
         pix_to_xtan.intercept = zero_value_x - slope_sign_x * offset_x

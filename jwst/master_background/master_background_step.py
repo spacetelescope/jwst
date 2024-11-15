@@ -97,7 +97,6 @@ class MasterBackgroundStep(Step):
                     del _
                     result = ModelContainer()
                     background_2d_collection = ModelContainer()
-                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, self.user_background)
                         result.append(subtract_2d_background(model, background_2d))
@@ -109,7 +108,7 @@ class MasterBackgroundStep(Step):
                 else:
                     asn_id = None
                     background_2d = expand_to_2d(input_data, self.user_background)
-                    background_2d_collection = background_2d
+                    background_2d_collection = ModelContainer([background_2d])
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
