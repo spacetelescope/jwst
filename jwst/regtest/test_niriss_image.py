@@ -9,7 +9,6 @@ from astropy.io.fits.diff import FITSDiff
 from jwst import datamodels
 from jwst.stpipe import Step
 from jwst.tweakreg import TweakRegStep
-from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 
 
 @pytest.fixture(scope="module")

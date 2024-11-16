@@ -161,11 +161,13 @@ def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwa
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
 
 
+@pytest.mark.bigdata
 def test_miri_image_detector1_multiprocess_rate(run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
 
+@pytest.mark.bigdata
 def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
