@@ -1,5 +1,7 @@
 from stdatamodels.jwst import datamodels
 
+from stpipe.crds_client import reference_uri_to_cache_path
+
 from ..stpipe import Step
 from . import msaflag_open
 
@@ -51,7 +53,6 @@ class MSAFlagOpenStep(Step):
 
 def create_reference_filename_dictionary(input_model):
     reffiles = {}
-    a = Step()
     reffiles['distortion'] = input_model.meta.ref_file.distortion.name
     reffiles['filteroffset'] = input_model.meta.ref_file.filteroffset.name
     reffiles['specwcs'] = input_model.meta.ref_file.filteroffset.name
@@ -72,5 +73,5 @@ def create_reference_filename_dictionary(input_model):
     # Convert from crds protocol to absolute filenames
     for key in reffiles.keys():
         if reffiles[key].startswith('crds://'):
-            reffiles[key] = a.reference_uri_to_cache_path(reffiles[key], input_model.crds_observatory)
+            reffiles[key] = reference_uri_to_cache_path(reffiles[key], input_model.crds_observatory)
     return reffiles

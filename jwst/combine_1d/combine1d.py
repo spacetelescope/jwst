@@ -38,10 +38,10 @@ class InputSpectrumModel:
 
         Parameters
         ----------
-        ms : `~jwst.datamodels.DataModel`, MultiSpecModel or SpecModel
+        ms : `~jwst.datamodels.JwstDataModel`, MultiSpecModel or SpecModel
             This is used to get the integration time.
 
-        spec : `~jwst.datamodels.DataModel`, SpecModel table
+        spec : `~jwst.datamodels.JwstDataModel`, SpecModel table
             The table containing columns "wavelength" and "flux".
             The `ms` object may contain more than one spectrum, but `spec`
             should be just one of those.
@@ -68,6 +68,7 @@ class InputSpectrumModel:
         self.unit_weight = False        # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
+        self.name = spec.name
         self.source_id = spec.source_id
         self.source_type = spec.source_type
         self.flux_unit = spec.spec_table.columns['flux'].unit
@@ -204,7 +205,11 @@ class OutputSpectrumModel:
         ninputs = 0
         for in_spec in input_spectra:
             ninputs += 1
-            log.info(f'Accumulating data from input spectrum {ninputs}')
+            if in_spec.name is not None:
+                slit_name = f'{ninputs}, slit {in_spec.name}'
+            else:
+                slit_name = ninputs
+            log.info(f'Accumulating data from input spectrum {slit_name}')
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
             out_pixel = self.wcs.invert(in_spec.right_ascension,
@@ -263,8 +268,8 @@ class OutputSpectrumModel:
             sum_weight = np.where(self.weight > 0., self.weight, 1.)
             self.surf_bright /= sum_weight
             self.flux /= sum_weight
-            self.flux_error = np.sqrt(self.flux_error / sum_weight)
-            self.sb_error = np.sqrt(self.sb_error / sum_weight)
+            self.flux_error = np.sqrt(self.flux_error) / sum_weight
+            self.sb_error = np.sqrt(self.sb_error) / sum_weight
             self.normalized = True
 
     def create_output_data(self):
@@ -272,7 +277,7 @@ class OutputSpectrumModel:
 
         Returns
         -------
-        output_model : `~jwst.datamodels.DataModel`, CombinedSpecModel object
+        output_model : `~jwst.datamodels.JwstDataModel`, CombinedSpecModel object
             A table of combined spectral data.
         """
 
@@ -350,7 +355,7 @@ def count_input(input_spectra):
         # only include spectra that have more than 1 data point
         if len(input_wl) > 1:
             if wl is None:
-                wl = input_wl
+                wl = input_wl.copy()
             else:
                 wl = np.hstack((input_wl, wl))
     wl.sort()
@@ -557,7 +562,7 @@ def combine_1d_spectra(input_model, exptime_key):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.DataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input spectra.  This will likely be a ModelContainer object.
 
     exptime_key : str
@@ -568,7 +573,7 @@ def combine_1d_spectra(input_model, exptime_key):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.DataModel`
+    output_model : `~jwst.datamodels.JwstDataModel`
         A datamodels.CombinedSpecModel object.
     """
 

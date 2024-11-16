@@ -269,8 +269,8 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
             elif len(bkg_model) < bkg_order:
                 log.debug(f"Not enough valid pixels to determine background "
                           f"with the required order for lambda={lam:.6f} "
-                          f"(column {x:d})\n"
-                          f"Lowering background order to {len(bkg_model)}")
+                          f"(column {x:d})")
+                log.debug(f"Lowering background order to {len(bkg_model)}")
 
         # Extract the source, and optionally subtract background using the
         # fit to the background for this column.  Even if
@@ -456,6 +456,11 @@ def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srcli
 
     # subtract background per pixel:
     val -= bkg
+
+    # add background variance to variance in source extraction region
+    f_var_poisson += b_var_poisson
+    f_var_rnoise += b_var_rnoise
+    f_var_flat += b_var_flat
 
     # scale per pixel values by pixel area included in extraction
     val *= area
@@ -676,10 +681,17 @@ def _extract_colpix(image_data, x, j, limits):
     # compute number of data points:
     ns = image_data.shape[0] - 1
     ns12 = ns + 0.5
-
-    npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) -
-                   max(0, int(math.floor(x[0] + 0.5))) + 1, intervals))
-    npts = max(npts, 1)
+    npts = 0
+    for interval in intervals:
+        if interval[0] == interval[1]:
+            # no data between limits
+            continue
+        maxval = min(ns, int(math.floor(interval[1] + 0.5)))
+        minval = max(0, int(math.floor(interval[0] + 0.5)))
+        if maxval - minval + 1 > 0:
+            npts += maxval - minval + 1
+    if npts == 0:
+        return [], [], []
 
     # pre-allocate data arrays:
     y = np.empty(npts, dtype=np.float64)
@@ -689,6 +701,8 @@ def _extract_colpix(image_data, x, j, limits):
     # populate data and weights:
     k = 0
     for i in intervals:
+        if i[0] == i[1]:
+            continue
         i1 = i[0] if i[0] >= -0.5 else -0.5
         i2 = i[1] if i[1] <= ns12 else ns12
 
@@ -697,6 +711,7 @@ def _extract_colpix(image_data, x, j, limits):
         ii2 = min(ns, int(math.floor(i2 + 0.5)))
 
         # special case: ii1 == ii2:
+        # take the value at the pixel
         if ii1 == ii2:
             v = image_data[ii1, x]
             val[k] = v
@@ -787,7 +802,7 @@ def _coalesce_bounds(segments):
         pint = cint[-1]
         interval = intervals.pop(0)
         if interval[0] <= pint[1]:
-            pint[1] = interval[1]
+            pint[1] = max(interval[1], pint[1])
             continue
         cint.append(interval)
 

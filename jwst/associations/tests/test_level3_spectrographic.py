@@ -11,14 +11,14 @@ from jwst.associations.tests.helpers import (
 )
 
 from jwst.associations import generate
-from jwst.associations.main import constrain_on_candidates
+from jwst.associations.lib.utilities import constrain_on_candidates
 
 
 class TestLevel3Spec(BasePoolRule):
     pools = [
         PoolParams(
             path=t_path('data/pool_005_spec_niriss.csv'),
-            n_asns=1,
+            n_asns=0,
             n_orphaned=0
         ),
         PoolParams(
@@ -28,7 +28,7 @@ class TestLevel3Spec(BasePoolRule):
         ),
         PoolParams(
             path=t_path('data/pool_007_spec_miri.csv'),
-            n_asns=2,
+            n_asns=1,
             n_orphaned=0
         ),
         PoolParams(
@@ -56,7 +56,7 @@ def nirspec_params_id(fixture_value):
             'o001',
             'spec3',
             r'jw99009-o001_spec3_\d{5}_asn',
-            'jw99009-o001_{source_id}_nirspec_f100lp-g140m-s200a2-s200a2',
+            'jw99009-o001_{source_id}_nirspec_f100lp-g140m-{slit_name}-s200a2',
             set(('science', 'target_acquisition', 'autowave'))
         ),
         (

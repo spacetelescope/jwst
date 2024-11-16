@@ -1,0 +1,26 @@
+name: contexts
+
+on:
+  workflow_call:
+    outputs:
+      jwst:
+        value: ${{ jobs.contexts.outputs.jwst }}
+  workflow_dispatch:
+
+jobs:
+  contexts:
+    name: retrieve latest CRDS contexts
+    runs-on: ubuntu-latest
+    outputs:
+      jwst: ${{ steps.jwst_crds_context.outputs.pmap }}
+    steps:
+      - id: jwst_crds_context
+        env:
+          OBSERVATORY: jwst
+          CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+        run: >
+          echo "pmap=$(
+          curl -s -X POST -d '{"jsonrpc": "1.0", "method": "get_default_context", "params": ["${{ env.OBSERVATORY }}", null], "id": 1}' ${{ env.CRDS_SERVER_URL }}/json/ --retry 8 --connect-timeout 10 |
+          python -c "import sys, json; print(json.load(sys.stdin)['result'])"
+          )" >> $GITHUB_OUTPUT
+      - run: if [[ ! -z "${{ steps.jwst_crds_context.outputs.pmap }}" ]]; then echo ${{ steps.jwst_crds_context.outputs.pmap }}; else exit 1; fi

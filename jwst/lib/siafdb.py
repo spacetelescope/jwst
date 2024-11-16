@@ -33,14 +33,14 @@ INSTRUMENT_MAP = {
 # in Level1bModel data models.
 SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
                            "crpix1", "crpix2", "cdelt1", "cdelt2",
-                           "vertices_idl"])
+                           "vertices_idl"],
+                           defaults = (None, None, None, None, 0, 0, 3600, 3600,
+                             (0, 1, 1, 0, 0, 0, 1, 1)))
 # Set default values for the SIAF.
 # Values which are needed by the pipeline are set to None which
 # triggers a ValueError if missing in the SIAF database.
 # Quantities not used by the pipeline get a default value -
 # FITS keywords and aperture vertices.
-SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
-                             (0, 1, 1, 0, 0, 0, 1, 1))
 
 SIAF_REQUIRED = ['V2Ref', 'V3Ref', 'V3IdlYAngle', 'VIdlParity']
 SIAF_OPTIONAL = ['XSciRef', 'YSciRef', 'XSciScale', 'YSciScale']
@@ -76,7 +76,7 @@ class SiafDb:
             log_level = logging.ERROR
         try:
             with LoggingContext(logger_pysiaf, level=log_level):
-                import pysiaf
+                import pysiaf # type: ignore[import-not-found]
         except ImportError:
             raise ValueError('Package "pysiaf" is not installed. Cannot use the pysiaf api')
         self.pysiaf = pysiaf
@@ -204,6 +204,12 @@ class SiafDb:
             prd_to_use, xml_path = nearest_prd(self.pysiaf, prd)
             self.prd_version = prd_to_use
             logger.info('Using PRD %s for specified PRD %s', prd_to_use, prd)
+
+        # If nothing has been specified, see if XML_DATA says what to do.
+        if not xml_path:
+            xml_path = os.environ.get('XML_DATA', None)
+            if xml_path:
+                xml_path = Path(xml_path) / 'SIAFXML'
 
         # If nothing else, use the `pysiaf` default.
         if not xml_path:

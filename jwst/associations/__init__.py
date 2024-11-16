@@ -9,7 +9,7 @@ For more, see the :ref:`documentation overview <asn-overview>`.
 """
 
 # Take version from the upstream package
-from .. import __version__
+from jwst import __version__
 
 
 # Utility
@@ -27,7 +27,7 @@ def libpath(filepath):
 from .association import *
 from .association_io import *
 from .exceptions import *
-from .generate import *
+from .generator import *
 from .lib.process_list import *
 from .pool import *
 from .registry import *

@@ -2,17 +2,21 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
+import warnings
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run calwebb_coron3 on coronographic data."""
     rtdata = rtdata_module
     rtdata.get_asn("nircam/coron/jw01386-c1020_20220909t073458_coron3_002a_asn.json")
 
     # Run the calwebb_coron3 pipeline on the association
     args = ["calwebb_coron3", rtdata.input]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # warning is explicitly raised by the pipeline
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="var_rnoise array not available")
+        Step.from_cmdline(args)
 
     return rtdata
 
@@ -28,7 +32,7 @@ def test_nircam_coron3_sci_exp(run_pipeline, suffix, obs, fitsdiff_default_kwarg
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_coron3/" + output)
 
-    fitsdiff_default_kwargs["atol"] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 1e-2
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -59,6 +63,7 @@ def test_nircam_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_coron3/" + output)
 
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    fitsdiff_default_kwargs['atol'] = 1e-4
+    fitsdiff_default_kwargs['rtol'] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

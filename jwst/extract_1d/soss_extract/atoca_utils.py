@@ -228,7 +228,7 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
 
         # Compute the change in wavelength for valid cols
         idx_valid = np.isfinite(wave_col)
-        idx_valid &= (wave_col > 0)
+        idx_valid &= (wave_col >= 0)
         wv_col_valid = wave_col[idx_valid]
         delta_wave = np.diff(wv_col_valid)
 
@@ -250,80 +250,6 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
         wave_top, wave_bottom = wave_top.T, wave_bottom.T
 
     return wave_top, wave_bottom
-
-
-def check_dispersion_direction(wave_map, dispersion_axis=1, dwv_sign=-1):
-    """Check that the dispersion axis is increasing in the good direction
-    given by `dwv_sign``
-    Parameters
-    ----------
-    wave_map : array[float]
-        2d-map of the pixel central wavelength
-    dispersion_axis : int, optional
-        Which axis is the dispersion axis (0 or 1)
-    dwv_sign : int, optional
-        Direction of increasing wavelengths (-1 or 1)
-
-    Returns
-    -------
-    bool_map : array[bool]
-        Boolean 2d map of the valid dispersion direction, same shape as `wave_map`
-    """
-
-    # Estimate the direction of increasing wavelength
-    wave_left, wave_right = get_wv_map_bounds(wave_map, dispersion_axis=dispersion_axis)
-    dwv = wave_right - wave_left
-
-    # Return bool map of pixels following the good direction
-    bool_map = (dwv_sign * dwv >= 0)
-    # The bad value could be from left or right so mask both
-    bool_map &= np.roll(bool_map, 1, axis=dispersion_axis)
-
-    return bool_map
-
-
-def mask_bad_dispersion_direction(wave_map, n_max=10, fill_value=0, dispersion_axis=1, dwv_sign=-1):
-    """Change value of the pixels in `wave_map` that do not follow the
-    general dispersion direction.
-
-    Parameters
-    ----------
-    wave_map : array[float]
-        2d-map of the pixel central wavelength
-    n_max : int
-        Maximum number of iterations
-    fill_value : float
-        Value use to replace pixels that do not follow the dispersion direction
-    dispersion_axis : int, optional
-        Which axis is the dispersion axis (0 or 1)
-    dwv_sign : int, optional
-        Direction of increasing wavelengths (-1 or 1)
-
-    Returns
-    -------
-    wave_map : array[float]
-        The corrected wave_map.
-    convergence flag : bool
-        Boolean set to True if all the pixels are now valid, False otherwise.
-    """
-    # Do not modify the input
-    wave_map = wave_map.copy()
-
-    # Make the correction iteratively
-    for i_try in range(n_max):
-        # Check which pixels are good
-        is_good_direction = check_dispersion_direction(wave_map, dispersion_axis, dwv_sign)
-        # Stop iteration if all good, or apply correction where needed.
-        if is_good_direction.all():
-            convergence_flag = True
-            break
-        else:
-            wave_map[~is_good_direction] = fill_value
-    else:
-        # Did not succeed! :(
-        convergence_flag = False
-
-    return wave_map, convergence_flag
 
 
 def oversample_grid(wave_grid, n_os=1):

@@ -24,12 +24,22 @@ conf.use_memmap = False
 @pytest.fixture(scope="session")
 def artifactory_repos(pytestconfig):
     """Provides Artifactory inputs_root and results_root"""
-    try:
-        inputs_root = pytestconfig.getini('inputs_root')[0]
-        results_root = pytestconfig.getini('results_root')[0]
-    except IndexError:
+    inputs_root = pytestconfig.getini('inputs_root')
+    # in pytest 8 inputs_root will be None
+    # in pytest <8 inputs_root will be []
+    # see: https://github.com/pytest-dev/pytest/pull/11594
+    # using "not inputs_root" will handle both cases
+    if not inputs_root:
         inputs_root = "jwst-pipeline"
+    else:
+        inputs_root = inputs_root[0]
+
+    results_root = pytestconfig.getini('results_root')
+    # see not above about inputs_root
+    if not results_root:
         results_root = "jwst-pipeline-results"
+    else:
+        results_root = results_root[0]
     return inputs_root, results_root
 
 
@@ -64,6 +74,16 @@ def postmortem(request, fixturename):
         return None
 
 
+def pytest_collection_modifyitems(config, items):
+    # add the index of each item in the list of items
+    # this is used below for artifactory_result_path
+    # to produce a unique result subdirectory for
+    # each test (even if that test shares a name with
+    # another test which is the case for parametrized tests).
+    for i, item in enumerate(items):
+        item.index = i
+
+
 @pytest.fixture(scope='function', autouse=True)
 def generate_artifactory_json(request, artifactory_repos):
     """Pytest fixture that leaves behind JSON upload and okify specfiles
@@ -81,8 +101,9 @@ def generate_artifactory_json(request, artifactory_repos):
         build_matrix_suffix = os.environ.get('BUILD_MATRIX_SUFFIX', '0')
         subdir = '{}_{}_{}'.format(TODAYS_DATE, build_tag, build_matrix_suffix)
         testname = request.node.originalname or request.node.name
+        basename = f"{request.node.index}_{testname}"
 
-        return os.path.join(results_root, subdir, testname) + os.sep
+        return os.path.join(results_root, subdir, basename) + os.sep
 
     yield
     # Execute the following at test teardown
@@ -94,11 +115,11 @@ def generate_artifactory_json(request, artifactory_repos):
         postmortem(request, 'sdpdata_module')
     if rtdata:
         try:
-            # The _jail fixture from ci_watson sets tmp_path
+            # The tmp_cwd fixture sets tmp_path
             cwd = str(request.node.funcargs['tmp_path'])
         except KeyError:
-            # The jail fixture (module-scoped) returns the path
-            cwd = str(request.node.funcargs['jail'])
+            # The tmp_cwd_module fixture (module-scoped) returns the path
+            cwd = str(request.node.funcargs['tmp_cwd_module'])
         rtdata.remote_results_path = artifactory_result_path()
         rtdata.test_name = request.node.name
         # Dump the failed test traceback into rtdata
@@ -200,12 +221,12 @@ def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
 
 
 @pytest.fixture(scope='function')
-def rtdata(artifactory_repos, envopt, request, _jail):
+def rtdata(artifactory_repos, envopt, request, tmp_cwd):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture(scope='module')
-def rtdata_module(artifactory_repos, envopt, request, jail):
+def rtdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
@@ -217,7 +238,7 @@ def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
 
 
 @pytest.fixture(scope='module')
-def sdpdata_module(artifactory_repos, envopt, request, jail):
+def sdpdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
     return _sdpdata_fixture_implementation(artifactory_repos, envopt, request)
 
 

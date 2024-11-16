@@ -3,12 +3,11 @@ from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
-
 from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_image3pipeline(rtdata_module, jail):
+def run_image3pipeline(rtdata_module):
     ''' Run calwebb_image3 on NIRCam imaging and align to gaia '''
 
     rtdata = rtdata_module
@@ -16,7 +15,7 @@ def run_image3pipeline(rtdata_module, jail):
     args = ["calwebb_image3", rtdata.input,
             "--steps.tweakreg.abs_refcat=GAIADR2",
             "--steps.tweakreg.save_results=True",
-            "--steps.tweakreg.output_use_model=True"
+            "--steps.tweakreg.output_use_model=True",
             ]
     Step.from_cmdline(args)
 

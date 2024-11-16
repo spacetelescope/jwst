@@ -34,6 +34,16 @@ The "NO_SAT_CHECK" flag is propagated to the
 PIXELDQ array in the output science data to indicate which pixels fall into
 this category.
 
+If the "use_readpatt" keyword is set, this step will use information about the
+read pattern to find pixels that saturated in the middle of grouped data.  This
+can be particularly important for flagging data that saturated during
+the second group but did not trigger the normal saturation threshold due to the
+grouped data averaging.  This requires that the third group be saturated, and
+the first group sufficiently low that the third group would not have been expected
+to saturate (i.e., flagging due to cosmic rays but not sources).
+
+.. _charge_migration:
+
 Charge Migration
 ----------------
 There is an effect in IR detectors that results in charge migrating (spilling)
@@ -58,26 +68,26 @@ handling in this step, due to the extra reference pixel values that are interlea
 within the science data. The saturation reference file data does not contain
 extra entries for these pixels. The step-by-step process is as follows:
 
-- Retrieve and load data from the appropriate "SATURATION" reference file from CRDS
+#. Retrieve and load data from the appropriate "SATURATION" reference file from CRDS
 
-- If the input science exposure used the NIRSpec IRS2 readout pattern:
+#. If the input science exposure used the NIRSpec IRS2 readout pattern:
 
- * Create a temporary saturation array that is the same size as the IRS2 readout
+   * Create a temporary saturation array that is the same size as the IRS2 readout
 
- * Copy the saturation threshold values from the original reference data into
-   the larger saturation array, skipping over the interleaved reference pixel
-   locations within the array
+   * Copy the saturation threshold values from the original reference data into
+     the larger saturation array, skipping over the interleaved reference pixel
+     locations within the array
 
-- If the input science exposure used a subarray readout, extract the matching
-  subarray from the full-frame saturation reference file data
+#. If the input science exposure used a subarray readout, extract the matching
+   subarray from the full-frame saturation reference file data
 
-- For pixels that contain NaN in the reference file saturation threshold array
-  or are flagged in the reference file with "NO_SAT_CHECK" (no saturation check
-  available), propagate the "NO_SAT_CHECK" flag to the science data PIXELDQ array
+#. For pixels that contain NaN in the reference file saturation threshold array
+   or are flagged in the reference file with "NO_SAT_CHECK" (no saturation check
+   available), propagate the "NO_SAT_CHECK" flag to the science data PIXELDQ array
 
-- For each group in the input science data, set the "SATURATION" flag in the
-  "GROUPDQ" array if the pixel value is greater than or equal to the saturation
-  threshold from the reference file
+#. For each group in the input science data, set the "SATURATION" flag in the
+   "GROUPDQ" array if the pixel value is greater than or equal to the saturation
+   threshold from the reference file
 
 NIRCam Frame 0
 --------------

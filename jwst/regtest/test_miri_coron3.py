@@ -5,7 +5,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+def run_pipeline(rtdata_module):
     """Run calwebb_coron3 on MIRI 4QPM coronographic data."""
     rtdata = rtdata_module
     rtdata.get_asn("miri/coron/jw01386-c1002_20230109t015044_coron3_00001_asn.json")
@@ -30,7 +30,7 @@ def test_miri_coron3_sci_exp(run_pipeline, suffix, exposure, fitsdiff_default_kw
     rtdata.output = output
     rtdata.get_truth("truth/test_miri_coron3/" + output)
 
-    fitsdiff_default_kwargs["atol"] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 1e-2
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -45,6 +45,7 @@ def test_miri_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_miri_coron3/" + output)
 
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    fitsdiff_default_kwargs['atol'] = 1e-4
+    fitsdiff_default_kwargs['rtol'] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

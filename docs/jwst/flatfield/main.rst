@@ -24,35 +24,35 @@ modes included in this category are NIRCam WFSS and Time-Series Grism,
 NIRISS WFSS and SOSS, and MIRI MRS and LRS. All of these modes are processed
 as follows:
 
-- If the science data have been taken using a subarray and the FLAT
-  reference file is a full-frame image, extract the corresponding subarray
-  region from the flat-field data.
+#. If the science data have been taken using a subarray and the FLAT
+   reference file is a full-frame image, extract the corresponding subarray
+   region from the flat-field data.
 
-- Find pixels that have a value of NaN or zero in the FLAT reference file
-  SCI array and set their DQ values to "NO_FLAT_FIELD" and "DO_NOT_USE."
+#. Find pixels that have a value of NaN or zero in the FLAT reference file
+   SCI array and set their DQ values to "NO_FLAT_FIELD" and "DO_NOT_USE."
 
-- Reset the values of pixels in the flat that have DQ="NO_FLAT_FIELD" to
-  1.0, so that they have no effect when applied to the science data.
+#. Reset the values of pixels in the flat that have DQ="NO_FLAT_FIELD" to
+   1.0, so that they have no effect when applied to the science data.
 
-- Propagate the FLAT reference file DQ values into the science exposure
-  DQ array using a bitwise OR operation.
+#. Propagate the FLAT reference file DQ values into the science exposure
+   DQ array using a bitwise OR operation.
 
-- Apply the flat according to:
+#. Apply the flat according to:
 
-  .. math::
-     SCI_{science} = SCI_{science} / SCI_{flat}
+   .. math::
+      SCI_{science} = SCI_{science} / SCI_{flat}
 
-  .. math::
-     VAR\_POISSON_{science} = VAR\_POISSON_{science} / SCI_{flat}^2
+   .. math::
+      VAR\_POISSON_{science} = VAR\_POISSON_{science} / SCI_{flat}^2
 
-  .. math::
-     VAR\_RNOISE_{science} = VAR\_RNOISE_{science} / SCI_{flat}^2
+   .. math::
+      VAR\_RNOISE_{science} = VAR\_RNOISE_{science} / SCI_{flat}^2
 
-  .. math::
-     VAR\_FLAT_{science} = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
+   .. math::
+      VAR\_FLAT_{science} = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
 
-  .. math::
-     ERR_{science} = \sqrt{VAR\_POISSON + VAR\_RNOISE + VAR\_FLAT}
+   .. math::
+      ERR_{science} = \sqrt{VAR\_POISSON + VAR\_RNOISE + VAR\_FLAT}
 
 Multi-integration datasets ("_rateints.fits" products), which are common
 for modes like NIRCam Time-Series Grism, NIRISS SOSS, and MIRI LRS Slitless,
@@ -78,12 +78,12 @@ pixel.  This interpolation requires knowledge of the dispersion direction,
 which is read from keyword "DISPAXIS."  See the Reference File section for
 further details.
 
-For NIRSpec Fixed-Slit and MOS exposures, an on-the-fly flat-field is
+For NIRSpec Fixed Slit (FS) and MOS exposures, an on-the-fly flat-field is
 constructed to match each of the slits/slitlets contained in the science
 exposure. For NIRSpec IFU exposures, a single full-frame flat-field is
 constructed, which is applied to the entire science image.
 
-NIRSpec NRS_BRIGHTOBJ data are processed just like NIRSpec Fixed-Slit
+NIRSpec NRS_BRIGHTOBJ data are processed just like NIRSpec fixed slit
 data, except that NRS_BRIGHTOBJ data are stored in a CubeModel,
 rather than a MultiSlitModel.  A 2-D flat-field image is constructed
 on-the-fly as usual, but this image is then divided into each plane of
@@ -92,9 +92,9 @@ the 3-D science data arrays.
 In all cases, there is a step option that allows for saving the
 on-the-fly flatfield to a file, if desired.
 
-NIRSpec Fixed-Slit Primary Slit
+NIRSpec Fixed Slit Primary Slit
 -------------------------------
-The primary slit in a NIRSpec fixed-slit exposure receives special handling.
+The primary slit in a NIRSpec fixed slit exposure receives special handling.
 If the primary slit, as given by the "FXD_SLIT" keyword value, contains a
 point source, as given by the "SRCTYPE" keyword, it is necessary to know the
 flatfield conversion factors for both a point source and a uniform source
@@ -104,7 +104,7 @@ is applied to the slit data, but that correction is not appropriate for the
 background signal contained in the slit, and hence corrections must be
 applied later in the :ref:`master background <master_background_step>` step.
 
-So in this case the `flatfield` step will compute 2D arrays of conversion
+In this case, the `flatfield` step will compute 2D arrays of conversion
 factors that are appropriate for a uniform source and for a point source,
 and store those correction factors in the "FLATFIELD_UN" and "FLATFIELD_PS"
 extensions, respectively, of the output data product. The point source
@@ -116,8 +116,15 @@ applied by the :ref:`wavecorr <wavecorr_step>` step to account for any
 source mis-centering in the slit and the flatfield conversion factors are
 wavelength-dependent. A uniform source does not require wavelength corrections
 and hence the flatfield conversions will differ for point and uniform
-sources. Any secondary slits that may be included in a fixed-slit exposure
+sources. Any secondary slits that may be included in a fixed slit exposure
 do not have source centering information available, so the
-:ref:`wavecorr <wavecorr_step>` step is not applied, and hence there's no
+:ref:`wavecorr <wavecorr_step>` step is not applied, and there is no
 difference between the point source and uniform source flatfield
 conversions for those slits.
+
+Fixed slits planned as part of a combined MOS and FS observation are an
+exception to this rule.  These targets may each be identified as
+point sources, with location information for each given in the
+:ref:`MSA metadata file <msa_metadata>`. Point sources in fixed slits planned
+this way are treated in the same manner as the primary fixed slit in standard
+FS observations.

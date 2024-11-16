@@ -219,10 +219,7 @@ signature is::
     Step.call(input, config_file=None, **parameters)
 
 The positional argument ``input`` is the data to be operated on, usually a
-string representing a file path or a
-.. comment out until stdatamodels is released
-.. ref  DataModel<datamodels>.
-DataModel.
+string representing a file path or a :ref:`DataModel<jwst-data-models>`
 The optional
 keyword argument ``config_file`` is used to specify a local parameter file. The
 optional keyword argument ``logcfg`` is used to specify a logging configuration file.
@@ -261,9 +258,7 @@ example is::
 
 `input` in this case can be a fits file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular
-.. comment out until stdatamodels is released
-.. ref  datamodel<datamodels>.
-datamodel.
+:ref:`datamodel<jwst-data-models>`.
 
 Unlike the ``call`` class method, there is no parameter initialization that
 occurs, either by a local parameter file or from a CRDS-retrieved parameter

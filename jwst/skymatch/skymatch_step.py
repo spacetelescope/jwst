@@ -18,12 +18,8 @@ from astropy.nddata.bitmask import (
 )
 
 from stdatamodels.jwst.datamodels.dqflags import pixel
-from stdatamodels.jwst.datamodels.util import (
-    open as datamodel_open,
-    is_association
-)
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary
 
 from ..stpipe import Step
 
@@ -62,33 +58,23 @@ class SkyMatchStep(Step):
         lsigma = float(min=0.0, default=4.0) # Lower clipping limit, in sigma
         usigma = float(min=0.0, default=4.0) # Upper clipping limit, in sigma
         binwidth = float(min=0.0, default=0.1) # Bin width for 'mode' and 'midpt' `skystat`, in sigma
+
+        # Memory management:
+        in_memory = boolean(default=True) # If False, preserve memory using temporary files
     """  # noqa: E501
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def __init__(self, *args, **kwargs):
-        minimize_memory = kwargs.pop('minimize_memory', False)
         super().__init__(*args, **kwargs)
-        self.minimize_memory = minimize_memory
 
     def process(self, input):
         self.log.setLevel(logging.DEBUG)
-        # for now turn off memory optimization until we have better machinery
-        # to handle outputs in a consistent way.
 
-        if hasattr(self, 'minimize_memory') and self.minimize_memory:
-            self._is_asn = (
-                is_association(input) or isinstance(input, str)
-            )
-
+        if isinstance(input, ModelLibrary):
+            library = input
         else:
-            self._is_asn = False
-
-        img = ModelContainer(
-            input,
-            save_open=not self._is_asn,
-            return_open=not self._is_asn
-        )
+            library = ModelLibrary(input, on_disk=not self.in_memory)
 
         self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 
@@ -103,51 +89,45 @@ class SkyMatchStep(Step):
             binwidth=self.binwidth
         )
 
-        # group images by their "group id":
-        grp_img = img.models_grouped
-
-        # create a list of "Sky" Images and/or Groups:
         images = []
-        grp_id = 1
-
-        for g in grp_img:
-            if len(g) > 1:
-                images.append(
-                    SkyGroup(
-                        list(map(self._imodel2skyim, g)),
-                        id=grp_id
-                    )
-                )
-                grp_id += 1
-            elif len(g) == 1:
-                images.append(self._imodel2skyim(g[0]))
-            else:
-                raise AssertionError("Logical error in the pipeline code.")
+        with library:
+            for group_index, (group_id, group_inds) in enumerate(library.group_indices.items()):
+                sky_images = []
+                for index in group_inds:
+                    model = library.borrow(index)
+                    try:
+                        sky_images.append(self._imodel2skyim(model, index))
+                    finally:
+                        library.shelve(model, index, modify=False)
+                if len(sky_images) == 1:
+                    images.extend(sky_images)
+                else:
+                    images.append(SkyGroup(sky_images, id=group_index))
 
         # match/compute sky values:
         match(images, skymethod=self.skymethod, match_down=self.match_down,
               subtract=self.subtract)
 
         # set sky background value in each image's meta:
-        for im in images:
-            if isinstance(im, SkyImage):
-                self._set_sky_background(
-                    im,
-                    "COMPLETE" if im.is_sky_valid else "SKIPPED"
-                )
-            else:
-                for gim in im:
+        with library:
+            for im in images:
+                if isinstance(im, SkyImage):
                     self._set_sky_background(
-                        gim,
-                        "COMPLETE" if gim.is_sky_valid else "SKIPPED"
+                        im,
+                        library,
+                        "COMPLETE" if im.is_sky_valid else "SKIPPED"
                     )
+                else:
+                    for gim in im:
+                        self._set_sky_background(
+                            gim,
+                            library,
+                            "COMPLETE" if gim.is_sky_valid else "SKIPPED"
+                        )
 
-        return input if self._is_asn else img
+        return library
 
-    def _imodel2skyim(self, image_model):
-        input_image_model = image_model
-        if self._is_asn:
-            image_model = datamodel_open(image_model)
+    def _imodel2skyim(self, image_model, index):
 
         if self._dqbits is None:
             dqmask = np.isfinite(image_model.data).astype(dtype=np.uint8)
@@ -163,9 +143,6 @@ class SkyMatchStep(Step):
         # if 'subtract' mode has changed compared to the previous pass:
         if image_model.meta.background.subtracted is None:
             if image_model.meta.background.level is not None:
-                if self._is_asn:
-                    image_model.close()
-
                 # report inconsistency:
                 raise ValueError("Background level was set but the "
                                  "'subtracted' property is undefined (None).")
@@ -179,9 +156,6 @@ class SkyMatchStep(Step):
                 # at this moment I think it is saver to quit and...
                 #
                 # report inconsistency:
-                if self._is_asn:
-                    image_model.close()
-
                 raise ValueError("Background level was subtracted but the "
                                  "'level' property is undefined (None).")
 
@@ -189,9 +163,6 @@ class SkyMatchStep(Step):
                 # cannot run 'skymatch' step on already "skymatched" images
                 # when 'subtract' spec is inconsistent with
                 # meta.background.subtracted:
-                if self._is_asn:
-                    image_model.close()
-
                 raise ValueError("'subtract' step's specification is "
                                  "inconsistent with background info already "
                                  "present in image '{:s}' meta."
@@ -206,29 +177,35 @@ class SkyMatchStep(Step):
             pix_area=1.0,  # TODO: pixel area
             convf=1.0,  # TODO: conv. factor to brightness
             mask=dqmask,
-            id=image_model.meta.filename,  # file name?
+            id=image_model.meta.filename,
             skystat=self._skystat,
             stepsize=self.stepsize,
-            reduce_memory_usage=self._is_asn,
-            meta={'image_model': input_image_model}
+            reduce_memory_usage=False,  # this overwrote input files
+            meta={'index': index}
         )
-
-        if self._is_asn:
-            image_model.close()
 
         if self.subtract:
             sky_im.sky = level
 
         return sky_im
 
-    def _set_sky_background(self, sky_image, step_status):
-        image = sky_image.meta['image_model']
-        sky = sky_image.sky
+    def _set_sky_background(self, sky_image, library, step_status):
+        """
+        Parameters
+        ----------
+        sky_image : SkyImage
+            SkyImage object containing sky image data and metadata.
 
-        if self._is_asn:
-            dm = datamodel_open(image)
-        else:
-            dm = image
+        library : ModelLibrary
+            Library of input data models, must be open
+
+        step_status : str
+            Status of the sky subtraction step. Must be one of the following:
+            'COMPLETE', 'SKIPPED'.
+        """
+        index = sky_image.meta['index']
+        dm = library.borrow(index)
+        sky = sky_image.sky
 
         if step_status == "COMPLETE":
             dm.meta.background.method = str(self.skymethod)
@@ -238,7 +215,4 @@ class SkyMatchStep(Step):
                 dm.data[...] = sky_image.image[...]
 
         dm.meta.cal_step.skymatch = step_status
-
-        if self._is_asn:
-            dm.save(image)
-            dm.close()
+        library.shelve(dm, index)

@@ -1,6 +1,6 @@
 import time
+import multiprocessing
 import numpy as np
-from multiprocessing import Pool
 
 from scipy import sparse
 
@@ -10,8 +10,51 @@ from .disperse import dispersed_pixel
 
 import logging
 
+from photutils.background import Background2D, MedianBackground
+from astropy.stats import SigmaClip
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclude_percentile=30.0):
+    """
+    Simple astropy background subtraction
+
+    Parameters
+    ----------
+    data : np.ndarray
+        2D array of pixel values
+    box_size : tuple
+        Size of box in pixels to use for background estimation. 
+        If not set, defaults to 1/5 of the image size.
+    filter_size : tuple
+        Size of filter to use for background estimation
+    sigma : float
+        Sigma threshold for background clipping
+    exclude_percentile : float
+        Percentage of masked pixels above which box is excluded from background estimation
+
+    Returns
+    -------
+    data : np.ndarray
+        2D array of pixel values with background subtracted
+
+    Notes
+    -----
+    Improper background subtraction in input _i2d image leads to extra flux
+    in the simulated dispersed image, and was one cause of flux scaling issues
+    in a previous version.
+    """
+    if box_size is None:
+        box_size = (int(data.shape[0]/5), int(data.shape[1]/5))
+    sigma_clip = SigmaClip(sigma=sigma)
+    bkg_estimator = MedianBackground()
+    bkg = Background2D(data, box_size, filter_size=filter_size,
+                   sigma_clip=sigma_clip, bkg_estimator=bkg_estimator, 
+                   exclude_percentile=exclude_percentile)
+
+    return data - bkg.background
 
 
 class Observation:
@@ -120,6 +163,7 @@ class Observation:
             log.info(f"Using direct image {dir_image_name}")
             with datamodels.open(dir_image_name) as model:
                 dimage = model.data
+                dimage = background_subtract(dimage)
 
                 if self.sed_file is None:
                     # Default pipeline will use sed_file=None, so we need to compute
@@ -259,7 +303,8 @@ class Observation:
 
         time1 = time.time()
         if self.max_cpu > 1:
-            mypool = Pool(self.max_cpu)  # Create the pool
+            ctx = multiprocessing.get_context("forkserver")
+            mypool = ctx.Pool(self.max_cpu)  # Create the pool
             all_res = mypool.imap_unordered(dispersed_pixel, pars)  # Fill the pool
             mypool.close()  # Drain the pool
         else:

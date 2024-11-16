@@ -36,7 +36,7 @@ def test_word_precision_check():
         ('*.fits', 0)
     ], ids=['all', 'txt', 'fits']
 )
-def test_data_glob_local(glob_filter, nfiles, _jail):
+def test_data_glob_local(glob_filter, nfiles, tmp_cwd):
     """Test working of local globbing
 
     Parameters

@@ -10,12 +10,12 @@ TRUTH_PATH = 'truth/test_miri_mrs_tso'
 
 
 @pytest.fixture(scope='module')
-def run_spec2(jail, rtdata_module):
+def run_spec2(rtdata_module):
     """Run the Spec2Pipeline on a single exposure"""
     rtdata = rtdata_module
 
     # Setup the inputs
-    file_name = 'jw80600018001_02101_00003_mirifushort_rateints.fits'
+    file_name = 'jw01556001001_04102_00001-seg001_mirifushort_rateints.fits'
     rtdata.get_data(INPUT_PATH + '/' + file_name)
 
     # Run the pipeline
@@ -25,6 +25,7 @@ def run_spec2(jail, rtdata_module):
             '--steps.srctype.save_results=true',
             '--steps.fringe.save_results=true',
             '--steps.photom.save_results=true',
+            '--steps.photom.mrs_time_correction=true',
             ]
 
     Step.from_cmdline(args)
@@ -36,7 +37,7 @@ def run_spec2(jail, rtdata_module):
 def test_spec2(rtdata_module, run_spec2, fitsdiff_default_kwargs, suffix):
     """Test ensuring the calwebb_tso-spec2 is operating appropriately for MIRI MRS TSO data"""
     rtdata = rtdata_module
-    output = f"jw80600018001_02101_00003_mirifushort_{suffix}.fits"
+    output = f"jw01556001001_04102_00001-seg001_mirifushort_{suffix}.fits"
     rtdata.output = output
 
     rtdata.get_truth(f"{TRUTH_PATH}/{output}")

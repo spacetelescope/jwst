@@ -6,8 +6,7 @@ Description
 
 Assumptions
 -----------
-It is assumed that the input science data have *NOT* had the zero group (or
-bias) subtracted. We also do not want the dark subtraction process to remove
+We do not want the dark subtraction process to remove
 the bias signal from the science exposure, therefore the dark reference data
 should have their own group zero subtracted from all groups. This means that
 group zero of the dark reference data will effectively be zero-valued.
@@ -35,9 +34,9 @@ GROUPGAP intervening frames.
 
 The frame-averaged dark is constructed using the following scheme:
 
-* SCI arrays are computed as the mean of the original dark SCI arrays
-* ERR arrays are computed as the uncertainty in the mean, using
-  :math:`\frac{\sqrt {\sum \mathrm{ERR}^2}}{nframes}`
+#. SCI arrays are computed as the mean of the original dark SCI arrays
+#. ERR arrays are computed as the uncertainty in the mean, using
+   :math:`\frac{\sqrt {\sum \mathrm{ERR}^2}}{nframes}`
 
 The dark reference data are not integration-dependent for most instruments,
 hence the same group-by-group dark current data are subtracted from every

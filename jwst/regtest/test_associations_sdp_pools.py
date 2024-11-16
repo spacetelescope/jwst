@@ -22,16 +22,21 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 
 # Mark expected failures. Key is the pool name
 # and value is the reason message.
-EXPECTED_FAILS = {
+EXPECTED_FAILS: dict = {
 }
 
 # Pools that require special handling
-SPECIAL_DEFAULT = {
+SPECIAL_DEFAULT: dict = {
     'args': [],
     'xfail': None,
     'slow': False,
 }
 SPECIAL_POOLS = {
+    'jw00016_20230331t130733_pool': {
+        'args': [],
+        'xfail': 'See issue JP-3516',
+        'slow': False,
+    },
     'jw00623_20190607t021101_pool': {
         'args': [],
         'xfail': None,
@@ -72,8 +77,23 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': True,
     },
+    'jw00818_20230407t030411_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': False,
+    },
     'jw00839_20221220t025418_pool': {
         'args': ['-i', 'o002', 'c1000'],
+        'xfail': None,
+        'slow': False,
+    },
+    'jw01093_20230626t181341_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw01192_o008_pool.csv': {
+        'args': ['-i', 'o008'],
         'xfail': None,
         'slow': False,
     },
@@ -87,13 +107,13 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': True,
     },
-    'jw01290_20230304t140931_pool': {
-        'args': [],
-        'xfail': None,
-        'slow': True,
-    },
     'jw01288_c1005_mostilno12_pool': {
         'args': ['-i', 'o003', 'c1001', 'c1005'],
+        'xfail': 'See issue JP-3230',
+        'slow': True,
+    },
+    'jw01290_20230304t140931_pool': {
+        'args': [],
         'xfail': None,
         'slow': True,
     },
@@ -112,6 +132,11 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': False,
     },
+    'jw01678_20240721t195707_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': False,
+    },
     'jw02064_20230302t112350_pool': {
         'args': [],
         'xfail': None,
@@ -119,6 +144,12 @@ SPECIAL_POOLS = {
     },
     'jw02064_20230302t112350_withids_pool': {
         'args': ['-i', 'o061', 'c1008', 'c1017'],
+        'xfail': None,
+        'slow': False,
+    },
+    # This association tests the Asn_Lv3ImageMosaic rule
+    'jw02739_20230710t150016_pool': {
+        'args': ['-i', 'c1000'],
         'xfail': None,
         'slow': False,
     },

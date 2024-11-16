@@ -73,6 +73,28 @@ class Extract1dStep(Step):
         Switch to select whether or not to apply an APERTURE correction during
         the Extract1dStep. Default is True
 
+    ifu_autocen : bool
+        Switch to turn on auto-centering for point source spectral extraction
+        in IFU mode.  Default is False.
+
+    ifu_rfcorr : bool
+        Switch to select whether or not to apply a 1d residual fringe correction
+        for MIRI MRS IFU spectra.  Default is False.
+
+    ifu_set_srctype : str
+        For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
+
+    ifu_rscale : float
+        For MRS IFU data a value for changing the extraction radius. The value provided is
+        the number of PSF FWHMs to use for the extraction radius. Values accepted are between
+        0.5 to 3.0. The default extraction size is set to 2 * FWHM. Values below 2 will result
+        in a smaller radius, a value of 2 results in no change to the radius and a value above
+        2 results in a larger extraction radius.
+
+    ifu_covar_scale : float
+        Scaling factor by which to multiply the ERR values in extracted spectra to account
+        for covariance between adjacent spaxels in the IFU data cube.
+
     soss_atoca : bool, default=False
         Switch to toggle extraction of SOSS data with the ATOCA algorithm.
         WARNING: ATOCA results not fully validated, and require the photom step
@@ -137,8 +159,13 @@ class Extract1dStep(Step):
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
-    center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
+    center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
+    ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
+    ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
+    ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
+    ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -147,14 +174,13 @@ class Extract1dStep(Step):
     soss_estimate = input_file(default = None)  # Estimate used to generate the wavelength grid
     soss_rtol = float(default=1.0e-4)  # Relative tolerance needed on a pixel model
     soss_max_grid_size = integer(default=20000)  # Maximum grid size, if wave_grid not specified
-    soss_transform = list(default=None, min=3, max=3)  # rotation applied to the ref files to match observation.
     soss_tikfac = float(default=None)  # regularization factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="masking")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr', 'wavemap', 'spectrace', 'specprofile', 'speckernel']
+    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel']
 
     def process(self, input):
         """Execute the step.
@@ -171,7 +197,10 @@ class Extract1dStep(Step):
         """
 
         # Open the input and figure out what type of model it is
-        input_model = datamodels.open(input)
+        if isinstance(input, ModelContainer):
+            input_model = input
+        else:
+            input_model = datamodels.open(input)
 
         was_source_model = False  # default value
         if isinstance(input_model, datamodels.CubeModel):
@@ -206,6 +235,28 @@ class Extract1dStep(Step):
             self.log.error('extract_1d will be skipped.')
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
+
+        if isinstance(input_model, datamodels.IFUCubeModel):
+            exp_type = input_model.meta.exposure.type
+        elif isinstance(input_model, ModelContainer):
+            exp_type = input_model[0].meta.exposure.type
+        else:
+            exp_type = None
+
+        if self.ifu_rfcorr:
+            if exp_type != "MIR_MRS":
+                self.log.warning("The option to apply a residual refringe correction is"
+                                 f" not supported for {input_model.meta.exposure.type} data.")
+
+        if self.ifu_rscale is not None:
+            if exp_type != "MIR_MRS":
+                self.log.warning("The option to change the extraction radius is"
+                                 f" not supported for {input_model.meta.exposure.type} data.")
+
+        if self.ifu_set_srctype is not None:
+            if exp_type != "MIR_MRS":
+                self.log.warning("The option to change the source type is"
+                                 f" not supported for {input_model.meta.exposure.type} data.")
 
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
@@ -248,6 +299,11 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.use_source_posn,
                         self.center_xy,
+                        self.ifu_autocen,
+                        self.ifu_rfcorr,
+                        self.ifu_set_srctype,
+                        self.ifu_rscale,
+                        self.ifu_covar_scale,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -282,6 +338,11 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.use_source_posn,
                             self.center_xy,
+                            self.ifu_autocen,
+                            self.ifu_rfcorr,
+                            self.ifu_set_srctype,
+                            self.ifu_rscale,
+                            self.ifu_covar_scale,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -319,6 +380,11 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.ifu_autocen,
+                    self.ifu_rfcorr,
+                    self.ifu_set_srctype,
+                    self.ifu_rscale,
+                    self.ifu_covar_scale,
                     was_source_model=was_source_model,
                 )
 
@@ -342,11 +408,9 @@ class Extract1dStep(Step):
                 if input_model.meta.instrument.filter == 'CLEAR':
                     self.log.info('Exposure is through the GR700XD + CLEAR (science).')
                     soss_filter = 'CLEAR'
-                elif input_model.meta.instrument.filter == 'F277W':
-                    self.log.info('Exposure is through the GR700XD + F277W (calibration).')
-                    soss_filter = 'F277W'
                 else:
-                    self.log.error('The SOSS extraction is implemented for the CLEAR or F277W filters only.')
+                    self.log.error('The SOSS extraction is implemented for the CLEAR filter only.'
+                                   f'Requested filter is {input_model.meta.instrument.filter}.')
                     self.log.error('extract_1d will be skipped.')
                     input_model.meta.cal_step.extract_1d = 'SKIPPED'
                     return input_model
@@ -356,25 +420,21 @@ class Extract1dStep(Step):
                     self.log.info('Exposure is in the SUBSTRIP256 subarray.')
                     self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
                     subarray = 'SUBSTRIP256'
-                elif input_model.meta.subarray.name == 'FULL':
-                    self.log.info('Exposure is in the FULL subarray.')
-                    self.log.info('Traces 1 and 2 will be modelled and decontaminated before extraction.')
-                    subarray = 'FULL'
                 elif input_model.meta.subarray.name == 'SUBSTRIP96':
                     self.log.info('Exposure is in the SUBSTRIP96 subarray.')
                     self.log.info('Traces of orders 1 and 2 will be modelled but only order 1'
                                   ' will be decontaminated before extraction.')
                     subarray = 'SUBSTRIP96'
                 else:
-                    self.log.error('The SOSS extraction is implemented for the SUBSTRIP256,'
-                                   ' SUBSTRIP96 and FULL subarray only.')
-                    self.log.error('extract_1d will be skipped.')
+                    self.log.error('The SOSS extraction is implemented for the SUBSTRIP256'
+                                   'and SUBSTRIP96 subarrays only. Subarray is currently '
+                                   f'{input_model.meta.subarray.name}.')
+                    self.log.error('Extract1dStep will be skipped.')
                     input_model.meta.cal_step.extract_1d = 'SKIPPED'
                     return input_model
 
                 # Load reference files.
-                spectrace_ref_name = self.get_reference_file(input_model, 'spectrace')
-                wavemap_ref_name = self.get_reference_file(input_model, 'wavemap')
+                pastasoss_ref_name = self.get_reference_file(input_model, 'pastasoss')
                 specprofile_ref_name = self.get_reference_file(input_model, 'specprofile')
                 speckernel_ref_name = self.get_reference_file(input_model, 'speckernel')
 
@@ -385,7 +445,6 @@ class Extract1dStep(Step):
                 soss_kwargs['tikfac'] = self.soss_tikfac
                 soss_kwargs['width'] = self.soss_width
                 soss_kwargs['bad_pix'] = self.soss_bad_pix
-                soss_kwargs['transform'] = self.soss_transform
                 soss_kwargs['subtract_background'] = self.subtract_background
                 soss_kwargs['rtol'] = self.soss_rtol
                 soss_kwargs['max_grid_size'] = self.soss_max_grid_size
@@ -399,8 +458,7 @@ class Extract1dStep(Step):
                 # Run the extraction.
                 result, ref_outputs, atoca_outputs = soss_extract.run_extract1d(
                     input_model,
-                    spectrace_ref_name,
-                    wavemap_ref_name,
+                    pastasoss_ref_name,
                     specprofile_ref_name,
                     speckernel_ref_name,
                     subarray,
@@ -458,6 +516,11 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.use_source_posn,
                     self.center_xy,
+                    self.ifu_autocen,
+                    self.ifu_rfcorr,
+                    self.ifu_set_srctype,
+                    self.ifu_rscale,
+                    self.ifu_covar_scale,
                     was_source_model=False,
                 )
 

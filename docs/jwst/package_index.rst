@@ -13,11 +13,15 @@ Package Index
    associations/index.rst
    background_step/index.rst
    background_subtraction/index.rst
+   badpix_selfcal/index.rst
    barshadow/index.rst
+   charge_migration/index.rst
+   clean_flicker_noise/index.rst
    combine_1d/index.rst
    cube_build/index.rst
    dark_current/index.rst
    dq_init/index.rst
+   emicorr/index.rst
    exp_to_source/index.rst
    extract_1d/index.rst
    extract_2d/index.rst
@@ -40,21 +44,25 @@ Package Index
    model_blender/index.rst
    mrs_imatch/index.rst
    msaflagopen/index.rst
+   nsclean/index.rst
    outlier_detection/index.rst
    pathloss/index.rst
    persistence/index.rst
    photom/index.rst
    pipeline/index.rst
+   pixel_replace/index.rst
    ramp_fitting/index.rst
    references_general/index.rst
    refpix/index.rst
    resample/index.rst
+   resample_spec/index.rst
    reset/index.rst
    residual_fringe/index.rst
    rscd/index.rst
    saturation/index.rst
    skymatch/index.rst
    source_catalog/index.rst
+   spectral_leak/index.rst
    srctype/index.rst
    stack_refs/index.rst
    stpipe/index.rst
@@ -62,7 +70,6 @@ Package Index
    superbias/index.rst
    tso_photometry/index.rst
    tweakreg/index.rst
-   undersampling_correction/index.rst
    wavecorr/index.rst
    wfs_combine/index.rst
    wfss_contam/index.rst

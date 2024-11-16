@@ -1,5 +1,4 @@
 import os
-
 import pytest
 import warnings
 
@@ -35,7 +34,7 @@ asn_memberdict = {
 
 
 @pytest.fixture(scope="module", params=file_roots)  # ids=ids)
-def run_pipeline(jail, rtdata_module, request):
+def run_pipeline(rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
        We currently test the following types of inputs:
          1) Full-frame exposure (all slits will be extracted)
@@ -43,7 +42,6 @@ def run_pipeline(jail, rtdata_module, request):
          3) S400A1 subarray exposure (1 slit extracted)"""
 
     rtdata = rtdata_module
-
     for fle in asn_memberdict[request.param]:
         rtdata.get_data('nirspec/fs/' + fle)
     # Get the input exposure
@@ -52,6 +50,8 @@ def run_pipeline(jail, rtdata_module, request):
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
+            "--steps.nsclean.skip=False",
+            "--steps.nsclean.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.wavecorr.save_results=true",
             "--steps.srctype.save_results=true",
@@ -62,9 +62,28 @@ def run_pipeline(jail, rtdata_module, request):
     return rtdata
 
 
+@pytest.fixture(scope="module")
+def run_pipeline_pixel_replace(rtdata_module):
+    """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures including pixel replacement.
+       The run_pipeline fixture saves the output for step before pixel_replace, so no need to retest.
+       We currently test the following types of inputs:
+         Full-frame exposure (all slits will be extracted)
+    """
+    rtdata = rtdata_module
+    rtdata.get_asn('nirspec/fs/jw01309_prtest_spec2_00001_asn.json')
+
+    # Run the calwebb_spec2 pipeline; save results from intermediate steps
+    args = ["calwebb_spec2", rtdata.input,
+            "--steps.pixel_replace.save_results=true",
+            "--steps.pixel_replace.skip=false"]
+    Step.from_cmdline(args)
+
+    return rtdata
+
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
-    "assign_wcs", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
+    "assign_wcs", "nsclean", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
     "cal", "s2d", "x1d"])
 def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
@@ -85,9 +104,34 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
+@pytest.mark.parametrize(
+    'output',
+    ['jw013090_prtest_04102_00004_nrs2_pixel_replace.fits',
+     'jw013090_prtest_04102_00004_nrs2_cal.fits',
+     'jw013090_prtest_04102_00004_nrs2_s2d.fits',
+     'jw013090_prtest_04102_00004_nrs2_x1d.fits']
+)
+def test_nirspec_fs_spec2_pixel_replace(run_pipeline_pixel_replace, fitsdiff_default_kwargs, output):
+    """Regression test of the calwebb_spec2 pipeline on a
+       NIRSpec FS exposures."""
+
+    # Run the pipeline and retrieve outputs
+    rtdata = run_pipeline_pixel_replace
+    rtdata.output = output
+
+    # Get the truth files
+    rtdata.get_truth(os.path.join("truth/test_nirspec_fs_spec2_pixel_replace", output))
+
+    # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+    basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
+    with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -105,7 +149,8 @@ def test_pathloss_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+    basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
+    with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -125,7 +170,8 @@ def test_pathloss_inverse(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+    basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
+    with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
         pls.source_type = 'extended'
         pls.run(data)
@@ -141,12 +187,12 @@ def test_pathloss_source_type(rtdata):
 @pytest.mark.bigdata
 def test_nirspec_fs_rateints_spec2(rtdata_module):
     """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure.
-       This is a test that the pipeline completes when processing this 
+       This is a test that the pipeline completes when processing this
        multi-integration input.
     """
     rtdata = rtdata_module
 
-    rtdata.get_data("nirspec/fs/jw01128004001_03102_00001_nrs1_new_rateints.fits")
+    rtdata.get_data("nirspec/fs/jw01128004001_03102_00001_nrs1_rateints.fits")
 
     # Run the spec2 pipeline on a (3D) _rateints file
     args = ["calwebb_spec2", rtdata.input]

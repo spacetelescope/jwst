@@ -36,7 +36,7 @@ def test_background_target_unset():
 
     # If BKGDTARG is missing, next test should be based on the
     # value of PATTTYPE, which in this case should return POINT.
-    assert output.meta.target.source_type == 'POINT'
+    assert output.meta.target.source_type == 'EXTENDED'
 
 
 def test_nrsifu_nodded():
@@ -52,7 +52,7 @@ def test_nrsifu_nodded():
     output = srctype.set_source_type(input)
 
     # Result should be POINT regardless of input setting
-    assert output.meta.target.source_type == 'POINT'
+    assert output.meta.target.source_type == 'EXTENDED'
 
 
 def test_mirmrs_nodded():
@@ -69,7 +69,7 @@ def test_mirmrs_nodded():
     output = srctype.set_source_type(input)
 
     # Result should be POINT regardless of input setting
-    assert output.meta.target.source_type == 'POINT'
+    assert output.meta.target.source_type == 'EXTENDED'
 
 
 def test_user_input():
@@ -190,6 +190,14 @@ def test_nrs_fixedslit():
     assert result.slits[0].source_type == 'EXTENDED'
     assert result.slits[1].source_type == 'POINT'
     assert result.slits[2].source_type == 'EXTENDED'
+
+    # Check that source_xpos and source_ypos are reset to zero for primary slit
+    # if the source is EXTENDED
+    input.slits[1].source_xpos = 0.5
+    input.slits[1].source_ypos = -0.5
+    result = srctype.set_source_type(input, "EXTENDED")
+    assert result.slits[1].source_xpos == 0.0
+    assert result.slits[1].source_ypos == 0.0
 
 
 def test_valid_user_spec():

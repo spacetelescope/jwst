@@ -73,7 +73,8 @@ def wfs_association(tmp_path_factory):
     im1.save(path1)
     im2.save(path2)
 
-    asn = asn_from_list([path1, path2],
+    #asn = asn_from_list([path1, path2],
+    asn = asn_from_list(["image1_cal.fits", "image2_cal.fits"],
                         product_name='jw00024-a3001_t001_nircam_nrca4_{suffix}')
     asn.data["program"] = "00024"
     asn.data["asn_type"] = "wfs-image2"
@@ -100,7 +101,7 @@ def wfs_association(tmp_path_factory):
         (1, 3, SATURATED, SATURATED, 2, SATURATED),
     ]
 )
-def test_create_combined(_jail, wfs_association,
+def test_create_combined(tmp_cwd, wfs_association,
                          data1, data2, dq1, dq2, result_data, result_dq):
     path_asn, path1, path2 = wfs_association
 

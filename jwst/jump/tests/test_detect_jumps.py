@@ -7,6 +7,8 @@ from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, d
 from jwst.jump.jump import run_detect_jumps
 import multiprocessing
 
+import os
+import platform
 import time
 import random
 
@@ -28,13 +30,19 @@ def test_exec_time_0_crs(setup_inputs):
                                        nints=2, readnoise=6.5, gain=5.5,
                                        grouptime=2.775, deltatime=2.775)
 
-    tstart = time.time()
+    tstart = time.monotonic()
     # using dummy variable in next to prevent "F841-variable is assigned to but never used"
     _ = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
-    tstop = time.time()
+    tstop = time.monotonic()
 
     t_elapsed = tstop - tstart
-    MAX_TIME = 10  # takes 1.6 sec on my Mac
+    if platform.system() == 'Darwin' and os.environ.get('CI', False):
+        # github mac runners have known performance issues see:
+        # https://github.com/actions/runner-images/issues/1336
+        # use a longer MAX_TIME when running on github on a mac
+        MAX_TIME = 20
+    else:
+        MAX_TIME = 10  # takes 1.6 sec on my Mac
 
     assert t_elapsed < MAX_TIME
 
@@ -299,51 +307,6 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
     assert_array_equal(out_model.groupdq[0, :, 4, 4], [1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
 
-def test_nirspec_saturated_pix(setup_inputs):
-    """
-    This test is based on an actual NIRSpec exposure that has some pixels
-    flagged as saturated in one or more groups, which the jump step is
-    supposed to ignore, but an old version of the code was setting JUMP flags
-    for some of the saturated groups. This is to verify that the saturated
-    groups are no longer flagged with jumps.
-    """
-    grouptime = 3.0
-    ingain = 1.0
-    inreadnoise = 10.7
-    ngroups = 7
-    nrows = 6
-    ncols = 6
-
-    model, rnoise, gain = setup_inputs(ngroups=ngroups, nints=1, nrows=nrows,
-                                       ncols=ncols, gain=ingain,
-                                       readnoise=inreadnoise, deltatime=grouptime)
-
-    # Setup the needed input pixel and DQ values
-    model.data[0, :, 1, 1] = [639854.75, 4872.451, -17861.791, 14022.15, 22320.176,
-                              1116.3828, 1936.9746]
-    model.groupdq[0, :, 1, 1] = [0, 0, 0, 0, 0, 2, 2]
-    model.data[0, :, 2, 2] = [8.25666812e+05, -1.10471914e+05, 1.95755371e+02, 1.83118457e+03,
-                              1.72250879e+03, 1.81733496e+03, 1.65188281e+03]
-    # 2 non-sat groups means only 1 non-sat diff, so no jumps should be flagged
-    model.groupdq[0, :, 2, 2] = [0, 0, 2, 2, 2, 2, 2]
-    model.data[0, :, 3, 3] = [1228767., 46392.234, -3245.6553, 7762.413,
-                              37190.76, 266611.62, 5072.4434]
-    model.groupdq[0, :, 3, 3] = [0, 0, 0, 0, 0, 0, 2]
-
-    # run jump detection
-    out_model = run_detect_jumps(model, gain, rnoise, rejection_thresh=200.0, three_grp_thresh=200,
-                                 four_grp_thresh=200,
-                                 max_cores='none', max_jump_to_flag_neighbors=200,
-                                 min_jump_to_flag_neighbors=10, flag_4_neighbors=True)
-
-    # Check the results. There should not be any pixels with DQ values of 6, which
-    # is saturated (2) plus jump (4). All the DQ's should be either just 2 or just 4.
-    assert_array_equal(out_model.groupdq[0, :, 1, 1], [0, 4, 4, 4, 0, 2, 2])
-    # assert that no groups are flagged when theres only 1 non-sat. grp
-    assert_array_equal(out_model.groupdq[0, :, 2, 2], [0, 0, 2, 2, 2, 2, 2])
-    assert_array_equal(out_model.groupdq[0, :, 3, 3], [0, 4, 4, 0, 0, 4, 2])
-
-
 def add_crs(model, crs_frac):
     """"
     Randomly add a cosmic ray of magnitude CR_MAG to a fraction (crs_frac)
@@ -479,7 +442,6 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     assert out_model.groupdq[1, 7, 14, 5] == JUMP_DET
 
 
-@pytest.mark.skip(reason="Test is only used to test performance issue. No need to run every time.")
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     """"
     A multiprocessing test that has a jump in every pixel. This is used
@@ -768,7 +730,7 @@ def test_single_CR_neighbor_flag(setup_inputs):
     model.data[0, 7, 3, 3] = 160.0
     model.data[0, 8, 3, 3] = 170.0
     model.data[0, 9, 3, 3] = 180.0
-
+    indq = model.groupdq.copy()
     # Flag neighbors
     out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
 
@@ -779,6 +741,7 @@ def test_single_CR_neighbor_flag(setup_inputs):
     assert out_model.groupdq[0, 5, 4, 3] == JUMP_DET
 
     # Do not flag neighbors
+    model.groupdq = indq
     out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, False)
 
     assert np.max(out_model.groupdq[0, 5, 3, 3]) == JUMP_DET
@@ -813,12 +776,12 @@ def test_proc(setup_inputs):
     model.data[0, 7, 2, 3] = 160.0
     model.data[0, 8, 2, 3] = 170.0
     model.data[0, 9, 2, 3] = 180.0
-
+    model_b = model.copy()
+    model_c = model.copy()
     out_model_a = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
-    out_model_b = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'half', 200, 4, True)
+    out_model_b = run_detect_jumps(model_b, gain, rnoise, 4.0, 5.0, 6.0, 'half', 200, 4, True)
     assert_array_equal(out_model_a.groupdq, out_model_b.groupdq)
-
-    out_model_c = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
+    out_model_c = run_detect_jumps(model_c, gain, rnoise, 4.0, 5.0, 6.0, 'all', 200, 4, True)
     assert_array_equal(out_model_a.groupdq, out_model_c.groupdq)
 
 

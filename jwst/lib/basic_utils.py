@@ -1,8 +1,5 @@
 """General utility objects"""
 
-# Moved to stdatamodels, kept here to preserve interface
-from stdatamodels.jwst.library.basic_utils import deprecate_class, bytes2human  # noqa: F401
-
 
 class LoggingContext:
     """Logging context manager

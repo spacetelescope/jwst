@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from stdatamodels.jwst import datamodels
 
@@ -70,7 +71,7 @@ def map_to_science_slits(input_model, master_bkg):
 
     # Loop over all input slits, creating 2D master background to
     # match each 2D slitlet cutout
-    output_model = expand_to_2d(input_model, master_bkg)
+    output_model = expand_to_2d(input_model, master_bkg, allow_mos=True)
 
     return output_model
 
@@ -101,7 +102,7 @@ def create_background_from_multislit(input_model):
     bkg_model.update(input_model)
     slits = []
     for slit in input_model.slits:
-        if "background" in slit.source_name:
+        if is_background_msa_slit(slit):
             log.info(f'Using background slitlet {slit.source_name}')
             slits.append(slit)
 
@@ -166,7 +167,7 @@ def correct_nrs_ifu_bkg(input_model):
     return input_model
 
 
-def correct_nrs_fs_bkg(input_model, primary_slit):
+def correct_nrs_fs_bkg(input_model):
     """Apply point source vs. uniform source corrections
     to a NIRSpec Fixed-Slit 2D master background array.
 
@@ -174,9 +175,6 @@ def correct_nrs_fs_bkg(input_model, primary_slit):
     ----------
     input_model : `~jwst.datamodels.SlitModel`
         The input background data.
-
-    primary_slit : bool
-        Is this the primary slit in the exposure?
 
     Returns
     -------
@@ -201,44 +199,63 @@ def correct_nrs_fs_bkg(input_model, primary_slit):
         log.warning('Skipping background updates')
         return input_model
 
-    if primary_slit:
-        # If processing the primary slit, we also need flatfield and
-        # photom correction arrays
-        if 'flatfield_point' in input_model.instance:
-            ff_point = getattr(input_model, 'flatfield_point')
-        else:
-            log.warning('flatfield_point array not found in input')
-            log.warning('Skipping background updates')
-            return input_model
+    # If processing the primary slit, we also need flatfield and
+    # photom correction arrays
+    if 'flatfield_point' in input_model.instance:
+        ff_point = getattr(input_model, 'flatfield_point')
+    else:
+        log.warning('flatfield_point array not found in input')
+        log.warning('Skipping background updates')
+        return input_model
 
-        if 'flatfield_uniform' in input_model.instance:
-            ff_uniform = getattr(input_model, 'flatfield_uniform')
-        else:
-            log.warning('flatfield_uniform array not found in input')
-            log.warning('Skipping background updates')
-            return input_model
+    if 'flatfield_uniform' in input_model.instance:
+        ff_uniform = getattr(input_model, 'flatfield_uniform')
+    else:
+        log.warning('flatfield_uniform array not found in input')
+        log.warning('Skipping background updates')
+        return input_model
 
-        if 'photom_point' in input_model.instance:
-            ph_point = getattr(input_model, 'photom_point')
-        else:
-            log.warning('photom_point array not found in input')
-            log.warning('Skipping background updates')
-            return input_model
+    if 'photom_point' in input_model.instance:
+        ph_point = getattr(input_model, 'photom_point')
+    else:
+        log.warning('photom_point array not found in input')
+        log.warning('Skipping background updates')
+        return input_model
 
-        if 'photom_uniform' in input_model.instance:
-            ph_uniform = getattr(input_model, 'photom_uniform')
-        else:
-            log.warning('photom_uniform array not found in input')
-            log.warning('Skipping background updates')
-            return input_model
+    if 'photom_uniform' in input_model.instance:
+        ph_uniform = getattr(input_model, 'photom_uniform')
+    else:
+        log.warning('photom_uniform array not found in input')
+        log.warning('Skipping background updates')
+        return input_model
 
-        # Apply the corrections for the primary slit
+    # Apply the corrections for the primary slit
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
+        warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
         input_model.data *= (pl_uniform / pl_point) * \
                             (ff_uniform / ff_point) * \
                             (ph_point / ph_uniform)
 
-    else:
-        # Apply the corrections for secondary slits
-        input_model.data *= (pl_uniform / pl_point)
-
     return input_model
+
+
+def is_background_msa_slit(slit):
+    """
+    Check if an MSA slitlet is a background source.
+
+    Parameters
+    ----------
+    slit : `~jwst.datamodels.SlitModel`
+        The slit model to check.
+
+    Returns
+    -------
+    bool
+        True if the slit is background; False if it is not.
+    """
+    name = str(slit.source_name).upper()
+    if ("BKG" in name) or ("BACKGROUND" in name):
+        return True
+    else:
+        return False

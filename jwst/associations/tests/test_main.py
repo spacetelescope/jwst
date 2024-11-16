@@ -17,7 +17,7 @@ POOL_PATH = 'pool_018_all_exptypes.csv'
 
 @pytest.mark.parametrize(
     'case', [
-        (None, 62),  # Don't re-run, just compare to the generator fixture results
+        (None, 61),  # Don't re-run, just compare to the generator fixture results
         (['-i', 'o001'], 2),
         (['-i', 'o001', 'o002'], 3),
         (['-i', 'c1001'], 1),
@@ -44,7 +44,7 @@ def test_asn_candidates(pool, all_candidates, case):
         (['nosuchpool.csv'], 1),
     ]
 )
-def test_cmdline_status(args, expected, _jail):
+def test_cmdline_status(args, expected, tmp_cwd):
     """Ensure command line status are as expected."""
     full_args = ['asn_generate'] + args
     status = subprocess.run(full_args)

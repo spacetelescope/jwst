@@ -10,3 +10,8 @@ The ``photom`` step has the following optional arguments.
 ``--source_type`` (string, default=None)
   Force the processing to use the given source type (POINT, EXTENDED),
   instead of using the information contained in the input data.
+
+``--mrs_time_correction`` (boolean, default=True)
+   A flag to indicate whether to turn on the time and wavelength dependent
+   correction for MIRI MRS data. 
+   

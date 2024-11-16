@@ -16,7 +16,10 @@ from gwcs import coordinate_frames as cf
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary
+from jwst.stpipe.utilities import record_step_status
+from jwst.assign_wcs.util import update_s_region_imaging
+from jwst.lib.exposure_types import IMAGING_TYPES
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -24,49 +27,56 @@ log.setLevel(logging.DEBUG)
 __all__ = ["assign_moving_target_wcs"]
 
 
-def assign_moving_target_wcs(input_model):
+def assign_moving_target_wcs(input_models):
 
-    if not isinstance(input_model, ModelContainer):
-        raise ValueError("Expected a ModelContainer object")
+    if not isinstance(input_models, ModelLibrary):
+        raise ValueError("Expected a ModelLibrary object")
 
-    # get the indices of the science exposures in the ModelContainer
-    ind = input_model.ind_asn_type('science')
-    sci_models = np.asarray(input_model._models)[ind]
-    # Get the MT RA/Dec values from all the input exposures
-    mt_ra = np.array([model.meta.wcsinfo.mt_ra for model in sci_models])
-    mt_dec = np.array([model.meta.wcsinfo.mt_dec for model in sci_models])
+    # loop over only science exposures in the ModelLibrary
+    ind = input_models.indices_for_exptype("science")
+    mt_ra = np.empty(len(ind))
+    mt_dec = np.empty(len(ind))
+    with input_models:
+        for i in ind:
+            model = input_models.borrow(i)
+            mt_ra[i] = model.meta.wcsinfo.mt_ra
+            mt_dec[i] = model.meta.wcsinfo.mt_dec
+            input_models.shelve(model, i, modify=False)
 
     # Compute the mean MT RA/Dec over all exposures
     if None in mt_ra or None in mt_dec:
         log.warning("One or more MT RA/Dec values missing in input images")
         log.warning("Step will be skipped, resulting in target misalignment")
-        for model in sci_models:
-            model.meta.cal_step.assign_mtwcs = 'SKIPPED'
-        return input_model
-    else:
-        mt_avra = mt_ra.mean()
-        mt_avdec = mt_dec.mean()
+        record_step_status(input_models, "assign_mtwcs", False)
+        return input_models
 
-    for model in sci_models:
-        model.meta.wcsinfo.mt_avra = mt_avra
-        model.meta.wcsinfo.mt_avdec = mt_avdec
-        if isinstance(model, datamodels.MultiSlitModel):
-            for ind, slit in enumerate(model.slits):
-                new_wcs = add_mt_frame(slit.meta.wcs,
-                                       mt_avra, mt_avdec,
-                                       slit.meta.wcsinfo.mt_ra, slit.meta.wcsinfo.mt_dec)
-                del model.slits[ind].meta.wcs
-                model.slits[ind].meta.wcs = new_wcs
-        else:
+    mt_avra = mt_ra.mean()
+    mt_avdec = mt_dec.mean()
 
-            new_wcs = add_mt_frame(model.meta.wcs, mt_avra, mt_avdec,
-                                   model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
-            del model.meta.wcs
-            model.meta.wcs = new_wcs
+    with input_models:
+        for i in ind:
+            model = input_models.borrow(i)
+            model.meta.wcsinfo.mt_avra = mt_avra
+            model.meta.wcsinfo.mt_avdec = mt_avdec
+            if isinstance(model, datamodels.MultiSlitModel):
+                for ind, slit in enumerate(model.slits):
+                    new_wcs = add_mt_frame(slit.meta.wcs,
+                                        mt_avra, mt_avdec,
+                                        slit.meta.wcsinfo.mt_ra, slit.meta.wcsinfo.mt_dec)
+                    del model.slits[ind].meta.wcs
+                    model.slits[ind].meta.wcs = new_wcs
+            else:
 
-        model.meta.cal_step.assign_mtwcs = 'COMPLETE'
+                new_wcs = add_mt_frame(model.meta.wcs, mt_avra, mt_avdec,
+                                    model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
+                del model.meta.wcs
+                model.meta.wcs = new_wcs
+            if model.meta.exposure.type.lower() in IMAGING_TYPES:
+                update_s_region_imaging(model)
+            record_step_status(model, "assign_mtwcs", True)
+            input_models.shelve(model, i, modify=True)
 
-    return input_model
+    return input_models
 
 
 def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):

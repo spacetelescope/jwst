@@ -5,7 +5,6 @@ from astropy.table import vstack
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer
 
 from ..stpipe import Pipeline
 
@@ -14,7 +13,7 @@ from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 from ..photom import photom_step
-
+from ..pixel_replace import pixel_replace_step
 from ..lib.pipe_utils import is_tso
 from astropy.io.fits import FITS_rec
 
@@ -30,6 +29,7 @@ class Tso3Pipeline(Pipeline):
 
         * outlier_detection
         * tso_photometry
+        * pixel_replace
         * extract_1d
         * photom
         * white_light
@@ -37,14 +37,13 @@ class Tso3Pipeline(Pipeline):
 
     class_alias = "calwebb_tso3"
 
-    spec = """
-        scale_detection = boolean(default=False)
-    """
+    spec = ""
 
     # Define alias to steps
     step_defs = {'outlier_detection':
                  outlier_detection_step.OutlierDetectionStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
+                 'pixel_replace': pixel_replace_step.PixelReplaceStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'photom': photom_step.PhotomStep,
                  'white_light': white_light_step.WhiteLightStep
@@ -73,12 +72,16 @@ class Tso3Pipeline(Pipeline):
             return
 
         if self.output_file is None:
-            self.output_file = input_models.meta.asn_table.products[0].name
-        self.asn_id = input_models.meta.asn_table.asn_id
+            self.output_file = input_models.asn_table["products"][0]["name"]
+
+        # This asn_id assignment is important as it allows outlier detection
+        # to know the asn_id since that step receives the cube as input.
+        self.asn_id = input_models.asn_table["asn_id"]
+        self.outlier_detection.mode = 'tso'
 
         # Input may consist of multiple exposures, so loop over each of them
         input_exptype = None
-        for cube in input_models:
+        for i, cube in enumerate(input_models):
             if input_exptype is None:
                 input_exptype = cube.meta.exposure.type
 
@@ -87,49 +90,26 @@ class Tso3Pipeline(Pipeline):
                 self.log.warning('Input data are 2D; skipping outlier_detection')
                 break
 
-            # Perform regular outlier detection
-            if not self.scale_detection:
+            self.log.info("Performing outlier detection on input images ...")
+            cube = self.outlier_detection.run(cube)
 
-                # Convert CubeModel into ModelContainer of 2-D DataModels to
-                # use as input to outlier detection step
-                input_2dmodels = ModelContainer()
-                for i in range(cube.data.shape[0]):
-                    # convert each plane of data cube into its own array
-                    image = datamodels.ImageModel(data=cube.data[i],
-                                                  err=cube.err[i], dq=cube.dq[i])
-                    image.update(cube)
-                    image.meta.wcs = cube.meta.wcs
-                    input_2dmodels.append(image)
-
-                self.log.info("Performing outlier detection on input images ...")
-                input_2dmodels = self.outlier_detection(input_2dmodels)
-
-                # Transfer updated DQ values to original input observation
-                for i in range(cube.data.shape[0]):
-                    # Update DQ arrays with those from outlier_detection step
-                    cube.dq[i] = np.bitwise_or(cube.dq[i], input_2dmodels[i].dq)
-
-                cube.meta.cal_step.outlier_detection = \
-                    input_2dmodels[0].meta.cal_step.outlier_detection
-
-                del input_2dmodels
-
-            else:
-                self.log.info("Performing scaled outlier detection on input images ...")
-                self.outlier_detection.scale_detection = True
-                cube = self.outlier_detection(cube)
-
-        # Save crfints products
-        if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
-            self.log.info("Saving crfints products with updated DQ arrays ...")
-            for cube in input_models:
+            # Save crfints products
+            if cube.meta.cal_step.outlier_detection == 'COMPLETE':
+                self.log.info("Saving crfints products with updated DQ arrays ...")
                 # preserve output filename
                 original_filename = cube.meta.filename
+
+                # ensure output filename will not have duplicate asn_id
+                if "_"+self.asn_id in original_filename:
+                    original_filename = original_filename.replace(
+                        "_"+self.asn_id, ''
+                    )
                 self.save_model(
                     cube, output_file=original_filename, suffix='crfints',
-                    asn_id=input_models.meta.asn_table.asn_id
+                    asn_id=self.asn_id
                 )
                 cube.meta.filename = original_filename
+            input_models[i] = cube
 
         # Create final photometry results as a single output
         # regardless of how many input members there may be
@@ -144,7 +124,7 @@ class Tso3Pipeline(Pipeline):
 
             for cube in input_models:
                 # Extract Photometry from imaging data
-                phot_result_list.append(self.tso_photometry(cube))
+                phot_result_list.append(self.tso_photometry.run(cube))
 
         # Spectroscopy
         else:
@@ -153,6 +133,7 @@ class Tso3Pipeline(Pipeline):
 
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
+
             x1d_result = datamodels.MultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             x1d_result.int_times = FITS_rec.from_columns(input_models[0].int_times.columns,
@@ -164,33 +145,44 @@ class Tso3Pipeline(Pipeline):
 
             # For each exposure in the TSO...
             for cube in input_models:
+                # interpolate pixels that have a NaN value or are flagged
+                # as DO_NOT_USE or NON_SCIENCE.
+                cube = self.pixel_replace.run(cube)
+                state = cube.meta.cal_step.pixel_replace
                 # Process spectroscopic TSO data
                 # extract 1D
                 self.log.info("Extracting 1-D spectra ...")
-                result = self.extract_1d(cube)
+                result = self.extract_1d.run(cube)
                 for row in cube.int_times:
                     # Subtract one to assign 1-indexed int_nums to int_times array locations
                     x1d_result.int_times[row[0] - 1] = row
 
                 # SOSS F277W may return None - don't bother with that
-                if result is not None:
-                    if input_exptype == 'NIS_SOSS':
-                        # SOSS data have yet to be photometrically calibrated
-                        # Calibrate 1D spectra here.
-                        result = self.photom(result)
+                if (result is None) or (result.meta.cal_step.extract_1d == "SKIPPED"):
+                    continue
 
-                    x1d_result.spec.extend(result.spec)
+                if input_exptype == 'NIS_SOSS':
+                    # SOSS data have yet to be photometrically calibrated
+                    # Calibrate 1D spectra here.
+                    result = self.photom.run(result)
 
-                    # perform white-light photometry on 1d extracted data
-                    self.log.info("Performing white-light photometry ...")
-                    phot_result_list.append(self.white_light(result))
+                x1d_result.spec.extend(result.spec)
+
+                # perform white-light photometry on 1d extracted data
+                self.log.info("Performing white-light photometry ...")
+                phot_result_list.append(self.white_light.run(result))
 
             # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
+            x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
-            self.save_model(x1d_result, suffix='x1dints')
+            x1d_result.meta.cal_step.pixel_replace = state
+            if len(x1d_result.spec) == 0:
+                self.log.warning("extract_1d step could not be completed for any integrations")
+                self.log.warning("x1dints products will not be created.")
+            else:
+                self.save_model(x1d_result, suffix='x1dints')
 
         # Done with all the inputs
         input_models.close()

@@ -13,7 +13,7 @@ from gwcs import selector
 from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
                                           DistortionMRSModel, WavelengthrangeModel,
                                           RegionsModel, SpecwcsModel)
-from stdatamodels.jwst.transforms import models as jwmodels
+from stdatamodels.jwst.transforms.models import (MIRI_AB2Slice, IdealToV2V3)
 
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform,
@@ -170,6 +170,15 @@ def lrs(input_model, reference_files):
     # Define the various coordinate frames.
     # Original detector frame
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+
+    # Intermediate slit frame
+    alpha_beta = cf.Frame2D(name='alpha_beta_spatial', axes_order=(0, 1),
+                            unit=(u.arcsec, u.arcsec), axes_names=('alpha', 'beta'))
+    spec_local = cf.SpectralFrame(name='alpha_beta_spectral', axes_order=(2,),
+                                  unit=(u.micron,), axes_names=('lambda',))
+    miri_focal = cf.CompositeFrame([alpha_beta, spec_local], name='alpha_beta')
+
+
     # Spectral component
     spec = cf.SpectralFrame(name='spec', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     # v2v3 spatial component
@@ -193,7 +202,8 @@ def lrs(input_model, reference_files):
     world = cf.CompositeFrame(name="world", frames=[icrs, spec])
 
     # Create the transforms
-    dettotel = lrs_distortion(input_model, reference_files)
+    dettoabl = lrs_xytoabl(input_model, reference_files)
+    abltov2v3l = lrs_abltov2v3l(input_model, reference_files)
     v2v3tosky = pointing.v23tosky(input_model)
     teltosky = v2v3tosky & models.Identity(1)
 
@@ -205,7 +215,8 @@ def lrs(input_model, reference_files):
     ) & models.Identity(1)
 
     # Put the transforms together into a single pipeline
-    pipeline = [(detector, dettotel),
+    pipeline = [(detector, dettoabl),
+                (miri_focal, abltov2v3l),
                 (v2v3, va_corr),
                 (v2v3vacorr, teltosky),
                 (world, None)]
@@ -213,11 +224,11 @@ def lrs(input_model, reference_files):
     return pipeline
 
 
-def lrs_distortion(input_model, reference_files):
+def lrs_xytoabl(input_model, reference_files):
     """
-    The LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
+    The first part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
 
-    Transform from subarray (x, y) to (v2, v3, lambda) using
+    Transform from subarray (x, y) to (alpha, beta, lambda) using
     the "specwcs" and "distortion" reference files.
 
     """
@@ -249,6 +260,11 @@ def lrs_distortion(input_model, reference_files):
             # Transform to slitless subarray from full array
             zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
+    # Figure out the typical along-slice pixel scale at the center of the slit
+    v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
+    v2_off, v3_off = subarray_dist(zero_point[0] + 1, zero_point[1])
+    pscale = np.sqrt(np.power(v2_cen - v2_off, 2) + np.power(v3_cen - v3_off,2))
+
     # In the lrsdata reference table, X_center,y_center,wavelength describe the location of the
     # centroid trace along the detector in pixels relative to nominal location.
     # x0,y0(ul) x1,y1 (ur) x2,y2(lr) x3,y3(ll) define corners of the box within which the distortion
@@ -275,71 +291,31 @@ def lrs_distortion(input_model, reference_files):
         bb_sub = ((input_model.meta.subarray.xstart - 1 + 4 - 0.5, input_model.meta.subarray.xsize - 1 + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
 
-    # Find the ROW of the zero point
-    row_zero_point = zero_point[1]
-
-    # The inputs to the "detector_to_v2v3" transform are
-    # - the indices in x spanning the entire image row
-    # - y is the y-value of the zero point
-    # This is equivalent of making a vector of x, y locations for
-    # every pixel in the reference row
-    const1d = models.Const1D(row_zero_point)
-    const1d.inverse = models.Const1D(row_zero_point)
-    det_to_v2v3 = models.Identity(1) & const1d | subarray_dist
-
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
-    # as a simple rotation using a linear fit to this relation provided by the CDP.
+    # as a simple x shift using a linear fit to this relation provided by the CDP.
+    # First convert the values in CDP table to subarray x/y
+    xcen_subarray = xcen + zero_point[0]
+    ycen_subarray = ycen + zero_point[1]
 
-    z = np.polyfit(xcen, ycen, 1)
-    slope = 1. / z[0]
-    traceangle = np.arctan(slope) * 180. / np.pi  # trace angle in degrees
-    rot = models.Rotation2D(traceangle)  # Rotation model
-
-    # Now include this rotation in our overall transform
-    # First shift to a frame relative to the trace zeropoint, then apply the rotation
-    # to correct for the curved trace.  End in a rotated frame relative to zero at the reference point
-    # and where yrot is aligned with the spectral trace)
-    xysubtoxyrot = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | rot
-
-    # Next shift back to the subarray frame, and then map to v2v3
-    xyrottov2v3 = models.Shift(zero_point[0]) & models.Shift(zero_point[1]) | det_to_v2v3
-
-    # The two models together
-    xysubtov2v3 = xysubtoxyrot | xyrottov2v3
-
-    # Work out the spectral component of the transform
-    # First compute the reference trace in the rotated-Y frame
-    xcenrot, ycenrot = rot(xcen, ycen)
-    # The input table of wavelengths isn't perfect, and the delta-wavelength
-    # steps show some unphysical behaviour
-    # Therefore fit with a spline for the ycenrot->wavelength transform
-    # Reverse vectors so that yinv is increasing (needed for spline fitting function)
-    yrev = ycenrot[::-1]
-    wrev = wavetab[::-1]
+    # Fit for X shift as a function of Y
     # Spline fit with enforced smoothness
-    spl = UnivariateSpline(yrev, wrev, s=0.002)
-    # Evaluate the fit at the rotated-y reference points
-    wavereference = spl(yrev)
-    # wavereference now contains the wavelengths corresponding to regularly-sampled ycenrot, create the model
-    wavemodel = models.Tabular1D(lookup_table=wavereference, points=yrev, name='waveref',
+    spl = UnivariateSpline(ycen_subarray[::-1], xcen_subarray[::-1] - zero_point[0], s=0.002)
+    # Evaluate the fit at the y reference points
+    xshiftref = spl(ycen_subarray)
+    # This function will give slit dX as a function of Y subarray pixel value
+    dxmodel = models.Tabular1D(lookup_table=xshiftref, points=ycen_subarray, name='xshiftref',
                                  bounds_error=False, fill_value=np.nan)
 
-    # Now construct the inverse spectral transform.
-    # First we need to create a spline going from wavereference -> ycenrot
-    spl2 = UnivariateSpline(wavereference[::-1], ycenrot, s=0.002)
-    # Make a uniform grid of wavelength points from min to max, sampled according
-    # to the minimum delta in the input table
-    dw = np.amin(np.absolute(np.diff(wavereference)))
-    wmin = np.amin(wavereference)
-    wmax = np.amax(wavereference)
-    wgrid = np.arange(wmin, wmax, dw)
-    # Evaluate the rotated y locations of the grid
-    ygrid = spl2(wgrid)
-    # ygrid now contains the rotated y pixel locations corresponding to
-    # regularly-sampled wavelengths, create the model
-    wavemodel.inverse = models.Tabular1D(lookup_table=ygrid, points=wgrid, name='waverefinv',
-                                         bounds_error=False, fill_value=np.nan)
+    # Fit for the wavelength as a function of Y
+    # Reverse the vectors so that yinv is increasing (needed for spline fitting function)
+    # Spline fit with enforced smoothness
+    spl = UnivariateSpline(ycen_subarray[::-1], wavetab[::-1], s=0.002)
+    # Evaluate the fit at the y reference points
+    wavereference = spl(ycen_subarray)
+    # This model will now give the wavelength corresponding to a given Y subarray pixel value
+    wavemodel = models.Tabular1D(lookup_table=wavereference, points=ycen_subarray, name='waveref',
+                                 bounds_error=False, fill_value=np.nan)
 
     # Wavelength barycentric correction
     try:
@@ -352,23 +328,110 @@ def lrs_distortion(input_model, reference_files):
             wavemodel = wavemodel | velocity_corr
             log.info("Applied Barycentric velocity correction : {}".format(velocity_corr[1].amplitude.value))
 
-    # Construct the full distortion model (xsub,ysub -> v2,v3,wavelength)
-    lrs_wav_model = xysubtoxyrot | models.Mapping([1], n_inputs=2) | wavemodel
-    dettotel = models.Mapping((0, 1, 0, 1)) | xysubtov2v3 & lrs_wav_model
+    # What is the effective slit X as a function of subarray x,y?
+    xmodel = models.Mapping([0], n_inputs=2) - (models.Mapping([1], n_inputs=2) | dxmodel)
+    # What is the effective Y as a function of subarray x,y?
+    ymodel = models.Mapping([1], n_inputs=2)
+    # What is the effective XY as a function of subarray x,y?
+    xymodel = models.Mapping((0, 1, 0, 1)) | xmodel & ymodel
+    # What is the alpha as a function of slit XY?
+    alphamodel = models.Mapping([0], n_inputs=2) | models.Shift(-zero_point[0]) | models.Polynomial1D(1, c0=0, c1=pscale)
+    # What is the alpha,beta as a function of slit XY? (beta is always zero)
+    abmodel = models.Mapping((0, 1, 0)) | alphamodel & models.Const1D(0)
 
-    # Construct the inverse distortion model (v2,v3,wavelength -> xsub,ysub)
-    # Transform to get xrot from v2,v3
-    v2v3toxrot = subarray_dist.inverse | xysubtoxyrot | models.Mapping([0], n_inputs=2)
-    # wavemodel.inverse gives yrot from wavelength
-    # v2,v3,lambda -> xrot,yrot
-    xform1 = v2v3toxrot & wavemodel.inverse
-    dettotel.inverse = xform1 | xysubtoxyrot.inverse
+    # Define a shift by the reference point and immediately back again
+    # This doesn't do anything effectively, but it stores the reference point for later use in pathloss
+    reftransform = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | models.Shift(+zero_point[0]) & models.Shift(+zero_point[1])
+    # Put the transforms together
+    xytoab = reftransform | xymodel | abmodel
+
+    # Construct the full distortion model (xsub,ysub -> alpha,beta,wavelength)
+    lrs_wav_model = models.Mapping([1], n_inputs=2) | wavemodel
+    dettoabl = models.Mapping((0, 1, 0, 1)) | xytoab & lrs_wav_model
+
+    # Construct the inverse distortion model (alpha,beta,wavelength -> xsub,ysub)
+    # Go from alpha to slit-X
+    slitxmodel = models.Polynomial1D(1, c0=0, c1=1/pscale) | models.Shift(zero_point[0])
+    # Go from lambda to real y
+    lam_to_y = wavemodel.inverse
+    # Go from slit-x and real y to real-x
+    backwards = models.Mapping([0], n_inputs=2) + (models.Mapping([1], n_inputs=2) | dxmodel)
+
+    # Go from alpha,beta,lam to real x
+    aa = models.Mapping((0, 2)) | slitxmodel & lam_to_y | backwards
+    # Go from alpha,beta,lam to real y
+    bb = models.Mapping([2], n_inputs=3) | lam_to_y
+    # Go from alpha,beta,lam, to real x,y
+    dettoabl.inverse = models.Mapping((0, 1, 2, 0, 1, 2)) | aa & bb
 
     # Bounding box is the subarray bounding box, because we're assuming subarray coordinates passed in
-    dettotel.bounding_box = bb_sub[::-1]
+    dettoabl.bounding_box = bb_sub[::-1]
 
-    return dettotel
+    return dettoabl
 
+def lrs_abltov2v3l(input_model, reference_files):
+    """
+    The second part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
+
+    Transform from (alpha, beta, lambda) to (v2, v3, lambda) using
+    the "specwcs" and "distortion" reference files.
+
+    """
+
+    # subarray to full array transform
+    subarray2full = subarray_transform(input_model)
+
+    # full array to v2v3 transform for the ordinary imager
+    with DistortionModel(reference_files['distortion']) as dist:
+        distortion = dist.model
+
+    # Combine models to create subarray to v2v3 distortion
+    if subarray2full is not None:
+        subarray_dist = subarray2full | distortion
+    else:
+        subarray_dist = distortion
+
+    ref = fits.open(reference_files['specwcs'])
+
+    with ref:
+        # Get the zero point from the reference data.
+        # The zero_point is X, Y  (which should be COLUMN, ROW)
+        # These are 1-indexed in CDP-7 (i.e., SIAF convention) so must be converted to 0-indexed
+        if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+            zero_point = ref[0].header['imx'] - 1, ref[0].header['imy'] - 1
+        elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
+            zero_point = ref[0].header['imxsltl'] - 1, ref[0].header['imysltl'] - 1
+            # Transform to slitless subarray from full array
+            zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
+
+    # Figure out the typical along-slice pixel scale at the center of the slit
+    v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
+    v2_off, v3_off = subarray_dist(zero_point[0] + 1, zero_point[1])
+    pscale = np.sqrt(np.power(v2_cen - v2_off, 2) + np.power(v3_cen - v3_off,2))
+
+    # Go from alpha to slit-X
+    slitxmodel = models.Polynomial1D(1, c0=0, c1=1 / pscale) | models.Shift(zero_point[0])
+    # Go from beta to slit-Y (row_zero_point plus some offset)
+    # Beta should always be zero unless using in a pseudo-ifu mode
+    slitymodel = models.Polynomial1D(1, c0=0, c1=1 / pscale) | models.Shift(zero_point[1])
+    # Go from alpha-beta to slit xy, and onward to v2v3
+    ab_to_v2v3 = slitxmodel & slitymodel | subarray_dist
+    # Put it together to pass through wavelength
+    abl_to_v2v3l = models.Mapping((0, 1, 2)) | ab_to_v2v3 & models.Identity(1)
+
+    # Define the inverse transform
+    # Go from slit X to alpha
+    alphamodel = models.Shift(-zero_point[0]) | models.Polynomial1D(1, c0=0, c1=pscale)
+    # Go from slit Y to beta
+    betamodel = models.Shift(-zero_point[1]) | models.Polynomial1D(1, c0=0, c1=pscale)
+    # Go from v2,v3 to slit-x,slit-y
+    v2v3_to_xydet = subarray_dist.inverse
+    # Go from v2,v3 to alpha, beta
+    aa = v2v3_to_xydet | alphamodel & betamodel
+    # Go from v2,v3,lambda to alpha,beta,lambda
+    abl_to_v2v3l.inverse = models.Mapping((0,1,2)) | aa & models.Identity(1)
+
+    return abl_to_v2v3l
 
 def ifu(input_model, reference_files):
     """
@@ -487,7 +550,7 @@ def detector_to_abl(input_model, reference_files):
     ch_dict = {}
     for c in channel:
         cb = c + band
-        mapper = jwmodels.MIRI_AB2Slice(bzero[cb], bdel[cb], c)
+        mapper = MIRI_AB2Slice(bzero[cb], bdel[cb], c)
         lm = selector.LabelMapper(inputs=('alpha', 'beta', 'lam'),
                                   mapper=mapper, inputs_mapping=models.Mapping((1,), n_inputs=3))
         ch_dict[tuple(wr[cb])] = lm
@@ -582,7 +645,7 @@ def get_wavelength_range(input_model, path=None):
 
     Parameters
     ----------
-    input_model : `jwst.datamodels.ImagingModel`
+    input_model : `jwst.datamodels.ImageModel`
         Data model after assign_wcs has been run.
     path : str
         Directory where the reference file is. (optional)
@@ -603,3 +666,29 @@ def get_wavelength_range(input_model, path=None):
     band = input_model.meta.instrument.band
 
     return dict([(ch + band, wr[ch + band]) for ch in channel])
+
+
+def store_dithered_position(input_model):
+    """Store the location of the dithered pointing
+    location in the dither metadata
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImageModel`
+        Data model containing dither offset information
+    """
+    # V2_ref and v3_ref should be in arcsec
+    idltov23 = IdealToV2V3(
+        input_model.meta.wcsinfo.v3yangle,
+        input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
+        input_model.meta.wcsinfo.vparity
+    )
+
+    dithered_v2, dithered_v3 = idltov23(input_model.meta.dither.x_offset, input_model.meta.dither.y_offset)
+
+    v23toworld = input_model.meta.wcs.get_transform('v2v3', 'world')
+    # v23toworld requires a wavelength along with v2, v3, but value does not affect return
+    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
+
+    input_model.meta.dither.dithered_ra = dithered_ra
+    input_model.meta.dither.dithered_dec = dithered_dec

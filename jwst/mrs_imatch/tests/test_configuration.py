@@ -57,7 +57,7 @@ def miri_dither_ch12():
     return input_models
 
 
-def test_imatch_background_subtracted(_jail, miri_dither_ch12):
+def test_imatch_background_subtracted(tmp_cwd, miri_dither_ch12):
     """ Test if data is already background subtracted - raise error"""
 
     all_models = ModelContainer(miri_dither_ch12)
@@ -70,10 +70,23 @@ def test_imatch_background_subtracted(_jail, miri_dither_ch12):
     # test if background subtracted - raise error
     with pytest.raises(ValueError):
         step = MRSIMatchStep()
-        step.run(new_container)
+        step.call(new_container, skip=False)
 
 
-def test_imatch_background_reset(_jail, miri_dither_ch12):
+def test_imatch_default_run(tmp_cwd, miri_dither_ch12):
+    """ Test mrs_imatch test is skipped by default """
+
+    all_models = ModelContainer(miri_dither_ch12)
+
+    # test if default running results in skipping step
+    step = MRSIMatchStep()
+    results = step.call(all_models)
+    n = len(all_models)
+    for i  in range(n):
+        assert results[i].meta.cal_step.mrs_imatch =='SKIPPED'
+
+    
+def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):
     """ Test if background polynomial is already determined - reset it"""
 
     all_models = ModelContainer(miri_dither_ch12)
@@ -107,7 +120,7 @@ def test_imatch_background_reset(_jail, miri_dither_ch12):
         assert test == 0
 
 
-def test_find_channel_index(_jail, miri_dither_ch12):
+def test_find_channel_index(tmp_cwd, miri_dither_ch12):
     """ Test if correct channel index is returned """
 
     # channel 1 - model only has 1 background polynomial

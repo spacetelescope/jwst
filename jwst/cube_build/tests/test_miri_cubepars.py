@@ -12,11 +12,11 @@ from jwst.cube_build import instrument_defaults
 
 
 @pytest.fixture(scope='module')
-def miri_cube_pars(tmpdir_factory):
+def miri_cube_pars(tmp_path_factory):
     """ Set up the miri cube pars reference file  """
 
-    filename = tmpdir_factory.mktemp('cube_pars')
-    filename = str(filename.join('miri_cube_pars.fits'))
+    filename = tmp_path_factory.mktemp('cube_pars')
+    filename = filename / 'miri_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
     hdu0.header['REFTYPE'] = 'CUBEPAR'
     hdu0.header['INSTRUME'] = 'MIRI'
@@ -86,7 +86,7 @@ def miri_cube_pars(tmpdir_factory):
     return filename
 
 
-def test_miri_use_cubepars(_jail, miri_cube_pars):
+def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
     """ Test reading in the miri cube pars file """
 
     instrument_info = instrument_defaults.InstrumentInfo()
@@ -130,8 +130,7 @@ def test_miri_use_cubepars(_jail, miri_cube_pars):
 
     # set up the ifucube class
     pars_cube = {
-        'scale1': 0.0,
-        'scale2': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -142,11 +141,7 @@ def test_miri_use_cubepars(_jail, miri_cube_pars):
         'wavemin': None,
         'wavemax': None,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     pipeline = 3
 
@@ -187,7 +182,7 @@ def test_miri_use_cubepars(_jail, miri_cube_pars):
     assert math.isclose(this_cube.spatial_size, 0.13, abs_tol=0.00001)
 
 
-def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
+def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
     """ Read in the miri cube pars file and override some defaults """
 
     instrument_info = instrument_defaults.InstrumentInfo()
@@ -233,8 +228,7 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
 
     # set up the ifucube class
     pars_cube = {
-        'scale1': 0.0,
-        'scale2': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -245,11 +239,7 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
         'wavemin': None,
         'wavemax': None,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     pipeline = 3
     input_model = None
@@ -297,8 +287,7 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
     user_rois = 0.6
     user_roiw = 0.8
     pars_cube = {
-        'scale1': user_ascale,
-        'scale2': user_ascale,
+        'scalexy': user_ascale,
         'scalew': user_wscale,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -309,11 +298,7 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
         'wavemin': user_wave_min,
         'wavemax': user_wave_max,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     this_cube = ifu_cube.IFUCubeData(
         pipeline,
@@ -340,7 +325,7 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
     assert math.isclose(this_cube.rois, user_rois, abs_tol=0.00001)
 
 
-def test_miri_cubepars_multiple_bands(_jail, miri_cube_pars):
+def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
     """Read in the miri cube pars file. Test cube has correct values when
     multiple bands are used
     """
@@ -406,8 +391,7 @@ def test_miri_cubepars_multiple_bands(_jail, miri_cube_pars):
 
     # set up the ifucube class
     pars_cube = {
-        'scale1': 0.0,
-        'scale2': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -418,11 +402,7 @@ def test_miri_cubepars_multiple_bands(_jail, miri_cube_pars):
         'wavemin': None,
         'wavemax': None,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     pipeline = 3
     input_model = None

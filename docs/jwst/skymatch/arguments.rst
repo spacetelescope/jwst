@@ -57,13 +57,19 @@ The ``skymatch`` step uses the following optional arguments:
 ``nclip`` (int, default=5)
   The number of clipping iterations to use when computing sky values.
 
-``lsig`` (float, default=4.0)
+``lsigma`` (float, default=4.0)
   Lower clipping limit, in sigma, used when computing the sky value.
 
-``usig`` (float, default=4.0)
+``usigma`` (float, default=4.0)
   Upper clipping limit, in sigma, used when computing the sky value.
 
 ``binwidth`` (float, default=0.1)
   Bin width, in sigma, used to sample the distribution of pixel
   values in order to compute the sky background using statistics
   that require binning, such as `mode` and `midpt`.
+
+**Memory management parameters:**
+
+``in_memory`` (boolean, default=True)
+  If False, preserve memory using temporary files
+  at the expense of having to run many I/O operations.

@@ -19,8 +19,6 @@ log.addHandler(logging.NullHandler())
 
 def g_eeAG(xi, eta, **kwargs):
     """
-    Short Summary
-    -------------
     Calculate the Fourier transform of one half of a hexagon that is bisected
     from one corner to its diametrically opposite corner.
     { DG: how does this compare to  g_eeGEN() ? }
@@ -79,8 +77,6 @@ def g_eeAG(xi, eta, **kwargs):
 
 def glimit(xi, eta, **kwargs):
     """
-    Short Summary
-    -------------
     Calculate the analytic limit of the Fourier transform of one half of the
         hexagon along eta=0.
 
@@ -135,8 +131,6 @@ def glimit(xi, eta, **kwargs):
 
 def centralpix_limit():
     """
-    Short Summary
-    -------------
     Calculate the analytic limit of the Fourier transform of one half of the
     hexagon at the origin.
 
@@ -157,8 +151,6 @@ def centralpix_limit():
 
 def mas2rad(mas):
     """
-    Short Summary
-    -------------
     Convert angle in milli arc-sec to radians
 
     Parameters
@@ -178,8 +170,6 @@ def mas2rad(mas):
 def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
              pitch=mas2rad(65)):
     """
-    Short Summary
-    -------------
     Calculate the hexagonal hole Fourier transform by adding the transforms
     of the 2 symmetric parts.
 

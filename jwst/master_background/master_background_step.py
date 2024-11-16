@@ -4,6 +4,7 @@ from stdatamodels.properties import merge_tree
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
+from jwst.stpipe import record_step_status
 
 from ..stpipe import Step
 from ..combine_1d.combine1d import combine_1d_spectra
@@ -63,7 +64,7 @@ class MasterBackgroundStep(Step):
             # First check if we should even do the subtraction.  If not, bail.
             if not self._do_sub:
                 result = input_data.copy()
-                self.record_step_status(result, 'master_background', success=False)
+                record_step_status(result, 'master_background', success=False)
                 return result
 
             # Check that data is a supported datamodel. If not, bail.
@@ -78,18 +79,17 @@ class MasterBackgroundStep(Step):
                     "Input %s of type %s cannot be handled.  Step skipped.",
                     input, type(input)
                 )
-                self.record_step_status(result, 'master_background', success=False)
+                record_step_status(result, 'master_background', success=False)
                 return result
 
             # If user-supplied master background, subtract it
             if self.user_background:
                 if isinstance(input_data, ModelContainer):
                     input_data, _ = split_container(input_data)
+                    asn_id = input_data.asn_table["asn_id"]
                     del _
                     result = ModelContainer()
-                    result.update(input_data)
                     background_2d_collection = ModelContainer()
-                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, self.user_background)
                         result.append(subtract_2d_background(model, background_2d))
@@ -99,16 +99,30 @@ class MasterBackgroundStep(Step):
                         model.meta.background.master_background_file = basename(self.user_background)
                 # Use user-supplied master background and subtract it
                 else:
+                    asn_id = None
                     background_2d = expand_to_2d(input_data, self.user_background)
-                    background_2d_collection = background_2d
+                    background_2d_collection = ModelContainer([background_2d])
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
+
+                # Save the computed 2d background if requested by user. The user has supplied
+                # the master background so just save the expanded 2d background
+                if self.save_background:
+                    self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+                    
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
                     input_data, background_data = split_container(input_data)
-                    asn_id = input_data.meta.asn_table.asn_id
+                    if len(background_data) == 0:
+                        msg = ("No background data found in input container, "
+                               "and no user-supplied background provided.  Skipping step.")
+                        self.log.warning(msg)
+                        result = input_data.copy()
+                        record_step_status(result, 'master_background', success=False)
+                        return result
+                    asn_id = input_data.asn_table["asn_id"]
 
                     for model in background_data:
                         # Check if the background members are nodded x1d extractions
@@ -135,9 +149,7 @@ class MasterBackgroundStep(Step):
                     background_data.close()
 
                     result = ModelContainer()
-                    result.update(input_data)
                     background_2d_collection = ModelContainer()
-                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
@@ -152,15 +164,15 @@ class MasterBackgroundStep(Step):
                         "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
                         input, type(input)
                     )
-                    self.record_step_status(result, 'master_background', success=False)
+                    record_step_status(result, 'master_background', success=False)
                     return result
 
                 # Save the computed background if requested by user
                 if self.save_background:
                     self.save_model(master_background, suffix='masterbg1d', force=True, asn_id=asn_id)
-                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+                    self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
 
-            self.record_step_status(result, 'master_background', success=True)
+            record_step_status(result, 'master_background', success=True)
 
         return result
 
@@ -216,6 +228,11 @@ class MasterBackgroundStep(Step):
                                   "run again and set force_subtract = True.")
 
         return do_sub
+    
+    def save_container(self, container, suffix="", asn_id="", force=True):
+        """Save all models in container for intermediate background subtraction"""
+        for i, model in enumerate(container):
+            self.save_model(model, suffix=suffix, force=force, asn_id=asn_id, idx=i)
 
 
 def copy_background_to_surf_bright(spectrum):
@@ -232,8 +249,6 @@ def copy_background_to_surf_bright(spectrum):
 def split_container(container):
     """Divide a ModelContainer with science and background into one of each
     """
-    asn = container.meta.asn_table.instance
-
     background = ModelContainer()
     science = ModelContainer()
 
@@ -244,12 +259,11 @@ def split_container(container):
         background.append(container._models[ind_bkgd])
 
     # Pass along the association table to the output science container
-    science.meta.asn_table = {}
     science.asn_pool_name = container.asn_pool_name
     science.asn_table_name = container.asn_table_name
-    merge_tree(science.meta.asn_table.instance, asn)
+    merge_tree(science.asn_table, container.asn_table)
     # Prune the background members from the table
-    for p in science.meta.asn_table.instance['products']:
+    for p in science.asn_table['products']:
         p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
     return science, background
 
@@ -259,17 +273,17 @@ def subtract_2d_background(source, background):
 
     Parameters
     ----------
-    source : `~jwst.datamodels.DataModel` or `~jwst.datamodels.ModelContainer`
+    source : `~jwst.datamodels.JwstDataModel` or `~jwst.datamodels.ModelContainer`
         The input science data.
 
-    background : `~jwst.datamodels.DataModel`
+    background : `~jwst.datamodels.JwstDataModel`
         The input background data.  Must be the same datamodel type as `source`.
         For a `~jwst.datamodels.ModelContainer`, the source and background
         models in the input containers must match one-to-one.
 
     Returns
     -------
-    `~jwst.datamodels.DataModel`
+    `~jwst.datamodels.JwstDataModel`
         Background subtracted from source.
     """
 

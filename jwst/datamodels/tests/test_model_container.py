@@ -1,13 +1,14 @@
 import os
 import warnings
+from jwst.associations import load_as_asn
 
 import pytest
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import JwstDataModel, MultiExposureModel
-from stdatamodels.jwst.datamodels import _defined_models as defined_models
+from stdatamodels.jwst.datamodels import JwstDataModel
+from stdatamodels.jwst.datamodels.util import NoTypeWarning
 
-from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels import ModelContainer
 from jwst.associations.asn_from_list import asn_from_list
 
 from jwst.lib.file_utils import pushdir
@@ -16,25 +17,27 @@ from jwst.lib.file_utils import pushdir
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
+CUSTOM_GROUP_ID_ASN_FILE = os.path.join(ROOT_DIR, 'association_group_id.json')
 
 
 @pytest.fixture
 def container():
-    warnings.simplefilter("ignore")
-    asn_file_path, asn_file_name = os.path.split(ASN_FILE)
-    with pushdir(asn_file_path):
-        with ModelContainer(asn_file_name) as c:
-            for m in c:
-                m.meta.observation.program_number = '0001'
-                m.meta.observation.observation_number = '1'
-                m.meta.observation.visit_number = '1'
-                m.meta.observation.visit_group = '1'
-                m.meta.observation.sequence_id = '01'
-                m.meta.observation.activity_id = '1'
-                m.meta.observation.exposure_number = '1'
-                m.meta.instrument.name = 'NIRCAM'
-                m.meta.instrument.channel = 'SHORT'
-        yield c
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", NoTypeWarning)
+        asn_file_path, asn_file_name = os.path.split(ASN_FILE)
+        with pushdir(asn_file_path):
+            with ModelContainer(asn_file_name) as c:
+                for m in c:
+                    m.meta.observation.program_number = '0001'
+                    m.meta.observation.observation_number = '1'
+                    m.meta.observation.visit_number = '1'
+                    m.meta.observation.visit_group = '1'
+                    m.meta.observation.sequence_id = '01'
+                    m.meta.observation.activity_id = '1'
+                    m.meta.observation.exposure_number = '1'
+                    m.meta.instrument.name = 'NIRCAM'
+                    m.meta.instrument.channel = 'SHORT'
+            yield c
 
 
 def reset_group_id(container):
@@ -93,18 +96,54 @@ def test_modelcontainer_error_from_asn(tmp_path):
         datamodels.open(path)
 
 
-@pytest.mark.parametrize("model", [v for v in defined_models.values()])
-def test_all_datamodels_init(model):
-    """
-    Test that all current datamodels can be initialized.
-    """
-    if model is SourceModelContainer:
-        # SourceModelContainer cannot have init=None
-        model(MultiExposureModel())
-    else:
-        model()
-
-
 def test_model_container_ind_asn_exptype(container):
     ind = container.ind_asn_type('science')
     assert ind == [0, 1]
+
+
+def test_group_id(tmp_path):
+    c = ModelContainer(CUSTOM_GROUP_ID_ASN_FILE)
+    groups = list(c.models_grouped)
+
+    assert len(groups) == 5
+    assert sorted(map(len, groups)) == [1, 1, 1, 1, 4]
+
+    with open(CUSTOM_GROUP_ID_ASN_FILE) as f:
+        asn_data = load_as_asn.load_asn(f)
+
+    asn_group_ids = set()
+    for d in asn_data['products'][0]['members']:
+        group_id = d.get('group_id')
+        if group_id is None:
+            asn_group_ids.add('jw00001001001_02201_00001')
+        else:
+            asn_group_ids.add(group_id)
+
+    model_droup_ids = set()
+    for g in groups:
+        for m in g:
+            model_droup_ids.add(m.meta.group_id)
+
+    assert asn_group_ids == model_droup_ids
+
+
+def test_save(tmp_cwd, container):
+
+    # container pushes us to data/ directory so need to go back to tmp_cwd
+    # to avoid polluting the data/ directory
+    with pushdir(tmp_cwd):
+
+        # test default just saves things at model meta filename
+        container.save()
+        expected_fnames = []
+        for model in container:
+            expected_fnames.append(model.meta.filename)
+        for fname in expected_fnames:
+            assert os.path.exists(fname)
+
+        # test specifying path saves to custom path with indices
+        path = "foo"
+        container.save(path)
+        expected_fnames = [path+str(i)+".fits" for i in range(len(container))]
+        for fname in expected_fnames:
+            assert os.path.exists(fname)

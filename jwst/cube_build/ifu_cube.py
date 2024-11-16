@@ -8,12 +8,13 @@ import logging
 import math
 
 from astropy.stats import circmean
-from astropy import units as u
 from gwcs import wcstools
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from stdatamodels.jwst.transforms.models import _toindex
+from astropy.coordinates import SkyCoord
+from astropy import units as u
 
 from ..model_blender import blendmeta
 from ..assign_wcs import pointing
@@ -62,12 +63,19 @@ class IFUCubeData():
         self.master_table = master_table
         self.output_type = output_type
 
-        self.scale1 = pars_cube.get('scale1')
-        self.scale2 = pars_cube.get('scale2')
+        self.scalexy = pars_cube.get('scalexy')
         self.scalew = pars_cube.get('scalew')
+        self.ra_center = pars_cube.get('ra_center')
+        self.dec_center = pars_cube.get('dec_center')
+        self.cube_pa = pars_cube.get('cube_pa')
+        self.nspax_x = pars_cube.get('nspax_x')
+        self.nspax_y = pars_cube.get('nspax_y')
+        self.offsets = pars_cube.get('offsets')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
+        self.debug_spaxel = pars_cube.get('debug_spaxel')
 
+        self.spaxel_x, self.spaxel_y, self.spaxel_z = [int(val) for val in self.debug_spaxel.split()]
         self.spatial_size = None
         self.spectral_size = None
         self.interpolation = pars_cube.get('interpolation')
@@ -107,7 +115,7 @@ class IFUCubeData():
         self.naxis3 = None
         self.cdelt3_normal = None
         self.rot_angle = None  # rotation angle between Ra-Dec and IFU local instrument plane
-
+        
         self.a_min = 0
         self.a_max = 0
         self.b_min = 0
@@ -230,6 +238,7 @@ class IFUCubeData():
         """ Based on the ra,dec and wavelength footprint set up the size
         of the cube in the tangent plane projected coordinate system.
 
+
         Parameters
         ----------
         footprint: tuple
@@ -254,8 +263,16 @@ class IFUCubeData():
         # we have angles in degrees
         ra_ave = circmean(ravalues * u.deg).value
 
-        self.crval1 = ra_ave
-        self.crval2 = dec_ave
+        if self.ra_center is not None:
+            self.crval1 = self.ra_center
+        else:
+            self.crval1 = ra_ave
+
+        if self.dec_center is not None:
+            self.crval2 = self.dec_center
+        else:
+            self.crval2 = dec_ave
+
         rot_angle = self.rot_angle
 
         # find the 4 corners
@@ -268,7 +285,6 @@ class IFUCubeData():
                                       corner_a[i], corner_b[i], rot_angle)
             xi_corner.append(xi)
             eta_corner.append(eta)
-
         xi_min = min(xi_corner)
         xi_max = max(xi_corner)
         eta_min = min(eta_corner)
@@ -280,8 +296,17 @@ class IFUCubeData():
         xilimit = max(np.abs(xi_min), np.abs(xi_max))
         etalimit = max(np.abs(eta_min), np.abs(eta_max))
 
-        na = math.ceil(xilimit / self.cdelt1) + 1
-        nb = math.ceil(etalimit / self.cdelt2) + 1
+        na = math.ceil((xilimit / self.cdelt1).item()) + 1
+        nb = math.ceil((etalimit / self.cdelt2).item()) + 1
+
+        # if the user set the nspax_x or nspax_y then redefine na, nb
+        # it is assumed that both values are ODD numbers
+        # We want the central pixel to be the tangent point with na/nb pixels on either
+        # side of central pixel.
+        if self.nspax_x is not None:
+            na = int(self.nspax_x/2)
+        if self.nspax_y is not None:
+            nb = int(self.nspax_y/2)
 
         xi_min = 0.0 - (na * self.cdelt1) - (self.cdelt1 / 2.0)
         xi_max = (na * self.cdelt1) + (self.cdelt1 / 2.0)
@@ -394,7 +419,6 @@ class IFUCubeData():
             across_cdelt = self.cdelt2
 
         if self.instrument == 'NIRSPEC':
-            self.cdelt2 = self.cdelt1  # make cubes square
             along_cdelt = self.cdelt2
 
             n1a = math.ceil(alimit / along_cdelt)
@@ -468,8 +492,8 @@ class IFUCubeData():
         """
 
         log.info('Cube Geometry:')
-        if self.coord_system == 'internal IFU ':
-            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (along slice, across slice arcsec)')
+        if self.coord_system == 'internal_cal':
+            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (along slice, across slice)')
         else:
             log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (xi, eta arcsec)')
         log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
@@ -544,6 +568,23 @@ class IFUCubeData():
         self.spaxel_var = np.zeros(total_num, dtype=np.float64)
         self.spaxel_iflux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
+        # ______________________________________________________________________________
+
+        nxyplane = self.naxis1 * self.naxis2
+
+        if self.spaxel_z == -1 and self.spaxel_x == -1 and self.spaxel_y == -1:
+            debug_cube_index = -1
+
+        elif(self.spaxel_z < 0 or self.spaxel_x < 0 or self.spaxel_y < 0):
+            print('Incorrect input for Debug Spaxel values. Counting starts at 0')
+            debug_cube_index = -1
+            print(self.spaxel_z, self.spaxel_x, self.spaxel_y)
+        else:
+            spaxel_z = self.spaxel_z
+            spaxel_x = self.spaxel_x
+            spaxel_y = self.spaxel_y
+            debug_cube_index = spaxel_z * (nxyplane) + spaxel_y * self.naxis1 + spaxel_x
+            log.info(f"Printing debug information for cube spaxel:  {spaxel_x} {spaxel_y} {spaxel_z}")
 
         # ______________________________________________________________________________
         subtract_background = True
@@ -557,11 +598,10 @@ class IFUCubeData():
         for ib in range(number_bands):
             this_par1 = self.list_par1[ib]
             this_par2 = self.list_par2[ib]
-            for input in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
+            for input_model in self.master_table.FileMap[self.instrument][this_par1][this_par2]:
                 # ________________________________________________________________________________
                 # loop over the files that cover the spectral range the cube is for
 
-                input_model = datamodels.open(input)
                 self.input_models_this_cube.append(input_model.copy())
                 # set up input_model to be first file used to copy in basic header info
                 # to ifucube meta data
@@ -578,7 +618,8 @@ class IFUCubeData():
                                                                    input_model)
 
                     coord1, coord2, corner_coord, wave, dwave, flux, err, slice_no, rois_pixel, \
-                        roiw_pixel, weight_pixel, softrad_pixel, scalerad_pixel = pixelresult
+                        roiw_pixel, weight_pixel, softrad_pixel, scalerad_pixel, \
+                        x_det, y_det = pixelresult
 
                     # by default flag the dq plane based on the FOV of the detector projected to sky
                     flag_dq_plane = 1
@@ -623,21 +664,23 @@ class IFUCubeData():
                                               roiw_ave, self.cdelt1, self.cdelt2)
 
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
-                        self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
-                        self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
-                        self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
-                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3], np.float64)
+                        self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                        self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                        self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux, np.float64)
                         spaxel_dq.astype(np.uint)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
                         result = None
                         del result
-                        del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq, spaxel_dq
+                        del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq
                     if self.weighting == 'drizzle' and build_cube:
                         cdelt3_mean = np.nanmean(self.cdelt3_normal)
                         xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
                         linear = 0
                         if self.linear_wavelength:
                             linear = 1
+                        if debug_cube_index >= 0:
+                            log.info(f"Input filename: {input_model.meta.filename}")
                         result = cube_wrapper_driz(instrument, flag_dq_plane,
                                                    start_region, end_region,
                                                    self.overlap_partial, self.overlap_full,
@@ -646,7 +689,8 @@ class IFUCubeData():
                                                    xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
                                                    dwave,
                                                    self.cdelt3_normal,
-                                                   self.cdelt1, self.cdelt2, cdelt3_mean, linear)
+                                                   self.cdelt1, self.cdelt2, cdelt3_mean, linear,
+                                                   x_det, y_det, debug_cube_index)
 
                         spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
                         self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
@@ -706,9 +750,12 @@ class IFUCubeData():
                                     20, 9, 21, 8, 22, 7, 23, 6, 24, 5, 25,
                                     4, 26, 3, 27, 2, 28, 1, 29, 0]
 
+                        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_model, np.arange(nslices))
+
                         for i in range(nslices):
 
-                            slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
+                            slice_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, i,
+                                                                       [tr1, tr2[i], tr3[i]])
                             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
                             detector2slicer = slice_wcs.get_transform('detector', 'slicer')
 
@@ -728,8 +775,6 @@ class IFUCubeData():
                             result = None
                             del spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, result
                 k = k + 1
-                input_model.close()
-                del input_model
             # _______________________________________________________________________
             # done looping over files
 
@@ -785,7 +830,7 @@ class IFUCubeData():
 
                 coord1, coord2, corner_coord, wave, dwave, flux, err, slice_no, \
                     rois_pixel, roiw_pixel, weight_pixel, \
-                    softrad_pixel, scalerad_pixel = pixelresult
+                    softrad_pixel, scalerad_pixel, _, _ = pixelresult
 
                 build_cube = True
                 if wave is None:  # there is no valid data on the detector. Pixels are flagged as DO_NOT_USE.
@@ -829,6 +874,9 @@ class IFUCubeData():
                     linear = 0
                     if self.linear_wavelength:
                         linear = 1
+                        x_det = None
+                        y_det = None
+                        debug_cube = -1
                     result = cube_wrapper_driz(instrument, flag_dq_plane,
                                                start_region, end_region,
                                                self.overlap_partial, self.overlap_full,
@@ -837,7 +885,8 @@ class IFUCubeData():
                                                xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
                                                dwave,
                                                self.cdelt3_normal,
-                                               self.cdelt1, self.cdelt2, cdelt3_mean, linear)
+                                               self.cdelt1, self.cdelt2, cdelt3_mean, linear,
+                                               x_det, y_det, debug_cube)
 
                     spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
                     self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
@@ -876,8 +925,8 @@ class IFUCubeData():
         a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                   par2)
         self.spatial_size = a_scale
-        if self.scale1 != 0:
-            self.spatial_size = self.scale1
+        if self.scalexy != 0:
+            self.spatial_size = self.scalexy
 
         min_wave = self.instrument_info.GetWaveMin(par1, par2)
         max_wave = self.instrument_info.GetWaveMax(par1, par2)
@@ -941,6 +990,7 @@ class IFUCubeData():
 
             a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                       par2)
+
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
@@ -1082,8 +1132,8 @@ class IFUCubeData():
             self.roiw = wave_roi
         if self.weight_power == 0:
             self.weight_power = weight_power
-        if self.scale1 != 0:
-            self.spatial_size = self.scale1
+        if self.scalexy != 0:
+            self.spatial_size = self.scalexy
 
         # check on valid values
 
@@ -1189,11 +1239,11 @@ class IFUCubeData():
 
         parameter1 = self.list_par1
         parameter2 = self.list_par2
-
 # ________________________________________________________________________________
-# Define the rotation angle between the ra-dec and alpha beta coord system using
-# the first input model. Use first file in first band to set up rotation angle
+# Define the rotation angle
 
+# If coord_system = ifualign then the angle is between the ra-dec and alpha beta
+# coord system using the first input model. Use first file in first band to set up rotation angle
 # Compute the rotation angle between local IFU system  and RA-DEC
 
         if self.coord_system == 'ifualign':
@@ -1237,6 +1287,12 @@ class IFUCubeData():
             self.rot_angle = 90 + np.arctan2(dra, ddec) * 180. / np.pi
             log.info(f'Rotation angle between ifu and sky: {self.rot_angle}')
 
+        # If coord_system = iskyalign and the user provided a position angle. Define the rotation angle
+        # to be the user provided value.
+
+        if self.coord_system == 'skyalign' and self.cube_pa is not None:
+            self.rot_angle = self.cube_pa
+            log.info(f'Setting rotation angle between ifu and sky: {self.rot_angle}')
 # ________________________________________________________________________________
 # now loop over data and find min and max ranges data covers
 
@@ -1254,19 +1310,27 @@ class IFUCubeData():
             log.debug(f'Working on data from {this_a}, {this_b}')
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             log.debug('number of files %d', n)
+            
             for k in range(n):
                 lmin = 0.0
                 lmax = 0.0
+                input_model = self.master_table.FileMap[self.instrument][this_a][this_b][k]
 
-                input_file = self.master_table.FileMap[self.instrument][this_a][this_b][k]
-                input_model = datamodels.open(input_file)
-
+# ________________________________________________________________________________
+                # If offsets are provided. Pull in ra and dec offsets.
+                raoffset = 0.0
+                decoffset = 0.0 
+                # pull out ra dec offset if it exists
+                if self.offsets is not None:
+                    raoffset, decoffset = self.find_ra_dec_offset(input_model.meta.filename)
+# ________________________________________________________________________________
                 # Find the footprint of the image
                 spectral_found = hasattr(input_model.meta.wcsinfo, 'spectral_region')
                 spatial_found = hasattr(input_model.meta.wcsinfo, 's_region')
                 world = False
-                if self.coord_system == 'skyalign':
+                if self.coord_system == 'skyalign' and self.cube_pa is None:
                     world = True
+
                 # Do not use the default spatial or spectral region found in the wcs if
                 # 1. instrument is MIRI and
                 # 2. Output type is not multi and (not default calspec2) and
@@ -1315,6 +1379,12 @@ class IFUCubeData():
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
 
                 # now append this model spatial and spectral corner
+                if self.offsets is not None:
+                    ca1, cb1 = self.offset_coord(ca1, cb1, raoffset, decoffset)
+                    ca2, cb2 = self.offset_coord(ca2, cb2, raoffset, decoffset)
+                    ca3, cb3 = self.offset_coord(ca3, cb3, raoffset, decoffset)
+                    ca4, cb4 = self.offset_coord(ca4, cb4, raoffset, decoffset)
+
                 corner_a.append(ca1)
                 corner_a.append(ca2)
                 corner_a.append(ca3)
@@ -1327,7 +1397,6 @@ class IFUCubeData():
 
                 lambda_min.append(lmin)
                 lambda_max.append(lmax)
-                input_model.close()
         # ________________________________________________________________________________
         # done looping over files determine final size of cube
         corner_a = np.array(corner_a)
@@ -1339,23 +1408,15 @@ class IFUCubeData():
         final_b_max = max(corner_b)
 
         log.debug(f'final a and b:{final_a_min, final_b_min, final_a_max, final_b_max}')
-        log.debug(f'final wave:   {min(lambda_min), max(lambda_max)}')
-
-        # for MIRI wavelength range read in from cube pars reference file
-        if self.instrument == 'MIRI':
-            final_lambda_min = self.wavemin
-            final_lambda_max = self.wavemax
-
-        # for NIRSPec wavelength range determined from the data
-        if self.instrument == 'NIRSPEC':
-            final_lambda_min = min(lambda_min)
-            final_lambda_max = max(lambda_max)
-            if self.wavemin_user:
-                final_lambda_min = self.wavemin
-
-            if self.wavemax_user:
-                final_lambda_max = self.wavemax
+        log.debug(f' min and max wavelengths:   {min(lambda_min), max(lambda_max)}')
         # ______________________________________________________________________
+        # the wavelength limits of cube are determined from 1. User or 2. cubepars
+        # reference file (in the priority)
+        final_lambda_min = self.wavemin
+        final_lambda_max = self.wavemax
+
+        log.debug(f' final min and max used in IFUcube:   {final_lambda_min, final_lambda_max}')
+
         if self.instrument == 'MIRI' and self.coord_system == 'internal_cal':
             #  we have a 1 to 1 mapping in y across slice  dimension
             nslice = self.instrument_info.GetNSlice(parameter1[0])
@@ -1465,13 +1526,17 @@ class IFUCubeData():
         weight_det = None
         softrad_det = None
         scalerad_det = None
-
+        x_det = None
+        y_det = None
+        offsets = self.offsets
+        
         if self.instrument == 'MIRI':
-            sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, subtract_background)
+            sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, subtract_background,
+                                                    offsets)
             (x, y, ra, dec, wave_all, slice_no_all, dwave_all, corner_coord_all) = sky_result
 
         elif self.instrument == 'NIRSPEC':
-            sky_result = self.map_nirspec_pixel_to_sky(input_model)
+            sky_result = self.map_nirspec_pixel_to_sky(input_model, offsets)
             (x, y, ra, dec, wave_all, slice_no_all, dwave_all, corner_coord_all) = sky_result
 
         # ______________________________________________________________________________
@@ -1482,6 +1547,8 @@ class IFUCubeData():
         dq_all = input_model.dq[y, x]
         valid2 = np.isfinite(flux_all)
 
+        x_all = x
+        y_all = y
         # Pre-select only data within a given wavelength range
         # This range is defined to include all pixels for which the chosen wavelength region
         # of interest would have them fall within one of the cube spectral planes
@@ -1530,10 +1597,10 @@ class IFUCubeData():
 
         num_good = len(good_data[0])
         if num_good == 0:  # This can occcur if all the pixels on the detector are marked DO_NOT_USE.
-
+            log.warning(f'No valid pixels found on detector {input_model.meta.filename}')
             return coord1, coord2, corner_coord, wave, dwave, flux, err, \
                 slice_no, rois_det, roiw_det, weight_det, \
-                softrad_det, scalerad_det
+                softrad_det, scalerad_det, x_det, y_det
 
         # good data holds the location of pixels we want to map to cube
         # define variables as numpy arrays (numba needs this defined)
@@ -1550,6 +1617,8 @@ class IFUCubeData():
         err[:] = err_all[good_data]
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]
+        x_det = x_all[good_data]
+        y_det = y_all[good_data]
 
         log.debug(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
 
@@ -1635,10 +1704,11 @@ class IFUCubeData():
             corner_coord = [xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4]
         return coord1, coord2, corner_coord, wave, dwave, flux, err, \
             slice_no, rois_det, roiw_det, weight_det, \
-            softrad_det, scalerad_det
+            softrad_det, scalerad_det, x_det, y_det
     # ______________________________________________________________________
 
-    def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background):
+    def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background,
+                              offsets):
         """Loop over a file and map the detector pixels to the output cube
         The output frame is on the SKY (ra-dec)
 
@@ -1654,6 +1724,8 @@ class IFUCubeData():
            needed for MIRI data
         input: datamodel
            input data model
+        offsets: dictionary
+           optional dictionary of ra and dec offsets to apply
 
         Returns
         -------
@@ -1664,6 +1736,14 @@ class IFUCubeData():
         slice_no = None  # Slice number
         dwave = None
         corner_coord = None
+
+        raoffset = 0.0
+        decoffset = 0.0 
+        # pull out ra dec offset if it exists
+        if offsets is not None:
+            raoffset, decoffset = self.find_ra_dec_offset(input_model.meta.filename)
+            log.info("Ra and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
+                     raoffset.value, decoffset.value, input_model.meta.filename)
 
         # check if background sky matching as been done in mrs_imatch step
         # If it has not been subtracted and the background has not been
@@ -1700,6 +1780,11 @@ class IFUCubeData():
 
         # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
         ra, dec, wave = input_model.meta.wcs(x, y)
+
+        # offset the central pixel
+        if offsets is not None:
+            ra, dec = self.offset_coord(ra, dec, raoffset, decoffset)
+        
         valid1 = ~np.isnan(ra)
         ra = ra[valid1]
         dec = dec[valid1]
@@ -1739,13 +1824,20 @@ class IFUCubeData():
                                                           input_model.meta.wcs.output_frame, alpha2,
                                                           beta - dbeta * pixfrac / 2., wave)
 
+            # now offset the pixel corners
+            if offsets is not None:
+                ra1, dec1 = self.offset_coord(ra1, dec1, raoffset, decoffset)
+                ra2, dec2 = self.offset_coord(ra2, dec2, raoffset, decoffset)
+                ra3, dec3 = self.offset_coord(ra3, dec3, raoffset, decoffset)                
+                ra4, dec4 = self.offset_coord(ra4, dec4, raoffset, decoffset)
+                
             corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
 
         sky_result = (x, y, ra, dec, wave, slice_no, dwave, corner_coord)
         return sky_result
 
     # ______________________________________________________________________
-    def map_nirspec_pixel_to_sky(self, input_model):
+    def map_nirspec_pixel_to_sky(self, input_model, offsets):
 
         """Loop over a file and map the detector pixels to the output cube
 
@@ -1762,6 +1854,16 @@ class IFUCubeData():
         x, y, ra, dec, lambda, slice_no
 
         """
+
+        # check if we have an ra and dec offset file
+        raoffset = 0.0
+        decoffset = 0.0 
+        # pull out ra dec offset if it exists
+        if offsets is not None:
+            raoffset, decoffset = self.find_ra_dec_offset(input_model.meta.filename)
+            log.info("Ra and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
+                     raoffset.value, decoffset.value, input_model.meta.filename)
+    
         # initialize the ra,dec, and wavelength arrays
         # we will loop over slice_nos and fill in values
         # the flag_det will be set when a slice_no pixel is filled in
@@ -1806,8 +1908,12 @@ class IFUCubeData():
         nslices = 30
         log.info("Mapping each NIRSpec slice to sky for input file: %s", input_model.meta.filename)
 
+        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_model, np.arange(nslices))
+
         for ii in range(nslices):
-            slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
+            slice_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, ii,
+                                                       [tr1, tr2[ii], tr3[ii]])
+
             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
             ra, dec, lam = slice_wcs(x, y)
 
@@ -1905,12 +2011,13 @@ class IFUCubeData():
 
         valid_data = np.where(flag_det == 1)
         y, x = valid_data
-
-        ra = ra_det[valid_data]
-        dec = dec_det[valid_data]
+        
         wave = lam_det[valid_data]
         slice_no = slice_det[valid_data]
         dwave = dwave_det[valid_data]
+
+        ra = ra_det[valid_data] 
+        dec = dec_det[valid_data]
         ra1 = ra1_det[valid_data]
         ra2 = ra2_det[valid_data]
         ra3 = ra3_det[valid_data]
@@ -1920,6 +2027,16 @@ class IFUCubeData():
         dec3 = dec3_det[valid_data]
         dec4 = dec4_det[valid_data]
 
+        if offsets is not None:
+            # central pixel
+            ra, dec = self.offset_coord(ra, dec, raoffset, decoffset)
+
+            # pixel corners
+            ra1, dec1 = self.offset_coord(ra1, dec1, raoffset, decoffset)
+            ra2, dec2 = self.offset_coord(ra2, dec2, raoffset, decoffset)
+            ra3, dec3 = self.offset_coord(ra3, dec3, raoffset, decoffset)
+            ra4, dec4 = self.offset_coord(ra4, dec4, raoffset, decoffset)
+            
         corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
         sky_result = (x, y, ra, dec, wave, slice_no, dwave, corner_coord)
         return sky_result
@@ -2274,6 +2391,13 @@ class IFUCubeData():
             ifucube_model.meta.ifu.roi_wave = 0
             ifucube_model.meta.ifu.roi_spatial = 0
 
+            # uncorrect cdelt for degree conversion
+            ifucube_model.meta.wcsinfo.cdelt1 *= 3600.0
+            ifucube_model.meta.wcsinfo.cdelt2 *= 3600.0
+
+            # correct "RA" axis orientation
+            ifucube_model.meta.wcsinfo.pc1_1 *= -1.0
+
             if self.instrument == 'MIRI':
                 ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
                 ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
@@ -2283,7 +2407,7 @@ class IFUCubeData():
             if self.instrument == 'NIRSPEC':
                 ifucube_model.meta.wcsinfo.cunit1 = 'meter'
                 ifucube_model.meta.wcsinfo.cunit2 = 'meter'
-                ifucube_model.meta.wcsinfo.ctype1 = 'NRSLICERX'
+                ifucube_model.meta.wcsinfo.ctype1 = 'NRSSLICERX'
                 ifucube_model.meta.wcsinfo.ctype2 = 'NRSSLICERY'
 
         # set WCS information
@@ -2304,12 +2428,48 @@ class IFUCubeData():
     # ********************************************************************************
     def blend_output_metadata(self, IFUCube):
         """Create new output metadata based on blending all input metadata."""
-        # Run fitsblender on output product
-        output_file = IFUCube.meta.filename
-        blendmeta.blendmodels(IFUCube, inputs=self.input_models_this_cube,
-                              output=output_file)
+        # Run blendmodels on output product
+        blendmeta.blendmodels(
+            IFUCube,
+            self.input_models_this_cube,
+            ignore=[
+                "meta.filename",
+            ],
+        )
+        # For moving targets, set RA, Dec equal to the average
+        mt_avra = getattr(self.input_models_this_cube[0].meta.wcsinfo, "mt_avra", None)
+        mt_avdec = getattr(self.input_models_this_cube[0].meta.wcsinfo, "mt_avdec", None)
+        if mt_avra is not None:
+            IFUCube.meta.wcsinfo.mt_ra = mt_avra
+            IFUCube.meta.wcsinfo.mt_dec = mt_avdec
+            IFUCube.meta.target.ra = mt_avra
+            IFUCube.meta.target.dec = mt_avdec
 
+    # ********************************************************************************
+    def find_ra_dec_offset(self, filename):
+        """ Match the filename in the offset list with input_model.meta.filename and return 
+        the corresponding Ra and Dec offset
+        """
+        
+        index = self.offsets['filename'].index(filename)
+        raoffset = self.offsets['raoffset'][index]
+        decoffset = self.offsets['decoffset'][index]
+        return raoffset, decoffset
+    
+    # ********************************************************************************
+    def offset_coord(self, ra, dec, raoffset, decoffset):
+        """ Given an ra,dec and ra offset and dec offset, use astropy SkyCoord functions
+            to apply the offsets
+        """
+        
+        coord = SkyCoord(ra, dec, unit='deg')
+        coord_new = coord.spherical_offsets_by(raoffset, decoffset)
 
+        ra_new = coord_new.ra.value
+        dec_new = coord_new.dec.value
+
+        return ra_new, dec_new
+    
 class IncorrectInput(Exception):
     """ Raises an exception if input parameter, Interpolation, is set to area
     when more than one file is used to build the cube.

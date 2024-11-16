@@ -6,7 +6,6 @@ from copy import deepcopy
 from itertools import chain
 import logging
 import re
-import typing
 
 from .process_list import ListCategory, ProcessList
 from .utilities import (
@@ -48,12 +47,23 @@ class SimpleConstraintABC(abc.ABC):
 
     Attributes
     ----------
+    found_values : set(str[,...])
+        Set of actual found values for this condition. True SimpleConstraints
+        do not normally set this; the value is not different than `value`.
+
     matched : bool
         Last call to `check_and_set`
     """
 
     # Attributes to show in the string representation.
-    _str_attrs = ('name', 'value')
+    _str_attrs: tuple = ('name', 'value')
+
+    def __new__(cls, *args, **kwargs):
+        """Force creation of the constraint attribute dict before anything else."""
+        obj = super().__new__(cls)
+        obj._ca_history = collections.deque()
+        obj._constraint_attributes = {}
+        return obj
 
     def __init__(self, init=None, value=None, name=None, **kwargs):
 
@@ -61,11 +71,27 @@ class SimpleConstraintABC(abc.ABC):
         self.value = value
         self.name = name
         self.matched = False
+        self.found_values = set()
 
         if init is not None:
-            self.__dict__.update(init)
+            self._constraint_attributes.update(init)
         else:
-            self.__dict__.update(kwargs)
+            self._constraint_attributes.update(kwargs)
+
+    def __getattr__(self, name):
+        """Retrieve user defined attribute"""
+        if name.startswith('_'):
+            return super().__getattribute__(name)
+        if name in self._constraint_attributes:
+            return self._constraint_attributes[name]
+        raise AttributeError(f'No such attribute {name}')
+
+    def __setattr__(self, name, value):
+        """Store all attributes in the user dictionary"""
+        if not name.startswith('_'):
+            self._constraint_attributes[name] = value
+        else:
+            object.__setattr__(self, name, value)
 
     @abc.abstractmethod
     def check_and_set(self, item):
@@ -80,6 +106,7 @@ class SimpleConstraintABC(abc.ABC):
                 - List of `~jwst.associations.ProcessList`.
         """
         self.matched = True
+        self.found_values.add(self.value)
         return self.matched, []
 
     @property
@@ -112,16 +139,21 @@ class SimpleConstraintABC(abc.ABC):
         """Copy ourselves"""
         return deepcopy(self)
 
-    def get_all_attr(self, attribute: str): # -> list[tuple[SimpleConstraint, typing.Any]]:
+    def get_all_attr(self, attribute, name=None):
         """Return the specified attribute
 
-        This method is meant to be overridden by classes
-        that need to traverse a list of constraints.
+        This method exists solely to support `Constraint.get_all_attr`.
+        This obviates the need for class/method checking.
 
         Parameters
         ----------
         attribute : str
             The attribute to retrieve
+
+        name : str or None
+            Only return attribute if the name of the current constraint
+            matches the requested named constraints. If None, always
+            return value.
 
         Returns
         -------
@@ -129,10 +161,25 @@ class SimpleConstraintABC(abc.ABC):
             The value of the attribute in a tuple. If there is no attribute,
             an empty tuple is returned.
         """
-        value = getattr(self, attribute)
-        if value is not None:
-            return [(self, value)]
+        if name is None or name == self.name:
+            value = getattr(self, attribute, None)
+            if value is not None:
+                if not isinstance(value, (list, set)) or len(value):
+                    return [(self, value)]
         return []
+
+    def restore(self):
+        """Restore constraint state"""
+        try:
+            self._constraint_attributes = self._ca_history.pop()
+        except IndexError:
+            logger.debug('No more attribute history to restore from. restore is a NOOP')
+
+    def preserve(self):
+        """Save the current state of the constraints"""
+        ca_copy = self._constraint_attributes.copy()
+        ca_copy['found_values'] = self._constraint_attributes['found_values'].copy()
+        self._ca_history.append(ca_copy)
 
     # Make iterable to work with `Constraint`.
     # Since this is a leaf, simple return ourselves.
@@ -142,7 +189,7 @@ class SimpleConstraintABC(abc.ABC):
     def __repr__(self):
         result = '{}({})'.format(
             self.__class__.__name__,
-            str(self.__dict__)
+            str(self._constraint_attributes)
         )
         return result
 
@@ -274,7 +321,6 @@ class SimpleConstraint(SimpleConstraintABC):
             reprocess_rules=None,
             **kwargs
     ):
-
         # Defined attributes
         self.sources = sources
         self.force_unique = force_unique
@@ -312,6 +358,7 @@ class SimpleConstraint(SimpleConstraintABC):
         if self.matched:
             if self.force_unique:
                 self.value = source_value
+            self.found_values.add(self.value)
 
         # Determine reprocessing
         reprocess = []
@@ -413,7 +460,7 @@ class AttrConstraint(SimpleConstraintABC):
         self.only_on_match = only_on_match
         self.onlyif = onlyif
         self.required = required
-        super(AttrConstraint, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
 
         # Give some defaults real meaning.
         if invalid_values is None:
@@ -729,16 +776,18 @@ class Constraint:
         """Copy ourselves"""
         return deepcopy(self)
 
-    def get_all_attr(self, attribute: str): # -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
-        """Return the specified attribute
-
-        This method is meant to be overridden by classes
-        that need to traverse a list of constraints.
+    def get_all_attr(self, attribute, name=None):
+        """Return the specified attribute for specified constraints
 
         Parameters
         ----------
         attribute : str
             The attribute to retrieve
+
+        name : str or None
+            Only return attribute if the name of the current constraint
+            matches the requested named constraints. If None, always
+            return value.
 
         Returns
         -------
@@ -752,13 +801,24 @@ class Constraint:
             If the attribute is not found.
         """
         result = []
-        value = getattr(self, attribute)
-        if value is not None:
-            result = [(self, value)]
+        if name is None or name == self.name:
+            value = getattr(self, attribute, None)
+            if value is not None:
+                result = [(self, value)]
         for constraint in self.constraints:
-            result.extend(constraint.get_all_attr(attribute))
+            result.extend(constraint.get_all_attr(attribute, name=name))
 
         return result
+
+    def preserve(self):
+        """Preserve all constraint states"""
+        for constraint in self.constraints:
+            constraint.preserve()
+
+    def restore(self):
+        """Restore all constraint states"""
+        for constraint in self.constraints:
+            constraint.restore()
 
     @staticmethod
     def all(item, constraints):

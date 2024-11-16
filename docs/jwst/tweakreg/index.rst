@@ -14,11 +14,10 @@ TweakReg
 **Also See:**
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    tweakreg_catalog
    tweakreg_step
    utils
-   astrometric_utils
 
 .. automodapi:: jwst.tweakreg

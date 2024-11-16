@@ -118,13 +118,16 @@ class JWSTSourceCatalog:
                              'MJy/sr')
 
         unit = u.Jy
-        to_jy = 1.e6 * self.model.meta.photometry.pixelarea_steradians
-        self.model.data *= to_jy
-        self.model.err *= to_jy
-        self.model.data <<= unit
-        self.model.err <<= unit
-        self.model.meta.bunit_data = unit.name
-        self.model.meta.bunit_err = unit.name
+        if self.model.meta.photometry.pixelarea_steradians is None:
+            log.warning("Pixel area is None. Can't convert to Jy.")
+        else:
+            to_jy = 1.e6 * self.model.meta.photometry.pixelarea_steradians
+            self.model.data *= to_jy
+            self.model.err *= to_jy
+            self.model.data <<= unit
+            self.model.err <<= unit
+            self.model.meta.bunit_data = unit.name
+            self.model.meta.bunit_err = unit.name
 
     def convert_from_jy(self):
         """
@@ -132,15 +135,18 @@ class JWSTSourceCatalog:
         `~astropy.unit.Quantity` objects to `~numpy.ndarray`.
         """
 
-        to_mjy_sr = 1.e6 * self.model.meta.photometry.pixelarea_steradians
-        self.model.data /= to_mjy_sr
-        self.model.err /= to_mjy_sr
+        if self.model.meta.photometry.pixelarea_steradians is None:
+            log.warning("Pixel area is None. Can't convert from Jy.")
+        else:
+            to_mjy_sr = 1.e6 * self.model.meta.photometry.pixelarea_steradians
+            self.model.data /= to_mjy_sr
+            self.model.err /= to_mjy_sr
 
-        self.model.data = self.model.data.value  # remove units
-        self.model.err = self.model.err.value  # remove units
+            self.model.data = self.model.data.value  # remove units
+            self.model.err = self.model.err.value  # remove units
 
-        self.model.meta.bunit_data = 'MJy/sr'
-        self.model.meta.bunit_err = 'MJy/sr'
+            self.model.meta.bunit_data = 'MJy/sr'
+            self.model.meta.bunit_err = 'MJy/sr'
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):
@@ -230,8 +236,6 @@ class JWSTSourceCatalog:
         self._ypeak = segm_cat.maxval_yindex
 
         self.meta.update(segm_cat.meta)
-        for key in ('sklearn', 'matplotlib'):
-            self.meta['version'].pop(key)
 
         # rename some columns in the output catalog
         prop_names = {}
@@ -960,7 +964,20 @@ class JWSTSourceCatalog:
         catalog = self.format_columns(catalog)
 
         # update metadata
-        self.meta['version']['jwst'] = jwst_version
+        # photutils 1.11.0 will change the meta dict key name from
+        # version to versions; can remove this check when we require
+        # photutils >= 1.11.0
+        verkeys = ('versions', 'version')
+        verkey = set(self.meta.keys()).intersection(verkeys).pop()
+        verdict = self.meta.get(verkey, None)
+
+        if verdict is not None:
+            verdict['jwst'] = jwst_version
+            packages = ['Python', 'numpy', 'scipy', 'astropy', 'photutils',
+                        'gwcs', 'jwst']
+            verdict = {key: verdict[key] for key in packages if key in verdict}
+            self.meta[verkey] = verdict
+
         self.meta['aperture_params'] = self.aperture_params
         self.meta['abvega_offset'] = self.abvega_offset
         catalog.meta.update(self.meta)

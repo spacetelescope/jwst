@@ -8,7 +8,9 @@ from jwst.pathloss.pathloss import (calculate_pathloss_vector,
                                     get_aperture_from_model,
                                     get_center,
                                     interpolate_onto_grid,
-                                    is_pointsource)
+                                    is_pointsource,
+                                    shutter_below_is_closed,
+                                    shutter_above_is_closed)
 from jwst.pathloss.pathloss import do_correction
 import numpy as np
 
@@ -84,10 +86,10 @@ def test_get_aper_from_model_msa():
     aperture reference data is returned for MSA mode"""
 
     datmod = PathlossModel()
-    datmod.apertures.append({'shutters': 5})
+    datmod.apertures.append({'shutters': 3})
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
-    result = get_aperture_from_model(datmod, 5)
+    result = get_aperture_from_model(datmod, '11x11')
 
     assert result == datmod.apertures[0]
 
@@ -181,6 +183,44 @@ def test_calculate_pathloss_vector_interpolation():
     # pathloss_vector = (a22*pathloss_ref[:,i,j]) = (1*pathloss_ref[:1,j])
     # Thus pathloss == the input array to the function.
     pathloss_comparison = datmod.apertures[0].pointsource_data
+    assert np.all(pathloss == pathloss_comparison)
+
+    # With the current wcs values, the logic should be returning True
+    assert is_inside_slitlet is True
+
+
+def test_calculate_pathloss_vector_interpolation_nontrivial():
+    """Calculate the pathloss vector for when interpolation is necessary."""
+
+    datmod = PathlossModel()
+
+    ref_data = {'pointsource_data': np.arange(10 * 10 * 10, dtype=np.float32).reshape((10, 10, 10)),
+                'pointsource_wcs': {'crpix1': 1.75, 'crval1': -0.5, 'cdelt1': 0.5,
+                                    'crpix2': 1.25, 'crval2': -0.5, 'cdelt2': 0.5,
+                                    'crpix3': 1.0, 'crval3': 1.0, 'cdelt3': 1.0}}
+
+    datmod.apertures.append(ref_data)
+
+    wavelength, pathloss, is_inside_slitlet = calculate_pathloss_vector(datmod.apertures[0].pointsource_data,
+                                                                        datmod.apertures[0].pointsource_wcs,
+                                                                        0.0, 0.0)
+
+    # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
+    # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
+    # data array.
+    wavelength_comparison = np.array([1 + (float(i + 1) - 1.0) * 1 for i in np.arange(10)])
+    assert np.all(wavelength == wavelength_comparison)
+
+    # In this instance we interpolate to get the array for pathloss VS wavelength.
+    # Data point is at x=1.75, y=1.25, so between pixels 1 and 2, but
+    # closer to 2 in x, closer to 1 in y
+    # (remember that y comes first for numpy)
+    ps_data = datmod.apertures[0].pointsource_data
+    pathloss_comparison = np.sum([0.75 * 0.25 * ps_data[:, 1, 1],
+                                  0.75 * 0.75 * ps_data[:, 1, 2],
+                                  0.25 * 0.25 * ps_data[:, 2, 1],
+                                  0.25 * 0.75 * ps_data[:, 2, 2]], axis=0)
+
     assert np.all(pathloss == pathloss_comparison)
 
     # With the current wcs values, the logic should be returning True
@@ -297,3 +337,21 @@ def test_interpolate_onto_grid():
     result_comparison = np.interp(wavelength_grid, extended_wavelength_vector, extended_pathloss_vector)
 
     np.testing.assert_array_equal(result, result_comparison)
+
+
+def test_shutter_below_is_closed():
+    shutter_below_closed = ['x111', 'x', '10x11']
+    shutter_below_open = ['11x11', '111x', '11x01']
+    for shutter_state in shutter_below_closed:
+        assert shutter_below_is_closed(shutter_state)
+    for shutter_state in shutter_below_open:
+        assert not shutter_below_is_closed(shutter_state)
+
+
+def test_shutter_above_is_closed():
+    shutter_above_closed = ['111x', 'x', '1x011']
+    shutter_above_open = ['11x11', 'x111', '110x1']
+    for shutter_state in shutter_above_closed:
+        assert shutter_above_is_closed(shutter_state)
+    for shutter_state in shutter_above_open:
+        assert not shutter_above_is_closed(shutter_state)

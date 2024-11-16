@@ -12,8 +12,9 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 
 # General imports.
 import numpy as np
+import warnings
 from scipy.sparse import issparse, csr_matrix, diags
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve, lsqr, MatrixRankWarning
 from scipy.interpolate import interp1d
 
 # Local imports.
@@ -23,6 +24,13 @@ import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+class MaskOverlapError(Exception):
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 
 class _BaseOverlap:
@@ -180,6 +188,12 @@ class _BaseOverlap:
 
         # First estimate of a global mask and masks for each orders
         self.mask, self.mask_ord = self._get_masks(global_mask)
+
+        # Ensure there are adequate good pixels left in each order
+        good_pixels_in_order = np.sum(np.sum(~self.mask_ord, axis=-1), axis=-1)
+        min_good_pixels = 25  # hard-code to qualitatively reasonable value
+        if np.any(good_pixels_in_order < min_good_pixels):
+            raise MaskOverlapError('At least one order has no valid pixels (mask_trace_profile and mask_wave do not overlap)')
 
         # Correct i_bounds if it was not specified
         self.i_bounds = self._get_i_bnds(wave_bounds)
@@ -408,9 +422,9 @@ class _BaseOverlap:
         """
 
         # Get needed attributes
-        args = ('threshold', 'n_orders', 'throughput', 'mask_trace_profile', 'wave_map', 'trace_profile')
+        args = ('threshold', 'n_orders', 'mask_trace_profile', 'trace_profile')
         needed_attr = self.get_attributes(*args)
-        threshold, n_orders, throughput, mask_trace_profile, wave_map, trace_profile = needed_attr
+        threshold, n_orders, mask_trace_profile, trace_profile = needed_attr
 
         # Convert list to array (easier for coding)
         mask_trace_profile = np.array(mask_trace_profile)
@@ -1277,7 +1291,15 @@ class _BaseOverlap:
         # Only solve for valid indices, i.e. wavelengths that are
         # covered by the pixels on the detector.
         # It will be a singular matrix otherwise.
-        sln[idx] = spsolve(matrix[idx, :][:, idx], result[idx])
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action='error', category=MatrixRankWarning)
+            try:
+                sln[idx] = spsolve(matrix[idx, :][:, idx], result[idx])
+            except MatrixRankWarning:
+                # on rare occasions spsolve's approximation of the matrix is not appropriate
+                # and fails on good input data. revert to different solver
+                log.info('ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
+                sln[idx] = lsqr(matrix[idx, :][:, idx], result[idx])[0]
 
         return sln
 
@@ -1463,7 +1485,7 @@ class _BaseOverlap:
 
             # Integrate
             integrand = fct_f_k(x_grid) * x_grid
-            bin_val.append(np.trapz(integrand, x_grid))
+            bin_val.append(np.trapezoid(integrand, x_grid))
 
         # Convert to array and return with the pixel centers.
         return pix_center, np.array(bin_val)
@@ -1647,7 +1669,6 @@ class ExtractionEngine(_BaseOverlap):
 
         # Use the convolved grid (depends on the order)
         wave_grid = wave_grid[i_bnds[0]:i_bnds[1]]
-
         # Compute the wavelength coverage of the grid
         d_grid = np.diff(wave_grid)
 

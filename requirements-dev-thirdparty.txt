@@ -1,0 +1,18 @@
+# ASDF upstream packages
+git+https://github.com/asdf-format/asdf-standard
+git+https://github.com/asdf-format/asdf
+git+https://github.com/asdf-format/asdf-transform-schemas
+git+https://github.com/asdf-format/asdf-coordinates-schemas
+git+https://github.com/asdf-format/asdf-wcs-schemas
+
+# Use nightly Astropy dev builds
+git+https://github.com/astropy/asdf-astropy
+--extra-index-url https://pypi.anaconda.org/astropy/simple
+pyerfa>=0.0.dev0
+astropy>=0.0.dev0
+photutils>=0.0.dev0
+
+# Use Bi-weekly numpy/scipy dev builds
+--extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+numpy>=0.0.dev0
+scipy>=0.0.dev0

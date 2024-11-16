@@ -1,6 +1,5 @@
 from collections.abc import MutableMapping
-from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import jsonschema
 import logging
@@ -80,12 +79,12 @@ class Association(MutableMapping):
     GLOBAL_CONSTRAINT = None
     """Global constraints"""
 
-    INVALID_VALUES = None
+    INVALID_VALUES: tuple | None = None
     """Attribute values that indicate the
     attribute is not specified.
     """
 
-    ioregistry = IORegistry()
+    ioregistry: IORegistry = IORegistry()
     """The association IO registry"""
 
     def __init__(
@@ -199,7 +198,8 @@ class Association(MutableMapping):
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            logger.debug('Validation failed:\n%s', err)
+            logger.debug('Validation failed:')
+            logger.debug(str(err))
             raise AssociationNotValidError('Validation failed') from err
 
         # Validate no path data for expnames
@@ -208,9 +208,9 @@ class Association(MutableMapping):
             for member in members:
                 fpath, fname = os.path.split(member["expname"])
                 if len(fpath) > 0:
-                    err_str = "'expname' contains path, but should only be a filename."
-                    err_str += "  All input files should be in a single directory"
-                    err_str += ", so no path is needed."
+                    err_str = "Input association file contains path information;"
+                    err_str += " note that this can complicate usage and/or sharing"
+                    err_str += " of such files."
                     logger.debug(err_str)
                     warnings.warn(err_str, UserWarning)
         return True
@@ -389,10 +389,10 @@ class Association(MutableMapping):
                 - [ProcessItem[, ...]]: List of items to process again.
 
         """
-        cached_constraints = deepcopy(self.constraints)
-        match, reprocess = cached_constraints.check_and_set(item)
-        if match:
-            self.constraints = cached_constraints
+        self.constraints.preserve()
+        match, reprocess = self.constraints.check_and_set(item)
+        if not match:
+            self.constraints.restore()
 
         # Set the association type for all reprocessed items.
         for process_list in reprocess:
@@ -564,7 +564,7 @@ def finalize(asns):
 
 
 def make_timestamp():
-    timestamp = datetime.utcnow().strftime(
+    timestamp = datetime.now(timezone.utc).strftime(
         _TIMESTAMP_TEMPLATE
     )
     return timestamp

@@ -1,3 +1,4 @@
+import logging
 import os
 from os.path import (
     abspath,
@@ -7,7 +8,7 @@ from os.path import (
 
 import pytest
 
-from stpipe.extern.configobj.configobj import ConfigObj
+from astropy.extern.configobj.configobj import ConfigObj
 from stpipe import crds_client
 from stpipe import cmdline
 from stpipe.config import StepConfig
@@ -15,8 +16,10 @@ from stpipe.config_parser import ValidationError
 
 from stdatamodels.jwst import datamodels
 
+from jwst import __version__ as jwst_version
 from jwst.white_light import WhiteLightStep
 from jwst.stpipe import Step
+from jwst.tests.helpers import LogWatcher
 
 from jwst.stpipe.tests.steps import (
     EmptyPipeline, MakeListPipeline, MakeListStep,
@@ -101,16 +104,16 @@ def test_reftype(cfg_file, expected_reftype):
     assert step.get_config_reftype() == expected_reftype
 
 
-def test_saving_pars(tmpdir):
+def test_saving_pars(tmp_path):
     """Save the step parameters from the commandline"""
     cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
-    saved_path = tmpdir.join('savepars.asdf')
-    step = Step.from_cmdline([
+    saved_path = os.path.join(tmp_path, 'savepars.asdf')
+    Step.from_cmdline([
         cfg_path,
         '--save-parameters',
         str(saved_path)
     ])
-    assert saved_path.check()
+    assert os.path.exists(saved_path)
 
     with asdf.open(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))) as af:
         original_config = StepConfig.from_asdf(af)
@@ -119,8 +122,6 @@ def test_saving_pars(tmpdir):
     with asdf.open(str(saved_path)) as af:
         config = StepConfig.from_asdf(af)
         assert config.parameters == original_config.parameters
-
-    step.closeout()
 
 
 @pytest.mark.parametrize(
@@ -597,7 +598,7 @@ def test_print_configspec():
     step.print_configspec()
 
 
-def test_call_with_config(caplog, _jail):
+def test_call_with_config(caplog, tmp_cwd):
     """Test call using a config file with substeps
 
     In particular, from JP-1482, there was a case where a substep parameter
@@ -608,4 +609,23 @@ def test_call_with_config(caplog, _jail):
 
     ProperPipeline.call(model, config_file=cfg)
 
-    assert "'par1': 'newpar1'" in caplog.text
+    assert "newpar1" in caplog.text
+
+
+def test_finalize_logging(monkeypatch):
+    """
+    Check that the jwst version and crds context are logged
+    when a step/pipeline is run.
+    """
+    pipeline = EmptyPipeline()
+    model = datamodels.ImageModel()
+    watcher = LogWatcher(f"Results used jwst version: {jwst_version}")
+    monkeypatch.setattr(logging.getLogger("jwst.stpipe.core"), "info", watcher)
+    pipeline.run(model)
+    assert watcher.seen
+
+
+def test_dunder_call_warning():
+    pipeline = EmptyPipeline()
+    with pytest.warns(UserWarning, match="Step.__call__ is deprecated"):
+        pipeline(None)

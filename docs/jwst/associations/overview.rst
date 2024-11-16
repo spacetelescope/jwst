@@ -84,13 +84,16 @@ Usage
 
 Users should not need to run the generator. Instead, it is expected that one
 edits an already existing association that accompanies the user's JWST data.
-Care should be taken if editing an association file.  Keep in mind all input
-files listed in the association file are in the same directory as the
-association file and no path information can be put in ``expname``, only the
-file name.  Or, if need be, an association can be created based on the existing
-:ref:`Stage 2 <asn-level2-example>` or :ref:`Stage 3 <asn-level3-example>` examples.
-If, however, the user *does* need to run the generator, :ref:`Association Generator
-<design-generator>` documentation will be helpful.
+
+Care should be taken if editing an association file.  Keep in mind that generally
+all input files listed in the association files are assumed to be in the same
+directory as the association file and no path information is put in ``expname``.
+
+If need be, an association can be created based on the existing
+:ref:`Stage 2 <asn-level2-example>` or :ref:`Stage 3 <asn-level3-example>` examples,
+or using the command line tool :ref:`asn-from-list`.
+If, however, the user *does* need to run the generator, the :ref:`Association Generator
+<design-generator>` description and :ref:`asn-generate` documentation will be helpful.
 
 Once an association is in-hand, one can pass it as input to a pipeline
 routine. For example::
@@ -111,20 +114,16 @@ What exactly is returned depends on what the association is. However,
 for all Stage 2 and Stage 3 associations, a Python ``dict`` is returned,
 whose structure matches that of the JSON or YAML file. Continuing
 from the above example, the following shows how to access the first
-exposure file name of a Stage 3 associations::
+exposure file name of a Stage 3 associations:
 
 .. code-block:: python
 
    exposure = asn['products'][0]['members'][0]['expname']
 
 Since most JWST data are some form of a 
-.. comment out until stdatamodels is released
-.. ref  JWST Data Model<data-models>
-JWST Data Model
+:ref:`JWST Data Model<jwst-data-models>`
 an association can be opened with
-.. comment out until stdatamodels is released
-.. ref  datamodels.open<datamodels-open>
-``datamodels.open``
+:ref:`datamodels.open<stdatamodels:datamodels-open>`
 which returns a
 :py:class:`~jwst.datamodels.ModelContainer`. All members of the association that can
 be represented as a ``DataModel``, will be available in the ``ModelContainer``

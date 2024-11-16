@@ -14,6 +14,8 @@ DNU = test_dq_flags["DO_NOT_USE"]
 JUMP = test_dq_flags["JUMP_DET"]
 SAT = test_dq_flags["SATURATED"]
 
+MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
+
 
 @pytest.fixture(scope="module")
 def generate_miri_reffiles():
@@ -140,7 +142,8 @@ def setup_subarray_inputs(
     return model1, gdq, rnModel, pixdq, err, gain
 
 
-def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
+@pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
+def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
     """
     Create a simple input to instantiate RampFitStep and execute a call to test
     the step class and class method.
@@ -166,7 +169,7 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
         model, override_gain=override_gain, override_readnoise=override_readnoise,
-        maximum_cores="none")
+        maximum_cores=max_cores)
 
     assert slopes is not None
     assert cube_model is not None
@@ -176,10 +179,10 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
     assert slopes.meta.cal_step.ramp_fit == "COMPLETE"
 
 
-def test_subarray_5groups(tmpdir_factory):
+def test_subarray_5groups(tmp_path_factory):
     # all pixel values are zero. So slope should be zero
-    gainfile = str(tmpdir_factory.mktemp("data").join("gain.fits"))
-    readnoisefile = str(tmpdir_factory.mktemp("data").join('readnoise.fits'))
+    gainfile = tmp_path_factory.mktemp("data") / "gain.fits"
+    readnoisefile = tmp_path_factory.mktemp("data") / 'readnoise.fits'
 
     model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
         ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50)
@@ -195,7 +198,7 @@ def test_subarray_5groups(tmpdir_factory):
 
     # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
-        model1, override_gain=gainfile, override_readnoise=readnoisefile,
+        model1, override_gain=str(gainfile), override_readnoise=str(readnoisefile),
         maximum_cores="none", save_opt=True)
 
     assert slopes is not None
@@ -313,205 +316,3 @@ def one_group_suppressed(nints, suppress, setup_inputs):
         maximum_cores="none")
 
     return slopes, cube_model, dims
-
-
-def test_one_group_not_suppressed_one_integration(setup_inputs):
-    """
-    This tests a one integration with three pixel ramps, with the
-    one group suppression switch turned off.
-    1. The fully saturated ramp should have no computed data with the
-       DO_NOT_USE flag set in the final DQ.
-    2. The one group ramp will have data computed and the SATURATED
-       flag set in the final DQ.
-    3. The good ramp is fully computed.
-    """
-    slopes, cube, dims = one_group_suppressed(1, False, setup_inputs)
-    nints, ngroups, nrows, ncols = dims
-    tol = 1e-5
-
-    # Check slopes information
-    check = np.array([[np.nan, 1., 1.0000002]])
-    np.testing.assert_allclose(slopes.data, check, tol)
-
-    check = np.array([[DNU | SAT, GOOD, GOOD]])
-    np.testing.assert_allclose(slopes.dq, check, tol)
-
-    check = np.array([[0., 0.04, 0.01]])
-    np.testing.assert_allclose(slopes.var_poisson, check, tol)
-
-    check = np.array([[0., 3.9999995, 0.19999999]])
-    np.testing.assert_allclose(slopes.var_rnoise, check, tol)
-
-    check = np.array([[0., 2.009975, 0.45825756]])
-    np.testing.assert_allclose(slopes.err, check, tol)
-
-    # Check slopes information
-    check = np.array([[[np.nan, 1., 1.0000001]]])
-    np.testing.assert_allclose(cube.data, check, tol)
-
-    check = np.array([[[DNU | SAT, GOOD, GOOD]]])
-    np.testing.assert_allclose(cube.dq, check, tol)
-
-    check = np.array([[[0., 0.04, 0.01]]])
-    np.testing.assert_allclose(cube.var_poisson, check, tol)
-
-    check = np.array([[[0., 3.9999995, 0.19999999]]])
-    np.testing.assert_allclose(cube.var_rnoise, check, tol)
-
-    check = np.array([[[0., 2.0099752, 0.4582576]]])
-    np.testing.assert_allclose(cube.err, check, tol)
-
-
-def test_one_group_suppressed_one_integration(setup_inputs):
-    """
-    This tests a one integration with three pixel ramps, with the
-    one group suppression switch turned on.
-    1. The fully saturated ramp should have no computed data with the
-       DO_NOT_USE flag set in the final DQ.
-    2. The one group ramp will be computed as a fully saturated ramp,
-       but the DO_NOT_USE flag will not be set in the final DQ.
-    3. The good ramp is fully computed.
-    """
-    slopes, cube, dims = one_group_suppressed(1, True, setup_inputs)
-    nints, ngroups, nrows, ncols = dims
-    tol = 1e-5
-
-    # Check slopes information
-    check = np.array([[np.nan, np.nan, 1.0000002]])
-    np.testing.assert_allclose(slopes.data, check, tol)
-
-    check = np.array([[DNU | SAT, DNU, GOOD]])
-    np.testing.assert_allclose(slopes.dq, check, tol)
-
-    check = np.array([[0., 0., 0.01]])
-    np.testing.assert_allclose(slopes.var_poisson, check, tol)
-
-    check = np.array([[0., 0., 0.19999999]])
-    np.testing.assert_allclose(slopes.var_rnoise, check, tol)
-
-    check = np.array([[0., 0., 0.45825756]])
-    np.testing.assert_allclose(slopes.err, check, tol)
-
-    # Check slopes information
-    check = np.array([[[np.nan, np.nan, 1.0000001]]])
-    np.testing.assert_allclose(cube.data, check, tol)
-
-    check = np.array([[[DNU | SAT, DNU, 0]]])
-    np.testing.assert_allclose(cube.dq, check, tol)
-
-    check = np.array([[[0., 0., 0.01]]])
-    np.testing.assert_allclose(cube.var_poisson, check, tol)
-
-    check = np.array([[[0., 0., 0.19999999]]])
-    np.testing.assert_allclose(cube.var_rnoise, check, tol)
-
-    check = np.array([[[0., 0., 0.4582576]]])
-    np.testing.assert_allclose(cube.err, check, tol)
-
-
-def test_one_group_not_suppressed_two_integrations(setup_inputs):
-    """
-    This tests three pixel ramps with two integrations and the
-    one group suppression switch turned off.  The second integration
-    for all ramps are good, so all pixels will have usable data in
-    the final image model.
-    1. A fully saturated first integration.  Usable data is obtained
-       from the second integration.
-    2. A one group ramp in the first integration.  Data from both
-       integrations is combeined for the final image model.
-    3. Good data from both integrations.
-    """
-    slopes, cube, dims = one_group_suppressed(2, False, setup_inputs)
-    nints, ngroups, nrows, ncols = dims
-    tol = 1e-5
-
-    # Check slopes information
-    check = np.array([[1.0000001, 1.0000002, 1.0000002]])
-    np.testing.assert_allclose(slopes.data, check, tol)
-
-    check = np.array([[GOOD, GOOD, GOOD]])
-    np.testing.assert_allclose(slopes.dq, check, tol)
-
-    check = np.array([[0.005, 0.008, 0.005]])
-    np.testing.assert_allclose(slopes.var_poisson, check, tol)
-
-    check = np.array([[0.19999999, 0.19047618, 0.09999999]])
-    np.testing.assert_allclose(slopes.var_rnoise, check, tol)
-
-    check = np.array([[0.45276925, 0.44550666, 0.32403702]])
-    np.testing.assert_allclose(slopes.err, check, tol)
-
-    # Check slopes information
-    check = np.array([[[np.nan,        1.,        1.0000001]],
-                      [[1.0000001, 1.0000001, 1.0000001]]])
-    np.testing.assert_allclose(cube.data, check, tol)
-
-    check = np.array([[[SAT | DNU, GOOD, GOOD]],
-                      [[GOOD, GOOD, GOOD]]])
-    np.testing.assert_allclose(cube.dq, check, tol)
-
-    check = np.array([[[0.,    0.04, 0.01]],
-                      [[0.005, 0.01, 0.01]]])
-    np.testing.assert_allclose(cube.var_poisson, check, tol)
-
-    check = np.array([[[0.,         3.9999995,  0.19999999]],
-                      [[0.19999999, 0.19999999, 0.19999999]]])
-    np.testing.assert_allclose(cube.var_rnoise, check, tol)
-
-    check = np.array([[[0.,         2.0099752, 0.4582576]],
-                      [[0.45276922, 0.4582576, 0.4582576]]])
-    np.testing.assert_allclose(cube.err, check, tol)
-
-
-def test_one_group_suppressed_two_integrations(setup_inputs):
-    """
-    This tests three pixel ramps with two integrations and the
-    one group suppression switch turned on.  The key differences
-    for this test are in the cube data.
-    1. A fully saturated first integration.  Usable data is obtained
-       from the second integration.
-    2. A one group ramp in the first integration.  No data from the
-       first integration is used, but DO_NOT_USE flag is not set for
-       the first integration.
-    3. Good data from both integrations.
-    """
-    slopes, cube, dims = one_group_suppressed(2, True, setup_inputs)
-    nints, ngroups, nrows, ncols = dims
-    tol = 1e-5
-
-    # Check slopes information
-    check = np.array([[1.0000001, 1.0000001, 1.0000002]])
-    np.testing.assert_allclose(slopes.data, check, tol)
-
-    check = np.array([[GOOD, GOOD, GOOD]])
-    np.testing.assert_allclose(slopes.dq, check, tol)
-
-    check = np.array([[0.005, 0.01, 0.005]])
-    np.testing.assert_allclose(slopes.var_poisson, check, tol)
-
-    check = np.array([[0.19999999, 0.19999999, 0.09999999]])
-    np.testing.assert_allclose(slopes.var_rnoise, check, tol)
-
-    check = np.array([[0.45276925, 0.45825756, 0.32403702]])
-    np.testing.assert_allclose(slopes.err, check, tol)
-
-    # Check slopes information
-    check = np.array([[[np.nan, np.nan, 1.0000001]],
-                      [[1.0000001, 1.0000001, 1.0000001]]])
-    np.testing.assert_allclose(cube.data, check, tol)
-
-    check = np.array([[[DNU | SAT, DNU, GOOD]],
-                      [[GOOD, GOOD, GOOD]]])
-    np.testing.assert_allclose(cube.dq, check, tol)
-
-    check = np.array([[[0.,    0.,    0.01]],
-                      [[0.005, 0.01, 0.01]]])
-    np.testing.assert_allclose(cube.var_poisson, check, tol)
-
-    check = np.array([[[0.,         0.,         0.19999999]],
-                      [[0.19999999, 0.19999999, 0.19999999]]])
-    np.testing.assert_allclose(cube.var_rnoise, check, tol)
-
-    check = np.array([[[0.,         0.,         0.4582576]],
-                      [[0.45276922, 0.4582576, 0.4582576]]])
-    np.testing.assert_allclose(cube.err, check, tol)

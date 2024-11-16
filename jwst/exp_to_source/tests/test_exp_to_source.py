@@ -1,4 +1,3 @@
-import os
 import pytest
 import numpy as np
 
@@ -34,12 +33,11 @@ def test_model_structure(run_exp_to_source):
             assert outputs[str(slit.source_id)].meta.filename != in_model.meta.filename
 
 
-def test_model_roundtrip(tmpdir, run_exp_to_source):
+def test_model_roundtrip(tmp_path, run_exp_to_source):
     inputs, outputs = run_exp_to_source
     files = []
-    path = str(tmpdir)
     for output in outputs:
-        file_path = os.path.join(path, output) + '.fits'
+        file_path = tmp_path / (output + '.fits')
         outputs[output].save(file_path)
         files.append(file_path)
     for file_path in files:
@@ -76,4 +74,44 @@ def test_container_structure():
     # Closeout
     container.close()
     for model in inputs:
+        model.close()
+    for model in outputs.values():
+        model.close()
+
+
+def test_slit_exptype():
+    """Test for slit exposure type handling."""
+
+    # Setup input
+    inputs = [MultiSlitModel(f) for f in helpers.INPUT_FILES]
+    container = ModelContainer(inputs)
+
+    # Add a slit exposure type to each input
+    for model in container:
+        for slit in model.slits:
+            if slit.source_id == 1:
+                slit.meta.exposure = {'type': 'NRS_MSASPEC'}
+            else:
+                slit.meta.exposure = {'type': 'NRS_FIXEDSLIT'}
+
+    # Make the source-based containers
+    outputs = multislit_to_container(container)
+
+    # Check that exposure type was passed from input to output
+    assert len(container) == 3
+    assert len(outputs) == 5
+    for i, model in enumerate(container):
+        for slit in model.slits:
+            exposure = outputs[str(slit.source_id)][i]
+            assert exposure.meta.exposure.type == slit.meta.exposure.type
+            if slit.source_id == 1:
+                assert exposure.meta.exposure.type == 'NRS_MSASPEC'
+            else:
+                assert exposure.meta.exposure.type == 'NRS_FIXEDSLIT'
+
+    # Closeout
+    container.close()
+    for model in inputs:
+        model.close()
+    for model in outputs.values():
         model.close()

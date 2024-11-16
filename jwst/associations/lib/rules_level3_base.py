@@ -29,9 +29,7 @@ from jwst.associations.lib.constraint import (
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
-    ACQ_EXP_TYPES,
     Constraint_TargetAcq,
-    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
@@ -40,11 +38,12 @@ from jwst.associations.lib.dms_base import (
 )
 from stpipe.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
-from jwst.associations.lib.product_utils import prune_duplicate_associations, prune_duplicate_products
+from jwst.associations.lib.prune import prune
 
 __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_AuxData',
+    'AsnMixin_Coronagraphy',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
     'Constraint',
@@ -84,7 +83,7 @@ LEVEL2B_EXPTYPES.extend(IMAGE2_NONSCIENCE_EXP_TYPES)
 LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 
 # Association Candidates that should have more than one observations
-MULTI_OBS_AC_TYPES = ['group', 'background']
+MULTI_OBS_AC_TYPES = ['group', 'background', 'mosaic']
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
@@ -98,7 +97,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     INVALID_VALUES = _EMPTY
 
     # Make sequences type-dependent
-    _sequences = defaultdict(Counter)
+    _sequences: defaultdict = defaultdict(Counter)
 
     def __init__(self, *args, **kwargs):
 
@@ -127,22 +126,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     @property
     def current_product(self):
         return self.data['products'][-1]
-
-    def __eq__(self, other):
-        """Compare equality of two associations"""
-        if isinstance(other, DMS_Level3_Base):
-            result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.member_ids == other.member_ids)
-            return result
-
-        return NotImplemented
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        result = self.__eq__(other)
-        if result is not NotImplemented:
-            result = not result
-        return result
 
     @property
     def dms_product_name(self):
@@ -175,6 +158,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         opt_elem = association._get_opt_element()
 
+        slit_name = association._get_slit_name()
+        if slit_name:
+            slit_name = '-' + slit_name
+
         exposure = association._get_exposure()
         if exposure:
             exposure = '-' + exposure
@@ -187,7 +174,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             'jw{program}-{acid}'
             '_{target}'
             '_{instrument}'
-            '_{opt_elem}{subarray}'
+            '_{opt_elem}{slit_name}{subarray}'
         )
         product_name = product_name.format(
             program=association.data['program'],
@@ -195,6 +182,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             target=target,
             instrument=instrument,
             opt_elem=opt_elem,
+            slit_name=slit_name,
             subarray=subarray,
             exposure=exposure
         )
@@ -280,8 +268,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # Determine expected member name
         expname = Utility.rename_to_level2(
-            item['filename'], exp_type=item['exp_type'],
-            is_tso=self.is_item_tso(item, other_exp_types=CORON_EXP_TYPES),
+            item['filename'],
+            exp_type=item['exp_type'],
+            use_integrations=(self.is_item_coron(item) |
+                              # NIS_AMI used to use cal files;
+                              # now switched to calints
+                              self.is_item_ami(item) |
+                              self.is_item_tso(item)),
             member_exptype=exptype
         )
 
@@ -473,7 +466,7 @@ class Utility():
             )
 
     @staticmethod
-    def rename_to_level2(level1b_name, exp_type=None, is_tso=False, member_exptype='science'):
+    def rename_to_level2(level1b_name, exp_type=None, use_integrations=False, member_exptype='science'):
         """Rename a Level 1b Exposure to a Level2 name.
 
         The basic transform is changing the suffix `uncal` to
@@ -489,9 +482,8 @@ class Utility():
             it will be presumed that the name
             should get a Level2b name
 
-        is_tso : boolean
-            Use 'calints' instead of 'cal' as
-            the suffix.
+        use_integrations : boolean
+            Use 'calints' instead of 'cal' as the suffix.
 
         member_exptype: str
             The association member exposure type, such as "science".
@@ -519,7 +511,7 @@ class Utility():
             else:
                 suffix = 'rate'
 
-        if is_tso:
+        if use_integrations:
             suffix += 'ints'
 
         level2_name = ''.join([
@@ -579,8 +571,7 @@ class Utility():
             else:
                 finalized_asns.append(asn)
 
-        lv3_asns = prune_duplicate_associations(lv3_asns)
-        lv3_asns = prune_duplicate_products(lv3_asns)
+        lv3_asns = prune(lv3_asns)
 
         # Ensure sequencing is correct.
         Utility.resequence(lv3_asns)
@@ -595,9 +586,9 @@ class Utility():
 # Define default product name filling
 format_product = FormatTemplate(
     key_formats={
-        'source_id': ['s{:05d}', 's{:s}'],
-        'expspcin': ['{:0>2s}']
-
+        'source_id': ['{:s}'],
+        'expspcin': ['{:0>2s}'],
+        'slit_name': ['{:s}']
     }
 )
 
@@ -647,6 +638,10 @@ def dms_product_name_sources(asn):
 
     opt_elem = asn._get_opt_element()
 
+    slit_name = asn._get_slit_name()
+    if slit_name:
+        slit_name = '-' + slit_name
+
     subarray = asn._get_subarray()
     if subarray:
         subarray = '-' + subarray
@@ -655,7 +650,51 @@ def dms_product_name_sources(asn):
         'jw{program}-{acid}'
         '_{source_id}'
         '_{instrument}'
-        '_{opt_elem}{subarray}'
+        '_{opt_elem}{slit_name}{subarray}'
+    )
+    product_name = format_product(
+        product_name_format,
+        program=asn.data['program'],
+        acid=asn.acid.id,
+        instrument=instrument,
+        opt_elem=opt_elem,
+        slit_name=slit_name,
+        subarray=subarray,
+    )
+
+    return product_name.lower()
+
+
+def dms_product_name_nrsfs_sources(asn):
+    """Produce source-based product names for NIRSpec fixed-slit observations.
+
+    For this mode, the product names have a placeholder for the
+    slit name, to be filled in later by the pipeline.
+
+    Parameters
+    ---------
+    asn : Association
+        The association for which the product
+        name is to be created.
+
+    Returns
+    -------
+    product_name : str
+        The product name
+    """
+    instrument = asn._get_instrument()
+
+    opt_elem = asn._get_opt_element()
+
+    subarray = asn._get_subarray()
+    if subarray:
+        subarray = '-' + subarray
+
+    product_name_format = (
+        'jw{program}-{acid}'
+        '_{source_id}'
+        '_{instrument}'
+        '_{opt_elem}-{slit_name}{subarray}'
     )
     product_name = format_product(
         product_name_format,
@@ -664,6 +703,58 @@ def dms_product_name_sources(asn):
         instrument=instrument,
         opt_elem=opt_elem,
         subarray=subarray,
+    )
+
+    return product_name.lower()
+
+
+def dms_product_name_coronimage(asn):
+    """Produce image-based product name
+       for coronagraphic data
+
+    Parameters
+    ---------
+    asn : Association
+        The association for which the product
+        name is to be created.
+
+    Returns
+    -------
+    product_name : str
+        The product name
+    """
+
+    target = asn._get_target()
+
+    instrument = asn._get_instrument()
+
+    opt_elem = asn._get_opt_element()
+
+    exposure = asn._get_exposure()
+    if exposure:
+        exposure = '-' + exposure
+
+    subarray = asn._get_subarray()
+    if subarray:
+        subarray = '-' + subarray
+
+    suffix = '-image3'
+
+    product_name = (
+        'jw{program}-{acid}'
+        '_{target}'
+        '_{instrument}'
+        '_{opt_elem}{subarray}{suffix}'
+    )
+    product_name = product_name.format(
+        program=asn.data['program'],
+        acid=asn.acid.id,
+        target=target,
+        instrument=instrument,
+        opt_elem=opt_elem,
+        subarray=subarray,
+        suffix=suffix,
+        exposure=exposure
     )
 
     return product_name.lower()
@@ -768,10 +859,22 @@ class Constraint_Optical_Path(Constraint):
                 sources=['pupil', 'grating'],
                 required=False,
             ),
-            DMSAttrConstraint(
-                name='opt_elem3',
-                sources=['fxd_slit'],
-                required=False,
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='fxd_slit2',
+                        sources=['fxd_slit'],
+                        value=['s200a1|s200a2'],
+                        force_unique=False,
+                        required=False,
+                    ),
+                    DMSAttrConstraint(
+                        name='fxd_slit',
+                        sources=['fxd_slit'],
+                        required=False,
+                    ),
+                ],
+                reduce=Constraint.any
             ),
             DMSAttrConstraint(
                 name='subarray',
@@ -798,7 +901,7 @@ class Constraint_Spectral(DMSAttrConstraint):
         )
 
 
-class Constraint_Target(DMSAttrConstraint):
+class Constraint_Target(Constraint):
     """Select on target
 
     Parameters
@@ -808,19 +911,31 @@ class Constraint_Target(DMSAttrConstraint):
         to as part of the target selection.
     """
     def __init__(self, association=None):
+        constraints = [Constraint([
+            DMSAttrConstraint(
+                name='acdirect',
+                sources=['asn_candidate'],
+                value=r"\[\('c\d{4}', 'direct_image'\)\]"
+            ),
+            SimpleConstraint(
+                name='target',
+                sources=lambda item: '000'
+            )]
+        )]
         if association is None:
-            super(Constraint_Target, self).__init__(
+            constraints.append(DMSAttrConstraint(
                 name='target',
                 sources=['targetid'],
-            )
+            ))
         else:
-            super(Constraint_Target, self).__init__(
+            constraints.append(DMSAttrConstraint(
                 name='target',
                 sources=['targetid'],
                 onlyif=lambda item: association.get_exposure_type(item) != 'background',
                 force_reprocess=ListCategory.EXISTING,
                 only_on_match=True,
-            )
+            ))
+        super(Constraint_Target, self).__init__(constraints, reduce=Constraint.any)
 
 
 # -----------
@@ -850,6 +965,26 @@ class AsnMixin_AuxData:
         if exp_type in NEVER_CHANGE:
             return exp_type
         return 'science'
+
+
+class AsnMixin_Coronagraphy:
+    """Basic overrides for Coronagraphy associations"""
+    def __init__(self, *args, **kwargs):
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        super().__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+        self.data['asn_type'] = 'coron3'
+        super()._init_hook(item)
 
 
 class AsnMixin_Science(DMS_Level3_Base):

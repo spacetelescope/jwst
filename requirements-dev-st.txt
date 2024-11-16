@@ -1,0 +1,12 @@
+# JWST upstream packages
+git+https://github.com/spacetelescope/stdatamodels
+
+# shared upstream packages
+git+https://github.com/spacetelescope/stcal
+git+https://github.com/spacetelescope/stpipe
+
+# Other important upstream packages
+git+https://github.com/spacetelescope/crds
+git+https://github.com/spacetelescope/gwcs
+git+https://github.com/spacetelescope/tweakwcs
+git+https://github.com/spacetelescope/wiimatch

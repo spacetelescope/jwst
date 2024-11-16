@@ -113,7 +113,6 @@ class FileTable():
 # ________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
 # for the correct (channel-subchannel) or (grating-subchannel)
-
         for model in input_models:
             instrument = model.meta.instrument.name.upper()
             assign_wcs = model.meta.cal_step.assign_wcs
@@ -142,9 +141,6 @@ class FileTable():
             else:
                 log.info('Instrument not valid for cube')
                 pass
-
-            model.close()
-            del model
 
         return instrument
 

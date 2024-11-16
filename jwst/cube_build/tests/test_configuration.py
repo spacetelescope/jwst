@@ -3,11 +3,11 @@ Unit test for Cube Build testing setting up configuration
 """
 
 import pytest
-
 from stdatamodels.jwst import datamodels
 
 from jwst.cube_build import cube_build
 from jwst.cube_build import file_table
+
 
 wcsinfo = {
     'dec_ref': -0.00244536159612126,
@@ -99,7 +99,6 @@ subarray_nirspec = {
     'ystart': 1
 }
 
-
 @pytest.fixture(scope='function')
 def miri_ifushort_short():
     """ Generate a IFU image """
@@ -111,7 +110,6 @@ def miri_ifushort_short():
     input_model.meta.subarray._instance.update(subarray)
     input_model.meta.cal_step.assign_wcs = 'COMPLETE'
     return input_model
-
 
 @pytest.fixture(scope='function')
 def miri_full_coverage():
@@ -202,7 +200,7 @@ def nirspec_medium_coverage():
     return input_models
 
 
-def test_calspec2_config(_jail, miri_ifushort_short):
+def test_calspec2_config(tmp_cwd, miri_ifushort_short):
     """ Determine cube based on calspec2 setup """
 
     pars_input = {}
@@ -249,7 +247,7 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     assert cube_pars['1']['par2'] == ['short', 'short']
 
 
-def test_calspec3_config_miri(_jail, miri_full_coverage):
+def test_calspec3_config_miri(tmp_cwd, miri_full_coverage):
     """ Test CalSpec3 MIRI configuration default band cubes"""
 
     pars_input = {}
@@ -322,7 +320,7 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     assert cube_pars['12']['par2'] == ['long']
 
 
-def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
+def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
     """ Test CalSpec3 MIRI configuration default band cubes"""
 
     pars_input = {}
@@ -376,7 +374,7 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
                                       'short', 'medium', 'long']
 
 
-def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
+def test_calspec3_config_nirspec(tmp_cwd, nirspec_medium_coverage):
     """ Test CalSpec3 configuration for NIRSpec - default band cubes"""
 
     pars_input = {}
@@ -424,7 +422,7 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
     assert cube_pars['2']['par2'] == ['f170lp']
 
 
-def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
+def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
     """ Test CalSpec3 configuration for NIRSpec - Multiband cubes"""
 
     pars_input = {}

@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
@@ -8,9 +9,12 @@ from jwst.assign_wcs import AssignWcsStep, nirspec
 
 
 @pytest.mark.bigdata
-def test_nirspec_fixedslit_wcs(rtdata):
+@pytest.mark.parametrize('input_file',
+                         ['jw02072002001_05101_00001_nrs1_rate.fits',
+                          'jw01309022001_04102_00001_nrs2_rate.fits'],
+                         ids=['full', 'allslits'])
+def test_nirspec_fixedslit_wcs(rtdata, input_file):
     """Test NIRSpec fixed slit wcs"""
-    input_file = 'jw00023001001_01101_00001_nrs1_rate.fits'
     rtdata.get_data(f"nirspec/fs/{input_file}")
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
@@ -29,21 +33,28 @@ def test_nirspec_fixedslit_wcs(rtdata):
 
 
 @pytest.mark.bigdata
-def test_nirspec_mos_wcs(rtdata):
+@pytest.mark.parametrize('input_file,msa_file',
+                         [('jw01345066001_05101_00001_nrs1_rate.fits', 'jw01345066001_01_msa.fits'),
+                          ('jw02674004001_03101_00001_nrs1_rate.fits', 'jw02674004001_01_msa.fits')],
+                         ids=['mos', 'mos_fs'])
+def test_nirspec_mos_wcs(rtdata, input_file, msa_file):
     """Test NIRSpec MOS wcs"""
-    input_file = 'msa_patt_num.fits'
     # Get MSA meta file
-    rtdata.get_data('nirspec/mos/V9621500100101_short_msa.fits')
+    rtdata.get_data(f'nirspec/mos/{msa_file}')
     rtdata.get_data(f"nirspec/mos/{input_file}")
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
-    output = input_file.replace('.fits', '_assign_wcs.fits')
+    output = input_file.replace('rate', 'assign_wcs')
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
     with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
-        names = [slit.name for slit in nirspec.get_open_slits(im)]
+        # Get validated open slits from WCS transform
+        slit2msa = im_truth.meta.wcs.get_transform('slit_frame', 'msa_frame')
+        open_slits = slit2msa.slits[:]
+        names = [slit.name for slit in open_slits]
+
         for name in names:
             wcs = nirspec.nrs_wcs_set_input(im, name)
             wcs_truth = nirspec.nrs_wcs_set_input(im_truth, name)
@@ -51,30 +62,30 @@ def test_nirspec_mos_wcs(rtdata):
             assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
-@pytest.mark.parametrize("input_file",
-                         [
-                             'jw00011001001_01120_00001_nrs1_rate.fits',
-                             'jw00011001001_01120_00002_nrs1_rate.fits',
-                             'jw00011001001_01120_00003_nrs2_rate.fits',
-                         ],
-                         ids=['nrs1_f170lp', 'nrs1_opaque', 'nrs2_f170lp'])
 @pytest.mark.bigdata
-def test_nirspec_ifu_wcs(input_file, rtdata):
+@pytest.mark.parametrize('input_file',
+                         ['jw01251004001_03107_00001_nrs1_rate.fits',
+                          'jw01251004001_03107_00001_nrs2_rate.fits'],
+                         ids=['nrs1', 'nrs2'])
+def test_nirspec_ifu_wcs(rtdata, input_file):
     """Test NIRSpec IFU wcs"""
     rtdata.get_data(f"nirspec/ifu/{input_file}")
 
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
-    output = input_file.replace('rate.fits', 'assign_wcs.fits')
+    output = input_file.replace('rate', 'assign_wcs')
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
     with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
-        # Test several slices in the IFU, range(30)
-        for slice_ in [0, 9, 16, 23, 29]:
-            wcs = nirspec.nrs_wcs_set_input(im, slice_)
-            wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slice_)
+        # Test all the IFU slices
+        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(im, np.arange(30))
+        t_wcsobj, t_tr1, t_tr2, t_tr3 = nirspec._get_transforms(im_truth, np.arange(30))
+        for k in range(len(tr2)):
+            wcs = nirspec._nrs_wcs_set_input_lite(im, wcsobj, k, [tr1, tr2[k], tr3[k]])
+            wcs_truth = nirspec._nrs_wcs_set_input_lite(
+                im_truth, t_wcsobj, k, [t_tr1, t_tr2[k], t_tr3[k]])
 
             assert_wcs_grid_allclose(wcs, wcs_truth)
 

@@ -8,6 +8,7 @@ from ..stpipe import Pipeline
 # step imports
 from ..group_scale import group_scale_step
 from ..dq_init import dq_init_step
+from ..emicorr import emicorr_step
 from ..saturation import saturation_step
 from ..ipc import ipc_step
 from ..superbias import superbias_step
@@ -40,6 +41,7 @@ class DarkPipeline(Pipeline):
     # Define aliases to steps
     step_defs = {'group_scale': group_scale_step.GroupScaleStep,
                  'dq_init': dq_init_step.DQInitStep,
+                 'emicorr': emicorr_step.EmiCorrStep,
                  'saturation': saturation_step.SaturationStep,
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
@@ -65,28 +67,29 @@ class DarkPipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.firstframe(input)
-            input = self.lastframe(input)
-            input = self.reset(input)
-            input = self.linearity(input)
-            input = self.rscd(input)
+            input = self.group_scale.run(input)
+            input = self.dq_init.run(input)
+            input = self.emicorr.run(input)
+            input = self.saturation.run(input)
+            input = self.ipc.run(input)
+            input = self.firstframe.run(input)
+            input = self.lastframe.run(input)
+            input = self.reset.run(input)
+            input = self.linearity.run(input)
+            input = self.rscd.run(input)
 
         else:
 
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.superbias(input)
-            input = self.refpix(input)
-            input = self.linearity(input)
+            input = self.group_scale.run(input)
+            input = self.dq_init.run(input)
+            input = self.saturation.run(input)
+            input = self.ipc.run(input)
+            input = self.superbias.run(input)
+            input = self.refpix.run(input)
+            input = self.linearity.run(input)
 
         log.info('... ending calwebb_dark')
 

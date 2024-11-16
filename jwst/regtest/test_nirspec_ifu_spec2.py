@@ -9,7 +9,7 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 
 
 @pytest.fixture(scope='module')
-def run_spec2(jail, rtdata_module):
+def run_spec2(rtdata_module):
     """Run the Spec2Pipeline on a spec2 ASN containing a single exposure"""
     rtdata = rtdata_module
 
@@ -24,6 +24,8 @@ def run_spec2(jail, rtdata_module):
         'args': [
             '--steps.assign_wcs.save_results=true',
             '--steps.msa_flagging.save_results=true',
+            '--steps.nsclean.skip=False',
+            '--steps.nsclean.save_results=true',
             '--steps.srctype.save_results=true',
             '--steps.flat_field.save_results=true',
             '--steps.pathloss.save_results=true',
@@ -39,7 +41,7 @@ def run_spec2(jail, rtdata_module):
 @pytest.mark.parametrize(
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'msa_flagging',
-     'pathloss', 's3d', 'srctype', 'x1d']
+     'nsclean', 'pathloss', 's3d', 'srctype', 'x1d']
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
@@ -47,8 +49,8 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
                      truth_path=TRUTH_PATH)
 
 
-@pytest.fixture()
-def run_photom(jail, rtdata):
+@pytest.fixture
+def run_photom(rtdata):
     """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT"""
 
     # Setup the inputs
@@ -73,8 +75,8 @@ def test_photom(run_photom, fitsdiff_default_kwargs):
                      truth_path=TRUTH_PATH)
 
 
-@pytest.fixture()
-def run_extract1d(jail, rtdata):
+@pytest.fixture
+def run_extract1d(rtdata):
     """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT"""
 
     # Setup the inputs

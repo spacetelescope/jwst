@@ -51,13 +51,16 @@ class Image2Pipeline(Pipeline):
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
+        if len(asn['products']) > 1 and self.output_file is not None:
+            self.log.warning("Multiple products in input association. Output file name will be ignored.")
+            self.output_file = None
 
         # Each exposure is a product in the association.
         # Process each exposure.
         results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
-            if self.save_results:
+            if (self.save_results) & (self.output_file is None):
                 self.output_file = product['name']
             try:
                 getattr(asn, 'filename')
@@ -74,8 +77,9 @@ class Image2Pipeline(Pipeline):
             suffix = 'cal'
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
-            result.meta.filename = self.make_output_path(suffix=suffix)
+            result.meta.filename = self.make_output_path(basepath=self.output_file, suffix=suffix)
             results.append(result)
+            self.output_file = None
 
         self.log.info('... ending calwebb_image2')
 
@@ -88,7 +92,7 @@ class Image2Pipeline(Pipeline):
             self,
             exp_product,
             pool_name=' ',
-            asn_file=' '
+            asn_file=' ',
     ):
         """Process an exposure found in the association product
 
@@ -123,7 +127,7 @@ class Image2Pipeline(Pipeline):
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
-        if isinstance(science, datamodels.DataModel):
+        if isinstance(science, datamodels.JwstDataModel):
             input = science
         else:
             input = datamodels.open(science)
@@ -131,6 +135,7 @@ class Image2Pipeline(Pipeline):
         # Record ASN pool and table names in output
         input.meta.asn.pool_name = pool_name
         input.meta.asn.table_name = asn_file
+        input.meta.filename = self.make_output_path(basepath=self.output_file)
 
         # Do background processing, if necessary
         if len(members_by_type['background']) > 0:
@@ -145,12 +150,12 @@ class Image2Pipeline(Pipeline):
                 self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['background'])
+            input = self.bkg_subtract.run(input, members_by_type['background'])
 
         # work on slope images
-        input = self.assign_wcs(input)
-        input = self.flat_field(input)
-        input = self.photom(input)
+        input = self.assign_wcs.run(input)
+        input = self.flat_field.run(input)
+        input = self.photom.run(input)
 
         # Resample individual exposures, but only if it's one of the
         # regular 2D science image types
@@ -158,7 +163,7 @@ class Image2Pipeline(Pipeline):
                 len(input.data.shape) == 2:
             self.resample.save_results = self.save_results
             self.resample.suffix = 'i2d'
-            self.resample(input)
+            self.resample.run(input)
 
         # That's all folks
         self.log.info(

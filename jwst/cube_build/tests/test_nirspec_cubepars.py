@@ -12,11 +12,11 @@ from jwst.cube_build import instrument_defaults
 
 
 @pytest.fixture(scope='module')
-def nirspec_cube_pars(tmpdir_factory):
+def nirspec_cube_pars(tmp_path_factory):
     """ Set up the nirspec cube pars reference file  """
 
-    filename = tmpdir_factory.mktemp('cube_pars')
-    filename = str(filename.join('nirspec_cube_pars.fits'))
+    filename = tmp_path_factory.mktemp('cube_pars')
+    filename = filename / 'nirspec_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
     hdu0.header['REFTYPE'] = 'CUBEPAR'
     hdu0.header['INSTRUME'] = 'NIRSPEC'
@@ -115,7 +115,7 @@ def nirspec_cube_pars(tmpdir_factory):
     return filename
 
 
-def test_nirspec_cubepars(_jail, nirspec_cube_pars):
+def test_nirspec_cubepars(tmp_cwd, nirspec_cube_pars):
     """ Read in the nirspec cube pars file """
 
     instrument_info = instrument_defaults.InstrumentInfo()
@@ -157,8 +157,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     # set up the ifucube class
 
     pars_cube = {
-        'scale1': 0.0,
-        'scale2': 0.0,
+        'scalexy': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -169,11 +168,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
         'wavemin': None,
         'wavemax': None,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     pipeline = 3
     input_model = None
@@ -222,8 +217,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     user_rois = 0.6
     user_roiw = 0.8
     pars_cube = {
-        'scale1': user_ascale,
-        'scale2': user_ascale,
+        'scalexy': user_ascale,
         'scalew': user_wscale,
         'interpolation': 'pointcloud',
         'weighting': 'msm',
@@ -234,11 +228,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
         'wavemin': user_wave_min,
         'wavemax': user_wave_max,
         'skip_dqflagging': False,
-        'xdebug': None,
-        'ydebug': None,
-        'zdebug': None,
-        'debug_pixel': 0,
-        'spaxel_debug': None}
+        'debug_spaxel': '0 0 0'}
 
     this_cube = ifu_cube.IFUCubeData(
         pipeline,

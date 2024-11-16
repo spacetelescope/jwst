@@ -1,29 +1,43 @@
 """Association Definitions: DMS Level2b product associations
 """
-from collections import deque
 import logging
-import re
 
-from jwst.associations.exceptions import AssociationNotValidError
 from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS, Constraint_Imprint_Special
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     Constraint_WFSC,
-    format_list,
-    item_getattr,
+    nissoss_calibrated_filter,
+    nrccoron_valid_detector,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
     nrslamp_valid_detector,
 )
-from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
-from jwst.associations.lib.utilities import (getattr_from_list, getattr_from_list_nofail)
-from jwst.associations.lib.rules_level2_base import *
-from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
+from jwst.associations.lib.rules_level2_base import (
+    ASN_SCHEMA, # noqa F401
+    AsnMixin_Lv2Image, 
+    AsnMixin_Lv2Spectral, 
+    AsnMixin_Lv2Nod, 
+    AsnMixin_Lv2Special, 
+    DMSLevel2bBase, 
+    DMSAttrConstraint, 
+    Utility, # noqa F401
+    Constraint_Mode, 
+    Constraint_Base, 
+    Constraint_Background, 
+    Constraint_Single_Science, 
+    Constraint_Image_Science, 
+    Constraint_Image_Nonscience, 
+    Constraint_Special, 
+    Constraint_Spectral_Science, 
+    Constraint_Imprint, 
+    Constraint_Target, 
+)
 
 __all__ = [
+    'Asn_Lv2CoronAsRate',
     'Asn_Lv2FGS',
     'Asn_Lv2Image',
     'Asn_Lv2ImageNonScience',
@@ -41,6 +55,7 @@ __all__ = [
     'Asn_Lv2SpecTSO',
     'Asn_Lv2WFSSNIS',
     'Asn_Lv2WFSSNRC',
+    'Asn_Lv2WFSSParallel',
     'Asn_Lv2WFSC',
 ]
 
@@ -52,6 +67,57 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+@RegistryMarker.rule
+class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
+    """Create normal rate products for some coronographic data
+
+    Characteristics;
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - NIRCam Coronagraphic
+        - Only subarray=Full exposures
+        - Treat as non-timeseries, producing "rate" products
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrc_coron',
+            ),
+            DMSAttrConstraint(
+                name='subarray',
+                sources=['subarray'],
+                value='full',
+            ),
+            SimpleConstraint(
+                value=True,
+                sources=nrccoron_valid_detector,
+            ),
+            Constraint(
+                [
+                    Constraint_Background(),
+                    Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                ], reduce=Constraint.any
+            ),
+        ])
+
+        # Now check and continue initialization.
+        super().__init__(*args, **kwargs)
+
+    def is_item_coron(self, item):
+        """Override to always return false
+
+        The override will force `make_member` to create a "rate"
+        product instead of a "rateints" product.
+        """
+        return False
+
+
 @RegistryMarker.rule
 class Asn_Lv2Image(
         AsnMixin_Lv2Image,
@@ -65,6 +131,7 @@ class Asn_Lv2Image(
         - Image-based science exposures
         - Single science exposure
         - Non-TSO
+        - Non-coronagraphic
     """
 
     def __init__(self, *args, **kwargs):
@@ -75,7 +142,9 @@ class Asn_Lv2Image(
             Constraint_Mode(),
             Constraint_Image_Science(),
             Constraint(
-                [Constraint_TSO()],
+                [
+                    Constraint_TSO(),
+                ],
                 reduce=Constraint.notany
             ),
             Constraint(
@@ -142,7 +211,7 @@ class Asn_Lv2ImageSpecial(
             Constraint_Mode(),
             Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science, self.get_exposure_type),
-            Constraint_Special(),
+            Constraint_Special(),  # background and ref_psf exposures
         ])
 
         # Now check and continue initialization.
@@ -248,9 +317,29 @@ class Asn_Lv2Spec(
             ),
             Constraint(
                 [
+                    #  Allow either any background, or ensure imprint and science members
+                    #  match on mosaic tile number and dither pointing position.
                     Constraint_Background(),
-                    Constraint_Imprint(),
-                    Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                    Constraint(
+                        [
+                            Constraint(
+                                [
+                                    Constraint_Imprint(),
+                                    Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                                ],
+                                reduce=Constraint.any
+                            ),
+                            DMSAttrConstraint(
+                                name='mostilno',
+                                sources=['mostilno']
+                            ),
+                            DMSAttrConstraint(
+                                name='dithptin',
+                                sources=['dithptin']
+                            )
+                        ],
+                        reduce=Constraint.all
+                    ),
                 ],
                 reduce=Constraint.any
             ),
@@ -264,7 +353,12 @@ class Asn_Lv2Spec(
                     )
                 ],
                 reduce=Constraint.notany
-            )
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
         ])
 
         # Now check and continue initialization.
@@ -294,6 +388,11 @@ class Asn_Lv2SpecImprint(
             Constraint_Mode(),
             Constraint_Spectral_Science(),
             Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
             DMSAttrConstraint(
                 name='imprint',
                 sources=['is_imprt']
@@ -326,7 +425,12 @@ class Asn_Lv2SpecSpecial(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(),
-            Constraint_Special(),
+            Constraint_Special(),  # background and ref_psf exposures
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
             Constraint(
                 [
                     Constraint_Imprint_Special(self),
@@ -380,6 +484,42 @@ class Asn_Lv2SpecTSO(
                             value='clear',
                         )],
                     )
+                ],
+                reduce=Constraint.notany
+            ),
+            # Don't allow NIRSpec invalid optical paths in spec2
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nrs_brightobj'
+                        ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nrsfss_valid_detector(item) == value,
+                            force_unique=False
+                        ),
+                    ]),
+                ],
+                reduce=Constraint.notany
+            ),
+            # Don't allow NIRISS SOSS with uncalibrated filters
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nis_soss'
+                        ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nissoss_calibrated_filter(item) == value,
+                            force_unique=False
+                        ),
+                    ]),
                 ],
                 reduce=Constraint.notany
             )
@@ -943,3 +1083,106 @@ class Asn_Lv2WFSC(
 
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data['asn_type'] = 'wfs-image2'
+
+
+@RegistryMarker.rule
+class Asn_Lv2WFSSParallel(
+        AsnMixin_Lv2WFSS,
+        AsnMixin_Lv2Spectral,
+):
+    """Level 2b WFSS/GRISM associations for WFSS taken in pure-parallel mode
+
+    Characteristics:
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - Multi-object science exposures
+        - Single Science exposure
+        - Require a source catalog from processing of the corresponding direct imagery.
+
+    WFSS is executed different when taken as part of a pure-parallel proposal than when WFSS
+    is done as the primary. The differences are as follows. When primary, all components, the direct
+    image and the two GRISM exposures, are all executed within the same observation. When in parallel,
+    each component is taken as a separate observation.
+    These are always in associations of type DIRECT_IMAGE.
+
+    Another difference is that there is no ``targetid`` assigned to the parallel exposures. However, since
+    WFSS parallels are very specific, there is not need to constrain on target. A default value is used
+    for the Level 3 product naming.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        self.constraints = Constraint([
+            DMSAttrConstraint(
+                name='acdirect',
+                sources=['asn_candidate'],
+                value=r"\[\('c\d{4}', 'direct_image'\)\]"
+            ),
+            Constraint([
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_wfss|nrc_wfss',
+                ),
+                DMSAttrConstraint(
+                    name='image_exp_type',
+                    sources=['exp_type'],
+                    value='nis_image|nrc_image',
+                    force_reprocess=ListCategory.NONSCIENCE,
+                    only_on_match=True,
+                ),
+            ], reduce=Constraint.any),
+            Constraint([
+                SimpleConstraint(
+                    value='science',
+                    test=lambda value, item: self.get_exposure_type(item) != value,
+                    force_unique=False,
+                    ),
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+            ], reduce=Constraint.any),
+            Constraint_Target(),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume'],
+            ),
+        ])
+
+        super(Asn_Lv2WFSSParallel, self).__init__(*args, **kwargs)
+
+    @staticmethod
+    def find_closest_direct(science, directs):
+        """Find the direct image that is closest to the science
+
+        For pure-parallel WFSS, there is only ever one direct image.
+        Simply return that.
+
+        Parameters
+        ----------
+        science : dict
+            The science member to compare against
+
+        directs : [dict[,...]]
+            The available direct members
+
+        Returns
+        -------
+        closest : dict
+            The direct image that is the "closest"
+        """
+        return directs[0]
+
+    def validate_candidates(self, member):
+        """Stub to always return True
+
+        For this association, stub this to always return True
+
+        Parameters
+        ----------
+        member : Member
+            Member being added. Ignored.
+
+        Returns
+        -------
+        True
+        """
+        return True

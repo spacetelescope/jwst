@@ -13,29 +13,61 @@ image catalogs using the corrected WCS will align on the sky.
 
 Source Detection
 ----------------
-If ``meta.tweakreg_catalog`` attribute of input data models is a non-empty
-string and ``use_custom_catalogs`` is `True`, then it will be interpretted
+If the ``meta.tweakreg_catalog`` attribute of input data models is a non-empty
+string and ``use_custom_catalogs`` is `True`, then it will be interpreted
 as a file name of a user-provided source catalog. The catalog must be in a
 format automatically recognized by :py:meth:`~astropy.table.Table.read`.
 
-When ``meta.tweakreg_catalog`` attribute of input data models is `None` or
-an empty string, then ``tweakreg`` step will attempt to detect sources in the
-input images. Stars are detected in the image using the Photutils "daofind"
-function. Photutils.daofind is an implementation of the `DAOFIND`_ algorithm
+When the ``meta.tweakreg_catalog`` attribute of input data models is `None` or
+an empty string, then the ``tweakreg`` step will attempt to detect sources in the
+input images. Stars are detected in the image with one of the following source
+detection algorithms: ``photutils.detection.DAOStarFinder`` (default),
+``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder``
+in conjunction with ``photutils.segmentation.SourceCatalog``.
+
+DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
 <http://adsabs.harvard.edu/abs/1987PASP...99..191S>`_).  It searches
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
 image) and have a size and shape similar to a defined 2D Gaussian
-kernel.  ``photutils.daofind`` also provides an estimate of the objects
+kernel.  DAOFind also provides an estimate of the object's
 roundness and sharpness, whose lower and upper bounds can be
 specified.
+
+IRAFStarFinder is a Python implementation of the IRAF star finding algorithm,
+which also calculates the objects' centroids, roundness, and sharpness.
+However, IRAFStarFinder uses image moments
+instead of 1-D Gaussian fits to projected light distributions like
+DAOStarFinder.
+
+SourceFinder implements a segmentation algorithm that identifies
+sources in an image based on a number of connected pixels above a
+specified threshold value.  The sources are deblended using a
+combination of multi-thresholding and watershed segmentation.
+SourceCatalog finds the centroids of these sources, which are used
+as the retrieved star positions.
+
+.. warning::
+    It has been shown (`STScI Technical Report JWST-STScI-008116, SM-12
+    <https://www.stsci.edu/~goudfroo/NIRISSdoc/Centroid_Accuracies_Precisions_NIRISS_v2.pdf>`_)
+    that for undersampled PSFs, e.g. for short-wavelength NIRISS
+    imaging data, ``DAOStarFinder`` gives bad results no matter the input parameters
+    due to its use of 1-D Gaussian fits.
+    ``IRAFStarFinder`` or ``SourceFinder`` should be used instead.
+
+.. note::
+    ``SourceFinder`` is likely to detect non-stellar sources
+    such as galaxies because sources are not assumed to be
+    point-source-like. This may lead to mismatches between the
+    derived source catalog and the reference catalog during the
+    alignment step.
 
 .. _DAOFIND: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?daofind
 
 Custom Source Catalogs
 ----------------------
-Source detection built-in into the ``tweakreg`` step can be disabled by
+Source detection built into the ``tweakreg`` step can be disabled by
 providing a file name to a custom source catalog in the
 ``meta.tweakreg_catalog`` attribute of input data models.
 The catalog must be in a format automatically recognized by
@@ -54,7 +86,7 @@ models to the custom catalog file name, the ``tweakreg_step`` also supports two
 other ways of supplying custom source catalogs to the step:
 
 1. Adding ``tweakreg_catalog`` attribute to the ``members`` of the input ASN
-   table - see `~jwst.datamodels.ModelContainer` for more details.
+   table - see `~jwst.datamodels.ModelLibrary` for more details.
    Catalog file names are relative to ASN file path.
 
 2. Providing a simple two-column text file, specified via step's parameter
@@ -62,26 +94,26 @@ other ways of supplying custom source catalogs to the step:
    and the file names of the corresponding catalogs in the second column.
    Catalog file names are relative to ``catfile`` file path.
 
-Specifying custom source catalogs via either the input ASN table or
-``catfile``, will update input data models' ``meta.tweakreg_catalog``
-attributes to the catalog file names provided in either in the ASN table or
+Specifying custom source catalogs via either the input ASN file or
+``catfile`` will update input data models' ``meta.tweakreg_catalog``
+attributes to the catalog file names provided in either in the ASN file or
 ``catfile``.
 
 .. note::
     When custom source catalogs are provided via both ``catfile`` and
-    ASN table members' attributes, the ``catfile`` takes precedence and
-    catalogs specified via ASN table are ignored altogether.
+    ASN file members' attributes, the ``catfile`` takes precedence and
+    catalogs specified via ASN file are ignored altogether.
 
 .. note::
     1. Providing a data model file name in the ``catfile`` and leaving
        the corresponding source catalog file name empty -- same as setting
-       ``'tweakreg_catalog'`` in the ASN table to an empty string ``""`` --
-       would set corresponding input data model's ``meta.tweakreg_catalog``
+       ``'tweakreg_catalog'`` in the ASN file to an empty string ``""`` --
+       would set the corresponding input data model's ``meta.tweakreg_catalog``
        attribute to `None`. In this case, ``tweakreg_step`` will automatically
        generate a source catalog for that data model.
 
     2. If an input data model is not listed in the ``catfile`` or does not
-       have ``'tweakreg_catalog'`` attribute provided in the ASN table,
+       have the ``'tweakreg_catalog'`` attribute provided in the ASN file,
        then the catalog file name in that model's ``meta.tweakreg_catalog``
        attribute will be used. If ``model.meta.tweakreg_catalog`` is `None`,
        ``tweakreg_step`` will automatically generate a source catalog for
@@ -91,35 +123,66 @@ Alignment
 ---------
 The source catalogs for each input image are compared to each other
 and linear (affine) coordinate transformations that align these
-catalogs are derived.  This fit insures that all the input images
+catalogs are derived.  This fit ensures that all the input images
 are aligned relative to each other.  This step produces a combined
 source catalog for the entire set of input images as if they were
 combined into a single mosaic.
 
-If the step parameter ``abs_refcat`` is set to 'GAIADR2' or 'GAIADR1',
+If the step parameter ``abs_refcat`` is set to 'GAIADR3', 'GAIADR2', or 'GAIADR1',
 an astrometric reference catalog then gets generated by querying
 a GAIA-based astrometric catalog web service for all astrometrically
 measured sources in the combined field-of-view of the set of input
-images. This catalog gets generated from the catalogs available
-through the GSSS STScI web services at `GSSSCATALOGS`_.
+images. This catalog is generated from the catalogs available
+through the `STScI MAST Catalogs`_ and has the ability to account
+for proper motion to a given epoch. The epoch is computed from the observation date and time
+of the input data.
 
-.. _GSSSCATALOGS: http://gsss.stsci.edu/Catalogs/Catalogs.htm
+.. _STScI MAST Catalogs: https://outerspace.stsci.edu/display/MASTDATA/Catalog+Access
 
 The combined source catalog derived in the first step
 then gets cross-matched and fit to this astrometric reference catalog.
 The pipeline initially supports fitting to the
-GAIADR2 catalog, with the option to select the GAIADR1 instead.
+GAIADR3 catalog, with the option to select the GAIADR2 or GAIADR1 instead.
 The results of this one fit then gets back-propagated to all the
 input images to align them all to the astrometric reference frame while
 maintaining the relative alignment between the images.
 
-For this part of alignment, instead of 'GAIADR1' or 'GAIADR2', users can
+For this part of alignment, instead of 'GAIADR1', 'GAIADR2', or 'GAIADR3', users can
 supply an external reference catalog by providing a path to an existing
-file. User-supplied catalog must contain ``'RA'`` and ``'DEC'`` columns which
-indicate reference source world coordinates (in degrees). An optional column
+file. A user-supplied catalog must contain ``'RA'`` and ``'DEC'`` columns
+indicating reference source world coordinates (in degrees). An optional column
 in the catalog is the ``'weight'`` column, which when present, will be used
 in fitting. The catalog must be in a format automatically recognized by
 :py:meth:`~astropy.table.Table.read`.
+
+Grouping
+--------
+
+Images taken at the same time (e.g., NIRCam images from all short-wave
+detectors) can be aligned together; that is, a single correction
+can be computed and applied to all these images because any error in
+telescope pointing will be identical in all these images and it is assumed
+that the relative positions of (e.g., NIRCam) detectors do not change.
+Identification of images that belong to the same "exposure" and therefore
+can be grouped together is based on several attributes described in
+`~jwst.datamodels.ModelLibrary`. This grouping is performed automatically
+in the ``tweakreg`` step using the
+`~jwst.datamodels.ModelLibrary.group_names` property.
+
+
+However, when detector calibrations are not accurate, alignment of groups
+of images may fail (or result in poor alignment). In this case, it may be
+desirable to align each image independently. This can be achieved either by
+setting the ``image_model.meta.group_id`` attribute to a unique string or integer
+value for each image, or by adding the ``group_id`` attribute to the ``members`` of the input ASN
+table - see `~jwst.datamodels.ModelLibrary` for more details.
+
+.. note::
+    Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
+    and so modifying it for one step will affect the results in another step.
+    If it is desirable to apply different grouping strategies to the ``tweakreg``
+    and ``skymatch`` steps, one may need to run each step individually and
+    provide a different ASN as input to each step.
 
 WCS Correction
 --------------
@@ -138,24 +201,38 @@ The ``tweakreg`` step has the following optional arguments:
 * ``save_catalogs``: A boolean indicating whether or not the catalogs should
   be written out. This parameter is ignored for input data models whose
   ``meta.tweakreg_catalog`` is a non-empty string pointing to a user-supplied
-  source catalog. (Default=`False`)
+  source catalog. (Default=False)
 
 * ``use_custom_catalogs``: A boolean that indicates whether
   to ignore source catalog in the input data model's ``meta.tweakreg_catalog``
   attribute. If `False`, new catalogs will be generated by the ``tweakreg``
-  step. (Default=`False`)
+  step. (Default=False)
 
 * ``catalog_format``: A `str` indicating catalog output file format.
-  (Default='ecsv')
+  (Default= `'ecsv'`)
 
 * ``catfile``: Name of the file with a list of custom user-provided catalogs.
-  (Default='')
+  (Default= `''`)
+
+* ``bkg_boxsize``: A positive `int` indicating the background mesh box size
+  in pixels. (Default=400)
+
+* ``starfinder``: A `str` indicating the source detection algorithm to use.
+  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'iraf'`)
+
+* ``snr_threshold``: A `float` value indicating SNR threshold above the
+  background. Required for all star finders. (Default=10.0)
+
+**Additional source finding parameters for DAO and IRAF:**
 
 * ``kernel_fwhm``: A `float` value indicating the Gaussian kernel FWHM in
   pixels. (Default=2.5)
 
-* ``snr_threshold``: A `float` value indicating SNR threshold above the
-  background. (Default=5.0)
+* ``minsep_fwhm``: A `float` value indicating the minimum separation between
+  detected objects in units of number of FWHMs. (Default=0.0)
+
+* ``sigma_radius``: A `float` value indicating the truncation radius of the
+  Gaussian kernel in units of number of FWHMs. (Default=2.5)
 
 * ``sharplo``: A `float` value indicating The lower bound on sharpness
   for object detection. (Default=0.2)
@@ -166,24 +243,52 @@ The ``tweakreg`` step has the following optional arguments:
 * ``roundlo``: A `float` value indicating the lower bound on roundness
   for object detection. (Default=-1.0)
 
-* ``roundhi``: `float` value indicating the upper bound on roundness
+* ``roundhi``: A `float` value indicating the upper bound on roundness
   for object detection. (Default=1.0)
 
 * ``brightest``: A positive `int` value indicating the number of brightest
-  objects to keep. (Default=200)
+  objects to keep. If None, keep all objects above the threshold. (Default=200)
 
 * ``peakmax``: A `float` value used to filter out objects with pixel values
   >= ``peakmax``. (Default=None)
 
-* ``bkg_boxsize``: A positive `int` indicating the background mesh box size
-  in pixels. (Default=400)
+**Additional source finding parameters for segmentation:**
+
+* ``npixels``: An `int` value indicating the minimum number of
+  connected pixels that comprises a segment (Default=10)
+
+* ``connectivity``: An `int` value indicating the connectivity defining the
+  neighborhood of a pixel. Options are `4`, i.e., connected pixels touch along edges,
+  or `8`, i.e, connected pixels touch along edges or corners (Default=8)
+
+* ``nlevels``: An `int` value indicating the number of multi-thresholding
+  levels for deblending (Default=32)
+
+* ``contrast``: A `float` value indicating the fraction of total source flux
+  an object must have to be deblended (Default=0.001)
+
+* ``multithresh_mode``: A `str` indicating the multi-thresholding mode.
+  Allowed values: `'exponential'`, `'linear'`, `'sinh'`.
+  (Default= `'exponential'`)
+
+* ``localbkg_width``: An `int` value indicating the width of rectangular
+  annulus used to compute local background around each source. If set to 0,
+  then local background will not be subtracted. (Default=0)
+
+* ``apermask_method``: A `str` indicating the method used to handle
+  neighboring sources when performing aperture photometry.
+  Allowed values: `'correct'`, `'mask'`, `'none'`. (Default= `'correct'`)
+
+* ``kron_params``: A tuple of `float` values indicating the
+  parameters defining Kron aperture. If None,
+  the parameters `(2.5, 1.4, 0.0)` are used. (Default=None)
 
 **Optimize alignment order:**
 
 * ``enforce_user_order``: a boolean value indicating whether or not take the
   first image as a reference image and then align the rest of the images
   to that reference image in the order in which input images have been provided
-  or to optimize order in which images are aligned. (Default=`False`)
+  or to optimize order in which images are aligned. (Default=False)
 
 **Reference Catalog parameters:**
 
@@ -202,7 +307,8 @@ The ``tweakreg`` step has the following optional arguments:
 * ``use2dhist``: A boolean indicating whether to use 2D histogram to find
   initial offset. (Default=True)
 
-* ``separation``: Minimum object separation in arcsec. (Default=1.0)
+* ``separation``: Minimum object separation in arcsec. It **must be** at least
+  ``sqrt(2)`` times larger than ``tolerance``. (Default=1.0)
 
 * ``tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=0.7)
 
@@ -238,7 +344,7 @@ The ``tweakreg`` step has the following optional arguments:
       spread across/covering the entire image).
 
 * ``nclip``: A non-negative integer number of clipping iterations
-  to use in the fit. (Default = 3)
+  to use in the fit. (Default=3)
 
 * ``sigma``: A positive `float` indicating the clipping limit, in sigma units,
   used when performing fit. (Default=3.0)
@@ -248,14 +354,14 @@ The ``tweakreg`` step has the following optional arguments:
 Parameters used for absolute astrometry to a reference catalog.
 
 * ``abs_refcat``: String indicating what astrometric catalog should be used.
-  Currently supported options: 'GAIADR1', 'GAIADR2' a path to an existing
-  reference catalog, `None`, or ''. See
+  Currently supported options: 'GAIADR1', 'GAIADR2', 'GAIADR3', a path to an existing
+  reference catalog, `None`, or `''`. See
   :py:data:`jwst.tweakreg.tweakreg_step.SINGLE_GROUP_REFCAT`
   for an up-to-date list of supported built-in reference catalogs.
 
   When ``abs_refcat`` is `None` or an empty string, alignment to the
   absolute astrometry catalog will be turned off.
-  (Default='')
+  (Default= `''`)
 
 * ``abs_minobj``: A positive `int` indicating minimum number of objects
   acceptable for matching. (Default=15)
@@ -269,9 +375,8 @@ Parameters used for absolute astrometry to a reference catalog.
   Otherwise the initial guess for the offsets will be set to zero
   (Default=True)
 
-* ``abs_separation``: Minimum object separation in arcsec. It is recommended
-  that a value smaller than ``separation`` be used for this parameter
-  (e.g. 10 times smaller) (Default=0.1)
+* ``abs_separation``: Minimum object separation in arcsec. It **must be** at
+  least ``sqrt(2)`` times larger than ``abs_tolerance``. (Default=1.0)
 
 * ``abs_tolerance``: Matching tolerance for ``xyxymatch`` in arcsec.
   (Default=0.7)
@@ -288,7 +393,7 @@ Parameters used for absolute astrometry to a reference catalog.
   that apply to ``fitgeometry`` also apply to ``abs_fitgeometry``.
 
 * ``abs_nclip``: A non-negative integer number of clipping iterations
-  to use in the fit. (Default = 3)
+  to use in the fit. (Default=3)
 
 * ``abs_sigma``: A positive `float` indicating the clipping limit, in sigma
   units, used when performing fit. (Default=3.0)
@@ -296,6 +401,40 @@ Parameters used for absolute astrometry to a reference catalog.
 * ``save_abs_catalog``: A boolean specifying whether or not to write out the
   astrometric catalog used for the fit as a separate product. (Default=False)
 
+**SIP approximation parameters:**
+
+Parameters used to provide a SIP-based approximation to the WCS,
+for FITS display. These parameter values should match the ones used
+in the ``assign_wcs`` step.
+
+* ``sip_approx``: A boolean flag to enable the computation of a SIP
+  approximation. (Default=True)
+
+* ``sip_degree``: A positive `int`, specifying the polynomial degree for
+  the forward SIP fit. `None` uses the best fit; the maximum value allowed
+  is 6. (Default=None)
+
+* ``sip_max_pix_error``: A positive `float`, specifying the maximum
+  error for the SIP forward fit, in units of pixels. Ignored if
+  ``sip_degree`` is set to an explicit value. (Default=0.01)
+
+* ``sip_inv_degree``: A positive `int`, specifying the polynomial degree for
+  the inverse SIP fit. `None` uses the best fit; the maximum value allowed
+  is 6. (Default=None)
+
+* ``sip_max_inv_pix_error``: A positive `float`, specifying the maximum
+  error for the SIP inverse fit, in units of pixels. Ignored if
+  ``sip_inv_degree`` is set to an explicit value. (Default=0.01)
+
+* ``sip_npoints``: Number of points for the SIP fit. (Default=12).
+
+**stpipe general options:**
+
+* ``output_use_model``: A boolean indicating whether to use `DataModel.meta.filename`
+  when saving the results. (Default=True)
+
+* ``in_memory``: A boolean indicating whether to keep models in memory, or to save
+  temporary files on disk while not in use to save memory. (Default=True)
 
 Further Documentation
 ---------------------
@@ -303,6 +442,22 @@ The underlying algorithms as well as formats of source catalogs are described
 in more detail at
 
 https://tweakwcs.readthedocs.io/en/latest/
+
+Further description of the input parameters and algorithms for star finding
+can be found at the following links:
+
+* `DAOStarFinder`_
+* `IRAFStarFinder`_
+* `SourceFinder`_
+* `SourceCatalog`_
+
+.. _DAOStarFinder: https://photutils.readthedocs.io/en/stable/api/photutils.detection.DAOStarFinder.html
+.. _IRAFStarFinder: https://photutils.readthedocs.io/en/stable/api/photutils.detection.IRAFStarFinder.html
+.. _SourceFinder: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceFinder.html
+.. _SourceCatalog: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceCatalog.html
+
+The alignment and WCS correction portions of the step are handled by the `stcal` package.
+Additional documentation may be found `here <https://stcal.readthedocs.io/en/latest/stcal/tweakreg/index.html>`_.
 
 
 Reference Files

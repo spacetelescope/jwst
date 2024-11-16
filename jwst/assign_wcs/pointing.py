@@ -3,13 +3,14 @@ from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
 from astropy.modeling.models import Shift, Scale, RotationSequence3D, Identity
-from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
+from astropy.coordinates.matrix_utilities import rotation_matrix
 from gwcs import utils as gwutils
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
+from functools import reduce
 
-from stdatamodels import DataModel
+from stdatamodels.jwst.datamodels import JwstDataModel
 
 
 __all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model",
@@ -79,7 +80,7 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
         axes = "zyxyz"
 
     matrices = [rotation_matrix(a, ax) for a, ax in zip(angles, axes)]
-    m = matrix_product(*matrices[::-1])
+    m = reduce(np.matmul, matrices[::-1])
     return _roll_angle_from_matrix(m, v2, v3)
 
 
@@ -100,7 +101,7 @@ def wcsinfo_from_model(input_model):
 
     Parameters
     ----------
-    input_model : `~stdatamodels.DataModel`
+    input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input data model
 
     """
@@ -172,7 +173,7 @@ def frame_from_model(wcsinfo):
 
     Parameters
     ----------
-    wcsinfo : `~stdatamodels.DataModel` or dict
+    wcsinfo : `~stdatamodels.jwst.datamodels.JwstDataModel` or dict
         Either one of the JWST data models or a dict with model.meta.wcsinfo.
 
     Returns
@@ -180,7 +181,7 @@ def frame_from_model(wcsinfo):
     frame : `~coordinate_frames.CoordinateFrame`
 
     """
-    if isinstance(wcsinfo, DataModel):
+    if isinstance(wcsinfo, JwstDataModel):
         wcsinfo = wcsinfo_from_model(wcsinfo)
 
     wcsaxes = wcsinfo['WCSAXES']
@@ -215,7 +216,7 @@ def frame_from_model(wcsinfo):
 
 
 def create_fitswcs(inp, input_frame=None):
-    if isinstance(inp, DataModel):
+    if isinstance(inp, JwstDataModel):
         wcsinfo = wcsinfo_from_model(inp)
         wavetable = None
         spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
@@ -226,7 +227,7 @@ def create_fitswcs(inp, input_frame=None):
         transform = fitswcs_transform_from_model(wcsinfo, wavetable=wavetable)
         output_frame = frame_from_model(wcsinfo)
     else:
-        raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
+        raise TypeError("Input is expected to be a JwstDataModel instance or a FITS file.")
 
     if input_frame is None:
         wcsaxes = wcsinfo['WCSAXES']

@@ -4,7 +4,10 @@ from .ami.ami_normalize_step import AmiNormalizeStep
 from .assign_mtwcs.assign_mtwcs_step import AssignMTWcsStep
 from .assign_wcs.assign_wcs_step import AssignWcsStep
 from .background.background_step import BackgroundStep
+from .badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep
 from .barshadow.barshadow_step import BarShadowStep
+from .charge_migration.charge_migration_step import ChargeMigrationStep
+from .clean_flicker_noise.clean_flicker_noise_step import CleanFlickerNoiseStep
 from .combine_1d.combine_1d_step import Combine1dStep
 from .coron.stack_refs_step import StackRefsStep
 from .coron.align_refs_step import AlignRefsStep
@@ -14,6 +17,7 @@ from .cube_build.cube_build_step import CubeBuildStep
 from .cube_skymatch.cube_skymatch_step import CubeSkyMatchStep
 from .dark_current.dark_current_step import DarkCurrentStep
 from .dq_init.dq_init_step import DQInitStep
+from .emicorr.emicorr_step import EmiCorrStep
 from .extract_1d.extract_1d_step import Extract1dStep
 from .extract_2d.extract_2d_step import Extract2dStep
 from .firstframe.firstframe_step import FirstFrameStep
@@ -31,12 +35,12 @@ from .master_background.master_background_step import MasterBackgroundStep
 from .master_background.master_background_mos_step import MasterBackgroundMosStep
 from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
+from .nsclean.nsclean_step import NSCleanStep
 from .outlier_detection.outlier_detection_step import OutlierDetectionStep
-from .outlier_detection.outlier_detection_scaled_step import OutlierDetectionScaledStep
-from .outlier_detection.outlier_detection_stack_step import OutlierDetectionStackStep
 from .pathloss.pathloss_step import PathLossStep
 from .persistence.persistence_step import PersistenceStep
 from .photom.photom_step import PhotomStep
+from .pixel_replace.pixel_replace_step import PixelReplaceStep
 from .ramp_fitting.ramp_fit_step import RampFitStep
 from .refpix.refpix_step import RefPixStep
 from .resample.resample_step import ResampleStep
@@ -47,12 +51,12 @@ from .rscd.rscd_step import RscdStep
 from .saturation.saturation_step import SaturationStep
 from .skymatch.skymatch_step import SkyMatchStep
 from .source_catalog.source_catalog_step import SourceCatalogStep
+from .spectral_leak.spectral_leak_step import SpectralLeakStep
 from .srctype.srctype_step import SourceTypeStep
 from .straylight.straylight_step import StraylightStep
 from .superbias.superbias_step import SuperBiasStep
 from .tso_photometry.tso_photometry_step import TSOPhotometryStep
 from .tweakreg.tweakreg_step import TweakRegStep
-from .undersampling_correction.undersampling_correction_step import UndersamplingCorrectionStep
 from .wavecorr.wavecorr_step import WavecorrStep
 from .wfs_combine.wfs_combine_step import WfsCombineStep
 from .wfss_contam.wfss_contam_step import WfssContamStep
@@ -66,16 +70,19 @@ __all__ = [
     "AssignMTWcsStep",
     "AssignWcsStep",
     "BackgroundStep",
+    "BadpixSelfcalStep",
     "BarShadowStep",
     "Combine1dStep",
     "StackRefsStep",
     "AlignRefsStep",
     "KlipStep",
     "HlspStep",
+    "CleanFlickerNoiseStep",
     "CubeBuildStep",
     "CubeSkyMatchStep",
     "DarkCurrentStep",
     "DQInitStep",
+    "EmiCorrStep",
     "Extract1dStep",
     "Extract2dStep",
     "FirstFrameStep",
@@ -93,12 +100,12 @@ __all__ = [
     "MasterBackgroundMosStep",
     "MRSIMatchStep",
     "MSAFlagOpenStep",
+    "NSCleanStep",
     "OutlierDetectionStep",
-    "OutlierDetectionScaledStep",
-    "OutlierDetectionStackStep",
     "PathLossStep",
     "PersistenceStep",
     "PhotomStep",
+    "PixelReplaceStep",
     "RampFitStep",
     "RefPixStep",
     "ResampleStep",
@@ -110,10 +117,11 @@ __all__ = [
     "SkyMatchStep",
     "SourceCatalogStep",
     "SourceTypeStep",
+    "SpectralLeakStep",
     "StraylightStep",
     "SuperBiasStep",
     "TSOPhotometryStep",
-    "UndersamplingCorrectionStep",
+    "ChargeMigrationStep",
     "TweakRegStep",
     "WavecorrStep",
     "WfsCombineStep",

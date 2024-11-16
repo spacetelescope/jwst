@@ -3,15 +3,14 @@ import logging
 import warnings
 
 import numpy as np
-from astropy import wcs as fitswcs
-from astropy.modeling import Model
 from astropy import units as u
 import gwcs
 
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
+from jwst.assign_wcs.util import wcs_bbox_from_shape
+from stcal.alignment import util
 
 
 log = logging.getLogger(__name__)
@@ -24,21 +23,29 @@ __all__ = ['decode_context']
 def make_output_wcs(input_models, ref_wcs=None,
                     pscale_ratio=None, pscale=None, rotation=None, shape=None,
                     crpix=None, crval=None):
-    """ Generate output WCS here based on footprints of all input WCS objects
+    """Generate output WCS here based on footprints of all input WCS objects.
+
     Parameters
     ----------
-    input_models : list of `~jwst.datamodel.DataModel`
-        Each datamodel must have a ~gwcs.WCS object.
+    input_models : `~jwst.datamodel.ModelLibrary`
+        The datamodels to combine into a single output WCS. Each datamodel must
+        have a ``meta.wcs.s_region`` attribute.
 
-    pscale_ratio : float, optional
-        Ratio of input to output pixel scale. Ignored when ``pscale`` is provided.
+    ref_wcs : gwcs.WCS, None, optional
+        Custom WCS to use as the output WCS. If not provided,
+        the reference WCS will be taken as the WCS of the first input model, with
+        its bounding box adjusted to encompass all input frames.
+
+    pscale_ratio : float, None, optional
+        Ratio of input to output pixel scale. Ignored when ``pscale``
+        is provided.
 
     pscale : float, None, optional
         Absolute pixel scale in degrees. When provided, overrides
         ``pscale_ratio``.
 
     rotation : float, None, optional
-        Position angle of output image’s Y-axis relative to North.
+        Position angle of output image Y-axis relative to North.
         A value of 0.0 would orient the final output image to be North up.
         The default of `None` specifies that the images will not be rotated,
         but will instead be resampled in the default orientation for the camera
@@ -52,7 +59,7 @@ def make_output_wcs(input_models, ref_wcs=None,
         WCS object.
 
     crpix : tuple of float, None, optional
-        Position of the reference pixel in the image array.  If ``crpix`` is not
+        Position of the reference pixel in the image array. If ``crpix`` is not
         specified, it will be set to the center of the bounding box of the
         returned WCS object.
 
@@ -64,21 +71,28 @@ def make_output_wcs(input_models, ref_wcs=None,
     -------
     output_wcs : object
         WCS object, with defined domain, covering entire set of input frames
-
     """
     if ref_wcs is None:
-        wcslist = [i.meta.wcs for i in input_models]
-        for w, i in zip(wcslist, input_models):
-            if w.bounding_box is None:
-                w.bounding_box = wcs_bbox_from_shape(i.data.shape)
-        naxes = wcslist[0].output_frame.naxes
+        sregion_list = []
+        with input_models:
+            for i, model in enumerate(input_models):
+                sregion_list.append(model.meta.wcsinfo.s_region)
+                if i == 0:
+                    example_model = model
+                    ref_wcs = example_model.meta.wcs
+                    ref_wcsinfo = example_model.meta.wcsinfo.instance
+                input_models.shelve(model)
+        naxes = ref_wcs.output_frame.naxes
 
         if naxes != 2:
-            raise RuntimeError("Output WCS needs 2 spatial axes. "
-                               f"{wcslist[0]} has {naxes}.")
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
+            raise RuntimeError(msg)
 
-        output_wcs = wcs_from_footprints(
-            input_models,
+        output_wcs = util.wcs_from_sregions(
+            sregion_list,
+            ref_wcs,
+            ref_wcsinfo,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,
@@ -86,19 +100,22 @@ def make_output_wcs(input_models, ref_wcs=None,
             crpix=crpix,
             crval=crval
         )
+        del example_model
 
     else:
         naxes = ref_wcs.output_frame.naxes
         if naxes != 2:
-            raise RuntimeError("Output WCS needs 2 spatial axes but the "
-                               f"supplied WCS has {naxes} axes.")
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
+            raise RuntimeError(msg)
         output_wcs = deepcopy(ref_wcs)
         if shape is not None:
             output_wcs.array_shape = shape
 
     # Check that the output data shape has no zero length dimensions
-    if not np.product(output_wcs.array_shape):
-        raise ValueError(f"Invalid output frame shape: {tuple(output_wcs.array_shape)}")
+    if not np.prod(output_wcs.array_shape):
+        msg = f"Invalid output frame shape: {tuple(output_wcs.array_shape)}"
+        raise ValueError(msg)
 
     return output_wcs
 
@@ -134,8 +151,9 @@ def reproject(wcs1, wcs2):
 
     Parameters
     ----------
-    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS` or `~astropy.modeling.Model`
-        WCS objects.
+    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
+        WCS objects that have `pixel_to_world_values` and `world_to_pixel_values`
+        methods.
 
     Returns
     -------
@@ -144,25 +162,11 @@ def reproject(wcs1, wcs2):
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
 
-    if isinstance(wcs1, fitswcs.WCS):
-        forward_transform = wcs1.all_pix2world
-    elif isinstance(wcs1, gwcs.WCS):
-        forward_transform = wcs1.forward_transform
-    elif issubclass(wcs1, Model):
-        forward_transform = wcs1
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
-
-    if isinstance(wcs2, fitswcs.WCS):
-        backward_transform = wcs2.all_world2pix
-    elif isinstance(wcs2, gwcs.WCS):
-        backward_transform = wcs2.backward_transform
-    elif issubclass(wcs2, Model):
-        backward_transform = wcs2.inverse
-    else:
-        raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-                        "object or astropy.modeling.Model subclass")
+    try:
+        forward_transform = wcs1.pixel_to_world_values
+        backward_transform = wcs2.world_to_pixel_values
+    except AttributeError as err:
+        raise TypeError("Input should be a WCS") from err
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
@@ -170,9 +174,9 @@ def reproject(wcs1, wcs2):
         for axis in sky:
             flat_sky.append(axis.flatten())
         # Filter out RuntimeWarnings due to computed NaNs in the WCS
-        warnings.simplefilter("ignore")
-        det = backward_transform(*tuple(flat_sky))
-        warnings.resetwarnings()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            det = backward_transform(*tuple(flat_sky))
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
@@ -197,7 +201,10 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
             inv_variance = 1.0
         result = inv_variance * dqmask
     elif weight_type == 'exptime':
-        exptime = model.meta.exposure.exposure_time
+        if check_for_tmeasure(model):
+            exptime = model.meta.exposure.measurement_time
+        else:
+            exptime = model.meta.exposure.exposure_time
         result = exptime * dqmask
     else:
         result = np.ones(model.data.shape, dtype=model.data.dtype) * dqmask
@@ -214,12 +221,35 @@ def build_mask(dqarr, bitvalue):
 
     if bitvalue is None:
         return np.ones(dqarr.shape, dtype=np.uint8)
+
+    bitvalue = np.array(bitvalue).astype(dqarr.dtype)
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
 
 
 def is_sky_like(frame):
     # Differentiate between sky-like and cartesian frames
     return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
+
+
+def is_flux_density(bunit):
+    """
+    Differentiate between surface brightness and flux density data units.
+
+    Parameters
+    ----------
+    bunit : str or `~astropy.units.Unit`
+       Data units, e.g. 'MJy' (is flux density) or 'MJy/sr' (is not).
+
+    Returns
+    -------
+    bool
+        True if the units are equivalent to flux density units.
+    """
+    try:
+        flux_density = u.Unit(bunit).is_equivalent(u.Jy)
+    except (ValueError, TypeError):
+        flux_density = False
+    return flux_density
 
 
 def decode_context(context, x, y):
@@ -293,13 +323,44 @@ def decode_context(context, x, y):
         raise ValueError('Pixel coordinates must be integer values')
 
     nbits = 8 * context.dtype.itemsize
+    one = np.array(1, context.dtype)
+    flags = np.array([one << i for i in range(nbits)])
 
     idx = []
     for xi, yi in zip(x, y):
         idx.append(
-            np.flatnonzero(
-                [v & (1 << k) for v in context[:, yi, xi] for k in range(nbits)]
-            )
+            np.flatnonzero(np.bitwise_and.outer(context[:, yi, xi], flags))
         )
 
     return idx
+
+
+def _resample_range(data_shape, bbox=None):
+    # Find range of input pixels to resample:
+    if bbox is None:
+        xmin = ymin = 0
+        xmax = data_shape[1] - 1
+        ymax = data_shape[0] - 1
+    else:
+        ((x1, x2), (y1, y2)) = bbox
+        xmin = max(0, int(x1 + 0.5))
+        ymin = max(0, int(y1 + 0.5))
+        xmax = min(data_shape[1] - 1, int(x2 + 0.5))
+        ymax = min(data_shape[0] - 1, int(y2 + 0.5))
+
+    return xmin, xmax, ymin, ymax
+
+
+def check_for_tmeasure(model):
+    '''
+    Check if the measurement_time keyword is present in the datamodel
+    for use in exptime weighting. If not, revert to using exposure_time.
+    '''
+    try:
+        tmeasure = model.meta.exposure.measurement_time
+        if tmeasure is not None:
+            return 1
+        else:
+            return 0
+    except AttributeError:
+        return 0

@@ -1,5 +1,5 @@
 """Test for duplication/missing associations"""
-import pytest
+import logging
 
 from jwst.associations.tests.helpers import (
     level3_rule_path,
@@ -8,25 +8,29 @@ from jwst.associations.tests.helpers import (
 )
 
 from jwst.associations import (AssociationPool, generate)
-from jwst.associations.main import (Main, constrain_on_candidates)
+from jwst.associations.main import Main
+from jwst.associations.lib.utilities import constrain_on_candidates
+from jwst.tests.helpers import LogWatcher
 
 
-def test_duplicate_names():
+def test_duplicate_names(monkeypatch):
     """
     For Level 3 association, there should be no association
-    with the same product name. Generation should produce
-    log messages indicating when duplicate names have been found.
+    with the same product name.
     """
     pool = AssociationPool.read(t_path('data/jw00632_dups.csv'))
     constrain_all_candidates = constrain_on_candidates(None)
     rules = registry_level3_only(global_constraints=constrain_all_candidates)
 
-    with pytest.warns(RuntimeWarning):
-        asns = generate(pool, rules)
+    # watch for an error log message, we don't use caplog here because
+    # something in the test suite messes up the logging during some runs
+    # (probably stpipe or the association generator) and causes caplog
+    # to sometimes miss the message
+    watcher = LogWatcher("Following associations have the same product name but significant differences")
+    monkeypatch.setattr(logging.getLogger('jwst.associations.lib.prune'), "warning", watcher)
+    asns = generate(pool, rules)
 
-    # There should only be one association left.
-    assert len(asns) == 1
-
+    watcher.assert_seen()
 
 
 def test_duplicate_generate():

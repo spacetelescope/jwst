@@ -6,7 +6,7 @@ from jwst.stpipe import Step
 
 
 @pytest.fixture(scope='module')
-def run_nis_wfss_spec2(jail, rtdata_module):
+def run_nis_wfss_spec2(rtdata_module):
     """Run the calwebb_spec2 pipeline on NIRISS WFSS exposures"""
     rtdata = rtdata_module
 
@@ -60,7 +60,7 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
 
 
 @pytest.fixture(scope='module')
-def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module, jail):
+def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module):
     """Run the calwebb_spec3 pipeline"""
     rtdata = rtdata_module
 
@@ -74,7 +74,7 @@ def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module, jail):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize('suffix', ['cal', 'x1d', 'c1d'])
-@pytest.mark.parametrize('source_id', ['s00015', 's00104'])
+@pytest.mark.parametrize('source_id', ['s000000015', 's000000104'])
 def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fitsdiff_default_kwargs):
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
     rtdata = rtdata_module
