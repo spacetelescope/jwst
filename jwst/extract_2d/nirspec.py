@@ -82,7 +82,15 @@ def nrs_extract2d(input_model, slit_name=None):
 
         # Loop over all slit instances that are present
         for slit in open_slits:
-            new_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit, exp_type)
+            try:
+                new_model, xlo, xhi, ylo, yhi = process_slit(
+                    input_model, slit, exp_type
+                )
+            except ValueError:
+                log.warning("process_slit failed for slit/subarray "
+                            "{0}".format(slit.name)
+                            ", probably because the cutout has no valid pixels")
+                continue
 
             slits.append(new_model)
             orig_s_region = new_model.meta.wcsinfo.s_region.strip()
