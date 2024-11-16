@@ -87,9 +87,10 @@ def nrs_extract2d(input_model, slit_name=None):
                     input_model, slit, exp_type
                 )
             except ValueError:
-                log.warning("process_slit failed for slit/subarray "
-                            "{0}".format(slit.name)
-                            ", probably because the cutout has no valid pixels")
+                log.warning(
+                    'process_slit failed for slit/subarray {0}, '.format(slit.name)
+                    + 'probably because the cutout has no valid pixels'
+                )
                 continue
 
             slits.append(new_model)
