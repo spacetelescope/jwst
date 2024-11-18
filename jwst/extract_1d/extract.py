@@ -1042,7 +1042,7 @@ def location_from_wcs(input_model, slit):
             ypos = slit.source_ypos
 
         slit2det = wcs.get_transform('slit_frame', 'detector')
-        if exp_type == 'NRS_BRIGHTOBJ':
+        if 'gwa' in wcs.available_frames:
             # Input is not resampled, wavelengths need to be meters
             x_y = slit2det(xpos, ypos, middle_wl * 1e-6)
         else:
