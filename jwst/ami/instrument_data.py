@@ -92,6 +92,7 @@ class NIRISS:
         self.telname = "JWST"
         self.instrument = "NIRISS"
         self.arrname = "jwst_ami"
+        self.holeshape = 'hex'
         self.mask = NRM_definition(
             nrm_model,
             maskname=self.arrname,
