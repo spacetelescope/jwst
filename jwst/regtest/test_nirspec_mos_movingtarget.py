@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 
 @pytest.fixture(scope="module")
 def run_spec2_pipeline(rtdata_module):
-    """Run the calwebb_spec2 pipeline on a single NIRSpec MOS/FS exposure."""
+    """Run the calwebb_spec2 pipeline on a single NIRSpec MOS Moving Target exposure."""
 
     rtdata = rtdata_module
 
