@@ -6,7 +6,7 @@
 import logging
 import numpy as np
 
-from .mask_definitions import NRM_mask_definitions
+from .mask_definition_ami import NRM_definition
 from . import utils
 from . import bp_fix
 from stdatamodels.jwst.datamodels import dqflags
@@ -91,12 +91,11 @@ class NIRISS:
         # only one NRM on JWST:
         self.telname = "JWST"
         self.instrument = "NIRISS"
-        self.arrname = "jwst_g7s6c"
-        self.holeshape = "hex"
-        self.mask = NRM_mask_definitions(
+        self.arrname = "jwst_ami"
+        self.mask = NRM_definition(
+            nrm_model,
             maskname=self.arrname,
-            chooseholes=self.chooseholes,
-            holeshape=self.holeshape,
+            chooseholes=self.chooseholes
         )
 
         # save affine deformation of pupil object or create a no-deformation object.
