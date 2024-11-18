@@ -7,81 +7,9 @@ from stdatamodels.jwst.datamodels import ImageModel
 from jwst.stpipe import query_step_status
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d.extract_2d_step import Extract2dStep
+from jwst.extract_2d.tests.test_nirspec import create_nirspec_hdul
 from jwst.master_background import MasterBackgroundMosStep
 from jwst.master_background import nirspec_utils
-
-
-# WCS keywords, borrowed from NIRCam grism tests
-WCS_KEYS = {'wcsaxes': 2, 'ra_ref': 53.1490299775, 'dec_ref': -27.8168745624,
-            'v2_ref': 86.103458, 'v3_ref': -493.227512, 'roll_ref': 45.04234459270135,
-            'v3i_yang': 0.0, 'vparity': -1,
-            'crpix1': 1024.5, 'crpix2': 1024.5,
-            'crval1': 53.1490299775, 'crval2': -27.8168745624,
-            'cdelt1': 1.81661111111111e-05, 'cdelt2': 1.8303611111111e-05,
-            'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',
-            'pc1_1': -0.707688557183348, 'pc1_2': 0.7065245261360363,
-            'pc2_1': 0.7065245261360363, 'pc2_2': 1.75306861111111e-05,
-            'cunit1': 'deg', 'cunit2': 'deg'}
-
-
-def create_nirspec_hdul(detector='NRS1', grating='G395M', filter_name='F290LP',
-                        exptype='NRS_MSASPEC', subarray='FULL', slit=None, nint=1,
-                        wcskeys=None):
-    if wcskeys is None:
-        wcskeys = WCS_KEYS.copy()
-
-    hdul = fits.HDUList()
-    phdu = fits.PrimaryHDU()
-    phdu.header['TELESCOP'] = 'JWST'
-    phdu.header['INSTRUME'] = 'NIRSPEC'
-    phdu.header['DETECTOR'] = detector
-    phdu.header['FILTER'] = filter_name
-    phdu.header['GRATING'] = grating
-    phdu.header['PROGRAM'] = '01234'
-    phdu.header['TIME-OBS'] = '8:59:37'
-    phdu.header['DATE-OBS'] = '2023-01-05'
-    phdu.header['EXP_TYPE'] = exptype
-    phdu.header['EFFEXPTM'] = 1.0
-    phdu.header['DURATION'] = 1.0
-    phdu.header['PATT_NUM'] = 1
-    phdu.header['SUBARRAY'] = subarray
-    phdu.header['XOFFSET'] = 0.0
-    phdu.header['YOFFSET'] = 0.0
-    if subarray == 'SUBS200A1':
-        phdu.header['SUBSIZE1'] = 2048
-        phdu.header['SUBSIZE2'] = 64
-        phdu.header['SUBSTRT1'] = 1
-        phdu.header['SUBSTRT2'] = 1041
-    elif subarray == 'SUB2048':
-        phdu.header['SUBSIZE1'] = 2048
-        phdu.header['SUBSIZE2'] = 32
-        phdu.header['SUBSTRT1'] = 1
-        phdu.header['SUBSTRT2'] = 946
-    else:
-        phdu.header['SUBSIZE1'] = 2048
-        phdu.header['SUBSIZE2'] = 2048
-        phdu.header['SUBSTRT1'] = 1
-        phdu.header['SUBSTRT2'] = 1
-
-    if exptype == 'NRS_MSASPEC':
-        phdu.header['MSAMETID'] = 1
-        phdu.header['MSAMETFL'] = 'test_msa_01.fits'
-
-    if slit is not None:
-        phdu.header['FXD_SLIT'] = slit
-        phdu.header['APERNAME'] = f'NRS_{slit}_SLIT'
-
-    scihdu = fits.ImageHDU()
-    scihdu.header['EXTNAME'] = "SCI"
-    scihdu.header.update(wcskeys)
-    if nint > 1:
-        scihdu.data = np.ones((nint, phdu.header['SUBSIZE2'], phdu.header['SUBSIZE1']))
-    else:
-        scihdu.data = np.ones((phdu.header['SUBSIZE2'], phdu.header['SUBSIZE1']))
-
-    hdul.append(phdu)
-    hdul.append(scihdu)
-    return hdul
 
 
 def create_msa_hdul():
@@ -93,7 +21,7 @@ def create_msa_hdul():
         'shutter_quadrant': [4, 4, 4, 4],
         'shutter_row': [10, 10, 10, 10],
         'shutter_column': [22, 23, 24, 25],
-        'source_id': [0, 0, 0, 2],
+        'source_id': [0, 0, 0, 1],
         'background': ['Y', 'Y', 'Y', 'N'],
         'shutter_state': ['OPEN', 'OPEN', 'OPEN', 'OPEN'],
         'estimated_source_in_shutter_x': [np.nan, np.nan, np.nan, 0.18283921],
@@ -103,14 +31,14 @@ def create_msa_hdul():
         'fixed_slit': ['NONE', 'NONE', 'NONE', 'NONE']}
 
     source_data = {
-        'program': [95065, 95065],
-        'source_id': [1, 2],
-        'source_name': ['95065_1', '95065_2'],
-        'alias': ['2122', '2123'],
-        'ra': [53.139904, 53.15],
-        'dec': [-27.805002, -27.81],
-        'preimage_id': ['95065001_000', '95065001_000'],
-        'stellarity': [1.0, 1.0]}
+        'program': [95065],
+        'source_id': [2],
+        'source_name': ['95065_2'],
+        'alias': ['2123'],
+        'ra': [53.15],
+        'dec': [-27.81],
+        'preimage_id': ['95065001_000'],
+        'stellarity': [1.0]}
 
     shutter_table = Table(shutter_data)
     source_table = Table(source_data)
@@ -130,6 +58,8 @@ def create_msa_hdul():
 def nirspec_msa_rate(tmp_path):
     hdul = create_nirspec_hdul()
     hdul[0].header['MSAMETFL'] = str(tmp_path / 'test_msa_01.fits')
+    hdul[0].header['EFFEXPTM'] = 1.0
+    hdul[0].header['DURATION'] = 1.0
     filename = str(tmp_path / 'test_nrs_msa_rate.fits')
     hdul.writeto(filename, overwrite=True)
     hdul.close()
