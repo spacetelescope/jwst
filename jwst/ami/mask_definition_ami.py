@@ -13,11 +13,11 @@ mm = 1.0e-3 * m
 um = 1.0e-6 * m
 
 
-class NRM_definitions():
+class NRM_definition():
 
     def __init__(self, nrm_model, maskname='jwst_ami', rotdeg=None, chooseholes=None):
         """
-        Set attributes of NRM_mask_definitions class.
+        Set attributes of NRM_definition class.
 
         Parameters
         ----------

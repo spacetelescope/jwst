@@ -6,7 +6,7 @@ import numpy as np
 from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2
 from . import utils
-from . import mask_definitions
+from . import mask_definition_ami
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -22,7 +22,7 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 class NrmModel:
     """
     A class for conveniently dealing with an "NRM object" This should be able
-    to take an NRM_mask_definitions object for mask geometry.
+    to take an NRM_definition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
     Simulates PSF (broadband or monochromatic)
     Builds a fringe model - either by user definition, or automated to data
@@ -35,7 +35,7 @@ class NrmModel:
     def __init__(
         self,
         mask=None,
-        holeshape="circ",
+        holeshape="hex",
         pixscale=None,
         over=1,
         pixweight=None,
@@ -91,19 +91,16 @@ class NrmModel:
         self.over = over
         self.pixweight = pixweight
 
-        # mask = "jwst"
-        # self.maskname = mask
-
-        # get these from mask_definitions instead
+        # get these from mask_definition_ami instead
         if mask is None:
-            log.info("No mask name specified for model, using jwst_g7s6c")
-            mask = mask_definitions.NRM_mask_definitions(
-                maskname="jwst_g7s6c", chooseholes=chooseholes, holeshape="hex"
+            log.info("Using JWST AMI mask geometry from NrmModel")
+            mask = mask_definition_ami.NRM_definition(
+                maskname="jwst_ami", chooseholes=chooseholes
             )
         elif isinstance(mask, str):
-            mask = mask_definitions.NRM_mask_definitions(
-                maskname=mask, chooseholes=chooseholes, holeshape="hex"
-            )
+            mask = mask_definition_ami.NRM_definition(
+                maskname=mask, chooseholes=chooseholes
+            ) # retain ability to possibly  use other named masks, for now
         self.ctrs = mask.ctrs
         self.d = mask.hdia
         self.D = mask.activeD
