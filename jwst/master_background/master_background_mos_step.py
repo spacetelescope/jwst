@@ -87,7 +87,7 @@ class MasterBackgroundMosStep(Pipeline):
             - "masterbkg_2d": `~jwst.datamodels.MultiSlitModel`
                 The 2D slit-based version of the master background.
 
-       sigma_clip : None or float
+        sigma_clip : None or float
             Optional factor for sigma clipping outliers when combining background spectra.
 
         median_kernel : integer, optional

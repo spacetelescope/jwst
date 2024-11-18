@@ -481,7 +481,7 @@ def count_input(input_spectra):
     return wl, n_input_spectra
 
 
-def compute_output_wl(wl, n_input_spectra, ):
+def compute_output_wl(wl, n_input_spectra):
     """Compute output wavelengths.
 
     In summary, the output wavelengths are computed by binning the
