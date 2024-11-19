@@ -5,7 +5,6 @@ from numpy.testing import assert_allclose
 
 from jwst.stpipe import Step
 from gwcs.wcstools import grid_from_bounding_box
-
 from stdatamodels.jwst import datamodels
 
 DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"
