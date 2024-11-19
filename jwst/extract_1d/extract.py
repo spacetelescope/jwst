@@ -2078,11 +2078,6 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
     # Read in the extract1d reference file.
     extract_ref_dict = read_extract1d_ref(extract_ref_name)
 
-    # Read in the aperture correction reference file
-    apcorr_ref_model = None
-    if apcorr_ref_name is not None and apcorr_ref_name != 'N/A':
-        apcorr_ref_model = read_apcorr_ref(apcorr_ref_name, exp_type)
-
     # Check for non-null specwcs and PSF reference files
     if (exp_type not in OPTIMAL_EXPTYPES
             or specwcs_ref_name == 'N/A' or psf_ref_name == 'N/A'):
@@ -2090,6 +2085,14 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
             log.warning(f'Optimal extraction is not available for EXP_TYPE {exp_type}')
             log.warning('Defaulting to box extraction.')
             extraction_type = 'box'
+
+    # Read in the aperture correction reference file
+    apcorr_ref_model = None
+    if apcorr_ref_name is not None and apcorr_ref_name != 'N/A':
+        if extraction_type == 'optimal':
+            log.warning("Turning off aperture correction for optimal extraction")
+        else:
+            apcorr_ref_model = read_apcorr_ref(apcorr_ref_name, exp_type)
 
     # Set up the output model
     output_model = datamodels.MultiSpecModel()
