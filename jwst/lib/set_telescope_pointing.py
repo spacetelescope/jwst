@@ -431,8 +431,6 @@ class TransformParameters:
     dry_run: bool = False
     #: URL of the engineering telemetry database REST interface.
     engdb_url: str | None = None
-    #: MAST_TOKEN
-    mast_token: str = None
     #: Exposure type
     exp_type: str | None = None
     #: FGS to use as the guiding FGS. If None, will be set to what telemetry provides.
@@ -483,7 +481,6 @@ class TransformParameters:
         self.pointing = get_pointing(self.obsstart, self.obsend,
                                      mnemonics_to_read=self.method.mnemonics,
                                      engdb_url=self.engdb_url,
-                                     mast_token=self.mast_token,
                                      tolerance=self.tolerance, reduce_func=self.reduce_func)
 
 
@@ -684,7 +681,7 @@ def update_mt_kwds(model):
 
 
 def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd=None, engdb_url=None,
-               mast_token=None, fgsid=None, tolerance=60, allow_default=False,
+               fgsid=None, tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
 
@@ -753,7 +750,6 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     t_pars = t_pars_from_model(
         model,
         default_pa_v3=default_pa_v3, engdb_url=engdb_url,
-        mast_token=mast_token,
         tolerance=tolerance, allow_default=allow_default,
         reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
         **transform_kwargs
@@ -1017,7 +1013,6 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
     # Calculate WCS
     try:
         pointings = get_pointing(obsstart, obsend, engdb_url=t_pars.engdb_url,
-                                 mast_token=t_pars.mast_token,
                                  tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
     except ValueError:
         logger.warning("Cannot get valid engineering mnemonics from engineering database")
@@ -1692,7 +1687,7 @@ def calc_position_angle(point, ref):
 
 
 def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
-                 engdb_url=None, mast_token=None, tolerance=60, reduce_func=None):
+                 engdb_url=None, tolerance=60, reduce_func=None):
     """
     Get telescope pointing engineering data.
 
@@ -1703,9 +1698,6 @@ def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
-
-    mast_token : str or None
-        Optional MAST_TOKEN for initializing the engineering db connection.
 
     mnemonics_to_read: {str: bool[,...]}
         The mnemonics to read. Key is the mnemonic name.
@@ -1748,8 +1740,7 @@ def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
     logger.info('Reduction function: %s', reduce_func)
 
     mnemonics = get_mnemonics(obsstart, obsend, mnemonics_to_read=mnemonics_to_read,
-                              tolerance=tolerance, engdb_url=engdb_url,
-                              mast_token=mast_token)
+                              tolerance=tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics_to_read, mnemonics)
 
     logger.log(DEBUG_FULL, 'Mnemonics found:')
@@ -1862,7 +1853,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111_MNEMONICS, engdb_url=None, mast_token=None):
+def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111_MNEMONICS, engdb_url=None):
     """Retrieve pointing mnemonics from the engineering database
 
     Parameters
@@ -1894,7 +1885,7 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
 
     """
     try:
-        engdb = ENGDB_Service(base_url=engdb_url, token=mast_token)
+        engdb = ENGDB_Service(base_url=engdb_url)
     except Exception as exception:
         raise ValueError(
             'Cannot open engineering DB connection'
