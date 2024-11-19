@@ -42,8 +42,8 @@ def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
         log.info(f'Optimized convolution kernel coefficients NOT found for detector {detector}')
         return None
 
-    kernel_left = []
-    kernel_right = []
+    kernels_left = []
+    kernels_right = []
     for chan in range(gamma.shape[0]):
         n = len(gamma[chan]) - 1
         kernel_left = np.fft.fftshift(np.fft.irfft(gamma[chan]))[n - halfwidth:n + halfwidth + 1]
@@ -56,10 +56,10 @@ def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
         kernel_right = np.convolve(kernel_right, window, mode='same')
         kernel_left = np.convolve(kernel_left, window, mode='same')
 
-        kernel_right += kernel_right
-        kernel_left += kernel_left
+        kernels_right += [kernel_right]
+        kernels_left += [kernel_left]
 
-    return [kernel_left, kernel_right]
+    return [kernels_left, kernels_right]
 
 
 def get_conv_kernel_coeffs(conv_kernel_model, detector):
@@ -130,10 +130,6 @@ def apply_conv_kernel(data, kernels, zeroim, sigreject=4.0):
     kernels_l, kernels_r = kernels
     nchan = len(kernels_l)
 
-    # The subtraction below is needed to flag outliers in the reference pixels.
-    zeroim = zeroim.astype(float)
-    data -= zeroim
-
     L = data[:, :4]
     R = data[:, -4:]
 
@@ -181,7 +177,6 @@ def apply_conv_kernel(data, kernels, zeroim, sigreject=4.0):
         template += np.convolve(R, kernel_r, mode='same') * normR
         data[:, chan * npix * 3 // 4:(chan + 1) * npix * 3 // 4] -= template[:, np.newaxis]
 
-    data += zeroim
     log.debug('Optimized convolution kernel applied')
     return data
 
