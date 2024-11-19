@@ -1393,19 +1393,9 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
     # Make a spatial profile, including source shifts if necessary
     if extract_params['extraction_type'] == 'optimal':
-        if location is None:
-            nominal_profile = box_profile(data_shape, extract_params, wl_array,
-                                          label='nominal aperture')
-            middle_pix, location = aperture_center(nominal_profile)
-            if extract_params['dispaxis'] == HORIZONTAL:
-                middle_wl = wl_array[middle_pix, location]
-            else:
-                middle_wl = wl_array[location, middle_pix]
-
         profile, lower_limit, upper_limit = psf_profile(
             data_model, extract_params['psf'], extract_params['specwcs'],
             middle_wl, location)
-
     else:
         profile, lower_limit, upper_limit = box_profile(
             data_shape, extract_params, wl_array, return_limits=True)

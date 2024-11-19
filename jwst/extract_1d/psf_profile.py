@@ -152,9 +152,9 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     center_y = np.mean(bbox[1])
 
     # Determine the location using the WCS
-    if middle_wl is None:
+    if middle_wl is None or np.isnan(middle_wl):
         _, _, middle_wl = wcs(center_x, center_y)
-    if location is None:
+    if location is None or np.isnan(location):
         if dispaxis == HORIZONTAL:
             location = center_y
         else:
