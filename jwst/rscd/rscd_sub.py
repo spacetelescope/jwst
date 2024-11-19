@@ -95,7 +95,7 @@ def correction_skip_groups(output, group_skip):
               (sci_nints, sci_ngroups))
     log.debug("The first integration in the data is integration: %d" %
               (sci_int_start))
-    log.info("Number of groups to skip for integrations 2 and higher %d ", group_skip)
+    log.info("Number of groups to skip for integrations 2 and higher: %d " %group_skip)
 
     # If ngroups <= group_skip+3, skip the flagging
     # the +3 is to ensure there is a slope to be fit including the flagging for
