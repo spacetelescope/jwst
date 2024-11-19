@@ -240,6 +240,10 @@ def test_firstframe_bright_use_group1():
     # set a fraction of the pixels to saturate in between the 2nd and 3rd groups
     groupdq[0, 2, 0:100, :] = dqflags.group['SATURATED']
 
+    # set a fraction of the pixels to saturate in between the 1st and 2nd groups
+    groupdq[0, 2, 200:300, :] = dqflags.group['SATURATED']
+    groupdq[0, 1, 200:300, :] = dqflags.group['SATURATED']
+
     # create a JWST datamodel for MIRI data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
@@ -253,6 +257,7 @@ def test_firstframe_bright_use_group1():
     
     expected_diff = np.full((ysize, xsize), dqflags.group['DO_NOT_USE'], dtype=int)
     expected_diff[0:100, :] = 0
+    expected_diff[200:300, :] = 0
 
     np.testing.assert_array_equal(expected_diff,
                                   dq_diff,

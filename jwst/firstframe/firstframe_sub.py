@@ -39,12 +39,10 @@ def do_correction(output, bright_use_group1=False):
     # the first group to 'DO_NOT_USE'
     if sci_ngroups > 3:
         if bright_use_group1:
-            # do not set DO_NOT_USE in the case where saturation happens after group2 and
-            # before group3 in this case, the first frame effect is small compared to the
+            # do not set DO_NOT_USE in the case where saturation happens in
+            # group3 as in this case the first frame effect is small compared to the
             # signal in group2-group1
-            svals = ((output.groupdq[:, 1, :, :] & dqflags.group["SATURATED"]) == 0) & (
-                (output.groupdq[:, 2, :, :] & dqflags.group["SATURATED"]) > 0
-            )
+            svals = (output.groupdq[:, 2, :, :] & dqflags.group["SATURATED"]) > 0
             tvals = output.groupdq[:, 0, :, :]
             tvals[~svals] = np.bitwise_or(
                 (output.groupdq[:, 0, :, :])[~svals], dqflags.group["DO_NOT_USE"]
