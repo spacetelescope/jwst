@@ -36,6 +36,10 @@ class Extract1dStep(Step):
         INFO every `log_increment` integrations.  This is intended to
         provide progress information when invoking the step interactively.
 
+    save_profile : bool
+        If True, the spatial profile containing the extraction aperture
+        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
+
     subtract_background : bool or None
         A flag which indicates whether the background should be subtracted.
         If None, the value in the extract_1d reference file will be used.
@@ -153,6 +157,7 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     log_increment = integer(default=50)  # increment for multi-integration log messages
+    save_profile = boolean(default=False)  # save spatial profile to disk
 
     subtract_background = boolean(default=None)  # subtract background?
     smoothing_length = integer(default=None)  # background smoothing size
@@ -379,12 +384,13 @@ class Extract1dStep(Step):
                 extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
                     model, exp_type)
 
+                profile = None
                 if isinstance(model, datamodels.IFUCubeModel):
                     # Call the IFU specific extraction routine
                     extracted = self._extract_ifu(model, exp_type, extract_ref, apcorr_ref)
                 else:
                     # Call the general extraction routine
-                    extracted = extract.run_extract1d(
+                    extracted, profile = extract.run_extract1d(
                         model,
                         extract_ref,
                         apcorr_ref,
@@ -393,13 +399,29 @@ class Extract1dStep(Step):
                         self.bkg_order,
                         self.log_increment,
                         self.subtract_background,
-                        self.use_source_posn
+                        self.use_source_posn,
+                        self.save_profile
                     )
 
                 # Set the step flag to complete in each model
                 extracted.meta.cal_step.extract_1d = 'COMPLETE'
                 result.append(extracted)
                 del extracted
+
+                # Save profile if needed
+                if self.save_profile and profile is not None:
+                    if isinstance(profile, ModelContainer):
+                        # Save the profile with the slit name + suffix 'profile'
+                        for model in profile:
+                            profile_path = self.make_output_path(suffix=f'{model.name}_profile')
+                            self.log.info(f"Saving profile {profile_path}")
+                            model.save(profile_path)
+                    else:
+                        # Only one profile - just use the suffix 'profile'
+                        profile_path = self.make_output_path(suffix='profile')
+                        self.log.info(f"Saving profile {profile_path}")
+                        profile.save(profile_path)
+                    profile.close()
 
             # If only one result, return the model instead of the container
             if len(result) == 1:
