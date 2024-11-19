@@ -23,7 +23,7 @@ def do_correction(output, bright_use_group1=False):
     output: data model object
         science data to be corrected
     bright_use_group1: boolean
-        do not flag group1 for bright pixels = saturating before group3 and after group2
+        do not flag group1 for bright pixels = group 3 saturated
 
     Returns
     -------

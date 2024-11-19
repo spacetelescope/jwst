@@ -223,7 +223,7 @@ def test_firstframe_bright_use_group1():
     Test if the firstframe code when bright_use_group1 is set to True.
     
     The groupdq flag for group 1 should not be set to DO_NOT_USE for the pixels that saturate 
-    between the 2nd and 3rd groups.  Otherwise, all other pixels should have their group1 groupdq 
+    the 3rd group.  Otherwise, all other pixels should have their group1 groupdq 
     flags set to DO_NOT_USE.
     """
 
