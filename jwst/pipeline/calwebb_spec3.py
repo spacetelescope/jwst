@@ -128,24 +128,24 @@ class Spec3Pipeline(Pipeline):
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
         model_type = input_models[0].meta.model_type
-        output_file = input_models.meta.asn_table.products[0].name
+        output_file = input_models.asn_table["products"][0]["name"]
         self.output_file = output_file
 
         # Find all the member types in the product
         members_by_type = defaultdict(list)
-        product = input_models.meta.asn_table.products[0].instance
+        product = input_models.asn_table["products"][0]
         for member in product['members']:
             members_by_type[member['exptype'].lower()].append(member['expname'])
 
         if is_moving_target(input_models[0]):
             self.log.info("Assigning WCS to a Moving Target exposure.")
             # assign_mtwcs modifies input_models in-place
-            self.assign_mtwcs(input_models)
+            self.assign_mtwcs.run(input_models)
 
         # If background data are present, call the master background step
         if members_by_type['background']:
-            source_models = self.master_background(input_models)
-            source_models.meta.asn_table = input_models.meta.asn_table
+            source_models = self.master_background.run(input_models)
+            source_models.asn_table = input_models.asn_table
 
             # If the step is skipped, do the container splitting that
             # would've been done in master_background
@@ -218,7 +218,7 @@ class Spec3Pipeline(Pipeline):
 
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
-                result = self.mrs_imatch(result)
+                result = self.mrs_imatch.run(result)
 
             # Call outlier detection and pixel replacement
             if exptype not in SLITLESS_TYPES:
@@ -231,21 +231,21 @@ class Spec3Pipeline(Pipeline):
                     self.outlier_detection.mode = 'ifu'
                 else:
                     self.outlier_detection.mode = 'spec'
-                result = self.outlier_detection(result)
+                result = self.outlier_detection.run(result)
 
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
-                result = self.pixel_replace(result)
+                result = self.pixel_replace.run(result)
                 # Resample time. Dependent on whether the data is IFU or not.
                 resample_complete = None
                 if exptype in IFU_EXPTYPES:
-                    result = self.cube_build(result)
+                    result = self.cube_build.run(result)
                     try:
                         resample_complete = result[0].meta.cal_step.cube_build
                     except AttributeError:
                         pass
                 else:
-                    result = self.resample_spec(result)
+                    result = self.resample_spec.run(result)
                     try:
                         resample_complete = result.meta.cal_step.resample
                     except AttributeError:
@@ -256,7 +256,7 @@ class Spec3Pipeline(Pipeline):
 
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE
-                result = self.pixel_replace(result)
+                result = self.pixel_replace.run(result)
 
                 # For slitless data, extract 1D spectra and then combine them
                 if exptype in ['NIS_SOSS']:
@@ -265,17 +265,17 @@ class Spec3Pipeline(Pipeline):
                     # those instead.
 
                     self.extract_1d.save_results = False
-                    result = self.extract_1d(result)
+                    result = self.extract_1d.run(result)
 
                     # SOSS F277W may return None - don't bother with that.
                     if result is not None:
                         self.photom.save_results = self.save_results
                         self.photom.suffix = 'x1d'
-                        result = self.photom(result)
+                        result = self.photom.run(result)
                 else:
-                    result = self.extract_1d(result)
+                    result = self.extract_1d.run(result)
 
-                result = self.combine_1d(result)
+                result = self.combine_1d.run(result)
 
             elif resample_complete is not None and resample_complete.upper() == 'COMPLETE':
 
@@ -290,10 +290,10 @@ class Spec3Pipeline(Pipeline):
                             self.spectral_leak.search_output_file = False
                             self.spectral_leak.save_results = self.save_results
 
-                result = self.extract_1d(result)
+                result = self.extract_1d.run(result)
 
                 if exptype in ['MIR_MRS']:
-                    result = self.spectral_leak(result)
+                    result = self.spectral_leak.run(result)
             else:
                 self.log.warning(
                     'Resampling was not completed. Skipping extract_1d.'
