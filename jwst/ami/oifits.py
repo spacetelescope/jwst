@@ -48,9 +48,6 @@ class RawOifits:
 
         self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
         self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
-        self.pa = (
-            self.fringe_fitter.instrument_data.pav3
-        )  # header pav3, not including v3i_yang??
 
         self.bholes, self.bls = self._makebaselines()
         self.tholes, self.tuv = self._maketriples_all()
@@ -364,6 +361,8 @@ class RawOifits:
         m.meta.observation.date = observation_date.fits
         m.meta.oifits.array_name = instrument_data.arrname
         m.meta.oifits.instrument_mode = instrument_data.pupil
+
+        m.meta.wcsinfo = instrument_data.wcsinfo
 
         # oi_array extension data
         m.array["TEL_NAME"] = tel_name
@@ -770,6 +769,6 @@ class CalibOifits:
 
         # add calibrated header keywords
         calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star
-        self.calib_oimodel.meta.oifits.calib = calname
+        self.calib_oimodel.meta.calibrator_object_id = calname
 
         return self.calib_oimodel

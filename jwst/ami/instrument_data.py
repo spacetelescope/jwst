@@ -179,9 +179,18 @@ class NIRISS:
         pscale_deg = np.mean([pscaledegx, pscaledegy])
         self.pscale_rad = np.deg2rad(pscale_deg)
         self.pscale_mas = pscale_deg * (60 * 60 * 1000)
-        self.pav3 = input_model.meta.pointing.pa_v3
+        #####
+
+        # Until further notice this is fine 
+        #self.pav3 = input_model.meta.pointing.pa_v3
+        self.pav3 = input_model.meta.wcsinfo.roll_ref
+
         self.vparity = input_model.meta.wcsinfo.vparity
         self.v3iyang = input_model.meta.wcsinfo.v3yangle
+
+        self.wcsinfo = input_model.meta.wcsinfo
+
+
         self.parangh = input_model.meta.wcsinfo.roll_ref
         self.crpix1 = input_model.meta.wcsinfo.crpix1
         self.crpix2 = input_model.meta.wcsinfo.crpix2
