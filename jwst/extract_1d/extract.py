@@ -1383,7 +1383,8 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
 def create_extraction(input_model, slit, output_model,
                       extract_ref_dict, slitname, sp_order, smoothing_length,
                       bkg_fit, bkg_order, use_source_posn, exp_type,
-                      subtract_background, apcorr_ref_model, log_increment):
+                      subtract_background, apcorr_ref_model, log_increment,
+                      save_profile):
     """Extract spectra from an input model and append to an output model.
 
     Input data, specified in the `slit` or `input_model`, should contain data
@@ -1465,7 +1466,16 @@ def create_extraction(input_model, slit, output_model,
     log_increment : int
         If greater than 0 and the input data are multi-integration, a message
         will be written to the log every `log_increment` integrations.
+    save_profile : bool
+        If True, the spatial profile created for the aperture will be returned
+        as an ImageModel.  If False, the return value is None.
 
+    Returns
+    -------
+    profile_model : ImageModel or None
+        If `save_profile` is True, the return value is an ImageModel containing
+        the spatial profile with aperture weights, used in extracting all
+        integrations.
     """
 
     if slit is None:
@@ -1558,6 +1568,14 @@ def create_extraction(input_model, slit, output_model,
     if np.sum(valid) == 0:
         log.error("Spectrum is empty; no valid data.")
         raise ContinueError()
+
+    # Save the profile if desired
+    if save_profile:
+        profile_model = datamodels.ImageModel(profile)
+        profile_model.update(input_model, only='PRIMARY')
+        profile_model.name = slitname
+    else:
+        profile_model = None
 
     # Set up aperture correction, to be used for every integration
     apcorr_available = False
@@ -1763,10 +1781,12 @@ def create_extraction(input_model, slit, output_model,
         else:
             log.info(f"All {input_model.data.shape[0]} integrations done")
 
+    return profile_model
+
 
 def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_length,
                   bkg_fit, bkg_order, log_increment, subtract_background,
-                  use_source_posn):
+                  use_source_posn, save_profile):
     """Extract all 1-D spectra from an input model.
 
     Parameters
@@ -1810,11 +1830,19 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
 
+    save_profile : bool
+        If True, the spatial profiles created for the input model will be returned
+        as ImageModels. If False, the return value is None.
+
     Returns
     -------
     output_model : MultiSpecModel
         A new data model containing the extracted spectra.
-
+    profile_model : ModelContainer, ImageModel, or None
+        If `save_profile` is True, the return value is an ImageModel containing
+        the spatial profile with aperture weights, used in extracting a single
+        slit, or else a container of ImageModels, one for each slit extracted.
+        Otherwise, the return value is None.
     """
     # Set "meta_source" to either the first model in a container,
     # or the individual input model, for convenience
@@ -1847,8 +1875,8 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
     prism_mode = is_prism(meta_source)
 
     # Handle inputs that contain one or more slit models
+    profile_model = None
     if isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)):
-
         if isinstance(input_model, ModelContainer):
             slits = input_model
         else:
@@ -1857,6 +1885,10 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
         # Save original use_source_posn value, because it can get
         # toggled within the following loop over slits
         save_use_source_posn = use_source_posn
+
+        # Make a container for the profile models, if needed
+        if save_profile:
+            profile_model = ModelContainer()
 
         for slit in slits:  # Loop over the slits in the input model
             log.info(f'Working on slit {slit.name}')
@@ -1875,13 +1907,17 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
                 continue
 
             try:
-               create_extraction(
+               profile = create_extraction(
                    meta_source, slit, output_model,
                    extract_ref_dict, slitname, sp_order, smoothing_length,
                    bkg_fit, bkg_order, use_source_posn, exp_type,
-                   subtract_background, apcorr_ref_model, log_increment)
+                   subtract_background, apcorr_ref_model, log_increment,
+                   save_profile)
             except ContinueError:
                 continue
+
+            if save_profile:
+                profile_model.append(profile)
 
     else:
         # Define source of metadata
@@ -1904,11 +1940,12 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
             else:
                 log.info(f'Processing spectral order {sp_order}')
                 try:
-                    create_extraction(
+                    profile_model = create_extraction(
                         input_model, slit, output_model,
                         extract_ref_dict, slitname, sp_order, smoothing_length,
                         bkg_fit, bkg_order, use_source_posn, exp_type,
-                        subtract_background, apcorr_ref_model, log_increment)
+                        subtract_background, apcorr_ref_model, log_increment,
+                        save_profile)
                 except ContinueError:
                     pass
 
@@ -1938,11 +1975,12 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
                 log.info(f'Processing spectral order {sp_order}')
 
                 try:
-                    create_extraction(
+                    profile_model = create_extraction(
                         input_model, slit, output_model,
                         extract_ref_dict, slitname, sp_order, smoothing_length,
                         bkg_fit, bkg_order, use_source_posn, exp_type,
-                        subtract_background, apcorr_ref_model, log_increment)
+                        subtract_background, apcorr_ref_model, log_increment,
+                        save_profile)
                 except ContinueError:
                     pass
 
@@ -1968,4 +2006,4 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
     # x1d product just to hold this keyword.
     output_model.meta.target.source_type = None
 
-    return output_model
+    return output_model, profile_model
