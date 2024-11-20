@@ -312,11 +312,6 @@ refpix
 
 - Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
-refpix
-------
-
-- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
-
 regtest
 -------
 
