@@ -76,8 +76,21 @@ NIR Detector Data
        (set by the step parameter ``side_gain``, which defaults to 1.0) is
        subtracted from the full group on a row-by-row basis.  Note that the ``odd_even_rows``
        parameter is ignored for NIR data when the side reference pixels are processed.
-       If the ``--use_conv_kernel`` option is set, the side-pixel correction will be
-       turned off and instead, an optimized convolution kernel will be used.
+       If the ``--use_conv_kernel`` option is set, the an optimized convolution kernel
+       will be used instead of the running median. This revision implements Simple Improved
+       Reference Subtraction using the left and right side reference pixels as described
+       in https://doi.org/10.1117/1.JATIS.8.2.028002. The algorithm as described in that
+       paper rearranges the reference pixels as a time series, performs a Fourier transform,
+       applies weights appropriate for each channel as derived from least-squares fits to
+       dark images, and Fourier transforms back for the correction. This implementation uses
+       a mathematically equivalent formulation using convolution kernels rather than Fourier
+       transforms, with the convolution kernel truncated where the weights approach zero.
+       There are two convolution kernels for each readout channel, one each for the left
+       and right reference pixels. These kernels are the Fourier transforms of the weight
+       coefficients described in https://doi.org/10.1117/1.JATIS.8.2.028002. The approach
+       implemented here makes nearly optimal use of the reference pixels. It reduces read
+       noise by 5-10% relative to a running median filter of the reference pixels, and
+       reduces 1/f "striping" noise by a larger factor than this.
     #. Transform the data back to the JWST focal plane, or DMS, frame.
 
 MIR Detector Data

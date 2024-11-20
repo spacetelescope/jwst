@@ -1185,8 +1185,7 @@ class NIRDataset(Dataset):
         #
         # Apply optimized convolution kernel
         if continue_apply_conv_kernel:
-            corrected_group = apply_conv_kernel(group, kernels, self.input_model.data[0, 0, ...],
-                                                sigreject=self.sigreject)
+            corrected_group = apply_conv_kernel(group, kernels, sigreject=self.sigreject)
         else:
             # use running median
             left = self.calculate_side_ref_signal(group, 0, 3)

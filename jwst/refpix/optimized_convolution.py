@@ -99,7 +99,7 @@ def get_conv_kernel_coeffs(conv_kernel_model, detector):
     return gamma, zeta
 
 
-def apply_conv_kernel(data, kernels, zeroim, sigreject=4.0):
+def apply_conv_kernel(data, kernels, sigreject=4.0):
     """
     Apply the convolution kernel.
 
@@ -111,9 +111,6 @@ def apply_conv_kernel(data, kernels, zeroim, sigreject=4.0):
 
     kernels : list
         List containing the left and right kernels
-
-    zeroim : 2-D numpy array
-        First group of first integration, to find outliers
 
     sigreject: float
         Number of sigmas to reject as outliers

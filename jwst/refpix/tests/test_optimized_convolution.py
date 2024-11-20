@@ -59,7 +59,7 @@ def test_apply_conv_kernel():
     halfwidth = 30
     kernels = make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth)
     sigreject = 4
-    result = apply_conv_kernel(input_model.data[1, 1, ...], kernels, data[0, 0, ...], sigreject=sigreject)
+    result = apply_conv_kernel(input_model.data[1, 1, ...], kernels, sigreject=sigreject)
     compare = np.ones((1, 1, 2048, 2048))
     assert compare.all() == result.all()
 
