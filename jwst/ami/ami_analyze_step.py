@@ -84,10 +84,8 @@ class AmiAnalyzeStep(Step):
                     yo = af['yo'],
                     rotradccw = af['rotradccw']
                     )
-                self.log.info('Using input affine transform with parameters:')
-                self.log.info(f'\tmx={af['mx']}, my={af['my']}')
-                self.log.info(f'\tsx={af['sx']}, sy={af['sy']}')
-                self.log.info(f'\txo={af['xo']}, yo={af['yo']}')
+                self.log.info(f'Using affine transform from ASDF file {self.affine2d}')
+            # now self.affine2d updated from string to object
             self.affine2d = affine2d
             return affine2d
         except:
