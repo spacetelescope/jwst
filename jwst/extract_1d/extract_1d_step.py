@@ -40,6 +40,10 @@ class Extract1dStep(Step):
         If True, the spatial profile containing the extraction aperture
         is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
 
+    save_scene_model : bool
+        If True, a model of the 2D flux as defined by the extraction aperture
+        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
+
     subtract_background : bool or None
         A flag which indicates whether the background should be subtracted.
         If None, the value in the extract_1d reference file will be used.
@@ -158,6 +162,7 @@ class Extract1dStep(Step):
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     log_increment = integer(default=50)  # increment for multi-integration log messages
     save_profile = boolean(default=False)  # save spatial profile to disk
+    save_scene_model = boolean(default=False)  # save flux model to disk
 
     subtract_background = boolean(default=None)  # subtract background?
     smoothing_length = integer(default=None)  # background smoothing size
@@ -312,6 +317,22 @@ class Extract1dStep(Step):
         )
         return result
 
+    def _save_intermediate(self, intermediate_model, suffix):
+        """Save an intermediate output file."""
+        if isinstance(intermediate_model, ModelContainer):
+            # Save the profile with the slit name + suffix 'profile'
+            for model in intermediate_model:
+                slit = str(model.name).lower()
+                output_path = self.make_output_path(suffix=f'{slit}_{suffix}')
+                self.log.info(f"Saving {suffix} {output_path}")
+                model.save(output_path)
+        else:
+            # Only one profile - just use the suffix 'profile'
+            output_path = self.make_output_path(suffix=suffix)
+            self.log.info(f"Saving {suffix} {output_path}")
+            intermediate_model.save(output_path)
+        intermediate_model.close()
+
     def process(self, input):
         """Execute the step.
 
@@ -385,12 +406,13 @@ class Extract1dStep(Step):
                     model, exp_type)
 
                 profile = None
+                scene_model = None
                 if isinstance(model, datamodels.IFUCubeModel):
                     # Call the IFU specific extraction routine
                     extracted = self._extract_ifu(model, exp_type, extract_ref, apcorr_ref)
                 else:
                     # Call the general extraction routine
-                    extracted, profile = extract.run_extract1d(
+                    extracted, profile, scene_model = extract.run_extract1d(
                         model,
                         extract_ref,
                         apcorr_ref,
@@ -400,7 +422,8 @@ class Extract1dStep(Step):
                         self.log_increment,
                         self.subtract_background,
                         self.use_source_posn,
-                        self.save_profile
+                        self.save_profile,
+                        self.save_scene_model
                     )
 
                 # Set the step flag to complete in each model
@@ -410,18 +433,11 @@ class Extract1dStep(Step):
 
                 # Save profile if needed
                 if self.save_profile and profile is not None:
-                    if isinstance(profile, ModelContainer):
-                        # Save the profile with the slit name + suffix 'profile'
-                        for model in profile:
-                            profile_path = self.make_output_path(suffix=f'{model.name}_profile')
-                            self.log.info(f"Saving profile {profile_path}")
-                            model.save(profile_path)
-                    else:
-                        # Only one profile - just use the suffix 'profile'
-                        profile_path = self.make_output_path(suffix='profile')
-                        self.log.info(f"Saving profile {profile_path}")
-                        profile.save(profile_path)
-                    profile.close()
+                    self._save_intermediate(profile, 'profile')
+
+                # Save model if needed
+                if self.save_scene_model and scene_model is not None:
+                    self._save_intermediate(scene_model, 'scene_model')
 
             # If only one result, return the model instead of the container
             if len(result) == 1:

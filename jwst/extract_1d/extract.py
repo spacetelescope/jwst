@@ -1335,7 +1335,7 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
         including any fractional pixels included via non-integer weights
         in the input profile.
 
-    flux_model : ndarray, 2-D, float64
+    scene_model : ndarray, 2-D, float64
         A 2D model of the flux in the spectral image, corresponding to
         the extracted aperture.
 
@@ -1380,8 +1380,17 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
     # Extraction routine can return multiple spectra;
     # here, we just want the first result
     first_result = []
-    for r in result:
+    for r in result[:-1]:
         first_result.append(r[0])
+
+    # The last return value is the 2D model - there is only one, regardless
+    # of the number of input profiles. It may need to be transposed to match
+    # the input data.
+    scene_model = result[-1]
+    if extract_params['dispaxis'] == HORIZONTAL:
+        first_result.append(scene_model)
+    else:
+        first_result.append(scene_model.T)
     return first_result
 
 
@@ -1389,7 +1398,7 @@ def create_extraction(input_model, slit, output_model,
                       extract_ref_dict, slitname, sp_order, smoothing_length,
                       bkg_fit, bkg_order, use_source_posn, exp_type,
                       subtract_background, apcorr_ref_model, log_increment,
-                      save_profile):
+                      save_profile, save_model):
     """Extract spectra from an input model and append to an output model.
 
     Input data, specified in the `slit` or `input_model`, should contain data
@@ -1474,6 +1483,9 @@ def create_extraction(input_model, slit, output_model,
     save_profile : bool
         If True, the spatial profile created for the aperture will be returned
         as an ImageModel.  If False, the return value is None.
+    save_model : bool
+        If True, the flux model created during extraction will be returned
+        as an ImageModel or CubeModel.  If False, the return value is None.
 
     Returns
     -------
@@ -1481,6 +1493,10 @@ def create_extraction(input_model, slit, output_model,
         If `save_profile` is True, the return value is an ImageModel containing
         the spatial profile with aperture weights, used in extracting all
         integrations.
+    scene_model : ImageModel, CubeModel, or None
+        If `save_model` is True, the return value is an ImageModel or CubeModel
+        matching the input data, containing the flux model generated during
+        extraction.
     """
 
     if slit is None:
@@ -1621,17 +1637,30 @@ def create_extraction(input_model, slit, output_model,
         integrations = range(shape[0])
         progress_msg_printed = False
 
+    # Set up a flux model to update if desired
+    if save_model:
+        if len(integrations) > 1:
+            scene_model = datamodels.CubeModel(shape)
+        else:
+            scene_model = datamodels.ImageModel()
+        scene_model.update(input_model, only='PRIMARY')
+        scene_model.name = slitname
+    else:
+        scene_model = None
+
     # Extract each integration
     for integ in integrations:
         (sum_flux, f_var_rnoise, f_var_poisson,
             f_var_flat, background, b_var_rnoise, b_var_poisson,
-            b_var_flat, npixels, flux_model) = extract_one_slit(
-                data_model,
-                integ,
-                profile,
-                bg_profile,
-                extract_params
-        )
+            b_var_flat, npixels, scene_model_2d) = extract_one_slit(
+                data_model, integ, profile, bg_profile, extract_params)
+
+        # Save the flux model
+        if save_model:
+            if isinstance(scene_model, datamodels.CubeModel):
+                scene_model.data[integ] = scene_model_2d
+            else:
+                scene_model.data = scene_model_2d
 
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
@@ -1786,58 +1815,53 @@ def create_extraction(input_model, slit, output_model,
         else:
             log.info(f"All {input_model.data.shape[0]} integrations done")
 
-    return profile_model
+    return profile_model, scene_model
 
 
 def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_length,
                   bkg_fit, bkg_order, log_increment, subtract_background,
-                  use_source_posn, save_profile):
+                  use_source_posn, save_profile, save_scene_model):
     """Extract all 1-D spectra from an input model.
 
     Parameters
     ----------
     input_model : data model
         The input science model.
-
     extract_ref_name : str
         The name of the extract1d reference file, or "N/A".
-
     apcorr_ref_name : str
         Name of the APCORR reference file. Default is None
-
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
-
     bkg_fit : str or None
         Type of fitting to apply to background values in each column
         (or row, if the dispersion is vertical).  Allowed values are
         'mean', 'median', 'poly', or None.
-
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background. Only used if `bkg_fit`
         is `poly`.  Allowed values are >= 0.
-
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
         multi-integration, a message will be written to the log every
         `log_increment` integrations.
-
     subtract_background : bool or None
         User supplied flag indicating whether the background should be
         subtracted.
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
-
     use_source_posn : bool or None
         If True, the target and background positions specified in the
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
-
     save_profile : bool
         If True, the spatial profiles created for the input model will be returned
         as ImageModels. If False, the return value is None.
+    save_scene_model : bool
+        If True, a model of the 2D flux as defined by the extraction aperture
+        is returned as an ImageModel or CubeModel.  If False, the return value
+        is None.
 
     Returns
     -------
@@ -1848,6 +1872,10 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
         the spatial profile with aperture weights, used in extracting a single
         slit, or else a container of ImageModels, one for each slit extracted.
         Otherwise, the return value is None.
+    scene_model : ModelContainer, ImageModel, CubeModel, or None
+        If `save_scene_model` is True, the return value is an ImageModel or CubeModel
+        matching the input data, containing a model of the flux as defined by the
+        aperture, created during extraction. Otherwise, the return value is None.
     """
     # Set "meta_source" to either the first model in a container,
     # or the individual input model, for convenience
@@ -1894,6 +1922,8 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
         # Make a container for the profile models, if needed
         if save_profile:
             profile_model = ModelContainer()
+        if save_scene_model:
+            scene_model = ModelContainer()
 
         for slit in slits:  # Loop over the slits in the input model
             log.info(f'Working on slit {slit.name}')
@@ -1912,17 +1942,19 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
                 continue
 
             try:
-               profile = create_extraction(
+               profile, slit_scene_model = create_extraction(
                    meta_source, slit, output_model,
                    extract_ref_dict, slitname, sp_order, smoothing_length,
                    bkg_fit, bkg_order, use_source_posn, exp_type,
                    subtract_background, apcorr_ref_model, log_increment,
-                   save_profile)
+                   save_profile, save_scene_model)
             except ContinueError:
                 continue
 
             if save_profile:
                 profile_model.append(profile)
+            if save_scene_model:
+                scene_model.append(slit_scene_model)
 
     else:
         # Define source of metadata
@@ -1945,12 +1977,12 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
             else:
                 log.info(f'Processing spectral order {sp_order}')
                 try:
-                    profile_model = create_extraction(
+                    profile_model, scene_model = create_extraction(
                         input_model, slit, output_model,
                         extract_ref_dict, slitname, sp_order, smoothing_length,
                         bkg_fit, bkg_order, use_source_posn, exp_type,
                         subtract_background, apcorr_ref_model, log_increment,
-                        save_profile)
+                        save_profile, save_scene_model)
                 except ContinueError:
                     pass
 
@@ -1980,12 +2012,12 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
                 log.info(f'Processing spectral order {sp_order}')
 
                 try:
-                    profile_model = create_extraction(
+                    profile_model, scene_model = create_extraction(
                         input_model, slit, output_model,
                         extract_ref_dict, slitname, sp_order, smoothing_length,
                         bkg_fit, bkg_order, use_source_posn, exp_type,
                         subtract_background, apcorr_ref_model, log_increment,
-                        save_profile)
+                        save_profile, save_scene_model)
                 except ContinueError:
                     pass
 
@@ -2011,4 +2043,4 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
     # x1d product just to hold this keyword.
     output_model.meta.target.source_type = None
 
-    return output_model, profile_model
+    return output_model, profile_model, scene_model
