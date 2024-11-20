@@ -330,11 +330,16 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         # Return array of shape (1, npixels) for generality
 
         fluxes = np.array([np.sum(image_masked * profile_2d, axis=0)])
-        model += fluxes[0][np.newaxis, :]
 
         # Number of contributing pixels at each wavelength.
 
         npixels = np.array([np.sum(profile_2d, axis=0)])
+
+        # Add average flux over the aperture to the model, so that
+        # a sum over the cross-dispersion direction reproduces the summed flux
+
+        valid = npixels[0] > 0
+        model[:, valid] += (fluxes[0][valid] / npixels[0][valid]) * profile_2d[:, valid]
 
         # And compute the variance on the sum, same shape as f.
         # Need to decompose this into read noise, photon noise, and flat noise.
