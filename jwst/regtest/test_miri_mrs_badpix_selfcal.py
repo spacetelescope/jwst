@@ -72,6 +72,6 @@ def test_miri_mrs_badpix_selfcal_bkg(basename, run_pipeline_background, fitsdiff
     rtdata.output = basename
     rtdata.get_truth(f"truth/test_miri_mrs_badpix_selfcal/{basename}")
 
-    # Compare the results and heck the bkg files in the background case, but not in the selfcal case
+    # Compare the results and check the bkg files in the background case, but not in the selfcal case
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
