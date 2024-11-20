@@ -16,6 +16,7 @@ class FirstFrameStep(Step):
     class_alias = "firstframe"
 
     spec = """
+        bright_use_group1 = boolean(default=False) # do not flag group1 if group3 is saturated   
     """
 
     def process(self, step_input):
@@ -25,16 +26,18 @@ class FirstFrameStep(Step):
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector.upper()
-            if detector[:3] != 'MIR':
-                self.log.warning('First Frame Correction is only for MIRI data')
-                self.log.warning('First frame step will be skipped')
-                input_model.meta.cal_step.firstframe = 'SKIPPED'
+            if detector[:3] != "MIR":
+                self.log.warning("First Frame Correction is only for MIRI data")
+                self.log.warning("First frame step will be skipped")
+                input_model.meta.cal_step.firstframe = "SKIPPED"
                 return input_model
 
             # Cork on a copy
             result = input_model.copy()
 
             # Do the firstframe correction subtraction
-            result = firstframe_sub.do_correction(result)
+            result = firstframe_sub.do_correction(
+                result, bright_use_group1=self.bright_use_group1
+            )
 
         return result
