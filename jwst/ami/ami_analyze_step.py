@@ -6,7 +6,6 @@ from . import utils
 
 import numpy as np
 import asdf
-import synphot
 
 __all__ = ["AmiAnalyzeStep"]
 
@@ -21,7 +20,7 @@ class AmiAnalyzeStep(Step):
         rotation = float(default=0.0)           # Rotation initial guess [deg]
         psf_offset = string(default='0.0 0.0') # PSF offset values to use to create the model array
         rotation_search = string(default='-3 3 1') # Rotation search parameters: start, stop, step
-        bandpass = string(default=None) # ASDF file containing array or Synphot spectrum to override filter/source
+        bandpass = string(default=None) # ASDF file containing array to override filter/source
         usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew = integer(default=None) # If not None, process only the first few integrations
         chooseholes = string(default=None) # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
