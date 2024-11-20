@@ -608,6 +608,7 @@ class Spec2Pipeline(Pipeline):
 
         # First process MOS slits through all remaining steps
         calib_mos.update(calibrated)
+        calib_mos.meta.wcsinfo = calibrated.meta.wcsinfo.instance
         if len(calib_mos.slits) > 0:
             calib_mos = self.master_background_mos.run(calib_mos)
             calib_mos = self.wavecorr.run(calib_mos)
