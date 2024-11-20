@@ -924,20 +924,21 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
         Index value for the center of the aperture along the
         dispersion axis.
     """
-
+    weights = profile.copy()
+    weights[weights <= 0] = 0.0
     if middle_pix is not None and np.sum(profile) > 0:
         spec_center = middle_pix
         if dispaxis == HORIZONTAL:
             slit_center = np.average(np.arange(profile.shape[0]),
-                                     weights=profile[:, middle_pix])
+                                     weights=weights[:, middle_pix])
         else:
             slit_center = np.average(np.arange(profile.shape[1]),
-                                     weights=profile[middle_pix, :])
+                                     weights=weights[middle_pix, :])
     else:
         yidx, xidx = np.mgrid[:profile.shape[0], :profile.shape[1]]
         if np.sum(profile) > 0:
-            center_y = np.average(yidx, weights=profile)
-            center_x = np.average(xidx, weights=profile)
+            center_y = np.average(yidx, weights=weights)
+            center_x = np.average(xidx, weights=weights)
         else:
             center_y = profile.shape[0] // 2
             center_x = profile.shape[1] // 2
@@ -1233,7 +1234,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         bg_profile = None
 
     # Get 1D wavelength corresponding to the spatial profile
-    mask = np.isnan(wl_array) | (profile == 0)
+    mask = np.isnan(wl_array) | (profile <= 0)
     masked_wl = np.ma.masked_array(wl_array, mask=mask)
     masked_weights = np.ma.masked_array(profile, mask=mask)
     if extract_params['dispaxis'] == HORIZONTAL:
@@ -1245,8 +1246,12 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     # weighted by the spatial profile
     center_y, center_x = aperture_center(profile, 1)
     coords = data_model.meta.wcs(center_x, center_y)
-    ra = float(coords[0])
-    dec = float(coords[1])
+    if np.any(np.isnan(coords)):
+        ra = None
+        dec = None
+    else:
+        ra = float(coords[0])
+        dec = float(coords[1])
 
     # Return limits as a tuple with 4 elements: lower, upper, left, right
     limits = (lower_limit, upper_limit, left_limit, right_limit)
