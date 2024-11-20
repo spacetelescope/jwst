@@ -24,7 +24,7 @@ class AmiAnalyzeStep(Step):
         usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew = integer(default=None) # If not None, process only the first few integrations
         chooseholes = string(default=None) # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
-        affine2d = string(default=None) # ASDF file containing user-defined affine parameters
+        affine2d = string(default='commissioning') # ASDF file containing user-defined affine parameters OR 'commssioning'
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
