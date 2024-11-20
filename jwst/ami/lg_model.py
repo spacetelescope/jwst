@@ -19,7 +19,7 @@ um = 1.0e-6 * m
 mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 
-class NrmModel:
+class LgModel:
     """
     A class for conveniently dealing with an "NRM object" This should be able
     to take an NRM_definition object for mask geometry.
@@ -47,7 +47,7 @@ class NrmModel:
         **kwargs,
     ):
         """
-        Set attributes of NrmModel class.
+        Set attributes of LgModel class.
 
         Parameters
         ----------
@@ -93,7 +93,7 @@ class NrmModel:
 
         # get these from mask_definition_ami instead
         if mask is None:
-            log.info("Using JWST AMI mask geometry from NrmModel")
+            log.info("Using JWST AMI mask geometry from LgModel")
             mask = mask_definition_ami.NRM_definition(
                 maskname="jwst_ami", chooseholes=chooseholes
             )
@@ -122,7 +122,7 @@ class NrmModel:
 
         self.chooseholes = chooseholes
 
-        # affine2d property not to be changed in NrmModel - create a new
+        # affine2d property not to be changed in LgModel - create a new
         #     instance instead
         # Save affine deformation of pupil object or create a no-deformation
         #     object.
@@ -400,7 +400,7 @@ class NrmModel:
     def create_modelpsf(self):
         """
         Make an image from the object's model and fit solutions, by setting the
-        NrmModel object's modelpsf attribute
+        LgModel object's modelpsf attribute
 
         Parameters
         ----------
