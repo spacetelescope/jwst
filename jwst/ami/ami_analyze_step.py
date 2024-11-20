@@ -180,16 +180,16 @@ class AmiAnalyzeStep(Step):
             # If there's a user-defined bandpass or affine, handle it
             if bandpass is not None:
                 bandpass = self.override_bandpass()
-
             if affine2d is not None:
                 if affine2d == 'commissioning':
-                    affine2d = utils.Affine2d(mx= 9.92820e-01,
+                    affine2d = utils.Affine2d(mx=9.92820e-01,
                         my=9.98540e-01,
                         sx=6.18605e-03,
                         sy=-7.27008e-03,
                         xo=0,
                         yo=0,
-                        name='commisioning')
+                        name='commissioning')
+                    self.log.info("Using affine parameters from commissioning.")
                 else:
                     affine2d = self.override_affine2d()
             # and if it is None, rotation search done in apply_LG_plus

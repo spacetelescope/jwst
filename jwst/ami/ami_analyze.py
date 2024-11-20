@@ -179,6 +179,11 @@ def apply_LG_plus(
         # the affine2d returned here has only rotation...
         # to use rotation and scaling/shear, do some matrix multiplication here??
 
+    log.info('Using affine transform with parameters:')
+    log.info(f'\tmx={affine2d.mx}\tmy={affine2d.my}')
+    log.info(f'\tsx={affine2d.sx}\tsy={affine2d.sy}')
+    log.info(f'\txo={affine2d.xo}\tyo={affine2d.yo}')
+
     niriss = instrument_data.NIRISS(filt,
                                     nrm_model,
                                     bandpass=bandpass,
