@@ -51,6 +51,8 @@ class MasterBackgroundMosStep(Pipeline):
     class_alias = "master_background_mos"
 
     spec = """
+        sigma_clip = float(default=3) # Factor for clipping outliers when combining background spectra
+        median_kernel = integer(default=1) # Moving-median boxcar size to filter the master background spectrum
         force_subtract = boolean(default=False)  # Force subtracting master background
         save_background = boolean(default=False) # Save computed master background
         user_background = string(default=None)   # Path to user-supplied master background
@@ -93,6 +95,14 @@ class MasterBackgroundMosStep(Pipeline):
             - "masterbkg_2d": `~jwst.datamodels.MultiSlitModel`
                 The 2D slit-based version of the master background.
 
+        sigma_clip : None or float
+            Optional factor for sigma clipping outliers when combining background spectra.
+
+        median_kernel : integer, optional
+            Optional user-supplied kernel with which to moving-median boxcar filter the master background
+            spectrum.  Must be an odd integer, even integers will be rounded down to the nearest
+            odd integer.
+
         force_subtract : bool, optional
             Optional user-supplied flag that overrides step logic to force subtraction of the
             master background.
@@ -123,7 +133,8 @@ class MasterBackgroundMosStep(Pipeline):
             if self.user_background:
                 self.log.info(f'Calculating master background from user-supplied background {self.user_background}')
                 user_background = datamodels.open(self.user_background)
-                master_background, mb_multislit = self._calc_master_background(data_model, user_background)
+                master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
+                    data_model, user_background)
             elif self.use_correction_pars:
                 self.log.info('Using pre-calculated correction parameters.')
                 master_background = self.correction_pars['masterbkg_1d']
@@ -140,7 +151,8 @@ class MasterBackgroundMosStep(Pipeline):
                     return data
 
                 self.log.info('Calculating master background')
-                master_background, mb_multislit = self._calc_master_background(data_model)
+                master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
+                    data_model, sigma_clip=self.sigma_clip, median_kernel=self.median_kernel)
 
             # Check that a master background was actually determined.
             if master_background is None:
@@ -160,6 +172,8 @@ class MasterBackgroundMosStep(Pipeline):
             if self.save_background:
                 self.save_model(master_background, suffix='masterbg1d', force=True)
                 self.save_model(mb_multislit, suffix='masterbg2d', force=True)
+                if bkg_x1d_spectra is not None:
+                    self.save_model(bkg_x1d_spectra, suffix='bkgx1d', force=True)
 
         return result
 
@@ -226,23 +240,32 @@ class MasterBackgroundMosStep(Pipeline):
 
         return num_bkg, num_src
 
-    def _calc_master_background(self, data, user_background=None):
+    def _calc_master_background(
+        self, data, user_background=None, sigma_clip=3, median_kernel=1):
         """Calculate master background from background slits
 
         Parameters
         ----------
         data : `~jwst.datamodels.MultiSlitModel`
             The data to operate on.
-
         user_background : None, string, or `~jwst.datamodels.CombinedSpecModel`
             Optional user-supplied master background 1D spectrum, path to file
             or opened datamodel
+        sigma_clip : None or float
+            Optional factor for sigma clipping outliers when combining background spectra.
+        median_kernel : integer, optional
+            Optional user-supplied kernel with which to moving-median boxcar filter the master background
+            spectrum.  Must be an odd integer, even integers will be rounded down to the nearest
+            odd integer.
 
         Returns
         -------
         masterbkg_1d, masterbkg_2d : `~jwst.datamodels.CombinedSpecModel`, `~jwst.datamodels.MultiSlitModel`
             The master background in 1d and 2d, multislit formats.
             None is returned when a master background could not be determined.
+        bkg_x1d_spectra : `~jwst.datamodels.MultiSlitModel`
+            The 1D extracted background spectra used to determine the master background.
+            Returns None when a user_background is provided.
         """
 
         # Since the parameters for the substeps are modified during processing,
@@ -271,20 +294,21 @@ class MasterBackgroundMosStep(Pipeline):
             if user_background:
                 self.log.debug(f'User background provided {user_background}')
                 master_background = user_background
+                bkg_x1d_spectra = None
             else:
                 self.log.info('Creating MOS master background from background slitlets')
                 bkg_model = self._extend_bg_slits(pre_calibrated)
                 if bkg_model is not None:
                     bkg_model = self.pixel_replace(bkg_model)
                     bkg_model = self.resample_spec(bkg_model)
-                    bkg_model = self.extract_1d(bkg_model)
-                    master_background = self.combine_1d(bkg_model)
-                    del bkg_model
+                    bkg_x1d_spectra = self.extract_1d(bkg_model)
+                    master_background = nirspec_utils.create_background_from_multislit(
+                                      bkg_x1d_spectra, sigma_clip=sigma_clip, median_kernel=median_kernel)
                 else:
                     master_background = None
             if master_background is None:
                 self.log.debug('No master background could be calculated. Returning None')
-                return None, None
+                return None, None, None
 
             # Now decalibrate the master background for each individual science slit.
             # First step is to map the master background into a MultiSlitModel
@@ -309,4 +333,4 @@ class MasterBackgroundMosStep(Pipeline):
             mb_multislit = self.pathloss.run(mb_multislit)
             mb_multislit = self.flat_field.run(mb_multislit)
 
-        return master_background, mb_multislit
+        return master_background, mb_multislit, bkg_x1d_spectra
