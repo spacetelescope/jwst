@@ -161,7 +161,7 @@ class ExtractionEngine:
             raise MaskOverlapError(msg)
 
         # Update i_bounds based on masked wavelengths
-        self.i_bnds = self._get_i_bnds()
+        self.i_bounds = self._get_i_bnds()
 
         # if throughput is given as callable, turn it into an array of proper shape
         self.update_throughput(throughput)
@@ -379,6 +379,7 @@ class ExtractionEngine:
 
         return i_bnds_new
 
+
     def update_i_bnds(self):
         """Update the grid limits for the extraction.
         Needs to be done after modification of the mask
@@ -387,7 +388,7 @@ class ExtractionEngine:
         # Get old and new boundaries.
         i_bnds_old = self.i_bounds
         i_bnds_new = self._get_i_bnds()
-        print(i_bnds_old, i_bnds_new)
+        print("i_bounds old, new in update_i_bnds", i_bnds_old, i_bnds_new)
 
         for i_order in range(self.n_orders):
 
@@ -914,9 +915,6 @@ class ExtractionEngine:
               There will be only one matrix multiplication:
               (P/sig).(w.T.lambda.c_n).
 
-        TODO: is there any way to avoid the need for this __call__ method given
-        that it's only a thin wrapper to the Tikhonov class?
-
         Parameters
         ----------
         data : (N, M) array_like
@@ -959,7 +957,7 @@ class ExtractionEngine:
         return spectrum
 
 
-    def _get_lo_hi(self, grid, i_order):
+    def _get_lo_hi(self, grid, wave_p, wave_m, mask):
         """
         Find the lowest (lo) and highest (hi) index
         of wave_grid for each pixels and orders.
@@ -968,8 +966,10 @@ class ExtractionEngine:
         ----------
         grid : array[float]
             Wave_grid to check.
-        i_order : int
-            Order to check values.
+        wave_p : array[float]
+            TODO: add here
+        wave_m : array[float]
+            TODO: add here
 
         Returns
         -------
@@ -979,29 +979,14 @@ class ExtractionEngine:
 
         log.debug('Computing lowest and highest indices of wave_grid.')
 
-        # ... order dependent attributes
-        attrs = ['wave_p', 'wave_m', 'mask_ord']
-        wave_p, wave_m, mask_ord = self.get_attributes(*attrs, i_order=i_order)
-
-        # Compute only for valid pixels
-        wave_p = wave_p[~self.mask]
-        wave_m = wave_m[~self.mask]
-
         # Find lower (lo) index in the pixel
-        lo = np.searchsorted(grid, wave_m, side='right')
+        lo = np.searchsorted(grid, wave_m, side='right') - 1
 
         # Find higher (hi) index in the pixel
         hi = np.searchsorted(grid, wave_p) - 1
 
-        # Set invalid pixels for this order to lo=-1 and hi=-2
-        ma = mask_ord[~self.mask]
-        lo[ma], hi[ma] = -1, -2
-
-        # print("grid", np.min(grid), np.max(grid), grid.size)
-        # grid 0.8515140811891634 2.204728219634399 1408 on PR branch
-        # grid 0.8480011181377183 2.2057149524019297 1413 on main
-        # the grid could be the problem!
-        # try reverting all changes to atoca_utils.grid_from_map and dependencies
+        # Set invalid pixels negative
+        lo[mask], hi[mask] = -1, -2
 
         return lo, hi   
 
@@ -1024,6 +1009,7 @@ class ExtractionEngine:
 
         attrs = ['wave_p', 'wave_m', 'i_bounds']
         wave_p, wave_m, i_bnds = self.get_attributes(*attrs, i_order=i_order)
+        print("i_bnds in get_mask_wave", i_bnds)
         wave_min = self.wave_grid[i_bnds[0]]
         wave_max = self.wave_grid[i_bnds[1] - 1]
 
@@ -1052,64 +1038,30 @@ class ExtractionEngine:
 
         log.debug('Computing weights and k.')
 
-        # Get needed attributes
-        wave_grid, mask = self.get_attributes('wave_grid', 'mask')
-
-        # ... order dependent attributes
+        # get order dependent attributes
         attrs = ['wave_p', 'wave_m', 'mask_ord', 'i_bounds']
         wave_p, wave_m, mask_ord, i_bnds = self.get_attributes(*attrs, i_order=i_order)
 
         # Use the convolved grid (depends on the order)
-        wave_grid = wave_grid[i_bnds[0]:i_bnds[1]]
+        wave_grid = self.wave_grid[i_bnds[0]:i_bnds[1]]
         # Compute the wavelength coverage of the grid
         d_grid = np.diff(wave_grid)
 
-        # Get lo hi
-        lo, hi = self._get_lo_hi(wave_grid, i_order)  # Get indexes
-
         # Compute only valid pixels
-        wave_p, wave_m = wave_p[~mask], wave_m[~mask]
-        ma = mask_ord[~mask]
+        wave_p, wave_m = wave_p[~self.mask], wave_m[~self.mask]
+        ma = mask_ord[~self.mask]
+
+        # Get lo hi
+        lo, hi = self._get_lo_hi(wave_grid, wave_p, wave_m, ma)  # Get indexes
 
         # Number of used pixels
         n_i = len(lo)
         i = np.arange(n_i)
 
-        # Define first and last index of wave_grid
-        # for each pixel
-        k_first, k_last = -1 * np.ones(n_i), -1 * np.ones(n_i)
-
-        # If lowest value close enough to the exact grid value,
-        # NOTE: Could be approximately equal to the exact grid
-        # value. It would look like that.
-        # >>> lo_dgrid = lo
-        # >>> lo_dgrid[lo_dgrid==len(d_grid)] = len(d_grid) - 1
-        # >>> cond = (grid[lo]-wave_m)/d_grid[lo_dgrid] <= 1.0e-8
-        # But let's stick with the exactly equal
-        cond = (wave_grid[lo] == wave_m)
-
-        # special case (no need for lo_i - 1)
-        k_first[cond & ~ma] = lo[cond & ~ma]
-        wave_m[cond & ~ma] = wave_grid[lo[cond & ~ma]]
-
-        # else, need lo_i - 1
-        k_first[~cond & ~ma] = lo[~cond & ~ma] - 1
-
-        # Same situation for highest value. If we follow the note
-        # above (~=), the code could look like
-        # >>> cond = (wave_p-grid[hi])/d_grid[hi-1] <= 1.0e-8
-        # But let's stick with the exactly equal
-        cond = (wave_p == wave_grid[hi])
-
-        # special case (no need for hi_i - 1)
-        k_last[cond & ~ma] = hi[cond & ~ma]
-        wave_p[cond & ~ma] = wave_grid[hi[cond & ~ma]]
-
-        # else, need hi_i + 1
-        k_last[~cond & ~ma] = hi[~cond & ~ma] + 1
-
         # Generate array of all k_i. Set to max value of uint16 if not valid
-        k_n = atoca_utils.arange_2d(k_first, k_last + 1)
+        k_n = atoca_utils.arange_2d(lo[~ma], hi[~ma])
+        print(k_n.shape)
+
         bad = k_n == -1
 
         # Number of valid k per pixel

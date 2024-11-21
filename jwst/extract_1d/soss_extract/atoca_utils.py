@@ -1631,12 +1631,6 @@ class TikhoTests(dict):
     """
     Class to save Tikhonov tests for different factors.
     All the tests are stored in the attribute `tests` as a dictionary
-
-    Parameters
-    ----------
-    test_dict : dict
-        Dictionary holding arrays for `factors`, `solution`, `error`, and `reg`
-        by default.
     """
 
     DEFAULT_THRESH_DERIVATIVE = (('chi2', 1e-5),
@@ -1645,17 +1639,11 @@ class TikhoTests(dict):
 
     def __init__(self, test_dict, default_chi2='chi2_cauchy'):
         """
-        TODO: always instantiated with a dict, no reason for optional
-        always uses default chi2 option, no need to make optional or support other options
-
-        Dict always has the following five keys:
-        'factors', 'solution', 'error', 'reg', 'grid'
-
         Parameters
         ----------
         test_dict : dict
-            Dictionary holding arrays for `factors`, `solution`, `error`, and `reg`
-            by default.
+            Dictionary holding arrays for `factors`, `solution`, `error`, `reg`, and `grid`.
+
         default_chi2: string
             Type of chi2 loss used by default. Options are chi2, chi2_soft_l1, chi2_cauchy.
         """
@@ -1686,7 +1674,6 @@ class TikhoTests(dict):
 
     def _compute_chi2(self, loss):
         """
-        TODO: is there a scipy builtin that does this?
         Calculates the reduced chi squared statistic
 
         Parameters
@@ -1715,13 +1702,13 @@ class TikhoTests(dict):
 
     def _get_chi2_derivative(self):
         """
-        TODO: is there a scipy builtin that does this?
         Compute derivative of the chi2 with respect to log10(factors)
 
         Returns
         -------
         factors_leftd : array[float]
             factors array, shortened to match length of derivative.
+
         d_chi2 : array[float]
             derivative of chi squared array with respect to log10(factors)
         """
@@ -1851,19 +1838,18 @@ class Tikhonov:
     where gamma is the Tikhonov regularization matrix.
     """
 
-    def __init__(self, a_mat, b_vec, t_mat, valid=True):
+    def __init__(self, a_mat, b_vec, t_mat):
         """
         Parameters
         ----------
         a_mat : matrix-like object (2d)
             matrix A in the system to solve A.x = b
+
         b_vec : vector-like object (1d)
             vector b in the system to solve A.x = b
+
         t_mat : matrix-like object (2d)
             Tikhonov regularisation matrix to be applied on b_vec.
-        valid : bool, optional
-            If True, solve the system only for valid indices. The
-            invalid values will be set to np.nan. Default is True.
         """
 
         # Save input matrix
@@ -1884,10 +1870,8 @@ class Tikhonov:
         self.idx_valid = idx_valid
 
         # Save other attributes
-        self.valid = valid
         self.test = None
 
-        return
 
     def solve(self, factor=1.0):
         """
@@ -1909,8 +1893,7 @@ class Tikhonov:
         a_mat_2 = self.a_mat_2
         result = self.result
         t_mat_2 = self.t_mat_2
-        valid = self.valid
-        idx_valid = self.idx_valid
+        idx = self.idx_valid
 
         # Matrix gamma squared (with scale factor)
         gamma_2 = factor ** 2 * t_mat_2
@@ -1921,18 +1904,13 @@ class Tikhonov:
         # Initialize solution
         solution = np.full(matrix.shape[0], np.nan)
 
-        # Consider only valid indices if in valid mode
-        if valid:
-            idx = idx_valid
-        else:
-            idx = np.full(len(solution), True)
-
         # Solve
         matrix = matrix[idx, :][:, idx]
         result = result[idx]
         solution[idx] = spsolve(matrix, result)
 
         return solution
+
 
     def test_factors(self, factors):
         """
