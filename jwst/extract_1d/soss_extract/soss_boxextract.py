@@ -15,13 +15,10 @@ def get_box_weights(centroid, n_pix, shape, cols):
     ----------
     centroid : array[float]
         Position of the centroid (in rows). Same shape as `cols`
-
     n_pix : float
         Width of the extraction box in pixels.
-
     shape : Tuple(int, int)
         Shape of the output image. (n_row, n_column)
-
     cols : array[int]
         Column indices of good columns. Used if the centroid is defined
         for specific columns or a sub-range of columns.
@@ -66,13 +63,10 @@ def box_extract(scidata, scierr, scimask, box_weights):
     ----------
     scidata : array[float]
         2d array of science data with shape (n_row, n_columns)
-
     scierr : array[float]
         2d array of uncertainty map with same shape as scidata
-
     scimask : array[bool]
         2d boolean array of masked pixels with same shape as scidata
-
     box_weights : array[float]
         2d array of pre-computed weights for box extraction,
         with same shape as scidata
@@ -81,10 +75,8 @@ def box_extract(scidata, scierr, scimask, box_weights):
     -------
     cols : array[int]
         Indices of extracted columns
-
     flux : array[float]
         The flux in each column
-
     flux_var : array[float]
         The variance of the flux in each column
     """
@@ -146,13 +138,10 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     ----------
     err : 2d array[float]
         Uncertainty map of the pixels.
-
     data : 2d array[float]
         Pixel values.
-
     pix_to_estim : 2d array[bool]
         Map of the pixels where the uncertainty needs to be estimated.
-
     valid_pix : 2d array[bool]
         Map of valid pixels to be used to find the error empirically.
 

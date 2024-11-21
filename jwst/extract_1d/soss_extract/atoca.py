@@ -66,16 +66,13 @@ class ExtractionEngine:
             A list or array of the central wavelength position for each
             order on the detector.
             It has to have the same (N, M) as `data`.
-
         trace_profile : (N_ord, N, M) list or array of 2-D arrays
             A list or array of the spatial profile for each order
             on the detector. It has to have the same (N, M) as `data`.
-
         throughput : (N_ord [, N_k]) list of array or callable
             A list of functions or array of the throughput at each order.
             If callable, the functions depend on the wavelength.
             If array, projected on `wave_grid`.
-
         kernels : callable, sparse matrix, or None.
             Convolution kernel to be applied on spectrum (f_k) for each orders.
             Can be a callable with the form f(x, x0) where x0 is
@@ -88,23 +85,18 @@ class ExtractionEngine:
             be used directly. N_ker is the length of the effective kernel
             and N_k_c is the length of the spectrum (f_k) convolved.
             If None, the kernel is set to 1, i.e., do not do any convolution.
-
         wave_grid : (N_k) array_like, required.
             The grid on which f(lambda) will be projected.
-
         mask_trace_profile : (N_ord, N, M) list or array of 2-D arrays[bool], required.
             A list or array of the pixel that need to be used for extraction,
             for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
-
         orders : list, optional
             List of orders considered. Default is orders = [1, 2]
-
         threshold : float, optional:
             The contribution of any order on a pixel is considered significant if
             its estimated spatial profile is greater than this threshold value.
             If it is not properly modeled (not covered by the wavelength grid),
             it will be masked. Default is 1e-3.
-
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
@@ -186,7 +178,6 @@ class ExtractionEngine:
         ----------
         args : str or list[str]
             All attributes to return.
-
         i_order : None or int, optional
             Index of order to extract. If specified, it will
             be applied to all attributes in args, so it cannot
@@ -252,7 +243,6 @@ class ExtractionEngine:
         kernels : callable, sparse matrix, or None
             Convolution kernel to be applied on the spectrum (f_k) for each order.
             If None, kernel is set to 1, i.e., do not do any convolution.
-
         c_kwargs : list of N_ord dictionaries or dictionary, optional
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
@@ -298,7 +288,6 @@ class ExtractionEngine:
         -------
         general_mask : array[bool]
             Mask that combines global_mask, wavelength mask, trace_profile mask
-
         mask_ord : array[bool]
             Mask applied to each order
         """
@@ -485,12 +474,10 @@ class ExtractionEngine:
         ----------
         i_order: integer
             Label of the order (depending on the initiation of the object).
-
         error: (N, M) array_like or None, optional.
             Estimate of the error on each pixel. Same shape as `data`.
             If None, the error is set to 1, which means the method will return
             b_n instead of b_n/sigma. Default is None.
-
         quick: bool, optional
             If True, only perform one matrix multiplication
             instead of the whole system: (P/sig).(w.T.lambda.c_n)
@@ -514,6 +501,8 @@ class ExtractionEngine:
         # ... order dependent attributes
         attrs = ['trace_profile', 'throughput', 'kernels', 'weights', 'i_bounds']
         trace_profile_n, throughput_n, kernel_n, weights_n, i_bnds = self.get_attributes(*attrs, i_order=i_order)
+
+        print("i_bounds in get_pixel_mapping", i_bnds)
 
         # Keep only valid pixels (P and sig are still 2-D)
         # And apply directly 1/sig here (quicker)
@@ -546,6 +535,7 @@ class ExtractionEngine:
 
         # Save new pixel mapping matrix.
         self.pixel_mapping[i_order] = pixel_mapping
+        print(pixel_mapping.shape)
 
         return pixel_mapping
 
@@ -561,7 +551,6 @@ class ExtractionEngine:
         ----------
         data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-
         error : (N, M) array_like
             Estimate of the error on each pixel.
 
@@ -593,7 +582,6 @@ class ExtractionEngine:
         ----------
         data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-
         error: (N, M) array_like
             Estimate of the error on each pixel.
 
@@ -610,6 +598,7 @@ class ExtractionEngine:
         # Initiate with empty matrix
         n_i = (~self.mask).sum()  # n good pixels
         b_matrix = csr_matrix((n_i, self.n_wavepoints))
+        print(b_matrix.shape)
 
         # Sum over orders
         for i_order in range(self.n_orders):
@@ -689,10 +678,8 @@ class ExtractionEngine:
         ----------
         factors : 1D list or array-like
             Factors to be tested.
-
         data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-
         error : (N, M) array_like
             Estimate of the error on each pixel. Same shape as `data`.
 
@@ -729,7 +716,6 @@ class ExtractionEngine:
         tests : dictionary
             Results of Tikhonov extraction tests for different factors.
             Must have the keys "factors" and "-logl".
-
         fit_mode : string
             Which mode is used to find the best Tikhonov factor. Options are
             'all', 'curvature', 'chi2', 'd_chi2'. If 'all' is chosen, the best of the
@@ -810,7 +796,6 @@ class ExtractionEngine:
         spectrum : callable or array-like
             flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
-
         fill_value : float or np.nan, optional
             Pixel value where the detector is masked. Default is 0.0.
 
@@ -849,10 +834,8 @@ class ExtractionEngine:
         spectrum : array[float] or callable
             Flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
-
         data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-
         error : (N, M) array_like
             Estimate of the error on each pixel.
             Same shape as `data`.
@@ -919,15 +902,12 @@ class ExtractionEngine:
         ----------
         data : (N, M) array_like
             A 2-D array of real values representing the detector image.
-
         error : (N, M) array_like
             Estimate of the error on each pixel`
             Same shape as `data`.
-
         tikhonov : bool, optional
             Whether to use Tikhonov extraction
             Default is False.
-
         factor : the Tikhonov factor to use if tikhonov is True
 
         Returns
@@ -1059,8 +1039,7 @@ class ExtractionEngine:
         i = np.arange(n_i)
 
         # Generate array of all k_i. Set to max value of uint16 if not valid
-        k_n = atoca_utils.arange_2d(lo[~ma], hi[~ma])
-        print(k_n.shape)
+        k_n = atoca_utils.arange_2d(lo[~ma]-1, hi[~ma]+1)
 
         bad = k_n == -1
 

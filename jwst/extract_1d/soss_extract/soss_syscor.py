@@ -13,10 +13,8 @@ def soss_background(scidata, scimask, bkg_mask):
     ----------
     scidata : array[float]
         The image of the SOSS trace.
-
     scimask : array[bool]
         Boolean mask of pixels to be excluded.
-
     bkg_mask : array[bool]
         Boolean mask of pixels to be excluded because they are in
         the trace, typically constructed with make_background_mask.
@@ -25,7 +23,6 @@ def soss_background(scidata, scimask, bkg_mask):
     -------
     scidata_bkg : array[float]
         Background-subtracted image
-
     col_bkg : array[float]
         Column-wise background values
     """
@@ -65,7 +62,6 @@ def make_background_mask(deepstack, width):
     deepstack : array[float]
         Deep image of the trace constructed by combining
         individual integrations of the observation.
-
     width : int
         Width, in pixels, of the trace to exclude with the mask
         (i.e. width/256 for a SUBSTRIP256 observation).

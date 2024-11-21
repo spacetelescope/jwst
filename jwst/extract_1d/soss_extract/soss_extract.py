@@ -134,7 +134,6 @@ def _get_trace_1d(ref_files, order):
     ref_files : dict
         A dictionary of the reference file DataModels, along with values
         for subarray and pwcpos, i.e. the pupil wheel position.
-
     order : int
         The spectral order for which to return the trace parameters.
 
@@ -182,19 +181,14 @@ def _estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tr
     ----------
     scidata_bkg : array
         A single background subtracted NIRISS SOSS detector image.
-
     scierr : array
         The uncertainties corresponding to the detector image.
-
     scimask : array
         Pixel mask to apply to the detector image.
-
     ref_file_args : tuple
         A tuple of reference file arguments constructed by get_ref_file_args().
-
     mask_trace_profile: array[bool]
         Mask determining the aperture used for extraction. Set to False where the pixel should be extracted.
-
     threshold : float, optional:
         The pixels with an aperture[order 2] > `threshold` are considered contaminated
         and will be masked. Default is 1e-4.
@@ -238,7 +232,6 @@ def _get_native_grid_from_trace(ref_files, spectral_order):
     ----------
     ref_files: dict
         A dictionary of the reference file DataModels.
-
     spectral_order: int
         The spectral order for which to return the trace parameters.
 
@@ -281,10 +274,8 @@ def _get_grid_from_trace(ref_files, spectral_order, n_os):
     ----------
     ref_files: dict
         A dictionary of the reference file DataModels.
-
     spectral_order: int
         The spectral order for which to return the trace parameters.
-
     n_os: int or array
         The oversampling factor of the wavelength grid used when solving for
         the uncontaminated flux.
@@ -485,50 +476,38 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     ----------
     scidata_bkg : array[float]
         A single background subtracted NIRISS SOSS detector image.
-
     scierr : array[float]
         The uncertainties corresponding to the detector image.
-
     scimask : array[bool]
         Pixel mask to apply to detector image.
-
     refmask : array[bool]
         Pixels that should never be reconstructed e.g. the reference pixels.
-
     ref_files : dict
         A dictionary of the reference file DataModels, along with values for
         subarray and pwcpos, i.e. the pupil wheel position.
-
     box_weights : dict
         A dictionary of the weights (for each order) used in the box extraction.
         The weights for each order are 2d arrays with the same size as the detector.
-
     tikfac : float, optional
         The Tikhonov regularization factor used when solving for
         the uncontaminated flux. If not specified, the optimal Tikhonov factor
         is calculated.
-
     threshold : float
         The threshold value for using pixels based on the spectral profile.
         Default value is 1e-4.
-
     n_os : int, optional
         The oversampling factor of the wavelength grid used when solving for
         the uncontaminated flux. If not specified, defaults to 2.
-
     wave_grid : str or SossWaveGridModel or None
         Filename of reference file or SossWaveGridModel containing the wavelength grid used by ATOCA
         to model each pixel valid pixel of the detector. If not given, the grid is determined
         based on an estimate of the flux (estimate), the relative tolerance (rtol)
         required on each pixel model and the maximum grid size (max_grid_size).
-
     estimate : UnivariateSpline or None
          Estimate of the target flux as a function of wavelength in microns.
-
     rtol : float
         The relative tolerance needed on a pixel model. It is used to determine the sampling
         of the soss_wave_grid when not directly given. Default is 1e-3.
-
     max_grid_size : int
         Maximum grid size allowed. It is used when soss_wave_grid is not directly
         to make sure the computation time or the memory used stays reasonable.
@@ -538,16 +517,12 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     -------
     tracemodels : dict
         Dictionary of the modeled detector images for each order.
-
     tikfac : float
         Optimal Tikhonov factor used in extraction
-
     logl : float
         Log likelihood value associated with the Tikhonov factor selected.
-
     wave_grid : 1d array
         Same as wave_grid input. TODO: this isn't true if input wave_grid is None, update docstring
-
     spec_list : list of SpecModel
         List of the underlying spectra for each integration and order.
         The tikhonov tests are also included.
@@ -866,23 +841,18 @@ def _extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='m
     ----------
     decontaminated_data : array[float]
         A single backround subtracted NIRISS SOSS detector image.
-
     scierr : array[float]
         The uncertainties corresponding to the detector image.
-
     scimask : array[float]
         Pixel mask to apply to the detector image.
-
     box_weights : dict
         A dictionary of the weights (for each order) used in the box extraction.
         The weights for each order are 2d arrays with the same size as the detector.
-
     bad_pix : str
         How to handle the bad pixels. Options are 'masking' and 'model'.
         'masking' will simply mask the bad pixels, such that the number of pixels
         in each column in the box extraction will not be constant, while the
         'model' option uses `tracemodels` to replace the bad pixels.
-
     tracemodels : dict
         Dictionary of the modeled detector images for each order.
 

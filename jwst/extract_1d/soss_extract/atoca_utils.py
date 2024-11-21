@@ -483,23 +483,18 @@ def make_combined_adaptive_grid(all_grids, all_estimates, grid_range,
     ----------
     all_grids : list[array]
         List of grid (arrays) to pass to _adapt_grid, in order of importance.
-
     all_estimates : list[callable]
         List of function (callable) to estimate the precision needed to oversample the grid.
         Must match the corresponding `grid` in `all_grid`.
-
     grid_range : list[float]
         Wavelength range the new grid should cover.
-
     max_iter : int, optional
         Number of times the intervals can be subdivided. The smallest
         subdivison of the grid if max_iter is reached will then be given
         by delta_grid / 2^max_iter. Needs to be greater than zero.
         Default is 10.
-
     rtol : float, optional
         The desired relative tolerance. Default is 10e-6, so 10 ppm.
-
     max_total_size : int, optional
         maximum size of the output grid. Default is 1 000 000.
 
@@ -660,7 +655,6 @@ def _estim_integration_err(grid, fct):
         Grid for integration. Each sections of this grid are treated
         as separate integrals. So if grid has length N; N-1 integrals are
         tested.
-
     fct: callable
         Function to be integrated.
 
@@ -668,7 +662,6 @@ def _estim_integration_err(grid, fct):
     -------
     err:
         absolute error of each integration, with length = length(grid) - 1
-
     rel_err:
         relative error of each integration, with length = length(grid) - 1
     """
@@ -727,22 +720,17 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
         Grid for integration. Each sections of this grid are treated
         as separate integrals. So if grid has length N; N-1 integrals are
         optimized.
-
     fct: callable
         Function to be integrated. Must be a function of `grid`
-
     max_grid_size: int, required.
         maximum size of the output grid.
-
     max_iter: int, optional
         Number of times the intervals can be subdivided. The smallest
         subdivison of the grid if max_iter is reached will then be given
         by delta_grid / 2^max_iter. Needs to be greater then zero.
         Default is 10.
-
     rtol: float, optional
         The desired relative tolerance. Default is 10e-6, so 10 ppm.
-
     atol: float, optional
         The desired absolute tolerance. Default is 1e-6.
 
@@ -751,7 +739,6 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
     os_grid  : 1D array
         Oversampled grid which minimizes the integration error based on
         Romberg's method
-
     convergence_flag: bool
         Whether the estimated tolerance was reach everywhere or not.
 
@@ -816,7 +803,6 @@ def ThroughputSOSS(wavelength, throughput):
     ----------
     wavelength : array[float]
         A wavelength array.
-
     throughput : array[float]
         The throughput values corresponding to the wavelengths.
 
@@ -851,17 +837,14 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         ----------
         wave_kernels : array[float]
             Wavelength array for the kernel. Must have same shape as kernels.
-
         kernels : array[float]
             Kernel for throughput array.
             Dimensions are (wavelength, oversampled pixels).
             Center (~max throughput) of the kernel is at the center of the 2nd axis.
-
         wave_trace : array[float]
             1-D trace of the detector central wavelengths for the given order.
             Since WebbPSF returns kernels in the pixel space, this is used to
             convert to wavelength space.
-
         n_pix : int
             Number of detector pixels spanned by the kernel. Second axis of kernels
             has shape (n_os * n_pix) - (n_os - 1), where n_os is the
@@ -958,7 +941,6 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         ----------
         wave : array[float]
             Wavelength where the kernel is projected.
-
         wave_c : array[float]
             Central wavelength of the kernel.
 
@@ -1016,18 +998,14 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
         a grid value and the center of the kernel.
         fct(grid, center) = kernel
         grid and center have the same length.
-
     grid : array[float]
         grid where the kernel is projected
-
     h_len : int
         Half-length where we compute kernel value.
-
     i_a : int
         Index of grid axis 0 where to apply convolution.
         Once the convolution applied, the convolved grid will be
         equal to grid[i_a:i_b].
-
     i_b : int
         index of grid axis 1 where to apply convolution.
 
@@ -1035,7 +1013,6 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
     -------
     left : array[float]
         Kernel values at left wing.
-
     right : array[float]
         Kernel values at right wing.
     """
@@ -1088,18 +1065,14 @@ def _trpz_weight(grid, length, shape, i_a, i_b):
     ----------
     grid : array[float]
         grid where the integration is projected
-
     length : int
         length of the kernel
-
     shape : tuple[int]
         shape of the compact convolution 2d array
-
     i_a : int
         Index of grid axis 0 where to apply convolution.
         Once the convolution applied, the convolved grid will be
         equal to grid[i_a:i_b].
-
     i_b : int
         index of grid axis 1 where to apply convolution.
 
@@ -1146,15 +1119,12 @@ def _fct_to_array(fct, grid, grid_range, thresh):
         a grid value and the center of the kernel.
         fct(grid, center) = kernel
         grid and center have the same length.
-
     grid : array[float]
         Grid where the kernel is projected
-
     grid_range : list[int] or tuple[int]
         Indices of the grid where to apply the convolution.
         Once the convolution applied, the convolved grid will be
         equal to grid[grid_range[0]:grid_range[1]].
-
     thresh : float, required
         Threshold to define the maximum length of the kernel.
         Truncate when `kernel` < `thresh`.
@@ -1213,10 +1183,8 @@ def _sparse_c(ker, n_k, i_zero):
     ----------
     ker : array[float]
         Convolution kernel with shape (N_kernel, N_kc)
-
     n_k : int
         Length of the original grid
-
     i_zero : int
         Position of the first element of the convolved grid
         in the original grid.
@@ -1277,19 +1245,16 @@ def get_c_matrix(kernel, grid, i_bounds=None, thresh=1e-5):
         with the form f(x, x0) where x0 is the position of the center of
         the kernel. Must return a 1D array (len(x)), so a kernel value
         for each pairs of (x, x0).
-
     grid: 1D np.array:
         The grid on which the convolution will be applied.
         For example, if C is the convolution matrix,
         f_convolved = C.f(grid)
-
     i_bounds: 2-elements object, optional, default None.
         The bounds of the grid on which the convolution is defined.
         For example, if bounds = (a,b),
         then grid_convolved = grid[a <= grid <= b].
         It dictates also the dimension of f_convolved.
         If None, the convolution is defined on the whole grid.
-
     thresh: float, optional
         Only used when `kernel` is callable to define the maximum
         length of the kernel. Truncate when `kernel` < `thresh`
@@ -1377,10 +1342,8 @@ def _curvature_finite(factors, log_reg2, log_chi2):
     ----------
     factors : array[float]
         Regularisation factors (not in log).
-
     log_reg2 : array[float]
         norm-2 of the regularisation term (in log10).
-
     log_chi2 : array[float]
         norm-2 of the chi2 term (in log10).
 
@@ -1388,8 +1351,8 @@ def _curvature_finite(factors, log_reg2, log_chi2):
     -------
     factors : array[float]
         Sorted and cut version of input factors array.
-
     curvature : array[float]
+        TODO: add documentation
     """
     # Make sure it is sorted according to the factors
     idx = np.argsort(factors)
@@ -1540,18 +1503,14 @@ def _find_intersect(factors, y_val, thresh, interpolate=True, search_range=[0,3]
     ----------
     factors : array[float]
         1D array of Tikhonov factors for which value array is calculated
-
     y_val : array[float]
         1D array of values.
-
     thresh: float
         Threshold use in 'd_chi2' mode. Find the highest factor where the
         derivative of the chi2 derivative is below thresh.
-
     interpolate: bool, optional, default True.
         If True, use interpolation to find a finer minimum;
         otherwise, return minimum value in array.
-
     search_range : iterable[int], optional, default [0,3]
         Relative range of grid indices around the value to interpolate.
 
@@ -1643,7 +1602,6 @@ class TikhoTests(dict):
         ----------
         test_dict : dict
             Dictionary holding arrays for `factors`, `solution`, `error`, `reg`, and `grid`.
-
         default_chi2: string
             Type of chi2 loss used by default. Options are chi2, chi2_soft_l1, chi2_cauchy.
         """
@@ -1708,7 +1666,6 @@ class TikhoTests(dict):
         -------
         factors_leftd : array[float]
             factors array, shortened to match length of derivative.
-
         d_chi2 : array[float]
             derivative of chi squared array with respect to log10(factors)
         """
@@ -1844,10 +1801,8 @@ class Tikhonov:
         ----------
         a_mat : matrix-like object (2d)
             matrix A in the system to solve A.x = b
-
         b_vec : vector-like object (1d)
             vector b in the system to solve A.x = b
-
         t_mat : matrix-like object (2d)
             Tikhonov regularisation matrix to be applied on b_vec.
         """
