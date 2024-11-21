@@ -305,7 +305,9 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
 
                     extract_params['src_coeff'] = aper.get('src_coeff')
                     extract_params['bkg_coeff'] = aper.get('bkg_coeff')
-                    if (extract_params['bkg_coeff'] is not None
+
+                    if ((extract_params['bkg_coeff'] is not None
+                         or extraction_type == 'optimal')
                             and subtract_background is not False):
                         extract_params['subtract_background'] = True
                         if bkg_fit is not None:
@@ -1583,6 +1585,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
     # of the number of input profiles. It may need to be transposed to match
     # the input data.
     scene_model = result[-1]
+    scene_model[profile_view == 0] = np.nan
     if extract_params['dispaxis'] == HORIZONTAL:
         first_result.append(scene_model)
     else:
@@ -1769,7 +1772,10 @@ def create_extraction(input_model, slit, output_model,
 
     # Save the profile if desired
     if save_profile:
-        profile_model = datamodels.ImageModel(profile)
+        profile_copy = profile.copy()
+        profile_copy[profile_copy == 0] = np.nan
+
+        profile_model = datamodels.ImageModel(profile_copy)
         profile_model.update(input_model, only='PRIMARY')
         profile_model.name = slitname
     else:
@@ -1842,10 +1848,17 @@ def create_extraction(input_model, slit, output_model,
 
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
-        surf_bright = sum_flux / npixels_temp  # may be reset below
-        sb_var_poisson = f_var_poisson / npixels_temp / npixels_temp
-        sb_var_rnoise = f_var_rnoise / npixels_temp / npixels_temp
-        sb_var_flat = f_var_flat / npixels_temp / npixels_temp
+        if extract_params['extraction_type'] == 'optimal':
+            # surface brightness makes no sense for an optimal extraction
+            surf_bright = np.zeros_like(sum_flux)
+            sb_var_poisson = np.zeros_like(sum_flux)
+            sb_var_rnoise = np.zeros_like(sum_flux)
+            sb_var_flat = np.zeros_like(sum_flux)
+        else:
+            surf_bright = sum_flux / npixels_temp  # may be reset below
+            sb_var_poisson = f_var_poisson / npixels_temp / npixels_temp
+            sb_var_rnoise = f_var_rnoise / npixels_temp / npixels_temp
+            sb_var_flat = f_var_flat / npixels_temp / npixels_temp
         background /= npixels_temp
         b_var_poisson = b_var_poisson / npixels_temp / npixels_temp
         b_var_rnoise = b_var_rnoise / npixels_temp / npixels_temp
