@@ -293,9 +293,11 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                     extract_params['src_coeff'] = aper.get('src_coeff')
                     extract_params['bkg_coeff'] = aper.get('bkg_coeff')
 
-                    if ((extract_params['bkg_coeff'] is not None
-                         or extraction_type == 'optimal')
-                            and subtract_background is not False):
+                    if (extract_params['bkg_coeff'] is not None
+                            and subtract_background is None):
+                        subtract_background = True
+
+                    if subtract_background:
                         extract_params['subtract_background'] = True
                         if bkg_fit is not None:
                             # Mean value for background fitting is equivalent
@@ -307,8 +309,8 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                         else:
                             extract_params['bkg_fit'] = aper.get('bkg_fit', 'poly')
                     else:
-                        extract_params['bkg_fit'] = None
                         extract_params['subtract_background'] = False
+                        extract_params['bkg_fit'] = None
 
                     extract_params['independent_var'] = aper.get('independent_var', 'pixel').lower()
 
@@ -399,6 +401,7 @@ def log_initial_parameters(extract_params):
     log.debug(f"smoothing_length = {extract_params['smoothing_length']}")
     log.debug(f"independent_var = {extract_params['independent_var']}")
     log.debug(f"use_source_posn = {extract_params['use_source_posn']}")
+    log.debug(f"subtract_background = {extract_params['subtract_background']}")
     log.debug(f"extraction_type = {extract_params['extraction_type']}")
 
 
