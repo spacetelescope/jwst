@@ -28,7 +28,7 @@ def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
         variance weighting, these should be the square root of the inverse
         variance.  If not supplied, unit weights will be used.
 
-    bkg_order : int
+    order : int
         Polynomial order for fitting to each column of background.
         Default 0 (uniform background).
 
@@ -403,24 +403,29 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
 
         # Number of contributing pixels at each wavelength for each source.
 
-        npixels = np.sum(pixwgt[..., -nobjects:], axis=1).T
+        npixels = np.sum(pixwgt[..., -nobjects:] != 0, axis=1).T
 
         if order > -1:
             bkg_2d = np.sum(coefs[:, np.newaxis, :order + 1] * coefmatrix[..., :order + 1], axis=-1).T
 
         # Variances for each object (discard variances for background here)
 
-        var_rn = np.sum(pixwgt[..., -nobjects:] ** 2 * variance_rn.T[:, :, np.newaxis], axis=1).T
-        var_phnoise = np.sum(pixwgt[..., -nobjects:] ** 2 * variance_phnoise.T[:, :, np.newaxis], axis=1).T
-        var_flat = np.sum(pixwgt[..., -nobjects:] ** 2 * variance_flat.T[:, :, np.newaxis], axis=1).T
+        var_rn = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_rn.T[:, :, np.newaxis], axis=1).T
+        var_phnoise = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_phnoise.T[:, :, np.newaxis], axis=1).T
+        var_flat = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_flat.T[:, :, np.newaxis], axis=1).T
 
         # Computing a background contribution to the noise is harder in a joint fit.
         # Here, I am computing the weighting coefficients I would have without a background.
         # I then compute those variances, and subtract them from the actual variances.
 
         if order > -1:
-            wgt_nobkg = [profiles_2d[i] * weights / np.sum(profiles_2d[i] ** 2 * weights, axis=0) for i in
-                         range(nobjects)]
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+
+                wgt_nobkg = [profiles_2d[i] * weights / np.sum(profiles_2d[i] ** 2 * weights, axis=0)
+                             for i in range(nobjects)]
+
             bkg = np.array([np.sum(wgt_nobkg[i] * bkg_2d, axis=0) for i in range(nobjects)])
 
             var_bkg_rn = np.array([var_rn[i] - np.sum(wgt_nobkg[i] ** 2 * variance_rn, axis=0)
