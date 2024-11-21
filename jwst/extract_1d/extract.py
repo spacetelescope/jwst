@@ -1344,14 +1344,22 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
     if integ > -1:
         log.info(f"Extracting integration {integ + 1}")
         data = data_model.data[integ]
-        var_poisson = data_model.var_poisson[integ]
         var_rnoise = data_model.var_rnoise[integ]
+        var_poisson = data_model.var_poisson[integ]
         var_flat = data_model.var_flat[integ]
     else:
         data = data_model.data
-        var_poisson = data_model.var_poisson
         var_rnoise = data_model.var_rnoise
+        var_poisson = data_model.var_poisson
         var_flat = data_model.var_flat
+
+    # Make sure variances match data
+    if var_rnoise.shape != data.shape:
+        var_rnoise = np.zeros_like(data)
+    if var_poisson.shape != data.shape:
+        var_poisson = np.zeros_like(data)
+    if var_flat.shape != data.shape:
+        var_flat = np.zeros_like(data)
 
     # Transpose data for extraction
     if extract_params['dispaxis'] == HORIZONTAL:
