@@ -1909,6 +1909,7 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
 
     # Handle inputs that contain one or more slit models
     profile_model = None
+    scene_model = None
     if isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)):
         if isinstance(input_model, ModelContainer):
             slits = input_model
