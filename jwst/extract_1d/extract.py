@@ -1585,7 +1585,6 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
     # of the number of input profiles. It may need to be transposed to match
     # the input data.
     scene_model = result[-1]
-    scene_model[profile_view == 0] = np.nan
     if extract_params['dispaxis'] == HORIZONTAL:
         first_result.append(scene_model)
     else:
@@ -1772,10 +1771,7 @@ def create_extraction(input_model, slit, output_model,
 
     # Save the profile if desired
     if save_profile:
-        profile_copy = profile.copy()
-        profile_copy[profile_copy == 0] = np.nan
-
-        profile_model = datamodels.ImageModel(profile_copy)
+        profile_model = datamodels.ImageModel(profile)
         profile_model.update(input_model, only='PRIMARY')
         profile_model.name = slitname
     else:
