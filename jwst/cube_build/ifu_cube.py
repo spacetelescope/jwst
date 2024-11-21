@@ -53,7 +53,6 @@ class IFUCubeData():
 
         self.input_models = input_models  # needed when building single mode IFU cubes
         self.output_name_base = output_name_base
-        print('At the start output name base', self.output_name_base)
         
         self.num_files = None
 
@@ -170,9 +169,7 @@ class IFUCubeData():
         """ Define the base output name
         """
         if self.pipeline == 2:
-            print('in define_cubename', self.output_name_base)
-            newname = self.output_name_base + self.suffix + '.fits'
-            print('***********NAME OF CUBE FILE', newname)
+            newname = self.output_name_base + '_' + self.suffix + '.fits'
         else:
             if self.instrument == 'MIRI':
 
@@ -207,7 +204,6 @@ class IFUCubeData():
                     b_name = b_name + subchannels[i]
                 b_name = b_name.lower()
                 newname = self.output_name_base + ch_name + '-' + b_name
-                print('*******************NAME of cube when not pipeline2', newname)
                 if self.coord_system == 'internal_cal':
                     newname = self.output_name_base + ch_name + '-' + b_name + '_internal'
                 if self.output_type == 'single':
