@@ -1,6 +1,12 @@
 import numpy as np
 
 
+class _MissingValueType:
+    pass
+
+_MISSING_VALUE = _MissingValueType()
+
+
 def _convert_dtype(value):
     """Convert numarray column dtype into YAML-compatible format description"""
     if 'U' in value:
@@ -99,7 +105,7 @@ class TableBuilder:
 
     def _add_row(self, row):
         for attr, col in self.attr_to_column.items():
-            self.columns[col].append(row[attr] if attr in row else np.nan)
+            self.columns[col].append(row[attr] if attr in row else _MISSING_VALUE)
 
     def build_table(self):
         """
@@ -113,6 +119,8 @@ class TableBuilder:
         arrays = []
         table_dtype = []
         for col, items in self.columns.items():
-            arrays.append(np.array(items))
+            if all((i is _MISSING_VALUE for i in items)):
+                continue
+            arrays.append(np.array([np.nan if i is _MISSING_VALUE else i for i in items]))
             table_dtype.append((col, arrays[-1].dtype))
         return np.rec.fromarrays(arrays, dtype=table_dtype)

@@ -91,7 +91,7 @@ def test_masterbkg_corrpars(rtdata):
 
 @pytest.mark.parametrize(
     'suffix',
-    ['masterbg1d', 'masterbg2d', 'cal', 's2d', 'x1d']
+    ['masterbg1d', 'masterbg2d', 'bkgx1d', 'cal', 's2d', 'x1d']
 )
 def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""
