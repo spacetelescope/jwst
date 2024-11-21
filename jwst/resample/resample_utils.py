@@ -4,6 +4,8 @@ import warnings
 
 import numpy as np
 from astropy import units as u
+from astropy import wcs as fitswcs
+from astropy.modeling import Model
 import gwcs
 
 from stdatamodels.dqflags import interpret_bit_flags
@@ -163,10 +165,17 @@ def reproject(wcs1, wcs2):
     """
 
     try:
+        # Here we want to use the WCS API functions so that a Sliced WCS
+        # will work as well. However, the API functions do not accept
+        # keyword arguments and `with_bounding_box=False` cannot be passsed.
+        # We delete the bounding box on a copy of the WCS - yes, inefficient.
         forward_transform = wcs1.pixel_to_world_values
-        backward_transform = wcs2.world_to_pixel_values
+        wcs_no_bbox = deepcopy(wcs2)
+        wcs_no_bbox.bounding_box = None
+        backward_transform = wcs_no_bbox.world_to_pixel_values
     except AttributeError as err:
         raise TypeError("Input should be a WCS") from err
+
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
