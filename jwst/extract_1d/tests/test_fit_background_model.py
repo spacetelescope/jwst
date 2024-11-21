@@ -172,6 +172,40 @@ def test_handles_empty_interval(inputs_constant):
     assert np.allclose(b_var_flat[0], 0.0)
 
 
+def test_bad_fit_type(inputs_constant):
+    (image, var_rnoise, var_poisson, var_rflat,
+     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    with pytest.raises(ValueError, match="bkg_fit_type should be 'median' or 'poly'"):
+        extract1d.extract1d(
+            image, [profile], var_rnoise, var_poisson, var_rflat,
+            weights=weights, profile_bg=profile_bg, fit_bkg=True,
+            bkg_fit_type='mean', bkg_order=bkg_order)
+
+
+@pytest.mark.parametrize('smooth', [1.5, 2])
+def test_smooth_length(inputs_constant, smooth):
+    (image, var_rnoise, var_poisson, var_rflat,
+     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    with pytest.raises(ValueError, match="should be an odd integer >= 1"):
+        extract1d.extract1d(
+            image, [profile], var_rnoise, var_poisson, var_rflat,
+            weights=weights, profile_bg=profile_bg, fit_bkg=True,
+            bkg_fit_type=bkg_fit, bkg_order=bkg_order, bg_smooth_length=smooth)
+
+
+@pytest.mark.parametrize('extraction_type', ['box', 'optimal'])
+@pytest.mark.parametrize('bkg_order_val', [-1, 2.3])
+def test_bad_fit_order(inputs_constant, extraction_type, bkg_order_val):
+    (image, var_rnoise, var_poisson, var_rflat,
+     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    with pytest.raises(ValueError, match="bkg_order must be an integer >= 0"):
+        extract1d.extract1d(
+            image, [profile], var_rnoise, var_poisson, var_rflat,
+            weights=weights, profile_bg=profile_bg, fit_bkg=True,
+            bkg_fit_type='poly', bkg_order=bkg_order_val,
+            extraction_type=extraction_type)
+
+
 @pytest.mark.parametrize('bkg_order_val', [0, 1, 2])
 def test_fit_background_optimal(inputs_with_source, bkg_order_val):
     (image, var_rnoise, var_poisson, var_rflat,
