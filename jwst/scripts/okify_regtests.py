@@ -20,7 +20,7 @@ import asdf
 import readchar
 from colorama import Fore
 
-ARTIFACTORY_REPO = 'jwst-pipeline-results'
+ARTIFACTORY_REPO = 'jwst-pipeline-results/regression-tests/runs/'
 SPECFILE_SUFFIX = '_okify.json'
 RTDATA_SUFFIX = '_rtdata.asdf'
 TERMINAL_WIDTH = shutil.get_terminal_size((80, 20)).columns
@@ -103,7 +103,7 @@ def artifactory_get_breadcrumbs(build_number, suffix):
 
     An example search for build 586 would be:
 
-    jfrog rt search jwst-pipeline-results/*_GITHUB_CI_*-586/*_okify.json
+    jfrog rt search jwst-pipeline-results/regression-tests/runs/*_GITHUB_CI_*-586/*_okify.json
     """
 
     # Retrieve all the okify specfiles for failed tests.
