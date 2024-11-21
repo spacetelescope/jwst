@@ -1,5 +1,5 @@
 """
-Test for extract_1d._fit_background_model
+Tests for extract_1d background fitting
 """
 import numpy as np
 import pytest
@@ -16,7 +16,7 @@ def inputs_constant():
     var_rflat = image.copy()
 
     profile = np.zeros_like(image)
-    profile[1] = 1.0 # one pixel aperture
+    profile[1] = 1.0  # one pixel aperture
     weights = None
 
     profile_bg = np.zeros_like(image)
@@ -26,6 +26,38 @@ def inputs_constant():
 
     return (image, var_rnoise, var_poisson, var_rflat,
             profile, weights, profile_bg, bkg_fit, bkg_order)
+
+
+@pytest.fixture
+def inputs_with_source():
+    shape = (9, 5)
+    image = np.full(shape, 1.0)
+    image[3] = 5.0
+    image[4] = 10.0
+    image[5] = 5.0
+
+    var_rnoise = image * 0.05
+    var_poisson = image * 0.05
+    var_rflat = image * 0.05
+    weights = None
+
+    # Most of the image is set to a low but non-zero weight
+    # (contribution to PSF is small)
+    profile = np.full_like(image, 1e-6)
+
+    # The source crosses 3 pixels, with the central pixel
+    # twice as high as the other two
+    profile[3] = 1
+    profile[4] = 2
+    profile[5] = 1
+
+    # Normalize across the spatial dimension
+    profile /= np.sum(profile, axis=0)
+
+    profile_bg = None
+
+    return (image, var_rnoise, var_poisson, var_rflat,
+            profile, weights, profile_bg)
 
 
 @pytest.mark.parametrize('bkg_fit_type', ['poly', 'median'])
@@ -112,3 +144,26 @@ def test_handles_empty_interval(inputs_constant):
     assert np.allclose(b_var_rnoise[0], 0.0)
     assert np.allclose(b_var_poisson[0], 0.0)
     assert np.allclose(b_var_flat[0], 0.0)
+
+
+@pytest.mark.parametrize('bkg_order_val', [0, 1, 2])
+def test_fit_background_optimal(inputs_with_source, bkg_order_val):
+    (image, var_rnoise, var_poisson, var_rflat,
+     profile, weights, profile_bg) = inputs_with_source
+
+    result = extract1d.extract1d(
+        image, [profile], var_rnoise, var_poisson, var_rflat,
+        weights=weights, profile_bg=profile_bg, fit_bkg=True,
+        bkg_fit_type='poly', bkg_order=bkg_order_val,
+        extraction_type='optimal')
+
+    names = ('total_flux', 'f_var_rnoise', 'f_var_poisson', 'f_var_flat',
+             'bkg_flux', 'b_var_rnoise', 'b_var_poisson', 'b_var_flat',
+             'npixels', 'model')
+    for name, data in zip(names, result):
+        print(name, data)
+
+    flux = result[0][0]
+    background = result[4][0]
+    assert np.allclose(flux, 20.0 - 1.0 * 3)
+    assert np.allclose(background, 3.0)

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
@@ -57,7 +59,7 @@ def simple_wcs_ifu():
         ra = (z + 1 - crpix1) * cdelt1 + crval1
         dec = np.full_like(ra, crval2 + 1 * cdelt2)
 
-        return ra, dec, wave
+        return ra, dec, wave[::-1]
 
     simple_wcs_function.bounding_box = wcs_bbox_from_shape(shape)
 
@@ -300,5 +302,40 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
         # on extraction parameters
         assert np.all(spec.spec_table['FLUX'] > 0)
         assert np.all(spec.spec_table['FLUX_ERROR'] > 0)
+
+    result.close()
+
+
+def test_save_output_single(tmp_path, mock_nirspec_fs_one_slit):
+    mock_nirspec_fs_one_slit.meta.filename = 'test_s2d.fits'
+    result = Extract1dStep.call(mock_nirspec_fs_one_slit,
+                                save_results=True, save_profile=True,
+                                save_scene_model=True, output_dir=str(tmp_path),
+                                suffix='x1d')
+
+    output_path = str(tmp_path / 'test_x1d.fits')
+
+    assert os.path.isfile(output_path)
+    assert os.path.isfile(output_path.replace('x1d', 'profile'))
+    assert os.path.isfile(output_path.replace('x1d', 'scene_model'))
+
+    result.close()
+
+
+def test_save_output_multislit(tmp_path, mock_nirspec_mos):
+    mock_nirspec_mos.meta.filename = 'test_s2d.fits'
+    result = Extract1dStep.call(mock_nirspec_mos,
+                                save_results=True, save_profile=True,
+                                save_scene_model=True, output_dir=str(tmp_path),
+                                suffix='x1d')
+
+    output_path = str(tmp_path / 'test_x1d.fits')
+
+    assert os.path.isfile(output_path)
+
+    # intermediate files for multislit data contain the slit name
+    for slit in mock_nirspec_mos.slits:
+        assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_profile'))
+        assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_scene_model'))
 
     result.close()
