@@ -151,3 +151,12 @@ def test_extract_optimal(inputs_with_source):
     # Now the flux can no longer be estimated in that column
     assert np.isnan(total_flux[0][2])
     assert npixels[0][2] == 0.
+
+
+def test_too_many_profiles(inputs_constant):
+    (image, var_rnoise, var_poisson, var_rflat,
+     profile, weights, profile_bg) = inputs_constant
+
+    with pytest.raises(ValueError, match="not supported with 2 input profiles"):
+        extract1d.extract1d(image, [profile, profile.copy()],
+                            var_rnoise, var_poisson, var_rflat)

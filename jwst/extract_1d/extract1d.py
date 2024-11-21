@@ -307,7 +307,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
 
         else:
             raise ValueError("bkg_fit_type should be 'median' or 'poly'. "
-                             "If 'poly', bkg_order must be a nonnegative integer.")
+                             "If 'poly', bkg_order must be an integer >= 0.")
 
         image_sub = image - bkg_2d
     else:
