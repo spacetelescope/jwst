@@ -1857,16 +1857,12 @@ class Tikhonov:
         self.t_mat = t_mat
 
         # Pre-compute some matrix for the linear system to solve
-        t_mat_2 = (t_mat.T).dot(t_mat)  # squared tikhonov matrix
-        a_mat_2 = a_mat.T.dot(a_mat)  # squared model matrix
-        result = (a_mat.T).dot(b_vec.T)
-        idx_valid = (result.toarray() != 0).squeeze()  # valid indices to use if `valid` is True
-
-        # Save pre-computed matrix
-        self.t_mat_2 = t_mat_2
-        self.a_mat_2 = a_mat_2
-        self.result = result
-        self.idx_valid = idx_valid
+        self.t_mat_2 = (t_mat.T).dot(t_mat)  # squared tikhonov matrix
+        self.a_mat_2 = a_mat.T.dot(a_mat)  # squared model matrix
+        self.result = (a_mat.T).dot(b_vec.T)
+        # here self.result is all NaNs... why?
+        print(np.sum(~np.isnan(self.result.toarray())))
+        self.idx_valid = (self.result.toarray() != 0).squeeze()  # valid indices to use if `valid` is True
 
         # Save other attributes
         self.test = None
@@ -1906,6 +1902,9 @@ class Tikhonov:
         # Solve
         matrix = matrix[idx, :][:, idx]
         result = result[idx]
+        print(type(matrix))
+        print(type(result))
+        print(result.nanmin(), result.nanmax())
         solution[idx] = try_solve_two_methods(matrix, result)
 
         return solution
