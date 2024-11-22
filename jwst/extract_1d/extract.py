@@ -258,8 +258,8 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['subtract_background'] = False
         extract_params['extraction_type'] = 'box'
         extract_params['use_source_posn'] = False  # no source position correction
-        extract_params['specwcs_ref_name'] = 'N/A'
-        extract_params['psf_ref_name'] = 'N/A'
+        extract_params['specwcs'] = 'N/A'
+        extract_params['psf'] = 'N/A'
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
         extract_params['position_offset'] = 0.
