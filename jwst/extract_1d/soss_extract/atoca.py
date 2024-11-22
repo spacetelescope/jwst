@@ -12,9 +12,7 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 
 # General imports.
 import numpy as np
-import warnings
 from scipy.sparse import issparse, csr_matrix, diags
-from scipy.sparse.linalg import spsolve, lsqr, MatrixRankWarning
 
 # Local imports.
 from . import atoca_utils
@@ -159,7 +157,7 @@ class ExtractionEngine:
         self.update_throughput(throughput)
 
         # turn kernels into sparse matrix
-        self.kernels =self._create_kernels(kernels, c_kwargs)
+        self.kernels = self._create_kernels(kernels, c_kwargs)
         
         # Compute integration weights. see method self.get_w() for details.
         self.weights, self.weights_k_idx = self.compute_weights()
@@ -270,7 +268,7 @@ class ExtractionEngine:
         for i_order, kernel_n in enumerate(kernels):
             if kernel_n is None:
                 kernel_n = np.array([1.0])
-            elif not issparse(kernel_n):
+            if not issparse(kernel_n):
                 kernel_n = atoca_utils.get_c_matrix(kernel_n, self.wave_grid,
                                                     i_bounds=self.i_bounds[i_order],
                                                     **c_kwargs[i_order])
@@ -367,30 +365,6 @@ class ExtractionEngine:
             i_bnds_new.append([a, b])
 
         return i_bnds_new
-
-
-    def update_i_bnds(self):
-        """Update the grid limits for the extraction.
-        Needs to be done after modification of the mask
-        """
-
-        # Get old and new boundaries.
-        i_bnds_old = self.i_bounds
-        i_bnds_new = self._get_i_bnds()
-        print("i_bounds old, new in update_i_bnds", i_bnds_old, i_bnds_new)
-
-        for i_order in range(self.n_orders):
-
-            # Take most restrictive lower bound.
-            low_bnds = [i_bnds_new[i_order][0], i_bnds_old[i_order][0]]
-            i_bnds_new[i_order][0] = np.max(low_bnds)
-
-            # Take most restrictive upper bound.
-            up_bnds = [i_bnds_new[i_order][1], i_bnds_old[i_order][1]]
-            i_bnds_new[i_order][1] = np.min(up_bnds)
-
-        # Update attribute.
-        self.i_bounds = i_bnds_new
 
 
     def wave_grid_c(self, i_order):
@@ -502,9 +476,6 @@ class ExtractionEngine:
         attrs = ['trace_profile', 'throughput', 'kernels', 'weights', 'i_bounds']
         trace_profile_n, throughput_n, kernel_n, weights_n, i_bnds = self.get_attributes(*attrs, i_order=i_order)
 
-        print(trace_profile_n.shape, throughput_n.shape, kernel_n.shape, weights_n.shape, i_bnds)
-        # TODO: why is the kernel shape here not the same as on main?
-
         # Keep only valid pixels (P and sig are still 2-D)
         # And apply directly 1/sig here (quicker)
         trace_profile_n = trace_profile_n[~mask] / error[~mask]
@@ -536,7 +507,6 @@ class ExtractionEngine:
 
         # Save new pixel mapping matrix.
         self.pixel_mapping[i_order] = pixel_mapping
-        print(pixel_mapping.shape)
 
         return pixel_mapping
 
@@ -599,7 +569,6 @@ class ExtractionEngine:
         # Initiate with empty matrix
         n_i = (~self.mask).sum()  # n good pixels
         b_matrix = csr_matrix((n_i, self.n_wavepoints))
-        print(b_matrix.shape)
 
         # Sum over orders
         for i_order in range(self.n_orders):
@@ -870,16 +839,8 @@ class ExtractionEngine:
         # Only solve for valid indices, i.e. wavelengths that are
         # covered by the pixels on the detector.
         # It will be a singular matrix otherwise.
-        with warnings.catch_warnings():
-            warnings.filterwarnings(action='error', category=MatrixRankWarning)
-            try:
-                sln[idx] = spsolve(matrix[idx, :][:, idx], result[idx])
-            except MatrixRankWarning:
-                # on rare occasions spsolve's approximation of the matrix is not appropriate
-                # and fails on good input data. revert to different solver
-                log.info('ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
-                sln[idx] = lsqr(matrix[idx, :][:, idx], result[idx])[0]
-
+        matrix = matrix[idx, :][:, idx]
+        sln[idx] = atoca_utils.try_solve_two_methods(matrix, result[idx])
         return sln
 
     @staticmethod
@@ -990,7 +951,6 @@ class ExtractionEngine:
 
         attrs = ['wave_p', 'wave_m', 'i_bounds']
         wave_p, wave_m, i_bnds = self.get_attributes(*attrs, i_order=i_order)
-        print("i_bnds in get_mask_wave", i_bnds)
         wave_min = self.wave_grid[i_bnds[0]]
         wave_max = self.wave_grid[i_bnds[1] - 1]
 
@@ -1039,9 +999,40 @@ class ExtractionEngine:
         n_i = len(lo)
         i = np.arange(n_i)
 
-        # Generate array of all k_i. Set to max value of uint16 if not valid
-        k_n = atoca_utils.arange_2d(lo[~ma]-1, hi[~ma]+1)
+        # Define first and last index of wave_grid for each pixel
+        k_first, k_last = -1 * np.ones(n_i), -1 * np.ones(n_i)
 
+        # If lowest value close enough to the exact grid value,
+        # NOTE: Could be approximately equal to the exact grid
+        # value. It would look like that.
+        # >>> lo_dgrid = lo
+        # >>> lo_dgrid[lo_dgrid==len(d_grid)] = len(d_grid) - 1
+        # >>> cond = (grid[lo]-wave_m)/d_grid[lo_dgrid] <= 1.0e-8
+        # But let's stick with the exactly equal
+        cond = (wave_grid[lo] == wave_m)
+
+        # special case (no need for lo_i - 1)
+        k_first[cond & ~ma] = lo[cond & ~ma]
+        wave_m[cond & ~ma] = wave_grid[lo[cond & ~ma]]
+
+        # else, need lo_i - 1
+        k_first[~cond & ~ma] = lo[~cond & ~ma] - 1
+
+        # Same situation for highest value. If we follow the note
+        # above (~=), the code could look like
+        # >>> cond = (wave_p-grid[hi])/d_grid[hi-1] <= 1.0e-8
+        # But let's stick with the exactly equal
+        cond = (wave_p == wave_grid[hi])
+
+        # special case (no need for hi_i - 1)
+        k_last[cond & ~ma] = hi[cond & ~ma]
+        wave_p[cond & ~ma] = wave_grid[hi[cond & ~ma]]
+
+        # else, need hi_i
+        k_last[~cond & ~ma] = hi[~cond & ~ma]
+
+        # Generate array of all k_i. Set to -1 if not valid
+        k_n = atoca_utils.arange_2d(k_first, k_last + 1)
         bad = k_n == -1
 
         # Number of valid k per pixel
@@ -1050,19 +1041,16 @@ class ExtractionEngine:
         # Compute array of all w_i. Set to np.nan if not valid
         # Initialize
         w_n = np.zeros(k_n.shape, dtype=float)
-        ####################
+
         ####################
         # 4 different cases
-        ####################
         ####################
 
         # Valid for every cases
         w_n[:, 0] = wave_grid[k_n[:, 1]] - wave_m
         w_n[i, n_k - 1] = wave_p - wave_grid[k_n[i, n_k - 2]]
 
-        ##################
         # Case 1, n_k == 2
-        ##################
         case = (n_k == 2) & ~ma
         if case.any():
 
@@ -1081,9 +1069,7 @@ class ExtractionEngine:
             part2 = d_grid[k_n[case, 0]]
             w_n[case, :] *= (part1 / part2)[:, None]
 
-        ##################
         # Case 2, n_k >= 3
-        ##################
         case = (n_k >= 3) & ~ma
         if case.any():
 
@@ -1109,9 +1095,7 @@ class ExtractionEngine:
             w_n[cond, n_ki - 1] *= (nume1 / deno)
             w_n[cond, n_ki - 2] += (nume1 * nume2 / deno)
 
-        ##################
         # Case 3, n_k >= 4
-        ##################
         case = (n_k >= 4) & ~ma
         if case.any():
             log.debug('n_k = 4 in get_w().')
@@ -1120,9 +1104,7 @@ class ExtractionEngine:
             w_n[case, n_ki - 2] += (wave_grid[k_n[case, n_ki - 2]]
                                     - wave_grid[k_n[case, n_ki - 3]])
 
-        ##################
         # Case 4, n_k > 4
-        ##################
         case = (n_k > 4) & ~ma
         if case.any():
             log.debug('n_k > 4 in get_w().')

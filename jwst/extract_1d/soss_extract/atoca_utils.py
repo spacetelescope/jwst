@@ -7,8 +7,9 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 """
 
 import numpy as np
+import warnings
 from scipy.sparse import diags, csr_matrix
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve, lsqr, MatrixRankWarning
 from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
 from scipy.optimize import minimize_scalar, brentq
 from scipy.interpolate import make_interp_spline
@@ -988,6 +989,33 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         return webbker
 
 
+def _constant_kernel_to_2d(c, grid_range):
+    """Build a 2d kernel array with a constant 1D kernel as input
+
+    Parameters
+    ----------
+    c : float or size-1 np.ndarray
+        Constant value to expand into a 2-D kernel
+    grid_range : list[int]
+        Indices over which convolution is defined on grid.
+
+    Returns
+    -------
+    kernel_2d : array[float]
+        2D array of input 1D kernel tiled over axis with
+        length equal to difference of grid_range values.
+    """
+
+    # Assign range where the convolution is defined on the grid
+    a, b = grid_range
+
+    # Get length of the convolved axis
+    n_k_c = b - a
+
+    # Return a 2D array with this length
+    return np.tile(np.atleast_1d(c), (n_k_c, 1)).T
+
+
 def _get_wings(fct, grid, h_len, i_a, i_b):
     """Compute values of the kernel at grid[+-h_len]
 
@@ -1272,9 +1300,12 @@ def get_c_matrix(kernel, grid, i_bounds=None, thresh=1e-5):
 
         a, b = i_bounds
 
-    # Generate a 2D kernel of shape (N_kernel x N_kc) from a callable
+    # Generate a 2D kernel of shape (N_kernel x N_kc)
     if callable(kernel):
         kernel = _fct_to_array(kernel, grid, [a, b], thresh)
+
+    elif kernel.size == 1:
+       kernel = _constant_kernel_to_2d(kernel, [a, b])
 
     elif kernel.ndim != 2:
         msg = ("Input kernel to get_c_matrix must be callable or"
@@ -1783,6 +1814,19 @@ class TikhoTests(dict):
         return best_fac
 
 
+def try_solve_two_methods(matrix, result):
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action='error', category=MatrixRankWarning)
+        try:
+            return spsolve(matrix, result)
+        except MatrixRankWarning:
+            # on rare occasions spsolve's approximation of the matrix is not appropriate
+            # and fails on good input data. revert to different solver
+            log.info('ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
+            return lsqr(matrix, result)[0]
+
+
 class Tikhonov:
     """
     TODO: can we avoid all of this by using scipy.optimize.least_squares
@@ -1862,7 +1906,7 @@ class Tikhonov:
         # Solve
         matrix = matrix[idx, :][:, idx]
         result = result[idx]
-        solution[idx] = spsolve(matrix, result)
+        solution[idx] = try_solve_two_methods(matrix, result)
 
         return solution
 

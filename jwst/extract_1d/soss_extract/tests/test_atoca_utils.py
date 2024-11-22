@@ -534,6 +534,9 @@ def test_get_c_matrix(kernel):
     # test where input kernel is a 2-D array instead of callable
 
 
+    # test where input kernel is size 1
+
+
     # test where i_bounds is not None
 
 
