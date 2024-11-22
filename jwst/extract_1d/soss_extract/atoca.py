@@ -156,6 +156,9 @@ class ExtractionEngine:
         # if throughput is given as callable, turn it into an array of proper shape
         self.update_throughput(throughput)
 
+        # Re-build global mask and masks for each orders
+        self.mask, self.mask_ord = self._get_masks()
+
         # turn kernels into sparse matrix
         self.kernels = self._create_kernels(kernels, c_kwargs)
         
@@ -316,24 +319,6 @@ class ExtractionEngine:
         mask_ord = (mask_wave | general_mask[None, :, :])
 
         return general_mask, mask_ord
-
-
-    def update_mask(self, mask):
-        """Update `mask` attribute by combining the `general_mask`
-        attribute with the input `mask`. Every time the mask is
-        changed, the integration weights need to be recomputed
-        since the pixels change.
-
-        Parameters
-        ----------
-        mask : array[bool]
-            New mask to be combined with internal general_mask and
-            saved in self.mask.
-        """
-        self.mask = (self.general_mask | mask)
-
-        # Re-compute weights
-        self.weights, self.weights_k_idx = self.compute_weights()
 
 
     def _get_i_bnds(self):
@@ -579,6 +564,19 @@ class ExtractionEngine:
         # Build detector pixels' array
         # Take only valid pixels and apply `error` on data
         data = data[~self.mask] / error[~self.mask]
+        print("sum of nans in data after mask", np.sum(np.isnan(data)))
+        print("n_i", n_i)
+
+        import matplotlib.pyplot as plt
+        plt.imshow(self.mask, origin="lower")
+        plt.show()
+
+        # FIXME: data[~self.mask] still contains NaNs in some cases
+        # but this is not the case on main
+        # first pass through, looking at just order 1, it appears self.mask has
+        # all the NaNs from the data already in it
+        # second pass through, mask is different and now it doesn't contain the NaNs
+        # in the data
 
         return b_matrix, csr_matrix(data)
 

@@ -1861,7 +1861,7 @@ class Tikhonov:
         self.a_mat_2 = a_mat.T.dot(a_mat)  # squared model matrix
         self.result = (a_mat.T).dot(b_vec.T)
         # here self.result is all NaNs... why?
-        print(np.sum(~np.isnan(self.result.toarray())))
+        print("self.result is all nans", np.any(~np.isnan(self.result.toarray())))
         self.idx_valid = (self.result.toarray() != 0).squeeze()  # valid indices to use if `valid` is True
 
         # Save other attributes
@@ -1902,9 +1902,6 @@ class Tikhonov:
         # Solve
         matrix = matrix[idx, :][:, idx]
         result = result[idx]
-        print(type(matrix))
-        print(type(result))
-        print(result.nanmin(), result.nanmax())
         solution[idx] = try_solve_two_methods(matrix, result)
 
         return solution
@@ -1962,11 +1959,6 @@ class Tikhonov:
         reg = np.array(reg)
 
         # Save in a dictionary
-        print(factors)
-        print(sln)
-        print(err)
-        print(reg)
-
         return TikhoTests({'factors': factors,
                             'solution': sln,
                             'error': err,
