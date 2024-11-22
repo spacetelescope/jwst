@@ -32,9 +32,9 @@ def inputs_constant():
 def inputs_with_source():
     shape = (9, 5)
     image = np.full(shape, 1.0)
-    image[3] = 5.0
-    image[4] = 10.0
-    image[5] = 5.0
+    image[3] += 5.0
+    image[4] += 10.0
+    image[5] += 5.0
 
     var_rnoise = image * 0.05
     var_poisson = image * 0.05
@@ -217,15 +217,8 @@ def test_fit_background_optimal(inputs_with_source, bkg_order_val):
         bkg_fit_type='poly', bkg_order=bkg_order_val,
         extraction_type='optimal')
 
-    names = ('total_flux', 'f_var_rnoise', 'f_var_poisson', 'f_var_flat',
-             'bkg_flux', 'b_var_rnoise', 'b_var_poisson', 'b_var_flat',
-             'npixels', 'model')
-    for name, data in zip(names, result):
-        print(name, data)
-
     flux = result[0][0]
     background = result[4][0]
 
-    # this should be exact, not sure why background fit is off
-    assert np.allclose(flux, 20.0 - 1.0 * 3, atol=1.0)
-    assert np.allclose(background, 3.0, atol=1.0)
+    assert np.allclose(flux, 20.0)
+    assert np.allclose(background, 2.66667)

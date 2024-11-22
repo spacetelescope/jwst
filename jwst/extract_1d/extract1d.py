@@ -401,9 +401,12 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
 
         coefs = np.nansum(pixwgt * image.T[:, :, np.newaxis], axis=1)
 
-        # Number of contributing pixels at each wavelength for each source.
-
-        npixels = np.sum(pixwgt[..., -nobjects:] != 0, axis=1).T
+        # Effective number of contributing pixels at each wavelength for each source.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+            wgt_src_pix = [profiles_2d[i] * weights / np.sum(profiles_2d[i] ** 2, axis=0)
+                           for i in range(nobjects)]
+        npixels = np.sum(wgt_src_pix, axis=1)
 
         if order > -1:
             bkg_2d = np.sum(coefs[:, np.newaxis, :order + 1] * coefmatrix[..., :order + 1], axis=-1).T
