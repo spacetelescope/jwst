@@ -12,7 +12,6 @@ from ..photom import photom_step
 from ..pixel_replace import pixel_replace_step
 from ..resample import resample_spec_step
 from ..extract_1d import extract_1d_step
-from ..combine_1d import combine_1d_step
 from ..stpipe import Pipeline
 
 __all__ = ['MasterBackgroundMosStep']
@@ -69,7 +68,6 @@ class MasterBackgroundMosStep(Pipeline):
         'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'extract_1d': extract_1d_step.Extract1dStep,
-        'combine_1d': combine_1d_step.Combine1dStep
     }
 
     # No need to prefetch. This will have been done by the parent step.
@@ -135,6 +133,7 @@ class MasterBackgroundMosStep(Pipeline):
                 user_background = datamodels.open(self.user_background)
                 master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
                     data_model, user_background)
+                # data, user_background=None, sigma_clip=3, median_kernel=1)
             elif self.use_correction_pars:
                 self.log.info('Using pre-calculated correction parameters.')
                 master_background = self.correction_pars['masterbkg_1d']
@@ -183,7 +182,7 @@ class MasterBackgroundMosStep(Pipeline):
             return
 
         steps = ['barshadow', 'flat_field', 'pathloss', 'photom',
-                 'pixel_replace', 'resample_spec', 'extract_1d', 'combine_1d']
+                 'pixel_replace', 'resample_spec', 'extract_1d']
         pars_to_ignore = {
             'barshadow': ['source_type'],
             'flat_field': ['save_interpolated_flat'],
@@ -302,7 +301,7 @@ class MasterBackgroundMosStep(Pipeline):
                     bkg_model = self.pixel_replace(bkg_model)
                     bkg_model = self.resample_spec(bkg_model)
                     bkg_x1d_spectra = self.extract_1d(bkg_model)
-                    master_background = nirspec_utils.create_background_from_multislit(
+                    master_background = nirspec_utils.create_background_from_multispec(
                                       bkg_x1d_spectra, sigma_clip=sigma_clip, median_kernel=median_kernel)
                 else:
                     master_background = None

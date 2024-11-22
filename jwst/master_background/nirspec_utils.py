@@ -77,14 +77,14 @@ def map_to_science_slits(input_model, master_bkg):
     return output_model
 
 
-def create_background_from_multislit(bkg_model, sigma_clip=3, median_kernel=1):
+def create_background_from_multispec(bkg_model, sigma_clip=3, median_kernel=1):
     """Create a 1D master background spectrum from a set of
     calibrated background MOS slitlets in the input
-    MultiSlitModel.
+    MultiSpecModel.
 
     Parameters
     ----------
-    bkg_model : `~jwst.datamodels.MultiSlitModel`
+    bkg_model : `~jwst.datamodels.MultiSpecModel`
         The input data model containing all slit instances.
     sigma_clip : None or float, optional
         Optional factor for sigma clipping outliers when combining background spectra.
