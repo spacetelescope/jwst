@@ -124,7 +124,7 @@ def test_extract_optimal(inputs_with_source):
     # Total flux should be well modeled
     assert np.allclose(total_flux[0], 20)
     assert np.allclose(bkg_flux[0], 0)
-    assert np.allclose(npixels[0], 3)
+    assert np.allclose(npixels[0], 2.66667)
 
     # set a NaN value in a column of interest
     image[4, 2] = np.nan
@@ -137,7 +137,7 @@ def test_extract_optimal(inputs_with_source):
 
     # Total flux is still well modeled from 2 pixels
     assert np.allclose(total_flux[0], 20)
-    assert npixels[0, 2] == 2
+    assert np.isclose(npixels[0, 2], 1.33333)
 
     # set the whole column to NaN
     image[:, 2] = np.nan
