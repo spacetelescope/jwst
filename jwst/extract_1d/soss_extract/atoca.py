@@ -576,7 +576,8 @@ class ExtractionEngine:
         # first pass through, looking at just order 1, it appears self.mask has
         # all the NaNs from the data already in it
         # second pass through, mask is different and now it doesn't contain the NaNs
-        # in the data
+        # that are present in the data, just the outline of the trace
+        # on main it appears this is somehow updated
 
         return b_matrix, csr_matrix(data)
 
