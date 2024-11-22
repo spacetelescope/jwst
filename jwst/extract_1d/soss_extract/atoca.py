@@ -159,7 +159,7 @@ class ExtractionEngine:
         self.update_throughput(throughput)
 
         # turn kernels into sparse matrix
-        self._create_kernels(kernels, c_kwargs)
+        self.kernels =self._create_kernels(kernels, c_kwargs)
         
         # Compute integration weights. see method self.get_w() for details.
         self.weights, self.weights_k_idx = self.compute_weights()
@@ -269,7 +269,7 @@ class ExtractionEngine:
         kernels_new = []
         for i_order, kernel_n in enumerate(kernels):
             if kernel_n is None:
-                kernel_n = 1
+                kernel_n = np.array([1.0])
             elif not issparse(kernel_n):
                 kernel_n = atoca_utils.get_c_matrix(kernel_n, self.wave_grid,
                                                     i_bounds=self.i_bounds[i_order],
@@ -277,7 +277,7 @@ class ExtractionEngine:
 
             kernels_new.append(kernel_n)
 
-        self.kernels = kernels_new
+        return kernels_new
 
 
     def _get_masks(self):
@@ -502,7 +502,8 @@ class ExtractionEngine:
         attrs = ['trace_profile', 'throughput', 'kernels', 'weights', 'i_bounds']
         trace_profile_n, throughput_n, kernel_n, weights_n, i_bnds = self.get_attributes(*attrs, i_order=i_order)
 
-        print("i_bounds in get_pixel_mapping", i_bnds)
+        print(trace_profile_n.shape, throughput_n.shape, kernel_n.shape, weights_n.shape, i_bnds)
+        # TODO: why is the kernel shape here not the same as on main?
 
         # Keep only valid pixels (P and sig are still 2-D)
         # And apply directly 1/sig here (quicker)
