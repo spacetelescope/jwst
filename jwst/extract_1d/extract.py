@@ -86,11 +86,11 @@ def read_extract1d_ref(refname):
                 # Input file does not load correctly as json file.
                 # Probably an error in json file
                 fd.close()
-                log.error("Extract1d json reference file has an error, run a json validator off line and fix the file")
-                raise RuntimeError("Invalid json extract 1d reference file, run json validator off line and fix file.")
+                log.error("Extract1d JSON reference file has an error. Run a json validator off line and fix the file.")
+                raise RuntimeError("Invalid JSON extract1d reference file.")
         else:
-            log.error("Invalid Extract 1d reference file, must be json.")
-            raise RuntimeError("Invalid Extract 1d reference file, must be json.")
+            log.error("Invalid Extract1d reference file: must be JSON.")
+            raise RuntimeError("Invalid extract1d reference file: must be JSON.")
 
     return ref_dict
 
@@ -138,8 +138,8 @@ def read_apcorr_ref(refname, exptype):
 
 
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
-                           smoothing_length, bkg_fit, bkg_order, use_source_posn,
-                           subtract_background):
+                           smoothing_length=None, bkg_fit=None, bkg_order=None,
+                           use_source_posn=None, subtract_background=None):
     """Get extraction parameter values.
 
     Parameters
@@ -163,7 +163,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         The metadata for the actual input model, i.e. not just for the
         current slit, from input_model.meta.
 
-    smoothing_length : int or None
+    smoothing_length : int or None, optional
         Width of a boxcar function for smoothing the background regions.
         If None, the smoothing length will be retrieved from `ref_dict`, or
         it will be set to 0 (no background smoothing) if this key is
@@ -173,14 +173,14 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         This argument is only used if background regions have been
         specified.
 
-    bkg_fit : str or None
+    bkg_fit : str or None, optional
         The type of fit to apply to background values in each
         column (or row, if the dispersion is vertical). The default
         `poly` results in a polynomial fit of order `bkg_order`. Other
         options are `mean` and `median`. If `mean` or `median` is selected,
         `bkg_order` is ignored.
 
-    bkg_order : int or None
+    bkg_order : int or None, optional
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.  If None, the polynomial
         order will be gotten from `ref_dict`, or it will be set to 0 if
@@ -192,14 +192,14 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
 
-    use_source_posn : bool or None
+    use_source_posn : bool or None, optional
         If True, the target and background positions specified in `ref_dict`
         (or a default target position) will be shifted to account for
         the actual source location in the data.
         If None, the value specified in `ref_dict` will be used, or it will
         be set to True if not found in `ref_dict`.
 
-    subtract_background : bool or None
+    subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
 
     Returns
@@ -228,12 +228,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['bkg_order'] = 0  # because no background sub.
         extract_params['subtract_background'] = False
         extract_params['extraction_type'] = 'box'
-
-        if use_source_posn is None:
-            extract_params['use_source_posn'] = False
-        else:
-            extract_params['use_source_posn'] = use_source_posn
-
+        extract_params['use_source_posn'] = False  # no source position correction
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
         # Note that extract_params['dispaxis'] is not assigned.
@@ -245,13 +240,15 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                     and (aper['id'] == slitname
                          or aper['id'] == ANY
                          or slitname == ANY)):
-                extract_params['match'] = PARTIAL
 
                 # region_type is retained for backward compatibility; it is
-                # not required to be present.
+                # not required to be present, but if it is and is not set
+                # to target, then the aperture is not matched.
                 region_type = aper.get("region_type", "target")
                 if region_type != "target":
                     continue
+
+                extract_params['match'] = PARTIAL
 
                 # spectral_order is a secondary selection criterion.  The
                 # default is the expected value, so if the key is not present
@@ -343,7 +340,7 @@ def log_initial_parameters(extract_params):
     extract_params : dict
         Information read from the reference file.
     """
-    if "xstart" not in extract_params:
+    if "dispaxis" not in extract_params:
         return
 
     log.debug("Extraction parameters:")
@@ -510,9 +507,10 @@ def populate_time_keywords(input_model, output_model):
     # Inclusive range of integration numbers in the INT_TIMES table, zero indexed.
     table_range = (int_num[0] - 1, int_num[-1] - 1)
     offset = data_range[0] - table_range[0]
-
-    if data_range[0] < table_range[0] or data_range[1] > table_range[1]:
-        log.warning("Not using the INT_TIMES table because it does not include rows for all integrations in the data.")
+    if ((data_range[0] < table_range[0] or data_range[1] > table_range[1])
+            or offset > table_range[1]):
+        log.warning("Not using the INT_TIMES table because it does not include "
+                    "rows for all integrations in the data.")
         return
 
     log.debug("TSO data, so copying times from the INT_TIMES table.")

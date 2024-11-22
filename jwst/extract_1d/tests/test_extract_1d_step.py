@@ -4,179 +4,9 @@ import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 
-from jwst.assign_wcs.util import wcs_bbox_from_shape
 from jwst.datamodels import ModelContainer
-from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d.extract_1d_step import Extract1dStep
-
-
-@pytest.fixture
-def simple_wcs():
-    shape = (50, 50)
-    xcenter = shape[1] // 2.0
-
-    def simple_wcs_function(x, y):
-        """ Simple WCS for testing """
-        crpix1 = xcenter
-        crpix3 = 1.0
-        cdelt1 = 0.1
-        cdelt2 = 0.1
-        cdelt3 = 0.01
-
-        crval1 = 45.0
-        crval2 = 45.0
-        crval3 = 7.5
-
-        wave = (x + 1 - crpix3) * cdelt3 + crval3
-        ra = (x + 1 - crpix1) * cdelt1 + crval1
-        dec = np.full_like(ra, crval2 + 1 * cdelt2)
-
-        return ra, dec, wave
-
-    simple_wcs_function.bounding_box = wcs_bbox_from_shape(shape)
-
-    return simple_wcs_function
-
-
-@pytest.fixture
-def simple_wcs_ifu():
-    shape = (10, 50, 50)
-    xcenter = shape[1] // 2.0
-
-    def simple_wcs_function(x, y, z):
-        """ Simple WCS for testing """
-        crpix1 = xcenter
-        crpix3 = 1.0
-        cdelt1 = 0.1
-        cdelt2 = 0.1
-        cdelt3 = 0.01
-
-        crval1 = 45.0
-        crval2 = 45.0
-        crval3 = 7.5
-
-        wave = (z + 1 - crpix3) * cdelt3 + crval3
-        ra = (z + 1 - crpix1) * cdelt1 + crval1
-        dec = np.full_like(ra, crval2 + 1 * cdelt2)
-
-        return ra, dec, wave[::-1]
-
-    simple_wcs_function.bounding_box = wcs_bbox_from_shape(shape)
-
-    return simple_wcs_function
-
-
-@pytest.fixture()
-def mock_nirspec_fs_one_slit(simple_wcs):
-    model = dm.SlitModel()
-    model.meta.instrument.name = 'NIRSPEC'
-    model.meta.instrument.detector = 'NRS1'
-    model.meta.observation.date = '2023-07-22'
-    model.meta.observation.time = '06:24:45.569'
-    model.meta.instrument.fixed_slit = 'S200A1'
-    model.meta.exposure.type = 'NRS_FIXEDSLIT'
-    model.meta.subarray.name = 'ALLSLITS'
-
-    model.source_type = 'EXTENDED'
-    model.meta.wcsinfo.dispersion_direction = 1
-    model.meta.wcs = simple_wcs
-
-    model.data = np.arange(50 * 50, dtype=float).reshape((50, 50))
-    model.var_poisson = model.data * 0.02
-    model.var_rnoise = model.data * 0.02
-    model.var_flat = model.data * 0.05
-    yield model
-    model.close()
-
-
-@pytest.fixture()
-def mock_nirspec_mos(mock_nirspec_fs_one_slit):
-    model = dm.MultiSlitModel()
-    model.meta.instrument.name = 'NIRSPEC'
-    model.meta.instrument.detector = 'NRS1'
-    model.meta.observation.date = '2023-07-22'
-    model.meta.observation.time = '06:24:45.569'
-    model.meta.exposure.type = 'NRS_MSASPEC'
-
-    nslit = 3
-    for i in range(nslit):
-        slit = mock_nirspec_fs_one_slit.copy()
-        slit.name = str(i + 1)
-        model.slits.append(slit)
-
-    yield model
-    model.close()
-
-
-@pytest.fixture()
-def mock_nirspec_bots(simple_wcs):
-    model = dm.CubeModel()
-    model.meta.instrument.name = 'NIRSPEC'
-    model.meta.instrument.detector = 'NRS1'
-    model.meta.instrument.filter = 'F290LP'
-    model.meta.instrument.grating = 'G395H'
-    model.meta.observation.date = '2023-07-22'
-    model.meta.observation.time = '06:24:45.569'
-    model.meta.instrument.fixed_slit = 'S1600A1'
-    model.meta.exposure.type = 'NRS_BRIGHTOBJ'
-    model.meta.subarray.name = 'SUB2048'
-    model.meta.exposure.nints = 10
-
-    model.name = 'S1600A1'
-    model.meta.target.source_type = 'POINT'
-    model.meta.wcsinfo.dispersion_direction = 1
-    model.meta.wcs = simple_wcs
-
-    model.data = np.arange(10 * 50 * 50, dtype=float).reshape((10, 50, 50))
-    model.var_poisson = model.data * 0.02
-    model.var_rnoise = model.data * 0.02
-    model.var_flat = model.data * 0.05
-    yield model
-    model.close()
-
-
-@pytest.fixture()
-def mock_miri_ifu(simple_wcs_ifu):
-    model = dm.IFUCubeModel()
-    model.meta.instrument.name = 'MIRI'
-    model.meta.instrument.detector = 'MIRIFULONG'
-    model.meta.observation.date = '2023-07-22'
-    model.meta.observation.time = '06:24:45.569'
-    model.meta.exposure.type = 'MIR_MRS'
-
-    model.meta.wcsinfo.dispersion_direction = 2
-    model.meta.photometry.pixelarea_steradians = 1.0
-    model.meta.wcs = simple_wcs_ifu
-
-    model.data = np.arange(10 * 50 * 50, dtype=float).reshape((10, 50, 50))
-    model.var_poisson = model.data * 0.02
-    model.var_rnoise = model.data * 0.02
-    model.var_flat = model.data * 0.05
-    model.weightmap = np.full_like(model.data, 1.0)
-    yield model
-    model.close()
-
-
-@pytest.fixture()
-def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
-    model = dm.MultiSlitModel()
-    model.meta.instrument.name = 'NIRISS'
-    model.meta.instrument.detector = 'NIS'
-    model.meta.observation.date = '2023-07-22'
-    model.meta.observation.time = '06:24:45.569'
-    model.meta.exposure.type = 'NIS_WFSS'
-
-    nslit = 3
-    for i in range(nslit):
-        slit = mock_nirspec_fs_one_slit.copy()
-        slit.name = str(i + 1)
-        slit.meta.exposure.type = 'NIS_WFSS'
-        model.slits.append(slit)
-
-    container = multislit_to_container([model])['0']
-
-    yield container
-    container.close()
+from jwst.extract_1d.soss_extract import soss_extract
 
 
 @pytest.mark.parametrize('slit_name', [None, 'S200A1', 'S1600A1'])
@@ -304,6 +134,53 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
         assert np.all(spec.spec_table['FLUX_ERROR'] > 0)
 
     result.close()
+
+
+@pytest.mark.slow
+def test_extract_niriss_soss_256(tmp_path, mock_niriss_soss_256):
+    result = Extract1dStep.call(mock_niriss_soss_256, soss_rtol=0.1,
+                                soss_modelname='soss_model.fits',
+                                output_dir=str(tmp_path))
+    assert result.meta.cal_step.extract_1d == 'COMPLETE'
+
+    # output flux and errors are non-zero, exact values will depend
+    # on extraction parameters
+    assert np.all(result.spec[0].spec_table['FLUX'] > 0)
+    assert np.all(result.spec[0].spec_table['FLUX_ERROR'] > 0)
+    result.close()
+
+    # soss output files are saved
+    assert os.path.isfile(tmp_path / 'soss_model_SossExtractModel.fits')
+    assert os.path.isfile(tmp_path / 'soss_model_AtocaSpectra.fits')
+
+
+@pytest.mark.slow
+def test_extract_niriss_soss_96(tmp_path, mock_niriss_soss_96):
+    result = Extract1dStep.call(mock_niriss_soss_96, soss_rtol=0.1,
+                                soss_modelname='soss_model.fits',
+                                output_dir=str(tmp_path))
+    assert result.meta.cal_step.extract_1d == 'COMPLETE'
+
+    # output flux and errors are non-zero, exact values will depend
+    # on extraction parameters
+    assert np.all(result.spec[0].spec_table['FLUX'] > 0)
+    assert np.all(result.spec[0].spec_table['FLUX_ERROR'] > 0)
+    result.close()
+
+    # soss output files are saved
+    assert os.path.isfile(tmp_path / 'soss_model_SossExtractModel.fits')
+    assert os.path.isfile(tmp_path / 'soss_model_AtocaSpectra.fits')
+
+
+def test_extract_niriss_soss_fail(tmp_path, monkeypatch, mock_niriss_soss_96):
+    # Mock an error condition in the soss extraction
+    def mock(*args, **kwargs):
+        return None, None, None
+    monkeypatch.setattr(soss_extract, 'run_extract1d', mock)
+
+    # None is returned
+    result = Extract1dStep.call(mock_niriss_soss_96)
+    assert result is None
 
 
 def test_save_output_single(tmp_path, mock_nirspec_fs_one_slit):
