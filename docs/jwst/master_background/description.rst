@@ -375,7 +375,7 @@ as follows:
    steps up through :ref:`photom <photom_step>` to all slits, treating them all as
    extended sources (appropriate for background signal), and saving the extended
    source correction arrays for each slit in an internal copy of the data model
-#. If a user-supplied master background spectrum **not** given, the
+#. If a user-supplied master background spectrum is **not** given, the
    :ref:`pixel_replace <pixel_replace_step>`,
    :ref:`resample_spec <resample_spec_step>` and :ref:`extract_1d <extract_1d_step>`
    steps are applied to the calibrated background slits, resulting
