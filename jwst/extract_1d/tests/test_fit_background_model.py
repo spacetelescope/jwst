@@ -36,10 +36,10 @@ def inputs_with_source():
     image[4] += 10.0
     image[5] += 5.0
 
-    var_rnoise = image * 0.05
+    var_rnoise = np.full(shape, 0.1)
     var_poisson = image * 0.05
     var_rflat = image * 0.05
-    weights = None
+    weights = 1 / var_rnoise
 
     # Most of the image is set to a low but non-zero weight
     # (contribution to PSF is small)
@@ -206,10 +206,14 @@ def test_bad_fit_order(inputs_constant, extraction_type, bkg_order_val):
             extraction_type=extraction_type)
 
 
+@pytest.mark.parametrize('use_weights', [True, False])
 @pytest.mark.parametrize('bkg_order_val', [0, 1, 2])
-def test_fit_background_optimal(inputs_with_source, bkg_order_val):
+def test_fit_background_optimal(inputs_with_source, use_weights, bkg_order_val):
     (image, var_rnoise, var_poisson, var_rflat,
      profile, weights, profile_bg) = inputs_with_source
+
+    if not use_weights:
+        weights = None
 
     result = extract1d.extract1d(
         image, [profile], var_rnoise, var_poisson, var_rflat,
