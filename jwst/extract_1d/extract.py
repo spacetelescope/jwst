@@ -548,14 +548,10 @@ def get_spectral_order(slit):
         returned.
 
     """
-    if hasattr(slit.meta, 'wcsinfo'):
-        sp_order = slit.meta.wcsinfo.spectral_order
+    sp_order = slit.meta.wcsinfo.spectral_order
 
-        if sp_order is None:
-            log.warning("spectral_order is None; using 1")
-            sp_order = 1
-    else:
-        log.warning("slit.meta doesn't have attribute wcsinfo; setting spectral order to 1")
+    if sp_order is None:
+        log.warning("spectral_order is None; using 1")
         sp_order = 1
 
     return sp_order
@@ -693,15 +689,15 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
     profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1.0
 
     if allow_partial:
-        for partial_pixel_weight in [lower_limit - idx, idx - upper_limit]:
+        for partial_pixel_weight in [idx + 1 - lower_limit, upper_limit - idx + 1]:
             # Check for overlap values that are between 0 and 1, for which
             # the profile does not already contain a higher fractional weight
             test = ((partial_pixel_weight > 0)
                     & (partial_pixel_weight < 1)
-                    & (profile < (1 - partial_pixel_weight)))
+                    & (profile < partial_pixel_weight))
 
             # Set these values to the partial pixel weight
-            profile[test] = 1 - partial_pixel_weight[test]
+            profile[test] = partial_pixel_weight[test]
 
 
 def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
@@ -875,11 +871,11 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
 
     # Set weights to zero outside left and right limits
     if extract_params['dispaxis'] == HORIZONTAL:
-        profile[:, :int(round(xstart))] = 0
-        profile[:, int(round(xstop)) + 1:] = 0
+        profile[:, :int(np.ceil(xstart))] = 0
+        profile[:, int(np.floor(xstop)) + 1:] = 0
     else:
-        profile[:int(round(ystart)), :] = 0
-        profile[int(round(ystop)) + 1:, :] = 0
+        profile[:int(np.ceil(ystart)), :] = 0
+        profile[int(np.floor(ystop)) + 1:, :] = 0
 
     if return_limits:
         return profile, lower_limit, upper_limit
