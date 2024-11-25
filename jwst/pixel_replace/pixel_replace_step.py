@@ -4,7 +4,8 @@ from functools import partial
 from ..stpipe import Step
 from jwst.stpipe import record_step_status
 from jwst import datamodels
-from .pixel_replace import PixelReplacement#from functools import wraps
+from .pixel_replace import PixelReplacement
+from functools import wraps
 #from jwst.pipeline.calwebb_spec3 import invariant_filename
 
 __all__ = ["PixelReplaceStep"]
