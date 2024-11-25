@@ -404,7 +404,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         # Effective number of contributing pixels at each wavelength for each source.
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
-            wgt_src_pix = [profiles_2d[i] * weights / np.sum(profiles_2d[i] ** 2, axis=0)
+            wgt_src_pix = [profiles_2d[i] * (weights > 0) / np.sum(profiles_2d[i] ** 2, axis=0)
                            for i in range(nobjects)]
         npixels = np.sum(wgt_src_pix, axis=1)
 
