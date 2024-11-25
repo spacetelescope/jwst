@@ -4,7 +4,8 @@ from functools import partial
 from ..stpipe import Step
 from jwst.stpipe import record_step_status
 from jwst import datamodels
-from .pixel_replace import PixelReplacement
+from .pixel_replace import PixelReplacement#from functools import wraps
+#from jwst.pipeline.calwebb_spec3 import invariant_filename
 
 __all__ = ["PixelReplaceStep"]
 
@@ -72,9 +73,9 @@ class PixelReplaceStep(Step):
                 'n_adjacent_cols': self.n_adjacent_cols,
             }
 
-            # ___________________
-            # calewbb_spec3 case
-            # ___________________
+            # ___________________________________
+            # calewbb_spec3 case / ModelContainer
+            # __________________________________
             if isinstance(input_model, datamodels.ModelContainer):
                 output_model = input_model
                 # Setup output path naming if associations are involved.
@@ -85,6 +86,12 @@ class PixelReplaceStep(Step):
                     pass
                 if asn_id is None:
                     asn_id = self.search_attr('asn_id')
+                if asn_id is None: # it is still None. It does not exist. A ModelContainer was passed in with
+                                   # no asn information
+                    # to create the correct output name set the following.
+                    self.output_use_model = True
+                    self.save_model = invariant_filename(self.save_model)
+
                 if asn_id is not None:
                     _make_output_path = self.search_attr(
                         '_make_output_path', parent_first=True
@@ -93,6 +100,7 @@ class PixelReplaceStep(Step):
                         _make_output_path,
                         asn_id=asn_id
                     )
+
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
                     run_pixel_replace = True
@@ -124,3 +132,23 @@ class PixelReplaceStep(Step):
                 record_step_status(replacement.output, 'pixel_replace', success=True)
                 result = replacement.output
                 return result
+            
+
+def invariant_filename(save_model_func):
+    """Restore meta.filename after save_model"""
+
+    @wraps(save_model_func)
+    def save_model(model, **kwargs):
+        try:
+            filename = model.meta.filename
+        except AttributeError:
+            filename = None
+
+        result = save_model_func(model, **kwargs)
+
+        if filename:
+            model.meta.filename = filename
+
+        return result
+
+    return save_model
