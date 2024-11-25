@@ -320,3 +320,382 @@ def test_populate_time_keywords_mismatched_spec(
     log_watcher.message = "Don't understand n_output_spec"
     ex.populate_time_keywords(mock_nirspec_bots, mock_one_spec)
     log_watcher.assert_seen()
+
+
+def test_get_spectral_order(mock_nirspec_fs_one_slit):
+    slit = mock_nirspec_fs_one_slit
+
+    slit.meta.wcsinfo.spectral_order = 2
+    assert ex.get_spectral_order(slit) == 2
+
+    slit.meta.wcsinfo.spectral_order = None
+    assert ex.get_spectral_order(slit) == 1
+
+    slit.meta.wcsinfo = None
+    assert ex.get_spectral_order(slit) == 1
+
+    del slit.meta.wcsinfo
+    assert ex.get_spectral_order(slit) == 1
+
+
+def test_is_prism_false_conditions(mock_nirspec_fs_one_slit):
+    model = mock_nirspec_fs_one_slit
+    assert ex.is_prism(model) is False
+
+    model.meta.instrument.filter = None
+    model.meta.instrument.grating = None
+    assert ex.is_prism(model) is False
+
+    model.meta.instrument.name = None
+    assert ex.is_prism(model) is False
+
+
+def test_is_prism_nirspec(mock_nirspec_fs_one_slit):
+    mock_nirspec_fs_one_slit.meta.instrument.grating = 'PRISM'
+    assert ex.is_prism(mock_nirspec_fs_one_slit) is True
+
+
+def test_is_prism_miri(mock_miri_ifu):
+    mock_miri_ifu.meta.instrument.filter = 'P750L'
+    assert ex.is_prism(mock_miri_ifu) is True
+
+def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
+    expected = {'slitlet_id': 2,
+                'source_id': 3,
+                'source_name': '4',
+                'source_alias': '5',
+                'source_type': 'POINT',
+                'stellarity': 0.5,
+                'source_xpos': -0.5,
+                'source_ypos': -0.5,
+                'source_ra': 10.0,
+                'source_dec': 10.0,
+                'shutter_state': 'x'}
+    for key, value in expected.items():
+        setattr(mock_nirspec_fs_one_slit, key, value)
+        assert not hasattr(mock_one_spec, key)
+
+    ex.copy_keyword_info(mock_nirspec_fs_one_slit, 'slit_name', mock_one_spec)
+    assert mock_one_spec.name == 'slit_name'
+    for key, value in expected.items():
+        assert getattr(mock_one_spec, key) == value
+
+
+@pytest.mark.parametrize("partial", [True, False])
+@pytest.mark.parametrize("lower,upper",
+                         [(0, 19), (-1, 21),
+                          (np.full(10, 0.0), np.full(10, 19.0)),
+                          (np.linspace(-1, 0, 10), np.linspace(19, 20, 10)),])
+def test_set_weights_from_limits_whole_array(lower, upper, partial):
+    shape = (20, 10)
+    profile = np.zeros(shape, dtype=float)
+    yidx, _ = np.mgrid[:shape[0], :shape[1]]
+
+    ex._set_weight_from_limits(profile, yidx, lower, upper, allow_partial=partial)
+    assert np.all(profile == 1.0)
+
+
+@pytest.mark.parametrize("lower,upper",
+                         [(10, 12), (9.5, 12.5),
+                          (np.linspace(9.5, 10, 10), np.linspace(12, 12.5, 10)),])
+def test_set_weights_from_limits_whole_pixel(lower, upper):
+    shape = (20, 10)
+    profile = np.zeros(shape, dtype=np.float32)
+    yidx, _ = np.mgrid[:shape[0], :shape[1]]
+
+    ex._set_weight_from_limits(profile, yidx, lower, upper, allow_partial=False)
+    assert np.all(profile[10:13] == 1.0)
+
+
+@pytest.mark.parametrize("lower,upper",
+                         [(9.5, 12.5),
+                          (np.linspace(9.5, 10, 10), np.linspace(12, 12.5, 10)),])
+def test_set_weights_from_limits_partial_pixel(lower, upper):
+    shape = (20, 10)
+    profile = np.zeros(shape, dtype=np.float32)
+    yidx, _ = np.mgrid[:shape[0], :shape[1]]
+
+    ex._set_weight_from_limits(profile, yidx, lower, upper, allow_partial=True)
+    assert np.allclose(profile[10:13], 1.0)
+    assert np.allclose(profile[9], 10 - lower)
+    assert np.allclose(profile[13], upper - 12)
+
+
+def test_set_weights_from_limits_overlap():
+    shape = (20, 10)
+    profile = np.zeros(shape, dtype=np.float32)
+    yidx, _ = np.mgrid[:shape[0], :shape[1]]
+
+    # Set an aperture with partial pixel edges
+    ex._set_weight_from_limits(profile, yidx, 9.5, 10.5, allow_partial=True)
+    assert np.allclose(profile[9], 0.5)
+    assert np.allclose(profile[11], 0.5)
+    assert np.allclose(profile[12], 0.0)
+
+    # Set an overlapping region in the same profile
+    ex._set_weight_from_limits(profile, yidx, 9.8, 11.5, allow_partial=True)
+
+    # Higher weight from previous profile remains
+    assert np.allclose(profile[9], 0.5)
+
+    # Previous partial pixel is now fully included
+    assert np.allclose(profile[11], 1.0)
+
+    # New partial weight set on upper limit
+    assert np.allclose(profile[12], 0.5)
+
+
+def test_box_profile_horizontal(extract_defaults):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = 1
+
+    # Exclude 2 pixels at left and right
+    params['xstart'] = 1.5
+    params['xstop'] = 7.5
+
+    # Exclude 2 pixels at top and bottom, set half pixel weights
+    # for another pixel at top and bottom edges
+    params['ystart'] = 2.5
+    params['ystop'] = 6.5
+    profile = ex.box_profile(shape, extract_defaults, wl_array)
+
+    # ystart/stop sets partial weights, xstart/stop sets whole pixels only
+    assert np.all(profile[2:3, 3:8] == 0.5)
+    assert np.all(profile[7:8, 3:8] == 0.5)
+    assert np.all(profile[3:7, 3:8] == 1.0)
+    assert np.all(profile[:2] == 0.0)
+    assert np.all(profile[8:] == 0.0)
+    assert np.all(profile[:, :2] == 0.0)
+    assert np.all(profile[:, 8:] == 0.0)
+
+
+def test_box_profile_vertical(extract_defaults):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = 2
+
+    # Exclude 2 pixels at "left" and "right" - in transposed aperture
+    params['ystart'] = 1.5
+    params['ystop'] = 7.5
+
+    # Exclude 2 pixels at "top" and "bottom", set half pixel weights
+    # for another pixel at top and bottom edges
+    params['xstart'] = 2.5
+    params['xstop'] = 6.5
+    profile = ex.box_profile(shape, extract_defaults, wl_array)
+
+    # xstart/stop sets partial weights, ystart/stop sets whole pixels only
+    assert np.all(profile[3:8, 2:3] == 0.5)
+    assert np.all(profile[3:8, 7:8] == 0.5)
+    assert np.all(profile[3:8, 3:7] == 1.0)
+
+    assert np.all(profile[:2] == 0.0)
+    assert np.all(profile[8:] == 0.0)
+    assert np.all(profile[:, :2] == 0.0)
+    assert np.all(profile[:, 8:] == 0.0)
+
+
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_box_profile_bkg_coeff(extract_defaults, dispaxis):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = dispaxis
+
+    # the definition for bkg_coeff is half a pixel off from start/stop definitions -
+    # this will set the equivalent of start/stop 0-2, 7-9 -
+    # 3 pixels at top and bottom of the array
+    params['bkg_coeff'] = [[-0.5], [2.5], [6.5], [9.5]]
+
+    profile, lower, upper = (
+        ex.box_profile(shape, extract_defaults, wl_array,
+                       coefficients='bkg_coeff', return_limits=True))
+    if dispaxis == 2:
+        profile = profile.T
+
+    assert np.all(profile[:3] == 1.0)
+    assert np.all(profile[7:] == 1.0)
+    assert np.all(profile[3:7] == 0.0)
+    assert lower == 0.0
+    assert upper == 9.0
+
+
+def test_box_profile_bkg_coeff_median(extract_defaults):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = 1
+    params['bkg_fit'] = 'median'
+
+    # Attempt to set partial pixels at middle edges
+    params['bkg_coeff'] = [[-0.5], [3.0], [6.0], [9.5]]
+
+    profile, lower, upper = (
+        ex.box_profile(shape, extract_defaults, wl_array,
+                       coefficients='bkg_coeff', return_limits=True))
+
+    # partial pixels are not allowed for fit type median - the profile is
+    # set for whole pixels only
+    assert np.all(profile[:3] == 1.0)
+    assert np.all(profile[7:] == 1.0)
+    assert np.all(profile[3:7] == 0.0)
+    assert lower == 0.0
+    assert upper == 9.0
+
+
+@pytest.mark.parametrize('swap_order', [False, True])
+def test_box_profile_bkg_coeff_poly(extract_defaults, swap_order):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = 1
+    params['bkg_fit'] = 'poly'
+
+    # Attempt to set partial pixels at middle edges
+    if swap_order:
+        # upper region first - this should make no difference.
+        params['bkg_coeff'] = [[6.0], [9.5], [-0.5], [3.0]]
+    else:
+        params['bkg_coeff'] = [[-0.5], [3.0], [6.0], [9.5]]
+
+    profile, lower, upper = (
+        ex.box_profile(shape, extract_defaults, wl_array,
+                       coefficients='bkg_coeff', return_limits=True))
+
+    # partial pixels are allowed for fit type poly
+    assert np.all(profile[:3] == 1.0)
+    assert np.all(profile[7:] == 1.0)
+    assert np.all(profile[3] == 0.5)
+    assert np.all(profile[6] == 0.5)
+    assert np.all(profile[4:6] == 0.0)
+    assert lower == 0.0
+    assert upper == 9.0
+
+
+@pytest.mark.parametrize('independent_var', ['pixel', 'wavelength'])
+def test_box_profile_src_coeff_constant(extract_defaults, independent_var):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = 1
+    params['independent_var'] = independent_var
+
+    # the definition for src_coeff is half a pixel off from start/stop definitions -
+    # this will set the equivalent of start/stop 3-6, excluding
+    # 3 pixels at top and bottom of the array
+    params['src_coeff'] = [[2.5], [6.5]]
+
+    profile, lower, upper = (
+        ex.box_profile(shape, extract_defaults, wl_array,
+                       coefficients='src_coeff', return_limits=True))
+    assert np.all(profile[3:7] == 1.0)
+    assert np.all(profile[:3] == 0.0)
+    assert np.all(profile[7:] == 0.0)
+    assert lower == 3.0
+    assert upper == 6.0
+
+
+@pytest.mark.parametrize('independent_var', ['pixel', 'wavelength'])
+def test_box_profile_src_coeff_linear(extract_defaults, independent_var):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = 1
+    params['independent_var'] = independent_var
+
+    if independent_var == 'wavelength':
+        slope = 1 / (wl_array[0, 1] - wl_array[0, 0])
+        start = -0.5 - wl_array[0, 0] * slope
+        stop = start + 4
+    else:
+        slope = 1.0
+        start = -0.5
+        stop = 3.5
+
+    # Set linearly increasing upper and lower edges,
+    # starting at the bottom of the array, with a width of 4 pixels
+    params['src_coeff'] = [[start, slope], [stop, slope]]
+    expected = [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+                [0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+                [0, 0, 0, 0, 0, 1, 1, 1, 1, 0],
+                [0, 0, 0, 0, 0, 0, 1, 1, 1, 1]]
+
+    profile, lower, upper = (
+        ex.box_profile(shape, extract_defaults, wl_array,
+                       coefficients='src_coeff', return_limits=True))
+    assert np.allclose(profile, expected)
+
+    # upper and lower limits are averages
+    assert np.isclose(lower, 4.5)
+    assert np.isclose(upper, 7.5)
+
+
+def test_box_profile_mismatched_coeff(extract_defaults):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = 1
+
+    # set some mismatched coefficients limits
+    params['src_coeff'] = [[2.5], [6.5], [9.5]]
+
+    with pytest.raises(RuntimeError, match='must contain alternating lists'):
+        ex.box_profile(shape, extract_defaults, wl_array)
+
+
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_box_profile_from_width(extract_defaults, dispaxis):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = dispaxis
+
+    if dispaxis == 1:
+        # Set ystart and ystop to center on pixel 4
+        params['ystart'] = 2.0
+        params['ystop'] = 6.0
+    else:
+        # Set xstart and xstop to center on pixel 4
+        params['xstart'] = 2.0
+        params['xstop'] = 6.0
+
+    # Set a width to 6 pixels
+    params['extract_width'] = 6.0
+
+    profile = ex.box_profile(shape, extract_defaults, wl_array)
+    if dispaxis == 2:
+        profile = profile.T
+
+    # Aperture is centered at pixel 4, to start at 1.5, end at 6.5
+    assert np.all(profile[2:7] == 1.0)
+    assert np.all(profile[1] == 0.5)
+    assert np.all(profile[7] == 0.5)
+    assert np.all(profile[0] == 0.0)
+    assert np.all(profile[8:] == 0.0)
