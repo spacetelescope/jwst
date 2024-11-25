@@ -4,12 +4,10 @@ import warnings
 import json
 
 import numpy as np
-import psutil
 from drizzle.resample import Drizzle
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.library.basic_utils import bytes2human
 
 from jwst.datamodels import ModelLibrary
 from jwst.associations.asn_from_list import asn_from_list
@@ -20,11 +18,7 @@ from jwst.resample import resample_utils
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["OutputTooLargeError", "ResampleData"]
-
-
-class OutputTooLargeError(RuntimeError):
-    """Raised when the output is too large for in-memory instantiation"""
+__all__ = ["ResampleData"]
 
 
 class ResampleData:
@@ -154,32 +148,6 @@ class ResampleData:
 
         log.debug(f"Output mosaic size: {tuple(self.output_wcs.pixel_shape)}")
 
-        allowed_memory = kwargs['allowed_memory']
-        if allowed_memory is None:
-            allowed_memory = os.environ.get('DMODEL_ALLOWED_MEMORY', allowed_memory)
-        if allowed_memory:
-            allowed_memory = float(allowed_memory)
-            # make a small image model to get the dtype
-            dtype = datamodels.ImageModel((1, 1)).data.dtype
-
-            # get the available memory
-            available_memory = psutil.virtual_memory().available + psutil.swap_memory().total
-
-            # compute the output array size
-            required_memory = np.prod(self.output_array_shape) * dtype.itemsize
-
-            # compare used to available
-            used_fraction = required_memory / available_memory
-            can_allocate = used_fraction <= allowed_memory
-        else:
-            can_allocate = True
-
-        if not can_allocate:
-            raise OutputTooLargeError(
-                f'Combined ImageModel size {self.output_array_shape} '
-                f'requires {bytes2human(required_memory)}. '
-                f'Model cannot be instantiated.'
-            )
 
     def _create_output_model(self, ref_input_model=None):
         """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
