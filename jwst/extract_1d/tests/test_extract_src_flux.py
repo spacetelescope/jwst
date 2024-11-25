@@ -35,7 +35,7 @@ def inputs_with_source():
     image[3] = 5.0
     image[4] = 10.0
     image[5] = 5.0
-    var_rnoise = image * 0.05
+    var_rnoise = np.full(shape, 0.1)
     var_poisson = image * 0.05
     var_rflat = image * 0.05
     weights = None
@@ -111,9 +111,13 @@ def test_extract_src_flux_empty_interval(inputs_constant):
     assert np.all(npixels == 0.)
 
 
-def test_extract_optimal(inputs_with_source):
+@pytest.mark.parametrize('use_weights', [True, False])
+def test_extract_optimal(inputs_with_source, use_weights):
     (image, var_rnoise, var_poisson, var_rflat,
      profile, weights, profile_bg) = inputs_with_source
+
+    if use_weights:
+        weights = 1 / var_rnoise
 
     (total_flux, f_var_rnoise, f_var_poisson, f_var_flat,
      bkg_flux, b_var_rnoise, b_var_poisson, b_var_flat,
@@ -128,6 +132,8 @@ def test_extract_optimal(inputs_with_source):
 
     # set a NaN value in a column of interest
     image[4, 2] = np.nan
+    if use_weights:
+        weights[4, 2] = 0
 
     (total_flux, f_var_rnoise, f_var_poisson, f_var_flat,
      bkg_flux, b_var_rnoise, b_var_poisson, b_var_flat,
