@@ -920,22 +920,28 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
     """
     weights = profile.copy()
     weights[weights <= 0] = 0.0
-    if middle_pix is not None and np.sum(profile) > 0:
+    if middle_pix is not None:
         spec_center = middle_pix
         if dispaxis == HORIZONTAL:
-            slit_center = np.average(np.arange(profile.shape[0]),
-                                     weights=weights[:, middle_pix])
+            if np.sum(weights[:, middle_pix]) > 0:
+                slit_center = np.average(np.arange(profile.shape[0]),
+                                         weights=weights[:, middle_pix])
+            else:
+                slit_center = (profile.shape[0] - 1) / 2
         else:
-            slit_center = np.average(np.arange(profile.shape[1]),
-                                     weights=weights[middle_pix, :])
+            if np.sum(weights[middle_pix, :]) > 0:
+                slit_center = np.average(np.arange(profile.shape[1]),
+                                         weights=weights[middle_pix, :])
+            else:
+                slit_center = (profile.shape[1] - 1) / 2
     else:
         yidx, xidx = np.mgrid[:profile.shape[0], :profile.shape[1]]
-        if np.sum(profile) > 0:
+        if np.sum(weights) > 0:
             center_y = np.average(yidx, weights=weights)
             center_x = np.average(xidx, weights=weights)
         else:
-            center_y = profile.shape[0] // 2
-            center_x = profile.shape[1] // 2
+            center_y = (profile.shape[0] - 1) / 2
+            center_x = (profile.shape[1] - 1) / 2
         if dispaxis == HORIZONTAL:
             slit_center = center_y
             spec_center = center_x
@@ -1053,7 +1059,7 @@ def location_from_wcs(input_model, slit):
                 dithra = slit.meta.dither.dithered_ra
                 dithdec = slit.meta.dither.dithered_dec
             x_y = wcs.backward_transform(dithra, dithdec, middle_wl)
-        except AttributeError:
+        except (AttributeError, TypeError):
             log.warning("Dithered pointing location not found in wcsinfo.")
             return None, None, None
     else:

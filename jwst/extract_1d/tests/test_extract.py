@@ -699,3 +699,362 @@ def test_box_profile_from_width(extract_defaults, dispaxis):
     assert np.all(profile[7] == 0.5)
     assert np.all(profile[0] == 0.0)
     assert np.all(profile[8:] == 0.0)
+
+
+@pytest.mark.parametrize('middle', [None, 7])
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_aperture_center(middle, dispaxis):
+    profile = np.zeros((10, 10), dtype=np.float32)
+    profile[1:4] = 1.0
+    if dispaxis != 1:
+        profile = profile.T
+    slit_center, spec_center = ex.aperture_center(
+        profile, dispaxis=dispaxis, middle_pix=middle)
+    assert slit_center == 2.0
+    if middle is None:
+        assert spec_center == 4.5
+    else:
+        assert spec_center == middle
+
+
+@pytest.mark.parametrize('middle', [None, 7])
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_aperture_center(middle, dispaxis):
+    profile = np.zeros((10, 10), dtype=np.float32)
+    profile[1:4] = 1.0
+    if dispaxis != 1:
+        profile = profile.T
+    slit_center, spec_center = ex.aperture_center(
+        profile, dispaxis=dispaxis, middle_pix=middle)
+    assert slit_center == 2.0
+    if middle is None:
+        assert spec_center == 4.5
+    else:
+        assert spec_center == middle
+
+
+@pytest.mark.parametrize('middle', [None, 7])
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_aperture_center_zero_weight(middle, dispaxis):
+    profile = np.zeros((10, 10), dtype=np.float32)
+    slit_center, spec_center = ex.aperture_center(
+        profile, dispaxis=dispaxis, middle_pix=middle)
+    assert slit_center == 4.5
+    if middle is None:
+        assert spec_center == 4.5
+    else:
+        assert spec_center == middle
+
+
+@pytest.mark.parametrize('middle', [None, 7])
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_aperture_center_variable_weight(middle, dispaxis):
+    profile = np.zeros((10, 10), dtype=np.float32)
+    profile[1:4] = np.arange(10)
+    if dispaxis != 1:
+        profile = profile.T
+    slit_center, spec_center = ex.aperture_center(
+        profile, dispaxis=dispaxis, middle_pix=middle)
+    assert slit_center == 2.0
+    if middle is None:
+        assert np.isclose(spec_center, 6.3333333)
+    else:
+        assert spec_center == middle
+
+
+@pytest.mark.parametrize('resampled', [True, False])
+@pytest.mark.parametrize('is_slit', [True, False])
+@pytest.mark.parametrize('missing_bbox', [True, False])
+def test_location_from_wcs_nirspec(
+        monkeypatch, mock_nirspec_fs_one_slit, resampled, is_slit, missing_bbox):
+    model = mock_nirspec_fs_one_slit
+
+    # monkey patch in a transform for the wcs
+    def slit2det(*args, **kwargs):
+        def return_one(*args, **kwargs):
+            return 0.0, 1.0
+        return return_one
+
+    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
+
+    if not resampled:
+        # also mock available frames, so it looks like unresampled cal data
+        monkeypatch.setattr(model.meta.wcs, 'available_frames', ['gwa'])
+
+    if missing_bbox:
+        # also mock a missing bounding box - should have same results
+        # for the test data
+        monkeypatch.setattr(model.meta.wcs, 'bounding_box', None)
+
+    if is_slit:
+        middle, middle_wl, location = ex.location_from_wcs(model, model)
+    else:
+        middle, middle_wl, location = ex.location_from_wcs(model, None)
+
+    # middle pixel is center of dispersion axis
+    assert middle == int((model.data.shape[1] - 1) / 2)
+
+    # middle wavelength is the wavelength at that point, from the mock wcs
+    assert np.isclose(middle_wl, 7.74)
+
+    # location is 1.0 - from the mocked transform function
+    assert location == 1.0
+
+
+@pytest.mark.parametrize('is_slit', [True, False])
+def test_location_from_wcs_miri(monkeypatch, mock_miri_lrs_fs, is_slit):
+    model = mock_miri_lrs_fs
+
+    # monkey patch in a transform for the wcs
+    def radec2det(*args, **kwargs):
+        def return_one(*args, **kwargs):
+            return 1.0, 0.0
+        return return_one
+
+    monkeypatch.setattr(model.meta.wcs, 'backward_transform', radec2det())
+
+    # Get the slit center from the WCS
+    if is_slit:
+        middle, middle_wl, location = ex.location_from_wcs(model, model)
+    else:
+        middle, middle_wl, location = ex.location_from_wcs(model, None)
+
+    # middle pixel is center of dispersion axis
+    assert middle == int((model.data.shape[0] - 1) / 2)
+
+    # middle wavelength is the wavelength at that point, from the mock wcs
+    assert np.isclose(middle_wl, 7.26)
+
+    # location is 1.0 - from the mocked transform function
+    assert location == 1.0
+
+
+def test_location_from_wcs_missing_data(mock_miri_lrs_fs, log_watcher):
+    # model is missing WCS information - None values are returned
+    log_watcher.message = "Dithered pointing location not found"
+    result = ex.location_from_wcs(mock_miri_lrs_fs, None)
+    assert result == (None, None, None)
+    log_watcher.assert_seen()
+
+
+def test_location_from_wcs_wrong_exptype(mock_niriss_soss, log_watcher):
+    # model is not a handled exposure type
+    log_watcher.message = "Source position cannot be found for EXP_TYPE"
+    result = ex.location_from_wcs(mock_niriss_soss, None)
+    assert result == (None, None, None)
+    log_watcher.assert_seen()
+
+
+def test_location_from_wcs_bad_location(
+        monkeypatch, mock_nirspec_fs_one_slit, log_watcher):
+    model = mock_nirspec_fs_one_slit
+
+    # monkey patch in a transform for the wcs
+    def slit2det(*args, **kwargs):
+        def return_one(*args, **kwargs):
+            return 0.0, np.nan
+        return return_one
+
+    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
+
+    # WCS transform returns NaN for the location
+    log_watcher.message = "Source position could not be determined"
+    result = ex.location_from_wcs(model, None)
+    assert result == (None, None, None)
+    log_watcher.assert_seen()
+
+
+def test_location_from_wcs_location_out_of_range(
+        monkeypatch, mock_nirspec_fs_one_slit, log_watcher):
+    model = mock_nirspec_fs_one_slit
+
+    # monkey patch in a transform for the wcs
+    def slit2det(*args, **kwargs):
+        def return_one(*args, **kwargs):
+            return 0.0, 2000
+        return return_one
+
+    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
+
+    # WCS transform a value outside the bounding box
+    log_watcher.message = "outside the bounding box"
+    result = ex.location_from_wcs(model, None)
+    assert result == (None, None, None)
+    log_watcher.assert_seen()
+
+
+def test_shift_by_source_location_horizontal(extract_defaults):
+    location = 12.5
+    nominal_location = 15.0
+    offset = location - nominal_location
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 1
+
+    ex.shift_by_source_location(location, nominal_location, extract_params)
+    assert extract_params['xstart'] == extract_defaults['xstart']
+    assert extract_params['xstop'] == extract_defaults['xstop']
+    assert extract_params['ystart'] == extract_defaults['ystart'] + offset
+    assert extract_params['ystop'] == extract_defaults['ystop'] + offset
+
+
+def test_shift_by_source_location_vertical(extract_defaults):
+    location = 12.5
+    nominal_location = 15.0
+    offset = location - nominal_location
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 2
+
+    ex.shift_by_source_location(location, nominal_location, extract_params)
+    assert extract_params['xstart'] == extract_defaults['xstart'] + offset
+    assert extract_params['xstop'] == extract_defaults['xstop'] + offset
+    assert extract_params['ystart'] == extract_defaults['ystart']
+    assert extract_params['ystop'] == extract_defaults['ystop']
+
+
+def test_shift_by_source_location_coeff(extract_defaults):
+    location = 6.5
+    nominal_location = 4.0
+    offset = location - nominal_location
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 1
+    extract_params['src_coeff'] = [[2.5, 1.0], [6.5, 1.0]]
+    extract_params['bkg_coeff'] = [[-0.5], [3.0], [6.0], [9.5]]
+
+    ex.shift_by_source_location(location, nominal_location, extract_params)
+    assert extract_params['src_coeff'] == [[2.5 + offset, 1.0], [6.5 + offset, 1.0]]
+    assert extract_params['bkg_coeff'] == [[-0.5 + offset], [3.0 + offset],
+                                           [6.0 + offset], [9.5 + offset]]
+
+
+@pytest.mark.parametrize('is_slit', [True, False])
+def test_define_aperture_nirspec(mock_nirspec_fs_one_slit, extract_defaults, is_slit):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    if is_slit:
+        slit = model
+    else:
+        slit = None
+    exptype = 'NRS_FIXEDSLIT'
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    ra, dec, wavelength, profile, bg_profile, limits = result
+    assert np.isclose(ra, 45.05)
+    assert np.isclose(dec, 45.1)
+    assert wavelength.shape == (model.data.shape[1],)
+    assert profile.shape == model.data.shape
+
+    # Default profile is the full array
+    assert np.all(profile == 1.0)
+    assert limits == (0, model.data.shape[0] - 1, 0, model.data.shape[1] - 1)
+
+    # Default bg profile is None
+    assert bg_profile is None
+
+
+@pytest.mark.parametrize('is_slit', [True, False])
+def test_define_aperture_miri(mock_miri_lrs_fs, extract_defaults, is_slit):
+    model = mock_miri_lrs_fs
+    extract_defaults['dispaxis'] = 2
+    if is_slit:
+        slit = model
+    else:
+        slit = None
+    exptype = 'MIR_LRS-FIXEDSLIT'
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    ra, dec, wavelength, profile, bg_profile, limits = result
+    assert np.isclose(ra, 45.05)
+    assert np.isclose(dec, 45.1)
+    assert wavelength.shape == (model.data.shape[1],)
+    assert profile.shape == model.data.shape
+
+    # Default profile is the full array
+    assert np.all(profile == 1.0)
+    assert limits == (0, model.data.shape[0] - 1, 0, model.data.shape[1] - 1)
+
+    # Default bg profile is None
+    assert bg_profile is None
+
+
+def test_define_aperture_with_bg(mock_nirspec_fs_one_slit, extract_defaults):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    slit = None
+    exptype = 'NRS_FIXEDSLIT'
+
+    extract_defaults['subtract_background'] = True
+    extract_defaults['bkg_coeff'] = [[-0.5], [2.5]]
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    bg_profile = result[-2]
+
+    # Bg profile has 1s in the first 3 rows
+    assert bg_profile.shape == model.data.shape
+    assert np.all(bg_profile[:3] == 1.0)
+    assert np.all(bg_profile[3:] == 0.0)
+
+
+def test_define_aperture_empty_aperture(mock_nirspec_fs_one_slit, extract_defaults):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    slit = None
+    exptype = 'NRS_FIXEDSLIT'
+
+    # Set the extraction limits out of range
+    extract_defaults['ystart'] = 2000
+    extract_defaults['ystop'] = 3000
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    _, _, _, profile, _, limits = result
+
+    assert np.all(profile == 0.0)
+    assert limits == (2000, 3000, None, None)
+
+
+def test_define_aperture_bad_wcs(monkeypatch, mock_nirspec_fs_one_slit, extract_defaults):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    slit = None
+    exptype = 'NRS_FIXEDSLIT'
+
+    # Set a wavelength so wcs is not called to retrieve it
+    model.wavelength = np.empty_like(model.data)
+    model.wavelength[:] = np.linspace(3, 5, model.data.shape[1])
+
+    # mock a bad wcs
+    def return_nan(*args):
+        return np.nan, np.nan, np.nan
+
+    monkeypatch.setattr(model.meta, 'wcs', return_nan)
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    ra, dec = result[:2]
+
+    # RA and Dec returned are none
+    assert ra is None
+    assert dec is None
+
+
+def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extract_defaults):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    slit = None
+    exptype = 'NRS_FIXEDSLIT'
+
+    # mock the source location function
+    def mock_source_location(*args):
+        return 24, 7.74, 9.5
+
+    monkeypatch.setattr(ex, 'location_from_wcs', mock_source_location)
+
+    # set parameters to extract a 6 pixel aperture, centered on source location
+    extract_defaults['use_source_posn'] = True
+    extract_defaults['extract_width'] = 6.0
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    _, _, _, profile, _, limits = result
+
+    assert np.all(profile[:7] == 0.0)
+    assert np.all(profile[7:13] == 1.0)
+    assert np.all(profile[13:] == 0.0)
