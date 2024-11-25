@@ -29,7 +29,47 @@ def simple_wcs():
 
         return ra, dec, wave
 
+    # Add a bounding box
     simple_wcs_function.bounding_box = wcs_bbox_from_shape(shape)
+
+    # Add a few expected attributes, so they can be monkeypatched as needed
+    simple_wcs_function.get_transform = None
+    simple_wcs_function.backward_transform = None
+    simple_wcs_function.available_frames = []
+
+    return simple_wcs_function
+
+
+@pytest.fixture()
+def simple_wcs_transpose():
+    shape = (50, 50)
+    ycenter = shape[0] // 2.0
+
+    def simple_wcs_function(x, y):
+        """ Simple WCS for testing """
+        crpix2 = ycenter
+        crpix3 = 1.0
+        cdelt1 = 0.1
+        cdelt2 = 0.1
+        cdelt3 = -0.01
+
+        crval1 = 45.0
+        crval2 = 45.0
+        crval3 = 7.5
+
+        wave = (y + 1 - crpix3) * cdelt3 + crval3
+        ra = (y + 1 - crpix2) * cdelt1 + crval1
+        dec = np.full_like(ra, crval2 + 1 * cdelt2)
+
+        return ra, dec, wave
+
+    # Add a bounding box
+    simple_wcs_function.bounding_box = wcs_bbox_from_shape(shape)
+
+    # Add a few expected attributes, so they can be monkeypatched as needed
+    simple_wcs_function.get_transform = None
+    simple_wcs_function.backward_transform = None
+    simple_wcs_function.available_frames = []
 
     return simple_wcs_function
 
@@ -73,8 +113,8 @@ def mock_nirspec_fs_one_slit(simple_wcs):
     model.meta.exposure.nints = 1
     model.meta.exposure.type = 'NRS_FIXEDSLIT'
     model.meta.subarray.name = 'ALLSLITS'
-
     model.source_type = 'EXTENDED'
+
     model.meta.wcsinfo.dispersion_direction = 1
     model.meta.wcs = simple_wcs
 
@@ -154,6 +194,31 @@ def mock_nirspec_bots(simple_wcs):
                                                       ('int_end_BJD_TDB', 'f8')])
     model.int_times = integration_table
 
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_miri_lrs_fs(simple_wcs_transpose):
+    model = dm.SlitModel()
+    model.meta.instrument.name = 'MIRI'
+    model.meta.instrument.detector = 'MIRIMAGE'
+    model.meta.observation.date = '2023-07-22'
+    model.meta.observation.time = '06:24:45.569'
+    model.meta.exposure.nints = 1
+    model.meta.exposure.type = 'MIR_LRS-FIXEDSLIT'
+    model.meta.subarray.name = 'FULL'
+    model.meta.target.source_type = 'EXTENDED'
+    model.meta.dither.dithered_ra = 45.0
+    model.meta.dither.dithered_ra = 45.0
+
+    model.meta.wcsinfo.dispersion_direction = 2
+    model.meta.wcs = simple_wcs_transpose
+
+    model.data = np.arange(50 * 50, dtype=float).reshape((50, 50))
+    model.var_poisson = model.data * 0.02
+    model.var_rnoise = model.data * 0.02
+    model.var_flat = model.data * 0.05
     yield model
     model.close()
 
