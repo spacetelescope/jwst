@@ -52,7 +52,6 @@ class ResampleStep(Step):
         output_wcs = string(default='')  # Custom output WCS
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
         in_memory = boolean(default=True)  # Keep images in memory
     """
 
@@ -234,7 +233,6 @@ class ResampleStep(Step):
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders,
-            allowed_memory=self.allowed_memory,
             in_memory=self.in_memory
         )
 
