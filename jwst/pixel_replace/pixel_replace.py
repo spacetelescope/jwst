@@ -29,7 +29,7 @@ class PixelReplacement:
     VERTICAL = 2
     LOG_SLICE = ['column', 'row']
 
-    default_suffix = 'pixrep'
+    #default_suffix = 'pixrep'
 
     def __init__(self, input_model, **pars):
         """
