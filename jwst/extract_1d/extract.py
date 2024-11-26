@@ -1259,7 +1259,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     return ra, dec, wavelength, profile, bg_profile, limits
 
 
-def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
+def extract_one_slit(data_model, integration, profile, bg_profile, extract_params):
     """Extract data for one slit, or spectral order, or integration.
 
     Parameters
@@ -1269,10 +1269,10 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
         (or similar), or a single data type, like an ImageModel, SlitModel,
         or CubeModel.
 
-    integ : int
+    integration : int
         For the case that data_model is a SlitModel or a CubeModel,
-        `integ` is the integration number.  If the integration number is
-        not relevant (i.e. the data array is 2-D), `integ` should be -1.
+        `integration` is the integration number.  If the integration number is
+        not relevant (i.e. the data array is 2-D), `integration` should be -1.
 
     profile : ndarray of float
         Spatial profile indicating the aperture location. Must be a
@@ -1341,12 +1341,12 @@ def extract_one_slit(data_model, integ, profile, bg_profile, extract_params):
 
     """
     # Get the data and variance arrays
-    if integ > -1:
-        log.info(f"Extracting integration {integ + 1}")
-        data = data_model.data[integ]
-        var_rnoise = data_model.var_rnoise[integ]
-        var_poisson = data_model.var_poisson[integ]
-        var_flat = data_model.var_flat[integ]
+    if integration > -1:
+        log.info(f"Extracting integration {integration + 1}")
+        data = data_model.data[integration]
+        var_rnoise = data_model.var_rnoise[integration]
+        var_poisson = data_model.var_poisson[integration]
+        var_flat = data_model.var_flat[integration]
     else:
         data = data_model.data
         var_rnoise = data_model.var_rnoise

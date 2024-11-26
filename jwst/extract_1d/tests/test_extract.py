@@ -63,6 +63,20 @@ def extract_defaults():
     return default
 
 
+@pytest.fixture()
+def simple_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[20:30, :] = 1.0
+    return profile
+
+
+@pytest.fixture()
+def background_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[:10, :] = 1.0
+    profile[40:, :] = 1.0
+    return profile
+
 def test_read_extract1d_ref(extract1d_ref_dict, extract1d_ref_file):
     ref_dict = ex.read_extract1d_ref(extract1d_ref_file)
     assert ref_dict == extract1d_ref_dict
@@ -1058,3 +1072,148 @@ def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extra
     assert np.all(profile[:7] == 0.0)
     assert np.all(profile[7:13] == 1.0)
     assert np.all(profile[13:] == 0.0)
+
+
+def test_extract_one_slit_horizontal(mock_nirspec_fs_one_slit, extract_defaults,
+                                     simple_profile, background_profile):
+    # update parameters to subtract background
+    extract_defaults['dispaxis'] = 1
+    extract_defaults['subtract_background'] = True
+    extract_defaults['bkg_fit'] = 'poly'
+    extract_defaults['bkg_order'] = 1
+
+    # set a source in the profile region
+    mock_nirspec_fs_one_slit.data[simple_profile != 0] += 1.0
+
+    result = ex.extract_one_slit(mock_nirspec_fs_one_slit, -1, simple_profile,
+                                 background_profile, extract_defaults)
+
+    for data in result[:-1]:
+        assert np.all(data > 0)
+        assert data.shape == (mock_nirspec_fs_one_slit.data.shape[1],)
+
+    # residuals from the 2D scene model should be zero - this simple case
+    # is exactly modeled with a box profile
+    scene_model = result[-1]
+    assert scene_model.shape == mock_nirspec_fs_one_slit.data.shape
+    assert np.allclose(np.abs(mock_nirspec_fs_one_slit.data - scene_model), 0)
+
+    # flux should be 1.0 * npixels
+    flux = result[0]
+    npixels = result[-2]
+    assert np.allclose(flux, npixels)
+
+    # npixels is sum of profile
+    assert np.all(npixels == np.sum(simple_profile, axis=0))
+
+
+def test_extract_one_slit_vertical(mock_miri_lrs_fs, extract_defaults,
+                                   simple_profile, background_profile):
+    model = mock_miri_lrs_fs
+    profile = simple_profile.T
+    profile_bg = background_profile.T
+
+    # update parameters to subtract background
+    extract_defaults['dispaxis'] = 2
+    extract_defaults['subtract_background'] = True
+    extract_defaults['bkg_fit'] = 'poly'
+    extract_defaults['bkg_order'] = 1
+
+    # set a source in the profile region
+    model.data[profile != 0] += 1.0
+
+    result = ex.extract_one_slit(model, -1, profile, profile_bg, extract_defaults)
+
+    for data in result[:-1]:
+        assert np.all(data > 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # residuals from the 2D scene model should be zero - this simple case
+    # is exactly modeled with a box profile
+    scene_model = result[-1]
+    assert scene_model.shape == model.data.shape
+    assert np.allclose(np.abs(model.data - scene_model), 0)
+
+    # flux should be 1.0 * npixels
+    flux = result[0]
+    npixels = result[-2]
+    assert np.allclose(flux, npixels)
+
+    # npixels is sum of profile
+    assert np.all(npixels == np.sum(profile, axis=1))
+
+
+def test_extract_one_slit_vertical_no_bg(mock_miri_lrs_fs, extract_defaults,
+                                         simple_profile):
+    model = mock_miri_lrs_fs
+    profile = simple_profile.T
+    extract_defaults['dispaxis'] = 2
+
+    result = ex.extract_one_slit(model, -1, profile, None, extract_defaults)
+
+    # flux and variances are nonzero
+    for data in result[:4]:
+        assert np.all(data > 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # background and variances are zero
+    for data in result[4:8]:
+        assert np.all(data == 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # npixels is the sum of the profile
+    assert np.allclose(result[8], np.sum(simple_profile, axis=0))
+
+    # scene model has 2D shape
+    assert result[-1].shape == model.data.shape
+
+
+def test_extract_one_slit_multi_int(mock_nirspec_bots, extract_defaults,
+                                    simple_profile, log_watcher):
+    model = mock_nirspec_bots
+    extract_defaults['dispaxis'] = 1
+
+    log_watcher.message = "Extracting integration 2"
+    result = ex.extract_one_slit(model, 1, simple_profile, None, extract_defaults)
+    log_watcher.assert_seen()
+
+    # flux and variances are nonzero
+    for data in result[:4]:
+        assert np.all(data > 0)
+        assert data.shape == (model.data.shape[2],)
+
+    # background and variances are zero
+    for data in result[4:8]:
+        assert np.all(data == 0)
+        assert data.shape == (model.data.shape[2],)
+
+    # npixels is the sum of the profile
+    assert np.allclose(result[8], np.sum(simple_profile, axis=0))
+
+    # scene model has 2D shape
+    assert result[-1].shape == model.data.shape[-2:]
+
+
+def test_extract_one_slit_missing_var(mock_nirspec_fs_one_slit, extract_defaults,
+                                      simple_profile):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+
+    # Test that mismatched variances still extract okay.
+    # This is probably only possible for var_flat, which is optional and
+    # uninitialized if flat fielding is skipped, but the code has handling
+    # for all 3 variance arrays.
+    model.var_rnoise = np.zeros((10, 10))
+    model.var_poisson = np.zeros((10, 10))
+    model.var_flat = np.zeros((10, 10))
+
+    result = ex.extract_one_slit(model, -1, simple_profile, None, extract_defaults)
+
+    # flux is nonzero
+    assert np.all(result[0] > 0)
+    assert result[0].shape == (model.data.shape[1],)
+
+    # variances are zero
+    for data in result[1:4]:
+        assert np.all(data == 0)
+        assert data.shape == (model.data.shape[1],)
