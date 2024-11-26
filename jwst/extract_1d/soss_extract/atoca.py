@@ -56,6 +56,7 @@ class ExtractionEngine:
 
     def __init__(self, wave_map, trace_profile, throughput, kernels,
                  wave_grid, mask_trace_profile,
+                 global_mask=None,
                  orders=[1,2], threshold=1e-3, c_kwargs=None):
         """
         Parameters
@@ -88,6 +89,9 @@ class ExtractionEngine:
         mask_trace_profile : (N_ord, N, M) list or array of 2-D arrays[bool], required.
             A list or array of the pixel that need to be used for extraction,
             for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
+        global_mask : (N, M) array_like boolean, optional
+            Boolean Mask of the detector pixels to mask for every extraction, e.g. bad pixels.
+            Should not be related to a specific order (if so, use `mask_trace_profile` instead).
         orders : list, optional
             List of orders considered. Default is orders = [1, 2]
         threshold : float, optional:
@@ -122,8 +126,8 @@ class ExtractionEngine:
             lp, lm = atoca_utils.get_wave_p_or_m(wave)
             wave_p.append(lp)
             wave_m.append(lm)
-        self.wave_p = np.array(wave_p).astype(self.dtype)
-        self.wave_m = np.array(wave_m).astype(self.dtype)
+        self.wave_p = np.array(wave_p, dtype=self.dtype)
+        self.wave_m = np.array(wave_m, dtype=self.dtype)
 
         # Set orders and ensure that the number of orders is consistent with wave_map length
         self.orders = orders
@@ -138,7 +142,7 @@ class ExtractionEngine:
         self.i_bounds = [[0, len(self.wave_grid)] for _ in range(self.n_orders)]
 
         # Estimate a global mask and masks for each orders
-        self.mask, self.mask_ord = self._get_masks()
+        self.mask, self.mask_ord = self._get_masks(global_mask)
         # Save mask here as the general mask,  since `mask` attribute can be changed.
         self.general_mask = self.mask.copy()
 
@@ -153,11 +157,12 @@ class ExtractionEngine:
         # Update i_bounds based on masked wavelengths
         self.i_bounds = self._get_i_bnds()
 
-        # if throughput is given as callable, turn it into an array of proper shape
+        # if throughput is given as callable, turn it into an array
+        # with shape (n_ord, wave_grid.size)
         self.update_throughput(throughput)
 
         # Re-build global mask and masks for each orders
-        self.mask, self.mask_ord = self._get_masks()
+        self.mask, self.mask_ord = self._get_masks(global_mask)
 
         # turn kernels into sparse matrix
         self.kernels = self._create_kernels(kernels, c_kwargs)
@@ -281,9 +286,14 @@ class ExtractionEngine:
         return kernels_new
 
 
-    def _get_masks(self):
+    def _get_masks(self, global_mask):
         """Compute a general mask on the detector and for each order.
         Depends on the trace profile and the wavelength grid.
+
+        Parameters
+        ----------
+        global_mask : array[bool]
+            Boolean mask of the detector pixels to mask for every extraction.
 
         Returns
         -------
@@ -295,14 +305,18 @@ class ExtractionEngine:
 
         # Get needed attributes
         args = ('threshold', 'n_orders', 'mask_trace_profile', 'trace_profile')
-        needed_attr = self.get_attributes(*args)
-        threshold, n_orders, mask_trace_profile, trace_profile = needed_attr
+        threshold, n_orders, mask_trace_profile, trace_profile = self.get_attributes(*args)
 
         # Mask pixels not covered by the wavelength grid.
         mask_wave = np.array([self.get_mask_wave(i_order) for i_order in range(n_orders)])
 
-        # Apply user defined mask.
-        mask_ord = np.any([mask_trace_profile, mask_wave], axis=0)
+        # combine trace profile mask with wavelength cutoff mask
+        # and apply detector bad pixel mask if specified
+        if global_mask is None:
+            mask_ord = np.any([mask_trace_profile, mask_wave], axis=0)
+        else:
+            mask = [global_mask for _ in range(n_orders)]  # For each orders
+            mask_ord = np.any([mask_trace_profile, mask_wave, mask], axis=0)
 
         # Find pixels that are masked in each order.
         general_mask = np.all(mask_ord, axis=0)
@@ -528,7 +542,6 @@ class ExtractionEngine:
 
     def get_detector_model(self, data, error):
         """
-        TODO: are mask, trace_profile, throughput ever passed in here?
         Get the linear model of the detector pixel, B.dot(flux) = pixels
         TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
               There will be only one matrix multiplication:
@@ -564,20 +577,6 @@ class ExtractionEngine:
         # Build detector pixels' array
         # Take only valid pixels and apply `error` on data
         data = data[~self.mask] / error[~self.mask]
-        print("sum of nans in data after mask", np.sum(np.isnan(data)))
-        print("n_i", n_i)
-
-        import matplotlib.pyplot as plt
-        plt.imshow(self.mask, origin="lower")
-        plt.show()
-
-        # FIXME: data[~self.mask] still contains NaNs in some cases
-        # but this is not the case on main
-        # first pass through, looking at just order 1, it appears self.mask has
-        # all the NaNs from the data already in it
-        # second pass through, mask is different and now it doesn't contain the NaNs
-        # that are present in the data, just the outline of the trace
-        # on main it appears this is somehow updated
 
         return b_matrix, csr_matrix(data)
 

@@ -568,6 +568,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     engine = ExtractionEngine(*ref_file_args,
                               wave_grid=wave_grid,
                               mask_trace_profile=mask_trace_profile,
+                              global_mask=scimask,
                               threshold=threshold,
                               c_kwargs=c_kwargs)
 

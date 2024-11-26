@@ -104,6 +104,8 @@ def test_get_wave_p_or_m(wave_map, dispersion_axis):
     """
     Check that the plus and minus side is correctly identified
     for strictly ascending and strictly descending wavelengths.
+
+    TODO: test that given a float64, output is float64
     """
     wave_reverse = np.fliplr(wave_map)
     if dispersion_axis == 0:
