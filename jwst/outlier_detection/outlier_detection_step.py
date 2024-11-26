@@ -59,7 +59,6 @@ class OutlierDetectionStep(Step):
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         search_output_file = boolean(default=False)
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
         in_memory = boolean(default=False) # ignored if run within the pipeline; set at pipeline level instead
     """
 
@@ -113,7 +112,6 @@ class OutlierDetectionStep(Step):
                 self.pixfrac,
                 self.kernel,
                 self.fillval,
-                self.allowed_memory,
                 self.in_memory,
                 self.make_output_path,
             )

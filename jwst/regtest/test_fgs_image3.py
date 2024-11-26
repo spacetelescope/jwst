@@ -1,7 +1,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.resample.resample import OutputTooLargeError
 from jwst.stpipe import Step
 
 
@@ -34,23 +33,3 @@ def test_fgs_image3_catalog(run_fgs_image3, rtdata_module, diff_astropy_tables):
     rtdata.get_truth("truth/test_fgs_image3/jw01029-o001_t009_fgs_clear_cat.ecsv")
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-3, atol=1e-4)
-
-
-@pytest.mark.bigdata
-def test_fgs_toobig(rtdata, fitsdiff_default_kwargs, caplog, monkeypatch):
-    """Test for the situation where the combined mosaic is too large"""
-
-    # Set the environment to not allow the resultant too-large image.
-    # Note: this test was originally run on two pre-flight images
-    # with WCSs from very different parts of the sky.
-    # This condition should hopefully never be encountered in reductions
-    # of in-flight data.  To test the software failsafe, we now use real data
-    # that makes a reasonable sized mosaic, but set the allowed memory to a
-    # small value.
-    monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', "0.0001")
-
-    rtdata.get_asn('fgs/image3/jw01029-o001_20240716t172128_image3_00001_asn.json')
-
-    args = ['jwst.resample.ResampleStep', rtdata.input]
-    with pytest.raises(OutputTooLargeError):
-        Step.from_cmdline(args)
