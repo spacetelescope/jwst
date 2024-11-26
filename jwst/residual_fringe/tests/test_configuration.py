@@ -44,7 +44,7 @@ def test_call_residual_fringe(tmp_cwd,  miri_image):
 
 def test_fringe_flat_applied(tmp_cwd, miri_image):
 
-    miri_image.meta.cal_step.fringe = 'SKIP'
+    miri_image.meta.cal_step.fringe = 'SKIPPED'
     residual_fringe_reference_file = None
     regions_reference_file = None
     save_intermediate_results = False
