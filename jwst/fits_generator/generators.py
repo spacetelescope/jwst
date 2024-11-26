@@ -41,10 +41,10 @@ from astropy.time import Time
 from . import util
 from jwst import __version__
 
-bool = __builtins__['bool']
-str = __builtins__['str']
-int = __builtins__['int']
-float = __builtins__['float']
+bool = __builtins__['bool']  # type: ignore[index]
+str = __builtins__['str']  # type: ignore[index]
+int = __builtins__['int']  # type: ignore[index]
+float = __builtins__['float']  # type: ignore[index]
 
 def date_and_time_to_cds(date_str, time_str):
     """

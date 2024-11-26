@@ -52,9 +52,9 @@ class GuiderPipeline(Pipeline):
             input = datamodels.GuiderRawModel(input)
 
         # Apply the steps
-        input = self.dq_init(input)
-        input = self.guider_cds(input)
-        input = self.flat_field(input)
+        input = self.dq_init.run(input)
+        input = self.guider_cds.run(input)
+        input = self.flat_field.run(input)
 
         log.info('... ending calwebb_guider')
 

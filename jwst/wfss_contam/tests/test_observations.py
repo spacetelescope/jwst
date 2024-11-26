@@ -12,7 +12,7 @@ from photutils.segmentation import SourceFinder
 from jwst.wfss_contam.observations import background_subtract
 from jwst.wfss_contam.disperse import dispersed_pixel
 from jwst.wfss_contam.tests import data
-from jwst.datamodels import SegmentationMapModel, ImageModel
+from jwst.datamodels import SegmentationMapModel, ImageModel  # type: ignore[attr-defined]
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 DIR_IMAGE = "direct_image.fits"

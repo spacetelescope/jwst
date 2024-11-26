@@ -97,7 +97,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     INVALID_VALUES = _EMPTY
 
     # Make sequences type-dependent
-    _sequences = defaultdict(Counter)
+    _sequences: defaultdict = defaultdict(Counter)
 
     def __init__(self, *args, **kwargs):
 

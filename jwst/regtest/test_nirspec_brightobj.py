@@ -20,7 +20,10 @@ def run_tso_spec2_pipeline(rtdata_module, request):
     rtdata = rtdata_module
 
     # Get the input exposure
-    rtdata.get_data('nirspec/tso/jw02420001001_04101_00001-seg001_nrs1_rateints.fits')
+    # Input data is from jw02420001001_04101_00001-seg001_nrs1_rateints.fits,
+    # modified to truncate the data to the first 100 integrations, for
+    # faster processing.
+    rtdata.get_data('nirspec/tso/jw02420001001_04101_00001-first100_nrs1_rateints.fits')
 
     # Run the calwebb_spec2 pipeline;
     args = ["calwebb_spec2", rtdata.input,
@@ -28,6 +31,7 @@ def run_tso_spec2_pipeline(rtdata_module, request):
             "--steps.extract_2d.save_results=True",
             "--steps.wavecorr.save_results=True",
             "--steps.flat_field.save_results=True",
+            "--steps.flat_field.save_interpolated_flat=True",
             "--steps.photom.save_results=True"]
     Step.from_cmdline(args)
 
@@ -35,7 +39,9 @@ def run_tso_spec2_pipeline(rtdata_module, request):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ['assign_wcs', 'extract_2d', 'wavecorr', 'flat_field', 'photom', 'calints', 'x1dints'])
+@pytest.mark.parametrize("suffix", ['assign_wcs', 'extract_2d', 'wavecorr',
+                                    'flat_field', 'photom', 'calints', 'x1dints',
+                                    'interpolatedflat'])
 def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec
@@ -57,27 +63,18 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
 @pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
-    data = rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits')
-    user_supplied_flat = rtdata.get_data('nirspec/tso/nrs2_interpolatedflat.fits')
+    basename = 'jw02420001001_04101_00001-first100_nrs1'
+    output_file = f'{basename}_flat_from_user_file.fits'
 
-    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat)
-    rtdata.output = 'flat_fielded_step_user_supplied.fits'
+    data = rtdata.get_data(f'nirspec/tso/{basename}_wavecorr.fits')
+    user_supplied_flat = rtdata.get_data(f'nirspec/tso/{basename}_user_flat.fits')
+
+    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat,
+                                           save_results=False)
+    rtdata.output = output_file
     data_flat_fielded.write(rtdata.output)
 
-    rtdata.get_truth('truth/test_nirspec_brightobj_spec2/flat_fielded_step_user_supplied.fits')
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
-
-
-@pytest.mark.bigdata
-def test_flat_field_bots_interp_flat(rtdata, fitsdiff_default_kwargs):
-    """Test the interpolated flat for a NRS BOTS exposure"""
-    data = rtdata.get_data('nirspec/tso/jw93056001001_short_nrs1_wavecorr.fits')
-
-    FlatFieldStep.call(data, save_interpolated_flat=True)
-    rtdata.output = 'jw93056001001_short_nrs1_wavecorr_interpolatedflat.fits'
-
-    rtdata.get_truth('truth/test_nirspec_brightobj_spec2/jw93056001001_short_nrs1_wavecorr_interpolatedflat.fits')
+    rtdata.get_truth(f'truth/test_nirspec_brightobj_spec2/{output_file}')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -85,7 +82,8 @@ def test_flat_field_bots_interp_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    with dm.open(rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits')) as data:
+    basename = 'jw02420001001_04101_00001-first100_nrs1'
+    with dm.open(rtdata.get_data(f'nirspec/tso/{basename}_wavecorr.fits')) as data:
         flatted = FlatFieldStep.call(data)
         unflatted = FlatFieldStep.call(flatted, inverse=True)
 

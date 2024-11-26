@@ -84,24 +84,24 @@ class Image3Pipeline(Pipeline):
                 is_moving = is_moving_target(model)
                 input_models.shelve(model, 0, modify=False)
             if is_moving:
-                input_models = self.assign_mtwcs(input_models)
+                input_models = self.assign_mtwcs.run(input_models)
             else:
-                input_models = self.tweakreg(input_models)
+                input_models = self.tweakreg.run(input_models)
 
-            input_models = self.skymatch(input_models)
-            input_models = self.outlier_detection(input_models)
+            input_models = self.skymatch.run(input_models)
+            input_models = self.outlier_detection.run(input_models)
 
         elif self.skymatch.skymethod == 'match':
             self.log.warning("Turning 'skymatch' step off for a single "
                                 "input image when 'skymethod' is 'match'")
 
         else:
-            input_models = self.skymatch(input_models)
+            input_models = self.skymatch.run(input_models)
 
-        result = self.resample(input_models)
+        result = self.resample.run(input_models)
         del input_models
         if isinstance(result, datamodels.ImageModel) and result.meta.cal_step.resample == 'COMPLETE':
-            self.source_catalog(result)
+            self.source_catalog.run(result)
 
 
     def _load_input_as_library(self, input):

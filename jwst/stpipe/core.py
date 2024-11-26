@@ -11,7 +11,7 @@ from stpipe import crds_client
 from stpipe import Step
 from stpipe import Pipeline
 
-from .. import __version_commit__, __version__
+from jwst import __version_commit__, __version__
 from ..lib.suffix import remove_suffix
 
 

@@ -80,7 +80,7 @@ class EngdbDirect(EngdbABC):
         ]), timeout=self.timeout)
         response.raise_for_status()
 
-    @property
+    @property  # type: ignore[no-redef]
     def default_format(self):  # noqa: F811
         return self._default_format
 

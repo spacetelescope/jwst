@@ -28,9 +28,15 @@ def make_output_wcs(input_models, ref_wcs=None,
     Parameters
     ----------
     input_models : `~jwst.datamodel.ModelLibrary`
-        Each datamodel must have a ~gwcs.WCS object.
+        The datamodels to combine into a single output WCS. Each datamodel must
+        have a ``meta.wcs.s_region`` attribute.
 
-    pscale_ratio : float, optional
+    ref_wcs : gwcs.WCS, None, optional
+        Custom WCS to use as the output WCS. If not provided,
+        the reference WCS will be taken as the WCS of the first input model, with
+        its bounding box adjusted to encompass all input frames.
+
+    pscale_ratio : float, None, optional
         Ratio of input to output pixel scale. Ignored when ``pscale``
         is provided.
 
@@ -67,27 +73,26 @@ def make_output_wcs(input_models, ref_wcs=None,
         WCS object, with defined domain, covering entire set of input frames
     """
     if ref_wcs is None:
+        sregion_list = []
         with input_models:
-            wcslist = []
             for i, model in enumerate(input_models):
-                w = model.meta.wcs
-                if w.bounding_box is None:
-                    w.bounding_box = wcs_bbox_from_shape(model.data.shape)
-                wcslist.append(w)
+                sregion_list.append(model.meta.wcsinfo.s_region)
                 if i == 0:
                     example_model = model
+                    ref_wcs = example_model.meta.wcs
+                    ref_wcsinfo = example_model.meta.wcsinfo.instance
                 input_models.shelve(model)
-        naxes = wcslist[0].output_frame.naxes
+        naxes = ref_wcs.output_frame.naxes
 
         if naxes != 2:
             msg = ("Output WCS needs 2 spatial axes "
                    f"but the supplied WCS has {naxes} axes.")
             raise RuntimeError(msg)
 
-        output_wcs = util.wcs_from_footprints(
-            wcslist,
-            ref_wcs=wcslist[0],
-            ref_wcsinfo=example_model.meta.wcsinfo.instance,
+        output_wcs = util.wcs_from_sregions(
+            sregion_list,
+            ref_wcs,
+            ref_wcsinfo,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,

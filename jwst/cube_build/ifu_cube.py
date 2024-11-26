@@ -679,6 +679,8 @@ class IFUCubeData():
                         linear = 0
                         if self.linear_wavelength:
                             linear = 1
+                        if debug_cube_index >= 0:
+                            log.info(f"Input filename: {input_model.meta.filename}")
                         result = cube_wrapper_driz(instrument, flag_dq_plane,
                                                    start_region, end_region,
                                                    self.overlap_partial, self.overlap_full,
@@ -2434,6 +2436,14 @@ class IFUCubeData():
                 "meta.filename",
             ],
         )
+        # For moving targets, set RA, Dec equal to the average
+        mt_avra = getattr(self.input_models_this_cube[0].meta.wcsinfo, "mt_avra", None)
+        mt_avdec = getattr(self.input_models_this_cube[0].meta.wcsinfo, "mt_avdec", None)
+        if mt_avra is not None:
+            IFUCube.meta.wcsinfo.mt_ra = mt_avra
+            IFUCube.meta.wcsinfo.mt_dec = mt_avdec
+            IFUCube.meta.target.ra = mt_avra
+            IFUCube.meta.target.dec = mt_avdec
 
     # ********************************************************************************
     def find_ra_dec_offset(self, filename):

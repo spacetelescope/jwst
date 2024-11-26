@@ -108,15 +108,6 @@ image.
 ``--blendheaders`` (bool, default=True)
     Blend metadata from all input images into the resampled output image.
 
-``--allowed_memory`` (float, default=None)
-    Specifies the fractional amount of free memory to allow when creating the
-    resampled image. If ``None``, the environment variable
-    ``DMODEL_ALLOWED_MEMORY`` is used. If not defined, no check is made. If the
-    resampled image would be larger than specified, an ``OutputTooLargeError``
-    exception will be generated.
-
-    For example, if set to ``0.5``, only resampled images that use less than
-    half the available memory can be created.
 
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during

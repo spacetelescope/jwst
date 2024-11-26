@@ -20,14 +20,14 @@ class ModelLibrary(AbstractModelLibrary):
     @property
     def crds_observatory(self):
         return "jwst"
-    
+
     @property
     def exptypes(self):
         """
         List of exposure types for all members in the library.
         """
         return [member["exptype"] for member in self._members]
-    
+
     def indices_for_exptype(self, exptype):
         """
         Determine the indices of models corresponding to ``exptype``.
@@ -104,6 +104,9 @@ class ModelLibrary(AbstractModelLibrary):
             msg = f"Cannot find header keyword {e} in {filename}"
             raise NoGroupID(msg) from e
 
+    def _model_to_exptype(self, model):
+        return model.meta.asn.exptype
+
     def _model_to_group_id(self, model):
         """
         Compute a "group_id" from a model using the DataModel interface
@@ -123,7 +126,8 @@ class ModelLibrary(AbstractModelLibrary):
         raise NoGroupID(f"{model} missing group_id")
 
     def _assign_member_to_model(self, model, member):
-        for attr in ("group_id", "tweakreg_catalog", "exptype"):
+        model.meta.asn.exptype = member["exptype"]
+        for attr in ("group_id", "tweakreg_catalog"):
             if attr in member:
                 setattr(model.meta, attr, member[attr])
         if not hasattr(model.meta, "asn"):

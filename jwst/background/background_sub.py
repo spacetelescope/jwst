@@ -272,6 +272,20 @@ def average_background(input_model, bkg_list, sigma, maxiters):
     return avg_bkg
 
 
+def sufficient_background_pixels(dq_array, bkg_mask, min_pixels=100):
+    """Count number of good pixels for background use.
+
+    Check DQ flags of pixels selected for bkg use - XOR the DQ values with
+    the DO_NOT_USE flag to flip the DO_NOT_USE bit. Then count the number
+    of pixels that AND with the DO_NOT_USE flag, i.e. initially did not have
+    the DO_NOT_USE bit set.
+    """
+    return np.count_nonzero((dq_array[bkg_mask]
+                            ^ pixel['DO_NOT_USE'])
+                            & pixel['DO_NOT_USE']
+                            ) > min_pixels
+
+
 def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=None):
     """Scale and subtract a background reference image from WFSS/GRISM data.
 
@@ -310,18 +324,12 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     # i.e. in regions we can use as background.
     if got_catalog:
         bkg_mask = mask_from_source_cat(input_model, wl_range_name, mmag_extract)
-        # Ensure mask has 100 pixels and that those pixels correspond to valid
-        # pixels using model DQ array
-        if np.count_nonzero(input_model.dq[bkg_mask]
-                            ^ pixel['DO_NOT_USE']
-                            & pixel['DO_NOT_USE']
-                            ) < 100:
+        if not sufficient_background_pixels(input_model.dq, bkg_mask):
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
             return None
     else:
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
-
     # Compute the mean values of science image and background reference
     # image, including only regions where there are no identified sources.
     # Exclude pixel values in the lower and upper 25% of the histogram.

@@ -9,11 +9,13 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
 from jwst.stpipe import Step
-from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
+from jwst.background.background_sub import (robust_mean, mask_from_source_cat,
+                                            no_NaN, sufficient_background_pixels)
 
 
 @pytest.fixture(scope="module")
@@ -403,3 +405,23 @@ def test_no_nan():
 
     # Make sure arrays are equal.
     assert np.array_equal(model.data, result.data)
+
+
+def test_sufficient_background_pixels():
+    model = datamodels.ImageModel(data=np.zeros((2048, 2048)),
+                                  dq=np.zeros((2048, 2048)))
+    refpix_flags = pixel['DO_NOT_USE'] | pixel['REFERENCE_PIXEL']
+    model.dq[:4, :] = refpix_flags
+    model.dq[-4:, :] = refpix_flags
+    model.dq[:, :4] = refpix_flags
+    model.dq[:, -4:] = refpix_flags
+
+    bkg_mask = np.ones((2048, 2048), dtype=bool)
+    # With full array minux refpix available for bkg, should be sufficient
+    assert sufficient_background_pixels(model.dq, bkg_mask)
+
+    bkg_mask[4: -4, :] = 0
+    bkg_mask[:, 4: -4] = 0
+    # Now mask out entire array, mocking full source coverage of detector -
+    # no pixels should be available for bkg
+    assert not sufficient_background_pixels(model.dq, bkg_mask)

@@ -59,22 +59,19 @@ def test_miri_mrs_badpix_selfcal(run_pipeline_selfcal, fitsdiff_default_kwargs):
         assert not os.path.isfile(fname)
 
 
+@pytest.mark.parametrize("basename", (
+    [f"{OUTSTEM_BKG}_badpix_selfcal.fits",] + 
+    [f"{OUTSTEM_BKG}_badpix_selfcal_bkg_{idx}.fits" for idx in range(4)]))
 @pytest.mark.bigdata
-def test_miri_mrs_badpix_selfcal_bkg(run_pipeline_background, fitsdiff_default_kwargs):
+def test_miri_mrs_badpix_selfcal_bkg(basename, run_pipeline_background, fitsdiff_default_kwargs):
     """Run a test for MIRI MRS data with dedicated background exposures."""
 
     rtdata = run_pipeline_background
 
     # Get the truth file
-    rtdata.get_truth(f"truth/test_miri_mrs_badpix_selfcal/{OUTSTEM_BKG}_badpix_selfcal.fits")
+    rtdata.output = basename
+    rtdata.get_truth(f"truth/test_miri_mrs_badpix_selfcal/{basename}")
 
-    # Compare the results
+    # Compare the results and check the bkg files in the background case, but not in the selfcal case
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
-
-    # check the bkg files in the background case, but not in the selfcal case
-    for idx in range(4):
-        fname = f"{OUTSTEM_BKG}_badpix_selfcal_bkg_{idx}.fits"
-        truth = rtdata.get_truth(f"truth/test_miri_mrs_badpix_selfcal/{fname}")
-        diff = FITSDiff(fname, truth, **fitsdiff_default_kwargs)
-        assert diff.identical, diff.report()

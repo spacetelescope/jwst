@@ -413,7 +413,6 @@ class TestMethods:
         data = slopes.data
         np.testing.assert_allclose(data[50, 50], cds_slope, 1e-6)
 
-    @pytest.mark.skip(reason="Unweighted fit not implemented.")
     def test_photon_noise_with_unweighted_fit(self, method):
         model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
         model1.data[0, 0, 50, 50] = 10.0

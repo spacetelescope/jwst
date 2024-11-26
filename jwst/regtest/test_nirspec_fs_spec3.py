@@ -36,7 +36,7 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     rtdata = rtdata_module
 
     if suffix == "median":
-        output = f"jw01309022001_04102_00002_nrs2_{slit_name}_{suffix}.fits"
+        output = f"jw01309022001_04102_00001_nrs2_{slit_name}_{suffix}.fits"
         # also ensure drizzled and blot models were created with the correct names
         assert os.path.isfile(output.replace("median", "outlier_s2d"))
         assert os.path.isfile(output.replace("median", "blot"))

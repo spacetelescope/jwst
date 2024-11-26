@@ -49,6 +49,47 @@ def test_err():
     assert np.allclose(result.spec[0].spec_table['SB_ERROR'], expected_error)
 
 
+def test_nan():
+    """Test that nan exclusion works"""
+    spec1 = create_spec_model(flux=1e-9)
+    spec2 = create_spec_model(flux=1e-9)
+    ms = datamodels.MultiSpecModel()
+    ms.meta.exposure.exposure_time = 1
+    ms.spec.append(spec1)
+    ms.spec.append(spec2)
+
+    # Make one pixel bad by being nan, without being marked as DO_NOT_USE.
+    # Result should just contain the second spectrum value
+    BAD_PIX = 5
+    spec1.spec_table['FLUX'][BAD_PIX] = np.nan
+    result = Combine1dStep.call(ms)
+    assert np.isclose(result.spec[0].spec_table['FLUX'][BAD_PIX], spec2.spec_table['FLUX'][BAD_PIX])
+
+
+def test_sigmaclip():
+    """Test that sigma clipping works"""
+    spec1 = create_spec_model(flux=1e-9)
+    spec2 = create_spec_model(flux=1e-9)
+    spec3 = create_spec_model(flux=1e-9)
+    ms = datamodels.MultiSpecModel()
+    ms.meta.exposure.exposure_time = 1
+    ms.spec.append(spec1)
+    ms.spec.append(spec2)
+    ms.spec.append(spec3)
+
+    # Make one pixel bad by being large.
+    # Result should be large
+    BAD_PIX = 5
+    spec1.spec_table['FLUX'][BAD_PIX] = 1.0
+    result = Combine1dStep.call(ms)
+    assert np.isclose(result.spec[0].spec_table['FLUX'][BAD_PIX], 1/3)
+
+    # Now process with sigma_clipping turned on
+    # Result should not just contain the second and third spectra values.
+    result_dq = Combine1dStep.call(ms, sigma_clip=3)
+    assert np.isclose(result_dq.spec[0].spec_table['FLUX'][BAD_PIX], spec2.spec_table['FLUX'][BAD_PIX])
+
+
 def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
     """Create a SpecModel"""
 

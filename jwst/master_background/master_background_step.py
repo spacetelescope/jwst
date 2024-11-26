@@ -2,6 +2,7 @@ from os.path import basename
 import numpy as np
 from stdatamodels.properties import merge_tree
 from stdatamodels.jwst import datamodels
+from scipy.signal import medfilt
 
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import record_step_status
@@ -21,6 +22,7 @@ class MasterBackgroundStep(Step):
     class_alias = "master_background"
 
     spec = """
+        median_kernel = integer(default=1) # Moving-median boxcar size to filter the master background spectrum
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
         force_subtract = boolean(default=False) # Force subtracting master background
@@ -36,6 +38,11 @@ class MasterBackgroundStep(Step):
         input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`, association
             Input target datamodel(s) to which master background subtraction is
             to be applied
+
+        median_kernel : integer, optional
+            Optional user-supplied kernel with which to moving-median boxcar filter the master background
+            spectrum.  Must be an odd integer, even integers will be rounded down to the nearest
+            odd integer.
 
         user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
             Optional user-supplied master background 1D spectrum, path to file
@@ -86,11 +93,10 @@ class MasterBackgroundStep(Step):
             if self.user_background:
                 if isinstance(input_data, ModelContainer):
                     input_data, _ = split_container(input_data)
+                    asn_id = input_data.asn_table["asn_id"]
                     del _
                     result = ModelContainer()
-                    result.update(input_data)
                     background_2d_collection = ModelContainer()
-                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, self.user_background)
                         result.append(subtract_2d_background(model, background_2d))
@@ -100,8 +106,9 @@ class MasterBackgroundStep(Step):
                         model.meta.background.master_background_file = basename(self.user_background)
                 # Use user-supplied master background and subtract it
                 else:
+                    asn_id = None
                     background_2d = expand_to_2d(input_data, self.user_background)
-                    background_2d_collection = background_2d
+                    background_2d_collection = ModelContainer([background_2d])
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
@@ -109,14 +116,20 @@ class MasterBackgroundStep(Step):
                 # Save the computed 2d background if requested by user. The user has supplied
                 # the master background so just save the expanded 2d background
                 if self.save_background:
-                    asn_id = input_data.meta.asn_table.asn_id
-                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
-                    
+                    self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+
             # Compute master background and subtract it
             else:
                 if isinstance(input_data, ModelContainer):
                     input_data, background_data = split_container(input_data)
-                    asn_id = input_data.meta.asn_table.asn_id
+                    if len(background_data) == 0:
+                        msg = ("No background data found in input container, "
+                               "and no user-supplied background provided.  Skipping step.")
+                        self.log.warning(msg)
+                        result = input_data.copy()
+                        record_step_status(result, 'master_background', success=False)
+                        return result
+                    asn_id = input_data.asn_table["asn_id"]
 
                     for model in background_data:
                         # Check if the background members are nodded x1d extractions
@@ -140,12 +153,28 @@ class MasterBackgroundStep(Step):
                         exptime_key='exposure_time',
                     )
 
+                    # If requested, apply a moving-median boxcar filter to the master background spectrum
+                    # Round down even kernel sizes because only odd kernel sizes are supported.
+                    if self.median_kernel % 2 == 0:
+                        self.median_kernel -= 1
+                        self.log.info('Even median filter kernels are not supported.'
+                                      f' Rounding the median kernel size down to {self.median_kernel}.')
+
+                    if (self.median_kernel > 1):
+                        self.log.info(f'Applying moving-median boxcar of width {self.median_kernel}.')
+                        master_background.spec[0].spec_table['surf_bright'] = medfilt(
+                            master_background.spec[0].spec_table['surf_bright'],
+                            kernel_size=[self.median_kernel]
+                        )
+                        master_background.spec[0].spec_table['flux'] = medfilt(
+                            master_background.spec[0].spec_table['flux'],
+                            kernel_size=[self.median_kernel]
+                        )
+
                     background_data.close()
 
                     result = ModelContainer()
-                    result.update(input_data)
                     background_2d_collection = ModelContainer()
-                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
@@ -166,7 +195,7 @@ class MasterBackgroundStep(Step):
                 # Save the computed background if requested by user
                 if self.save_background:
                     self.save_model(master_background, suffix='masterbg1d', force=True, asn_id=asn_id)
-                    self.save_model(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
+                    self.save_container(background_2d_collection, suffix='masterbg2d', force=True, asn_id=asn_id)
 
             record_step_status(result, 'master_background', success=True)
 
@@ -225,6 +254,11 @@ class MasterBackgroundStep(Step):
 
         return do_sub
 
+    def save_container(self, container, suffix="", asn_id="", force=True):
+        """Save all models in container for intermediate background subtraction"""
+        for i, model in enumerate(container):
+            self.save_model(model, suffix=suffix, force=force, asn_id=asn_id, idx=i)
+
 
 def copy_background_to_surf_bright(spectrum):
     """Copy the background column to the surf_bright column in a MultiSpecModel in-place"""
@@ -240,8 +274,6 @@ def copy_background_to_surf_bright(spectrum):
 def split_container(container):
     """Divide a ModelContainer with science and background into one of each
     """
-    asn = container.meta.asn_table.instance
-
     background = ModelContainer()
     science = ModelContainer()
 
@@ -252,12 +284,11 @@ def split_container(container):
         background.append(container._models[ind_bkgd])
 
     # Pass along the association table to the output science container
-    science.meta.asn_table = {}
     science.asn_pool_name = container.asn_pool_name
     science.asn_table_name = container.asn_table_name
-    merge_tree(science.meta.asn_table.instance, asn)
+    merge_tree(science.asn_table, container.asn_table)
     # Prune the background members from the table
-    for p in science.meta.asn_table.instance['products']:
+    for p in science.asn_table['products']:
         p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
     return science, background
 

@@ -187,8 +187,6 @@ class EngdbMast(EngdbABC):
         # Get the token
         if token is None:
             token = getenv('MAST_API_TOKEN', None)
-        if token is None:
-            raise RuntimeError('No MAST token provided but is required. See https://auth.mast.stsci.edu/ for more information.')
         self.token = token
 
         # Get various timeout parameters

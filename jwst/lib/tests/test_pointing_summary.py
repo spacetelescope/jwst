@@ -12,7 +12,6 @@ from stdatamodels.jwst.datamodels import ImageModel
 from jwst.lib import engdb_tools
 import jwst.lib.pointing_summary as ps
 
-from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 DATA_PATH = Path(__file__).parent / 'data'
 
@@ -24,8 +23,7 @@ GOOD_ENDTIME = '2016-01-19'
 @pytest.fixture
 def engdb():
     """Setup the service to operate through the mock service"""
-    with EngDB_Mocker():
-        yield engdb_tools.ENGDB_Service(base_url='http://localhost')
+    yield engdb_tools.ENGDB_Service()
 
 
 @pytest.fixture(scope='module')

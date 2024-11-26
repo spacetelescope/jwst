@@ -20,12 +20,14 @@ class Combine1dStep(Step):
 
     spec = """
     exptime_key = string(default="exposure_time") # use for weight
+    sigma_clip = float(default=None) # Factor for clipping outliers
     """
 
     def process(self, input_file):
 
         with datamodels.open(input_file) as input_model:
             result = combine1d.combine_1d_spectra(input_model,
-                                                  self.exptime_key)
+                                                  self.exptime_key,
+                                                  sigma_clip=self.sigma_clip)
 
         return result

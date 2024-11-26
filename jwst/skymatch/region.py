@@ -413,18 +413,25 @@ class Edge():
         u = self._stop - self._start
         v = edge._stop - edge._start
         w = self._start - edge._start
-        D = np.cross(u, v)
 
-        if np.allclose(np.cross(u, v), 0, rtol=0,
+        # Find the determinant of the matrix formed by the vectors u and v
+        #    Note: Originally this was computed using a numpy "2D" cross product,
+        #          however, this functionality has been deprecated and slated for
+        #          removal.
+        D = np.linalg.det([u, v])
+
+        if np.allclose(D, 0, rtol=0,
                        atol=1e2 * np.finfo(float).eps):
             return np.array(self._start)
 
-        return np.cross(v, w) / D * u + self._start
+        # See note above
+        return np.linalg.det([v, w]) / D * u + self._start
 
     def is_parallel(self, edge):
         u = self._stop - self._start
         v = edge._stop - edge._start
-        return np.allclose(np.cross(u, v), 0, rtol=0,
+        # See note in intersection method
+        return np.allclose(np.linalg.det([u, v]), 0, rtol=0,
                            atol=1e2 * np.finfo(float).eps)
 
 

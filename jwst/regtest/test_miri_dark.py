@@ -7,7 +7,9 @@ from jwst.stpipe import Step
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'exposure',
-    ['jw00001001001_01101_00001_mirimage', 'jw02201001001_01101_00001_MIRIMAGE']
+    ['jw04482014001_02102_00001_mirifulong',
+     'jw04482014001_02102_00001_mirifushort',
+     'jw04482014001_02102_00001_mirimage']
 )
 def test_miri_dark_pipeline(exposure, rtdata, fitsdiff_default_kwargs):
     """Test the DarkPipeline on MIRI dark exposures"""

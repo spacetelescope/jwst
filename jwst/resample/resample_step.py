@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import asdf
 
-from jwst.datamodels import ModelLibrary, ImageModel
+from jwst.datamodels import ModelLibrary, ImageModel  # type: ignore[attr-defined]
 from jwst.lib.pipe_utils import match_nans_and_flags
 
 from . import resample
@@ -52,11 +52,10 @@ class ResampleStep(Step):
         output_wcs = string(default='')  # Custom output WCS
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image
         in_memory = boolean(default=True)  # Keep images in memory
     """
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def process(self, input):
 
@@ -234,7 +233,6 @@ class ResampleStep(Step):
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders,
-            allowed_memory=self.allowed_memory,
             in_memory=self.in_memory
         )
 

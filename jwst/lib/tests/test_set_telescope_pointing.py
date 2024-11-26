@@ -12,15 +12,14 @@ import pytest
 pytest.importorskip('pysiaf')
 
 from astropy.io import fits  # noqa: E402
+from astropy.table import Table  # noqa: E402
 from astropy.time import Time  # noqa: E402
 
 from stdatamodels.jwst import datamodels  # noqa: E402
 
 from jwst.lib import engdb_mast  # noqa: E402
-from jwst.lib import engdb_tools  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
 from jwst.lib import siafdb  # noqa: E402
-from jwst.lib.tests.engdb_mock import EngDB_Mocker  # noqa: E402
 from jwst.tests.helpers import word_precision_check  # noqa: E402
 
 # Ensure that `set_telescope_pointing` logs.
@@ -28,8 +27,8 @@ stp.logger.setLevel(logging.DEBUG)
 stp.logger.addHandler(logging.StreamHandler())
 
 # Setup mock engineering service
-STARTTIME = Time('2014-01-03')
-ENDTIME = Time('2014-01-04')
+STARTTIME = Time('2022-06-03T17:25:40', format='isot')
+ENDTIME = Time('2022-06-03T17:25:56', format='isot')
 ZEROTIME_START = Time('2014-01-01')
 ZEROTIME_END = Time('2014-01-02')
 
@@ -39,21 +38,21 @@ TARG_DEC = -87.0
 
 # Get the mock databases
 DATA_PATH = Path(__file__).parent / 'data'
-db_ngas_path = DATA_PATH / 'engdb_ngas'
-db_jw703_path = DATA_PATH / 'engdb_jw00703'
-siaf_path = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
 
-# Some expected values
-Q_EXPECTED = np.asarray(
-    [-0.36915286, 0.33763282, 0.05758533, 0.86395264]
-)
-J2FGS_MATRIX_EXPECTED = np.asarray(
-    [-1.00444000e-03, 9.99999496e-01, 3.39649146e-06,
-     3.38145836e-03, -3.90000000e-14, 9.99994283e-01,
-     9.99993778e-01, 1.00444575e-03, -3.38145665e-03]
-)
-FSMCORR_EXPECTED = np.zeros((2,))
-OBSTIME_EXPECTED = STARTTIME
+Q_EXPECTED = np.array([0.37671179, 0.70705936, -0.57895271, 0.15155541])
+J2FGS_EXPECTED = np.array([
+    -4.93963971e-05, 4.25990115e-03, 9.99990925e-01, 9.99745568e-01,
+    -2.25561320e-02, 1.45472042e-04, 2.25565470e-02, 9.99736502e-01,
+    -4.25770310e-03])
+
+J2FGS_MATRIX_EXPECTED = np.array([
+    -4.89526137e-05,  4.25977338e-03,  9.99990926e-01,  9.99745568e-01,
+    -2.25561320e-02,  1.45025485e-04,  2.25565451e-02,  9.99736503e-01,
+    -4.25758537e-03])
+
+FSMCORR_0_EXPECTED = np.array([-0.00188433, -0.21604178])
+FSMCORR_EXPECTED = np.array([0.03592864, -0.18001011])
+OBSTIME_EXPECTED = Time(1654277147.967113, format='unix')
 
 # Meta attributes for test comparisons
 METAS_EQUALITY = ['meta.visit.engdb_pointing_quality',
@@ -131,12 +130,12 @@ def test_allow_any_file(file_case, allow_any_file):
         warnings.filterwarnings("ignore", "model_type not found")
         if not allow and not allow_any_file:
             with pytest.raises(TypeError):
-                stp.add_wcs(path, siaf_path=siaf_path, allow_any_file=allow_any_file, dry_run=True)
+                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
         else:
             # Expected error when trying to actually add the wcs.
             # The provided files do not have sufficient info to do the calculations.
             with pytest.raises(AttributeError):
-                stp.add_wcs(path, siaf_path=siaf_path, allow_any_file=allow_any_file, dry_run=True)
+                stp.add_wcs(path, allow_any_file=allow_any_file, dry_run=True)
 
 
 @pytest.mark.parametrize(
@@ -240,8 +239,8 @@ def test_change_engdb_url():
     """
     with pytest.raises(ValueError):
         stp.get_pointing(
-            STARTTIME.mjd,
-            ENDTIME.mjd,
+            Time('2015-06-15').mjd,
+            Time('2015-06-17').mjd,
             engdb_url=engdb_mast.MAST_BASE_URL
         )
 
@@ -256,27 +255,14 @@ def test_change_engdb_url_fail():
         )
 
 
-def test_strict_pointing(data_file, eng_db_jw703):
+def test_strict_pointing(data_file_strict):
     """Test failure on strict pointing"""
     with pytest.raises(ValueError):
-        stp.add_wcs(data_file, siaf_path=siaf_path, tolerance=0)
+        stp.add_wcs(data_file_strict, tolerance=0)
 
 
-def test_pointing_averaging(eng_db_jw703):
+def test_get_pointing():
     """Ensure that the averaging works."""
-    q_exp = np.array([0.62383733, 0.53552715, -0.49252283, 0.28541008])
-    j2fgs_exp = np.array([
-        -1.00962794e-03, 9.99999464e-01, 3.41404261e-06,
-        3.38429719e-03, 2.85793453e-09, 9.99994300e-01,
-        9.99993742e-01, 1.00963370e-03, -3.38429548e-03
-    ])
-    j2fgs_exp = np.array([
-        -1.00962794e-03, 3.38429719e-03, 9.99993742e-01,
-        9.99999464e-01, 2.85793453e-09, 1.00963370e-03,
-        3.41404261e-06, 9.99994300e-01, -3.38429548e-03
-    ])
-    fsmcorr_exp = np.array([-0.02558673, -0.00200601])
-    obstime_exp = Time(1559582740.4880004, format='unix')
 
     (q,
      j2fgs_matrix,
@@ -285,15 +271,14 @@ def test_pointing_averaging(eng_db_jw703):
      gs_commanded,
      fgsid,
      gs_position) = stp.get_pointing(
-         Time('2019-06-03T17:25:40', format='isot').mjd,
-         Time('2019-06-03T17:25:56', format='isot').mjd,
-         engdb_url='http://localhost'
+         STARTTIME.mjd,
+         ENDTIME.mjd
     )
 
-    assert np.allclose(q, q_exp)
-    assert np.allclose(j2fgs_matrix, j2fgs_exp)
-    assert np.allclose(fsmcorr, fsmcorr_exp)
-    assert np.isclose(obstime.value, obstime_exp.value)
+    assert np.allclose(q, Q_EXPECTED)
+    assert np.allclose(j2fgs_matrix, J2FGS_EXPECTED)
+    assert np.allclose(fsmcorr, FSMCORR_EXPECTED)
+    assert np.isclose(obstime.value, OBSTIME_EXPECTED.value)
 
 
 def test_get_pointing_fail():
@@ -305,65 +290,28 @@ def test_get_pointing_fail():
          gs_commanded) = stp.get_pointing(47892.0, 48256.0)
 
 
-def test_get_pointing(eng_db_ngas):
+def test_logging(caplog):
     (q,
      j2fgs_matrix,
      fsmcorr,
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
-    assert np.isclose(q, Q_EXPECTED).all()
-    assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
-    assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
-    assert STARTTIME <= obstime <= ENDTIME
-
-
-def test_logging(eng_db_ngas, caplog):
-    (q,
-     j2fgs_matrix,
-     fsmcorr,
-     obstime,
-     gs_commanded,
-     fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
+     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert 'Determining pointing between observations times' in caplog.text
     assert 'Telemetry search tolerance' in caplog.text
     assert 'Reduction function' in caplog.text
     assert 'Querying engineering DB' in caplog.text
 
 
-def test_get_pointing_list(eng_db_ngas):
-    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings, engdb_url='http://localhost')
+def test_get_pointing_list():
+    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
     assert isinstance(results, list)
     assert len(results) > 0
     assert np.isclose(results[0].q, Q_EXPECTED).all()
     assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
-    assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
+    assert np.isclose(results[0].fsmcorr, FSMCORR_0_EXPECTED).all()
     assert STARTTIME <= results[0].obstime <= ENDTIME
-
-
-def test_get_pointing_with_zeros(eng_db_ngas):
-    (q,
-     j2fgs_matrix,
-     fsmcorr,
-     obstime,
-     gs_commanded,
-     fgsid,
-     gs_position) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd,
-                                     reduce_func=stp.first_pointing,
-                                     engdb_url='http://localhost')
-    assert j2fgs_matrix.any()
-    (q_desired,
-     j2fgs_matrix_desired,
-     fsmcorr_desired,
-     obstime,
-     gs_commanded,
-     fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
-    assert np.array_equal(q, q_desired)
-    assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
-    assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
 def test_add_wcs_default(data_file, tmp_path):
@@ -372,7 +320,7 @@ def test_add_wcs_default(data_file, tmp_path):
 
     try:
         stp.add_wcs(
-            data_file, siaf_path=siaf_path, tolerance=0, allow_default=True
+            data_file, tolerance=0, allow_default=True
         )
     except ValueError:
         pass  # This is what we want for the test.
@@ -404,7 +352,7 @@ def test_add_wcs_default_fgsacq(tmp_path):
         expected_name = 'add_wcs_default_acq1.fits'
         try:
             stp.update_wcs(
-                model, siaf_path=siaf_path, tolerance=0, allow_default=True
+                model, tolerance=0, allow_default=True
             )
         except ValueError:
             pass  # This is what we want for the test.
@@ -426,15 +374,15 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
     with pytest.raises(ValueError):
         stp.add_wcs(
-            data_file_nosiaf, siaf_path=siaf_path, tolerance=0, allow_default=True
+            data_file_nosiaf, tolerance=0, allow_default=True
         )
 
 
-def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
+def test_add_wcs_with_db(data_file, tmp_path):
     """Test using the database"""
     expected_name = 'add_wcs_with_db.fits'
 
-    stp.add_wcs(data_file, siaf_path=siaf_path, engdb_url='http://localhost')
+    stp.add_wcs(data_file)
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -465,7 +413,7 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
     # Execute the operation.
     try:
-        stp.add_wcs(data_file_fromsim, siaf_path=siaf_path, engdb_url=engdb_mast.MAST_BASE_URL,
+        stp.add_wcs(data_file_fromsim, engdb_url=engdb_mast.MAST_BASE_URL,
                     fgsid=fgsid)
     except ValueError as exception:
         pytest.xfail(f'No telemetry exists. Update test to use existing telemetry. Exception: {exception}')
@@ -486,12 +434,12 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
+def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
     """Test using the database"""
     expected_name = 'add_wcs_method_full_nosiafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
+    stp.add_wcs(data_file, method=stp.Methods.OPS_TR_202111)
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -509,34 +457,7 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
             assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
 
 
-@pytest.mark.parametrize('source, prd', [(siaf_path, None), (None, 'prdopssoc-053')])
-def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path, source, prd):
-    """Test using the database and a specified siaf db"""
-    expected_name = 'add_wcs_method_full_siafdb.fits'
-
-    # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, prd=prd, method=stp.Methods.OPS_TR_202111, engdb_url='http://localhost')
-
-    # Test
-    with datamodels.Level1bModel(data_file) as model:
-
-        # Save for post-test comparison and update
-        model.save(tmp_path / expected_name)
-
-        with datamodels.open(DATA_PATH / expected_name) as expected:
-            for meta in METAS_EQUALITY:
-                if isinstance(model[meta], str):
-                    assert model[meta] == expected[meta]
-                else:
-                    assert np.isclose(model[meta], expected[meta], atol=1e-13)
-
-            for meta in METAS_ISCLOSE:
-                assert np.isclose(model[meta], expected[meta])
-
-            assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
-
-
-def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
+def test_default_siaf_values(data_file_nosiaf):
     """
     Test that FITS WCS default values were set.
     """
@@ -548,14 +469,14 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.aperture.name = "MIRIM_TAFULL"
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "MIR_IMAGE"
-        stp.update_wcs(model, siaf_path=siaf_path, allow_default=False, engdb_url='http://localhost')
+        stp.update_wcs(model, allow_default=False)
         assert model.meta.wcsinfo.crpix1 == 24.5
         assert model.meta.wcsinfo.crpix2 == 24.5
         assert model.meta.wcsinfo.cdelt1 == 3.0693922222222226e-05
         assert model.meta.wcsinfo.cdelt2 == 3.092664722222222e-05
 
 
-def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
+def test_tsgrism_siaf_values(data_file_nosiaf):
     """
     Test that FITS WCS default values were set.
     """
@@ -566,12 +487,12 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "NRC_TSGRISM"
         model.meta.visit.tsovisit = True
-        stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
+        stp.update_wcs(model)
         assert model.meta.wcsinfo.siaf_xref_sci == 858.0
         assert model.meta.wcsinfo.siaf_yref_sci == 35
 
 
-def test_mirim_tamrs_siaf_values(eng_db_ngas, data_file_nosiaf):
+def test_mirim_tamrs_siaf_values(data_file_nosiaf):
     """
     Test that FITS WCS default values were set.
     """
@@ -581,9 +502,49 @@ def test_mirim_tamrs_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.aperture.name = 'MIRIM_TAMRS'
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "MIR_TACQ"
-        stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
+        stp.update_wcs(model)
         assert model.meta.wcsinfo.crpix1 == 997.5
         assert model.meta.wcsinfo.crpix2 == 993.5
+
+
+def test_moving_target_update(caplog, data_file_moving_target):
+    """Test moving target table updates."""
+    with datamodels.open(data_file_moving_target) as model:
+        stp.update_mt_kwds(model)
+
+        expected_ra = 6.200036603575057e-05
+        expected_dec = 1.7711407285091175e-10
+        assert np.isclose(model.meta.wcsinfo.mt_ra, expected_ra)
+        assert np.isclose(model.meta.wcsinfo.mt_dec, expected_dec)
+        assert np.isclose(model.meta.target.ra, expected_ra)
+        assert np.isclose(model.meta.target.dec, expected_dec)
+
+    assert "Moving target RA and Dec updated" in caplog.text
+
+
+def test_moving_target_no_mtt(caplog, data_file):
+    """Test moving target table updates, no table present."""
+    with datamodels.open(data_file) as model:
+        stp.update_mt_kwds(model)
+
+        # No update without table
+        assert model.meta.wcsinfo.mt_ra is None
+        assert model.meta.wcsinfo.mt_dec is None
+
+    assert "Moving target position table not found" in caplog.text
+
+
+def test_moving_target_tnotinrange(caplog, data_file_moving_target):
+    """Test moving target table updates, time not in range."""
+    with datamodels.open(data_file_moving_target) as model:
+        model.meta.exposure.mid_time -= 0.2
+        stp.update_mt_kwds(model)
+
+        # No update without times in range
+        assert model.meta.wcsinfo.mt_ra is None
+        assert model.meta.wcsinfo.mt_dec is None
+
+    assert "is not in the moving_target table range" in caplog.text
 
 
 # ######################
@@ -623,7 +584,7 @@ def make_t_pars(detector='any', fgsid_telem=1, fgsid_user=None):
     t_pars.siaf = siafdb.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                               crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
                               vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
-    t_pars.siaf_db = siafdb.SiafDb(siaf_path)
+    t_pars.siaf_db = siafdb.SiafDb()
 
     return t_pars
 
@@ -727,6 +688,28 @@ def data_file(tmp_path):
 
 
 @pytest.fixture
+def data_file_strict(tmp_path):
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = STARTTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
+    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '2017-01-01'
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x = -25.021
+    model.meta.ephemeris.velocity_y = -16.507
+    model.meta.ephemeris.velocity_z = -7.187
+
+    file_path = tmp_path / 'file.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture
 def data_file_nosiaf():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
@@ -789,17 +772,41 @@ def data_file_acq1(tmp_path):
     yield file_path
 
 
-@pytest.fixture()
-def eng_db_jw703():
-    """Setup the test engineering database"""
-    with EngDB_Mocker(db_path=db_jw703_path):
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
-        yield engdb
+@pytest.fixture
+def data_file_moving_target(tmp_path):
+    """Example data from simulation."""
+    # Values are from simulated data file jw00634_nrcblong_mttest_uncal.fits
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = 58738.82598848102
+    model.meta.exposure.end_time = 58738.82747969907
+    model.meta.exposure.mid_time = 58738.82673409005
+    model.meta.target.ra = 0.0
+    model.meta.target.dec = 0.0
+    model.meta.guidestar.gs_ra = 0.0001
+    model.meta.guidestar.gs_dec = 0.0001
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '2019-09-12'
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x = 0.00651191175424979
+    model.meta.ephemeris.velocity_y = 0.160769793796114
+    model.meta.ephemeris.velocity_z = 0.147663026601154
 
+    model.meta.target.type = 'MOVING'
+    model.meta.moving_target = None
 
-@pytest.fixture()
-def eng_db_ngas():
-    """Setup the test engineering database"""
-    with EngDB_Mocker(db_path=db_ngas_path):
-        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
-        yield engdb
+    times = ['2019-09-12T19:49:25.405', '2019-09-12T19:50:29.825', '2019-09-12T19:51:34.246']
+    apparent_ra = [0.0, 6.2e-5, 1.24e-4]
+    apparent_dec = [-6.2e-5,  0.0,  3.0e-5]
+    default = [0.0, 0.0, 0.0]
+    col_names = [item['name'] for item in model.schema['properties']['moving_target']['datatype']]
+    mt_table = Table([times, apparent_ra, apparent_dec],
+                     names=('time', 'mt_apparent_RA', 'mt_apparent_Dec'))
+    for column in col_names:
+        if column not in {'time', 'mt_apparent_RA', 'mt_apparent_Dec'}:
+            mt_table.add_column(default, name=column)
+    model.moving_target = mt_table.as_array()
+
+    file_path = tmp_path / 'file.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path

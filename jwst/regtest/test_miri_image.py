@@ -33,6 +33,52 @@ def run_detector1(rtdata_module):
 
 
 @pytest.fixture(scope="module")
+def run_detector1_multiprocess_rate(rtdata_module):
+    """Run detector1 pipeline on MIRI imaging data."""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
+            "--save_calibrated_ramp=True",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.firstframe.save_results=True",
+            "--steps.lastframe.save_results=True",
+            "--steps.reset.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.rscd.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.ramp_fit.maximum_cores=2", # Multiprocessing
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1_multiprocess_jump(rtdata_module):
+    """Run detector1 pipeline on MIRI imaging data."""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
+            "--save_calibrated_ramp=True",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.firstframe.save_results=True",
+            "--steps.lastframe.save_results=True",
+            "--steps.reset.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.rscd.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.jump.maximum_cores=2", # Multiprocessing
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
 def run_detector1_with_average_dark_current(rtdata_module):
     """Run detector1 pipeline on MIRI imaging data, providing an
     estimate of the average dark current for inclusion in ramp_fitting
@@ -113,6 +159,18 @@ def run_image3(run_image2, rtdata_module):
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+def test_miri_image_detector1_multiprocess_rate(run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
+    """Regression test of detector1 pipeline performed on MIRI imaging data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
+
+
+@pytest.mark.bigdata
+def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
+    """Regression test of detector1 pipeline performed on MIRI imaging data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
 
 @pytest.mark.bigdata

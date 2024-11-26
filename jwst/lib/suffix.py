@@ -41,7 +41,7 @@ SUFFIXES_TO_ADD = [
     'c1d', 'cal', 'calints', 'cat', 'crf', 'crfints',
     'dark',
     'i2d',
-    'median',
+    'mbsub', 'median',
     'phot', 'psf-amiavg', 'psfalign', 'psfstack', 'psfsub',
     'ramp', 'rate', 'rateints', 'residual_fringe',
     's2d', 's3d', 'snr',
