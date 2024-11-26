@@ -5,6 +5,7 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import polynomial
 
+from jwst.datamodels import ModelContainer
 from jwst.extract_1d import extract as ex
 from jwst.tests.helpers import LogWatcher
 
@@ -28,6 +29,8 @@ def extract1d_ref_dict():
                  {'id': 'slit4', 'bkg_coeff': [[10], [20]]},
                  {'id': 'slit5', 'bkg_coeff': None},
                  {'id': 'slit6', 'use_source_posn': True},
+                 {'id': 'slit7', 'spectral_order': 20},
+                 {'id': 'S200A1'}
                  ]
     ref_dict = {'apertures': apertures}
     return ref_dict
@@ -76,6 +79,21 @@ def background_profile():
     profile[:10, :] = 1.0
     profile[40:, :] = 1.0
     return profile
+
+
+@pytest.fixture()
+def create_extraction_inputs(mock_nirspec_fs_one_slit, extract1d_ref_dict):
+    input_model = mock_nirspec_fs_one_slit
+    slit = None
+    output_model = dm.MultiSpecModel()
+    ref_dict = extract1d_ref_dict
+    slitname = 'S200A1'
+    sp_order = 1
+    exp_type = 'NRS_FIXEDSLIT'
+    yield [input_model, slit, output_model, ref_dict,
+           slitname, sp_order, exp_type]
+    output_model.close()
+
 
 def test_read_extract1d_ref(extract1d_ref_dict, extract1d_ref_file):
     ref_dict = ex.read_extract1d_ref(extract1d_ref_file)
@@ -733,22 +751,6 @@ def test_aperture_center(middle, dispaxis):
 
 @pytest.mark.parametrize('middle', [None, 7])
 @pytest.mark.parametrize('dispaxis', [1, 2])
-def test_aperture_center(middle, dispaxis):
-    profile = np.zeros((10, 10), dtype=np.float32)
-    profile[1:4] = 1.0
-    if dispaxis != 1:
-        profile = profile.T
-    slit_center, spec_center = ex.aperture_center(
-        profile, dispaxis=dispaxis, middle_pix=middle)
-    assert slit_center == 2.0
-    if middle is None:
-        assert spec_center == 4.5
-    else:
-        assert spec_center == middle
-
-
-@pytest.mark.parametrize('middle', [None, 7])
-@pytest.mark.parametrize('dispaxis', [1, 2])
 def test_aperture_center_zero_weight(middle, dispaxis):
     profile = np.zeros((10, 10), dtype=np.float32)
     slit_center, spec_center = ex.aperture_center(
@@ -1217,3 +1219,290 @@ def test_extract_one_slit_missing_var(mock_nirspec_fs_one_slit, extract_defaults
     for data in result[1:4]:
         assert np.all(data == 0)
         assert data.shape == (model.data.shape[1],)
+
+
+def test_create_extraction_with_photom(create_extraction_inputs):
+    model = create_extraction_inputs[0]
+    model.meta.cal_step.photom = 'COMPLETE'
+
+    ex.create_extraction(*create_extraction_inputs)
+
+    output_model = create_extraction_inputs[2]
+    assert output_model.spec[0].spec_table.columns['flux'].unit == 'Jy'
+
+
+def test_create_extraction_without_photom(create_extraction_inputs):
+    model = create_extraction_inputs[0]
+    model.meta.cal_step.photom = 'SKIPPED'
+
+    ex.create_extraction(*create_extraction_inputs)
+
+    output_model = create_extraction_inputs[2]
+    assert output_model.spec[0].spec_table.columns['flux'].unit == 'DN/s'
+
+
+def test_create_extraction_missing_src_type(create_extraction_inputs):
+    model = create_extraction_inputs[0]
+    model.source_type = None
+    model.meta.target.source_type = 'EXTENDED'
+
+    ex.create_extraction(*create_extraction_inputs)
+
+    output_model = create_extraction_inputs[2]
+    assert output_model.spec[0].source_type == 'EXTENDED'
+
+
+def test_create_extraction_no_match(create_extraction_inputs):
+    create_extraction_inputs[4] = 'bad slitname'
+    with pytest.raises(ValueError, match="Missing extraction parameters"):
+        ex.create_extraction(*create_extraction_inputs)
+
+
+def test_create_extraction_partial_match(create_extraction_inputs, log_watcher):
+    # match a slit that has a mismatched spectral order specified
+    create_extraction_inputs[4] = 'slit7'
+
+    log_watcher.message = 'Spectral order 1 not found'
+    with pytest.raises(ex.ContinueError):
+        ex.create_extraction(*create_extraction_inputs)
+    log_watcher.assert_seen()
+
+
+def test_create_extraction_missing_dispaxis(create_extraction_inputs, log_watcher):
+    create_extraction_inputs[0].meta.wcsinfo.dispersion_direction = None
+    log_watcher.message = 'dispersion direction information is missing'
+    with pytest.raises(ex.ContinueError):
+        ex.create_extraction(*create_extraction_inputs)
+    log_watcher.assert_seen()
+
+
+def test_create_extraction_missing_wavelengths(create_extraction_inputs, log_watcher):
+    model = create_extraction_inputs[0]
+    model.wavelength = np.full_like(model.data, np.nan)
+    log_watcher.message = 'Spectrum is empty; no valid data'
+    with pytest.raises(ex.ContinueError):
+        ex.create_extraction(*create_extraction_inputs)
+    log_watcher.assert_seen()
+
+
+def test_create_extraction_nrs_apcorr(create_extraction_inputs, nirspec_fs_apcorr,
+                                      mock_nirspec_bots, log_watcher):
+    model = mock_nirspec_bots
+    model.source_type = 'POINT'
+    model.meta.cal_step.photom = 'COMPLETE'
+    create_extraction_inputs[0] = model
+
+    log_watcher.message = 'Tabulating aperture correction'
+    ex.create_extraction(*create_extraction_inputs, apcorr_ref_model=nirspec_fs_apcorr,
+                         use_source_posn=False)
+    log_watcher.assert_seen()
+
+
+def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, log_watcher):
+    # Input model is a cube, but with only one integration
+    model = mock_nirspec_bots
+    model.data = model.data[0].reshape(1, *model.data.shape[-2:])
+    create_extraction_inputs[0] = model
+
+    log_watcher.message = '1 integration done'
+    ex.create_extraction(*create_extraction_inputs, log_increment=1)
+    output_model = create_extraction_inputs[2]
+    assert len(output_model.spec) == 1
+    log_watcher.assert_seen()
+
+
+def test_create_extraction_log_increment(
+        create_extraction_inputs, mock_nirspec_bots, log_watcher):
+    create_extraction_inputs[0] = mock_nirspec_bots
+
+    # all integrations are logged
+    log_watcher.message = '... 9 integrations done'
+    ex.create_extraction(*create_extraction_inputs, log_increment=1)
+    log_watcher.assert_seen()
+
+
+def test_run_extract1d(mock_nirspec_mos):
+    model = mock_nirspec_mos
+    output_model, profile_model, scene_model = ex.run_extract1d(model)
+    assert isinstance(output_model, dm.MultiSpecModel)
+    assert profile_model is None
+    assert scene_model is None
+    output_model.close()
+
+
+def test_run_extract1d_save_models(mock_niriss_wfss_l3):
+    model = mock_niriss_wfss_l3
+    output_model, profile_model, scene_model = ex.run_extract1d(
+        model, save_profile=True, save_scene_model=True)
+    assert isinstance(output_model, dm.MultiSpecModel)
+    assert isinstance(profile_model, ModelContainer)
+    assert isinstance(scene_model, ModelContainer)
+
+    assert len(profile_model) == len(model)
+    assert len(scene_model) == len(model)
+
+    for pmodel in profile_model:
+        assert isinstance(pmodel, dm.ImageModel)
+    for smodel in scene_model:
+        assert isinstance(smodel, dm.ImageModel)
+
+    output_model.close()
+    profile_model.close()
+    scene_model.close()
+
+
+def test_run_extract1d_save_cube_scene(mock_nirspec_bots):
+    model = mock_nirspec_bots
+    output_model, profile_model, scene_model = ex.run_extract1d(
+        model, save_profile=True, save_scene_model=True)
+    assert isinstance(output_model, dm.MultiSpecModel)
+    assert isinstance(profile_model, dm.ImageModel)
+    assert isinstance(scene_model, dm.CubeModel)
+
+    assert profile_model.data.shape == model.data.shape[-2:]
+    assert scene_model.data.shape == model.data.shape
+
+    output_model.close()
+    profile_model.close()
+    scene_model.close()
+
+
+
+def test_run_extract1d_tso(mock_nirspec_bots):
+    model = mock_nirspec_bots
+    output_model, _, _ = ex.run_extract1d(model)
+
+    # time and integration keywords are populated
+    for i, spec in enumerate(output_model.spec):
+        assert spec.int_num == i + 1
+
+    output_model.close()
+
+
+@pytest.mark.parametrize('from_name_attr', [True, False])
+def test_run_extract1d_slitmodel_name(mock_nirspec_fs_one_slit, from_name_attr):
+    model = mock_nirspec_fs_one_slit
+    slit_name = 'S200A1'
+    if from_name_attr:
+        model.name = slit_name
+        model.meta.instrument.fixed_slit = None
+    else:
+        model.name = None
+        model.meta.instrument.fixed_slit = 'S200A1'
+
+    output_model, _, _ = ex.run_extract1d(model)
+    assert output_model.spec[0].name == 'S200A1'
+
+    output_model.close()
+
+
+@pytest.mark.parametrize('from_name_attr', [True, False])
+def test_run_extract1d_imagemodel_name(mock_miri_lrs_fs, from_name_attr):
+    model = mock_miri_lrs_fs
+    slit_name = 'test_slit_name'
+    if from_name_attr:
+        model.name = slit_name
+    else:
+        model.name = None
+
+    output_model, _, _ = ex.run_extract1d(model)
+    if from_name_attr:
+        assert output_model.spec[0].name == 'test_slit_name'
+    else:
+        assert output_model.spec[0].name == 'MIR_LRS-FIXEDSLIT'
+    output_model.close()
+
+
+def test_run_extract1d_apcorr(mock_miri_lrs_fs, miri_lrs_apcorr_file, log_watcher):
+    model = mock_miri_lrs_fs
+    model.meta.target.source_type = 'POINT'
+
+    log_watcher.message = 'Creating aperture correction'
+    output_model, _, _ = ex.run_extract1d(model, apcorr_ref_name=miri_lrs_apcorr_file)
+    log_watcher.assert_seen()
+
+    output_model.close()
+
+
+def test_run_extract1d_invalid():
+    model = dm.MultiSpecModel()
+    with pytest.raises(RuntimeError, match="Can't extract a spectrum"):
+        ex.run_extract1d(model)
+
+
+def test_run_extract1d_zeroth_order_slit(mock_nirspec_fs_one_slit):
+    model = mock_nirspec_fs_one_slit
+    model.meta.wcsinfo.spectral_order = 0
+    output_model, _, _ = ex.run_extract1d(model)
+
+    # no spectra extracted for zeroth order
+    assert len(output_model.spec) == 0
+    output_model.close()
+
+
+def test_run_extract1d_zeroth_order_image(mock_miri_lrs_fs):
+    model = mock_miri_lrs_fs
+    model.meta.wcsinfo.spectral_order = 0
+    output_model, _, _ = ex.run_extract1d(model)
+
+    # no spectra extracted for zeroth order
+    assert len(output_model.spec) == 0
+    output_model.close()
+
+
+def test_run_extract1d_zeroth_order_multispec(mock_nirspec_mos):
+    model = mock_nirspec_mos
+    for slit in model.slits:
+        slit.meta.wcsinfo.spectral_order = 0
+    output_model, _, _ = ex.run_extract1d(model)
+
+    # no spectra extracted for zeroth order
+    assert len(output_model.spec) == 0
+    output_model.close()
+
+
+def test_run_extract1d_no_data(mock_niriss_wfss_l3):
+    container = mock_niriss_wfss_l3
+    for model in container:
+        model.data = np.array([])
+    output_model, _, _ = ex.run_extract1d(container)
+
+    # no spectra extracted
+    assert len(output_model.spec) == 0
+    output_model.close()
+
+
+def test_run_extract1d_continue_error_slit(monkeypatch, mock_nirspec_fs_one_slit):
+    def raise_continue_error(*args, **kwargs):
+        raise ex.ContinueError('Test error')
+
+    monkeypatch.setattr(ex, 'create_extraction', raise_continue_error)
+    output_model, _, _ = ex.run_extract1d(mock_nirspec_fs_one_slit)
+
+    # no spectra extracted
+    assert len(output_model.spec) == 0
+    output_model.close()
+
+
+def test_run_extract1d_continue_error_image(monkeypatch, mock_miri_lrs_fs):
+    def raise_continue_error(*args, **kwargs):
+        raise ex.ContinueError('Test error')
+
+    monkeypatch.setattr(ex, 'create_extraction', raise_continue_error)
+    output_model, _, _ = ex.run_extract1d(mock_miri_lrs_fs)
+
+    # no spectra extracted
+    assert len(output_model.spec) == 0
+    output_model.close()
+
+
+def test_run_extract1d_continue_error_multislit(monkeypatch, mock_nirspec_mos):
+    def raise_continue_error(*args, **kwargs):
+        raise ex.ContinueError('Test error')
+
+    monkeypatch.setattr(ex, 'create_extraction', raise_continue_error)
+    output_model, _, _ = ex.run_extract1d(mock_nirspec_mos)
+
+    # no spectra extracted
+    assert len(output_model.spec) == 0
+    output_model.close()
