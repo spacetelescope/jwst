@@ -105,10 +105,10 @@ class RefPixStep(Step):
                                 conv_kernel_model = None
                             else:
                                 self.log.info('Using CRDS reference file: {}'.format(conv_kernel_ref_filename))
-                                conv_kernel_model = datamodels.ConvKernelModel(conv_kernel_ref_filename)
+                                conv_kernel_model = datamodels.SIRSKernelModel(conv_kernel_ref_filename)
                         else:
                             self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
-                            conv_kernel_model = datamodels.ConvKernelModel(self.user_supplied_reffile)
+                            conv_kernel_model = datamodels.SIRSKernelModel(self.user_supplied_reffile)
 
                 conv_kernel_params = {
                     'use_conv_kernel': self.use_conv_kernel,
