@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.io import fits
+from astropy.table import Table
 
 from jwst.assign_wcs.util import wcs_bbox_from_shape
 from jwst.exp_to_source import multislit_to_container
@@ -107,6 +109,8 @@ def mock_nirspec_fs_one_slit(simple_wcs):
     model = dm.SlitModel()
     model.meta.instrument.name = 'NIRSPEC'
     model.meta.instrument.detector = 'NRS1'
+    model.meta.instrument.filter = 'F290LP'
+    model.meta.instrument.grating = 'G395H'
     model.meta.observation.date = '2023-07-22'
     model.meta.observation.time = '06:24:45.569'
     model.meta.instrument.fixed_slit = 'S200A1'
@@ -200,7 +204,7 @@ def mock_nirspec_bots(simple_wcs):
 
 @pytest.fixture()
 def mock_miri_lrs_fs(simple_wcs_transpose):
-    model = dm.SlitModel()
+    model = dm.ImageModel()
     model.meta.instrument.name = 'MIRI'
     model.meta.instrument.detector = 'MIRIMAGE'
     model.meta.observation.date = '2023-07-22'
@@ -375,3 +379,66 @@ def mock_10_spec(mock_one_spec):
 
     yield model
     model.close()
+
+
+@pytest.fixture()
+def miri_lrs_apcorr():
+    table = Table(
+        {
+            'subarray': ['FULL', 'SLITLESSPRISM'],
+            'wavelength': [[1, 2, 3], [1, 2, 3]],
+            'nelem_wl': [3, 3],
+            'size': [[1, 2, 3], [1, 2, 3]],
+            'nelem_size': [3, 3],
+            'apcorr': np.full((2, 3, 3), 0.5),
+            'apcorr_err': np.full((2, 3, 3), 0.01)
+        }
+    )
+    table = fits.table_to_hdu(table)
+    table.header['EXTNAME'] = 'APCORR'
+    table.header['SIZEUNIT'] = 'pixels'
+    hdul = fits.HDUList([fits.PrimaryHDU(), table])
+
+    apcorr_model = dm.MirLrsApcorrModel(hdul)
+    yield apcorr_model
+    apcorr_model.close()
+
+
+@pytest.fixture()
+def miri_lrs_apcorr_file(tmp_path, miri_lrs_apcorr):
+    filename = str(tmp_path / 'miri_lrs_apcorr.fits')
+    miri_lrs_apcorr.save(filename)
+    return filename
+
+
+@pytest.fixture()
+def nirspec_fs_apcorr():
+    table = Table(
+        {
+            'filter': ['clear', 'f290lp'],
+            'grating': ['prism', 'g395h'],
+            'slit': ['S200A1', 'S200A1'],
+            'wavelength': [[1, 2, 3], [1, 2, 3]],
+            'nelem_wl': [3, 3],
+            'size': np.full((2, 3, 3), [0.3, 0.5, 1]),
+            'nelem_size': [3, 3],
+            'pixphase': [[0.0, 0.25, 0.5], [0.0, 0.25, 0.5]],
+            'apcorr': np.full((2, 3, 3, 3), 0.5),
+            'apcorr_err': np.full((2, 3, 3, 3), 0.01)
+        }
+    )
+    table = fits.table_to_hdu(table)
+    table.header['EXTNAME'] = 'APCORR'
+    table.header['SIZEUNIT'] = 'pixels'
+    hdul = fits.HDUList([fits.PrimaryHDU(), table])
+
+    apcorr_model = dm.NrsFsApcorrModel(hdul)
+    yield apcorr_model
+    apcorr_model.close()
+
+
+@pytest.fixture()
+def nirspec_fs_apcorr_file(tmp_path, nirspec_fs_apcorr):
+    filename = str(tmp_path / 'nirspec_fs_apcorr.fits')
+    nirspec_fs_apcorr.save(filename)
+    return filename
