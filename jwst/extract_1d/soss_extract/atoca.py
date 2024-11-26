@@ -143,8 +143,6 @@ class ExtractionEngine:
 
         # Estimate a global mask and masks for each orders
         self.mask, self.mask_ord = self._get_masks(global_mask)
-        # Save mask here as the general mask,  since `mask` attribute can be changed.
-        self.general_mask = self.mask.copy()
 
         # Ensure there are adequate good pixels left in each order
         good_pixels_in_order = np.sum(np.sum(~self.mask_ord, axis=-1), axis=-1)
@@ -163,6 +161,8 @@ class ExtractionEngine:
 
         # Re-build global mask and masks for each orders
         self.mask, self.mask_ord = self._get_masks(global_mask)
+        # Save mask here as the general mask,  since `mask` attribute can be changed.
+        self.general_mask = self.mask.copy()
 
         # turn kernels into sparse matrix
         self.kernels = self._create_kernels(kernels, c_kwargs)
@@ -235,7 +235,7 @@ class ExtractionEngine:
                 raise ValueError(msg)
 
         # Set the attribute to the new values.
-        self.throughput = np.array(throughput_new).astype(self.dtype)
+        self.throughput = np.array(throughput_new, dtype=self.dtype)
 
 
     def _create_kernels(self, kernels, c_kwargs):
@@ -361,7 +361,7 @@ class ExtractionEngine:
             # Take the most restrictive bound
             a = np.maximum(a, i_bnds[0])
             b = np.minimum(b, i_bnds[1])
-            i_bnds_new.append([a, b])
+            i_bnds_new.append([int(a), int(b)])
 
         return i_bnds_new
 
