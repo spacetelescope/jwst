@@ -677,6 +677,5 @@ def make_resamp(input_models):
         good_bits="~DO_NOT_USE",
         in_memory=in_memory,
         asn_id="test",
-        allowed_memory=None,
     )
     return resamp
