@@ -32,7 +32,6 @@ dependencies = [
     "requests>=2.22",
     "scikit-image>=0.19",
     "scipy>=1.9.3",
-    "setuptools>=75.0.0; python_version >= '3.12'",
     "spherical-geometry>=1.2.22",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
