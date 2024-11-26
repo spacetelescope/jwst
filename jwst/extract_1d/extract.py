@@ -1342,7 +1342,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
     """
     # Get the data and variance arrays
     if integration > -1:
-        log.info(f"Extracting integration {integration + 1}")
+        log.debug(f"Extracting integration {integration + 1}")
         data = data_model.data[integration]
         var_rnoise = data_model.var_rnoise[integration]
         var_poisson = data_model.var_poisson[integration]
@@ -1403,10 +1403,9 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
 
 
 def create_extraction(input_model, slit, output_model,
-                      extract_ref_dict, slitname, sp_order, smoothing_length,
-                      bkg_fit, bkg_order, use_source_posn, exp_type,
-                      subtract_background, apcorr_ref_model, log_increment,
-                      save_profile, save_model):
+                      extract_ref_dict, slitname, sp_order, exp_type,
+                      apcorr_ref_model=None, log_increment=50,
+                      save_profile=False, save_scene_model=False, **kwargs):
     """Extract spectra from an input model and append to an output model.
 
     Input data, specified in the `slit` or `input_model`, should contain data
@@ -1466,34 +1465,22 @@ def create_extraction(input_model, slit, output_model,
         Slit name for the input data.
     sp_order : int
         Spectral order for the input data.
-    smoothing_length : int or None
-        Width of a boxcar function for smoothing the background regions.
-    bkg_fit : {'mean', 'median', 'poly', None}
-        The type of fit to apply to background values at each dispersion
-        element.
-    bkg_order : int or None
-        Polynomial order for background fitting.
-    use_source_posn : bool or None
-        If True, the nominal aperture will be shifted to the planned
-        source position, if available.
     exp_type : str
         Exposure type for the input data.
-    subtract_background : bool or None
-        If False, all background parameters will be ignored. If None,
-        background will be subtracted if 'bkg_coeff' is specified in
-        the reference file dictionary.
-    apcorr_ref_model : DataModel or None
+    apcorr_ref_model : DataModel or None, optional
         The aperture correction reference datamodel, containing the
         APCORR reference file data.
-    log_increment : int
+    log_increment : int, optional
         If greater than 0 and the input data are multi-integration, a message
         will be written to the log every `log_increment` integrations.
-    save_profile : bool
+    save_profile : bool, optional
         If True, the spatial profile created for the aperture will be returned
         as an ImageModel.  If False, the return value is None.
-    save_model : bool
+    save_scene_model : bool, optional
         If True, the flux model created during extraction will be returned
         as an ImageModel or CubeModel.  If False, the return value is None.
+    kwargs : dict, optional
+        Additional options to pass to `get_extract_parameters`.
 
     Returns
     -------
@@ -1502,7 +1489,7 @@ def create_extraction(input_model, slit, output_model,
         the spatial profile with aperture weights, used in extracting all
         integrations.
     scene_model : ImageModel, CubeModel, or None
-        If `save_model` is True, the return value is an ImageModel or CubeModel
+        If `save_scene_model` is True, the return value is an ImageModel or CubeModel
         matching the input data, containing the flux model generated during
         extraction.
     """
@@ -1524,9 +1511,10 @@ def create_extraction(input_model, slit, output_model,
 
     # We need a flag to indicate whether the photom step has been run.
     # If it hasn't, we'll copy the count rate to the flux column.
-    try:
+    if hasattr(input_model.meta.cal_step, 'photom'):
         s_photom = input_model.meta.cal_step.photom
-    except AttributeError:
+    else:  # pragma: no cover
+        # This clause is not reachable for reasonable data models
         s_photom = None
 
     if s_photom is not None and s_photom.upper() == 'COMPLETE':
@@ -1557,7 +1545,7 @@ def create_extraction(input_model, slit, output_model,
 
     # Turn off use_source_posn if the source is not POINT
     if source_type != 'POINT' or exp_type in WFSS_EXPTYPES:
-        use_source_posn = False
+        kwargs['use_source_posn'] = False
         log.info(f"Setting use_source_posn to False for exposure type {exp_type}, "
                  f"source type {source_type}")
 
@@ -1570,10 +1558,7 @@ def create_extraction(input_model, slit, output_model,
         pixel_solid_angle = 1.  # not needed
 
     extract_params = get_extract_parameters(
-        extract_ref_dict, data_model, slitname, sp_order, input_model.meta,
-        smoothing_length, bkg_fit,bkg_order, use_source_posn,
-        subtract_background
-    )
+        extract_ref_dict, data_model, slitname, sp_order, input_model.meta, **kwargs)
 
     if extract_params['match'] == NO_MATCH:
         log.critical('Missing extraction parameters.')
@@ -1609,6 +1594,7 @@ def create_extraction(input_model, slit, output_model,
     # Set up aperture correction, to be used for every integration
     apcorr_available = False
     if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
+        log.info('Creating aperture correction.')
         # NIRSpec needs to use a wavelength in the middle of the
         # range rather than the beginning of the range
         # for calculating the pixel scale since some wavelengths at the
@@ -1646,7 +1632,7 @@ def create_extraction(input_model, slit, output_model,
         progress_msg_printed = False
 
     # Set up a flux model to update if desired
-    if save_model:
+    if save_scene_model:
         if len(integrations) > 1:
             scene_model = datamodels.CubeModel(shape)
         else:
@@ -1664,7 +1650,7 @@ def create_extraction(input_model, slit, output_model,
                 data_model, integ, profile, bg_profile, extract_params)
 
         # Save the flux model
-        if save_model:
+        if save_scene_model:
             if isinstance(scene_model, datamodels.CubeModel):
                 scene_model.data[integ] = scene_model_2d
             else:
@@ -1778,7 +1764,6 @@ def create_extraction(input_model, slit, output_model,
         copy_keyword_info(data_model, slitname, spec)
 
         if apcorr is not None:
-            log.info('Applying Aperture correction.')
             if hasattr(apcorr, 'tabulated_correction'):
                 if apcorr.tabulated_correction is not None:
                     apcorr_available = True
@@ -1795,9 +1780,9 @@ def create_extraction(input_model, slit, output_model,
                 try:
                     apcorr.tabulate_correction(spec.spec_table)
                     apcorr.apply(spec.spec_table, use_tabulated=True)
-                    log.info("Tabulating aperture correction for use in multiple integrations.")
+                    log.debug("Tabulating aperture correction for use in multiple integrations.")
                 except AttributeError:
-                    log.info("Computing aperture correction.")
+                    log.debug("Computing aperture correction.")
                     apcorr.apply(spec.spec_table)
 
         output_model.spec.append(spec)
@@ -1818,17 +1803,16 @@ def create_extraction(input_model, slit, output_model,
                 log.info(f"... {integ + 1} integrations done")
 
     if not progress_msg_printed:
-        if input_model.data.shape[0] == 1:
-            log.info("1 integration done")
-        else:
-            log.info(f"All {input_model.data.shape[0]} integrations done")
+        log.info(f"All {input_model.data.shape[0]} integrations done")
 
     return profile_model, scene_model
 
 
-def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_length,
-                  bkg_fit, bkg_order, log_increment, subtract_background,
-                  use_source_posn, save_profile, save_scene_model):
+def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
+                  smoothing_length=None, bkg_fit=None, bkg_order=None,
+                  log_increment=50, subtract_background=None,
+                  use_source_posn=None, save_profile=False,
+                  save_scene_model=False):
     """Extract all 1-D spectra from an input model.
 
     Parameters
@@ -1837,7 +1821,7 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
         The input science model.
     extract_ref_name : str
         The name of the extract1d reference file, or "N/A".
-    apcorr_ref_name : str
+    apcorr_ref_name : str or None
         Name of the APCORR reference file. Default is None
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
@@ -1953,10 +1937,13 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
             try:
                profile, slit_scene_model = create_extraction(
                    meta_source, slit, output_model,
-                   extract_ref_dict, slitname, sp_order, smoothing_length,
-                   bkg_fit, bkg_order, use_source_posn, exp_type,
-                   subtract_background, apcorr_ref_model, log_increment,
-                   save_profile, save_scene_model)
+                   extract_ref_dict, slitname, sp_order, exp_type,
+                   apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
+                   save_profile=save_profile, save_scene_model=save_scene_model,
+                   smoothing_length=smoothing_length,
+                   bkg_fit=bkg_fit, bkg_order=bkg_order,
+                   use_source_posn=use_source_posn,
+                   subtract_background=subtract_background)
             except ContinueError:
                 continue
 
@@ -1969,15 +1956,13 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
         # Define source of metadata
         slit = None
 
-        # These default values for slitname are not really slit names,
-        # and slitname may be assigned a better value below, in the
-        # sections for input_model being an ImageModel or a SlitModel.
+        # This default value for slitname is not really a slit name.
+        # It may be assigned a better value below, in the sections for
+        # ImageModel or SlitModel.
         slitname = exp_type
-        if slitname is None:
-            slitname = ANY
 
         if isinstance(input_model, datamodels.ImageModel):
-            if hasattr(input_model, "name"):
+            if hasattr(input_model, "name") and input_model.name is not None:
                 slitname = input_model.name
 
             sp_order = get_spectral_order(input_model)
@@ -1988,10 +1973,13 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
                 try:
                     profile_model, scene_model = create_extraction(
                         input_model, slit, output_model,
-                        extract_ref_dict, slitname, sp_order, smoothing_length,
-                        bkg_fit, bkg_order, use_source_posn, exp_type,
-                        subtract_background, apcorr_ref_model, log_increment,
-                        save_profile, save_scene_model)
+                        extract_ref_dict, slitname, sp_order, exp_type,
+                        apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
+                        save_profile=save_profile, save_scene_model=save_scene_model,
+                        smoothing_length=smoothing_length,
+                        bkg_fit=bkg_fit, bkg_order=bkg_order,
+                        use_source_posn=use_source_posn,
+                        subtract_background=subtract_background)
                 except ContinueError:
                     pass
 
@@ -2023,10 +2011,13 @@ def run_extract1d(input_model, extract_ref_name, apcorr_ref_name, smoothing_leng
                 try:
                     profile_model, scene_model = create_extraction(
                         input_model, slit, output_model,
-                        extract_ref_dict, slitname, sp_order, smoothing_length,
-                        bkg_fit, bkg_order, use_source_posn, exp_type,
-                        subtract_background, apcorr_ref_model, log_increment,
-                        save_profile, save_scene_model)
+                        extract_ref_dict, slitname, sp_order, exp_type,
+                        apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
+                        save_profile=save_profile, save_scene_model=save_scene_model,
+                        smoothing_length=smoothing_length,
+                        bkg_fit=bkg_fit, bkg_order=bkg_order,
+                        use_source_posn=use_source_posn,
+                        subtract_background=subtract_background)
                 except ContinueError:
                     pass
 
