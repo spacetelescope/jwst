@@ -3,6 +3,8 @@ import warnings
 import numpy as np
 from astropy import convolution
 
+__all__ = ['extract1d']
+
 
 def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
                       weights=None, order=0):
