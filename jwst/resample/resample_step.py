@@ -98,29 +98,30 @@ class ResampleStep(Step):
         kwargs = self.get_drizpars()
 
         # Call the resampling routine
-        resamp = resample.ResampleData(input_models, output=output, **kwargs)
-        result = resamp.do_drizzle(input_models)
+        if self.single:
+            resamp = resample.ResampleImage(
+                input_models,
+                output=output,
+                enable_var=False,
+                compute_err="driz_err",
+                **kwargs
+            )
+            result = resamp.resample_many_to_many()
+        else:
+            resamp = resample.ResampleImage(
+                input_models,
+                output=output,
+                enable_var=True,
+                compute_err="from_var",
+                **kwargs
+            )
+            result = resamp.resample_many_to_one()
 
-        with result:
-            for model in result:
-                model.meta.cal_step.resample = 'COMPLETE'
-                self.update_fits_wcs(model)
-                util.update_s_region_imaging(model)
-
-                # if pixel_scale exists, it will override pixel_scale_ratio.
-                # calculate the actual value of pixel_scale_ratio based on pixel_scale
-                # because source_catalog uses this value from the header.
-                if self.pixel_scale is None:
-                    model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-                else:
-                    model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-                model.meta.resample.pixfrac = kwargs['pixfrac']
-                result.shelve(model)
-
-            if len(result) == 1:
-                model = result.borrow(0)
-                result.shelve(model, 0, modify=False)
-                return model
+        # with result:
+        #     if len(result) == 1:
+        #         model = result.borrow(0)
+        #         result.shelve(model, 0, modify=False)
+        #         return model
 
         return result
 
@@ -231,66 +232,34 @@ class ResampleStep(Step):
             fillval=self.fillval,
             wht_type=self.weight_type,
             good_bits=GOOD_BITS,
-            single=self.single,
             blendheaders=self.blendheaders,
             in_memory=self.in_memory
         )
 
         # Custom output WCS parameters.
-        kwargs['output_shape'] = self.check_list_pars(
+        output_shape = self.check_list_pars(
             self.output_shape,
             'output_shape',
             min_vals=[1, 1]
         )
         kwargs['output_wcs'] = self.load_custom_wcs(
             self.output_wcs,
-            kwargs['output_shape']
+            output_shape
         )
-        kwargs['crpix'] = self.check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self.check_list_pars(self.crval, 'crval')
-        kwargs['rotation'] = self.rotation
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+
+        wcs_pars = {
+            'crpix': self.check_list_pars(self.crpix, 'crpix'),
+            'crval': self.check_list_pars(self.crval, 'crval'),
+            'rotation': self.rotation,
+            'pixel_scale': self.pixel_scale,
+            'pixel_scale_ratio': self.pixel_scale_ratio,
+            'output_shape': None if output_shape is None else output_shape[::-1],
+        }
+
+        kwargs['wcs_pars'] = wcs_pars
 
         # Report values to processing log
         for k, v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
 
         return kwargs
-
-    def update_fits_wcs(self, model):
-        """
-        Update FITS WCS keywords of the resampled image.
-        """
-        # Delete any SIP-related keywords first
-        pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
-        regex = re.compile(pattern)
-
-        keys = list(model.meta.wcsinfo.instance.keys())
-        for key in keys:
-            if regex.match(key):
-                del model.meta.wcsinfo.instance[key]
-
-        # Write new PC-matrix-based WCS based on GWCS model
-        transform = model.meta.wcs.forward_transform
-        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
-        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
-        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
-        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
-        model.meta.wcsinfo.ra_ref = transform[6].lon.value
-        model.meta.wcsinfo.dec_ref = transform[6].lat.value
-        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
-        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
-        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
-        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
-        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
-        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
-        model.meta.wcsinfo.ctype1 = "RA---TAN"
-        model.meta.wcsinfo.ctype2 = "DEC--TAN"
-
-        # Remove no longer relevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
-        for key in rm_keys:
-            if key in model.meta.wcsinfo.instance:
-                del model.meta.wcsinfo.instance[key]
