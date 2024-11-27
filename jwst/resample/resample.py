@@ -1,22 +1,18 @@
-import logging
-import os
-import warnings
-import json
-import re
-import math
-from typing import Any
 from copy import deepcopy
+import logging
+import json
+import math
+import os
+import re
+import warnings
 
 import numpy as np
-import psutil
 
 from drizzle.resample import Drizzle
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.library.basic_utils import bytes2human
 from stdatamodels.jwst.datamodels.dqflags import pixel
-from stdatamodels.properties import ObjectNode
 
 from stcal.resample import (
     Resample,
@@ -834,7 +830,7 @@ class ResampleData:
         log.debug(f"Output mosaic size: {self.output_array_shape}")
 
         if pscale is None:
-            pscale = np.rad2deg(np.sqrt(self.output_pix_area))
+            pscale = np.rad2deg(math.sqrt(self.output_pix_area))
             log.info(f'Computed output pixel scale: {3600.0 * pscale} arcsec.')
 
         self.pscale = pscale  # in deg
@@ -910,11 +906,11 @@ class ResampleData:
                     )
                 if self.input_pixscale0 is None:
                     self.input_pixscale0 = np.rad2deg(
-                        np.sqrt(input_pixel_area)
+                        math.sqrt(input_pixel_area)
                     )
                     if self._recalc_pscale_ratio:
                         self.pscale_ratio = self.pscale / self.input_pixscale0
-            iscale = np.sqrt(input_pixflux_area / input_pixel_area)
+            iscale = math.sqrt(input_pixflux_area / input_pixel_area)
         else:
             iscale = 1.0
         return iscale
