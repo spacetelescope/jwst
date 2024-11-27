@@ -677,7 +677,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
 
         except MaskOverlapError:
             log.error('Not enough unmasked pixels to model the remaining part of order 2.'
-                      'Model and spectrum will be NaN in that spectral region.')
+                      ' Model and spectrum will be NaN in that spectral region.')
             spec_ord = [_build_null_spec_table(pixel_wave_grid)]
             model = np.nan * np.ones_like(scidata_bkg)
 

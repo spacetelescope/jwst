@@ -133,8 +133,8 @@ class ExtractionEngine:
         self.orders = orders
         self.n_orders = len(self.orders)
         if self.n_orders != len(self.wave_map):
-            msg = ("The number of orders specified {} and the number of "
-                   "wavelength maps provided {} do not match.")
+            msg = ("The number of orders specified ({}) and the number of "
+                   "wavelength maps provided ({}) do not match.")
             log.critical(msg.format(self.n_orders, len(self.wave_map)))
             raise ValueError(msg.format(self.n_orders, len(self.wave_map)))
 
@@ -170,9 +170,7 @@ class ExtractionEngine:
         # Compute integration weights. see method self.get_w() for details.
         self.weights, self.weights_k_idx = self.compute_weights()
 
-        # Initialize the pixel mapping (b_n) matrices
         self.pixel_mapping = [None for _ in range(self.n_orders)]
-        self.i_grid = None
         self.tikho_mat = None
         self.w_t_wave_c = None
 
@@ -214,27 +212,22 @@ class ExtractionEngine:
             Throughput values for each order, given either as an array
             or as a callable function with self.wave_grid as input.
         """
-
-        # Update the throughput values.
         throughput_new = []
         for throughput_n in throughput:  # Loop over orders.
 
             if callable(throughput_n):
+                throughput_n = throughput_n(self.wave_grid)
 
-                # Throughput was given as a callable function.
-                throughput_new.append(throughput_n(self.wave_grid))
-
-            elif throughput_n.shape == self.wave_grid.shape:
-
-                # Throughput was given as an array.
-                throughput_new.append(throughput_n)
-
-            else:
-                msg = 'Throughputs must be given as callable or arrays matching the extraction grid.'
+            msg = 'Throughputs must be given as callable or arrays matching the extraction grid.'
+            if not isinstance(throughput_n, np.ndarray):
+                log.critical(msg)
+                raise ValueError(msg)
+            if throughput_n.shape != self.wave_grid.shape:
                 log.critical(msg)
                 raise ValueError(msg)
 
-        # Set the attribute to the new values.
+            throughput_new.append(throughput_n)
+
         self.throughput = np.array(throughput_new, dtype=self.dtype)
 
 
@@ -660,7 +653,7 @@ class ExtractionEngine:
         # Build the system to solve
         b_matrix, pix_array = self.get_detector_model(data, error)
 
-        tikho = atoca_utils.Tikhonov(b_matrix, pix_array, self.t_mat)
+        tikho = atoca_utils.Tikhonov(b_matrix, pix_array, self.tikho_mat)
 
         # Test all factors
         tests = tikho.test_factors(factors)
@@ -959,6 +952,7 @@ class ExtractionEngine:
         """Compute integration weights for each grid points and each pixels.
         Depends on the order `n`.
         TODO: what is this doing? where can we find the math?
+        TODO: why is the mask not just simply mask_ord?
 
         Parameters
         ----------
