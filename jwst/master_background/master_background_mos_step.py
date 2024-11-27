@@ -133,7 +133,6 @@ class MasterBackgroundMosStep(Pipeline):
                 user_background = datamodels.open(self.user_background)
                 master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
                     data_model, user_background)
-                # data, user_background=None, sigma_clip=3, median_kernel=1)
             elif self.use_correction_pars:
                 self.log.info('Using pre-calculated correction parameters.')
                 master_background = self.correction_pars['masterbkg_1d']
@@ -181,8 +180,7 @@ class MasterBackgroundMosStep(Pipeline):
         if not self.parent:
             return
 
-        steps = ['barshadow', 'flat_field', 'pathloss', 'photom',
-                 'pixel_replace', 'resample_spec', 'extract_1d']
+        steps = ['barshadow', 'flat_field', 'pathloss', 'photom']
         pars_to_ignore = {
             'barshadow': ['source_type'],
             'flat_field': ['save_interpolated_flat'],
@@ -191,12 +189,9 @@ class MasterBackgroundMosStep(Pipeline):
         }
 
         for step in steps:
-            if step in pars_to_ignore:
-                pars = getattr(self.parent, step).get_pars()
-                for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
-                    del pars[par]
-            else:
-                pars = getattr(self, step).get_pars()
+            pars = getattr(self.parent, step).get_pars()
+            for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
+                del pars[par]
             getattr(self, step).update_pars(pars)
 
     def _extend_bg_slits(self, pre_calibrated):
@@ -298,9 +293,9 @@ class MasterBackgroundMosStep(Pipeline):
                 self.log.info('Creating MOS master background from background slitlets')
                 bkg_model = self._extend_bg_slits(pre_calibrated)
                 if bkg_model is not None:
-                    bkg_model = self.pixel_replace(bkg_model)
-                    bkg_model = self.resample_spec(bkg_model)
-                    bkg_x1d_spectra = self.extract_1d(bkg_model)
+                    bkg_model = self.pixel_replace.run(bkg_model)
+                    bkg_model = self.resample_spec.run(bkg_model)
+                    bkg_x1d_spectra = self.extract_1d.run(bkg_model)
                     master_background = nirspec_utils.create_background_from_multispec(
                                       bkg_x1d_spectra, sigma_clip=sigma_clip, median_kernel=median_kernel)
                 else:
