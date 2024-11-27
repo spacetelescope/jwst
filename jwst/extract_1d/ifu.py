@@ -17,6 +17,8 @@ from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.extract import read_apcorr_ref
 from jwst.residual_fringe import utils as rfutils
 
+__all__ = ['ifu_extract1d']
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
