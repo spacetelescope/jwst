@@ -1,5 +1,6 @@
 from copy import deepcopy
 import logging
+import math
 import warnings
 
 import numpy as np
@@ -9,15 +10,153 @@ import gwcs
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.assign_wcs.util import wcs_bbox_from_shape
-from stcal.alignment import util
+from stcal.alignment.util import (
+    compute_scale,
+    wcs_bbox_from_shape,
+    wcs_from_sregions,
+)
+from stcal.resample.utils import compute_wcs_pixel_area
 
+
+__all__ = ["decode_context", "make_output_wcs", "resampled_wcs_from_models"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-__all__ = ['decode_context']
+def resampled_wcs_from_models(
+        input_models,
+        ref_wcs=None,
+        pixel_scale_ratio=1.0,
+        pixel_scale=None,
+        output_shape=None,
+        rotation=None,
+        crpix=None,
+        crval=None,
+):
+    """
+    Computes the WCS of the resampled image from input models and
+    specified WCS parameters.
+
+    Parameters
+    ----------
+
+    input_models : `~jwst.datamodel.ModelLibrary`
+        Each datamodel must have a ``model.meta.wcs`` set to a ~gwcs.WCS object.
+
+    ref_wcs : WCS object
+        A WCS used as reference for the creation of the output
+        coordinate frame, projection, and scaling and rotation transforms.
+
+    pixel_scale_ratio : float, optional
+        Desired pixel scale ratio defined as the ratio of the desired output
+        pixel scale to the first input model's pixel scale computed from this
+        model's WCS at the fiducial point (taken as the ``ref_ra`` and
+        ``ref_dec`` from the ``wcsinfo`` meta attribute of the first input
+        image). Ignored when ``pixel_scale`` is specified.
+
+    pixel_scale : float, None, optional
+        Desired pixel scale (in degrees) of the output WCS. When provided,
+        overrides ``pixel_scale_ratio``.
+
+    output_shape : tuple of two integers (int, int), None, optional
+        Shape of the image (data array) using ``np.ndarray`` convention
+        (``ny`` first and ``nx`` second). This value will be assigned to
+        ``pixel_shape`` and ``array_shape`` properties of the returned
+        WCS object.
+
+    rotation : float, None, optional
+        Position angle of output image's Y-axis relative to North.
+        A value of 0.0 would orient the final output image to be North up.
+        The default of `None` specifies that the images will not be rotated,
+        but will instead be resampled in the default orientation for the
+        camera with the x and y axes of the resampled image corresponding
+        approximately to the detector axes. Ignored when ``transform`` is
+        provided.
+
+    crpix : tuple of float, None, optional
+        Position of the reference pixel in the resampled image array.
+        If ``crpix`` is not specified, it will be set to the center of the
+        bounding box of the returned WCS object.
+
+    crval : tuple of float, None, optional
+        Right ascension and declination of the reference pixel.
+        Automatically computed if not provided.
+
+    Returns
+    -------
+    wcs : ~gwcs.wcs.WCS
+        The WCS object corresponding to the combined input footprints.
+
+    pscale_in : float
+        Computed pixel scale (in degrees) of the first input image.
+
+    pscale_out : float
+        Computed pixel scale (in degrees) of the output image.
+
+    pixel_scale_ratio : float
+        Pixel scale ratio (output to input).
+
+    """
+    # build a list of WCS of all input models:
+    sregion_list = []
+    ref_wcs = None
+    ref_wcsinfo = None
+    shape = None
+
+    with input_models:
+        for model in input_models:
+            w = model.meta.wcs
+            if ref_wcsinfo is None:
+                ref_wcsinfo = model.meta.wcsinfo.instance
+                shape = model.data.shape
+            if ref_wcs is None:
+                ref_wcs = w
+            # make sure all WCS objects have the bounding_box defined:
+            if w.bounding_box is None:
+                w.bounding_box = wcs_bbox_from_shape(shape)
+            sregion_list.append(model.meta.wcsinfo.s_region)
+            input_models.shelve(model)
+
+    if not sregion_list:
+        raise ValueError("No input models.")
+
+    if pixel_scale is None:
+        # TODO: at some point we should switch to compute_wcs_pixel_area
+        #       instead of compute_scale.
+        pscale_in0 = compute_scale(
+            ref_wcs,
+            fiducial=np.array([ref_wcsinfo["ra_ref"], ref_wcsinfo["dec_ref"]])
+        )
+        pixel_scale = pscale_in0 * pixel_scale_ratio
+        log.info(
+            f"Pixel scale ratio (pscale_out/pscale_in): {pixel_scale_ratio}"
+        )
+        log.info(f"Computed output pixel scale: {3600 * pixel_scale} arcsec.")
+    else:
+        pscale_in0 = np.rad2deg(
+            math.sqrt(compute_wcs_pixel_area(ref_wcs, shape=shape))
+        )
+
+        pixel_scale_ratio = pixel_scale / pscale_in0
+        log.info(f"Output pixel scale: {3600 * pixel_scale} arcsec.")
+        log.info(
+            "Computed pixel scale ratio (pscale_out/pscale_in): "
+            f"{pixel_scale_ratio}."
+        )
+
+    wcs = wcs_from_sregions(
+        sregion_list,
+        ref_wcs=ref_wcs,
+        ref_wcsinfo=ref_wcsinfo,
+        pscale_ratio=pixel_scale_ratio,
+        pscale=pixel_scale,
+        rotation=rotation,
+        shape=output_shape,
+        crpix=crpix,
+        crval=crval
+    )
+    return wcs, pscale_in0, pixel_scale, pixel_scale_ratio
 
 
 def make_output_wcs(input_models, ref_wcs=None,
@@ -89,10 +228,10 @@ def make_output_wcs(input_models, ref_wcs=None,
                    f"but the supplied WCS has {naxes} axes.")
             raise RuntimeError(msg)
 
-        output_wcs = util.wcs_from_sregions(
+        output_wcs = wcs_from_sregions(
             sregion_list,
-            ref_wcs,
-            ref_wcsinfo,
+            ref_wcs=ref_wcs,
+            ref_wcsinfo=ref_wcsinfo,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,
@@ -340,22 +479,6 @@ def decode_context(context, x, y):
         )
 
     return idx
-
-
-def _resample_range(data_shape, bbox=None):
-    # Find range of input pixels to resample:
-    if bbox is None:
-        xmin = ymin = 0
-        xmax = data_shape[1] - 1
-        ymax = data_shape[0] - 1
-    else:
-        ((x1, x2), (y1, y2)) = bbox
-        xmin = max(0, int(x1 + 0.5))
-        ymin = max(0, int(y1 + 0.5))
-        xmax = min(data_shape[1] - 1, int(x2 + 0.5))
-        ymax = min(data_shape[0] - 1, int(y2 + 0.5))
-
-    return xmin, xmax, ymin, ymax
 
 
 def check_for_tmeasure(model):
