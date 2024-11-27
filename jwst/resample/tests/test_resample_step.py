@@ -6,7 +6,7 @@ import numpy as np
 import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
-from stcal.resample.resample import compute_wcs_pixel_area
+from stcal.resample.utils import compute_wcs_pixel_area
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
@@ -177,8 +177,6 @@ def miri_rate_pair(miri_rate_zero_crossing):
     yield im1, im2
     im1.close()
     im2.close()
-
-from stcal.resample.utils import compute_wcs_pixel_area
 
 
 @pytest.fixture
