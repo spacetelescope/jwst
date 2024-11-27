@@ -1,5 +1,4 @@
 import logging
-import re
 from copy import deepcopy
 
 import asdf
@@ -9,7 +8,6 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 
 from . import resample
 from ..stpipe import Step
-from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
