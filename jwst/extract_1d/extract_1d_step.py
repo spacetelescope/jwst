@@ -15,6 +15,16 @@ class Extract1dStep(Step):
 
     Attributes
     ----------
+    subtract_background : bool or None
+        A flag which indicates whether the background should be subtracted.
+        If None, the value in the extract_1d reference file will be used.
+        If not None, this parameter overrides the value in the
+        extract_1d reference file.
+
+    apply_apcorr : bool
+        Switch to select whether to apply an APERTURE correction during
+        the Extract1dStep. Default is True.
+
     use_source_posn : bool or None
         If True, the source and background extraction positions specified in
         the extract1d reference file (or the default position, if there is no
@@ -24,31 +34,6 @@ class Extract1dStep(Step):
         the pixel location of the source based on its RA and Dec. It does not
         make sense to apply aperture offsets for extended sources, so this
         parameter can be overridden (set to False) internally by the step.
-
-    apply_apcorr : bool
-        Switch to select whether to apply an APERTURE correction during
-        the Extract1dStep. Default is True.
-
-    log_increment : int
-        if `log_increment` is greater than 0 (the default is 50) and the
-        input data are multi-integration (which can be CubeModel or
-        SlitModel), a message will be written to the log with log level
-        INFO every `log_increment` integrations.  This is intended to
-        provide progress information when invoking the step interactively.
-
-    save_profile : bool
-        If True, the spatial profile containing the extraction aperture
-        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
-
-    save_scene_model : bool
-        If True, a model of the 2D flux as defined by the extraction aperture
-        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
-
-    subtract_background : bool or None
-        A flag which indicates whether the background should be subtracted.
-        If None, the value in the extract_1d reference file will be used.
-        If not None, this parameter overrides the value in the
-        extract_1d reference file.
 
     smoothing_length : int or None
         If not None, the background regions (if any) will be smoothed
@@ -72,19 +57,34 @@ class Extract1dStep(Step):
         If both `smoothing_length` and `bkg_order` are not None, the
         boxcar smoothing will be done first.
 
+    log_increment : int
+        if `log_increment` is greater than 0 (the default is 50) and the
+        input data are multi-integration (which can be CubeModel or
+        SlitModel), a message will be written to the log with log level
+        INFO every `log_increment` integrations.  This is intended to
+        provide progress information when invoking the step interactively.
+
+    save_profile : bool
+        If True, the spatial profile containing the extraction aperture
+        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
+
+    save_scene_model : bool
+        If True, a model of the 2D flux as defined by the extraction aperture
+        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
+
     center_xy : int or None
         A list of 2 pixel coordinate values at which to place the center
         of the IFU extraction aperture, overriding any centering done by the step.
         Two values, in x,y order, are used for extraction from IFU cubes.
         Default is None.
 
-    bkg_sigma_clip : float
-        Background sigma clipping value to use on background to remove outliers
-        and maximize the quality of the 1d spectrum. Used for IFU mode only.
-
     ifu_autocen : bool
         Switch to turn on auto-centering for point source spectral extraction
         in IFU mode.  Default is False.
+
+    bkg_sigma_clip : float
+        Background sigma clipping value to use on background to remove outliers
+        and maximize the quality of the 1d spectrum. Used for IFU mode only.
 
     ifu_rfcorr : bool
         Switch to select whether or not to apply a 1d residual fringe correction
@@ -158,20 +158,20 @@ class Extract1dStep(Step):
     class_alias = "extract_1d"
 
     spec = """
-    use_source_posn = boolean(default=None)  # use source coords to center extractions?
-    apply_apcorr = boolean(default=True)  # apply aperture corrections?
-    log_increment = integer(default=50)  # increment for multi-integration log messages
-    save_profile = boolean(default=False)  # save spatial profile to disk
-    save_scene_model = boolean(default=False)  # save flux model to disk
-
     subtract_background = boolean(default=None)  # subtract background?
+    apply_apcorr = boolean(default=True)  # apply aperture corrections?
+
+    use_source_posn = boolean(default=None)  # use source coords to center extractions?
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
+    log_increment = integer(default=50)  # increment for multi-integration log messages
+    save_profile = boolean(default=False)  # save spatial profile to disk
+    save_scene_model = boolean(default=False)  # save flux model to disk
     
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
-    bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
+    bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
     ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
