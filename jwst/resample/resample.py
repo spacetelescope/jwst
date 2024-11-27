@@ -62,8 +62,7 @@ class ResampleImage(Resample):
                  fillval="NAN", wht_type="ivm", good_bits=0,
                  blendheaders=True, output_wcs=None, wcs_pars=None,
                  output=None, enable_ctx=True, enable_var=True,
-                 compute_err=None, allowed_memory=None, asn_id=None,
-                 in_memory=True):
+                 compute_err=None, asn_id=None, in_memory=True):
         """
         Parameters
         ----------
@@ -267,11 +266,6 @@ class ResampleImage(Resample):
                 At this time, output error array is not equivalent to
                 error propagation results.
 
-        allowed_memory : float, None
-            Fraction of memory allowed to be used for resampling. If
-            ``allowed_memory`` is `None` then no check for available memory
-            will be performed.
-
         in_memory : bool, optional
 
         asn_id : str, None, optional
@@ -358,7 +352,6 @@ class ResampleImage(Resample):
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
-            allowed_memory=allowed_memory,
         )
 
     def _input_model_to_dict(self, model):
