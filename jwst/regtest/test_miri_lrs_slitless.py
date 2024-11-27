@@ -5,11 +5,11 @@ from numpy.testing import assert_allclose
 
 from jwst.stpipe import Step
 from gwcs.wcstools import grid_from_bounding_box
-
 from stdatamodels.jwst import datamodels
 
 DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"
 DATASET2_ID = "jw01536028001_03103_00001-seg002_mirimage"
+DATASET3_ID = "jw01281001001_04103_00001-seg002_trim_mirimage"
 ASN3_FILENAME = "jw01536-o028_20221202t215749_tso3_00001_asn.json"
 PRODUCT_NAME = "jw01536-o028_t008_miri_p750l-slitlessprism"
 ASN_ID = "o028"
@@ -17,7 +17,7 @@ ASN_ID = "o028"
 
 @pytest.fixture(scope="module")
 def run_tso1_pipeline(rtdata_module):
-    """Run the calwebb_tso1 pipeline on a MIRI LRS slitless exposure."""
+    """Run the calwebb_detector1 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
     rtdata.get_data(f"miri/lrs/{DATASET1_ID}_uncal.fits")
 
@@ -29,6 +29,25 @@ def run_tso1_pipeline(rtdata_module):
         "--steps.lastframe.save_results=True",
         "--steps.reset.save_results=True",
         "--steps.linearity.save_results=True",
+        "--steps.dark_current.save_results=True",
+    ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1_pipeline(rtdata_module):
+    """Run calwebb_detector pipeline on a MIRI LRS slitless exposure for Segment 2 data. 
+       Focusing on the steps that depend on integration # and not covered by run_tso1_pipeline.
+       Also test running RSC step"""
+    rtdata = rtdata_module
+    rtdata.get_data(f"miri/lrs/{DATASET3_ID}_uncal.fits")
+
+    args = [
+        "calwebb_detector1",
+        rtdata.input,
+        "--steps.emicorr.save_results=True",
+        "--steps.rscd.skip=False",
+        "--steps.rscd.save_results=True",
         "--steps.dark_current.save_results=True",
     ]
     Step.from_cmdline(args)
@@ -85,6 +104,25 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_defau
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("step_suffix", ['rscd', 'emicorr',
+                                         'dark_current', 'ramp', 'rate', 'rateints'])
+def test_miri_lrs_slitless_detector1(run_detector1_pipeline, rtdata_module,
+                                          fitsdiff_default_kwargs, step_suffix):
+    """
+    Regression test of  detector1 pipeline performed on MIRI LRS slitless TSO data.
+    Testing segment 2 data for RSCD, emicorr and dark_current.
+    """
+    rtdata = rtdata_module
+    output_filename = f"{DATASET3_ID}_{step_suffix}.fits"
+    rtdata.output = output_filename
+
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_detector1/{output_filename}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+    
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["assign_wcs", "srctype", "flat_field",
