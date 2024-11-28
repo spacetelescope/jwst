@@ -1,0 +1,1 @@
+Moved common resample code to ``stcal`` (see https://github.com/spacetelescope/stcal/pull/320). Adjusted code in ``jwst.resample`` to depend on the common code from ``stcal.resample``.
