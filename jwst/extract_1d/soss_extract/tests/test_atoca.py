@@ -199,7 +199,7 @@ def test_extraction_engine(
     # assert engine.i_bounds[1][0] == 0
 
 
-    # test masks
+    # test _get_masks
     # ensure they all include the input detector bad pixel mask
     for mask in [engine.mask_ord[0], engine.mask_ord[1], engine.mask, engine.general_mask]:
         assert mask.dtype == np.bool_
@@ -305,7 +305,6 @@ def test_get_attributes(engine):
     expected = [engine.wave_map, engine.wave_grid]
     for i in range(len(expected)):
         for j in range(2): #orders
-            print(att_list[i][j])
             assert np.allclose(att_list[i][j], expected[i][j])
 
     # test i_order not None
@@ -345,9 +344,71 @@ def test_update_throughput(engine, throughput):
         return 1.0
     with pytest.raises(ValueError):
         engine.update_throughput([new_thru_f, new_thru_f])
-        print(engine.throughput)
 
 
+def test_create_kernels(engine):
+    # TODO: make a non-trivial kernel fixture to work with this
+    # trivial example already done
+    pass
 
 
+def test_wave_grid_c(engine):
+    for order in [0,1]:
+        n_valid = engine.i_bounds[order][1] - engine.i_bounds[order][0]
+        assert engine.wave_grid_c(order).size == n_valid
 
+
+def test_set_w_t_wave_c(engine):
+    """all this does is copy whatever is input"""
+    product = np.zeros((1,))
+    engine._set_w_t_wave_c(0, product)
+    assert len(engine.w_t_wave_c) == engine.n_orders
+    assert engine.w_t_wave_c[0] == product
+    assert engine.w_t_wave_c[1] == []
+    assert product is not engine.w_t_wave_c[0]
+
+
+def test_grid_from_map():
+    assert False
+
+
+def test_get_pixel_mapping(engine):
+
+    pixel_mapping_0 = engine.get_pixel_mapping(0)
+    # check attribute is set and identical to output
+    # check the second one is not set but there is space for it
+    assert hasattr(engine, "pixel_mapping")
+    assert len(engine.pixel_mapping) == engine.n_orders
+    assert np.allclose(engine.pixel_mapping[0].data, pixel_mapping_0.data)
+    assert engine.pixel_mapping[1] is None
+
+    # set the second one so can check both at once
+    engine.get_pixel_mapping(1)
+    for order in [0,1]:
+        mapping = engine.pixel_mapping[order]
+        assert mapping.dtype == np.float64
+        # TODO: why is this the shape, instead of using mask_ord and only the valid wave_grid?
+        expected_shape = (np.sum(~engine.mask), engine.wave_grid.size)
+        assert mapping.shape == expected_shape
+
+        # test that w_t_wave_c is getting saved
+        w_t_wave_c = engine.w_t_wave_c[order]
+        assert w_t_wave_c.dtype == np.float64
+        assert w_t_wave_c.shape == expected_shape
+    
+        # check if quick=True works
+        mapping_quick = engine.get_pixel_mapping(order, quick=True)
+        assert np.allclose(mapping.data, mapping_quick.data)
+
+    # check that quick=True does not work if w_t_wave_c unsaved
+    engine.w_t_wave_c = None
+    with pytest.raises(AttributeError):
+        engine.get_pixel_mapping(1, quick=True)
+
+    # TODO: follow the shape of every sparse matrix through this function, see if
+    # it makes sense or if it would make more sense to mask differently
+    # TODO: test that the math is actually correct using a trivial example (somehow)
+
+
+def test_build_sys():
+    pass

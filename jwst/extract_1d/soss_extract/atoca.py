@@ -360,7 +360,8 @@ class ExtractionEngine:
 
 
     def wave_grid_c(self, i_order):
-        """Return wave_grid for the convolved flux at a given order.
+        """Return wave_grid for a given order constrained according to the i_bounds
+        of that order.
         """
 
         index = slice(*self.i_bounds[i_order])
@@ -400,7 +401,7 @@ class ExtractionEngine:
         return weights, weights_k_idx
 
     def _set_w_t_wave_c(self, i_order, product):
-        """Save the matrix product of the weighs (w), the throughput (t),
+        """Save the matrix product of the weights (w), the throughput (t),
         the wavelength (lam) and the convolution matrix for faster computation.
         """
 
@@ -453,6 +454,9 @@ class ExtractionEngine:
         array[float]
             Sparse matrix of b_n coefficients
         """
+        if (quick) and (self.w_t_wave_c is None):
+            msg = "Attribute w_t_wave_c of ExtractionEngine must exist if quick=True"
+            raise AttributeError(msg)
 
         # Special treatment for error map
         # Can be bool or array.
