@@ -14,9 +14,11 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
 from jwst.stpipe import Step
-from jwst.background.background_sub import (robust_mean, mask_from_source_cat,
-                                            no_NaN, sufficient_background_pixels)
+from jwst.background.background_sub import (subtract_wfss_bkg, 
+                                            mask_from_source_cat,
+                                            sufficient_background_pixels)
 
+UNIFORM_BKG = 0.123
 
 @pytest.fixture(scope="module")
 def data_path():
@@ -239,7 +241,19 @@ def make_wfss_datamodel(data_path):
     image.meta.observation._instance.update(observation)
     image.meta.subarray._instance.update(subarray)
     image.meta.exposure._instance.update(exposure)
-    image.data = np.random.rand(2048, 2048)
+
+    # make random data and error arrays, add NaNs to ensure NaN handling works properly
+    rng = np.random.default_rng(seed=42)
+    image.data = rng.random((2048, 2048))
+    image.err = 0.1*rng.random((2048, 2048))
+    num_nans = 123
+    nan_indices = np.unravel_index(rng.choice(image.data.size, num_nans), image.data.shape)
+    image.data[nan_indices] = np.nan
+    image.err[nan_indices] = np.nan
+
+    # also add a small background to the data to see if it will get removed
+    image.data += UNIFORM_BKG
+
     image.meta.source_catalog = str(data_path / "test_cat.ecsv")
 
     return image
@@ -308,20 +322,10 @@ def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):
     wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
     bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
 
-    mask = mask_from_source_cat(wcs_corrected, wavelenrange)
+    result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
 
-    with datamodels.open(bkg_file) as bkg_ref:
-        bkg_ref = no_NaN(bkg_ref)
+    assert np.isclose(np.nanmean(result.data), 0.0)
 
-        # calculate backgrounds
-        pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
-        test_data_mean, _, _ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
-
-        pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
-        test_reference_mean, _, _ = sigma_clipped_stats(bkg_ref.data, sigma=2)
-
-        assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
-        assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
 
 
 @pytest.mark.parametrize('data_shape,background_shape',
@@ -371,40 +375,6 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
 
     image.close()
     background.close()
-
-
-def test_robust_mean():
-    """Test robust mean calculation"""
-    data = np.random.rand(2048, 2048)
-    result = robust_mean(data)
-    test = np.mean(data)
-
-    assert np.isclose([test], [result], rtol=1e-3)
-
-
-def test_no_nan():
-    """Make sure that nan values are filled with fill value"""
-    # Make data model
-    model = datamodels.ImageModel()
-    data = np.random.rand(10, 10)
-
-    # Randomly insert NaNs
-    data.ravel()[np.random.choice(data.size, 10, replace=False)] = np.nan
-    model.data = data
-
-    # Randomly select fill value
-    fill_val = np.random.randint(0, 20)
-
-    # Call no_NaN
-    result = no_NaN(model, fill_value=fill_val)
-
-    # Use np.nan to find NaNs.
-    test_result = np.isnan(model.data)
-    # Assign fill values to NaN indices
-    model.data[test_result] = fill_val
-
-    # Make sure arrays are equal.
-    assert np.array_equal(model.data, result.data)
 
 
 def test_sufficient_background_pixels():

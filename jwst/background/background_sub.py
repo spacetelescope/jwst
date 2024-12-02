@@ -10,6 +10,7 @@ from . import subtract_images
 from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
+from scipy.stats import norm
 
 import logging
 
@@ -317,9 +318,6 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
         log.warning("No source_catalog found in input.meta.")
         got_catalog = False
 
-    # If there are NaNs, we have to replace them with something harmless.
-    bkg_ref = no_NaN(bkg_ref)
-
     # Create a mask from the source catalog, True where there are no sources,
     # i.e. in regions we can use as background.
     if got_catalog:
@@ -330,28 +328,13 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
             return None
     else:
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
-    # Compute the mean values of science image and background reference
-    # image, including only regions where there are no identified sources.
-    # Exclude pixel values in the lower and upper 25% of the histogram.
-    lowlim = 25.
-    highlim = 75.
-    sci_mean = robust_mean(input_model.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
-    bkg_mean = robust_mean(bkg_ref.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
 
-    log.debug("mean of [{}, {}] percentile grism image = {}"
-              .format(lowlim, highlim, sci_mean))
-    log.debug("mean of [{}, {}] percentile background image = {}"
-              .format(lowlim, highlim, bkg_mean))
-
+    # compute scaling factor for the reference background image
+    factor = _err_weighted_mean(input_model.data, input_model.err, bkg_ref.data, ~bkg_mask)
     result = input_model.copy()
-    if bkg_mean != 0.:
-        subtract_this = (sci_mean / bkg_mean) * bkg_ref.data
-        result.data = input_model.data - subtract_this
-        log.info(f"Average of background image subtracted = {subtract_this.mean(dtype=float)}")
-    else:
-        log.warning("Background image has zero mean; nothing will be subtracted.")
+    subtract_this = factor * bkg_ref.data
+    result.data = input_model.data - subtract_this
+    log.info(f"Average of background image subtracted = {subtract_this.mean(dtype=float)}")
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
 
     bkg_ref.close()
@@ -359,30 +342,55 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     return result
 
 
-def no_NaN(model, fill_value=0.):
-    """Replace NaNs with a harmless value.
+def _apply_percentiles(data, lo, hi):
+    limits = np.nanpercentile(data, (lo, hi))
+    print(limits)
+    mask = np.logical_and(data < limits[0], data > limits[1])
+    return data[~mask]
+
+
+
+def _err_weighted_mean(sci, var, bkg, mask, p_lo=25., p_hi=75.):
+    """
+    Compute scaling factor by which to multiply background image before subtraction.
+    It is computed as
+    scale_factor = np.sum(sci*bkg/var) / np.sum(sci*bkg/var)
+    where sci and bkg have both been sigma-clipped according to p_lo and p_hi
 
     Parameters
     ----------
-    model : JWST data model
-        Reference file model.
-
-    fill_value : float
-        NaNs will be replaced with this value.
-
+    sci: ndarray, required
+        The science array
+    var: ndarray, required
+        The variance array
+    bkg: ndarray, required
+        The reference model background array
+    mask: ndarray, required
+        Mask to remove sources from the data. Should be 1 where BAD
+    p_lo: float, optional
+        Lower percentile for sigma clipping
+    p_hi: float, optional
+        Upper percentile for sigma clipping
+    
     Returns
     -------
-    result : JWST data model
-        Reference file model without NaNs in data array.
+    factor: float
+        Scaling factor by which to multiply background image before subtraction
     """
+    # apply the mask. we don't care about the input shape here
+    sci = sci[~mask]
+    bkg = bkg[~mask]
+    var = var[~mask]
 
-    mask = np.isnan(model.data)
-    if mask.sum(dtype=np.intp) == 0:
-        return model
-    else:
-        temp = model.copy()
-        temp.data[mask] = fill_value
-        return temp
+    print("sci", sci[~sci.mask].shape, np.nanmean(sci), np.sum(np.isnan(sci)))
+    print("bkg", bkg[~bkg.mask].shape, np.nanmean(bkg), np.sum(np.isnan(bkg)))
+    print("var", var[~var.mask].shape, np.nanmean(var), np.sum(np.isnan(var)))
+    sci = _apply_percentiles(sci, p_lo, p_hi)
+    bkg = _apply_percentiles(bkg, p_lo, p_hi)
+    print("sci", sci[~sci.mask].shape, np.nanmean(sci), np.sum(np.isnan(sci)))
+    print("bkg", bkg[~bkg.mask].shape, np.nanmean(bkg), np.sum(np.isnan(bkg)))
+    print("var", var[~var.mask].shape, np.nanmean(var), np.sum(np.isnan(var)))
+    return np.nansum(sci*bkg/var) / np.nansum(bkg*bkg/var)
 
 
 def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
@@ -428,36 +436,3 @@ def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
             bkg_mask[..., ymin:ymax, xmin:xmax] = False
 
     return bkg_mask
-
-
-def robust_mean(x, lowlim=25., highlim=75.):
-    """Compute a mean value, excluding outliers.
-
-    Parameters
-    ----------
-    x : ndarray
-        The array for which we want a mean value.
-
-    lowlim : float
-        The lower `lowlim` percent of the data will not be used when
-        computing the mean.
-
-    highlim : float
-        The upper `highlim` percent of the data will not be used when
-        computing the mean.
-
-    Returns
-    -------
-    mean_value : float
-        The mean of `x`, excluding data outside `lowlim` to `highlim`
-        percentile limits.
-    """
-
-    nan_mask = np.isnan(x)
-    cleaned_x = x[~nan_mask]
-    limits = np.percentile(cleaned_x, (lowlim, highlim))
-    mask = np.logical_and(cleaned_x >= limits[0], cleaned_x <= limits[1])
-
-    mean_value = np.mean(cleaned_x[mask], dtype=float)
-
-    return mean_value
