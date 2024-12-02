@@ -540,9 +540,6 @@ class ExtractionEngine:
     def get_detector_model(self, data, error):
         """
         Get the linear model of the detector pixel, B.dot(flux) = pixels
-        TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
-              There will be only one matrix multiplication:
-              (P/sig).(w.T.lambda.c_n).
 
         Parameters
         ----------
@@ -611,8 +608,8 @@ class ExtractionEngine:
 
         Returns
         -------
-        array[float]
-            Grid of Tikhonov factors.
+        float
+            Estimated Tikhonov factor.
         """
         # Get some values from the object
         mask, wave_grid = self.get_attributes('mask', 'wave_grid')
@@ -670,7 +667,6 @@ class ExtractionEngine:
 
     def best_tikho_factor(self, tests, fit_mode):
         """
-        TODO: why does function with same name exist here and in atoca_utils?
         Compute the best scale factor for Tikhonov regularization.
         It is determined by taking the factor giving the lowest reduced chi2 on
         the detector, the highest curvature of the l-curve or when the improvement
@@ -722,7 +718,7 @@ class ExtractionEngine:
         # Evaluate best factor with different methods
         results = dict()
         for mode in list_mode:
-            best_fac = tests.best_tikho_factor(mode=mode)
+            best_fac = tests.best_factor(mode=mode)
             results[mode] = best_fac
 
         if fit_mode == 'all':
@@ -873,13 +869,13 @@ class ExtractionEngine:
         """
         # Solve with the specified solver.
         if tikhonov:
-            # Build the system to solve
-            b_matrix, pix_array = self.get_detector_model(data, error)
-
             if factor is None:
                 msg = "Please specify tikhonov `factor`."
                 log.critical(msg)
                 raise ValueError(msg)
+
+            # Build the system to solve
+            b_matrix, pix_array = self.get_detector_model(data, error)
 
             spectrum = self._solve_tikho(b_matrix, pix_array, self.tikho_mat, factor=factor)
 

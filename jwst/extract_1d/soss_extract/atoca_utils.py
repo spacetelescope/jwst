@@ -1729,11 +1729,8 @@ class TikhoTests(dict):
                                          np.log10(reg2))
 
 
-    def best_tikho_factor(self, mode='curvature'):
+    def best_factor(self, mode='curvature'):
         """
-        TODO: why is there a function with identical name in atoca.py ExtractionEngine?
-        this one is called by the other one...
-
         Compute the best scale factor for Tikhonov regularisation.
         It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
@@ -1806,7 +1803,7 @@ class TikhoTests(dict):
 
         else:
             msg = (f'`mode`={mode} is not a valid option for '
-                   f'TikhoTests.best_tikho_factor().')
+                   f'TikhoTests.best_factor().')
             log.critical(msg)
             raise ValueError(msg)
 
@@ -1860,8 +1857,6 @@ class Tikhonov:
         self.t_mat_2 = (t_mat.T).dot(t_mat)  # squared tikhonov matrix
         self.a_mat_2 = a_mat.T.dot(a_mat)  # squared model matrix
         self.result = (a_mat.T).dot(b_vec.T)
-        # here self.result is all NaNs... why?
-        print("self.result is all nans", np.any(~np.isnan(self.result.toarray())))
         self.idx_valid = (self.result.toarray() != 0).squeeze()  # valid indices to use if `valid` is True
 
         # Save other attributes
@@ -1933,13 +1928,17 @@ class Tikhonov:
         sln, err, reg = [], [], []
 
         # Test all factors
+        # TODO: does this need to be in a for loop? is it possible to allow solve
+        # to do a single large matrix multiplication?
         for i_fac, factor in enumerate(factors):
 
             # Save solution
             sln.append(self.solve(factor))
 
             # Save error A.x - b
-            err.append(a_mat.dot(sln[-1]) - b_vec)
+            this_err = a_mat.dot(sln[-1]) - b_vec
+            # initially this is a np.matrix of shape (1, n_pixels); flatten and make array
+            err.append(np.array(this_err).flatten())
 
             # Save regularization term
             reg_i = t_mat.dot(sln[-1])

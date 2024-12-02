@@ -8,6 +8,9 @@ DATA_SHAPE = (25,200)
 WAVE_BNDS_O1 = [2.8, 0.8]
 WAVE_BNDS_O2 = [1.4, 0.5]
 WAVE_BNDS_GRID = [0.7, 2.7]
+ORDER1_SCALING = 20.0
+ORDER2_SCALING = 2.0
+SPECTRAL_SLOPE = 2
 
 @pytest.fixture(scope="module")
 def wave_map():
@@ -22,6 +25,7 @@ def wave_map():
     wave_ord2[:,190:] = 0.0
 
     return [wave_ord1, wave_ord2]
+
 
 @pytest.fixture(scope="module")
 def trace_profile(wave_map):
@@ -410,5 +414,172 @@ def test_get_pixel_mapping(engine):
     # TODO: test that the math is actually correct using a trivial example (somehow)
 
 
-def test_build_sys():
-    pass
+def test_rebuild(engine):
+
+    detector_model = engine.rebuild(f_lam)
+    assert detector_model.dtype == np.float64
+    assert detector_model.shape == engine.wave_map[0].shape
+
+    # test that input spectrum is ok as either callable or array
+    assert np.allclose(detector_model, engine.rebuild(f_lam(engine.wave_grid)))
+
+    # test fill value
+    detector_model_nans = engine.rebuild(f_lam, fill_value=np.nan)
+    assert np.allclose(np.isnan(detector_model_nans), engine.general_mask)
+
+
+def f_lam(wl, m=SPECTRAL_SLOPE, b=0):
+    """
+    Estimator for flux as function of wavelength
+    Returns linear function of wl with slope m and intercept b
+    
+    This function is also used in this test suite as 
+    """
+    return m*wl + b
+
+
+@pytest.fixture(scope="module")
+def imagemodel(engine, detector_mask):
+    """
+    use engine.rebuild to make an image model from an expected f(lambda).
+    Then we can ensure it round-trips
+    """
+
+    rng = np.random.default_rng(seed=42)
+    shp = engine.trace_profile[0].shape
+
+    # make the detector bad values NaN, but leave the trace masks alone
+    # in reality, of course, this is backward: detector bad values
+    # would be determined from data
+    data = engine.rebuild(f_lam, fill_value=0.0)
+    data[detector_mask] = np.nan
+
+    # add noise
+    noise_scaling = 3e-5
+    data += noise_scaling*rng.standard_normal(shp)
+
+    # error random, all positive, but also always larger than a certain value
+    # to avoid very large values of data / error
+    error = noise_scaling*(rng.standard_normal(shp)**2 + 0.5)
+
+    return data, error
+
+
+def test_build_sys(imagemodel, engine):
+    
+    data, error = imagemodel
+    matrix, result = engine.build_sys(data, error)
+    assert result.size == engine.n_wavepoints
+    assert matrix.shape == (result.size, result.size)
+
+
+
+def test_get_detector_model(imagemodel, engine):
+
+    data, error = imagemodel
+    unmasked_size = np.sum(~engine.mask)
+    b_matrix, data_matrix = engine.get_detector_model(data, error)
+
+    assert data_matrix.shape == (1, unmasked_size)
+    assert b_matrix.shape == (unmasked_size, engine.n_wavepoints)
+    assert np.allclose(data_matrix.toarray()[0], (data/error)[~engine.mask])
+
+
+def test_estimate_tikho_factors(engine):
+    
+    factor = engine.estimate_tikho_factors(f_lam)
+    assert isinstance(factor, float)
+
+
+    # very approximate calculation of tik fac looks like
+    # n_pixels = (~engine.mask).sum()
+    # flux = f_lam(engine.wave_grid)
+    # dlam = engine.wave_grid[1:] - engine.wave_grid[:-1]
+    # print(n_pixels/np.mean(flux[1:] * dlam))
+
+
+@pytest.fixture(scope="module")
+def tikho_tests(imagemodel, engine):
+    data, error = imagemodel
+
+    log_guess = np.log10(engine.estimate_tikho_factors(f_lam))
+    factors = np.logspace(log_guess - 9, log_guess + 9, 19)
+    return factors, engine.get_tikho_tests(factors, data, error)
+
+
+def test_get_tikho_tests(tikho_tests, engine):
+
+    factors, tests = tikho_tests
+    unmasked_size = np.sum(~engine.mask)
+
+    # test all the output shapes
+    assert np.allclose(tests["factors"], factors)
+    assert tests["solution"].shape == (len(factors), engine.n_wavepoints)
+    assert tests["error"].shape == (len(factors), unmasked_size)
+    assert tests["reg"].shape == (len(factors), engine.n_wavepoints-1)
+    assert tests["chi2"].shape == (len(factors),)
+    assert tests["chi2_soft_l1"].shape == (len(factors),)
+    assert tests["chi2_cauchy"].shape == (len(factors),)
+    assert np.allclose(tests["grid"], engine.wave_grid)
+
+    # test data type is preserved through solve
+    for key in tests.keys():
+        assert tests[key].dtype == np.dtype("float64")
+
+
+def test_best_tikho_factor(engine, tikho_tests):
+
+    input_factors, tests = tikho_tests
+    fit_modes = ["all", "curvature", "chi2", "d_chi2"]
+    best_factors = []
+    for mode in fit_modes:
+        factor = engine.best_tikho_factor(tests, mode)
+        assert isinstance(factor, float)
+        best_factors.append(factor)
+    
+    # ensure fit_mode=all found one of the three others
+    assert best_factors[0] in best_factors[1:]
+
+    # TODO: test the logic tree by manually changing the tests dict
+    # this is non-trivial because dchi2 and curvature
+    # are both derived from other keys in the dictionary, not just the statistical metrics
+
+
+def test_call(engine, tikho_tests, imagemodel):
+    """
+    Run the actual extract method.
+    Ensure it can retrieve the input spectrum based on f_lam to within a few percent
+    at all points on the wave_grid.
+
+    Note this round-trip implicitly checks the math of the build_sys, get_detector_model,
+    _solve, and _solve_tikho, at least at first blush.
+    """
+    data, error = imagemodel
+    _, tests = tikho_tests
+    best_factor = engine.best_tikho_factor(tests, "all")
+
+    expected_spectrum = f_lam(engine.wave_grid)
+    for tikhonov in [True, False]:
+        spectrum = engine(data, error, tikhonov=tikhonov, factor=best_factor)
+        diff = (spectrum - expected_spectrum)/expected_spectrum
+        assert not np.all(np.isnan(diff))
+        diff = diff[~np.isnan(diff)]
+        assert np.all(np.abs(diff) < 0.05)
+    
+    # test bad input, failing to put factor in for Tikhonov solver
+    with pytest.raises(ValueError):
+        engine(data, error, tikhonov=True)
+
+
+def test_compute_likelihood(engine, imagemodel):
+    """Ensure log-likelihood is highest for the correct slope"""
+
+    data, error = imagemodel
+    test_slopes = np.arange(0, 5, 0.5)
+    logl = []
+    for slope in test_slopes:
+        spectrum = partial(f_lam, m=slope)
+        logl.append(engine.compute_likelihood(spectrum, data, error))
+    
+    assert np.argmax(logl) == np.argwhere(test_slopes == SPECTRAL_SLOPE)
+    assert np.all(np.array(logl) < 0)
