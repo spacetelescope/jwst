@@ -362,7 +362,9 @@ class RawOifits:
         m.meta.oifits.array_name = instrument_data.arrname
         m.meta.oifits.instrument_mode = instrument_data.pupil
 
-        m.meta.wcsinfo = instrument_data.wcsinfo
+        m.meta.ami.roll_ref = instrument_data.roll_ref
+        m.meta.ami.v3yangle = instrument_data.v3iyang
+        m.meta.ami.vparity = instrument_data.vparity
 
         # oi_array extension data
         m.array["TEL_NAME"] = tel_name
@@ -769,6 +771,6 @@ class CalibOifits:
 
         # add calibrated header keywords
         calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star
-        self.calib_oimodel.meta.calibrator_object_id = calname
+        self.calib_oimodel.meta.ami.calibrator_object_id = calname
 
         return self.calib_oimodel

@@ -179,19 +179,12 @@ class NIRISS:
         pscale_deg = np.mean([pscaledegx, pscaledegy])
         self.pscale_rad = np.deg2rad(pscale_deg)
         self.pscale_mas = pscale_deg * (60 * 60 * 1000)
-        #####
 
-        # Until further notice this is fine 
-        #self.pav3 = input_model.meta.pointing.pa_v3
-        self.pav3 = input_model.meta.wcsinfo.roll_ref
-
+        self.roll_ref = input_model.meta.wcsinfo.roll_ref
         self.vparity = input_model.meta.wcsinfo.vparity
         self.v3iyang = input_model.meta.wcsinfo.v3yangle
 
-        self.wcsinfo = input_model.meta.wcsinfo
-
-
-        self.parangh = input_model.meta.wcsinfo.roll_ref
+        self.parangh = self.roll_ref
         self.crpix1 = input_model.meta.wcsinfo.crpix1
         self.crpix2 = input_model.meta.wcsinfo.crpix2
         self.pupil = input_model.meta.instrument.pupil
@@ -232,7 +225,7 @@ class NIRISS:
                     log.warning("All integrations will be analyzed")
             self.nwav = scidata.shape[0]
             [self.wls.append(self.wls[0]) for f in range(self.nwav - 1)]
-        # Rotate mask hole centers by pav3 + v3i_yang to be in equatorial coordinates
+        # Rotate mask hole centers by roll_ref + v3i_yang to be in equatorial coordinates
         ctrs_sky = self.mast2sky()
         oifctrs = np.zeros(self.mask.ctrs.shape)
         oifctrs[:, 0] = ctrs_sky[:, 1].copy() * -1
@@ -341,10 +334,15 @@ class NIRISS:
     def mast2sky(self):
         """
         Rotate hole center coordinates:
-            Clockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = -1
-            Counterclockwise by the V3 position angle - V3I_YANG from north in degrees if VPARITY = 1
+            Clockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = -1
+            Counterclockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = 1
         Hole center coords are in the V2, V3 plane in meters.
 
+        Notes
+        -----
+            Nov. 2024 email discussion with Tony Sohn, Paul Goudfrooij confirmed V2/V3 coordinate
+            rotation back to "North up" equatorial orientation should use ROLL_REF + V3I_YANG
+            (= PA_APER). 
         Returns
         -------
         ctrs_rot: array
@@ -356,9 +354,9 @@ class NIRISS:
         # NOT used for the fringe fitting itself
         mask_ctrs = utils.rotate2dccw(mask_ctrs, np.pi / 2.0)
         vpar = self.vparity  # Relative sense of rotation between Ideal xy and V2V3
-        rot_ang = self.pav3 - self.v3iyang  # subject to change!
+        rot_ang = self.roll_ref + self.v3iyang  # subject to change!
 
-        if self.pav3 == 0.0:
+        if self.roll_ref == 0.0:
             return mask_ctrs
         else:
             # Using rotate2sccw, which rotates **vectors** CCW in a fixed coordinate system,
