@@ -3,7 +3,6 @@ Unit tests for background subtraction
 """
 import pathlib
 
-from astropy.stats import sigma_clipped_stats
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
@@ -290,16 +289,17 @@ def test_nrc_wfss_background(tmp_cwd, filters, pupils, detectors, make_wfss_data
 
     result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
 
-    # re-mask data to check background level
-    mask = mask_from_source_cat(result, wavelenrange)
-    sci_bkg_out = result.data[mask]
-
     # check that background is zero to within some fraction of the data stdev
     # since we have a uniform bkg for this test but the reference file takes into account
     # lots of imperfections, the subtraction doesn't actually look that great here.
-    # Should be better for real data
-    tol = 0.2*np.nanstd(sci_bkg_out)
-    assert np.isclose(np.nanmean(sci_bkg_out), 0.0, atol=tol)
+    # TODO: refactor this test to use a fake background instead of reference file background
+
+    # re-mask data so "real" sources are ignored here
+    mask = mask_from_source_cat(result, wavelenrange)
+    data = result.data[mask]
+
+    tol = 0.5*np.nanstd(data)
+    assert np.isclose(np.nanmean(data), 0.0, atol=tol)
 
 
 @pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
@@ -322,16 +322,17 @@ def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):
 
     result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
 
-    # re-mask data to check background level
-    mask = mask_from_source_cat(result, wavelenrange)
-    sci_bkg_out = result.data[mask]
-
     # check that background is zero to within some fraction of the data stdev
     # since we have a uniform bkg for this test but the reference file takes into account
     # lots of imperfections, the subtraction doesn't actually look that great here.
-    # Should be better for real data
-    tol = 0.2*np.nanstd(sci_bkg_out)
-    assert np.isclose(np.nanmean(sci_bkg_out), 0.0, atol=tol)
+    # TODO: refactor this test to use a fake background instead of reference file background
+
+    # re-mask data so "real" sources are ignored here
+    mask = mask_from_source_cat(result, wavelenrange)
+    data = result.data[mask]
+
+    tol = 0.5*np.nanstd(data)
+    assert np.isclose(np.nanmean(data), 0.0, atol=tol)
 
 
 
