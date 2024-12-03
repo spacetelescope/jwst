@@ -72,7 +72,7 @@ def detect_outliers(
             maskpt,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
-            compute_err=True
+            return_error=True
         )
     else:
         median_data, median_wcs, median_err = median_without_resampling(
