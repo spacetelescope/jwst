@@ -684,6 +684,6 @@ def make_resamp(input_models):
         asn_id="test",
         enable_var=False,
         enable_ctx=False,
-        enable_err="driz_err",
+        compute_err="driz_err",
     )
     return resamp

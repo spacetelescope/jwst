@@ -1,13 +1,10 @@
 import logging
 import json
-import math
 import os
 import re
-import warnings
 
 import numpy as np
 
-from drizzle.resample import Drizzle
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
@@ -17,11 +14,7 @@ from stcal.resample import (
     Resample,
     OutputTooLargeError,
 )
-from stcal.resample.utils import (
-    compute_wcs_pixel_area,
-    is_imaging_wcs,
-    resample_range,
-)
+from stcal.resample.utils import is_imaging_wcs
 
 from jwst.datamodels import ModelLibrary
 from jwst.associations.asn_from_list import asn_from_list
