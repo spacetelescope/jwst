@@ -96,15 +96,17 @@ def detect_outliers(
         return input_models
 
     if resample_data:
-        resamp = resample.ResampleData(
+        resamp = resample.ResampleImage(
             input_models,
-            single=True,
             blendheaders=False,
             wht_type=weight_type,
             pixfrac=pixfrac,
             kernel=kernel,
             fillval=fillval,
             good_bits=good_bits,
+            enable_ctx=False,
+            enable_var=False,
+            compute_err=None,
         )
         median_data, median_wcs = median_with_resampling(
             input_models,

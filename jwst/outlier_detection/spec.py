@@ -98,15 +98,15 @@ def detect_outliers(
     if resample_data is True:
         # Start by creating resampled/mosaic images for
         #  each group of exposures
-        resamp = resample_spec.ResampleSpecData(
+        resamp = resample_spec.ResampleSpec(
             input_models,
-            single=True,
             blendheaders=False,
             wht_type=weight_type,
             pixfrac=pixfrac,
             kernel=kernel,
             fillval=fillval,
             good_bits=good_bits,
+            compute_err="driz_err"
         )
 
         median_data, median_wcs, median_err = median_with_resampling(

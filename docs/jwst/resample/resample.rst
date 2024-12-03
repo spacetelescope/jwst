@@ -1,6 +1,6 @@
 .. resample_:
 
-Python Interface to Drizzle: ResampleData()
-===========================================
+Python Interface to Drizzle: ResampleImage()
+============================================
 
 .. automodapi:: jwst.resample.resample

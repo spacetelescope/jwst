@@ -185,7 +185,7 @@ def median_with_resampling(
     ----------
     input_models : ModelLibrary
         The input datamodels.
-    resamp : resample.resample.ResampleData object
+    resamp : resample.resample.ResampleImage object
         The controlling object for the resampling process.
     maskpt : float
         The weight threshold for masking out low weight pixels.
@@ -209,50 +209,49 @@ def median_with_resampling(
     median_wcs : gwcs.WCS
         A WCS corresponding to the median data.
     median_error : np.ndarray, optional
-        A median error estimate, returned only if `return_error` is True.
-    """
-    if not resamp.single:
-        raise ValueError("median_with_resampling should only be used for resample_many_to_many")
+        A median error estimate, returned only if `return_error` is `True`
+        *and* ``resamp.compute_err`` is "driz_err".
 
+    """
     in_memory = not input_models.on_disk
     indices_by_group = list(input_models.group_indices.values())
     ngroups = len(indices_by_group)
+
+    return_error = return_error and (resamp.compute_err == "driz_err")
 
     if save_intermediate_results:
         # create an empty image model for the median data
         median_model = datamodels.ImageModel(None)
 
-    with input_models:
-        for i, indices in enumerate(indices_by_group):
-            drizzled_model = resamp.resample_group(
-                input_models, indices, compute_error=return_error
-            )
+    for i, indices in enumerate(indices_by_group):
 
-            if save_intermediate_results:
-                # write the drizzled model to file
-                _fileio.save_drizzled(drizzled_model, make_output_path)
+        drizzled_model = resamp.resample_group(indices)
 
-            if i == 0:
-                median_wcs = resamp.output_wcs
-                input_shape = (ngroups,) + drizzled_model.data.shape
-                dtype = drizzled_model.data.dtype
-                computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
-                if return_error:
-                    err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
-                else:
-                    err_computer = None
-                if save_intermediate_results:
-                    # update median model's meta with meta from the first model:
-                    median_model.update(drizzled_model)
-                    median_model.meta.wcs = median_wcs
+        if save_intermediate_results:
+            # write the drizzled model to file
+            _fileio.save_drizzled(drizzled_model, make_output_path)
 
-            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
-            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
-            computer.append(drizzled_model.data, i)
+        if i == 0:
+            median_wcs = resamp.output_wcs
+            input_shape = (ngroups,) + drizzled_model.data.shape
+            dtype = drizzled_model.data.dtype
+            computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
             if return_error:
-                drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
-                err_computer.append(drizzled_model.err, i)
-            del drizzled_model
+                err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+            else:
+                err_computer = None
+            if save_intermediate_results:
+                # update median model's meta with meta from the first model:
+                median_model.update(drizzled_model)
+                median_model.meta.wcs = median_wcs
+
+        weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
+        drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
+        computer.append(drizzled_model.data, i)
+        if return_error:
+            drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
+            err_computer.append(drizzled_model.err, i)
+        del drizzled_model
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
