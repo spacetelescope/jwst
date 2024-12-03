@@ -10,7 +10,6 @@ from . import subtract_images
 from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
-from scipy.stats import norm
 
 import logging
 
@@ -330,7 +329,11 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
 
     # compute scaling factor for the reference background image
-    factor = _err_weighted_mean(input_model.data, input_model.err, bkg_ref.data, ~bkg_mask)
+    factor = _clipped_err_weighted_mean(
+        input_model.data[bkg_mask],
+        input_model.err[bkg_mask],
+        bkg_ref.data[bkg_mask],
+    )
     result = input_model.copy()
     subtract_this = factor * bkg_ref.data
     result.data = input_model.data - subtract_this
@@ -342,19 +345,11 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     return result
 
 
-def _apply_percentiles(data, lo, hi):
-    limits = np.nanpercentile(data, (lo, hi))
-    print(limits)
-    mask = np.logical_and(data < limits[0], data > limits[1])
-    return data[~mask]
-
-
-
-def _err_weighted_mean(sci, var, bkg, mask, p_lo=25., p_hi=75.):
+def _clipped_err_weighted_mean(sci, var, bkg, p_lo=25., p_hi=75.):
     """
     Compute scaling factor by which to multiply background image before subtraction.
     It is computed as
-    scale_factor = np.sum(sci*bkg/var) / np.sum(sci*bkg/var)
+    scale_factor = sum(sci*bkg/var) / sum(bkg*bkg/var)
     where sci and bkg have both been sigma-clipped according to p_lo and p_hi
 
     Parameters
@@ -365,8 +360,6 @@ def _err_weighted_mean(sci, var, bkg, mask, p_lo=25., p_hi=75.):
         The variance array
     bkg: ndarray, required
         The reference model background array
-    mask: ndarray, required
-        Mask to remove sources from the data. Should be 1 where BAD
     p_lo: float, optional
         Lower percentile for sigma clipping
     p_hi: float, optional
@@ -377,19 +370,13 @@ def _err_weighted_mean(sci, var, bkg, mask, p_lo=25., p_hi=75.):
     factor: float
         Scaling factor by which to multiply background image before subtraction
     """
-    # apply the mask. we don't care about the input shape here
+    # find sigma-clipping mask from the data
+    limits = np.nanpercentile(sci, (p_lo, p_hi))
+    mask = np.logical_and(sci < limits[0], sci > limits[1]) #true where BAD
     sci = sci[~mask]
     bkg = bkg[~mask]
     var = var[~mask]
 
-    print("sci", sci[~sci.mask].shape, np.nanmean(sci), np.sum(np.isnan(sci)))
-    print("bkg", bkg[~bkg.mask].shape, np.nanmean(bkg), np.sum(np.isnan(bkg)))
-    print("var", var[~var.mask].shape, np.nanmean(var), np.sum(np.isnan(var)))
-    sci = _apply_percentiles(sci, p_lo, p_hi)
-    bkg = _apply_percentiles(bkg, p_lo, p_hi)
-    print("sci", sci[~sci.mask].shape, np.nanmean(sci), np.sum(np.isnan(sci)))
-    print("bkg", bkg[~bkg.mask].shape, np.nanmean(bkg), np.sum(np.isnan(bkg)))
-    print("var", var[~var.mask].shape, np.nanmean(var), np.sum(np.isnan(var)))
     return np.nansum(sci*bkg/var) / np.nansum(bkg*bkg/var)
 
 

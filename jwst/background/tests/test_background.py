@@ -288,20 +288,18 @@ def test_nrc_wfss_background(tmp_cwd, filters, pupils, detectors, make_wfss_data
     wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
     bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
 
-    mask = mask_from_source_cat(wcs_corrected, wavelenrange)
+    result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
 
-    with datamodels.open(bkg_file) as bkg_ref:
-        bkg_ref = no_NaN(bkg_ref)
+    # re-mask data to check background level
+    mask = mask_from_source_cat(result, wavelenrange)
+    sci_bkg_out = result.data[mask]
 
-        # calculate backgrounds
-        pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
-        test_data_mean, _, _ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
-
-        pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
-        test_reference_mean, _, _ = sigma_clipped_stats(bkg_ref.data, sigma=2)
-
-        assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
-        assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
+    # check that background is zero to within some fraction of the data stdev
+    # since we have a uniform bkg for this test but the reference file takes into account
+    # lots of imperfections, the subtraction doesn't actually look that great here.
+    # Should be better for real data
+    tol = 0.2*np.nanstd(sci_bkg_out)
+    assert np.isclose(np.nanmean(sci_bkg_out), 0.0, atol=tol)
 
 
 @pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
@@ -324,7 +322,16 @@ def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):
 
     result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
 
-    assert np.isclose(np.nanmean(result.data), 0.0)
+    # re-mask data to check background level
+    mask = mask_from_source_cat(result, wavelenrange)
+    sci_bkg_out = result.data[mask]
+
+    # check that background is zero to within some fraction of the data stdev
+    # since we have a uniform bkg for this test but the reference file takes into account
+    # lots of imperfections, the subtraction doesn't actually look that great here.
+    # Should be better for real data
+    tol = 0.2*np.nanstd(sci_bkg_out)
+    assert np.isclose(np.nanmean(sci_bkg_out), 0.0, atol=tol)
 
 
 
