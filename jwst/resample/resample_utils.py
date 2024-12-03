@@ -15,6 +15,7 @@ from stcal.alignment.util import (
     wcs_bbox_from_shape,
     wcs_from_sregions,
 )
+from stcal.resample import UnsupportedWCSError
 from stcal.resample.utils import compute_wcs_pixel_area
 
 
@@ -120,6 +121,13 @@ def resampled_wcs_from_models(
 
     if not sregion_list:
         raise ValueError("No input models.")
+
+    naxes = ref_wcs.output_frame.naxes
+    if naxes != 2:
+        raise UnsupportedWCSError(
+            "Output WCS needs 2 coordinate axes but the "
+            f"supplied WCS has {naxes} axes."
+        )
 
     if pixel_scale is None:
         # TODO: at some point we should switch to compute_wcs_pixel_area

@@ -13,7 +13,7 @@ from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.utils import _flag_resampled_model_crs
 from jwst.resample.tests.test_resample_step import miri_rate_model
 from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
-from jwst.resample.resample import ResampleData
+from jwst.resample.resample import ResampleImage
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -671,10 +671,9 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
 def make_resamp(input_models):
     """All defaults are same as what is run by default by outlier detection"""
     in_memory = not input_models._on_disk
-    resamp = ResampleData(
+    resamp = ResampleImage(
         input_models,
         output="",
-        single=True,
         blendheaders=False,
         wht_type="ivm",
         pixfrac=1.0,
@@ -683,5 +682,8 @@ def make_resamp(input_models):
         good_bits="~DO_NOT_USE",
         in_memory=in_memory,
         asn_id="test",
+        enable_var=False,
+        enable_ctx=False,
+        enable_err="driz_err",
     )
     return resamp
