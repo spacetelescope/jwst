@@ -132,7 +132,7 @@ The ``ami_analyze`` step itself does not accept an ASN as input.
 Outputs
 -------
 
-The ``ami_analyze`` step produces three output files. The first two (``_ami-oi.fits`` and ``_amimulti-oi.fits``) contain the interferometric observables, and the third (``_amilg.fits``) contains the data, LG model, and residuals.  These are described in more detail below.
+The ``ami_analyze`` step produces three output files. The first two (``_ami-oi.fits`` and ``_amimulti-oi.fits``) contain the interferometric observables, and the third (``_amilg.fits``) contains the data, LG model, and residuals. All products contain a ``PRIMARY`` HDU containing header keywords but no science data, as well as an ``ASDF`` extension. The files are described in more detail below.
 
 The output file name syntax is exposure-based, using the input file name as the root, with
 the addition of the association candidate ID and the "_ami-oi", "_amimulti-oi", or "amilg" product type suffix, e.g.
@@ -143,20 +143,19 @@ Interferometric observables
 :Data model: `~jwst.datamodels.AmiOIModel`
 :File suffix: _ami-oi.fits, _amimulti-oi.fits
 
-. The inteferometric observables are saved as OIFITS files, a registered FITS format
+The inteferometric observables are saved as OIFITS files, a registered FITS format
 for optical interferometry, containing the following list of extensions:
 
 1)  ``OI_ARRAY``: AMI subaperture information  
 2)  ``OI_TARGET``: target properties  
-3)  ``OI_T3``: extracted closure amplitudes, phases 
+3)  ``OI_T3``: extracted closure amplitudes, triple-product phases 
 4)  ``OI_VIS``: extracted visibility (fringe) amplitudes, phases
 5)  ``OI_VIS2``: squared visibility (fringe) amplitudes
 6)  ``OI_WAVELENGTH``: filter information
 
 For more information on the format and contents of OIFITS files, see the `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-The _ami-oi.fits file contains tables of median observables over all integrations of the input file.  Errors 
-are computed as the sigma-clipped standard deviation over integrations.
+The _ami-oi.fits file contains tables of observables averaged over all integrations of the input file. The error is taken to be the standard error of the mean, where the variance is the covariance between amplitudes and phases (e.g. fringe amplitudes and fringe phases, closure phases and triple-product amplitudes).
 The _amimulti-oi.fits file contains observables for each integration, and does not contain error estimates. The
 structure is the same as the _ami-oi.fits file, but the following data columns are 2D, with the second dimension being 
 the number of integrations: "PISTONS", "PIST_ERR", "VISAMP", "VISAMPERR", "VISPHI", "VISPHIERR", "VIS2DATA", "VIS2ERR", "T3AMP", "T3AMPERR", "T3PHI", "T3PHIERR".
