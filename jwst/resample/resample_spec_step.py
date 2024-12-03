@@ -138,21 +138,36 @@ class ResampleSpecStep(Step):
             for model in container:
                 match_nans_and_flags(model)
 
-            resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
+            # Call the resampling routine
+            if self.single:
+                resamp = resample_spec.ResampleSpec(
+                    container,
+                    enable_var=False,
+                    compute_err="driz_err",
+                    **self.drizpars
+                )
+                drizzled_library = resamp.resample_many_to_many()
+            else:
+                resamp = resample_spec.ResampleSpec(
+                    container,
+                    enable_var=True,
+                    compute_err="from_var",
+                    **self.drizpars
+                )
+                drizzled_library = resamp.resample_many_to_one()
+                drizzled_library = ModelLibrary([drizzled_library,], on_disk=False)
 
-            library = ModelLibrary(container, on_disk=False)
-            drizzled_library = resamp.do_drizzle(library)
             with drizzled_library:
                 for i, model in enumerate(drizzled_library):
                     self.update_slit_metadata(model)
                     update_s_region_spectral(model)
                     result.slits.append(model)
                     drizzled_library.shelve(model, i, modify=False)
-            del library, drizzled_library
+            del drizzled_library
 
             # Keep the first computed pixel scale ratio for storage
             if self.pixel_scale is not None and pscale_ratio is None:
-                pscale_ratio = resamp.pscale_ratio
+                pscale_ratio = resamp.pixel_scale_ratio
 
         if self.pixel_scale is None or pscale_ratio is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
@@ -173,25 +188,29 @@ class ResampleSpecStep(Step):
             fillval=self.fillval,
             wht_type=self.weight_type,
             good_bits=GOOD_BITS,
-            single=self.single,
             blendheaders=self.blendheaders,
             in_memory=self.in_memory
         )
 
         # Custom output WCS parameters
-        kwargs['output_shape'] = ResampleStep.check_list_pars(
+        wcs_pars = {}
+        wcs_pars['output_shape'] = ResampleStep.check_list_pars(
             self.output_shape,
             'output_shape',
             min_vals=[1, 1]
         )
         kwargs['output_wcs'] = ResampleStep.load_custom_wcs(
-            self.output_wcs, kwargs['output_shape'])
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+            self.output_wcs,
+            wcs_pars['output_shape']
+        )
+        wcs_pars['pixel_scale'] = self.pixel_scale
+        wcs_pars['pixel_scale_ratio'] = self.pixel_scale_ratio
 
         # Report values to processing log
         for k, v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
+
+        kwargs["wcs_pars"] = wcs_pars
 
         return kwargs
 
@@ -214,20 +233,35 @@ class ResampleSpecStep(Step):
         for model in input_models:
             match_nans_and_flags(model)
 
-        resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
+        # Call the resampling routine
+        if self.single:
+            resamp = resample_spec.ResampleSpec(
+                input_models,
+                enable_var=False,
+                compute_err="driz_err",
+                **self.drizpars
+            )
+            drizzled_library = resamp.resample_many_to_many()
+        else:
+            resamp = resample_spec.ResampleSpec(
+                input_models,
+                enable_var=True,
+                compute_err="from_var",
+                **self.drizpars
+            )
+            drizzled_library = resamp.resample_many_to_one()
+            drizzled_library = ModelLibrary([drizzled_library,], on_disk=False)
 
-        library = ModelLibrary(input_models, on_disk=False)
-        drizzled_library = resamp.do_drizzle(library)
         with drizzled_library:
             result = drizzled_library.borrow(0)
             drizzled_library.shelve(result, 0, modify=False)
-        del library, drizzled_library
+        del drizzled_library
 
         result.meta.bunit_data = input_models[0].meta.bunit_data
         if self.pixel_scale is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         else:
-            result.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
+            result.meta.resample.pixel_scale_ratio = resamp.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac
         self.update_slit_metadata(result)
         update_s_region_spectral(result)

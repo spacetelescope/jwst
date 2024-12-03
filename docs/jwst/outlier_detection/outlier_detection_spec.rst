@@ -21,10 +21,10 @@ This routine performs identical operations to the imaging mode, with the followi
    alongside the median datamodel (in the ``err`` extension) if ``save_intermediate_results``
    is `True`.
 
-#. Resampling is handled by a different class, :py:class:`~jwst.resample.resample_spec.ResampleSpecData`
-   instead of :py:class:`~jwst.resample.resample.ResampleData`.
+#. Resampling is handled by a different class, :py:class:`~jwst.resample.resample_spec.ResampleSpec`
+   instead of :py:class:`~jwst.resample.resample.ResampleImage`.
 
-#. The resampled images are written out to disk with suffix "outlier_s2d" instead of 
+#. The resampled images are written out to disk with suffix "outlier_s2d" instead of
    "outlier_i2d" if the ``save_intermediate_results`` parameter is set to `True`.
 
 #. The ``in_memory`` parameter has no effect, and all operations are performed in memory.
