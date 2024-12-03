@@ -80,12 +80,22 @@ def correction_skip_groups(output, group_skip):
         RSCD-corrected science data
     """
 
-    # Save some data params for easy use later
-    sci_nints = output.data.shape[0]       # number of integrations
-    sci_ngroups = output.data.shape[1]     # number of groups
+    # General exposure parameters
+    sci_ngroups = output.meta.exposure.ngroups
+    sci_nints = output.meta.exposure.nints
+
+    # values defined for segmented data 
+    sci_int_start = output.meta.exposure.integration_start
+
+    if sci_int_start is None:
+        sci_int_start = 1
+        
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
+    log.debug("The first integration in the data is integration: %d" %
+              (sci_int_start))
+    log.info("Number of groups to skip for integrations 2 and higher: %d " %group_skip)
 
     # If ngroups <= group_skip+3, skip the flagging
     # the +3 is to ensure there is a slope to be fit including the flagging for
@@ -96,9 +106,19 @@ def correction_skip_groups(output, group_skip):
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
-    # If ngroups > group_skip+3, set all of the GROUPDQ in the first group to 'DO_NOT_USE'
-    output.groupdq[1:, 0:group_skip:, :] = \
-        np.bitwise_or(output.groupdq[1:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
+    # The RSCD correction is applied to integrations 2 and higher.
+    # For segmented data the first integration in the file may not be the first integration in the
+    # exposure. The value in meta.exposure.integration_start holds the value of the first integration
+    # in the file.
+    # If a correction is to be done and if  ngroups > group_skip+3, then  set all of the GROUPDQ
+    # in 0: group_skip to 'DO_NOT_USE'
+
+    int_start = 1
+    if sci_int_start !=1: # we have segmented data
+        int_start = 0
+        
+    output.groupdq[int_start:, 0:group_skip, :, :] = \
+        np.bitwise_or(output.groupdq[int_start:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
     log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
     output.meta.cal_step.rscd = 'COMPLETE'
 
