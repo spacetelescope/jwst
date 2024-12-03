@@ -128,7 +128,8 @@ for FLUX and SURF_BRIGHT.  BACKGROUND will be zero if background subtraction
 is not requested. BKGD_ERROR is calculated as the square root of the sum of the
 BKGD_VAR arrays.
 
-The DQ array is set to DO_NOT_USE for pixels with NaN flux values.
+The DQ array is set to DO_NOT_USE for pixels with NaN flux values and zero
+otherwise.
 
 
 .. _extract-1d-for-slits:
@@ -165,7 +166,7 @@ is available for NIRSpec MOS, fixed-slit, and BOTS data, as well as MIRI LRS fix
 If `use_source_posn` is set to None via the reference file or input parameters,
 it is turned on by default for all point sources in these modes, except NIRSpec BOTS.
 To turn it on for NIRSpec BOTS, set `use_source_posn` to True.  To turn it off
-for any mode, set `use_source_posn` to False
+for any mode, set `use_source_posn` to False.
 The planned location for the source is calculated internally, via header metadata recording
 the source position and the spectral WCS transforms, then used to offset the
 extraction start and stop values in the cross-dispersion direction.
@@ -219,9 +220,9 @@ Parameters related to background fitting are `smoothing_length`,
    specified in order to compute the simple mean or median of the background
    values in each column (or row). Note that using `bkg_fit=mean` is
    mathematically equivalent to `bkg_fit=poly` with `bkg_order=0`. If `bkg_fit`
-   is provided both by a reference file and by the user, e.g.
-   `--steps.extract_1d.bkg_fit='poly'`, the user-supplied value will override
-   the reference file value.
+   is provided both by a reference file and by the user (e.g.
+   `--steps.extract_1d.bkg_fit='poly'` from the command line),
+   the user-supplied value will override the reference file value.
 
 #. If `bkg_fit=poly` is specified, `bkg_order` is used to indicate the
    polynomial order to be used. The default value is zero, i.e. a constant.
@@ -247,7 +248,7 @@ Polynomials specified via `src_coeff` and `bkg_coeff` are functions of either wa
 the input 2D slit image), which is specified by the parameter `independent_var`.
 The default is "pixel"; the alternative is "wavelength".  The dependent values of these
 polynomial functions are always pixel numbers (zero-indexed) in the cross-dispersion
-direction.
+direction, with respect to the input 2D slit image.
 
 The coefficients for the polynomial functions are specified as a list of an
 even number of lists (an even number because both the lower and upper limits of each
