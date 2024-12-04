@@ -97,6 +97,226 @@ def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
     return matrix, vec, coefmatrix, coefmatrix_masked
 
 
+def _fit_background_for_box_extraction(
+        image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+        profile_bg, weights, bg_smooth_length, bkg_fit_type, bkg_order):
+    """Fit a background level for box extraction."""
+
+    # Start by copying the input image
+    input_background = image.copy()
+
+    # Smooth the image, if desired, for computing a background.
+    # Astropy's convolve routine will replace NaNs.  The convolution
+    # is done along the dispersion direction.
+    if bg_smooth_length > 1:
+        if not bg_smooth_length % 2 == 1:
+            raise ValueError("bg_smooth_length should be an odd integer >= 1.")
+        kernel = np.ones((1, bg_smooth_length)) / bg_smooth_length
+        input_background = convolution.convolve(input_background, kernel, boundary='extend')
+
+    if bkg_fit_type == 'median':
+        input_background[profile_bg == 0] = np.nan
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
+            bkg_1d = np.nanmedian(input_background, axis=0)
+        bkg_2d = bkg_1d[np.newaxis, :]
+
+        # Putting an uncertainty on the median is a bit harder.
+        # It is typically about 1.2 times the uncertainty on the mean.
+        # The details depend on the number of pixels averaged...
+        # bkg_npix is the total weight that we will need to apply
+        # to the background value when removing it from the 2D image.
+        # pixwgt normalizes the total weights of all pixels used to 1.
+        bkg_npix = np.sum(profiles_2d[0], axis=0)
+        variance = variance_rn + variance_phnoise + variance_flat
+        wgt = np.isfinite(image) * np.isfinite(variance) * (profile_bg != 0)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+            pixwgt = wgt / np.sum(wgt, axis=0)[np.newaxis, :]
+
+        var_bkg_rn = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_rn * pixwgt ** 2, axis=0)])
+        var_bkg_phnoise = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_phnoise * pixwgt ** 2, axis=0)])
+        var_bkg_flat = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_flat * pixwgt ** 2, axis=0)])
+
+    elif bkg_fit_type == 'poly' and bkg_order >= 0:
+
+        if not bkg_order == int(bkg_order):
+            raise ValueError("If bkg_fit_type is 'poly', bkg_order must be an integer >= 0.")
+
+        # Build the matrices to fit a polynomial column-by-column.
+        result = build_coef_matrix(input_background, profile_bg=profile_bg,
+                                   weights=weights, order=bkg_order)
+        matrix, vec, coefmatrix, coefmatrix_masked = result
+
+        # Don't try to solve singular matrices.  Background will be
+        # zero in these cases.  Could make them NaN if you want.
+        ok = np.linalg.cond(matrix) < 1e10
+        cov_bg_coefs = np.zeros(matrix.shape)
+        cov_bg_coefs[ok] = np.linalg.inv(matrix[ok])
+
+        # These are the pixel-dependent weights to compute our coefficients.
+        # We will use them to propagate errors.
+        pixwgt = weights.T[:, :, np.newaxis] * np.einsum('ijk,ilj->ilk', cov_bg_coefs, coefmatrix_masked)
+        bkg_mat = np.sum(np.swapaxes(coefmatrix, 0, 1) * profiles_2d[0][:, :, np.newaxis], axis=0)
+
+        # Sum of all the contributions to the background at the pixels
+        # where we will do the extraction.  Used to propagate errors.
+        pixwgt_tot = np.sum(bkg_mat[:, np.newaxis, :] * pixwgt, axis=-1)
+
+        var_bkg_rn = np.array([np.nansum(variance_rn.T * pixwgt_tot ** 2, axis=1)])
+        var_bkg_phnoise = np.array([np.nansum(variance_phnoise.T * pixwgt_tot ** 2, axis=1)])
+        var_bkg_flat = np.array([np.nansum(variance_flat.T * pixwgt_tot ** 2, axis=1)])
+
+        coefs = np.einsum('ijk,ij->ik', cov_bg_coefs, vec)
+
+        # Reconstruct the 2D background.
+        bkg_2d = np.sum(coefs[:, np.newaxis, :] * coefmatrix, axis=-1).T
+
+    else:
+        raise ValueError("bkg_fit_type should be 'median' or 'poly'. "
+                         "If 'poly', bkg_order must be an integer >= 0.")
+
+    return bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat
+
+
+def _box_extract(
+        image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+        bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model):
+    """Perform box extraction."""
+    # This only makes sense with a single profile, i.e., pulling out
+    # a single spectrum.
+    nobjects = 1
+    profile_2d = profiles_2d[0].copy()
+    image_masked = image.copy()
+
+    # Mask NaNs and infs for the extraction
+    profile_2d[~np.isfinite(image_masked)] = 0
+    image_masked[profile_2d == 0] = 0
+
+    # Return array of shape (1, npixels) for generality
+    fluxes = np.array([np.sum(image_masked * profile_2d, axis=0)])
+
+    # Number of contributing pixels at each wavelength.
+    npixels = np.array([np.sum(profile_2d, axis=0)])
+
+    # Add average flux over the aperture to the model, so that
+    # a sum over the cross-dispersion direction reproduces the summed flux
+    valid = npixels[0] > 0
+    model[:, valid] += (fluxes[0][valid] / npixels[0][valid]) * profile_2d[:, valid]
+
+    # Compute the variance on the sum, same shape as f.
+    # Need to decompose this into read noise, photon noise, and flat noise.
+    var_rn = np.array([np.nansum(variance_rn * profile_2d ** 2, axis=0)])
+    var_phnoise = np.array([np.nansum(variance_phnoise * profile_2d ** 2, axis=0)])
+    var_flat = np.array([np.nansum(variance_flat * profile_2d ** 2, axis=0)])
+
+    if bkg_2d is not None:
+        var_rn += var_bkg_rn
+        var_phnoise += var_bkg_phnoise
+        var_flat += var_bkg_flat
+        bkg = np.array([np.sum(bkg_2d * profile_2d, axis=0)])
+        bkg[~np.isfinite(bkg)] = 0.0
+    else:
+        bkg = np.zeros((nobjects, image.shape[1]))
+
+    return (fluxes, var_rn, var_phnoise, var_flat,
+            bkg, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, npixels, model)
+
+
+def _optimal_extract(
+        image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+        weights, profile_bg, fit_bkg, bkg_order,
+        bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model):
+    """Perform optimal extraction."""
+
+    # Background fitting needs to be done simultaneously with the
+    # fitting of the spectra in this case.  If we are not fitting a
+    # background, pass -1 for the order of the polynomial correction.
+    if fit_bkg:
+        order = bkg_order
+        if order != int(order) or order < 0:
+            raise ValueError("For optimal extraction, bkg_order must be an integer >= 0.")
+    else:
+        order = -1
+
+    result = build_coef_matrix(image, profiles_2d=profiles_2d, weights=weights,
+                               profile_bg=profile_bg, order=order)
+    matrix, vec, coefmatrix, coefmatrix_masked = result
+
+    # Don't try to solve equations with singular matrices.
+    # Fluxes will be zero in these cases.  We will make them NaN later.
+    ok = np.linalg.cond(matrix) < 1e10
+
+    # These are the covariance matrices for all parameters if inverse
+    # variance weights are passed to the build_coef_matrix above.  For
+    # generality, variances are actually computed using the weights on
+    # each pixel and the associated variance in the input image.
+    covariances = np.zeros(matrix.shape)
+    covariances[ok] = np.linalg.inv(matrix[ok])
+
+    # These are the pixel-dependent weights to compute our coefficients.
+    # We will use them to propagate errors.
+    pixwgt = weights.T[:, :, np.newaxis] * np.einsum('ijk,ilj->ilk', covariances, coefmatrix_masked)
+
+    # Don't use NaN pixels in the sum.  These will already be zero in
+    # pixwgt.  coefs are the best-fit coefficients of the source and
+    # background components.
+    coefs = np.nansum(pixwgt * image.T[:, :, np.newaxis], axis=1)
+
+    # Effective number of contributing pixels at each wavelength for each source.
+    nobjects = len(profiles_2d)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+        wgt_src_pix = [profiles_2d[i] * (weights > 0) / np.sum(profiles_2d[i] ** 2, axis=0)
+                       for i in range(nobjects)]
+    npixels = np.sum(wgt_src_pix, axis=1)
+
+    if order > -1:
+        bkg_2d = np.sum(coefs[:, np.newaxis, :order + 1] * coefmatrix[..., :order + 1], axis=-1).T
+
+    # Variances for each object (discard variances for background here)
+    var_rn = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_rn.T[:, :, np.newaxis], axis=1).T
+    var_phnoise = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_phnoise.T[:, :, np.newaxis], axis=1).T
+    var_flat = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_flat.T[:, :, np.newaxis], axis=1).T
+
+    # Computing a background contribution to the noise is harder in a joint fit.
+    # Here, I am computing the weighting coefficients I would have without a background.
+    # I then compute those variances, and subtract them from the actual variances.
+    if order > -1:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+
+            wgt_nobkg = [profiles_2d[i] * weights / np.sum(profiles_2d[i] ** 2 * weights, axis=0)
+                         for i in range(nobjects)]
+
+        bkg = np.array([np.sum(wgt_nobkg[i] * bkg_2d, axis=0) for i in range(nobjects)])
+
+        var_bkg_rn = np.array([var_rn[i] - np.sum(wgt_nobkg[i] ** 2 * variance_rn, axis=0)
+                               for i in range(nobjects)])
+        var_bkg_phnoise = np.array([var_phnoise[i] - np.sum(wgt_nobkg[i] ** 2 * variance_phnoise, axis=0)
+                                    for i in range(nobjects)])
+        var_bkg_flat = np.array([var_flat[i] - np.sum(wgt_nobkg[i] ** 2 * variance_flat, axis=0)
+                                 for i in range(nobjects)])
+
+        # Make sure background values are finite
+        bkg[~np.isfinite(bkg)] = 0.0
+
+        # We did our best to estimate the background contribution to the variance
+        # in this case.  Don't let it go negative.
+        var_bkg_rn *= var_bkg_rn > 0
+        var_bkg_phnoise *= var_bkg_phnoise > 0
+        var_bkg_flat *= var_bkg_flat > 0
+    else:
+        bkg = np.zeros((nobjects, image.shape[1]))
+
+    # Reshape to (nobjects, npixels)
+    fluxes = coefs[:, -nobjects:].T
+    model += np.sum(coefs[:, np.newaxis, :] * coefmatrix, axis=-1).T
+
+    return (fluxes, var_rn, var_phnoise, var_flat,
+            bkg, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, npixels, model)
+
+
 def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
               weights=None, profile_bg=None, extraction_type='box',
               bg_smooth_length=0, fit_bkg=False, bkg_fit_type='poly', bkg_order=0):
@@ -108,7 +328,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         The array may have been transposed so that the dispersion direction
         is the second index.
 
-    profiles_2d : list of 2-D ndarrays.
+    profiles_2d : list of 2-D ndarray
         These arrays contain the weights for the extraction.  A box
         extraction will add up the flux multiplied by these weights; an
         optimal extraction will fit an amplitude to the weight map at each
@@ -130,7 +350,7 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         Weights for the individual pixels in fitting a profile.  If None
         (default), use uniform weights (ones for all valid pixels).
 
-    profile_bg : boolean 2-D ndarray
+    profile_bg : 2-D ndarray or None
         Array of the same shape as image, with nonzero elements where the
         background is to be estimated.
 
@@ -202,15 +422,8 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
     nobjects = len(profiles_2d)  # hopefully at least one!
     model = np.zeros(image.shape)
 
-    bkg_2d = None  # This will be overwritten if we are fitting a background.
-    variance = variance_rn + variance_phnoise + variance_flat
-
-    # Initialize background uncertainties to zero.
-    var_bkg_rn = np.zeros((nobjects, image.shape[1]))
-    var_bkg_phnoise = np.zeros((nobjects, image.shape[1]))
-    var_bkg_flat = np.zeros((nobjects, image.shape[1]))
-
     # If weights are not supplied, equally weight all valid pixels.
+    variance = variance_rn + variance_phnoise + variance_flat
     if weights is None:
         weights = np.isfinite(variance) * np.isfinite(image)
 
@@ -220,215 +433,48 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
     # Inverse variance weights should be used with care, as they have the
     # potential to introduce biases.
     if profile_bg is not None and fit_bkg and extraction_type == 'box':
-        bkg_2d = image.copy()
+        (bkg_2d, var_bkg_rn,
+         var_bkg_phnoise, var_bkg_flat) = _fit_background_for_box_extraction(
+            image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+            profile_bg, weights, bg_smooth_length, bkg_fit_type, bkg_order)
 
-        # Smooth the image, if desired, for computing a background.
-        # Astropy's convolve routine will replace NaNs.  The convolution
-        # is done along the dispersion direction.
-        if bg_smooth_length > 1:
-            if not bg_smooth_length % 2 == 1:
-                raise ValueError("bg_smooth_length should be an odd integer >= 1.")
-            kernel = np.ones((1, bg_smooth_length)) / bg_smooth_length
-            bkg_2d = convolution.convolve(bkg_2d, kernel, boundary='extend')
-
-        if bkg_fit_type == 'median':
-            bkg_2d[profile_bg == 0] = np.nan
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
-                bkg_1d = np.nanmedian(bkg_2d, axis=0)
-            bkg_2d = bkg_1d[np.newaxis, :]
-
-            # Putting an uncertainty on the median is a bit harder.
-            # It is typically about 1.2 times the uncertainty on the mean.
-            # The details depend on the number of pixels averaged...
-            # bkg_npix is the total weight that we will need to apply
-            # to the background value when removing it from the 2D image.
-            # pixwgt normalizes the total weights of all pixels used to 1.
-            bkg_npix = np.sum(profiles_2d[0], axis=0)
-            wgt = np.isfinite(image) * np.isfinite(variance) * (profile_bg != 0)
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
-                pixwgt = wgt / np.sum(wgt, axis=0)[np.newaxis, :]
-
-            var_bkg_rn = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_rn * pixwgt ** 2, axis=0)])
-            var_bkg_phnoise = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_phnoise * pixwgt ** 2, axis=0)])
-            var_bkg_flat = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_flat * pixwgt ** 2, axis=0)])
-
-            model += bkg_2d
-
-        elif bkg_fit_type == 'poly' and bkg_order >= 0:
-
-            if not bkg_order == int(bkg_order):
-                raise ValueError("If bkg_fit_type is 'poly', bkg_order must be an integer >= 0.")
-
-            # Build the matrices to fit a polynomial column-by-column.
-            result = build_coef_matrix(bkg_2d, profile_bg=profile_bg,
-                                       weights=weights, order=bkg_order)
-            matrix, vec, coefmatrix, coefmatrix_masked = result
-
-            # Don't try to solve singular matrices.  Background will be
-            # zero in these cases.  Could make them NaN if you want.
-            ok = np.linalg.cond(matrix) < 1e10
-            cov_bg_coefs = np.zeros(matrix.shape)
-            cov_bg_coefs[ok] = np.linalg.inv(matrix[ok])
-
-            # These are the pixel-dependent weights to compute our coefficients.
-            # We will use them to propagate errors.
-            pixwgt = weights.T[:, :, np.newaxis] * np.einsum('ijk,ilj->ilk', cov_bg_coefs, coefmatrix_masked)
-            bkg_mat = np.sum(np.swapaxes(coefmatrix, 0, 1) * profiles_2d[0][:, :, np.newaxis], axis=0)
-
-            # Sum of all the contributions to the background at the pixels
-            # where we will do the extraction.  Used to propagate errors.
-            pixwgt_tot = np.sum(bkg_mat[:, np.newaxis, :] * pixwgt, axis=-1)
-
-            var_bkg_rn = np.array([np.nansum(variance_rn.T * pixwgt_tot ** 2, axis=1)])
-            var_bkg_phnoise = np.array([np.nansum(variance_phnoise.T * pixwgt_tot ** 2, axis=1)])
-            var_bkg_flat = np.array([np.nansum(variance_flat.T * pixwgt_tot ** 2, axis=1)])
-
-            coefs = np.einsum('ijk,ij->ik', cov_bg_coefs, vec)
-
-            # Reconstruct the 2D background.
-            bkg_2d = np.sum(coefs[:, np.newaxis, :] * coefmatrix, axis=-1).T
-
-            model += bkg_2d
-
-        else:
-            raise ValueError("bkg_fit_type should be 'median' or 'poly'. "
-                             "If 'poly', bkg_order must be an integer >= 0.")
-
+        model += bkg_2d
         image_sub = image - bkg_2d
     else:
         image_sub = image.copy()
 
+        # Set background image to None
+        bkg_2d = None
+
+        # Set background uncertainties to zero.
+        var_bkg_rn = np.zeros((nobjects, image.shape[1]))
+        var_bkg_phnoise = np.zeros((nobjects, image.shape[1]))
+        var_bkg_flat = np.zeros((nobjects, image.shape[1]))
+
     # This is the case of box extraction.
     if extraction_type == 'box' and len(profiles_2d) == 1:
 
-        # This only makes sense with a single profile, i.e., pulling out
-        # a single spectrum.
-        profile_2d = profiles_2d[0].copy()
-        image_masked = image_sub.copy()
-
-        # Mask NaNs and infs for the extraction
-        profile_2d[~np.isfinite(image_masked)] = 0
-        image_masked[profile_2d == 0] = 0
-
-        # Return array of shape (1, npixels) for generality
-        fluxes = np.array([np.sum(image_masked * profile_2d, axis=0)])
-
-        # Number of contributing pixels at each wavelength.
-        npixels = np.array([np.sum(profile_2d, axis=0)])
-
-        # Add average flux over the aperture to the model, so that
-        # a sum over the cross-dispersion direction reproduces the summed flux
-        valid = npixels[0] > 0
-        model[:, valid] += (fluxes[0][valid] / npixels[0][valid]) * profile_2d[:, valid]
-
-        # And compute the variance on the sum, same shape as f.
-        # Need to decompose this into read noise, photon noise, and flat noise.
-        var_rn = np.array([np.nansum(variance_rn * profile_2d ** 2, axis=0)])
-        var_phnoise = np.array([np.nansum(variance_phnoise * profile_2d ** 2, axis=0)])
-        var_flat = np.array([np.nansum(variance_flat * profile_2d ** 2, axis=0)])
-
-        if bkg_2d is not None:
-            var_rn += var_bkg_rn
-            var_phnoise += var_bkg_phnoise
-            var_flat += var_bkg_flat
-            bkg = np.array([np.sum(bkg_2d * profile_2d, axis=0)])
-            bkg[~np.isfinite(bkg)] = 0.0
-        else:
-            bkg = np.zeros((nobjects, image.shape[1]))
+        (fluxes, var_rn, var_phnoise, var_flat,
+         bkg, var_bkg_rn, var_bkg_phnoise,
+         var_bkg_flat, npixels, model) = _box_extract(
+            image_sub, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+            bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model)
 
     # This is optimal extraction (well, profile-based extraction).  It
     # is "optimal extraction" if the weights are the inverse variances,
     # but you must be careful about biases in this case.
     elif extraction_type == 'optimal':
 
-        # Background fitting needs to be done simultaneously with the
-        # fitting of the spectra in this case.  If we are not fitting a
-        # background, pass -1 for the order of the polynomial correction.
-        if fit_bkg:
-            order = bkg_order
-            if order != int(order) or order < 0:
-                raise ValueError("For optimal extraction, bkg_order must be an integer >= 0.")
-        else:
-            order = -1
-
-        result = build_coef_matrix(image, profiles_2d=profiles_2d, weights=weights,
-                                   profile_bg=profile_bg, order=order)
-        matrix, vec, coefmatrix, coefmatrix_masked = result
-
-        # Don't try to solve equations with singular matrices.
-        # Fluxes will be zero in these cases.  We will make them NaN later.
-        ok = np.linalg.cond(matrix) < 1e10
-
-        # These are the covariance matrices for all parameters if inverse
-        # variance weights are passed to the build_coef_matrix above.  For
-        # generality, variances are actually computed using the weights on
-        # each pixel and the associated variance in the input image.
-        covariances = np.zeros(matrix.shape)
-        covariances[ok] = np.linalg.inv(matrix[ok])
-
-        # These are the pixel-dependent weights to compute our coefficients.
-        # We will use them to propagate errors.
-        pixwgt = weights.T[:, :, np.newaxis] * np.einsum('ijk,ilj->ilk', covariances, coefmatrix_masked)
-
-        # Don't use NaN pixels in the sum.  These will already be zero in
-        # pixwgt.  coefs are the best-fit coefficients of the source and
-        # background components.
-        coefs = np.nansum(pixwgt * image.T[:, :, np.newaxis], axis=1)
-
-        # Effective number of contributing pixels at each wavelength for each source.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
-            wgt_src_pix = [profiles_2d[i] * (weights > 0) / np.sum(profiles_2d[i] ** 2, axis=0)
-                           for i in range(nobjects)]
-        npixels = np.sum(wgt_src_pix, axis=1)
-
-        if order > -1:
-            bkg_2d = np.sum(coefs[:, np.newaxis, :order + 1] * coefmatrix[..., :order + 1], axis=-1).T
-
-        # Variances for each object (discard variances for background here)
-        var_rn = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_rn.T[:, :, np.newaxis], axis=1).T
-        var_phnoise = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_phnoise.T[:, :, np.newaxis], axis=1).T
-        var_flat = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_flat.T[:, :, np.newaxis], axis=1).T
-
-        # Computing a background contribution to the noise is harder in a joint fit.
-        # Here, I am computing the weighting coefficients I would have without a background.
-        # I then compute those variances, and subtract them from the actual variances.
-        if order > -1:
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
-
-                wgt_nobkg = [profiles_2d[i] * weights / np.sum(profiles_2d[i] ** 2 * weights, axis=0)
-                             for i in range(nobjects)]
-
-            bkg = np.array([np.sum(wgt_nobkg[i] * bkg_2d, axis=0) for i in range(nobjects)])
-
-            var_bkg_rn = np.array([var_rn[i] - np.sum(wgt_nobkg[i] ** 2 * variance_rn, axis=0)
-                                   for i in range(nobjects)])
-            var_bkg_phnoise = np.array([var_phnoise[i] - np.sum(wgt_nobkg[i] ** 2 * variance_phnoise, axis=0)
-                                        for i in range(nobjects)])
-            var_bkg_flat = np.array([var_flat[i] - np.sum(wgt_nobkg[i] ** 2 * variance_flat, axis=0)
-                                     for i in range(nobjects)])
-
-            # Make sure background values are finite
-            bkg[~np.isfinite(bkg)] = 0.0
-
-            # We did our best to estimate the background contribution to the variance
-            # in this case.  Don't let it go negative.
-            var_bkg_rn *= var_bkg_rn > 0
-            var_bkg_phnoise *= var_bkg_phnoise > 0
-            var_bkg_flat *= var_bkg_flat > 0
-        else:
-            bkg = np.zeros((nobjects, image.shape[1]))
-
-        # Reshape to (nobjects, npixels)
-        fluxes = coefs[:, -nobjects:].T
-        model += np.sum(coefs[:, np.newaxis, :] * coefmatrix, axis=-1).T
+        (fluxes, var_rn, var_phnoise, var_flat,
+         bkg, var_bkg_rn, var_bkg_phnoise,
+         var_bkg_flat, npixels, model) = _optimal_extract(
+            image_sub, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+            weights, profile_bg, fit_bkg, bkg_order,
+            bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model)
 
     else:
-        raise ValueError("Extraction method %s not supported with %d input profiles." % (extraction_type, nobjects))
+        raise ValueError(f"Extraction method {extraction_type} not "
+                         f"supported with {nobjects} input profiles.")
 
     no_data = np.isclose(npixels, 0)
     fluxes[no_data] = np.nan
