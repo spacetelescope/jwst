@@ -792,7 +792,7 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
 
     Parameters
     ----------
-    input_model : data model
+    input_model : JWSTDataModel
         The input science model.
 
     ra_targ, dec_targ : float or None
