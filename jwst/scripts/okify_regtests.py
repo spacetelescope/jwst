@@ -13,7 +13,6 @@ import subprocess
 import tempfile
 from argparse import ArgumentParser
 from contextlib import contextmanager
-from glob import glob
 from pathlib import Path
 
 import asdf
@@ -110,11 +109,10 @@ def artifactory_get_breadcrumbs(build_number, suffix):
     args = list(
         ['jfrog', 'rt', 'dl']
         + [f"{ARTIFACTORY_REPO}/*_GITHUB_CI_*-{build_number}/*{suffix}"]
-        + ['--flat']
     )
     subprocess.run(args, check=True, capture_output=True)
 
-    return sorted(glob(f'*{suffix}'))
+    return sorted([str(p) for p in Path().rglob(f'*{suffix}')])
 
 
 def artifactory_get_build_artifacts(build_number):
