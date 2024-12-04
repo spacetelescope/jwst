@@ -170,6 +170,7 @@ class Dataset:
 
     conv_kernel_params : dict
         Dictionary containing the parameters needed for the optimized convolution kernel
+        for Simple Improved Reference Subtraction (SIRS)
 
 """
 
@@ -181,8 +182,8 @@ class Dataset:
                  conv_kernel_params,
                  odd_even_rows):
 
-        self.use_conv_kernel = conv_kernel_params['use_conv_kernel']
-        self.conv_kernel_model = conv_kernel_params['conv_kernel_model']
+        self.refpix_algorithm = conv_kernel_params['refpix_algorithm']
+        self.sirs_kernel_model = conv_kernel_params['sirs_kernel_model']
         self.sigreject = conv_kernel_params['sigreject']
         self.gaussmooth = conv_kernel_params['gaussmooth']
         self.halfwidth = conv_kernel_params['halfwidth']
@@ -384,14 +385,14 @@ class Dataset:
             if not self.is_subarray:
                 log.info('NIR full frame data')
                 log.info('The following parameters are valid for this mode:')
-                if not self.use_conv_kernel:
+                if self.refpix_algorithm == 'running_median':
                     log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
                     log.info(f'odd_even_columns = {self.odd_even_columns}')
                     log.info(f'side_smoothing_length = {self.side_smoothing_length}')
                     log.info(f'side_gain = {self.side_gain}')
                     log.info('The following parameter is not applicable and is ignored:')
                     log.info(f'odd_even_rows = {self.odd_even_rows}')
-                else:
+                elif self.refpix_algorithm == 'sirs':
                     log.info(f'sigreject = {self.sigreject}')
                     log.info(f'gaussmooth = {self.gaussmooth}')
                     log.info(f'halfwidth = {self.halfwidth}')
@@ -1173,8 +1174,8 @@ class NIRDataset(Dataset):
         continue_apply_conv_kernel = False
         # Check if convolution kernels for this detector are in the reference file
         # and if not, proceed with side-pixel correction as usual
-        if self.use_conv_kernel and self.conv_kernel_model is not None:
-            kernels = make_kernels(self.conv_kernel_model,
+        if self.refpix_algorithm == 'sirs' and self.sirs_kernel_model is not None:
+            kernels = make_kernels(self.sirs_kernel_model,
                                    self.input_model.meta.instrument.detector,
                                    self.gaussmooth,
                                    self.halfwidth)

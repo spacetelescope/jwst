@@ -25,11 +25,10 @@ class RefPixStep(Step):
         ovr_corr_mitigation_ftr = float(default=3.0) # Factor to avoid overcorrection of bad reference pixels for IRS2
         preserve_irs2_refpix = boolean(default=False) # Preserve reference pixels in output
         irs2_mean_subtraction = boolean(default=False) # Apply a mean offset subtraction before IRS2 correction
-        use_conv_kernel = boolean(default=False) # For NIR full-frame data, use convolution kernel instead of running median
+        refpix_algorithm = option("sirs", default="running_median") # NIR full-frame side pixels algorithm
         sigreject = float(default=4.0) # Number of sigmas to reject as outliers
         gaussmooth = float(default=1.0) # Width of Gaussian smoothing kernel to use as a low-pass filter
         halfwidth = integer(default=30) # Half-width of convolution kernel to build
-        user_supplied_reffile = string(default=None)  # ASDF user-supplied reference file for convolution kernel
     """
 
     reference_file_types = ['refpix']
@@ -89,30 +88,25 @@ class RefPixStep(Step):
 
                 # Get the reference file from CRDS or use user-supplied one
                 if input_model.meta.instrument.name == 'MIRI':
-                    conv_kernel_model = None
+                    sirs_kernel_model = None
                 elif 'FULL' not in input_model.meta.subarray.name:
-                    conv_kernel_model = None
-                    self.log.info('Optimized Convolution Kernel not applied for subarray data')
+                    sirs_kernel_model = None
+                    self.log.info('Simple Improved Reference Subtraction (SIRS) not applied for subarray data.')
                 else:
-                    if not self.use_conv_kernel:
-                        conv_kernel_model = None
-                    else:
-                        if self.user_supplied_reffile is None:
-                            conv_kernel_ref_filename = self.get_reference_file(result, 'refpix')
-                            if conv_kernel_ref_filename == 'N/A':
-                                self.log.warning('No reference file found for the optimized convolution kernel.')
-                                self.log.warning('REFPIX step will use a running median')
-                                conv_kernel_model = None
-                            else:
-                                self.log.info('Using CRDS reference file: {}'.format(conv_kernel_ref_filename))
-                                conv_kernel_model = datamodels.SIRSKernelModel(conv_kernel_ref_filename)
+                    if self.refpix_algorithm == 'running_median':
+                        sirs_kernel_model = None
+                    elif self.refpix_algorithm == 'sirs':
+                        sirs_ref_filename = self.get_reference_file(result, 'sirskernel')
+                        if sirs_ref_filename == 'N/A':
+                            self.log.warning('No reference file found for the optimized convolution kernel.')
+                            self.log.warning('REFPIX step will use a running median')
                         else:
-                            self.log.info('Using user-supplied reference file: {}'.format(self.user_supplied_reffile))
-                            conv_kernel_model = datamodels.SIRSKernelModel(self.user_supplied_reffile)
+                            self.log.info('Using SIRS reference file: {}'.format(sirs_ref_filename))
+                            sirs_kernel_model = datamodels.SIRSKernelModel(sirs_ref_filename)
 
                 conv_kernel_params = {
-                    'use_conv_kernel': self.use_conv_kernel,
-                    'conv_kernel_model': conv_kernel_model,
+                    'refpix_algorithm': self.refpix_algorithm,
+                    'sirs_kernel_model': sirs_kernel_model,
                     'sigreject': self.sigreject,
                     'gaussmooth': self.gaussmooth,
                     'halfwidth': self.halfwidth

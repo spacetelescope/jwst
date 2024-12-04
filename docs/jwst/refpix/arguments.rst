@@ -53,12 +53,11 @@ in the output.  This option is intended for calibration or diagnostic reductions
 only. For normal science operation, this argument should always be False,
 so that interleaved pixels are stripped before continuing processing.
 
-*  ``--use_conv_kernel``
+*  ``--refpix_algorithm``
 
-If the ``use_conv_kernel`` argument is set to False, all NIR full-frame data,
-will be processed using the running median and the side-pixel correction. The
-default value is set to True, which turns off the side-pixed correction and
-use an optimized convolution kernel instead of the running median.
+The ``refpix_algorithm`` argument is only relevant for all NIR full-frame
+data, and can be set to 'running_median' (default) or 'sirs' to use the
+Simple Improved Reference Subtraction (SIRS).
 
 *  ``--sigreject``
 
@@ -75,7 +74,3 @@ a low-pass filter. The numerical value is expected to be a float.
 The ``halfwidth`` argument is the half-width of convolution kernel to build. The
 numerical value is expected to be an integer.
 
-*  ``--user_supplied_reffile``
-
-The ``user_supplied_reffile`` argument is the name of the ASDF user-supplied
-reference file for the optimized convolution kernel algorithm.

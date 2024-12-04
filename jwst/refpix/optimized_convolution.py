@@ -1,6 +1,6 @@
 #
-# Module for using Reference Pixels to improve the 1/f noise, to be
-# used be only for non-IRS2 NIR data
+# Module for using the Simple Improved Reference Subtraction (SIRS) algorithm
+# to improve the 1/f noise, only for full frame non-IRS2 NIR data
 #
 
 import logging
@@ -10,15 +10,16 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
+def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
     """
     Make convolution kernels reference file's Fourier coefficients.
 
     Parameters:
     -----------
 
-    conv_kernel_model : `~jwst.datamodels.ConvKernelModel`
-        Data model containing the Fourier coefficients from the reference files
+    sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
+        Data model containing the Fourier coefficients from the reference files for
+        Simple Improved Reference Subtraction (SIRS)
 
     detector : str
         Name of the detector of the input data
@@ -37,7 +38,7 @@ def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
 
     """
 
-    gamma, zeta = get_conv_kernel_coeffs(conv_kernel_model, detector)
+    gamma, zeta = get_conv_kernel_coeffs(sirs_kernel_model, detector)
     if gamma is None or zeta is None:
         log.info(f'Optimized convolution kernel coefficients NOT found for detector {detector}')
         return None
@@ -62,15 +63,16 @@ def make_kernels(conv_kernel_model, detector, gaussmooth, halfwidth):
     return [kernels_left, kernels_right]
 
 
-def get_conv_kernel_coeffs(conv_kernel_model, detector):
+def get_conv_kernel_coeffs(sirs_kernel_model, detector):
     """
     Get the convolution kernels coefficients from the reference file
 
     Parameters:
     -----------
 
-    conv_kernel_model : `~jwst.datamodels.ConvKernelModel`
-        Data model containing the Fourier coefficients from the reference files
+    sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
+        Data model containing the Fourier coefficients from the reference files for
+        Simple Improved Reference Subtraction (SIRS)
 
     detector : str
         Name of the detector of the input data
@@ -84,7 +86,7 @@ def get_conv_kernel_coeffs(conv_kernel_model, detector):
     zeta: numpy array
         Fourier coefficients
     """
-    mdl_dict = conv_kernel_model.to_flat_dict()
+    mdl_dict = sirs_kernel_model.to_flat_dict()
     gamma, zeta = None, None
     for item in mdl_dict:
         det = item.split(sep='.')[0]
