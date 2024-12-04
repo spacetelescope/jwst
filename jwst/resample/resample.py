@@ -363,6 +363,7 @@ class ResampleImage(Resample):
             "s_region": model.meta.wcsinfo.s_region,
             "wcs": model.meta.wcs,
             "wcsinfo": model.meta.wcsinfo,
+            "bunit_data": model.meta.bunit_data,
 
             "exposure_time": model.meta.exposure.exposure_time,
             "start_time": model.meta.exposure.start_time,
@@ -440,8 +441,6 @@ class ResampleImage(Resample):
         model.meta.exposure.effective_exposure_time = info_dict["effective_exposure_time"]
         model.meta.exposure.elapsed_exposure_time = info_dict["elapsed_exposure_time"]
 
-        model.meta.cal_step.resample = 'COMPLETE'
-
     def add_model(self, model):
         """ Resamples model image and either variance data (if ``enable_var``
         was `True`) or error data (if ``enable_err`` was `True`) and adds
@@ -498,8 +497,8 @@ class ResampleImage(Resample):
             # only for an imaging WCS:
             self.update_fits_wcsinfo(self.output_jwst_model)
             assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
-        else:
-            assign_wcs_util.update_s_region_spectral(self.output_jwst_model)
+        # else:
+        #     assign_wcs_util.update_s_region_spectral(self.output_jwst_model)
 
         self.output_jwst_model.meta.cal_step.resample = 'COMPLETE'
 
@@ -536,19 +535,6 @@ class ResampleImage(Resample):
             )
         self.output_jwst_model = None
 
-    def _create_output_model(self, ref_input_model=None):
-        """ Create a new blank model and update it's meta with info from
-        ``ref_input_model``.
-        """
-        output_model = datamodels.ImageModel(None)
-
-        # update meta data and wcs
-        if ref_input_model is not None:
-            output_model.update(ref_input_model)
-        output_model.meta.wcs = self._output_wcs
-
-        return output_model
-
     def resample_group(self, indices):
         """ Resample multiple input images that belong to a single
         ``group_id`` as specified by ``indices``.
@@ -564,6 +550,7 @@ class ResampleImage(Resample):
         output_model_filename = ''
 
         log.info(f"{len(indices)} exposures to drizzle together")
+        first = True
         with self.input_models:
             for index in indices:
                 model = self.input_models.borrow(index)
@@ -588,6 +575,9 @@ class ResampleImage(Resample):
                     model.area = model.area
 
                 self.add_model(model)
+                if first:
+                    self.output_jwst_model.meta.bunit_data = model.meta.bunit_data
+                    first = False
                 self.input_models.shelve(model, index, modify=False)
                 del model
 
@@ -689,7 +679,7 @@ class ResampleImage(Resample):
 
         # Remove no longer relevant WCS keywords
         rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                'v3yangle', 'vparity']
+                   'v3yangle', 'vparity']
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]

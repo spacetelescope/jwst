@@ -242,6 +242,11 @@ class ResampleSpecStep(Step):
                 **self.drizpars
             )
             drizzled_library = resamp.resample_many_to_many()
+            with drizzled_library:
+                result = drizzled_library.borrow(0)
+                drizzled_library.shelve(result, 0, modify=False)
+            del drizzled_library
+
         else:
             resamp = resample_spec.ResampleSpec(
                 input_models,
@@ -249,15 +254,9 @@ class ResampleSpecStep(Step):
                 compute_err="from_var",
                 **self.drizpars
             )
-            drizzled_library = resamp.resample_many_to_one()
-            drizzled_library = ModelLibrary([drizzled_library,], on_disk=False)
+            result = resamp.resample_many_to_one()
 
-        with drizzled_library:
-            result = drizzled_library.borrow(0)
-            drizzled_library.shelve(result, 0, modify=False)
-        del drizzled_library
-
-        result.meta.bunit_data = input_models[0].meta.bunit_data
+        # result.meta.bunit_data = input_models[0].meta.bunit_data
         if self.pixel_scale is None:
             result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         else:
