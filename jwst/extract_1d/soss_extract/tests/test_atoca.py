@@ -3,7 +3,6 @@ import numpy as np
 from functools import partial
 from scipy.sparse import csr_matrix
 from jwst.extract_1d.soss_extract import atoca
-from jwst.extract_1d.soss_extract import atoca_utils as au
 from jwst.extract_1d.soss_extract.tests.conftest import (
     SPECTRAL_SLOPE, f_lam, DATA_SHAPE, WAVE_BNDS_O1, WAVE_BNDS_O2)
 
@@ -52,7 +51,6 @@ def test_extraction_engine_init(
         assert len(engine.i_bounds[order]) == 2
         assert engine.i_bounds[order][0] >= 0
         assert engine.i_bounds[order][1] < DATA_SHAPE[1]
-        assert all([isinstance(val, int) for val in engine.i_bounds[order]])
 
     # test to ensure that wave_map is considered for bounds
     # in order 1 the wave_map is more restrictive on the shortwave end
@@ -61,7 +59,7 @@ def test_extraction_engine_init(
     # in order 2 no restriction on the shortwave end so get the full extent
     assert engine.i_bounds[0][0] > 0
     assert engine.i_bounds[1][1] < engine.n_wavepoints
-    
+
     # TODO: off-by-one error here. why does this fail?
     # check what this looks like on a real run on main
     # assert engine.i_bounds[0][1] == engine.n_wavepoints

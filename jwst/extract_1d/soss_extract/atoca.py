@@ -257,7 +257,7 @@ class ExtractionEngine:
                     kwargs_ker = {'thresh': ker.min_value} 
                 except AttributeError:
                     # take the get_c_matrix defaults
-                    kwargs_ker = dict()
+                    kwargs_ker = {}
                 c_kwargs.append(kwargs_ker)
 
         # ...or same for all orders if only a dictionary was given
@@ -701,7 +701,7 @@ class ExtractionEngine:
 # #             idx_max = np.argmax(tests['factors'])
 # #             idx_to_keep[idx_max] = True
 #         # Make new tests with remaining factors
-#         new_tests = dict()
+#         new_tests = {}
 #         for key in tests:
 #             if key != 'grid':
 #                 new_tests[key] = tests[key][idx_to_keep]
@@ -716,7 +716,7 @@ class ExtractionEngine:
             list_mode = [fit_mode]
 
         # Evaluate best factor with different methods
-        results = dict()
+        results = {}
         for mode in list_mode:
             best_fac = tests.best_factor(mode=mode)
             results[mode] = best_fac

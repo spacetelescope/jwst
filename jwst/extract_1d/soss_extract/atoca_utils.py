@@ -1615,17 +1615,15 @@ def _linear(z):
 
 
 LOSS_FUNCTIONS = {'soft_l1': _soft_l1, 'cauchy': _cauchy, 'linear': _linear}
-
+DEFAULT_THRESH_DERIVATIVE = {'chi2':1e-5,
+                                'chi2_soft_l1':1e-4,
+                                'chi2_cauchy':1e-3}
 
 class TikhoTests(dict):
     """
     Class to save Tikhonov tests for different factors.
     All the tests are stored in the attribute `tests` as a dictionary
     """
-
-    DEFAULT_THRESH_DERIVATIVE = (('chi2', 1e-5),
-                                ('chi2_soft_l1', 1e-4),
-                                ('chi2_cauchy', 1e-3))
 
     def __init__(self, test_dict, default_chi2='chi2_cauchy'):
         """
@@ -1643,9 +1641,7 @@ class TikhoTests(dict):
         # Save attributes
         self.n_points = n_points
         self.default_chi2 = default_chi2
-        self.default_thresh = {chi2_type: thresh
-                               for (chi2_type, thresh)
-                               in self.DEFAULT_THRESH_DERIVATIVE}
+        self.default_thresh = DEFAULT_THRESH_DERIVATIVE
 
         # Initialize so it behaves like a dictionary
         super().__init__(test_dict)
@@ -1679,8 +1675,8 @@ class TikhoTests(dict):
         try:
             loss = LOSS_FUNCTIONS[loss]
         except KeyError as e:
-            keys = [key for key in LOSS_FUNCTIONS.keys()]
-            msg = f'loss={loss} not a valid key. Must be one of {keys} or callable.'
+            msg = (f"loss={loss} not a valid key."
+                   f"Must be one of {[LOSS_FUNCTIONS.keys()]} or callable.")
             raise e(msg)
 
         # Compute the reduced chi^2 for all tests

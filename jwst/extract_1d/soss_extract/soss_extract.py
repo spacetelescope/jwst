@@ -7,8 +7,8 @@ from scipy.interpolate import UnivariateSpline, CubicSpline
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags, SossWaveGridModel
 
-from ..extract import populate_time_keywords
-from ...lib import pipe_utils
+from jwst.extract_1d.extract import populate_time_keywords
+from jwst.lib import pipe_utils
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
@@ -81,7 +81,7 @@ def get_ref_file_args(ref_files):
 
 
     # The throughput curves for order 1 and 2.
-    throughput_index_dict = dict()
+    throughput_index_dict = {}
     for i, throughput in enumerate(pastasoss_ref.throughputs):
         throughput_index_dict[throughput.spectral_order] = i
 
@@ -98,7 +98,7 @@ def get_ref_file_args(ref_files):
     # Take the centroid of each trace as a grid to project the WebbKernel
     # WebbKer needs a 2d input, so artificially add axis
     wave_maps = [wavemap_o1, wavemap_o2]
-    centroid = dict()
+    centroid = {}
     for wv_map, order in zip(wave_maps, [1, 2]):
         wv_cent = np.zeros((wv_map.shape[1]))
 
@@ -314,7 +314,7 @@ def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
 
     # Build native grid for each  orders.
     spectral_orders = [2, 1]
-    grids_ord = dict()
+    grids_ord = {}
     for sp_ord in spectral_orders:
         grids_ord[sp_ord] = _get_grid_from_trace(ref_files, sp_ord, n_os=n_os)
 
@@ -344,14 +344,13 @@ def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
     all_estimates = [estimate, estimate, flat_fct]
 
     # Generate the combined grid
-    kwargs = dict(rtol=rtol, max_total_size=max_grid_size, max_iter=30)
+    kwargs = {"rtol":rtol, "max_total_size":max_grid_size, "max_iter":30}
     return make_combined_adaptive_grid(all_grids, all_estimates, wv_range, **kwargs)
 
 
 def _append_tiktests(test_a, test_b):
 
-    out = dict()
-
+    out = {}
     for key in test_a:
         out[key] = np.append(test_a[key], test_b[key], axis=0)
 
@@ -621,7 +620,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
     # Model the order 1 and order 2 trace separately.
-    tracemodels = dict()
+    tracemodels = {}
 
     for i_order, order in enumerate(order_list):
 
@@ -705,8 +704,7 @@ def _compute_box_weights(ref_files, shape, width):
         order_list.append(trace.spectral_order)
 
     # Extract each order from order list
-    box_weights = dict()
-    wavelengths = dict()
+    box_weights, wavelengths = {}, {}
     order_str = {order: f'Order {order}' for order in order_list}
     for order_integer in order_list:
         # Order string-name is used more often than integer-name
@@ -735,7 +733,7 @@ def _decontaminate_image(scidata_bkg, tracemodels, subarray):
     mod_order_list = tracemodels.keys()
 
     # Create dictionaries for the output images.
-    decontaminated_data = dict()
+    decontaminated_data = {}
 
     log.debug('Performing the decontamination.')
 
@@ -862,15 +860,13 @@ def _extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='m
     """
     # Init models with an empty dictionary if not given
     if tracemodels is None:
-        tracemodels = dict()
+        tracemodels = {}
 
     # Which orders to extract (extract the ones with given box aperture).
     order_list = box_weights.keys()
 
     # Create dictionaries for the output spectra.
-    fluxes = dict()
-    fluxerrs = dict()
-    npixels = dict()
+    fluxes, fluxerrs, npixels = {}, {}, {}
 
     log.info('Performing the box extraction.')
 
@@ -966,7 +962,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
     specprofile_ref = datamodels.SpecProfileModel(specprofile_ref_name)
     speckernel_ref = datamodels.SpecKernelModel(speckernel_ref_name)
 
-    ref_files = dict()
+    ref_files = {}
     ref_files['pastasoss'] = pastasoss_ref
     ref_files['specprofile'] = specprofile_ref
     ref_files['speckernel'] = speckernel_ref
@@ -1013,8 +1009,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
     output_references = datamodels.SossExtractModel()
     output_references.update(input_model)
 
-    all_tracemodels = dict()
-    all_box_weights = dict()
+    all_tracemodels, all_box_weights = {}, {}
 
     # Convert to Cube if datamodels is an ImageModel
     if isinstance(input_model, datamodels.ImageModel):
@@ -1077,7 +1072,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
         if soss_filter == 'CLEAR' and generate_model:
 
             # Model the image.
-            kwargs = dict()
+            kwargs = {}
             kwargs['estimate'] = estimate
             kwargs['tikfac'] = soss_kwargs['tikfac']
             kwargs['max_grid_size'] = soss_kwargs['max_grid_size']
@@ -1104,7 +1099,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
             raise ValueError(msg)
         else:
             # Return empty tracemodels and no spec_list
-            tracemodels = dict()
+            tracemodels = {}
             spec_list = None
 
         # Decontaminate the data using trace models (if tracemodels not empty)
@@ -1118,7 +1113,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
             bad_pix_models = None
 
         # Use the bad pixel models to perform a de-contaminated extraction.
-        kwargs = dict()
+        kwargs = {}
         kwargs['bad_pix'] = soss_kwargs['bad_pix']
         kwargs['tracemodels'] = bad_pix_models
         result = _extract_image(data_to_extract, scierr, scimask, box_weights, **kwargs)

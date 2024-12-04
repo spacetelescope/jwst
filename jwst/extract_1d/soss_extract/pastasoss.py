@@ -367,9 +367,9 @@ def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
     Array
         The interpolated quantities
     """
-    sorted = np.argsort(wavelength)
-    q = quantity[sorted]
-    w = wavelength[sorted]
+    sort_i = np.argsort(wavelength)
+    q = quantity[sort_i]
+    w = wavelength[sort_i]
 
     # Determine the slope on the right of the array
     slope_right = (q[-1] - q[-2]) / (w[-1] - w[-2])
