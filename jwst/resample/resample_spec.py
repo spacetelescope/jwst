@@ -227,7 +227,6 @@ class ResampleSpec(ResampleImage):
 
     def input_model_to_dict(self, model):
         model_dict = super().input_model_to_dict(model)
-        model_dict["bunit_data"] = model.meta.bunit_data
         return model_dict
 
     def create_output_jwst_model(self, ref_input_model=None):
@@ -249,6 +248,14 @@ class ResampleSpec(ResampleImage):
             model.meta.photometry.pixelarea_arcsecsq = (
                 self._spec_output_pix_area * np.rad2deg(3600)**2
             )
+
+        # delete these to reduce the number of failures in the regression tests
+        # TODO: this is helpful info that should be stored in products.
+        # del model.meta.resample.pixel_scale_ratio
+        # del model.meta.resample.pixfrac
+        # del model.meta.resample.weight_type
+        # del model.meta.resample.pointings
+        # del model.meta.cal_step.resample
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None,
                                  good_bits=None, pixel_scale_ratio=1.0):
