@@ -345,12 +345,12 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     return result
 
 
-def _clipped_err_weighted_mean(sci, var, bkg, p_lo=25., p_hi=75.):
+def _clipped_err_weighted_mean(sci, var, bkg, p_lo=1., p_hi=99.):
     """
     Compute scaling factor by which to multiply background image before subtraction.
-    It is computed as
+    Sigma-clip the (sci/bkg) ratio according to p_lo and p_hi to determine a clipping mask,
+    apply that mask to the data, background, and variance, then compute
     scale_factor = sum(sci*bkg/var) / sum(bkg*bkg/var)
-    where sci and bkg have both been sigma-clipped according to p_lo and p_hi
 
     Parameters
     ----------
@@ -370,9 +370,9 @@ def _clipped_err_weighted_mean(sci, var, bkg, p_lo=25., p_hi=75.):
     factor: float
         Scaling factor by which to multiply background image before subtraction
     """
-    # find sigma-clipping mask from the data
-    limits = np.nanpercentile(sci, (p_lo, p_hi))
-    mask = np.logical_and(sci < limits[0], sci > limits[1]) #true where BAD
+    ratio = sci/bkg
+    limits = np.nanpercentile(ratio, (p_lo, p_hi))
+    mask = np.logical_or(ratio < limits[0], ratio > limits[1]) #true where BAD
     sci = sci[~mask]
     bkg = bkg[~mask]
     var = var[~mask]
