@@ -105,6 +105,7 @@ class ResampleStep(Step):
                 **kwargs
             )
             result = resamp.resample_many_to_many()
+
         else:
             resamp = resample.ResampleImage(
                 input_models,
