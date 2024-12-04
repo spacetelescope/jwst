@@ -767,8 +767,6 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
     def throughput(wavelength):
         return np.ones_like(wavelength)
     kernel = np.array([1.])
-
-    # Set reference file arguments
     ref_file_args[2] = [throughput]
     ref_file_args[3] = [kernel]
 
