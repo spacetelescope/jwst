@@ -120,11 +120,6 @@ def read_apcorr_ref(refname, exptype):
     DataModel
         A datamodel containing the reference file input.
 
-    Notes
-    -----
-    This function should be removed after the DATAMODL keyword is required for
-    the APCORR reference file.
-
     """
     apcorr_model_map = {
         'MIR_LRS-FIXEDSLIT': MirLrsApcorrModel,
@@ -155,7 +150,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         the entire contents of the file.  If there is no extract1d reference
         file, `ref_dict` will be None.
 
-    input_model : data model
+    input_model : JWSTDataModel
         This can be either the input science file or one SlitModel out of
         a list of slits.
 
@@ -395,10 +390,10 @@ def populate_time_keywords(input_model, output_model):
 
     Parameters
     ----------
-    input_model : data model
+    input_model : JWSTDataModel
         The input science model.
 
-    output_model : data model
+    output_model : JWSTDataModel
         The output science model.  This may be modified in-place.
 
     """
@@ -574,7 +569,7 @@ def is_prism(input_model):
 
     Parameters
     ----------
-    input_model : data model
+    input_model : JWSTDataModel
         The input science model.
 
     Returns
@@ -885,8 +880,7 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
 
     if return_limits:
         return profile, lower_limit, upper_limit
-    else:
-        return profile
+    return profile
 
 
 def aperture_center(profile, dispaxis=1, middle_pix=None):
@@ -1270,7 +1264,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
 
     Parameters
     ----------
-    data_model : data model
+    data_model : JWSTDataModel
         The input science model. May be a single slit from a MultiSlitModel
         (or similar), or a single data type, like an ImageModel, SlitModel,
         or CubeModel.
@@ -1517,12 +1511,7 @@ def create_extraction(input_model, slit, output_model,
 
     # We need a flag to indicate whether the photom step has been run.
     # If it hasn't, we'll copy the count rate to the flux column.
-    if hasattr(input_model.meta.cal_step, 'photom'):
-        s_photom = input_model.meta.cal_step.photom
-    else:  # pragma: no cover
-        # This clause is not reachable for reasonable data models
-        s_photom = None
-
+    s_photom = input_model.meta.cal_step.photom
     if s_photom is not None and s_photom.upper() == 'COMPLETE':
         photom_has_been_run = True
         flux_units = 'Jy'
@@ -1823,7 +1812,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
 
     Parameters
     ----------
-    input_model : data model
+    input_model : JWSTDataModel
         The input science model.
     extract_ref_name : str
         The name of the extract1d reference file, or "N/A".

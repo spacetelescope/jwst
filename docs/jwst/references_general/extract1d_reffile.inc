@@ -61,10 +61,10 @@ and background extraction regions.
 * xstop: last pixel in the horizontal direction, X (float) (0-indexed)
 * ystart: first pixel in the vertical direction, Y (float) (0-indexed)
 * ystop: last pixel in the vertical direction, Y (float) (0-indexed)
-* src_coeff: polynomial coefficients for source extraction regions
+* src_coeff: polynomial coefficients for source extraction region
   limits (list of lists of float); takes precedence over start/stop values.
-* bkg_coeff: polynomial coefficients for background extraction regions
-  (list of lists of float)
+* bkg_coeff: polynomial coefficients for background extraction region
+  limits (list of lists of float)
 * independent_var: "wavelength" or "pixel" (string)
 * smoothing_length: width of boxcar for smoothing background regions along
   the dispersion direction (odd int)

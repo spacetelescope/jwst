@@ -8,10 +8,10 @@ General Step Arguments
 The following arguments apply to all modes unless otherwise specified.
 
 ``--subtract_background``
-  This is a boolean flag to specify whether the background should be
-  subtracted.  If None, the value in the :ref:`EXTRACT1D <extract1d_reffile>`
-  reference file (if any) will be used.  If not None, this parameter overrides
-  the value in the reference file.  Has no effect for NIRISS SOSS data.
+  Flag to specify whether the background should be subtracted.  If None or True,
+  background subtraction will be performed if there are background regions
+  specified in the reference file.  If False, no background subtraction will be
+  performed.  Has no effect for NIRISS SOSS data.
 
 ``--apply_apcorr``
   Switch to select whether or not to apply an APERTURE correction during the
@@ -21,22 +21,14 @@ Step Arguments for Slit and Slitless Spectroscopic Data
 -------------------------------------------------------
 
 ``--use_source_posn``
-  This is a boolean flag to specify whether the target and background extraction
+  Specify whether the target and background extraction
   region locations specified in the :ref:`EXTRACT1D <extract1d_reffile>` reference
   file should be shifted to account for the expected position of the source. If None (the default),
-  the step will make the decision of whether to use the source position based
-  on the observing mode and the source type. The source position will only be
-  used for point sources and for modes where the source could be located
-  off-center due to nodding or dithering. If turned on, the position
-  of the source is used in conjunction with the World Coordinate System (WCS) to
-  compute the x/y source location. For NIRSpec modes, the source position
-  is determined from the ``source_xpos/source_ypos`` metadata. For MIRI LRS fixed slit,
-  the dither offset is applied to the sky pointing location to determine source position.
-  If this parameter is specified in the
-  :ref:`EXTRACT1D <extract1d_reffile>` reference file, the reference file value will
-  override any automatic settings based on exposure and source type. As always, a value
-  given by the user as an argument to the step overrides all settings in the reference
-  file or within the step code.
+  the step will decide whether to use the source position based
+  on the observing mode and the source type. By default, source position corrections
+  are attempted only for NIRSpec MOS and NIRSpec and MIRI LRS fixed-slit point sources.
+  Set to False to ignore position estimates for all modes; set to True to additionally attempt
+  source position correction NIRSpec BOTS data.
 
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the
@@ -82,16 +74,16 @@ Step Arguments for Slit and Slitless Spectroscopic Data
 
 ``--log_increment``
   For multi-integration extractions, if this parameter is set to a value greater
-  than zero, an INFO-level log message will be printed every `log_increment` integrations,
+  than zero, an INFO-level log message will be printed every `log_increment` integrations
   to report on progress. Default value is 50.
 
 ``--save_profile``
-  If True, the spatial profile representing the extraction aperture
-  is saved to disk with suffix "profile".
+  Flag to enable saving the spatial profile representing the extraction aperture.
+  If True, the profile is saved to disk with suffix "profile".
 
 ``--save_scene_model``
-  If True, a model of the 2D flux as defined by the extraction aperture
-  is saved to disk with suffix "scene_model".
+  Flag to enable saving a model of the 2D flux as defined by the extraction aperture.
+  If True, the model is saved to disk with suffix "scene_model".
 
 Step Arguments for IFU Data
 ---------------------------
@@ -141,11 +133,10 @@ Step Arguments for NIRISS SOSS Data
 -----------------------------------
 
 ``--soss_atoca``
-  If True, use the ATOCA algorithm to treat order contamination. Default is ``True``.
+  Flag to enable using the ATOCA algorithm to treat order contamination. Default is ``True``.
 
 ``--soss_threshold``
-  Sets the threshold
-  value for a pixel to be included when modelling the spectral trace. The default
+  Threshold value for a pixel to be included when modeling the spectral trace. The default
   value is 0.01.
 
 ``--soss_n_os``

@@ -82,7 +82,7 @@ EXTRXSTP (x end of extraction), EXTRYSTR (y start of extraction), and
 EXTRYSTP (y end of extraction).  For MIRI and NIRSpec IFU data, the center of
 the extraction region is recorded in the metadata EXTR_X (x center of extraction region)
 and EXTR_Y (y center of extraction region). The NIRISS SOSS algorithm is a specialized extraction
-algorithm that does not use fixed limits, therefore no extraction limits are provided for this mode.
+algorithm that does not use fixed limits; therefore, no extraction limits are provided for this mode.
 Note that the pipeline takes input start/stop values from the reference files to be
 zero-indexed positions, but all extraction values are recorded in the headers as one-indexed
 values, following FITS header conventions.
@@ -219,10 +219,7 @@ Parameters related to background fitting are `smoothing_length`,
    the column (or row). Alternatively, values of "mean" or "median" can be
    specified in order to compute the simple mean or median of the background
    values in each column (or row). Note that using `bkg_fit=mean` is
-   mathematically equivalent to `bkg_fit=poly` with `bkg_order=0`. If `bkg_fit`
-   is provided both by a reference file and by the user (e.g.
-   `--steps.extract_1d.bkg_fit='poly'` from the command line),
-   the user-supplied value will override the reference file value.
+   mathematically equivalent to `bkg_fit=poly` with `bkg_order=0`.
 
 #. If `bkg_fit=poly` is specified, `bkg_order` is used to indicate the
    polynomial order to be used. The default value is zero, i.e. a constant.
