@@ -1812,14 +1812,13 @@ class TikhoTests(dict):
 
 
 def try_solve_two_methods(matrix, result):
-
+    """on rare occasions spsolve's approximation of the matrix is not appropriate
+    and fails on good input data. revert to different solver"""
     with warnings.catch_warnings():
         warnings.filterwarnings(action='error', category=MatrixRankWarning)
         try:
             return spsolve(matrix, result)
         except MatrixRankWarning:
-            # on rare occasions spsolve's approximation of the matrix is not appropriate
-            # and fails on good input data. revert to different solver
             log.info('ATOCA matrix solve failed with spsolve. Retrying with least-squares.')
             return lsqr(matrix, result)[0]
 

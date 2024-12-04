@@ -1,0 +1,229 @@
+import pytest
+import numpy as np
+from functools import partial
+from jwst.extract_1d.soss_extract import atoca
+from jwst.extract_1d.soss_extract import atoca_utils as au
+
+"""
+Create a miniature, slightly simplified model of the SOSS detector/optics.
+Use those to instantiate an extraction engine, use the engine to create mock data
+from a known input spectrum, and then check if the engine can retrieve that spectrum
+from the data.
+
+The model has the following features:
+- Factor-of-10 smaller along each dimension
+- Similar wavelengths for each of the two orders
+- Partially overlapping traces for the two orders
+- Randomly-selected bad pixels in the data
+- Wave grid of size ~100 with varying resolution
+- Triangle function throughput for each spectral order
+- Kernel set to unity (for now)
+"""
+
+DATA_SHAPE = (25,200)
+WAVE_BNDS_O1 = [2.8, 0.8]
+WAVE_BNDS_O2 = [1.4, 0.5]
+WAVE_BNDS_GRID = [0.7, 2.7]
+ORDER1_SCALING = 20.0
+ORDER2_SCALING = 2.0
+SPECTRAL_SLOPE = 2
+
+
+@pytest.fixture(scope="package")
+def wave_map():
+    wave_ord1 = np.linspace(WAVE_BNDS_O1[0], WAVE_BNDS_O1[1], DATA_SHAPE[1])
+    wave_ord1 = np.ones(DATA_SHAPE)*wave_ord1[np.newaxis, :]
+
+    wave_ord2 = np.linspace(WAVE_BNDS_O2[0], WAVE_BNDS_O2[1], DATA_SHAPE[1])
+    wave_ord2 = np.ones(DATA_SHAPE)*wave_ord2[np.newaxis,:]
+    # add a small region of zeros to mimic what is input to the step from ref files
+    wave_ord2[:,190:] = 0.0
+
+    return [wave_ord1, wave_ord2]
+
+
+@pytest.fixture(scope="package")
+def trace_profile(wave_map):
+    """order 2 is partially on top of, partially not on top of order 1
+    give order 2 some slope to simulate that"""
+    # order 1
+    DATA_SHAPE = wave_map[0].shape
+    ord1 = np.zeros((DATA_SHAPE[0]))
+    ord1[3:9] = 0.2
+    ord1[2] = 0.1
+    ord1[9] = 0.1
+    profile_ord1 = np.ones(DATA_SHAPE)*ord1[:, np.newaxis]
+
+    # order 2
+    yy, xx = np.meshgrid(np.arange(DATA_SHAPE[0]), np.arange(DATA_SHAPE[1]))
+    yy = yy.astype(np.float32) - xx.astype(np.float32)*0.08
+    yy = yy.T
+    
+    profile_ord2 = np.zeros_like(yy)
+    full = (yy >= 3) & (yy < 9)
+    half0 = (yy >= 9) & (yy < 11)
+    half1 = (yy >= 1) & (yy < 3)
+    profile_ord2[full] = 0.2
+    profile_ord2[half0] = 0.1
+    profile_ord2[half1] = 0.1
+
+    return [profile_ord1, profile_ord2]
+
+
+@pytest.fixture(scope="package")
+def wave_grid():
+    """wave_grid has smaller spacings in some places than others
+    and is not backwards order like the wave map
+    Two duplicates are in there on purpose for testing"""
+    lo0 = np.linspace(WAVE_BNDS_GRID[0], 1.2, 16)
+    hi = np.linspace(1.2, 1.7, 46)
+    lo2 = np.linspace(1.7, WAVE_BNDS_GRID[1], 31)
+    return np.concatenate([lo0, hi, lo2])
+
+
+@pytest.fixture(scope="package")
+def throughput():
+    """make a triangle function for each order but with different peak wavelength
+    """
+
+    def filter_function(wl, wl_max):
+        """Set free parameters to roughly mimic throughput functions on main"""
+        maxthru = 0.4
+        thresh = 0.01
+        scaling = 0.3
+        dist = np.abs(wl - wl_max)
+        thru = maxthru - dist*scaling
+        thru[thru<thresh] = thresh
+        return thru
+    
+    thru_o1 = partial(filter_function, wl_max=1.7)
+    thru_o2 = partial(filter_function, wl_max=0.7)
+
+    return [thru_o1, thru_o2]
+
+@pytest.fixture(scope="package")
+def kernels_unity():
+    """For now, just return unity"""
+    return [np.array([1.,]), np.array([1.,])]
+
+
+@pytest.fixture(scope="package")
+def webb_kernels(wave_map):
+    """
+    Toy model of the JWST kernels.
+    Let the kernel be a triangle function along the pixel position axis,
+    peaking at the center,
+    and independent of wavelength.
+
+    Same for both orders except the wavelengths and wave_trace are different.
+    """
+    n_os = 5
+    n_pix = 15 # full pixel width of kernel
+    n_wave = 10
+    peakiness = 4
+    min_val = 1
+    kernel_width = n_os*n_pix - (n_os - 1)
+    ctr_idx = kernel_width//2
+    
+    kernels = []
+    for order in [0,1]:
+        # set up wavelength grid over which kernel is defined
+        wave_trace = wave_map[order][0]
+        wave_range = (np.min(wave_trace), np.max(wave_trace))
+        wavelengths = np.linspace(*wave_range, n_wave)
+        wave_kernel = np.ones((kernel_width, wavelengths.size), dtype=float)*wavelengths[None,:]
+
+        # model kernel as simply a triangle function that peaks at the center
+        triangle_function = ctr_idx - peakiness*np.abs(ctr_idx - np.arange(0, kernel_width))
+        triangle_function[triangle_function<=min_val] = min_val
+        kernel = np.ones((kernel_width, wavelengths.size), dtype=float)*triangle_function[:,None]
+        kernel/=np.sum(kernel)
+        
+        kernels.append(au.WebbKernel(wave_kernel, kernel, wave_trace, n_pix))
+
+    return kernels
+
+
+@pytest.fixture(scope="package")
+def mask_trace_profile(trace_profile):
+    """Masks set to unity where bad"""
+
+    def mask_from_trace(trace_in, cut_low=None, cut_hi=None):
+        trace = trace_in.copy()
+        trace[trace_in<=0] = 1
+        trace[trace_in>0] = 0
+        if cut_low is not None:
+            trace[:,:cut_low] = 1
+        if cut_hi is not None:
+            trace[:,cut_hi:] = 1
+        return trace.astype(bool)
+    
+    trace_o1 = mask_from_trace(trace_profile[0], cut_low=0, cut_hi=199)
+    trace_o2 = mask_from_trace(trace_profile[1], cut_low=0, cut_hi=175)
+    return [trace_o1, trace_o2]
+
+
+@pytest.fixture(scope="package")
+def detector_mask(wave_map):
+    """Add a few random bad pixels"""
+    rng = np.random.default_rng(42)
+    mask = np.zeros(DATA_SHAPE, dtype=bool)
+    bad = rng.choice(mask.size, 100)
+    bad = np.unravel_index(bad, DATA_SHAPE)
+    mask[bad] = 1
+    return mask
+
+
+@pytest.fixture(scope="package")
+def engine(wave_map,
+           trace_profile,
+           throughput,
+           kernels_unity,
+           wave_grid,
+           mask_trace_profile,
+           detector_mask,
+):
+    return atoca.ExtractionEngine(wave_map,
+                                    trace_profile,
+                                    throughput,
+                                    kernels_unity,
+                                    wave_grid,
+                                    mask_trace_profile,
+                                    global_mask=detector_mask)
+
+
+def f_lam(wl, m=SPECTRAL_SLOPE, b=0):
+    """
+    Estimator for flux as function of wavelength
+    Returns linear function of wl with slope m and intercept b
+    
+    This function is also used in this test suite as 
+    """
+    return m*wl + b
+
+
+@pytest.fixture(scope="package")
+def imagemodel(engine, detector_mask):
+    """
+    use engine.rebuild to make an image model from an expected f(lambda).
+    Then we can ensure it round-trips
+    """
+
+    rng = np.random.default_rng(seed=42)
+    shp = engine.trace_profile[0].shape
+
+    # make the detector bad values NaN, but leave the trace masks alone
+    # in reality, of course, this is backward: detector bad values
+    # would be determined from data
+    data = engine.rebuild(f_lam, fill_value=0.0)
+    data[detector_mask] = np.nan
+
+    # add noise
+    noise_scaling = 3e-5
+    data += noise_scaling*rng.standard_normal(shp)
+
+    # error random, all positive, but also always larger than a certain value
+    # to avoid very large values of data / error
+    error = noise_scaling*(rng.standard_normal(shp)**2 + 0.5)
+
+    return data, error
