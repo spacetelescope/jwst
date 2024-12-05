@@ -93,7 +93,7 @@ class RefPixStep(Step):
                     sirs_kernel_model = None
                     self.log.info('Simple Improved Reference Subtraction (SIRS) not applied for subarray data.')
                 else:
-                    if self.refpix_algorithm == 'running_median':
+                    if self.refpix_algorithm == 'median':
                         sirs_kernel_model = None
                     elif self.refpix_algorithm == 'sirs':
                         sirs_ref_filename = self.get_reference_file(result, 'sirskernel')

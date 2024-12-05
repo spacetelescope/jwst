@@ -56,8 +56,8 @@ so that interleaved pixels are stripped before continuing processing.
 *  ``--refpix_algorithm``
 
 The ``refpix_algorithm`` argument is only relevant for all NIR full-frame
-data, and can be set to 'running_median' (default) or 'sirs' to use the
-Simple Improved Reference Subtraction (SIRS).
+data, and can be set to 'median' (default) to use the running median or
+'sirs' to use the Simple Improved Reference Subtraction (SIRS).
 
 *  ``--sigreject``
 

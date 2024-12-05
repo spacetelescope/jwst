@@ -385,7 +385,7 @@ class Dataset:
             if not self.is_subarray:
                 log.info('NIR full frame data')
                 log.info('The following parameters are valid for this mode:')
-                if self.refpix_algorithm == 'running_median':
+                if self.refpix_algorithm == 'median':
                     log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
                     log.info(f'odd_even_columns = {self.odd_even_columns}')
                     log.info(f'side_smoothing_length = {self.side_smoothing_length}')
