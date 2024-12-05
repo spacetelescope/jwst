@@ -929,34 +929,31 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
     """
     weights = profile.copy()
     weights[weights <= 0] = 0.0
+
+    yidx, xidx = np.mgrid[:profile.shape[0], :profile.shape[1]]
+    if dispaxis == HORIZONTAL:
+        spec_idx = xidx
+        if middle_pix is not None:
+            slit_idx = yidx[:, middle_pix]
+            weights = weights[:, middle_pix]
+        else:
+            slit_idx = yidx
+    else:
+        spec_idx = yidx
+        if middle_pix is not None:
+            slit_idx = xidx[middle_pix, :]
+            weights = weights[middle_pix, :]
+        else:
+            slit_idx = xidx
+
+    if np.sum(weights) == 0:
+        weights[:] = 1
+
+    slit_center = np.average(slit_idx, weights=weights)
     if middle_pix is not None:
         spec_center = middle_pix
-        if dispaxis == HORIZONTAL:
-            if np.sum(weights[:, middle_pix]) > 0:
-                slit_center = np.average(np.arange(profile.shape[0]),
-                                         weights=weights[:, middle_pix])
-            else:
-                slit_center = (profile.shape[0] - 1) / 2
-        else:
-            if np.sum(weights[middle_pix, :]) > 0:
-                slit_center = np.average(np.arange(profile.shape[1]),
-                                         weights=weights[middle_pix, :])
-            else:
-                slit_center = (profile.shape[1] - 1) / 2
     else:
-        yidx, xidx = np.mgrid[:profile.shape[0], :profile.shape[1]]
-        if np.sum(weights) > 0:
-            center_y = np.average(yidx, weights=weights)
-            center_x = np.average(xidx, weights=weights)
-        else:
-            center_y = (profile.shape[0] - 1) / 2
-            center_x = (profile.shape[1] - 1) / 2
-        if dispaxis == HORIZONTAL:
-            slit_center = center_y
-            spec_center = center_x
-        else:
-            slit_center = center_x
-            spec_center = center_y
+        spec_center = np.average(spec_idx, weights=weights)
 
     # if dispaxis == 1 (default), this returns center_x, center_y
     return slit_center, spec_center
@@ -1581,7 +1578,7 @@ def create_extraction(input_model, slit, output_model,
     (ra, dec, wavelength, profile, bg_profile, limits) = define_aperture(
         input_model, slit, extract_params, exp_type)
 
-    valid = ~np.isfinite(wavelength)
+    valid = np.isfinite(wavelength)
     wavelength = wavelength[valid]
     if np.sum(valid) == 0:
         log.error("Spectrum is empty; no valid data.")

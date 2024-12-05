@@ -764,7 +764,7 @@ def test_aperture_center_zero_weight(middle, dispaxis):
 
 @pytest.mark.parametrize('middle', [None, 7])
 @pytest.mark.parametrize('dispaxis', [1, 2])
-def test_aperture_center_variable_weight(middle, dispaxis):
+def test_aperture_center_variable_weight_by_slit(middle, dispaxis):
     profile = np.zeros((10, 10), dtype=np.float32)
     profile[1:4] = np.arange(10)
     if dispaxis != 1:
@@ -775,6 +775,23 @@ def test_aperture_center_variable_weight(middle, dispaxis):
     if middle is None:
         assert np.isclose(spec_center, 6.3333333)
     else:
+        assert spec_center == middle
+
+
+@pytest.mark.parametrize('middle', [None, 7])
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_aperture_center_variable_weight_by_spec(middle, dispaxis):
+    profile = np.zeros((10, 10), dtype=np.float32)
+    profile[:, 1:4] = np.arange(10)[:, None]
+    if dispaxis != 1:
+        profile = profile.T
+    slit_center, spec_center = ex.aperture_center(
+        profile, dispaxis=dispaxis, middle_pix=middle)
+    if middle is None:
+        assert np.isclose(slit_center, 6.3333333)
+        assert np.isclose(spec_center, 2.0)
+    else:
+        assert np.isclose(slit_center, 4.5)
         assert spec_center == middle
 
 
