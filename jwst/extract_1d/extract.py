@@ -690,9 +690,18 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
     profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1.0
 
     if allow_partial:
-        for partial_pixel_weight in [idx + 1 - lower_limit, upper_limit - idx + 1]:
+
+        # For each pixel, get the distance from the lower and upper limits,
+        # to set partial pixel weights to the fraction of the pixel included.
+        # For example, if the lower limit is 1.7, then the weight of pixel 1
+        # should be set to 0.3. If the upper limit is 10.7, then the weight of
+        # pixel 11 should be set to 0.7.
+        lower_weight = idx - lower_limit + 1
+        upper_weight = upper_limit - idx + 1
+
+        for partial_pixel_weight in [lower_weight, upper_weight]:
             # Check for overlap values that are between 0 and 1, for which
-            # the profile does not already contain a higher fractional weight
+            # the profile does not already contain a higher weight
             test = ((partial_pixel_weight > 0)
                     & (partial_pixel_weight < 1)
                     & (profile < partial_pixel_weight))
@@ -1572,7 +1581,7 @@ def create_extraction(input_model, slit, output_model,
     (ra, dec, wavelength, profile, bg_profile, limits) = define_aperture(
         input_model, slit, extract_params, exp_type)
 
-    valid = ~np.isnan(wavelength)
+    valid = ~np.isfinite(wavelength)
     wavelength = wavelength[valid]
     if np.sum(valid) == 0:
         log.error("Spectrum is empty; no valid data.")
