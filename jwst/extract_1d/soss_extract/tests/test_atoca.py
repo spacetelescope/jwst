@@ -6,6 +6,12 @@ from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract.tests.conftest import (
     SPECTRAL_SLOPE, f_lam, DATA_SHAPE, WAVE_BNDS_O1, WAVE_BNDS_O2)
 
+"""Tests for the ATOCA extraction engine, taking advantage of the miniature
+model set up by conftest.py.
+The test_call() function ensures that the engine can retrieve the spectrum
+with SPECTRAL_SLOPE that we put into the data, which implicitly checks
+a lot of the matrix math."""
+
 
 def test_extraction_engine_init(
     wave_map,

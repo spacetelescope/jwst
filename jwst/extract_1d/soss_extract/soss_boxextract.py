@@ -127,9 +127,6 @@ def box_extract(scidata, scierr, scimask, box_weights):
 
 def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     """
-    TODO: how similar is this to other places where we interpolate errors?
-    Could this be replaced with some algorithm involving smoothing of the error map?
-
     Function to estimate pixel error empirically using the corresponding error
     of the nearest pixel value (`data`). Intended to be used in a box extraction
     when the bad pixels are modeled.
