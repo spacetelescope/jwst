@@ -2,7 +2,7 @@
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from . import background_sub
+from . import background_sub, background_sub_wfss
 import numpy as np
 __all__ = ["BackgroundStep"]
 
@@ -60,7 +60,7 @@ class BackgroundStep(Step):
                               wlrange_name)
 
                 # Do the background subtraction for WFSS/GRISM data
-                result = background_sub.subtract_wfss_bkg(
+                result = background_sub_wfss.subtract_wfss_bkg(
                     input_model, bkg_name, wlrange_name, self.wfss_mmag_extract)
                 if result is None:
                     result = input_model

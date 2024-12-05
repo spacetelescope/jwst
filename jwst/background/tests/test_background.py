@@ -1,32 +1,16 @@
 """
 Unit tests for background subtraction
 """
-import pathlib
-
 import pytest
-import numpy as np
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels.dqflags import pixel
-
-from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
-from jwst.stpipe import Step
-from jwst.background.background_sub import (subtract_wfss_bkg, 
-                                            mask_from_source_cat,
-                                            sufficient_background_pixels)
-
-UNIFORM_BKG = 0.123
-
-@pytest.fixture(scope="module")
-def data_path():
-    return pathlib.Path(__file__).parent / "data"
 
 
 @pytest.fixture(scope='module')
 def background(tmp_path_factory):
-    """Generate a  background image to feed to background step"""
+    """Generate a background image to feed to background step"""
 
     filename = tmp_path_factory.mktemp('background_input')
     filename = filename / 'background.fits'
@@ -191,151 +175,6 @@ def test_nirspec_gwa_ytilt(tmp_cwd, background, science_image):
     back_image.close()
 
 
-@pytest.fixture(scope='module')
-def make_wfss_datamodel(data_path):
-    """Generate WFSS Observation"""
-    wcsinfo = {
-        'dec_ref': -27.79156387419731,
-        'ra_ref': 53.16247756038121,
-        'roll_ref': 0.04254766236781744,
-        'v2_ref': -290.1,
-        'v3_ref': -697.5,
-        'v3yangle': 0.56987,
-        'vparity': -1}
-
-    observation = {
-        'date': '2023-01-05',
-        'time': '8:59:37'}
-
-    exposure = {
-        'duration': 11.805952,
-        'end_time': 58119.85416,
-        'exposure_time': 11.776,
-        'frame_time': 0.11776,
-        'group_time': 0.11776,
-        'groupgap': 0,
-        'integration_time': 11.776,
-        'nframes': 1,
-        'ngroups': 8,
-        'nints': 1,
-        'nresets_between_ints': 0,
-        'nsamples': 1,
-        'sample_time': 10.0,
-        'start_time': 58668.72509857639,
-        'zero_frame': False}
-
-    subarray = {'xsize': 2048,
-                'ysize': 2048,
-                'xstart': 1,
-                'ystart': 1}
-
-    instrument = {
-        'filter_position': 1,
-        'pupil_position': 1}
-
-    image = datamodels.ImageModel((2048, 2048))
-
-    image.meta.wcsinfo._instance.update(wcsinfo)
-    image.meta.instrument._instance.update(instrument)
-    image.meta.observation._instance.update(observation)
-    image.meta.subarray._instance.update(subarray)
-    image.meta.exposure._instance.update(exposure)
-
-    # make random data and error arrays, add NaNs to ensure NaN handling works properly
-    rng = np.random.default_rng(seed=42)
-    image.data = rng.random((2048, 2048))
-    image.err = 0.1*rng.random((2048, 2048))
-    num_nans = 123
-    nan_indices = np.unravel_index(rng.choice(image.data.size, num_nans), image.data.shape)
-    image.data[nan_indices] = np.nan
-    image.err[nan_indices] = np.nan
-
-    # also add a small background to the data to see if it will get removed
-    image.data += UNIFORM_BKG
-
-    image.meta.source_catalog = str(data_path / "test_cat.ecsv")
-
-    return image
-
-
-filter_list = ['F250M', 'F277W', 'F335M', 'F356W', 'F460M',
-               'F356W', 'F410M', 'F430M', 'F444W']  # + ['F480M', 'F322W2', 'F300M']
-
-
-@pytest.mark.parametrize("pupils", ['GRISMC', 'GRISMR'])
-@pytest.mark.parametrize("filters", filter_list)
-@pytest.mark.parametrize("detectors", ['NRCALONG', 'NRCBLONG'])
-def test_nrc_wfss_background(tmp_cwd, filters, pupils, detectors, make_wfss_datamodel):
-    """Test background subtraction for NIRCAM WFSS modes."""
-    data = make_wfss_datamodel
-
-    data.meta.instrument.filter = filters
-    data.meta.instrument.pupil = pupils
-    data.meta.instrument.detector = detectors
-    data.meta.instrument.channel = 'LONG'
-    data.meta.instrument.name = 'NIRCAM'
-    data.meta.exposure.type = 'NRC_WFSS'
-
-    if data.meta.instrument.detector == 'NRCALONG':
-        data.meta.instrument.module = 'A'
-    elif data.meta.instrument.detector == 'NRCBLONG':
-        data.meta.instrument.module = 'B'
-
-    wcs_corrected = AssignWcsStep.call(data)
-
-    # Get References
-    wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
-    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
-
-    result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
-
-    # check that background is zero to within some fraction of the data stdev
-    # since we have a uniform bkg for this test but the reference file takes into account
-    # lots of imperfections, the subtraction doesn't actually look that great here.
-    # TODO: refactor this test to use a fake background instead of reference file background
-
-    # re-mask data so "real" sources are ignored here
-    mask = mask_from_source_cat(result, wavelenrange)
-    data = result.data[mask]
-
-    tol = 0.5*np.nanstd(data)
-    assert np.isclose(np.nanmean(data), 0.0, atol=tol)
-
-
-@pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
-@pytest.mark.parametrize("pupils", ['F090W', 'F115W', 'F140M', 'F150W', 'F158M', 'F200W'])
-def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):
-    """Test background subtraction for NIRISS WFSS modes."""
-    data = make_wfss_datamodel
-
-    data.meta.instrument.filter = filters
-    data.meta.instrument.pupil = pupils
-    data.meta.instrument.detector = 'NIS'
-    data.meta.instrument.name = 'NIRISS'
-    data.meta.exposure.type = 'NIS_WFSS'
-
-    wcs_corrected = AssignWcsStep.call(data)
-
-    # Get References
-    wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
-    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
-
-    result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
-
-    # check that background is zero to within some fraction of the data stdev
-    # since we have a uniform bkg for this test but the reference file takes into account
-    # lots of imperfections, the subtraction doesn't actually look that great here.
-    # TODO: refactor this test to use a fake background instead of reference file background
-
-    # re-mask data so "real" sources are ignored here
-    mask = mask_from_source_cat(result, wavelenrange)
-    data = result.data[mask]
-
-    tol = 0.5*np.nanstd(data)
-    assert np.isclose(np.nanmean(data), 0.0, atol=tol)
-
-
-
 @pytest.mark.parametrize('data_shape,background_shape',
                          [((10, 10), (10, 10)),
                           ((10, 10), (20, 20)),
@@ -383,23 +222,3 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
 
     image.close()
     background.close()
-
-
-def test_sufficient_background_pixels():
-    model = datamodels.ImageModel(data=np.zeros((2048, 2048)),
-                                  dq=np.zeros((2048, 2048)))
-    refpix_flags = pixel['DO_NOT_USE'] | pixel['REFERENCE_PIXEL']
-    model.dq[:4, :] = refpix_flags
-    model.dq[-4:, :] = refpix_flags
-    model.dq[:, :4] = refpix_flags
-    model.dq[:, -4:] = refpix_flags
-
-    bkg_mask = np.ones((2048, 2048), dtype=bool)
-    # With full array minux refpix available for bkg, should be sufficient
-    assert sufficient_background_pixels(model.dq, bkg_mask)
-
-    bkg_mask[4: -4, :] = 0
-    bkg_mask[:, 4: -4] = 0
-    # Now mask out entire array, mocking full source coverage of detector -
-    # no pixels should be available for bkg
-    assert not sufficient_background_pixels(model.dq, bkg_mask)
