@@ -25,7 +25,7 @@ class RefPixStep(Step):
         ovr_corr_mitigation_ftr = float(default=3.0) # Factor to avoid overcorrection of bad reference pixels for IRS2
         preserve_irs2_refpix = boolean(default=False) # Preserve reference pixels in output
         irs2_mean_subtraction = boolean(default=False) # Apply a mean offset subtraction before IRS2 correction
-        refpix_algorithm = option("sirs", default="running_median") # NIR full-frame side pixels algorithm
+        refpix_algorithm = option("median", "sirs", default="median") # NIR full-frame side pixel algorithm
         sigreject = float(default=4.0) # Number of sigmas to reject as outliers
         gaussmooth = float(default=1.0) # Width of Gaussian smoothing kernel to use as a low-pass filter
         halfwidth = integer(default=30) # Half-width of convolution kernel to build
