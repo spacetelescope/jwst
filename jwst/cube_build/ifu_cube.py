@@ -563,7 +563,6 @@ class IFUCubeData():
         """
 
         self.output_name = self.define_cubename()
-        print('ifu cube returend output_name', self.output_name)
         total_num = self.naxis1 * self.naxis2 * self.naxis3
 
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)

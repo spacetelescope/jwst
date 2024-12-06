@@ -6,7 +6,7 @@ from jwst.stpipe import record_step_status
 from jwst import datamodels
 from .pixel_replace import PixelReplacement
 from functools import wraps
-#from jwst.pipeline.calwebb_spec3 import invariant_filename
+from jwst.stpipe.utilities import invariant_filename
 
 __all__ = ["PixelReplaceStep"]
 
@@ -135,23 +135,3 @@ class PixelReplaceStep(Step):
                 record_step_status(replacement.output, 'pixel_replace', success=True)
                 result = replacement.output
                 return result
-            
-
-def invariant_filename(save_model_func):
-    """Restore meta.filename after save_model"""
-
-    @wraps(save_model_func)
-    def save_model(model, **kwargs):
-        try:
-            filename = model.meta.filename
-        except AttributeError:
-            filename = None
-
-        result = save_model_func(model, **kwargs)
-
-        if filename:
-            model.meta.filename = filename
-
-        return result
-
-    return save_model

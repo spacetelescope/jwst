@@ -291,3 +291,37 @@ def test_pixel_replace_nirspec_ifu_container_names(tmp_cwd, tmp_path, input_mode
     
     result.close()
     input_model.close()
+
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize('input_model_function',
+                         [nirspec_ifu])
+@pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
+def test_pixel_replace_nirspec_ifu_name(tmp_cwd, tmp_path, input_model_function, algorithm):
+    """
+    Test pixel replacement for NIRSpec IFU using a single file
+
+    Larger data and more WCS operations required for testing make
+    this test take more than a minute, so marking this test 'slow'.
+
+    The test is otherwise the same as for other modes.
+    """
+    output_dir = tmp_path / 'output'
+    output_dir.mkdir(exist_ok=True)
+    output_dir = str(output_dir)
+    
+    input_model, bad_idx = input_model_function()
+    input_model.meta.filename = 'jwst_nirspec_cal.fits'
+    expected_name = 'jwst_nirspec_pixelreplacestep.fits'
+
+    # for this simple case, the results from either algorithm should
+    # be the same
+    result = PixelReplaceStep.call(input_model, skip=False, algorithm=algorithm,save_results=True)
+    
+    assert expected_name == result.meta.filename
+
+    
+    result.close()
+    input_model.close()
+    
