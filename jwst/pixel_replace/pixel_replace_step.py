@@ -78,8 +78,10 @@ class PixelReplaceStep(Step):
             # calewbb_spec3 case / ModelContainer
             # __________________________________
             if isinstance(input_model, datamodels.ModelContainer):
-                output_model = input_model.copy()
                 # Setup output path naming if associations are involved.
+                # if input is ModelContainer do not copy the input_model
+                # because assocation information is not copied.
+                # Instead update input_modelin place. 
                 asn_id = None
                 try:
                     asn_id = input_model.asn_table["asn_id"]
@@ -103,7 +105,7 @@ class PixelReplaceStep(Step):
                     )
 
                 # Check models to confirm they are the correct type
-                for model in output_model:
+                for i, model in enumerate(input_model):
                     run_pixel_replace = True
                     if model.meta.model_type in ['MultiSlitModel', 'SlitModel',
                                                  'ImageModel', 'IFUImageModel', 'CubeModel']:
@@ -121,7 +123,7 @@ class PixelReplaceStep(Step):
                         replacement.replace()
                         model = replacement.output
                         record_step_status(model, 'pixel_replace', success=True)
-                return output_model
+                return input_model
             # ________________________________________
             # calewbb_spec2 case - single input model
             # ________________________________________

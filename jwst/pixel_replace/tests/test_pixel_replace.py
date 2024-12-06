@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pytest
 
@@ -8,7 +9,7 @@ from stdatamodels.jwst.datamodels.dqflags import pixel as flags
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.pixel_replace.pixel_replace_step import PixelReplaceStep
-
+from glob import glob
 
 def cal_data(shape, bad_idx, dispaxis=1, model='slit'):
     if model == 'image':
@@ -251,7 +252,7 @@ def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
 @pytest.mark.parametrize('input_model_function',
                          [nirspec_ifu])
 @pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
-def test_pixel_replace_nirspec_ifu_container_names(input_model_function, algorithm):
+def test_pixel_replace_nirspec_ifu_container_names(tmp_cwd, tmp_path, input_model_function, algorithm):
     """
     Test pixel replacement for NIRSpec IFU using a container
 
@@ -260,6 +261,10 @@ def test_pixel_replace_nirspec_ifu_container_names(input_model_function, algorit
 
     The test is otherwise the same as for other modes.
     """
+    output_dir = tmp_path / 'output'
+    output_dir.mkdir(exist_ok=True)
+    output_dir = str(output_dir)
+    
     input_model, bad_idx = input_model_function()
     input_model.meta.filename = 'jwst_nirspec_1_cal.fits'
     input_model2, bad_idx2 = input_model_function()
@@ -267,14 +272,22 @@ def test_pixel_replace_nirspec_ifu_container_names(input_model_function, algorit
     cfiles = [input_model, input_model2]
     container = ModelContainer(cfiles) 
 
+    expected_name = []
+    expected_name.append('jwst_nirspec_1_pixelreplacestep.fits')
+    expected_name.append('jwst_nirspec_2_pixelreplacestep.fits')
+
+    return_files = []
     # for this simple case, the results from either algorithm should
     # be the same
     result = PixelReplaceStep.call(container, skip=False, algorithm=algorithm,save_results=True)
-
-    print(result[0].meta.filename, result[1].meta.filename)
+    for dirname in [output_dir, tmp_cwd]:
+        result_files = glob(os.path.join(dirname, '*pixelreplacestep.fits'))
+        for file in result_files:
+            basename = os.path.basename(file)
+            return_files.append(basename)
     
-    assert result[0].meta.filename == 'jwst_nirspec_1_pixelreplacestep.fits'
-    assert result[1].meta.filename == 'jwst_nirspec_2_pixelreplacestep.fits'
+    assert expected_name[0] == basename[0][0]
+    assert expected_name[1] == basename[1][0]
     
     result.close()
     input_model.close()
