@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from scipy.signal import savgol_filter
 from functools import partial
 from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract import atoca_utils as au
@@ -26,6 +27,7 @@ WAVE_BNDS_O2 = [1.4, 0.5]
 WAVE_BNDS_GRID = [0.7, 2.7]
 ORDER1_SCALING = 20.0
 ORDER2_SCALING = 2.0
+TRACE_END_IDX = [DATA_SHAPE[1],180]
 SPECTRAL_SLOPE = 2
 
 
@@ -37,7 +39,7 @@ def wave_map():
     wave_ord2 = np.linspace(WAVE_BNDS_O2[0], WAVE_BNDS_O2[1], DATA_SHAPE[1])
     wave_ord2 = np.ones(DATA_SHAPE)*wave_ord2[np.newaxis,:]
     # add a small region of zeros to mimic what is input to the step from ref files
-    wave_ord2[:,190:] = 0.0
+    wave_ord2[:,TRACE_END_IDX[1]:] = 0.0
 
     return [wave_ord1, wave_ord2]
 
@@ -68,6 +70,41 @@ def trace_profile(wave_map):
     profile_ord2[half1] = 0.1
 
     return [profile_ord1, profile_ord2]
+
+
+@pytest.fixture(scope="package")
+def trace1d(wave_map, trace_profile):
+    """For each order, return tuple (xtrace, ytrace, wavetrace)"""
+
+    trace_list = []
+    for order in [0,1]:
+
+        profile = trace_profile[order]
+        wave2d = wave_map[order].copy() #avoid modifying wave_map, it's needed elsewhere!
+        end_idx = TRACE_END_IDX[order]
+
+        # find mean y-index at each x where trace_profile is nonzero
+        shp = profile.shape
+        xx, yy = np.mgrid[:shp[0], :shp[1]]
+        xx = xx.astype("float")
+        xx[profile==0] = np.nan
+        mean_trace = np.nanmean(xx, axis=0)
+        # same strategy for wavelength
+        wave2d[profile==0] = np.nan
+        mean_wave = np.nanmean(wave2d, axis=0)
+
+        # smooth it. we know it should be linear so use 1st order poly and large box size
+        ytrace = savgol_filter(mean_trace, mean_trace.size-1, 1)
+        wavetrace = savgol_filter(mean_wave, mean_wave.size-1, 1)
+
+        # apply cutoff
+        wavetrace = wavetrace[:end_idx]
+        ytrace = ytrace[:end_idx]
+        xtrace = np.arange(0, end_idx)
+
+        trace_list.append((xtrace, ytrace, wavetrace))        
+
+    return trace_list
 
 
 @pytest.fixture(scope="package")
@@ -225,5 +262,8 @@ def imagemodel(engine, detector_mask):
     # error random, all positive, but also always larger than a certain value
     # to avoid very large values of data / error
     error = noise_scaling*(rng.standard_normal(shp)**2 + 0.5)
+
+    # TODO: Why does the data here have some kind of beat frequency?
+    # TODO: why does the data here have one deep negative bar at the end of each spectral order?
 
     return data, error
