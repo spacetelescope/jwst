@@ -179,9 +179,10 @@ class IFUCubeData():
                 # that the remaining suffixes created below form the entire
                 # list of optical elements in the final output name.
                 suffix = self.output_name_base[self.output_name_base.rfind('_') + 1:]
+                
                 if suffix in ['clear']:
                     self.output_name_base = self.output_name_base[:self.output_name_base.rfind('_')]
-
+                    
                 # Now compose the appropriate list of optical element suffix names
                 # based on MRS channel and sub-channel
                 channels = []
@@ -562,6 +563,7 @@ class IFUCubeData():
         """
 
         self.output_name = self.define_cubename()
+        print('ifu cube returend output_name', self.output_name)
         total_num = self.naxis1 * self.naxis2 * self.naxis3
 
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
