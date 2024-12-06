@@ -234,5 +234,3 @@ class FringeFitter:
         # model now stored as nrm.modelpsf, also nrm.residual
         self.nrm = nrm # this gets updated with each slice
         return nrm # to fit_fringes_all, where the output model will be created from list of nrm objects
-
-        

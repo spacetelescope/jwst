@@ -184,7 +184,6 @@ class NIRISS:
         self.vparity = input_model.meta.wcsinfo.vparity
         self.v3iyang = input_model.meta.wcsinfo.v3yangle
 
-        self.parangh = self.roll_ref
         self.crpix1 = input_model.meta.wcsinfo.crpix1
         self.crpix2 = input_model.meta.wcsinfo.crpix2
         self.pupil = input_model.meta.instrument.pupil
@@ -333,7 +332,9 @@ class NIRISS:
 
     def mast2sky(self):
         """
-        Rotate hole center coordinates:
+        Rotate hole center coordinates.
+
+        Rotation of coordinates is:
             Clockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = -1
             Counterclockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = 1
         Hole center coords are in the V2, V3 plane in meters.
@@ -342,7 +343,8 @@ class NIRISS:
         -----
             Nov. 2024 email discussion with Tony Sohn, Paul Goudfrooij confirmed V2/V3 coordinate
             rotation back to "North up" equatorial orientation should use ROLL_REF + V3I_YANG
-            (= PA_APER). 
+            (= PA_APER).
+
         Returns
         -------
         ctrs_rot: array
@@ -354,13 +356,13 @@ class NIRISS:
         # NOT used for the fringe fitting itself
         mask_ctrs = utils.rotate2dccw(mask_ctrs, np.pi / 2.0)
         vpar = self.vparity  # Relative sense of rotation between Ideal xy and V2V3
-        rot_ang = self.roll_ref + self.v3iyang  # subject to change!
+        rot_ang = self.roll_ref + self.v3iyang
 
         if self.roll_ref == 0.0:
             return mask_ctrs
         else:
             # Using rotate2sccw, which rotates **vectors** CCW in a fixed coordinate system,
-            # so to rotate coord system CW instead of the vector, reverse sign of rotation angle.  Double-check comment
+            # so to rotate coord system CW instead of the vector, reverse sign of rotation angle.
             if vpar == -1:
                 # rotate clockwise  <rotate coords clockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))

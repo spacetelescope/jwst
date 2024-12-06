@@ -36,14 +36,19 @@ class AmiAnalyzeStep(Step):
             kwargs["suffix"] = ["ami-oi", "amimulti-oi", "amilg"][kwargs.pop("idx")]
         return Step.save_model(self, model, *args, **kwargs)
 
-
     def override_bandpass(self):
         """
-        Read bandpass from asdf file. Expects an array of [effstims, wave_m] 
-        (i.e. np.array((effstims,wave_m)).T) stored as 'bandpass' in asdf file,
-        where effstims are normalized countrates (unitless) and wave_m is wavelengths 
-        across the filter at which to compute the model (meters).
+        Read bandpass from asdf file and use it to override the default.
 
+        Expects an array of [effstims, wave_m] 
+        (i.e. np.array((effstims,wave_m)).T) stored as 'bandpass' in asdf file,
+        where effstims are normalized countrates (unitless) and wave_m are the
+        wavelengths across the filter at which to compute the model (meters).
+        
+        Returns
+        -------
+            bandpass: array
+                Array of [countrates, wavelengths]
         """
 
         try:
@@ -62,15 +67,26 @@ class AmiAnalyzeStep(Step):
             self.bandpass = bandpass 
             return bandpass
 
-        except:
-            message = (f'Could not read bandpass from {self.bandpass}. \
-                See documentation for info on creating a custom bandpass ASDF file.')
+        except FileNotFoundError:
+            message = f'File {self.bandpass} could not be found at the specified location.'
             raise Exception(message)
+
+        except KeyError:
+            message1 = 'ASDF file does not contain the required "bandpass" key. ' 
+            message2 = 'See step documentation for info on creating a custom bandpass ASDF file.'
+            raise Exception((message1 + message2))
+
+        except (IndexError, ValueError):
+            message1 = f'Could not use bandpass from {self.bandpass}. It may have the wrong shape. '
+            message2 = 'See documentation for info on creating a custom bandpass ASDF file.'
+            raise Exception((message1 + message2))
 
     def override_affine2d(self):
         """
-        Read user-input affine transform from ASDF file. Make Affine2d object
-        (see utils.Affine2D class). Input should contain mx,my,sx,sy,xo,yo,rotradccw.
+        Read user-input affine transform from ASDF file. 
+
+        Makes an Affine2d object (see utils.Affine2D class). 
+        Input should contain mx,my,sx,sy,xo,yo,rotradccw.
         """
         try:
             with asdf.open(self.affine2d, lazy_load=False) as af:
@@ -87,10 +103,24 @@ class AmiAnalyzeStep(Step):
             # now self.affine2d updated from string to object
             self.affine2d = affine2d
             return affine2d
-        except:
-            self.log.info(f'Could not read affine transfrom parameters from {self.affine2d}. \
-                See documentation for info on creating a custom affine2d ASDF file.')
-            self.log.info('**** DEFAULTING TO USE IDENTITY TRANSFORM ****')
+
+        except FileNotFoundError:
+            self.log.info(f'File {self.affine2d} could not be found at the specified location.')
+            self.log.info('\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****')
+            affine2d = None
+
+        except KeyError:
+            message1 = 'ASDF file does not contain all of the required keys: mx, my, sx, sy ,xo, yo, rotradccw. ' 
+            message2 = 'See step documentation for info on creating a custom affine2d ASDF file.'
+            self.log.info((message1 + message2))
+            self.log.info('\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****')
+            affine2d = None
+
+        except (IndexError, TypeError, ValueError):
+            message1 = f'Could not use affine2d from {self.affine2d}. '
+            message2 = 'See documentation for info on creating a custom bandpass ASDF file.'
+            self.log.info((message1 + message2))
+            self.log.info('\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****')
             affine2d = None
 
         self.affine2d = affine2d

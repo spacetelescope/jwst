@@ -62,33 +62,33 @@ Examples of how to create ASDF files containing the properly formatted informati
 
 .. code-block:: python
 
-   # Create a F380M filter + A0V source bandpass ASDF file
+   # Create a F480M filter + Vega bandpass ASDF file
 
    import asdf
    from jwst.ami import utils
+   from stdatamodels.jwst import datamodels
+   from synphot import SourceSpectrum
 
-   filt='F380M'
-   src = 'A0V'
+   # F480M throughput reference file from JWST CRDS
+   throughput_file = 'jwst_niriss_throughput_0012.fits'
    nspecbin=19
+   throughput_model = datamodels.open(throughput_file)
 
-   filt_spec = utils.get_filt_spec(filt)
-   src_spec = utils.get_src_spec(src)
+   filt_spec = utils.get_filt_spec(throughput_model)
+   src_spec = SourceSpectrum.from_vega()  
+   bandpass = utils.combine_src_filt(filt_spec,
+                                    src_spec,
+                                    trim=0.01,
+                                    nlambda=nspecbin)
 
-   bandpass = utils.combine_src_filt(filt_spec, 
-                                  src_spec, 
-                                  trim=0.01, 
-                                  nlambda=nspecbin)
-
-   # this bandpass has shape (19, 2); each row is [throughput, wavelength]
-
-   asdf_name = 'bandpass_f380m_a0v.asdf'
-
+   # This bandpass has shape (19, 2); each row is [throughput, wavelength]
+   asdf_name = 'bandpass_f480m_vega.asdf'
    tree = {"bandpass": bandpass}
-
    with open(asdf_name, 'wb') as fh:
         af = asdf.AsdfFile(tree)
         af.write_to(fh)
    af.close()
+   throughput_model.close()
 
 
 .. code-block:: python
@@ -97,13 +97,14 @@ Examples of how to create ASDF files containing the properly formatted informati
 
    import asdf
    tree = {
-   'mx': 1., # dimensionless x-magnification
-   'my': 1., # dimensionless y-magnification
-   'sx': 0., # dimensionless x shear
-   'sy': 0., # dimensionless y shear
-   'xo': 0., # x-offset in pupil space
-   'yo': 0., # y-offset in pupil space
-   'rotradccw': None }
+         'mx': 1., # dimensionless x-magnification
+         'my': 1., # dimensionless y-magnification
+         'sx': 0., # dimensionless x shear
+         'sy': 0., # dimensionless y shear
+         'xo': 0., # x-offset in pupil space
+         'yo': 0., # y-offset in pupil space
+         'rotradccw': None 
+         }
 
    affineasdf = 'affine.asdf'
 

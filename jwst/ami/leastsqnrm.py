@@ -746,8 +746,8 @@ def populate_antisymmphasearray(deltaps, n=7):
     deltaps: 1D float array
         pistons between each pair of holes
 
-    n: integer
-        number of holes
+    n: integer, optional
+        number of holes (default=7)
 
     Returns
     -------
@@ -778,8 +778,8 @@ def populate_symmamparray(amps, n=7):
     amps: 1D float array
         fringe visibility between each pair of holes
 
-    n: integer
-        number of holes
+    n: integer, optional
+        number of holes (default=7)
 
     Returns
     -------
@@ -810,8 +810,8 @@ def t3_amplitudes(amps, n=7):
     amps: 1D float array
         fringe visibility between each pair of holes
 
-    n: integer
-        number of holes
+    n: integer, optional
+        number of holes (default=7)
 
     Returns
     -------
@@ -847,8 +847,8 @@ def redundant_cps(deltaps, n=7):
     deltaps: 1D float array
         pistons between each pair of holes
 
-    n: integer
-        number of holes
+    n: integer, optional
+        number of holes (default=7)
 
     Returns
     -------
@@ -943,8 +943,8 @@ def closure_amplitudes(amps, n=7):
     amps: 1D float array
          fringe amplitudes
 
-    N: integer
-        number of holes
+    n: integer, optional
+        number of holes (default=7)
 
     Returns
     -------
@@ -981,8 +981,8 @@ def q4_phases(deltaps, n=7):
     deltaps: 1D float array
         pistons between each pair of holes
 
-    n: integer
-        number of holes
+    n: integer, optional
+        number of holes (default=7)
 
     Returns
     -------
