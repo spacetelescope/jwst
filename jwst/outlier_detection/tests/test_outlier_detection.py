@@ -21,7 +21,7 @@ from jwst.outlier_detection.outlier_detection_step import (
 )
 from jwst.resample.tests.test_resample_step import miri_rate_model
 from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
-from jwst.resample.resample import ResampleData
+from jwst.resample.resample import ResampleImage
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -619,7 +619,7 @@ def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
 
     # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
     # arbitrarily use 5 times that
-    buffer_size = 4 * 20 * 5 
+    buffer_size = 4 * 20 * 5
     median_on_disk, _ = median_without_resampling(
         lib_on_disk,
         0.7,
@@ -648,27 +648,17 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
         lib,
         resamp,
         0.7)
-    
+
     assert isinstance(wcs, WCS)
     assert median.shape == (21,20)
-        
-    resamp.single = False
-    with pytest.raises(ValueError):
-        # ensure failure if try to call when resamp.single is False
-        median_with_resampling(
-            lib,
-            resamp,
-            0.7,
-            save_intermediate_results=True)
 
 
 def make_resamp(input_models):
     """All defaults are same as what is run by default by outlier detection"""
     in_memory = not input_models._on_disk
-    resamp = ResampleData(
+    resamp = ResampleImage(
         input_models,
         output="",
-        single=True,
         blendheaders=False,
         wht_type="ivm",
         pixfrac=1.0,
@@ -677,5 +667,8 @@ def make_resamp(input_models):
         good_bits="~DO_NOT_USE",
         in_memory=in_memory,
         asn_id="test",
+        enable_var=False,
+        enable_ctx=False,
+        compute_err="driz_err",
     )
     return resamp
