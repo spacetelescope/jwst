@@ -17,16 +17,14 @@ from astropy.nddata.bitmask import (
     interpret_bit_flags,
 )
 
+from stcal.skymatch.skymatch import match
+from stcal.skymatch.skyimage import SkyImage, SkyGroup
+from stcal.skymatch.skystatistics import SkyStats
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelLibrary
 
 from ..stpipe import Step
-
-# LOCAL:
-from .skymatch import match
-from .skyimage import SkyImage, SkyGroup
-from .skystatistics import SkyStats
 
 
 __all__ = ['SkyMatchStep']
