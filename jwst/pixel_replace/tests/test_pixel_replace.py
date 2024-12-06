@@ -286,8 +286,8 @@ def test_pixel_replace_nirspec_ifu_container_names(tmp_cwd, tmp_path, input_mode
             basename = os.path.basename(file)
             return_files.append(basename)
     
-    assert expected_name[0] == basename[0][0]
-    assert expected_name[1] == basename[1][0]
+    assert expected_name[0] == return_files[0]
+    assert expected_name[1] == return_files[1]
     
     result.close()
     input_model.close()
