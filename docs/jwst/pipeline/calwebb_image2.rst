@@ -61,9 +61,9 @@ Inputs
 
 The input to ``Image2Pipeline`` is
 a countrate exposure, in the form of either "_rate" or "_rateints"
-data. A single input file can be processed or an ASN file listing
-multiple inputs can be used, in which case the processing steps will be
-applied to each input exposure, one at a time. If "_rateints" products are
+data. A single input FITS file can be processed or an ASN file can be used,
+as long as there is only one output product specified in
+the association. If "_rateints" products are
 used as input, each step applies its algorithm to each
 integration in the exposure, where appropriate.
 

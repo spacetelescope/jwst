@@ -2,7 +2,6 @@
 from jwst.associations.lib.counter import Counter
 
 from jwst.associations.exceptions import (
-    AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
@@ -136,7 +135,7 @@ TSO_EXP_TYPES = [
     'nrs_brightobj'
 ]
 
-# Define the valid optical paths vs detector for NIRSpect Fixed-slit Science
+# Define the valid optical paths vs detector for NIRSpec Fixed-slit Science
 # Tuples are (SLIT, GRATING, FILTER, DETECTOR)
 # All A-slits are represented by SLIT == 'a'.
 NRS_FSS_VALID_OPTICAL_PATHS = (
@@ -204,7 +203,7 @@ NRS_FSS_VALID_LAMP_OPTICAL_PATHS = (
     ('g140m', 'flat4', 'nrs2'),
 )
 
-# Define the valid optical paths vs detector for NIRSpect IFU Science
+# Define the valid optical paths vs detector for NIRSpec IFU Science
 # Tuples are (GRATING, FILTER, DETECTOR)
 # The only combinations that result in data on the NRS2 detector are
 # g140h/f100lp, g235h/f170lp, and g395h/f290lp.
@@ -222,6 +221,13 @@ NRS_IFU_VALID_OPTICAL_PATHS = (
     ('g395h', 'f290lp', 'nrs1'),
     ('g395h', 'f290lp', 'nrs2'),
 )
+
+
+# Define the uncalibrated filters for NIRISS SOSS
+# Data taken with these filters should not be processed beyond
+# level 2a.
+NIS_SOSS_UNCALIBRATED_FILTERS = ('f277w',)
+
 
 # Key that uniquely identifies members.
 MEMBER_KEY = 'expname'
@@ -759,7 +765,7 @@ class DMSBaseMixin(ACIDMixin):
             else:
                 values.sort(key=str.lower)
                 value = format_list(values)
-                if value not in _EMPTY:
+                if value not in _EMPTY and value not in slit_names:
                     slit_names.append(value)
 
         # Build the string. Sort the elements in order to
@@ -767,9 +773,7 @@ class DMSBaseMixin(ACIDMixin):
         slit_names.sort(key=str.lower)
         slit_name = '-'.join(slit_names)
 
-        if slit_name == '':
-            slit_name = None
-
+        # Slit name may be empty string
         return slit_name
 
     def _get_subarray(self):
@@ -802,7 +806,12 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        target_id = format_list(self.constraints['target'].found_values)
+        attrs = self.constraints.get_all_attr('found_values', name='target')
+        if attrs:
+            value = attrs[0][1]
+        else:
+            value = []
+        target_id = format_list(value)
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 
@@ -1153,3 +1162,17 @@ def nrccoron_valid_detector(item):
             return True
     else:
         return True
+
+
+def nissoss_calibrated_filter(item):
+    """Check that a NIRISS filter is calibrated."""
+    _, exp_type = item_getattr(item, ['exp_type'])
+    if exp_type != 'nis_soss':
+        return True
+
+    try:
+        _, filter = item_getattr(item, ['filter'])
+    except KeyError:
+        return False
+
+    return filter not in NIS_SOSS_UNCALIBRATED_FILTERS

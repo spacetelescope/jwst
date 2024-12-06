@@ -3,7 +3,7 @@ import numpy as np
 from scipy import optimize
 from scipy.ndimage import fourier_shift
 
-from stdatamodels.jwst.datamodels import QuadModel
+from stdatamodels.jwst.datamodels import CubeModel
 
 import logging
 log = logging.getLogger(__name__)
@@ -40,7 +40,9 @@ def align_fourierLSQ(reference, target, mask=None):
 
     init_pars = [0., 0., 1.]
     results, _ = optimize.leastsq(shift_subtract, init_pars,
-                                  args=(reference, target, mask))
+                                  args=(reference, target, mask),
+                                  xtol=1E-15, ftol=1E-15,
+                                  )
     return results
 
 
@@ -127,7 +129,7 @@ def fourier_imshift(image, shift):
     return offset
 
 
-def align_array(reference, target, mask=None):
+def align_array(reference, target, mask=None, return_aligned=True):
     """
     Computes shifts between target image (or image "slices") and the reference
     image and re-aligns input images to the target.
@@ -160,21 +162,26 @@ def align_array(reference, target, mask=None):
 
     if len(target.shape) == 2:
         shifts = align_fourierLSQ(reference, target, mask=mask)
-        aligned = fourier_imshift(target, -shifts)
+        if return_aligned:
+            aligned = fourier_imshift(target, -shifts)
 
     elif len(target.shape) == 3:
         nslices = target.shape[0]
-        shifts = np.empty((nslices, 3), dtype=float)
-        aligned = np.empty_like(target)
+        shifts = np.empty((nslices, 3), dtype=np.float64)
+        if return_aligned:
+            aligned = np.empty_like(target)
 
         for m in range(nslices):
             sh = align_fourierLSQ(reference, target[m], mask=mask)
             shifts[m, :] = sh
-            aligned[m, :, :] = fourier_imshift(target[m], -sh)
+            if return_aligned:
+                aligned[m, :, :] = fourier_imshift(target[m], -sh)
 
     else:
         raise ValueError("Input target image must be either a 2D or 3D array.")
 
+    if not return_aligned:
+        return shifts
     return aligned, shifts
 
 
@@ -207,35 +214,31 @@ def align_models(reference, target, mask):
 
     """
 
-    # Get the number of integrations in the science exposure
-    nrefslices = reference.data.shape[0]
-
-    # Create output QuadModel of required dimensions
-    quad_shape = (nrefslices,
-                  target.shape[0], target.shape[1], target.shape[2])
-    output_model = QuadModel(quad_shape)
+    # Create output CubeModel of required dimensions. Since all science integrations
+    # are assumed to have the same shift, the output is just a shifted copy of the
+    # 3-D PSF cube
+    output_model = CubeModel(target.shape)
     output_model.update(target)
 
-    # Loop over all integrations of the science exposure
-    for k in range(nrefslices):
+    # Compute the shifts of the PSF ("target") images relative to
+    # the science ("reference") image in the first integration
+    shifts = align_array(
+        reference.data[0],
+        target.data,
+        mask=mask.data, return_aligned=False)
 
-        # Compute the shifts of the PSF ("target") images relative to
-        # the science ("reference") image in this integration, and apply
-        # the shifts to the PSF images
-        d, shifts = align_array(
-            reference.data[k].astype(np.float64),
-            target.data.astype(np.float64),
-            mask.data)
-        output_model.data[k] = d
+    # Apply the shifts to the PSF images
+    output_model.data = fourier_imshift(
+        target.data,
+        -shifts)
 
-        # Apply the same shifts to the PSF error arrays, if they exist
-        if target.err is not None:
-            output_model.err[k] = fourier_imshift(
-                target.err.astype(np.float64),
-                -shifts)
+    # Apply the same shifts to the PSF error arrays, if they exist
+    if target.err is not None:
+        output_model.err = fourier_imshift(
+            target.err,
+            -shifts)
 
-        # TODO: in the future we need to add shifts and other info (such as
-        # slice ID from the reference image to which target was aligned)
-        # to output cube metadata (or property).
-
+    # TODO: in the future we need to add shifts and other info (such as
+    # slice ID from the reference image to which target was aligned)
+    # to output cube metadata (or property).
     return output_model

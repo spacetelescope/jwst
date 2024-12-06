@@ -4,9 +4,8 @@ Test the engdblog step
 import os
 import pytest
 from tempfile import TemporaryDirectory
-
+from jwst.lib import engdb_mast
 from jwst.engdblog import EngDBLogStep
-from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 
 def test_engdblogstep(caplog, engdb):
@@ -17,7 +16,7 @@ def test_engdblogstep(caplog, engdb):
     assert 'EngDBLogStep instance created' in caplog.text
     assert mnemonic in caplog.text
     assert "Step EngDBLogStep running with args (['{}'],)".format(mnemonic) in caplog.text
-    assert '{}[2021-01-25:2021-01-27] = '.format(mnemonic) in caplog.text
+    assert '{}[2022-01-25 02:00:00:2022-01-26 02:10:00] = '.format(mnemonic) in caplog.text
     assert 'Step EngDBLogStep done' in caplog.text
 
 
@@ -29,7 +28,7 @@ def test_barestring(caplog, engdb):
     assert 'EngDBLogStep instance created' in caplog.text
     assert mnemonic in caplog.text
     assert f"Step EngDBLogStep running with args ('{mnemonic}',)." in caplog.text
-    assert '{}[2021-01-25:2021-01-27] = '.format(mnemonic) in caplog.text
+    assert '{}[2022-01-25 02:00:00:2022-01-26 02:10:00] = '.format(mnemonic) in caplog.text
     assert 'Step EngDBLogStep done' in caplog.text
 
 
@@ -38,7 +37,7 @@ def test_badmnemonic(caplog, engdb):
     result = EngDBLogStep.call([mnemonic])
     assert isinstance(result, dict)
     assert len(result) == 0
-    assert 'Cannot retrieve info for {}'.format(mnemonic) in caplog.text
+    assert '{} has no entries in time range'.format(mnemonic) in caplog.text
 
 
 def test_novalues(caplog, engdb):
@@ -65,7 +64,7 @@ def test_multi_mnemonics(caplog, engdb):
     result = EngDBLogStep.call(mnemonics)
     assert len(result) == 2
     for mnemonic in mnemonics:
-        assert '{}[2021-01-25:2021-01-27] = '.format(mnemonic) in caplog.text
+        assert '{}[2022-01-25 02:00:00:2022-01-26 02:10:00] = '.format(mnemonic) in caplog.text
 
 
 # #####################
@@ -73,5 +72,4 @@ def test_multi_mnemonics(caplog, engdb):
 # #####################
 @pytest.fixture
 def engdb():
-    with EngDB_Mocker() as mocker:  # noqa: F841
-        yield
+    yield engdb_mast.EngdbMast()

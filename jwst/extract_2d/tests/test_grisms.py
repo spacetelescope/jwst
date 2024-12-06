@@ -27,7 +27,7 @@ from jwst.assign_wcs.util import create_grism_bbox
 from jwst.assign_wcs import AssignWcsStep, nircam
 
 from jwst.extract_2d.extract_2d_step import Extract2dStep
-from jwst.extract_2d.grisms import extract_tso_object, extract_grism_objects
+from jwst.extract_2d.grisms import extract_tso_object, extract_grism_objects, compute_tso_offset_center
 from jwst.extract_2d.tests import data
 
 
@@ -66,6 +66,7 @@ wcs_wfss_kw = {'wcsaxes': 2, 'ra_ref': 53.1423683802, 'dec_ref': -27.8171119969,
 
 wcs_tso_kw = {'wcsaxes': 2, 'ra_ref': 86.9875, 'dec_ref': 23.423,
               'v2_ref': 95.043034, 'v3_ref': -556.150466, 'roll_ref': 359.9521,
+              'v3i_yang': -0.37562675, 'vparity': -1,
               }
 
 
@@ -97,6 +98,8 @@ def create_hdul(detector='NRCALONG', channel='LONG', module='A',
     phdu.header['SUBSIZE2'] = 2048
     phdu.header['SUBSTRT1'] = 1
     phdu.header['SUBSTRT2'] = 1
+    phdu.header['XOFFSET'] = 5.0  # random offset for testing
+    phdu.header['YOFFSET'] = 1.45
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"
     scihdu.header.update(wcskeys)
@@ -206,7 +209,7 @@ def test_create_box_fits():
     # Add fake data to pass a shape to wfss_imaging_wcs
     im.data = np.zeros((512, 512))
     aswcs = AssignWcsStep()
-    imwcs = aswcs(im)
+    imwcs = aswcs.run(im)
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
@@ -239,7 +242,7 @@ def test_create_box_gwcs():
     # The data array is not relevant
     im.data = np.zeros((512, 512))
     aswcs = AssignWcsStep()
-    imwcs = aswcs(im)
+    imwcs = aswcs.run(im)
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
@@ -265,7 +268,7 @@ def setup_image_cat():
     im.data = np.zeros((512, 512))
     im.meta.source_catalog = source_catalog
     aswcs = AssignWcsStep()
-    imwcs = aswcs(im)
+    imwcs = aswcs.run(im)
     refs = get_reference_files(im)
 
     return imwcs, refs
@@ -371,6 +374,15 @@ def test_extract_tso_height():
     assert ysize == 50
     assert xsize == NIRCAM_TSO_WIDTH
     del outmodel
+
+
+def test_compute_tso_offset_center():
+
+    image_model = create_tso_wcsimage(filtername="F444W", subarray=False)
+    distortion = image_model.meta.wcs.get_transform("v2v3", "direct_image")
+    xc, yc = compute_tso_offset_center(image_model, distortion)
+    assert np.isclose(yc, 59.929, atol=1e-3)
+    assert np.isclose(xc, 961.355, atol=1e-3)
 
 
 @pytest.mark.filterwarnings("ignore: Card is too long")

@@ -295,26 +295,24 @@ source centering within the slit, hence slits containing uniform sources receive
 the same flat-field and photometric calibrations as background spectra and
 therefore don't require corrections for those two calibrations. Furthermore, the
 source position in the slit is only known for the primary slit in an exposure, so
-even if the secondary slits contain point sources, no wavelength correction can
-be applied, and therefore again the flat-field and photometric calibrations are
-the same as for background spectra. This means only the pathloss correction
-difference between uniform and point sources needs to be accounted for in the
-secondary slits.
+secondary slits are always handled as extended sources, no wavelength correction is
+applied, and therefore again the flat-field, photometric, and pathloss calibrations
+are the same as for background spectra.
 
-Therefore if the primary slit (as given by the FXD_SLIT keyword) contains a point source
-(as given by the SRCTYPE keyword) the corrections that need to be applied to the 2-D
-master background for that slit are:
+Fixed slits planned as part of a combined MOS and FS observation are an
+exception to this rule.  These targets may each be identified as
+point sources, with location information for each given in the
+:ref:`MSA metadata file <msa_metadata>`. Point sources in fixed slits planned
+this way are treated in the same manner as the primary fixed slit in standard
+FS observations.
+
+Therefore, if a fixed slit contains a point source (as given by the SRCTYPE keyword)
+the corrections that need to be applied to the 2-D master background for that slit are:
 
 .. math::
  bkg(corr) = bkg &* [flatfield(uniform) / flatfield(point)]\\
                  &* [pathloss(uniform) / pathloss(point)]\\
                  &* [photom(point) / photom(uniform)]
-
-For secondary slits that contain a point source, the correction applied to the
-2-D master background is simply:
-
-.. math::
- bkg(corr) = bkg * pathloss(uniform) / pathloss(point)
 
 The uniform and point source versions of the flat-field, pathloss, and photom
 corrections are retrieved from the input :ref:`cal <cal>` product. They
@@ -378,7 +376,8 @@ as follows:
    extended sources (appropriate for background signal), and saving the extended
    source correction arrays for each slit in an internal copy of the data model
 #. If a user-supplied master background spectrum is **not** given, the
-   :ref:`resample_spec <resample_step>` and :ref:`extract_1d <extract_1d_step>`
+   :ref:`pixel_replace <pixel_replace_step>`,
+   :ref:`resample_spec <resample_spec_step>` and :ref:`extract_1d <extract_1d_step>`
    steps are applied to the calibrated background slits, resulting
    in extracted 1D background spectra
 #. The 1D background spectra are combined, using the

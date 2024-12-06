@@ -3,6 +3,8 @@ import logging
 import numpy as np
 import copy
 
+from jwst.datamodels import CubeModel, ImageModel  # type: ignore[attr-defined]
+
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
@@ -73,6 +75,8 @@ def apply_LG_plus(
     # If the input image is 2D, expand all relevant extensions to be 3D
     # Incl. those not currently used?
     if len(input_model.data.shape) == 2:
+        if isinstance(input_copy, ImageModel):
+            input_copy = CubeModel(input_copy)
         input_copy.data = np.expand_dims(input_copy.data, axis=0)
         input_copy.dq = np.expand_dims(input_copy.dq, axis=0)
         # input_copy.err = np.expand_dims(input_copy.err, axis=0)

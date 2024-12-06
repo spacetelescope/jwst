@@ -34,6 +34,14 @@ The "NO_SAT_CHECK" flag is propagated to the
 PIXELDQ array in the output science data to indicate which pixels fall into
 this category.
 
+If the "use_readpatt" keyword is set, this step will use information about the
+read pattern to find pixels that saturated in the middle of grouped data.  This
+can be particularly important for flagging data that saturated during
+the second group but did not trigger the normal saturation threshold due to the
+grouped data averaging.  This requires that the third group be saturated, and
+the first group sufficiently low that the third group would not have been expected
+to saturate (i.e., flagging due to cosmic rays but not sources).
+
 .. _charge_migration:
 
 Charge Migration

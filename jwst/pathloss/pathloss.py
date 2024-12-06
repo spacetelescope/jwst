@@ -10,7 +10,7 @@ import stdatamodels.jwst.datamodels as datamodels
 
 from jwst.assign_wcs import nirspec, util
 from jwst.lib.wcs_utils import get_wavelengths
-from jwst.lib.basic_utils import set_nans_to_donotuse
+from jwst.lib.pipe_utils import match_nans_and_flags
 
 
 log = logging.getLogger(__name__)
@@ -547,8 +547,8 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
         slit.pathloss_point = correction.pathloss_point
         slit.pathloss_uniform = correction.pathloss_uniform
 
-        # check the dq flags have the correct value
-        slit.dq = set_nans_to_donotuse(slit.data, slit.dq)
+        # Make sure all NaNs and flags match up in the output slit model
+        match_nans_and_flags(slit)
 
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -613,8 +613,8 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
         slit.pathloss_point = correction.pathloss_point
         slit.pathloss_uniform = correction.pathloss_uniform
 
-        # check the dq flags have the correct value
-        slit.dq = set_nans_to_donotuse(slit.data, slit.dq)
+        # Make sure all NaNs and flags match up in the output slit model
+        match_nans_and_flags(slit)
 
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -669,8 +669,8 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
     # This might be useful to other steps
     data.wavelength = correction.wavelength
 
-    # check the dq flags have the correct value
-    data.dq = set_nans_to_donotuse(data.data, data.dq)
+    # Make sure all NaNs and flags match up in the output data model
+    match_nans_and_flags(data)
 
     # Set the step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -713,8 +713,8 @@ def do_correction_lrs(data, pathloss, user_slit_loc):
     # This might be useful to other steps
     data.wavelength = correction.wavelength
 
-    # check the dq flags have the correct value
-    data.dq = set_nans_to_donotuse(data.data, data.dq)
+    # Make sure all NaNs and flags match up in the output data model
+    match_nans_and_flags(data)
 
     # Set the step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -808,8 +808,8 @@ def do_correction_soss(data, pathloss):
         data.var_flat /= pathloss_2d**2
     data.pathloss_point = pathloss_2d
 
-    # check the dq flags have the correct value
-    data.dq = set_nans_to_donotuse(data.data, data.dq)
+    # Make sure all NaNs and flags match up in the output data model
+    match_nans_and_flags(data)
 
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -976,24 +976,41 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
             wavelength_pointsource *= 1.0e6
             wavelength_uniformsource *= 1.0e6
 
-            wavelength_array = slit.wavelength
-
-            # Compute the point source pathloss 2D correction
-            pathloss_2d_ps = interpolate_onto_grid(
-                wavelength_array,
-                wavelength_pointsource,
-                pathloss_pointsource_vector)
-
-            # Compute the uniform source pathloss 2D correction
-            pathloss_2d_un = interpolate_onto_grid(
-                wavelength_array,
-                wavelength_uniformsource,
-                pathloss_uniform_vector)
-
             # Use the appropriate correction for this slit
             if is_pointsource(source_type or slit.source_type):
+                # calculate the point source corrected wavelengths and uncorrected wavelengths for the slit
+                wavelength_array_corr = get_wavelengths(slit, use_wavecorr=True)
+                wavelength_array_uncorr = get_wavelengths(slit, use_wavecorr=False)
+
+                # Compute the point source pathloss 2D correction
+                pathloss_2d_ps = interpolate_onto_grid(
+                    wavelength_array_corr,
+                    wavelength_pointsource,
+                    pathloss_pointsource_vector)
+
+                # Compute the uniform source pathloss 2D correction
+                pathloss_2d_un = interpolate_onto_grid(
+                    wavelength_array_uncorr,
+                    wavelength_uniformsource,
+                    pathloss_uniform_vector)
+
                 pathloss_2d = pathloss_2d_ps
+
             else:
+                wavelength_array = slit.wavelength
+
+                # Compute the point source pathloss 2D correction
+                pathloss_2d_ps = interpolate_onto_grid(
+                    wavelength_array,
+                    wavelength_pointsource,
+                    pathloss_pointsource_vector)
+
+                # Compute the uniform source pathloss 2D correction
+                pathloss_2d_un = interpolate_onto_grid(
+                    wavelength_array,
+                    wavelength_uniformsource,
+                    pathloss_uniform_vector)
+
                 pathloss_2d = pathloss_2d_un
 
             # Save the corrections. The `data` portion is the correction used.
@@ -1056,8 +1073,13 @@ def _corrections_for_ifu(data, pathloss, source_type):
     # Create the 2-d wavelength arrays, initialize with NaNs
     wavelength_array = np.zeros(data.shape, dtype=np.float32)
     wavelength_array.fill(np.nan)
+
+    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(data, NIRSPEC_IFU_SLICES)
+
     for slice in NIRSPEC_IFU_SLICES:
-        slice_wcs = nirspec.nrs_wcs_set_input(data, slice)
+        slice_wcs = nirspec._nrs_wcs_set_input_lite(data, wcsobj, slice,
+                                                   [tr1, tr2[slice], tr3[slice]])
+
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
         ra, dec, wavelength = slice_wcs(x, y)
         valid = ~np.isnan(wavelength)

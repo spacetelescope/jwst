@@ -178,6 +178,11 @@ def tsgrism(input_model, reference_files):
     frame coordinates around the trace transform.
 
     TSGRISM is only slated to work with GRISMR and Mod A
+
+    For this mode, the source is typically at crpix1 x crpix2, which
+    are stored in keywords XREF_SCI, YREF_SCI.
+    offset special requirements may be encoded in the X_OFFSET parameter,
+    but those are handled in extract_2d.
     """
 
     # make sure this is a grism image
@@ -230,14 +235,12 @@ def tsgrism(input_model, reference_files):
 
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
-    # and x0,y0 is the source location in the "direct" image
-    # For this mode, the source is always at crpix1 x crpix2, which
-    # are stored in keywords XREF_SCI, YREF_SCI.
-    # Discussion with nadia that wcsinfo might not be available
-    # here but crpix info could be in wcs.source_location or similar
-    # TSGRISM mode places the sources at crpix, and all subarrays
-    # begin at 0,0, so no need to translate the crpix to full frame
-    # because they already are in full frame coordinates.
+    # and x0,y0 is the source location in the "direct" image.
+    # For this mode (tsgrism), it is assumed that the source is
+    # at the nominal aperture reference point, i.e., 
+    # crpix1 <--> xref_sci and crpix2 <--> yref_sci
+    # offsets in X are handled in extract_2d, e.g. if an offset
+    # special requirement was specified in the APT.
     xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
 
     if xc is None:

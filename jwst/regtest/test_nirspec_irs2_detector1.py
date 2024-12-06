@@ -12,11 +12,12 @@ from jwst.stpipe import Step
 def run_detector1pipeline(rtdata_module):
     """Run calwebb_detector1 pipeline on NIRSpec data with IRS2 readout mode."""
     rtdata = rtdata_module
-    rtdata.get_data("nirspec/irs2/jw0010010_11010_nrs1_chimera_uncal.fits")
+    rtdata.get_data("nirspec/irs2/jw01335004001_03101_00002_nrs2_uncal.fits")
 
     Step.from_cmdline([
         "calwebb_detector1",
         rtdata.input,
+        "--steps.group_scale.save_results=True",
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
         "--steps.superbias.save_results=True",
@@ -27,13 +28,34 @@ def run_detector1pipeline(rtdata_module):
         "--steps.jump.save_results=True",
         "--steps.ramp_fit.save_results=True",
         "--steps.gain_scale.save_results=True",
-        "--steps.jump.rejection_threshold=200",
     ])
 
 
+@pytest.fixture(scope="module")
+def run_detector1_with_clean_flicker_noise(rtdata_module):
+    """Run detector1 pipeline on NIRSpec IRS2 data with noise cleaning."""
+    rtdata_module.get_data("nirspec/irs2/jw01335004001_03101_00002_nrs2_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files.
+    # Run optional clean_flicker_noise step,
+    # saving extra outputs and masking to science regions
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01335004001_03101_00002_nrs2_cfn",
+            "--save_calibrated_ramp=True",
+            "--steps.clean_flicker_noise.skip=False",
+            "--steps.clean_flicker_noise.mask_science_regions=True",
+            "--steps.clean_flicker_noise.save_results=True",
+            "--steps.clean_flicker_noise.save_mask=True",
+            "--steps.clean_flicker_noise.save_background=True",
+            "--steps.clean_flicker_noise.save_noise=True",
+            ]
+    Step.from_cmdline(args)
+
+
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ['dq_init', 'saturation', 'superbias',
-                                    'refpix', 'linearity', 'dark_current', 'jump', '0_ramp_fit', 'gain_scale',
+@pytest.mark.parametrize("suffix", ['group_scale', 'dq_init', 'saturation', 'superbias',
+                                    'refpix', 'linearity', 'dark_current', 'jump',
+                                    '0_ramp_fit', 'gain_scale',
                                     'rate'])
 def test_nirspec_irs2_detector1(run_detector1pipeline, rtdata_module,
                                 fitsdiff_default_kwargs, suffix):
@@ -42,9 +64,33 @@ def test_nirspec_irs2_detector1(run_detector1pipeline, rtdata_module,
     """
     rtdata = rtdata_module
 
-    output_filename = f"jw0010010_11010_nrs1_chimera_{suffix}.fits"
+    output_filename = f"jw01335004001_03101_00002_nrs2_{suffix}.fits"
     rtdata.output = output_filename
     rtdata.get_truth(f"truth/test_nirspec_irs2_detector1/{output_filename}")
 
+    # Set tolerances so comparisons work across architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["cfn_clean_flicker_noise", "mask",
+                                    "flicker_bkg", "flicker_noise",
+                                    "cfn_ramp", "cfn_rate", "cfn_rateints"])
+def test_nirspec_irs2_detector1_with_clean_flicker_noise(
+        run_detector1_with_clean_flicker_noise, rtdata_module,
+        fitsdiff_default_kwargs, suffix):
+    """Test detector1 pipeline for NIRSpec IRS2 data with noise cleaning."""
+    rtdata = rtdata_module
+
+    output_filename = f"jw01335004001_03101_00002_nrs2_{suffix}.fits"
+    rtdata.output = output_filename
+    rtdata.get_truth(f"truth/test_nirspec_irs2_clean_flicker_noise/{output_filename}")
+
+    # Set tolerances so comparisons work across architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

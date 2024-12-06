@@ -3,10 +3,6 @@ import pytest
 
 from jwst.regtest import regtestdata as rt
 
-# Define artifactory source and truth
-INPUT_PATH = 'nirspec/ifu'
-TRUTH_PATH = 'truth/test_nirspec_ifu'
-
 
 @pytest.fixture(scope='module')
 def run_spec3_multi(rtdata_module):
@@ -51,6 +47,6 @@ def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
     rt.is_like_truth(
         run_spec3_multi, fitsdiff_default_kwargs, output,
-        truth_path=TRUTH_PATH,
+        truth_path='truth/test_nirspec_ifu',
         is_suffix=False
     )

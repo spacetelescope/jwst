@@ -1,17 +1,19 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
-from collections.abc import Sequence
+from functools import wraps
+import logging
+import warnings
+
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
-
-from .. import __version_commit__, __version__
-
 from stpipe import crds_client
 from stpipe import Step
 from stpipe import Pipeline
+
+from jwst import __version_commit__, __version__
 from ..lib.suffix import remove_suffix
-import logging
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -26,6 +28,7 @@ class JwstStep(Step):
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
         return datamodels.open(init, **kwargs)
+
 
     def load_as_level2_asn(self, obj):
         """Load object as an association
@@ -89,36 +92,29 @@ class JwstStep(Step):
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
-    def record_step_status(self, datamodel, cal_step, success=True):
-        """Record whether or not a step completed in meta.cal_step
-
-        Parameters
-        ----------
-        datamodel : `~jwst.datamodels.JwstDataModel` instance
-            This is the datamodel or container of datamodels to modify in place
-
-        cal_step : str
-            The attribute in meta.cal_step for recording the status of the step
-
-        success : bool
-            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
-        """
-        if success:
-            status = 'COMPLETE'
-        else:
-            status = 'SKIPPED'
-            self.skip = True
-
-        if isinstance(datamodel, Sequence):
-            for model in datamodel:
-                model.meta.cal_step._instance[cal_step] = status
-        else:
-            datamodel.meta.cal_step._instance[cal_step] = status
-
-        # TODO: standardize cal_step naming to point to the official step name
 
     def remove_suffix(self, name):
         return remove_suffix(name)
+
+    @wraps(Step.run)
+    def run(self, *args, **kwargs):
+        result = super().run(*args, **kwargs)
+        if not self.parent:
+            log.info(f"Results used jwst version: {__version__}")
+        return result
+
+    @wraps(Step.__call__)
+    def __call__(self, *args, **kwargs):
+        if not self.parent:
+            warnings.warn(
+                "Step.__call__ is deprecated. It is equivalent to Step.run "
+                "and is not recommended. See "
+                "https://jwst-pipeline.readthedocs.io/en/latest/jwst/"
+                "user_documentation/running_pipeline_python.html"
+                "#advanced-use-pipeline-run-vs-pipeline-call for more details.",
+                UserWarning
+            )
+        return super().__call__(*args, **kwargs)
 
 
 # JwstPipeline needs to inherit from Pipeline, but also

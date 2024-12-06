@@ -259,12 +259,12 @@ def test_dq_add1_groupdq():
 
 # Set parameters for multiple runs of guider data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector"
-test_data = [(1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE', 'GUIDER1'),
+test_data_multiple = [(1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE', 'GUIDER1'),
              (1, 1, 1032, 1024, 1, 5, 'MIRI', 'MIR_IMAGE', 'MIRIMAGE')]
 ids = ["GuiderRawModel-Image", "RampModel"]
 
 
-@pytest.mark.parametrize(args, test_data, ids=ids)
+@pytest.mark.parametrize(args, test_data_multiple, ids=ids)
 def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector):
     """Test that the full step runs"""
 

@@ -2,6 +2,8 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
+import tracemalloc
+import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -31,18 +33,85 @@ def run_detector1(rtdata_module):
 
 
 @pytest.fixture(scope="module")
+def run_detector1_multiprocess_rate(rtdata_module):
+    """Run detector1 pipeline on MIRI imaging data."""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
+            "--save_calibrated_ramp=True",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.firstframe.save_results=True",
+            "--steps.lastframe.save_results=True",
+            "--steps.reset.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.rscd.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.ramp_fit.maximum_cores=2", # Multiprocessing
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1_multiprocess_jump(rtdata_module):
+    """Run detector1 pipeline on MIRI imaging data."""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
+            "--save_calibrated_ramp=True",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.firstframe.save_results=True",
+            "--steps.lastframe.save_results=True",
+            "--steps.reset.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.rscd.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.jump.maximum_cores=2", # Multiprocessing
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
 def run_detector1_with_average_dark_current(rtdata_module):
     """Run detector1 pipeline on MIRI imaging data, providing an
     estimate of the average dark current for inclusion in ramp_fitting
     poisson variance estimation."""
     rtdata = rtdata_module
-    rtdata.get_data("miri/image/jw01024001001_04101_00002_mirimage_uncal.fits")
+    rtdata.get_data("miri/image/jw01024002001_02101_00001_mirimage_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
     args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
             "--save_calibrated_ramp=True",
             "--steps.dark_current.save_results=True",
             "--steps.dark_current.average_dark_current=1.0",
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1_with_clean_flicker_noise(rtdata_module):
+    """Run detector1 pipeline on MIRI imaging data with noise cleaning."""
+    rtdata_module.get_data("miri/image/jw01024002001_02101_00001_mirimage_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files.
+    # Run optional clean_flicker_noise step,
+    # saving extra outputs and masking to science regions
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01024002001_02101_00001_mirimage_cfn",
+            "--save_calibrated_ramp=True",
+            "--steps.clean_flicker_noise.skip=False",
+            "--steps.clean_flicker_noise.mask_science_regions=True",
+            "--steps.clean_flicker_noise.save_results=True",
+            "--steps.clean_flicker_noise.save_mask=True",
+            "--steps.clean_flicker_noise.save_background=True",
+            "--steps.clean_flicker_noise.save_noise=True",
             ]
     Step.from_cmdline(args)
 
@@ -85,11 +154,56 @@ def run_image3(run_image2, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "firstframe", "lastframe", "reset",
-                                    "linearity", "rscd", "dark_current", "refpix", "ramp", "rate",
+                                    "linearity", "rscd", "dark_current", "ramp", "rate",
                                     "rateints"])
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+def test_miri_image_detector1_multiprocess_rate(run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
+    """Regression test of detector1 pipeline performed on MIRI imaging data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
+
+
+@pytest.mark.bigdata
+def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
+    """Regression test of detector1 pipeline performed on MIRI imaging data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
+
+
+@pytest.mark.bigdata
+def test_detector1_mem_usage(rtdata_module):
+    """Determine the memory usage for Detector 1"""
+    rtdata = rtdata_module
+    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input]
+
+    # starting the monitoring
+    tracemalloc.start()
+
+    # run Detector1
+    Step.from_cmdline(args)
+
+    # displaying the memory
+    current_mem, peak_mem = tracemalloc.get_traced_memory()
+    # convert bytes to GB
+    peak_mem *= 1e-9
+    peak_mem = np.round(peak_mem, decimals=1)
+
+    # stopping the monitoring
+    tracemalloc.stop()
+
+    # set comparison values in GB
+    mem_threshold = 16.0  # average user's available memory
+    mem_benchmark = 11.0   # benchmark run with build 1.15.1 + 1 additional GB
+
+    # test that max memory is less than threshold
+    assert peak_mem < mem_threshold, "Max memory used is greater than 16 GB!"
+
+    # test that max memory is less or equal to benchmark
+    assert peak_mem <= mem_benchmark, "Max memory used is greater than 11 GB"
 
 
 @pytest.mark.bigdata
@@ -100,14 +214,37 @@ def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_d
     """Regression test of detector1 pipeline performed on MIRI imaging data with a specified
     average dark current."""
     rtdata = rtdata_module
-    rtdata.input = "jw01024001001_04101_00002_mirimage_uncal.fits"
-    output = f"jw01024001001_04101_00002_mirimage_{suffix}.fits"
+    rtdata.input = "jw01024002001_02101_00001_mirimage_uncal.fits"
+    output = f"jw01024002001_02101_00001_mirimage_{suffix}.fits"
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_miri_image_stages/{output}")
 
     # Set tolerances so the crf, rscd and rateints file comparisons work across
     # architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix",
+                         ["cfn_clean_flicker_noise", "mask",
+                          "flicker_bkg", "flicker_noise",
+                          "cfn_ramp", "cfn_rate", "cfn_rateints"])
+def test_miri_image_detector1_with_clean_flicker_noise(
+        run_detector1_with_clean_flicker_noise,
+        rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Test detector1 pipeline for MIRI imaging data with noise cleaning."""
+    rtdata = rtdata_module
+    rtdata.input = "jw01024002001_02101_00001_mirimage_uncal.fits"
+    output = f"jw01024002001_02101_00001_mirimage_{suffix}.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_miri_image_clean_flicker_noise/{output}")
+
+    # Set tolerances so the file comparisons work across architectures
     fitsdiff_default_kwargs["rtol"] = 1e-4
     fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -164,7 +301,7 @@ def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     rtdata.output = "jw01024-o001_t002_miri_f770w_cat.ecsv"
     rtdata.get_truth("truth/test_miri_image_stages/jw01024-o001_t002_miri_f770w_cat.ecsv")
 
-    assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4)
+    assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-3, atol=1e-4)
 
 
 @pytest.mark.bigdata

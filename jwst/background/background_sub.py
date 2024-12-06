@@ -91,16 +91,24 @@ class ImageSubsetArray:
         if jmax < jmin:
             jmax = jmin
 
+        # To ensure that we can mix and match subarray obs, take
+        # the x/y shape from self.data. To ensure we can work
+        # with mismatched NINTS, if we have that third dimension
+        # use the value from other
+        data_shape = list(self.data.shape)
+        if self.im_dim == 3:
+            data_shape[0] = other.data.shape[0]
+
         # Set up arrays, NaN out data/err for sigma clipping, keep DQ as 0 for bitwise_or
-        data_overlap = np.ones_like(other.data) * np.nan
-        err_overlap = np.ones_like(other.data) * np.nan
-        dq_overlap = np.zeros_like(other.data, dtype=np.uint32)
+        data_overlap = np.full(data_shape, np.nan, dtype=other.data.dtype)
+        err_overlap = np.full(data_shape, np.nan, dtype=other.data.dtype)
+        dq_overlap = np.zeros(data_shape, dtype=np.uint32)
 
         if self.im_dim == 2:
             idx = (slice(jmin - other.jmin, jmax - other.jmin),
                    slice(imin - other.imin, imax - other.imin),
                    )
-        if self.im_dim == 3:
+        else:
             idx = (slice(None, None),
                    slice(jmin - other.jmin, jmax - other.jmin),
                    slice(imin - other.imin, imax - other.imin),
@@ -112,9 +120,9 @@ class ImageSubsetArray:
         dq_cutout = other.dq[idx]
 
         # Put them into the right place in the original image array shape
-        data_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(data_cutout)
-        err_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(err_cutout)
-        dq_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(dq_cutout)
+        data_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(data_cutout)
+        err_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(err_cutout)
+        dq_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(dq_cutout)
 
         return data_overlap, err_overlap, dq_overlap
 
@@ -264,6 +272,20 @@ def average_background(input_model, bkg_list, sigma, maxiters):
     return avg_bkg
 
 
+def sufficient_background_pixels(dq_array, bkg_mask, min_pixels=100):
+    """Count number of good pixels for background use.
+
+    Check DQ flags of pixels selected for bkg use - XOR the DQ values with
+    the DO_NOT_USE flag to flip the DO_NOT_USE bit. Then count the number
+    of pixels that AND with the DO_NOT_USE flag, i.e. initially did not have
+    the DO_NOT_USE bit set.
+    """
+    return np.count_nonzero((dq_array[bkg_mask]
+                            ^ pixel['DO_NOT_USE'])
+                            & pixel['DO_NOT_USE']
+                            ) > min_pixels
+
+
 def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=None):
     """Scale and subtract a background reference image from WFSS/GRISM data.
 
@@ -302,18 +324,12 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=Non
     # i.e. in regions we can use as background.
     if got_catalog:
         bkg_mask = mask_from_source_cat(input_model, wl_range_name, mmag_extract)
-        # Ensure mask has 100 pixels and that those pixels correspond to valid
-        # pixels using model DQ array
-        if np.count_nonzero(input_model.dq[bkg_mask]
-                            ^ pixel['DO_NOT_USE']
-                            & pixel['DO_NOT_USE']
-                            ) < 100:
+        if not sufficient_background_pixels(input_model.dq, bkg_mask):
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
             return None
     else:
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
-
     # Compute the mean values of science image and background reference
     # image, including only regions where there are no identified sources.
     # Exclude pixel values in the lower and upper 25% of the histogram.

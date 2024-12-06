@@ -5,14 +5,11 @@ import json
 import math
 import numpy as np
 
-from typing import Union, Tuple, NamedTuple, List
+from dataclasses import dataclass
 from astropy.modeling import polynomial
 from astropy.io import fits
-from gwcs import WCS
-from stdatamodels import DataModel
-from stdatamodels.properties import ObjectNode
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import dqflags, SlitModel, SpecModel
+from stdatamodels.jwst.datamodels import dqflags
 from stdatamodels.jwst.datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
@@ -88,11 +85,12 @@ PARTIAL = "partial match"
 EXACT = "exact match"
 
 
-class Aperture(NamedTuple):  # When python 3.6 is no longer supported, consider converting to DataClass
-    xstart: Union[int, float]
-    xstop: Union[int, float]
-    ystart: Union[int, float]
-    ystop: Union[int, float]
+@dataclass
+class Aperture:
+    xstart: float
+    xstop: float
+    ystart: float
+    ystop: float
 
 
 class Extract1dError(Exception):
@@ -109,7 +107,7 @@ class ContinueError(Exception):
     pass
 
 
-def open_extract1d_ref(refname: str, exptype: str) -> dict:
+def open_extract1d_ref(refname, exptype):
     """Open the extract1d reference file.
 
     Parameters
@@ -174,7 +172,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
     return ref_dict
 
 
-def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
+def open_apcorr_ref(refname, exptype):
     """Determine the appropriate DataModel class to use when opening the input APCORR reference file.
 
     Parameters
@@ -212,16 +210,16 @@ def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
 
 
 def get_extract_parameters(
-        ref_dict: Union[dict, None],
-        input_model: DataModel,
-        slitname: str,
-        sp_order: int,
-        meta: ObjectNode,
-        smoothing_length: Union[int, None],
-        bkg_fit: str,
-        bkg_order: Union[int, None],
-        use_source_posn: Union[bool, None]
-) -> dict:
+        ref_dict,
+        input_model,
+        slitname,
+        sp_order,
+        meta,
+        smoothing_length,
+        bkg_fit,
+        bkg_order,
+        use_source_posn
+):
     """Get extract1d reference file values.
 
     Parameters
@@ -449,7 +447,7 @@ def get_extract_parameters(
     return extract_params
 
 
-def log_initial_parameters(extract_params: dict):
+def log_initial_parameters(extract_params):
     """Log some of the initial extraction parameters.
 
     Parameters
@@ -477,9 +475,7 @@ def log_initial_parameters(extract_params: dict):
     log.debug(f"use_source_posn = {extract_params['use_source_posn']}")
 
 
-def get_aperture(
-        im_shape: tuple, wcs: WCS, extract_params: dict
-) -> Union[Aperture, dict]:
+def get_aperture(im_shape, wcs, extract_params):
     """Get the extraction limits xstart, xstop, ystart, ystop.
 
     Parameters
@@ -521,7 +517,7 @@ def get_aperture(
     return ap_ref
 
 
-def aperture_from_ref(extract_params: dict, im_shape: Tuple[int]) -> Aperture:
+def aperture_from_ref(extract_params, im_shape):
     """Get extraction region from reference file or image shape.
 
     Parameters
@@ -560,9 +556,7 @@ def aperture_from_ref(extract_params: dict, im_shape: Tuple[int]) -> Aperture:
     return ap_ref
 
 
-def update_from_width(
-        ap_ref: Aperture, extract_width: Union[int, None], direction: int
-) -> Aperture:
+def update_from_width(ap_ref, extract_width, direction):
     """Update XD extraction limits based on extract_width.
 
     If extract_width was specified, that value should override
@@ -623,9 +617,7 @@ def update_from_width(
     return ap_width
 
 
-def update_from_shape(
-        ap: Aperture, im_shape: Tuple[int]
-) -> Tuple[Aperture, bool]:
+def update_from_shape(ap, im_shape):
     """Truncate extraction region based on input image shape.
 
     Parameters
@@ -675,7 +667,7 @@ def update_from_shape(
     return ap_shape, truncated
 
 
-def aperture_from_wcs(wcs: WCS) -> Union[NamedTuple, None]:
+def aperture_from_wcs(wcs):
     """Get the limits over which the WCS is defined.
 
     Parameters
@@ -685,7 +677,7 @@ def aperture_from_wcs(wcs: WCS) -> Union[NamedTuple, None]:
 
     Returns
     -------
-    ap_wcs : namedtuple or None
+    ap_wcs : Aperture or None
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.  These are the
         limits copied directly from wcs.bounding_box.
     """
@@ -722,12 +714,7 @@ def aperture_from_wcs(wcs: WCS) -> Union[NamedTuple, None]:
     return ap_wcs
 
 
-def update_from_wcs(
-        ap_ref: Aperture,
-        ap_wcs: Union[Aperture, None],
-        extract_width: int,
-        direction: int,
-) -> Aperture:
+def update_from_wcs(ap_ref, ap_wcs, extract_width, direction,):
     """Limit the extraction region to the WCS bounding box.
 
     Parameters
@@ -783,9 +770,7 @@ def update_from_wcs(
     return ap
 
 
-def sanity_check_limits(
-        ap_ref: Aperture, ap_wcs: Aperture,
-) -> bool:
+def sanity_check_limits(ap_ref, ap_wcs,):
     """Sanity check.
 
     Parameters
@@ -805,13 +790,12 @@ def sanity_check_limits(
     """
     if (ap_wcs.xstart >= ap_ref.xstop or ap_wcs.xstop <= ap_ref.xstart or
             ap_wcs.ystart >= ap_ref.ystop or ap_wcs.ystop <= ap_ref.ystart):
-        log.warning(
-            f"The WCS bounding box is outside the aperture:\n\t"
-            f"aperture: {ap_ref.xstart}, {ap_ref.xstop}, {ap_ref.ystart}, {ap_ref.ystop}\n\t"
-            f"wcs: {ap_wcs.xstart}, {ap_wcs.xstop}, {ap_wcs.ystart}, {ap_wcs.ystop}\n"
-            f"so the wcs bounding box will be ignored."
-        )
-
+        log.warning("The WCS bounding box is outside the aperture:")
+        log.warning(f"\taperture: {ap_ref.xstart}, {ap_ref.xstop}, "
+                    f"{ap_ref.ystart}, {ap_ref.ystop}")
+        log.warning(f"\twcs: {ap_wcs.xstart}, {ap_wcs.xstop}, "
+                    f"{ap_wcs.ystart}, {ap_wcs.ystop}")
+        log.warning("so the wcs bounding box will be ignored.")
         flag = False
     else:
         flag = True
@@ -819,9 +803,7 @@ def sanity_check_limits(
     return flag
 
 
-def compare_start(
-        aperture_start: Union[int, float], wcs_bb_lower_lim: Union[int, float]
-) -> Union[int, float]:
+def compare_start(aperture_start, wcs_bb_lower_lim):
     """Compare the start limit from the aperture with the WCS lower limit.
 
     Extended summary
@@ -856,9 +838,7 @@ def compare_start(
         return math.ceil(wcs_bb_lower_lim)
 
 
-def compare_stop(
-        aperture_stop: Union[int, float], wcs_bb_upper_lim: Union[int, float]
-) -> Union[int, float]:
+def compare_stop(aperture_stop, wcs_bb_upper_lim):
     """Compare the stop limit from the aperture with the WCS upper limit.
 
     The more restrictive (i.e. smaller) limit is the one upon which the
@@ -891,7 +871,7 @@ def compare_stop(
         return math.floor(wcs_bb_upper_lim)
 
 
-def create_poly(coeff: List[float]) -> Union[polynomial.Polynomial1D, None]:
+def create_poly(coeff):
     """Create a polynomial model from coefficients.
 
     Parameters
@@ -1036,27 +1016,27 @@ class ExtractBase(abc.ABC):
 
     def __init__(
             self,
-            input_model: DataModel,
-            slit: Union[DataModel, None] = None,
-            ref_image: Union[DataModel, None] = None,
-            dispaxis: int = HORIZONTAL,
-            spectral_order: int = 1,
-            xstart: int = None,
-            xstop: int = None,
-            ystart: int = None,
-            ystop: int = None,
-            extract_width: int = None,
-            src_coeff: Union[List[List[float]], None] = None,
-            bkg_coeff: Union[List[List[float]], None] = None,
-            independent_var: str = "pixel",
-            smoothing_length: int = 0,
-            bkg_fit: str = "poly",
-            bkg_order: int = 0,
-            position_correction: float = 0.,
-            subtract_background: Union[bool, None] = None,
-            use_source_posn: Union[bool, None] = None,
-            match: Union[str, None] = None,
-            ref_file_type: Union[str, None] = None
+            input_model,
+            slit = None,
+            ref_image = None,
+            dispaxis = HORIZONTAL,
+            spectral_order = 1,
+            xstart = None,
+            xstop = None,
+            ystart = None,
+            ystop = None,
+            extract_width = None,
+            src_coeff = None,
+            bkg_coeff = None,
+            independent_var = "pixel",
+            smoothing_length = 0,
+            bkg_fit = "poly",
+            bkg_order = 0,
+            position_correction = 0.,
+            subtract_background = None,
+            use_source_posn = None,
+            match = None,
+            ref_file_type = None
     ):
         """
         Parameters
@@ -1223,9 +1203,7 @@ class ExtractBase(abc.ABC):
         pass
 
     @staticmethod
-    def get_target_coordinates(
-            input_model: DataModel, slit: Union[DataModel, None]
-    ) -> Tuple[Union[float, None], Union[float, None]]:
+    def get_target_coordinates(input_model, slit):
         """Get the right ascension and declination of the target.
 
         For MultiSlitModel (or similar) data, each slit has the source
@@ -1278,9 +1256,7 @@ class ExtractBase(abc.ABC):
 
         return targ_ra, targ_dec
 
-    def offset_from_offset(
-            self, input_model: DataModel, slit: DataModel,
-    ) -> Tuple[float, Union[float, None]]:
+    def offset_from_offset(self, input_model, slit):
         """Get position offset from the target coordinates.
 
         Parameters
@@ -1348,13 +1324,7 @@ class ExtractBase(abc.ABC):
 
         return offset, locn
 
-    def locn_from_wcs(
-            self,
-            input_model: DataModel,
-            slit: Union[DataModel, None],
-            targ_ra: Union[float, None],
-            targ_dec: Union[float, None],
-    ) -> Union[Tuple[int, float, float], None]:
+    def locn_from_wcs(self, input_model, slit, targ_ra, targ_dec):
         """Get the location of the spectrum, based on the WCS.
 
         Parameters
@@ -1545,7 +1515,7 @@ class ExtractModel(ExtractBase):
                     log.debug("Background subtraction was specified in the reference file,")
                     log.debug("but has been overridden by the step parameter.")
 
-    def nominal_locn(self, middle: int, middle_wl: float) -> Union[float, None]:
+    def nominal_locn(self, middle, middle_wl):
         """Find the nominal cross-dispersion location of the target spectrum.
 
         This version is for the case that the reference file is a JSON file,
@@ -1605,7 +1575,7 @@ class ExtractModel(ExtractBase):
 
         return location
 
-    def add_position_correction(self, shape: tuple):
+    def add_position_correction(self, shape):
         """Add the position offset to the extraction location (in-place).
 
         Extended summary
@@ -1667,7 +1637,7 @@ class ExtractModel(ExtractBase):
             coeff_list[0] += self.position_correction
             coeffs[i] = copy.copy(coeff_list)
 
-    def update_extraction_limits(self, ap: Aperture):
+    def update_extraction_limits(self, ap):
         """Update start and stop limits.
 
         Extended summary
@@ -1797,19 +1767,7 @@ class ExtractModel(ExtractBase):
 
         return result
 
-    def extract(
-            self,
-            data: np.ndarray,
-            var_poisson: np.ndarray,
-            var_rnoise: np.ndarray,
-            var_flat: np.ndarray,
-            wl_array: Union[np.ndarray, None],
-    ) -> Tuple[
-        float, float, np.ndarray,
-        np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-        np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-        np.ndarray, np.ndarray
-    ]:
+    def extract(self, data, var_poisson, var_rnoise, var_flat, wl_array):
         """Do the extraction.
 
         Extended summary
@@ -2049,9 +2007,7 @@ class ImageExtractModel(ExtractBase):
         """
         super().__init__(*base_args, **base_kwargs)
 
-    def nominal_locn(
-            self, middle: float, middle_wl: float
-    ) -> Union[float, None]:
+    def nominal_locn(self, middle, middle_wl):
         """Find the nominal cross-dispersion location of the target spectrum.
 
         This version is for the case that the reference file is an image.
@@ -2107,7 +2063,7 @@ class ImageExtractModel(ExtractBase):
 
         return location
 
-    def add_position_correction(self, shape: tuple):
+    def add_position_correction(self, shape):
         """Shift the reference image (in-place).
 
         Parameters
@@ -2164,18 +2120,7 @@ class ImageExtractModel(ExtractBase):
         log.debug(f"smoothing_length = {self.smoothing_length}")
         log.debug(f"position_correction = {self.position_correction}")
 
-    def extract(self,
-                data: np.ndarray,
-                var_poisson: np.ndarray,
-                var_rnoise: np.ndarray,
-                var_flat: np.ndarray,
-                wl_array: np.ndarray,
-                ) -> \
-            Tuple[
-                float, float, np.ndarray,
-                np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                np.ndarray, np.ndarray]:
+    def extract(self, data, var_poisson, var_rnoise, var_flat, wl_array):
         """
         Do the actual extraction, for the case that the extract1d reference file
         is an image.
@@ -2456,7 +2401,7 @@ class ImageExtractModel(ExtractBase):
                 background, b_var_poisson, b_var_rnoise, b_var_flat,
                 npixels, dq)
 
-    def match_shape(self, shape: tuple) -> np.ndarray:
+    def match_shape(self, shape):
         """Truncate or expand reference image to match the science data.
 
         Extended summary
@@ -2496,9 +2441,7 @@ class ImageExtractModel(ExtractBase):
         return buf
 
     @staticmethod
-    def separate_target_and_background(
-            ref
-    ) -> Tuple[np.ndarray, Union[np.ndarray, None]]:
+    def separate_target_and_background(ref):
         """Create masks for target and background.
 
         Parameters
@@ -2534,23 +2477,24 @@ class ImageExtractModel(ExtractBase):
 
 
 def run_extract1d(
-        input_model: DataModel,
-        extract_ref_name: str,
-        apcorr_ref_name: Union[str, None],
-        smoothing_length: Union[int, None],
-        bkg_fit: str,
-        bkg_order: Union[int, None],
-        bkg_sigma_clip: float,
-        log_increment: int,
-        subtract_background: Union[bool, None],
-        use_source_posn: Union[bool, None],
-        center_xy: Union[float, None],
-        ifu_autocen: Union[bool, None],
-        ifu_rfcorr: Union[bool, None],
-        ifu_set_srctype: str,
-        ifu_rscale: float,
-        was_source_model: bool = False,
-) -> DataModel:
+        input_model,
+        extract_ref_name,
+        apcorr_ref_name,
+        smoothing_length,
+        bkg_fit,
+        bkg_order,
+        bkg_sigma_clip,
+        log_increment,
+        subtract_background,
+        use_source_posn,
+        center_xy,
+        ifu_autocen,
+        ifu_rfcorr,
+        ifu_set_srctype,
+        ifu_rscale,
+        ifu_covar_scale,
+        was_source_model,
+):
     """Extract 1-D spectra.
 
     This just reads the reference files (if any) and calls do_extract1d.
@@ -2619,6 +2563,10 @@ def run_extract1d(
         radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
         extraction radius.
 
+    ifu_covar_scale : float
+        Scaling factor by which to multiply the ERR values in extracted spectra to account
+        for covariance between adjacent spaxels in the IFU data cube.
+
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
@@ -2669,6 +2617,7 @@ def run_extract1d(
         ifu_rfcorr,
         ifu_set_srctype,
         ifu_rscale,
+        ifu_covar_scale,
         was_source_model,
     )
 
@@ -2683,7 +2632,7 @@ def run_extract1d(
     return output_model
 
 
-def ref_dict_sanity_check(ref_dict: Union[dict, None]) -> Union[dict, None]:
+def ref_dict_sanity_check(ref_dict):
     """Check for required entries.
 
     Parameters
@@ -2718,23 +2667,24 @@ def ref_dict_sanity_check(ref_dict: Union[dict, None]) -> Union[dict, None]:
 
 
 def do_extract1d(
-        input_model: DataModel,
-        extract_ref_dict: Union[dict, None],
-        apcorr_ref_model=None,
-        smoothing_length: Union[int, None] = None,
-        bkg_fit: str = "poly",
-        bkg_order: Union[int, None] = None,
-        bkg_sigma_clip: float = 0,
-        log_increment: int = 50,
-        subtract_background: Union[int, None] = None,
-        use_source_posn: Union[bool, None] = None,
-        center_xy: Union[int, None] = None,
-        ifu_autocen: Union[bool, None] = None,
-        ifu_rfcorr: Union[bool, None] = None,
-        ifu_set_srctype: str = None,
-        ifu_rscale: float = None,
-        was_source_model: bool = False
-) -> DataModel:
+        input_model,
+        extract_ref_dict,
+        apcorr_ref_model = None,
+        smoothing_length = None,
+        bkg_fit = "poly",
+        bkg_order = None,
+        bkg_sigma_clip = 0,
+        log_increment = 50,
+        subtract_background = None,
+        use_source_posn = None,
+        center_xy = None,
+        ifu_autocen = None,
+        ifu_rfcorr = None,
+        ifu_set_srctype = None,
+        ifu_rscale = None,
+        ifu_covar_scale = 1.0,
+        was_source_model = False
+):
     """Extract 1-D spectra.
 
     In the pipeline, this function would be called by run_extract1d.
@@ -2813,6 +2763,10 @@ def do_extract1d(
         radius, a value of 2 results in no change to the radius and a value above 2 results in a larger
         extraction radius.
 
+    ifu_covar_scale : float
+        Scaling factor by which to multiply the ERR values in extracted spectra to account
+        for covariance between adjacent spaxels in the IFU data cube.
+
     was_source_model : bool
         True if and only if `input_model` is actually one SlitModel
         obtained by iterating over a SourceModelContainer.  The default
@@ -2836,10 +2790,7 @@ def do_extract1d(
     # Set "meta_source" to either the first model in a container, or the individual input model, for convenience
     # of retrieving meta attributes in subsequent statements
     if was_source_model:
-        if isinstance(input_model, datamodels.SlitModel):  # input_model is SourceContainer with a single SlitModel
-            meta_source = input_model
-        else:
-            meta_source = input_model[0]
+        meta_source = input_model[0]
     else:
         meta_source = input_model
 
@@ -2986,7 +2937,10 @@ def do_extract1d(
 
             # For NRS_FIXEDSLIT, the slit name comes from the FXD_SLIT keyword in the model meta
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
-                slitname = input_model.meta.instrument.fixed_slit
+                if hasattr(input_model, "name") and input_model.name is not None:
+                    slitname = input_model.name
+                else:
+                    slitname = input_model.meta.instrument.fixed_slit
 
             # Loop over all spectral orders available for extraction
             prev_offset = OFFSET_NOT_ASSIGNED_YET
@@ -3025,7 +2979,7 @@ def do_extract1d(
                 log.info(f"Overriding source type and setting it to = {ifu_set_srctype}")
             output_model = ifu.ifu_extract1d(
                 input_model, extract_ref_dict, source_type, subtract_background,
-                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale
+                bkg_sigma_clip, apcorr_ref_model, center_xy, ifu_autocen, ifu_rfcorr, ifu_rscale, ifu_covar_scale
             )
 
         else:
@@ -3054,9 +3008,7 @@ def do_extract1d(
     return output_model
 
 
-def populate_time_keywords(
-        input_model: DataModel, output_model: DataModel
-) -> Union[DataModel, None]:
+def populate_time_keywords(input_model, output_model):
     """Copy the integration times keywords to header keywords.
 
     Parameters
@@ -3199,7 +3151,7 @@ def populate_time_keywords(
             n += 1
 
 
-def get_spectral_order(slit: DataModel) -> int:
+def get_spectral_order(slit):
     """Get the spectral order number.
 
     Parameters
@@ -3228,7 +3180,7 @@ def get_spectral_order(slit: DataModel) -> int:
     return sp_order
 
 
-def is_prism(input_model: DataModel) -> bool:
+def is_prism(input_model):
     """Determine whether the current observing mode used a prism.
 
     Extended summary
@@ -3276,9 +3228,7 @@ def is_prism(input_model: DataModel) -> bool:
     return prism_mode
 
 
-def copy_keyword_info(
-        slit: SlitModel, slitname: Union[str, None], spec: SpecModel
-):
+def copy_keyword_info(slit, slitname, spec):
     """Copy metadata from the input to the output spectrum.
 
     Parameters
@@ -3330,16 +3280,7 @@ def copy_keyword_info(
         spec.shutter_state = slit.shutter_state
 
 
-def extract_one_slit(
-        input_model: DataModel,
-        slit: SlitModel,
-        integ: int,
-        prev_offset: Union[float, str],
-        extract_params: dict
-) -> Tuple[float, float, np.ndarray,
-           np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-           np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-           np.ndarray, np.ndarray, float]:
+def extract_one_slit(input_model, slit, integ, prev_offset, extract_params):
     """Extract data for one slit, or spectral order, or plane.
 
     Parameters
@@ -3554,11 +3495,7 @@ def extract_one_slit(
             extraction_values)
 
 
-def replace_bad_values(
-        data: np.ndarray,
-        input_dq: Union[np.ndarray, None],
-        wl_array: np.ndarray
-) -> np.ndarray:
+def replace_bad_values(data, input_dq, wl_array):
     """Replace values flagged with DO_NOT_USE or that have NaN wavelengths.
 
     Parameters
@@ -3598,10 +3535,7 @@ def replace_bad_values(
     return data
 
 
-def nans_at_endpoints(
-        wavelength: np.ndarray,
-        dq: np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray, slice]:
+def nans_at_endpoints(wavelength, dq):
     """Flag NaNs in the wavelength array.
 
     Extended summary
@@ -3671,7 +3605,8 @@ def create_extraction(extract_ref_dict,
                       output_model,
                       apcorr_ref_model,
                       log_increment,
-                      is_multiple_slits):
+                      is_multiple_slits
+):
     if slit is None:
         meta_source = input_model
     else:
@@ -3722,13 +3657,6 @@ def create_extraction(extract_ref_dict,
         use_source_posn = False
         log.info(f"Setting use_source_posn to False for source type {source_type}")
 
-    # Turn off use_source_posn if working on non-primary NRS fixed slits
-    if is_multiple_slits:
-        if exp_type == 'NRS_FIXEDSLIT' and slitname != slit.meta.instrument.fixed_slit:
-            use_source_posn = False
-            log.info("Can only compute source location for primary NIRSpec slit,")
-            log.info("so setting use_source_posn to False")
-
     if photom_has_been_run:
         pixel_solid_angle = meta_source.meta.photometry.pixelarea_steradians
         if pixel_solid_angle is None:
@@ -3776,6 +3704,8 @@ def create_extraction(extract_ref_dict,
         log.info(f"Beginning loop over {shape[0]} integrations ...")
         integrations = range(shape[0])
 
+    ra_last = dec_last = wl_last = apcorr = None
+    
     for integ in integrations:
         try:
             ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, \
@@ -3889,27 +3819,57 @@ def create_extraction(extract_ref_dict,
             else:
                 wl = wavelength.min()
 
-            if isinstance(input_model, datamodels.ImageModel):
-                apcorr = select_apcorr(input_model)(
-                    input_model,
-                    apcorr_ref_model.apcorr_table,
-                    apcorr_ref_model.sizeunit,
-                    location=(ra, dec, wl)
-                )
+            # Determine whether we have a tabulated aperture correction
+            # available to save time.
+            
+            apcorr_available = False
+            if apcorr is not None:
+                if hasattr(apcorr, 'tabulated_correction'):
+                    if apcorr.tabulated_correction is not None:
+                        apcorr_available = True
+                
+            # See whether we can reuse the previous aperture correction
+            # object.  If so, just apply the pre-computed correction to
+            # save a ton of time.
+            if ra == ra_last and dec == dec_last and wl == wl_last and apcorr_available:
+                # re-use the last aperture correction
+                apcorr.apply(spec.spec_table, use_tabulated=True)
+
             else:
-                match_kwargs = {'location': (ra, dec, wl)}
-                if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-                    match_kwargs['slit'] = slitname
+                if isinstance(input_model, datamodels.ImageModel):
+                    apcorr = select_apcorr(input_model)(
+                        input_model,
+                        apcorr_ref_model.apcorr_table,
+                        apcorr_ref_model.sizeunit,
+                        location=(ra, dec, wl)
+                    )
+                else:
+                    match_kwargs = {'location': (ra, dec, wl)}
+                    if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+                        match_kwargs['slit'] = slitname
 
-                apcorr = select_apcorr(input_model)(
-                    input_model,
-                    apcorr_ref_model.apcorr_table,
-                    apcorr_ref_model.sizeunit,
-                    slit_name=slitname,
-                    **match_kwargs
-                )
-            apcorr.apply(spec.spec_table)
+                    apcorr = select_apcorr(input_model)(
+                        input_model,
+                        apcorr_ref_model.apcorr_table,
+                        apcorr_ref_model.sizeunit,
+                        slit_name=slitname,
+                        **match_kwargs
+                    )
+                # Attempt to tabulate the aperture correction for later use.
+                # If this fails, fall back on the old method.
+                try:
+                    apcorr.tabulate_correction(spec.spec_table)
+                    apcorr.apply(spec.spec_table, use_tabulated=True)
+                    log.info("Tabulating aperture correction for use in multiple integrations.")
+                except AttributeError:
+                    log.info("Computing aperture correction.")
+                    apcorr.apply(spec.spec_table)
 
+            # Save previous ra, dec, wavelength in case we can reuse
+            # the aperture correction object.
+            ra_last = ra
+            dec_last = dec
+            wl_last = wl
         output_model.spec.append(spec)
 
         if log_increment > 0 and (integ + 1) % log_increment == 0:

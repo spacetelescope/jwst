@@ -20,6 +20,15 @@ build:
   os: ubuntu-22.04
   tools:
     python: mambaforge-4.10
+  jobs:
+    post_checkout:
+      - git fetch --unshallow || true
+      - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' || true
+      - git fetch --all --tags || true
+    pre_install:
+      - git update-index --assume-unchanged docs/rtd_environment.yaml docs/conf.py
+    post_install:
+      - towncrier build --keep
 
 conda:
   environment: docs/rtd_environment.yaml

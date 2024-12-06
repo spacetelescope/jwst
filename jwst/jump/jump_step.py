@@ -4,11 +4,8 @@ from stdatamodels.jwst import datamodels
 from ..stpipe import Step
 from .jump import run_detect_jumps
 import time
-import multiprocessing
 
 __all__ = ["JumpStep"]
-
-multiprocessing.set_start_method('forkserver', force=True)
 
 
 class JumpStep(Step):
@@ -41,6 +38,7 @@ class JumpStep(Step):
         mask_snowball_core_next_int = boolean(default=True) # Flag saturated cores of snowballs in the next integration?
         snowball_time_masked_next_int = integer(default=4000) # Time in seconds over which saturated cores are flagged in next integration
         find_showers = boolean(default=False) # Apply MIRI shower flagging?
+        max_shower_amplitude = float(default=4) # Maximum MIRI shower amplitude in DN/s
         extend_snr_threshold = float(default=1.2) # The SNR minimum for detection of extended showers in MIRI
         extend_min_area = integer(default=90) # Min area of emission after convolution for the detection of showers
         extend_inner_radius = float(default=1) # Inner radius of the ring_2D_kernel used for convolution
@@ -58,18 +56,22 @@ class JumpStep(Step):
 
     class_alias = 'jump'
 
-    def process(self, input):
+    def process(self, step_input):
 
-        with datamodels.RampModel(input) as input_model:
+        # Open the input data model
+        with datamodels.RampModel(step_input) as input_model:
+
             tstart = time.time()
             # Check for an input model with NGROUPS<=2
             ngroups = input_model.data.shape[1]
             if ngroups <= 2:
                 self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
                 self.log.warning('Jump step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.jump = 'SKIPPED'
-                return result
+                input_model.meta.cal_step.jump = 'SKIPPED'
+                return input_model
+
+            # Work on a copy
+            result = input_model.copy()
 
             # Retrieve the parameter values
             rej_thresh = self.rejection_threshold
@@ -94,18 +96,18 @@ class JumpStep(Step):
                 self.log.info('Maximum cores to use = %s', max_cores)
 
             # Get the gain and readnoise reference files
-            gain_filename = self.get_reference_file(input_model, 'gain')
+            gain_filename = self.get_reference_file(result, 'gain')
             self.log.info('Using GAIN reference file: %s', gain_filename)
 
             gain_model = datamodels.GainModel(gain_filename)
 
-            readnoise_filename = self.get_reference_file(input_model,
+            readnoise_filename = self.get_reference_file(result,
                                                          'readnoise')
             self.log.info('Using READNOISE reference file: %s',
                           readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
             # Call the jump detection routine
-            result = run_detect_jumps(input_model, gain_model, readnoise_model,
+            result = run_detect_jumps(result, gain_model, readnoise_model,
                                       rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
                                       max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
                                       flag_4_neighbors,
@@ -118,6 +120,7 @@ class JumpStep(Step):
                                       min_sat_radius_extend=self.min_sat_radius_extend,
                                       sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand * 2,
                                       expand_large_events=expand_large_events, find_showers=self.find_showers,
+                                      max_shower_amplitude=self.max_shower_amplitude,
                                       edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
                                       extend_min_area=self.extend_min_area,
                                       extend_inner_radius=self.extend_inner_radius,
@@ -134,11 +137,13 @@ class JumpStep(Step):
                                       )
 
 
-            gain_model.close()
-            readnoise_model.close()
             tstop = time.time()
             self.log.info('The execution time in seconds: %f', tstop - tstart)
 
-        result.meta.cal_step.jump = 'COMPLETE'
+            result.meta.cal_step.jump = 'COMPLETE'
+
+            # Cleanup
+            del gain_model
+            del readnoise_model
 
         return result

@@ -1,9 +1,10 @@
 #! /usr/bin/env python
-
 import numpy as np
 
 from stcal.ramp_fitting import ramp_fit
 from stcal.ramp_fitting import utils
+
+from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
 
 from stcal.ramp_fitting.utils import LARGE_VARIANCE
 from stcal.ramp_fitting.utils import LARGE_VARIANCE_THRESHOLD
@@ -16,14 +17,11 @@ from ..stpipe import Step
 from ..lib import reffile_utils
 
 import logging
-import copy
 import warnings
-import multiprocessing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-multiprocessing.set_start_method('forkserver', force=True)
 
 
 __all__ = ["RampFitStep"]
@@ -65,7 +63,7 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
         gain_2d = reffile_utils.get_subarray_data(model, gain_model)
 
     if reffile_utils.ref_matches_sci(model, readnoise_model):
-        readnoise_2d = readnoise_model.data.copy()
+        readnoise_2d = readnoise_model.data
     else:
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
@@ -221,7 +219,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
     imshape = (nrows, ncols)
     cubeshape = (ngroups,) + imshape
 
-    segs_4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.uint8)
+    segs_4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.uint16)
     var_r4 = np.zeros((nint,) + (ngroups,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     var_r3 = np.zeros((nint,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     s_inv_var_r3 = np.zeros((nint,) + imshape, dtype=np.float32)
@@ -317,7 +315,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
     imshape = (asize2, asize1)
     gdq_2d = gdq_sect[:, :, :].reshape((ngroups, npix))
     segs = np.zeros((ngroups, npix), dtype=np.int32)
-    sr_index = np.zeros(npix, dtype=np.uint8)
+    sr_index = np.zeros(npix, dtype=np.uint16)
 
     i_read = 0
     while i_read < ngroups:
@@ -341,7 +339,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
         i_read += 1
 
-    segs = segs.astype(np.uint8)
+    segs = segs.astype(np.uint16)
     segs_beg_3 = segs.reshape(ngroups, imshape[0], imshape[1])
     segs_beg_3 = utils.remove_bad_singles(segs_beg_3)
 
@@ -387,6 +385,7 @@ class RampFitStep(Step):
     class_alias = "ramp_fit"
 
     spec = """
+        algorithm = option('OLS', 'OLS_C', 'LIKELY', default='OLS_C') # 'OLS' and 'OLS_C' use the same underlying algorithm, but OLS_C is implemented in C
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
@@ -401,22 +400,35 @@ class RampFitStep(Step):
     # As of 04/26/17, the only allowed algorithm is 'ols', and the
     #      only allowed weighting is 'optimal'.
 
-    algorithm = 'ols'      # Only algorithm allowed for Build 7.1
-#    algorithm = 'gls'       # 032520
+    # algorithm = 'ols'      # Only algorithm allowed for Build 7.1
+    # algorithm = 'gls'       # 032520
 
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 
     reference_file_types = ['readnoise', 'gain']
 
-    def process(self, input):
+    def process(self, step_input):
 
-        with datamodels.RampModel(input) as input_model:
+        # Open the input data model
+        with datamodels.RampModel(step_input) as input_model:
+              
+            # Cork on a copy
+            result = input_model.copy()
+
             max_cores = self.maximum_cores
-            readnoise_filename = self.get_reference_file(input_model, 'readnoise')
-            gain_filename = self.get_reference_file(input_model, 'gain')
+            readnoise_filename = self.get_reference_file(result, 'readnoise')
+            gain_filename = self.get_reference_file(result, 'gain')
 
-            log.info('Using READNOISE reference file: %s', readnoise_filename)
-            log.info('Using GAIN reference file: %s', gain_filename)
+            ngroups = input_model.data.shape[1]
+            if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
+                log.info(f"When selecting the LIKELY ramp fitting algorithm the"
+                         f" ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"
+                         f" but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
+                         f" is being changed to OLS_C")
+                self.algorithm = "OLS_C"
+
+            log.info(f"Using READNOISE reference file: {readnoise_filename}")
+            log.info(f"Using GAIN reference file: {gain_filename}")
 
             with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model, \
                     datamodels.GainModel(gain_filename) as gain_model:
@@ -426,77 +438,84 @@ class RampFitStep(Step):
                 # available later in the gain_scale step, which avoids having to
                 # load the gain ref file again in that step.
                 if gain_model.meta.exposure.gain_factor is not None:
-                    input_model.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
+                    result.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
 
                 # Get gain arrays, subarrays if desired.
-                frames_per_group = input_model.meta.exposure.nframes
+                frames_per_group = result.meta.exposure.nframes
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
-                    input_model, readnoise_model, gain_model, frames_per_group)
+                    result, readnoise_model, gain_model, frames_per_group)
 
-            log.info('Using algorithm = %s' % self.algorithm)
-            log.info('Using weighting = %s' % self.weighting)
+            log.info(f"Using algorithm = {self.algorithm}")
+            log.info(f"Using weighting = {self.weighting}")
 
             buffsize = ramp_fit.BUFSIZE
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-            int_times = input_model.int_times
+            int_times = result.int_times
 
             # Before the ramp_fit() call, copy the input model ("_W" for weighting)
             # for later reconstruction of the fitting array tuples.
-            input_model_W = copy.copy(input_model)
+            input_model_W = result.copy()
+
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
-                input_model, buffsize, self.save_opt, readnoise_2d, gain_2d,
+                result, buffsize, self.save_opt, readnoise_2d, gain_2d,
                 self.algorithm, self.weighting, max_cores, dqflags.pixel,
                 suppress_one_group=self.suppress_one_group)
 
             # Create a gdq to modify if there are charge_migrated groups
-            gdq = input_model_W.groupdq.copy()
+            if self.algorithm == "OLS":
+                gdq = input_model_W.groupdq.copy()
 
-            # Locate groups where that are flagged with CHARGELOSS
-            wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
+                # Locate groups where that are flagged with CHARGELOSS
+                wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), dqflags.group['CHARGELOSS']))
 
-            if len(wh_chargeloss[0]) > 0:
-                # Unflag groups flagged as both CHARGELOSS and DO_NOT_USE
-                gdq[wh_chargeloss] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['CHARGELOSS'])
+                if len(wh_chargeloss[0]) > 0:
+                    # Unflag groups flagged as both CHARGELOSS and DO_NOT_USE
+                    gdq[wh_chargeloss] -= (dqflags.group['DO_NOT_USE'] + dqflags.group['CHARGELOSS'])
 
-                # Flag SATURATED groups as DO_NOT_USE for later segment determination
-                where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
-                gdq[where_sat] = np.bitwise_or(gdq[where_sat], dqflags.group['DO_NOT_USE'])
+                    # Flag SATURATED groups as DO_NOT_USE for later segment determination
+                    where_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
+                    gdq[where_sat] = np.bitwise_or(gdq[where_sat], dqflags.group['DO_NOT_USE'])
 
-                # Get group_time for readnoise variance calculation
-                group_time = input_model.meta.exposure.group_time
+                    # Get group_time for readnoise variance calculation
+                    group_time = result.meta.exposure.group_time
 
-                # Using the modified GROUPDQ array, create new readnoise variance arrays
-                image_var_RN, integ_var_RN, opt_var_RN = \
-                    compute_RN_variances(gdq, readnoise_2d, gain_2d, group_time)
+                    # Using the modified GROUPDQ array, create new readnoise variance arrays
+                    image_var_RN, integ_var_RN, opt_var_RN = \
+                        compute_RN_variances(gdq, readnoise_2d, gain_2d, group_time)
 
-                # Create new ramp fitting array tuples, by inserting the new
-                # readnoise variances into copies of the original ramp fitting
-                # tuples.
-                image_info_new, integ_info_new = None, None
-                if image_info is not None and image_var_RN is not None:
-                    image_info_new = (image_info[0], image_info[1], image_info[2], image_var_RN, image_info[4])
+                    # Create new ramp fitting array tuples, by inserting the new
+                    # readnoise variances into copies of the original ramp fitting
+                    # tuples.
+                    image_info_new, integ_info_new = None, None
+                    ch_int, ch_grp, ch_row, ch_col = wh_chargeloss
+                    if image_info is not None and image_var_RN is not None:
+                        rnoise = image_info[3]
+                        rnoise[ch_row, ch_col] = image_var_RN[ch_row, ch_col]
+                        image_info_new = (image_info[0], image_info[1], image_info[2], rnoise, image_info[4])
 
-                if integ_info is not None and integ_var_RN is not None:
-                    integ_info_new = (integ_info[0], integ_info[1], integ_info[2], integ_var_RN, integ_info[4])
+                    if integ_info is not None and integ_var_RN is not None:
+                        rnoise = integ_info[3]
+                        rnoise[ch_int, ch_row, ch_col] = integ_var_RN[ch_int, ch_row, ch_col]
+                        integ_info_new = (integ_info[0], integ_info[1], integ_info[2], rnoise, integ_info[4])
 
-                image_info = image_info_new
-                integ_info = integ_info_new
+                    image_info = image_info_new
+                    integ_info = integ_info_new
 
-                opt_info_new = None
-                if opt_info is not None and opt_var_RN is not None:
-                    opt_info_new = (opt_info[0], opt_info[1], opt_info[2], opt_var_RN,
-                                    opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
+                    opt_info_new = None
+                    if opt_info is not None and opt_var_RN is not None:
+                        opt_info_new = (opt_info[0], opt_info[1], opt_info[2], opt_var_RN,
+                                        opt_info[4], opt_info[5], opt_info[6], opt_info[7], opt_info[8])
 
-                opt_info = opt_info_new
+                    opt_info = opt_info_new
 
         # Save the OLS optional fit product, if it exists.
         if opt_info is not None:
-            opt_model = create_optional_results_model(input_model, opt_info)
+            opt_model = create_optional_results_model(result, opt_info)
             self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
         '''
         # GLS removed from code, since it's not implemented right now.
@@ -510,19 +529,22 @@ class RampFitStep(Step):
         out_model, int_model = None, None
         # Create models from possibly updated info
         if image_info is not None and integ_info is not None:
-            out_model = create_image_model(input_model, image_info)
+            out_model = create_image_model(result, image_info)
             out_model.meta.bunit_data = 'DN/s'
             out_model.meta.bunit_err = 'DN/s'
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
-            if ((input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or
-                    (input_model.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
-                     input_model.meta.instrument.lamp_mode == 'IFU')):
+            if ((result.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or
+                    (result.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
+                     result.meta.instrument.lamp_mode == 'IFU')):
 
                 out_model = datamodels.IFUImageModel(out_model)
 
-            int_model = create_integration_model(input_model, integ_info, int_times)
+            int_model = create_integration_model(result, integ_info, int_times)
             int_model.meta.bunit_data = 'DN/s'
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
+
+        # Cleanup
+        del result
 
         return out_model, int_model

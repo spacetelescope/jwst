@@ -121,7 +121,13 @@ The ``extract_1d`` step has the following step-specific arguments.
    is a MIRI MRS only paramenter. Values accepted are between 0.5 to 3.0. The default extraction
    size is set to 2 * FWHM. Values below 2 will result in a smaller
    radius, a value of 2 results in no change to radius and a value above 2 results in a larger
-   extraction radius.  
+   extraction radius.
+
+``--ifu_covar_scale``
+   A float to be multiplied into the error arrays of the extracted spectra to account
+   for covariance between adjacent spaxels in the IFU data cube.  The default value is
+   1.0 (i.e., no correction) unless set by a user or a parameter reference file.  This
+   parameter only affects MIRI and NIRSpec IFU spectroscopy.
    
 ``--soss_atoca``
   This is a NIRISS-SOSS algorithm-specific parameter; if True, use the ATOCA
@@ -162,11 +168,6 @@ The ``extract_1d`` step has the following step-specific arguments.
   This is a NIRISS-SOSS algorithm-specific parameter; the maximum grid size allowed. It is
   used when soss_wave_grid is not provided to make sure the computation time or the memory
   used stays reasonable. Default value is 20000.
-
-``--soss_transform``
-  This is a NIRISS-SOSS algorithm-specific parameter; this defines a rotation to
-  apply to the reference files to match the observation. It should be specified as
-  a list of three floats, with default values of None.
 
 ``--soss_tikfac``
   This is a NIRISS-SOSS algorithm-specific parameter; this is the regularization

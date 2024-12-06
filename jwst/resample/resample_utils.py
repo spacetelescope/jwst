@@ -9,7 +9,8 @@ import gwcs
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
+from jwst.assign_wcs.util import wcs_bbox_from_shape
+from stcal.alignment import util
 
 
 log = logging.getLogger(__name__)
@@ -22,21 +23,29 @@ __all__ = ['decode_context']
 def make_output_wcs(input_models, ref_wcs=None,
                     pscale_ratio=None, pscale=None, rotation=None, shape=None,
                     crpix=None, crval=None):
-    """ Generate output WCS here based on footprints of all input WCS objects
+    """Generate output WCS here based on footprints of all input WCS objects.
+
     Parameters
     ----------
-    input_models : list of `~jwst.datamodel.JwstDataModel`
-        Each datamodel must have a ~gwcs.WCS object.
+    input_models : `~jwst.datamodel.ModelLibrary`
+        The datamodels to combine into a single output WCS. Each datamodel must
+        have a ``meta.wcs.s_region`` attribute.
 
-    pscale_ratio : float, optional
-        Ratio of input to output pixel scale. Ignored when ``pscale`` is provided.
+    ref_wcs : gwcs.WCS, None, optional
+        Custom WCS to use as the output WCS. If not provided,
+        the reference WCS will be taken as the WCS of the first input model, with
+        its bounding box adjusted to encompass all input frames.
+
+    pscale_ratio : float, None, optional
+        Ratio of input to output pixel scale. Ignored when ``pscale``
+        is provided.
 
     pscale : float, None, optional
         Absolute pixel scale in degrees. When provided, overrides
         ``pscale_ratio``.
 
     rotation : float, None, optional
-        Position angle of output image’s Y-axis relative to North.
+        Position angle of output image Y-axis relative to North.
         A value of 0.0 would orient the final output image to be North up.
         The default of `None` specifies that the images will not be rotated,
         but will instead be resampled in the default orientation for the camera
@@ -50,7 +59,7 @@ def make_output_wcs(input_models, ref_wcs=None,
         WCS object.
 
     crpix : tuple of float, None, optional
-        Position of the reference pixel in the image array.  If ``crpix`` is not
+        Position of the reference pixel in the image array. If ``crpix`` is not
         specified, it will be set to the center of the bounding box of the
         returned WCS object.
 
@@ -62,21 +71,28 @@ def make_output_wcs(input_models, ref_wcs=None,
     -------
     output_wcs : object
         WCS object, with defined domain, covering entire set of input frames
-
     """
     if ref_wcs is None:
-        wcslist = [i.meta.wcs for i in input_models]
-        for w, i in zip(wcslist, input_models):
-            if w.bounding_box is None:
-                w.bounding_box = wcs_bbox_from_shape(i.data.shape)
-        naxes = wcslist[0].output_frame.naxes
+        sregion_list = []
+        with input_models:
+            for i, model in enumerate(input_models):
+                sregion_list.append(model.meta.wcsinfo.s_region)
+                if i == 0:
+                    example_model = model
+                    ref_wcs = example_model.meta.wcs
+                    ref_wcsinfo = example_model.meta.wcsinfo.instance
+                input_models.shelve(model)
+        naxes = ref_wcs.output_frame.naxes
 
         if naxes != 2:
-            raise RuntimeError("Output WCS needs 2 spatial axes. "
-                               f"{wcslist[0]} has {naxes}.")
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
+            raise RuntimeError(msg)
 
-        output_wcs = wcs_from_footprints(
-            input_models,
+        output_wcs = util.wcs_from_sregions(
+            sregion_list,
+            ref_wcs,
+            ref_wcsinfo,
             pscale_ratio=pscale_ratio,
             pscale=pscale,
             rotation=rotation,
@@ -84,19 +100,22 @@ def make_output_wcs(input_models, ref_wcs=None,
             crpix=crpix,
             crval=crval
         )
+        del example_model
 
     else:
         naxes = ref_wcs.output_frame.naxes
         if naxes != 2:
-            raise RuntimeError("Output WCS needs 2 spatial axes but the "
-                               f"supplied WCS has {naxes} axes.")
+            msg = ("Output WCS needs 2 spatial axes "
+                   f"but the supplied WCS has {naxes} axes.")
+            raise RuntimeError(msg)
         output_wcs = deepcopy(ref_wcs)
         if shape is not None:
             output_wcs.array_shape = shape
 
     # Check that the output data shape has no zero length dimensions
     if not np.prod(output_wcs.array_shape):
-        raise ValueError(f"Invalid output frame shape: {tuple(output_wcs.array_shape)}")
+        msg = f"Invalid output frame shape: {tuple(output_wcs.array_shape)}"
+        raise ValueError(msg)
 
     return output_wcs
 
@@ -182,7 +201,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
             inv_variance = 1.0
         result = inv_variance * dqmask
     elif weight_type == 'exptime':
-        if _check_for_tmeasure(model):
+        if check_for_tmeasure(model):
             exptime = model.meta.exposure.measurement_time
         else:
             exptime = model.meta.exposure.exposure_time
@@ -210,6 +229,27 @@ def build_mask(dqarr, bitvalue):
 def is_sky_like(frame):
     # Differentiate between sky-like and cartesian frames
     return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
+
+
+def is_flux_density(bunit):
+    """
+    Differentiate between surface brightness and flux density data units.
+
+    Parameters
+    ----------
+    bunit : str or `~astropy.units.Unit`
+       Data units, e.g. 'MJy' (is flux density) or 'MJy/sr' (is not).
+
+    Returns
+    -------
+    bool
+        True if the units are equivalent to flux density units.
+    """
+    try:
+        flux_density = u.Unit(bunit).is_equivalent(u.Jy)
+    except (ValueError, TypeError):
+        flux_density = False
+    return flux_density
 
 
 def decode_context(context, x, y):
@@ -311,7 +351,7 @@ def _resample_range(data_shape, bbox=None):
     return xmin, xmax, ymin, ymax
 
 
-def _check_for_tmeasure(model):
+def check_for_tmeasure(model):
     '''
     Check if the measurement_time keyword is present in the datamodel
     for use in exptime weighting. If not, revert to using exposure_time.

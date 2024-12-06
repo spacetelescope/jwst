@@ -22,6 +22,7 @@ from ..reset import reset_step
 from ..persistence import persistence_step
 from ..charge_migration import charge_migration_step
 from ..jump import jump_step
+from ..clean_flicker_noise import clean_flicker_noise_step
 from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
@@ -64,6 +65,7 @@ class Detector1Pipeline(Pipeline):
                  'persistence': persistence_step.PersistenceStep,
                  'charge_migration': charge_migration_step.ChargeMigrationStep,
                  'jump': jump_step.JumpStep,
+                 'clean_flicker_noise': clean_flicker_noise_step.CleanFlickerNoiseStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
                  'gain_scale': gain_scale_step.GainScaleStep,
                  }
@@ -87,18 +89,18 @@ class Detector1Pipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
-            input = self.emicorr(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.firstframe(input)
-            input = self.lastframe(input)
-            input = self.reset(input)
-            input = self.linearity(input)
-            input = self.rscd(input)
-            input = self.dark_current(input)
-            input = self.refpix(input)
+            input = self.group_scale.run(input)
+            input = self.dq_init.run(input)
+            input = self.emicorr.run(input)
+            input = self.saturation.run(input)
+            input = self.ipc.run(input)
+            input = self.firstframe.run(input)
+            input = self.lastframe.run(input)
+            input = self.reset.run(input)
+            input = self.linearity.run(input)
+            input = self.rscd.run(input)
+            input = self.dark_current.run(input)
+            input = self.refpix.run(input)
 
             # skip until MIRI team has figured out an algorithm
             # input = self.persistence(input)
@@ -108,25 +110,28 @@ class Detector1Pipeline(Pipeline):
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.superbias(input)
-            input = self.refpix(input)
-            input = self.linearity(input)
+            input = self.group_scale.run(input)
+            input = self.dq_init.run(input)
+            input = self.saturation.run(input)
+            input = self.ipc.run(input)
+            input = self.superbias.run(input)
+            input = self.refpix.run(input)
+            input = self.linearity.run(input)
 
             # skip persistence for NIRSpec
             if instrument != 'NIRSPEC':
-                input = self.persistence(input)
+                input = self.persistence.run(input)
 
-            input = self.dark_current(input)
+            input = self.dark_current.run(input)
 
         # apply the charge_migration step
-        input = self.charge_migration(input)
+        input = self.charge_migration.run(input)
 
         # apply the jump step
-        input = self.jump(input)
+        input = self.jump.run(input)
+
+        # apply the clean_flicker_noise step
+        input = self.clean_flicker_noise.run(input)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
@@ -138,15 +143,15 @@ class Detector1Pipeline(Pipeline):
         # objects, but when the step is skipped due to `skip = True`,
         # only the input is returned when the step is invoked.
         if self.ramp_fit.skip:
-            input = self.ramp_fit(input)
+            input = self.ramp_fit.run(input)
             ints_model = None
         else:
-            input, ints_model = self.ramp_fit(input)
+            input, ints_model = self.ramp_fit.run(input)
 
         # apply the gain_scale step to the exposure-level product
         if input is not None:
             self.gain_scale.suffix = 'gain_scale'
-            input = self.gain_scale(input)
+            input = self.gain_scale.run(input)
         else:
             log.info("NoneType returned from ramp_fit.  Gain Scale step skipped.")
 
@@ -154,7 +159,7 @@ class Detector1Pipeline(Pipeline):
         # if it exists, and then save it
         if ints_model is not None:
             self.gain_scale.suffix = 'gain_scaleints'
-            ints_model = self.gain_scale(ints_model)
+            ints_model = self.gain_scale.run(ints_model)
             self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving

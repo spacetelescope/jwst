@@ -8,6 +8,10 @@ Description
 
 Overview
 --------
+
+This step has been deprecated  and will be
+skipped by default in the calwebb_spec3 pipeline.
+
 The ``mrs_imatch`` step "matches" image intensities of several input
 2D MIRI MRS images by fitting polynomials to cube intensities (cubes built
 from the input 2D images), in such a way as to minimize - in the least squares

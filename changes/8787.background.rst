@@ -1,0 +1,1 @@
+Fixed crash when combining full and subarray observations for background subtraction.
