@@ -24,7 +24,7 @@ class AmiAnalyzeStep(Step):
         usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew = integer(default=None) # If not None, process only the first few integrations
         chooseholes = string(default=None) # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
-        affine2d = string(default=None) # ASDF file containing user-defined affine parameters
+        affine2d = string(default='commissioning') # ASDF file containing user-defined affine parameters OR 'commssioning'
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
@@ -180,11 +180,19 @@ class AmiAnalyzeStep(Step):
             # If there's a user-defined bandpass or affine, handle it
             if bandpass is not None:
                 bandpass = self.override_bandpass()
-
             if affine2d is not None:
-                # if it is None, handled in apply_LG_plus
-                affine2d = self.override_affine2d()
-
+                if affine2d == 'commissioning':
+                    affine2d = utils.Affine2d(mx=9.92820e-01,
+                        my=9.98540e-01,
+                        sx=6.18605e-03,
+                        sy=-7.27008e-03,
+                        xo=0,
+                        yo=0,
+                        name='commissioning')
+                    self.log.info("Using affine parameters from commissioning.")
+                else:
+                    affine2d = self.override_affine2d()
+            # and if it is None, rotation search done in apply_LG_plus
 
             # Get the name of the NRM reference file to use
             nrm_reffile = self.get_reference_file(input_model, 'nrm')
