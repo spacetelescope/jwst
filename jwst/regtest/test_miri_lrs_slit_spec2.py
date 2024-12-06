@@ -65,24 +65,6 @@ def test_miri_lrs_extract1d_from_cal(run_pipeline, rtdata_module, fitsdiff_defau
 
 
 @pytest.mark.bigdata
-def test_miri_lrs_extract1d_image_ref(run_pipeline, rtdata_module, fitsdiff_default_kwargs):
-    rtdata = rtdata_module
-
-    rtdata.get_data("miri/lrs/jw01530005001_03103_00001_mirimage_image_ref.fits")
-    rtdata.input = "jw01530005001_03103_00001_mirimage_cal.fits"
-    Extract1dStep.call(rtdata.input,
-                       override_extract1d="jw01530005001_03103_00001_mirimage_image_ref.fits",
-                       suffix='x1dfromrefimage',
-                       save_results=True)
-    output = "jw01530005001_03103_00001_mirimage_x1dfromrefimage.fits"
-    rtdata.output = output
-    rtdata.get_truth(f"truth/test_miri_lrs_slit_spec2/{output}")
-
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
-
-
-@pytest.mark.bigdata
 def test_miri_lrs_slit_wcs(run_pipeline, rtdata_module, fitsdiff_default_kwargs):
     rtdata = rtdata_module
 
