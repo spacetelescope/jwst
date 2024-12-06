@@ -44,7 +44,18 @@ def subtract_wfss_bkg(
     """
 
     bkg_ref = datamodels.open(bkg_filename)
+    
+    # get the dispersion axis
+    try:
+        dispaxis = input_model.meta.wcsinfo.dispersion_direction
+    except AttributeError:
+        log.warning("Dispersion axis not found in input science image metadata. "
+                    "Variance stopping criterion will have no effect for iterative "
+                    "outlier rejection (will run until maxiter).")
+        dispaxis = None
+    rescaler_kwargs["dispersion_axis"] = dispaxis
 
+    # get the source catalog for masking
     if hasattr(input_model.meta, "source_catalog"):
         got_catalog = True
     else:
@@ -161,6 +172,7 @@ class _ScalingFactorComputer:
                 rms_resid = self._compute_rms_residual(sci_sub)
             i += 1
 
+        self._iters_run_last_call = i
         return self.err_weighted_mean(sci, bkg, var), mask
 
 

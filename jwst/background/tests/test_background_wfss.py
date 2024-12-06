@@ -127,14 +127,6 @@ def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     return bkg_fname
 
 
-def test_make_wfss_ref_bkg(make_wfss_ref_bkg):
-    bkg_model = datamodels.open(make_wfss_ref_bkg)
-    bkg = bkg_model.data
-    import matplotlib.pyplot as plt
-    plt.imshow(bkg, origin='lower')
-    plt.show()
-
-
 filter_list = ['F250M', 'F277W', 'F335M', 'F356W', 'F460M',
                'F356W', 'F410M', 'F430M', 'F444W']  # + ['F480M', 'F322W2', 'F300M']
 
@@ -254,7 +246,9 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     # ensure it still works after iteration
     for niter in [1,2,5]:
         for p in [2, 0.5, 0.1]:
-            rescaler = rescaler = _ScalingFactorComputer(p=p, maxiter=niter)
+            rescaler = _ScalingFactorComputer(p=p, maxiter=niter)
+            assert rescaler.rms_thresh == -1 #check rms_thresh=None input sets thresh properly
+
             factor, mask_out = rescaler(sci, bkg, var)
             mask_fraction = np.sum(mask_out)/mask_out.size
             max_mask_fraction = p*niter*2 + INITIAL_NAN_FRACTION
@@ -263,7 +257,32 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
             assert mask_fraction <= max_mask_fraction
             assert mask_fraction > INITIAL_NAN_FRACTION
     
-    # TODO: test that this works with variance stopping criterion
-    # TODO: test invalid inputs
-    # TODO: test passing in all the different options
+    # test that variance stopping criterion works
+    # tune the RMS thresh to take roughly half the iterations
+    # need lots of significant digits here because iterating makes little difference
+    # for this test case
+    maxiter = 10
+    rms_thresh = 0.0215 
+    rescaler = _ScalingFactorComputer(p=0.5, dispersion_axis=1, rms_thresh=rms_thresh, maxiter=maxiter)
+    factor, mask_out = rescaler(sci, bkg, var)
+    assert rescaler._iters_run_last_call < maxiter
+    # ensure the final answer variance is smaller than rms_thresh
+    sci[mask_out] = np.nan
+    bkg[mask_out] = np.nan
+    var[mask_out] = np.nan
+    final_factor = rescaler.err_weighted_mean(sci, bkg, var)
+    final_sub = sci - final_factor*bkg
+    assert rescaler._compute_rms_residual(final_sub) <= rms_thresh
 
+    # test putting mask=None works ok, and that maxiter=0 just gives you err weighted mean
+    rescaler = _ScalingFactorComputer(maxiter=0)
+    factor, mask_out = rescaler(sci, bkg, var)
+    assert np.all(mask_out == 0)
+    assert factor == rescaler.err_weighted_mean(sci, bkg, var)
+
+    # test invalid inputs
+    with pytest.raises(ValueError):
+        rescaler = _ScalingFactorComputer(dispersion_axis=5, rms_thresh=1)
+
+    with pytest.raises(ValueError):
+        rescaler = _ScalingFactorComputer(dispersion_axis=None, rms_thresh=1)
