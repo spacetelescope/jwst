@@ -46,7 +46,8 @@ def run_detect_jumps(
 
         only_use_ints=True,
         mask_snowball_persist_next_int=True,
-        snowball_time_masked_next_int=250
+        snowball_time_masked_next_int=250,
+        max_shower_amplitude=4
 ):
     # determine the number of groups that correspond to the after_jump times
     # needed because the group time is not passed to detect_jumps_data

@@ -187,5 +187,6 @@ class JumpStep(Step):
         jump_data.grps_masked_after_shower = int(self.time_masked_after_shower // gtime)
         jump_data.mask_persist_grps_next_int = self.mask_snowball_core_next_int
         jump_data.persist_grps_flagged = int(self.snowball_time_masked_next_int // gtime)
+        jump_data.max_shower_amplitude = jump_data.max_shower_amplitude * gtime
 
         return jump_data
