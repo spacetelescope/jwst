@@ -1769,8 +1769,6 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
     model.groupdq[0, 4:, 5, 1] = SATURATED
     model.data[0, 4:, 5, 1] = SAT_SCI
 
-    # out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
-
     # run jump detection
     out_model = JumpStep.call(
         model,
