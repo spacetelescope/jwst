@@ -75,23 +75,36 @@ def run_detect_jumps(
 
     # Create and populate the RampData class
     jump_data = JumpData(output_model, gain_2d, readnoise_2d, dqflags.pixel)
+
     jump_data.set_detection_settings(
         rejection_thresh, three_grp_thresh, four_grp_thresh, max_jump_to_flag_neighbors,
         min_jump_to_flag_neighbors, flag_4_neighbors)
+
+    print("=" * 80)
+    print("    jump.py:")
+    print("=" * 80)
+
     jump_data.set_after_jump(
-        after_jump_flag_dn1, after_jump_flag_n1, after_jump_flag_dn2, after_jump_flag_n2)
+        after_jump_flag_dn1, after_jump_flag_n1,
+        after_jump_flag_dn2, after_jump_flag_n2)
+
     jump_data.set_snowball_info(
         expand_large_events, min_jump_area, min_sat_area, expand_factor, sat_required_snowball,
         min_sat_radius_extend, sat_expand, edge_size)
+
     jump_data.set_shower_info(
         find_showers, extend_snr_threshold, extend_min_area, extend_inner_radius,
         extend_outer_radius, extend_ellipse_expand_ratio, min_diffs_single_pass, max_extended_radius)
+
     jump_data.set_sigma_clipping_info(
         minimum_groups, minimum_sigclip_groups, only_use_ints)
+
     jump_data.max_cores = max_cores
     jump_data.grps_masked_after_shower = int(time_masked_after_shower // gtime)
     jump_data.mask_persist_grps_next_int = mask_snowball_persist_next_int
     jump_data.persist_grps_flagged = int(snowball_time_masked_next_int // gtime)
+
+    new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(jump_data)
 
     # Detect jumps
     new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(jump_data)
