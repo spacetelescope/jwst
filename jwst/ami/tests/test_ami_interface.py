@@ -48,8 +48,8 @@ def example_model(mock_nrm_reference_file):
     model.meta.program.pi_name = "someone"
     model.meta.target.catalog_name = ""
     model.meta.visit.start_time = "2022-06-05 12:15:41.5020000"
-    model.meta.wcsinfo.roll_ref = 171.8779402866089
-    model.meta.wcsinfo.v3yangle = 0.56126717
+    model.meta.ami.roll_ref = 171.8779402866089
+    model.meta.ami.v3yangle = 0.56126717
     model.meta.filename = "test_calints.fits"
     model.meta.instrument.pupil = "NRM"
     model.meta.exposure.type = "NIS_AMI"
