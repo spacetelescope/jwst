@@ -5,6 +5,7 @@ from numpy.testing import assert_allclose
 from astropy import units as u
 from astropy import wcs
 from astropy.io import fits
+from astropy.coordinates import SkyCoord, SpectralCoord
 from astropy.modeling.models import RotationSequence3D
 
 from gwcs.wcstools import grid_from_bounding_box
@@ -148,7 +149,10 @@ def test_frame_from_model_3d(tmp_path, create_model_3d):
     # Test CompositeFrame initialization (celestial and spectral)
     im = create_model_3d
     frame = pointing.frame_from_model(im)
-    radec, lam = frame.coordinates(1, 2, 3)
+    
+    # This "fix" is subject to change, API maybe added to gwcs to handle this sort of thing.
+    radec = SkyCoord(1, 2, unit=frame.frames[0].unit, frame=frame.frames[0].reference_frame)
+    lam = SpectralCoord(3, frame.frames[1].unit[0])
 
     assert_allclose(radec.spherical.lon.value, 1)
     assert_allclose(radec.spherical.lat.value, 2)
