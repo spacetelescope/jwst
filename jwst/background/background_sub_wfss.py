@@ -42,7 +42,6 @@ def subtract_wfss_bkg(
     result : JWST data model
         background-subtracted target data model
     """
-
     bkg_ref = datamodels.open(bkg_filename)
     
     # get the dispersion axis
@@ -195,7 +194,7 @@ class _ScalingFactorComputer:
         the median along the dispersion axis.
         Note meta.wcsinfo.dispersion_axis is 1-indexed coming out of assign_wcs, i.e., in [1,2].
         So we need to """
-        collapsing_axis = int(not bool(self.dispersion_axis - 1))
+        collapsing_axis = int(self.dispersion_axis - 1)
         sci_sub_profile = np.nanmedian(sci_sub, axis=collapsing_axis)
         return np.sqrt(np.nanmean(sci_sub_profile**2))
 
