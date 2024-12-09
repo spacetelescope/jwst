@@ -23,17 +23,14 @@ class NRM_definition():
 		----------
 		nrm_model: NRMModel
 			datamodel containing NRM reference file data
-		
+		maskname: string
+			Identifier for mask geometry; default 'jwst_ami', optional
 		rotdeg: list of floats
-			range of rotations to search (degrees)
-
+			range of rotations to search (degrees), optional
 		chooseholes: list
-			None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
-
-		Returns
-		-------
-		None
+			None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask, optional
 		"""
+
 		if maskname not in ['jwst_ami','jwst_g7s6c']:
 			raise ValueError("Mask name not supported")
 
@@ -113,9 +110,6 @@ class NRM_definition():
 		"""
 		Calculate the diameter of the smallest centered circle (D)
 		enclosing the live mask area
-
-		Parameters
-		----------
 
 		Returns
 		-------
