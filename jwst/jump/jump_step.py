@@ -101,6 +101,7 @@ class JumpStep(Step):
 
             # Detect jumps
             jump_data = self._setup_jump_data(result)
+
             new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(jump_data)
                 
             # Update the DQ arrays of the output model with the jump detection results
@@ -157,6 +158,7 @@ class JumpStep(Step):
 
 
         jump_data = JumpData(result, gain_2d, rnoise_2d, dqflags.pixel)
+
         jump_data.set_detection_settings(
             self.rejection_threshold, self.three_group_rejection_threshold, self.four_group_rejection_threshold,
             self.max_jump_to_flag_neighbors, self.min_jump_to_flag_neighbors, self.flag_4_neighbors)
@@ -166,8 +168,14 @@ class JumpStep(Step):
         gtime = result.meta.exposure.group_time
         after_jump_flag_n1 = int(self.after_jump_flag_time1 // gtime)
         after_jump_flag_n2 = int(self.after_jump_flag_time2 // gtime)
+
+        print("=" * 80)
+        print("    jump_step.py:")
+        print("=" * 80)
+
         jump_data.set_after_jump(
-            self.after_jump_flag_dn1, after_jump_flag_n1, self.after_jump_flag_dn2, after_jump_flag_n2)
+            self.after_jump_flag_dn1, after_jump_flag_n1,
+            self.after_jump_flag_dn2, after_jump_flag_n2)
 
         sat_expand = self.sat_expand * 2
         jump_data.set_snowball_info(
