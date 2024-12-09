@@ -29,8 +29,6 @@ class PixelReplacement:
     VERTICAL = 2
     LOG_SLICE = ['column', 'row']
 
-    default_suffix = 'pixrep'
-
     def __init__(self, input_model, **pars):
         """
         Initialize the class with input data model.
