@@ -1546,9 +1546,10 @@ def create_extraction(input_model, slit, output_model,
 
     # Turn off use_source_posn if the source is not POINT
     if source_type != 'POINT' or exp_type in WFSS_EXPTYPES:
-        kwargs['use_source_posn'] = False
-        log.info(f"Setting use_source_posn to False for exposure type {exp_type}, "
-                 f"source type {source_type}")
+        if kwargs.get('use_source_posn') is None:
+            kwargs['use_source_posn'] = False
+            log.info(f"Setting use_source_posn to False for exposure type {exp_type}, "
+                     f"source type {source_type}")
 
     if photom_has_been_run:
         pixel_solid_angle = data_model.meta.photometry.pixelarea_steradians
