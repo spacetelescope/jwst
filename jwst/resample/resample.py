@@ -1,6 +1,5 @@
 import logging
 import os
-import warnings
 import json
 
 import numpy as np
