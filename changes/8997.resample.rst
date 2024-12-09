@@ -1,0 +1,2 @@
+Resample variance and error arrays using squared drizzle coefficients
+(error propagation).

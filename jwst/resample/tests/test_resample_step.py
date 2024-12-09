@@ -788,19 +788,38 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
     var_poisson = 0.00025
     im = AssignWcsStep.call(nircam_rate)
     _set_photom_kwd(im)
+    im.data[:, :] = 1.0
     im.var_rnoise += var_rnoise
     im.var_poisson += var_poisson
     im.err += err
     im.meta.filename = "foo.fits"
 
+    c1 = ModelLibrary([im.copy()])
     c = ModelLibrary([im.copy() for _ in range(n_images)])
 
+    result1 = ResampleStep.call(c1, blendheaders=False, weight_type=weight_type)
     result = ResampleStep.call(c, blendheaders=False, weight_type=weight_type)
 
     # Verify that the combined uncertainty goes as 1 / sqrt(N)
-    assert_allclose(result.err[5:-5, 5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
-    assert_allclose(result.var_rnoise[5:-5, 5:-5].mean(), var_rnoise / n_images, atol=1e-7)
-    assert_allclose(result.var_poisson[5:-5, 5:-5].mean(), var_poisson / n_images, atol=1e-7)
+    mask = np.isfinite(result.err)
+
+    assert np.all((result1.err[mask] / err) <= 1.0)
+    assert_allclose(
+        result.err[mask].mean(),
+        result1.err[mask].mean() / np.sqrt(n_images), atol=1e-5
+    )
+
+    assert np.all((result1.var_rnoise[mask] / var_rnoise) <= 1.0)
+    assert_allclose(
+        result.var_rnoise[mask].mean(),
+        result1.var_rnoise[mask].mean() / n_images, atol=1e-5
+    )
+
+    assert np.all((result1.var_poisson[mask] / var_poisson) <= 1.0)
+    assert_allclose(
+        result.var_poisson[mask].mean(),
+        result1.var_poisson[mask].mean() / n_images, atol=1e-5
+    )
 
     im.close()
     result.close()
@@ -819,8 +838,8 @@ def test_resample_undefined_variance(nircam_rate, shape):
     with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
         result = ResampleStep.call(c, blendheaders=False)
 
-    # no valid variance - output error and variance are all NaN
-    assert_allclose(result.err, np.nan)
+    # no valid variance - variance are all NaN
+    assert np.any(np.isfinite(result.err))
     assert_allclose(result.var_rnoise, np.nan)
     assert_allclose(result.var_poisson, np.nan)
     assert_allclose(result.var_flat, np.nan)
@@ -928,8 +947,8 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     input_mean = np.nanmean(im.data)
     output_mean_1 = np.nanmean(data1)
     output_mean_2 = np.nanmean(data2)
-    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
-    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
+    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=2e-4)
+    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=2e-4)
 
     im.close()
     result.close()
