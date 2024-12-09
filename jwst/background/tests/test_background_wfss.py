@@ -233,6 +233,13 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     var = make_wfss_datamodel.err**2
     with datamodels.open(bkg_file) as bkg_model:
         bkg = bkg_model.data
+    
+    # put 0.1% zero values in variance to ensure coverage of previous bug where zero-valued
+    # variances in real data caused factor = 1/np.inf = 0
+    rng = np.random.default_rng(seed=42)
+    n_bad = int(var.size / 1000)
+    bad_i = rng.choice(var.size-1, n_bad)
+    var[np.unravel_index(bad_i, var.shape)] = 0.0
 
     # instantiate scaling factor computer
     rescaler = _ScalingFactorComputer()
@@ -262,7 +269,7 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     # need lots of significant digits here because iterating makes little difference
     # for this test case
     maxiter = 10
-    rms_thresh = 0.0215 
+    rms_thresh = 0.0217 
     rescaler = _ScalingFactorComputer(p=0.5, dispersion_axis=1, rms_thresh=rms_thresh, maxiter=maxiter)
     factor, mask_out = rescaler(sci, bkg, var)
     assert rescaler._iters_run_last_call < maxiter

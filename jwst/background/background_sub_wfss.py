@@ -87,7 +87,7 @@ def subtract_wfss_bkg(
     result.data = input_model.data - subtract_this
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
 
-    log.info(f"Average of background image subtracted = {np.nanmean(subtract_this):.5f}")
+    log.info(f"Average of background image subtracted = {np.nanmean(subtract_this):.3e}")
 
     bkg_ref.close()
 
@@ -115,7 +115,7 @@ class _ScalingFactorComputer:
         """
         if rms_thresh is None:
             rms_thresh = -1
-        if (rms_thresh > 0) and (dispersion_axis not in [0,1]):
+        if (rms_thresh > 0) and (dispersion_axis not in [1,2]):
             msg = (f"Unrecognized dispersion axis {dispersion_axis}. "
                     "Dispersion axis must be specified if rms_thresh "
                     "is used as a stopping criterion.")
@@ -177,6 +177,9 @@ class _ScalingFactorComputer:
 
 
     def err_weighted_mean(self, sci, bkg, var):
+        """Remove any var=0 values, which can happen for real data"""
+        mask = (var == 0)
+        self._update_nans(sci, bkg, var, mask)
         return np.nansum(sci*bkg/var) / np.nansum(bkg*bkg/var)
 
 
@@ -187,11 +190,14 @@ class _ScalingFactorComputer:
 
 
     def _compute_rms_residual(self, sci_sub):
-        """Calculate the RMS of the cross-dispersion background, which is found by taking
-        the median along the dispersion axis"""
-        sci_sub_profile = np.nanmedian(sci_sub, axis=self.dispersion_axis)
+        """
+        Calculate the RMS of the cross-dispersion background, which is found by taking
+        the median along the dispersion axis.
+        Note meta.wcsinfo.dispersion_axis is 1-indexed coming out of assign_wcs, i.e., in [1,2].
+        So we need to """
+        collapsing_axis = int(not bool(self.dispersion_axis - 1))
+        sci_sub_profile = np.nanmedian(sci_sub, axis=collapsing_axis)
         return np.sqrt(np.nanmean(sci_sub_profile**2))
-
 
 
 def _sufficient_background_pixels(dq_array, bkg_mask, min_pixels=100):
