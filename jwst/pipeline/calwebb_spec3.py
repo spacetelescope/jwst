@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from collections import defaultdict
-from functools import wraps
 import os.path as op
 
 from stdatamodels.jwst import datamodels
