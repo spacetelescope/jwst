@@ -97,12 +97,9 @@ class JumpStep(Step):
             if self.maximum_cores != 'none':
                 self.log.info('Maximum cores to use = %s', self.maximum_cores)
 
-            # Work on a copy
+            # Detect jumps using a copy of the input data model.
             result = input_model.copy()
-
-            # Detect jumps
             jump_data = self._setup_jump_data(result)
-
             new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(jump_data)
                 
             # Update the DQ arrays of the output model with the jump detection results
@@ -136,6 +133,9 @@ class JumpStep(Step):
         return result
 
     def _setup_jump_data(self, result):
+        """
+        Create a JumpData instance to be used by STCAL jump.
+        """
         # Get the gain and readnoise reference files
         gain_filename = self.get_reference_file(result, 'gain')
         self.log.info('Using GAIN reference file: %s', gain_filename)
@@ -157,7 +157,7 @@ class JumpStep(Step):
                 log.info('Extracting readnoise subarray to match science data')
                 rnoise_2d = reffile_utils.get_subarray_data(result, rnoise_m)
 
-
+        # Instantiate a JumpData class and populate it based on the input RampModel.
         jump_data = JumpData(result, gain_2d, rnoise_2d, dqflags.pixel)
 
         jump_data.set_detection_settings(
@@ -169,10 +169,6 @@ class JumpStep(Step):
         gtime = result.meta.exposure.group_time
         after_jump_flag_n1 = int(self.after_jump_flag_time1 // gtime)
         after_jump_flag_n2 = int(self.after_jump_flag_time2 // gtime)
-
-        print("=" * 80)
-        print("    jump_step.py:")
-        print("=" * 80)
 
         jump_data.set_after_jump(
             self.after_jump_flag_dn1, after_jump_flag_n1,
