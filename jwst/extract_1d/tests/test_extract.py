@@ -1338,6 +1338,35 @@ def test_create_extraction_log_increment(
     log_watcher.assert_seen()
 
 
+@pytest.mark.parametrize('use_source', [True, False, None])
+@pytest.mark.parametrize('source_type', ['POINT', 'EXTENDED'])
+def test_create_extraction_use_source(
+        monkeypatch, create_extraction_inputs, mock_nirspec_fs_one_slit,
+        use_source, source_type, log_watcher):
+    model = mock_nirspec_fs_one_slit
+    model.source_type = source_type
+    create_extraction_inputs[0] = model
+
+    # mock the source location function
+    def mock_source_location(*args):
+        return 24, 7.74, 9.5
+
+    monkeypatch.setattr(ex, 'location_from_wcs', mock_source_location)
+
+    if source_type != 'POINT' and use_source is None:
+        # If not specified, source position should be used only if POINT
+        log_watcher.message = 'Setting use_source_posn to False'
+    elif use_source is True or (source_type == 'POINT' and use_source is None):
+        # If explicitly set to True, or unspecified + source type is POINT,
+        # source position is used
+        log_watcher.message = 'Aperture start/stop: -15'
+    else:
+        # If False, source position is not used 
+        log_watcher.message = 'Aperture start/stop: 0'
+    ex.create_extraction(*create_extraction_inputs, use_source_posn=use_source)
+    log_watcher.assert_seen()
+
+
 def test_run_extract1d(mock_nirspec_mos):
     model = mock_nirspec_mos
     output_model, profile_model, scene_model = ex.run_extract1d(model)
