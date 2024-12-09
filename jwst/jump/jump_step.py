@@ -1,14 +1,15 @@
 #! /usr/bin/env python
 
 from ..stpipe import Step
-from .jump import run_detect_jumps
 import time
 
 import numpy as np
 
 from ..lib import reffile_utils
+
 from stcal.jump.jump_class import JumpData
 from stcal.jump.jump import detect_jumps_data
+
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
