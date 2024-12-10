@@ -1,6 +1,5 @@
 import logging
 import os
-import warnings
 import json
 
 import numpy as np
@@ -148,7 +147,6 @@ class ResampleData:
 
         log.debug(f"Output mosaic size: {tuple(self.output_wcs.pixel_shape)}")
 
-
     def _create_output_model(self, ref_input_model=None):
         """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
         output_model = datamodels.ImageModel(None)  # tuple(self.output_wcs.array_shape))
@@ -245,14 +243,7 @@ class ResampleData:
             fillval=self.fillval,
             disable_ctx=True,
         )
-        # Also make a temporary model to hold error data
-        if compute_error:
-            driz_error = Drizzle(
-                out_shape=self.output_array_shape,
-                kernel=self.kernel,
-                fillval=self.fillval,
-                disable_ctx=True,
-            )
+
         log.info(f"{len(indices)} exposures to drizzle together")
         for index in indices:
             img = input_models.borrow(index)
@@ -309,6 +300,7 @@ class ResampleData:
                 data=data,
                 exptime=img.meta.exposure.exposure_time,  # GWCSDrizzle.add_image param default was 1.0
                 pixmap=pixmap,
+                data2=np.square(img.err) if compute_error else None,
                 scale=iscale,
                 weight_map=inwht,
                 wht_scale=1.0,  # hard-coded for JWST count-rate data
@@ -321,33 +313,15 @@ class ResampleData:
             )
             del data
 
-            # make an approximate error image by drizzling it
-            # in the same way the image is handled
-            if compute_error:
-                driz_error.add_image(
-                    data=img.err,
-                    exptime=img.meta.exposure.exposure_time,  # GWCSDrizzle.add_image param default
-                    pixmap=pixmap,
-                    scale=iscale,
-                    weight_map=inwht,
-                    wht_scale=1.0,  # hard-coded for JWST count-rate data
-                    pixfrac=self.pixfrac,
-                    in_units="cps",  # GWCSDrizzle.add_image param default
-                    xmin=xmin,
-                    xmax=xmax,
-                    ymin=ymin,
-                    ymax=ymax,
-                )
             input_models.shelve(img, index, modify=False)
             del img
 
         output_model.data = driz.out_img
         output_model.wht = driz.out_wht
-        del driz
         # copy the drizzled error into the output model
         if compute_error:
-            output_model.err = driz_error.out_img
-            del driz_error
+            output_model.err = np.sqrt(driz.out_img2[0])
+        del driz
 
         return output_model
 
@@ -409,13 +383,15 @@ class ResampleData:
             max_ctx_id=len(input_models),
             disable_ctx=False,
         )
-        self._init_variance_arrays()
+
         self._init_exptime_counters()
 
         log.info("Resampling science and variance data")
 
-        leading_group_idx = [v[0] for v in input_models.group_indices.values()]
+        invalid_var = 4 * [False]
+        var_list = ["var_rnoise", "var_flat", "var_poisson", "err"]
 
+        leading_group_idx = [v[0] for v in input_models.group_indices.values()]
         with input_models:
             for idx, img in enumerate(input_models):
                 if output_model is None:
@@ -465,10 +441,28 @@ class ResampleData:
                     data.shape,
                 )
 
+                data2 = []
+                for k, name in enumerate(var_list):
+                    var = getattr(img, name)
+                    if var is None or var.shape != data.shape or var.size == 0:
+                        data2.append(None)
+                        invalid_var[k] = True
+                        log.warning(
+                            f"Data shape mismatch for '{name}' for model "
+                            f"{repr(img.meta.filename)}. Skipping ..."
+                        )
+                    else:
+                        if name == "err":
+                            data2.append(np.square(var))
+                        else:
+                            data2.append(var)
+                del var
+
                 driz.add_image(
                     data=data,
                     exptime=img.meta.exposure.exposure_time,  # GWCSDrizzle.add_image param default
                     pixmap=pixmap,
+                    data2=data2,
                     scale=iscale,
                     weight_map=inwht,
                     wht_scale=1.0,  # hard-coded for JWST count-rate data
@@ -478,15 +472,6 @@ class ResampleData:
                     xmax=xmax,
                     ymin=ymin,
                     ymax=ymax,
-                )
-                # Resample variance arrays in input_models to output_model
-                self._resample_variance_arrays(
-                    model=img,
-                    iscale=iscale,
-                    inwht=inwht,
-                    pixmap=pixmap,
-                    in_image_limits=in_image_limits,
-                    output_shape=self.output_array_shape,
                 )
 
                 del data, inwht
@@ -499,23 +484,15 @@ class ResampleData:
         output_model.wht = driz.out_wht
         if driz.out_ctx is not None:
             output_model.con = driz.out_ctx
-
+        for k, name in enumerate(var_list):
+            if invalid_var[k]:
+                var = np.full_like(output_model.data, np.nan)
+            elif name == "err":
+                var = np.sqrt(driz.out_img2[k])
+            else:
+                var = driz.out_img2[k]
+            setattr(output_model, name, var)
         del driz
-
-        # compute final variances:
-        self._compute_resample_variance_totals(output_model)
-
-        var_components = [
-            output_model.var_rnoise,
-            output_model.var_poisson,
-            output_model.var_flat
-        ]
-        output_model.err = np.sqrt(np.nansum(var_components, axis=0))
-
-        # nansum returns zero for input that is all NaN -
-        # set those values to NaN instead
-        all_nan = np.all(np.isnan(var_components), axis=0)
-        output_model.err[all_nan] = np.nan
 
         if self.blendheaders:
             blender.finalize_model(output_model)
@@ -523,202 +500,6 @@ class ResampleData:
         self._get_exptime_totals(output_model)
 
         return ModelLibrary([output_model,], on_disk=False)
-
-    def _init_variance_arrays(self):
-        shape = self.output_array_shape
-        self._weighted_rn_var = np.full(shape, np.nan, dtype=np.float32)
-        self._weighted_pn_var = np.full(shape, np.nan, dtype=np.float32)
-        self._weighted_flat_var = np.full(shape, np.nan, dtype=np.float32)
-        self._total_weight_rn_var = np.zeros(shape, dtype=np.float32)
-        self._total_weight_pn_var = np.zeros(shape, dtype=np.float32)
-        self._total_weight_flat_var = np.zeros(shape, dtype=np.float32)
-
-    def _resample_variance_arrays(self, model, iscale, inwht, pixmap,
-                                  in_image_limits, output_shape):
-        xmin, xmax, ymin, ymax = in_image_limits
-
-        # Do the read noise variance first, so it can be
-        # used for weights if needed
-        rn_var = self._resample_one_variance_array(
-            "var_rnoise",
-            input_model=model,
-            iscale=iscale,
-            inwht=inwht,
-            pixmap=pixmap,
-            xmin=xmin,
-            xmax=xmax,
-            ymin=ymin,
-            ymax=ymax,
-        )
-
-        # Find valid weighting values in the variance
-        if rn_var is not None:
-            mask = (rn_var > 0) & np.isfinite(rn_var)
-        else:
-            mask = np.full_like(rn_var, False)
-
-        # Set the weight for the image from the weight type
-        weight = np.ones(output_shape)
-        if self.weight_type == "ivm" and rn_var is not None:
-            weight[mask] = rn_var[mask] ** -1
-        elif self.weight_type == "exptime":
-            if resample_utils.check_for_tmeasure(model):
-                weight[:] = model.meta.exposure.measurement_time
-            else:
-                weight[:] = model.meta.exposure.exposure_time
-
-        # Weight and add the readnoise variance
-        # Note: floating point overflow is an issue if variance weights
-        # are used - it can't be squared before multiplication
-        if rn_var is not None:
-            mask = (rn_var >= 0) & np.isfinite(rn_var) & (weight > 0)
-            self._weighted_rn_var[mask] = np.nansum(
-                [
-                    self._weighted_rn_var[mask],
-                    rn_var[mask] * weight[mask] * weight[mask]
-                ],
-                axis=0
-            )
-            self._total_weight_rn_var[mask] += weight[mask]
-
-        # Now do poisson and flat variance, updating only valid new values
-        # (zero is a valid value; negative, inf, or NaN are not)
-        pn_var = self._resample_one_variance_array(
-            "var_poisson",
-            input_model=model,
-            iscale=iscale,
-            inwht=inwht,
-            pixmap=pixmap,
-            xmin=xmin,
-            xmax=xmax,
-            ymin=ymin,
-            ymax=ymax,
-        )
-        if pn_var is not None:
-            mask = (pn_var >= 0) & np.isfinite(pn_var) & (weight > 0)
-            self._weighted_pn_var[mask] = np.nansum(
-                [
-                    self._weighted_pn_var[mask],
-                    pn_var[mask] * weight[mask] * weight[mask]
-                ],
-                axis=0
-            )
-            self._total_weight_pn_var[mask] += weight[mask]
-
-        flat_var = self._resample_one_variance_array(
-            "var_flat",
-            input_model=model,
-            iscale=iscale,
-            inwht=inwht,
-            pixmap=pixmap,
-            xmin=xmin,
-            xmax=xmax,
-            ymin=ymin,
-            ymax=ymax,
-        )
-        if flat_var is not None:
-            mask = (flat_var >= 0) & np.isfinite(flat_var) & (weight > 0)
-            self._weighted_flat_var[mask] = np.nansum(
-                [
-                    self._weighted_flat_var[mask],
-                    flat_var[mask] * weight[mask] * weight[mask]
-                ],
-                axis=0
-            )
-            self._total_weight_flat_var[mask] += weight[mask]
-
-    def _compute_resample_variance_totals(self, output_model):
-        # Divide by the total weights, squared, and set in the output model.
-        # Zero weight and missing values are NaN in the output.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "invalid value*", RuntimeWarning)
-            warnings.filterwarnings("ignore", "divide by zero*", RuntimeWarning)
-
-            output_variance = (
-                self._weighted_rn_var / self._total_weight_rn_var /
-                self._total_weight_rn_var
-            )
-            setattr(output_model, "var_rnoise", output_variance)
-
-            output_variance = (
-                self._weighted_pn_var / self._total_weight_pn_var /
-                self._total_weight_pn_var
-            )
-            setattr(output_model, "var_poisson", output_variance)
-
-            output_variance = (
-                self._weighted_flat_var / self._total_weight_flat_var /
-                self._total_weight_flat_var
-            )
-            setattr(output_model, "var_flat", output_variance)
-
-        del (
-            self._weighted_rn_var,
-            self._weighted_pn_var,
-            self._weighted_flat_var,
-            self._total_weight_rn_var,
-            self._total_weight_pn_var,
-            self._total_weight_flat_var,
-        )
-
-    def _resample_one_variance_array(self, name, input_model, iscale,
-                                     inwht, pixmap,
-                                     xmin=None, xmax=None, ymin=None, ymax=None):
-        """Resample one variance image from an input model.
-
-        The error image is passed to drizzle instead of the variance, to
-        better match kernel overlap and user weights to the data, in the
-        pixel averaging process. The drizzled error image is squared before
-        returning.
-        """
-        variance = getattr(input_model, name)
-        if variance is None or variance.size == 0:
-            log.debug(
-                f"No data for '{name}' for model "
-                f"{repr(input_model.meta.filename)}. Skipping ..."
-            )
-            return
-
-        elif variance.shape != input_model.data.shape:
-            log.warning(
-                f"Data shape mismatch for '{name}' for model "
-                f"{repr(input_model.meta.filename)}. Skipping ..."
-            )
-            return
-
-        output_shape = self.output_array_shape
-
-        # Resample the error array. Fill "unpopulated" pixels with NaNs.
-        driz = Drizzle(
-            out_shape=output_shape,
-            kernel=self.kernel,
-            fillval=np.nan,
-            disable_ctx=True
-        )
-
-        log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
-        log.debug(f"Input Sci shape: {variance.shape}")
-        log.debug(f"Output Sci shape: {output_shape}")
-
-        # Call 'drizzle' to perform image combination
-        log.info(f"Drizzling {variance.shape} --> {output_shape}")
-
-        driz.add_image(
-            data=np.sqrt(variance),
-            exptime=input_model.meta.exposure.exposure_time,
-            pixmap=pixmap,
-            scale=iscale,
-            weight_map=inwht,
-            wht_scale=1.0,  # hard-coded for JWST count-rate data
-            pixfrac=self.pixfrac,
-            in_units="cps",
-            xmin=xmin,
-            xmax=xmax,
-            ymin=ymin,
-            ymax=ymax,
-        )
-
-        return driz.out_img ** 2
 
     def _init_exptime_counters(self):
         self._total_exposure_time = 0.
