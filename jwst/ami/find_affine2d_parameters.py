@@ -35,7 +35,7 @@ def create_afflist_rot(rotdegs):
     return alist
 
 
-def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
+def find_rotation(imagedata, nrm_model, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
                   pixel, npix, bandpass, over, holeshape):
     """
     Create an affine2d object using the known rotation and scale.
@@ -44,6 +44,9 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     ----------
     imagedata: 2D float array
         image data
+
+    nrm_model: NRMModel datamodel
+        datamodel containing mask geometry information
 
     psf_offset: 2D float array
         offset from image center in detector pixels
@@ -98,7 +101,7 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     crosscorr_rots = []
 
     for (rot, aff) in zip(rotdegs, affine2d_list):
-        jw = lg_model.LgModel(mask='jwst_ami', holeshape=holeshape, over=over, affine2d=aff)
+        jw = lg_model.LgModel(nrm_model, mask='jwst_ami', holeshape=holeshape, over=over, affine2d=aff)
 
         jw.set_pixelscale(pixel)
         # psf_offset in data coords & pixels.  Does it get rotated?  Second order errors poss.

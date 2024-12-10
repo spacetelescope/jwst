@@ -126,9 +126,8 @@ def apply_LG_plus(
     # Throughput (combined filter and source spectrum) calculated here
     bandpass = utils.handle_bandpass(bandpass, throughput_model)
 
-    
-
     if affine2d is None:
+        log.info("Searching for best-fit affine transform")
         rotsearch_d = np.append(
         np.arange(
             rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]
@@ -161,6 +160,7 @@ def apply_LG_plus(
 
         affine2d = find_rotation(
             meddata,
+            nrm_model,
             psf_offset,
             rotsearch_d,
             mx,
@@ -180,9 +180,10 @@ def apply_LG_plus(
         # to use rotation and scaling/shear, do some matrix multiplication here??
 
     log.info('Using affine transform with parameters:')
-    log.info(f'\tmx={affine2d.mx}\tmy={affine2d.my}')
-    log.info(f'\tsx={affine2d.sx}\tsy={affine2d.sy}')
-    log.info(f'\txo={affine2d.xo}\tyo={affine2d.yo}')
+    log.info(f'\tmx={affine2d.mx:.6f}\tmy={affine2d.my:.6f}')
+    log.info(f'\tsx={affine2d.sx:.6f}\tsy={affine2d.sy:.6f}')
+    log.info(f'\txo={affine2d.xo:.6f}\tyo={affine2d.yo:.6f}')
+    log.info(f'\trotradccw={affine2d.rotradccw:.4f}')
 
     niriss = instrument_data.NIRISS(filt,
                                     nrm_model,
