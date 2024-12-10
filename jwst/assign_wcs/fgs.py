@@ -5,6 +5,7 @@ import logging
 
 from astropy import units as u
 from astropy import coordinates as coord
+from astropy.modeling import bind_bounding_box
 from gwcs import coordinate_frames as cf
 
 from stdatamodels.jwst.datamodels import DistortionModel
@@ -78,7 +79,10 @@ def imaging(input_model, reference_files):
     if subarray2full is not None:
         # Assign a bounding_box based on subarray's xsize and ysize
         distortion = subarray2full | distortion
-        distortion.bounding_box = bounding_box_from_subarray(input_model)
+
+        # Bind the bounding box to the distortion model using the bounding box ordering
+        # used by GWCS. This makes it clear the bounding box is set correctly to GWCS
+        bind_bounding_box(distortion, bounding_box_from_subarray(input_model, order="F"), order="F")
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
@@ -106,7 +110,8 @@ def imaging_distortion(input_model, reference_files):
     try:
         transform.bounding_box
     except NotImplementedError:
-        transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
+        bind_bounding_box(transform, transform_bbox_from_shape(input_model.data.shape, order="F"), order="F")
+
     dist.close()
     return transform
 
