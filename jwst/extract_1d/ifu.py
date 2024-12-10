@@ -57,7 +57,7 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
         Background sigma clipping value to use to remove noise/outliers in background
 
     apcorr_ref_file : str or None
-        File name for aperture correction refrence file.
+        File name for aperture correction reference file.
 
     center_xy : float or None
         A list of 2 pixel coordinate values at which to place the center
