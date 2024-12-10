@@ -642,38 +642,19 @@ def copy_keyword_info(slit, slitname, spec):
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
-    if hasattr(slit, "slitlet_id"):
-        spec.slitlet_id = slit.slitlet_id
+    # Copy over some attributes if present, even if they are None
+    copy_attributes = ["slitlet_id", "source_id", "source_xpos", "source_ypos",
+                       "source_ra", "source_dec", "shutter_state"]
+    for key in copy_attributes:
+        if hasattr(slit, key):
+            setattr(spec, key, getattr(slit, key))
 
-    if hasattr(slit, "source_id"):
-        spec.source_id = slit.source_id
-
-    if hasattr(slit, "source_name") and slit.source_name is not None:
-        spec.source_name = slit.source_name
-
-    if hasattr(slit, "source_alias") and slit.source_alias is not None:
-        spec.source_alias = slit.source_alias
-
-    if hasattr(slit, "source_type") and slit.source_type is not None:
-        spec.source_type = slit.source_type
-
-    if hasattr(slit, "stellarity") and slit.stellarity is not None:
-        spec.stellarity = slit.stellarity
-
-    if hasattr(slit, "source_xpos"):
-        spec.source_xpos = slit.source_xpos
-
-    if hasattr(slit, "source_ypos"):
-        spec.source_ypos = slit.source_ypos
-
-    if hasattr(slit, "source_ra"):
-        spec.source_ra = slit.source_ra
-
-    if hasattr(slit, "source_dec"):
-        spec.source_dec = slit.source_dec
-
-    if hasattr(slit, "shutter_state"):
-        spec.shutter_state = slit.shutter_state
+    # copy over some attributes only if they are present and not None
+    copy_populated_attributes = ["source_name", "source_alias",
+                                 "source_type", "stellarity"]
+    for key in copy_populated_attributes:
+        if getattr(slit, key, None) is not None:
+            setattr(spec, key, getattr(slit, key))
 
 
 def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partial=True):
