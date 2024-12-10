@@ -38,6 +38,9 @@ class NIRISS:
         ----------
         filt: string
             filter name
+        
+        nrm_model: NRMModel datamodel
+            datamodel containing mask geometry information
 
         chooseholes: list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
@@ -94,7 +97,7 @@ class NIRISS:
         self.arrname = "jwst_ami"
         self.holeshape = 'hex'
         self.mask = NRM_definition(
-            nrm_model,
+            self.nrm_model,
             maskname=self.arrname,
             chooseholes=self.chooseholes
         )

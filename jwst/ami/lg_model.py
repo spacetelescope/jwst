@@ -27,13 +27,14 @@ class LgModel:
     Simulates PSF (broadband or monochromatic)
     Builds a fringe model - either by user definition, or automated to data
     Fits model to data by least squares
-    Masks: gpi_g10s40, jwst, visir
+    Masks: jwst_ami (formerly jwst_g7s6c)
     Algorithm documented in Greenbaum, A. Z., Pueyo, L. P., Sivaramakrishnan,
     A., and Lacour, S., Astrophysical Journal vol. 798, Jan 2015.
     """
 
     def __init__(
         self,
+        nrm_model,
         mask=None,
         holeshape="hex",
         pixscale=None,
@@ -51,6 +52,9 @@ class LgModel:
 
         Parameters
         ----------
+        nrm_model: NRMModel datamodel
+            datamodel containing mask geometry information
+
         mask: string
             keyword for built-in values
 
@@ -85,7 +89,7 @@ class LgModel:
             self.debug = kwargs["debug"]
         else:
             self.debug = False
-
+            
         self.holeshape = holeshape
         self.pixel = pixscale  # det pix in rad (square)
         self.over = over
@@ -94,11 +98,11 @@ class LgModel:
         # get these from mask_definition_ami instead
         if mask is None:
             log.info("Using JWST AMI mask geometry from LgModel")
-            mask = mask_definition_ami.NRM_definition(
+            mask = mask_definition_ami.NRM_definition(nrm_model,
                 maskname="jwst_ami", chooseholes=chooseholes
             )
         elif isinstance(mask, str):
-            mask = mask_definition_ami.NRM_definition(
+            mask = mask_definition_ami.NRM_definition(nrm_model,
                 maskname=mask, chooseholes=chooseholes
             ) # retain ability to possibly  use other named masks, for now
         self.ctrs = mask.ctrs
