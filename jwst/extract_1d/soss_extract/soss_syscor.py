@@ -78,11 +78,9 @@ def make_background_mask(deepstack, width):
 
     # Set the appropriate quantile for masking based on the subarray size.
     if nrows == 96:  # SUBSTRIP96
-        quantile = 100 * (1 - width / 96)  # Mask 1 order worth of pixels.
-    elif nrows == 256:  # SUBSTRIP256
-        quantile = 100 * (1 - 2 * width / 256)  # Mask 2 orders worth of pixels.
-    elif nrows == 2048:  # FULL
-        quantile = 100 * (1 - 2 * width / 2048)  # Mask 2 orders worth of pixels.
+        quantile = 100 * (1 - width / nrows)  # Mask 1 order worth of pixels.
+    elif nrows in [256, 2048]:  # SUBSTRIP256, FULL
+        quantile = 100 * (1 - 2 * width / nrows)  # Mask 2 orders worth of pixels.
     else:
         msg = (f'Unexpected image dimensions, expected nrows = 96, 256 or 2048, '
                f'got nrows = {nrows}.')

@@ -1054,6 +1054,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
             refmask &= ~not_finite
 
         # Perform background correction.
+        print("bkg sub on?", soss_kwargs["subtract_background"])
         if soss_kwargs['subtract_background']:
             log.info('Applying background subtraction.')
             bkg_mask = make_background_mask(scidata, width=40)
