@@ -28,7 +28,7 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   on the observing mode and the source type. By default, source position corrections
   are attempted only for NIRSpec MOS and NIRSpec and MIRI LRS fixed-slit point sources.
   Set to False to ignore position estimates for all modes; set to True to additionally attempt
-  source position correction NIRSpec BOTS data.
+  source position correction for NIRSpec BOTS data or extended sources.
 
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the
