@@ -324,6 +324,24 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                         # If the user supplied a value, use that value.
                         extract_params['smoothing_length'] = smoothing_length
 
+                    # Check that the smoothing length has a reasonable value
+                    sm_length = extract_params['smoothing_length']
+                    if sm_length != int(sm_length):
+                        sm_length = int(np.round(sm_length))
+                        log.warning(f'Smoothing length must be an integer. '
+                                    f'Rounding to {sm_length}')
+                    if sm_length != 0:
+                        if sm_length < 3:
+                            log.warning(f'Smoothing length {sm_length} '
+                                        f'is not allowed. Setting it to 0.')
+                            sm_length = 0
+                        elif sm_length % 2 == 0:
+                            sm_length -= 1
+                            log.warning('Even smoothing lengths are not supported. '
+                                        'Rounding the smoothing length down to '
+                                        f'{sm_length}.')
+                    extract_params['smoothing_length'] = sm_length
+
                     # Default the extraction type to 'box': 'optimal'
                     # is not yet supported.
                     extract_params['extraction_type'] = 'box'

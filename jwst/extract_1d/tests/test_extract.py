@@ -221,17 +221,33 @@ def test_get_extract_parameters_source_posn_from_ref(
     assert params['use_source_posn'] is True
 
 
+@pytest.mark.parametrize('length', [3, 4, 2.8, 3.5])
 def test_get_extract_parameters_smoothing(
-        mock_nirspec_fs_one_slit, extract1d_ref_dict, extract_defaults):
+        mock_nirspec_fs_one_slit, extract1d_ref_dict,
+        extract_defaults, length):
     input_model = mock_nirspec_fs_one_slit
 
-    # match an entry that explicity sets use_source_posn
     params = ex.get_extract_parameters(
         extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
-        smoothing_length=3)
+        smoothing_length=length)
 
-    # returned value has input smoothing length
+    # returned value has input smoothing length, rounded to an
+    # odd integer if necessary
     assert params['smoothing_length'] == 3
+
+
+@pytest.mark.parametrize('length', [-1, 1, 2, 1.3])
+def test_get_extract_parameters_smoothing_bad_value(
+        mock_nirspec_fs_one_slit, extract1d_ref_dict,
+        extract_defaults, length):
+    input_model = mock_nirspec_fs_one_slit
+
+    params = ex.get_extract_parameters(
+        extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
+        smoothing_length=length)
+
+    # returned value has smoothing length 0
+    assert params['smoothing_length'] == 0
 
 
 def test_log_params(extract_defaults, log_watcher):
