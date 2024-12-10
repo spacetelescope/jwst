@@ -1,8 +1,6 @@
-import numpy as np
 import pytest
 
 import stpipe
-from stpipe import crds_client
 
 from stdatamodels.jwst import datamodels
 
