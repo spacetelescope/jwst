@@ -101,11 +101,11 @@ def test_estim_error_nearest_data(imagemodel, mask_trace_profile):
         assert np.all(err_out > 0)
 
         # test that the replaced pixels are not statistical outliers c.f. the other pixels
-        replaced_pix = err_out[pix_to_estim]
-        original_pix = err_out[valid_pix]
-
+        # replaced_pix = err_out[pix_to_estim]
+        # original_pix = err_out[valid_pix]
         # diff = np.mean(replaced_pix)/np.mean(original_pix)
         # assert np.isclose(diff, 1, rtol=0.5) # assert False
+
         # TODO: why does this fail?
         # In both orders, the errors on the replaced pixels are roughly
         # half of the errors on the original good pixels

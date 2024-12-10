@@ -199,7 +199,7 @@ def wavecal_model_order2_poly(refmodel, x, pwcpos):
     return wavelengths
 
 
-def _rotate(x, y, angle, origin=(0, 0), interp=True):
+def _rotate(x, y, angle, origin=(0, 0)):
     """
     Applies a rotation transformation to a set of 2D points.
 
@@ -216,9 +216,6 @@ def _rotate(x, y, angle, origin=(0, 0), interp=True):
         The angle (in degrees) by which to rotate the points.
     origin : Tuple[float, float], optional
         The point about which to rotate the points. Default is (0, 0).
-    interp : bool, optional
-        Whether to interpolate the rotated positions onto the original x-pixel
-        column values. Default is True.
 
     Returns
     -------
@@ -244,17 +241,15 @@ def _rotate(x, y, angle, origin=(0, 0), interp=True):
     # apply transformation
     x_new, y_new = R @ (xy - xy_center) + xy_center
 
-    # interpolate rotated positions onto x-pixel column values (default)
-    if interp:
-        # interpolate new coordinates onto original x values and mask values
-        # outside of the domain of the image 0<=x<=2047 and 0<=y<=255.
-        y_new = interp1d(x_new, y_new, fill_value="extrapolate")(x)
-        mask = np.where(y_new <= 255.0)
-        x = x[mask]
-        y_new = y_new[mask]
-        return x, y_new
+    # interpolate rotated positions onto x-pixel column values 
+    # interpolate new coordinates onto original x values and mask values
+    # outside of the domain of the image 0<=x<=2047 and 0<=y<=255.
+    y_new = interp1d(x_new, y_new, fill_value="extrapolate")(x)
+    mask = np.where(y_new <= 255.0)
+    x = x[mask]
+    y_new = y_new[mask]
+    return x, y_new
 
-    return x_new, y_new
 
 
 def _find_spectral_order_index(refmodel, order):
@@ -274,6 +269,10 @@ def _find_spectral_order_index(refmodel, order):
         The index to provide the reference file lists of traces and wavecal
         models to retrieve the arrays for the desired spectral order
     """
+    if order not in [1,2]:
+        error_message = f"Order {order} is not supported at this time."
+        log.error(error_message)
+        raise ValueError(error_message)
 
     for i, entry in enumerate(refmodel.traces):
         if entry.spectral_order == order:
@@ -283,7 +282,7 @@ def _find_spectral_order_index(refmodel, order):
     return -1
 
 
-def _get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
+def _get_soss_traces(refmodel, pwcpos, order, subarray):
     """Generate the traces given a pupil wheel position.
 
     This is the primary method for generating the gr700xd trace position given a
@@ -301,14 +300,11 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     pwcpos : float
         The pupil wheel positions angle provided in the FITS header under
         keyword PWCPOS.
-    order : str
+    order : str or int
         The spectral order for which a trace is computed.
         Order 3 is currently unsupported.
     subarray : str
         Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
-    interp : bool, optional
-        Whether to interpolate the rotated positions onto the original x-pixel
-        column values. Default is True.
 
     Returns
     -------
@@ -317,36 +313,28 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray, interp=True):
     points for the first spectral order.
     If `order` is '2', a tuple of the x and y coordinates of the rotated
     points for the second spectral order.
-    If `order` is '3' or a combination of '1', '2', and '3', a list of
-    tuples of the x and y coordinates of the rotated points for each
-    spectral order.
 
     Raises
     ------
     ValueError
-        If `order` is not '1', '2', '3', or a combination of '1', '2', and '3'.
+        If `order` is not in ['1', '2'].
     """
     spectral_order_index = _find_spectral_order_index(refmodel, int(order))
 
-    if spectral_order_index < 0:
-        error_message = f"Order {order} is not supported at this time."
-        log.error(error_message)
-        raise ValueError(error_message)
-    else:
-        # reference trace data
-        x, y = refmodel.traces[spectral_order_index].trace.T.copy()
-        origin = refmodel.traces[spectral_order_index].pivot_x, refmodel.traces[spectral_order_index].pivot_y
+    # reference trace data
+    x, y = refmodel.traces[spectral_order_index].trace.T.copy()
+    origin = refmodel.traces[spectral_order_index].pivot_x, refmodel.traces[spectral_order_index].pivot_y
 
-        # Offset for SUBSTRIP96
-        if subarray == 'SUBSTRIP96':
-            y -= 10
-        # rotated reference trace
-        x_new, y_new = _rotate(x, y, pwcpos - refmodel.meta.pwcpos_cmd, origin, interp=interp)
+    # Offset for SUBSTRIP96
+    if subarray == 'SUBSTRIP96':
+        y -= 10
+    # rotated reference trace
+    x_new, y_new = _rotate(x, y, pwcpos - refmodel.meta.pwcpos_cmd, origin)
 
-        # wavelength associated to trace at given pwcpos value
-        wavelengths = _get_wavelengths(refmodel, x_new, pwcpos, int(order))
+    # wavelength associated to trace at given pwcpos value
+    wavelengths = _get_wavelengths(refmodel, x_new, pwcpos, int(order))
 
-        return order, x_new, y_new, wavelengths
+    return order, x_new, y_new, wavelengths
 
 
 def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
@@ -386,9 +374,7 @@ def _extrapolate_to_wavegrid(w_grid, wavelength, quantity):
     q = np.concatenate((q_left, q, q_right))
 
     # resample at the w_grid everywhere
-    q_grid = np.interp(w_grid, w, q)
-
-    return q_grid
+    return np.interp(w_grid, w, q)
 
 
 def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, maxiter=5, dtol=1e-2):
@@ -489,8 +475,8 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     Array, Array
         The 2D wavemaps and corresponding 1D spectraces
     """
-    _, order1_x, order1_y, order1_wl = _get_soss_traces(refmodel, pwcpos, order='1', subarray=subarray, interp=True)
-    _, order2_x, order2_y, order2_wl = _get_soss_traces(refmodel, pwcpos, order='2', subarray=subarray, interp=True)
+    _, order1_x, order1_y, order1_wl = _get_soss_traces(refmodel, pwcpos, order='1', subarray=subarray)
+    _, order2_x, order2_y, order2_wl = _get_soss_traces(refmodel, pwcpos, order='2', subarray=subarray)
 
     # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
     wavemin = WAVEMAP_WLMIN

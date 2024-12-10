@@ -4,6 +4,7 @@ from scipy.signal import savgol_filter
 from functools import partial
 from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract import atoca_utils as au
+from stdatamodels.jwst.datamodels import PastasossModel
 
 """
 Create a miniature, slightly simplified model of the SOSS detector/optics.
@@ -21,6 +22,7 @@ The model has the following features:
 - Kernel set to unity (for now)
 """
 
+PWCPOS = 245.85932900002442
 DATA_SHAPE = (25,200)
 WAVE_BNDS_O1 = [2.8, 0.8]
 WAVE_BNDS_O2 = [1.4, 0.5]
@@ -267,3 +269,41 @@ def imagemodel(engine, detector_mask):
     # TODO: why does the data here have one deep negative bar at the end of each spectral order?
 
     return data, error
+
+
+@pytest.fixture(scope="module")
+def refmodel(trace1d):
+    """Mock Pastasoss reference model with spatial dimensions scaled
+    down by a factor of 10. Since the traces are just linear, the polynomials
+    also have coefficients equal to 0 except for the constant and linear terms"""
+    model = PastasossModel()
+    model.meta.pwcpos_cmd = 245.76
+    
+    trace0 = {"pivot_x": 189.0,
+              "pivot_y": 5.0,
+              "spectral_order": 1,
+              "trace": np.array([trace1d[0][0], trace1d[0][1]], dtype=np.float64).T,
+              "padding": 0,}
+    trace1 = {"pivot_x": 168.0,
+              "pivot_y": 20.0,
+              "spectral_order": 2,
+              "trace": np.array([trace1d[1][0], trace1d[1][1]], dtype=np.float64).T,}
+    model.traces = [trace0, trace1]
+
+    wavecal0 = {"coefficients": [WAVE_BNDS_O1[0], -2.0,] + [0.0 for i in range(19)],
+                "polynomial_degree": 5,
+                "scale_extents": [[0, -1.03552000e-01], [DATA_SHAPE[1], 1.62882080e-01]]}
+    wavecal1 = {"coefficients": [WAVE_BNDS_O2[0], -1.0,] + [0.0 for i in range(8)],
+                "polynomial_degree": 3,
+                "scale_extents": [[0, 245.5929], [DATA_SHAPE[1], 245.9271]]}
+    model.wavecal_models = [wavecal0, wavecal1]
+
+    thru0 = {"spectral_order": 1,
+             "wavelength": np.linspace(0.5, 5.5, 501),
+             "throughput": np.ones((501,)),} #peaks around 1.22 at value 0.37
+    thru1 = {"spectral_order": 2,
+             "wavelength": np.linspace(0.5, 5.5, 501),
+             "throughput": np.ones((501,)),} #peaks around 0.7 at value of 0.16
+    model.throughputs = [thru0, thru1]
+
+    return model
