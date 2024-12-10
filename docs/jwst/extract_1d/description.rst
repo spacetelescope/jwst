@@ -160,16 +160,17 @@ If `extract_width` is also given, the start and stop values are used to define
 the center of the extraction region in the cross-dispersion direction, but the
 width of the aperture is set by the `extract_width` value.
 
-For point source data, the cross-dispersion start and stop values may be shifted
+For some instruments and modes, the cross-dispersion start and stop values may be shifted
 to account for the expected location of the source.  This option
 is available for NIRSpec MOS, fixed-slit, and BOTS data, as well as MIRI LRS fixed-slit.
 If `use_source_posn` is set to None via the reference file or input parameters,
 it is turned on by default for all point sources in these modes, except NIRSpec BOTS.
-To turn it on for NIRSpec BOTS, set `use_source_posn` to True.  To turn it off
-for any mode, set `use_source_posn` to False.
-The planned location for the source is calculated internally, via header metadata recording
-the source position and the spectral WCS transforms, then used to offset the
-extraction start and stop values in the cross-dispersion direction.
+To turn it on for NIRSpec BOTS or extended sources, set `use_source_posn` to True.
+To turn it off for any mode, set `use_source_posn` to False.
+If source position correction is enabled, the planned location for the source is
+calculated internally, via header metadata recording the source position and the
+spectral WCS transforms, then used to offset the extraction start and stop values
+in the cross-dispersion direction.
 
 A more flexible way to specify the source extraction region is via the `src_coeff`
 parameter. `src_coeff` is specified as a list of lists of floating-point
