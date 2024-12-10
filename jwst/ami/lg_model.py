@@ -40,10 +40,8 @@ class LgModel:
         pixscale=None,
         over=1,
         pixweight=None,
-        datapath="",
         phi=None,
-        refdir="",
-        chooseholes=False,
+        chooseholes=None,
         affine2d=None,
         **kwargs,
     ):
@@ -59,7 +57,7 @@ class LgModel:
             keyword for built-in values
 
         holeshape: string
-           shape of apertures
+           shape of apertures, default="hex"
 
         pixscale: float
            initial estimate of pixel scale in radians
@@ -70,17 +68,11 @@ class LgModel:
         pixweight: 2D float array, default is None
             weighting array
 
-        datapath: string
-            directory for output (will remove for final)
-
         phi: float 1D array
             distance of fringe from hole center in units of waves
 
-        refdir: string
-            directory containing ref files (will remove for final)
-
-        chooseholes: list ?
-            holes ...?
+        chooseholes: list of strings
+            None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
 
         affine2d: Affine2d object
             Affine2d object
@@ -89,7 +81,7 @@ class LgModel:
             self.debug = kwargs["debug"]
         else:
             self.debug = False
-            
+
         self.holeshape = holeshape
         self.pixel = pixscale  # det pix in rad (square)
         self.over = over
@@ -110,11 +102,9 @@ class LgModel:
         self.D = mask.activeD
 
         self.N = len(self.ctrs)
-        self.datapath = datapath
-        self.refdir = refdir
         self.fmt = "%10.4e"
 
-        # get latest OPD from WebbPSF?
+        # get closest in time OPD from WebbPSF?
 
         if phi:  # meters of OPD at central wavelength
             if phi == "perfect":
