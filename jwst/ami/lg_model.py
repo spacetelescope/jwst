@@ -6,7 +6,7 @@ import numpy as np
 from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2
 from . import utils
-from . import mask_definitions
+from . import mask_definition_ami
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -19,43 +19,45 @@ um = 1.0e-6 * m
 mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 
-class NrmModel:
+class LgModel:
     """
     A class for conveniently dealing with an "NRM object" This should be able
-    to take an NRM_mask_definitions object for mask geometry.
+    to take an NRM_definition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
     Simulates PSF (broadband or monochromatic)
     Builds a fringe model - either by user definition, or automated to data
     Fits model to data by least squares
-    Masks: gpi_g10s40, jwst, visir
+    Masks: jwst_ami (formerly jwst_g7s6c)
     Algorithm documented in Greenbaum, A. Z., Pueyo, L. P., Sivaramakrishnan,
     A., and Lacour, S., Astrophysical Journal vol. 798, Jan 2015.
     """
 
     def __init__(
         self,
+        nrm_model,
         mask=None,
-        holeshape="circ",
+        holeshape="hex",
         pixscale=None,
         over=1,
         pixweight=None,
-        datapath="",
         phi=None,
-        refdir="",
-        chooseholes=False,
+        chooseholes=None,
         affine2d=None,
         **kwargs,
     ):
         """
-        Set attributes of NrmModel class.
+        Set attributes of LgModel class.
 
         Parameters
         ----------
+        nrm_model: NRMModel datamodel
+            datamodel containing mask geometry information
+
         mask: string
             keyword for built-in values
 
         holeshape: string
-           shape of apertures
+           shape of apertures, default="hex"
 
         pixscale: float
            initial estimate of pixel scale in radians
@@ -66,17 +68,11 @@ class NrmModel:
         pixweight: 2D float array, default is None
             weighting array
 
-        datapath: string
-            directory for output (will remove for final)
-
         phi: float 1D array
             distance of fringe from hole center in units of waves
 
-        refdir: string
-            directory containing ref files (will remove for final)
-
-        chooseholes: list ?
-            holes ...?
+        chooseholes: list of strings
+            None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
 
         affine2d: Affine2d object
             Affine2d object
@@ -91,29 +87,24 @@ class NrmModel:
         self.over = over
         self.pixweight = pixweight
 
-        # mask = "jwst"
-        # self.maskname = mask
-
-        # get these from mask_definitions instead
+        # get these from mask_definition_ami instead
         if mask is None:
-            log.info("No mask name specified for model, using jwst_g7s6c")
-            mask = mask_definitions.NRM_mask_definitions(
-                maskname="jwst_g7s6c", chooseholes=chooseholes, holeshape="hex"
+            log.info("Using JWST AMI mask geometry from LgModel")
+            mask = mask_definition_ami.NRM_definition(nrm_model,
+                maskname="jwst_ami", chooseholes=chooseholes
             )
         elif isinstance(mask, str):
-            mask = mask_definitions.NRM_mask_definitions(
-                maskname=mask, chooseholes=chooseholes, holeshape="hex"
-            )
+            mask = mask_definition_ami.NRM_definition(nrm_model,
+                maskname=mask, chooseholes=chooseholes
+            ) # retain ability to possibly  use other named masks, for now
         self.ctrs = mask.ctrs
         self.d = mask.hdia
         self.D = mask.activeD
 
         self.N = len(self.ctrs)
-        self.datapath = datapath
-        self.refdir = refdir
         self.fmt = "%10.4e"
 
-        # get latest OPD from WebbPSF?
+        # get closest in time OPD from WebbPSF?
 
         if phi:  # meters of OPD at central wavelength
             if phi == "perfect":
@@ -125,7 +116,7 @@ class NrmModel:
 
         self.chooseholes = chooseholes
 
-        # affine2d property not to be changed in NrmModel - create a new
+        # affine2d property not to be changed in LgModel - create a new
         #     instance instead
         # Save affine deformation of pupil object or create a no-deformation
         #     object.
@@ -403,7 +394,7 @@ class NrmModel:
     def create_modelpsf(self):
         """
         Make an image from the object's model and fit solutions, by setting the
-        NrmModel object's modelpsf attribute
+        LgModel object's modelpsf attribute
 
         Parameters
         ----------
