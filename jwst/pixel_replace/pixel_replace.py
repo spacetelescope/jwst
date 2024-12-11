@@ -380,7 +380,7 @@ class PixelReplacement:
             # TODO: check on signs here - absolute max sometimes picks up
             #  large negative outliers
             norm_scale = minimize(self.profile_mse, x0=np.abs(np.nanmax(norm_current)),
-                                  args=(min_median, norm_current)).x
+                                  args=(min_median, norm_current), method='Nelder-Mead').x
 
             scale = np.max(min_current)
 
