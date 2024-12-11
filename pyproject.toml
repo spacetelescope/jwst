@@ -87,9 +87,6 @@ world_coords = "jwst.scripts.world_coords:main"
 [project.entry-points."stpipe.steps"]
 jwst = "jwst.stpipe.integration:get_steps"
 
-[project.entry-points.pytest11]
-report_crds_context = "pytest_crds.plugin"
-
 [project.optional-dependencies]
 docs = [
     "matplotlib",
