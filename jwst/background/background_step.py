@@ -20,6 +20,9 @@ class BackgroundStep(Step):
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
+        wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
+        wfss_p_rms = float(default=1)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
+        wfss_p = float(default=1)  # WFSS outlier percentile to reject per iteration
     """
 
     # These reference files are only used for WFSS/GRISM data.
@@ -61,8 +64,16 @@ class BackgroundStep(Step):
                               wlrange_name)
 
                 # Do the background subtraction for WFSS/GRISM data
+                rescaler_kwargs = {"p": self.wfss_p,
+                                   "maxiter": self.wfss_maxiter,
+                                   "delta_rms_thresh": self.wfss_p_rms/100,
+                                   }
                 result = subtract_wfss_bkg(
-                    input_model, bkg_name, wlrange_name, self.wfss_mmag_extract)
+                    input_model,
+                    bkg_name,
+                    wlrange_name,
+                    self.wfss_mmag_extract,
+                    rescaler_kwargs=rescaler_kwargs)
                 if result is None:
                     result = input_model
                     result.meta.cal_step.back_sub = 'SKIPPED'

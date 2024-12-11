@@ -73,6 +73,7 @@ def subtract_wfss_bkg(
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
 
     # compute scaling factor for the reference background image
+    log.info("Starting iterative outlier rejection for background subtraction.")
     rescaler = _ScalingFactorComputer(**rescaler_kwargs)
     factor, _ = rescaler(input_model.data.copy(),
                       bkg_ref.data.copy(),
@@ -95,34 +96,35 @@ def subtract_wfss_bkg(
 
 class _ScalingFactorComputer:
 
-    def __init__(self, p=1.0, maxiter=5, rms_thresh=None, dispersion_axis=None):
+    def __init__(self, p=1.0, maxiter=5, delta_rms_thresh=0, dispersion_axis=None):
         """
         Parameters
         ----------
         p: float, optional
-            Percentile for sigma clipping on both low and high ends, default 1.0.
+            Percentile for sigma clipping on both low and high ends per iteration, default 1.0.
             For example, with p=2.0, the middle 96% of the data is kept.
         maxiter: int, optional
             Maximum number of iterations for outlier rejection. Default 5.
-        rms_thresh: float, optional
+        delta_rms_thresh: float, optional
             Stopping criterion for outlier rejection; stops when the rms residuals
-            are less than this threshold. Default None, i.e., ignore this
-            and only stop at maxiter.
+            change by less than this fractional threshold in a single iteration.
+            For example, assuming delta_rms_thresh=0.1 and a residual RMS of 100
+            in iteration 1, the iteration will stop if the RMS residual in iteration
+            2 is greater than 90.
+            Default 0.0, i.e., ignore this and only stop at maxiter.
         dispersion_axis: int, optional
             The index to select the along-dispersion axis. Used to compute the RMS
             residual, so must be set if rms_thresh > 0. Default None.
         """
-        if rms_thresh is None:
-            rms_thresh = -1
-        if (rms_thresh > 0) and (dispersion_axis not in [1,2]):
+        if (delta_rms_thresh > 0) and (dispersion_axis not in [1,2]):
             msg = (f"Unrecognized dispersion axis {dispersion_axis}. "
-                    "Dispersion axis must be specified if rms_thresh "
+                    "Dispersion axis must be specified if delta_rms_thresh "
                     "is used as a stopping criterion.")
             raise ValueError(msg)
 
         self.p = p
         self.maxiter = maxiter
-        self.rms_thresh = rms_thresh
+        self.delta_rms_thresh = delta_rms_thresh
         self.dispersion_axis = dispersion_axis
 
 
@@ -153,23 +155,37 @@ class _ScalingFactorComputer:
         self._update_nans(sci, bkg, var, mask)
 
         # iteratively reject more and more outliers
-        rms_resid = np.inf
         i = 0
-        while (i < self.maxiter) and (rms_resid > self.rms_thresh):
+        last_rms_resid = np.inf
+        while (i < self.maxiter):
 
-            # Reject outliers based on residual between sci and bkg.
-            # Updating the sci, var, and bkg nan values
-            # means they are ignored by nanpercentile in the next iteration
+            # compute the factor that minimizes the residuals
             factor = self.err_weighted_mean(sci, bkg, var)
             sci_sub = sci-factor*bkg
+
+            # Check fractional improvement stopping criterion before incrementing.
+            # Note this never passes in iteration 0 because last_rms_resid is inf.
+            if self.delta_rms_thresh > 0:
+                rms_resid = self._compute_rms_residual(sci_sub)
+                fractional_diff = (last_rms_resid - rms_resid)/last_rms_resid
+                if fractional_diff < self.delta_rms_thresh:
+                    msg = (f"Stopping at iteration {i}; too little improvement "
+                           "since last iteration (hit delta_rms_thresh).")
+                    log.info(msg)
+                    break
+                last_rms_resid = rms_resid
+
+            i += 1
+
+            # Reject outliers based on residual between sci and bkg.
+            # Updating the sci, var, and bkg nan values means that
+            # they are ignored by nanpercentile in the next iteration
             limits = np.nanpercentile(sci_sub, (self.p, 100-self.p))
             mask += np.logical_or(sci_sub < limits[0], sci_sub > limits[1])
             self._update_nans(sci, bkg, var, mask)
 
-            # update stop conditions
-            if (self.rms_thresh > 0):
-                rms_resid = self._compute_rms_residual(sci_sub)
-            i += 1
+        if i >= self.maxiter:
+            log.info(f"Stopped at maxiter ({i}).")
 
         self._iters_run_last_call = i
         return self.err_weighted_mean(sci, bkg, var), mask

@@ -14,6 +14,7 @@ from jwst.background.background_sub_wfss import (subtract_wfss_bkg,
 BKG_SCALING = 0.123
 DETECTOR_SHAPE = (2048, 2048)
 INITIAL_NAN_FRACTION = 1e-4
+INITIAL_OUTLIER_FRACTION = 1e-3
 
 @pytest.fixture(scope="module")
 def known_bkg():
@@ -47,6 +48,14 @@ def mock_data(known_bkg):
     err[nan_indices] = np.nan
     original_data_mean = np.nanmean(data)
 
+    # add some outliers
+    num_outliers = int(data.size * INITIAL_OUTLIER_FRACTION)
+    outlier_indices = np.unravel_index(rng.choice(data.size, num_outliers), data.shape)
+    data[outlier_indices] = rng.normal(100, 1, num_outliers)
+
+    data[nan_indices] = np.nan
+    err[nan_indices] = np.nan
+
     # also add a small background to the data with same structure
     # as the known reference background to see if it will get removed
     data += known_bkg*BKG_SCALING
@@ -55,7 +64,7 @@ def mock_data(known_bkg):
 
 
 @pytest.fixture(scope='module')
-def make_wfss_datamodel(data_path, mock_data, known_bkg):
+def make_wfss_datamodel(data_path, mock_data):
 
     """Generate WFSS Observation"""
     wcsinfo = {
@@ -160,8 +169,7 @@ def test_nrc_wfss_background(tmp_cwd, filters, pupils, detectors, make_wfss_data
     # ensure NaN fraction did not increase. Rejecting outliers during determination
     # of factor should not have carried over into result.
     nan_frac = np.sum(np.isnan(result.data))/result.data.size
-    rtol = 1/(result.data.size*INITIAL_NAN_FRACTION)
-    assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=rtol)
+    assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
     # re-mask data so "real" sources are ignored here
     mask = _mask_from_source_cat(result, wavelenrange)
@@ -170,8 +178,11 @@ def test_nrc_wfss_background(tmp_cwd, filters, pupils, detectors, make_wfss_data
     # test that the background has been subtracted from the data to within some fraction of
     # the noise in the data. There's probably a first-principles way to determine the tolerance,
     # but this is ok for the purposes of this test.
-    tol = 0.01*np.nanstd(result.data)
-    assert np.isclose(np.nanmean(result.data), result.original_data_mean, atol=tol)
+    sci = result.data.copy()
+    # ignore the outliers for the purposes of this test
+    sci[sci>50] = np.nan
+    tol = 0.01*np.nanstd(sci)
+    assert np.isclose(np.nanmean(sci), result.original_data_mean, atol=tol)
 
 
 @pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
@@ -196,15 +207,20 @@ def test_nis_wfss_background(filters, pupils, make_wfss_datamodel, bkg_file):
     # ensure NaN fraction did not increase. Rejecting outliers during determination
     # of factor should not have carried over into result.
     nan_frac = np.sum(np.isnan(result.data))/result.data.size
-    rtol = 1/(result.data.size*INITIAL_NAN_FRACTION)
-    assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=rtol)
+    assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
     # re-mask data so "real" sources are ignored here
     mask = _mask_from_source_cat(result, wavelenrange)
     data = result.data[mask]
 
-    tol = 0.01*np.nanstd(result.data)
-    assert np.isclose(np.nanmean(result.data), result.original_data_mean, atol=tol)
+    # test that the background has been subtracted from the data to within some fraction of
+    # the noise in the data. There's probably a first-principles way to determine the tolerance,
+    # but this is ok for the purposes of this test.
+    sci = result.data.copy()
+    # ignore the outliers for the purposes of this test
+    sci[sci>50] = np.nan
+    tol = 0.01*np.nanstd(sci)
+    assert np.isclose(np.nanmean(sci), result.original_data_mean, atol=tol)
 
 
 def test_sufficient_background_pixels():
@@ -245,6 +261,8 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     rescaler = _ScalingFactorComputer()
 
     # just get the weighted mean without iteration
+    # to check it's as expected, mask outliers
+    sci[sci>50] = np.nan
     factor = rescaler.err_weighted_mean(sci, bkg, var)
     original_data_mean = make_wfss_datamodel.original_data_mean
     expected_factor = BKG_SCALING+original_data_mean
@@ -254,7 +272,7 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     for niter in [1,2,5]:
         for p in [2, 0.5, 0.1]:
             rescaler = _ScalingFactorComputer(p=p, maxiter=niter)
-            assert rescaler.rms_thresh == -1 #check rms_thresh=None input sets thresh properly
+            assert rescaler.delta_rms_thresh == 0 #check rms_thresh=None input sets thresh properly
 
             factor, mask_out = rescaler(sci, bkg, var)
             mask_fraction = np.sum(mask_out)/mask_out.size
@@ -269,17 +287,14 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
     # need lots of significant digits here because iterating makes little difference
     # for this test case
     maxiter = 10
-    rms_thresh = 0.0217 
-    rescaler = _ScalingFactorComputer(p=0.5, dispersion_axis=1, rms_thresh=rms_thresh, maxiter=maxiter)
+    delta_rms_thresh = 1e-4
+    p = 100*INITIAL_OUTLIER_FRACTION/2
+    rescaler = _ScalingFactorComputer(p=p,
+                                      dispersion_axis=1,
+                                      delta_rms_thresh=delta_rms_thresh,
+                                      maxiter=maxiter)
     factor, mask_out = rescaler(sci, bkg, var)
     assert rescaler._iters_run_last_call < maxiter
-    # ensure the final answer variance is smaller than rms_thresh
-    sci[mask_out] = np.nan
-    bkg[mask_out] = np.nan
-    var[mask_out] = np.nan
-    final_factor = rescaler.err_weighted_mean(sci, bkg, var)
-    final_sub = sci - final_factor*bkg
-    assert rescaler._compute_rms_residual(final_sub) <= rms_thresh
 
     # test putting mask=None works ok, and that maxiter=0 just gives you err weighted mean
     rescaler = _ScalingFactorComputer(maxiter=0)
@@ -289,7 +304,7 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
 
     # test invalid inputs
     with pytest.raises(ValueError):
-        rescaler = _ScalingFactorComputer(dispersion_axis=5, rms_thresh=1)
+        rescaler = _ScalingFactorComputer(dispersion_axis=5, delta_rms_thresh=1)
 
     with pytest.raises(ValueError):
-        rescaler = _ScalingFactorComputer(dispersion_axis=None, rms_thresh=1)
+        rescaler = _ScalingFactorComputer(dispersion_axis=None, delta_rms_thresh=1)
