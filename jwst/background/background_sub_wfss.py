@@ -5,7 +5,7 @@ import warnings
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from ..assign_wcs.util import create_grism_bbox
+from jwst.assign_wcs.util import create_grism_bbox
 
 import logging
 log = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ def subtract_wfss_bkg(
     bkg_filename,
     wl_range_name,
     mmag_extract=None,
-    rescaler_kwargs: dict = {},
+    rescaler_kwargs={},
 ):
     """Scale and subtract a background reference image from WFSS/GRISM data.
 
