@@ -157,6 +157,11 @@ class AmiAnalyzeStep(Step):
         # pull out parameters that are strings and change to floats
         psf_offset = [float(a) for a in self.psf_offset.split()]
         rotsearch_parameters = [float(a) for a in self.rotation_search.split()]
+        # handle command-line None input interpreted as string
+        if affine2d in ["None", "none"]:
+            affine2d = None
+        if bandpass in ["None", "none"]:
+            bandpass = None
 
         self.log.info(f"Oversampling factor = {oversample}")
         self.log.info(f"Initial rotation guess = {rotate} deg")
