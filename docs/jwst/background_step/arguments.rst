@@ -27,3 +27,20 @@ control the sigma clipping, and are passed as arguments to the astropy
   Sets the minimum (faintest) magnitude limit to use when selecting sources
   from the WFSS source catalog, based on the value of `isophotal_abmag` in the
   source catalog. Defaults to ``None``.
+
+``--wfss_maxiter``
+  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
+  Sets the maximum number of iterations allowed for iterative outlier rejection
+  during determination of the reference background scaling factor. Defaults to 5.
+
+``wfss_p_rms``
+  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
+  Sets the minimum percentage difference in the RMS of the background-subtracted image
+  between iterations to continue the iterative outlier rejection process.
+  Defaults to 0, i.e., do all iterations up to ``wfss_maxiter``.
+
+``wfss_p``
+  Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
+  Sets the percentile of outliers in the data to reject on both the low and high end
+  per iteration during determination of the reference background scaling factor.
+  Defaults to 1, i.e., keep the middle 98 percent of the data.
