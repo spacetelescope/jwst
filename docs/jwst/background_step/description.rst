@@ -90,11 +90,9 @@ signal level of the WFSS image within background (source-free) regions of the
 image. The scaling factor is determined based on the variance-weighted mean
 of the science data, i.e., ``factor = sum(sci*bkg/var) / sum(bkg*bkg/var)``.
 Outliers are rejected iteratively during determination of the scaling factor
-according to the percentile threshold and stopping criteria set using the
-``wfss_p``, ``wfss_p_rms``, and ``wfss_maxiter`` step arguments in order to avoid
-biasing the scaling factor based on outliers. Note, however, that the final output
-products do not contain any new outliers; more robust outlier detection is performed
-later on in the pipeline.
+in order to avoid biasing the scaling factor based on outliers. The iterative
+rejection process is controlled by the
+``wfss_p``, ``wfss_p_rms``, and ``wfss_maxiter`` step arguments.
 
 The locations of source spectra are determined from a source catalog (specified
 by the primary header keyword SCATFILE), in conjunction with a reference file
