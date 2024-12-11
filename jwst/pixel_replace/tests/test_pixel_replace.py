@@ -219,7 +219,8 @@ def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
 
     # for this simple case, the results from either algorithm should
     # be the same
-    result = PixelReplaceStep.call(input_model, skip=False, algorithm=algorithm,save_results=True)
+    result = PixelReplaceStep.call(input_model, skip=False,
+                                   algorithm=algorithm, save_results=True)
 
     assert result.meta.filename == 'jwst_nirspec_pixelreplacestep.fits'
     
@@ -279,12 +280,12 @@ def test_pixel_replace_nirspec_ifu_container_names(tmp_cwd, tmp_path, input_mode
     return_files = []
     # for this simple case, the results from either algorithm should
     # be the same
-    result = PixelReplaceStep.call(container, skip=False, algorithm=algorithm,save_results=True)
-    for dirname in [output_dir, tmp_cwd]:
-        result_files = glob(os.path.join(dirname, '*pixelreplacestep.fits'))
-        for file in result_files:
-            basename = os.path.basename(file)
-            return_files.append(basename)
+    result = PixelReplaceStep.call(container, skip=False, algorithm=algorithm,
+                                   save_results=True)
+    result_files = glob(os.path.join(tmp_cwd, '*pixelreplacestep.fits'))
+    for file in result_files:
+        basename = os.path.basename(file)
+        return_files.append(basename)
     
     assert expected_name[0] == return_files[0]
     assert expected_name[1] == return_files[1]
@@ -321,7 +322,6 @@ def test_pixel_replace_nirspec_ifu_name(tmp_cwd, tmp_path, input_model_function,
     
     assert expected_name == result.meta.filename
 
-    
     result.close()
     input_model.close()
     
