@@ -206,21 +206,18 @@ def _estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tr
     wave_grid = grid_from_map(wave_maps[0], spat_pros[0], n_os=1)
 
     # Mask parts contaminated by order 2 based on its spatial profile
-    mask = ((spat_pros[1] >= threshold) | mask_trace_profile | scimask)
+    mask = ((spat_pros[1] >= threshold) | mask_trace_profile[0])
 
     # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
     ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [None]
-    kwargs = {'orders': [1],}
-    engine = ExtractionEngine(*ref_file_args, wave_grid, [mask], **kwargs)
+    engine = ExtractionEngine(*ref_file_args, wave_grid, [mask], global_mask=scimask, orders=[1])
 
     # Extract estimate
     spec_estimate = engine(scidata_bkg, scierr)
 
     # Interpolate
     idx = np.isfinite(spec_estimate)
-    estimate_spl = UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
-
-    return estimate_spl
+    return UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
 
 
 def _get_native_grid_from_trace(ref_files, spectral_order):
@@ -550,7 +547,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     #       Dev suggested np.logspace(-19, -10, 10)
     if (tikfac is None or wave_grid is None) and estimate is None:
         estimate = _estim_flux_first_order(scidata_bkg, scierr, scimask,
-                                          ref_file_args, mask_trace_profile[0])
+                                          ref_file_args, mask_trace_profile)
 
     # Generate grid based on estimate if not given
     if wave_grid is None:
@@ -1054,7 +1051,6 @@ def run_extract1d(input_model, pastasoss_ref_name,
             refmask &= ~not_finite
 
         # Perform background correction.
-        print("bkg sub on?", soss_kwargs["subtract_background"])
         if soss_kwargs['subtract_background']:
             log.info('Applying background subtraction.')
             bkg_mask = make_background_mask(scidata, width=40)
