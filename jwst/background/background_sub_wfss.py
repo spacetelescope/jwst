@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import warnings
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
@@ -75,10 +76,14 @@ def subtract_wfss_bkg(
     # compute scaling factor for the reference background image
     log.info("Starting iterative outlier rejection for background subtraction.")
     rescaler = _ScalingFactorComputer(**rescaler_kwargs)
-    factor, _ = rescaler(input_model.data.copy(),
-                      bkg_ref.data.copy(),
-                      input_model.err.copy()**2,
-                      mask=~bkg_mask)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore",
+                                category=RuntimeWarning,
+                                message="All-NaN slice encountered")
+        factor, _ = rescaler(input_model.data.copy(),
+                        bkg_ref.data.copy(),
+                        input_model.err.copy()**2,
+                        mask=~bkg_mask)
 
     # extract the derived factor and apply it to the unmasked, non-outlier-rejected data
     subtract_this = factor * bkg_ref.data
@@ -167,7 +172,11 @@ class _ScalingFactorComputer:
             # Note this never passes in iteration 0 because last_rms_resid is inf.
             if self.delta_rms_thresh > 0:
                 rms_resid = self._compute_rms_residual(sci_sub)
-                fractional_diff = (last_rms_resid - rms_resid)/last_rms_resid
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore",
+                                            category=RuntimeWarning,
+                                            message="invalid value encountered in scalar divide")
+                    fractional_diff = (last_rms_resid - rms_resid)/last_rms_resid
                 if fractional_diff < self.delta_rms_thresh:
                     msg = (f"Stopping at iteration {i}; too little improvement "
                            "since last iteration (hit delta_rms_thresh).")
