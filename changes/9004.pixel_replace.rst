@@ -1,0 +1,1 @@
+Change from the default BFGS algorithm to Nelder-Mead when calling scipy.minimize within the fit_profile approach to pixel replacement in order to fix numpy 2.0 compatibility issues.
