@@ -203,7 +203,7 @@ def mask_trace_profile(trace_profile):
 
 
 @pytest.fixture(scope="package")
-def detector_mask(wave_map):
+def detector_mask():
     """Add a few random bad pixels"""
     rng = np.random.default_rng(42)
     mask = np.zeros(DATA_SHAPE, dtype=bool)
@@ -307,3 +307,11 @@ def refmodel(trace1d):
     model.throughputs = [thru0, thru1]
 
     return model
+
+
+@pytest.fixture
+def ref_files(refmodel):
+    ref_files = {"pastasoss": refmodel}
+    ref_files["subarray"] = "SUBSTRIP256"
+    ref_files["pwcpos"] = PWCPOS
+    return ref_files

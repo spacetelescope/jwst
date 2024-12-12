@@ -177,6 +177,9 @@ def _get_trace_1d(ref_files, order):
 
 def _estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile, threshold=1e-4):
     """
+    Roughly estimate the underlying flux of the target spectrum by simply masking
+    out order 2 and retrieving the flux from order 1.
+
     Parameters
     ----------
     scidata_bkg : array
@@ -264,9 +267,9 @@ def _get_native_grid_from_trace(ref_files, spectral_order):
 
 def _get_grid_from_trace(ref_files, spectral_order, n_os):
     """
-    TODO: is this partially or fully redundant with atoca_utils.grid_from_map?
     Make a 1d-grid of the pixels boundary and ready for ATOCA ExtractionEngine,
     based on the wavelength solution.
+
     Parameters
     ----------
     ref_files: dict
@@ -298,8 +301,7 @@ def _get_grid_from_trace(ref_files, spectral_order, n_os):
 
 
 def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
-    '''
-    TODO: add docstring
+    """
     Create the grid to use for the simultaneous extraction of order 1 and 2.
     The grid is made by:
     1) requiring that it satisfies the oversampling n_os
@@ -307,7 +309,26 @@ def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
     3) trying to reach the specified tolerance in the rest of spectral range
     The max_grid_size overrules steps 2) and 3), so the precision may not be reached if
     the grid size needed is too large.
-    '''
+
+    Parameters
+    ----------
+    ref_files : dict
+        A dictionary of the reference file DataModels.
+    rtol : float
+        The relative tolerance needed on a pixel model.
+    max_grid_size : int
+        Maximum grid size allowed.
+    estimate : UnivariateSpline
+        Estimate of the target flux as a function of wavelength in microns.
+    n_os : int
+        The oversampling factor of the wavelength grid used when solving for
+        the uncontaminated flux.
+
+    Returns
+    -------
+    wave_grid : 1d array
+        The grid of the pixels boundaries at the native sampling.
+    """
 
     # Build native grid for each  orders.
     spectral_orders = [2, 1]
@@ -367,7 +388,36 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
 
 
 def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
+    """
+    TODO: would it be better to pass the engine directly in here somehow?
 
+    Bin the flux to the pixel grid and build a SpecModel.
+
+    Parameters
+    ----------
+    f_order : np.array
+        The solution f_k of the linear system.
+    
+    grid_order : np.array
+        The wavelength grid of the solution, usually oversampled compared to the pixel grid.
+
+    ref_file_args : list
+        The reference file arguments used by the ExtractionEngine.
+
+    pixel_grid : np.array
+        The pixel grid to which the flux should be binned.
+
+    mask : np.array
+        The mask of the pixels to be extracted.
+
+    sp_ord : int
+        The spectral order of the flux.
+
+    Returns
+    -------
+    spec : SpecModel
+        
+    """
     # Make sure the input is not modified
     ref_file_args = ref_file_args.copy()
 
@@ -383,6 +433,7 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
 
     pixel_grid = np.squeeze(pixel_grid)
     f_binned = np.squeeze(f_binned)
+
     # Remove Nans to save space
     is_valid = np.isfinite(f_binned)
     table_size = np.sum(is_valid)
@@ -499,15 +550,18 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         to model each pixel valid pixel of the detector. If not given, the grid is determined
         based on an estimate of the flux (estimate), the relative tolerance (rtol)
         required on each pixel model and the maximum grid size (max_grid_size).
+        # TODO: none of the options work except None or an ndarray, including on main.
+        # docstring needs updates.
+        # Should we add support for these? If not, is SossWaveGridModel used for anything,
+        # and can that be removed from stdatamodels and as a valid argument to soss_wave_grid_in?
     estimate : UnivariateSpline or None
          Estimate of the target flux as a function of wavelength in microns.
     rtol : float
         The relative tolerance needed on a pixel model. It is used to determine the sampling
-        of the soss_wave_grid when not directly given. Default is 1e-3.
+        of wave_grid when the input wave_grid is None. Default is 1e-3.
     max_grid_size : int
-        Maximum grid size allowed. It is used when soss_wave_grid is not directly
-        to make sure the computation time or the memory used stays reasonable.
-        Default is 1000000
+        Maximum grid size allowed when wave_grid is None.
+        Default is 1000000.
 
     Returns
     -------
@@ -542,9 +596,6 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     global_mask = np.all(mask_trace_profile, axis=0).astype(bool)
 
     # Rough estimate of the underlying flux
-    # Note: estim_flux func is not strictly necessary and factors could be a simple logspace -
-    #       dq mask caused issues here and this may need a try/except wrap.
-    #       Dev suggested np.logspace(-19, -10, 10)
     if (tikfac is None or wave_grid is None) and estimate is None:
         estimate = _estim_flux_first_order(scidata_bkg, scierr, scimask,
                                           ref_file_args, mask_trace_profile)
@@ -683,7 +734,9 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         model = np.where(already_modeled, 0., model)
 
         # Add to tracemodels
+        both_nan = np.isnan(tracemodels[order_str]) & np.isnan(model)
         tracemodels[order_str] = np.nansum([tracemodels[order_str], model], axis=0)
+        tracemodels[order_str][both_nan] = np.nan
 
         # Add the result to spec_list
         for sp in spec_ord:
@@ -753,10 +806,63 @@ def _decontaminate_image(scidata_bkg, tracemodels, subarray):
     return decontaminated_data
 
 
-# TODO Add docstring
 def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
                         mask_rebuild, order, wave_grid, valid_cols,
                         tikfac_log_range, save_tiktests=False):
+    """
+    Extract an output spectrum for a single spectral order using the ATOCA
+    algorithm, testing a range of Tikhonov factors.
+    The Tikhonov factor is derived in two stages: first, ten factors are tested
+    spanning tikfac_log_range, and then a further 20 factors are tested across
+    2 orders of magnitude in each direction around the best factor from the first
+    stage.
+    The best-fitting model and spectrum are reconstructed using the best-fit Tikhonov factor
+    and respecting mask_rebuild.
+
+    Parameters
+    ----------
+    data_order : np.array
+        The 2D data array for the spectral order to be extracted.
+    err_order : np.array
+        The 2D error array for the spectral order to be extracted.
+    ref_file_args : list
+        The reference file arguments used by the ExtractionEngine.
+    mask_fit : np.array
+        Mask determining the aperture used for extraction. This typically includes
+        detector bad pixels and any pixels that are not part of the trace
+    mask_rebuild : np.array
+        Mask determining the aperture used for rebuilding the trace. This typically includes
+        only pixels that do not belong to either spectral trace, i.e., regions of the detector
+        where no real data could exist.
+    order : int
+        The spectral order to be extracted.
+    wave_grid : np.array
+        The wavelength grid used to model the data.
+    valid_cols : np.array
+        The columns of the detector that are valid for extraction.
+    tikfac_log_range : list
+        The range of Tikhonov factors to test, in log space.
+    save_tiktests : bool, optional.
+        If True, save the intermediate models and spectra for each Tikhonov factor tested.
+    
+    Returns
+    -------
+    model : np.array
+        Model derived from the best Tikhonov factor, same shape as data_order.
+    spec_list : list of SpecModel
+        If save_tiktests is True, returns a list of the model spectra for each Tikhonov factor tested,
+        with the best-fitting spectrum last in the list.
+        If save_tiktests is False, returns a one-element list with the best-fitting spectrum.
+    
+    Notes
+    -----
+    The last spectrum in the list of SpecModels lacks the "chi2", "chi2_soft_l1", "chi2_cauchy", and "reg"
+    attributes, as these are only calculated for the intermediate models. The last spectrum is not
+    necessarily identical to any of the spectra in the list, as it is reconstructed according to
+    mask_rebuild instead of fit respecting mask_fit.
+
+    # TODO are all of these behaviors for the last spec in the list the desired ones?
+    """
 
     # The throughput and kernel is not needed here; set them so they have no effect on the extraction.
     def throughput(wavelength):
@@ -777,7 +883,7 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
 
     # Find the tikhonov factor.
     # Initial pass with tikfac_range.
-    factors = np.logspace(tikfac_log_range[0], tikfac_log_range[-1] + 8, 10)
+    factors = np.logspace(tikfac_log_range[0], tikfac_log_range[-1], 10)
     all_tests = engine.get_tikho_tests(factors, data_order, err_order)
     tikfac = engine.best_tikho_factor(tests=all_tests, fit_mode='all')
 
@@ -821,7 +927,6 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
 
     # Add the result to spec_list
     spec_list.append(spec_ord)
-
     return model, spec_list
 
 
