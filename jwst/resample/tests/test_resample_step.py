@@ -1,4 +1,5 @@
 import pytest
+from itertools import product
 
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
@@ -803,22 +804,31 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
     # Verify that the combined uncertainty goes as 1 / sqrt(N)
     mask = np.isfinite(result.err)
 
+    twht = np.sum(result.wht[mask])
+    twht1 = np.sum(result1.wht[mask])
+
     assert np.all((result1.err[mask] / err) <= 1.0)
     assert_allclose(
-        result.err[mask].mean(),
-        result1.err[mask].mean() / np.sqrt(n_images), atol=1e-5
+        np.sum(result.err[mask]**2) * twht**2,
+        np.sum(result1.err[mask]**2) * twht1**2,
+        rtol=1e-6,
+        atol=0.0,
     )
 
     assert np.all((result1.var_rnoise[mask] / var_rnoise) <= 1.0)
     assert_allclose(
-        result.var_rnoise[mask].mean(),
-        result1.var_rnoise[mask].mean() / n_images, atol=1e-5
+        np.sum(result.var_rnoise[mask]) * twht,
+        np.sum(result1.var_rnoise[mask]) * twht1,
+        rtol=1e-6,
+        atol=0.0,
     )
 
     assert np.all((result1.var_poisson[mask] / var_poisson) <= 1.0)
     assert_allclose(
-        result.var_poisson[mask].mean(),
-        result1.var_poisson[mask].mean() / n_images, atol=1e-5
+        np.sum(result.var_poisson[mask]) * twht,
+        np.sum(result1.var_poisson[mask]) * twht1,
+        rtol=1e-6,
+        atol=0.0,
     )
 
     im.close()
@@ -1454,3 +1464,98 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     result2.close()
     result3.close()
     result4.close()
+
+
+@pytest.mark.filterwarnings("ignore:Kernel '")
+@pytest.mark.parametrize(
+    'kernel_fc, ps_ratio, weights',
+    (
+        x for x in product(
+            [
+                ('square', True),
+                ('point', True),
+                ('gaussian', False),
+            ],
+            [0.25, 0.5, 1, 1.2],
+            [(0.99, 0.01), (0.9, 1.5), (467, 733)],
+        )
+    )
+)
+def test_variance_arrays(kernel_fc, ps_ratio, weights, nircam_rate):
+
+    # check that if both 'pixel_scale_ratio' and 'pixel_scale' are passed in,
+    # that 'pixel_scale' overrides correctly
+    im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im1)
+    im2 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im2)
+
+    shape = im1.data.shape
+    xc = shape[1] // 2
+    yc = shape[0] // 2
+
+    # unpack parameters:
+    kernel, fc = kernel_fc
+
+    # pixel values in input data:
+    dataval = [1.0, 7.0]
+
+    # pixel values in input variance:
+    varval = [0.5, 50.0]
+
+    sl = np.s_[yc - 4: yc + 5, xc - 4: xc + 5]
+    im1.data[sl] = dataval[0]
+    im2.data[sl] = dataval[1]
+
+    im1.var_poisson[:, :] = 0.0
+    im1.var_poisson[sl] = varval[0]
+    im2.var_poisson[:, :] = 0.0
+    im2.var_poisson[sl] = varval[1]
+
+    im1.meta.exposure.exposure_time = weights[0]
+    im1.meta.exposure.measurement_time = weights[0]
+    im2.meta.exposure.exposure_time = weights[1]
+    im2.meta.exposure.measurement_time = weights[1]
+
+    library = ModelLibrary([im1, im2])
+
+    # check when both pixel_scale and pixel_scale_ratio are passed in
+    res = ResampleStep.call(
+        library,
+        pixel_scale_ratio=ps_ratio,
+        kernel=kernel,
+        weight_type="exptime",
+        blendheaders=False,
+        save_results=True,
+    )
+
+    assert np.any(np.isfinite(res.var_poisson))
+
+    mask = res.con[0] > 0
+    n_nonzero = np.sum(im1.data > 0.0)
+    res.var_poisson[np.logical_not(mask)] = 0.0
+
+    rtol = 1.0e-6 if fc else 0.15
+
+    ideal_output = np.dot(dataval, weights) * n_nonzero
+    ideal_output2 = np.dot(varval, np.square(weights)) / np.sum(weights)**2
+
+    tflux = np.sum(res.data[mask] * res.wht[mask])
+    tflux2 = np.max(res.var_poisson)
+
+    # check output flux:
+    assert np.allclose(
+        tflux,
+        ideal_output,
+        rtol=rtol,
+        atol=0.0
+    )
+
+    # check output variance:
+    # less restrictive (to account for pixel overlap variations):
+    assert (np.max(tflux2) <= ideal_output2 * (1 + rtol) and
+            np.max(tflux2) >= 0.25 * ideal_output2 * (1 - rtol))
+
+    im1.close()
+    im2.close()
+    res.close()

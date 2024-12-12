@@ -296,11 +296,16 @@ class ResampleData:
                 img.data.shape,
             )
 
+            if compute_error and img.err is not None:
+                data2 = np.square(img.err)
+            else:
+                data2 = None
+
             driz.add_image(
                 data=data,
                 exptime=img.meta.exposure.exposure_time,  # GWCSDrizzle.add_image param default was 1.0
                 pixmap=pixmap,
-                data2=np.square(img.err) if compute_error else None,
+                data2=data2,
                 scale=iscale,
                 weight_map=inwht,
                 wht_scale=1.0,  # hard-coded for JWST count-rate data
@@ -319,7 +324,7 @@ class ResampleData:
         output_model.data = driz.out_img
         output_model.wht = driz.out_wht
         # copy the drizzled error into the output model
-        if compute_error:
+        if compute_error and driz.out_img2 is not None:
             output_model.err = np.sqrt(driz.out_img2[0])
         del driz
 
@@ -388,8 +393,8 @@ class ResampleData:
 
         log.info("Resampling science and variance data")
 
-        invalid_var = 4 * [False]
-        var_list = ["var_rnoise", "var_flat", "var_poisson", "err"]
+        var_list = ["var_rnoise", "var_flat", "var_poisson"]
+        invalid_var = len(var_list) * [False]
 
         leading_group_idx = [v[0] for v in input_models.group_indices.values()]
         with input_models:
@@ -452,10 +457,7 @@ class ResampleData:
                             f"{repr(img.meta.filename)}. Skipping ..."
                         )
                     else:
-                        if name == "err":
-                            data2.append(np.square(var))
-                        else:
-                            data2.append(var)
+                        data2.append(var)
                 del var
 
                 driz.add_image(
@@ -484,15 +486,19 @@ class ResampleData:
         output_model.wht = driz.out_wht
         if driz.out_ctx is not None:
             output_model.con = driz.out_ctx
+
+        valid_var = []
         for k, name in enumerate(var_list):
             if invalid_var[k]:
                 var = np.full_like(output_model.data, np.nan)
-            elif name == "err":
-                var = np.sqrt(driz.out_img2[k])
             else:
                 var = driz.out_img2[k]
+                valid_var.append(var)
             setattr(output_model, name, var)
-        del driz
+
+        err = np.sum(valid_var, axis=0).astype(np.float32)
+        output_model.err = err
+        del driz, err, valid_var, var
 
         if self.blendheaders:
             blender.finalize_model(output_model)

@@ -95,7 +95,7 @@ image.
     If `weight_type=ivm` (the default), the scaling value
     will be determined per-pixel using the inverse of the read noise
     (VAR_RNOISE) array stored in each input image. If the VAR_RNOISE array does
-    not exist, the variance is set to 1 for all pixels (equal weighting).
+    not exist, the weight is set to 1 for all pixels (equal weighting).
     If `weight_type=exptime`, the scaling value will be set equal to the
     measurement time (TMEASURE) found in the image header if available;
     if unavailable, the scaling will be set equal to the exposure time (EFFEXPTM).
