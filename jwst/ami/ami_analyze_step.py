@@ -192,7 +192,6 @@ class AmiAnalyzeStep(Step):
                         sy=-7.27008e-03,
                         xo=0,
                         yo=0,
-                        rotradccw=0,
                         name='commissioning')
                     self.log.info("Using affine parameters from commissioning.")
                 else:

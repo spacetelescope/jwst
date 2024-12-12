@@ -183,7 +183,7 @@ def apply_LG_plus(
     log.info(f'\tmx={affine2d.mx:.6f}\tmy={affine2d.my:.6f}')
     log.info(f'\tsx={affine2d.sx:.6f}\tsy={affine2d.sy:.6f}')
     log.info(f'\txo={affine2d.xo:.6f}\tyo={affine2d.yo:.6f}')
-    log.info(f'\trotradccw={affine2d.rotradccw:.4f}')
+    log.info(f'\trotradccw={affine2d.rotradccw}')
 
     niriss = instrument_data.NIRISS(filt,
                                     nrm_model,
