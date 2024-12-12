@@ -223,8 +223,10 @@ class Extract1dStep(Step):
 
         if exp_type in extract.OPTIMAL_EXPTYPES:
             specwcs_ref = self.get_reference_file(model, 'specwcs')
-            #psf_ref = self.get_reference_file(model, 'psf')
-            psf_ref = "MIRI_LRS_SLIT_EPSF_20240602_WAVE_1D.fits"
+            self.log.info(f'Using SPECWCS file {specwcs_ref}')
+
+            psf_ref = self.get_reference_file(model, 'psf')
+            self.log.info(f'Using PSF file {psf_ref}')
         else:
             specwcs_ref = 'N/A'
             psf_ref = 'N/A'
