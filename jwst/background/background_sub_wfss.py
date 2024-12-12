@@ -92,7 +92,8 @@ def subtract_wfss_bkg(
     result.data = input_model.data - subtract_this
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
 
-    log.info(f"Average of background image subtracted = {np.nanmean(subtract_this):.3e}")
+    log.info(f"Average of scaled background image = {np.nanmean(subtract_this):.3e}")
+    log.info(f"Scaling factor = {factor:.5e}")
 
     bkg_ref.close()
 
@@ -215,8 +216,8 @@ class _ScalingFactorComputer:
 
     def _compute_rms_residual(self, sci_sub):
         """
-        Calculate the RMS of the cross-dispersion background, which is found by taking
-        the median along the dispersion axis.
+        Calculate the background-subtracted RMS along the dispersion axis, which is found
+        by taking the median profile of the image collapsed along the cross-dispersion axis.
         Note meta.wcsinfo.dispersion_axis is 1-indexed coming out of assign_wcs, i.e., in [1,2].
         So we need to """
         collapsing_axis = int(self.dispersion_axis - 1)

@@ -89,6 +89,9 @@ Before being subtracted, the background reference image is scaled to match the
 signal level of the WFSS image within background (source-free) regions of the
 image. The scaling factor is determined based on the variance-weighted mean
 of the science data, i.e., ``factor = sum(sci*bkg/var) / sum(bkg*bkg/var)``.
+This factor is equivalent to solving for the scaling constant applied to the
+reference background that gives the maximum likelihood of matching 
+the science data.
 Outliers are rejected iteratively during determination of the scaling factor
 in order to avoid biasing the scaling factor based on outliers. The iterative
 rejection process is controlled by the
