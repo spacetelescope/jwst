@@ -809,8 +809,8 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
 
     assert np.all((result1.err[mask] / err) <= 1.0)
     assert_allclose(
-        np.sum(result.err[mask]**2) * twht**2,
-        np.sum(result1.err[mask]**2) * twht1**2,
+        np.sum(result.err[mask]**2) * twht,
+        np.sum(result1.err[mask]**2) * twht1,
         rtol=1e-6,
         atol=0.0,
     )
@@ -849,7 +849,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
         result = ResampleStep.call(c, blendheaders=False)
 
     # no valid variance - variance are all NaN
-    assert np.any(np.isfinite(result.err))
+    assert_allclose(result.err, np.nan)
     assert_allclose(result.var_rnoise, np.nan)
     assert_allclose(result.var_poisson, np.nan)
     assert_allclose(result.var_flat, np.nan)

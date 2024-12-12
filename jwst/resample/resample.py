@@ -496,7 +496,12 @@ class ResampleData:
                 valid_var.append(var)
             setattr(output_model, name, var)
 
-        err = np.sum(valid_var, axis=0).astype(np.float32)
+        if len(valid_var) > 0:
+            all_nan = np.all(np.isnan(valid_var), axis=0)
+            err = np.sqrt(np.nansum(valid_var, axis=0)).astype(np.float32)
+            err[all_nan] = np.nan
+        else:
+            err = np.full_like(output_model.data, np.nan)
         output_model.err = err
         del driz, err, valid_var, var
 
