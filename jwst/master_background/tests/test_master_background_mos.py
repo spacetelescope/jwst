@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.table import Table
-from stdatamodels.jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
 
 from jwst.stpipe import query_step_status
 from jwst.assign_wcs import AssignWcsStep
@@ -10,6 +10,9 @@ from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.tests.test_nirspec import create_nirspec_hdul
 from jwst.master_background import MasterBackgroundMosStep
 from jwst.master_background import nirspec_utils
+from jwst.pixel_replace import PixelReplaceStep
+from jwst.resample import ResampleSpecStep
+from jwst.extract_1d import Extract1dStep
 
 
 def create_msa_hdul():
@@ -74,12 +77,27 @@ def nirspec_msa_metfl(tmp_path):
     hdul.close()
     return filename
 
+
 @pytest.fixture
 def nirspec_msa_extracted2d(nirspec_msa_rate, nirspec_msa_metfl):
     model = ImageModel(nirspec_msa_rate)
     model = AssignWcsStep.call(model)
     model = Extract2dStep.call(model)
     return model
+
+
+def mk_multispec(model):
+    specs_model = MultiSlitModel()
+    specs_model.update(model)
+    slits = []
+    for slit in model.slits:
+        if nirspec_utils.is_background_msa_slit(slit):
+            slits.append(slit)
+    specs_model.slits.extend(slits)
+    specs_model = PixelReplaceStep.call(specs_model)
+    specs_model = ResampleSpecStep.call(specs_model)
+    specs_model = Extract1dStep.call(specs_model)
+    return specs_model
 
 
 def test_master_background_mos(nirspec_msa_extracted2d):
@@ -97,43 +115,47 @@ def test_master_background_mos(nirspec_msa_extracted2d):
     # Check that a background was subtracted from the science data
     assert not np.allclose(sci_orig, sci_bkgsub)
 
-    model.close()
-    result.close()
+    del model
+    del result
 
 
-def test_create_background_from_multislit(nirspec_msa_extracted2d):
+def test_create_background_from_multispec(nirspec_msa_extracted2d):
     model = nirspec_msa_extracted2d
 
-    # Insert a outliers into one of the background spectra
+    # Insert outliers into one of the background spectra
     nypix = len(model.slits[0].data)
     nxpix = len(model.slits[0].data)
-    model.slits[0].data[nypix//2,nxpix//2-1:nxpix//2+1] = 10
+    model.slits[0].data[nypix//2, nxpix//2-1:nxpix//2+1] = 10
+
+    specs_model = mk_multispec(model)
 
     # First check that we can make a master background from the inputs
 
     # Check that with sigma_clip=None, the outlier is retained
-    master_background, _ = nirspec_utils.create_background_from_multislit(
-        model, sigma_clip=None)
+    master_background = nirspec_utils.create_background_from_multispec(
+        specs_model, sigma_clip=None)
     assert np.any(master_background.spec[0].spec_table['surf_bright'] > 1)
 
     # Confirm that using a median_filter will filter out the outlier
-    master_background, _ = nirspec_utils.create_background_from_multislit(
-        model, median_kernel=4)
+    master_background = nirspec_utils.create_background_from_multispec(
+        specs_model, median_kernel=4)
     assert np.allclose(master_background.spec[0].spec_table['surf_bright'], 1)
 
     # Confirm that using a sigma clipping when combining background spectra
     # removes the outlier
-    master_background, _ = nirspec_utils.create_background_from_multislit(
-        model, sigma_clip=3)
+    master_background = nirspec_utils.create_background_from_multispec(
+        specs_model, sigma_clip=3)
     assert np.allclose(master_background.spec[0].spec_table['surf_bright'], 1)
 
-    model.close()
+    del model
+    del specs_model
+
 
 def test_map_to_science_slits(nirspec_msa_extracted2d):
     model = nirspec_msa_extracted2d
+    specs_model = mk_multispec(model)
 
-    master_background, _ = nirspec_utils.create_background_from_multislit(
-        model)
+    master_background = nirspec_utils.create_background_from_multispec(specs_model)
 
     # Check that the master background is expanded to the shape of the input slits
     mb_multislit = nirspec_utils.map_to_science_slits(model, master_background)
@@ -145,13 +167,15 @@ def test_map_to_science_slits(nirspec_msa_extracted2d):
     nonzero = slit_data != 0
     assert np.allclose(slit_data[nonzero], 1)
 
-    model.close()
+    del model
+    del specs_model
+
 
 def test_apply_master_background(nirspec_msa_extracted2d):
     model = nirspec_msa_extracted2d
+    specs_model = mk_multispec(model)
 
-    master_background, _ = nirspec_utils.create_background_from_multislit(
-    model)
+    master_background = nirspec_utils.create_background_from_multispec(specs_model)
     mb_multislit = nirspec_utils.map_to_science_slits(model, master_background)
 
     result = nirspec_utils.apply_master_background(model, mb_multislit, inverse=False)
@@ -175,7 +199,8 @@ def test_apply_master_background(nirspec_msa_extracted2d):
     assert np.any(diff != 0)
     assert np.allclose(diff[diff != 0], -1)
 
-    model.close()
-    result.close()
+    del model
+    del result
+    del specs_model
 
 

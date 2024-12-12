@@ -38,6 +38,7 @@ class JumpStep(Step):
         mask_snowball_core_next_int = boolean(default=True) # Flag saturated cores of snowballs in the next integration?
         snowball_time_masked_next_int = integer(default=4000) # Time in seconds over which saturated cores are flagged in next integration
         find_showers = boolean(default=False) # Apply MIRI shower flagging?
+        max_shower_amplitude = float(default=4) # Maximum MIRI shower amplitude in DN/s
         extend_snr_threshold = float(default=1.2) # The SNR minimum for detection of extended showers in MIRI
         extend_min_area = integer(default=90) # Min area of emission after convolution for the detection of showers
         extend_inner_radius = float(default=1) # Inner radius of the ring_2D_kernel used for convolution
@@ -119,6 +120,7 @@ class JumpStep(Step):
                                       min_sat_radius_extend=self.min_sat_radius_extend,
                                       sat_required_snowball=sat_required_snowball, sat_expand=self.sat_expand * 2,
                                       expand_large_events=expand_large_events, find_showers=self.find_showers,
+                                      max_shower_amplitude=self.max_shower_amplitude,
                                       edge_size=self.edge_size, extend_snr_threshold=self.extend_snr_threshold,
                                       extend_min_area=self.extend_min_area,
                                       extend_inner_radius=self.extend_inner_radius,

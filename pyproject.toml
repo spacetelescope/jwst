@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "asdf>=3.1.0,<4",
+    "asdf>=3.1.0,<5",
     "astropy>=5.3",
     "BayesicFitting>=3.0.1",
     "crds>=12.0.3",
@@ -74,7 +74,6 @@ collect_pipeline_cfgs = "jwst.scripts.collect_pipeline_cfgs:main"
 create_data = "jwst.scripts.create_data:main"
 csvconvert = "jwst.csv_tools.csvconvert:CSVConvertScript"
 exp_to_source = "jwst.exp_to_source.main:Main"
-okify_regtests = "jwst.scripts.okify_regtests:main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
 schemadoc = "jwst.scripts.schemadoc:main"
 set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
@@ -106,8 +105,6 @@ sdp = [
 ]
 test = [
     "ci-watson>=0.5.0",
-    "colorama>=0.4.1",
-    "readchar>=3.0",
     "ruff",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
