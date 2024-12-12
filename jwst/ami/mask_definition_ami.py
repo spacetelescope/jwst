@@ -13,11 +13,14 @@ mm = 1.0e-3 * m
 um = 1.0e-6 * m
 
 
-class NRM_definition():
+class NRMDefinition():
 
 	def __init__(self, nrm_model, maskname='jwst_ami', rotdeg=None, chooseholes=None):
 		"""
-		Set attributes of NRM_definition class.
+		Set attributes of NRMDefinition class. 
+
+		Get hole centers and other mask geometry details from NRMModel, apply rotations/flips 
+		as necessary and set them as attributes.
 
 		Parameters
 		----------
@@ -29,12 +32,17 @@ class NRM_definition():
 			range of rotations to search (degrees), optional
 		chooseholes: list
 			None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask, optional
+			If None, use real seven-hole mask
 		"""
 
 		if maskname not in ['jwst_ami','jwst_g7s6c']:
 			raise ValueError("Mask name not supported")
 
 		self.maskname = maskname # there's only one mask but this is used in oifits
+		self.hdia = nrm_model.flat_to_flat
+		self.activeD = nrm_model.diameter
+		self.OD = nrm_model.pupil_circumscribed
+		self.ctrs = []
 
 		self.read_nrm_model(nrm_model, chooseholes=chooseholes)
 
@@ -43,10 +51,7 @@ class NRM_definition():
 
 	def read_nrm_model(self, nrm_model, chooseholes=None):
 		"""
-
-		Calculate hole centers with appropriate rotation,
-		set these and other mask geometry details from NRMModel as
-		attributes.
+		Calculate hole centers with appropriate rotation.
 
 		Parameters
 		----------
@@ -71,9 +76,7 @@ class NRM_definition():
 							[nrm_model.x_a6, nrm_model.y_a6],        # B2 -> B6
 							[nrm_model.x_a7, nrm_model.y_a7]])        # C1 -> C6
 
-		self.hdia = nrm_model.flat_to_flat
-		self.activeD = nrm_model.diameter
-		self.OD = nrm_model.pupil_circumscribed
+
 
 		holedict = {}  # as_built names, C2 open, C5 closed, but as designed coordinates
 		# Assemble holes by actual open segment names (as_built).  Either the full mask or the

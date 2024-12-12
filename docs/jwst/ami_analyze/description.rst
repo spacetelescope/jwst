@@ -52,7 +52,7 @@ other options:
 :--run_bpfix: Run Fourier bad pixel fix on cropped data (default=True)
 
 
-Note that the `affine2d` default argument is a special case; 'commissioning' is currently the only string other than an ASDF filename that is accepted.
+Note that the `affine2d` default argument is a special case; 'commissioning' is currently the only string other than an ASDF filename that is accepted. If `None` is passed, it will perform a rotation search (least-squares fit to a PSF model) and use that for the affine transform.
 
 
 Creating ASDF files

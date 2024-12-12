@@ -22,7 +22,7 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 class LgModel:
     """
     A class for conveniently dealing with an "NRM object" This should be able
-    to take an NRM_definition object for mask geometry.
+    to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
     Simulates PSF (broadband or monochromatic)
     Builds a fringe model - either by user definition, or automated to data
@@ -65,14 +65,15 @@ class LgModel:
         over: integer
            oversampling factor
 
-        pixweight: 2D float array, default is None
+        pixweight: 2D float array, default None
             weighting array
 
         phi: float 1D array
             distance of fringe from hole center in units of waves
 
-        chooseholes: list of strings
-            None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
+        chooseholes: list of strings, default None
+            E.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
+            If None, use the real seven-hole mask.
 
         affine2d: Affine2d object
             Affine2d object
@@ -90,11 +91,11 @@ class LgModel:
         # get these from mask_definition_ami instead
         if mask is None:
             log.info("Using JWST AMI mask geometry from LgModel")
-            mask = mask_definition_ami.NRM_definition(nrm_model,
+            mask = mask_definition_ami.NRMDefinition(nrm_model,
                 maskname="jwst_ami", chooseholes=chooseholes
             )
         elif isinstance(mask, str):
-            mask = mask_definition_ami.NRM_definition(nrm_model,
+            mask = mask_definition_ami.NRMDefinition(nrm_model,
                 maskname=mask, chooseholes=chooseholes
             ) # retain ability to possibly  use other named masks, for now
         self.ctrs = mask.ctrs

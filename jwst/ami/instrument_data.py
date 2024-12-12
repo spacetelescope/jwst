@@ -6,7 +6,7 @@
 import logging
 import numpy as np
 
-from .mask_definition_ami import NRM_definition
+from .mask_definition_ami import NRMDefinition
 from . import utils
 from . import bp_fix
 from stdatamodels.jwst.datamodels import dqflags
@@ -96,7 +96,7 @@ class NIRISS:
         self.instrument = "NIRISS"
         self.arrname = "jwst_ami"
         self.holeshape = 'hex'
-        self.mask = NRM_definition(
+        self.mask = NRMDefinition(
             self.nrm_model,
             maskname=self.arrname,
             chooseholes=self.chooseholes
