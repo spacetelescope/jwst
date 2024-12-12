@@ -187,6 +187,7 @@ def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix,
                            **extract_kwargs)
         var = result[1].T
         model = result[-1].T
+    var[var == 0] = 1.0
     return np.nansum((model - cutout)**2 / var)
 
 
@@ -239,7 +240,7 @@ def nod_pair_location(input_model, middle_wl, dispaxis):
 
 
 def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location,
-                optimize_shifts=False, model_nod_pair=True):
+                optimize_shifts=True, model_nod_pair=True):
     """Create a spatial profile from a PSF reference.
 
     Currently only works on MIRI LRS-FIXEDSLIT exposures.
