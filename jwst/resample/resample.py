@@ -58,8 +58,8 @@ class ResampleImage(Resample):
         """
         Parameters
         ----------
-        input_models : LibModelAccessBase
-            A `LibModelAccessBase`-based object allowing iterating over
+        input_models : ModelLibrary
+            A `ModelLibrary`-based object allowing iterating over
             all contained models of interest.
 
         pixfrac : float, optional
@@ -425,8 +425,6 @@ class ResampleImage(Resample):
         model.meta.photometry.pixelarea_arcsecsq = info_dict["pixelarea_arcsecsq"]
 
         model.meta.resample.pointings = info_dict["pointings"]
-        # model.meta.resample.n_coadds = info_dict["n_coadds"]
-
         model.meta.resample.pixel_scale_ratio = info_dict["pixel_scale_ratio"]
         model.meta.resample.pixfrac = info_dict["pixfrac"]
         model.meta.resample.kernel = info_dict["kernel"]
@@ -497,8 +495,6 @@ class ResampleImage(Resample):
             # only for an imaging WCS:
             self.update_fits_wcsinfo(self.output_jwst_model)
             assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
-        # else:
-        #     assign_wcs_util.update_s_region_spectral(self.output_jwst_model)
 
         self.output_jwst_model.meta.cal_step.resample = 'COMPLETE'
 
@@ -630,9 +626,6 @@ class ResampleImage(Resample):
 
         Used for stage 3 resampling
         """
-        # if self.output_jwst_model is not None:
-        #     self.reset_arrays(reset_output=True)
-
         log.info("Resampling science and variance data")
 
         with self.input_models:

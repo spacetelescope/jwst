@@ -116,12 +116,6 @@ class ResampleStep(Step):
             )
             result = resamp.resample_many_to_one()
 
-        # with result:
-        #     if len(result) == 1:
-        #         model = result.borrow(0)
-        #         result.shelve(model, 0, modify=False)
-        #         return model
-
         return result
 
     @staticmethod
