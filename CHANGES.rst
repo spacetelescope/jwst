@@ -303,12 +303,11 @@ ramp_fitting
 
 - Updated the flow of the detector 1 pipeline when selecting the ``LIKELY`` algorithm
   for ramp fitting.  The ramps must contain a minimum number of groups (4).[#8631]
-  
+
+- Removed unnecessary copies, and created a single copy at step.py level. [#8676]
+
 refpix
 ------
-
-- Add optimized convolution kernel instead of the running median for NIR
-  fullframe data. [#8726]
 
 - Removed unnecessary copies, and created a single copy at step.py level. [#8676]
 
