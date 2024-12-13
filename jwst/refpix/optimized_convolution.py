@@ -32,9 +32,8 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
 
     Returns:
     --------
-
     kernels: list
-        Contains the kernels appropriate for convolution with the left  and right reference pixels
+        List of kernels appropriate for convolution with the left and right reference pixels.
 
     """
 
