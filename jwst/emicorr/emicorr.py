@@ -4,7 +4,6 @@
 
 import numpy as np
 import bottleneck as bn
-import time
 import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
@@ -180,7 +179,6 @@ def apply_emicorr(output_model, emicorr_model,
     xstart = output_model.meta.subarray.xstart   # SUBSTRT1 keyword
     # get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
     nsamples = output_model.meta.exposure.nsamples
-    t0 = time.time()
 
     # get the subarray case from either the ref file or set default values
     freqs_numbers = []
@@ -471,8 +469,7 @@ def apply_emicorr(output_model, emicorr_model,
         }
         freq_pa_dict['subarray_cases'] = on_the_fly_subarr_case
         mk_reffile(freq_pa_dict, save_onthefly_reffile)
-    print('%.2f' % (time.time() - t0))
-    exit()
+
     return output_model
 
 
