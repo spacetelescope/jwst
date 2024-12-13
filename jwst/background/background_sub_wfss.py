@@ -80,14 +80,14 @@ def subtract_wfss_bkg(
         warnings.filterwarnings("ignore",
                                 category=RuntimeWarning,
                                 message="All-NaN slice encountered")
-        factor, _ = rescaler(input_model.data.copy(),
-                        bkg_ref.data.copy(),
-                        input_model.err.copy()**2,
-                        mask=~bkg_mask)
+        # copy to avoid propagating NaNs from iterative clipping into final product
+        sci = input_model.data.copy()
+        var = input_model.err.copy()**2
+        bkg = bkg_ref.data.copy()
+        factor, _ = rescaler(sci, bkg, var, mask=~bkg_mask)
 
     # extract the derived factor and apply it to the unmasked, non-outlier-rejected data
     subtract_this = factor * bkg_ref.data
-    
     result = input_model.copy()
     result.data = input_model.data - subtract_this
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)

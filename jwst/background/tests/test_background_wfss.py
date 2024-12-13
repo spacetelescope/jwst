@@ -6,6 +6,7 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
+from jwst.background import BackgroundStep
 from jwst.background.background_sub_wfss import (subtract_wfss_bkg, 
                                             _mask_from_source_cat,
                                             _sufficient_background_pixels,
@@ -124,6 +125,36 @@ def make_wfss_datamodel(data_path, mock_data):
     return image
 
 
+@pytest.fixture
+def make_nrc_wfss_datamodel(make_wfss_datamodel):
+    """Make a NIRCAM WFSS datamodel and call AssignWCS to populate its WCS"""
+    data = make_wfss_datamodel.copy()
+    data.meta.instrument.filter = 'F250M'
+    data.meta.instrument.pupil = 'GRISMC'
+    data.meta.instrument.detector = 'NRCALONG'
+    data.meta.instrument.channel = 'LONG'
+    data.meta.instrument.name = 'NIRCAM'
+    data.meta.exposure.type = 'NRC_WFSS'
+    data.meta.instrument.module = 'A'
+    result = AssignWcsStep.call(data)
+
+    return result
+
+
+@pytest.fixture
+def make_nis_wfss_datamodel(make_wfss_datamodel):
+    """Make a NIRISS WFSS datamodel and call AssignWCS to populate its WCS"""
+    data = make_wfss_datamodel.copy()
+    data.meta.instrument.filter = 'GR150C'
+    data.meta.instrument.pupil = 'F090W'
+    data.meta.instrument.detector = 'NIS'
+    data.meta.instrument.name = 'NIRISS'
+    data.meta.exposure.type = 'NIS_WFSS'
+    result = AssignWcsStep.call(data)
+
+    return result
+
+
 @pytest.fixture()
 def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     """Mock background reference file"""
@@ -136,91 +167,112 @@ def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     return bkg_fname
 
 
-filter_list = ['F250M', 'F277W', 'F335M', 'F356W', 'F460M',
-               'F356W', 'F410M', 'F430M', 'F444W']  # + ['F480M', 'F322W2', 'F300M']
+def shared_tests(sci, mask, original_data_mean):
+    """Tests that are common to all WFSS modes
+    Note that NaN fraction test in test_nrc_wfss_background and test_nis_wfss_background
+    cannot be applied to the full run tests because the background reference files contain
+    NaNs in some cases (specifically for NIRISS)"""
+
+    # re-mask data so "real" sources are ignored here
+    sci[~mask] = np.nan
+
+    # test that the background has been subtracted from the data to within some fraction of
+    # the noise in the data. There's probably a first-principles way to determine the tolerance,
+    # but this is ok for the purposes of this test.
+    # ignore the outliers here too
+    sci[sci>50] = np.nan
+    tol = 0.01*np.nanstd(sci)
+    assert np.isclose(np.nanmean(sci), original_data_mean, atol=tol)
 
 
-@pytest.mark.parametrize("pupils", ['GRISMC', 'GRISMR'])
-@pytest.mark.parametrize("filters", filter_list)
-@pytest.mark.parametrize("detectors", ['NRCALONG', 'NRCBLONG'])
-def test_nrc_wfss_background(tmp_cwd, filters, pupils, detectors, make_wfss_datamodel, bkg_file):
+def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
     """Test background subtraction for NIRCAM WFSS modes."""
-    data = make_wfss_datamodel
-
-    data.meta.instrument.filter = filters
-    data.meta.instrument.pupil = pupils
-    data.meta.instrument.detector = detectors
-    data.meta.instrument.channel = 'LONG'
-    data.meta.instrument.name = 'NIRCAM'
-    data.meta.exposure.type = 'NRC_WFSS'
-
-    if data.meta.instrument.detector == 'NRCALONG':
-        data.meta.instrument.module = 'A'
-    elif data.meta.instrument.detector == 'NRCBLONG':
-        data.meta.instrument.module = 'B'
+    data = make_nrc_wfss_datamodel.copy()
 
     # Get References
-    wcs_corrected = AssignWcsStep.call(data)
-    wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
+    wavelenrange = Step().get_reference_file(data, "wavelengthrange")
 
     # do the subtraction
-    result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
+    result = subtract_wfss_bkg(data, bkg_file, wavelenrange)
+    sci = result.data.copy()
 
     # ensure NaN fraction did not increase. Rejecting outliers during determination
     # of factor should not have carried over into result.
-    nan_frac = np.sum(np.isnan(result.data))/result.data.size
+    nan_frac = np.sum(np.isnan(sci))/sci.size
     assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
-    # re-mask data so "real" sources are ignored here
+    # re-compute mask to ignore "real" sources for tests
     mask = _mask_from_source_cat(result, wavelenrange)
-    result.data[~mask] = np.nan
 
-    # test that the background has been subtracted from the data to within some fraction of
-    # the noise in the data. There's probably a first-principles way to determine the tolerance,
-    # but this is ok for the purposes of this test.
-    sci = result.data.copy()
-    # ignore the outliers for the purposes of this test
-    sci[sci>50] = np.nan
-    tol = 0.01*np.nanstd(sci)
-    assert np.isclose(np.nanmean(sci), result.original_data_mean, atol=tol)
+    shared_tests(sci, mask, data.original_data_mean)
 
 
-@pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
-@pytest.mark.parametrize("pupils", ['F090W', 'F115W', 'F140M', 'F150W', 'F158M', 'F200W'])
-def test_nis_wfss_background(filters, pupils, make_wfss_datamodel, bkg_file):
+# test both filters because they have opposite dispersion directions
+def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
     """Test background subtraction for NIRISS WFSS modes."""
-    data = make_wfss_datamodel
-
-    data.meta.instrument.filter = filters
-    data.meta.instrument.pupil = pupils
-    data.meta.instrument.detector = 'NIS'
-    data.meta.instrument.name = 'NIRISS'
-    data.meta.exposure.type = 'NIS_WFSS'
+    data = make_nis_wfss_datamodel.copy()
 
     # Get References
-    wcs_corrected = AssignWcsStep.call(data)
-    wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
+    wavelenrange = Step().get_reference_file(data, "wavelengthrange")
 
     # do the subtraction
-    result = subtract_wfss_bkg(wcs_corrected, bkg_file, wavelenrange)
+    result = subtract_wfss_bkg(data, bkg_file, wavelenrange)
+    sci = result.data.copy()
 
     # ensure NaN fraction did not increase. Rejecting outliers during determination
     # of factor should not have carried over into result.
-    nan_frac = np.sum(np.isnan(result.data))/result.data.size
+    nan_frac = np.sum(np.isnan(sci))/sci.size
     assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
-    # re-mask data so "real" sources are ignored here
     mask = _mask_from_source_cat(result, wavelenrange)
-    data = result.data[mask]
+    shared_tests(sci, mask, data.original_data_mean)
 
-    # test that the background has been subtracted from the data to within some fraction of
-    # the noise in the data. There's probably a first-principles way to determine the tolerance,
-    # but this is ok for the purposes of this test.
+
+# test both filters because they have opposite dispersion directions
+@pytest.mark.parametrize("pupil", ["GRISMC", "GRISMR"])
+def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
+    """Test full run of NIRCAM WFSS background subtraction.
+    The residual structure in the background will not look as nice as in 
+    test_nis_wfss_background because here it's taken from a reference file,
+    so the bkg has real detector imperfections
+    while the data is synthetic and just has a mock gradient"""
+    data = make_nrc_wfss_datamodel.copy()
+    data.meta.instrument.pupil = pupil
+
+    # do the subtraction. set all options to ensure they are at least recognized
+    result = BackgroundStep.call(data, None,
+                                 wfss_maxiter=8,
+                                 wfss_p=0.5,
+                                 wfss_p_rms=0,)
+
     sci = result.data.copy()
-    # ignore the outliers for the purposes of this test
-    sci[sci>50] = np.nan
-    tol = 0.01*np.nanstd(sci)
-    assert np.isclose(np.nanmean(sci), result.original_data_mean, atol=tol)
+    # re-derive mask to ignore "real" sources for tests
+    wavelenrange = Step().get_reference_file(data, "wavelengthrange")
+    mask = _mask_from_source_cat(result, wavelenrange)
+    shared_tests(sci, mask, data.original_data_mean)
+
+
+@pytest.mark.parametrize("filt", ["GR150C", "GR150R"])
+def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
+    """Test full run of NIRISS WFSS background subtraction.
+    The residual structure in the background will not look as nice as in 
+    test_nis_wfss_background because here it's taken from a reference file,
+    so the bkg has real detector imperfections
+    while the data is synthetic and just has a mock gradient"""
+    data = make_nis_wfss_datamodel.copy()
+    data.meta.instrument.filter = filt
+
+    # do the subtraction. set all options to ensure they are at least recognized
+    result = BackgroundStep.call(data, None,
+                                 wfss_maxiter=8,
+                                 wfss_p=0.5,
+                                 wfss_p_rms=0,)
+    
+    sci = result.data.copy()
+    # re-derive mask to ignore "real" sources for tests
+    wavelenrange = Step().get_reference_file(data, "wavelengthrange")
+    mask = _mask_from_source_cat(result, wavelenrange)
+    shared_tests(sci, mask, data.original_data_mean)
 
 
 def test_sufficient_background_pixels():
