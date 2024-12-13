@@ -1095,6 +1095,8 @@ def run_extract1d(input_model, pastasoss_ref_name,
         # Pre-compute the weights for box extraction (used in modeling and extraction)
         args = (ref_files, scidata_bkg.shape)
         box_weights, wavelengths = compute_box_weights(*args, width=soss_kwargs['width'])
+        if subarray == 'SUBSTRIP96':
+            box_weights['Order 2'] = np.ones((96, 2048))
 
         # Model the traces based on optics filter configuration (CLEAR or F277W)
         if soss_filter == 'CLEAR' and generate_model:
