@@ -99,7 +99,7 @@ def detect_outliers(
         resamp = resample.ResampleImage(
             input_models,
             blendheaders=False,
-            wht_type=weight_type,
+            weight_type=weight_type,
             pixfrac=pixfrac,
             kernel=kernel,
             fillval=fillval,

@@ -675,7 +675,7 @@ def make_resamp(input_models):
         input_models,
         output="",
         blendheaders=False,
-        wht_type="ivm",
+        weight_type="ivm",
         pixfrac=1.0,
         kernel="square",
         fillval="INDEF",
