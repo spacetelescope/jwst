@@ -1,5 +1,5 @@
 import numpy as np
-from stdatamodels.jwst.datamodels import Level1bModel, ConvKernelModel
+from stdatamodels.jwst.datamodels import RampModel, SIRSKernelModel
 from jwst.refpix.optimized_convolution import make_kernels, get_conv_kernel_coeffs, apply_conv_kernel
 
 
@@ -24,12 +24,12 @@ ckm = {'nrcb1': {
                                     0.8868761-0.00237024j, 0.89918566-0.00323711j]])
                 }
        }
-conv_kernel_model = ConvKernelModel(ckm)
+conv_kernel_model = SIRSKernelModel(ckm)
 
 
 def mk_data_mdl(data, instrument, detector):
     # create input_model
-    input_model = Level1bModel(data=data)
+    input_model = RampModel(data=data)
     input_model.meta.instrument.name = instrument
     input_model.meta.instrument.detector = detector
     input_model.meta.subarray.name = 'FULL'
