@@ -230,7 +230,7 @@ class ResampleSpec(ResampleImage):
         return model_dict
 
     def create_output_jwst_model(self, ref_input_model=None):
-        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        """ Create a new blank model and update its meta with info from ``ref_input_model``. """
         output_model = datamodels.SlitModel(None)
         # update meta data and wcs
         if ref_input_model is not None:
