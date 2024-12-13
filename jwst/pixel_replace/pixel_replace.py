@@ -336,7 +336,7 @@ class PixelReplacement:
             # TODO: check on signs here - absolute max sometimes picks up
             #  large negative outliers
             profile_norm_scale = np.nanmax(np.abs(profile_data), axis=(dispaxis - 1), keepdims=True)
-            # If profile data has SNR <>> 5 everywhere just use unity scaling
+            # If profile data has SNR < 5 everywhere just use unity scaling
             # (so we don't normalize to noise)
             if (np.nanmax(profile_snr) < 5):
                 profile_norm_scale[:] = 1.0
@@ -369,13 +369,11 @@ class PixelReplacement:
             # Clean current profile of values flagged as bad
             current_condition = self.custom_slice(dispaxis, ind)
             current_profile = model.data[current_condition]
-            current_err = model.err[current_condition]
             cleaned_current = np.where(
                 model.dq[current_condition] & self.DO_NOT_USE,
                 np.nan,
                 current_profile
             )[range(*profile_cut)]
-            cleaned_snr = cleaned_current / current_err[range(*profile_cut)]
 
             replace_mask = np.where(~np.isnan(cleaned_current))[0]
             if len(replace_mask) == 0:
@@ -386,15 +384,15 @@ class PixelReplacement:
             norm_current = min_current / np.max(min_current)
 
             # Scale median profile to current profile with bad pixel - minimize mse?
-            # Only do this scaling if max SNR > 5 so we don't scale on noise.
-            # Likewise, require input values below 1e20 so that we don't overflow the
+            # Only do this scaling if we didn't default to all-unity scaling above,
+            # and require input values below 1e20 so that we don't overflow the
             # minimization routine with extremely bad noise.
-            if ((np.nanmax(cleaned_snr > 5)) & (np.nanmax(np.abs(min_median)) < 1e20)
+            if ((np.nanmedian(profile_norm_scale) != 1.0) & (np.nanmax(np.abs(min_median)) < 1e20)
                     & (np.nanmax(np.abs(norm_current)) < 1e20)):
                 # TODO: check on signs here - absolute max sometimes picks up
                 #  large negative outliers
                 norm_scale = minimize(self.profile_mse, x0=np.abs(np.nanmax(norm_current)),
-                                      args=(min_median, norm_current), method='Nelder-Mead').x
+                                      args=(np.abs(min_median), np.abs(norm_current)), method='Nelder-Mead').x
                 scale = np.max(min_current)
             else:
                 norm_scale = 1.0
