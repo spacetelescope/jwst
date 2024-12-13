@@ -1,12 +1,10 @@
-# A module for conveniently manipulating an 'NRM object' using the
-# Lacour-Greenbaum algorithm. First written by Alexandra Greenbaum in 2014.
 import logging
 import numpy as np
 
 from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2
 from . import utils
-from . import mask_definitions
+from . import mask_definition_ami
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -19,43 +17,47 @@ um = 1.0e-6 * m
 mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 
-class NrmModel:
+class LgModel:
     """
-    A class for conveniently dealing with an "NRM object" This should be able
-    to take an NRM_mask_definitions object for mask geometry.
+    A class for conveniently dealing with an "NRM object." 
+    
+    This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
     Simulates PSF (broadband or monochromatic)
     Builds a fringe model - either by user definition, or automated to data
     Fits model to data by least squares
-    Masks: gpi_g10s40, jwst, visir
+    Masks: jwst_ami (formerly jwst_g7s6c)
     Algorithm documented in Greenbaum, A. Z., Pueyo, L. P., Sivaramakrishnan,
     A., and Lacour, S., Astrophysical Journal vol. 798, Jan 2015.
+    First written by Alexandra Greenbaum in 2014.
     """
 
     def __init__(
         self,
+        nrm_model,
         mask=None,
-        holeshape="circ",
+        holeshape="hex",
         pixscale=None,
         over=1,
         pixweight=None,
-        datapath="",
         phi=None,
-        refdir="",
-        chooseholes=False,
+        chooseholes=None,
         affine2d=None,
         **kwargs,
     ):
         """
-        Set attributes of NrmModel class.
+        Set attributes of LgModel class.
 
         Parameters
         ----------
+        nrm_model: NRMModel datamodel
+            datamodel containing mask geometry information
+
         mask: string
             keyword for built-in values
 
         holeshape: string
-           shape of apertures
+           shape of apertures, default="hex"
 
         pixscale: float
            initial estimate of pixel scale in radians
@@ -63,20 +65,15 @@ class NrmModel:
         over: integer
            oversampling factor
 
-        pixweight: 2D float array, default is None
+        pixweight: 2D float array, default None
             weighting array
-
-        datapath: string
-            directory for output (will remove for final)
 
         phi: float 1D array
             distance of fringe from hole center in units of waves
 
-        refdir: string
-            directory containing ref files (will remove for final)
-
-        chooseholes: list ?
-            holes ...?
+        chooseholes: list of strings, default None
+            E.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
+            If None, use the real seven-hole mask.
 
         affine2d: Affine2d object
             Affine2d object
@@ -91,29 +88,24 @@ class NrmModel:
         self.over = over
         self.pixweight = pixweight
 
-        # mask = "jwst"
-        # self.maskname = mask
-
-        # get these from mask_definitions instead
+        # get these from mask_definition_ami instead
         if mask is None:
-            log.info("No mask name specified for model, using jwst_g7s6c")
-            mask = mask_definitions.NRM_mask_definitions(
-                maskname="jwst_g7s6c", chooseholes=chooseholes, holeshape="hex"
+            log.info("Using JWST AMI mask geometry from LgModel")
+            mask = mask_definition_ami.NRMDefinition(nrm_model,
+                maskname="jwst_ami", chooseholes=chooseholes
             )
         elif isinstance(mask, str):
-            mask = mask_definitions.NRM_mask_definitions(
-                maskname=mask, chooseholes=chooseholes, holeshape="hex"
-            )
+            mask = mask_definition_ami.NRMDefinition(nrm_model,
+                maskname=mask, chooseholes=chooseholes
+            ) # retain ability to possibly  use other named masks, for now
         self.ctrs = mask.ctrs
         self.d = mask.hdia
         self.D = mask.activeD
 
         self.N = len(self.ctrs)
-        self.datapath = datapath
-        self.refdir = refdir
         self.fmt = "%10.4e"
 
-        # get latest OPD from WebbPSF?
+        # get closest in time OPD from WebbPSF?
 
         if phi:  # meters of OPD at central wavelength
             if phi == "perfect":
@@ -125,7 +117,7 @@ class NrmModel:
 
         self.chooseholes = chooseholes
 
-        # affine2d property not to be changed in NrmModel - create a new
+        # affine2d property not to be changed in LgModel - create a new
         #     instance instead
         # Save affine deformation of pupil object or create a no-deformation
         #     object.
@@ -140,8 +132,10 @@ class NrmModel:
 
     def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
         """
-        Simulate a detector-scale psf using parameters input from the call and
-        already stored in the object,and generate a simulation fits header
+        Simulate a detector-scale psf.
+
+        Use parameters input from the call and
+        already stored in the object, and generate a simulation fits header
         storing all of the  parameters used to generate that psf.  If the input
         bandpass is one number it will calculate a monochromatic psf.
 
@@ -199,9 +193,11 @@ class NrmModel:
         self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
     ):
         """
-        Generates the fringe model with the attributes of the object using a
-        bandpass that is either a single wavelength or a list of tuples of the
-        form [(weight1, wavl1), (weight2, wavl2),...].  The model is
+        Generates the fringe model.
+
+        Use the attributes of the object with a bandpass that is either a single 
+        wavelength or a list of tuples of the form 
+        [(weight1, wavl1), (weight2, wavl2),...].  The model is
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
         slice for a toal of 44 2D slices.
@@ -302,8 +298,10 @@ class NrmModel:
         weighted=False,
     ):
         """
-        Run a least-squares fit on an input image; find the appropriate
-        wavelength scale and rotation. If a model is not specified then this
+        Run a least-squares fit on an input image.
+
+        Find the appropriate wavelength scale and rotation. 
+        If a model is not specified then this
         method will find the appropriate wavelength scale, rotation (and
         hopefully centering as well -- This is not written into the object yet,
         but should be soon).  Without specifying a model, fit_image can take a
@@ -403,7 +401,7 @@ class NrmModel:
     def create_modelpsf(self):
         """
         Make an image from the object's model and fit solutions, by setting the
-        NrmModel object's modelpsf attribute
+        LgModel object's modelpsf attribute
 
         Parameters
         ----------
@@ -427,7 +425,9 @@ class NrmModel:
         self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
     ):
         """
-        Determine the scale and rotation that best fits the data.  Correlations
+        Determine the scale and rotation that best fits the data.  
+
+        Correlations
         are calculated in the image plane, in anticipation of data with many
         bad pixels.
 
