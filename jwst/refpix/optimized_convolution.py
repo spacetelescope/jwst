@@ -12,7 +12,7 @@ log.setLevel(logging.DEBUG)
 
 def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
     """
-    Make convolution kernels reference file's Fourier coefficients.
+    Make convolution kernels from Fourier coefficients in the reference file.
 
     Parameters:
     -----------
