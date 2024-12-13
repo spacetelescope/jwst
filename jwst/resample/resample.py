@@ -10,10 +10,7 @@ from spherical_geometry.polygon import SphericalPolygon
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from stcal.resample import (
-    Resample,
-    OutputTooLargeError,
-)
+from stcal.resample import Resample
 from stcal.resample.utils import is_imaging_wcs
 
 from jwst.datamodels import ModelLibrary
@@ -30,7 +27,6 @@ log.setLevel(logging.DEBUG)
 
 __all__ = [
     "ResampleImage",
-    "OutputTooLargeError",
     "is_imaging_wcs",
 ]
 
