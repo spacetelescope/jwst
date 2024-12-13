@@ -3,6 +3,8 @@
 #
 
 import numpy as np
+import bottleneck as bn
+import time
 import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
@@ -178,6 +180,7 @@ def apply_emicorr(output_model, emicorr_model,
     xstart = output_model.meta.subarray.xstart   # SUBSTRT1 keyword
     # get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
     nsamples = output_model.meta.exposure.nsamples
+    t0 = time.time()
 
     # get the subarray case from either the ref file or set default values
     freqs_numbers = []
@@ -377,7 +380,7 @@ def apply_emicorr(output_model, emicorr_model,
         phase_temp = phaseall[0: nints_to_phase, :, :, :]
         dd_temp = dd_all[0: nints_to_phase, :, :, :]
         for nb in range(nbins):
-            u = np.where((phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb]))
+            u = (phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb])
             # calculate the sigma-clipped mean
             dmean, _, _ = scs(dd_temp[u])
             pa[nb] = dmean   # amplitude in this bin
@@ -445,9 +448,8 @@ def apply_emicorr(output_model, emicorr_model,
         log.info('Subtracting EMI noise from data')
 
         # Interleave (straight copy) into 4 amps
-        noise_x = np.arange(nx4) * 4
         for k in range(4):
-            output_model.data[..., noise_x + k] -= dd_noise
+            output_model.data[..., k::4] -= dd_noise
 
         # clean up
         del data
@@ -469,7 +471,8 @@ def apply_emicorr(output_model, emicorr_model,
         }
         freq_pa_dict['subarray_cases'] = on_the_fly_subarr_case
         mk_reffile(freq_pa_dict, save_onthefly_reffile)
-
+    print('%.2f' % (time.time() - t0))
+    exit()
     return output_model
 
 
@@ -539,20 +542,16 @@ def minmed(data, minval=False, avgval=False, maxval=False):
         Median image of a stack of images
     """
 
-    ngroups, ny, nx = np.shape(data)
-    medimg = np.zeros((ny, nx))
-    # use a mask to ignore nans for calculations
-    vec = np.ma.array(data, mask=np.isnan(data))
-    n = vec.size
+    n = data.size
     if n > 0:
         if n <= 2 or minval:
-            medimg = np.ma.min(vec, axis=0)
+            medimg = bn.nanmin(data, axis=0)
         if maxval:
-            medimg = np.ma.max(vec, axis=0)
+            medimg = bn.nanmax(data, axis=0)
         if not minval and not maxval and not avgval:
-            medimg = np.ma.median(vec, axis=0)
+            medimg = bn.nanmedian(data, axis=0)
         if avgval:
-            medimg = np.ma.mean(vec, axis=0)
+            medimg = bn.nanmean(data, axis=0)
     return medimg
 
 
