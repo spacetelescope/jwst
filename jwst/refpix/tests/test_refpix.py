@@ -8,6 +8,14 @@ from jwst.refpix.reference_pixels import (
     Dataset, NIRDataset, correct_model, create_dataset, NRS_edgeless_subarrays)
 
 
+conv_kernel_params = {
+    'refpix_algorithm': 'median',
+    'sirs_kernel_model': None,
+    'sigreject': 4,
+    'gaussmooth': 1,
+    'halfwidth': 30}
+
+
 def test_refpix_subarray_miri():
     """Check that the correction is skipped for MIR subarray data """
 
@@ -457,7 +465,6 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL']
     input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
-    conv_kernel_params = None
     init_dataset = create_dataset(input_model,
                                   odd_even_columns,
                                   use_side_ref_pixels,
@@ -501,7 +508,6 @@ def test_do_corrections_subarray(setup_subarray_cube):
     input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL']
     input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
-    conv_kernel_params = None
     init_dataset = create_dataset(input_model,
                                   odd_even_columns,
                                   use_side_ref_pixels,
@@ -574,7 +580,6 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
     input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
     input_model.pixeldq[:, -4:] = dqflags.pixel['REFERENCE_PIXEL']
 
-    conv_kernel_params = None
     init_dataset = create_dataset(input_model,
                                   odd_even_columns,
                                   use_side_ref_pixels,
@@ -612,6 +617,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
                            use_side_ref_pixels,
                            side_smoothing_length,
                            side_gain,
+                           conv_kernel_params,
                            odd_even_rows)
 
     # Make sure get_group properly copied the subarray
@@ -645,7 +651,8 @@ def test_do_top_bottom_correction(setup_cube):
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
-                              side_gain)
+                              side_gain,
+                              conv_kernel_params)
 
     abounds = [0, 512, 1024, 1536, 2048]
     top_even_amps = [12, 13, 14, 15]
@@ -718,7 +725,8 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
-                              side_gain)
+                              side_gain,
+                              conv_kernel_params)
 
     abounds = [0, 512, 1024, 1536, 2048]
     top_amps = [12, 13, 14, 15]
@@ -885,7 +893,6 @@ def test_correct_model(setup_cube, instr, det):
     input_model = setup_cube(instr, det, ngroups, nrows, ncols)
     input_model.data[0, 0, :, :] = rpix
     input_model.data[0, 0, 4:-4, 4:-4] = dataval
-    conv_kernel_params = None
 
     correct_model(input_model,
                   odd_even_columns,
@@ -931,7 +938,6 @@ def test_zero_frame(setup_cube):
     input_model.zeroframe[0, 4:-4, 4:-4] = dataval / 2.
     input_model.zeroframe[0, 5, 5] = 0.  # Test a bad pixel.
     input_model.meta.exposure.zero_frame = True
-    conv_kernel_params = None
 
     correct_model(input_model,
                   odd_even_columns,

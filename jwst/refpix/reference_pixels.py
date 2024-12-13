@@ -1619,13 +1619,15 @@ class MIRIDataset(Dataset):
     """
 
     def __init__(self, input_model,
-                 odd_even_rows):
+                 odd_even_rows,
+                 conv_kernel_params):
 
         super(MIRIDataset, self).__init__(input_model,
                                           odd_even_columns=False,
                                           use_side_ref_pixels=False,
                                           side_smoothing_length=False,
                                           side_gain=False,
+                                          conv_kernel_params=conv_kernel_params,
                                           odd_even_rows=odd_even_rows)
 
         self.reference_sections = MIR_reference_sections
@@ -2010,7 +2012,8 @@ def create_dataset(input_model,
 
     if detector[:3] == 'MIR':
         return MIRIDataset(input_model,
-                           odd_even_rows)
+                           odd_even_rows,
+                           conv_kernel_params)
     elif detector == 'NRS1':
         return NRS1Dataset(input_model,
                            odd_even_columns,
