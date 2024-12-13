@@ -7,6 +7,7 @@ import logging
 
 import numpy as np
 
+from astropy.modeling import bind_bounding_box
 from astropy.modeling.models import Shift, Const1D, Mapping
 from gwcs.wcstools import grid_from_bounding_box
 from gwcs.utils import _toindex
@@ -470,7 +471,7 @@ def extract_grism_objects(input_model,
                 else:
                     var_flat = None
 
-                tr.bounding_box = util.transform_bbox_from_shape(ext_data.shape)
+                bind_bounding_box(tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order='F')
                 subwcs.set_transform('grism_detector', 'detector', tr)
 
                 new_slit = datamodels.SlitModel(data=ext_data,
