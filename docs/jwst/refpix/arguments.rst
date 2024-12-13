@@ -62,7 +62,7 @@ data, and can be set to 'median' (default) to use the running median or
 *  ``--sigreject``
 
 The ``sigreject`` argument is the number of sigmas to reject as outliers in the
-optimized convolution kernel algorithm. The value is expected to be a float.
+SIRS algorithm. The value is expected to be a float.
 
 *  ``--gaussmooth``
 
