@@ -1,1 +1,0 @@
-Add optimized convolution kernel instead of the running median for NIR fullframe data.
