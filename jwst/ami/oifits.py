@@ -1,12 +1,5 @@
 #! /usr/bin/env python
-"""
-RawOifits class: takes fringefitter class, which contains nrm_list and instrument_data attributes,
-all info needed to write oifits.
-populate structure needed to write out oifits files according to schema.
-averaged and multi-integration versions, sigma-clipped stats over ints
 
-CalibOifits class: takes two AmiOIModel datamodels and produces a final calibrated datamodel.
-"""
 import numpy as np
 from scipy.special import comb
 from astropy.stats import sigma_clipped_stats
@@ -23,8 +16,14 @@ log.setLevel(logging.DEBUG)
 class RawOifits:
     def __init__(self, fringefitter, method="mean"):
         """
-        Class to store AMI data in the format required to write out to OIFITS files
-        Angular quantities of input are in radians from fringe fitting; converted to degrees for saving.
+        Class to store AMI data in the format required to write out to OIFITS files.
+
+        Takes fringefitter class, which contains nrm_list and instrument_data attributes,
+        all info needed to write oifits. Angular quantities of input are in radians from 
+        fringe fitting; converted to degrees for saving. Populate the structure needed to 
+        write out oifits files according to schema.
+        Produces averaged and multi-integration versions, with sigma-clipped stats over
+        integrations.
 
         Parameters
         ----------
@@ -729,6 +728,8 @@ class RawOifits:
 class CalibOifits:
     def __init__(self, targoimodel, caloimodel):
         """
+        Produce a final calibrated AmiOIModel.
+
         Calibrate (normalize) an AMI observation by subtracting closure phases
         of a reference star from those of a target and dividing visibility amplitudes
         of the target by those of the reference star.

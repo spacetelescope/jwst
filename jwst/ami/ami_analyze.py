@@ -1,4 +1,3 @@
-#  Module for applying the LG-PLUS algorithm to an AMI exposure
 import logging
 import numpy as np
 import copy
@@ -30,7 +29,7 @@ def apply_LG_plus(
     run_bpfix,
 ):
     """
-    Applies the image plane algorithm to an AMI image
+    Applies the image plane algorithm (LG-PLUS) to an AMI exposure
 
     Parameters
     ----------
@@ -126,15 +125,16 @@ def apply_LG_plus(
     # Throughput (combined filter and source spectrum) calculated here
     bandpass = utils.handle_bandpass(bandpass, throughput_model)
 
-    rotsearch_d = np.append(
+    if affine2d is None:
+        log.info("Searching for best-fit affine transform")
+        rotsearch_d = np.append(
         np.arange(
             rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]
         ),
         rotsearch_parameters[1],
-    )
+        )
 
-    log.info(f"Initial values to use for rotation search: {rotsearch_d}")
-    if affine2d is None:
+        log.info(f"Initial values to use for rotation search: {rotsearch_d}")
         # affine2d object, can be overridden by user input affine.
         # do rotation search on uncropped median image (assuming rotation constant over exposure)
         # replace remaining NaNs in median image with median of surrounding 8 (non-NaN) pixels
@@ -159,6 +159,7 @@ def apply_LG_plus(
 
         affine2d = find_rotation(
             meddata,
+            nrm_model,
             psf_offset,
             rotsearch_d,
             mx,
@@ -173,6 +174,15 @@ def apply_LG_plus(
             oversample,
             holeshape,
         )
+        log.info(f'Found rotation: {affine2d.rotradccw:.4f} rad ({np.rad2deg(affine2d.rotradccw):.4f} deg)')
+        # the affine2d returned here has only rotation...
+        # to use rotation and scaling/shear, do some matrix multiplication here??
+
+    log.info('Using affine transform with parameters:')
+    log.info(f'\tmx={affine2d.mx:.6f}\tmy={affine2d.my:.6f}')
+    log.info(f'\tsx={affine2d.sx:.6f}\tsy={affine2d.sy:.6f}')
+    log.info(f'\txo={affine2d.xo:.6f}\tyo={affine2d.yo:.6f}')
+    log.info(f'\trotradccw={affine2d.rotradccw}')
 
     niriss = instrument_data.NIRISS(filt,
                                     nrm_model,
