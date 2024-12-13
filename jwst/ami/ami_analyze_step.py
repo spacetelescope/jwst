@@ -9,6 +9,13 @@ import asdf
 
 __all__ = ["AmiAnalyzeStep"]
 
+# Affine parameters from commissioning
+MX_COMM = 9.92820e-01
+MY_COMM = 9.98540e-01
+SX_COMM = 6.18605e-03
+SY_COMM = -7.27008e-03
+XO_COMM = 0.
+YO_COMM = 0.
 
 class AmiAnalyzeStep(Step):
     """Performs analysis of an AMI mode exposure by applying the LG algorithm."""
@@ -24,7 +31,7 @@ class AmiAnalyzeStep(Step):
         usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew = integer(default=None) # If not None, process only the first few integrations
         chooseholes = string(default=None) # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
-        affine2d = string(default=None) # ASDF file containing user-defined affine parameters
+        affine2d = string(default='commissioning') # ASDF file containing user-defined affine parameters OR 'commssioning'
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
@@ -158,6 +165,10 @@ class AmiAnalyzeStep(Step):
         psf_offset = [float(a) for a in self.psf_offset.split()]
         rotsearch_parameters = [float(a) for a in self.rotation_search.split()]
 
+        # handle command-line None input interpreted as string
+        if str(affine2d).lower() == 'none':
+            affine2d = None
+
         self.log.info(f"Oversampling factor = {oversample}")
         self.log.info(f"Initial rotation guess = {rotate} deg")
         self.log.info(f"Initial values to use for psf offset = {psf_offset}")
@@ -180,11 +191,19 @@ class AmiAnalyzeStep(Step):
             # If there's a user-defined bandpass or affine, handle it
             if bandpass is not None:
                 bandpass = self.override_bandpass()
-
             if affine2d is not None:
-                # if it is None, handled in apply_LG_plus
-                affine2d = self.override_affine2d()
-
+                if affine2d == 'commissioning':
+                    affine2d = utils.Affine2d(mx=MX_COMM,
+                        my=MY_COMM,
+                        sx=SX_COMM,
+                        sy=SY_COMM,
+                        xo=XO_COMM,
+                        yo=YO_COMM,
+                        name='commissioning')
+                    self.log.info("Using affine parameters from commissioning.")
+                else:
+                    affine2d = self.override_affine2d()
+            # and if it is None, rotation search done in apply_LG_plus
 
             # Get the name of the NRM reference file to use
             nrm_reffile = self.get_reference_file(input_model, 'nrm')

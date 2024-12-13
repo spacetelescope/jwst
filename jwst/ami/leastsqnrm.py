@@ -490,7 +490,7 @@ def weighted_operations(img, model, dqm=None):
     Aw = flatmodel * weights[:, np.newaxis]
     bw = flatimg * weights
     # resids are pixel value residuals, flattened to 1d vector
-    x, rss, rank, singvals = np.linalg.lstsq(Aw, bw)
+    x, rss, rank, singvals = np.linalg.lstsq(Aw, bw, rcond=None)
 
     # actual residuals in image:
     res = flatimg - np.dot(flatmodel, x)
