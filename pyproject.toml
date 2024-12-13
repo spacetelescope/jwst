@@ -192,6 +192,7 @@ norecursedirs = [
     "docs/_build",
     "docs/exts",
     "jwst/associations/tests/data",
+    "pytest_jwst",
     "scripts",
     ".tox",
     ".eggs",
