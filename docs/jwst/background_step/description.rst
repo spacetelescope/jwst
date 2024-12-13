@@ -95,7 +95,7 @@ the science data.
 Outliers are rejected iteratively during determination of the scaling factor
 in order to avoid biasing the scaling factor based on outliers. The iterative
 rejection process is controlled by the
-``wfss_p``, ``wfss_p_rms``, and ``wfss_maxiter`` step arguments.
+``wfss_outlier_percent``, ``wfss_rms_stop``, and ``wfss_maxiter`` step arguments.
 
 The locations of source spectra are determined from a source catalog (specified
 by the primary header keyword SCATFILE), in conjunction with a reference file

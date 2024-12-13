@@ -207,7 +207,6 @@ def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
     shared_tests(sci, mask, data.original_data_mean)
 
 
-# test both filters because they have opposite dispersion directions
 def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
     """Test background subtraction for NIRISS WFSS modes."""
     data = make_nis_wfss_datamodel.copy()
@@ -241,9 +240,9 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
 
     # do the subtraction. set all options to ensure they are at least recognized
     result = BackgroundStep.call(data, None,
-                                 wfss_maxiter=8,
-                                 wfss_p=0.5,
-                                 wfss_p_rms=0,)
+                                 wfss_maxiter=3,
+                                 wfss_outlier_percent=0.5,
+                                 wfss_rms_stop=0,)
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
@@ -264,9 +263,9 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
 
     # do the subtraction. set all options to ensure they are at least recognized
     result = BackgroundStep.call(data, None,
-                                 wfss_maxiter=8,
-                                 wfss_p=0.5,
-                                 wfss_p_rms=0,)
+                                 wfss_maxiter=3,
+                                 wfss_outlier_percent=0.5,
+                                 wfss_rms_stop=0,)
     
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
