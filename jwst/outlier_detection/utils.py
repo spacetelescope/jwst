@@ -208,16 +208,26 @@ def median_with_resampling(
         The median data array.
     median_wcs : gwcs.WCS
         A WCS corresponding to the median data.
-    median_error : np.ndarray, optional
-        A median error estimate, returned only if `return_error` is `True`
-        *and* ``resamp.compute_err`` is "driz_err".
+
+    median_error : np.ndarray, None, optional
+        A median error estimate, returned only if `return_error` is `True`.
+        If ``resamp.compute_err`` is not set to "driz_err", `None` will be
+        returned.
 
     """
     in_memory = not input_models.on_disk
     indices_by_group = list(input_models.group_indices.values())
     ngroups = len(indices_by_group)
+    median_err = None
 
-    return_error = return_error and (resamp.compute_err == "driz_err")
+    eval_med_err = False
+    if return_error and resamp.compute_err == "driz_err":
+        eval_med_err = True
+        log.warning(
+            "Returning median_error has been disabled since input "
+            "'resamp' object does not have 'compute_err' attribute set to "
+            "'driz_err'."
+        )
 
     if save_intermediate_results:
         # create an empty image model for the median data
@@ -236,7 +246,7 @@ def median_with_resampling(
             input_shape = (ngroups,) + drizzled_model.data.shape
             dtype = drizzled_model.data.dtype
             computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
-            if return_error:
+            if eval_med_err:
                 err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
             else:
                 err_computer = None
@@ -248,22 +258,20 @@ def median_with_resampling(
         weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
         drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
         computer.append(drizzled_model.data, i)
-        if return_error:
+        if eval_med_err:
             drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
             err_computer.append(drizzled_model.err, i)
         del drizzled_model
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
-    if return_error:
+    if eval_med_err:
         median_err = err_computer.evaluate()
-    else:
-        median_err = None
 
     if save_intermediate_results:
         # Save median model to fits
         median_model.data = median_data
-        if return_error:
+        if eval_med_err:
             median_model.err = median_err
         # drizzled model already contains asn_id
         make_output_path = partial(make_output_path, asn_id=None)
