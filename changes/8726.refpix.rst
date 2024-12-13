@@ -1,1 +1,1 @@
-Implemented SIRS algorithm instead of running median for side pixels of NIR full-frame data
+Implemented SIRS algorithm instead of running median for side pixels of NIR full-frame data. Running median is still default.
