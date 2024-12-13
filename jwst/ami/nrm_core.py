@@ -1,8 +1,3 @@
-#! /usr/bin/env python
-
-# Module for fringe fitting class
-# Original python was by A. Greenbaum & A. Sivaramakrishnan
-
 import logging
 import numpy as np
 from . import lg_model
@@ -18,8 +13,11 @@ log.setLevel(logging.DEBUG)
 class FringeFitter:
     def __init__(self, instrument_data, **kwargs):
         """
+        Fit fringes to get interferometric observables for the data.
+
         For the given information on the instrument and mask, calculate the
         fringe observables (visibilities and closure phases in the image plane.
+        Original python was by A. Greenbaum & A. Sivaramakrishnan
 
         Parameters
         ----------
@@ -160,8 +158,7 @@ class FringeFitter:
 
     def fit_fringes_single_integration(self, slc):
         """
-        Generate the best model to
-        match a single slice
+        Generate the best model to match a single slice.
 
         Parameters
         ----------

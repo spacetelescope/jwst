@@ -1,7 +1,3 @@
-#
-#  Module for calculation of the optimal rotation for an image plane
-#
-
 import logging
 import numpy as np
 
@@ -14,8 +10,9 @@ log.setLevel(logging.DEBUG)
 
 def create_afflist_rot(rotdegs):
     """
-    Create a list of affine objects with various rotations to use in order to
-    go through and find which fits an image plane data best.
+    Create a list of affine objects with various rotations.
+
+    Find which affine rotation fits an image plane data best.
 
     Parameters
     ----------

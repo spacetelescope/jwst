@@ -9,6 +9,13 @@ import asdf
 
 __all__ = ["AmiAnalyzeStep"]
 
+# Affine parameters from commissioning
+MX_COMM = 9.92820e-01
+MY_COMM = 9.98540e-01
+SX_COMM = 6.18605e-03
+SY_COMM = -7.27008e-03
+XO_COMM = 0.
+YO_COMM = 0.
 
 class AmiAnalyzeStep(Step):
     """Performs analysis of an AMI mode exposure by applying the LG algorithm."""
@@ -186,12 +193,12 @@ class AmiAnalyzeStep(Step):
                 bandpass = self.override_bandpass()
             if affine2d is not None:
                 if affine2d == 'commissioning':
-                    affine2d = utils.Affine2d(mx=9.92820e-01,
-                        my=9.98540e-01,
-                        sx=6.18605e-03,
-                        sy=-7.27008e-03,
-                        xo=0,
-                        yo=0,
+                    affine2d = utils.Affine2d(mx=MX_COMM,
+                        my=MY_COMM,
+                        sx=SX_COMM,
+                        sy=SY_COMM,
+                        xo=XO_COMM,
+                        yo=YO_COMM,
                         name='commissioning')
                     self.log.info("Using affine parameters from commissioning.")
                 else:

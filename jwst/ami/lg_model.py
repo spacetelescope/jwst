@@ -1,5 +1,3 @@
-# A module for conveniently manipulating an 'NRM object' using the
-# Lacour-Greenbaum algorithm. First written by Alexandra Greenbaum in 2014.
 import logging
 import numpy as np
 
@@ -21,8 +19,9 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 class LgModel:
     """
-    A class for conveniently dealing with an "NRM object" This should be able
-    to take an NRMDefinition object for mask geometry.
+    A class for conveniently dealing with an "NRM object." 
+    
+    This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
     Simulates PSF (broadband or monochromatic)
     Builds a fringe model - either by user definition, or automated to data
@@ -30,6 +29,7 @@ class LgModel:
     Masks: jwst_ami (formerly jwst_g7s6c)
     Algorithm documented in Greenbaum, A. Z., Pueyo, L. P., Sivaramakrishnan,
     A., and Lacour, S., Astrophysical Journal vol. 798, Jan 2015.
+    First written by Alexandra Greenbaum in 2014.
     """
 
     def __init__(
@@ -132,8 +132,10 @@ class LgModel:
 
     def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
         """
-        Simulate a detector-scale psf using parameters input from the call and
-        already stored in the object,and generate a simulation fits header
+        Simulate a detector-scale psf.
+
+        Use parameters input from the call and
+        already stored in the object, and generate a simulation fits header
         storing all of the  parameters used to generate that psf.  If the input
         bandpass is one number it will calculate a monochromatic psf.
 
@@ -191,9 +193,11 @@ class LgModel:
         self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
     ):
         """
-        Generates the fringe model with the attributes of the object using a
-        bandpass that is either a single wavelength or a list of tuples of the
-        form [(weight1, wavl1), (weight2, wavl2),...].  The model is
+        Generates the fringe model.
+
+        Use the attributes of the object with a bandpass that is either a single 
+        wavelength or a list of tuples of the form 
+        [(weight1, wavl1), (weight2, wavl2),...].  The model is
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
         slice for a toal of 44 2D slices.
@@ -294,8 +298,10 @@ class LgModel:
         weighted=False,
     ):
         """
-        Run a least-squares fit on an input image; find the appropriate
-        wavelength scale and rotation. If a model is not specified then this
+        Run a least-squares fit on an input image.
+
+        Find the appropriate wavelength scale and rotation. 
+        If a model is not specified then this
         method will find the appropriate wavelength scale, rotation (and
         hopefully centering as well -- This is not written into the object yet,
         but should be soon).  Without specifying a model, fit_image can take a
@@ -419,7 +425,9 @@ class LgModel:
         self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
     ):
         """
-        Determine the scale and rotation that best fits the data.  Correlations
+        Determine the scale and rotation that best fits the data.  
+
+        Correlations
         are calculated in the image plane, in anticipation of data with many
         bad pixels.
 

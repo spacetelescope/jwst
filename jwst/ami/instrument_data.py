@@ -1,8 +1,3 @@
-#
-#  Module for defining data format, wavelength info, an mask geometry for these
-#   instrument: NIRISS AMI
-#
-
 import logging
 import numpy as np
 
@@ -32,7 +27,10 @@ class NIRISS:
                  run_bpfix=True
                  ):
         """
-        Initialize NIRISS class
+        Initialize NIRISS class for NIRISS/AMI instrument.
+
+        Module for defining all instrument characteristics including data format, 
+        wavelength info, and mask geometry.
 
         Parameters
         ----------

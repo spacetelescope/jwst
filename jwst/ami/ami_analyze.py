@@ -1,4 +1,3 @@
-#  Module for applying the LG-PLUS algorithm to an AMI exposure
 import logging
 import numpy as np
 import copy
@@ -30,7 +29,7 @@ def apply_LG_plus(
     run_bpfix,
 ):
     """
-    Applies the image plane algorithm to an AMI image
+    Applies the image plane algorithm (LG-PLUS) to an AMI exposure
 
     Parameters
     ----------

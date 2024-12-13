@@ -1,21 +1,11 @@
-#
-#  Module for defining mask geometry in pupil space
-#  Replace old mask_definitions by reading info in nrm_model into a similar object.
-#
-
 import numpy as np
 import math
 
 from .utils import rotate2dccw
 
-m = 1.0
-mm = 1.0e-3 * m
-um = 1.0e-6 * m
-
-
 class NRMDefinition():
 
-	def __init__(self, nrm_model, maskname='jwst_ami', rotdeg=None, chooseholes=None):
+	def __init__(self, nrm_model, maskname='jwst_ami', chooseholes=None):
 		"""
 		Set attributes of NRMDefinition class. 
 
@@ -28,8 +18,6 @@ class NRMDefinition():
 			datamodel containing NRM reference file data
 		maskname: string
 			Identifier for mask geometry; default 'jwst_ami', optional
-		rotdeg: list of floats
-			range of rotations to search (degrees), optional
 		chooseholes: list
 			None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask, optional
 			If None, use real seven-hole mask
@@ -45,9 +33,6 @@ class NRMDefinition():
 		self.ctrs = []
 
 		self.read_nrm_model(nrm_model, chooseholes=chooseholes)
-
-		if rotdeg is not None:
-			self.rotdeg = rotdeg
 
 	def read_nrm_model(self, nrm_model, chooseholes=None):
 		"""
