@@ -88,7 +88,7 @@ world_coords = "jwst.scripts.world_coords:main"
 jwst = "jwst.stpipe.integration:get_steps"
 
 [project.entry-points.pytest11]
-report_crds_context = "pytest_crds.plugin"
+report_crds_context = "pytest_jwst.plugin"
 
 [project.optional-dependencies]
 docs = [
@@ -128,6 +128,7 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 namespaces = false
+include = ["pytest_jwst*", "jwst*"]
 
 [tool.setuptools.package-data]
 "*" = [
