@@ -53,7 +53,7 @@ class ApCorrBase(abc.ABC):
     }
 
     def __init__(self, input_model, apcorr_table, sizeunit,
-                 location = None, slit_name = None, **match_kwargs):
+                 location=None, slit_name=None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
@@ -155,7 +155,7 @@ class ApCorrBase(abc.ABC):
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
         var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
-                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
+                               'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for row in spec_table:
             correction = self.apcorr_func(row['npixels'], row['wavelength'])
@@ -180,7 +180,7 @@ class ApCorrPhase(ApCorrBase):
     """
     size_key = 'size'
 
-    def __init__(self, *args, pixphase = 0.5, **kwargs):
+    def __init__(self, *args, pixphase=0.5, **kwargs):
         self.phase = pixphase  # In the future we'll attempt to measure the pixel phase from inputs.
 
         super().__init__(*args, **kwargs)
@@ -297,7 +297,7 @@ class ApCorrRadial(ApCorrBase):
     """Aperture correction class used with spectral data produced from an extraction aperture radius."""
 
     def __init__(self, input_model, apcorr_table,
-                 location = None):
+                 location=None):
 
         self.correction = None
         self.model = input_model
@@ -339,7 +339,7 @@ class ApCorrRadial(ApCorrBase):
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
         var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
-                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
+                               'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for i, row in enumerate(spec_table):
             correction = self.apcorr_correction[i]
@@ -377,7 +377,7 @@ class ApCorrRadial(ApCorrBase):
     def find_apcorr_func(self, iwave, radius_ifu):
         # at ifu wavelength plane (iwave), the extraction radius is radius_ifu
         # pull out the radius values (self.size)  to use in the apcor ref file for this iwave
-        # self.size and self.apcorr have already been interpolated in wavelength to match the
+        # self.size and self.apcorr have already been interpolated in wavelength to match
         # the ifu wavelength range.
 
         radius_apcor = self.size[:, iwave]

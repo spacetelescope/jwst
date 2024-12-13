@@ -57,7 +57,7 @@ class PixelReplaceStep(Step):
                                         datamodels.ImageModel, 
                                         datamodels.IFUImageModel,
                                         datamodels.CubeModel)):
-                self.log.debug('Input is a {input_model.meta.model_type}.')
+                self.log.debug(f'Input is a {input_model.meta.model_type}.')
             elif isinstance(input_model, datamodels.ModelContainer):
                 self.log.debug('Input is a ModelContainer.')
             else:
