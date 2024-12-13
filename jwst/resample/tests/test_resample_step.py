@@ -1482,9 +1482,6 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     )
 )
 def test_variance_arrays(kernel_fc, ps_ratio, weights, nircam_rate):
-
-    # check that if both 'pixel_scale_ratio' and 'pixel_scale' are passed in,
-    # that 'pixel_scale' overrides correctly
     im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
     _set_photom_kwd(im1)
     im2 = AssignWcsStep.call(nircam_rate, sip_approx=False)
@@ -1519,7 +1516,6 @@ def test_variance_arrays(kernel_fc, ps_ratio, weights, nircam_rate):
 
     library = ModelLibrary([im1, im2])
 
-    # check when both pixel_scale and pixel_scale_ratio are passed in
     res = ResampleStep.call(
         library,
         pixel_scale_ratio=ps_ratio,
