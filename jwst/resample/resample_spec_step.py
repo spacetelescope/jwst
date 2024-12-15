@@ -186,7 +186,7 @@ class ResampleSpecStep(Step):
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type,
+            weight_type=self.weight_type,
             good_bits=GOOD_BITS,
             blendheaders=self.blendheaders,
             in_memory=self.in_memory
