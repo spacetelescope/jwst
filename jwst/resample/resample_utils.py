@@ -16,7 +16,7 @@ from stcal.alignment.util import (
     wcs_from_sregions,
 )
 from stcal.resample import UnsupportedWCSError
-from stcal.resample.utils import compute_wcs_pixel_area
+from stcal.resample.utils import compute_mean_pixel_area
 
 
 __all__ = ["decode_context", "make_output_wcs", "resampled_wcs_from_models"]
@@ -130,7 +130,7 @@ def resampled_wcs_from_models(
         )
 
     if pixel_scale is None:
-        # TODO: at some point we should switch to compute_wcs_pixel_area
+        # TODO: at some point we should switch to compute_mean_pixel_area
         #       instead of compute_scale.
         pscale_in0 = compute_scale(
             ref_wcs,
@@ -143,7 +143,7 @@ def resampled_wcs_from_models(
         log.info(f"Computed output pixel scale: {3600 * pixel_scale} arcsec.")
     else:
         pscale_in0 = np.rad2deg(
-            math.sqrt(compute_wcs_pixel_area(ref_wcs, shape=shape))
+            math.sqrt(compute_mean_pixel_area(ref_wcs, shape=shape))
         )
 
         pixel_scale_ratio = pixel_scale / pscale_in0

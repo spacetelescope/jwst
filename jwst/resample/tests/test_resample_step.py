@@ -6,7 +6,7 @@ import numpy as np
 import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
-from stcal.resample.utils import compute_wcs_pixel_area
+from stcal.resample.utils import compute_mean_pixel_area
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
@@ -29,7 +29,7 @@ def _set_photom_kwd(im):
         bb = ((xmin - 0.5, xmax - 0.5), (ymin - 0.5, ymax - 0.5))
         im.meta.wcs.bounding_box = bb
 
-    mean_pixel_area = compute_wcs_pixel_area(
+    mean_pixel_area = compute_mean_pixel_area(
         im.meta.wcs,
         shape=im.data.shape,
     )
@@ -932,7 +932,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     # (assuming inputs are in surface brightness units)
     iscale = np.sqrt(
         im.meta.photometry.pixelarea_steradians
-        / compute_wcs_pixel_area(im.meta.wcs, shape=im.data.shape)
+        / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
     )
     input_mean = np.nanmean(im.data)
     output_mean_1 = np.nanmean(data1)
@@ -991,7 +991,7 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
     # (assuming inputs are in surface brightness units)
     iscale = np.sqrt(
         im.meta.photometry.pixelarea_steradians
-        / compute_wcs_pixel_area(im.meta.wcs, shape=im.data.shape)
+        / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
     )
     input_mean = np.nanmean(im.data)
     output_mean_1 = np.nanmean(data1)
