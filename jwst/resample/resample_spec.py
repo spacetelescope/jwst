@@ -47,7 +47,7 @@ class ResampleSpec(ResampleImage):
          a record of metadata from all input models.
     """
     def __init__(self, input_models, pixfrac=1.0, kernel="square",
-                 fillval="NAN", wht_type="ivm", good_bits=0,
+                 fillval="NAN", weight_type="ivm", good_bits=0,
                  blendheaders=True, output_wcs=None, wcs_pars=None,
                  output=None, enable_ctx=True, enable_var=True,
                  compute_err=None, asn_id=None, in_memory=True):
@@ -211,7 +211,7 @@ class ResampleSpec(ResampleImage):
             pixfrac=pixfrac,
             kernel=kernel,
             fillval=fillval,
-            wht_type=wht_type,
+            weight_type=weight_type,
             good_bits=good_bits,
             blendheaders=blendheaders,
             output_wcs=output_wcs_dict,
