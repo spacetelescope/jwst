@@ -47,7 +47,7 @@ class ResampleImage(Resample):
     dq_flag_name_map = pixel
 
     def __init__(self, input_models, pixfrac=1.0, kernel="square",
-                 fillval="NAN", wht_type="ivm", good_bits=0,
+                 fillval="NAN", weight_type="ivm", good_bits=0,
                  blendheaders=True, output_wcs=None, wcs_pars=None,
                  output=None, enable_ctx=True, enable_var=True,
                  compute_err=None, asn_id=None, in_memory=True):
@@ -86,10 +86,11 @@ class ResampleImage(Resample):
             ``fillval`` value.
 
         wht_type : {"exptime", "ivm"}, optional
-            The weighting type for adding models' data. For ``wht_type="ivm"``
-            (the default), the weighting will be determined per-pixel using
-            the inverse of the read noise (VAR_RNOISE) array stored in each
-            input image. If the ``VAR_RNOISE`` array does not exist,
+            The weighting type for adding models' data. For
+            ``weight_type="ivm"`` (the default), the weighting will be
+            determined per-pixel using the inverse of the read noise
+            (VAR_RNOISE) array stored in each input image.
+            If the ``VAR_RNOISE`` array does not exist,
             the variance is set to 1 for all pixels (i.e., equal weighting).
             If ``weight_type="exptime"``, the weight will be set equal
             to the measurement time (``TMEASURE``) when available and to
@@ -335,7 +336,7 @@ class ResampleImage(Resample):
             pixfrac=pixfrac,
             kernel=kernel,
             fillval=fillval,
-            wht_type=wht_type,
+            weight_type=weight_type,
             good_bits=good_bits,
             output_wcs=output_wcs,
             output_model=None,
