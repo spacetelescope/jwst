@@ -137,7 +137,17 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
         log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
 
     grid = gwcs.wcstools.grid_from_bounding_box(bb)
-    pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
+
+    if hasattr(out_wcs, "bounding_box"):
+        orig_bbox = getattr(out_wcs, "bounding_box", None)
+        out_wcs.bounding_box = None
+    else:
+        orig_bbox = None
+    try:
+        pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
+    finally:
+        if orig_bbox is not None:
+            out_wcs.bounding_box = orig_bbox
 
     return pixmap
 

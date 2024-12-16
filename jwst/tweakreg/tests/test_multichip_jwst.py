@@ -459,7 +459,19 @@ def test_multichip_alignment_step_abs(monkeypatch):
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
+
+    # temporarily disable the bounding box:
+    if hasattr(wr, "bounding_box"):
+        orig_bbox = getattr(wr, "bounding_box", None)
+        wr.bounding_box = None
+    else:
+        orig_bbox = None
+    try:
+        x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
+    finally:
+        if orig_bbox is not None:
+            wr.bounding_box = orig_bbox
+
     refcat['x'] = x
     refcat['y'] = y
     mr.tweakreg_catalog = refcat
