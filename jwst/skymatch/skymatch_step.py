@@ -169,6 +169,7 @@ class SkyMatchStep(Step):
                                  .format(image_model.meta.filename))
 
         wcs = deepcopy(image_model.meta.wcs)
+        wcs.bounding_box = None
 
         sky_im = SkyImage(
             image=image_model.data,
