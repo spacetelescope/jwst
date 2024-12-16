@@ -23,8 +23,7 @@ dependencies = [
     "BayesicFitting>=3.0.1",
     "crds>=12.0.3",
     "drizzle>=2.0.0",
-    #"gwcs>=0.21.0,<0.23.0",
-    "gwcs @ git+https://github.com/nden/gwcs.git@inverse-bbox",
+    "gwcs @ git+https://github.com/nden/gwcs.git@master",
     "numpy>=1.22,<2.0",
     "opencv-python-headless>=4.6.0.66",
     "photutils>=1.5.0",
@@ -34,8 +33,7 @@ dependencies = [
     "scikit-image>=0.19",
     "scipy>=1.9.3",
     "spherical-geometry>=1.2.22",
-    #"stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    "stcal @ git+https://github.com/nden/stcal.git@inverse-wcs-bbox",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "stsci.imagestats>=1.6.3",
@@ -90,7 +88,7 @@ world_coords = "jwst.scripts.world_coords:main"
 jwst = "jwst.stpipe.integration:get_steps"
 
 [project.entry-points.pytest11]
-report_crds_context = "pytest_crds.plugin"
+report_crds_context = "pytest_jwst.plugin"
 
 [project.optional-dependencies]
 docs = [
@@ -130,6 +128,7 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 namespaces = false
+include = ["pytest_jwst*", "jwst*"]
 
 [tool.setuptools.package-data]
 "*" = [
@@ -193,6 +192,7 @@ norecursedirs = [
     "docs/_build",
     "docs/exts",
     "jwst/associations/tests/data",
+    "pytest_jwst",
     "scripts",
     ".tox",
     ".eggs",

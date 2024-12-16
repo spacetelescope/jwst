@@ -330,7 +330,7 @@ to supply custom catalogs.
         path : str or None
             - If None, the `meta.filename` is used for each model.
             - If a string, the string is used as a root and an index is
-              appended.
+              appended, along with the '.fits' extension.
 
         save_model_func: func or None
             Alternate function to save each model instead of
@@ -353,8 +353,11 @@ to supply custom catalogs.
                     save_path = model.meta.filename
                 else:
                     if len(self) <= 1:
-                        idx = None
-                    save_path = path+str(idx)+".fits"
+                        idx = ''
+                    if path.endswith(".fits"):
+                        save_path = path.replace(".fits", f"{idx}.fits")
+                    else:
+                        save_path = f"{path}{idx}.fits"
                 output_paths.append(
                     model.save(save_path, **kwargs)
                     )
