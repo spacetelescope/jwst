@@ -1,12 +1,7 @@
-#
-#  Module for defining data format, wavelength info, an mask geometry for these
-#   instrument: NIRISS AMI
-#
-
 import logging
 import numpy as np
 
-from .mask_definitions import NRM_mask_definitions
+from .mask_definition_ami import NRMDefinition
 from . import utils
 from . import bp_fix
 from stdatamodels.jwst.datamodels import dqflags
@@ -32,12 +27,18 @@ class NIRISS:
                  run_bpfix=True
                  ):
         """
-        Initialize NIRISS class
+        Initialize NIRISS class for NIRISS/AMI instrument.
+
+        Module for defining all instrument characteristics including data format, 
+        wavelength info, and mask geometry.
 
         Parameters
         ----------
         filt: string
             filter name
+        
+        nrm_model: NRMModel datamodel
+            datamodel containing mask geometry information
 
         chooseholes: list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
@@ -91,12 +92,12 @@ class NIRISS:
         # only one NRM on JWST:
         self.telname = "JWST"
         self.instrument = "NIRISS"
-        self.arrname = "jwst_g7s6c"
-        self.holeshape = "hex"
-        self.mask = NRM_mask_definitions(
+        self.arrname = "jwst_ami"
+        self.holeshape = 'hex'
+        self.mask = NRMDefinition(
+            self.nrm_model,
             maskname=self.arrname,
-            chooseholes=self.chooseholes,
-            holeshape=self.holeshape,
+            chooseholes=self.chooseholes
         )
 
         # save affine deformation of pupil object or create a no-deformation object.

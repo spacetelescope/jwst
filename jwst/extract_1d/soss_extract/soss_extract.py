@@ -1166,9 +1166,12 @@ def run_extract1d(input_model, pastasoss_ref_name,
             col_bkg = np.zeros(scidata.shape[1])
 
         # Pre-compute the weights for box extraction (used in modeling and extraction)
-        box_weights, wavelengths = _compute_box_weights(
-            ref_files, scidata_bkg.shape, width=soss_kwargs['width']
-        )
+        args = (ref_files, scidata_bkg.shape)
+        box_weights, wavelengths = _compute_box_weights(*args, width=soss_kwargs['width'])
+        # FIXME: hardcoding the substrip96 weights to unity is a band-aid solution
+        # and needs to be fixed with this PR
+        if subarray == 'SUBSTRIP96':
+            box_weights['Order 2'] = np.ones((96, 2048))
 
         # Model the traces based on optics filter configuration (CLEAR or F277W)
         if soss_filter == 'CLEAR' and generate_model:
