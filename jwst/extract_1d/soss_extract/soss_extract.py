@@ -545,13 +545,12 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     n_os : int, optional
         The oversampling factor of the wavelength grid used when solving for
         the uncontaminated flux. If not specified, defaults to 2.
-    wave_grid : str or SossWaveGridModel or None
-        Filename of reference file or SossWaveGridModel containing the wavelength grid used by ATOCA
-        to model each pixel valid pixel of the detector. If not given, the grid is determined
-        based on an estimate of the flux (estimate), the relative tolerance (rtol)
-        required on each pixel model and the maximum grid size (max_grid_size).
-        # TODO: none of the options work except None or an ndarray, including on main.
-        # docstring needs updates.
+    wave_grid : np.ndarray, optional
+        Wavelength grid used by ATOCA to model each pixel valid pixel of the detector.
+        If not given, the grid is determined based on an estimate of the flux (estimate),
+        the relative tolerance (rtol) required on each pixel model and
+        the maximum grid size (max_grid_size).
+        # TODO: none of the options specified on main work
         # Should we add support for these? If not, is SossWaveGridModel used for anything,
         # and can that be removed from stdatamodels and as a valid argument to soss_wave_grid_in?
     estimate : UnivariateSpline or None
@@ -572,7 +571,8 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     logl : float
         Log likelihood value associated with the Tikhonov factor selected.
     wave_grid : 1d array
-        Same as wave_grid input. TODO: this isn't true if input wave_grid is None, update docstring
+        The wavelengths at which the spectra were extracted. Same as wave_grid
+        if specified as input.
     spec_list : list of SpecModel
         List of the underlying spectra for each integration and order.
         The tikhonov tests are also included.
@@ -623,6 +623,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     if tikfac is None:
 
         log.info('Solving for the optimal Tikhonov factor.')
+        save_tiktests = True
 
         # Find the tikhonov factor.
         # Initial pass 8 orders of magnitude with 10 grid points.
@@ -637,11 +638,9 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
         tikfac = engine.best_tikho_factor(tiktests, fit_mode='d_chi2')
-        # Add all theses tests to previous ones
         all_tests = _append_tiktests(all_tests, tiktests)
 
         # Save spectra in a list of SingleSpecModels for optional output
-        save_tiktests = True
         for i_order, order in enumerate(order_list):
             for idx in range(len(all_tests['factors'])):
                 f_k = all_tests['solution'][idx, :]
@@ -686,9 +685,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         # Add the result to spec_list
         spec_list.append(spec_ord)
 
-    # ###############################
-    # Model remaining part of order 2
-    # ###############################
+    # Model the remaining part of order 2
     if ref_files['subarray'] != 'SUBSTRIP96':
         idx_order2 = 1
         order = idx_order2 + 1
@@ -700,9 +697,6 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
 
         # Mask for the fit. All valid pixels inside box aperture
         mask_fit = mask_trace_profile[idx_order2] | scimask
-#         # and extract only what was not already modeled
-#         already_modeled = np.isfinite(tracemodels[order_str])
-#         mask_fit |= already_modeled
 
         # Build 1d spectrum integrated over pixels
         pixel_wave_grid, valid_cols = _get_native_grid_from_trace(ref_files, order)
@@ -747,6 +741,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
 
 
 def _compute_box_weights(ref_files, shape, width):
+    """Determine the weights for the box extraction."""
 
     # Generate list of orders from pastasoss trace list
     order_list = []
@@ -1029,6 +1024,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
                   specprofile_ref_name, speckernel_ref_name, subarray,
                   soss_filter, soss_kwargs):
     """Run the spectral extraction on NIRISS SOSS data.
+
     Parameters
     ----------
     input_model : DataModel

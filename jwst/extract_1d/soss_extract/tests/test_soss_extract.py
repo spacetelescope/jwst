@@ -139,15 +139,6 @@ def test_model_image(monkeypatch_setup,
     assert np.all(n_good - n_good[0] == 0)
                        
 
-    # check that if tikfac is defined, output spectra is a single-element list
-    tikfac_in = 1e-7
-    tracemodels, tikfac, logl, wave_grid, spec_list = _model_image(
-        scidata, scierr, detector_mask, refmask, ref_files, box_weights,
-        tikfac=tikfac_in, threshold=1e-4, n_os=2, wave_grid=None,
-        estimate=None, rtol=1e-3, max_grid_size=1000000,
-    )
-    
-
 def test_model_image_tikfac_specified(monkeypatch_setup,
                                         imagemodel,
                                         detector_mask,
@@ -165,6 +156,7 @@ def test_model_image_tikfac_specified(monkeypatch_setup,
         tikfac=tikfac_in, threshold=1e-4, n_os=2, wave_grid=None,
         estimate=None, rtol=1e-3, max_grid_size=1000000,
 )
+    # check that spec_list is a single-element list per order in this case
     assert len(spec_list) == 3
     assert tikfac == tikfac_in
 
@@ -195,6 +187,7 @@ def test_model_image_wavegrid_specified(monkeypatch_setup,
     assert np.allclose(wave_grid, wave_grid_in)
 
     # test SossWaveGridModel input
+    # the docs on main say this works, but I don't think it does even on main
     with pytest.raises(ValueError):
         wave_grid_in = SossWaveGridModel()
         wave_grid_in.wavegrid = np.linspace(1.0, 2.5, 100)

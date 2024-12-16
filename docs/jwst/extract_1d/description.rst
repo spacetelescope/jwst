@@ -383,3 +383,9 @@ the data must be given. The steps to run this correction outside the pipeline ar
   flux_cor = rf1d(flux, wave, channel=4)
 
 where `flux` is the extracted spectral data, and the data are from channel 4 for this example.
+
+Extraction for NIRISS SOSS Data
+-------------------------------
+For NIRISS SOSS data, the two spectral orders overlap slightly, so a specialized extraction
+algorithm known as ATOCA (Algorithm to Treat Order ContAmination) is used...
+Link paper 
