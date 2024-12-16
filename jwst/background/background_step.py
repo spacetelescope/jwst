@@ -21,7 +21,7 @@ class BackgroundStep(Step):
         maxiters = integer(default=None)  # Number of clipping iterations
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
-        wfss_rms_stop = float(default=1)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
+        wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
         wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
     """
 
