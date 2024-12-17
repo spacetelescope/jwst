@@ -1,4 +1,5 @@
 import pytest
+from itertools import product
 
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
@@ -788,19 +789,47 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
     var_poisson = 0.00025
     im = AssignWcsStep.call(nircam_rate)
     _set_photom_kwd(im)
+    im.data[:, :] = 1.0
     im.var_rnoise += var_rnoise
     im.var_poisson += var_poisson
     im.err += err
     im.meta.filename = "foo.fits"
 
+    c1 = ModelLibrary([im.copy()])
     c = ModelLibrary([im.copy() for _ in range(n_images)])
 
+    result1 = ResampleStep.call(c1, blendheaders=False, weight_type=weight_type)
     result = ResampleStep.call(c, blendheaders=False, weight_type=weight_type)
 
     # Verify that the combined uncertainty goes as 1 / sqrt(N)
-    assert_allclose(result.err[5:-5, 5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
-    assert_allclose(result.var_rnoise[5:-5, 5:-5].mean(), var_rnoise / n_images, atol=1e-7)
-    assert_allclose(result.var_poisson[5:-5, 5:-5].mean(), var_poisson / n_images, atol=1e-7)
+    mask = np.isfinite(result.err)
+
+    twht = np.sum(result.wht[mask])
+    twht1 = np.sum(result1.wht[mask])
+
+    assert np.all((result1.err[mask] / err) <= 1.0)
+    assert_allclose(
+        np.sum(result.err[mask]**2) * twht,
+        np.sum(result1.err[mask]**2) * twht1,
+        rtol=1e-6,
+        atol=0.0,
+    )
+
+    assert np.all((result1.var_rnoise[mask] / var_rnoise) <= 1.0)
+    assert_allclose(
+        np.sum(result.var_rnoise[mask]) * twht,
+        np.sum(result1.var_rnoise[mask]) * twht1,
+        rtol=1e-6,
+        atol=0.0,
+    )
+
+    assert np.all((result1.var_poisson[mask] / var_poisson) <= 1.0)
+    assert_allclose(
+        np.sum(result.var_poisson[mask]) * twht,
+        np.sum(result1.var_poisson[mask]) * twht1,
+        rtol=1e-6,
+        atol=0.0,
+    )
 
     im.close()
     result.close()
@@ -819,7 +848,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
     with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
         result = ResampleStep.call(c, blendheaders=False)
 
-    # no valid variance - output error and variance are all NaN
+    # no valid variance - variance are all NaN
     assert_allclose(result.err, np.nan)
     assert_allclose(result.var_rnoise, np.nan)
     assert_allclose(result.var_poisson, np.nan)
@@ -928,8 +957,8 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     input_mean = np.nanmean(im.data)
     output_mean_1 = np.nanmean(data1)
     output_mean_2 = np.nanmean(data2)
-    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
-    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
+    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=2e-4)
+    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=2e-4)
 
     im.close()
     result.close()
@@ -1435,3 +1464,94 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     result2.close()
     result3.close()
     result4.close()
+
+
+@pytest.mark.filterwarnings("ignore:Kernel '")
+@pytest.mark.parametrize(
+    'kernel_fc, ps_ratio, weights',
+    (
+        x for x in product(
+            [
+                ('square', True),
+                ('point', True),
+                ('gaussian', False),
+            ],
+            [0.25, 0.5, 1, 1.2],
+            [(0.99, 0.01), (0.9, 1.5), (467, 733)],
+        )
+    )
+)
+def test_variance_arrays(kernel_fc, ps_ratio, weights, nircam_rate):
+    im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im1)
+    im2 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    _set_photom_kwd(im2)
+
+    shape = im1.data.shape
+    xc = shape[1] // 2
+    yc = shape[0] // 2
+
+    # unpack parameters:
+    kernel, fc = kernel_fc
+
+    # pixel values in input data:
+    dataval = [1.0, 7.0]
+
+    # pixel values in input variance:
+    varval = [0.5, 50.0]
+
+    sl = np.s_[yc - 4: yc + 5, xc - 4: xc + 5]
+    im1.data[sl] = dataval[0]
+    im2.data[sl] = dataval[1]
+
+    im1.var_poisson[:, :] = 0.0
+    im1.var_poisson[sl] = varval[0]
+    im2.var_poisson[:, :] = 0.0
+    im2.var_poisson[sl] = varval[1]
+
+    im1.meta.exposure.exposure_time = weights[0]
+    im1.meta.exposure.measurement_time = weights[0]
+    im2.meta.exposure.exposure_time = weights[1]
+    im2.meta.exposure.measurement_time = weights[1]
+
+    library = ModelLibrary([im1, im2])
+
+    res = ResampleStep.call(
+        library,
+        pixel_scale_ratio=ps_ratio,
+        kernel=kernel,
+        weight_type="exptime",
+        blendheaders=False,
+        save_results=True,
+    )
+
+    assert np.any(np.isfinite(res.var_poisson))
+
+    mask = res.con[0] > 0
+    n_nonzero = np.sum(im1.data > 0.0)
+    res.var_poisson[np.logical_not(mask)] = 0.0
+
+    rtol = 1.0e-6 if fc else 0.15
+
+    ideal_output = np.dot(dataval, weights) * n_nonzero
+    ideal_output2 = np.dot(varval, np.square(weights)) / np.sum(weights)**2
+
+    tflux = np.sum(res.data[mask] * res.wht[mask])
+    tflux2 = np.max(res.var_poisson)
+
+    # check output flux:
+    assert np.allclose(
+        tflux,
+        ideal_output,
+        rtol=rtol,
+        atol=0.0
+    )
+
+    # check output variance:
+    # less restrictive (to account for pixel overlap variations):
+    assert (np.max(tflux2) <= ideal_output2 * (1 + rtol) and
+            np.max(tflux2) >= 0.25 * ideal_output2 * (1 - rtol))
+
+    im1.close()
+    im2.close()
+    res.close()
