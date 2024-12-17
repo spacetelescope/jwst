@@ -92,7 +92,6 @@ def get_ref_file_args(ref_files):
 
     # The spectral kernels.
     speckernel_ref = ref_files['speckernel']
-    # ovs = speckernel_ref.meta.spectral_oversampling
     n_pix = 2 * speckernel_ref.meta.halfwidth + 1
 
     # Take the centroid of each trace as a grid to project the WebbKernel
@@ -237,10 +236,10 @@ def _get_native_grid_from_trace(ref_files, spectral_order):
 
     Returns
     -------
-        wave : 
-            Grid of the pixels boundaries at the native sampling (1d array)
-        col : 
-            The column number of the pixel
+    wave : 
+        Grid of the pixels boundaries at the native sampling (1d array)
+    col : 
+        The column number of the pixel
     """
 
     # From wavelength solution
@@ -389,8 +388,6 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
 
 def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     """
-    TODO: would it be better to pass the engine directly in here somehow?
-
     Bin the flux to the pixel grid and build a SpecModel.
 
     Parameters
@@ -631,7 +628,7 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         log_guess = np.log10(guess_factor)
         factors = np.logspace(log_guess - 4, log_guess + 4, 10)
         all_tests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
-        tikfac= engine.best_tikho_factor(all_tests, fit_mode='all')
+        tikfac = engine.best_tikho_factor(all_tests, fit_mode='all')
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
@@ -854,7 +851,7 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
     The last spectrum in the list of SpecModels lacks the "chi2", "chi2_soft_l1", "chi2_cauchy", and "reg"
     attributes, as these are only calculated for the intermediate models. The last spectrum is not
     necessarily identical to any of the spectra in the list, as it is reconstructed according to
-    mask_rebuild instead of fit respecting mask_fit.
+    mask_rebuild instead of fit respecting mask_fit; that is, bad pixels are included.
 
     # TODO are all of these behaviors for the last spec in the list the desired ones?
     """

@@ -579,7 +579,6 @@ class ExtractionEngine:
     def tikho_mat(self):
         """
         Return the Tikhonov matrix.
-        Generate it with `atoca_utils.get_tikho_matrix` method if not defined yet.
         """
         if self._tikho_mat is not None:
             return self._tikho_mat
@@ -900,9 +899,9 @@ class ExtractionEngine:
         grid : array[float]
             Wave_grid to check.
         wave_p : array[float]
-            TODO: add here
+            Wavelengths on the higher side of each pixel.
         wave_m : array[float]
-            TODO: add here
+            Wavelengths on the lower side of each pixel.
 
         Returns
         -------
@@ -985,7 +984,7 @@ class ExtractionEngine:
         ma = mask_ord[~self.mask]
 
         # Get lo hi
-        lo, hi = self._get_lo_hi(wave_grid, wave_p, wave_m, ma)  # Get indexes
+        lo, hi = self._get_lo_hi(wave_grid, wave_p, wave_m, ma)  # Get indices
 
         # Number of used pixels
         n_i = len(lo)

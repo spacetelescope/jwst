@@ -64,8 +64,6 @@ def arange_2d(starts, stops):
 
 def sparse_k(val, k, n_k):
     """
-    TODO: ensure test coverage. Probably sufficient to have test for compute_weights
-    in atoca.py
     Transform a 2D array `val` to a sparse matrix.
 
     Parameters
@@ -380,11 +378,11 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1):
         Minimum and maximum boundary of the grid to generate, in microns.
         Wave_range must include some wavelengths of wave_map.
         Note wave_range is exclusive, in the sense that wave_range[0] and wave_range[1]
-        will not be between min(output) and mad(output). Instead, min(output) will be
+        will not be between min(output) and max(output). Instead, min(output) will be
         the smallest value in the extrapolated grid that is greater than wave_range[0]
         and max(output) will be the largest value that is less than wave_range[1].
     n_os : int
-        Oversampling of the grid compare to the pixel sampling.
+        Oversampling of the grid compared to the pixel sampling.
 
     Returns
     -------
@@ -470,9 +468,6 @@ def _trim_grids(all_grids, grid_range):
 def make_combined_adaptive_grid(all_grids, all_estimates, grid_range,
                                 max_iter=10, rtol=10e-6, max_total_size=1000000):
     """
-    TODO: can this be a class? e.g., class AdaptiveGrid?
-    q: why are there multiple grids passed in here in the first place
-
     Return an irregular oversampled grid needed to reach a
     given precision when integrating over each intervals of `grid`.
     The grid is built by subdividing iteratively each intervals that
@@ -1085,8 +1080,6 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
 
 def _trpz_weight(grid, length, shape, i_a, i_b):
     """
-    TODO: add to some integration class?
-
     Compute weights due to trapezoidal integration
 
     Parameters
@@ -1466,7 +1459,7 @@ def _get_interp_idx_array(idx, relative_range, max_length):
     return np.arange(*abs_range, 1)
 
 
-def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=[-2,4]):
+def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=None):
     """ Find minimum of a grid using akima spline interpolation to get a finer estimate
 
     Parameters
@@ -1486,6 +1479,8 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=[
     min_fac : float
         The factor with minimized error/curvature.
     """
+    if interp_index is None:
+        interp_index = [-2, 4]
 
     # Only keep finite values
     idx_finite = np.isfinite(val_to_minimize)
@@ -1528,7 +1523,7 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=[
     return min_fac
 
 
-def _find_intersect(factors, y_val, thresh, interpolate=True, search_range=[0,3]):
+def _find_intersect(factors, y_val, thresh, interpolate=True, search_range=None):
     """ Find the root of y_val - thresh (so the intersection between thresh and y_val)
     Parameters
     ----------
@@ -1551,6 +1546,8 @@ def _find_intersect(factors, y_val, thresh, interpolate=True, search_range=[0,3]
         Factor corresponding to the best approximation of the intersection
         point.
     """
+    if search_range is None:
+        search_range = [0, 3]
 
     # Only keep finite values
     idx_finite = np.isfinite(y_val)
@@ -1821,9 +1818,6 @@ def try_solve_two_methods(matrix, result):
 
 class Tikhonov:
     """
-    TODO: can we avoid all of this by using scipy.optimize.least_squares
-    like this? https://stackoverflow.com/questions/62768131/how-to-add-tikhonov-regularization-in-scipy-optimize-least-squares 
-
     Tikhonov regularization to solve the ill-posed problem A.x = b, where
     A is accidentally singular or close to singularity. Tikhonov regularization
     adds a regularization term in the equation and aim to minimize the

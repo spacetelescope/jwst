@@ -19,7 +19,8 @@ The model has the following features:
 - Randomly-selected bad pixels in the data
 - Wave grid of size ~100 with varying resolution
 - Triangle function throughput for each spectral order
-- Kernel set to unity (for now)
+- Kernel is also a triangle function peaking at the center, or else unity for certain tests
+- (partial) Mock of the Pastasoss reference model
 """
 
 PWCPOS = 245.85932900002442
