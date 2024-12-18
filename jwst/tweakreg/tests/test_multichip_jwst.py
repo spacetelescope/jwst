@@ -376,7 +376,6 @@ def test_multichip_alignment_step_rel(monkeypatch):
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    #x, y = wr.world_to_pixel(refcat['RA'].value, refcat['DEC'].value)
     x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value,  with_bounding_box=False)
     refcat['x'] = x
     refcat['y'] = y
@@ -460,7 +459,6 @@ def test_multichip_alignment_step_abs(monkeypatch):
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    #x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
     x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value, with_bounding_box=False)
     refcat['x'] = x
     refcat['y'] = y
