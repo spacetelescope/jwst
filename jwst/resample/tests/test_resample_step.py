@@ -907,15 +907,17 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     rng = np.random.default_rng(seed=77)
     im.data[:, :] = rng.random(im.data.shape)
 
-    crpix = (600, 550)
-    crval = (22.04, 11.98)
+    if output_shape2 is None:
+        crpix = None
+    else:
+        crpix = (output_shape2[-1] // 2, output_shape2[-2] // 2)
+    crval = tuple(np.mean(im.meta.wcs.footprint(), axis=0))
     rotation = 15
     ratio = 0.7
 
-    # first pass - create a reference output WCS:
     result = ResampleStep.call(
         im,
-        output_shape=(1205, 1100),
+        output_shape=output_shape2,
         crpix=crpix,
         crval=crval,
         rotation=rotation,
@@ -924,11 +926,15 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
 
     # make sure results are nontrivial
     data1 = result.data
+    weight1 = result.wht
+
     assert not np.all(np.isnan(data1))
 
+    if crpix is not None:
+        assert np.allclose(result.meta.wcs(*crpix), crval, rtol=1e-12, atol=0)
+
     refwcs = str(tmp_path / "resample_refwcs.asdf")
-    result.meta.wcs.bounding_box = [(-0.5, 1204.5), (-0.5, 1099.5)]
-    asdf.AsdfFile({"wcs": result.meta.wcs}).write_to(refwcs)
+    asdf.AsdfFile({"wcs": result.meta.wcs, "array_shape": data1.shape}).write_to(refwcs)
 
     result = ResampleStep.call(
         im,
@@ -937,6 +943,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     )
 
     data2 = result.data
+    weight2 = result.wht
     assert not np.all(np.isnan(data2))
 
     if output_shape2 is not None:
@@ -945,7 +952,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     if match:
         # test output image shape
         assert data1.shape == data2.shape
-        assert np.allclose(data1, data2, equal_nan=True)
+        assert np.allclose(data1, data2, equal_nan=True, rtol=1.0e-7, atol=1e-7)
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
@@ -954,10 +961,11 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
         / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
     )
     input_mean = np.nanmean(im.data)
-    output_mean_1 = np.nanmean(data1)
-    output_mean_2 = np.nanmean(data2)
-    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
-    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
+    total_weight = np.sum(weight1)
+    output_mean_1 = np.nansum(data1 * weight1) / total_weight
+    output_mean_2 = np.nansum(data2 * weight2) / total_weight
+    assert np.isclose(input_mean * iscale2, output_mean_1)
+    assert np.isclose(input_mean * iscale2, output_mean_2)
 
     im.close()
     result.close()
