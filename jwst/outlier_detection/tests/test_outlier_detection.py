@@ -6,11 +6,9 @@ import os
 
 from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
-from stcal.alignment.util import compute_s_region_imaging
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.pointing import create_fitswcs
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.utils import _flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
