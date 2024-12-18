@@ -887,24 +887,16 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
         trace = extract_params['trace']
         
         lower_limit_region = trace - (width - 1.0) / 2.0
-        upper_limit_region = lower_limit + width - 1
+        upper_limit_region = lower_limit_region + width - 1
         
         _set_weight_from_limits(profile, dval, lower_limit_region,
                                 upper_limit_region)
 
-        mean_lower = np.mean(lower_limit_region)
-        mean_upper = np.mean(upper_limit_region)
+        lower_limit = np.mean(lower_limit_region)
+        upper_limit = np.mean(upper_limit_region)
         log.info(f'Mean {label} start/stop from {coefficients}: '
-                    f'{mean_lower:.2f} -> {mean_upper:.2f} (inclusive)')
+                    f'{lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
 
-        if lower_limit is None:
-            lower_limit = mean_lower
-            upper_limit = mean_upper
-        else:
-            if mean_lower < lower_limit:
-                lower_limit = mean_lower
-            if mean_upper > upper_limit:
-                upper_limit = mean_upper
 
     elif extract_params['extract_width'] is not None:
         # Limits from extraction width at center of ystart/stop if present,
@@ -1302,9 +1294,9 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
     # Calculate a trace from WCS and update extract parameters
     if extract_params['use_trace']:
-        if exp_type in ['NRS_BRIGHT_OBJ', 'NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+        if exp_type in ['NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_MSASPEC']:
             trace = nirspec_trace_from_wcs(
-                input_model, slit, trace_shift=extract_params['trace_offset'])
+                input_model, slit, trace_offset=extract_params['trace_offset'])
             extract_params['trace'] = trace
         else:
             log.warning('Calculating a trace is not supported for this mode.')
