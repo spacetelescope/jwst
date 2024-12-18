@@ -4,6 +4,7 @@ import numpy as np
 from json.decoder import JSONDecodeError
 
 from astropy.modeling import polynomial
+from scipy.interpolate import interp1d
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
@@ -19,8 +20,8 @@ from jwst.extract_1d.apply_apcorr import select_apcorr
 
 __all__ = ['run_extract1d', 'read_extract1d_ref', 'read_apcorr_ref',
            'get_extract_parameters', 'box_profile', 'aperture_center',
-           'location_from_wcs', 'shift_by_source_location', 'define_aperture',
-           'extract_one_slit', 'create_extraction']
+           'location_from_wcs', 'shift_by_source_location', 'nirspec_trace_from_wcs',
+           'define_aperture', 'extract_one_slit', 'create_extraction']
 
 
 log = logging.getLogger(__name__)
@@ -140,7 +141,8 @@ def read_apcorr_ref(refname, exptype):
 
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
-                           use_source_posn=None, subtract_background=None):
+                           use_source_posn=None, subtract_background=None,
+                           use_trace=None, trace_offset=None):
     """Get extraction parameter values.
 
     Parameters
@@ -202,6 +204,18 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
 
     subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
+        
+    use_trace : bool or None, optional
+        If True the trace of the source will be calculated and used for
+        1D extraction.
+        If None, the value specified in `ref_dict` will be used.
+        Otherwise it it will be set to False for all exposure types
+        except NIRSpec BOTS data.
+    
+    trace_offset : float or None, optional
+        Pixel offset to apply to the automatically calucated trace.
+        If None, the value specified in `ref_dict` will be used or it 
+        will default to 0.
 
     Returns
     -------
@@ -232,6 +246,9 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['use_source_posn'] = False  # no source position correction
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
+        extract_params['use_trace'] = False
+        extract_params['trace_offset'] = 0.
+        extract_params['trace'] = None
         # Note that extract_params['dispaxis'] is not assigned.
         # This will be done later, possibly slit by slit.
 
@@ -314,6 +331,22 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                         else:  # use the value from the ref file
                             use_source_posn = use_source_posn_aper
                     extract_params['use_source_posn'] = use_source_posn
+                    
+
+                    use_trace_aper = aper.get('use_trace', None)  # value from the extract1d ref file
+                    if use_trace is None:  # no value set on command line
+                        if use_trace_aper is None:  # no value set in ref file
+                            # Use a suitable default
+                            if meta.exposure.type in ['NRS_BRIGHTOBJ',]:
+                                use_trace = True
+                                log.info(f"Turning on trace extraction exp_type = {meta.exposure.type}")
+                            else:
+                                use_trace = False
+                        else:  # use the value from the ref file
+                            use_trace = use_trace_aper
+                    extract_params['use_trace'] = use_trace
+                    extract_params['trace_offset'] = trace_offset
+                    extract_params['trace'] = None
 
                     extract_params['extract_width'] = aper.get('extract_width')
                     extract_params['position_correction'] = 0  # default value
@@ -792,8 +825,9 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
 
     # Set aperture region, in this priority order:
     # 1. src_coeff upper and lower limits (or bkg_coeff, for background profile)
-    # 2. center of start/stop values +/- extraction width
-    # 3. start/stop values
+    # 2. Using a trace +/- the extraction width
+    # 3. center of start/stop values +/- extraction width
+    # 4. start/stop values
     profile = np.full(shape, 0.0)
     if extract_params[coefficients] is not None:
         # Limits from source coefficients: ignore ystart/stop/width
@@ -847,6 +881,30 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
                         lower_limit = mean_lower
                     if mean_upper > upper_limit:
                         upper_limit = mean_upper
+                        
+    elif extract_params['extract_width'] is not None and extract_params['trace'] is not None:
+        width = extract_params['extract_width']
+        trace = extract_params['trace']
+        
+        lower_limit_region = trace - (width - 1.0) / 2.0
+        upper_limit_region = lower_limit + width - 1
+        
+        _set_weight_from_limits(profile, dval, lower_limit_region,
+                                upper_limit_region)
+
+        mean_lower = np.mean(lower_limit_region)
+        mean_upper = np.mean(upper_limit_region)
+        log.info(f'Mean {label} start/stop from {coefficients}: '
+                    f'{mean_lower:.2f} -> {mean_upper:.2f} (inclusive)')
+
+        if lower_limit is None:
+            lower_limit = mean_lower
+            upper_limit = mean_upper
+        else:
+            if mean_lower < lower_limit:
+                lower_limit = mean_lower
+            if mean_upper > upper_limit:
+                upper_limit = mean_upper
 
     elif extract_params['extract_width'] is not None:
         # Limits from extraction width at center of ystart/stop if present,
@@ -1136,6 +1194,54 @@ def shift_by_source_location(location, nominal_location, extract_params):
     for params in start_stop_params:
         if extract_params[params] is not None:
             extract_params[params] += offset
+            
+def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
+
+    if slit is None:
+        shape = input_model.data.shape
+        wcs_ref = input_model.meta.wcs
+        source_xpos = getattr(input_model, "source_xpos", 0.0)
+        source_ypos = getattr(input_model, "source_ypos", 0.0)
+    else:
+        shape = slit.data.shape
+        wcs_ref = slit.meta.wcs
+        source_xpos = getattr(slit, "source_xpos", 0.0)
+        source_ypos = getattr(slit, "source_ypos", 0.0)
+
+    log.info(f"Determining the spectral trace for source_xpos = {source_xpos:.3f} and source_xpos = {source_ypos:.3f}")
+
+    nx = shape[-1]
+    ny = shape[-2]
+    y, x = np.meshgrid(np.arange(ny), np.arange(nx), indexing="ij")
+
+    d2s = wcs_ref.get_transform("detector", "slit_frame")
+
+    # Calculate the wavelengths in the slit frame because they are in
+    # meters for cal files and um for s2d files
+    _, _, slit_wavelength = d2s(x,y)
+
+    # Make an initial array of wavelengths that will cover the wavelength range of the data
+    wave_vals = np.linspace(np.nanmin(slit_wavelength), np.nanmax(slit_wavelength), nx)
+    # Get arrays of the source position in the slit
+    pos_x = np.full(nx, source_xpos)
+    pos_y = np.full(nx, source_ypos)
+
+    # Grab the wcs transform between the slit frame where we know the 
+    # source position and the detector frame
+    s2d = wcs_ref.get_transform("slit_frame", "detector")
+
+    # Calculate the expected center of the source trace
+    trace_x, trace_y = s2d(pos_x, pos_y, wave_vals)
+    
+    # Interpolate the trace to a regular pixel grid in the dispersion
+    # direction
+    interp_trace = interp1d(trace_x, trace_y, fill_value='extrapolate')
+    
+    # Shift the trace if a shift has been supplied
+    trace = interp_trace(np.arange(nx))
+    trace += trace_offset
+    
+    return trace
 
 
 def define_aperture(input_model, slit, extract_params, exp_type):
@@ -1194,6 +1300,15 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     # Get a wavelength array for the data
     wl_array = get_wavelengths(data_model, exp_type, extract_params['spectral_order'])
 
+    # Calculate a trace from WCS and update extract parameters
+    if extract_params['use_trace']:
+        if exp_type in ['NRS_BRIGHT_OBJ', 'NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+            trace = nirspec_trace_from_wcs(
+                input_model, slit, trace_shift=extract_params['trace_offset'])
+            extract_params['trace'] = trace
+        else:
+            log.warning('Calculating a trace is not supported for this mode.')
+
     # Shift aperture definitions by source position if needed
     # Extract parameters are updated in place
     if extract_params['use_source_posn']:
@@ -1212,6 +1327,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
             # Offet extract parameters by location - nominal
             shift_by_source_location(location, nominal_location, extract_params)
+            
 
     # Make a spatial profile, including source shifts if necessary
     profile, lower_limit, upper_limit = box_profile(
@@ -1812,8 +1928,8 @@ def create_extraction(input_model, slit, output_model,
 def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                   smoothing_length=None, bkg_fit=None, bkg_order=None,
                   log_increment=50, subtract_background=None,
-                  use_source_posn=None, save_profile=False,
-                  save_scene_model=False):
+                  use_source_posn=None, use_trace=None, trace_offset=0,
+                  save_profile=False, save_scene_model=False):
     """Extract all 1-D spectra from an input model.
 
     Parameters
@@ -1944,7 +2060,8 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                    smoothing_length=smoothing_length,
                    bkg_fit=bkg_fit, bkg_order=bkg_order,
                    use_source_posn=use_source_posn,
-                   subtract_background=subtract_background)
+                   subtract_background=subtract_background,
+                   use_trace=use_trace, trace_offset=trace_offset)
             except ContinueError:
                 continue
 
@@ -1980,7 +2097,8 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         smoothing_length=smoothing_length,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
                         use_source_posn=use_source_posn,
-                        subtract_background=subtract_background)
+                        subtract_background=subtract_background,
+                        use_trace=use_trace, trace_offset=trace_offset)
                 except ContinueError:
                     pass
 
@@ -2018,7 +2136,8 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         smoothing_length=smoothing_length,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
                         use_source_posn=use_source_posn,
-                        subtract_background=subtract_background)
+                        subtract_background=subtract_background,
+                        use_trace=use_trace, trace_offset=trace_offset)
                 except ContinueError:
                     pass
 
