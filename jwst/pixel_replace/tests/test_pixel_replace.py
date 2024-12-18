@@ -11,6 +11,7 @@ from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.pixel_replace.pixel_replace_step import PixelReplaceStep
 from glob import glob
 
+
 def cal_data(shape, bad_idx, dispaxis=1, model='slit'):
     if model == 'image':
         model = datamodels.ImageModel(shape)
@@ -202,10 +203,9 @@ def test_pixel_replace_multislit(input_model_function, algorithm):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize('input_model_function',
-                         [nirspec_ifu])
+@pytest.mark.parametrize('input_model_function', [nirspec_ifu])
 @pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
-def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
+def test_pixel_replace_nirspec_ifu(tmp_cwd, input_model_function, algorithm):
     """
     Test pixel replacement for NIRSpec IFU.
 
@@ -223,7 +223,9 @@ def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
                                    algorithm=algorithm, save_results=True)
 
     assert result.meta.filename == 'jwst_nirspec_pixelreplacestep.fits'
-    
+    assert result.meta.cal_step.pixel_replace == 'COMPLETE'
+    assert os.path.isfile(result.meta.filename)
+
     for ext in ['data', 'err', 'var_poisson', 'var_rnoise', 'var_flat']:
         # non-science edges are uncorrected
         assert np.all(np.isnan(getattr(result, ext)[..., :, 1]))
@@ -247,81 +249,31 @@ def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
     input_model.close()
 
 
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize('input_model_function',
-                         [nirspec_ifu])
-@pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
-def test_pixel_replace_nirspec_ifu_container_names(tmp_cwd, tmp_path, input_model_function, algorithm):
-    """
-    Test pixel replacement for NIRSpec IFU using a container
-
-    Larger data and more WCS operations required for testing make
-    this test take more than a minute, so marking this test 'slow'.
-
-    The test is otherwise the same as for other modes.
-    """
-    output_dir = tmp_path / 'output'
-    output_dir.mkdir(exist_ok=True)
-    output_dir = str(output_dir)
-    
-    input_model, bad_idx = input_model_function()
+@pytest.mark.parametrize('input_model_function', [nirspec_fs_slitmodel])
+def test_pixel_replace_container_names(tmp_cwd, input_model_function):
+    """Test pixel replace output names for input container."""
+    input_model, _ = input_model_function()
     input_model.meta.filename = 'jwst_nirspec_1_cal.fits'
-    input_model2, bad_idx2 = input_model_function()
+    input_model2, _ = input_model_function()
     input_model2.meta.filename = 'jwst_nirspec_2_cal.fits'
     cfiles = [input_model, input_model2]
     container = ModelContainer(cfiles) 
 
-    expected_name = []
-    expected_name.append('jwst_nirspec_1_pixelreplacestep.fits')
-    expected_name.append('jwst_nirspec_2_pixelreplacestep.fits')
+    expected_name = ['jwst_nirspec_1_pixelreplacestep.fits',
+                     'jwst_nirspec_2_pixelreplacestep.fits']
 
-    return_files = []
-    # for this simple case, the results from either algorithm should
-    # be the same
-    result = PixelReplaceStep.call(container, skip=False, algorithm=algorithm,
-                                   save_results=True)
+    result = PixelReplaceStep.call(container, skip=False, save_results=True)
+    for i, model in enumerate(result):
+        assert model.meta.filename == expected_name[i]
+        assert model.meta.cal_step.pixel_replace == 'COMPLETE'
+
     result_files = glob(os.path.join(tmp_cwd, '*pixelreplacestep.fits'))
-    for file in result_files:
+    for i, file in enumerate(result_files):
         basename = os.path.basename(file)
-        return_files.append(basename)
-    
-    assert expected_name[0] == return_files[0]
-    assert expected_name[1] == return_files[1]
-    
-    result.close()
-    input_model.close()
-
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize('input_model_function',
-                         [nirspec_ifu])
-@pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
-def test_pixel_replace_nirspec_ifu_name(tmp_cwd, tmp_path, input_model_function, algorithm):
-    """
-    Test pixel replacement for NIRSpec IFU using a single file
-
-    Larger data and more WCS operations required for testing make
-    this test take more than a minute, so marking this test 'slow'.
-
-    The test is otherwise the same as for other modes.
-    """
-    output_dir = tmp_path / 'output'
-    output_dir.mkdir(exist_ok=True)
-    output_dir = str(output_dir)
-    
-    input_model, bad_idx = input_model_function()
-    input_model.meta.filename = 'jwst_nirspec_cal.fits'
-    expected_name = 'jwst_nirspec_pixelreplacestep.fits'
-
-    # for this simple case, the results from either algorithm should
-    # be the same
-    result = PixelReplaceStep.call(input_model, skip=False, algorithm=algorithm,save_results=True)
-    
-    assert expected_name == result.meta.filename
+        assert expected_name[i] == basename
+        with datamodels.open(file) as model:
+            assert model.meta.cal_step.pixel_replace == 'COMPLETE'
+            assert model.meta.filename == expected_name[i]
 
     result.close()
     input_model.close()
-    

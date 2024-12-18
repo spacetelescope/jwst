@@ -1,11 +1,8 @@
-#! /usr/bin/env python
 from functools import partial
 
-from ..stpipe import Step
-from jwst.stpipe import record_step_status
 from jwst import datamodels
-from .pixel_replace import PixelReplacement
-from jwst.stpipe.utilities import invariant_filename
+from jwst.pixel_replace.pixel_replace import PixelReplacement
+from jwst.stpipe import record_step_status, Step
 
 __all__ = ["PixelReplaceStep"]
 
@@ -34,6 +31,7 @@ class PixelReplaceStep(Step):
         algorithm = option("fit_profile", "mingrad", "N/A", default="fit_profile")
         n_adjacent_cols = integer(default=3)    # Number of adjacent columns to use in creation of profile
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
+        output_use_model = boolean(default=True) # Use input filenames in the output models
     """
 
     def process(self, input):
@@ -55,7 +53,7 @@ class PixelReplaceStep(Step):
 
             if isinstance(input_model, (datamodels.MultiSlitModel,
                                         datamodels.SlitModel,
-                                        datamodels.ImageModel, 
+                                        datamodels.ImageModel,
                                         datamodels.IFUImageModel,
                                         datamodels.CubeModel)):
                 self.log.debug(f'Input is a {input_model.meta.model_type}.')
@@ -77,10 +75,10 @@ class PixelReplaceStep(Step):
             # calewbb_spec3 case / ModelContainer
             # __________________________________
             if isinstance(input_model, datamodels.ModelContainer):
-                # Setup output path naming if associations are involved.
-                # if input is ModelContainer do not copy the input_model
-                # because assocation information is not copied.
-                # Instead update input_modelin place. 
+                output_model = input_model
+
+                # Setup output path naming if associations are involved, to
+                # include the ASN ID in the output
                 asn_id = None
                 try:
                     asn_id = input_model.asn_table["asn_id"]
@@ -88,12 +86,6 @@ class PixelReplaceStep(Step):
                     pass
                 if asn_id is None:
                     asn_id = self.search_attr('asn_id')
-                if asn_id is None: # it is still None. It does not exist. A ModelContainer was passed in with
-                                   # no asn information
-                    # to create the correct output name set the following.
-                    self.output_use_model = True
-                    self.save_model = invariant_filename(self.save_model)
-
                 if asn_id is not None:
                     _make_output_path = self.search_attr(
                         '_make_output_path', parent_first=True
@@ -104,7 +96,7 @@ class PixelReplaceStep(Step):
                     )
 
                 # Check models to confirm they are the correct type
-                for i, model in enumerate(input_model):
+                for i, model in enumerate(output_model):
                     run_pixel_replace = True
                     if model.meta.model_type in ['MultiSlitModel', 'SlitModel',
                                                  'ImageModel', 'IFUImageModel', 'CubeModel']:
@@ -120,9 +112,10 @@ class PixelReplaceStep(Step):
                     if run_pixel_replace:
                         replacement = PixelReplacement(model, **pars)
                         replacement.replace()
-                        model = replacement.output
-                        record_step_status(model, 'pixel_replace', success=True)
-                return input_model
+                        output_model[i] = replacement.output
+                        record_step_status(output_model[i], 'pixel_replace', success=True)
+
+                return output_model
             # ________________________________________
             # calewbb_spec2 case - single input model
             # ________________________________________
