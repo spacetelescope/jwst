@@ -179,10 +179,9 @@ class IFUCubeData():
                 # that the remaining suffixes created below form the entire
                 # list of optical elements in the final output name.
                 suffix = self.output_name_base[self.output_name_base.rfind('_') + 1:]
-                
                 if suffix in ['clear']:
                     self.output_name_base = self.output_name_base[:self.output_name_base.rfind('_')]
-                    
+
                 # Now compose the appropriate list of optical element suffix names
                 # based on MRS channel and sub-channel
                 channels = []
