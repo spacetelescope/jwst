@@ -1303,7 +1303,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
     # Shift aperture definitions by source position if needed
     # Extract parameters are updated in place
-    if extract_params['use_source_posn']:
+    if extract_params['use_source_posn'] and extract_params['trace'] is None:
         # Source location from WCS
         middle_pix, middle_wl, location = location_from_wcs(input_model, slit)
 
