@@ -59,6 +59,7 @@ def test_record_query_step_status():
     model3 = dm.MultiSpecModel()
     assert query_step_status(model3, 'test_step') == NOT_SET
 
+
 # make up a datamodel for testing filename
 @pytest.fixture(scope='function')
 def miri_ifushort():
@@ -81,9 +82,27 @@ def miri_ifushort():
 
 def change_name_func(model):
     model.meta.filename = "changed"
+    model.meta.cal_step.pixel_replace = "COMPLETE"
     return model
 
-def test_invariant_filename(miri_ifushort):
+
+def test_invariant_filename():
+    # Make sure the change_name_func changes the name and has side effects
+    # (here, setting a status variable, but normally, actually saving the file)
+    input_model = datamodels.IFUImageModel()
+    input_model.meta.filename = 'test1.fits'
+    change_name_func(input_model)
+    assert input_model.meta.filename == 'changed'
+    assert input_model.meta.cal_step.pixel_replace == 'COMPLETE'
+
+    # When the function is wrapped with invariant_filename,
+    # the filename is not changed, but the side effect still happens
+    input_model = datamodels.IFUImageModel()
+    input_model.meta.filename = 'test2.fits'
     invariant_save_func = invariant_filename(change_name_func)
-    output_model = invariant_save_func(miri_ifushort)
-    assert output_model.meta.filename == "test1.fits"
+    output_model = invariant_save_func(input_model)
+    assert output_model.meta.filename == "test2.fits"
+    assert output_model.meta.cal_step.pixel_replace == 'COMPLETE'
+
+    # The output model is not a copy - the name is reset in place
+    assert output_model is input_model

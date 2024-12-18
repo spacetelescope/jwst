@@ -30,13 +30,14 @@
 Utilities
 """
 import importlib.util
-from functools import wraps
-from importlib import import_module
 import inspect
 import logging
 import os
 import re
 from collections.abc import Sequence
+from functools import wraps
+from importlib import import_module
+
 from jwst import datamodels
 
 # Configure logging
