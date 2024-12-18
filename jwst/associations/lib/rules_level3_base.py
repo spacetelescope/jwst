@@ -682,6 +682,8 @@ def dms_product_name_nrsfs_sources(asn):
     product_name : str
         The product name
     """
+    target = asn._get_target()
+
     instrument = asn._get_instrument()
 
     opt_elem = asn._get_opt_element()
@@ -690,8 +692,10 @@ def dms_product_name_nrsfs_sources(asn):
     if subarray:
         subarray = '-' + subarray
 
+
     product_name_format = (
         'jw{program}-{acid}'
+        '_{target}'
         '_{source_id}'
         '_{instrument}'
         '_{opt_elem}-{slit_name}{subarray}'
@@ -700,6 +704,7 @@ def dms_product_name_nrsfs_sources(asn):
         product_name_format,
         program=asn.data['program'],
         acid=asn.acid.id,
+        target=target,
         instrument=instrument,
         opt_elem=opt_elem,
         subarray=subarray,
