@@ -268,7 +268,7 @@ def test_pixel_replace_container_names(tmp_cwd, input_model_function):
         assert model.meta.cal_step.pixel_replace == 'COMPLETE'
 
     result_files = glob(os.path.join(tmp_cwd, '*pixelreplacestep.fits'))
-    for i, file in enumerate(result_files):
+    for i, file in enumerate(sorted(result_files)):
         basename = os.path.basename(file)
         assert expected_name[i] == basename
         with datamodels.open(file) as model:
