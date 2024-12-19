@@ -5,7 +5,6 @@ from jwst.stpipe import record_step_status, query_step_status
 from jwst.stpipe.utilities import all_steps, NOT_SET
 import jwst.pipeline
 import jwst.step
-import pytest
 from stdatamodels.jwst import datamodels
 from jwst.stpipe.utilities import invariant_filename
 
@@ -59,26 +58,6 @@ def test_record_query_step_status():
     model3 = dm.MultiSpecModel()
     assert query_step_status(model3, 'test_step') == NOT_SET
 
-
-# make up a datamodel for testing filename
-@pytest.fixture(scope='function')
-def miri_ifushort():
-    """ Generate input model IFU image """
-
-
-    mirifushort_short = {
-        'detector': 'MIRIFUSHORT',
-        'channel': '12',
-        'band': 'SHORT',
-        'name': 'MIRI'
-    
-    }
-    input_model = datamodels.IFUImageModel()
-    input_model.meta.exposure.type = 'MIR_MRS'
-    input_model.meta.instrument._instance.update(mirifushort_short)
-    input_model.meta.filename = 'test1.fits'
-    return input_model
-    
 
 def change_name_func(model):
     model.meta.filename = "changed"
