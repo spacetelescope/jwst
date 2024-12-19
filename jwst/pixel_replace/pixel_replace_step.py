@@ -71,14 +71,12 @@ class PixelReplaceStep(Step):
                 'n_adjacent_cols': self.n_adjacent_cols,
             }
 
-            # ___________________________________
-            # calewbb_spec3 case / ModelContainer
-            # __________________________________
+            # calwebb_spec3 case / ModelContainer
             if isinstance(input_model, datamodels.ModelContainer):
                 output_model = input_model
 
-                # Setup output path naming if associations are involved, to
-                # include the ASN ID in the output
+                # Set up output path name to include the ASN ID
+                # if associations are involved
                 asn_id = None
                 try:
                     asn_id = input_model.asn_table["asn_id"]
@@ -116,9 +114,8 @@ class PixelReplaceStep(Step):
                         record_step_status(output_model[i], 'pixel_replace', success=True)
 
                 return output_model
-            # ________________________________________
-            # calewbb_spec2 case - single input model
-            # ________________________________________
+
+            # calwebb_spec2 case / single input model
             else:
                 # Make copy of input to prevent overwriting
                 result = input_model.copy()
