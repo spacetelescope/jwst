@@ -894,7 +894,7 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
 
         lower_limit = np.mean(lower_limit_region)
         upper_limit = np.mean(upper_limit_region)
-        log.info(f'Mean {label} start/stop from {coefficients}: '
+        log.info(f'Mean {label} start/stop from trace: '
                     f'{lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
 
 
