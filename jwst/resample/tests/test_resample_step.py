@@ -831,9 +831,9 @@ def test_resample_undefined_variance(nircam_rate, shape):
 
 @pytest.mark.parametrize('ratio', [0.7, 1.2])
 @pytest.mark.parametrize('rotation', [0, 15, 135])
-@pytest.mark.parametrize('crpix', [(100, 101), (101, 101)])
-@pytest.mark.parametrize('crval', [(22.01, 12), (22.15, 12.01)])
-@pytest.mark.parametrize('shape', [(10205, 10100)])
+@pytest.mark.parametrize('crpix', [(600, 550), (601, 551)])
+@pytest.mark.parametrize('crval', [(22.04, 11.98), (22.041, 11.981)])
+@pytest.mark.parametrize('shape', [(1205, 1100)])
 def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval, shape):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.data += 5
@@ -847,6 +847,9 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
     )
 
     t = result.meta.wcs.forward_transform
+
+    # make sure results are nontrivial
+    assert not np.all(np.isnan(result.data))
 
     # test rotation
     pc = t['pc_rotation_matrix'].matrix.value
