@@ -163,7 +163,7 @@ class Extract1dStep(Step):
 
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     use_trace = boolean(default=None)  # use source trace for extraction
-    trace_offset = boolean(default=0)  # number of pixels to shift source trace
+    trace_offset = float(default=0)  # number of pixels to shift source trace
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
