@@ -30,7 +30,8 @@ def extract1d_ref_dict():
                  {'id': 'slit5', 'bkg_coeff': None},
                  {'id': 'slit6', 'use_source_posn': True},
                  {'id': 'slit7', 'spectral_order': 20},
-                 {'id': 'S200A1'}
+                 {'id': 'S200A1'},
+                 {'id': 'S1600A1'}
                  ]
     ref_dict = {'apertures': apertures}
     return ref_dict
@@ -58,7 +59,10 @@ def extract_defaults():
                'spectral_order': 1,
                'src_coeff': None,
                'subtract_background': False,
+               'trace_offset': 0,
+               'trace': None,
                'use_source_posn': False,
+               'use_trace': False,
                'xstart': 0,
                'xstop': 49,
                'ystart': 0,
@@ -137,7 +141,7 @@ def test_get_extract_parameters_default(
         extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta)
 
     # returned value has defaults except that use_source_posn
-    # is switched on for NRS_FIXEDSLIT
+    # is switched on for NRS_FIXEDSLIT and use_trace is False
     expected = extract_defaults
     expected['use_source_posn'] = True
 
@@ -979,6 +983,34 @@ def test_shift_by_source_location_coeff(extract_defaults):
 
 
 @pytest.mark.parametrize('is_slit', [True, False])
+def test_nirspec_trace_from_wcs(
+        monkeypatch, mock_nirspec_fs_one_slit, is_slit):
+    model = mock_nirspec_fs_one_slit
+
+    # monkey patch in a transform for the wcs
+    def slit2det(*args, **kwargs):
+        def return_results(*args, **kwargs):
+            if len(args) == 2:
+                zeros = np.zeros(args[0].shape)
+                wave, _ = np.meshgrid(args[0], args[1])
+                return zeros, zeros, wave
+            if len(args) == 3:
+                pix = np.arange(len(args[0]))
+                trace = np.ones(len(args[0]))
+                return pix, trace
+        return return_results
+
+    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
+
+    if is_slit:
+        trace = ex.nirspec_trace_from_wcs(model, model)
+    else:
+        trace = ex.nirspec_trace_from_wcs(model, None)
+    
+    assert np.all(trace == np.ones(model.data.shape[-1]))
+
+
+@pytest.mark.parametrize('is_slit', [True, False])
 def test_define_aperture_nirspec(mock_nirspec_fs_one_slit, extract_defaults, is_slit):
     model = mock_nirspec_fs_one_slit
     extract_defaults['dispaxis'] = 1
@@ -1325,9 +1357,10 @@ def test_create_extraction_nrs_apcorr(create_extraction_inputs, nirspec_fs_apcor
     model.meta.cal_step.photom = 'COMPLETE'
     create_extraction_inputs[0] = model
 
+    # Set use_trace to false because the mock does not have a WCS
     log_watcher.message = 'Tabulating aperture correction'
     ex.create_extraction(*create_extraction_inputs, apcorr_ref_model=nirspec_fs_apcorr,
-                         use_source_posn=False)
+                         use_source_posn=False, use_trace=False)
     log_watcher.assert_seen()
 
 
@@ -1338,7 +1371,8 @@ def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, 
     create_extraction_inputs[0] = model
 
     log_watcher.message = '1 integration done'
-    ex.create_extraction(*create_extraction_inputs, log_increment=1)
+    ex.create_extraction(
+        *create_extraction_inputs, log_increment=1, use_trace=False)
     output_model = create_extraction_inputs[2]
     assert len(output_model.spec) == 1
     log_watcher.assert_seen()
@@ -1350,7 +1384,7 @@ def test_create_extraction_log_increment(
 
     # all integrations are logged
     log_watcher.message = '... 9 integrations done'
-    ex.create_extraction(*create_extraction_inputs, log_increment=1)
+    ex.create_extraction(*create_extraction_inputs, log_increment=1, use_trace=False)
     log_watcher.assert_seen()
 
 
@@ -1380,6 +1414,39 @@ def test_create_extraction_use_source(
         # If False, source position is not used 
         log_watcher.message = 'Aperture start/stop: 0'
     ex.create_extraction(*create_extraction_inputs, use_source_posn=use_source)
+    log_watcher.assert_seen()
+    
+    
+@pytest.mark.parametrize('use_trace', [True, False, None])
+@pytest.mark.parametrize('extract_width', [None, 7])
+def test_create_extraction_use_trace(
+        monkeypatch, create_extraction_inputs, mock_nirspec_bots,
+        use_trace, extract_width, log_watcher):
+    model = mock_nirspec_bots
+    create_extraction_inputs[0] = model
+    aper = create_extraction_inputs[3]['apertures']
+    create_extraction_inputs[4] = 'S1600A1'
+    for i in range(len(aper)):
+        if aper[i]['id'] == 'S1600A1':
+            aper[i]['extract_width'] = extract_width
+            aper[i]['trace_offset'] = 0
+
+    # mock the source location function
+    def mock_trace(*args, **kwargs):
+        return np.full(model.data.shape[-1], 25)
+
+    monkeypatch.setattr(ex, 'nirspec_trace_from_wcs', mock_trace)
+
+    if use_trace is not False and extract_width is not None:
+        # If explicitly set to True, or unspecified + source type is POINT,
+        # source position is used
+        log_watcher.message = 'aperture start/stop from trace: 22'
+    elif extract_width is not None:
+        log_watcher.message = 'Aperture start/stop: 21.5'
+    else:
+        # If False, source trace is not used 
+        log_watcher.message = 'Aperture start/stop: 0'
+    ex.create_extraction(*create_extraction_inputs, use_trace=use_trace)
     log_watcher.assert_seen()
 
 

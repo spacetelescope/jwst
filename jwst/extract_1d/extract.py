@@ -142,7 +142,7 @@ def read_apcorr_ref(refname, exptype):
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
                            use_source_posn=None, subtract_background=None,
-                           use_trace=None, trace_offset=None):
+                           use_trace=None, trace_offset=0):
     """Get extraction parameter values.
 
     Parameters
