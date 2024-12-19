@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 from collections import defaultdict
-from functools import wraps
 import os.path as op
 
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import SourceModelContainer
 from jwst.stpipe import query_step_status
-
+from jwst.stpipe.utilities import invariant_filename
 from ..associations.lib.rules_level3_base import format_product
 from ..exp_to_source import multislit_to_container
 from ..master_background.master_background_step import split_container
@@ -350,25 +349,3 @@ class Spec3Pipeline(Pipeline):
             srcid = f's{str(source_id):>09s}'
 
         return srcid
-
-# #########
-# Utilities
-# #########
-def invariant_filename(save_model_func):
-    """Restore meta.filename after save_model"""
-
-    @wraps(save_model_func)
-    def save_model(model, **kwargs):
-        try:
-            filename = model.meta.filename
-        except AttributeError:
-            filename = None
-
-        result = save_model_func(model, **kwargs)
-
-        if filename:
-            model.meta.filename = filename
-
-        return result
-
-    return save_model

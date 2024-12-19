@@ -30,12 +30,14 @@
 Utilities
 """
 import importlib.util
-from importlib import import_module
 import inspect
 import logging
 import os
 import re
 from collections.abc import Sequence
+from functools import wraps
+from importlib import import_module
+
 from jwst import datamodels
 
 # Configure logging
@@ -211,3 +213,23 @@ def query_step_status(datamodel, cal_step):
         return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
     else:
         return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)
+
+
+def invariant_filename(save_model_func):
+    """Restore meta.filename after save_model"""
+
+    @wraps(save_model_func)
+    def save_model(model, **kwargs):
+        try:
+            filename = model.meta.filename
+        except AttributeError:
+            filename = None
+
+        result = save_model_func(model, **kwargs)
+
+        if filename:
+            model.meta.filename = filename
+
+        return result
+
+    return save_model
