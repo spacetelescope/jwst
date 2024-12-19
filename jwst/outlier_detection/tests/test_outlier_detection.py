@@ -6,11 +6,9 @@ import os
 
 from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
-from stcal.alignment.util import compute_s_region_imaging
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.pointing import create_fitswcs
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.utils import _flag_resampled_model_crs
 from jwst.outlier_detection.outlier_detection_step import (
@@ -108,21 +106,17 @@ def test_flag_cr(sci_blot_image_pair):
     assert sci.dq[10, 10] == datamodels.dqflags.pixel["GOOD"]
 
 
-# not a fixture - now has options
-def we_many_sci(
-    numsci=3, sigma=0.02, background=1.5, signal=7, exptype="MIR_IMAGE", tsovisit=False
-):
-    """Provide numsci science images with different noise but identical source
-    and same background level"""
-    shape = (21, 20)
+def make_sci1(shape):
+    """Needs to be a fixture because we want to change exposure.type
+    in the subsequent tests without rerunning AssignWCS"""
 
     sci1 = datamodels.ImageModel(shape)
 
     # Populate keywords
     sci1.meta.instrument.name = "MIRI"
     sci1.meta.instrument.detector = "MIRIMAGE"
-    sci1.meta.exposure.type = exptype
-    sci1.meta.visit.tsovisit = tsovisit
+    sci1.meta.exposure.type = "MIR_IMAGE"
+    sci1.meta.visit.tsovisit = False
     sci1.meta.observation.date = "2020-01-01"
     sci1.meta.observation.time = "00:00:00"
     sci1.meta.telescope = "JWST"
@@ -135,6 +129,8 @@ def we_many_sci(
     sci1.meta.wcsinfo.roll_ref = 0
     sci1.meta.wcsinfo.ra_ref = 1.5e-5
     sci1.meta.wcsinfo.dec_ref = 1.5e-5
+    sci1.meta.wcsinfo.v2_ref = 0
+    sci1.meta.wcsinfo.v3_ref = 0
     sci1.meta.wcsinfo.v3yangle = 0
     sci1.meta.wcsinfo.vparity = -1
     sci1.meta.wcsinfo.pc1_1 = 1
@@ -148,11 +144,29 @@ def we_many_sci(
     sci1.meta.wcsinfo.cunit1 = "deg"
     sci1.meta.wcsinfo.cunit2 = "deg"
     sci1.meta.background.subtracted = False
-    sci1.meta.background.level = background
+    sci1.meta.background.level = 1.5
 
-    # Replace the FITS-type WCS with an Identity WCS
-    sci1.meta.wcs = create_fitswcs(sci1)
-    sci1.meta.wcsinfo.s_region = compute_s_region_imaging(sci1.meta.wcs, shape=shape, center=False)
+    sci1 = AssignWcsStep.call(sci1)
+
+    sci1.meta.filename = "foo1_cal.fits"
+
+    # add pixel areas
+    sci1.meta.photometry.pixelarea_steradians = 1.0
+    sci1.meta.photometry.pixelarea_arcsecsq = 1.0
+    return sci1
+
+
+# not a fixture - now has options
+def we_many_sci(
+    numsci=3, sigma=0.02, background=1.5, signal=7, exptype="MIR_IMAGE", tsovisit=False
+):
+    """Provide numsci science images with different noise but identical source
+    and same background level"""
+    shape = (21,20)
+    sci1 = make_sci1(shape)
+    sci1.meta.exposure.type = exptype
+    sci1.meta.visit.tsovisit = tsovisit
+
     rng = np.random.default_rng(720)
     sci1.data = rng.normal(loc=background, size=shape, scale=sigma)
     sci1.err = np.zeros(shape) + sigma
@@ -160,11 +174,7 @@ def we_many_sci(
     # update the noise for this source to include the photon/measurement noise
     sci1.err[7, 7] = np.sqrt(sigma ** 2 + signal)
     sci1.var_rnoise = np.zeros(shape) + 1.0
-    sci1.meta.filename = "foo1_cal.fits"
 
-    # add pixel areas
-    sci1.meta.photometry.pixelarea_steradians = 1.0
-    sci1.meta.photometry.pixelarea_arcsecsq = 1.0
 
     # Make copies with different noise
     all_sci = [sci1]
@@ -650,7 +660,7 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
         0.7)
     
     assert isinstance(wcs, WCS)
-    assert median.shape == (21,20)
+    assert median.shape == (34,34)
         
     resamp.single = False
     with pytest.raises(ValueError):

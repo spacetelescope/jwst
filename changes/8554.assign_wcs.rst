@@ -1,0 +1,2 @@
+Use the range of points in the TabularModel to adjust the bounding_box in a MIRI LRS FIXEDSLIT observation.
+Ignore the bounding_box in running the inverse WCS transform when computing crpix.

@@ -81,7 +81,7 @@ def _make_gwcs_wcs(fits_hdr):
              Mapping((1, 2), name='xtyt'))
     c2tan.name = 'Cartesian 3D to TAN'
 
-    tan2c = (Mapping((0, 0, 1), n_inputs=2, name='xtyt2xyz') |
+    tan2c = (Mapping((0, 0, 1), name='xtyt2xyz') |
              (Const1D(1, name='one') & Identity(2, name='I(2D)')))
     tan2c.name = 'TAN to cartesian 3D'
 
@@ -376,7 +376,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
+    x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value,  with_bounding_box=False)
     refcat['x'] = x
     refcat['y'] = y
     mr.tweakreg_catalog = refcat
@@ -459,7 +459,7 @@ def test_multichip_alignment_step_abs(monkeypatch):
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
+    x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value, with_bounding_box=False)
     refcat['x'] = x
     refcat['y'] = y
     mr.tweakreg_catalog = refcat
