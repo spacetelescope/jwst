@@ -138,11 +138,8 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
 
     grid = gwcs.wcstools.grid_from_bounding_box(bb)
 
-    if hasattr(out_wcs, "bounding_box"):
-        orig_bbox = getattr(out_wcs, "bounding_box", None)
-        out_wcs.bounding_box = None
-    else:
-        orig_bbox = None
+    orig_bbox = out_wcs.bounding_box
+    out_wcs.bounding_box = None
     try:
         pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
     finally:
