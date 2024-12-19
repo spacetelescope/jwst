@@ -757,9 +757,10 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
     `extract_params`, in this priority order:
 
        1. src_coeff upper and lower limits (or bkg_coeff, for a background profile)
-       2. center of start/stop values +/- extraction width / 2
-       3. cross-dispersion start/stop values
-       4. array limits.
+       2. trace +/- extraction width / 2
+       3. center of start/stop values +/- extraction width / 2
+       4. cross-dispersion start/stop values
+       5. array limits.
 
     Left and right limits are set from start/stop values only.
 
@@ -1188,7 +1189,33 @@ def shift_by_source_location(location, nominal_location, extract_params):
             extract_params[params] += offset
             
 def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
+    """Calculate NIRSpec source trace from WCS.
+    
+    The source trace is calculated by projecting the recorded source
+    positions source_xpos/ypos from the NIRSpec "slit_frame" onto
+    detector pixels.
 
+    Parameters
+    ----------
+    input_model : DataModel
+        The input science model containing metadata information.
+
+    slit : DataModel or None
+        One slit from a MultiSlitModel (or similar), or None.
+        The WCS and target coordinates will be retrieved from `slit`
+        unless `slit` is None. In that case, they will be retrieved
+        from `input_model`.
+        
+    trace_offset : int, optional
+        Signed number of pixels to offset the trace in the cross-
+        dispersion direction, by default 0.
+
+    Returns
+    -------
+    trace : ndarray of float
+        Fractional pixel positions in the y (cross-dispersion direction) 
+        of the trace for each x (dispersion direction) pixel.
+    """
     if slit is None:
         shape = input_model.data.shape
         wcs_ref = input_model.meta.wcs
@@ -1956,6 +1983,12 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
         If True, the target and background positions specified in the
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
+    use_trace : bool or None
+        If True, a source trace will be calculated and used for 1D extraction.
+        If None, the value in the extract_1d reference file will be used.
+    trace_offset : float
+        Number of pixels to shift the calculated trace in the cross-dispersion
+        direction if use_trace is True.
     save_profile : bool
         If True, the spatial profiles created for the input model will be returned
         as ImageModels. If False, the return value is None.
