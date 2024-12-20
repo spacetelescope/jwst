@@ -33,7 +33,7 @@ dependencies = [
     "scikit-image>=0.19",
     "scipy>=1.14.1",
     "spherical-geometry>=1.2.22",
-    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
+    "stcal @ git+https://github.com/mcara/stcal.git@fix-bbox-shift-make-wcs",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "stsci.imagestats>=1.6.3",
