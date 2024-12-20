@@ -38,7 +38,7 @@ def wcs_gwcs():
     crpix = (500.0, 500.0)
     shape = (1000, 1000)
     pscale = 0.06 / 3600
-    
+
     prj = astmodels.Pix2Sky_TAN()
     fiducial = np.array(crval)
 
@@ -193,7 +193,7 @@ def test_reproject(wcs1, wcs2, offset, request):
     wcs1 = request.getfixturevalue(wcs1)
     wcs2 = request.getfixturevalue(wcs2)
     x = np.arange(150, 200)
-    
+
     f = reproject(wcs1, wcs2)
     res = f(x, x)
     assert_allclose(x, res[0] + offset)
