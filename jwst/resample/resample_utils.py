@@ -164,7 +164,7 @@ def reproject(wcs1, wcs2):
 
     try:
         forward_transform = wcs1.pixel_to_world_values
-        backward_transform = wcs1.world_to_pixel_values
+        backward_transform = wcs2.world_to_pixel_values
     except AttributeError as err:
         raise TypeError("Input should be a WCS") from err
 
