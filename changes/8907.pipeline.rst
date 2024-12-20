@@ -1,1 +1,0 @@
-Fixed a bug leading to incorrect area extensions, and sometimes crashes, in the coron3 pipeline

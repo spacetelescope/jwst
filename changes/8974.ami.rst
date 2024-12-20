@@ -1,1 +1,0 @@
-Use mask and pupil geometry constants from NRM reference file, and apply affine distortion from commissioning to LG model as default.

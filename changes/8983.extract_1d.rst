@@ -1,1 +1,0 @@
-Set order 2 weights to 1.0 for NIRISS SOSS SUBSTRIP96 data to avoid a spurious flux drop in spectra around 1.5um.

@@ -1,1 +1,0 @@
-Fix a bug that caused intermediate files to conflict for different slits when a MultiSlitModel was processed.
