@@ -1,1 +1,0 @@
-Added mypy type checking to CI checks

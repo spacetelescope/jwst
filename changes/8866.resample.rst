@@ -1,1 +1,0 @@
-Updated resample code to support the new ``drizzle`` API, see https://github.com/spacetelescope/drizzle/pull/134 for more details.

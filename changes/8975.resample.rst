@@ -1,1 +1,0 @@
-Removed allowed_memory parameter and DMODEL_ALLOWED_MEMORY environment variable

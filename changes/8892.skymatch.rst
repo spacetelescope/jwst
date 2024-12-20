@@ -1,1 +1,0 @@
-Resolve warnings emitted by NumPy 2 when running skymatch.

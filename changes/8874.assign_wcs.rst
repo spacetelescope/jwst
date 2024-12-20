@@ -1,1 +1,0 @@
-Catch NaN values in msa tables for source positions in slit and replace with slit center.
