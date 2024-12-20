@@ -204,17 +204,17 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
 
     subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
-        
+
     use_trace : bool or None, optional
         If True the trace of the source will be calculated and used for
         1D extraction.
         If None, the value specified in `ref_dict` will be used.
         Otherwise it it will be set to False for all exposure types
         except NIRSpec BOTS data.
-    
+
     trace_offset : float or None, optional
         Pixel offset to apply to the automatically calucated trace.
-        If None, the value specified in `ref_dict` will be used or it 
+        If None, the value specified in `ref_dict` will be used or it
         will default to 0.
 
     Returns
@@ -331,7 +331,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                         else:  # use the value from the ref file
                             use_source_posn = use_source_posn_aper
                     extract_params['use_source_posn'] = use_source_posn
-                    
+
 
                     use_trace_aper = aper.get('use_trace', None)  # value from the extract1d ref file
                     if use_trace is None:  # no value set on command line
@@ -882,14 +882,14 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
                         lower_limit = mean_lower
                     if mean_upper > upper_limit:
                         upper_limit = mean_upper
-                        
+
     elif extract_params['extract_width'] is not None and extract_params['trace'] is not None:
         width = extract_params['extract_width']
         trace = extract_params['trace']
-        
+
         lower_limit_region = trace - (width - 1.0) / 2.0
         upper_limit_region = lower_limit_region + width - 1
-        
+
         _set_weight_from_limits(profile, dval, lower_limit_region,
                                 upper_limit_region)
 
@@ -1187,10 +1187,10 @@ def shift_by_source_location(location, nominal_location, extract_params):
     for params in start_stop_params:
         if extract_params[params] is not None:
             extract_params[params] += offset
-            
+
 def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
     """Calculate NIRSpec source trace from WCS.
-    
+
     The source trace is calculated by projecting the recorded source
     positions source_xpos/ypos from the NIRSpec "slit_frame" onto
     detector pixels.
@@ -1205,7 +1205,7 @@ def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
         The WCS and target coordinates will be retrieved from `slit`
         unless `slit` is None. In that case, they will be retrieved
         from `input_model`.
-        
+
     trace_offset : int, optional
         Signed number of pixels to offset the trace in the cross-
         dispersion direction, by default 0.
@@ -1213,7 +1213,7 @@ def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
     Returns
     -------
     trace : ndarray of float
-        Fractional pixel positions in the y (cross-dispersion direction) 
+        Fractional pixel positions in the y (cross-dispersion direction)
         of the trace for each x (dispersion direction) pixel.
     """
     if slit is None:
@@ -1245,21 +1245,21 @@ def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
     pos_x = np.full(nx, source_xpos)
     pos_y = np.full(nx, source_ypos)
 
-    # Grab the wcs transform between the slit frame where we know the 
+    # Grab the wcs transform between the slit frame where we know the
     # source position and the detector frame
     s2d = wcs_ref.get_transform("slit_frame", "detector")
 
     # Calculate the expected center of the source trace
     trace_x, trace_y = s2d(pos_x, pos_y, wave_vals)
-    
+
     # Interpolate the trace to a regular pixel grid in the dispersion
     # direction
     interp_trace = interp1d(trace_x, trace_y, fill_value='extrapolate')
-    
+
     # Shift the trace if a shift has been supplied
     trace = interp_trace(np.arange(nx))
     trace += trace_offset
-    
+
     return trace
 
 
@@ -1346,7 +1346,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
             # Offet extract parameters by location - nominal
             shift_by_source_location(location, nominal_location, extract_params)
-            
+
 
     # Make a spatial profile, including source shifts if necessary
     profile, lower_limit, upper_limit = box_profile(

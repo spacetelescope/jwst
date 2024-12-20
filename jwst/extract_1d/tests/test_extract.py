@@ -1006,7 +1006,7 @@ def test_nirspec_trace_from_wcs(
         trace = ex.nirspec_trace_from_wcs(model, model)
     else:
         trace = ex.nirspec_trace_from_wcs(model, None)
-    
+
     assert np.all(trace == np.ones(model.data.shape[-1]))
 
 
@@ -1411,12 +1411,12 @@ def test_create_extraction_use_source(
         # source position is used
         log_watcher.message = 'Aperture start/stop: -15'
     else:
-        # If False, source position is not used 
+        # If False, source position is not used
         log_watcher.message = 'Aperture start/stop: 0'
     ex.create_extraction(*create_extraction_inputs, use_source_posn=use_source)
     log_watcher.assert_seen()
-    
-    
+
+
 @pytest.mark.parametrize('use_trace', [True, False, None])
 @pytest.mark.parametrize('extract_width', [None, 7])
 def test_create_extraction_use_trace(
@@ -1444,7 +1444,7 @@ def test_create_extraction_use_trace(
     elif extract_width is not None:
         log_watcher.message = 'Aperture start/stop: 21.5'
     else:
-        # If False, source trace is not used 
+        # If False, source trace is not used
         log_watcher.message = 'Aperture start/stop: 0'
     ex.create_extraction(*create_extraction_inputs, use_trace=use_trace)
     log_watcher.assert_seen()
