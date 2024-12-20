@@ -1,0 +1,1 @@
+Added on option to calculate a source trace from WCS and expected source positions for NIRSpec BOTS/MOS/FS data and perform a box extraction around that trace.  This option is turned on by default for the BOTS mode.
