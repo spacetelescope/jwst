@@ -219,6 +219,14 @@ outlier_detection (image3, tso3, spec3, coron3)
   <https://github.com/spacetelescope/jwst/issues/8880>`_)
 
 
+refpix (detector1)
+------------------
+
+- Implemented SIRS algorithm instead of running median for side pixels of NIR
+  full-frame data. Running median is still default. (`#8726
+  <https://github.com/spacetelescope/jwst/issues/8726>`_)
+
+
 resample (image2, image3, coron3)
 ---------------------------------
 
