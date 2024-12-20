@@ -226,8 +226,7 @@ def apply_emicorr(output_model, emicorr_model,
         frequency = freqs_numbers[fi]
         log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
 
-        # Read image data and set up some variables
-        data = output_model.data.copy()
+        # Set up some variables
 
         # Correspondance of array order in IDL
         # sz[0] = 4 in idl
@@ -283,30 +282,32 @@ def apply_emicorr(output_model, emicorr_model,
 
         for ninti in range(nints):
             log.debug('  Working on integration: {}'.format(ninti+1))
-
+            # Read in this integration
+            data = output_model.data[ninti].copy()
+            
             # Remove source signal and fixed bias from each integration ramp
             # (linear is good enough for phase finding)
 
             # do linear fit for source + sky
-            s0, mm0 = sloper(data[ninti, 1:ngroups-1, :, :])
+            s0, mm0 = sloper(data[1:ngroups-1, :, :])
 
             # subtract source+sky from each frame of this ramp
             for ngroupi in range(ngroups):
-                data[ninti, ngroupi, ...] = output_model.data[ninti, ngroupi, ...] - (s0 * ngroupi)
+                data[ngroupi, ...] = output_model.data[ninti, ngroupi, ...] - (s0 * ngroupi)
 
             # make a self-superbias
-            m0 = minmed(data[ninti, 1:ngroups-1, :, :])
+            m0 = minmed(data[1:ngroups-1, :, :])
 
             # subtract self-superbias from each frame of this ramp
             for ngroupi in range(ngroups):
-                data[ninti, ngroupi, ...] = data[ninti, ngroupi, ...] - m0
+                data[ngroupi, ...] = data[ngroupi, ...] - m0
 
                 # de-interleave each frame into the 4 separate output channels and
                 # average (or median) them together for S/N
-                d0 = data[ninti, ngroupi, :, 0:nx:4]
-                d1 = data[ninti, ngroupi, :, 1:nx:4]
-                d2 = data[ninti, ngroupi, :, 2:nx:4]
-                d3 = data[ninti, ngroupi, :, 3:nx:4]
+                d0 = data[ngroupi, :, 0:nx:4]
+                d1 = data[ngroupi, :, 1:nx:4]
+                d2 = data[ngroupi, :, 2:nx:4]
+                d3 = data[ngroupi, :, 3:nx:4]
                 dd = (d0 + d1 + d2 + d3)/4.
 
                 # fix a bad ref col
@@ -450,7 +451,6 @@ def apply_emicorr(output_model, emicorr_model,
             output_model.data[..., k::4] -= dd_noise
 
         # clean up
-        del data
         del dd_all
         del times_this_int
         del phaseall
