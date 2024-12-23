@@ -33,15 +33,18 @@ def run_detector1pipeline(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_detector1pipeline_with_sirs(rtdata_module):
-    """Run calwebb_detector1 on NIRCam imaging long data using the convolution kernel algorithm
-     Simple Improved Reference Subtraction (SIRS)"""
+    """Run calwebb_detector1 on NIRCam imaging long data using SIRS.
+
+    SIRS is the convolution kernel algorithm - Simple Improved Reference Subtraction.
+    """
     rtdata = rtdata_module
     rtdata.get_data("nircam/image/jw01538046001_03105_00001_nrcalong_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
     args = ["calwebb_detector1", rtdata.input,
+            "--output_file=jw01538046001_03105_00001_nrcalong_sirs",
             "--steps.refpix.refpix_algorithm=sirs",
-            "--steps.refpix.save_results=True"
+            "--steps.refpix.save_results=True",
             ]
     Step.from_cmdline(args)
 
@@ -110,9 +113,9 @@ def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsd
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_uncal.fits"
-    output = "jw01538046001_03105_00001_nrcalong_refpix.fits"
+    output = "jw01538046001_03105_00001_nrcalong_sirs_refpix.fits"
     rtdata.output = output
-    rtdata.get_truth("truth/test_nircam_image_stages/jw01538046001_03105_00001_nrcalong_refpix_SIRS.fits")
+    rtdata.get_truth("truth/test_nircam_image_stages/jw01538046001_03105_00001_nrcalong_sirs_refpix.fits")
 
     fitsdiff_default_kwargs["rtol"] = 5e-5
     fitsdiff_default_kwargs["atol"] = 1e-4
