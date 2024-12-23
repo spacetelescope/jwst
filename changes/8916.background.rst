@@ -1,1 +1,0 @@
-Apply bitwise operations in correct order when counting good pixels in the background mask during WFSS background subtraction.

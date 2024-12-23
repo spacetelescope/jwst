@@ -1,3 +1,0 @@
-Fix all bounding box assignments to wcs objects so that they are correctly and
-specifically assigned as order ``F`` boxes. This ensures consistency with the
-assumptions made by GWCS for bounding boxes.

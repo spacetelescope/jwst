@@ -1,1 +1,0 @@
-Compute scaling for WFSS background subtraction using error-weighted mean

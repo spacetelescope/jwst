@@ -1,1 +1,0 @@
-Transfer wcsinfo metadata to new MultiSlitModel created during ``calwebb_spec2`` processing of NIRSpec MSA data.
