@@ -98,7 +98,6 @@ class DataTypes():
         # Suffixes will be added to this name later, to designate the
         # channel+subchannel (MIRI MRS) or grating+filter (NRS IFU) the output cube covers.
 
-
         if output_file is not None:
             basename, ext = os.path.splitext(os.path.basename(output_file))
             self.output_name = basename

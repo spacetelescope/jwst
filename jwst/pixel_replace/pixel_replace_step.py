@@ -1,10 +1,8 @@
-#! /usr/bin/env python
 from functools import partial
 
-from ..stpipe import Step
-from jwst.stpipe import record_step_status
 from jwst import datamodels
-from .pixel_replace import PixelReplacement
+from jwst.pixel_replace.pixel_replace import PixelReplacement
+from jwst.stpipe import record_step_status, Step
 
 __all__ = ["PixelReplaceStep"]
 
@@ -33,6 +31,7 @@ class PixelReplaceStep(Step):
         algorithm = option("fit_profile", "mingrad", "N/A", default="fit_profile")
         n_adjacent_cols = integer(default=3)    # Number of adjacent columns to use in creation of profile
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
+        output_use_model = boolean(default=True) # Use input filenames in the output models
     """
 
     def process(self, input):
@@ -54,7 +53,7 @@ class PixelReplaceStep(Step):
 
             if isinstance(input_model, (datamodels.MultiSlitModel,
                                         datamodels.SlitModel,
-                                        datamodels.ImageModel, 
+                                        datamodels.ImageModel,
                                         datamodels.IFUImageModel,
                                         datamodels.CubeModel)):
                 self.log.debug(f'Input is a {input_model.meta.model_type}.')
@@ -72,12 +71,12 @@ class PixelReplaceStep(Step):
                 'n_adjacent_cols': self.n_adjacent_cols,
             }
 
-            # ___________________
-            # calewbb_spec3 case
-            # ___________________
+            # calwebb_spec3 case / ModelContainer
             if isinstance(input_model, datamodels.ModelContainer):
                 output_model = input_model
-                # Setup output path naming if associations are involved.
+
+                # Set up output path name to include the ASN ID
+                # if associations are involved
                 asn_id = None
                 try:
                     asn_id = input_model.asn_table["asn_id"]
@@ -93,6 +92,7 @@ class PixelReplaceStep(Step):
                         _make_output_path,
                         asn_id=asn_id
                     )
+
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
                     run_pixel_replace = True
@@ -112,10 +112,10 @@ class PixelReplaceStep(Step):
                         replacement.replace()
                         output_model[i] = replacement.output
                         record_step_status(output_model[i], 'pixel_replace', success=True)
+
                 return output_model
-            # ________________________________________
-            # calewbb_spec2 case - single input model
-            # ________________________________________
+
+            # calwebb_spec2 case / single input model
             else:
                 # Make copy of input to prevent overwriting
                 result = input_model.copy()
