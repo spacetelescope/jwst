@@ -111,7 +111,7 @@ def _normalize_profile(profile, dispaxis):
 
 
 def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
-                        extra_shift=0.0, nod_offset=None):
+                         extra_shift=0.0, nod_offset=None):
     """Make a spatial profile corresponding to the data cutout.
 
     Input index values should already contain the shift to the trace location
@@ -168,7 +168,7 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
 
 
 def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix,
-                     psf_shift, psf_data, dispaxis):
+                      psf_shift, psf_data, dispaxis):
     """Residual function to minimize for optimizing trace locations."""
     sprofile = _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
                                     extra_shift=param[0], nod_offset=param[1])
@@ -180,15 +180,19 @@ def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix,
     if dispaxis == HORIZONTAL:
         result = extract1d(cutout, [sprofile], cutout_var, empty_var, empty_var,
                            **extract_kwargs)
-        var = result[1]
+        var = result[1][0]
         model = result[-1]
+
+        valid = (var != 0)
+        return np.nansum((model[:, valid] - cutout[:, valid]) ** 2 / var[valid])
     else:
         result = extract1d(cutout.T, [sprofile.T], cutout_var.T, empty_var.T, empty_var.T,
                            **extract_kwargs)
-        var = result[1].T
+        var = result[1][0]
         model = result[-1].T
-    var[var == 0] = 1.0
-    return np.nansum((model - cutout)**2 / var)
+
+        valid = (var != 0)
+        return np.nansum((model[valid, :] - cutout[valid, :]) ** 2 / var[valid, None])
 
 
 def nod_pair_location(input_model, middle_wl, dispaxis):
@@ -240,7 +244,7 @@ def nod_pair_location(input_model, middle_wl, dispaxis):
 
 
 def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location,
-                optimize_shifts=True, model_nod_pair=True):
+                wl_array, optimize_shifts=True, model_nod_pair=True):
     """Create a spatial profile from a PSF reference.
 
     Currently only works on MIRI LRS-FIXEDSLIT exposures.
@@ -266,6 +270,9 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     location : float or None
         Spatial index to use as the center of the trace.  If not provided,
         the location at the center of the bounding box will be used.
+    wl_array : ndarray
+        Array of wavelength values, matching the input model data shape, for
+        each pixel in the array.
     optimize_shifts : bool, optional
         If True, the spatial location of the trace will be optimized via
         minimizing the residuals in a scene model compared to the data in
@@ -324,14 +331,22 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
         cutout = input_model.data[y0:y1, x0:x1]
         cutout_var = input_model.var_rnoise[y0:y1, x0:x1] ** 2
 
+    # todo - data wavelengths to interpolate the PSF onto
+    cutout_wl = wl_array[y0:y1, x0:x1]
+
+    # Check if data is resampled
+    # todo - see if we can get this supported - trace shift is none
+    resampled = str(input_model.meta.cal_step.resample) == 'COMPLETE'
+    if resampled:
+        log.error('Optimal extraction must be performed on cal files.')
+        raise NotImplementedError('Optimal extraction not implemented for resampled data.')
+
     # Perform fit of reference trace and corresponding wavelength
-    # The wavelength for the reference trace does not exactly line up exactly with the data
+    # The wavelength for the reference trace does not exactly line up
+    # exactly with the PSF data
     cs = CubicSpline(wavetab, trace)
     cen_shift = cs(middle_wl)
     shift = location - cen_shift
-
-    # todo - if possible, fix this for s2d -
-    #  cen_shift is wrong, wavelengths don't match PSF
 
     # adjust the trace to the slit region
     trace_cutout = trace - bbox[0][0]
@@ -349,15 +364,9 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
 
     psf_interp = interpolate.interp1d(wavetab, trace_shift, fill_value="extrapolate")
     psf_shift = psf_interp(psf_wave)
-    psf_shift = psf_model.meta.psf.center_col - (psf_shift * psf_subpix)
 
-    # Note: this assumes that data wavelengths are identical to PSF wavelengths
-    data_shape = cutout.shape
-    _y, _x = np.mgrid[:data_shape[0], :data_shape[1]]
-    if data_shape[dispaxis % 2] != psf_shift.size:
-        log.error('Data shape does not match PSF reference.')
-        log.error('Optimal extraction must be performed on cal files.')
-        raise NotImplementedError('Optimal extraction not implemented for resampled data.')
+    # todo - check 1d interp for opposite dispersion direction
+    psf_shift = psf_model.meta.psf.center_col - (psf_shift * psf_subpix)
 
     # Check if we need to add a negative nod pair trace
     if model_nod_pair:
@@ -376,6 +385,10 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
                 nod_offset = location - nod_center
     else:
         nod_offset = None
+
+    # Get an index grid for the data cutout
+    data_shape = cutout.shape
+    _y, _x = np.mgrid[:data_shape[0], :data_shape[1]]
 
     # If desired, add additional shifts to the starting locations of
     # the primary trace (and negative nod pair trace if necessary)
