@@ -200,7 +200,7 @@ class Extract1dStep(Step):
     """
 
     reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile',
-                            'speckernel', 'specwcs'] #, 'psf']
+                            'speckernel', 'specwcs', 'psf']
 
     def _get_extract_reference_files_by_mode(self, model, exp_type):
         """Get extraction reference files with special handling by exposure type."""
@@ -223,10 +223,10 @@ class Extract1dStep(Step):
 
         if exp_type in extract.OPTIMAL_EXPTYPES:
             specwcs_ref = self.get_reference_file(model, 'specwcs')
-            self.log.info(f'Using SPECWCS file {specwcs_ref}')
+            self.log.info(f'Using SPECWCS reference file {specwcs_ref}')
 
             psf_ref = self.get_reference_file(model, 'psf')
-            self.log.info(f'Using PSF file {psf_ref}')
+            self.log.info(f'Using PSF reference file {psf_ref}')
         else:
             specwcs_ref = 'N/A'
             psf_ref = 'N/A'
