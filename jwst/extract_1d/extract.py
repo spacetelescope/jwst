@@ -1346,6 +1346,11 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         `bg_profile` is a 2D image containing pixel weights for background
         regions, to be fit during extraction.  Otherwise, `bg_profile` is
         None.
+    nod_profile : ndarray of float or None
+        For optimal extraction, if nod subtraction was performed, a
+        second spatial profile is generated, modeling the negative source
+        in the slit. This second spatial profile is returned in `nod_profile`
+        if generated.  Otherwise, `nod_profile` is None.
     limits : tuple of float
         Index limit values for the aperture, returned as (lower_limit, upper_limit,
         left_limit, right_limit).  Upper/lower limits are along the
@@ -1396,16 +1401,23 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         shift_by_offset(offset, extract_params, update_trace=True)
 
     # Make a spatial profile, including source shifts if necessary
+    nod_profile = None
     if extract_params['extraction_type'] == 'optimal':
-        profile, lower_limit, upper_limit = psf_profile(
+        profiles, lower_limit, upper_limit = psf_profile(
             data_model, extract_params['psf'], extract_params['specwcs'],
             middle_wl, location, wl_array)
+        if len(profiles) > 0:
+            profile, nod_profile = profiles
+        else:
+            profile = profiles[0]
     else:
         profile, lower_limit, upper_limit = box_profile(
             data_shape, extract_params, wl_array, return_limits=True)
 
     # Make sure profile weights are zero where wavelengths are invalid
     profile[~np.isfinite(wl_array)] = 0.0
+    if nod_profile is not None:
+        nod_profile[~np.isfinite(wl_array)] = 0.0
 
     # Get the effective left and right limits from the profile weights
     nonzero_weight = np.where(np.sum(profile, axis=extract_params['dispaxis'] - 1) > 0)[0]
@@ -1448,10 +1460,11 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     # Return limits as a tuple with 4 elements: lower, upper, left, right
     limits = (lower_limit, upper_limit, left_limit, right_limit)
 
-    return ra, dec, wavelength, profile, bg_profile, limits
+    return ra, dec, wavelength, profile, bg_profile, nod_profile, limits
 
 
-def extract_one_slit(data_model, integration, profile, bg_profile, extract_params):
+def extract_one_slit(data_model, integration, profile, bg_profile,
+                     nod_profile, extract_params):
     """Extract data for one slit, or spectral order, or integration.
 
     Parameters
@@ -1476,6 +1489,13 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
         Background profile indicating any background regions to use, following
         the same format as the spatial profile. Ignored if
         extract_params['subtract_background'] is False.
+
+    nod_profile : ndarray of float or None
+        For optimal extraction, if nod subtraction was performed, a
+        second spatial profile is generated, modeling the negative source
+        in the slit. This second spatial profile may be passed in `nod_profile`
+        for simultaneous fitting with the primary source in `profile`.
+        Otherwise, `nod_profile` should be None.
 
     extract_params : dict
         Parameters read from the extract1d reference file, as returned by
@@ -1555,11 +1575,13 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
 
     # Transpose data for extraction
     if extract_params['dispaxis'] == HORIZONTAL:
-        profile_view = profile
         bg_profile_view = bg_profile
+        if nod_profile is not None:
+            profiles = [profile, nod_profile]
+        else:
+            profiles = [profile]
     else:
         data = data.T
-        profile_view = profile.T
         var_rnoise = var_rnoise.T
         var_poisson = var_poisson.T
         var_flat = var_flat.T
@@ -1567,9 +1589,13 @@ def extract_one_slit(data_model, integration, profile, bg_profile, extract_param
             bg_profile_view = bg_profile.T
         else:
             bg_profile_view = None
+        if nod_profile is not None:
+            profiles = [profile.T, nod_profile.T]
+        else:
+            profiles = [profile.T]
 
     # Extract spectra from the data
-    result = extract1d.extract1d(data, [profile_view], var_rnoise, var_poisson, var_flat,
+    result = extract1d.extract1d(data, profiles, var_rnoise, var_poisson, var_flat,
                                  profile_bg=bg_profile_view,
                                  bg_smooth_length=extract_params['smoothing_length'],
                                  fit_bkg=extract_params['subtract_background'],
@@ -1762,7 +1788,7 @@ def create_extraction(input_model, slit, output_model,
 
     # Set up spatial profiles and wavelength array,
     # to be used for every integration
-    (ra, dec, wavelength, profile, bg_profile, limits) = define_aperture(
+    (ra, dec, wavelength, profile, bg_profile, nod_profile, limits) = define_aperture(
         input_model, slit, extract_params, exp_type)
 
     valid = np.isfinite(wavelength)
@@ -1773,7 +1799,10 @@ def create_extraction(input_model, slit, output_model,
 
     # Save the profile if desired
     if save_profile:
-        profile_model = datamodels.ImageModel(profile)
+        if nod_profile is not None:
+            profile_model = datamodels.ImageModel(profile + nod_profile)
+        else:
+            profile_model = datamodels.ImageModel(profile)
         profile_model.update(input_model, only='PRIMARY')
         profile_model.name = slitname
     else:
@@ -1835,7 +1864,7 @@ def create_extraction(input_model, slit, output_model,
         (sum_flux, f_var_rnoise, f_var_poisson,
             f_var_flat, background, b_var_rnoise, b_var_poisson,
             b_var_flat, npixels, scene_model_2d) = extract_one_slit(
-                data_model, integ, profile, bg_profile, extract_params)
+                data_model, integ, profile, bg_profile, nod_profile, extract_params)
 
         # Save the flux model
         if save_scene_model:

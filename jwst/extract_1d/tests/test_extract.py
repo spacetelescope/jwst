@@ -1084,7 +1084,7 @@ def test_define_aperture_nirspec(mock_nirspec_fs_one_slit, extract_defaults, is_
         slit = None
     exptype = 'NRS_FIXEDSLIT'
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    ra, dec, wavelength, profile, bg_profile, limits = result
+    ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
     assert np.isclose(ra, 45.05)
     assert np.isclose(dec, 45.1)
     assert wavelength.shape == (model.data.shape[1],)
@@ -1108,7 +1108,7 @@ def test_define_aperture_miri(mock_miri_lrs_fs, extract_defaults, is_slit):
         slit = None
     exptype = 'MIR_LRS-FIXEDSLIT'
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    ra, dec, wavelength, profile, bg_profile, limits = result
+    ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
     assert np.isclose(ra, 45.05)
     assert np.isclose(dec, 45.1)
     assert wavelength.shape == (model.data.shape[1],)
@@ -1132,7 +1132,7 @@ def test_define_aperture_with_bg(mock_nirspec_fs_one_slit, extract_defaults):
     extract_defaults['bkg_coeff'] = [[-0.5], [2.5]]
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    bg_profile = result[-2]
+    bg_profile = result[-3]
 
     # Bg profile has 1s in the first 3 rows
     assert bg_profile.shape == model.data.shape
@@ -1151,7 +1151,7 @@ def test_define_aperture_empty_aperture(mock_nirspec_fs_one_slit, extract_defaul
     extract_defaults['ystop'] = 3000
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    _, _, _, profile, _, limits = result
+    _, _, _, profile, _, _, limits = result
 
     assert np.all(profile == 0.0)
     assert limits == (2000, 3000, None, None)
@@ -1198,7 +1198,7 @@ def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extra
     extract_defaults['extract_width'] = 6.0
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    _, _, _, profile, _, limits = result
+    _, _, _, profile, _, _, limits = result
 
     assert np.all(profile[:7] == 0.0)
     assert np.all(profile[7:13] == 1.0)
@@ -1235,7 +1235,7 @@ def test_extract_one_slit_horizontal(mock_nirspec_fs_one_slit, extract_defaults,
     mock_nirspec_fs_one_slit.data[simple_profile != 0] += 1.0
 
     result = ex.extract_one_slit(mock_nirspec_fs_one_slit, -1, simple_profile,
-                                 background_profile, extract_defaults)
+                                 background_profile, None, extract_defaults)
 
     for data in result[:-1]:
         assert np.all(data > 0)
@@ -1271,7 +1271,7 @@ def test_extract_one_slit_vertical(mock_miri_lrs_fs, extract_defaults,
     # set a source in the profile region
     model.data[profile != 0] += 1.0
 
-    result = ex.extract_one_slit(model, -1, profile, profile_bg, extract_defaults)
+    result = ex.extract_one_slit(model, -1, profile, profile_bg, None, extract_defaults)
 
     for data in result[:-1]:
         assert np.all(data > 0)
@@ -1298,7 +1298,7 @@ def test_extract_one_slit_vertical_no_bg(mock_miri_lrs_fs, extract_defaults,
     profile = simple_profile.T
     extract_defaults['dispaxis'] = 2
 
-    result = ex.extract_one_slit(model, -1, profile, None, extract_defaults)
+    result = ex.extract_one_slit(model, -1, profile, None, None, extract_defaults)
 
     # flux and variances are nonzero
     for data in result[:4]:
@@ -1323,7 +1323,7 @@ def test_extract_one_slit_multi_int(mock_nirspec_bots, extract_defaults,
     extract_defaults['dispaxis'] = 1
 
     log_watcher.message = "Extracting integration 2"
-    result = ex.extract_one_slit(model, 1, simple_profile, None, extract_defaults)
+    result = ex.extract_one_slit(model, 1, simple_profile, None, None, extract_defaults)
     log_watcher.assert_seen()
 
     # flux and variances are nonzero
@@ -1356,7 +1356,7 @@ def test_extract_one_slit_missing_var(mock_nirspec_fs_one_slit, extract_defaults
     model.var_poisson = np.zeros((10, 10))
     model.var_flat = np.zeros((10, 10))
 
-    result = ex.extract_one_slit(model, -1, simple_profile, None, extract_defaults)
+    result = ex.extract_one_slit(model, -1, simple_profile, None, None, extract_defaults)
 
     # flux is nonzero
     assert np.all(result[0] > 0)

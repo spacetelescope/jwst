@@ -141,9 +141,9 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
 
     Returns
     -------
-    profile : ndarray of float
-        2D spatial profile containing the primary trace and, optionally,
-        a negative trace for a nod pair.  The profile is normalized along
+    profiles : list of ndarray of float
+        2D spatial profiles containing the primary trace and, optionally,
+        a negative trace for a nod pair.  The profiles are normalized along
         the cross-dispersion axis.
     """
     if dispaxis == HORIZONTAL:
@@ -153,46 +153,42 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
     sprofile = ndimage.map_coordinates(psf_data, [yidx, xidx], order=1)
     _normalize_profile(sprofile, dispaxis)
 
-    if nod_offset is not None:
-        if dispaxis == HORIZONTAL:
-            yidx += psf_subpix * nod_offset
-        else:
-            xidx += psf_subpix * nod_offset
+    if nod_offset is None:
+        return [sprofile]
 
-        nod_profile = ndimage.map_coordinates(psf_data, [yidx, xidx], order=1)
-        _normalize_profile(nod_profile, dispaxis)
+    # Make an additional profile for the negative nod if desired
+    if dispaxis == HORIZONTAL:
+        yidx += psf_subpix * nod_offset
+    else:
+        xidx += psf_subpix * nod_offset
 
-        sprofile -= nod_profile
+    nod_profile = ndimage.map_coordinates(psf_data, [yidx, xidx], order=1)
+    _normalize_profile(nod_profile, dispaxis)
 
-    return sprofile
+    return [sprofile, nod_profile * -1]
 
 
-def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix,
+def _profile_residual(param, cutout, xidx, yidx, psf_subpix,
                       psf_shift, psf_data, dispaxis):
     """Residual function to minimize for optimizing trace locations."""
-    sprofile = _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
-                                    extra_shift=param[0], nod_offset=param[1])
-    empty_var = np.zeros_like(cutout)
+    sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
+                                     extra_shift=param[0], nod_offset=param[1])
     extract_kwargs = {'extraction_type': 'optimal',
                       'fit_bkg': True,
                       'bkg_fit_type': 'poly',
                       'bkg_order': 0}
     if dispaxis == HORIZONTAL:
-        result = extract1d(cutout, [sprofile], cutout_var, empty_var, empty_var,
+        empty_var = np.zeros_like(cutout)
+        result = extract1d(cutout, sprofiles, empty_var, empty_var, empty_var,
                            **extract_kwargs)
-        var = result[1][0]
         model = result[-1]
-
-        valid = (var != 0)
-        return np.nansum((model[:, valid] - cutout[:, valid]) ** 2 / var[valid])
     else:
-        result = extract1d(cutout.T, [sprofile.T], cutout_var.T, empty_var.T, empty_var.T,
+        sprofiles = [profile.T for profile in sprofiles]
+        empty_var = np.zeros_like(cutout.T)
+        result = extract1d(cutout.T, sprofiles, empty_var, empty_var, empty_var,
                            **extract_kwargs)
-        var = result[1][0]
         model = result[-1].T
-
-        valid = (var != 0)
-        return np.nansum((model[valid, :] - cutout[valid, :]) ** 2 / var[valid, None])
+    return np.nansum((model - cutout) ** 2)
 
 
 def nod_pair_location(input_model, middle_wl, dispaxis):
@@ -326,16 +322,14 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     x1 = int(np.round(bbox[0][1]))
     if input_model.data.ndim == 3:
         cutout = input_model.data[0, y0:y1, x0:x1]
-        cutout_var = input_model.var_rnoise[0, y0:y1, x0:x1]
     else:
         cutout = input_model.data[y0:y1, x0:x1]
-        cutout_var = input_model.var_rnoise[y0:y1, x0:x1] ** 2
 
     # todo - data wavelengths to interpolate the PSF onto
     cutout_wl = wl_array[y0:y1, x0:x1]
 
     # Check if data is resampled
-    # todo - see if we can get this supported - trace shift is none
+    # todo - see if we can get this supported - trace shift is zero
     resampled = str(input_model.meta.cal_step.resample) == 'COMPLETE'
     if resampled:
         log.error('Optimal extraction must be performed on cal files.')
@@ -393,36 +387,40 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     # If desired, add additional shifts to the starting locations of
     # the primary trace (and negative nod pair trace if necessary)
     if optimize_shifts:
+        log.info('Optimizing trace locations')
         extra_shift, nod_offset = optimize.minimize(
             _profile_residual, [0.0, nod_offset],
-            (cutout, cutout_var, _x, _y, psf_subpix, psf_shift,
+            (cutout, _x, _y, psf_subpix, psf_shift,
              psf_model.data, dispaxis)).x
         location += extra_shift
     else:
         extra_shift = 0.0
 
     log.info(f'Centering profile on spectrum at {location:.2f}, wavelength {middle_wl:.2f}')
-    log.info(f'For this wavelength, the reference trace location is at {cen_shift:.2f}')
+    log.debug(f'For this wavelength, the reference trace location is at {cen_shift:.2f}')
     log.debug(f'Shift applied to reference trace: {location - cen_shift:.2f}')
     if nod_offset is not None:
         log.info(f'Also modeling a negative trace at {location - nod_offset:.2f} '
                  f'(offset: {nod_offset:.2f})')
 
     # Make a spatial profile from the shifted PSF data
-    sprofile = _make_cutout_profile(_x, _y, psf_subpix, psf_shift, psf_model.data,
-                                    dispaxis, extra_shift=extra_shift,
-                                    nod_offset=nod_offset)
+    sprofiles = _make_cutout_profile(_x, _y, psf_subpix, psf_shift, psf_model.data,
+                                     dispaxis, extra_shift=extra_shift,
+                                     nod_offset=nod_offset)
 
     # Make the output profile, matching the input data
     data_shape = input_model.data.shape
-    profile = np.full(data_shape, 0.0)
     output_y = _y + y0
     output_x = _x + x0
     valid = (output_y >= 0) & (output_y < y1) & (output_x >= 0) & (output_x < x1)
-    profile[output_y[valid], output_x[valid]] = sprofile[valid]
+    profiles = []
+    for sprofile in sprofiles:
+        profile = np.full(data_shape, 0.0)
+        profile[output_y[valid], output_x[valid]] = sprofile[valid]
+        profiles.append(profile)
 
     if dispaxis == HORIZONTAL:
         limits = (y0, y1)
     else:
         limits = (x0, x1)
-    return profile, *limits
+    return profiles, *limits
