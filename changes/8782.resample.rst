@@ -1,1 +1,0 @@
-Permit creating drizzled models one at a time in many-to-many mode.
