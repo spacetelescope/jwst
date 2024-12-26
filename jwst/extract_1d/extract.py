@@ -1399,7 +1399,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     if extract_params['extraction_type'] == 'optimal':
         profile, lower_limit, upper_limit = psf_profile(
             data_model, extract_params['psf'], extract_params['specwcs'],
-            middle_wl, location)
+            middle_wl, location, wl_array)
     else:
         profile, lower_limit, upper_limit = box_profile(
             data_shape, extract_params, wl_array, return_limits=True)
