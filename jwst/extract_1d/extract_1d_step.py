@@ -1,11 +1,11 @@
+import crds
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
-
-from ..stpipe import Step
-from . import extract
-from .soss_extract import soss_extract
-from .ifu import ifu_extract1d
+from jwst.stpipe import Step
+from jwst.extract_1d import extract
+from jwst.extract_1d.soss_extract import soss_extract
+from jwst.extract_1d.ifu import ifu_extract1d
 
 __all__ = ["Extract1dStep"]
 
@@ -222,11 +222,17 @@ class Extract1dStep(Step):
         if apcorr_ref != 'N/A':
             self.log.info(f'Using APCORR file {apcorr_ref}')
 
-        specwcs_ref = self.get_reference_file(model, 'specwcs')
+        try:
+            specwcs_ref = self.get_reference_file(model, 'specwcs')
+        except crds.core.exceptions.CrdsLookupError:
+            specwcs_ref = 'N/A'
         if specwcs_ref != 'N/A':
             self.log.info(f'Using SPECWCS reference file {specwcs_ref}')
 
-        psf_ref = self.get_reference_file(model, 'psf')
+        try:
+            psf_ref = self.get_reference_file(model, 'psf')
+        except crds.core.exceptions.CrdsLookupError:
+            psf_ref = 'N/A'
         if psf_ref != 'N/A':
             self.log.info(f'Using PSF reference file {psf_ref}')
 
