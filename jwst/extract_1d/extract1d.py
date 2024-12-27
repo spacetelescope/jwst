@@ -285,18 +285,19 @@ def _optimal_extract(
     if order > -1:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
 
             wgt_nobkg = [profiles_2d[i] * weights / np.sum(profiles_2d[i] ** 2 * weights, axis=0)
                          for i in range(nobjects)]
 
-        bkg = np.array([np.sum(wgt_nobkg[i] * bkg_2d, axis=0) for i in range(nobjects)])
+            bkg = np.array([np.sum(wgt_nobkg[i] * bkg_2d, axis=0) for i in range(nobjects)])
 
-        var_bkg_rn = np.array([var_rn[i] - np.sum(wgt_nobkg[i] ** 2 * variance_rn, axis=0)
-                               for i in range(nobjects)])
-        var_bkg_phnoise = np.array([var_phnoise[i] - np.sum(wgt_nobkg[i] ** 2 * variance_phnoise, axis=0)
-                                    for i in range(nobjects)])
-        var_bkg_flat = np.array([var_flat[i] - np.sum(wgt_nobkg[i] ** 2 * variance_flat, axis=0)
-                                 for i in range(nobjects)])
+            var_bkg_rn = np.array([var_rn[i] - np.sum(wgt_nobkg[i] ** 2 * variance_rn, axis=0)
+                                   for i in range(nobjects)])
+            var_bkg_phnoise = np.array([var_phnoise[i] - np.sum(wgt_nobkg[i] ** 2 * variance_phnoise, axis=0)
+                                        for i in range(nobjects)])
+            var_bkg_flat = np.array([var_flat[i] - np.sum(wgt_nobkg[i] ** 2 * variance_flat, axis=0)
+                                     for i in range(nobjects)])
 
         # Make sure background values are finite
         bkg[~np.isfinite(bkg)] = 0.0
