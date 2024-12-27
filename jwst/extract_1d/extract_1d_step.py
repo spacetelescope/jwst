@@ -167,7 +167,7 @@ class Extract1dStep(Step):
     subtract_background = boolean(default=None)  # subtract background?
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
 
-    extraction_type = option("box", "optimal", default="box") # Perform box or optimal extraction
+    extraction_type = option("box", "optimal", None, default="box") # Perform box or optimal extraction
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     position_offset = float(default=0)  # number of pixels to shift source trace in the cross-dispersion direction
     optimize_psf_location = boolean(default=True)  # For optimal extraction, optimize source location
@@ -222,15 +222,13 @@ class Extract1dStep(Step):
         if apcorr_ref != 'N/A':
             self.log.info(f'Using APCORR file {apcorr_ref}')
 
-        if exp_type in extract.OPTIMAL_EXPTYPES:
-            specwcs_ref = self.get_reference_file(model, 'specwcs')
+        specwcs_ref = self.get_reference_file(model, 'specwcs')
+        if specwcs_ref != 'N/A':
             self.log.info(f'Using SPECWCS reference file {specwcs_ref}')
 
-            psf_ref = self.get_reference_file(model, 'psf')
+        psf_ref = self.get_reference_file(model, 'psf')
+        if psf_ref != 'N/A':
             self.log.info(f'Using PSF reference file {psf_ref}')
-        else:
-            specwcs_ref = 'N/A'
-            psf_ref = 'N/A'
 
         return extract_ref, apcorr_ref, specwcs_ref, psf_ref
 
