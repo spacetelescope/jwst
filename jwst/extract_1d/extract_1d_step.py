@@ -170,6 +170,7 @@ class Extract1dStep(Step):
     extraction_type = option("box", "optimal", default="box") # Perform box or optimal extraction
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     position_offset = float(default=0)  # number of pixels to shift source trace in the cross-dispersion direction
+    optimize_psf_location = boolean(default=True)  # For optimal extraction, optimize source location
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
@@ -445,6 +446,7 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.use_source_posn,
                         self.position_offset,
+                        self.optimize_psf_location,
                         self.save_profile,
                         self.save_scene_model,
                     )
