@@ -220,6 +220,7 @@ class Spec3Pipeline(Pipeline):
                 result = self.mrs_imatch.run(result)
 
             # Call outlier detection and pixel replacement
+            resample_complete = None
             if exptype not in SLITLESS_TYPES:
                 # Update the asn table name to the level 3 instance so that
                 # the downstream products have the correct table name since
@@ -235,8 +236,8 @@ class Spec3Pipeline(Pipeline):
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.
                 result = self.pixel_replace.run(result)
+
                 # Resample time. Dependent on whether the data is IFU or not.
-                resample_complete = None
                 if exptype in IFU_EXPTYPES:
                     result = self.cube_build.run(result)
                     try:
@@ -293,6 +294,10 @@ class Spec3Pipeline(Pipeline):
 
                 if exptype in ['MIR_MRS']:
                     result = self.spectral_leak.run(result)
+            elif exptype not in IFU_EXPTYPES:
+                # Extract spectra and combine results
+                result = self.extract_1d.run(result)
+                result = self.combine_1d.run(result)
             else:
                 self.log.warning(
                     'Resampling was not completed. Skipping extract_1d.'
