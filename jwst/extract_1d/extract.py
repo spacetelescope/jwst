@@ -30,9 +30,6 @@ log.setLevel(logging.DEBUG)
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
-OPTIMAL_EXPTYPES = ['MIR_LRS-FIXEDSLIT']
-"""Exposure types for which optimal extraction is available."""
-
 ANY = "ANY"
 """Wildcard for slit name.
 
@@ -359,7 +356,13 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                     extract_params['smoothing_length'] = sm_length
 
                     # Set the extraction type to 'box' or 'optimal'
-                    extract_params['extraction_type'] = extraction_type
+                    if str(extraction_type).lower() == 'none':
+                        if extract_params['use_source_posn']:
+                            extract_params['extraction_type'] = 'optimal'
+                        else:
+                            extract_params['extraction_type'] = 'box'
+                    else:
+                        extract_params['extraction_type'] = extraction_type
                     extract_params['specwcs'] = specwcs_ref_name
                     extract_params['psf'] = psf_ref_name
                     extract_params['optimize_psf_location'] = optimize_psf_location
@@ -1946,9 +1949,8 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
     # Read in the extract1d reference file.
     extract_ref_dict = read_extract1d_ref(extract_ref_name)
 
-    # Check for non-null specwcs and PSF reference files
-    if (exp_type not in OPTIMAL_EXPTYPES
-            or specwcs_ref_name == 'N/A' or psf_ref_name == 'N/A'):
+    # Check for non-null PSF reference file
+    if psf_ref_name == 'N/A':
         if extraction_type != 'box':
             log.warning(f'Optimal extraction is not available for EXP_TYPE {exp_type}')
             log.warning('Defaulting to box extraction.')
