@@ -144,6 +144,7 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
         a negative trace for a nod pair.  The profiles are normalized along
         the cross-dispersion axis.
     """
+    # Add an extra spatial shift to the primary trace
     if dispaxis == HORIZONTAL:
         xmap = xidx
         ymap = yidx + extra_shift
@@ -168,7 +169,7 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
     return [sprofile, nod_profile * -1]
 
 
-def _profile_residual(param, cutout, xidx, yidx, psf_subpix, psf_data, dispaxis):
+def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix, psf_data, dispaxis):
     """Residual function to minimize for optimizing trace locations."""
     sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
                                      extra_shift=param[0], nod_offset=param[1])
@@ -178,16 +179,16 @@ def _profile_residual(param, cutout, xidx, yidx, psf_subpix, psf_data, dispaxis)
                       'bkg_order': 0}
     if dispaxis == HORIZONTAL:
         empty_var = np.zeros_like(cutout)
-        result = extract1d(cutout, sprofiles, empty_var, empty_var, empty_var,
+        result = extract1d(cutout, sprofiles, cutout_var, empty_var, empty_var,
                            **extract_kwargs)
         model = result[-1]
     else:
         sprofiles = [profile.T for profile in sprofiles]
         empty_var = np.zeros_like(cutout.T)
-        result = extract1d(cutout.T, sprofiles, empty_var, empty_var, empty_var,
+        result = extract1d(cutout.T, sprofiles, cutout_var.T, empty_var, empty_var,
                            **extract_kwargs)
         model = result[-1].T
-    return np.nansum((model - cutout) ** 2)
+    return np.nansum((model - cutout) ** 2 / cutout_var)
 
 
 def nod_pair_location(input_model, middle_wl, dispaxis):
@@ -321,8 +322,10 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     x1 = int(np.round(bbox[0][1]))
     if input_model.data.ndim == 3:
         cutout = input_model.data[0, y0:y1, x0:x1]
+        cutout_var = input_model.var_rnoise[0, y0:y1, x0:x1]
     else:
         cutout = input_model.data[y0:y1, x0:x1]
+        cutout_var = input_model.var_rnoise[y0:y1, x0:x1]
     cutout_wl = wl_array[y0:y1, x0:x1].copy()
 
     # Check if data is resampled
@@ -401,7 +404,7 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
         log.info('Optimizing trace locations')
         extra_shift, nod_offset = optimize.minimize(
             _profile_residual, [0.0, nod_offset],
-            (cutout, xidx, yidx, psf_subpix, psf_model.data, dispaxis)).x
+            (cutout, cutout_var, xidx, yidx, psf_subpix, psf_model.data, dispaxis)).x
         location += extra_shift
     else:
         extra_shift = 0.0

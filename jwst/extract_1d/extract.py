@@ -1406,7 +1406,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         profiles, lower_limit, upper_limit = psf_profile(
             data_model, extract_params['psf'], extract_params['specwcs'],
             middle_wl, location, wl_array)
-        if len(profiles) > 0:
+        if len(profiles) > 1:
             profile, nod_profile = profiles
         else:
             profile = profiles[0]
