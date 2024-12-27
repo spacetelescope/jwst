@@ -59,6 +59,7 @@ def extract_defaults():
                'src_coeff': None,
                'subtract_background': False,
                'use_source_posn': False,
+               'optimize_psf_location': False,
                'xstart': 0,
                'xstop': 49,
                'ystart': 0,
