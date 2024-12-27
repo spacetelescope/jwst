@@ -19,7 +19,7 @@ VERTICAL = 2
 """Dispersion direction, predominantly horizontal or vertical."""
 
 
-def open_specwcs(specwcs_ref_name: str, exp_type: str):
+def open_specwcs(specwcs_ref_name, exp_type):
     """Open the specwcs reference file.
 
     Currently only works on MIRI LRS-FIXEDSLIT exposures.
@@ -30,7 +30,7 @@ def open_specwcs(specwcs_ref_name: str, exp_type: str):
         The name of the specwcs reference file. This file contains
         information of the trace location. For MIRI LRS-FIXEDSlIT it
         is a FITS file containing the x,y center of the trace.
-    ext_type : str
+    exp_type : str
         The exposure type of the data.
 
     Returns
@@ -66,14 +66,14 @@ def open_specwcs(specwcs_ref_name: str, exp_type: str):
     return trace, wave_trace, wavetab
     
 
-def open_psf(psf_refname: str, exp_type: str):
+def open_psf(psf_refname, exp_type):
     """Open the PSF reference file.
 
     Parameters
     ----------
-    psf_ref_name : str
+    psf_refname : str
         The name of the psf reference file. 
-    ext_type : str
+    exp_type : str
         The exposure type of the data.
 
     Returns
@@ -110,12 +110,13 @@ def _normalize_profile(profile, dispaxis):
     profile[~np.isfinite(profile)] = 0.0
 
 
-def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
+def _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
                          extra_shift=0.0, nod_offset=None):
     """Make a spatial profile corresponding to the data cutout.
 
     Input index values should already contain the shift to the trace location
-    in the cross-dispersion direction.
+    in the cross-dispersion direction and any wavelength shifts necessary
+    in the dispersion direction.
 
     Parameters
     ----------
@@ -125,9 +126,6 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
         Index array for y values.
     psf_subpix : float
         Scaling factor for pixel size in the PSF data.
-    psf_shift : ndarray of float
-        Offset values along the cross-dispersion direction for the
-        primary trace.
     psf_data : ndarray of float
         2D PSF model.
     dispaxis : int
@@ -147,10 +145,12 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
         the cross-dispersion axis.
     """
     if dispaxis == HORIZONTAL:
-        yidx = yidx * psf_subpix + psf_shift + extra_shift
+        xmap = xidx
+        ymap = yidx + extra_shift
     else:
-        xidx = xidx * psf_subpix + psf_shift[:, np.newaxis] + extra_shift
-    sprofile = ndimage.map_coordinates(psf_data, [yidx, xidx], order=1)
+        xmap = xidx + extra_shift
+        ymap = yidx
+    sprofile = ndimage.map_coordinates(psf_data, [ymap, xmap], order=1)
     _normalize_profile(sprofile, dispaxis)
 
     if nod_offset is None:
@@ -158,20 +158,19 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
 
     # Make an additional profile for the negative nod if desired
     if dispaxis == HORIZONTAL:
-        yidx += psf_subpix * nod_offset
+        ymap += psf_subpix * nod_offset
     else:
-        xidx += psf_subpix * nod_offset
+        xmap += psf_subpix * nod_offset
 
-    nod_profile = ndimage.map_coordinates(psf_data, [yidx, xidx], order=1)
+    nod_profile = ndimage.map_coordinates(psf_data, [ymap, xmap], order=1)
     _normalize_profile(nod_profile, dispaxis)
 
     return [sprofile, nod_profile * -1]
 
 
-def _profile_residual(param, cutout, xidx, yidx, psf_subpix,
-                      psf_shift, psf_data, dispaxis):
+def _profile_residual(param, cutout, xidx, yidx, psf_subpix, psf_data, dispaxis):
     """Residual function to minimize for optimizing trace locations."""
-    sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_shift, psf_data, dispaxis,
+    sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
                                      extra_shift=param[0], nod_offset=param[1])
     extract_kwargs = {'extraction_type': 'optimal',
                       'fit_bkg': True,
@@ -324,9 +323,7 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
         cutout = input_model.data[0, y0:y1, x0:x1]
     else:
         cutout = input_model.data[y0:y1, x0:x1]
-
-    # todo - data wavelengths to interpolate the PSF onto
-    cutout_wl = wl_array[y0:y1, x0:x1]
+    cutout_wl = wl_array[y0:y1, x0:x1].copy()
 
     # Check if data is resampled
     # todo - see if we can get this supported - trace shift is zero
@@ -384,14 +381,27 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     data_shape = cutout.shape
     _y, _x = np.mgrid[:data_shape[0], :data_shape[1]]
 
-    # If desired, add additional shifts to the starting locations of
+    # Get the effective index into the 1D PSF wavelengths from the data wavelengths
+    cutout_wl[~np.isfinite(cutout_wl)] = -1
+    sort_idx = np.argsort(psf_wave)
+    wave_idx = np.interp(cutout_wl, psf_wave[sort_idx], sort_idx,
+                         left=np.nan, right=np.nan)
+
+    # Add the wavelength and spatial shifts to the coordinates to map to
+    if dispaxis == HORIZONTAL:
+        xidx = wave_idx
+        yidx = _y * psf_subpix + psf_shift
+    else:
+        xidx = _x * psf_subpix + psf_shift[:, np.newaxis]
+        yidx = wave_idx
+
+    # If desired, add additional spatial shifts to the starting locations of
     # the primary trace (and negative nod pair trace if necessary)
     if optimize_shifts:
         log.info('Optimizing trace locations')
         extra_shift, nod_offset = optimize.minimize(
             _profile_residual, [0.0, nod_offset],
-            (cutout, _x, _y, psf_subpix, psf_shift,
-             psf_model.data, dispaxis)).x
+            (cutout, xidx, yidx, psf_subpix, psf_model.data, dispaxis)).x
         location += extra_shift
     else:
         extra_shift = 0.0
@@ -404,7 +414,7 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
                  f'(offset: {nod_offset:.2f})')
 
     # Make a spatial profile from the shifted PSF data
-    sprofiles = _make_cutout_profile(_x, _y, psf_subpix, psf_shift, psf_model.data,
+    sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_model.data,
                                      dispaxis, extra_shift=extra_shift,
                                      nod_offset=nod_offset)
 
