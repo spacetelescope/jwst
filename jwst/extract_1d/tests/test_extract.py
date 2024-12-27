@@ -62,6 +62,7 @@ def extract_defaults():
                'position_offset': 0.0,
                'trace': None,
                'use_source_posn': False,
+               'optimize_psf_location': False,
                'xstart': 0,
                'xstop': 49,
                'ystart': 0,

@@ -150,7 +150,7 @@ def read_apcorr_ref(refname, exptype):
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
                            use_source_posn=None, subtract_background=None,
-                           position_offset=0.0,
+                           position_offset=0.0, optimize_psf_location=False,
                            extraction_type='box', specwcs_ref_name='N/A',
                            psf_ref_name='N/A'):
     """Get extraction parameter values.
@@ -161,21 +161,16 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         For an extract1d reference file in JSON format, `ref_dict` will be
         the entire contents of the file.  If there is no extract1d reference
         file, `ref_dict` will be None.
-
     input_model : JWSTDataModel
         This can be either the input science file or one SlitModel out of
         a list of slits.
-
     slitname : str
         The name of the slit, or "ANY".
-
     sp_order : int
         The spectral order number.
-
     meta : ObjectNode
         The metadata for the actual input model, i.e. not just for the
         current slit, from input_model.meta.
-
     smoothing_length : int or None, optional
         Width of a boxcar function for smoothing the background regions.
         If None, the smoothing length will be retrieved from `ref_dict`, or
@@ -185,14 +180,12 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         explicitly specified the value, so that value will be used.
         This argument is only used if background regions have been
         specified.
-
     bkg_fit : str or None, optional
         The type of fit to apply to background values in each
         column (or row, if the dispersion is vertical). The default
         `poly` results in a polynomial fit of order `bkg_order`. Other
         options are `mean` and `median`. If `mean` or `median` is selected,
         `bkg_order` is ignored.
-
     bkg_order : int or None, optional
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.  If None, the polynomial
@@ -204,30 +197,28 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         specified the value, so that value will be used.
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
-
     use_source_posn : bool or None, optional
         If True, the target and background positions specified in `ref_dict`
         (or a default target position) will be shifted to account for
         the actual source location in the data.
         If None, the value specified in `ref_dict` will be used, or it will
         be set to True if not found in `ref_dict`.
-
+    optimize_psf_location : bool
+        If True, and if `extraction_type` is 'optimal', then the source
+        location will be optimized, via iterative comparisons of the scene
+        model with the input data.
     subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
-
     position_offset : float or None, optional
         Pixel offset to apply to the nominal source location.
         If None, the value specified in `ref_dict` will be used or it
         will default to 0.
-
     extraction_type : str, optional
         Extraction type ('box' or 'optimal').  Optimal extraction is
         only available if `specwcs_ref_name` and `psf_ref_name` are
         not 'N/A'.
-
     specwcs_ref_name : str, optional
         The name of the specwcs reference file, or "N/A".
-
     psf_ref_name : str, optional
         The name of the PSF reference file, or "N/A".
 
@@ -258,6 +249,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['subtract_background'] = False
         extract_params['extraction_type'] = 'box'
         extract_params['use_source_posn'] = False  # no source position correction
+        extract_params['optimize_psf_location'] = False
         extract_params['specwcs'] = 'N/A'
         extract_params['psf'] = 'N/A'
         extract_params['position_correction'] = 0
@@ -384,6 +376,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                     extract_params['extraction_type'] = extraction_type
                     extract_params['specwcs'] = specwcs_ref_name
                     extract_params['psf'] = psf_ref_name
+                    extract_params['optimize_psf_location'] = optimize_psf_location
 
                     break
 
@@ -1405,7 +1398,8 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     if extract_params['extraction_type'] == 'optimal':
         profiles, lower_limit, upper_limit = psf_profile(
             data_model, extract_params['psf'], extract_params['specwcs'],
-            middle_wl, location, wl_array)
+            middle_wl, location, wl_array,
+            optimize_shifts=extract_params['optimize_psf_location'])
         if len(profiles) > 1:
             profile, nod_profile = profiles
         else:
@@ -2037,6 +2031,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                   smoothing_length=None, bkg_fit=None, bkg_order=None,
                   log_increment=50, subtract_background=None,
                   use_source_posn=None, position_offset=0.0,
+                  optimize_psf_location=True,
                   save_profile=False, save_scene_model=False):
     """Extract all 1-D spectra from an input model.
 
@@ -2082,6 +2077,10 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
     position_offset : float
         Number of pixels to shift the nominal source position in the
         cross-dispersion direction.
+    optimize_psf_location : bool
+        If True, and if `extraction_type` is 'optimal', then the source
+        location will be optimized, via iterative comparisons of the scene
+        model with the input data.
     save_profile : bool
         If True, the spatial profiles created for the input model will be returned
         as ImageModels. If False, the return value is None.
@@ -2193,7 +2192,9 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                    bkg_fit=bkg_fit, bkg_order=bkg_order,
                    subtract_background=subtract_background,
                    use_source_posn=use_source_posn,
-                   position_offset=position_offset)
+                   position_offset=position_offset,
+                   optimize_psf_location=optimize_psf_location,
+                   subtract_background=subtract_background)
             except ContinueError:
                 continue
 
@@ -2233,7 +2234,9 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
-                        position_offset=position_offset)
+                        position_offset=position_offset,
+                        optimize_psf_location=optimize_psf_location,
+                        subtract_background=subtract_background)
                 except ContinueError:
                     pass
 
@@ -2275,7 +2278,9 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
-                        position_offset=position_offset)
+                        position_offset=position_offset,
+                        optimize_psf_location=optimize_psf_location,
+                        subtract_background=subtract_background)
                 except ContinueError:
                     pass
 
