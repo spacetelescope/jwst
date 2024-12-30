@@ -67,8 +67,7 @@ def extract_defaults():
                'xstop': 49,
                'ystart': 0,
                'ystop': 49,
-               'psf': 'N/A',
-               'specwcs': 'N/A'}
+               'psf': 'N/A'}
     return default
 
 
@@ -1653,6 +1652,7 @@ def test_run_extract1d_zeroth_order_slit(mock_nirspec_fs_one_slit):
 def test_run_extract1d_zeroth_order_image(mock_miri_lrs_fs):
     model = mock_miri_lrs_fs
     model.meta.wcsinfo.spectral_order = 0
+    model.meta.instrument.filter = None
     output_model, _, _ = ex.run_extract1d(model)
 
     # no spectra extracted for zeroth order

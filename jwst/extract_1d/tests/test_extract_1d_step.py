@@ -68,6 +68,22 @@ def test_extract_nirspec_bots(mock_nirspec_bots, simple_wcs):
     result.close()
 
 
+def test_extract_miri_lrs_fs(mock_miri_lrs_fs, simple_wcs_transpose):
+    result = Extract1dStep.call(mock_miri_lrs_fs)
+    assert result.meta.cal_step.extract_1d == 'COMPLETE'
+    assert result.spec[0].name == 'MIR_LRS-FIXEDSLIT'
+
+    # output wavelength is the same as input
+    _, _, expected_wave = simple_wcs_transpose(np.arange(50), np.arange(50))
+    assert np.allclose(result.spec[0].spec_table['WAVELENGTH'], expected_wave)
+
+    # output flux and errors are non-zero, exact values will depend
+    # on extraction parameters
+    assert np.all(result.spec[0].spec_table['FLUX'] > 0)
+    assert np.all(result.spec[0].spec_table['FLUX_ERROR'] > 0)
+    result.close()
+
+
 @pytest.mark.parametrize('ifu_set_srctype', [None, 'EXTENDED'])
 def test_extract_miri_ifu(mock_miri_ifu, simple_wcs_ifu, ifu_set_srctype):
     # Source type defaults to extended, results should be the
