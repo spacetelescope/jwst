@@ -8,9 +8,10 @@
 
 import numpy as np
 import logging
-
+import pdb
 from stdatamodels.jwst.datamodels import dqflags
 from astropy.stats import sigma_clipped_stats as scs
+from astropy.convolution import convolve_fft, Gaussian2DKernel
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
@@ -228,4 +229,68 @@ def correct_xartifact(input_model, modelpars):
     del usedata
 
     log.info("Cross-artifact model complete.")
+    return output
+
+def mop_droplets(self, input_model, allregions):
+    """
+    Corrects the MIRI MRS data for 'straylight' produced by residual cosmic ray showers.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.IFUImageModel`
+        Science data to be corrected.
+
+    allregions : FITS array
+        Holds the regions information mapping MRS pixels to slices (3-D, planes for different throughputs)
+
+    Returns
+    -------
+    output : `~jwst.datamodels.IFUImageModel`
+        Straylight-subtracted science data.
+
+    """
+
+    log.info("Applying correction for residual shower droplets.")
+
+    plane = self.mop_plane
+    low_reject = self.mop_low_reject
+    high_reject = self.mop_high_reject
+    x_stddev = self.mop_x_stddev
+    y_stddev = self.mop_y_stddev
+
+    # Create a copy of the input data array that will be modified
+    # for use in the straylight calculations
+    usedata = input_model.data.copy()
+    mask_dq = input_model.dq
+
+    # Which throughput plane of the slice map should be used?
+    regions = allregions[plane,:,:]
+
+    # NaN-out the science pixels by using the slice footprint regions
+    scipix = np.where(regions != 0)
+    usedata[scipix] = np.nan
+
+    # NaN-out pixels that should not be used for computation
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['REFERENCE_PIXEL'])
+    # where are pixels set to any one of the all_flags cases
+    testflags = np.bitwise_and(mask_dq, all_flags)
+    # where are testflags ne 0 and mask == 1
+    bad_flags = np.where(testflags != 0)
+    usedata[bad_flags] = np.nan
+
+    # Apply a thresholding analysis and mask out any pixels that do not pass it
+    lowcut = np.nanpercentile(usedata, low_reject)
+    hicut = np.nanpercentile(usedata, high_reject)
+    badpix = np.where((usedata < lowcut) | (usedata > hicut))
+    usedata[badpix] = np.nan
+
+    # Construct a 2d gaussian convolution kernel with specified parameters
+    gauss = Gaussian2DKernel(x_stddev=x_stddev, y_stddev=y_stddev)
+    model = convolve_fft(usedata, gauss)
+
+    # Create output as a copy of the real data prior to filling it with NaNs
+    output = input_model.copy()
+    # Subtract the model from the data
+    output.data = output.data - model
+
     return output
