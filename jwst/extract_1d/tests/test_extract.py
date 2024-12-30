@@ -31,7 +31,7 @@ def extract1d_ref_dict():
                  {'id': 'slit6', 'use_source_posn': True},
                  {'id': 'slit7', 'spectral_order': 20},
                  {'id': 'S200A1'},
-                 {'id': 'S1600A1'}
+                 {'id': 'S1600A1', 'use_source_posn': False}
                  ]
     ref_dict = {'apertures': apertures}
     return ref_dict
@@ -200,13 +200,14 @@ def test_get_extract_parameters_no_match(
 def test_get_extract_parameters_source_posn_exptype(
         mock_nirspec_bots, extract1d_ref_dict, extract_defaults):
     input_model = mock_nirspec_bots
+    input_model.meta.exposure.type = 'NRS_LAMP'
 
     # match a bare entry
     params = ex.get_extract_parameters(
         extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
         use_source_posn=None)
 
-    # use_source_posn is switched off for NRS_BRIGHTOBJ
+    # use_source_posn is switched off for unknown exptypes
     assert params['use_source_posn'] is False
 
 
@@ -1464,6 +1465,7 @@ def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, 
     model = mock_nirspec_bots
     model.data = model.data[0].reshape(1, *model.data.shape[-2:])
     create_extraction_inputs[0] = model
+    create_extraction_inputs[4] = 'S1600A1'
 
     log_watcher.message = '1 integration done'
     ex.create_extraction(
@@ -1476,6 +1478,7 @@ def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, 
 def test_create_extraction_log_increment(
         create_extraction_inputs, mock_nirspec_bots, log_watcher):
     create_extraction_inputs[0] = mock_nirspec_bots
+    create_extraction_inputs[4] = 'S1600A1'
 
     # all integrations are logged
     log_watcher.message = '... 9 integrations done'

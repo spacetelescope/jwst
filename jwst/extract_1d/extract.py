@@ -31,6 +31,9 @@ log.setLevel(logging.DEBUG)
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
+SRCPOS_EXPTYPES = ['MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
+"""Exposure types for which source position can be estimated."""
+
 ANY = "ANY"
 """Wildcard for slit name.
 
@@ -315,7 +318,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                     if use_source_posn is None:  # no value set on command line
                         if use_source_posn_aper is None:  # no value set in ref file
                             # Use a suitable default
-                            if meta.exposure.type in ['MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+                            if meta.exposure.type in SRCPOS_EXPTYPES:
                                 use_source_posn = True
                                 log.info(f"Turning on source position correction "
                                          f"for exp_type = {meta.exposure.type}")
@@ -1018,11 +1021,11 @@ def location_from_wcs(input_model, slit):
         location.
     """
     if slit is not None:
-        shape = slit.data.shape
+        shape = slit.data.shape[-2:]
         wcs = slit.meta.wcs
         dispaxis = slit.meta.wcsinfo.dispersion_direction
     else:
-        shape = input_model.data.shape
+        shape = input_model.data.shape[-2:]
         wcs = input_model.meta.wcs
         dispaxis = input_model.meta.wcsinfo.dispersion_direction
 
