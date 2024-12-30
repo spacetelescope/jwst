@@ -201,7 +201,7 @@ class Extract1dStep(Step):
     """
 
     reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile',
-                            'speckernel', 'specwcs', 'psf']
+                            'speckernel', 'psf']
 
     def _get_extract_reference_files_by_mode(self, model, exp_type):
         """Get extraction reference files with special handling by exposure type."""
@@ -223,20 +223,13 @@ class Extract1dStep(Step):
             self.log.info(f'Using APCORR file {apcorr_ref}')
 
         try:
-            specwcs_ref = self.get_reference_file(model, 'specwcs')
-        except crds.core.exceptions.CrdsLookupError:
-            specwcs_ref = 'N/A'
-        if specwcs_ref != 'N/A':
-            self.log.info(f'Using SPECWCS reference file {specwcs_ref}')
-
-        try:
             psf_ref = self.get_reference_file(model, 'psf')
         except crds.core.exceptions.CrdsLookupError:
             psf_ref = 'N/A'
         if psf_ref != 'N/A':
             self.log.info(f'Using PSF reference file {psf_ref}')
 
-        return extract_ref, apcorr_ref, specwcs_ref, psf_ref
+        return extract_ref, apcorr_ref, psf_ref
 
     def _extract_soss(self, model):
         """Extract NIRISS SOSS spectra."""
@@ -426,7 +419,7 @@ class Extract1dStep(Step):
             result = ModelContainer()
             for model in input_model:
                 # Get the reference file names
-                extract_ref, apcorr_ref, specwcs_ref, psf_ref = \
+                extract_ref, apcorr_ref, psf_ref = \
                     self._get_extract_reference_files_by_mode(model, exp_type)
 
                 profile = None
@@ -440,7 +433,6 @@ class Extract1dStep(Step):
                         model,
                         extract_ref,
                         apcorr_ref,
-                        specwcs_ref,
                         psf_ref,
                         self.extraction_type,
                         self.smoothing_length,

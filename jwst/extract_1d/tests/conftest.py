@@ -229,6 +229,7 @@ def mock_miri_lrs_fs(simple_wcs_transpose):
     model = dm.ImageModel()
     model.meta.instrument.name = 'MIRI'
     model.meta.instrument.detector = 'MIRIMAGE'
+    model.meta.instrument.filter = 'P750L'
     model.meta.observation.date = '2023-07-22'
     model.meta.observation.time = '06:24:45.569'
     model.meta.exposure.nints = 1

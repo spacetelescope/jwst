@@ -148,8 +148,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
                            use_source_posn=None, subtract_background=None,
                            position_offset=0.0, optimize_psf_location=False,
-                           extraction_type='box', specwcs_ref_name='N/A',
-                           psf_ref_name='N/A'):
+                           extraction_type='box', psf_ref_name='N/A'):
     """Get extraction parameter values.
 
     Parameters
@@ -198,26 +197,24 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         If True, the target and background positions specified in `ref_dict`
         (or a default target position) will be shifted to account for
         the actual source location in the data.
-        If None, the value specified in `ref_dict` will be used, or it will
-        be set to True if not found in `ref_dict`.
-    optimize_psf_location : bool
-        If True, and if `extraction_type` is 'optimal', then the source
-        location will be optimized, via iterative comparisons of the scene
-        model with the input data.
+        If None, a default value will be set, based on the exposure type.
     subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
     position_offset : float or None, optional
         Pixel offset to apply to the nominal source location.
         If None, the value specified in `ref_dict` will be used or it
         will default to 0.
+    optimize_psf_location : bool
+        If True, and if `extraction_type` is 'optimal', then the source
+        location will be optimized, via iterative comparisons of the scene
+        model with the input data.
     extraction_type : str, optional
         Extraction type ('box' or 'optimal').  Optimal extraction is
-        only available if `specwcs_ref_name` and `psf_ref_name` are
-        not 'N/A'.
-    specwcs_ref_name : str, optional
-        The name of the specwcs reference file, or "N/A".
+        only available if `psf_ref_name` is not 'N/A'.  If set to None,
+        optimal extraction will be used if `use_source_posn` is True.
     psf_ref_name : str, optional
         The name of the PSF reference file, or "N/A".
+
 
     Returns
     -------
@@ -247,7 +244,6 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['extraction_type'] = 'box'
         extract_params['use_source_posn'] = False  # no source position correction
         extract_params['optimize_psf_location'] = False
-        extract_params['specwcs'] = 'N/A'
         extract_params['psf'] = 'N/A'
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
@@ -377,7 +373,6 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                             extract_params['extraction_type'] = 'box'
                     else:
                         extract_params['extraction_type'] = extraction_type
-                    extract_params['specwcs'] = specwcs_ref_name
                     extract_params['psf'] = psf_ref_name
                     extract_params['optimize_psf_location'] = optimize_psf_location
 
@@ -1400,8 +1395,8 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     nod_profile = None
     if extract_params['extraction_type'] == 'optimal':
         profiles, lower_limit, upper_limit = psf_profile(
-            data_model, extract_params['psf'], extract_params['specwcs'],
-            middle_wl, location, wl_array,
+            data_model, extract_params['trace'],
+            wl_array, extract_params['psf'],
             optimize_shifts=extract_params['optimize_psf_location'])
         if len(profiles) > 1:
             profile, nod_profile = profiles
@@ -2030,7 +2025,7 @@ def create_extraction(input_model, slit, output_model,
 
 
 def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
-                  specwcs_ref_name="N/A", psf_ref_name="N/A", extraction_type="box",
+                  psf_ref_name="N/A", extraction_type="box",
                   smoothing_length=None, bkg_fit=None, bkg_order=None,
                   log_increment=50, subtract_background=None,
                   use_source_posn=None, position_offset=0.0,
@@ -2046,13 +2041,11 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
         The name of the extract1d reference file, or "N/A".
     apcorr_ref_name : str or None
         Name of the APCORR reference file. Default is None
-    specwcs_ref_name : str
-        The name of the specwcs reference file, or "N/A".
     psf_ref_name : str
         The name of the PSF reference file, or "N/A".
     extraction_type : str
         Extraction type ('box' or 'optimal').  Optimal extraction is
-        only available if `specwcs_ref_name` and `psf_ref_name` are
+        only available if `psf_ref_name` is not "N/A".
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
     bkg_fit : str or None
@@ -2187,7 +2180,6 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                    extract_ref_dict, slitname, sp_order, exp_type,
                    apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
                    save_profile=save_profile, save_scene_model=save_scene_model,
-                   specwcs_ref_name=specwcs_ref_name,
                    psf_ref_name=psf_ref_name,
                    extraction_type=extraction_type,
                    smoothing_length=smoothing_length,
@@ -2229,7 +2221,6 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         extract_ref_dict, slitname, sp_order, exp_type,
                         apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
                         save_profile=save_profile, save_scene_model=save_scene_model,
-                        specwcs_ref_name=specwcs_ref_name,
                         psf_ref_name=psf_ref_name,
                         extraction_type=extraction_type,
                         smoothing_length=smoothing_length,
@@ -2273,9 +2264,8 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         extract_ref_dict, slitname, sp_order, exp_type,
                         apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
                         save_profile=save_profile, save_scene_model=save_scene_model,
-                        specwcs_ref_name = specwcs_ref_name,
-                        psf_ref_name = psf_ref_name,
-                        extraction_type = extraction_type,
+                        psf_ref_name=psf_ref_name,
+                        extraction_type=extraction_type,
                         smoothing_length=smoothing_length,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
                         subtract_background=subtract_background,

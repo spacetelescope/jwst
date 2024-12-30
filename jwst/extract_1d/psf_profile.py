@@ -1,10 +1,7 @@
 import logging
 import numpy as np
 
-from scipy.interpolate import CubicSpline
-from scipy import interpolate, ndimage, optimize
-from astropy.io import fits
-
+from scipy import ndimage, optimize
 from stdatamodels.jwst.datamodels import MiriLrsPsfModel
 from stdatamodels.jwst.transforms.models import IdealToV2V3
 
@@ -18,51 +15,6 @@ HORIZONTAL = 1
 VERTICAL = 2
 """Dispersion direction, predominantly horizontal or vertical."""
 
-
-def open_specwcs(specwcs_ref_name, exp_type):
-    """Open the specwcs reference file.
-
-    Currently only works on MIRI LRS-FIXEDSLIT exposures.
-
-    Parameters
-    ----------
-    specwcs_ref_name : str
-        The name of the specwcs reference file. This file contains
-        information of the trace location. For MIRI LRS-FIXEDSlIT it
-        is a FITS file containing the x,y center of the trace.
-    exp_type : str
-        The exposure type of the data.
-
-    Returns
-    -------
-    trace, wave_trace, wavetab
-        Center of the trace in x and y for a given wavelength.
-
-    """
-    if exp_type == 'MIR_LRS-FIXEDSLIT':
-        # use fits to read file (the datamodel does not have all that is needed)
-        with fits.open(specwcs_ref_name) as ref:
-            lrsdata = np.array([d for d in ref[1].data])
-            # Get the zero point from the reference data.
-            # The zero_point is X, Y  (which should be COLUMN, ROW)
-            # These are 1-indexed in CDP-7 (i.e., SIAF convention) so must be converted to 0-indexed
-            # for lrs_fixedslit
-            zero_point = ref[0].header['imx'] - 1, ref[0].header['imy'] - 1
-
-        # In the lrsdata reference table:
-        # X_center, Y_center, wavelength, relative to zero_point
-        xcen = lrsdata[:, 0]
-        ycen = lrsdata[:, 1]
-        wavetab = lrsdata[:, 2]
-        trace = xcen + zero_point[0]
-        wave_trace = ycen + zero_point[1]
-
-    else:
-        raise NotImplementedError(f'Specwcs files for EXP_TYPE {exp_type} '
-                                  f'are not supported.')
-
-    return trace, wave_trace, wavetab
-    
 
 def open_psf(psf_refname, exp_type):
     """Open the PSF reference file.
@@ -245,8 +197,8 @@ def nod_pair_location(input_model, middle_wl, dispaxis):
         return x
 
 
-def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location,
-                wl_array, optimize_shifts=True, model_nod_pair=True):
+def psf_profile(input_model, trace, wl_array, psf_ref_name,
+                optimize_shifts=True, model_nod_pair=True):
     """Create a spatial profile from a PSF reference.
 
     Currently only works on MIRI LRS-FIXEDSLIT exposures.
@@ -262,19 +214,14 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     input_model : data model
         This can be either the input science file or one SlitModel out of
         a list of slits.
-    psf_ref_name : str
-        PSF reference filename.
-    specwcs_ref_name : str
-        Reference file containing information on the spectral trace.
-    middle_wl : float or None
-        Wavelength value to use as the center of the trace. If not provided,
-        the wavelength at the center of the bounding box will be used.
-    location : float or None
-        Spatial index to use as the center of the trace.  If not provided,
-        the location at the center of the bounding box will be used.
+    trace : ndarray
+        Array of source cross-dispersion position values, one for each
+        dispersion element in the input model data.
     wl_array : ndarray
         Array of wavelength values, matching the input model data shape, for
         each pixel in the array.
+    psf_ref_name : str
+        PSF reference filename.
     optimize_shifts : bool, optional
         If True, the spatial location of the trace will be optimized via
         minimizing the residuals in a scene model compared to the data in
@@ -297,44 +244,21 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
         For PSF profiles, this is always set to the upper edge of the bounding box,
         since the full array may have non-zero weight.
     """
-    # Check if data is resampled
-    if hasattr(input_model.meta.cal_step, 'resample'):
-        resampled = str(input_model.meta.cal_step.resample) == 'COMPLETE'
-    else:
-        # guess from the wcs
-        resampled = 'v2v3' not in input_model.meta.wcs.available_frames
-
-    # Check input exposure type
-    exp_type = input_model.meta.exposure.type
-    if exp_type == 'MIR_LRS-FIXEDSLIT' and not resampled and specwcs_ref_name != 'N/A':
-        trace, wave_trace, wavetab = open_specwcs(specwcs_ref_name, exp_type)
-    else:
-        trace, wave_trace, wavetab = None, None, None
-
     # Read in reference files
+    exp_type = input_model.meta.exposure.type
     psf_model = open_psf(psf_ref_name, exp_type)
 
+    # Get the data cutout
     dispaxis = input_model.meta.wcsinfo.dispersion_direction
     wcs = input_model.meta.wcs
     bbox = wcs.bounding_box
-    center_x = np.mean(bbox[0])
-    center_y = np.mean(bbox[1])
-
-    # Determine the location using the WCS
-    if middle_wl is None or np.isnan(middle_wl):
-        _, _, middle_wl = wcs(center_x, center_y)
-    if dispaxis == HORIZONTAL:
-        nominal = center_y
-    else:
-        nominal = center_x
-    if location is None or np.isnan(location):
-        location = nominal
 
     y0 = int(np.ceil(bbox[1][0]))
     y1 = int(np.ceil(bbox[1][1]))
-    x0 = int(np.round(bbox[0][0]))
-    x1 = int(np.round(bbox[0][1]))
+    x0 = int(np.ceil(bbox[0][0]))
+    x1 = int(np.ceil(bbox[0][1]))
     if input_model.data.ndim == 3:
+        # use the first integration only
         cutout = input_model.data[0, y0:y1, x0:x1]
         cutout_var = input_model.var_rnoise[0, y0:y1, x0:x1]
     else:
@@ -343,34 +267,31 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
     cutout_wl = wl_array[y0:y1, x0:x1]
 
     # Get the effective index into the 1D PSF wavelengths from the data wavelengths
+    middle_wl = np.nanmean(cutout_wl)
     psf_wave = psf_model.wave
     sort_idx = np.argsort(psf_wave)
     valid_wave = np.isfinite(psf_wave[sort_idx])
     wave_idx = np.interp(cutout_wl, psf_wave[sort_idx][valid_wave], sort_idx[valid_wave],
                          left=np.nan, right=np.nan)
 
-    # Get the spatial shift for the output wavelengths
-    psf_subpix = psf_model.meta.psf.subpix
-    if trace is not None:
-        # Perform fit of reference trace and corresponding wavelength
-        # The wavelength for the reference trace does not exactly line up
-        # exactly with the PSF data
-        cs = CubicSpline(wavetab, trace)
-        cen_shift = cs(middle_wl)
-        shift = location - cen_shift
-        log.debug(f'For this wavelength, the reference trace location is at {cen_shift:.2f}')
-        log.debug(f'Shift applied to reference trace: {shift:.2f}')
-
-        # adjust the trace to the slit region
-        trace_cutout = trace - bbox[0][0]
-        trace_shift = trace_cutout + shift
-
-        psf_interp = interpolate.interp1d(wavetab, trace_shift, fill_value="extrapolate")
-        psf_location = psf_interp(cutout_wl)
-
+    # Get the spatial shift for the source location
+    if trace is None:
+        # Don't try to model a negative pair if we didn't have a trace to start
+        model_nod_pair = False
+        if dispaxis == HORIZONTAL:
+            location = np.mean(bbox[1])
+            trace = np.full(cutout.shape[1], location)
+        else:
+            location = np.mean(bbox[0])
+            trace = np.full(cutout.shape[0], location)
     else:
-        psf_location = location
-
+        if dispaxis == HORIZONTAL:
+            trace = trace[x0:x1]
+        else:
+            trace = trace[y0:y1]
+        location = np.nanmean(trace)
+    psf_subpix = psf_model.meta.psf.subpix
+    psf_location = trace - bbox[0][0]
     psf_shift = psf_model.meta.psf.center_col - (psf_location * psf_subpix)
 
     # Check if we need to add a negative nod pair trace
@@ -387,6 +308,10 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
                 log.warning('The negative nod will not be modeled.')
                 nod_offset = None
             else:
+                if not optimize_shifts:
+                    log.warning('Negative nod locations are currently approximations only.')
+                    log.warning('PSF location optimization is strongly recommended when '
+                                'negative nods are modeled.')
                 nod_offset = location - nod_center
     else:
         nod_offset = None
@@ -400,7 +325,7 @@ def psf_profile(input_model, psf_ref_name, specwcs_ref_name, middle_wl, location
         xidx = wave_idx
         yidx = _y * psf_subpix + psf_shift
     else:
-        xidx = _x * psf_subpix + psf_shift
+        xidx = _x * psf_subpix + psf_shift[:, None]
         yidx = wave_idx
 
     # If desired, add additional spatial shifts to the starting locations of
