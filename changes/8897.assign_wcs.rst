@@ -1,1 +1,0 @@
-Use pixel vertices to define s_region instead of pixel centers."

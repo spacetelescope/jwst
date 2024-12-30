@@ -1,1 +1,0 @@
-Remove all uses of Step.__call__ to allow it's deprecation.

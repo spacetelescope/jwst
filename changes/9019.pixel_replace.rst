@@ -1,0 +1,1 @@
+Base output filenames on input filenames when the step is called outside the pipeline, in order to create sensible names when the input is a list of models.

@@ -1,1 +1,0 @@
-use ``towncrier`` to handle change log entries
