@@ -797,8 +797,8 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
 
     # Set aperture region, in this priority order:
     # 1. src_coeff upper and lower limits (or bkg_coeff, for background profile)
-    # 2. Using a trace +/- the extraction width
-    # 3. center of start/stop values +/- extraction width
+    # 2. trace +/- extraction width / 2
+    # 3. center of start/stop values +/- extraction width / 2
     # 4. start/stop values
     profile = np.full(shape, 0.0)
     if extract_params[coefficients] is not None:
