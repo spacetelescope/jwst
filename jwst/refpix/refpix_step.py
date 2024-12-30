@@ -105,7 +105,7 @@ class RefPixStep(Step):
                         else:
                             self.log.info('Using SIRS reference file: {}'.format(sirs_ref_filename))
                             sirs_kernel_model = datamodels.SIRSKernelModel(sirs_ref_filename)
-                            conv_kernel_params['refpix_algorithm'] = sirs_kernel_model
+                            conv_kernel_params['sirs_kernel_model'] = sirs_kernel_model
                     elif input_model.meta.instrument.name == 'MIRI':
                         self.log.info('Simple Improved Reference Subtraction (SIRS) not applied for MIRI data.')
                     elif 'FULL' not in input_model.meta.subarray.name:
