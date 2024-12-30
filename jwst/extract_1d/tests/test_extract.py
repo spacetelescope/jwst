@@ -59,10 +59,9 @@ def extract_defaults():
                'spectral_order': 1,
                'src_coeff': None,
                'subtract_background': False,
-               'trace_offset': 0,
+               'trace_offset': 0.0,
                'trace': None,
                'use_source_posn': False,
-               'use_trace': False,
                'xstart': 0,
                'xstop': 49,
                'ystart': 0,
@@ -141,7 +140,7 @@ def test_get_extract_parameters_default(
         extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta)
 
     # returned value has defaults except that use_source_posn
-    # is switched on for NRS_FIXEDSLIT and use_trace is False
+    # is switched on for NRS_FIXEDSLIT
     expected = extract_defaults
     expected['use_source_posn'] = True
 
@@ -753,6 +752,45 @@ def test_box_profile_from_width(extract_defaults, dispaxis):
     assert np.all(profile[8:] == 0.0)
 
 
+@pytest.mark.parametrize('dispaxis', [1, 2])
+def test_box_profile_from_trace(extract_defaults, dispaxis):
+    shape = (10, 10)
+    wl_array = np.empty(shape)
+    wl_array[:] = np.linspace(3, 5, 10)
+
+    params = extract_defaults
+    params['dispaxis'] = dispaxis
+
+    # Set a linear trace
+    params['trace'] = np.arange(10) + 1.5
+
+    # Set the width to 4 pixels
+    params['extract_width'] = 4.0
+
+    # Make the profile
+    profile, lower, upper = ex.box_profile(
+        shape, extract_defaults, wl_array, return_limits=True)
+    if dispaxis == 2:
+        profile = profile.T
+
+    expected = [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+                [0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+                [0, 0, 0, 0, 0, 1, 1, 1, 1, 0],
+                [0, 0, 0, 0, 0, 0, 1, 1, 1, 1]]
+
+    assert np.allclose(profile, expected)
+
+    # upper and lower limits are averages
+    assert np.isclose(lower, 4.5)
+    assert np.isclose(upper, 7.5)
+
+
 @pytest.mark.parametrize('middle', [None, 7])
 @pytest.mark.parametrize('dispaxis', [1, 2])
 def test_aperture_center(middle, dispaxis):
@@ -822,27 +860,19 @@ def test_location_from_wcs_nirspec(
         monkeypatch, mock_nirspec_fs_one_slit, resampled, is_slit, missing_bbox):
     model = mock_nirspec_fs_one_slit
 
-    # monkey patch in a transform for the wcs
-    def slit2det(*args, **kwargs):
-        def return_one(*args, **kwargs):
-            return 0.0, 1.0
-        return return_one
-
-    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
-
     if not resampled:
-        # also mock available frames, so it looks like unresampled cal data
+        # mock available frames, so it looks like unresampled cal data
         monkeypatch.setattr(model.meta.wcs, 'available_frames', ['gwa'])
 
     if missing_bbox:
-        # also mock a missing bounding box - should have same results
+        # mock a missing bounding box - should have same results
         # for the test data
         monkeypatch.setattr(model.meta.wcs, 'bounding_box', None)
 
     if is_slit:
-        middle, middle_wl, location = ex.location_from_wcs(model, model)
+        middle, middle_wl, location, trace = ex.location_from_wcs(model, model)
     else:
-        middle, middle_wl, location = ex.location_from_wcs(model, None)
+        middle, middle_wl, location, trace = ex.location_from_wcs(model, None)
 
     # middle pixel is center of dispersion axis
     assert middle == int((model.data.shape[1] - 1) / 2)
@@ -852,6 +882,9 @@ def test_location_from_wcs_nirspec(
 
     # location is 1.0 - from the mocked transform function
     assert location == 1.0
+
+    # trace is the same, in an array
+    assert np.all(trace == 1.0)
 
 
 @pytest.mark.parametrize('is_slit', [True, False])
@@ -866,11 +899,17 @@ def test_location_from_wcs_miri(monkeypatch, mock_miri_lrs_fs, is_slit):
 
     monkeypatch.setattr(model.meta.wcs, 'backward_transform', radec2det())
 
+    # mock the trace function
+    def mock_trace(*args, **kwargs):
+        return np.full(model.data.shape[-2], 1.0)
+
+    monkeypatch.setattr(ex, '_miri_trace_from_wcs', mock_trace)
+
     # Get the slit center from the WCS
     if is_slit:
-        middle, middle_wl, location = ex.location_from_wcs(model, model)
+        middle, middle_wl, location, trace = ex.location_from_wcs(model, model)
     else:
-        middle, middle_wl, location = ex.location_from_wcs(model, None)
+        middle, middle_wl, location, trace = ex.location_from_wcs(model, None)
 
     # middle pixel is center of dispersion axis
     assert middle == int((model.data.shape[0] - 1) / 2)
@@ -881,12 +920,18 @@ def test_location_from_wcs_miri(monkeypatch, mock_miri_lrs_fs, is_slit):
     # location is 1.0 - from the mocked transform function
     assert location == 1.0
 
+    # trace is the same, in an array
+    assert np.all(trace == 1.0)
+
 
 def test_location_from_wcs_missing_data(mock_miri_lrs_fs, log_watcher):
+    model = mock_miri_lrs_fs
+    model.meta.wcs.backward_transform = None
+
     # model is missing WCS information - None values are returned
     log_watcher.message = "Dithered pointing location not found"
-    result = ex.location_from_wcs(mock_miri_lrs_fs, None)
-    assert result == (None, None, None)
+    result = ex.location_from_wcs(model, None)
+    assert result == (None, None, None, None)
     log_watcher.assert_seen()
 
 
@@ -894,7 +939,7 @@ def test_location_from_wcs_wrong_exptype(mock_niriss_soss, log_watcher):
     # model is not a handled exposure type
     log_watcher.message = "Source position cannot be found for EXP_TYPE"
     result = ex.location_from_wcs(mock_niriss_soss, None)
-    assert result == (None, None, None)
+    assert result == (None, None, None, None)
     log_watcher.assert_seen()
 
 
@@ -913,7 +958,7 @@ def test_location_from_wcs_bad_location(
     # WCS transform returns NaN for the location
     log_watcher.message = "Source position could not be determined"
     result = ex.location_from_wcs(model, None)
-    assert result == (None, None, None)
+    assert result == (None, None, None, None)
     log_watcher.assert_seen()
 
 
@@ -929,10 +974,16 @@ def test_location_from_wcs_location_out_of_range(
 
     monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
 
+    # mock the trace function
+    def mock_trace(*args, **kwargs):
+        return np.full(model.data.shape[-1], 1.0)
+
+    monkeypatch.setattr(ex, '_nirspec_trace_from_wcs', mock_trace)
+
     # WCS transform a value outside the bounding box
     log_watcher.message = "outside the bounding box"
     result = ex.location_from_wcs(model, None)
-    assert result == (None, None, None)
+    assert result == (None, None, None, None)
     log_watcher.assert_seen()
 
 
@@ -982,31 +1033,75 @@ def test_shift_by_source_location_coeff(extract_defaults):
                                            [6.0 + offset], [9.5 + offset]]
 
 
-@pytest.mark.parametrize('is_slit', [True, False])
-def test_nirspec_trace_from_wcs(
-        monkeypatch, mock_nirspec_fs_one_slit, is_slit):
+def test_shift_by_offset_horizontal(extract_defaults):
+    offset = 2.5
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 1
+    extract_params['trace_offset'] = offset
+
+    ex.shift_by_offset(extract_params)
+    assert extract_params['xstart'] == extract_defaults['xstart']
+    assert extract_params['xstop'] == extract_defaults['xstop']
+    assert extract_params['ystart'] == extract_defaults['ystart'] + offset
+    assert extract_params['ystop'] == extract_defaults['ystop'] + offset
+
+
+def test_shift_by_offset_vertical(extract_defaults):
+    offset = 2.5
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 2
+    extract_params['trace_offset'] = offset
+
+    ex.shift_by_offset(extract_params)
+    assert extract_params['xstart'] == extract_defaults['xstart'] + offset
+    assert extract_params['xstop'] == extract_defaults['xstop'] + offset
+    assert extract_params['ystart'] == extract_defaults['ystart']
+    assert extract_params['ystop'] == extract_defaults['ystop']
+
+
+def test_shift_by_offset_coeff(extract_defaults):
+    offset = 2.5
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 1
+    extract_params['trace_offset'] = offset
+    extract_params['src_coeff'] = [[2.5, 1.0], [6.5, 1.0]]
+    extract_params['bkg_coeff'] = [[-0.5], [3.0], [6.0], [9.5]]
+
+    ex.shift_by_offset(extract_params)
+    assert extract_params['src_coeff'] == [[2.5 + offset, 1.0], [6.5 + offset, 1.0]]
+    assert extract_params['bkg_coeff'] == [[-0.5 + offset], [3.0 + offset],
+                                           [6.0 + offset], [9.5 + offset]]
+
+
+def test_shift_by_offset_trace(extract_defaults):
+    offset = 2.5
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 1
+    extract_params['trace_offset'] = offset
+    extract_params['trace'] = np.arange(10, dtype=float)
+
+    ex.shift_by_offset(extract_params)
+    assert np.all(extract_params['trace'] == np.arange(10) + offset)
+
+
+def test_nirspec_trace_from_wcs(mock_nirspec_fs_one_slit):
     model = mock_nirspec_fs_one_slit
+    trace = ex._nirspec_trace_from_wcs(model.data.shape, model.meta.wcs.bounding_box,
+                                       model.meta.wcs, 1.0, 1.0)
+    # mocked model contains some mock transforms as well - all ones are expected
+    assert np.all(trace == np.ones(model.data.shape[-1]))
 
-    # monkey patch in a transform for the wcs
-    def slit2det(*args, **kwargs):
-        def return_results(*args, **kwargs):
-            if len(args) == 2:
-                zeros = np.zeros(args[0].shape)
-                wave, _ = np.meshgrid(args[0], args[1])
-                return zeros, zeros, wave
-            if len(args) == 3:
-                pix = np.arange(len(args[0]))
-                trace = np.ones(len(args[0]))
-                return pix, trace
-        return return_results
 
-    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
+def test_miri_trace_from_wcs(mock_miri_lrs_fs):
+    model = mock_miri_lrs_fs
+    trace = ex._miri_trace_from_wcs(model.data.shape, model.meta.wcs.bounding_box,
+                                    model.meta.wcs, 1.0, 1.0)
 
-    if is_slit:
-        trace = ex.nirspec_trace_from_wcs(model, model)
-    else:
-        trace = ex.nirspec_trace_from_wcs(model, None)
-
+    # mocked model contains some mock transforms as well - all ones are expected
     assert np.all(trace == np.ones(model.data.shape[-1]))
 
 
@@ -1125,7 +1220,7 @@ def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extra
 
     # mock the source location function
     def mock_source_location(*args):
-        return 24, 7.74, 9.5
+        return 24, 7.74, 9.5, np.full(model.data.shape[-1], 9.5)
 
     monkeypatch.setattr(ex, 'location_from_wcs', mock_source_location)
 
@@ -1346,7 +1441,8 @@ def test_create_extraction_missing_wavelengths(create_extraction_inputs, log_wat
     model.wavelength = np.full_like(model.data, np.nan)
     log_watcher.message = 'Spectrum is empty; no valid data'
     with pytest.raises(ex.ContinueError):
-        ex.create_extraction(*create_extraction_inputs)
+        with pytest.warns(RuntimeWarning, match='All-NaN'):
+            ex.create_extraction(*create_extraction_inputs)
     log_watcher.assert_seen()
 
 
@@ -1357,10 +1453,9 @@ def test_create_extraction_nrs_apcorr(create_extraction_inputs, nirspec_fs_apcor
     model.meta.cal_step.photom = 'COMPLETE'
     create_extraction_inputs[0] = model
 
-    # Set use_trace to false because the mock does not have a WCS
     log_watcher.message = 'Tabulating aperture correction'
     ex.create_extraction(*create_extraction_inputs, apcorr_ref_model=nirspec_fs_apcorr,
-                         use_source_posn=False, use_trace=False)
+                         use_source_posn=False)
     log_watcher.assert_seen()
 
 
@@ -1372,7 +1467,7 @@ def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, 
 
     log_watcher.message = '1 integration done'
     ex.create_extraction(
-        *create_extraction_inputs, log_increment=1, use_trace=False)
+        *create_extraction_inputs, log_increment=1)
     output_model = create_extraction_inputs[2]
     assert len(output_model.spec) == 1
     log_watcher.assert_seen()
@@ -1384,7 +1479,7 @@ def test_create_extraction_log_increment(
 
     # all integrations are logged
     log_watcher.message = '... 9 integrations done'
-    ex.create_extraction(*create_extraction_inputs, log_increment=1, use_trace=False)
+    ex.create_extraction(*create_extraction_inputs, log_increment=1)
     log_watcher.assert_seen()
 
 
@@ -1399,7 +1494,7 @@ def test_create_extraction_use_source(
 
     # mock the source location function
     def mock_source_location(*args):
-        return 24, 7.74, 9.5
+        return 24, 7.74, 9.5, np.full(model.data.shape[-1], 9.5)
 
     monkeypatch.setattr(ex, 'location_from_wcs', mock_source_location)
 
@@ -1417,36 +1512,33 @@ def test_create_extraction_use_source(
     log_watcher.assert_seen()
 
 
-@pytest.mark.parametrize('use_trace', [True, False, None])
 @pytest.mark.parametrize('extract_width', [None, 7])
 def test_create_extraction_use_trace(
         monkeypatch, create_extraction_inputs, mock_nirspec_bots,
-        use_trace, extract_width, log_watcher):
+        extract_width, log_watcher):
     model = mock_nirspec_bots
     create_extraction_inputs[0] = model
     aper = create_extraction_inputs[3]['apertures']
     create_extraction_inputs[4] = 'S1600A1'
     for i in range(len(aper)):
         if aper[i]['id'] == 'S1600A1':
+            aper[i]['use_source_posn'] = True
             aper[i]['extract_width'] = extract_width
             aper[i]['trace_offset'] = 0
 
     # mock the source location function
-    def mock_trace(*args, **kwargs):
-        return np.full(model.data.shape[-1], 25)
+    def mock_source_location(*args):
+        return 24, 7.74, 25, np.full(model.data.shape[-1], 25)
 
-    monkeypatch.setattr(ex, 'nirspec_trace_from_wcs', mock_trace)
-
-    if use_trace is not False and extract_width is not None:
+    monkeypatch.setattr(ex, 'location_from_wcs', mock_source_location)
+    if extract_width is not None:
         # If explicitly set to True, or unspecified + source type is POINT,
         # source position is used
         log_watcher.message = 'aperture start/stop from trace: 22'
-    elif extract_width is not None:
-        log_watcher.message = 'Aperture start/stop: 21.5'
     else:
         # If False, source trace is not used
         log_watcher.message = 'Aperture start/stop: 0'
-    ex.create_extraction(*create_extraction_inputs, use_trace=use_trace)
+    ex.create_extraction(*create_extraction_inputs)
     log_watcher.assert_seen()
 
 
@@ -1494,7 +1586,6 @@ def test_run_extract1d_save_cube_scene(mock_nirspec_bots):
     output_model.close()
     profile_model.close()
     scene_model.close()
-
 
 
 def test_run_extract1d_tso(mock_nirspec_bots):

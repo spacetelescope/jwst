@@ -162,7 +162,6 @@ class Extract1dStep(Step):
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
 
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
-    use_trace = boolean(default=None)  # use source trace for extraction
     trace_offset = float(default=0)  # number of pixels to shift source trace in the cross-dispersion direction
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
@@ -424,7 +423,6 @@ class Extract1dStep(Step):
                         self.log_increment,
                         self.subtract_background,
                         self.use_source_posn,
-                        self.use_trace,
                         self.trace_offset,
                         self.save_profile,
                         self.save_scene_model,

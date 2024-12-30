@@ -4,6 +4,7 @@ import numpy as np
 from json.decoder import JSONDecodeError
 
 from astropy.modeling import polynomial
+from gwcs.wcstools import grid_from_bounding_box
 from scipy.interpolate import interp1d
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.apcorr import (
@@ -20,7 +21,7 @@ from jwst.extract_1d.apply_apcorr import select_apcorr
 
 __all__ = ['run_extract1d', 'read_extract1d_ref', 'read_apcorr_ref',
            'get_extract_parameters', 'box_profile', 'aperture_center',
-           'location_from_wcs', 'shift_by_source_location', 'nirspec_trace_from_wcs',
+           'location_from_wcs', 'shift_by_source_location', 'shift_by_offset',
            'define_aperture', 'extract_one_slit', 'create_extraction']
 
 
@@ -142,7 +143,7 @@ def read_apcorr_ref(refname, exptype):
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
                            use_source_posn=None, subtract_background=None,
-                           use_trace=None, trace_offset=0):
+                           trace_offset=0.0):
     """Get extraction parameter values.
 
     Parameters
@@ -205,15 +206,8 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
     subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
 
-    use_trace : bool or None, optional
-        If True the trace of the source will be calculated and used for
-        1D extraction.
-        If None, the value specified in `ref_dict` will be used.
-        Otherwise it it will be set to False for all exposure types
-        except NIRSpec BOTS data.
-
     trace_offset : float or None, optional
-        Pixel offset to apply to the automatically calucated trace.
+        Pixel offset to apply to the nominal source location.
         If None, the value specified in `ref_dict` will be used or it
         will default to 0.
 
@@ -246,7 +240,6 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['use_source_posn'] = False  # no source position correction
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
-        extract_params['use_trace'] = False
         extract_params['trace_offset'] = 0.
         extract_params['trace'] = None
         # Note that extract_params['dispaxis'] is not assigned.
@@ -331,20 +324,6 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                         else:  # use the value from the ref file
                             use_source_posn = use_source_posn_aper
                     extract_params['use_source_posn'] = use_source_posn
-
-
-                    use_trace_aper = aper.get('use_trace', None)  # value from the extract1d ref file
-                    if use_trace is None:  # no value set on command line
-                        if use_trace_aper is None:  # no value set in ref file
-                            # Use a suitable default
-                            if meta.exposure.type in ['NRS_BRIGHTOBJ',]:
-                                use_trace = True
-                                log.info(f"Turning on trace extraction exp_type = {meta.exposure.type}")
-                            else:
-                                use_trace = False
-                        else:  # use the value from the ref file
-                            use_trace = use_trace_aper
-                    extract_params['use_trace'] = use_trace
                     extract_params['trace_offset'] = trace_offset
                     extract_params['trace'] = None
 
@@ -396,21 +375,10 @@ def log_initial_parameters(extract_params):
         return
 
     log.debug("Extraction parameters:")
-    log.debug(f"dispaxis = {extract_params['dispaxis']}")
-    log.debug(f"spectral order = {extract_params['spectral_order']}")
-    log.debug(f"initial xstart = {extract_params['xstart']}")
-    log.debug(f"initial xstop = {extract_params['xstop']}")
-    log.debug(f"initial ystart = {extract_params['ystart']}")
-    log.debug(f"initial ystop = {extract_params['ystop']}")
-    log.debug(f"extract_width = {extract_params['extract_width']}")
-    log.debug(f"initial src_coeff = {extract_params['src_coeff']}")
-    log.debug(f"initial bkg_coeff = {extract_params['bkg_coeff']}")
-    log.debug(f"bkg_fit = {extract_params['bkg_fit']}")
-    log.debug(f"bkg_order = {extract_params['bkg_order']}")
-    log.debug(f"smoothing_length = {extract_params['smoothing_length']}")
-    log.debug(f"independent_var = {extract_params['independent_var']}")
-    log.debug(f"use_source_posn = {extract_params['use_source_posn']}")
-    log.debug(f"extraction_type = {extract_params['extraction_type']}")
+    skip_keys = {'match', 'trace'}
+    for key, value in extract_params.items():
+        if key not in skip_keys:
+            log.debug(f"  {key} = {value}")
 
 
 def create_poly(coeff):
@@ -887,17 +855,19 @@ def box_profile(shape, extract_params, wl_array, coefficients='src_coeff',
         width = extract_params['extract_width']
         trace = extract_params['trace']
 
+        if extract_params['dispaxis'] != HORIZONTAL:
+            trace = np.tile(trace, (shape[1], 1)).T
+
         lower_limit_region = trace - (width - 1.0) / 2.0
         upper_limit_region = lower_limit_region + width - 1
 
         _set_weight_from_limits(profile, dval, lower_limit_region,
                                 upper_limit_region)
 
-        lower_limit = np.mean(lower_limit_region)
-        upper_limit = np.mean(upper_limit_region)
+        lower_limit = np.nanmean(lower_limit_region)
+        upper_limit = np.nanmean(upper_limit_region)
         log.info(f'Mean {label} start/stop from trace: '
-                    f'{lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
-
+                 f'{lower_limit:.2f} -> {upper_limit:.2f} (inclusive)')
 
     elif extract_params['extract_width'] is not None:
         # Limits from extraction width at center of ystart/stop if present,
@@ -1020,7 +990,6 @@ def location_from_wcs(input_model, slit):
     ----------
     input_model : DataModel
         The input science model containing metadata information.
-
     slit : DataModel or None
         One slit from a MultiSlitModel (or similar), or None.
         The WCS and target coordinates will be retrieved from `slit`
@@ -1036,29 +1005,29 @@ def location_from_wcs(input_model, slit):
         nominal extraction location, in case it varies along the
         spectrum.  The offset will then be the difference between
         `location` (below) and the nominal location.
-
     middle_wl : float or None
         The wavelength at pixel `middle`.
-
     location : float or None
         Pixel coordinate in the cross-dispersion direction within the
         spectral image that is at the planned target location.
         The spectral extraction region should be centered here.
+    trace : ndarray or None
+        An array of source positions, one per dispersion element, corresponding
+        to the location at each point in the wavelength array. If the
+        input data is resampled, the trace corresponds directly to the
+        location.
     """
     if slit is not None:
-        wcs_source = slit
+        shape = slit.data.shape
+        wcs = slit.meta.wcs
+        dispaxis = slit.meta.wcsinfo.dispersion_direction
     else:
-        wcs_source = input_model
-    wcs = wcs_source.meta.wcs
-    dispaxis = wcs_source.meta.wcsinfo.dispersion_direction
+        shape = input_model.data.shape
+        wcs = input_model.meta.wcs
+        dispaxis = input_model.meta.wcsinfo.dispersion_direction
 
     bb = wcs.bounding_box  # ((x0, x1), (y0, y1))
     if bb is None:
-        if slit is None:
-            shape = input_model.data.shape
-        else:
-            shape = slit.data.shape
-
         bb = wcs_bbox_from_shape(shape)
 
     if dispaxis == HORIZONTAL:
@@ -1084,13 +1053,15 @@ def location_from_wcs(input_model, slit):
         lower = bb[0][0]
         upper = bb[0][1]
 
-    # We need transform[2], a 1-D array of wavelengths crossing the spectrum
-    # near its middle.
+    # Get the wavelengths for the valid data in the sky transform,
+    # average to get the middle wavelength
     fwd_transform = wcs(x, y)
     middle_wl = np.nanmean(fwd_transform[2])
 
     exp_type = input_model.meta.exposure.type
+    trace = None
     if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']:
+        log.info("Using source_xpos and source_ypos to center extraction.")
         if slit is None:
             xpos = input_model.source_xpos
             ypos = input_model.source_ypos
@@ -1101,12 +1072,15 @@ def location_from_wcs(input_model, slit):
         slit2det = wcs.get_transform('slit_frame', 'detector')
         if 'gwa' in wcs.available_frames:
             # Input is not resampled, wavelengths need to be meters
-            x_y = slit2det(xpos, ypos, middle_wl * 1e-6)
+            _, location = slit2det(xpos, ypos, middle_wl * 1e-6)
         else:
-            x_y = slit2det(xpos, ypos, middle_wl)
-        log.info("Using source_xpos and source_ypos to center extraction.")
+            _, location = slit2det(xpos, ypos, middle_wl)
+
+        if ~np.isnan(location):
+            trace = _nirspec_trace_from_wcs(shape, bb, wcs, xpos, ypos)
 
     elif exp_type == 'MIR_LRS-FIXEDSLIT':
+        log.info("Using dithered_ra and dithered_dec to center extraction.")
         try:
             if slit is None:
                 dithra = input_model.meta.dither.dithered_ra
@@ -1114,23 +1088,21 @@ def location_from_wcs(input_model, slit):
             else:
                 dithra = slit.meta.dither.dithered_ra
                 dithdec = slit.meta.dither.dithered_dec
-            x_y = wcs.backward_transform(dithra, dithdec, middle_wl)
+            location, _ = wcs.backward_transform(dithra, dithdec, middle_wl)
+
         except (AttributeError, TypeError):
             log.warning("Dithered pointing location not found in wcsinfo.")
-            return None, None, None
+            return None, None, None, None
+
+        if ~np.isnan(location):
+            trace = _miri_trace_from_wcs(shape, bb, wcs, dithra, dithdec)
     else:
         log.warning(f"Source position cannot be found for EXP_TYPE {exp_type}")
-        return None, None, None
-
-    # location is the XD location of the spectrum:
-    if dispaxis == HORIZONTAL:
-        location = x_y[1]
-    else:
-        location = x_y[0]
+        return None, None, None, None
 
     if np.isnan(location):
         log.warning('Source position could not be determined from WCS.')
-        return None, None, None
+        return None, None, None, None
 
     # If the target is at the edge of the image or at the edge of the
     # non-NaN area, we can't use the WCS to find the
@@ -1138,9 +1110,9 @@ def location_from_wcs(input_model, slit):
     if location < lower or location > upper:
         log.warning(f"WCS implies the target is at {location:.2f}, which is outside the bounding box,")
         log.warning("so we can't get spectrum location using the WCS")
-        return None, None, None
+        return None, None, None, None
 
-    return middle, middle_wl, location
+    return middle, middle_wl, location, trace
 
 
 def shift_by_source_location(location, nominal_location, extract_params):
@@ -1188,7 +1160,52 @@ def shift_by_source_location(location, nominal_location, extract_params):
         if extract_params[params] is not None:
             extract_params[params] += offset
 
-def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
+
+def shift_by_offset(extract_params):
+    """Shift the nominal extraction parameters by a user-set offset.
+
+    Start, stop, and polynomial coefficient values for source and
+    background are updated in place in the `extract_params` dictionary.
+    The source trace value, if present, is also updated.
+
+    The offset value should be in the `extract_params` input, in
+    the 'trace_offset' key.
+
+    Parameters
+    ----------
+    extract_params : dict
+        Extraction parameters to update, as created by
+        `get_extraction_parameters`.
+
+    """
+    offset = extract_params.get('trace_offset', 0.0)
+    if offset == 0:
+        return
+
+    log.info(f"Applying additional cross-dispersion offset {offset:.2f} pixels")
+
+    # Shift polynomial coefficients
+    coeff_params = ['src_coeff', 'bkg_coeff']
+    for params in coeff_params:
+        if extract_params[params] is not None:
+            for coeff_list in extract_params[params]:
+                coeff_list[0] += offset
+
+    # Shift start/stop values
+    if extract_params['dispaxis'] == HORIZONTAL:
+        start_stop_params = ['ystart', 'ystop']
+    else:
+        start_stop_params = ['xstart', 'xstop']
+    for params in start_stop_params:
+        if extract_params[params] is not None:
+            extract_params[params] += offset
+
+    # Shift the full trace
+    if extract_params['trace'] is not None:
+        extract_params['trace'] += offset
+
+
+def _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_ypos):
     """Calculate NIRSpec source trace from WCS.
 
     The source trace is calculated by projecting the recorded source
@@ -1197,18 +1214,19 @@ def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
 
     Parameters
     ----------
-    input_model : DataModel
-        The input science model containing metadata information.
-
-    slit : DataModel or None
-        One slit from a MultiSlitModel (or similar), or None.
-        The WCS and target coordinates will be retrieved from `slit`
-        unless `slit` is None. In that case, they will be retrieved
-        from `input_model`.
-
-    trace_offset : int, optional
-        Signed number of pixels to offset the trace in the cross-
-        dispersion direction, by default 0.
+    shape : tuple of int
+        2D shape for the full input data array, (ny, nx).
+    bounding_box : tuple
+        A pair of tuples, each consisting of two numbers.
+        Represents the range of useful pixel values in both dimensions,
+        ((xmin, xmax), (ymin, ymax)).
+    wcs_ref : `~gwcs.WCS`
+        WCS for the input data model, containing slit and detector
+        transforms.
+    source_xpos : float
+        Slit position, in the x direction, for the target.
+    source_ypos : float
+        Slit position, in the y direction, for the target.
 
     Returns
     -------
@@ -1216,27 +1234,12 @@ def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
         Fractional pixel positions in the y (cross-dispersion direction)
         of the trace for each x (dispersion direction) pixel.
     """
-    if slit is None:
-        shape = input_model.data.shape
-        wcs_ref = input_model.meta.wcs
-        source_xpos = getattr(input_model, "source_xpos", 0.0)
-        source_ypos = getattr(input_model, "source_ypos", 0.0)
-    else:
-        shape = slit.data.shape
-        wcs_ref = slit.meta.wcs
-        source_xpos = getattr(slit, "source_xpos", 0.0)
-        source_ypos = getattr(slit, "source_ypos", 0.0)
-
-    log.info(f"Determining the spectral trace for source_xpos = {source_xpos:.3f} and source_xpos = {source_ypos:.3f}")
-
-    nx = shape[-1]
-    ny = shape[-2]
-    y, x = np.meshgrid(np.arange(ny), np.arange(nx), indexing="ij")
-
-    d2s = wcs_ref.get_transform("detector", "slit_frame")
+    x, y = grid_from_bounding_box(bounding_box)
+    nx = int(bounding_box[0][1] - bounding_box[0][0])
 
     # Calculate the wavelengths in the slit frame because they are in
     # meters for cal files and um for s2d files
+    d2s = wcs_ref.get_transform("detector", "slit_frame")
     _, _, slit_wavelength = d2s(x,y)
 
     # Make an initial array of wavelengths that will cover the wavelength range of the data
@@ -1256,11 +1259,74 @@ def nirspec_trace_from_wcs(input_model, slit, trace_offset=0):
     # direction
     interp_trace = interp1d(trace_x, trace_y, fill_value='extrapolate')
 
-    # Shift the trace if a shift has been supplied
+    # Get the trace position for each dispersion element
     trace = interp_trace(np.arange(nx))
-    trace += trace_offset
 
-    return trace
+    # Place the trace in the full array
+    full_trace = np.full(shape[1], np.nan)
+    x0 = int(np.ceil(bounding_box[0][0]))
+    full_trace[x0:x0 + nx] = trace
+
+    return full_trace
+
+
+def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
+    """Calculate MIRI LRS fixed slit source trace from WCS.
+
+    The source trace is calculated by projecting the recorded source
+    positions dithered_ra/dec from the world frame onto detector pixels.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        2D shape for the full input data array, (ny, nx).
+    bounding_box : tuple
+        A pair of tuples, each consisting of two numbers.
+        Represents the range of useful pixel values in both dimensions,
+        ((xmin, xmax), (ymin, ymax)).
+    wcs_ref : `~gwcs.WCS`
+        WCS for the input data model, containing sky and detector
+        transforms, forward and backward.
+    source_ra : float
+        RA coordinate for the target.
+    source_dec : float
+        Dec coordinate for the target.
+
+    Returns
+    -------
+    trace : ndarray of float
+        Fractional pixel positions in the x (cross-dispersion direction)
+        of the trace for each y (dispersion direction) pixel.
+    """
+    x, y = grid_from_bounding_box(bounding_box)
+    ny = int(bounding_box[1][1] - bounding_box[1][0])
+
+    # Calculate the wavelengths for the full array
+    _, _, slit_wavelength = wcs_ref(x, y)
+
+    # Make an initial array of wavelengths that will cover the wavelength range of the data
+    wave_vals = np.linspace(np.nanmin(slit_wavelength), np.nanmax(slit_wavelength), ny)
+
+    # Get arrays of the source position
+    pos_ra = np.full(ny, source_ra)
+    pos_dec = np.full(ny, source_dec)
+
+    # Calculate the expected center of the source trace
+    trace_x, trace_y = wcs_ref.backward_transform(pos_ra, pos_dec, wave_vals)
+
+    # Interpolate the trace to a regular pixel grid in the dispersion
+    # direction
+    interp_trace = interp1d(trace_y, trace_x, fill_value='extrapolate')
+
+    # Get the trace position for each dispersion element within the bounding box
+    trace = interp_trace(np.arange(ny))
+
+    # Place the trace in the full array
+    full_trace = np.full(shape[0], np.nan)
+    y0 = int(np.ceil(bounding_box[1][0]))
+    full_trace[y0:y0 + ny] = trace
+
+    return full_trace
 
 
 def define_aperture(input_model, slit, extract_params, exp_type):
@@ -1319,20 +1385,11 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     # Get a wavelength array for the data
     wl_array = get_wavelengths(data_model, exp_type, extract_params['spectral_order'])
 
-    # Calculate a trace from WCS and update extract parameters
-    if extract_params['use_trace']:
-        if exp_type in ['NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_MSASPEC']:
-            trace = nirspec_trace_from_wcs(
-                input_model, slit, trace_offset=extract_params['trace_offset'])
-            extract_params['trace'] = trace
-        else:
-            log.warning('Calculating a trace is not supported for this mode.')
-
     # Shift aperture definitions by source position if needed
     # Extract parameters are updated in place
-    if extract_params['use_source_posn'] and extract_params['trace'] is None:
+    if extract_params['use_source_posn']:
         # Source location from WCS
-        middle_pix, middle_wl, location = location_from_wcs(input_model, slit)
+        middle_pix, middle_wl, location, trace = location_from_wcs(input_model, slit)
 
         if location is not None:
             log.info(f"Computed source location is {location:.2f}, "
@@ -1344,9 +1401,16 @@ def define_aperture(input_model, slit, extract_params, exp_type):
             nominal_location, _ = aperture_center(
                 nominal_profile, extract_params['dispaxis'], middle_pix=middle_pix)
 
-            # Offet extract parameters by location - nominal
+            # Offset extract parameters by location - nominal
             shift_by_source_location(location, nominal_location, extract_params)
+    else:
+        middle_pix, middle_wl, location, trace = None, None, None, None
 
+    # Store the trace, if computed
+    extract_params['trace'] = trace
+
+    # Add an extra trace offset if desired, from extract_params['trace_offset']
+    shift_by_offset(extract_params)
 
     # Make a spatial profile, including source shifts if necessary
     profile, lower_limit, upper_limit = box_profile(
@@ -1947,7 +2011,7 @@ def create_extraction(input_model, slit, output_model,
 def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                   smoothing_length=None, bkg_fit=None, bkg_order=None,
                   log_increment=50, subtract_background=None,
-                  use_source_posn=None, use_trace=None, trace_offset=0,
+                  use_source_posn=None, trace_offset=0.0,
                   save_profile=False, save_scene_model=False):
     """Extract all 1-D spectra from an input model.
 
@@ -1983,12 +2047,9 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
         If True, the target and background positions specified in the
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
-    use_trace : bool or None
-        If True, a source trace will be calculated and used for 1D extraction.
-        If None, the value in the extract_1d reference file will be used.
     trace_offset : float
-        Number of pixels to shift the calculated trace in the cross-dispersion
-        direction if use_trace is True.
+        Number of pixels to shift the nominal source position in the
+        cross-dispersion direction.
     save_profile : bool
         If True, the spatial profiles created for the input model will be returned
         as ImageModels. If False, the return value is None.
@@ -2084,9 +2145,9 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                    save_profile=save_profile, save_scene_model=save_scene_model,
                    smoothing_length=smoothing_length,
                    bkg_fit=bkg_fit, bkg_order=bkg_order,
-                   use_source_posn=use_source_posn,
                    subtract_background=subtract_background,
-                   use_trace=use_trace, trace_offset=trace_offset)
+                   use_source_posn=use_source_posn,
+                   trace_offset=trace_offset)
             except ContinueError:
                 continue
 
@@ -2121,9 +2182,9 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         save_profile=save_profile, save_scene_model=save_scene_model,
                         smoothing_length=smoothing_length,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
-                        use_source_posn=use_source_posn,
                         subtract_background=subtract_background,
-                        use_trace=use_trace, trace_offset=trace_offset)
+                        use_source_posn=use_source_posn,
+                        trace_offset=trace_offset)
                 except ContinueError:
                     pass
 
@@ -2160,9 +2221,9 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         save_profile=save_profile, save_scene_model=save_scene_model,
                         smoothing_length=smoothing_length,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
-                        use_source_posn=use_source_posn,
                         subtract_background=subtract_background,
-                        use_trace=use_trace, trace_offset=trace_offset)
+                        use_source_posn=use_source_posn,
+                        trace_offset=trace_offset)
                 except ContinueError:
                     pass
 

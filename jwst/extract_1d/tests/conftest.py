@@ -34,9 +34,24 @@ def simple_wcs():
     # Add a bounding box
     simple_wcs_function.bounding_box = wcs_bbox_from_shape(shape)
 
-    # Add a few expected attributes, so they can be monkeypatched as needed
-    simple_wcs_function.get_transform = None
-    simple_wcs_function.backward_transform = None
+    # Define a simple transform
+    def get_transform(*args, **kwargs):
+        def return_results(*args, **kwargs):
+            if len(args) == 2:
+                zeros = np.zeros(args[0].shape)
+                wave, _ = np.meshgrid(args[0], args[1])
+                return zeros, zeros, wave
+            if len(args) == 3:
+                try:
+                    nx = len(args[0])
+                except TypeError:
+                    nx = 1
+                pix = np.arange(nx)
+                trace = np.ones(nx)
+                return pix, trace
+        return return_results
+
+    simple_wcs_function.get_transform = get_transform
     simple_wcs_function.available_frames = []
 
     return simple_wcs_function
@@ -68,10 +83,17 @@ def simple_wcs_transpose():
     # Add a bounding box
     simple_wcs_function.bounding_box = wcs_bbox_from_shape(shape)
 
-    # Add a few expected attributes, so they can be monkeypatched as needed
-    simple_wcs_function.get_transform = None
-    simple_wcs_function.backward_transform = None
-    simple_wcs_function.available_frames = []
+    # Mock a simple backward transform
+    def backward_transform(*args, **kwargs):
+        try:
+            nx = len(args[0])
+        except TypeError:
+            nx = 1
+        pix = np.arange(nx)
+        trace = np.ones(nx)
+        return trace, pix
+
+    simple_wcs_function.backward_transform = backward_transform
 
     return simple_wcs_function
 
