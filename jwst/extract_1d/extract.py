@@ -4,26 +4,24 @@ import numpy as np
 from json.decoder import JSONDecodeError
 
 from astropy.modeling import polynomial
-from gwcs.wcstools import grid_from_bounding_box
-from scipy.interpolate import interp1d
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
 
-from jwst.assign_wcs.util import wcs_bbox_from_shape
 from jwst.datamodels import ModelContainer
 from jwst.lib import pipe_utils
 from jwst.lib.wcs_utils import get_wavelengths
 from jwst.extract_1d import extract1d, spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.psf_profile import psf_profile
+from jwst.extract_1d.source_location import location_from_wcs, middle_from_wcs
 
 __all__ = ['run_extract1d', 'read_extract1d_ref', 'read_apcorr_ref',
            'get_extract_parameters', 'box_profile', 'aperture_center',
-           'location_from_wcs', 'shift_by_offset',
-           'define_aperture', 'extract_one_slit', 'create_extraction']
+           'shift_by_offset', 'define_aperture', 'extract_one_slit',
+           'create_extraction']
 
 
 log = logging.getLogger(__name__)
@@ -997,142 +995,6 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
     return slit_center, spec_center
 
 
-def location_from_wcs(input_model, slit):
-    """Get the cross-dispersion location of the spectrum, based on the WCS.
-
-    None values will be returned if there was insufficient information
-    available, e.g. if the wavelength attribute or wcs function is not
-    defined.
-
-    Parameters
-    ----------
-    input_model : DataModel
-        The input science model containing metadata information.
-    slit : DataModel or None
-        One slit from a MultiSlitModel (or similar), or None.
-        The WCS and target coordinates will be retrieved from `slit`
-        unless `slit` is None. In that case, they will be retrieved
-        from `input_model`.
-
-    Returns
-    -------
-    middle : int or None
-        Pixel coordinate in the dispersion direction within the 2-D
-        cutout (or the entire input image) at the middle of the WCS
-        bounding box.  This is the point at which to determine the
-        nominal extraction location, in case it varies along the
-        spectrum.  The offset will then be the difference between
-        `location` (below) and the nominal location.
-    middle_wl : float or None
-        The wavelength at pixel `middle`.
-    location : float or None
-        Pixel coordinate in the cross-dispersion direction within the
-        spectral image that is at the planned target location.
-        The spectral extraction region should be centered here.
-    trace : ndarray or None
-        An array of source positions, one per dispersion element, corresponding
-        to the location at each point in the wavelength array. If the
-        input data is resampled, the trace corresponds directly to the
-        location.
-    """
-    if slit is not None:
-        shape = slit.data.shape[-2:]
-        wcs = slit.meta.wcs
-        dispaxis = slit.meta.wcsinfo.dispersion_direction
-    else:
-        shape = input_model.data.shape[-2:]
-        wcs = input_model.meta.wcs
-        dispaxis = input_model.meta.wcsinfo.dispersion_direction
-
-    bb = wcs.bounding_box  # ((x0, x1), (y0, y1))
-    if bb is None:
-        bb = wcs_bbox_from_shape(shape)
-
-    if dispaxis == HORIZONTAL:
-        # Width (height) in the cross-dispersion direction, from the start of
-        # the 2-D cutout (or of the full image) to the upper limit of the bounding box.
-        # This may be smaller than the full width of the image, but it's all we
-        # need to consider.
-        xd_width = int(round(bb[1][1]))  # must be an int
-        middle = int((bb[0][0] + bb[0][1]) / 2.)  # Middle of the bounding_box in the dispersion direction.
-        x = np.empty(xd_width, dtype=np.float64)
-        x[:] = float(middle)
-        y = np.arange(xd_width, dtype=np.float64)
-        lower = bb[1][0]
-        upper = bb[1][1]
-    else:  # dispaxis = VERTICAL
-        xd_width = int(round(bb[0][1]))  # Cross-dispersion total width of bounding box; must be an int
-        middle = int((bb[1][0] + bb[1][1]) / 2.)  # Mid-point of width along dispersion direction
-        x = np.arange(xd_width, dtype=np.float64)  # 1-D vector of cross-dispersion (x) pixel indices
-        y = np.empty(xd_width, dtype=np.float64)  # 1-D vector all set to middle y index
-        y[:] = float(middle)
-
-        # lower and upper range in cross-dispersion direction
-        lower = bb[0][0]
-        upper = bb[0][1]
-
-    # Get the wavelengths for the valid data in the sky transform,
-    # average to get the middle wavelength
-    fwd_transform = wcs(x, y)
-    middle_wl = np.nanmean(fwd_transform[2])
-
-    exp_type = input_model.meta.exposure.type
-    trace = None
-    if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']:
-        log.info("Using source_xpos and source_ypos to center extraction.")
-        if slit is None:
-            xpos = input_model.source_xpos
-            ypos = input_model.source_ypos
-        else:
-            xpos = slit.source_xpos
-            ypos = slit.source_ypos
-
-        slit2det = wcs.get_transform('slit_frame', 'detector')
-        if 'gwa' in wcs.available_frames:
-            # Input is not resampled, wavelengths need to be meters
-            _, location = slit2det(xpos, ypos, middle_wl * 1e-6)
-        else:
-            _, location = slit2det(xpos, ypos, middle_wl)
-
-        if ~np.isnan(location):
-            trace = _nirspec_trace_from_wcs(shape, bb, wcs, xpos, ypos)
-
-    elif exp_type == 'MIR_LRS-FIXEDSLIT':
-        log.info("Using dithered_ra and dithered_dec to center extraction.")
-        try:
-            if slit is None:
-                dithra = input_model.meta.dither.dithered_ra
-                dithdec = input_model.meta.dither.dithered_dec
-            else:
-                dithra = slit.meta.dither.dithered_ra
-                dithdec = slit.meta.dither.dithered_dec
-            location, _ = wcs.backward_transform(dithra, dithdec, middle_wl)
-
-        except (AttributeError, TypeError):
-            log.warning("Dithered pointing location not found in wcsinfo.")
-            return None, None, None, None
-
-        if ~np.isnan(location):
-            trace = _miri_trace_from_wcs(shape, bb, wcs, dithra, dithdec)
-    else:
-        log.warning(f"Source position cannot be found for EXP_TYPE {exp_type}")
-        return None, None, None, None
-
-    if np.isnan(location):
-        log.warning('Source position could not be determined from WCS.')
-        return None, None, None, None
-
-    # If the target is at the edge of the image or at the edge of the
-    # non-NaN area, we can't use the WCS to find the
-    # location of the target spectrum.
-    if location < lower or location > upper:
-        log.warning(f"WCS implies the target is at {location:.2f}, which is outside the bounding box,")
-        log.warning("so we can't get spectrum location using the WCS")
-        return None, None, None, None
-
-    return middle, middle_wl, location, trace
-
-
 def shift_by_offset(offset, extract_params, update_trace=True):
     """Shift the nominal extraction parameters by a pixel offset.
 
@@ -1171,130 +1033,6 @@ def shift_by_offset(offset, extract_params, update_trace=True):
     # Shift the full trace
     if update_trace and extract_params['trace'] is not None:
         extract_params['trace'] += offset
-
-
-def _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_ypos):
-    """Calculate NIRSpec source trace from WCS.
-
-    The source trace is calculated by projecting the recorded source
-    positions source_xpos/ypos from the NIRSpec "slit_frame" onto
-    detector pixels.
-
-    Parameters
-    ----------
-    shape : tuple of int
-        2D shape for the full input data array, (ny, nx).
-    bounding_box : tuple
-        A pair of tuples, each consisting of two numbers.
-        Represents the range of useful pixel values in both dimensions,
-        ((xmin, xmax), (ymin, ymax)).
-    wcs_ref : `~gwcs.WCS`
-        WCS for the input data model, containing slit and detector
-        transforms.
-    source_xpos : float
-        Slit position, in the x direction, for the target.
-    source_ypos : float
-        Slit position, in the y direction, for the target.
-
-    Returns
-    -------
-    trace : ndarray of float
-        Fractional pixel positions in the y (cross-dispersion direction)
-        of the trace for each x (dispersion direction) pixel.
-    """
-    x, y = grid_from_bounding_box(bounding_box)
-    nx = int(bounding_box[0][1] - bounding_box[0][0])
-
-    # Calculate the wavelengths in the slit frame because they are in
-    # meters for cal files and um for s2d files
-    d2s = wcs_ref.get_transform("detector", "slit_frame")
-    _, _, slit_wavelength = d2s(x,y)
-
-    # Make an initial array of wavelengths that will cover the wavelength range of the data
-    wave_vals = np.linspace(np.nanmin(slit_wavelength), np.nanmax(slit_wavelength), nx)
-    # Get arrays of the source position in the slit
-    pos_x = np.full(nx, source_xpos)
-    pos_y = np.full(nx, source_ypos)
-
-    # Grab the wcs transform between the slit frame where we know the
-    # source position and the detector frame
-    s2d = wcs_ref.get_transform("slit_frame", "detector")
-
-    # Calculate the expected center of the source trace
-    trace_x, trace_y = s2d(pos_x, pos_y, wave_vals)
-
-    # Interpolate the trace to a regular pixel grid in the dispersion
-    # direction
-    interp_trace = interp1d(trace_x, trace_y, fill_value='extrapolate')
-
-    # Get the trace position for each dispersion element
-    trace = interp_trace(np.arange(nx))
-
-    # Place the trace in the full array
-    full_trace = np.full(shape[1], np.nan)
-    x0 = int(np.ceil(bounding_box[0][0]))
-    full_trace[x0:x0 + nx] = trace
-
-    return full_trace
-
-
-def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
-    """Calculate MIRI LRS fixed slit source trace from WCS.
-
-    The source trace is calculated by projecting the recorded source
-    positions dithered_ra/dec from the world frame onto detector pixels.
-
-    Parameters
-    ----------
-    shape : tuple of int
-        2D shape for the full input data array, (ny, nx).
-    bounding_box : tuple
-        A pair of tuples, each consisting of two numbers.
-        Represents the range of useful pixel values in both dimensions,
-        ((xmin, xmax), (ymin, ymax)).
-    wcs_ref : `~gwcs.WCS`
-        WCS for the input data model, containing sky and detector
-        transforms, forward and backward.
-    source_ra : float
-        RA coordinate for the target.
-    source_dec : float
-        Dec coordinate for the target.
-
-    Returns
-    -------
-    trace : ndarray of float
-        Fractional pixel positions in the x (cross-dispersion direction)
-        of the trace for each y (dispersion direction) pixel.
-    """
-    x, y = grid_from_bounding_box(bounding_box)
-    ny = int(bounding_box[1][1] - bounding_box[1][0])
-
-    # Calculate the wavelengths for the full array
-    _, _, slit_wavelength = wcs_ref(x, y)
-
-    # Make an initial array of wavelengths that will cover the wavelength range of the data
-    wave_vals = np.linspace(np.nanmin(slit_wavelength), np.nanmax(slit_wavelength), ny)
-
-    # Get arrays of the source position
-    pos_ra = np.full(ny, source_ra)
-    pos_dec = np.full(ny, source_dec)
-
-    # Calculate the expected center of the source trace
-    trace_x, trace_y = wcs_ref.backward_transform(pos_ra, pos_dec, wave_vals)
-
-    # Interpolate the trace to a regular pixel grid in the dispersion
-    # direction
-    interp_trace = interp1d(trace_y, trace_x, fill_value='extrapolate')
-
-    # Get the trace position for each dispersion element within the bounding box
-    trace = interp_trace(np.arange(ny))
-
-    # Place the trace in the full array
-    full_trace = np.full(shape[0], np.nan)
-    y0 = int(np.ceil(bounding_box[1][0]))
-    full_trace[y0:y0 + ny] = trace
-
-    return full_trace
 
 
 def define_aperture(input_model, slit, extract_params, exp_type):
@@ -2187,8 +1925,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                    subtract_background=subtract_background,
                    use_source_posn=use_source_posn,
                    position_offset=position_offset,
-                   optimize_psf_location=optimize_psf_location,
-                   subtract_background=subtract_background)
+                   optimize_psf_location=optimize_psf_location)
             except ContinueError:
                 continue
 
@@ -2228,8 +1965,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
                         position_offset=position_offset,
-                        optimize_psf_location=optimize_psf_location,
-                        subtract_background=subtract_background)
+                        optimize_psf_location=optimize_psf_location)
                 except ContinueError:
                     pass
 
@@ -2271,8 +2007,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
                         position_offset=position_offset,
-                        optimize_psf_location=optimize_psf_location,
-                        subtract_background=subtract_background)
+                        optimize_psf_location=optimize_psf_location)
                 except ContinueError:
                     pass
 
