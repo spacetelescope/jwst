@@ -3,9 +3,9 @@ import numpy as np
 
 from scipy import ndimage, optimize
 from stdatamodels.jwst.datamodels import MiriLrsPsfModel
-from stdatamodels.jwst.transforms.models import IdealToV2V3
 
 from jwst.extract_1d.extract1d import extract1d
+from jwst.extract_1d.source_location import middle_from_wcs, nod_pair_location
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -14,6 +14,8 @@ log.setLevel(logging.DEBUG)
 HORIZONTAL = 1
 VERTICAL = 2
 """Dispersion direction, predominantly horizontal or vertical."""
+
+NOD_PAIR_PATTERN = ['ALONG-SLIT-NOD', '2-POINT-NOD']
 
 
 def open_psf(psf_refname, exp_type):
@@ -146,57 +148,6 @@ def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix, psf_dat
     return np.nansum((model - cutout) ** 2 / cutout_var)
 
 
-def nod_pair_location(input_model, middle_wl, dispaxis):
-    """Estimate a nod pair location from the WCS.
-
-    Expected location is at the opposite spatial offset from
-    the input model.
-
-    Parameters
-    ----------
-    input_model : DataModel
-        Model containing WCS and dither data.
-    middle_wl : float
-        Wavelength at the middle of the array.
-    dispaxis : int
-        Dispersion axis.
-
-    Returns
-    -------
-    nod_location : float
-        The expected location of the negative trace, in the
-        cross-dispersion direction, at the middle wavelength.
-    """
-    if 'v2v3' not in input_model.meta.wcs.available_frames:
-        return np.nan
-
-    idltov23 = IdealToV2V3(
-        input_model.meta.wcsinfo.v3yangle,
-        input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
-        input_model.meta.wcsinfo.vparity
-    )
-
-    if dispaxis == HORIZONTAL:
-        x_offset = input_model.meta.dither.x_offset
-        y_offset = -input_model.meta.dither.y_offset
-    else:
-        x_offset = -input_model.meta.dither.x_offset
-        y_offset = input_model.meta.dither.y_offset
-
-    dithered_v2, dithered_v3 = idltov23(x_offset, y_offset)
-
-    # v23toworld requires a wavelength along with v2, v3, but value does not affect return
-    v23toworld = input_model.meta.wcs.get_transform('v2v3', 'world')
-    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
-
-    x, y = input_model.meta.wcs.backward_transform(dithered_ra, dithered_dec, middle_wl)
-
-    if dispaxis == HORIZONTAL:
-        return y
-    else:
-        return x
-
-
 def psf_profile(input_model, trace, wl_array, psf_ref_name,
                 optimize_shifts=True, model_nod_pair=True):
     """Create a spatial profile from a PSF reference.
@@ -266,30 +217,36 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
         cutout_var = input_model.var_rnoise[y0:y1, x0:x1]
     cutout_wl = wl_array[y0:y1, x0:x1]
 
+    # Get the nominal center of the cutout
+    middle_disp, middle_xdisp, middle_wl = middle_from_wcs(wcs, bbox, dispaxis)
+
     # Get the effective index into the 1D PSF wavelengths from the data wavelengths
-    middle_wl = np.nanmean(cutout_wl)
     psf_wave = psf_model.wave
     sort_idx = np.argsort(psf_wave)
     valid_wave = np.isfinite(psf_wave[sort_idx])
     wave_idx = np.interp(cutout_wl, psf_wave[sort_idx][valid_wave], sort_idx[valid_wave],
                          left=np.nan, right=np.nan)
 
-    # Get the spatial shift for the source location
     if trace is None:
-        # Don't try to model a negative pair if we didn't have a trace to start
+        # Don't try to model a negative pair if we don't have a trace to start
         model_nod_pair = False
+
+        # Set the location to the middle of the cross-dispersion
+        # all the way across the array - no trace info available.
+        location = middle_xdisp
         if dispaxis == HORIZONTAL:
-            location = np.mean(bbox[1])
-            trace = np.full(cutout.shape[1], location)
+            trace = np.full(cutout.shape[1], middle_xdisp)
         else:
-            location = np.mean(bbox[0])
-            trace = np.full(cutout.shape[0], location)
+            trace = np.full(cutout.shape[0], middle_xdisp)
     else:
+        # Nominal location from the middle dispersion point
+        location = trace[int(np.round(middle_disp))]
         if dispaxis == HORIZONTAL:
             trace = trace[x0:x1]
         else:
             trace = trace[y0:y1]
-        location = np.nanmean(trace)
+
+    # Scale the trace location to the subsampled psf
     psf_subpix = psf_model.meta.psf.subpix
     psf_location = trace - bbox[0][0]
     psf_shift = psf_model.meta.psf.center_col - (psf_location * psf_subpix)
@@ -297,13 +254,18 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     # Check if we need to add a negative nod pair trace
     if model_nod_pair:
         nod_subtracted = str(input_model.meta.cal_step.back_sub) == 'COMPLETE'
+        pattype_ok = str(input_model.meta.dither.primary_type) in NOD_PAIR_PATTERN
         if not nod_subtracted:
             log.info('Input data was not nod-subtracted. '
                      'A negative trace will not be modeled.')
             nod_offset = None
+        elif not pattype_ok:
+            log.info('Input data was not a two-point nod. '
+                     'A negative trace will not be modeled.')
+            nod_offset = None
         else:
             nod_center = nod_pair_location(input_model, middle_wl, dispaxis)
-            if np.isnan(nod_center):
+            if np.isnan(nod_center) or (np.abs(location - nod_center) < 2):
                 log.warning('Nod center could not be estimated from the WCS.')
                 log.warning('The negative nod will not be modeled.')
                 nod_offset = None
