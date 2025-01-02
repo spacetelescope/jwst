@@ -216,6 +216,27 @@ def test_save_output_single(tmp_path, mock_nirspec_fs_one_slit):
     result.close()
 
 
+def test_save_output_multiple(tmp_path, mock_nirspec_fs_one_slit):
+    input_container = ModelContainer([mock_nirspec_fs_one_slit.copy(),
+                                      mock_nirspec_fs_one_slit.copy()])
+
+    result = Extract1dStep.call(input_container,
+                                save_results=True, save_profile=True,
+                                save_scene_model=True, output_dir=str(tmp_path),
+                                suffix='x1d', output_file='test')
+
+    output_paths = [str(tmp_path / 'test_0_x1d.fits'),
+                    str(tmp_path / 'test_1_x1d.fits')]
+
+    for output_path in output_paths:
+        assert os.path.isfile(output_path)
+        assert os.path.isfile(output_path.replace('x1d', 'profile'))
+        assert os.path.isfile(output_path.replace('x1d', 'scene_model'))
+
+    result.close()
+    input_container.close()
+
+
 def test_save_output_multislit(tmp_path, mock_nirspec_mos):
     mock_nirspec_mos.meta.filename = 'test_s2d.fits'
     result = Extract1dStep.call(mock_nirspec_mos,
@@ -233,3 +254,24 @@ def test_save_output_multislit(tmp_path, mock_nirspec_mos):
         assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_scene_model'))
 
     result.close()
+
+
+def test_save_output_multiple_multislit(tmp_path, mock_nirspec_mos):
+    input_container = ModelContainer([mock_nirspec_mos.copy(),
+                                      mock_nirspec_mos.copy()])
+    result = Extract1dStep.call(input_container,
+                                save_results=True, save_profile=True,
+                                save_scene_model=True, output_dir=str(tmp_path),
+                                suffix='x1d', output_file='test')
+
+    for i in range(2):
+        output_path = str(tmp_path / f'test_{i}_x1d.fits')
+        assert os.path.isfile(output_path)
+
+        # intermediate files for multislit data contain the slit name
+        for slit in mock_nirspec_mos.slits:
+            assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_profile.fits'))
+            assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_scene_model.fits'))
+
+    result.close()
+    input_container.close()
