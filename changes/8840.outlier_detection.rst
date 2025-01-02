@@ -1,1 +1,0 @@
-Moved median computers out of the jwst repository and into stcal.

@@ -1,1 +1,0 @@
-Mention possible need to provide package name to strun when using aliases.

@@ -1,1 +1,0 @@
-When blending metadata don't store columns containing all missing value (nans).

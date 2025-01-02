@@ -1,1 +1,0 @@
-Fix wavelength sort order for single input spectrum.
