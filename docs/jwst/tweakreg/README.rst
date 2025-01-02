@@ -252,7 +252,7 @@ The ``tweakreg`` step has the following optional arguments:
 * ``peakmax``: A `float` value used to filter out objects with pixel values
   >= ``peakmax``. (Default=None)
 
-.. warn::
+.. warning::
   Different source finding algorithms have different values for the
   ``sharplo``, ``sharphi``, ``roundlo`` and ``roundhi`` parameters. These
   parameters should be adjusted to match the algorithm selected by the
