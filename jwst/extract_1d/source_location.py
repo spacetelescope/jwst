@@ -67,6 +67,8 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
 
     # Get all the wavelengths at the middle dispersion element
     _, _, center_wavelengths = wcs(x, y)
+    sort_idx = np.argsort(center_wavelengths)
+    valid = np.isfinite(center_wavelengths[sort_idx])
 
     # Average to get the middle wavelength
     middle_wavelength = np.nanmean(center_wavelengths)
@@ -77,12 +79,16 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
         if np.allclose(center_wavelengths, middle_wavelength):
             middle_xdisp = np.mean(y)
         else:
-            middle_xdisp = np.interp(middle_wavelength, center_wavelengths, y)
+            middle_xdisp = np.interp(
+                middle_wavelength, center_wavelengths[sort_idx][valid],
+                y[sort_idx[valid]])
     else:
         if np.allclose(center_wavelengths, middle_wavelength):
             middle_xdisp = np.mean(x)
         else:
-            middle_xdisp = np.interp(middle_wavelength, center_wavelengths, x)
+            middle_xdisp = np.interp(
+                middle_wavelength, center_wavelengths[sort_idx][valid],
+                x[sort_idx[valid]])
     return middle_disp, middle_xdisp, middle_wavelength
 
 
