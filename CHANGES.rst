@@ -1,3 +1,55 @@
+1.17.1 (2025-01-02)
+===================
+
+pixel_replace (spec2 MOS)
+-------------------------
+
+- Change from the default BFGS algorithm to Nelder-Mead when calling
+  scipy.minimize
+  within the fit_profile approach to pixel replacement in order to fix numpy
+  2.0
+  compatibility issues.  Additionally, add safety catch to ensure that pixel
+  replacement
+  profile fitting doesn't attempt to scale based on noise. (`#9004
+  <https://github.com/spacetelescope/jwst/issues/9004>`_)
+- Base output filenames on input filenames when the step is called outside the
+  pipeline, in order to create sensible names when the input is a list of
+  models. (`#9019 <https://github.com/spacetelescope/jwst/issues/9019>`_)
+
+
+refpix (detector1)
+------------------
+
+- Bugfix for the new SIRS reference pixel subtraction. (`#9037
+  <https://github.com/spacetelescope/jwst/issues/9037>`_)
+
+
+1.17.1.dev33+gadadfaaea.d20250102 (2025-01-02)
+==============================================
+
+pixel_replace (spec2 MOS)
+-------------------------
+
+- Change from the default BFGS algorithm to Nelder-Mead when calling
+  scipy.minimize
+  within the fit_profile approach to pixel replacement in order to fix numpy
+  2.0
+  compatibility issues.  Additionally, add safety catch to ensure that pixel
+  replacement
+  profile fitting doesn't attempt to scale based on noise. (`#9004
+  <https://github.com/spacetelescope/jwst/issues/9004>`_)
+- Base output filenames on input filenames when the step is called outside the
+  pipeline, in order to create sensible names when the input is a list of
+  models. (`#9019 <https://github.com/spacetelescope/jwst/issues/9019>`_)
+
+
+refpix (detector1)
+------------------
+
+- Bugfix for the new SIRS reference pixel subtraction. (`#9037
+  <https://github.com/spacetelescope/jwst/issues/9037>`_)
+
+
 1.17.0 (2024-12-20)
 ===================
 
