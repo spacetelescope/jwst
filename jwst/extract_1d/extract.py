@@ -16,7 +16,7 @@ from jwst.lib.wcs_utils import get_wavelengths
 from jwst.extract_1d import extract1d, spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.psf_profile import psf_profile
-from jwst.extract_1d.source_location import location_from_wcs, middle_from_wcs
+from jwst.extract_1d.source_location import location_from_wcs
 
 __all__ = ['run_extract1d', 'read_extract1d_ref', 'read_apcorr_ref',
            'get_extract_parameters', 'box_profile', 'aperture_center',
@@ -368,6 +368,14 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                                         f'{sm_length}.')
                     extract_params['smoothing_length'] = sm_length
 
+                    extract_params['psf'] = psf_ref_name
+                    extract_params['optimize_psf_location'] = optimize_psf_location
+                    extract_params['model_nod_pair'] = model_nod_pair
+
+                    # Check for a valid PSF file
+                    if extract_params['psf'] == 'N/A':
+                        extraction_type = 'box'
+
                     # Set the extraction type to 'box' or 'optimal'
                     if str(extraction_type).lower() == 'none':
                         if extract_params['use_source_posn']:
@@ -376,9 +384,6 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                             extract_params['extraction_type'] = 'box'
                     else:
                         extract_params['extraction_type'] = extraction_type
-                    extract_params['psf'] = psf_ref_name
-                    extract_params['optimize_psf_location'] = optimize_psf_location
-                    extract_params['model_nod_pair'] = model_nod_pair
 
                     break
 
@@ -1107,7 +1112,6 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     if extract_params['use_source_posn']:
         # Source location from WCS
         middle_pix, middle_wl, location, trace = location_from_wcs(input_model, slit)
-
         if location is not None:
             log.info(f"Computed source location is {location:.2f}, "
                      f"at pixel {middle_pix}, wavelength {middle_wl:.2f}")

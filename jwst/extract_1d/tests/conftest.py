@@ -44,10 +44,11 @@ def simple_wcs():
             if len(args) == 3:
                 try:
                     nx = len(args[0])
+                    pix = np.arange(nx)
+                    trace = np.ones(nx)
                 except TypeError:
-                    nx = 1
-                pix = np.arange(nx)
-                trace = np.ones(nx)
+                    pix = 0
+                    trace = 1.0
                 return pix, trace
         return return_results
 
@@ -87,13 +88,15 @@ def simple_wcs_transpose():
     def backward_transform(*args, **kwargs):
         try:
             nx = len(args[0])
+            pix = np.arange(nx)
+            trace = np.ones(nx)
         except TypeError:
-            nx = 1
-        pix = np.arange(nx)
-        trace = np.ones(nx)
+            pix = 0
+            trace = 1
         return trace, pix
 
     simple_wcs_function.backward_transform = backward_transform
+    simple_wcs_function.available_frames = []
 
     return simple_wcs_function
 
@@ -471,4 +474,22 @@ def nirspec_fs_apcorr():
 def nirspec_fs_apcorr_file(tmp_path, nirspec_fs_apcorr):
     filename = str(tmp_path / 'nirspec_fs_apcorr.fits')
     nirspec_fs_apcorr.save(filename)
+    return filename
+
+
+@pytest.fixture()
+def psf_reference():
+    psf_model = dm.MiriLrsPsfModel()
+    psf_model.data = np.ones((50, 50), dtype=float)
+    psf_model.wave = np.linspace(0, 10, 50)
+    psf_model.meta.psf.subpix = 1
+    psf_model.meta.psf.center_col = 25
+    yield psf_model
+    psf_model.close()
+
+
+@pytest.fixture()
+def psf_reference_file(tmp_path, psf_reference):
+    filename = str(tmp_path / 'psf_reference.fits')
+    psf_reference.save(filename)
     return filename

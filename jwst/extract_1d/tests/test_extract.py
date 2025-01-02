@@ -7,6 +7,7 @@ from astropy.modeling import polynomial
 
 from jwst.datamodels import ModelContainer
 from jwst.extract_1d import extract as ex
+from jwst.extract_1d import psf_profile as pp
 from jwst.tests.helpers import LogWatcher
 
 
@@ -83,6 +84,20 @@ def background_profile():
     profile = np.zeros((50, 50), dtype=np.float32)
     profile[:10, :] = 1.0
     profile[40:, :] = 1.0
+    return profile
+
+
+@pytest.fixture()
+def nod_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[10:20, :] = 1.0 / 10
+    return profile
+
+
+@pytest.fixture()
+def negative_nod_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[30:40, :] = -1.0 / 10
     return profile
 
 
@@ -200,7 +215,7 @@ def test_get_extract_parameters_no_match(
 
 
 def test_get_extract_parameters_source_posn_exptype(
-        mock_nirspec_bots, extract1d_ref_dict, extract_defaults):
+        mock_nirspec_bots, extract1d_ref_dict):
     input_model = mock_nirspec_bots
     input_model.meta.exposure.type = 'NRS_LAMP'
 
@@ -214,7 +229,7 @@ def test_get_extract_parameters_source_posn_exptype(
 
 
 def test_get_extract_parameters_source_posn_from_ref(
-        mock_nirspec_bots, extract1d_ref_dict, extract_defaults):
+        mock_nirspec_bots, extract1d_ref_dict):
     input_model = mock_nirspec_bots
 
     # match an entry that explicitly sets use_source_posn
@@ -229,8 +244,7 @@ def test_get_extract_parameters_source_posn_from_ref(
 
 @pytest.mark.parametrize('length', [3, 4, 2.8, 3.5])
 def test_get_extract_parameters_smoothing(
-        mock_nirspec_fs_one_slit, extract1d_ref_dict,
-        extract_defaults, length):
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, length):
     input_model = mock_nirspec_fs_one_slit
 
     params = ex.get_extract_parameters(
@@ -244,8 +258,7 @@ def test_get_extract_parameters_smoothing(
 
 @pytest.mark.parametrize('length', [-1, 1, 2, 1.3])
 def test_get_extract_parameters_smoothing_bad_value(
-        mock_nirspec_fs_one_slit, extract1d_ref_dict,
-        extract_defaults, length):
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, length):
     input_model = mock_nirspec_fs_one_slit
 
     params = ex.get_extract_parameters(
@@ -254,6 +267,35 @@ def test_get_extract_parameters_smoothing_bad_value(
 
     # returned value has smoothing length 0
     assert params['smoothing_length'] == 0
+
+
+@pytest.mark.parametrize('use_source', [None, True, False])
+def test_get_extract_parameters_extraction_type_none(
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, use_source):
+    input_model = mock_nirspec_fs_one_slit
+    params = ex.get_extract_parameters(
+        extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
+        extraction_type=None, use_source_posn=use_source, psf_ref_name='available')
+
+    # Extraction type is set to optimal if use_source_posn is True
+    if use_source is None or use_source is True:
+        assert params['use_source_posn'] is True
+        assert params['extraction_type'] == 'optimal'
+    else:
+        assert params['use_source_posn'] is False
+        assert params['extraction_type'] == 'box'
+
+
+@pytest.mark.parametrize('extraction_type', [None, 'box', 'optimal'])
+def test_get_extract_parameters_no_psf(
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, extraction_type):
+    input_model = mock_nirspec_fs_one_slit
+    params = ex.get_extract_parameters(
+        extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
+        extraction_type=extraction_type, psf_ref_name='N/A')
+
+    # Extraction type is always box if no psf is available
+    assert params['extraction_type'] == 'box'
 
 
 def test_log_params(extract_defaults, log_watcher):
@@ -1032,7 +1074,8 @@ def test_define_aperture_bad_wcs(monkeypatch, mock_nirspec_fs_one_slit, extract_
     assert dec is None
 
 
-def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extract_defaults):
+def test_define_aperture_use_source(
+        monkeypatch, mock_nirspec_fs_one_slit, extract_defaults):
     model = mock_nirspec_fs_one_slit
     extract_defaults['dispaxis'] = 1
     slit = None
@@ -1072,6 +1115,87 @@ def test_define_aperture_extra_offset(mock_nirspec_fs_one_slit, extract_defaults
     assert np.all(profile[:2] == 0.0)
     assert np.all(profile[2:] == 1.0)
     assert limits == (2, model.data.shape[0] + 1, 0, model.data.shape[1] - 1)
+
+
+def test_define_aperture_optimal(mock_miri_lrs_fs, extract_defaults, psf_reference_file):
+    model = mock_miri_lrs_fs
+    extract_defaults['dispaxis'] = 2
+    slit = None
+    exptype = 'MIR_LRS-FIXEDSLIT'
+
+    # set parameters for optimal extraction
+    extract_defaults['extraction_type'] = 'optimal'
+    extract_defaults['use_source_posn'] = True
+    extract_defaults['psf'] = psf_reference_file
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    _, _, _, profile, bg_profile, nod_profile, limits = result
+
+    assert bg_profile is None
+    assert nod_profile is None
+
+    # profile is normalized along cross-dispersion
+    assert np.allclose(np.sum(profile, axis=1), 1.0)
+
+    # trace is centered on 1.0, near the edge of the slit,
+    # and the psf data has the same size as the array (50x50),
+    # so only half the psf is included
+    npix = 26
+    assert np.all(np.sum(profile != 0, axis=1) == npix)
+
+    # psf is uniform when in range, 0 otherwise
+    assert np.allclose(profile[:, :npix], 1 / npix)
+    assert np.allclose(profile[:, npix:], 0.0)
+
+
+def test_define_aperture_optimal_with_nod(
+        monkeypatch, mock_miri_lrs_fs, extract_defaults, psf_reference_file):
+    model = mock_miri_lrs_fs
+    extract_defaults['dispaxis'] = 2
+    slit = None
+    exptype = 'MIR_LRS-FIXEDSLIT'
+
+    # mock nod subtraction
+    mock_miri_lrs_fs.meta.cal_step.back_sub = 'COMPLETE'
+    mock_miri_lrs_fs.meta.dither.primary_type = 'ALONG-SLIT-NOD'
+
+    # mock a nod position at the opposite end of the array
+    def mock_nod(*args, **kwargs):
+        return 48.0
+
+    monkeypatch.setattr(pp, 'nod_pair_location', mock_nod)
+
+    # set parameters for optimal extraction
+    extract_defaults['extraction_type'] = 'optimal'
+    extract_defaults['use_source_posn'] = True
+    extract_defaults['psf'] = psf_reference_file
+    extract_defaults['model_nod_pair'] = True
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    _, _, _, profile, bg_profile, nod_profile, limits = result
+
+    assert bg_profile is None
+    assert nod_profile is not None
+
+    # profiles are normalized along cross-dispersion,
+    # nod profile is negative
+    assert np.allclose(np.sum(profile, axis=1), 1.0)
+    assert np.allclose(np.sum(nod_profile, axis=1), -1.0)
+
+    # positive trace is centered on 1.0, negative trace on
+    # 48.0, array size is 50.
+    npix = 26
+    assert np.all(np.sum(profile != 0, axis=1) == npix)
+    assert np.all(np.sum(nod_profile != 0, axis=1) == npix)
+
+    # psf is uniform when in range, 0 otherwise
+    assert np.allclose(profile[:, :npix], 1 / npix)
+    assert np.allclose(profile[:, npix:], 0.0)
+
+    # nod profile is the same, but negative, and at the other
+    # end of the array
+    assert np.allclose(nod_profile[:, -npix:], -1 / npix)
+    assert np.allclose(nod_profile[:, :-npix], 0.0)
 
 
 def test_extract_one_slit_horizontal(mock_nirspec_fs_one_slit, extract_defaults,
@@ -1217,6 +1341,60 @@ def test_extract_one_slit_missing_var(mock_nirspec_fs_one_slit, extract_defaults
     for data in result[1:4]:
         assert np.all(data == 0)
         assert data.shape == (model.data.shape[1],)
+
+
+def test_extract_one_slit_optimal_horizontal(
+        mock_nirspec_fs_one_slit, extract_defaults,
+        nod_profile, negative_nod_profile):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    extract_defaults['extraction_type'] = 'optimal'
+
+    result = ex.extract_one_slit(model, -1, nod_profile, None,
+                                 negative_nod_profile, extract_defaults)
+
+    # flux and variances are nonzero
+    for data in result[:4]:
+        assert np.all(data > 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # background and variances are zero
+    for data in result[4:8]:
+        assert np.all(data == 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # npixels is the sum of the pixels in the positive profile
+    assert np.allclose(result[8], np.sum(nod_profile > 0, axis=0))
+
+    # scene model has 2D shape
+    assert result[-1].shape == model.data.shape
+
+
+def test_extract_one_slit_optimal_vertical(
+        mock_miri_lrs_fs, extract_defaults, nod_profile, negative_nod_profile):
+    model = mock_miri_lrs_fs
+    nod_profile = nod_profile.T
+    negative_nod_profile = negative_nod_profile.T
+    extract_defaults['dispaxis'] = 2
+    extract_defaults['extraction_type'] = 'optimal'
+
+    result = ex.extract_one_slit(model, -1, nod_profile, None, negative_nod_profile, extract_defaults)
+
+    # flux and variances are nonzero
+    for data in result[:4]:
+        assert np.all(data > 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # background and variances are zero
+    for data in result[4:8]:
+        assert np.all(data == 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # npixels is the sum of the pixels in the positive profile
+    assert np.allclose(result[8], np.sum(nod_profile > 0, axis=1))
+
+    # scene model has 2D shape
+    assert result[-1].shape == model.data.shape
 
 
 def test_create_extraction_with_photom(create_extraction_inputs):
@@ -1382,6 +1560,34 @@ def test_create_extraction_use_trace(
     log_watcher.assert_seen()
 
 
+def test_create_extraction_optimal(
+        monkeypatch, create_extraction_inputs, psf_reference_file):
+    model = create_extraction_inputs[0]
+
+    # mock nod subtraction
+    model.meta.cal_step.back_sub = 'COMPLETE'
+    model.meta.dither.primary_type = '2-POINT-NOD'
+
+    # mock a nod position at the opposite end of the array
+    def mock_nod(*args, **kwargs):
+        return 48.0
+
+    monkeypatch.setattr(pp, 'nod_pair_location', mock_nod)
+
+    profile_model, _ = ex.create_extraction(
+        *create_extraction_inputs,  save_profile=True,
+        psf_ref_name=psf_reference_file, use_source_posn=True,
+        extraction_type='optimal', model_nod_pair=True)
+
+    assert profile_model is not None
+
+    # profile contains positive and negative nod, summed
+    assert np.all(profile_model.data[:10] > 0)
+    assert np.all(profile_model.data[-10:] < 0)
+
+    profile_model.close()
+
+
 def test_run_extract1d(mock_nirspec_mos):
     model = mock_nirspec_mos
     output_model, profile_model, scene_model = ex.run_extract1d(model)
@@ -1483,6 +1689,33 @@ def test_run_extract1d_apcorr(mock_miri_lrs_fs, miri_lrs_apcorr_file, log_watche
 
     output_model.close()
 
+
+def test_run_extract1d_apcorr_optimal(
+        mock_miri_lrs_fs, miri_lrs_apcorr_file, psf_reference_file, log_watcher):
+    model = mock_miri_lrs_fs
+    model.meta.target.source_type = 'POINT'
+
+    # Aperture correction that is otherwise valid is nonetheless
+    # turned off for optimal extraction
+    log_watcher.message = 'Turning off aperture correction for optimal extraction'
+    output_model, _, _ = ex.run_extract1d(model, apcorr_ref_name=miri_lrs_apcorr_file,
+                                          psf_ref_name=psf_reference_file,
+                                          extraction_type='optimal')
+    log_watcher.assert_seen()
+
+    output_model.close()
+
+
+def test_run_extract1d_optimal_no_psf(mock_miri_lrs_fs, log_watcher):
+    model = mock_miri_lrs_fs
+    model.meta.target.source_type = 'POINT'
+
+    # Optimal extraction is turned off if there is no psf file provided
+    log_watcher.message = 'Optimal extraction is not available'
+    output_model, _, _ = ex.run_extract1d(model, extraction_type='optimal')
+    log_watcher.assert_seen()
+
+    output_model.close()
 
 def test_run_extract1d_invalid():
     model = dm.MultiSpecModel()
