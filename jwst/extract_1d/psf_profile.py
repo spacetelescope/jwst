@@ -312,7 +312,7 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
                                      nod_offset=nod_offset)
 
     # Make the output profile, matching the input data
-    data_shape = input_model.data.shape
+    data_shape = input_model.data.shape[-2:]
     output_y = _y + y0
     output_x = _x + x0
     valid = (output_y >= 0) & (output_y < y1) & (output_x >= 0) & (output_x < x1)
