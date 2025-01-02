@@ -350,18 +350,26 @@ class Extract1dStep(Step):
         )
         return result
 
-    def _save_intermediate(self, intermediate_model, suffix):
+    def _save_intermediate(self, intermediate_model, suffix, idx):
         """Save an intermediate output file."""
         if isinstance(intermediate_model, ModelContainer):
-            # Save the profile with the slit name + suffix 'profile'
+            # Save the profile with the slit name + index + suffix 'profile'
             for model in intermediate_model:
                 slit = str(model.name).lower()
-                output_path = self.make_output_path(suffix=f'{slit}_{suffix}')
+                if idx is not None:
+                    complete_suffix = f'{slit}_{idx}_{suffix}'
+                else:
+                    complete_suffix = f'{slit}_{suffix}'
+                output_path = self.make_output_path(suffix=complete_suffix)
                 self.log.info(f"Saving {suffix} {output_path}")
                 model.save(output_path)
         else:
-            # Only one profile - just use the suffix 'profile'
-            output_path = self.make_output_path(suffix=suffix)
+            # Only one profile - just use the index and suffix 'profile'
+            if idx is not None:
+                complete_suffix = f'{idx}_{suffix}'
+            else:
+                complete_suffix = suffix
+            output_path = self.make_output_path(suffix=complete_suffix)
             self.log.info(f"Saving {suffix} {output_path}")
             intermediate_model.save(output_path)
         intermediate_model.close()
@@ -433,7 +441,7 @@ class Extract1dStep(Step):
 
         else:
             result = ModelContainer()
-            for model in input_model:
+            for i, model in enumerate(input_model):
                 # Get the reference file names
                 extract_ref, apcorr_ref, psf_ref = \
                     self._get_extract_reference_files_by_mode(model, exp_type)
@@ -470,12 +478,16 @@ class Extract1dStep(Step):
                 del extracted
 
                 # Save profile if needed
+                if len(input_model) > 1:
+                    idx = i
+                else:
+                    idx = None
                 if self.save_profile and profile is not None:
-                    self._save_intermediate(profile, 'profile')
+                    self._save_intermediate(profile, 'profile', idx)
 
                 # Save model if needed
                 if self.save_scene_model and scene_model is not None:
-                    self._save_intermediate(scene_model, 'scene_model')
+                    self._save_intermediate(scene_model, 'scene_model', idx)
 
             # If only one result, return the model instead of the container
             if len(result) == 1:
