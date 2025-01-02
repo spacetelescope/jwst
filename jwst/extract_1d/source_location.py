@@ -71,10 +71,18 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
     # Average to get the middle wavelength
     middle_wavelength = np.nanmean(center_wavelengths)
 
-    # Find the effective index in y for the averaged wavelength
-    # to get the cross-dispersion center
-    middle_xdisp = np.interp(middle_wavelength, center_wavelengths, y)
-
+    # Find the effective index in cross-dispersion coordinates for the
+    # averaged wavelength to get the cross-dispersion center
+    if dispaxis == HORIZONTAL:
+        if np.allclose(center_wavelengths, middle_wavelength):
+            middle_xdisp = np.mean(y)
+        else:
+            middle_xdisp = np.interp(middle_wavelength, center_wavelengths, y)
+    else:
+        if np.allclose(center_wavelengths, middle_wavelength):
+            middle_xdisp = np.mean(x)
+        else:
+            middle_xdisp = np.interp(middle_wavelength, center_wavelengths, x)
     return middle_disp, middle_xdisp, middle_wavelength
 
 
