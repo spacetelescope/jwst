@@ -144,9 +144,10 @@ def read_apcorr_ref(refname, exptype):
 
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
-                           use_source_posn=None, subtract_background=None,
-                           position_offset=0.0, optimize_psf_location=False,
-                           extraction_type='box', psf_ref_name='N/A'):
+                           use_source_posn=None, position_offset=0.0,
+                           model_nod_pair=False, optimize_psf_location=False,
+                           subtract_background=None, extraction_type='box',
+                           psf_ref_name='N/A'):
     """Get extraction parameter values.
 
     Parameters
@@ -202,17 +203,22 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         Pixel offset to apply to the nominal source location.
         If None, the value specified in `ref_dict` will be used or it
         will default to 0.
+    model_nod_pair : bool, optional
+        If True, and if `extraction_type` is 'optimal', then a negative
+        trace from nod subtraction will be modeled alongside the positive
+        source, if possible.
     optimize_psf_location : bool
         If True, and if `extraction_type` is 'optimal', then the source
         location will be optimized, via iterative comparisons of the scene
         model with the input data.
+    subtract_background : bool or None, optional
+        If False, all background parameters will be ignored.
     extraction_type : str, optional
         Extraction type ('box' or 'optimal').  Optimal extraction is
         only available if `psf_ref_name` is not 'N/A'.  If set to None,
         optimal extraction will be used if `use_source_posn` is True.
     psf_ref_name : str, optional
         The name of the PSF reference file, or "N/A".
-
 
     Returns
     -------
@@ -241,11 +247,11 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['subtract_background'] = False
         extract_params['extraction_type'] = 'box'
         extract_params['use_source_posn'] = False  # no source position correction
+        extract_params['position_offset'] = 0.
+        extract_params['model_nod_pair'] = False
         extract_params['optimize_psf_location'] = False
         extract_params['psf'] = 'N/A'
-        extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
-        extract_params['position_offset'] = 0.
         extract_params['trace'] = None
         # Note that extract_params['dispaxis'] is not assigned.
         # This will be done later, possibly slit by slit.
@@ -337,7 +343,6 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                     extract_params['trace'] = None
 
                     extract_params['extract_width'] = aper.get('extract_width')
-                    extract_params['position_correction'] = 0  # default value
 
                     if smoothing_length is None:
                         extract_params['smoothing_length'] = aper.get('smoothing_length', 0)
@@ -373,6 +378,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                         extract_params['extraction_type'] = extraction_type
                     extract_params['psf'] = psf_ref_name
                     extract_params['optimize_psf_location'] = optimize_psf_location
+                    extract_params['model_nod_pair'] = model_nod_pair
 
                     break
 
@@ -1135,6 +1141,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         profiles, lower_limit, upper_limit = psf_profile(
             data_model, extract_params['trace'],
             wl_array, extract_params['psf'],
+            model_nod_pair=extract_params['model_nod_pair'],
             optimize_shifts=extract_params['optimize_psf_location'])
         if len(profiles) > 1:
             profile, nod_profile = profiles
@@ -1767,7 +1774,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                   smoothing_length=None, bkg_fit=None, bkg_order=None,
                   log_increment=50, subtract_background=None,
                   use_source_posn=None, position_offset=0.0,
-                  optimize_psf_location=True,
+                  model_nod_pair=False, optimize_psf_location=True,
                   save_profile=False, save_scene_model=False):
     """Extract all 1-D spectra from an input model.
 
@@ -1811,6 +1818,12 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
     position_offset : float
         Number of pixels to shift the nominal source position in the
         cross-dispersion direction.
+    model_nod_pair : bool
+        If True, and if `extraction_type` is 'optimal', then a negative trace
+        from nod subtraction is modeled alongside the positive source during
+        extraction.  Even if set to True, this will be attempted only if the
+        input data has been background subtracted and the dither pattern
+        indicates that only 2 nods were used.
     optimize_psf_location : bool
         If True, and if `extraction_type` is 'optimal', then the source
         location will be optimized, via iterative comparisons of the scene
@@ -1925,6 +1938,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                    subtract_background=subtract_background,
                    use_source_posn=use_source_posn,
                    position_offset=position_offset,
+                   model_nod_pair=model_nod_pair,
                    optimize_psf_location=optimize_psf_location)
             except ContinueError:
                 continue
@@ -1965,6 +1979,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
                         position_offset=position_offset,
+                        model_nod_pair=model_nod_pair,
                         optimize_psf_location=optimize_psf_location)
                 except ContinueError:
                     pass
@@ -2007,6 +2022,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
                         position_offset=position_offset,
+                        model_nod_pair=model_nod_pair,
                         optimize_psf_location=optimize_psf_location)
                 except ContinueError:
                     pass

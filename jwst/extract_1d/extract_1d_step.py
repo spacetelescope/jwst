@@ -25,21 +25,36 @@ class Extract1dStep(Step):
         Switch to select whether to apply an APERTURE correction during
         the Extract1dStep. Default is True.
 
-    extraction_type : str
+    extraction_type : str or None
         If 'box', a standard extraction is performed, summing over an
         aperture box. If 'optimal', a PSF-based extraction is performed.
-        Currently, optimal extraction is only available for MIRI LRS Fixed
-        Slit data.
+        If None, optimal extraction is attempted whenever use_source_posn is
+        True. Currently, optimal extraction is only available for MIRI LRS
+        Fixed Slit data.
 
     use_source_posn : bool or None
-        If True, the source and background extraction positions specified in
-        the extract1d reference file (or the default position, if there is no
-        reference file) will be shifted to account for the computed position
-        of the source in the data.  If None (the default), the values in the
-        reference file will be used. Aperture offset is determined by computing
-        the pixel location of the source based on its RA and Dec. It does not
-        make sense to apply aperture offsets for extended sources, so this
-        parameter can be overridden (set to False) internally by the step.
+        If True, the source and background extraction regions specified in
+        the extract1d reference file will be shifted to account for the computed
+        position of the source in the data.  If None (the default), this parameter
+        is set to True for point sources in NIRSpec and MIRI LRS fixed slit modes.
+
+    position_offset : float
+        Number of pixels to offset the source and background extraction regions
+        in the cross-dispersion direction.  This is intended to allow a manual
+        tweak to the aperture defined via reference file; the default value is 0.0.
+
+    model_nod_pair : bool
+        If True, and the extraction type is 'optimal', then a negative trace
+        from nod subtraction is modeled alongside the positive source during
+        extraction.  Even if set to True, this will be attempted only if the
+        input data has been background subtracted and the dither pattern
+        indicates that only 2 nods were used.
+
+    optimize_psf_location : bool
+        If True, and the extraction type is 'optimal', then the placement of
+        the PSF model for the source location (and negative nod, if present)
+        will be iteratively optimized. This parameter is recommended if
+        negative nods are modeled.
 
     smoothing_length : int or None
         If not None, the background regions (if any) will be smoothed
@@ -170,6 +185,7 @@ class Extract1dStep(Step):
     extraction_type = option("box", "optimal", None, default="box") # Perform box or optimal extraction
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     position_offset = float(default=0)  # number of pixels to shift source trace in the cross-dispersion direction
+    model_nod_pair = boolean(default=True)  # For optimal extraction, model a negative nod if possible
     optimize_psf_location = boolean(default=True)  # For optimal extraction, optimize source location
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
@@ -442,6 +458,7 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.use_source_posn,
                         self.position_offset,
+                        self.model_nod_pair,
                         self.optimize_psf_location,
                         self.save_profile,
                         self.save_scene_model,
