@@ -272,7 +272,7 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
             else:
                 if not optimize_shifts:
                     log.warning('Negative nod locations are currently approximations only.')
-                    log.warning('PSF location optimization is strongly recommended when '
+                    log.warning('PSF location optimization is recommended when '
                                 'negative nods are modeled.')
                 nod_offset = location - nod_center
     else:
