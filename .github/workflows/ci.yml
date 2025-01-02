@@ -48,6 +48,7 @@ jobs:
         - linux: check-types
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@9f1f43251dde69da8613ea8e11144f05cdea41d5  # v1.15.0
+    needs: [ crds_context ]
     with:
       setenv: |
         CRDS_PATH: /tmp/data/crds_cache
