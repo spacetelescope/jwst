@@ -340,6 +340,65 @@ def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
     return full_trace
 
 
+def trace_from_wcs(exp_type, shape, bounding_box, wcs_ref, source_x, source_y, dispaxis):
+    """Calculate a source trace from WCS.
+
+    The source trace is calculated by projecting a fixed source
+    positions onto detector pixels, to get a source location at each
+    dispersion element.  For MIRI LRS fixed slit and NIRSpec modes, this
+    will be a curved trace, using the sky or slit frame as appropriate.
+    For all other modes, a flat trace is returned, containing the
+    cross-dispersion position at all dispersion elements.
+
+    Parameters
+    ----------
+    exp_type : str
+        Exposure type for the input data.
+    shape : tuple of int
+        2D shape for the full input data array, (ny, nx).
+    bounding_box : tuple
+        A pair of tuples, each consisting of two numbers.
+        Represents the range of useful pixel values in both dimensions,
+        ((xmin, xmax), (ymin, ymax)).
+    wcs_ref : `~gwcs.WCS`
+        WCS for the input data model, containing sky and detector
+        transforms, forward and backward.
+    source_x : float
+        X pixel coordinate for the target.
+    source_y : float
+        Y pixel coordinate for the target.
+    dispaxis : int
+        Dispersion axis.
+
+    Returns
+    -------
+    trace : ndarray of float
+        Pixel positions in the cross-dispersion direction
+        of the trace for each dispersion pixel.
+    """
+    if exp_type == 'MIR_LRS-FIXEDSLIT':
+        source_ra, source_dec, _ = wcs_ref(source_x, source_y)
+        trace = _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec)
+    elif exp_type.startswith('NRS'):
+        d2s = wcs_ref.get_transform("detector", "slit_frame")
+        source_xpos, source_ypos, _ = d2s(source_x, source_y)
+        trace = _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_ypos)
+    else:
+        # Flat trace containing the cross-dispersion position at every element
+        if dispaxis == HORIZONTAL:
+            trace = np.full(shape[1], np.nan)
+            x0 = int(np.ceil(bounding_box[0][0]))
+            nx = int(bounding_box[0][1] - bounding_box[0][0])
+            trace[x0:x0 + nx] = source_y
+        else:
+            trace = np.full(shape[0], np.nan)
+            y0 = int(np.ceil(bounding_box[1][0]))
+            ny = int(bounding_box[1][1] - bounding_box[1][0])
+            trace[y0:y0 + ny] = source_x
+
+    return trace
+
+
 def _nod_pair_from_dither(input_model, middle_wl, dispaxis):
     """Estimate a nod pair location from the dither offsets.
 

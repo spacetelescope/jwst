@@ -493,3 +493,32 @@ def psf_reference_file(tmp_path, psf_reference):
     filename = str(tmp_path / 'psf_reference.fits')
     psf_reference.save(filename)
     return filename
+
+
+@pytest.fixture()
+def simple_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[20:30, :] = 1.0
+    return profile
+
+
+@pytest.fixture()
+def background_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[:10, :] = 1.0
+    profile[40:, :] = 1.0
+    return profile
+
+
+@pytest.fixture()
+def nod_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[10:20, :] = 1.0 / 10
+    return profile
+
+
+@pytest.fixture()
+def negative_nod_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[30:40, :] = -1.0 / 10
+    return profile
