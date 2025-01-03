@@ -21,7 +21,7 @@ from jwst.extract_1d.apply_apcorr import select_apcorr
 
 __all__ = ['run_extract1d', 'read_extract1d_ref', 'read_apcorr_ref',
            'get_extract_parameters', 'box_profile', 'aperture_center',
-           'location_from_wcs', 'shift_by_source_location', 'shift_by_offset',
+           'location_from_wcs', 'shift_by_offset',
            'define_aperture', 'extract_one_slit', 'create_extraction']
 
 
@@ -1118,75 +1118,25 @@ def location_from_wcs(input_model, slit):
     return middle, middle_wl, location, trace
 
 
-def shift_by_source_location(location, nominal_location, extract_params):
-    """Shift the nominal extraction parameters by the source location.
-
-    The offset applied is `location` - `nominal_location`, along
-    the cross-dispersion direction.
+def shift_by_offset(offset, extract_params, update_trace=True):
+    """Shift the nominal extraction parameters by a pixel offset.
 
     Start, stop, and polynomial coefficient values for source and
     background are updated in place in the `extract_params` dictionary.
+    The source trace value, if present, is also updated if desired.
 
     Parameters
     ----------
-    location : float
-        The source location in the cross-dispersion direction
-        at which to center the extraction aperture.
-    nominal_location : float
-        The center of the nominal extraction aperture, in the
-        cross-dispersion direction, according to the extraction
-        parameters.
-    extract_params : dict
-        Extraction parameters to update, as created by
-        `get_extraction_parameters`, and corresponding to the
-        specified nominal location.
-
-    """
-
-    # Get the center of the nominal aperture
-    offset = location - nominal_location
-    log.info(f"Nominal location is {nominal_location:.2f}, "
-             f"so offset is {offset:.2f} pixels")
-
-    # Shift aperture limits by the difference between the
-    # source location and the nominal center
-    coeff_params = ['src_coeff', 'bkg_coeff']
-    for params in coeff_params:
-        if extract_params[params] is not None:
-            for coeff_list in extract_params[params]:
-                coeff_list[0] += offset
-    if extract_params['dispaxis'] == HORIZONTAL:
-        start_stop_params = ['ystart', 'ystop']
-    else:
-        start_stop_params = ['xstart', 'xstop']
-    for params in start_stop_params:
-        if extract_params[params] is not None:
-            extract_params[params] += offset
-
-
-def shift_by_offset(extract_params):
-    """Shift the nominal extraction parameters by a user-set offset.
-
-    Start, stop, and polynomial coefficient values for source and
-    background are updated in place in the `extract_params` dictionary.
-    The source trace value, if present, is also updated.
-
-    The offset value should be in the `extract_params` input, in
-    the 'trace_offset' key.
-
-    Parameters
-    ----------
+    offset : float
+        Cross-dispersion offset to apply, in pixels.
     extract_params : dict
         Extraction parameters to update, as created by
         `get_extraction_parameters`.
+    update_trace : bool
+        If True, the trace in `extract_params['trace']` is also updated
+        if present.
 
     """
-    offset = extract_params.get('trace_offset', 0.0)
-    if offset == 0:
-        return
-
-    log.info(f"Applying additional cross-dispersion offset {offset:.2f} pixels")
-
     # Shift polynomial coefficients
     coeff_params = ['src_coeff', 'bkg_coeff']
     for params in coeff_params:
@@ -1204,7 +1154,7 @@ def shift_by_offset(extract_params):
             extract_params[params] += offset
 
     # Shift the full trace
-    if extract_params['trace'] is not None:
+    if update_trace and extract_params['trace'] is not None:
         extract_params['trace'] += offset
 
 
@@ -1405,15 +1355,21 @@ def define_aperture(input_model, slit, extract_params, exp_type):
                 nominal_profile, extract_params['dispaxis'], middle_pix=middle_pix)
 
             # Offset extract parameters by location - nominal
-            shift_by_source_location(location, nominal_location, extract_params)
+            offset = location - nominal_location
+            log.info(f"Nominal location is {nominal_location:.2f}, "
+                     f"so offset is {offset:.2f} pixels")
+            shift_by_offset(offset, extract_params, update_trace=False)
     else:
         middle_pix, middle_wl, location, trace = None, None, None, None
 
     # Store the trace, if computed
     extract_params['trace'] = trace
 
-    # Add an extra trace offset if desired, from extract_params['trace_offset']
-    shift_by_offset(extract_params)
+    # Add an extra position offset if desired, from extract_params['trace_offset']
+    offset = extract_params.get('trace_offset', 0.0)
+    if offset != 0.0:
+        log.info(f"Applying additional cross-dispersion offset {offset:.2f} pixels")
+        shift_by_offset(offset, extract_params, update_trace=True)
 
     # Make a spatial profile, including source shifts if necessary
     profile, lower_limit, upper_limit = box_profile(

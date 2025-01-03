@@ -988,52 +988,6 @@ def test_location_from_wcs_location_out_of_range(
     log_watcher.assert_seen()
 
 
-def test_shift_by_source_location_horizontal(extract_defaults):
-    location = 12.5
-    nominal_location = 15.0
-    offset = location - nominal_location
-
-    extract_params = extract_defaults.copy()
-    extract_params['dispaxis'] = 1
-
-    ex.shift_by_source_location(location, nominal_location, extract_params)
-    assert extract_params['xstart'] == extract_defaults['xstart']
-    assert extract_params['xstop'] == extract_defaults['xstop']
-    assert extract_params['ystart'] == extract_defaults['ystart'] + offset
-    assert extract_params['ystop'] == extract_defaults['ystop'] + offset
-
-
-def test_shift_by_source_location_vertical(extract_defaults):
-    location = 12.5
-    nominal_location = 15.0
-    offset = location - nominal_location
-
-    extract_params = extract_defaults.copy()
-    extract_params['dispaxis'] = 2
-
-    ex.shift_by_source_location(location, nominal_location, extract_params)
-    assert extract_params['xstart'] == extract_defaults['xstart'] + offset
-    assert extract_params['xstop'] == extract_defaults['xstop'] + offset
-    assert extract_params['ystart'] == extract_defaults['ystart']
-    assert extract_params['ystop'] == extract_defaults['ystop']
-
-
-def test_shift_by_source_location_coeff(extract_defaults):
-    location = 6.5
-    nominal_location = 4.0
-    offset = location - nominal_location
-
-    extract_params = extract_defaults.copy()
-    extract_params['dispaxis'] = 1
-    extract_params['src_coeff'] = [[2.5, 1.0], [6.5, 1.0]]
-    extract_params['bkg_coeff'] = [[-0.5], [3.0], [6.0], [9.5]]
-
-    ex.shift_by_source_location(location, nominal_location, extract_params)
-    assert extract_params['src_coeff'] == [[2.5 + offset, 1.0], [6.5 + offset, 1.0]]
-    assert extract_params['bkg_coeff'] == [[-0.5 + offset], [3.0 + offset],
-                                           [6.0 + offset], [9.5 + offset]]
-
-
 def test_shift_by_offset_horizontal(extract_defaults):
     offset = 2.5
 
@@ -1041,7 +995,7 @@ def test_shift_by_offset_horizontal(extract_defaults):
     extract_params['dispaxis'] = 1
     extract_params['trace_offset'] = offset
 
-    ex.shift_by_offset(extract_params)
+    ex.shift_by_offset(offset, extract_params)
     assert extract_params['xstart'] == extract_defaults['xstart']
     assert extract_params['xstop'] == extract_defaults['xstop']
     assert extract_params['ystart'] == extract_defaults['ystart'] + offset
@@ -1055,7 +1009,7 @@ def test_shift_by_offset_vertical(extract_defaults):
     extract_params['dispaxis'] = 2
     extract_params['trace_offset'] = offset
 
-    ex.shift_by_offset(extract_params)
+    ex.shift_by_offset(offset, extract_params)
     assert extract_params['xstart'] == extract_defaults['xstart'] + offset
     assert extract_params['xstop'] == extract_defaults['xstop'] + offset
     assert extract_params['ystart'] == extract_defaults['ystart']
@@ -1071,7 +1025,7 @@ def test_shift_by_offset_coeff(extract_defaults):
     extract_params['src_coeff'] = [[2.5, 1.0], [6.5, 1.0]]
     extract_params['bkg_coeff'] = [[-0.5], [3.0], [6.0], [9.5]]
 
-    ex.shift_by_offset(extract_params)
+    ex.shift_by_offset(offset, extract_params)
     assert extract_params['src_coeff'] == [[2.5 + offset, 1.0], [6.5 + offset, 1.0]]
     assert extract_params['bkg_coeff'] == [[-0.5 + offset], [3.0 + offset],
                                            [6.0 + offset], [9.5 + offset]]
@@ -1085,8 +1039,20 @@ def test_shift_by_offset_trace(extract_defaults):
     extract_params['trace_offset'] = offset
     extract_params['trace'] = np.arange(10, dtype=float)
 
-    ex.shift_by_offset(extract_params)
+    ex.shift_by_offset(offset, extract_params, update_trace=True)
     assert np.all(extract_params['trace'] == np.arange(10) + offset)
+
+
+def test_shift_by_offset_trace_no_update(extract_defaults):
+    offset = 2.5
+
+    extract_params = extract_defaults.copy()
+    extract_params['dispaxis'] = 1
+    extract_params['trace_offset'] = offset
+    extract_params['trace'] = np.arange(10, dtype=float)
+
+    ex.shift_by_offset(offset, extract_params, update_trace=False)
+    assert np.all(extract_params['trace'] == np.arange(10))
 
 
 def test_nirspec_trace_from_wcs(mock_nirspec_fs_one_slit):
@@ -1235,6 +1201,24 @@ def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extra
     assert np.all(profile[:7] == 0.0)
     assert np.all(profile[7:13] == 1.0)
     assert np.all(profile[13:] == 0.0)
+
+
+def test_define_aperture_extra_offset(mock_nirspec_fs_one_slit, extract_defaults):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    slit = None
+    exptype = 'NRS_FIXEDSLIT'
+
+    extract_defaults['trace_offset'] = 2.0
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    _, _, _, profile, _, limits = result
+    assert profile.shape == model.data.shape
+
+    # Default profile is shifted 2 pixels up
+    assert np.all(profile[:2] == 0.0)
+    assert np.all(profile[2:] == 1.0)
+    assert limits == (2, model.data.shape[0] + 1, 0, model.data.shape[1] - 1)
 
 
 def test_extract_one_slit_horizontal(mock_nirspec_fs_one_slit, extract_defaults,
