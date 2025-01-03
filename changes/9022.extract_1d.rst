@@ -1,0 +1,2 @@
+Expanded the ``use_source_posn`` option to calculate a source trace from WCS and expected source positions for unresampled NIRSpec and MIRI LRS fixed slit data.
+Added the step parameter ``position_offset`` to allow an additional aperture offset in pixels.

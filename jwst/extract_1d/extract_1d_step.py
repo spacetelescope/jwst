@@ -162,13 +162,14 @@ class Extract1dStep(Step):
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
 
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
+    position_offset = float(default=0)  # number of pixels to shift source trace in the cross-dispersion direction
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
     log_increment = integer(default=50)  # increment for multi-integration log messages
     save_profile = boolean(default=False)  # save spatial profile to disk
     save_scene_model = boolean(default=False)  # save flux model to disk
-    
+
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
@@ -176,7 +177,7 @@ class Extract1dStep(Step):
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
-    
+
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -422,8 +423,9 @@ class Extract1dStep(Step):
                         self.log_increment,
                         self.subtract_background,
                         self.use_source_posn,
+                        self.position_offset,
                         self.save_profile,
-                        self.save_scene_model
+                        self.save_scene_model,
                     )
 
                 # Set the step flag to complete in each model
