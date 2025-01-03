@@ -1,11 +1,11 @@
+import crds
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
-
-from ..stpipe import Step
-from . import extract
-from .soss_extract import soss_extract
-from .ifu import ifu_extract1d
+from jwst.stpipe import Step
+from jwst.extract_1d import extract
+from jwst.extract_1d.soss_extract import soss_extract
+from jwst.extract_1d.ifu import ifu_extract1d
 
 __all__ = ["Extract1dStep"]
 
@@ -24,6 +24,12 @@ class Extract1dStep(Step):
     apply_apcorr : bool
         Switch to select whether to apply an APERTURE correction during
         the Extract1dStep. Default is True.
+
+    extraction_type : str
+        If 'box', a standard extraction is performed, summing over an
+        aperture box. If 'optimal', a PSF-based extraction is performed.
+        Currently, optimal extraction is only available for MIRI LRS Fixed
+        Slit data.
 
     use_source_posn : bool or None
         If True, the source and background extraction positions specified in
@@ -161,14 +167,16 @@ class Extract1dStep(Step):
     subtract_background = boolean(default=None)  # subtract background?
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
 
+    extraction_type = option("box", "optimal", None, default="box") # Perform box or optimal extraction
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
+    optimize_psf_location = boolean(default=True)  # For optimal extraction, optimize source location
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
     log_increment = integer(default=50)  # increment for multi-integration log messages
     save_profile = boolean(default=False)  # save spatial profile to disk
     save_scene_model = boolean(default=False)  # save flux model to disk
-    
+
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
@@ -176,7 +184,7 @@ class Extract1dStep(Step):
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
-    
+
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -191,7 +199,8 @@ class Extract1dStep(Step):
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel']
+    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile',
+                            'speckernel', 'specwcs', 'psf']
 
     def _get_extract_reference_files_by_mode(self, model, exp_type):
         """Get extraction reference files with special handling by exposure type."""
@@ -212,7 +221,21 @@ class Extract1dStep(Step):
         if apcorr_ref != 'N/A':
             self.log.info(f'Using APCORR file {apcorr_ref}')
 
-        return extract_ref, apcorr_ref
+        try:
+            specwcs_ref = self.get_reference_file(model, 'specwcs')
+        except crds.core.exceptions.CrdsLookupError:
+            specwcs_ref = 'N/A'
+        if specwcs_ref != 'N/A':
+            self.log.info(f'Using SPECWCS reference file {specwcs_ref}')
+
+        try:
+            psf_ref = self.get_reference_file(model, 'psf')
+        except crds.core.exceptions.CrdsLookupError:
+            psf_ref = 'N/A'
+        if psf_ref != 'N/A':
+            self.log.info(f'Using PSF reference file {psf_ref}')
+
+        return extract_ref, apcorr_ref, specwcs_ref, psf_ref
 
     def _extract_soss(self, model):
         """Extract NIRISS SOSS spectra."""
@@ -402,8 +425,8 @@ class Extract1dStep(Step):
             result = ModelContainer()
             for model in input_model:
                 # Get the reference file names
-                extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
-                    model, exp_type)
+                extract_ref, apcorr_ref, specwcs_ref, psf_ref = \
+                    self._get_extract_reference_files_by_mode(model, exp_type)
 
                 profile = None
                 scene_model = None
@@ -416,12 +439,16 @@ class Extract1dStep(Step):
                         model,
                         extract_ref,
                         apcorr_ref,
+                        specwcs_ref,
+                        psf_ref,
+                        self.extraction_type,
                         self.smoothing_length,
                         self.bkg_fit,
                         self.bkg_order,
                         self.log_increment,
                         self.subtract_background,
                         self.use_source_posn,
+                        self.optimize_psf_location,
                         self.save_profile,
                         self.save_scene_model
                     )
