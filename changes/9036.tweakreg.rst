@@ -1,3 +1,0 @@
-Changed the default values for ``sharplo``, ``sharphi``, ``roundlo``, and
-``roundhi`` to the values appropriate for the current default algorith for
-source finding in the ``tweakreg`` step.
