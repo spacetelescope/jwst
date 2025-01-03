@@ -146,7 +146,7 @@ def read_apcorr_ref(refname, exptype):
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
                            use_source_posn=None, subtract_background=None,
-                           trace_offset=0.0):
+                           position_offset=0.0):
     """Get extraction parameter values.
 
     Parameters
@@ -209,7 +209,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
     subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
 
-    trace_offset : float or None, optional
+    position_offset : float or None, optional
         Pixel offset to apply to the nominal source location.
         If None, the value specified in `ref_dict` will be used or it
         will default to 0.
@@ -243,7 +243,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         extract_params['use_source_posn'] = False  # no source position correction
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
-        extract_params['trace_offset'] = 0.
+        extract_params['position_offset'] = 0.
         extract_params['trace'] = None
         # Note that extract_params['dispaxis'] is not assigned.
         # This will be done later, possibly slit by slit.
@@ -327,7 +327,7 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                         else:  # use the value from the ref file
                             use_source_posn = use_source_posn_aper
                     extract_params['use_source_posn'] = use_source_posn
-                    extract_params['trace_offset'] = trace_offset
+                    extract_params['position_offset'] = position_offset
                     extract_params['trace'] = None
 
                     extract_params['extract_width'] = aper.get('extract_width')
@@ -1365,8 +1365,8 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     # Store the trace, if computed
     extract_params['trace'] = trace
 
-    # Add an extra position offset if desired, from extract_params['trace_offset']
-    offset = extract_params.get('trace_offset', 0.0)
+    # Add an extra position offset if desired, from extract_params['position_offset']
+    offset = extract_params.get('position_offset', 0.0)
     if offset != 0.0:
         log.info(f"Applying additional cross-dispersion offset {offset:.2f} pixels")
         shift_by_offset(offset, extract_params, update_trace=True)
@@ -1970,7 +1970,7 @@ def create_extraction(input_model, slit, output_model,
 def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                   smoothing_length=None, bkg_fit=None, bkg_order=None,
                   log_increment=50, subtract_background=None,
-                  use_source_posn=None, trace_offset=0.0,
+                  use_source_posn=None, position_offset=0.0,
                   save_profile=False, save_scene_model=False):
     """Extract all 1-D spectra from an input model.
 
@@ -2006,7 +2006,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
         If True, the target and background positions specified in the
         reference file (or the default position, if there is no reference
         file) will be shifted to account for source position offset.
-    trace_offset : float
+    position_offset : float
         Number of pixels to shift the nominal source position in the
         cross-dispersion direction.
     save_profile : bool
@@ -2106,7 +2106,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                    bkg_fit=bkg_fit, bkg_order=bkg_order,
                    subtract_background=subtract_background,
                    use_source_posn=use_source_posn,
-                   trace_offset=trace_offset)
+                   position_offset=position_offset)
             except ContinueError:
                 continue
 
@@ -2143,7 +2143,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
-                        trace_offset=trace_offset)
+                        position_offset=position_offset)
                 except ContinueError:
                     pass
 
@@ -2182,7 +2182,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                         bkg_fit=bkg_fit, bkg_order=bkg_order,
                         subtract_background=subtract_background,
                         use_source_posn=use_source_posn,
-                        trace_offset=trace_offset)
+                        position_offset=position_offset)
                 except ContinueError:
                     pass
 

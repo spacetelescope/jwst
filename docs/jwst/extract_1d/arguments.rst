@@ -30,7 +30,7 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   Set to False to ignore position estimates for all modes; set to True to additionally attempt
   source position correction for extended sources.
 
-``--trace_offset``
+``--position_offset``
   Specify a number of pixels (fractional pixels are allowed) to offset the 
   extraction aperture from the nominal position.  The default is 0.
 

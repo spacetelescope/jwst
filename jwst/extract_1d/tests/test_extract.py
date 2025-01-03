@@ -59,7 +59,7 @@ def extract_defaults():
                'spectral_order': 1,
                'src_coeff': None,
                'subtract_background': False,
-               'trace_offset': 0.0,
+               'position_offset': 0.0,
                'trace': None,
                'use_source_posn': False,
                'xstart': 0,
@@ -993,7 +993,7 @@ def test_shift_by_offset_horizontal(extract_defaults):
 
     extract_params = extract_defaults.copy()
     extract_params['dispaxis'] = 1
-    extract_params['trace_offset'] = offset
+    extract_params['position_offset'] = offset
 
     ex.shift_by_offset(offset, extract_params)
     assert extract_params['xstart'] == extract_defaults['xstart']
@@ -1007,7 +1007,7 @@ def test_shift_by_offset_vertical(extract_defaults):
 
     extract_params = extract_defaults.copy()
     extract_params['dispaxis'] = 2
-    extract_params['trace_offset'] = offset
+    extract_params['position_offset'] = offset
 
     ex.shift_by_offset(offset, extract_params)
     assert extract_params['xstart'] == extract_defaults['xstart'] + offset
@@ -1021,7 +1021,7 @@ def test_shift_by_offset_coeff(extract_defaults):
 
     extract_params = extract_defaults.copy()
     extract_params['dispaxis'] = 1
-    extract_params['trace_offset'] = offset
+    extract_params['position_offset'] = offset
     extract_params['src_coeff'] = [[2.5, 1.0], [6.5, 1.0]]
     extract_params['bkg_coeff'] = [[-0.5], [3.0], [6.0], [9.5]]
 
@@ -1036,7 +1036,7 @@ def test_shift_by_offset_trace(extract_defaults):
 
     extract_params = extract_defaults.copy()
     extract_params['dispaxis'] = 1
-    extract_params['trace_offset'] = offset
+    extract_params['position_offset'] = offset
     extract_params['trace'] = np.arange(10, dtype=float)
 
     ex.shift_by_offset(offset, extract_params, update_trace=True)
@@ -1048,7 +1048,7 @@ def test_shift_by_offset_trace_no_update(extract_defaults):
 
     extract_params = extract_defaults.copy()
     extract_params['dispaxis'] = 1
-    extract_params['trace_offset'] = offset
+    extract_params['position_offset'] = offset
     extract_params['trace'] = np.arange(10, dtype=float)
 
     ex.shift_by_offset(offset, extract_params, update_trace=False)
@@ -1209,7 +1209,7 @@ def test_define_aperture_extra_offset(mock_nirspec_fs_one_slit, extract_defaults
     slit = None
     exptype = 'NRS_FIXEDSLIT'
 
-    extract_defaults['trace_offset'] = 2.0
+    extract_defaults['position_offset'] = 2.0
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     _, _, _, profile, _, limits = result
@@ -1511,7 +1511,7 @@ def test_create_extraction_use_trace(
         if aper[i]['id'] == 'S1600A1':
             aper[i]['use_source_posn'] = True
             aper[i]['extract_width'] = extract_width
-            aper[i]['trace_offset'] = 0
+            aper[i]['position_offset'] = 0
 
     # mock the source location function
     def mock_source_location(*args):
