@@ -144,10 +144,10 @@ def read_apcorr_ref(refname, exptype):
 
 def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                            smoothing_length=None, bkg_fit=None, bkg_order=None,
+                           subtract_background=None,
                            use_source_posn=None, position_offset=0.0,
                            model_nod_pair=False, optimize_psf_location=False,
-                           subtract_background=None, extraction_type='box',
-                           psf_ref_name='N/A'):
+                           extraction_type='box', psf_ref_name='N/A'):
     """Get extraction parameter values.
 
     Parameters
@@ -192,13 +192,13 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         specified the value, so that value will be used.
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
+    subtract_background : bool or None, optional
+        If False, all background parameters will be ignored.
     use_source_posn : bool or None, optional
         If True, the target and background positions specified in `ref_dict`
         (or a default target position) will be shifted to account for
         the actual source location in the data.
         If None, a default value will be set, based on the exposure type.
-    subtract_background : bool or None, optional
-        If False, all background parameters will be ignored.
     position_offset : float or None, optional
         Pixel offset to apply to the nominal source location.
         If None, the value specified in `ref_dict` will be used or it
@@ -211,8 +211,6 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         If True, and if `extraction_type` is 'optimal', then the source
         location will be optimized, via iterative comparisons of the scene
         model with the input data.
-    subtract_background : bool or None, optional
-        If False, all background parameters will be ignored.
     extraction_type : str, optional
         Extraction type ('box' or 'optimal').  Optimal extraction is
         only available if `psf_ref_name` is not 'N/A'.  If set to None,
