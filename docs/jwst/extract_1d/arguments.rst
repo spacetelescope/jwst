@@ -26,21 +26,13 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   file should be shifted to account for the expected position of the source. If None (the default),
   the step will decide whether to use the source position based
   on the observing mode and the source type. By default, source position corrections
-  are attempted only for NIRSpec MOS and NIRSpec and MIRI LRS fixed-slit point sources.
+  are attempted only for point sources in NIRSpec MOS/FS/BOTS and MIRI LRS fixed-slit exposures.
   Set to False to ignore position estimates for all modes; set to True to additionally attempt
-  source position correction for NIRSpec BOTS data or extended sources.
+  source position correction for extended sources.
 
-``--use_trace``
-  Specify whether to calculate a 2D trace and extract the pixels around that trace
-  within the ``extract_width`` defined in the :ref:`EXTRACT1D <extract1d_reffile>`.
-  If None (the default), the step will decide whether to use the source position based
-  on the observing mode.  Currently this option is only available for NIRSpec BOTS, MOS,
-  and fixed-slit modes, where the trace will be calculated from the expected positions 
-  of the sources.  This option is used by default for the NIRSpec BOTS mode.
-
-``--trace_offset``
+``--position_offset``
   Specify a number of pixels (fractional pixels are allowed) to offset the 
-  calculated trace if ``use_trace`` is set to True.  The default is 0.
+  extraction aperture from the nominal position.  The default is 0.
 
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the

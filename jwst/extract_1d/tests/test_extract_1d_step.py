@@ -53,7 +53,7 @@ def test_extract_nirspec_mos_multi_slit(mock_nirspec_mos, simple_wcs):
 
 def test_extract_nirspec_bots(mock_nirspec_bots, simple_wcs):
     result = Extract1dStep.call(
-        mock_nirspec_bots, apply_apcorr=False, use_trace=False)
+        mock_nirspec_bots, apply_apcorr=False, use_source_posn=False)
     assert result.meta.cal_step.extract_1d == 'COMPLETE'
     assert (result.spec[0].name == 'S1600A1')
 
