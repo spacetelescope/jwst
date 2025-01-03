@@ -129,12 +129,17 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
     return [sprofile, nod_profile * -1]
 
 
-def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix, psf_data, dispaxis):
+def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix, psf_data,
+                      dispaxis, fit_bkg=True):
     """Residual function to minimize for optimizing trace locations."""
+    if len(param) > 1:
+        nod_offset = param[1]
+    else:
+        nod_offset = None
     sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
-                                     extra_shift=param[0], nod_offset=param[1])
+                                     extra_shift=param[0], nod_offset=nod_offset)
     extract_kwargs = {'extraction_type': 'optimal',
-                      'fit_bkg': True,
+                      'fit_bkg': fit_bkg,
                       'bkg_fit_type': 'poly',
                       'bkg_order': 0}
     if dispaxis == HORIZONTAL:
@@ -263,31 +268,27 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     psf_shift = psf_model.meta.psf.center_col - (psf_location * psf_subpix)
 
     # Check if we need to add a negative nod pair trace
+    nod_offset = None
     if model_nod_pair:
         nod_subtracted = str(input_model.meta.cal_step.back_sub) == 'COMPLETE'
         pattype_ok = str(input_model.meta.dither.primary_type) in NOD_PAIR_PATTERN
         if not nod_subtracted:
             log.info('Input data was not nod-subtracted. '
                      'A negative trace will not be modeled.')
-            nod_offset = None
         elif not pattype_ok:
             log.info('Input data was not a two-point nod. '
                      'A negative trace will not be modeled.')
-            nod_offset = None
         else:
             nod_center = nod_pair_location(input_model, middle_wl, dispaxis)
             if np.isnan(nod_center) or (np.abs(location - nod_center) < 2):
                 log.warning('Nod center could not be estimated from the WCS.')
                 log.warning('The negative nod will not be modeled.')
-                nod_offset = None
             else:
                 if not optimize_shifts:
                     log.warning('Negative nod locations are currently approximations only.')
                     log.warning('PSF location optimization is recommended when '
                                 'negative nods are modeled.')
                 nod_offset = location - nod_center
-    else:
-        nod_offset = None
 
     # Get an index grid for the data cutout
     cutout_shape = cutout.shape
@@ -305,10 +306,17 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     # the primary trace (and negative nod pair trace if necessary)
     if optimize_shifts:
         log.info('Optimizing trace locations')
-        extra_shift, nod_offset = optimize.minimize(
-            _profile_residual, [0.0, nod_offset],
-            (cutout, cutout_var, xidx, yidx, psf_subpix, psf_model.data, dispaxis)).x
-        location += extra_shift
+        if nod_offset is None:
+            extra_shift, = optimize.minimize(
+                _profile_residual, [0.0],
+                (cutout, cutout_var, xidx, yidx,
+                 psf_subpix, psf_model.data, dispaxis), method='Nelder-Mead').x
+        else:
+            extra_shift, nod_offset = optimize.minimize(
+                _profile_residual, [0.0, nod_offset],
+                (cutout, cutout_var, xidx, yidx,
+                 psf_subpix, psf_model.data, dispaxis), method='Nelder-Mead').x
+        location -= extra_shift
     else:
         extra_shift = 0.0
 
