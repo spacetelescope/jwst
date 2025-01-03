@@ -1,1 +1,0 @@
-Add 'mbsub' to the list of known suffixes, for ``master_background`` correction in ``calwebb_spec3``.

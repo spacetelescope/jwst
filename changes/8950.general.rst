@@ -1,1 +1,0 @@
-Update minimum required version of crds to allow for "data release style" contexts.

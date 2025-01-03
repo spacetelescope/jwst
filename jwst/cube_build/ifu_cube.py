@@ -53,6 +53,7 @@ class IFUCubeData():
 
         self.input_models = input_models  # needed when building single mode IFU cubes
         self.output_name_base = output_name_base
+        
         self.num_files = None
 
         self.instrument = instrument
@@ -168,7 +169,7 @@ class IFUCubeData():
         """ Define the base output name
         """
         if self.pipeline == 2:
-            newname = self.output_name_base + self.suffix + '.fits'
+            newname = self.output_name_base + '_' + self.suffix + '.fits'
         else:
             if self.instrument == 'MIRI':
 

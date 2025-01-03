@@ -1,1 +1,0 @@
-For moving-target IFU data, set RA, Dec header information of s3d products according to the mean of input models instead of the first input model.

@@ -1,1 +1,0 @@
-Added pixel-to-pixel sigma clipping on input backgrounds in the NIRSpec MOS master_background_mos step.  Added option to median filter master background spectrum in both the master_background and master_background_mos steps.

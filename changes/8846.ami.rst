@@ -1,1 +1,0 @@
-Change how AMI observables are averaged: average fringe quantities before calculating additional observables. Update their error calculation: use covariance of amplitudes/phases (and derived quantities) and standard error of the mean. Code now expects an ASDF filename string for user-supplied affine2d and bandpass input arguments. Example file creation in documentation.

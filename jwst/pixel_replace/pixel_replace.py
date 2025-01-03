@@ -29,8 +29,6 @@ class PixelReplacement:
     VERTICAL = 2
     LOG_SLICE = ['column', 'row']
 
-    default_suffix = 'pixrep'
-
     def __init__(self, input_model, **pars):
         """
         Initialize the class with input data model.
@@ -319,20 +317,27 @@ class PixelReplacement:
             # Cut out valid neighboring profiles
             adjacent_condition = self.custom_slice(dispaxis, valid_adjacent_inds)
             profile_data = model.data[adjacent_condition]
+            profile_err = model.err[adjacent_condition]
 
             # Mask out bad pixels
             invalid_condition = (model.dq[adjacent_condition] & self.DO_NOT_USE).astype(bool)
             profile_data[invalid_condition] = np.nan
+            profile_err[invalid_condition] = np.nan
 
             # Add additional cut to pull only from region with valid data
             # for convenience (may not be necessary)
             region_condition = self.custom_slice(3 - dispaxis, range(*profile_cut))
             profile_data = profile_data[region_condition]
+            profile_snr = np.abs(profile_data / profile_err[region_condition])
 
             # Normalize profile data
             # TODO: check on signs here - absolute max sometimes picks up
             #  large negative outliers
             profile_norm_scale = np.nanmax(np.abs(profile_data), axis=(dispaxis - 1), keepdims=True)
+            # If profile data has SNR < 5 everywhere just use unity scaling
+            # (so we don't normalize to noise)
+            if (np.nanmax(profile_snr) < 5):
+                profile_norm_scale[:] = 1.0
             normalized = profile_data / profile_norm_scale
 
             # Get corresponding error and variance data and scale and mask to match
@@ -377,12 +382,19 @@ class PixelReplacement:
             norm_current = min_current / np.max(min_current)
 
             # Scale median profile to current profile with bad pixel - minimize mse?
-            # TODO: check on signs here - absolute max sometimes picks up
-            #  large negative outliers
-            norm_scale = minimize(self.profile_mse, x0=np.abs(np.nanmax(norm_current)),
-                                  args=(min_median, norm_current)).x
-
-            scale = np.max(min_current)
+            # Only do this scaling if we didn't default to all-unity scaling above,
+            # and require input values below 1e20 so that we don't overflow the
+            # minimization routine with extremely bad noise.
+            if ((np.nanmedian(profile_norm_scale) != 1.0) & (np.nanmax(np.abs(min_median)) < 1e20)
+                    & (np.nanmax(np.abs(norm_current)) < 1e20)):
+                # TODO: check on signs here - absolute max sometimes picks up
+                #  large negative outliers
+                norm_scale = minimize(self.profile_mse, x0=np.abs(np.nanmax(norm_current)),
+                                      args=(np.abs(min_median), np.abs(norm_current)), method='Nelder-Mead').x
+                scale = np.max(min_current)
+            else:
+                norm_scale = 1.0
+                scale = 1.0
 
             # Replace pixels that are do-not-use but not non-science
             current_dq = model.dq[current_condition][range(*profile_cut)]

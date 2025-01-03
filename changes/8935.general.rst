@@ -1,1 +1,0 @@
-Include xml and db test data as package data for lib tests.

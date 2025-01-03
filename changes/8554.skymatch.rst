@@ -1,1 +1,0 @@
-Ignore the bounding_box of an observation when computing sky statistics.
