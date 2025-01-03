@@ -5,7 +5,8 @@ from scipy import ndimage, optimize
 from stdatamodels.jwst.datamodels import MiriLrsPsfModel
 
 from jwst.extract_1d.extract1d import extract1d
-from jwst.extract_1d.source_location import middle_from_wcs, nod_pair_location
+from jwst.extract_1d.source_location import (
+    middle_from_wcs, nod_pair_location, trace_from_wcs)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -57,13 +58,15 @@ def open_psf(psf_refname, exp_type):
 def _normalize_profile(profile, dispaxis):
     """Normalize a spatial profile along the cross-dispersion axis."""
     if dispaxis == HORIZONTAL:
-        psum = np.sum(profile, axis=0)
-        profile[:, psum != 0] = profile[:, psum != 0] / psum[psum != 0]
-        profile[:, psum == 0] = 0.0
+        psum = np.nansum(profile, axis=0)
+        nz = (psum != 0)
+        profile[:, nz] = profile[:, nz] / psum[nz]
+        profile[:, ~nz] = 0.0
     else:
-        psum = np.sum(profile, axis=1)
-        profile[psum != 0, :] = profile[psum != 0, :] / psum[psum != 0, None]
-        profile[psum == 0, :] = 0.0
+        psum = np.nansum(profile, axis=1)
+        nz = (psum != 0)
+        profile[nz, :] = profile[nz, :] / psum[nz, None]
+        profile[~nz, :] = 0.0
     profile[~np.isfinite(profile)] = 0.0
 
 
@@ -200,6 +203,7 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     psf_model = open_psf(psf_ref_name, exp_type)
 
     # Get the data cutout
+    data_shape = input_model.data.shape[-2:]
     dispaxis = input_model.meta.wcsinfo.dispersion_direction
     wcs = input_model.meta.wcs
     bbox = wcs.bounding_box
@@ -229,22 +233,29 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
 
     if trace is None:
         # Don't try to model a negative pair if we don't have a trace to start
-        model_nod_pair = False
+        if model_nod_pair:
+            log.warning('Cannot model a negative nod without position information')
+            model_nod_pair = False
 
         # Set the location to the middle of the cross-dispersion
-        # all the way across the array - no trace info available.
+        # all the way across the array
         location = middle_xdisp
         if dispaxis == HORIZONTAL:
-            trace = np.full(cutout.shape[1], middle_xdisp)
+            trace = trace_from_wcs(exp_type, data_shape, bbox, wcs,
+                                   middle_disp, middle_xdisp, dispaxis)
         else:
-            trace = np.full(cutout.shape[0], middle_xdisp)
+            trace = trace_from_wcs(exp_type, data_shape, bbox, wcs,
+                                   middle_xdisp, middle_disp, dispaxis)
+
     else:
         # Nominal location from the middle dispersion point
         location = trace[int(np.round(middle_disp))]
-        if dispaxis == HORIZONTAL:
-            trace = trace[x0:x1]
-        else:
-            trace = trace[y0:y1]
+
+    # Trim the trace to the data cutout
+    if dispaxis == HORIZONTAL:
+        trace = trace[x0:x1]
+    else:
+        trace = trace[y0:y1]
 
     # Scale the trace location to the subsampled psf
     psf_subpix = psf_model.meta.psf.subpix
@@ -279,8 +290,8 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
         nod_offset = None
 
     # Get an index grid for the data cutout
-    data_shape = cutout.shape
-    _y, _x = np.mgrid[:data_shape[0], :data_shape[1]]
+    cutout_shape = cutout.shape
+    _y, _x = np.mgrid[:cutout_shape[0], :cutout_shape[1]]
 
     # Add the wavelength and spatial shifts to the coordinates to map to
     if dispaxis == HORIZONTAL:
@@ -312,7 +323,6 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
                                      nod_offset=nod_offset)
 
     # Make the output profile, matching the input data
-    data_shape = input_model.data.shape[-2:]
     output_y = _y + y0
     output_x = _x + x0
     valid = (output_y >= 0) & (output_y < y1) & (output_x >= 0) & (output_x < x1)
