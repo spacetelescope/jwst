@@ -59,17 +59,17 @@ jobs:
           pytest-results-summary: true
         - macos: py3-xdist
           pytest-results-summary: true
-        - linux: py311-stdevdeps-xdist
+        - linux: py312-stdevdeps-xdist
           pytest-results-summary: true
-        - macos: py311-stdevdeps-xdist
+        - macos: py312-stdevdeps-xdist
           pytest-results-summary: true
         - linux: py3-stdevdeps-xdist
           pytest-results-summary: true
         - macos: py3-stdevdeps-xdist
           pytest-results-summary: true
-        - linux: py311-devdeps-xdist
+        - linux: py312-devdeps-xdist
           pytest-results-summary: true
-        - macos: py311-devdeps-xdist
+        - macos: py312-devdeps-xdist
           pytest-results-summary: true
         - linux: py3-devdeps-xdist
           pytest-results-summary: true

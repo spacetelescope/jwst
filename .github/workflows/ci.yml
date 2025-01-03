@@ -69,13 +69,12 @@ jobs:
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
       envs: |
-        - linux: py310-oldestdeps-xdist-cov
+        - linux: py311-oldestdeps-xdist-cov
           pytest-results-summary: true
-        - linux: py310-xdist
-        - linux: py311-xdist-cov
+        - linux: py311-xdist
+        - linux: py312-xdist-cov
           coverage: codecov
           pytest-results-summary: true
-        - linux: py312-xdist
         - linux: py313-xdist
-        - macos: py311-xdist
+        - macos: py312-xdist
           pytest-results-summary: true
