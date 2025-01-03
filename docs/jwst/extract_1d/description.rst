@@ -178,7 +178,7 @@ For resampled, "s2d", products this will effectively be the rectangular
 extraction region offset in the cross-dispersion direction.  For 
 "cal" or "calints" products that have not been resampled, the extraction region 
 will be curved to follow the calculated trace.
-If no `extract_width` has been provided, the shifted the extraction start and 
+If no `extract_width` has been provided, the shifted extraction start and 
 stop values will be used.
 
 A more flexible way to specify the source extraction region is via the `src_coeff`
