@@ -154,3 +154,31 @@ def test_extract1d_null_order2(rtdata_module, run_extract1d_null_order2, fitsdif
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.fixture(scope='module')
+def run_spec2_substrip96(rtdata_module):
+    """Run stage 2 pipeline on substrip96 data.
+    Solving for the optimal Tikhonov factor is time-consuming, and the code to do
+    so is identical between substrip96 and substrip256 data. Therefore just set
+    it to a reasonable value here."""
+    rtdata = rtdata_module
+    rtdata.get_data("niriss/soss/jw03596001001_03102_00001-seg001_nis_ints0-2_rateints.fits")
+    args = ["calwebb_spec2", rtdata.input,
+            "--steps.extract_1d.soss_tikfac=1.0e-16",]
+    Step.from_cmdline(args)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["calints", "x1dints"])
+def test_spec2_substrip96(rtdata_module, run_spec2_substrip96, fitsdiff_default_kwargs, suffix):
+    """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
+    rtdata = rtdata_module
+
+    output = f"jw03596001001_03102_00001-seg001_nis_ints0-2_{suffix}.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()

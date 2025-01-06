@@ -389,8 +389,6 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
 def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     """
     Bin the flux to the pixel grid and build a SpecModel.
-    TODO: if we made this return its trace model, could we avoid repeated code
-    inside _build_tracemodel_order?
 
     Parameters
     ----------
@@ -1089,8 +1087,6 @@ def run_extract1d(input_model, pastasoss_ref_name,
         log.info('Wavelength grid was not specified. Setting `wave_grid` to None.')
         wave_grid = None
 
-    # TODO: Maybe not unpack yet. Use SpecModel attributes
-    #       to allow for multiple orders? Create unpacking function.
     # Convert estimate to cubic spline if given.
     # It should be a SpecModel or a file name (string)
     estimate = soss_kwargs.pop('estimate')
@@ -1218,7 +1214,6 @@ def run_extract1d(input_model, pastasoss_ref_name,
 
         if soss_kwargs['bad_pix'] == 'model':
             # Generate new trace models for each individual decontaminated orders
-            # TODO: Use the sum of tracemodels so it can be applied even w/o decontamination
             bad_pix_models = tracemodels
         else:
             bad_pix_models = None

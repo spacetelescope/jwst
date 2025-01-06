@@ -32,26 +32,25 @@ class MaskOverlapError(Exception):
 
 class ExtractionEngine:
     """
-    Run the ATOCA algorithm (Darveau-Bernier 2021, in prep).
+    Run the ATOCA algorithm (Darveau-Bernier 2022, PASP, DOI:10.1088/1538-3873/ac8a77).
 
-    TODO: merge the docstring below, which came from _BaseOverlap class, into this docstring
-    Base class for the ATOCA algorithm (Darveau-Bernier 2021, in prep).
-    Used to perform an overlapping extraction of the form:
-    (B_T * B) * f = (data/sig)_T * B
-    where B is a matrix and f is an array.
-    The matrix multiplication B * f is the 2d model of the detector.
-    We want to solve for the array f.
-    The elements of f are labelled by 'k'.
-    The pixels are labeled by 'i'.
-    Every pixel 'i' is covered by a set of 'k' for each order
-    of diffraction.
-    The classes inheriting from this class should specify the
-    methods get_w which computes the 'k' associated to each pixel 'i'.
-    These depends of the type of interpolation used.
+    The ExtractionEngine is basically a fitter. On instantiation, it generates a model
+    of the detector, including a mapping between the detector pixels and the wavelength
+    for each spectral order, the throughput and convolution kernel, and known detector
+    bad pixels. This does not require any real data.
+    When called, it ingests data and associated errors, than
+    generates an output 1-D spectrum that explains the pixel brightnesses in the data
+    within the constraints of the model.
+
+    The engine can also run in reverse:
+    The `rebuild` method generates a synthetic 2-D detector 'observation'
+    from a known or fitted spectrum, and the `compute_likelihood` method
+    compares the synthetic data to the real data to generate a likelihood.
+    This allows for a likelihood-based optimization of the spectrum.
 
     This version models the pixels of the detector using an oversampled trapezoidal integration.
     """
-    # The desired data-type for computations, e.g., 'float32'. 'float64' is recommended.
+    # The desired data-type for computations. 'float64' is recommended.
     dtype = 'float64'
 
     def __init__(self, wave_map, trace_profile, throughput, kernels,
@@ -670,26 +669,6 @@ class ExtractionEngine:
         best_fac : float
             The best Tikhonov factor.
         """
-
-        # TODO Find a way to identify when the solution becomes unstable
-        #      and do nnot use these in the search for the best tikhonov factor.
-        # The follwing commented bloc was an attemp to do it, but problems
-        # occur if the chi2 reaches a maximum at large factors.
-#         # Remove all bad factors that are most likely unstable
-#         min_factor = tests.best_tikho_factor(mode='d_chi2', thresh=1e-8)
-#         idx_to_keep = min_factor <= tests['factors']
-#         print(idx_to_keep)
-# #         # Keep at least the max factor if None are found
-# #         if not idx_to_keep.any():
-# #             idx_max = np.argmax(tests['factors'])
-# #             idx_to_keep[idx_max] = True
-#         # Make new tests with remaining factors
-#         new_tests = {}
-#         for key in tests:
-#             if key != 'grid':
-#                 new_tests[key] = tests[key][idx_to_keep]
-#         tests = atoca_utils.TikhoTests(new_tests)
-
         # Modes to be tested
         if fit_mode == 'all':
             # Test all modes
@@ -829,7 +808,17 @@ class ExtractionEngine:
     def __call__(self, data, error, tikhonov=False, factor=None):
         """
         Extract underlying flux on the detector.
-        All parameters are passed to `build_sys` method.
+
+        Performs an overlapping extraction of the form:
+        (B_T * B) * f = (data/sig)_T * B
+        where B is a matrix and f is an array.
+        The matrix multiplication B * f is the 2d model of the detector.
+        We want to solve for the array f.
+        The elements of f are labelled by 'k'.
+        The pixels are labeled by 'i'.
+        Every pixel 'i' is covered by a set of 'k' for each order
+        of diffraction.
+
         TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
               There will be only one matrix multiplication:
               (P/sig).(w.T.lambda.c_n).
@@ -932,10 +921,8 @@ class ExtractionEngine:
 
 
     def get_w(self, i_order):
-        """Compute integration weights for each grid points and each pixels.
-        Depends on the order `n`.
-        TODO: what is this doing? where can we find the math?
-        TODO: why is the mask not just simply mask_ord?
+        """Compute integration weights 'k' for each grid point and pixel 'i'.
+        These depend on the type of interpolation used, i.e. the order `n`.
 
         Parameters
         ----------

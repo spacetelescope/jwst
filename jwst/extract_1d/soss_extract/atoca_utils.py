@@ -1705,7 +1705,6 @@ class TikhoTests(dict):
     def _compute_curvature(self):
         """
         TODO: add docstring
-        TODO: can this be combined with _curvature_finite?
         """
         key = self.default_chi2
 
