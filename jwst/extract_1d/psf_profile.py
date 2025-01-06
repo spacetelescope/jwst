@@ -2,7 +2,7 @@ import logging
 import numpy as np
 
 from scipy import ndimage, optimize
-from stdatamodels.jwst.datamodels import MiriLrsPsfModel
+from stdatamodels.jwst.datamodels import SpecPsfModel
 
 from jwst.extract_1d.extract1d import extract1d
 from jwst.extract_1d.source_location import (
@@ -31,7 +31,7 @@ def open_psf(psf_refname, exp_type):
 
     Returns
     -------
-    psf_model : MiriLrsPsfModel
+    psf_model : SpecPsfModel
         Currently only works on MIRI LRS-FIXEDSLIT exposures.
         Returns the EPSF model.
 
@@ -42,16 +42,16 @@ def open_psf(psf_refname, exp_type):
         # super sample factor: psf_model.meta.psf.subpix)
         # psf : psf_model.data (2d)
         # wavelength of PSF planes: psf_model.wave
-        psf_model = MiriLrsPsfModel(psf_refname)
+        psf_model = SpecPsfModel(psf_refname)
 
     else:
-        # So far, only MIRI LRS has a PSF datamodel defined. Try to use it
-        # for the input model.
+        # So far, only MIRI LRS has a PSF datamodel defined. For any other
+        # exposure type, try to use the model MIRI LRS uses to open the input model
         try:
-            psf_model = MiriLrsPsfModel(psf_refname)
+            psf_model = SpecPsfModel(psf_refname)
         except (ValueError, AttributeError):
             raise NotImplementedError(f'PSF file for EXP_TYPE {exp_type} '
-                                      f'could not be read as MiriLrsPsfModel.') from None
+                                      f'could not be read as SpecPsfModel.') from None
     return psf_model 
 
 
@@ -262,11 +262,6 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     else:
         trace = trace[y0:y1]
 
-    # Scale the trace location to the subsampled psf
-    psf_subpix = psf_model.meta.psf.subpix
-    psf_location = trace - bbox[0][0]
-    psf_shift = psf_model.meta.psf.center_col - (psf_location * psf_subpix)
-
     # Check if we need to add a negative nod pair trace
     nod_offset = None
     if model_nod_pair:
@@ -294,11 +289,16 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     cutout_shape = cutout.shape
     _y, _x = np.mgrid[:cutout_shape[0], :cutout_shape[1]]
 
-    # Add the wavelength and spatial shifts to the coordinates to map to
+    # Scale the trace location to the subsampled psf and
+    # add the wavelength and spatial shifts to the coordinates to map to
+    psf_subpix = psf_model.meta.psf.subpix
+    psf_location = trace - bbox[0][0]
     if dispaxis == HORIZONTAL:
+        psf_shift = psf_model.meta.psf.center_row - (psf_location * psf_subpix)
         xidx = wave_idx
         yidx = _y * psf_subpix + psf_shift
     else:
+        psf_shift = psf_model.meta.psf.center_col - (psf_location * psf_subpix)
         xidx = _x * psf_subpix + psf_shift[:, None]
         yidx = wave_idx
 

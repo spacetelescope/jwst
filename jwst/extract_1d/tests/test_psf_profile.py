@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import MiriLrsPsfModel
+from stdatamodels.jwst.datamodels import SpecPsfModel
 
 from jwst.extract_1d import psf_profile as pp
 from jwst.tests.helpers import LogWatcher
@@ -22,10 +22,10 @@ def log_watcher(monkeypatch):
 @pytest.mark.parametrize('exp_type', ['MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'UNKNOWN'])
 def test_open_psf(psf_reference_file, exp_type):
     # for any exptype, a model that can be read
-    # as MiriLrsPsfModel will be, since it's the only
+    # as SpecPsfModel will be, since it's the only
     # one implemented so far
     with pp.open_psf(psf_reference_file, exp_type=exp_type) as model:
-        assert isinstance(model, MiriLrsPsfModel)
+        assert isinstance(model, SpecPsfModel)
 
 
 def test_open_psf_fail():

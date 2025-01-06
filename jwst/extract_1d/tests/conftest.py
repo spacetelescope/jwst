@@ -490,11 +490,12 @@ def nirspec_fs_apcorr_file(tmp_path, nirspec_fs_apcorr):
 
 @pytest.fixture()
 def psf_reference():
-    psf_model = dm.MiriLrsPsfModel()
+    psf_model = dm.SpecPsfModel()
     psf_model.data = np.ones((50, 50), dtype=float)
     psf_model.wave = np.linspace(0, 10, 50)
     psf_model.meta.psf.subpix = 1.0
     psf_model.meta.psf.center_col = 25
+    psf_model.meta.psf.center_row = 25
     yield psf_model
     psf_model.close()
 
@@ -508,13 +509,14 @@ def psf_reference_file(tmp_path, psf_reference):
 
 @pytest.fixture()
 def psf_reference_with_source():
-    psf_model = dm.MiriLrsPsfModel()
+    psf_model = dm.SpecPsfModel()
     psf_model.data = np.full((50, 50), 1e-6)
     psf_model.data[:, 24:27] += 1.0
 
     psf_model.wave = np.linspace(0, 10, 50)
     psf_model.meta.psf.subpix = 1.0
     psf_model.meta.psf.center_col = 25
+    psf_model.meta.psf.center_row = 25
     yield psf_model
     psf_model.close()
 
