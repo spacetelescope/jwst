@@ -483,7 +483,7 @@ def _nod_pair_from_slitpos(input_model, middle_wl):
     return location
 
 
-def nod_pair_location(input_model, middle_wl, dispaxis):
+def nod_pair_location(input_model, middle_wl):
     """Estimate a nod pair location from the WCS.
 
     For MIRI, it will first attempt to guess the location from the
@@ -497,8 +497,6 @@ def nod_pair_location(input_model, middle_wl, dispaxis):
         Model containing WCS and dither data.
     middle_wl : float
         Wavelength at the middle of the array.
-    dispaxis : int
-        Dispersion axis.
 
     Returns
     -------
@@ -509,6 +507,7 @@ def nod_pair_location(input_model, middle_wl, dispaxis):
     exp_type = input_model.meta.exposure.type
     nod_center = np.nan
     if exp_type == 'MIR_LRS-FIXEDSLIT':
+        dispaxis = input_model.meta.wcsinfo.dispersion_direction
         nod_center = _nod_pair_from_dither(input_model, middle_wl, dispaxis)
     elif exp_type.startswith('NRS'):
         nod_center = _nod_pair_from_slitpos(input_model, middle_wl)

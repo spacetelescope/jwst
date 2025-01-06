@@ -279,7 +279,7 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
             log.info('Input data was not a two-point nod. '
                      'A negative trace will not be modeled.')
         else:
-            nod_center = nod_pair_location(input_model, middle_wl, dispaxis)
+            nod_center = nod_pair_location(input_model, middle_wl)
             if np.isnan(nod_center) or (np.abs(location - nod_center) < 2):
                 log.warning('Nod center could not be estimated from the WCS.')
                 log.warning('The negative nod will not be modeled.')
