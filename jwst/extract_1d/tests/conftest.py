@@ -38,8 +38,12 @@ def simple_wcs():
     def get_transform(*args, **kwargs):
         def return_results(*args, **kwargs):
             if len(args) == 2:
-                zeros = np.zeros(args[0].shape)
-                wave, _ = np.meshgrid(args[0], args[1])
+                try:
+                    zeros = np.zeros(args[0].shape)
+                    wave, _ = np.meshgrid(args[0], args[1])
+                except AttributeError:
+                    zeros = 0.0
+                    wave = args[0]
                 return zeros, zeros, wave
             if len(args) == 3:
                 try:
@@ -91,10 +95,17 @@ def simple_wcs_transpose():
             pix = np.arange(nx)
             trace = np.ones(nx)
         except TypeError:
-            pix = 0
-            trace = 1
+            pix = 0.0
+            trace = 1.0
         return trace, pix
 
+    # Mock a simple forward transform, for mocking a v2v3 frame
+    def get_transform(*args, **kwargs):
+        def return_results(*args, **kwargs):
+            return 1.0, 1.0, 1.0
+        return return_results
+
+    simple_wcs_function.get_transform = get_transform
     simple_wcs_function.backward_transform = backward_transform
     simple_wcs_function.available_frames = []
 
