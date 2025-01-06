@@ -56,7 +56,7 @@ opencv-python-headless==4.10.0.84
 openpyxl==3.1.5
 packaging==24.2
 Parsley==1.3
-photutils==2.0.2
+photutils==2.1.0
 pillow==11.1.0
 pluggy==1.5.0
 poppy==1.1.1
