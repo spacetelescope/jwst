@@ -220,12 +220,12 @@ def test_update_throughput(engine, throughput):
 
 
 def test_create_kernels(webb_kernels, engine):
-    """test_atoca_utisl.test_get_c_matrix already tests the creation
+    """test_atoca_utils.test_get_c_matrix already tests the creation
     of individual kernels for different input types, here just ensure
     the options get passed into that function properly"""
 
-    kernels_0 = engine._create_kernels(webb_kernels, None)
-    kernels_1 = engine._create_kernels([None, None], None)
+    kernels_0 = engine._create_kernels(webb_kernels)
+    kernels_1 = engine._create_kernels([None, None])
 
     for kernel_list in [kernels_0, kernels_1]:
         assert len(kernel_list) == 2

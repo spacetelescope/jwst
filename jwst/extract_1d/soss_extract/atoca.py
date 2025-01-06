@@ -57,7 +57,7 @@ class ExtractionEngine:
     def __init__(self, wave_map, trace_profile, throughput, kernels,
                  wave_grid, mask_trace_profile,
                  global_mask=None,
-                 orders=[1,2], threshold=1e-3, c_kwargs=None):
+                 orders=[1,2], threshold=1e-3):
         """
         Parameters
         ----------
@@ -99,10 +99,6 @@ class ExtractionEngine:
             its estimated spatial profile is greater than this threshold value.
             If it is not properly modeled (not covered by the wavelength grid),
             it will be masked. Default is 1e-3.
-        c_kwargs : list of N_ord dictionaries or dictionary, optional
-            Inputs keywords arguments to pass to
-            `convolution.get_c_matrix` function for each order.
-            If dictionary, the same c_kwargs will be used for each order.
         """
 
         # Set the attributes and ensure everything has correct dtype
@@ -165,7 +161,7 @@ class ExtractionEngine:
         self.general_mask = self.mask.copy()
 
         # turn kernels into sparse matrix
-        self.kernels = self._create_kernels(kernels, c_kwargs)
+        self.kernels = self._create_kernels(kernels)
         
         # Compute integration weights. see method self.get_w() for details.
         self.weights, self.weights_k_idx = self.compute_weights()
@@ -231,38 +227,26 @@ class ExtractionEngine:
         self.throughput = np.array(throughput_new, dtype=self.dtype)
 
 
-    def _create_kernels(self, kernels, c_kwargs):
+    def _create_kernels(self, kernels):
         """Make sparse matrix from input kernels
-
-        TODO: the only kwarg ever passed in here appears to be thresh, which already gets
-        handled internally... so can we remove all kwargs handling here?
 
         Parameters
         ----------
         kernels : callable, sparse matrix, or None
             Convolution kernel to be applied on the spectrum (f_k) for each order.
             If None, kernel is set to 1, i.e., do not do any convolution.
-        c_kwargs : list of N_ord dictionaries or dictionary, optional
-            Inputs keywords arguments to pass to
-            `convolution.get_c_matrix` function for each order.
-            If dictionary, the same c_kwargs will be used for each order.
         """
 
-        # If c_kwargs not given, use the kernels min_value attribute.
+        # Take thresh to be the kernels min_value attribute.
         # It is a way to make sure that the full kernel is used.
-        if c_kwargs is None:
-            c_kwargs = []
-            for ker in kernels:
-                try:
-                    kwargs_ker = {'thresh': ker.min_value} 
-                except AttributeError:
-                    # take the get_c_matrix defaults
-                    kwargs_ker = {}
-                c_kwargs.append(kwargs_ker)
-
-        # ...or same for all orders if only a dictionary was given
-        elif isinstance(c_kwargs, dict):
-            c_kwargs = [c_kwargs for _ in kernels]
+        c_kwargs = []
+        for ker in kernels:
+            try:
+                kwargs_ker = {'thresh': ker.min_value} 
+            except AttributeError:
+                # take the get_c_matrix defaults
+                kwargs_ker = {}
+            c_kwargs.append(kwargs_ker)
 
         # Define convolution sparse matrix.
         kernels_new = []

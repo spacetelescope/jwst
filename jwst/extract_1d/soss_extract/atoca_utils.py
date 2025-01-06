@@ -7,6 +7,7 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 """
 
 import numpy as np
+from numpy.polynomial import Polynomial
 import warnings
 from scipy.sparse import diags, csr_matrix
 from scipy.sparse.linalg import spsolve, lsqr, MatrixRankWarning
@@ -242,9 +243,6 @@ def _extrapolate_grid(wave_grid, wave_range, poly_ord=1):
     by fitting the derivative with a polynomial of a given order and using it to
     compute subsequent values at both ends of the grid.
 
-    TODO: np.polyfit is considered legacy now, should be replaced by
-    https://numpy.org/doc/stable/reference/routines.polynomials-package.html
-
     Parameters
     ----------
     wave_grid : array[float]
@@ -272,8 +270,7 @@ def _extrapolate_grid(wave_grid, wave_range, poly_ord=1):
 
     # Define delta_wave as a function of wavelength by fitting a polynomial.
     delta_wave = np.diff(wave_grid)
-    pars = np.polyfit(wave_grid[:-1], delta_wave, poly_ord)
-    f_delta = np.poly1d(pars)
+    f_delta = Polynomial.fit(wave_grid[:-1], delta_wave, poly_ord)
 
     # Set a minimum delta value to avoid running forever
     min_delta = delta_wave.min()/10
@@ -365,8 +362,6 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1):
     """Define a wavelength grid by taking the central wavelength at each columns
     given by the center of mass of the spatial profile (so one wavelength per
     column). If wave_range is outside of the wave_map, extrapolate.
-    TODO: question for SOSS team: I doubt it matters much, but is the current
-    behavior of wave_range ok or should it be inclusive?
 
     Parameters
     ----------
@@ -912,10 +907,11 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
             wv[i_good] = wave_trace[index[i_good]]
 
             # Fit n=1 polynomial
-            poly_i = np.polyfit(i_surround[~wv.mask], wv[~wv.mask], 1)
+            f = Polynomial.fit(i_surround[~wv.mask], wv[~wv.mask], 1)
+            poly_i = f.coef[::-1] # Reverse order to match old behavior from legacy np.polyval
 
             # Project on os pixel grid
-            wave_kernels[:, i_cen] = np.poly1d(poly_i)(self.pixels)
+            wave_kernels[:, i_cen] = f(self.pixels)
 
             # Save coeffs
             poly.append(poly_i)
@@ -1917,8 +1913,6 @@ class Tikhonov:
         sln, err, reg = [], [], []
 
         # Test all factors
-        # TODO: does this need to be in a for loop? is it possible to allow solve
-        # to do a single large matrix multiplication?
         for i_fac, factor in enumerate(factors):
 
             # Save solution

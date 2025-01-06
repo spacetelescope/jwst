@@ -57,9 +57,6 @@ def _min_max_scaler(x, x_min, x_max):
 def wavecal_model_order1_poly(refmodel, x, pwcpos):
     """Compute order 1 wavelengths.
 
-    TODO: surely there are numpy or scipy builtins to avoid having to write
-    out this polynomial expansion by hand?
-
     Parameters
     ----------
     refmodel : PastasossModel
@@ -202,9 +199,6 @@ def wavecal_model_order2_poly(refmodel, x, pwcpos):
 def _rotate(x, y, angle, origin=(0, 0)):
     """
     Applies a rotation transformation to a set of 2D points.
-
-    TODO: surely there are scipy builtins for this? is there
-    any difference between this and ndimage.rotate or something?
 
     Parameters
     ----------

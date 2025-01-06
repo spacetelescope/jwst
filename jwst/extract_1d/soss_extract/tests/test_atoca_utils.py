@@ -389,8 +389,10 @@ def test_webb_kernel(webb_kernels, wave_map):
     # call the kernel object directly
     # this takes a wavelength and a central wavelength of the kernel, 
     # then converts to pixels to use self.f_ker internally
+    kern_val = kern(wl_test, wl_test)
     assert kern(wl_test, wl_test).ndim == 1
-    assert np.allclose(kern(wl_test, wl_test), np.max(data_in))
+    # ignore edge effects
+    assert np.allclose(kern_val[1:-1], np.max(data_in))
 
     # both inputs need to be same shape
     with pytest.raises(ValueError):

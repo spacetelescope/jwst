@@ -389,6 +389,8 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
 def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     """
     Bin the flux to the pixel grid and build a SpecModel.
+    TODO: if we made this return its trace model, could we avoid repeated code
+    inside _build_tracemodel_order?
 
     Parameters
     ----------
@@ -473,6 +475,21 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
 
     # Project on detector and save in dictionary
     tracemodel_ord = model.rebuild(flux_order, fill_value=np.nan)
+
+    # import matplotlib.pyplot as plt
+    # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 12))
+    # ax1.imshow(engine.trace_profile[0], origin='lower', aspect='auto', cmap='viridis')
+    # ax1.set_title("Trace Profile")
+    # ax2.plot(grid_order, flux_order)
+    # ax2.set_title("flux vs wl")
+    # cim = ax3.imshow(engine.wave_map[i_order], origin='lower', aspect='auto', cmap='viridis', vmin=0.7, vmax=0.9)
+    # ax3.set_title("wavelengths")
+    # fig.colorbar(cim, ax=ax3)
+    # ax4.imshow(tracemodel_ord, origin='lower', aspect='auto', cmap='viridis', vmin=0, vmax=80)
+    # ax4.set_title("trace model")
+    # for ax in [ax1, ax3, ax4]:
+    #     ax.set_xlim([1100, 1400])
+    # plt.show()
 
     # Build 1d spectrum integrated over pixels
     pixel_wave_grid, valid_cols = _get_native_grid_from_trace(ref_files, sp_ord)
@@ -605,16 +622,12 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     else:
         log.info('Using previously computed or user specified wavelength grid.')
 
-    # Set the c_kwargs using the minimum value of the kernels
-    c_kwargs = [{'thresh': webb_ker.min_value} for webb_ker in ref_file_args[3]]
-
     # Initialize the Engine.
     engine = ExtractionEngine(*ref_file_args,
                               wave_grid=wave_grid,
                               mask_trace_profile=mask_trace_profile,
                               global_mask=scimask,
-                              threshold=threshold,
-                              c_kwargs=c_kwargs)
+                              threshold=threshold)
 
     spec_list = []
     if tikfac is None:
@@ -1033,7 +1046,7 @@ def run_extract1d(input_model, pastasoss_ref_name,
     speckernel_ref_name : str
         Name of the speckernel reference file.
     subarray : str
-        Subarray on which the data were recorded; one of 'SUBSTRIPT96',
+        Subarray on which the data were recorded; one of 'SUBSTRIP96',
         'SUBSTRIP256' or 'FULL'.
     soss_filter : str
         Filter in place during observations; one of 'CLEAR' or 'F277W'.
@@ -1161,8 +1174,8 @@ def run_extract1d(input_model, pastasoss_ref_name,
         # Pre-compute the weights for box extraction (used in modeling and extraction)
         args = (ref_files, scidata_bkg.shape)
         box_weights, wavelengths = _compute_box_weights(*args, width=soss_kwargs['width'])
+
         # FIXME: hardcoding the substrip96 weights to unity is a band-aid solution
-        # and needs to be fixed with this PR
         if subarray == 'SUBSTRIP96':
             box_weights['Order 2'] = np.ones((96, 2048))
 
