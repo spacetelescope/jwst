@@ -21,7 +21,7 @@ asdf_standard==1.1.1
 asdf_transform_schemas==0.5.0
 asdf_wcs_schemas==0.4.0
 astropy==7.0.0
-astropy-iers-data==0.2024.12.30.0.33.36
+astropy-iers-data==0.2025.1.6.0.33.42
 attrs==24.3.0
 BayesicFitting==3.2.3
 certifi==2024.12.14
