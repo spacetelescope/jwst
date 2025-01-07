@@ -117,6 +117,16 @@ of sky in the images. This method cannot measure the true sky level, but
 instead provides additive corrections that can be used to equalize the signal
 between overlapping images.
 
+User-Supplied Sky Values
+-------------------------
+The ``skymatch`` step can also accept user-supplied sky values for each image.
+This is useful when sky values have been determined based on a custom workflow
+outside the pipeline. To use this feature, the user must provide a list of sky
+values matching the number of images (``skylist`` parameter) and set the
+``skymethod`` parameter to "user". Note that the skylist will be applied on a
+per-image basis irrespective of the groups defined in the association, and the
+order of the list must match the order of the input images.
+
 Examples
 --------
 To get a better idea of the behavior of these different methods, the tables below
