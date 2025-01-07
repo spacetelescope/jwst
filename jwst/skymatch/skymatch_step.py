@@ -24,7 +24,7 @@ from jwst.datamodels import ModelLibrary
 from ..stpipe import Step
 
 # LOCAL:
-from .skymatch import match
+from .skymatch import skymatch
 from .skyimage import SkyImage, SkyGroup
 from .skystatistics import SkyStats
 
@@ -42,9 +42,10 @@ class SkyMatchStep(Step):
 
     spec = """
         # General sky matching parameters:
-        skymethod = option('local', 'global', 'match', 'global+match', default='match') # sky computation method
+        skymethod = option('local', 'global', 'match', 'global+match', 'user', default='match') # sky computation method
         match_down = boolean(default=True) # adjust sky to lowest measured value?
         subtract = boolean(default=False) # subtract computed sky from image data?
+        skylist = list(default=None) # List of sky values to use when skymethod='user'
 
         # Image's bounding polygon parameters:
         stepsize = integer(default=None) # Max vertex separation
@@ -105,8 +106,8 @@ class SkyMatchStep(Step):
                     images.append(SkyGroup(sky_images, id=group_index))
 
         # match/compute sky values:
-        match(images, skymethod=self.skymethod, match_down=self.match_down,
-              subtract=self.subtract)
+        skymatch(images, skymethod=self.skymethod, match_down=self.match_down,
+              subtract=self.subtract, skylist=self.skylist)
 
         # set sky background value in each image's meta:
         with library:

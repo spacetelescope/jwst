@@ -12,7 +12,7 @@ import numpy as np
 from . skyimage import SkyImage, SkyGroup
 
 
-__all__ = ['match']
+__all__ = ['skymatch']
 
 
 __author__ = 'Mihai Cara'
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def match(images, skymethod='global+match', match_down=True, subtract=False):
+def skymatch(images, skymethod='global+match', match_down=True, subtract=False, skylist=None):
     """
     A function to compute and/or "equalize" sky background in input images.
 
@@ -40,7 +40,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         A list of of :py:class:`~jwst.skymatch.skyimage.SkyImage` or
         :py:class:`~jwst.skymatch.skyimage.SkyGroup` objects.
 
-    skymethod : {'local', 'global+match', 'global', 'match'}, optional
+    skymethod : {'local', 'global+match', 'global', 'match', 'user'}, optional
         Select the algorithm for sky computation:
 
         * **'local'** : compute sky background values of each input image or
@@ -80,6 +80,10 @@ drizzlepac/astrodrizzle.html>`_
             containing diffuse sources (e.g., galaxies, nebulae)
             covering significant parts of the image.
 
+        * **'user'** : use a list of sky values provided by the user
+            (parameter `skylist`) to set sky values for each input image/group.
+            The list of sky values must be in the same order as the input.
+
     match_down : bool, optional
         Specifies whether the sky *differences* should be subtracted from
         images with higher sky values (`match_down` = `True`) to match the
@@ -94,6 +98,8 @@ drizzlepac/astrodrizzle.html>`_
     subtract : bool (Default = False)
         Subtract computed sky value from image data.
 
+    skylist : list of float, optional
+        A list of sky values to use when `skymethod` is set to `'user'`.
 
     Raises
     ------
@@ -233,7 +239,7 @@ drizzlepac/astrodrizzle.html>`_.
         in sky levels.
 
     """
-    function_name = match.__name__
+    function_name = skymatch.__name__
 
     # Time it
     runtime_begin = datetime.now()
@@ -245,9 +251,9 @@ drizzlepac/astrodrizzle.html>`_.
 
     # check sky method:
     skymethod = skymethod.lower()
-    if skymethod not in ['local', 'global', 'match', 'global+match']:
+    if skymethod not in ['local', 'global', 'match', 'global+match', 'user']:
         raise ValueError("Unsupported 'skymethod'. Valid values are: "
-                         "'local', 'global', 'match', or 'global+match'")
+                         "'local', 'global', 'match', 'global+match', or 'user'")
     do_match = 'match' in skymethod
     do_global = 'global' in skymethod
     show_old = subtract
@@ -278,6 +284,15 @@ drizzlepac/astrodrizzle.html>`_.
         "Total number of images to be sky-subtracted and/or matched: {:d}"
         .format(nimages)
     )
+
+    # check skylist is valid if skymethod is 'user'
+    if skymethod == 'user':
+        if skylist is None:
+            raise ValueError("When 'skymethod' is set to 'user', 'skylist' "
+                             "must be a list of sky values for each image.")
+        if len(skylist) != nimages:
+            raise ValueError("Length of 'skylist' must be equal to the number "
+                             "of images in 'images'.")
 
     # Print conversion factors
     log.debug(" ")
@@ -334,7 +349,7 @@ drizzlepac/astrodrizzle.html>`_.
     #
     # 3. Method: "global". Compute the minimum sky background
     #    value *across* *all* sky line members.
-    if do_global or not do_match:
+    if do_global or skymethod == 'local':
 
         log.info(" ")
         if do_global:
@@ -365,6 +380,13 @@ drizzlepac/astrodrizzle.html>`_.
             log.info("----  Final (match+global) sky for:")
 
         _apply_sky(images, sky_deltas, do_global, subtract, show_old)
+    
+    # 4. Method: "user". Use user-provided sky values.
+    if skymethod == 'user':
+        log.info(" ")
+        log.info("----  Using user-provided sky values for each image.")
+
+        _apply_sky(images, skylist, False, subtract, show_old)
 
     # log running time:
     runtime_end = datetime.now()
