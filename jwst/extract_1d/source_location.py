@@ -7,7 +7,8 @@ from stdatamodels.jwst.transforms.models import IdealToV2V3
 from jwst.assign_wcs.util import wcs_bbox_from_shape
 
 
-__all__ = ['middle_from_wcs', 'location_from_wcs', 'nod_pair_location']
+__all__ = ['middle_from_wcs', 'location_from_wcs', 'trace_from_wcs',
+           'nod_pair_location']
 
 HORIZONTAL = 1
 """Horizontal dispersion axis."""
