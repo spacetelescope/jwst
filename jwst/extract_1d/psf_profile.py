@@ -8,9 +8,10 @@ from jwst.extract_1d.extract1d import extract1d
 from jwst.extract_1d.source_location import (
     middle_from_wcs, nod_pair_location, trace_from_wcs)
 
+__all__ = ['psf_profile']
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
 
 HORIZONTAL = 1
 VERTICAL = 2
