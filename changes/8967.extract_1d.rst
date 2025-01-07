@@ -1,0 +1,1 @@
+Add options for PSF-based optimal extraction for point sources in MIRI LRS fixed slit exposures.
