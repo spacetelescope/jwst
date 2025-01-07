@@ -81,8 +81,10 @@ drizzlepac/astrodrizzle.html>`_
             covering significant parts of the image.
 
         * **'user'** : use a list of sky values provided by the user
-            (parameter `skylist`) to set sky values for each input image/group.
+            (parameter `skylist`) to set sky values for each input image.
             The list of sky values must be in the same order as the input.
+            The sky values will always be applied on a per-image basis, even
+            if some of the inputs are grouped (i.e., have the same sequence_id).
 
     match_down : bool, optional
         Specifies whether the sky *differences* should be subtracted from
@@ -385,6 +387,13 @@ drizzlepac/astrodrizzle.html>`_.
     if skymethod == 'user':
         log.info(" ")
         log.info("----  Using user-provided sky values for each image.")
+
+        # unpack groups into individual images. assumption is that user-defined background values
+        # have been figured out on a per-model basis, agnostic of group membership.
+        for im in images:
+            if isinstance(im, SkyGroup):
+                images.remove(im)
+                images.extend(im)
 
         _apply_sky(images, skylist, False, subtract, show_old)
 

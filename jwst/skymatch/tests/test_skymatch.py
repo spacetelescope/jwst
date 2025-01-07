@@ -162,7 +162,7 @@ def _add_bad_pixels(im, sat_val, dont_use_val):
     'skymethod, subtract, skystat, match_down, grouped',
     tuple(
         product(
-            ['local', 'match', 'global', 'global+match'],
+            ['local', 'match', 'global', 'global+match', 'user'],
             [False, True],
             ['median', 'mean', 'midpt', 'mode'],
             [False, True],
@@ -211,7 +211,8 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
         skystat=skystat,
         binwidth=0.2,
         nclip=0,
-        dqbits='~DO_NOT_USE+SATURATED'
+        dqbits='~DO_NOT_USE+SATURATED',
+        skylist=levels
     )
 
     if skymethod == 'match' and grouped:
@@ -242,6 +243,9 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
 
     elif skymethod == 'global':
         ref_levels = len(levels) * [min(levels)]
+
+    elif skymethod == 'user':
+        ref_levels = levels
 
     sub_levels = np.subtract(levels, ref_levels)
 
