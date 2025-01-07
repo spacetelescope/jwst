@@ -18,7 +18,7 @@ def log_watcher(monkeypatch):
 
 
 @pytest.mark.parametrize('dispaxis', [1, 2])
-def test_middle_from_wcs_variable_wl(dispaxis):
+def test_middle_from_wcs_constant_wl(dispaxis):
     # mock a wcs that returns a constant wavelength
     def mock_wcs(x, y):
         return None, None, np.full(x.shape, 10.0)
