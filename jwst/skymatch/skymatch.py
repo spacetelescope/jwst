@@ -390,12 +390,14 @@ drizzlepac/astrodrizzle.html>`_.
 
         # unpack groups into individual images. assumption is that user-defined background values
         # have been figured out on a per-model basis, agnostic of group membership.
+        images_flattened = []
         for im in images:
             if isinstance(im, SkyGroup):
-                images.remove(im)
-                images.extend(im)
+                images_flattened.extend(im)
+            else:
+                images_flattened.append(im)
 
-        _apply_sky(images, skylist, False, subtract, show_old)
+        _apply_sky(images_flattened, skylist, False, subtract, show_old)
 
     # log running time:
     runtime_end = datetime.now()
