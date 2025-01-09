@@ -83,7 +83,7 @@ class CleanFlickerNoiseStep(Step):
             (reference type FLAT) is required. For modes that do not provide
             FLAT files via CRDS, including all NIRSpec modes, a manually
             generated override flat is required to enable this option.
-            Use the `override_flat` parameter to provide alternate flat images
+            Use the `override_flat` parameter to provide an alternate flat image
             as needed.
 
         n_sigma : float, optional
