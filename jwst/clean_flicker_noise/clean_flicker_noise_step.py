@@ -30,6 +30,7 @@ class CleanFlickerNoiseStep(Step):
         background_method = option('median', 'model', None, default='median') # Background fitting algorithm
         background_box_size = int_list(min=2, max=2, default=None)  # Background box size for modeled background
         mask_science_regions = boolean(default=False)  # Mask known science regions
+        apply_flat_field = boolean(default=False)  # Apply a flat correction before fitting background and noise
         n_sigma = float(default=2.0)  # Clipping level for non-background signal
         fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
         single_mask = boolean(default=True)  # Make a single mask for all integrations
@@ -39,6 +40,8 @@ class CleanFlickerNoiseStep(Step):
         save_noise = boolean(default=False)  # Save the fit noise
         skip = boolean(default=True)  # By default, skip the step
     """
+
+    reference_file_types = ['flat']
 
     def process(self, input):
         """
@@ -74,6 +77,15 @@ class CleanFlickerNoiseStep(Step):
             affected by failed-open MSA shutters.  For MIRI imaging, mask
             regions of the detector not used for science.
 
+        apply_flat_field : bool, optional
+            If set, images are flat-corrected prior to fitting background
+            and noise levels.  A full-frame flat field image
+            (reference type FLAT) is required. For modes that do not provide
+            FLAT files via CRDS, including all NIRSpec modes, a manually
+            generated override flat is required to enable this option.
+            Use the `override_flat` parameter to provide alternate flat images
+            as needed.
+
         n_sigma : float, optional
             Sigma clipping threshold to be used in detecting outliers in the image.
 
@@ -108,10 +120,23 @@ class CleanFlickerNoiseStep(Step):
         # Open the input data model
         with datamodels.open(input) as input_model:
 
+            flat_filename = None
+            if self.apply_flat_field:
+                flat_filename = self.get_reference_file(input_model, 'flat')
+                exp_type = input_model.meta.exposure.type
+                if flat_filename == 'N/A':
+                    self.log.warning(f"Flat correction is not available for "
+                                     f"exposure type {exp_type} without a user-"
+                                     f"supplied flat.")
+                    flat_filename = None
+                else:
+                    self.log.info(f'Using FLAT reference file: {flat_filename}')
+
             result = clean_flicker_noise.do_correction(
                 input_model, self.input_dir, self.fit_method, self.fit_by_channel,
                 self.background_method, self.background_box_size,
-                self.mask_science_regions, self.n_sigma, self.fit_histogram,
+                self.mask_science_regions, flat_filename,
+                self.n_sigma, self.fit_histogram,
                 self.single_mask, self.user_mask,
                 self.save_mask, self.save_background, self.save_noise)
             output_model, mask_model, background_model, noise_model, status = result
