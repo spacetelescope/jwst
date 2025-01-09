@@ -114,7 +114,7 @@ class SkyMatchStep(Step):
 
         # match/compute sky values:
         skymatch(images, skymethod=self.skymethod, match_down=self.match_down,
-              subtract=self.subtract, skylist=self.skylist)
+              subtract=self.subtract)
 
         # set sky background value in each image's meta:
         with library:
