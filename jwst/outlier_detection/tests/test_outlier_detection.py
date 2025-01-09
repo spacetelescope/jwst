@@ -9,8 +9,13 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
-from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.utils import _flag_resampled_model_crs
+from jwst.outlier_detection import (
+    OutlierDetectionCoronStep,
+    OutlierDetectionImagingStep,
+    OutlierDetectionTSOStep,
+    OutlierDetectionSpecStep,
+)
 from jwst.resample.tests.test_resample_step import miri_rate_model
 from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
 from jwst.resample.resample import ResampleData
@@ -267,7 +272,7 @@ def test_outlier_step_no_outliers(mirimage_three_sci, do_resample, tmp_cwd):
     container = ModelContainer(list(mirimage_three_sci))
     container[0].var_rnoise[10, 10] = 1E9
     pristine = ModelContainer([m.copy() for m in container])
-    OutlierDetectionStep.call(container, in_memory=True, resample_data=do_resample)
+    OutlierDetectionImagingStep.call(container, in_memory=True, resample_data=do_resample)
 
     # Make sure nothing changed in SCI and DQ arrays
     for image, uncorrected in zip(pristine, container):
@@ -286,7 +291,7 @@ def test_outlier_step_weak_cr_imaging(mirimage_three_sci, tmp_cwd):
         container.shelve(zeroth)
 
     # Verify that intermediate files are removed
-    OutlierDetectionStep.call(container)
+    OutlierDetectionImagingStep.call(container)
     i2d_files = glob(os.path.join(tmp_cwd, '*i2d.fits'))
     median_files = glob(os.path.join(tmp_cwd, '*median.fits'))
     assert len(i2d_files) == 0
@@ -296,7 +301,7 @@ def test_outlier_step_weak_cr_imaging(mirimage_three_sci, tmp_cwd):
     data_as_cube = list(container.map_function(
         lambda model, index: model.data.copy(), modify=False))
 
-    result = OutlierDetectionStep.call(
+    result = OutlierDetectionImagingStep.call(
         container, save_results=True, save_intermediate_results=True
     )
 
@@ -348,7 +353,7 @@ def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
     container[0].data[209, 37] += 1
 
     # Call outlier detection
-    result = OutlierDetectionStep.call(
+    result = OutlierDetectionSpecStep.call(
         container, resample_data=resample,
         output_dir=output_dir, save_results=True,
         save_intermediate_results=save_intermediate)
@@ -369,7 +374,7 @@ def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
         expected_intermediate = 0
     for dirname in [output_dir, tmp_cwd]:
         all_files = glob(os.path.join(dirname, '*.fits'))
-        result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+        result_files = glob(os.path.join(dirname, '*outlierdetectionspecstep.fits'))
         i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
         s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
         median_files = glob(os.path.join(dirname, '*median.fits'))
@@ -454,7 +459,7 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
     data_as_cube = list(container.map_function(
         lambda model, index: model.data.copy(), modify=False))
 
-    result = OutlierDetectionStep.call(
+    result = OutlierDetectionImagingStep.call(
         container, save_results=True, save_intermediate_results=True, in_memory=False
     )
 
@@ -479,7 +484,7 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
     dirname = tmp_cwd
     all_files = glob(os.path.join(dirname, '*.fits'))
     input_files = glob(os.path.join(dirname, '*_cal.fits'))
-    result_files = glob(os.path.join(dirname, '*outlierdetectionstep.fits'))
+    result_files = glob(os.path.join(dirname, '*outlierdetectionimagingstep.fits'))
     i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
     s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
     median_files = glob(os.path.join(dirname, '*median.fits'))
@@ -518,7 +523,7 @@ def test_outlier_step_square_source_no_outliers(mirimage_three_sci, tmp_cwd):
             dq_as_cube.append(model.dq.copy())
             container.shelve(model, modify=False)
 
-    result = OutlierDetectionStep.call(container, in_memory=True)
+    result = OutlierDetectionImagingStep.call(container, in_memory=True)
 
     # Make sure nothing changed in SCI and DQ arrays
     with container:
@@ -549,7 +554,7 @@ def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
     # coron3 will provide a CubeModel so convert the container to a cube
     cube = container_to_cube(container)
 
-    result = OutlierDetectionStep.call(cube)
+    result = OutlierDetectionCoronStep.call(cube)
 
     # Make sure nothing changed in SCI array except that
     # outliers are NaN
@@ -588,7 +593,7 @@ def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
 
     cube = container_to_cube(im)
 
-    result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
+    result = OutlierDetectionTSOStep.call(cube, rolling_window_width=rolling_window_width)
 
     # Make sure nothing changed in SCI array except
     # that outliers are NaN

@@ -2,9 +2,10 @@ import numpy as np
 from jwst.resample.resample_utils import build_mask
 
 from jwst import datamodels as dm
+from jwst.stpipe import Step
 
 from stcal.outlier_detection.utils import compute_weight_threshold
-from .utils import flag_model_crs, nanmedian3D
+from .utils import flag_model_crs, nanmedian3D, OutlierDetectionStepBase
 from ._fileio import save_median
 
 import logging
@@ -12,58 +13,71 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-__all__ = ["detect_outliers"]
+__all__ = ["OutlierDetectionTSOStep"]
 
 
-def detect_outliers(
-    input_model,
-    save_intermediate_results,
-    good_bits,
-    maskpt,
-    rolling_window_width,
-    snr,
-    make_output_path,
-):
+class OutlierDetectionTSOStep(Step, OutlierDetectionStepBase):
+    """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
+    Input images can be listed in an input association file or already opened
+    with a ModelContainer.  DQ arrays are modified in place.
+
+    Parameters
+    -----------
+    input_data : ~jwst.datamodels.CubeModel or str
+        CubeModel or filename pointing to a CubeModel.
     """
-    Flag outliers in tso data.
+    class_alias = "outlier_detection_tso"
 
-    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    spec = """
+        maskpt = float(default=0.7)
+        snr = float(default=5.0)
+        rolling_window_width = integer(default=25)
+        save_intermediate_results = boolean(default=False)
+        good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
     """
-    if not isinstance(input_model, dm.JwstDataModel):
-        input_model = dm.open(input_model)
-    if isinstance(input_model, dm.ModelContainer):
-        raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
-    weighted_cube = weight_no_resample(input_model, good_bits)
 
-    weight_threshold = compute_weight_threshold(weighted_cube.wht, maskpt)
+    def process(self, input_model):
+        """Perform outlier detection processing on input data."""
 
-    if (rolling_window_width > 1) and (rolling_window_width < weighted_cube.shape[0]):
-        medians = compute_rolling_median(weighted_cube, weight_threshold, w=rolling_window_width)
+        # determine the asn_id (if not set by the pipeline)
+        asn_id = self._get_asn_id(input_model)
+        self.log.info(f"Outlier Detection asn_id: {asn_id}")
 
-    else:
-        medians = nanmedian3D(weighted_cube.data, overwrite_input=False)
-        # this is a 2-D array, need to repeat it into the time axis
-        # for consistent shape with rolling median case
-        medians = np.broadcast_to(medians, weighted_cube.shape)
+        if not isinstance(input_model, dm.JwstDataModel):
+            input_model = dm.open(input_model)
+        if isinstance(input_model, dm.ModelContainer):
+            raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
+        weighted_cube = weight_no_resample(input_model, self.good_bits)
 
-    # Save median model if pars['save_intermediate_results'] is True
-    # this will be a CubeModel with rolling median values.
-    if save_intermediate_results:
-        median_model = dm.CubeModel(data=medians)  # type: ignore[name-defined]
-        with dm.open(weighted_cube) as dm0:
-            median_model.update(dm0)
-        save_median(median_model, make_output_path)
-        del median_model
+        weight_threshold = compute_weight_threshold(weighted_cube.wht, self.maskpt)
 
-    # no need for blotting, resample is turned off for TSO
-    # go straight to outlier detection
-    log.info("Flagging outliers")
-    flag_model_crs(
-        input_model,
-        medians,
-        snr,
-    )
-    return input_model
+        if (self.rolling_window_width > 1) and (self.rolling_window_width < weighted_cube.shape[0]):
+            medians = compute_rolling_median(weighted_cube, weight_threshold, w=self.rolling_window_width)
+
+        else:
+            medians = nanmedian3D(weighted_cube.data, overwrite_input=False)
+            # this is a 2-D array, need to repeat it into the time axis
+            # for consistent shape with rolling median case
+            medians = np.broadcast_to(medians, weighted_cube.shape)
+
+        # Save median model if pars['save_intermediate_results'] is True
+        # this will be a CubeModel with rolling median values.
+        if self.save_intermediate_results:
+            median_model = dm.CubeModel(data=medians)  # type: ignore[name-defined]
+            with dm.open(weighted_cube) as dm0:
+                median_model.update(dm0)
+            save_median(median_model, self.make_output_path)
+            del median_model
+
+        # no need for blotting, resample is turned off for TSO
+        # go straight to outlier detection
+        log.info("Flagging outliers")
+        flag_model_crs(
+            input_model,
+            medians,
+            self.snr,
+        )
+        return self._set_status(input_model, True)
 
 
 def weight_no_resample(input_model, good_bits):

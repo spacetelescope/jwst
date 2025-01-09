@@ -1,32 +1,3 @@
-"""
-Submodule defined for performing outlier detection on IFU data.
-
-This is the controlling routine for the outlier detection process.
-It loads and sets the various input data and parameters needed to flag
-outliers.  Pixel are flagged as outliers based on the MINIMUM difference
-a pixel has with its neighbor across all the input cal files.
-
-Notes
------
-This routine performs the following operations::
-
-  1. Extracts parameter settings from input ModelContainer and merges
-     them with any user-provided values
-  2. Loop over cal files
-     a. read in science data
-     b. Store computed neighbor differences for all the pixels.
-        The neighbor pixel  differences are defined by the dispersion axis.
-        For MIRI, with the dispersion axis along the y axis, the neighbors that are used to
-        to find the differences are to the left and right of each pixel being examined.
-        For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
-        find the differences are above and below the pixel being examined.
-  3. For each input file store the  minimum of the pixel neighbor differences
-  4. Comparing all the differences from all the input data find the minimum neighbor difference
-  5. Normalize minimum difference to local median of difference array
-  6. Select outliers by flagging those normalized minimum values > threshold_percent
-  7. Updates input ImageModel DQ arrays with mask of detected outliers.
-"""
-
 import logging
 
 import numpy as np
@@ -34,77 +5,110 @@ import numpy as np
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe.utilities import record_step_status
+from jwst.stpipe import Step
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from stcal.outlier_detection.utils import medfilt
+from .utils import OutlierDetectionStepBase
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["detect_outliers"]
+__all__ = ["OutlierDetectionIFUStep"]
 
 
-def detect_outliers(
-    input_models,
-    save_intermediate_results,
-    kernel_size,
-    ifu_second_check,
-    threshold_percent,
-    make_output_path,
-):
+class OutlierDetectionIFUStep(Step, OutlierDetectionStepBase):
+    """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
+    Input images can be listed in an input association file or already opened
+    with a ModelContainer.  DQ arrays are modified in place.
+    Parameters
+    -----------
+    input_models : asn file or ~jwst.datamodels.ModelContainer
+        Single filename association table, or a datamodels.ModelContainer.
+    Notes
+    -----
+    This routine performs the following operations.
+    1. Extracts parameter settings from input ModelContainer and merges
+        them with any user-provided values
+    2. Loop over cal files
+        a. read in science data
+        b. Store computed neighbor differences for all the pixels.
+            The neighbor pixel  differences are defined by the dispersion axis.
+            For MIRI, with the dispersion axis along the y axis, the neighbors that are used to
+            to find the differences are to the left and right of each pixel being examined.
+            For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
+            find the differences are above and below the pixel being examined.
+    3. For each input file store the  minimum of the pixel neighbor differences
+    4. Comparing all the differences from all the input data find the minimum neighbor difference
+    5. Normalize minimum difference to local median of difference array
+    6. select outliers by flagging those normailzed minimum values > threshold_percent
+    7. Updates input ImageModel DQ arrays with mask of detected outliers.
     """
-    Flag outliers in ifu data.
 
-    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    class_alias = "outlier_detection_ifu"
+
+    spec = """
+        kernel_size = string(default='7 7')
+        threshold_percent = float(default=99.8)
+        ifu_second_check = boolean(default=False)
+        save_intermediate_results = boolean(default=False)
     """
-    if not isinstance(input_models, ModelContainer):
-        input_models = ModelContainer(input_models)
 
-    if len(input_models) < 2:
-        log.warning(f"Input only contains {len(input_models)} exposures")
-        log.warning("Outlier detection will be skipped")
-        record_step_status(input_models, "outlier_detection", False)
-        return input_models
+    def process(self, input_models):
+        """Perform outlier detection processing on input data."""
 
-    sizex, sizey = [int(val) for val in kernel_size.split()]
-    kern_size = np.zeros(2, dtype=int)
-    kern_size[0] = sizex
-    kern_size[1] = sizey
+        # determine the asn_id (if not set by the pipeline)
+        asn_id = self._get_asn_id(input_models)
+        self.log.info(f"Outlier Detection asn_id: {asn_id}")
 
-    # check if kernel size is an odd value
-    if kern_size[0] % 2 == 0:
-        log.info("X kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
-        kern_size[0] = kern_size[0] + 1
-        log.info("New x kernel size is {}: ".format(kern_size[0]))
-    if kern_size[1] % 2 == 0:
-        log.info("Y kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
-        kern_size[1] = kern_size[1] + 1
-        log.info("New y kernel size is {}: ".format(kern_size[1]))
+        if not isinstance(input_models, ModelContainer):
+            input_models = ModelContainer(input_models)
 
-    (diffaxis, ny, nx) = _find_detector_parameters(input_models)
+        if len(input_models) < 2:
+            log.warning(f"Input only contains {len(input_models)} exposures")
+            log.warning("Outlier detection will be skipped")
+            record_step_status(input_models, "outlier_detection", False)
+            return input_models
 
-    nfiles = len(input_models)
-    detector = np.empty(nfiles, dtype='<U15')
-    for i, model in enumerate(input_models):
-        detector[i] = model.meta.instrument.detector.lower()
+        sizex, sizey = [int(val) for val in self.kernel_size.split()]
+        kern_size = np.zeros(2, dtype=int)
+        kern_size[0] = sizex
+        kern_size[1] = sizey
 
-    exptype = input_models[0].meta.exposure.type
-    log.info("Performing IFU outlier_detection for exptype {}".format(
-             exptype))
-    # How many unique values of detector?
-    uq_det = np.unique(detector)
-    ndet = len(uq_det)
-    for idet in range(ndet):
-        indx = (np.where(detector == uq_det[idet]))[0]
-        ndet_files = int(len(indx))
-        flag_outliers(input_models,
-                      idet, uq_det, ndet_files,
-                      diffaxis, nx, ny,
-                      kern_size, threshold_percent,
-                      save_intermediate_results,
-                      ifu_second_check,
-                      make_output_path)
-    return input_models
+        # check if kernel size is an odd value
+        if kern_size[0] % 2 == 0:
+            log.info("X kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
+            kern_size[0] = kern_size[0] + 1
+            log.info("New x kernel size is {}: ".format(kern_size[0]))
+        if kern_size[1] % 2 == 0:
+            log.info("Y kernel size is given as an even number. This value must be an odd number. Increasing number by 1")
+            kern_size[1] = kern_size[1] + 1
+            log.info("New y kernel size is {}: ".format(kern_size[1]))
+
+        (diffaxis, ny, nx) = _find_detector_parameters(input_models)
+
+        nfiles = len(input_models)
+        detector = np.empty(nfiles, dtype='<U15')
+        for i, model in enumerate(input_models):
+            detector[i] = model.meta.instrument.detector.lower()
+
+        exptype = input_models[0].meta.exposure.type
+        log.info("Performing IFU outlier_detection for exptype {}".format(
+                exptype))
+        # How many unique values of detector?
+        uq_det = np.unique(detector)
+        ndet = len(uq_det)
+        for idet in range(ndet):
+            indx = (np.where(detector == uq_det[idet]))[0]
+            ndet_files = int(len(indx))
+            flag_outliers(input_models,
+                        idet, uq_det, ndet_files,
+                        diffaxis, nx, ny,
+                        kern_size, self.threshold_percent,
+                        self.save_intermediate_results,
+                        self.ifu_second_check,
+                        self.make_output_path)
+        return self._set_status(input_models, True)
 
 
 def flag_outliers(input_models, idet, uq_det, ndet_files,

@@ -19,7 +19,7 @@ from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..master_background import master_background_step
 from ..mrs_imatch import mrs_imatch_step
-from ..outlier_detection import outlier_detection_step
+from ..outlier_detection import outlier_detection_spec_step, outlier_detection_ifu_step
 from ..resample import resample_spec_step
 from ..combine_1d import combine_1d_step
 from ..photom import photom_step
@@ -42,7 +42,7 @@ class Spec3Pipeline(Pipeline):
     assign moving target wcs (assign_mtwcs)
     master background subtraction (master_background)
     MIRI MRS background matching (mrs_imatch)
-    outlier detection (outlier_detection)
+    outlier detection (outlier_detection_spec or outlier_detection_ifu)
     2-D spectroscopic resampling (resample_spec)
     3-D spectroscopic resampling (cube_build)
     1-D spectral extraction (extract_1d)
@@ -60,7 +60,8 @@ class Spec3Pipeline(Pipeline):
         'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
         'master_background': master_background_step.MasterBackgroundStep,
         'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
-        'outlier_detection': outlier_detection_step.OutlierDetectionStep,
+        'outlier_detection_spec': outlier_detection_spec_step.OutlierDetectionSpecStep,
+        'outlier_detection_ifu': outlier_detection_ifu_step.OutlierDetectionIFUStep,
         'pixel_replace': pixel_replace_step.PixelReplaceStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
@@ -85,8 +86,10 @@ class Spec3Pipeline(Pipeline):
         # Setup sub-step defaults
         self.master_background.suffix = 'mbsub'
         self.mrs_imatch.suffix = 'mrs_imatch'
-        self.outlier_detection.suffix = 'crf'
-        self.outlier_detection.save_results = self.save_results
+        self.outlier_detection_spec.suffix = 'crf'
+        self.outlier_detection_spec.save_results = self.save_results
+        self.outlier_detection_ifu.suffix = 'crf'
+        self.outlier_detection_ifu.save_results = self.save_results
         self.resample_spec.suffix = 's2d'
         self.resample_spec.save_results = self.save_results
         self.cube_build.suffix = 's3d'
@@ -104,7 +107,8 @@ class Spec3Pipeline(Pipeline):
         # These steps save intermediate files, resulting in meta.filename
         # being modified. This can affect the filenames of subsequent
         # steps.
-        self.outlier_detection.save_model = invariant_filename(self.outlier_detection.save_model)
+        self.outlier_detection_spec.save_model = invariant_filename(self.outlier_detection_spec.save_model)
+        self.outlier_detection_ifu.save_model = invariant_filename(self.outlier_detection_ifu.save_model)
         self.pixel_replace.save_model = invariant_filename(self.pixel_replace.save_model)
 
         # Retrieve the inputs:
@@ -227,10 +231,9 @@ class Spec3Pipeline(Pipeline):
                 for cal_array in result:
                     cal_array.meta.asn.table_name = op.basename(input_models.asn_table_name)
                 if exptype in IFU_EXPTYPES:
-                    self.outlier_detection.mode = 'ifu'
+                    result = self.outlier_detection_ifu.run(result)
                 else:
-                    self.outlier_detection.mode = 'spec'
-                result = self.outlier_detection.run(result)
+                    result = self.outlier_detection_spec.run(result)
 
                 # interpolate pixels that have a NaN value or are flagged
                 # as DO_NOT_USE or NON_SCIENCE.

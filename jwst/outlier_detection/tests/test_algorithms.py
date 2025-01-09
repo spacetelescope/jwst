@@ -1,6 +1,6 @@
 import numpy as np
 
-from jwst.outlier_detection.tso import moving_median_over_zeroth_axis
+from jwst.outlier_detection.outlier_detection_tso_step import moving_median_over_zeroth_axis
 
 
 def test_rolling_median():

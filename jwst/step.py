@@ -36,7 +36,11 @@ from .master_background.master_background_mos_step import MasterBackgroundMosSte
 from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
 from .nsclean.nsclean_step import NSCleanStep
-from .outlier_detection.outlier_detection_step import OutlierDetectionStep
+from .outlier_detection.outlier_detection_coron_step import OutlierDetectionCoronStep
+from .outlier_detection.outlier_detection_ifu_step import OutlierDetectionIFUStep
+from .outlier_detection.outlier_detection_imaging_step import OutlierDetectionImagingStep
+from .outlier_detection.outlier_detection_spec_step import OutlierDetectionSpecStep
+from .outlier_detection.outlier_detection_tso_step import OutlierDetectionTSOStep
 from .pathloss.pathloss_step import PathLossStep
 from .persistence.persistence_step import PersistenceStep
 from .photom.photom_step import PhotomStep
@@ -101,7 +105,11 @@ __all__ = [
     "MRSIMatchStep",
     "MSAFlagOpenStep",
     "NSCleanStep",
-    "OutlierDetectionStep",
+    "OutlierDetectionCoronStep",
+    "OutlierDetectionIFUStep",
+    "OutlierDetectionImagingStep",
+    "OutlierDetectionSpecStep",
+    "OutlierDetectionTSOStep",
     "PathLossStep",
     "PersistenceStep",
     "PhotomStep",

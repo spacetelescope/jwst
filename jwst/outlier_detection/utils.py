@@ -1,6 +1,7 @@
 """Utilities for outlier detection methods."""
 
 import copy
+from abc import ABC, abstractmethod
 from functools import partial
 import numpy as np
 
@@ -10,6 +11,8 @@ from jwst.resample.resample_utils import build_driz_weight
 from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
 from stcal.outlier_detection.median import MedianComputer, nanmedian3D
 from stdatamodels.jwst import datamodels
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.stpipe.utilities import record_step_status
 from . import _fileio
 
 import logging
@@ -19,6 +22,59 @@ log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
 OUTLIER = datamodels.dqflags.pixel['OUTLIER']
+
+
+class OutlierDetectionStepBase(ABC):
+    """Minimal base class holding common methods for outlier detection steps."""
+
+    @abstractmethod
+    def search_attr(self, attr, **kwargs):
+        pass
+
+    @abstractmethod
+    def _make_output_path(self):
+        pass
+
+    def _get_asn_id(self, input_models):
+        """Find association ID for any allowed input model type,
+        and update make_output_path such that the association ID
+        is included in intermediate and output file names."""
+        # handle if input_models isn't open
+        if isinstance(input_models, (str, dict)):
+            input_models = datamodels.open(input_models, asn_n_members=1)
+
+        # Setup output path naming if associations are involved.
+        try:   
+            if isinstance(input_models, ModelLibrary):
+                asn_id = input_models.asn["asn_id"]
+            elif isinstance(input_models, ModelContainer):
+                asn_id = input_models.asn_table["asn_id"]
+            else:
+                asn_id = input_models.meta.asn_table.asn_id
+        except (AttributeError, KeyError):
+            asn_id = None
+
+        if asn_id is None:
+            asn_id = self.search_attr('asn_id')
+        if asn_id is not None:
+            _make_output_path = self.search_attr(
+                '_make_output_path', parent_first=True
+            )
+
+            self._make_output_path = partial(
+                _make_output_path,
+                asn_id=asn_id
+            )
+        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        return
+
+    def _set_status(self, input_models, status):
+        # this might be called with the input which might be a filename or path
+        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
+            input_models = datamodels.open(input_models)
+
+        record_step_status(input_models, "outlier_detection", status)
+        return input_models
 
 
 def create_cube_median(cube_model, maskpt):
