@@ -53,8 +53,8 @@ def run_spec3_optimal(rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["x1d", "profile", "scene_model"])
-def test_miri_lrs_slit_spec2(run_spec2_optimal, fitsdiff_default_kwargs,
-                             rtdata_module, suffix):
+def test_miri_lrs_slit_spec2_optimal(
+        run_spec2_optimal, fitsdiff_default_kwargs, rtdata_module, suffix):
     """Regression test for MIRI LRS FS optimal extraction in spec2."""
     rtdata = rtdata_module
     output = f"jw01530005001_03103_00001_mirimage_opt_{suffix}.fits"
@@ -71,8 +71,8 @@ def test_miri_lrs_slit_spec2(run_spec2_optimal, fitsdiff_default_kwargs,
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["0_x1d", "1_x1d", "0_profile",  "1_profile",
                                     "0_scene_model", "1_scene_model", "c1d"])
-def test_miri_lrs_slit_spec3(run_spec3_optimal, fitsdiff_default_kwargs,
-                             rtdata_module, suffix):
+def test_miri_lrs_slit_spec3_optimal(
+        run_spec3_optimal, fitsdiff_default_kwargs, rtdata_module, suffix):
     """Regression test for MIRI LRS FS optimal extraction in spec3."""
     rtdata = rtdata_module
     output = f"jw01530-o005_t004_miri_p750l_{suffix}.fits"
