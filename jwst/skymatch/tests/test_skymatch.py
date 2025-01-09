@@ -551,3 +551,33 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
             else:
                 assert abs(np.mean(im2.data[dq_mask]) - lev) < 0.01
             result2.shelve(im2)
+
+
+def test_user_sky_bad_inputs(nircam_rate):
+
+    im1 = nircam_rate.copy()
+    im2 = im1.copy()
+    im3 = im1.copy()
+    
+    container = [im1, im2, im3]
+
+    # define some background:
+    levels = [9.12, 8.28, 2.56]
+
+    for im, lev in zip(container, levels):
+        im.data += lev
+
+    with pytest.raises(ValueError):
+        # skylist must be provided
+        SkyMatchStep.call(
+            container,
+            skymethod='user',
+        )
+
+    with pytest.raises(ValueError):
+        # skylist must have the same length as the number of input images
+        SkyMatchStep.call(
+            container,
+            skymethod='user',
+            skylist=levels[:-1]
+        )

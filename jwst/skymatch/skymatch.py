@@ -382,22 +382,6 @@ drizzlepac/astrodrizzle.html>`_.
             log.info("----  Final (match+global) sky for:")
 
         _apply_sky(images, sky_deltas, do_global, subtract, show_old)
-    
-    # 4. Method: "user". Use user-provided sky values.
-    if skymethod == 'user':
-        log.info(" ")
-        log.info("----  Using user-provided sky values for each image.")
-
-        # unpack groups into individual images. assumption is that user-defined background values
-        # have been figured out on a per-model basis, agnostic of group membership.
-        images_flattened = []
-        for im in images:
-            if isinstance(im, SkyGroup):
-                images_flattened.extend(im)
-            else:
-                images_flattened.append(im)
-
-        _apply_sky(images_flattened, skylist, False, subtract, show_old)
 
     # log running time:
     runtime_end = datetime.now()

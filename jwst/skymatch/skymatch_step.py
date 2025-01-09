@@ -28,6 +28,9 @@ from .skymatch import skymatch
 from .skyimage import SkyImage, SkyGroup
 from .skystatistics import SkyStats
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 
 __all__ = ['SkyMatchStep']
 
@@ -76,6 +79,10 @@ class SkyMatchStep(Step):
             library = input
         else:
             library = ModelLibrary(input, on_disk=not self.in_memory)
+
+        # Method: "user". Use user-provided sky values, and bypass skymatch() altogether.
+        if self.skymethod == 'user':
+            return self._user_sky(library)
 
         self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 
@@ -217,3 +224,30 @@ class SkyMatchStep(Step):
 
         dm.meta.cal_step.skymatch = step_status
         library.shelve(dm, index)
+
+
+    def _user_sky(self, library):
+        """Handle user-provided sky values for each image.
+        """
+
+        log.info(" ")
+        log.info("----  Using user-provided sky values for each image.")
+
+        if self.skylist is None:
+            raise ValueError('skymethod set to "user", but no sky values provided.')
+        if len(self.skylist) != len(library):
+            raise ValueError(f"Number of entries in skylist ({len(self.skylist)}) does not match "
+                             f"number of input images ({len(library)}).")
+
+        with library:
+            for i, model in enumerate(library):
+                sky = self.skylist[i]
+                model.meta.background.level = sky
+                model.meta.background.subtracted = self.subtract
+                model.meta.background.method = self.skymethod
+                if self.subtract:
+                    model.data[...] -= sky
+                model.meta.cal_step.skymatch = "COMPLETE"
+                library.shelve(model)
+
+        return library
