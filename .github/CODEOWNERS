@@ -7,4 +7,5 @@
 /.github/ @spacetelescope/jwst-pipeline-developers  # CI files
 /* @spacetelescope/jwst-pipeline-developers  # top level files only
 /changes/** @spacetelescope/jwst-pipeline-developers  # changelogs
-/docs/** @spacetelescope/jwst-pipeline-developers  # changelogs
+/docs/** @spacetelescope/jwst-pipeline-developers  # docs
+/jwst/regtest/** @spacetelescope/jwst-pipeline-developers  # regtest code
