@@ -487,8 +487,8 @@ def _nod_pair_from_slitpos(input_model, middle_wl):
 def nod_pair_location(input_model, middle_wl):
     """Estimate a nod pair location from the WCS.
 
-    For MIRI, it will first attempt to guess the location from the
-    dither offsets.  For NIRSpec, it will guess from the slit position.
+    For MIRI, it will guess the location from the dither offsets.
+    For NIRSpec, it will guess from the slit position.
     For anything else, or if the estimate fails, it will return NaN
     for the location.
 
