@@ -1043,13 +1043,14 @@ def _read_flat_file(input_model, flat_filename):
         return None
 
     # Open the provided flat as FlatModel
+    log.debug('Dividing by flat data prior to fitting')
     flat = datamodels.FlatModel(flat_filename)
 
     # Extract subarray from reference data, if necessary
     if ref_matches_sci(input_model, flat):
         flat_data = flat.data
     else:
-        log.info("Extracting matching subarray from flat")
+        log.debug("Extracting matching subarray from flat")
         sub_flat = get_subarray_model(input_model, flat)
         flat_data = sub_flat.data
         sub_flat.close()
