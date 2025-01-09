@@ -1,10 +1,13 @@
 .. _outlier-detection-ifu:
 
-Integral Field Unit (IFU) Data
-==============================
+Overview
+========
 
-This module serves as the interface for applying ``outlier_detection`` to IFU
-observations, like those taken with NIRSpec and MIRI. A :ref:`Stage 3 association <asn-level3-techspecs>`,
+This module serves as the interface for detecting outliers in IFU
+observations, namely those taken in the following modes:
+'MIR_MRS', 'NRS_IFU'.
+
+A :ref:`Stage 3 association <asn-level3-techspecs>`,
 which is loaded into a :py:class:`~jwst.datamodels.ModelContainer` object,
 serves as the basic format for all processing performed by this step.
 
@@ -22,7 +25,7 @@ by the detector PSF.
 This routine performs the following operations:
 
 #. Extract parameter settings for the input ModelContainer and merge them with any user-provided values.
-   See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list of parameters.
+   See :ref:`arguments <outlier_detection_ifu_step_args>` for the full list of parameters.
 
 #. Loop over cal files, computing nearest-neighbor differences for each pixel
    in the along-dispersion direction.
@@ -46,3 +49,5 @@ This routine performs the following operations:
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.
+
+``OutlierDetectionIFUStep`` does not use any reference files.

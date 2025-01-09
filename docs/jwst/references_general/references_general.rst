@@ -644,8 +644,8 @@ Note: Words like "highly" and "large" will be defined by each instrument team.  
 Parameter Specification
 =======================
 
-There are a number of steps, such as :ref:`OutlierDetectionStep
-<outlier_detection_step>` or :ref:`SkyMatchStep <skymatch_step>`, that define
+There are a number of steps, such as :ref:`OutlierDetectionImagingStep
+<outlier_detection_imaging_step>` or :ref:`SkyMatchStep <skymatch_step>`, that define
 what data quality flags a pixel is allowed to have to be considered in
 calculations. Such parameters can be set in a number of ways.
 

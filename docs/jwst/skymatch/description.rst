@@ -48,9 +48,7 @@ BKGSUB
   (see the :ref:`skymatch step arguments <skymatch_arguments>` for more details).
 
 Both the "BKGSUB" and "BKGLEVEL" keyword values are important information for
-downstream tasks, such as
-:ref:`outlier detection <outlier_detection_step>` and
-:ref:`resampling <resample_step>`.
+downstream tasks, such as outlier detection and resampling.
 Outlier detection will use the BKGLEVEL values to internally equalize the images,
 which is necessary to prevent false detections due to overall differences in
 signal levels between images, and the resample step will subtract the BKGLEVEL

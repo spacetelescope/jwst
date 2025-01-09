@@ -21,28 +21,39 @@ class OutlierDetectionIFUStep(Step, OutlierDetectionStepBase):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
     Input images can be listed in an input association file or already opened
     with a ModelContainer.  DQ arrays are modified in place.
+
     Parameters
-    -----------
+    ----------
     input_models : asn file or ~jwst.datamodels.ModelContainer
         Single filename association table, or a datamodels.ModelContainer.
+
     Notes
     -----
     This routine performs the following operations.
-    1. Extracts parameter settings from input ModelContainer and merges
-        them with any user-provided values
-    2. Loop over cal files
-        a. read in science data
-        b. Store computed neighbor differences for all the pixels.
-            The neighbor pixel  differences are defined by the dispersion axis.
-            For MIRI, with the dispersion axis along the y axis, the neighbors that are used to
-            to find the differences are to the left and right of each pixel being examined.
-            For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
-            find the differences are above and below the pixel being examined.
-    3. For each input file store the  minimum of the pixel neighbor differences
-    4. Comparing all the differences from all the input data find the minimum neighbor difference
-    5. Normalize minimum difference to local median of difference array
-    6. select outliers by flagging those normailzed minimum values > threshold_percent
-    7. Updates input ImageModel DQ arrays with mask of detected outliers.
+
+    #. Extracts parameter settings from input ModelContainer and merges
+       them with any user-provided values
+
+    #. Loop over cal files
+
+       #. read in science data
+
+       #. Store computed neighbor differences for all the pixels.
+          The neighbor pixel  differences are defined by the dispersion axis.
+          For MIRI, with the dispersion axis along the y axis, the neighbors that are used to
+          to find the differences are to the left and right of each pixel being examined.
+          For NIRSpec, with the dispersion along the x axis, the neighbors that are used to
+          find the differences are above and below the pixel being examined.
+
+    #. For each input file store the  minimum of the pixel neighbor differences
+
+    #. Comparing all the differences from all the input data find the minimum neighbor difference
+
+    #. Normalize minimum difference to local median of difference array
+
+    #. select outliers by flagging those normailzed minimum values > threshold_percent
+
+    #. Updates input ImageModel DQ arrays with mask of detected outliers.
     """
 
     class_alias = "outlier_detection_ifu"

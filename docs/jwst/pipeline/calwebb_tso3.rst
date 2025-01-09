@@ -17,17 +17,17 @@ exposures are shown below:
 
 .. checkmark
 
-+---------------------------------------------------+---------+--------------+
-| calwebb_tso3                                      | Imaging | Spectroscopy |
-+===================================================+=========+==============+
-| :ref:`outlier_detection <outlier_detection_step>` | |check| | |check|      |
-+---------------------------------------------------+---------+--------------+
-| :ref:`tso_photometry <tso_photometry_step>`       | |check| |              |
-+---------------------------------------------------+---------+--------------+
-| :ref:`extract_1d <extract_1d_step>`               |         | |check|      |
-+---------------------------------------------------+---------+--------------+
-| :ref:`white_light <white_light_step>`             |         | |check|      |
-+---------------------------------------------------+---------+--------------+
++-------------------------------------------------------+---------+--------------+
+| calwebb_tso3                                          | Imaging | Spectroscopy |
++=======================================================+=========+==============+
+| :ref:`outlier_detection <outlier_detection_tso_step>` | |check| | |check|      |
++-------------------------------------------------------+---------+--------------+
+| :ref:`tso_photometry <tso_photometry_step>`           | |check| |              |
++-------------------------------------------------------+---------+--------------+
+| :ref:`extract_1d <extract_1d_step>`                   |         | |check|      |
++-------------------------------------------------------+---------+--------------+
+| :ref:`white_light <white_light_step>`                 |         | |check|      |
++-------------------------------------------------------+---------+--------------+
 
 The logic that decides whether to apply the imaging or spectroscopy steps is based
 on the EXP_TYPE and TSOVISIT keyword values of the input data. Imaging steps are
@@ -59,7 +59,7 @@ their individual exposure products too large (in terms of file size on disk) to 
 conveniently. In these cases, the uncalibrated raw data for a given exposure are split into
 multiple "segmented" products, each of which is identified with a segment number
 (see :ref:`segmented products <segmented_files>`). The ``calwebb_tso3`` input ASN file includes
-all "_calints" exposure segments. The :ref:`outlier_detection <outlier_detection_step>` step will
+all "_calints" exposure segments. The :ref:`outlier_detection <outlier_detection_tso_step>` step will
 process a single segment at a time, creating one output "_crfints" product per segment. The
 remaining ``calwebb_tso3`` steps, will process each segment and concatenate the results into a
 single output product, containing the results for all exposures and segments listed in the ASN.
@@ -73,7 +73,7 @@ Outputs
 :Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _crfints
 
-If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version
+If the :ref:`outlier_detection <outlier_detection_tso_step>` step is applied, a new version
 of each input calibrated product is created, which contains a DQ array
 that has been updated to flag pixels detected as outliers. This updated
 product is known as a CR-flagged product and is saved as a "_crfints" product type.

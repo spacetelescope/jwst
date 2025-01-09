@@ -15,21 +15,21 @@ The steps applied by the ``calwebb_image3`` pipeline are shown below.
 This pipeline is intended for non-TSO imaging only. TSO imaging data should be
 processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 
-+--------------------------------------------------+
-| calwebb_image3                                   |
-+==================================================+
-| :ref:`assign_mtwcs <assign_mtwcs_step>`          |
-+--------------------------------------------------+
-| :ref:`tweakreg <tweakreg_step>`                  |
-+--------------------------------------------------+
-| :ref:`skymatch <skymatch_step>`                  |
-+--------------------------------------------------+
-| :ref:`outlier_detection <outlier_detection_step>`|
-+--------------------------------------------------+
-| :ref:`resample <resample_step>`                  |
-+--------------------------------------------------+
-| :ref:`source_catalog <source_catalog_step>`      |
-+--------------------------------------------------+
++----------------------------------------------------------+
+| calwebb_image3                                           |
++==========================================================+
+| :ref:`assign_mtwcs <assign_mtwcs_step>`                  |
++----------------------------------------------------------+
+| :ref:`tweakreg <tweakreg_step>`                          |
++----------------------------------------------------------+
+| :ref:`skymatch <skymatch_step>`                          |
++----------------------------------------------------------+
+| :ref:`outlier_detection <outlier_detection_imaging_step>`|
++----------------------------------------------------------+
+| :ref:`resample <resample_step>`                          |
++----------------------------------------------------------+
+| :ref:`source_catalog <source_catalog_step>`              |
++----------------------------------------------------------+
 
 Arguments
 ---------
@@ -64,7 +64,7 @@ CR-flagged exposures
 :Data model: `~jwst.datamodels.ImageModel`
 :File suffix: _crf
 
-If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version
+If the :ref:`outlier_detection <outlier_detection_imaging_step>` step is applied, a new version
 of each input calibrated exposure is created, in which the DQ array has been updated to
 flag pixels detected as outliers. These files use the "_crf" (CR-Flagged)
 product type suffix and also includes the association candidate ID as a

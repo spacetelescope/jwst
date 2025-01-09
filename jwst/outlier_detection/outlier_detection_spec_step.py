@@ -15,6 +15,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["OutlierDetectionSpecStep"]
 
 class OutlierDetectionSpecStep(Step, OutlierDetectionStepBase):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
