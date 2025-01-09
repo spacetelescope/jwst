@@ -33,7 +33,6 @@ def open_psf(psf_refname, exp_type):
     Returns
     -------
     psf_model : SpecPsfModel
-        Currently only works on MIRI LRS-FIXEDSLIT exposures.
         Returns the EPSF model.
 
     """
@@ -161,22 +160,24 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
                 optimize_shifts=True, model_nod_pair=True):
     """Create a spatial profile from a PSF reference.
 
-    Currently only works on MIRI LRS-FIXEDSLIT exposures.
-    Input data must be point source.
-
-    The extraction routine can support multiple sources for
-    simultaneous extraction, but for this first version, we will assume
-    one source only, located at the planned position (dither RA/Dec), and
-    return a single profile.
+    This is intended to provide PSF-based profiles for point sources,
+    for slit-like data containing one positive trace and, optionally,
+    one negative trace resulting from nod subtraction.  The location of
+    the positive trace should be provided in the `trace` input parameter;
+    the negative trace location will be guessed from the input metadata.
+    If a negative trace is modeled, it is recommended that `optimize_shifts`
+    also be set to True, to improve the initial guess for the trace
+    location.
 
     Parameters
     ----------
     input_model : data model
         This can be either the input science file or one SlitModel out of
         a list of slits.
-    trace : ndarray
+    trace : ndarray or None
         Array of source cross-dispersion position values, one for each
-        dispersion element in the input model data.
+        dispersion element in the input model data.  If None, the source
+        is assumed to be at the center of the slit.
     wl_array : ndarray
         Array of wavelength values, matching the input model data shape, for
         each pixel in the array.
