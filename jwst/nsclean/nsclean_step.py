@@ -101,13 +101,23 @@ class NSCleanStep(Step):
         # Open the input data model
         with datamodels.open(input) as input_model:
 
+            # clean_flicker_noise allows flat handling, but NIRSpec is
+            # not supported via CRDS files, since it does not have a full
+            # frame flat.  Since this step is for NIRSpec only, don't allow
+            # flat handling here.
+            flat_filename = None
+
             # Do the NSClean correction
             result = clean_flicker_noise.do_correction(
-                input_model, self.input_dir, self.fit_method, self.fit_by_channel,
-                self.background_method, self.background_box_size,
-                self.mask_spectral_regions, self.n_sigma, self.fit_histogram,
-                self.single_mask, self.user_mask,
-                self.save_mask, self.save_background, self.save_noise)
+                input_model, input_dir=self.input_dir, fit_method=self.fit_method,
+                fit_by_channel=self.fit_by_channel,
+                background_method=self.background_method,
+                background_box_size=self.background_box_size,
+                mask_science_regions=self.mask_spectral_regions, 
+                flat_filename=flat_filename, n_sigma=self.n_sigma,
+                fit_histogram=self.fit_histogram, single_mask=self.single_mask,
+                user_mask=self.user_mask, save_mask=self.save_mask,
+                save_background=self.save_background, save_noise=self.save_noise)
             output_model, mask_model, background_model, noise_model, status = result
 
             # Save the mask, if requested
