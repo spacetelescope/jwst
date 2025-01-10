@@ -20,10 +20,11 @@ the behavior of the processing.
   via `~photutils.background.Background2D`.
   If None, the background value is set to 0.0.
 
-``--background_box_size`` (list of int, default=(32,32))
+``--background_box_size`` (list of int, default=None)
   Box size for the data grid used by `~photutils.background.Background2D`
   when `background_method` = 'model'. For best results, use a
-  box size that evenly divides the input image shape.
+  box size that evenly divides the input image shape. If None, the largest
+  value between 1 and 32 that evenly divides the image dimension is used.
 
 ``--mask_science_regions`` (boolean, default=False)
   For NIRSpec, mask regions of the image defined by WCS bounding
