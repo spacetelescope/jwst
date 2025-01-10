@@ -59,7 +59,7 @@ You can also install a specific version:
 
     conda create -n <env_name> python=3.11
     conda activate <env_name>
-    pip install jwst==1.9.4
+    pip install jwst==1.16.1
 
 ### Installing the development version from Github
 
@@ -89,15 +89,15 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_stable-deps.txt
-    conda activate jwstdp-1.12.5
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_stable-deps.txt
+    conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_stable-deps.txt
+    conda activate jwstdp-1.16.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-1.12.5
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_macos-stable-deps.txt
+    conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.16.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_macos-stable-deps.txt
 
 Each DMS delivery has its own installation instructions, which may be found in
 the corresponding release documentation linked from this page:
@@ -216,12 +216,15 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.16.0              | B11.1rc1  | TBD      | 1281         | 2024-09-20 | TBD         | First release candidate for B11.1             |
-| 1.15.1              | B11.0     | 2024.2.2 | 1242         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |
-| 1.15.0              | B11.0rc1  |          | 1241         | 2024-06-26 |             | First release candidate for B11.0             |
-| 1.14.1              |           |          | 1238         | 2024-06-27 |             | PyPI-only release for external users          |
-| 1.14.0              | B10.2.1   | 2024.1.1 | 1238         | 2024-03-29 | 2024-06-12  | Final release candidate for B10.2.1           |
-| 1.13.4              |           |          | 1185         | 2024-01-25 |             | PyPI-only release for external users          |
+| 1.17.1              | B11.2     | TBD      | 1321         | 2024-01-02 | TBD         | Second release candidate for B11.2            |
+| 1.17.0              | B11.2     | TBD      | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
+| 1.16.1              | B11.1.1   | 2024.3.1 | 1303         | 2024-11-13 | 2024-12-06  | Final release candidate for B11.1             |
+| 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 |             | First release candidate for B11.1             |
+| 1.15.1              | B11.0     | 2024.2.2 | 1293         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |
+| 1.15.0              | B11.0rc1  |          | 1274         | 2024-06-26 |             | First release candidate for B11.0             |
+| 1.14.1              |           |          | 1240         | 2024-06-27 |             | PyPI-only release for external users          |
+| 1.14.0              | B10.2.1   | 2024.1.1 | 1240         | 2024-03-29 | 2024-06-12  | Final release candidate for B10.2.1           |
+| 1.13.4              |           |          | 1210         | 2024-01-25 |             | PyPI-only release for external users          |
 | 1.13.3              | B10.1     | 2023.4.0 | 1181         | 2024-01-05 |             | Final release candidate for B10.1             |
 | 1.13.2              | B10.1rc3  | 2023.4.0 | 1181         | 2023-12-21 |             | Third release candidate for B10.1             |
 | 1.13.1              | B10.1rc2  | 2023.4.0 | 1181         | 2023-12-19 |             | Second release candidate for B10.1            |

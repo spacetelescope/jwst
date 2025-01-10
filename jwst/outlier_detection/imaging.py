@@ -35,7 +35,6 @@ def detect_outliers(
     pixfrac,
     kernel,
     fillval,
-    allowed_memory,
     in_memory,
     make_output_path,
 ):
@@ -65,7 +64,6 @@ def detect_outliers(
             kernel=kernel,
             fillval=fillval,
             good_bits=good_bits,
-            allowed_memory=allowed_memory,
         )
         median_data, median_wcs = median_with_resampling(input_models,
                                                     resamp,

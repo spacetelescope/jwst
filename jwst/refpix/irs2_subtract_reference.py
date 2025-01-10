@@ -78,7 +78,6 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
     # of the input model will be copied to output at the end of the step.
     data = output_model.data.copy()
     pixeldq = output_model.pixeldq.copy()
-    output_model.meta.cal_step.refpix = 'not specified yet'
 
     # Load the reference file data.
     # The reference file data are complex, but they're stored as float, with

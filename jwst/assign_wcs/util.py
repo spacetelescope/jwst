@@ -127,7 +127,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     if spectral and disp_axis is None:
         raise ValueError('If input WCS is spectral, a disp_axis must be given')
 
-    crpix = np.array(wcs.invert(*fiducial))
+    crpix = np.array(wcs.invert(*fiducial, with_bounding_box=False))
 
     delta = np.zeros_like(crpix)
     spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
@@ -721,7 +721,7 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def transform_bbox_from_shape(shape):
+def transform_bbox_from_shape(shape, order="C"):
     """Create a bounding box from the shape of the data.
 
     This is appropriate to attached to a transform.
@@ -730,15 +730,19 @@ def transform_bbox_from_shape(shape):
     ----------
     shape : tuple
         The shape attribute from a `numpy.ndarray` array
+    order : str
+        The order of the array.  Either "C" or "F".
 
     Returns
     -------
     bbox : tuple
-        Bounding box in y, x order.
+        Bounding box in y, x order if order is "C" (default)
+        Boundsing box in x, y order if order is "F"
     """
     bbox = ((-0.5, shape[-2] - 0.5),
             (-0.5, shape[-1] - 0.5))
-    return bbox
+
+    return bbox if order == "C" else bbox[::-1]
 
 
 def wcs_bbox_from_shape(shape):
@@ -760,7 +764,7 @@ def wcs_bbox_from_shape(shape):
     return bbox
 
 
-def bounding_box_from_subarray(input_model):
+def bounding_box_from_subarray(input_model, order='C'):
     """Create a bounding box from the subarray size.
 
     Note: The bounding_box assumes full frame coordinates.
@@ -771,11 +775,14 @@ def bounding_box_from_subarray(input_model):
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
         The data model.
+    order : str
+        The order of the array.  Either "C" or "F".
 
     Returns
     -------
     bbox : tuple
-        Bounding box in y, x order.
+        Bounding box in y, x order if order is "C" (default)
+        Boundsing box in x, y order if order is "F"
     """
     bb_xstart = -0.5
     bb_xend = -0.5
@@ -788,7 +795,7 @@ def bounding_box_from_subarray(input_model):
         bb_yend = input_model.meta.subarray.ysize - 0.5
 
     bbox = ((bb_ystart, bb_yend), (bb_xstart, bb_xend))
-    return bbox
+    return bbox if order == 'C' else bbox[::-1]
 
 
 def update_s_region_imaging(model):

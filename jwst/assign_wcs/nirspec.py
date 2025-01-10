@@ -229,7 +229,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     # SLICER to MSA Entrance
     slicer2msa = slicer_to_msa(reference_files)
 
-    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
+    det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -241,7 +241,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     (slit_frame, slit2slicer),
-                    ('slicer', slicer2msa),
+                    (slicer_frame, slicer2msa),
                     (msa_frame, None)]
     else:
         # MSA to OTEIP transform
@@ -271,7 +271,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     (slit_frame, slit2slicer),
-                    ('slicer', slicer2msa),
+                    (slicer_frame, slicer2msa),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, va_corr),
@@ -352,7 +352,8 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "v2v3vacorr", "world"
-    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
+    # _ would be the slicer_frame that is not used
+    det, sca, gwa, slit_frame, _, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -726,8 +727,7 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
             quadrant = slitlet_rows[0]['shutter_quadrant']
             ycen = j
             xcen = slitlet_rows[0]['shutter_row']  # grab the first as they are all the same
-            shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
-
+            shutter_id = np.int64(xcen) + (np.int64(ycen) - 1) * 365  # shutter numbers in MSA file are 1-indexed
             # Background slits all have source_id=0 in the msa_file,
             # so assign a unique id based on the slitlet_id
             source_id = slitlet_id
@@ -750,7 +750,7 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
                  np.nan_to_num(s['estimated_source_in_shutter_x'], nan=0.5),
                  np.nan_to_num(s['estimated_source_in_shutter_y'], nan=0.5))
                 for s in slitlet_rows if s['background'] == 'N'][0]
-            shutter_id = xcen + (ycen - 1) * 365  # shutter numbers in MSA file are 1-indexed
+            shutter_id = np.int64(xcen) + (np.int64(ycen) - 1) * 365  # shutter numbers in MSA file are 1-indexed
 
             # y-size
             jmin = min([s['shutter_column'] for s in slitlet_rows])
@@ -1594,6 +1594,8 @@ def create_frames():
                              axes_names=('x_msa', 'y_msa'))
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                               axes_names=('x_slit', 'y_slit'))
+    slicer_spatial = cf.Frame2D(name='slicer_spatial', axes_order=(0, 1), unit=("", ""),
+                                axes_names=('x_slicer', 'y_slicer'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
                               unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
@@ -1607,12 +1609,13 @@ def create_frames():
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     v2v3vacorr = cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
+    slicer_frame = cf.CompositeFrame([slicer_spatial, spec], name='slicer')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')
     oteip_spatial = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
     world = cf.CompositeFrame([sky, spec], name='world')
-    return det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world
+    return det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world
 
 
 def create_imaging_frames():

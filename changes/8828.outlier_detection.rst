@@ -1,1 +1,0 @@
-For slit spectra, threshold outliers with a median error across exposures instead of input error from the exposure itself.

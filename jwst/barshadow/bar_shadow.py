@@ -364,7 +364,7 @@ def create_empty_shadow_array(nshutters):
 
     nshutters: int
         The length of the slit in shutters
-
+https://github.com/spacetelescope/gwcs/actions/runs/11661031952/job/32464576263
     Returns:
 
     empty_shadow: nddata_array

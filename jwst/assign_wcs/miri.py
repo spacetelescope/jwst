@@ -1,6 +1,7 @@
 import os.path
 import logging
 import numpy as np
+from astropy.modeling import bind_bounding_box
 from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
@@ -79,16 +80,17 @@ def imaging(input_model, reference_files):
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:
         distortion = subarray2full | distortion
-        distortion.bounding_box = bounding_box_from_subarray(input_model)
+
+        # Bind the bounding box to the distortion model using the bounding box ordering
+        # used by GWCS. This makes it clear the bounding box is set correctly to GWCS
+        bind_bounding_box(distortion, bounding_box_from_subarray(input_model, order="F"), order="F")
     else:
         # TODO: remove setting the bounding box if it is set in the new ref file.
         try:
-            bb = distortion.bounding_box
+            distortion.bounding_box
         except NotImplementedError:
             shape = input_model.data.shape
-            # Note: Since bounding_box is attached to the model here it's in reverse order.
-            bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
-            distortion.bounding_box = bb
+            bind_bounding_box(distortion, ((3.5, shape[1] - 4.5), (-0.5, shape[0] - 0.5)), order="F")
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
@@ -147,10 +149,11 @@ def imaging_distortion(input_model, reference_files):
 
     if col_offset is not None and row_offset is not None:
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
-    if bbox is None:
-        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
-    else:
-        distortion.bounding_box = bbox
+
+    # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
+    # This makes it clear the bounding box is set correctly to GWCS
+    bind_bounding_box(distortion, transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox, order="F")
+
     return distortion
 
 
@@ -307,6 +310,8 @@ def lrs_xytoabl(input_model, reference_files):
     dxmodel = models.Tabular1D(lookup_table=xshiftref, points=ycen_subarray, name='xshiftref',
                                  bounds_error=False, fill_value=np.nan)
 
+    if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+        bb_sub = (bb_sub[0], (dxmodel.points[0].min(), dxmodel.points[0].max()))
     # Fit for the wavelength as a function of Y
     # Reverse the vectors so that yinv is increasing (needed for spline fitting function)
     # Spline fit with enforced smoothness
@@ -365,7 +370,7 @@ def lrs_xytoabl(input_model, reference_files):
     dettoabl.inverse = models.Mapping((0, 1, 2, 0, 1, 2)) | aa & bb
 
     # Bounding box is the subarray bounding box, because we're assuming subarray coordinates passed in
-    dettoabl.bounding_box = bb_sub[::-1]
+    bind_bounding_box(dettoabl, bb_sub, order="F")
 
     return dettoabl
 
@@ -478,7 +483,7 @@ def ifu(input_model, reference_files):
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
     # Put the transforms together into a single transform
-    det2abl.bounding_box = transform_bbox_from_shape(input_model.data.shape)
+    bind_bounding_box(det2abl, transform_bbox_from_shape(input_model.data.shape, order="F"), order="F")
     pipeline = [(detector, det2abl),
                 (miri_focal, abl2v2v3l),
                 (v2v3, va_corr),

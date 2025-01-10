@@ -22,10 +22,29 @@ def run_detector1pipeline(rtdata_module):
             "--steps.saturation.save_results=True",
             "--steps.superbias.save_results=True",
             "--steps.refpix.save_results=True",
+            "--steps.refpix.refpix_algorithm=median",
             "--steps.linearity.save_results=True",
             "--steps.dark_current.save_results=True",
             "--steps.jump.save_results=True",
             "--steps.jump.rejection_threshold=50.0",
+            ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1pipeline_with_sirs(rtdata_module):
+    """Run calwebb_detector1 on NIRCam imaging long data using SIRS.
+
+    SIRS is the convolution kernel algorithm - Simple Improved Reference Subtraction.
+    """
+    rtdata = rtdata_module
+    rtdata.get_data("nircam/image/jw01345001001_10201_00001_nrca3_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["calwebb_detector1", rtdata.input,
+            "--output_file=jw01345001001_10201_00001_nrca3_sirs",
+            "--steps.refpix.refpix_algorithm=sirs",
+            "--steps.refpix.save_results=True",
             ]
     Step.from_cmdline(args)
 
@@ -87,6 +106,22 @@ def run_image3pipeline(run_image2pipeline, rtdata_module):
             "--steps.source_catalog.snr_threshold=20",
             ]
     Step.from_cmdline(args)
+
+
+@pytest.mark.bigdata
+def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsdiff_default_kwargs):
+    """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
+    rtdata = rtdata_module
+    rtdata.input = "jw01345001001_10201_00001_nrca3_uncal.fits"
+    output = "jw01345001001_10201_00001_nrca3_sirs_refpix.fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_nircam_image_stages/jw01345001001_10201_00001_nrca3_sirs_refpix.fits")
+
+    fitsdiff_default_kwargs["rtol"] = 5e-5
+    fitsdiff_default_kwargs["atol"] = 1e-4
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata

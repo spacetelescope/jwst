@@ -1,1 +1,0 @@
-Remove the outdated schema_editor script.
