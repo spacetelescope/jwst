@@ -38,7 +38,7 @@ the behavior of the processing.
   FLAT files via CRDS, including all NIRSpec modes, a manually
   generated override flat is required to enable this option.
   Use the `override_flat` parameter to provide an alternate flat image
-  as needed.
+  as needed (see :ref:`overriding reference files <intro_override_reference_file>`).
 
 ``--n_sigma`` (float, default=2.0)
   The sigma-clipping threshold to use when searching for outliers
