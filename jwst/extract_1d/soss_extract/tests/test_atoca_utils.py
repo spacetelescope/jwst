@@ -348,6 +348,10 @@ def test_webb_kernel(webb_kernels, wave_map):
     # basic ensure that the input is stored and shapes
     assert kern.wave_kernels.shape == kern.kernels.shape
 
+    # test that pixels and wave_kernels are both monotonic
+    assert np.all(np.diff(kern.pixels) > 0)
+    assert np.all(np.diff(kern.wave_kernels) > 0)
+
     # test that pixels is mirrored around the center and has zero at center
     assert np.allclose(kern.pixels + kern.pixels[::-1], 0)
     assert kern.pixels[kern.pixels.size//2] == 0

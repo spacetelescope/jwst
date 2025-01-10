@@ -154,9 +154,7 @@ def _get_wv_map_bounds(wave_map, dispersion_axis=1):
     i.e., as though index 2 and 5 were next to each other.
     A human (or a smarter linear interpolation) would figure out the slope is 2 and
     determine the value of wave_top[5] should most likely be 11.
-
-    TODO: the above note probably doesn't matter in practice, but see if SOSS team wants
-    to change this behavior.
+    This is found not to matter in practice for the current use cases.
     """
     if dispersion_axis == 1:
         # Simpler to use transpose
@@ -693,18 +691,6 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
     The precision is computed based on the estimate of the integrals
     using a first order Romberg integration.
 
-    TODO: the reliance on rel_err alone is not very robust. (on main,
-    an absolute tolerance can be specified but is always set to zero.)
-    for a simple test case, sometimes no matter how many times
-    you subdivide you still get the same relative error.
-    See test_adapt_grid in test_atoca_utils.py
-    The reason seems to be that you aren't comparing to the actual truth,
-    but instead an imperfect approx of the truth. The rel. difference between
-    those estimates is not necessarily going to improve even as the absolute
-    error does.  For now, setting absolute error to be a small value,
-    but it's not obvious in practice how to set this default because it depends 
-    on the units of the output spectrum.
-
     Parameters
     ----------
     grid: array
@@ -818,9 +804,9 @@ def ThroughputSOSS(wavelength, throughput):
     return interpolator
 
 
-class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need further adjustment.
+class WebbKernel:
 
-    def __init__(self, wave_kernels, kernels, wave_trace, n_pix):  # TODO kernels may need to be flipped?)
+    def __init__(self, wave_kernels, kernels, wave_trace, n_pix):
         """
         Initialize the kernel object.
 
@@ -1372,7 +1358,7 @@ def _curvature_finite(factors, log_reg2, log_chi2):
     factors : array[float]
         Sorted and cut version of input factors array.
     curvature : array[float]
-        TODO: add documentation
+        Second derivative of the log10 of the regularized chi2
     """
     # Make sure it is sorted according to the factors
     idx = np.argsort(factors)

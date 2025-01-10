@@ -616,7 +616,8 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     if wave_grid is None:
         log.info(f'wave_grid not given: generating grid based on rtol={rtol}')
         wave_grid = _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os)
-        log.debug(f'wave_grid covering from {wave_grid.min()} to {wave_grid.max()}')
+        log.debug(f'wave_grid covering from {wave_grid.min()} to {wave_grid.max()}'
+                  f' with {wave_grid.size} points')
     else:
         log.info('Using previously computed or user specified wavelength grid.')
 
