@@ -246,7 +246,7 @@ class SkyMatchStep(Step):
                 model.meta.background.subtracted = self.subtract
                 model.meta.background.method = self.skymethod
                 if self.subtract:
-                    model.data[...] -= sky
+                    model.data -= sky
                 model.meta.cal_step.skymatch = "COMPLETE"
                 library.shelve(model)
 
