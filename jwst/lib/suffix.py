@@ -54,7 +54,6 @@ SUFFIXES_TO_ADD = [
 # Used by `find_suffixes` to remove undesired values it has found.
 SUFFIXES_TO_DISCARD = [
     'ami_average',
-    'outlier_detection',
     'engdblogstep',
     'functionwrapper',
     'pipeline',
@@ -161,6 +160,7 @@ _calculated_suffixes = {
  'nscleanstep',
  'clean_flicker_noise',
  'cleanflickernoisestep',
+ 'outlier_detection',
  'outlierdetectioncoronstep',
  'outlierdetectionifustep',
  'outlierdetectionimagingstep',

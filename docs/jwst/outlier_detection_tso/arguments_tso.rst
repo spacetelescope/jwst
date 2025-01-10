@@ -27,6 +27,10 @@ and defaults) see :py:obj:`jwst.outlier_detection.OutlierDetectionTSOStep.spec`.
   adjacent to those found in the first pass.  Valid values are a pair of
   floating-point values in a single string (for example "5.0 4.0").
 
+``--maskpt``
+  The percent of maximum weight to use as lower-limit for valid data;
+  valid values go from 0.0 to 1.0.
+
 ``--rolling_window_width``
   Number of integrations over which to take the median when using rolling-window
   median for TSO observations. The default is 25. If the number of integrations

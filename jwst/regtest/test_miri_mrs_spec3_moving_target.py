@@ -21,7 +21,7 @@ def run_spec3_moving_target(rtdata_module):
     args = [
         "calwebb_spec3",
         rtdata.input,
-        '--steps.outlier_detection.skip=True',
+        '--steps.outlier_detection_ifu.skip=True',
         '--steps.cube_build.save_results=true',
         '--steps.extract_1d.save_results=true',
     ]

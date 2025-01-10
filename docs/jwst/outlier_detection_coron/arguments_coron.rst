@@ -26,3 +26,7 @@ and defaults) see :py:obj:`jwst.outlier_detection.OutlierDetectionCoronStep.spec
   second (typically lower threshold) for masking lower-level bad pixels
   adjacent to those found in the first pass.  Valid values are a pair of
   floating-point values in a single string (for example "5.0 4.0").
+
+``--maskpt``
+  The percent of maximum weight to use as lower-limit for valid data;
+  valid values go from 0.0 to 1.0.

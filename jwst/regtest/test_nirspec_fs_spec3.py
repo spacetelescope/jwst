@@ -20,8 +20,8 @@ def run_pipeline(rtdata_module):
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
     args = ["calwebb_spec3", rtdata.input,
-            "--steps.outlier_detection.save_results=true",
-            "--steps.outlier_detection.save_intermediate_results=true",
+            "--steps.outlier_detection_spec.save_results=true",
+            "--steps.outlier_detection_spec.save_intermediate_results=true",
             "--steps.resample_spec.save_results=true",
             "--steps.extract_1d.save_results=true"]
     Step.from_cmdline(args)
