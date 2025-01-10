@@ -48,7 +48,7 @@ def test_expected_skip_niriss_soss_full(mock_niriss_full):
 
 
 def test_expected_skip_niriss_soss_f277w(mock_niriss_f277w):
-    
+
     with mock_niriss_f277w as model:
         result = Extract1dStep().process(model)
         result2 = PhotomStep().process(result)
