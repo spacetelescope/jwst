@@ -66,10 +66,12 @@ class CleanFlickerNoiseStep(Step):
             `~photutils.background.Background2D`.  If None, the background
             value is 0.0.
 
-        background_box_size : tuple of int, optional
+        background_box_size : tuple of int or None, optional
             Box size for the data grid used by `Background2D` when
             `background_method` = 'model'. For best results, use a box size
-            that evenly divides the input image shape.
+            that evenly divides the input image shape.  If None, the largest
+            value between 1 and 32 that evenly divides the image dimension
+            is used.
 
         mask_science_regions : bool, optional
             For NIRSpec, mask regions of the image defined by WCS bounding

@@ -417,6 +417,14 @@ def test_background_level(log_watcher):
     # warns, but completes successfully
     log_watcher.message = "does not divide evenly"
     background = cfn.background_level(
+        image, mask, background_method='model', background_box_size=(32, 32))
+    assert background.shape == shape
+    assert np.all(background == 1.0)
+    log_watcher.assert_seen()
+
+    # model method with None box size: picks the largest even divisor < 32
+    log_watcher.message = "box size [25, 25]"
+    background = cfn.background_level(
         image, mask, background_method='model', background_box_size=None)
     assert background.shape == shape
     assert np.all(background == 1.0)

@@ -582,7 +582,15 @@ def background_level(image, mask, background_method='median',
             bkg_estimator = MedianBackground()
 
             if background_box_size is None:
-                background_box_size = [32, 32]
+                # use 32 x 32 if possible, otherwise take next largest box
+                # size that evenly divides the image (minimum 1)
+                background_box_size = []
+                recommended = np.arange(1, 33)
+                for i_size in image.shape:
+                    divides_evenly = (i_size % recommended == 0)
+                    background_box_size.append(recommended[divides_evenly][-1])
+                log.debug(f'Using box size {background_box_size}')
+
             box_division_remainder = (image.shape[0] % background_box_size[0],
                                       image.shape[1] % background_box_size[1])
             if not np.allclose(box_division_remainder, 0):
@@ -1024,7 +1032,8 @@ def _read_flat_file(input_model, flat_filename):
     data are extracted as needed.
 
     Only the flat image is returned: error and DQ arrays are ignored.
-    Any zeros or NaNs in the flat image are set to a median value before
+    Any zeros or NaNs in the flat image are set to a smoothed local average
+    value (via `background_level`, with background_method = 'model') before
     returning, to avoid impacting the background and noise fits near
     missing flat data.
 
@@ -1057,9 +1066,14 @@ def _read_flat_file(input_model, flat_filename):
         sub_flat.close()
     flat.close()
 
-    # Set any zeros or non-finite values in the flat data to a median value
-    median_flat = np.nanmedian(flat_data)
-    flat_data[(flat_data == 0) | ~np.isfinite(flat_data)] = median_flat
+    # Set any zeros or non-finite values in the flat data to a smoothed local value
+    bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
+    smoothed_flat = background_level(flat_data, ~bad_data, background_method='model')
+    try:
+        flat_data[bad_data] = smoothed_flat[bad_data]
+    except IndexError:
+        # 2D model failed, median value returned instead
+        flat_data[bad_data] = smoothed_flat
 
     return flat_data
 
