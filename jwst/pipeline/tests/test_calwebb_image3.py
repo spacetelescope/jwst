@@ -77,7 +77,7 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
             f"--logcfg={LOGCFG}",
             "--steps.tweakreg.skip=true",
             "--steps.skymatch.skip=true",
-            "--steps.outlier_detection.skip=true",
+            "--steps.outlier_detection_imaging.skip=true",
             "--steps.resample.skip=true",
             "--steps.source_catalog.skip=true",
             f"--in_memory={str(in_memory)}",]
@@ -96,7 +96,7 @@ def test_run_image3_single_file(make_dummy_cal_file):
             f"--logcfg={LOGCFG}",
             "--steps.tweakreg.skip=true",
             "--steps.skymatch.skip=true",
-            "--steps.outlier_detection.skip=true",
+            "--steps.outlier_detection_imaging.skip=true",
             "--steps.resample.skip=true",
             "--steps.source_catalog.skip=true",]
 

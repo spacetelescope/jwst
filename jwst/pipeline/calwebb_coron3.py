@@ -58,7 +58,7 @@ class Coron3Pipeline(Pipeline):
     #. stack_refs (assemble reference PSF inputs)
     #. align_refs (align reference PSFs to target images)
     #. klip (PSF subtraction using the KLIP algorithm)
-    #. outlier_detection (flag outliers)
+    #. outlier_detection_coron (flag outliers)
     #. resample (image combination and resampling)
 
     """
@@ -74,7 +74,7 @@ class Coron3Pipeline(Pipeline):
         'stack_refs': stack_refs_step.StackRefsStep,
         'align_refs': align_refs_step.AlignRefsStep,
         'klip': klip_step.KlipStep,
-        'outlier_detection': outlier_detection_coron_step.OutlierDetectionCoronStep,
+        'outlier_detection_coron': outlier_detection_coron_step.OutlierDetectionCoronStep,
         'resample': resample_step.ResampleStep
     }
 
@@ -110,13 +110,13 @@ class Coron3Pipeline(Pipeline):
             members_by_type[member['exptype'].lower()].append(member['expname'])
 
         # Set up required output products and formats
-        self.outlier_detection.save_results = self.save_results
+        self.outlier_detection_coron.save_results = self.save_results
         self.resample.blendheaders = False
 
         # Save the original outlier_detection.skip setting from the
         # input, because it may get toggled off within loops for
         # processing individual inputs
-        skip_outlier_detection = self.outlier_detection.skip
+        skip_outlier_detection = self.outlier_detection_coron.skip
 
         # Extract lists of all the PSF and science target members
         psf_files = members_by_type['psf']
@@ -149,10 +149,10 @@ class Coron3Pipeline(Pipeline):
         # Perform outlier detection on the PSFs.
         if not skip_outlier_detection:
             for model in psf_models:
-                self.outlier_detection.run(model)
+                self.outlier_detection_coron.run(model)
                 # step may have been skipped for this model;
                 # turn back on for next model
-                self.outlier_detection.skip = False
+                self.outlier_detection_coron.skip = False
         else:
             self.log.info('Outlier detection skipped for PSF\'s')
 
@@ -173,10 +173,10 @@ class Coron3Pipeline(Pipeline):
 
                 # Remove outliers from the target
                 if not skip_outlier_detection:
-                    target = self.outlier_detection.run(target)
+                    target = self.outlier_detection_coron.run(target)
                     # step may have been skipped for this model;
                     # turn back on for next model
-                    self.outlier_detection.skip = False
+                    self.outlier_detection_coron.skip = False
 
                 # Call align_refs
                 psf_aligned = self.align_refs.run(target, psf_stack)

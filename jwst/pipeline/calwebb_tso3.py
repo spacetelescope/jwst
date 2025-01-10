@@ -40,7 +40,7 @@ class Tso3Pipeline(Pipeline):
     spec = ""
 
     # Define alias to steps
-    step_defs = {'outlier_detection': outlier_detection_tso_step.OutlierDetectionTSOStep,
+    step_defs = {'outlier_detection_tso': outlier_detection_tso_step.OutlierDetectionTSOStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
                  'pixel_replace': pixel_replace_step.PixelReplaceStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
@@ -85,16 +85,16 @@ class Tso3Pipeline(Pipeline):
 
             # Can't do outlier detection if there isn't a stack of images
             if len(cube.data.shape) < 3:
-                self.log.warning('Input data are 2D; skipping outlier_detection')
+                self.log.warning('Input data are 2D; skipping outlier_detection_tso')
                 break
 
             self.log.info("Performing outlier detection on input images ...")
-            cube = self.outlier_detection.run(cube)
+            cube = self.outlier_detection_tso.run(cube)
 
             # Save crfints products
             # TODO: is any of this still necessary, or is it now handled correctly by the step?
             # or can it be replaced by invariant_filename?
-            if cube.meta.cal_step.outlier_detection == 'COMPLETE':
+            if cube.meta.cal_step.outlier_detection_tso == 'COMPLETE':
                 self.log.info("Saving crfints products with updated DQ arrays ...")
                 # preserve output filename
                 original_filename = cube.meta.filename

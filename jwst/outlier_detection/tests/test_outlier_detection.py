@@ -374,7 +374,7 @@ def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
         expected_intermediate = 0
     for dirname in [output_dir, tmp_cwd]:
         all_files = glob(os.path.join(dirname, '*.fits'))
-        result_files = glob(os.path.join(dirname, '*outlierdetectionspecstep.fits'))
+        result_files = glob(os.path.join(dirname, '*crf.fits'))
         i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
         s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
         median_files = glob(os.path.join(dirname, '*median.fits'))
@@ -484,7 +484,7 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
     dirname = tmp_cwd
     all_files = glob(os.path.join(dirname, '*.fits'))
     input_files = glob(os.path.join(dirname, '*_cal.fits'))
-    result_files = glob(os.path.join(dirname, '*outlierdetectionimagingstep.fits'))
+    result_files = glob(os.path.join(dirname, '*crf.fits'))
     i2d_files = glob(os.path.join(dirname, '*i2d*.fits'))
     s2d_files = glob(os.path.join(dirname, '*outlier_s2d.fits'))
     median_files = glob(os.path.join(dirname, '*median.fits'))

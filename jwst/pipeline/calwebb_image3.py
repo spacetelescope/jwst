@@ -25,7 +25,7 @@ class Image3Pipeline(Pipeline):
         assign_mtwcs
         tweakreg
         skymatch
-        outlier_detection
+        outlier_detection_imaging
         resample
         source_catalog
     """
@@ -41,7 +41,7 @@ class Image3Pipeline(Pipeline):
         'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
         'tweakreg': tweakreg_step.TweakRegStep,
         'skymatch': skymatch_step.SkyMatchStep,
-        'outlier_detection': outlier_detection_imaging_step.OutlierDetectionImagingStep,
+        'outlier_detection_imaging': outlier_detection_imaging_step.OutlierDetectionImagingStep,
         'resample': resample_step.ResampleStep,
         'source_catalog': source_catalog_step.SourceCatalogStep
     }
@@ -58,7 +58,7 @@ class Image3Pipeline(Pipeline):
         self.log.info('Starting calwebb_image3 ...')
 
         # Configure settings for saving results files
-        self.outlier_detection.save_results = self.save_results
+        self.outlier_detection_imaging.save_results = self.save_results
 
         self.resample.suffix = 'i2d'
         self.resample.save_results = self.save_results
@@ -87,7 +87,7 @@ class Image3Pipeline(Pipeline):
                 input_models = self.tweakreg.run(input_models)
 
             input_models = self.skymatch.run(input_models)
-            input_models = self.outlier_detection.run(input_models)
+            input_models = self.outlier_detection_imaging.run(input_models)
 
         elif self.skymatch.skymethod == 'match':
             self.log.warning("Turning 'skymatch' step off for a single "

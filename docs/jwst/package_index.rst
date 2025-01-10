@@ -45,6 +45,7 @@ Package Index
    mrs_imatch/index.rst
    msaflagopen/index.rst
    nsclean/index.rst
+   outlier_detection/outlier_detection.rst
    outlier_detection_coron/index.rst
    outlier_detection_ifu/index.rst
    outlier_detection_imaging/index.rst
