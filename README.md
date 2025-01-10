@@ -16,6 +16,9 @@
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 > [!WARNING]
+> Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
+> this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
+> 
 > Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 ## Installation
@@ -89,6 +92,29 @@ used for Linux and Mac OS systems.
 
 Linux:
 
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-linux-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-linux-x86_64
+
+MacOS:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-x86_64
+
+
+Starting with the jwst 1.16.1 release, we updated our release procedures to use 
+[stasis](https://github.com/spacetelescope/stasis). Each DMS delivery has its own installation instructions, 
+which may be found in the corresponding release documentation, e.g.:
+https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed. You can find the list of available releases at the top-level stasis domain 
+[here](https://ssb.stsci.edu/stasis/releases/jwst/).
+
+For releases prior to 1.16.1, please instead follow the directions below. The complete list of releases prior to 1.16.1
+is available [here](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
+
+Linux:
+
     conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_stable-deps.txt
     conda activate jwstdp-1.16.1
     pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_stable-deps.txt
@@ -99,12 +125,6 @@ MacOS:
     conda activate jwstdp-1.16.1
     pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_macos-stable-deps.txt
 
-Each DMS delivery has its own installation instructions, which may be found in
-the corresponding release documentation linked from this page:
-https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
-The installation procedures may change from time to time, so consulting the
-documentation page for the specific version in question is the best way to get
-that version installed.
 
 
 ### Installing for Developers
