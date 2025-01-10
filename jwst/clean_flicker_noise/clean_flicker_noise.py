@@ -1024,8 +1024,9 @@ def _read_flat_file(input_model, flat_filename):
     data are extracted as needed.
 
     Only the flat image is returned: error and DQ arrays are ignored.
-    Any zeros in the flat image are set to NaN before returning, to avoid
-    zero-division errors.
+    Any zeros or NaNs in the flat image are set to a median value before
+    returning, to avoid impacting the background and noise fits near
+    missing flat data.
 
     Parameters
     ----------
@@ -1303,7 +1304,7 @@ def _clean_one_image(image, mask, background_method, background_box_size,
 
     # If provided, divide the image by the flat
     if flat is not None:
-        image = image / flat
+        image /= flat
 
     # Find and replace/mask NaNs
     nan_pix = np.isnan(image)
