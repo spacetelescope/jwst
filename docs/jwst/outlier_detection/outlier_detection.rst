@@ -64,12 +64,11 @@ The new steps can be run in Python using the following syntax:
 ::
   
    from jwst.outlier_detection_coron import OutlierDetectionCoronStep
-   step = OutlierDetectionCoronStep()
-   step.call(input.fits, save_intermediate_results=True)
+   OutlierDetectionCoronStep.call(input.fits, save_intermediate_results=True)
 
 The new pipelines can be run in Python using, e.g.,:
 
 ::
 
-   from jwst.pipeline import calwebb_image3
-   calwebb_image3(input.fits, steps={'outlier_detection_coron': {'save_intermediate_results': True}})
+   from jwst.pipeline import Image3Pipeline
+   Image3Pipeline.call(input.fits, steps={'outlier_detection_coron': {'save_intermediate_results': True}})
