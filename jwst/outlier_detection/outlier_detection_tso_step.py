@@ -18,8 +18,8 @@ __all__ = ["OutlierDetectionTSOStep"]
 
 class OutlierDetectionTSOStep(Step, OutlierDetectionStepBase):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
-    Input images can be listed in an input association file or already opened
-    with a ModelContainer.  DQ arrays are modified in place.
+    Input images must be a ~jwst.datamodels.CubeModel or a filename pointing
+    to a CubeModel.  DQ arrays are modified in place.
 
     Parameters
     -----------
@@ -34,6 +34,7 @@ class OutlierDetectionTSOStep(Step, OutlierDetectionStepBase):
         rolling_window_width = integer(default=25)
         save_intermediate_results = boolean(default=False)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
+        suffix = string(default="crfints")
     """
 
     def process(self, input_model):

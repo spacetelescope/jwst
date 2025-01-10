@@ -41,6 +41,7 @@ class OutlierDetectionSpecStep(Step, OutlierDetectionStepBase):
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
+        suffix = string(default='crf')
     """
 
     def process(self, input_models):

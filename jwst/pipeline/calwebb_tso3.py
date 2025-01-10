@@ -92,6 +92,8 @@ class Tso3Pipeline(Pipeline):
             cube = self.outlier_detection.run(cube)
 
             # Save crfints products
+            # TODO: is any of this still necessary, or is it now handled correctly by the step?
+            # or can it be replaced by invariant_filename?
             if cube.meta.cal_step.outlier_detection == 'COMPLETE':
                 self.log.info("Saving crfints products with updated DQ arrays ...")
                 # preserve output filename

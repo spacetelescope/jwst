@@ -48,6 +48,7 @@ class OutlierDetectionImagingStep(Step, OutlierDetectionStepBase):
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         in_memory = boolean(default=False)
+        suffix = string(default='crf')
     """
 
     def process(self, input_models):

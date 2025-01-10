@@ -38,6 +38,7 @@ class OutlierDetectionCoronStep(Step, OutlierDetectionStepBase):
         snr = float(default=5.0)
         save_intermediate_results = boolean(default=False)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
+        suffix = string(default="crfints")
     """
 
     def process(self, input_model):

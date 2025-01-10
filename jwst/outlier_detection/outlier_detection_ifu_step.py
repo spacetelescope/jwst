@@ -63,6 +63,7 @@ class OutlierDetectionIFUStep(Step, OutlierDetectionStepBase):
         threshold_percent = float(default=99.8)
         ifu_second_check = boolean(default=False)
         save_intermediate_results = boolean(default=False)
+        suffix = string(default='crf')
     """
 
     def process(self, input_models):

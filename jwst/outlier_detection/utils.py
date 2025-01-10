@@ -1,7 +1,7 @@
 """Utilities for outlier detection methods."""
 
 import copy
-from abc import ABC, abstractmethod
+from abc import ABC
 from functools import partial
 import numpy as np
 
@@ -26,14 +26,6 @@ OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
 class OutlierDetectionStepBase(ABC):
     """Minimal base class holding common methods for outlier detection steps."""
-
-    @abstractmethod
-    def search_attr(self, attr, **kwargs):
-        pass
-
-    @abstractmethod
-    def _make_output_path(self):
-        pass
 
     def _get_asn_id(self, input_models):
         """Find association ID for any allowed input model type,
@@ -69,6 +61,7 @@ class OutlierDetectionStepBase(ABC):
         return
 
     def _set_status(self, input_models, status):
+        """Record step exit status, handling both filenames and open models."""
         # this might be called with the input which might be a filename or path
         if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
             input_models = datamodels.open(input_models)

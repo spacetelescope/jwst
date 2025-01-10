@@ -86,9 +86,7 @@ class Spec3Pipeline(Pipeline):
         # Setup sub-step defaults
         self.master_background.suffix = 'mbsub'
         self.mrs_imatch.suffix = 'mrs_imatch'
-        self.outlier_detection_spec.suffix = 'crf'
         self.outlier_detection_spec.save_results = self.save_results
-        self.outlier_detection_ifu.suffix = 'crf'
         self.outlier_detection_ifu.save_results = self.save_results
         self.resample_spec.suffix = 's2d'
         self.resample_spec.save_results = self.save_results
