@@ -1,6 +1,5 @@
 from itertools import product
 from copy import deepcopy
-import io
 
 import pytest
 import numpy as np
