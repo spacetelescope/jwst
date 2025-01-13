@@ -335,11 +335,18 @@ def mock_niriss_soss_96(mock_niriss_soss):
 
     shape = (3, 96, 2048)
     model.data = np.ones(shape, dtype=np.float32)
+
+    # add a little noise to the data so fitting is more robust
+    rng = np.random.default_rng(seed=77)
+    noise = rng.standard_normal(shape) * 1e-6
+    model.data += noise
+
     model.dq = np.zeros(shape, dtype=np.uint32)
     model.err = model.data * 0.02
     model.var_poisson = model.data * 0.001
     model.var_rnoise = model.data * 0.001
     model.var_flat = model.data * 0.001
+
     return model
 
 
