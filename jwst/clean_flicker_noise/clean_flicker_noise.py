@@ -1068,12 +1068,13 @@ def _read_flat_file(input_model, flat_filename):
 
     # Set any zeros or non-finite values in the flat data to a smoothed local value
     bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
-    smoothed_flat = background_level(flat_data, ~bad_data, background_method='model')
-    try:
-        flat_data[bad_data] = smoothed_flat[bad_data]
-    except IndexError:
-        # 2D model failed, median value returned instead
-        flat_data[bad_data] = smoothed_flat
+    if np.any(bad_data):
+        smoothed_flat = background_level(flat_data, ~bad_data, background_method='model')
+        try:
+            flat_data[bad_data] = smoothed_flat[bad_data]
+        except IndexError:
+            # 2D model failed, median value returned instead
+            flat_data[bad_data] = smoothed_flat
 
     return flat_data
 
