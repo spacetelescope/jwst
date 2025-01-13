@@ -354,7 +354,7 @@ source.
 Cosmic-Ray flagged data: ``crf`` and ``crfints``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Several of the stage 3 pipelines, such as :ref:`calwebb_image3 <calwebb_image3>` and
-:ref:`calwebb_spec3 <calwebb_spec3>`, include the :ref:`outlier detection <outlier_detection_step>`
+:ref:`calwebb_spec3 <calwebb_spec3>`, include an outlier detection
 step, which finds and flags outlier pixel values within calibrated images. The results of this
 process have the identical format and content as the input ``cal`` and ``calints`` products.
 The only difference is that the DQ arrays have been updated to contain CR flags. If the inputs

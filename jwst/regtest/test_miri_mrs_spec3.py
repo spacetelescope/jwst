@@ -20,7 +20,7 @@ def run_spec3_ifushort(rtdata_module):
     args = [
         "calwebb_spec3",
         rtdata.input,
-        '--steps.outlier_detection.save_results=true',
+        '--steps.outlier_detection_ifu.save_results=true',
         '--steps.cube_build.save_results=true',
         '--steps.extract_1d.save_results=true',
     ]
@@ -83,7 +83,7 @@ def run_spec3_ifushort_extract1d(rtdata_module):
     args = [
         "calwebb_spec3",
         rtdata.input,
-        '--steps.outlier_detection.save_results=true',
+        '--steps.outlier_detection_ifu.save_results=true',
         '--steps.cube_build.save_results=true',
         '--steps.extract_1d.ifu_set_srctype="POINT"',
         '--steps.extract_1d.ifu_rscale=3.0',

@@ -1,17 +1,20 @@
 .. _outlier-detection-tso:
 
-Time-Series Observations (TSO) Data
-===================================
+Overview
+========
 
-This module serves as the interface for applying ``outlier_detection`` to time
-series observations.
+This module serves as the interface for detecting outliers in time series
+observations, namely those taken in the following modes:
+'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ', 'NRC_TSIMAGE'.
 
 Normal imaging data benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
 integration to the next.  The outlier detection algorithm, therefore, gets run with 
 a few variations to accomodate the nature of these 3D data.
 A :py:class:`~jwst.datamodels.CubeModel` object serves as the basic format for all
-processing performed by this step. This routine performs the following operations:
+processing performed by this step.
+
+This routine performs the following operations:
 
 #. Convert input data into a CubeModel (3D data array) if a ModelContainer
    of 2D data arrays is provided.
@@ -37,3 +40,5 @@ processing performed by this step. This routine performs the following operation
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.
+
+``OutlierDetectionTSOStep`` does not use any reference files.

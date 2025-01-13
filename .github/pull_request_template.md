@@ -84,7 +84,11 @@ This PR addresses ...
 - ``changes/<PR#>.tweakreg.rst``
 - ``changes/<PR#>.skymatch.rst``
 - ``changes/<PR#>.exp_to_source.rst``
-- ``changes/<PR#>.outlier_detection.rst``
+- ``changes/<PR#>.outlier_detection_coron.rst``
+- ``changes/<PR#>.outlier_detection_ifu.rst``
+- ``changes/<PR#>.outlier_detection_imaging.rst``
+- ``changes/<PR#>.outlier_detection_spec.rst``
+- ``changes/<PR#>.outlier_detection_tso.rst``
 - ``changes/<PR#>.tso_photometry.rst``
 - ``changes/<PR#>.stack_refs.rst``
 - ``changes/<PR#>.align_refs.rst``

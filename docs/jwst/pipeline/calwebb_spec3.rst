@@ -30,7 +30,9 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | :ref:`mrs_imatch <mrs_imatch_step>`                         |     |     |     |     | |c| |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`outlier_detection <outlier_detection_step>`           | |c| | |c| | |c| | |c| | |c| |      |      |        |
+| :ref:`outlier_detection_ifu <outlier_detection_ifu_step>`   | |c| | |c| | |c| | |c| | |c| |      |      |        |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`outlier_detection_spec <outlier_detection_spec_step>` | |c| | |c| | |c| | |c| | |c| |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | :ref:`pixel_replace <pixel_replace_step>`                   | |c| | |c| | |c| | |c| | |c| |      |  |c| |   |c|  |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
@@ -141,7 +143,7 @@ CR-flagged exposures
 :Data model: `~jwst.datamodels.ImageModel`
 :File suffix: _crf
 
-If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version of
+If outlier detection is applied, a new version of
 each input calibrated exposure is created, in which the DQ array has been updated to
 flag pixels detected as outliers. These files use the "_crf" (CR-Flagged)
 product type suffix and also includes the association candidate ID as a

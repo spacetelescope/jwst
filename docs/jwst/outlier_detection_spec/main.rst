@@ -1,10 +1,13 @@
 .. _outlier-detection-spec:
 
-Slit-like Spectroscopic Data
-============================
+Overview
+========
 
-This module serves as the interface for applying ``outlier_detection`` to slit-like
-spectroscopic observations. The algorithm is very similar to the
+This module serves as the interface for detecting outliers in slit-like
+spectroscopic observations, namely those taken in the following modes:
+'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'.
+
+The algorithm is very similar to the
 :ref:`imaging algorithm <outlier-detection-imaging>`, and much of the same code is used.
 Please refer to those docs for more information.
 A :ref:`Stage 3 association <asn-level3-techspecs>`,
@@ -29,4 +32,4 @@ This routine performs identical operations to the imaging mode, with the followi
 
 #. The ``in_memory`` parameter has no effect, and all operations are performed in memory.
 
-.. automodapi:: jwst.outlier_detection.spec
+``OutlierDetectionSpecStep`` does not use any reference files.

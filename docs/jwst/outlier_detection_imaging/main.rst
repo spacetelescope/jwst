@@ -1,21 +1,23 @@
 .. _outlier-detection-imaging:
 
-Imaging Data
-============
+Overview
+========
 
-This module serves as the interface for applying ``outlier_detection`` to direct
-image observations, like those taken with MIRI, NIRCam, and NIRISS.
+This module serves as the interface for detecting outliers in
+imaging observations, namely those taken in the following modes:
+'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
+
 A :ref:`Stage 3 association <asn-level3-techspecs>`,
 which is loaded into a :py:class:`~jwst.datamodels.ModelLibrary` object,
 serves as the basic format for all processing performed by this step.
 This routine performs the following operations:
 
 #. Extract parameter settings for the input models and merge them with any user-provided values.
-   See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list of parameters.
+   See :ref:`arguments <outlier_detection_imaging_step_args>` for the full list of parameters.
 
 #. By default, resample all input images to the same output WCS. The resample process is
    controlled by the ``fillval``, ``pixfrac``, ``kernel``, and ``good_bits`` parameters;
-   see the :ref:`outlier detection arguments <outlier_detection_step_args>` for more information.
+   see the :ref:`arguments <outlier_detection_imaging_step_args>` for more information.
    Resampling can be turned off with the ``resample_data`` parameter.
 
    * Compute an output WCS that is large enough to encompass all the input images.
@@ -125,3 +127,5 @@ is input to the step, the memory behavior of the step is read from the ``on_disk
 of the ModelLibrary object, and the ``in_memory`` parameter of the step is ignored.
 When running ``calwebb_image3``, the ``in_memory`` flag should be set at the pipeline level,
 e.g., ``strun calwebb_image3 asn.json --in-memory=False``; the step-specific flag will be ignored.
+
+``OutlierDetectionImagingStep`` does not use any reference files.

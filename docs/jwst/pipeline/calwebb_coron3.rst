@@ -14,19 +14,19 @@ of the source object.
 The steps applied by the ``calwebb_coron3`` pipeline are shown in the table
 below.
 
-+---------------------------------------------------+
-| calwebb_coron3                                    |
-+===================================================+
-| :ref:`outlier_detection <outlier_detection_step>` |
-+---------------------------------------------------+
-| :ref:`stack_refs <stack_refs_step>`               |
-+---------------------------------------------------+
-| :ref:`align_refs <align_refs_step>`               |
-+---------------------------------------------------+
-| :ref:`klip <klip_step>`                           |
-+---------------------------------------------------+
-| :ref:`resample <resample_step>`                   |
-+---------------------------------------------------+
++---------------------------------------------------------+
+| calwebb_coron3                                          |
++=========================================================+
+| :ref:`outlier_detection <outlier_detection_coron_step>` |
++---------------------------------------------------------+
+| :ref:`stack_refs <stack_refs_step>`                     |
++---------------------------------------------------------+
+| :ref:`align_refs <align_refs_step>`                     |
++---------------------------------------------------------+
+| :ref:`klip <klip_step>`                                 |
++---------------------------------------------------------+
+| :ref:`resample <resample_step>`                         |
++---------------------------------------------------------+
 
 The high-level processing provided by these steps is:
 
@@ -97,7 +97,7 @@ CR-flagged images
 :Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _crfints
 
-If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version of
+If the :ref:`outlier_detection <outlier_detection_coron_step>` step is applied, a new version of
 each exposure is created, in which the DQ array is updated to flag pixels detected
 as outliers. These files use the "_crfints" (CR-Flagged per integration)
 product type suffix and include the association candidate ID, e.g.

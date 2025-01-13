@@ -82,8 +82,8 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module):
     args = [
         "calwebb_tso3",
         ASN3_FILENAME,
-        "--steps.outlier_detection.save_results=true",
-        "--steps.outlier_detection.save_intermediate_results=true"
+        "--steps.outlier_detection_tso.save_results=true",
+        "--steps.outlier_detection_tso.save_intermediate_results=true"
     ]
     Step.from_cmdline(args)
 

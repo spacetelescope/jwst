@@ -1,14 +1,16 @@
 .. _outlier-detection-coron:
 
-Coronagraphic Data
-==================
+Overview
+========
 
-This module serves as the interface for applying ``outlier_detection`` to coronagraphic
-image observations. A :py:class:`~jwst.datamodels.CubeModel` serves as the basic format
-for all processing performed by this step. This routine performs the following operations:
+This module serves as the interface for detecting outliers in coronagraphic
+image observations, namely those taken in the following modes:
+'MIR_LYOT', 'MIR_4QPM', 'NRC_CORON'.
+
+This routine performs the following operations:
 
 #. Extract parameter settings from input model and merge them with any user-provided values.
-   See :ref:`outlier detection arguments <outlier_detection_step_args>` for the full list
+   See :ref:`arguments <outlier_detection_coron_step_args>` for the full list
    of parameters.
 
 #. Do not attempt resampling; data are assumed to be aligned and have an identical WCS.
@@ -28,3 +30,5 @@ for all processing performed by this step. This routine performs the following o
 
 #. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
    of identified outliers.
+
+``OutlierDetectionCoronStep`` does not use any reference files.

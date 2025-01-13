@@ -1,7 +1,7 @@
 import pytest
 from jwst.outlier_detection._fileio import _save_intermediate_output
 from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
-from jwst.step import OutlierDetectionStep
+from jwst.step import OutlierDetectionImagingStep
 import os
 import numpy as np
 from functools import partial
@@ -21,7 +21,7 @@ def model():
 
 @pytest.fixture(scope="module")
 def make_output_path():
-    return OutlierDetectionStep().make_output_path
+    return OutlierDetectionImagingStep().make_output_path
 
 
 @pytest.mark.parametrize("asn_id", [None, ASN_ID])

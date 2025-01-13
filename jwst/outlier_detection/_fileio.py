@@ -100,7 +100,7 @@ def _make_blot_model(input_model, blot, blot_err):
 def _save_intermediate_output(model, suffix, make_output_path):
     """Save an intermediate output from outlier detection.
 
-    Ensure all intermediate outputs from OutlierDetectionStep have
+    Ensure all intermediate outputs from the steps have
     consistent file naming conventions.
 
     Parameters
