@@ -95,7 +95,12 @@ Linux:
     conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-linux-x86_64.yml
     conda activate JWSTDP-1.17.1-1-py312-linux-x86_64
 
-MacOS:
+MacOS arm64:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-arm64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-arm64
+
+MacOS x86_64:
 
     conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-x86_64.yml
     conda activate JWSTDP-1.17.1-1-py312-macos-x86_64
@@ -107,11 +112,11 @@ which may be found in the corresponding release documentation, e.g.:
 https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
 The installation procedures may change from time to time, so consulting the
 documentation page for the specific version in question is the best way to get
-that version installed. You can find the list of available releases at the top-level stasis domain 
-[here](https://ssb.stsci.edu/stasis/releases/jwst/).
+that version installed. You can find the list of available releases at the  
+[top-level stasis domain](https://ssb.stsci.edu/stasis/releases/jwst/).
 
 For releases prior to 1.16.1, please instead follow the directions below. The complete list of releases prior to 1.16.1
-is available [here](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
+is available on [astroconda-releases](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
 
 Linux:
 
@@ -124,7 +129,6 @@ MacOS:
     conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_macos-stable-deps.txt
     conda activate jwstdp-1.16.1
     pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_macos-stable-deps.txt
-
 
 
 ### Installing for Developers
