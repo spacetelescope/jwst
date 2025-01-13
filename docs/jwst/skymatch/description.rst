@@ -123,9 +123,10 @@ The ``skymatch`` step can also accept user-supplied sky values for each image.
 This is useful when sky values have been determined based on a custom workflow
 outside the pipeline. To use this feature, the user must provide a list of sky
 values matching the number of images (``skylist`` parameter) and set the
-``skymethod`` parameter to "user". Note that the skylist will be applied on a
-per-image basis irrespective of the groups defined in the association, and the
-order of the list must match the order of the input images.
+``skymethod`` parameter to "user". The ``skylist`` must be a two-column 
+whitespace-delimited file with the first column containing the image filenames
+and the second column containing the sky values. There must be exactly one line
+per image in the input list.
 
 Examples
 --------

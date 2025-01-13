@@ -1,5 +1,6 @@
 from itertools import product
 from copy import deepcopy
+import io
 
 import pytest
 import numpy as np
@@ -170,13 +171,16 @@ def _add_bad_pixels(im, sat_val, dont_use_val):
         )
     )
 )
-def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
+def test_skymatch(tmp_cwd, nircam_rate, skymethod, subtract, skystat, match_down,
                   grouped):
     # test basic functionality and correctness of sky computations
     np.random.seed(1)
     im1 = nircam_rate.copy()
+    im1.meta.filename = "one.fits"
     im2 = im1.copy()
+    im2.meta.filename = "two.fits"
     im3 = im1.copy()
+    im3.meta.filename = "three.fits"
 
     # add "bad" data
     im1, dq_mask = _add_bad_pixels(im1, 1e6, 1e9)
@@ -201,6 +205,14 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
             scale=0.1,
             size=im.data.shape
         )
+    
+    # put levels into the skylist file for when skylist='user'
+    fnames = [model.meta.filename for model in container]
+    print("fnames", fnames)
+    skyfile = "skylist.txt"
+    with open(skyfile, "w") as f:
+        for fname, lev in zip(fnames, levels):
+            f.write(f"{fname} {lev}\n")
 
     # exclude central DO_NOT_USE and corner SATURATED pixels
     result = SkyMatchStep.call(
@@ -212,7 +224,7 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
         binwidth=0.2,
         nclip=0,
         dqbits='~DO_NOT_USE+SATURATED',
-        skylist=levels
+        skylist=skyfile,
     )
 
     if skymethod == 'match' and grouped:
@@ -553,16 +565,20 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
             result2.shelve(im2)
 
 
-def test_user_sky_bad_inputs(nircam_rate):
+def test_user_sky_bad_inputs(tmp_cwd, nircam_rate):
 
     im1 = nircam_rate.copy()
+    im1.meta.filename = "one.fits"
     im2 = im1.copy()
+    im2.meta.filename = "two.fits"
     im3 = im1.copy()
+    im3.meta.filename = "three.fits"
     
     container = [im1, im2, im3]
 
     # define some background:
     levels = [9.12, 8.28, 2.56]
+    fnames = [model.meta.filename for model in container]
 
     for im, lev in zip(container, levels):
         im.data += lev
@@ -574,10 +590,29 @@ def test_user_sky_bad_inputs(nircam_rate):
             skymethod='user',
         )
 
+    # test skylist file doesn't have right number of lines
+    skyfile = "skylist_short.txt"
+    with open(skyfile, "w") as f:
+        for fname, lev in zip(fnames[1:], levels[1:]):
+            f.write(f"{fname} {lev}\n")
+
     with pytest.raises(ValueError):
-        # skylist must have the same length as the number of input images
         SkyMatchStep.call(
             container,
             skymethod='user',
-            skylist=levels[:-1]
+            skylist=skyfile
+        )
+    
+    # test skylist file does not contain all filenames
+    skyfile = "skylist_missing.txt"
+    fnames_wrong = ["two.fits"] + fnames[1:]
+    with open(skyfile, "w") as f:
+        for fname, lev in zip(fnames_wrong, levels):
+            f.write(f"{fname} {lev}\n")
+    
+    with pytest.raises(ValueError):
+        SkyMatchStep.call(
+            container,
+            skymethod='user',
+            skylist=skyfile
         )

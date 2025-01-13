@@ -48,7 +48,7 @@ class SkyMatchStep(Step):
         skymethod = option('local', 'global', 'match', 'global+match', 'user', default='match') # sky computation method
         match_down = boolean(default=True) # adjust sky to lowest measured value?
         subtract = boolean(default=False) # subtract computed sky from image data?
-        skylist = list(default=None) # List of sky values to use when skymethod='user'
+        skylist = string(default=None) # Filename pointing to list of (imagename skyval) pairs
 
         # Image's bounding polygon parameters:
         stepsize = integer(default=None) # Max vertex separation
@@ -230,19 +230,34 @@ class SkyMatchStep(Step):
         """Handle user-provided sky values for each image.
         """
 
-        log.info(" ")
-        log.info("----  Using user-provided sky values for each image.")
-
         if self.skylist is None:
-            raise ValueError('skymethod set to "user", but no sky values provided.')
-        if len(self.skylist) != len(library):
+            raise ValueError('skymethod set to "user", but no sky value file provided.')
+
+        log.info(" ")
+        log.info("Setting sky background of input images to user-provided values "
+                 f"from `skylist` ({self.skylist}).")
+        
+        # read the comma separated file
+        skylist = np.genfromtxt(
+            self.skylist,
+            dtype=[("fname", "<S128"),  ("sky", "f")],
+        )
+        skyfnames, skyvals = skylist['fname'], skylist['sky']
+        skyfnames = skyfnames.astype(str)
+
+        if len(skyvals) != len(library):
             raise ValueError(f"Number of entries in skylist ({len(self.skylist)}) does not match "
                              f"number of input images ({len(library)}).")
 
         with library:
-            for i, model in enumerate(library):
-                sky = self.skylist[i]
-                model.meta.background.level = sky
+            for model in library:
+                fname = model.meta.filename
+                sky = skyvals[np.where(skyfnames == fname)]
+                if len(sky) == 0:
+                    raise ValueError(f"Image '{fname}' not found in the skylist.")
+                if len(sky) > 1:
+                    raise ValueError(f"Image '{fname}' found multiple times in the skylist.")
+                model.meta.background.level = float(sky)
                 model.meta.background.subtracted = self.subtract
                 model.meta.background.method = self.skymethod
                 if self.subtract:

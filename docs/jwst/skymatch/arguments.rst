@@ -23,11 +23,11 @@ The ``skymatch`` step uses the following optional arguments:
   the images. The BKGSUB keyword (boolean) will be set in each output image to
   record whether or not the background was subtracted.
 
-``skylist`` (list, default=None)
-  A list of user-defined sky values to be used for sky subtraction. The list
-  must be in the same order (and have the same length) as the input images,
-  irrespective of association grouping. This argument is used only when
-  ``skymethod`` is set to `user`.
+``skylist`` (string, default=None)
+  A filename pointing to a two-column whitespace-delimited list of user-defined
+  (filename, skyval) pairs to be used for sky subtraction. The list
+  must have the same length as the input images and contain exactly one line per
+  image. This argument is used only when ``skymethod`` is set to `user`.
 
 **Image bounding polygon parameters:**
 
