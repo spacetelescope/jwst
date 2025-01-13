@@ -562,9 +562,6 @@ def _model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
         If not given, the grid is determined based on an estimate of the flux (estimate),
         the relative tolerance (rtol) required on each pixel model and
         the maximum grid size (max_grid_size).
-        # TODO: none of the options specified on main work
-        # Should we add support for these? If not, is SossWaveGridModel used for anything,
-        # and can that be removed from stdatamodels and as a valid argument to soss_wave_grid_in?
     estimate : UnivariateSpline or None
          Estimate of the target flux as a function of wavelength in microns.
     rtol : float
