@@ -26,11 +26,6 @@ class OutlierDetectionImagingStep(Step, OutlierDetectionStepBase):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
     Input images can be listed in an input association file or already opened
     with a ModelContainer.  DQ arrays are modified in place.
-    
-    Parameters
-    -----------
-    input_data : asn file or ~jwst.datamodels.ModelContainer
-        Single filename association table, or a datamodels.ModelContainer.
     """
 
     class_alias = "outlier_detection_imaging"
@@ -52,7 +47,13 @@ class OutlierDetectionImagingStep(Step, OutlierDetectionStepBase):
     """
 
     def process(self, input_models):
-        """Perform outlier detection processing on input data."""
+        """Perform outlier detection processing on input data.
+        
+        Parameters
+        -----------
+        input_models : asn file or ~jwst.datamodels.ModelContainer
+            Single filename association table, or a datamodels.ModelContainer.
+        """
 
         # determine the asn_id (if not set by the pipeline)
         asn_id = self._get_asn_id(input_models)

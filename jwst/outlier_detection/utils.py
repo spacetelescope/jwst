@@ -30,7 +30,13 @@ class OutlierDetectionStepBase(ABC):
     def _get_asn_id(self, input_models):
         """Find association ID for any allowed input model type,
         and update make_output_path such that the association ID
-        is included in intermediate and output file names."""
+        is included in intermediate and output file names.
+        
+        Parameters
+        -----------
+        input_models : ~jwst.datamodels.ModelContainer, ~jwst.datamodels.ModelLibrary, dict, str
+            The input association.
+        """
         # handle if input_models isn't open
         if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
@@ -61,7 +67,16 @@ class OutlierDetectionStepBase(ABC):
         return
 
     def _set_status(self, input_models, status):
-        """Record step exit status, handling both filenames and open models."""
+        """Record step exit status, handling both filenames and open models.
+        
+        Parameters
+        ----------
+        input_models : any type encoding a datamodel or association, or a path to one.
+            The input data.
+        status : bool
+            The exit status to record for outlier detection, True if successful
+            and False if not.
+        """
         # this might be called with the input which might be a filename or path
         if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
             input_models = datamodels.open(input_models)

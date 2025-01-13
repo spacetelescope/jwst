@@ -20,11 +20,6 @@ class OutlierDetectionTSOStep(Step, OutlierDetectionStepBase):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
     Input images must be a ~jwst.datamodels.CubeModel or a filename pointing
     to a CubeModel.  DQ arrays are modified in place.
-
-    Parameters
-    -----------
-    input_data : ~jwst.datamodels.CubeModel or str
-        CubeModel or filename pointing to a CubeModel.
     """
     class_alias = "outlier_detection_tso"
 
@@ -38,7 +33,13 @@ class OutlierDetectionTSOStep(Step, OutlierDetectionStepBase):
     """
 
     def process(self, input_model):
-        """Perform outlier detection processing on input data."""
+        """Perform outlier detection processing on input data.
+
+        Parameters
+        -----------
+        input_data : ~jwst.datamodels.CubeModel or str
+            CubeModel or filename pointing to a CubeModel.
+        """
 
         # determine the asn_id (if not set by the pipeline)
         asn_id = self._get_asn_id(input_model)
