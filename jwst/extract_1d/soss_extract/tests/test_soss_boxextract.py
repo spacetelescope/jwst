@@ -44,9 +44,6 @@ def test_get_box_weights(trace1d, box_weights):
 
         # check at least some partial weights exist
         assert np.sum(weight_sum == 1) < weight_sum.size
-        
-    # TODO: need a test, maybe regtest, for subarray sub96 problem
-    # see https://github.com/spacetelescope/jwst/issues/8780
 
 
 def test_box_extract(trace1d, box_weights, imagemodel):
@@ -73,11 +70,6 @@ def test_box_extract(trace1d, box_weights, imagemodel):
         unique, counts = np.unique(npix, return_counts=True)
         assert np.isclose(unique[np.argmax(counts)], WIDTH)
 
-        # TODO: somehow check the fluxes retrieved look like what we would expect from data
-        # although this is hard because the wavelengths are not extracted here
-
-        # TODO: why does flux have very low values at edges even after cutting by good?
-
 
 def test_estim_error_nearest_data(imagemodel, mask_trace_profile):
 
@@ -100,18 +92,11 @@ def test_estim_error_nearest_data(imagemodel, mask_trace_profile):
         assert np.sum(np.isnan(err_out)) == 0
         assert np.all(err_out > 0)
 
-        # test that the replaced pixels are not statistical outliers c.f. the other pixels
+        # # test that the replaced pixels are not statistical outliers c.f. the other pixels
         # replaced_pix = err_out[pix_to_estim]
         # original_pix = err_out[valid_pix]
         # diff = np.mean(replaced_pix)/np.mean(original_pix)
         # assert np.isclose(diff, 1, rtol=0.5) # assert False
-
-        # TODO: why does this fail?
-        # In both orders, the errors on the replaced pixels are roughly
-        # half of the errors on the original good pixels
-        # There are enough replaced pixels here (~30) that small-number statistics cannot account for this
-        # The reason is because the code chooses the lower error between the two nearest-flux
-        # data points, and since the errors in our tests are uncorrelated with the flux values,
-        # this leads to a factor-of-2 decrease
-        # It's not clear to me that picking the smaller of two error values is the right thing to do
-        # but that behavior is documented
+        # # this fails because estim_error_nearest_data takes the smaller of the two nearest
+        # # good pixels, which leads to the replaced pixels being lower on average
+        # # than the original pixels.

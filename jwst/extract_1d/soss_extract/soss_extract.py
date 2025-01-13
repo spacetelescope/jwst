@@ -861,8 +861,6 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
     attributes, as these are only calculated for the intermediate models. The last spectrum is not
     necessarily identical to any of the spectra in the list, as it is reconstructed according to
     mask_rebuild instead of fit respecting mask_fit; that is, bad pixels are included.
-
-    # TODO are all of these behaviors for the last spec in the list the desired ones?
     """
 
     # The throughput and kernel is not needed here; set them so they have no effect on the extraction.

@@ -1179,9 +1179,6 @@ def _sparse_c(ker, n_k, i_zero):
     Convert a convolution kernel in compact form (N_ker, N_k_convolved)
     to sparse form (N_k_convolved, N_k)
 
-    TODO: why is all the formalism for defining the diagonal necessary? why can't csr_matrix be
-    called directly? there must be a reason, but add documentation!
-
     Parameters
     ----------
     ker : array[float]
@@ -1690,7 +1687,7 @@ class TikhoTests(dict):
 
     def _compute_curvature(self):
         """
-        TODO: add docstring
+        Compute the curvature of the l-curve in log-log space
         """
         key = self.default_chi2
 

@@ -66,11 +66,6 @@ def test_extraction_engine_init(
     assert engine.i_bounds[0][0] > 0
     assert engine.i_bounds[1][1] < engine.n_wavepoints
 
-    # TODO: off-by-one error here. why does this fail?
-    # check what this looks like on a real run on main
-    # assert engine.i_bounds[0][1] == engine.n_wavepoints
-    # assert engine.i_bounds[1][0] == 0
-
 
     # test _get_masks
     # ensure they all include the input detector bad pixel mask
@@ -125,7 +120,7 @@ def test_extraction_engine_init(
         assert weights.dtype == np.float64
         assert np.issubdtype(k_idx.dtype, np.integer)
 
-        # TODO: why is weights the same size as ~engine.mask, and not ~engine.mask_ord?
+        # why is weights the same size as ~engine.mask, and not ~engine.mask_ord?
         assert weights.shape == (np.sum(~engine.mask), n_valid)
         assert k_idx.shape[0] == weights.shape[0]
 
@@ -266,7 +261,7 @@ def test_get_pixel_mapping(engine):
     for order in [0,1]:
         mapping = engine.pixel_mapping[order]
         assert mapping.dtype == np.float64
-        # TODO: why is this the shape, instead of using mask_ord and only the valid wave_grid?
+        # why is this the shape, instead of using mask_ord and only the valid wave_grid?
         expected_shape = (np.sum(~engine.mask), engine.wave_grid.size)
         assert mapping.shape == expected_shape
 
@@ -372,8 +367,8 @@ def test_best_tikho_factor(engine, tikho_tests):
     # ensure fit_mode=all found one of the three others
     assert best_factors[0] in best_factors[1:]
 
-    # TODO: test the logic tree by manually changing the tests dict
-    # this is non-trivial because dchi2 and curvature
+    # test the logic tree by manually changing the tests dict
+    # is non-trivial because dchi2 and curvature
     # are both derived from other keys in the dictionary, not just the statistical metrics
 
 

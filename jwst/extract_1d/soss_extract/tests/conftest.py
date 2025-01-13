@@ -247,6 +247,13 @@ def imagemodel(engine, detector_mask):
     """
     use engine.rebuild to make an image model from an expected f(lambda).
     Then we can ensure it round-trips
+
+    Notes
+    -----
+    The data coming out of this fixture display some unphysical striping.
+    This is likely due to inadequate wavelength sampling in the mock data.
+    It has no real effect for the unit testing suite, but may be worth
+    in the future if this test suite is expanded.
     """
 
     rng = np.random.default_rng(seed=42)
@@ -265,9 +272,6 @@ def imagemodel(engine, detector_mask):
     # error random, all positive, but also always larger than a certain value
     # to avoid very large values of data / error
     error = noise_scaling*(rng.standard_normal(shp)**2 + 0.5)
-
-    # TODO: Why does the data here have some kind of beat frequency?
-    # TODO: why does the data here have one deep negative bar at the end of each spectral order?
 
     return data, error
 
