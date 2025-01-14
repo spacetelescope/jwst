@@ -47,11 +47,11 @@ class AmiAnalyzeStep(Step):
         """
         Read bandpass from asdf file and use it to override the default.
 
-        Expects an array of [effstims, wave_m] 
+        Expects an array of [effstims, wave_m]
         (i.e. np.array((effstims,wave_m)).T) stored as 'bandpass' in asdf file,
         where effstims are normalized countrates (unitless) and wave_m are the
         wavelengths across the filter at which to compute the model (meters).
-        
+
         Returns
         -------
             bandpass: array
@@ -65,13 +65,13 @@ class AmiAnalyzeStep(Step):
             # assume it is an array of the correct shape
             wavemin = np.min(bandpass[:,1])
             wavemax = np.max(bandpass[:,1])
-            self.log.info('User-defined bandpass provided:') 
+            self.log.info('User-defined bandpass provided:')
             self.log.info('\tOVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES')
             self.log.info(f'Using {bandpass.shape[0]} wavelengths for fit.')
             self.log.info(f'Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}')
 
             # update attribute and return
-            self.bandpass = bandpass 
+            self.bandpass = bandpass
             return bandpass
 
         except FileNotFoundError:
@@ -79,7 +79,7 @@ class AmiAnalyzeStep(Step):
             raise Exception(message)
 
         except KeyError:
-            message1 = 'ASDF file does not contain the required "bandpass" key. ' 
+            message1 = 'ASDF file does not contain the required "bandpass" key. '
             message2 = 'See step documentation for info on creating a custom bandpass ASDF file.'
             raise Exception((message1 + message2))
 
@@ -90,9 +90,9 @@ class AmiAnalyzeStep(Step):
 
     def override_affine2d(self):
         """
-        Read user-input affine transform from ASDF file. 
+        Read user-input affine transform from ASDF file.
 
-        Makes an Affine2d object (see utils.Affine2D class). 
+        Makes an Affine2d object (see utils.Affine2D class).
         Input should contain mx,my,sx,sy,xo,yo,rotradccw.
         """
         try:
@@ -117,7 +117,7 @@ class AmiAnalyzeStep(Step):
             affine2d = None
 
         except KeyError:
-            message1 = 'ASDF file does not contain all of the required keys: mx, my, sx, sy ,xo, yo, rotradccw. ' 
+            message1 = 'ASDF file does not contain all of the required keys: mx, my, sx, sy ,xo, yo, rotradccw. '
             message2 = 'See step documentation for info on creating a custom affine2d ASDF file.'
             self.log.info((message1 + message2))
             self.log.info('\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****')

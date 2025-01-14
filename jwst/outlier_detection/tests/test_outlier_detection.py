@@ -107,7 +107,7 @@ def test_flag_cr(sci_blot_image_pair):
 
 def mock_data(rng):
     """Make some mock data with a "real" source at 7,7"""
-    
+
     j, k = SIGNAL_LOC
     data = rng.normal(loc=BACKGROUND, size=SHAPE, scale=SIGMA)
     err = np.zeros(SHAPE) + SIGMA
@@ -216,7 +216,7 @@ def assign_wcs_to_models(models, exptype, tsovisit, detector="ANY"):
 @pytest.fixture
 def mirimage_three_sci(we_three_sci):
     """Provide 3 MIRI imaging science observations.
-    
+
     This is the default/base model set for the test suite, everything is default.
     So just need to assign the WCS, identical for all.
     This fixture is separated from we_three_sci so the latter
@@ -625,7 +625,7 @@ def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
 
     # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
     # arbitrarily use 5 times that
-    buffer_size = 4 * 20 * 5 
+    buffer_size = 4 * 20 * 5
     median_on_disk, _ = median_without_resampling(
         lib_on_disk,
         0.7,
@@ -654,10 +654,10 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
         lib,
         resamp,
         0.7)
-    
+
     assert isinstance(wcs, WCS)
     assert median.shape == (34,34)
-        
+
     resamp.single = False
     with pytest.raises(ValueError):
         # ensure failure if try to call when resamp.single is False

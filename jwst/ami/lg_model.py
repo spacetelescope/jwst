@@ -19,8 +19,8 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 class LgModel:
     """
-    A class for conveniently dealing with an "NRM object." 
-    
+    A class for conveniently dealing with an "NRM object."
+
     This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
     Simulates PSF (broadband or monochromatic)
@@ -168,14 +168,14 @@ class LgModel:
         nspec = 0
         # accumulate polychromatic oversampled psf in the object
 
-        for w, l in bandpass:  # w: wavelength's weight, l: lambda (wavelength)
+        for w, ll in bandpass:  # w: wavelength's weight, l: lambda (wavelength)
             self.psf_over += w * analyticnrm2.psf(
                 self.pixel,  # det pixel, rad
                 fov,  # in detpix number
                 over,
                 self.ctrs,
                 self.d,
-                l,
+                ll,
                 self.phi,
                 psf_offset,  # det pixels
                 self.affine2d,
@@ -195,8 +195,8 @@ class LgModel:
         """
         Generates the fringe model.
 
-        Use the attributes of the object with a bandpass that is either a single 
-        wavelength or a list of tuples of the form 
+        Use the attributes of the object with a bandpass that is either a single
+        wavelength or a list of tuples of the form
         [(weight1, wavl1), (weight2, wavl2),...].  The model is
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
@@ -251,12 +251,12 @@ class LgModel:
             (self.N * (self.N - 1) + 1, self.over * self.fov, self.over * self.fov)
         )
 
-        for w, l in bandpass:  # w: weight, l: lambda (wavelength)
+        for w, ll in bandpass:  # w: weight, l: lambda (wavelength)
             # model_array returns the envelope and fringe model as a list of
             #   oversampled fov x fov slices
             pb, ff = analyticnrm2.model_array(
                 self.modelctrs,
-                l,
+                ll,
                 self.over,
                 self.modelpix,
                 self.fov,
@@ -300,7 +300,7 @@ class LgModel:
         """
         Run a least-squares fit on an input image.
 
-        Find the appropriate wavelength scale and rotation. 
+        Find the appropriate wavelength scale and rotation.
         If a model is not specified then this
         method will find the appropriate wavelength scale, rotation (and
         hopefully centering as well -- This is not written into the object yet,
@@ -425,7 +425,7 @@ class LgModel:
         self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
     ):
         """
-        Determine the scale and rotation that best fits the data.  
+        Determine the scale and rotation that best fits the data.
 
         Correlations
         are calculated in the image plane, in anticipation of data with many

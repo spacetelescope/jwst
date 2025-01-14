@@ -11,7 +11,7 @@ import asdf
 from ..assign_wcs.util import update_s_region_keyword
 from ..stpipe import Step, record_step_status
 from pathlib import Path
-from astropy import units 
+from astropy import units
 __all__ = ["CubeBuildStep"]
 
 
@@ -64,7 +64,7 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
-         offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files. 
+         offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
          debug_spaxel = string(default='-1 -1 -1') # Default not used
        """
 
@@ -242,7 +242,7 @@ class CubeBuildStep (Step):
 # used in calspec3 (for offline cube building).
 # The offset list is an asdf file.
         self.offsets = None
-        
+
         if self.offset_file is not None:
             offsets = self.check_offset_file()
             if offsets is not None:
@@ -559,7 +559,7 @@ class CubeBuildStep (Step):
 
         # validate the offset file using the schema file
         DATA_PATH = Path(__file__).parent
-        
+
         try:
             af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
         except:
@@ -575,7 +575,7 @@ class CubeBuildStep (Step):
         offset_dec = af['decoffset']
         # Note:
         # af['units'] is checked by the schema validation. It must be arcsec or a validation error occurs.
-        
+
         # check that all the file names in input_model are in the offset filename
         for model in self.input_models:
             file_check = model.meta.filename
@@ -592,7 +592,7 @@ class CubeBuildStep (Step):
         if (len_file != len_ra or len_ra != len_dec or len_file != len_dec):
             af.close()
             raise ValueError('The offset file does not have the same number of values for filename, raoffset, decoffset')
-        
+
         offset_ra =   offset_ra* units.arcsec
         offset_dec =   offset_dec* units.arcsec
 
