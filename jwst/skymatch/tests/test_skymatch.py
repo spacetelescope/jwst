@@ -170,7 +170,7 @@ def _add_bad_pixels(im, sat_val, dont_use_val):
         )
     )
 )
-def test_skymatch(tmp_cwd, nircam_rate, skymethod, subtract, skystat, match_down,
+def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
                   grouped):
     # test basic functionality and correctness of sky computations
     np.random.seed(1)
@@ -211,7 +211,7 @@ def test_skymatch(tmp_cwd, nircam_rate, skymethod, subtract, skystat, match_down
         skystat=skystat,
         binwidth=0.2,
         nclip=0,
-        dqbits='~DO_NOT_USE+SATURATED',
+        dqbits='~DO_NOT_USE+SATURATED'
     )
 
     if skymethod == 'match' and grouped:

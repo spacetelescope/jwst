@@ -23,7 +23,7 @@ from jwst.datamodels import ModelLibrary
 from jwst.lib.suffix import remove_suffix
 import os.path as op
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 
 # LOCAL:
 from .skymatch import skymatch
@@ -74,13 +74,13 @@ class SkyMatchStep(Step):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def process(self, input):
+    def process(self, input_models):
         self.log.setLevel(logging.DEBUG)
 
-        if isinstance(input, ModelLibrary):
-            library = input
+        if isinstance(input_models, ModelLibrary):
+            library = input_models
         else:
-            library = ModelLibrary(input, on_disk=not self.in_memory)
+            library = ModelLibrary(input_models, on_disk=not self.in_memory)
 
         # Method: "user". Use user-provided sky values, and bypass skymatch() altogether.
         if self.skymethod == 'user':
