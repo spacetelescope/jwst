@@ -14,6 +14,8 @@ WAVEMAP_WLMAX = 5.5
 WAVEMAP_NWL = 5001
 SUBARRAY_YMIN = 2048 - 256
 
+__all__ = ['get_soss_traces', 'get_soss_wavemaps']
+
 def _get_wavelengths(refmodel, x, pwcpos, order):
     """Get the associated wavelength values for a given spectral order"""
     if order == 1:
@@ -276,7 +278,7 @@ def _find_spectral_order_index(refmodel, order):
     return -1
 
 
-def _get_soss_traces(refmodel, pwcpos, order, subarray):
+def get_soss_traces(refmodel, pwcpos, order, subarray):
     """Generate the traces given a pupil wheel position.
 
     This is the primary method for generating the gr700xd trace position given a
@@ -469,8 +471,8 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     Array, Array
         The 2D wavemaps and corresponding 1D spectraces
     """
-    _, order1_x, order1_y, order1_wl = _get_soss_traces(refmodel, pwcpos, order='1', subarray=subarray)
-    _, order2_x, order2_y, order2_wl = _get_soss_traces(refmodel, pwcpos, order='2', subarray=subarray)
+    _, order1_x, order1_y, order1_wl = get_soss_traces(refmodel, pwcpos, order='1', subarray=subarray)
+    _, order2_x, order2_y, order2_wl = get_soss_traces(refmodel, pwcpos, order='2', subarray=subarray)
 
     # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
     wavemin = WAVEMAP_WLMIN
