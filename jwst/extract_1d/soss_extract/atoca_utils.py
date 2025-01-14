@@ -268,7 +268,7 @@ def _extrapolate_grid(wave_grid, wave_range, poly_ord=1):
 
     # Define delta_wave as a function of wavelength by fitting a polynomial.
     delta_wave = np.diff(wave_grid)
-    f_delta = Polynomial.fit(wave_grid[:-1], delta_wave, poly_ord)
+    f_delta = Polynomial.fit(wave_grid[:-1], delta_wave, poly_ord).convert()
 
     # Set a minimum delta value to avoid running forever
     min_delta = delta_wave.min()/10
@@ -893,7 +893,7 @@ class WebbKernel:
             wv[i_good] = wave_trace[index[i_good]]
 
             # Fit n=1 polynomial
-            f = Polynomial.fit(i_surround[~wv.mask], wv[~wv.mask], 1)
+            f = Polynomial.fit(i_surround[~wv.mask], wv[~wv.mask], 1).convert()
             poly_i = f.coef[::-1] # Reverse order to match old behavior from legacy np.polyval
 
             # Project on os pixel grid
