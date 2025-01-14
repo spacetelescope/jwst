@@ -264,6 +264,10 @@ exclude = [
 ]
 line-length = 130
 
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+
 [tool.ruff.lint]
 select = [
     "F", # Pyflakes (part of default flake8)
