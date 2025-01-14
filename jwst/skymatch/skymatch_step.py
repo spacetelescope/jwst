@@ -258,9 +258,12 @@ class SkyMatchStep(Step):
                 fname, _ = remove_suffix(op.splitext(model.meta.filename)[0])
                 sky = skyvals[np.where(skyfnames == fname)]
                 if len(sky) == 0:
-                    raise ValueError(f"Image '{fname}' not found in the skylist.")
+                    raise ValueError(f"Image with stem '{fname}' not found in the skylist.")
                 if len(sky) > 1:
-                    raise ValueError(f"Image '{fname}' found multiple times in the skylist.")
+                    raise ValueError(f"Image with stem '{fname}' found multiple times in the skylist.")
+                
+                log.debug(f"Setting sky background of image '{model.meta.filename}' to {float(sky)}.")
+
                 model.meta.background.level = float(sky)
                 model.meta.background.subtracted = self.subtract
                 model.meta.background.method = self.skymethod
