@@ -558,10 +558,10 @@ def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
     im2 = im1.copy()
     im2.meta.filename = "two_unknown.fits"
     im3 = im1.copy()
-    im3.meta.filename = "three.fits"
+    im3.meta.filename = "dir/three.fits"
 
     # give filenames in skyfile same stems but different suffix
-    fnames_skyfile = ["one_cal.fits", "two_unknown_cal.fits", "three_cal.fits"]
+    fnames_skyfile = ["other_dir/one_cal.fits", "two_unknown_cal.fits", "three_cal.fits"]
 
     container = [im1, im2, im3]
 

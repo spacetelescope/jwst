@@ -21,7 +21,7 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelLibrary
 from jwst.lib.suffix import remove_suffix
-import os.path as op
+from pathlib import Path
 
 from jwst.stpipe import Step
 
@@ -246,7 +246,7 @@ class SkyMatchStep(Step):
         )
         skyfnames, skyvals = skylist['fname'], skylist['sky']
         skyfnames = skyfnames.astype(str)
-        skyfnames = [remove_suffix(op.splitext(fname)[0])[0] for fname in skyfnames]
+        skyfnames = [remove_suffix(Path(fname).stem)[0] for fname in skyfnames]
         skyfnames = np.array(skyfnames)
 
         if len(skyvals) != len(library):
@@ -255,7 +255,7 @@ class SkyMatchStep(Step):
 
         with library:
             for model in library:
-                fname, _ = remove_suffix(op.splitext(model.meta.filename)[0])
+                fname, _ = remove_suffix(Path(model.meta.filename).stem)
                 sky = skyvals[np.where(skyfnames == fname)]
                 if len(sky) == 0:
                     raise ValueError(f"Image with stem '{fname}' not found in the skylist.")
