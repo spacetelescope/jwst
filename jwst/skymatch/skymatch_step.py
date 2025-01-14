@@ -20,6 +20,8 @@ from astropy.nddata.bitmask import (
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelLibrary
+from jwst.lib.suffix import remove_suffix
+import os.path as op
 
 from ..stpipe import Step
 
@@ -237,13 +239,15 @@ class SkyMatchStep(Step):
         log.info("Setting sky background of input images to user-provided values "
                  f"from `skylist` ({self.skylist}).")
         
-        # read the comma separated file
+        # read the comma separated file and get just the stem of the filename
         skylist = np.genfromtxt(
             self.skylist,
             dtype=[("fname", "<S128"),  ("sky", "f")],
         )
         skyfnames, skyvals = skylist['fname'], skylist['sky']
         skyfnames = skyfnames.astype(str)
+        skyfnames = [remove_suffix(op.splitext(fname)[0])[0] for fname in skyfnames]
+        skyfnames = np.array(skyfnames)
 
         if len(skyvals) != len(library):
             raise ValueError(f"Number of entries in skylist ({len(self.skylist)}) does not match "
@@ -251,7 +255,7 @@ class SkyMatchStep(Step):
 
         with library:
             for model in library:
-                fname = model.meta.filename
+                fname, _ = remove_suffix(op.splitext(model.meta.filename)[0])
                 sky = skyvals[np.where(skyfnames == fname)]
                 if len(sky) == 0:
                     raise ValueError(f"Image '{fname}' not found in the skylist.")
