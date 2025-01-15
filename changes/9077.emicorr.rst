@@ -1,0 +1,4 @@
+Make several very small changes to in emicorr to substantially improve
+memory consumption and runtime without affecting results. Add bottleneck
+as a "soft" dependency to replace numpy's slow nan functions. If the
+bottleneck import fails the code will fall back on the numpy functions.
