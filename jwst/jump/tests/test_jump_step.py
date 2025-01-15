@@ -23,6 +23,7 @@ NO_GAIN_VALUE = dqflags.pixel["NO_GAIN_VALUE"]
 
 @pytest.fixture(scope="module")
 def generate_miri_reffiles(tmp_path_factory):
+    """Generate MIRI reference files."""
 
     def _generate_miri_reffiles(xsize=103, ysize=102, ingain=6):
 
@@ -61,6 +62,7 @@ def generate_miri_reffiles(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def generate_nircam_reffiles(tmp_path_factory):
+    """Generate NIRCAM reference files."""
 
     def _generate_nircam_reffiles(xsize=20, ysize=20, ingain=6):
         gainfile = tmp_path_factory.mktemp("ndata") / "gain.fits"
@@ -99,6 +101,7 @@ def generate_nircam_reffiles(tmp_path_factory):
 @pytest.fixture
 # 161
 def setup_inputs():
+    """Create test containers for test data."""
 
     def _setup(ngroups=10, readnoise=10, nints=1, nrows=1024, ncols=1032,
                nframes=1, grouptime=1.0, gain=1, deltatime=1, subarray=False):
@@ -161,11 +164,7 @@ def setup_inputs():
 
 
 def add_crs(model, crs_frac):
-    """"
-    Randomly add a cosmic ray of magnitude CR_MAG to a fraction (crs_frac)
-    of the groups in the model's SCI array
-    """
-
+    """"Randomly add a cosmic ray of magnitude CR_MAG some of the SCI groups."""
     num_ints = model.data.shape[0]
     num_groups = model.data.shape[1]
     num_rows = model.data.shape[2]
@@ -190,11 +189,11 @@ def add_crs(model, crs_frac):
 
 
 def add_circles_to_data(data, center_coords, radii, fill_val=None):
-    """Modifies `data` to add circles at positions specified by `center_coords`
-       of sizes specified by `radii`. The magnitude of each circle is 10x its
-       radius (bigger snowballs are brighter).
-    """
+    """Modify `data` to add circles at specified positions.
 
+    At positions specified by `center_coords` of sizes specified by `radii`.  The
+    magnitude of each circle is 10x its radius (bigger snowballs are brighter).
+    """
     X, Y = np.ogrid[:data.shape[0], :data.shape[1]]
 
     for i, _ in enumerate(radii):
@@ -212,6 +211,7 @@ def add_circles_to_data(data, center_coords, radii, fill_val=None):
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
+    """Test one cosmic ray."""
     override_gain, override_readnoise = generate_miri_reffiles()
     print("max_cores = ", max_cores)
     grouptime = 3.0
@@ -250,6 +250,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
+    """Test NIRCAM data with various mulitprocessing levels."""
     override_gain, override_readnoise = generate_nircam_reffiles()
 
     grouptime = 3.0
@@ -288,6 +289,7 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
+    """Test two cosmic rays with various mulitprocessing levels."""
     override_gain, override_readnoise = generate_miri_reffiles()
     grouptime = 3.0
     deltaDN = 5
@@ -325,6 +327,7 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
+    """Test integrations with two groups with various mulitprocessing levels."""
     override_gain, override_readnoise = generate_miri_reffiles()
     grouptime = 3.0
     ingain = 6
@@ -342,6 +345,7 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
 
 
 def test_three_group_integration(generate_miri_reffiles, setup_inputs):
+    """Test integration with three groups."""
     override_gain, override_readnoise = generate_miri_reffiles()
     grouptime = 3.0
     ingain = 6
@@ -359,13 +363,14 @@ def test_three_group_integration(generate_miri_reffiles, setup_inputs):
 
 
 def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
-    """Test that snowballs are properly flagged when the `sat_required_snowball`,
-    which requires there to be a saturated pixel within the cluster of
+    """Test that snowballs are properly flagged when the `sat_required_snowball`.
+
+    This requires there to be a saturated pixel within the cluster of
     jump-flagged pixels for a snowball to be flagged, is set to FALSE.
 
     This test also tests if the `expand_factor` keyword, which controls how many
-    pixels out a snowball is grown, is being used properly"""
-
+    pixels out a snowball is grown, is being used properly.
+    """
     # make datamodel
     override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
                                                                  ysize=100)
@@ -403,13 +408,14 @@ def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
 
 
 def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
-    """Test that snowballs are properly flagged when the `sat_required_snowball`,
-    which requires there to be a saturated pixel within the cluster of
+    """Test that snowballs are properly flagged when the `sat_required_snowball`.
+
+    This requires there to be a saturated pixel within the cluster of
     jump-flagged pixels for a snowball to be flagged, is set to FALSE.
 
     This test also tests if the `expand_factor` keyword, which controls how many
-    pixels out a snowball is grown, is being used properly"""
-
+    pixels out a snowball is grown, is being used properly.
+    """
     # make datamodel
     override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
                                                                  ysize=100)
@@ -455,10 +461,10 @@ def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
 
 
 def test_exec_time_0_crs(setup_inputs):
-    """"
-    Set up with dimension similar to simulated MIRI datasets, Dataset has no
-    cosmic rays. Test only the execution time of jump detection for
-    comparison with nominal time; hopefully indicative of faults with newly
+    """"Set up with dimension similar to simulated MIRI datasets.
+
+    Dataset has no cosmic rays. Test only the execution time of jump detection
+    for comparison with nominal time; hopefully indicative of faults with newly
     added code.
     """
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
@@ -496,11 +502,11 @@ def test_exec_time_0_crs(setup_inputs):
 
 
 def test_exec_time_many_crs(setup_inputs):
-    """"
-    Set up with dimension similar to simulated MIRI datasets, Dataset has
-    many cosmic rays; approximately one CR per 4 groups. Test only the execution
-    time of jump detection for comparison with nominal time; hopefully
-    indicative of faults with newly added code.
+    """"Set up with dimension similar to simulated MIRI datasets.
+
+    Dataset has many cosmic rays; approximately one CR per 4 groups. Test only
+    the execution time of jump detection for comparison with nominal time;
+    hopefully indicative of faults with newly added code.
     """
     nrows = 350
     ncols = 400
@@ -536,9 +542,7 @@ def test_exec_time_many_crs(setup_inputs):
 
 
 def test_nocrs_noflux(setup_inputs):
-    """"
-    All pixel values are zero. So slope should be zero
-    """
+    """"All pixel values are zero. So slope should be zero."""
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
 
     out_model = JumpStep.call(
@@ -559,9 +563,10 @@ def test_nocrs_noflux(setup_inputs):
 
 
 def test_nocrs_noflux_badgain_pixel(setup_inputs):
-    """"
-    all pixel values are zero. So slope should be zero, pixel with bad gain should
-    have pixel dq set to 'NO_GAIN_VALUE' and 'DO_NOT_USE'
+    """"Test all pixel values are zero.
+
+    So slope should be zero, pixel with bad gain should have pixel dq set to
+    'NO_GAIN_VALUE' and 'DO_NOT_USE'.
     """
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, nrows=20, ncols=20)
     gain.data[7, 7] = -10  # bad gain
@@ -589,9 +594,9 @@ def test_nocrs_noflux_badgain_pixel(setup_inputs):
 
 
 def test_nocrs_noflux_subarray(setup_inputs):
-    """"
-    All pixel values are zero. This shows that the subarray reference files get
-    extracted from the full frame versions.
+    """"Test all pixel values are zero.
+
+    This shows that the subarray reference files get extracted from the full frame versions.
     """
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5, subarray=True)
     out_model = JumpStep.call(
@@ -611,9 +616,7 @@ def test_nocrs_noflux_subarray(setup_inputs):
 
 
 def test_onecr_10_groups_neighbors_flagged(setup_inputs):
-    """"
-    A single CR in a 10 group exposure
-    """
+    """Test a single CR in a 10 group exposure."""
     grouptime = 3.0
     ingain = 200
     inreadnoise = 7.0
@@ -657,9 +660,10 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
 
 
 def test_nocr_100_groups_nframes1(setup_inputs):
-    """"
-    NO CR in a 100 group exposure to make sure that frames_per_group is passed correctly to
-    twopoint_difference. This test recreates the problem found in issue #4571.
+    """"Test no CR in a 100 group exposure.
+
+    This makes sure that frames_per_group is passed correctly to twopoint_difference.
+    This test recreates the problem found in issue #4571.
     """
     grouptime = 3.0
     ingain = 1
@@ -699,9 +703,9 @@ def test_nocr_100_groups_nframes1(setup_inputs):
 
 
 def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
-    """"
-    Two integrations with CRs in different locations. This makes sure we are correctly
-    dealing with integrations.
+    """"Two integrations with CRs in different locations.
+
+    This makes sure we are correctly dealing with integrations.
     """
     grouptime = 3.0
     ingain = 200
@@ -760,7 +764,8 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
 
 
 def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
-    """
+    """Test to make sure group 5 is getting flagged.
+
     This test is based on actual MIRI data that was having the incorrect
     group flagged with JUMP_DET (it was flagging group 2 instead of group 5).
     This makes sure that group 5 is getting flagged.
@@ -862,7 +867,8 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
 
 
 def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
-    """"
+    """"Test two CRs on the boundary between two slices.
+
     A multiprocessing test that has two CRs on the boundary between two slices.
     This makes sure that we are correctly flagging neighbors in different  slices.
     """
@@ -940,7 +946,8 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
 
 
 def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
-    """"
+    """"Test two CRs on the boundary between two slices in different integrations.
+
     A multiprocessing test that has two CRs on the boundary between two slices
     in different integrations. This makes sure that we are correctly flagging
     neighbors in different slices and that we are parsing the integrations correctly.
@@ -1009,7 +1016,8 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
 
 
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
-    """"
+    """"Test jump in every pixel.
+
     A multiprocessing test that has a jump in every pixel. This is used
     to test the performance gain from multiprocessing.
     """
@@ -1061,10 +1069,7 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
 
 
 def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
-    """"
-    A test to make sure that the neighbors of CRs on the edges of the
-    array are flagged correctly.
-    """
+    """"Test to make sure CR neighbors on the edges of the array are flagged correctly."""
     grouptime = 3.0
     ingain = 200
     inreadnoise = 7.0
@@ -1164,9 +1169,7 @@ def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
 
 
 def test_onecr_10_groups(setup_inputs):
-    """"
-    A test to make sure that neighbors are not flagged when they are not requested to be flagged.
-    """
+    """"A test to make sure that neighbors are not flagged when they are not requested to be flagged."""
     grouptime = 3.0
     ingain = 200
     inreadnoise = 7.0
@@ -1216,7 +1219,8 @@ def test_onecr_10_groups(setup_inputs):
 
 
 def test_onecr_10_groups_fullarray(setup_inputs):
-    """"
+    """"Test cosmic ray 5th group special case.
+
     A test that has a cosmic ray in the 5th group for all pixels except column 10. In column
     10 the jump is in the 7th group.
     """
@@ -1279,9 +1283,9 @@ def test_onecr_10_groups_fullarray(setup_inputs):
 
 
 def test_onecr_50_groups(setup_inputs):
-    """"
-    A test with a fifty group integration. There are two jumps in pixel 5,5. One in group 5 and
-    one in group 30.
+    """"Test a 50 group integration.
+
+    There are two jumps in pixel 5,5. One in group 5 and one in group 30.
     """
     grouptime = 3.0
     ingain = 5
@@ -1334,7 +1338,8 @@ def test_onecr_50_groups(setup_inputs):
 
 
 def test_onecr_50_groups_afterjump(setup_inputs):
-    """"
+    """"Test a 50 group integration.
+
     A test with a fifty group integration. There are two jumps in pixel 5,5. One in group 5 and
     one in group 30.  Test includes after jump flagging.
     """
@@ -1393,8 +1398,9 @@ def test_onecr_50_groups_afterjump(setup_inputs):
 
 
 def test_single_CR_neighbor_flag(setup_inputs):
-    """"
-    A single CR in a 10 group exposure. Tests that:
+    """"Test a single CR in a 10 group exposure.
+
+    Tests that:
     - if neighbor-flagging is set, the 4 neighboring pixels *ARE* flagged, and
     - if neighbor-flagging is *NOT* set, the 4 neighboring pixels are *NOT* flagged
     """
@@ -1478,10 +1484,10 @@ def test_single_CR_neighbor_flag(setup_inputs):
 
 
 def test_proc(setup_inputs):
-    """"
-    A single CR in a 10 group exposure. Verify that the pixels flagged using
-    multiprocessing are identical to the pixels flagged when no
-    multiprocessing is done.
+    """"Test a single CR in a 10 group exposure.
+
+    Verify that the pixels flagged using multiprocessing are identical to the
+    pixels flagged when no multiprocessing is done.
     """
     grouptime = 3.0
     ingain = 5
@@ -1571,9 +1577,10 @@ def test_proc(setup_inputs):
 
 
 def test_adjacent_CRs(setup_inputs):
-    """
-    Three CRs in a 10 group exposure; the CRs have overlapping neighboring
-    pixels. This test makes sure that the correct pixels are flagged.
+    """Test three CRs in a 10 group exposure.
+
+    The CRs have overlapping neighboring pixels. This test makes sure that the
+    correct pixels are flagged.
     """
     grouptime = 3.0
     ingain = 5
@@ -1664,7 +1671,8 @@ def test_adjacent_CRs(setup_inputs):
 
 
 def test_cr_neighbor_sat_flagging(setup_inputs):
-    """"
+    """Test CR neighbors get properly flagged.
+
     For pixels impacted by cosmic rays, neighboring pixels that are not
     already flagged as saturated will also be flagged as JUMP_DET. If a
     neigboring pixel has been flagged as saturated, it should not also be
