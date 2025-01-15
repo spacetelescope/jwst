@@ -39,7 +39,8 @@ class PixelReplaceStep(Step):
 
         Parameters
         ----------
-        input : JWST DataModel
+        input : ~jwst.datamodels.JWSTDataModel
+            The input data model to process.
 
         Returns
         -------

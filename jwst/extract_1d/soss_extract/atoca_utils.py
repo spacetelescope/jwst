@@ -611,11 +611,13 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
 
     Parameters
     ----------
-    all_grid : list[array]
+    all_grids : list[array]
         List of grid (arrays) to pass to adapt_grid, in order of importance.
     all_estimate : list[callable]
         List of function (callable) to estimate the precision needed to oversample the grid.
         Must match the corresponding `grid` in `all_grid`.
+    grid_range : list[float], optional
+        The minimum and maximum wavelength of the grid.
     max_iter : int, optional
         Number of times the intervals can be subdivided. The smallest
         subdivison of the grid if max_iter is reached will then be given
@@ -1719,6 +1721,10 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
         For example, if bounds = (a,b),
         then grid_convolved = grid[a <= grid <= b].
         It dictates also the dimension of f_convolved
+    i_bounds: 2-elements object
+        Range where the convolution is defined on the grid.
+    norm: bool, optional
+        Normalize the kernel if True.
     sparse: bool, optional
         return a sparse matrix (N_k_convolved, N_k) if True.
         return a matrix (N_ker, N_k_convolved) if False.
@@ -1736,6 +1742,8 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
     length: int, optional
         Only used when `kernel` is callable to define the maximum
         length of the kernel.
+    kwargs: dict
+        Additional arguments to pass to the kernel function.
 
     """
     # Define range where the convolution is defined on the grid.
@@ -2344,6 +2352,10 @@ class TikhoTests(dict):
             self is used
         n_points : int, optional
             Number of data points; if not provided, self.n_points is used
+        loss : str or callable
+            Loss function to use. If a string, must be one of 'linear', 'soft_l1',
+            or 'cauchy'. If a callable, it must accept an array of squared errors
+            and return an array of the same shape.
 
         Returns
         -------

@@ -498,7 +498,7 @@ class Association(MutableMapping):
             'Association._add must be implemented by a specific association rule.'
         )
 
-    def _add_items(self, items, **kwargs):
+    def _add_items(self, items):
         """Force adding items to the association.
 
         Parameters

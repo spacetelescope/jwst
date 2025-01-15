@@ -122,7 +122,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 # *****************************************************************************
 
 
-def find_corners_NIRSPEC(input, instrument_info, coord_system):
+def find_corners_NIRSPEC(input, coord_system):
     """Find the sky footprint of a slice of a NIRSpec exposure.
 
     For each slice find:
@@ -136,9 +136,6 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
        input model (or file)
     coord_system : str
        coordinate system of output cube: skyalign, ifualign, internal_cal
-
-    Notes
-    -----
 
     Returns
     -------

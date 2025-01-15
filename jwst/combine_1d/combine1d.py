@@ -655,6 +655,9 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
         be one of:  "exposure_time" (the default), "integration_time",
         or "unit_weight".
 
+    sigma_clip : float, optional
+        Passed into accumulate_sums for clipping outliers in spectral combination.
+
     Returns
     -------
     output_model : `~jwst.datamodels.JwstDataModel`

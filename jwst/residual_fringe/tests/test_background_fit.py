@@ -9,7 +9,7 @@ from astropy.io import fits
 
 
 def read_fit_column(file):
-    """This is really  a small regression test, testing that the background fitting is working."""
+    """Regression test, testing that the background fitting is working."""
     # Data was pulled out of an exposure by modifying residual_fringe.py to write out a column of data
     # The function we are testing is fit_1d_background_complex.
 

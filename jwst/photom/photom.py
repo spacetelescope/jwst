@@ -81,12 +81,7 @@ def find_row(fits_table, match_fields):
 
 
 class DataSet():
-    """Input dataset to which the photom information will be applied.
-
-    Parameters
-    ----------
-
-    """
+    """Input dataset to which the photom information will be applied."""
 
     def __init__(self, model, inverse=False, source_type=None, mrs_time_correction=False,
                  correction_pars=None):
@@ -234,9 +229,6 @@ class DataSet():
 
         area_fname : str
             Pixel area map reference file name
-
-        Returns
-        -------
 
         """
         # Normal fixed-slit exposures get handled as a MultiSlitModel
@@ -396,9 +388,6 @@ class DataSet():
                `~jwst.datamodels.NisImgPhotomModel`
             NIRISS photom reference file data model
 
-        Returns
-        -------
-
         """
         # Handle MultiSlit models separately, which are used for NIRISS WFSS
         if isinstance(self.input, datamodels.MultiSlitModel):
@@ -460,9 +449,6 @@ class DataSet():
                `~jwst.datamodels.MirMrsPhotomModel` or
                `~jwst.datamodels.MirLrsPhotomModel`
             MIRI photom reference file data model
-
-        Returns
-        -------
 
         """
         # Imaging detector
@@ -588,9 +574,6 @@ class DataSet():
                `~jwst.datamodels.NrcWfssPhotomModel`
             NIRCam photom reference file data model
 
-        Returns
-        -------
-
         """
         # Handle WFSS data separately from regular imaging
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS':
@@ -633,9 +616,6 @@ class DataSet():
         ----------
         ftab : `~jwst.datamodels.FgsImgPhotomModel`
             FGS photom reference file data model
-
-        Returns
-        -------
 
         """
         # Read the first (and only) row in the reference file
@@ -737,9 +717,6 @@ class DataSet():
 
         order : int
             Spectral order number
-
-        Returns
-        -------
 
         """
         # First get the scalar conversion factor.

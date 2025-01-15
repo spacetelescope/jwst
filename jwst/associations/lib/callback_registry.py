@@ -25,6 +25,8 @@ class CallbackRegistry():
 
         Parameters
         ----------
+        event : str
+            The event to reduce.
         args : [arg[,...]]
             The args to filter
 

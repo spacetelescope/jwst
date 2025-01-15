@@ -65,7 +65,7 @@ def get_correction_function(side, timecoeff, mid_time):
         A dictionay holding the correction factors for the time/wavelength
         correction.  binwave, acoeff, bcoeff, ccoeff, x0 are the parameters
         for an MRS time-wavelength photom correction.
-    mid-time : int
+    mid_time : int
         Modified Julian day
 
     Returns

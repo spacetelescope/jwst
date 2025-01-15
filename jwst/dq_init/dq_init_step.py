@@ -30,7 +30,7 @@ class DQInitStep(Step):
 
         Parameters
         ----------
-        input : JWST datamodel
+        step_input : JWST datamodel
             input jwst datamodel
 
         Returns

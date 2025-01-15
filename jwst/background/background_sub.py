@@ -15,7 +15,7 @@ log.setLevel(logging.DEBUG)
 
 
 class ImageSubsetArray:
-    """This class is intended to keep track of where different images
+    """Keep track of where different images
     may relate to each other when using e.g. subarray observations.
     """
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""This script adds velocity aberration correction information to the FITS
+"""Adds velocity aberration correction information to the FITS
 files provided to it on the command line (one or more).
 
 It assumes the following keywords are present in the file header:

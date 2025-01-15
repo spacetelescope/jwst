@@ -50,7 +50,7 @@ class JWSTSourceCatalog:
             The input `ImageModel`.  The data is assumed to be
             background subtracted.
 
-        segment_image : `~photutils.segmentation.SegmentationImage`
+        segment_img : `~photutils.segmentation.SegmentationImage`
             A 2D segmentation image, with the same shape as the input data,
             where sources are marked by different positive integer values.
             A value of zero is reserved for the background.

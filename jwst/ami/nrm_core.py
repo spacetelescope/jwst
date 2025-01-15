@@ -20,11 +20,11 @@ class FringeFitter:
 
         Parameters
         ----------
-        instrument_data - jwst.ami.instrument_data.NIRISS object
+        instrument_data: jwst.ami.instrument_data.NIRISS object
             Information on the mask geometry (namely # holes), instrument,
             wavelength obs mode.
 
-        kwargs options:
+        kwargs: dict
             oversample - model oversampling (also how fine to measure the centering)
             psf_offset - subpixel centering of your data, if known
             npix - number of data pixels to use. Default is the shape of the data frame.
@@ -111,9 +111,6 @@ class FringeFitter:
     def make_lgfitmodel(self):
         """Populate the LGFitModel with the output of the fringe fitting
         (LG algorithm).
-
-        Parameters
-        ----------
 
         Returns
         -------

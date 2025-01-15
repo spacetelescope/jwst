@@ -76,6 +76,9 @@ class LgModel:
         affine2d: Affine2d object
             Affine2d object
 
+        kwargs: dict
+            Additional keyword arguments
+
         """
         if "debug" in kwargs:
             self.debug = kwargs["debug"]
@@ -290,7 +293,6 @@ class LgModel:
         reference=None,
         pixguess=None,
         rotguess=0,
-        psf_offset=(0, 0),
         modelin=None,
         savepsfs=False,
         dqm=None,
@@ -523,7 +525,7 @@ class LgModel:
 
         Parameters
         ----------
-        phi: float
+        phi_m: float
             piston angle
 
         Returns

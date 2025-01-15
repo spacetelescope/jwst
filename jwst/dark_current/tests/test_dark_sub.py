@@ -66,7 +66,9 @@ def setup_nrc_cube():
 
 def _params():
     """Returns list of tuples, one for each readpatt, generating parameters for
-    test_frame_averaging. Parameters are the following:
+    test_frame_averaging.
+    
+    Parameters are the following:
 
         (readpatt, ngroups, nframes, groupgap, nrows, ncols)
 

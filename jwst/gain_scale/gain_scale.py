@@ -17,6 +17,9 @@ def do_correction(output_model, gain_factor):
     output_model : `~jwst.datamodels.JwstDataModel`
         Input datamodel to be corrected
 
+    gain_factor : float
+        Gain factor by which to rescale the data
+
     Returns
     -------
     output_model : `~jwst.datamodels.JwstDataModel`

@@ -30,20 +30,21 @@ def g_eeAG(xi, eta, **kwargs):
     eta: 2D float array
         hexagon's coordinate center at center of symmetry, normal to xi
 
-    c (optional, via **kwargs): tuple(float, float)
-        coordinates of center
+    **kwargs:
+        c: (optional, via **kwargs): tuple(float, float)
+            coordinates of center
 
-    pixel (optional, via **kwargs): float
-        pixel scale
+        pixel (optional, via **kwargs): float
+            pixel scale
 
-    d (optional, via **kwargs): float
-        flat-to-flat distance across hexagon
+        d (optional, via **kwargs): float
+            flat-to-flat distance across hexagon
 
-    lambda (optional, via **kwargs): float
-        wavelength
+        lambda (optional, via **kwargs): float
+            wavelength
 
-    minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation
+        minus: (optional, via **kwargs) boolean
+            if set, use flipped sign of xi in calculation
 
     Returns
     -------
@@ -88,20 +89,21 @@ def glimit(xi, eta, **kwargs):
         hexagon's coordinate center at center of symmetry, normal to xi;
         not currently used
 
-    c (optional, via **kwargs): tuple(float, float)
-        coordinates of center
+    **kwargs: dict
+        c (optional, via **kwargs): tuple(float, float)
+            coordinates of center
 
-    pixel (optional, via **kwargs): float
-        pixel scale
+        pixel (optional, via **kwargs): float
+            pixel scale
 
-    d (optional, via **kwargs): float
-        flat-to-flat distance across hexagon
+        d (optional, via **kwargs): float
+            flat-to-flat distance across hexagon
 
-    lam: (optional, via **kwargs): float
-        wavelength
+        lam: (optional, via **kwargs): float
+            wavelength
 
-    minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation
+        minus: (optional, via **kwargs) boolean
+            if set, use flipped sign of xi in calculation
 
     Returns
     -------

@@ -29,7 +29,7 @@ __all__ = ["ResampleSpecData"]
 
 
 class ResampleSpecData(ResampleData):
-    """This is the controlling routine for the resampling process for spectral data.
+    """Controlling routine for the resampling process for spectral data.
 
     Notes
     -----
@@ -220,6 +220,9 @@ class ResampleSpecData(ResampleData):
 
         Parameters
         ----------
+        input_models : list of `~jwst.datamodels.DataModel`
+            A list of datamodels to process.
+
         refmodel : `~jwst.datamodels.JwstDataModel`, optional
             The reference input image from which the fiducial WCS is created.
             If not specified, the first image in input_models. If the

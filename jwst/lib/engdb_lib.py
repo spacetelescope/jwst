@@ -72,14 +72,15 @@ class EngdbABC(abc.ABC):
         mnemonic : str
             The engineering mnemonic to retrieve
 
+        service_kwargs : dict
+            Service-specific keyword arguments. Refer to the concrete implementations
+            of EngdbABC.
+
+
         Returns
         -------
         meta : object
             The meta information. Type of return is dependent on the type of service
-
-        service_kwargs : dict
-            Service-specific keyword arguments. Refer to the concrete implementations
-            of EngdbABC.
 
         """
         pass

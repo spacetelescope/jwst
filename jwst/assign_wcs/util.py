@@ -347,9 +347,6 @@ def get_object_info(catalog_name=None):
     objects : list[jwst.transforms.models.SkyObject]
         A list of SkyObject tuples
 
-    Notes
-    -----
-
     """
     if isinstance(catalog_name, str):
         if len(catalog_name) == 0:
@@ -851,6 +848,7 @@ def compute_footprint_nrs_slit(slit):
     Parameters
     ----------
     slit : `~jwst.datamodels.SlitModel`
+        The slit model.
 
     """
     slit2world = slit.meta.wcs.get_transform("slit_frame", "world")
@@ -893,7 +891,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.IFUImageModel`
+    dmodel : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     mod : module
         The imported ``nirspec`` module.
@@ -1176,6 +1174,10 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
             WCS from ``datamodel.meta.wcs`` will result in the GWCS and
             FITS WCS descriptions to diverge.
 
+    kwargs : dict, optional
+        Additional parameters to be passed to
+        :py:meth:`~gwcs.wcs.WCS.to_fits_sip`.
+
     Other Parameters
     ----------------
     bounding_box : tuple, None, optional
@@ -1272,6 +1274,8 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
     bbox : tuple or None
         The bounding box over which to approximate the distortion solution.
         Typically this is based on the shape of the direct image.
+    kwargs : dict
+        Additional parameters to be passed to update_fits_wcsinfo.
 
     """
     xstart = wfss_model.meta.subarray.xstart

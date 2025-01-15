@@ -519,6 +519,9 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     flux: float
         normalization factor
 
+    linfit: bool
+        whether to perform linear fit
+
     dqm: 2D bool array
         bad pixel mask slice
 
@@ -689,6 +692,7 @@ def tan2visibilities(coeffs):
     Parameters
     ----------
     coeffs: 1D float array
+        coefficients from the fit
 
     Returns
     -------
@@ -725,7 +729,7 @@ def tan2visibilities(coeffs):
 
 
 def populate_antisymmphasearray(deltaps, n=7):
-    """Populate the antisymmetric fringe phase array:
+    """Populate the antisymmetric fringe phase array.
 
     fringephasearray[0,q+1:] = coeffs[0:6]
     fringephasearray[1,q+2:] = coeffs[6:11]

@@ -119,11 +119,13 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
 
     Parameters
     ----------
+    input_models : ModelContainer
+        The input data models to search for outliers
     idet : int
         Integer indicating which detector we are working with
     uq_det : string array
         Array of (unique) detector names found input data
-    n_det_files : int
+    ndet_files : int
         Number of files for the detector we are working on
     diffaxis : int
         The axis to form the adjacent pixel differences

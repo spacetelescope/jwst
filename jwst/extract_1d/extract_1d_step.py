@@ -340,6 +340,7 @@ class Extract1dStep(Step):
         Parameters
         ----------
         input: JWST data model
+            The input datamodel.
 
         Returns
         -------

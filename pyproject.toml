@@ -260,6 +260,7 @@ exclude = [
     ".tox",
     ".eggs",
     "build",
+    "jwst/fits_generator", #deprecated, will be removed soon
 ]
 line-length = 130
 
@@ -274,7 +275,10 @@ ignore = [
     "D103", # Missing docstring in public function
     "D104", # Missing docstring in public package
     "D105", # Missing docstring in magic methods, e.g. __iter__
+    "D106", # Missing docstring in public nested class
+    "D107", # Missing docstring in __init__
     "D205", # 1 blank line required between summary line and description
+    "D400", # First line should end with a period, superseded by D414 (ends in punctuation)
     "D401", # First line should be in imperative mood
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
@@ -288,12 +292,6 @@ ignore = [
     "F401", # unused import
     "F403", # import with *
     "F405", # ambiguous import from *
-]
-"jwst/fits_generator/*" = [
-    "F821", # undefined name
-]
-"jwst/fits_generator/tests/*" = [
-    "F841", # unused variable
 ]
 "jwst/associations/tests*" = [
     "F841", # unused variable

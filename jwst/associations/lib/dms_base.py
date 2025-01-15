@@ -974,7 +974,8 @@ def get_exposure_type(item, default='science', association=None):
         The default exposure type.
         If None, routine will raise LookupError
 
-
+    association : Association or None
+        The association to pass to `item_getattr`.
 
     Returns
     -------
@@ -1057,6 +1058,10 @@ def item_getattr(item, attributes, association=None):
 
     attributes : list
         List of attributes
+
+    association : Association or None
+        The association from which to retrieve the invalid values.
+        If None, no invalid values are defined.
 
     Returns
     -------

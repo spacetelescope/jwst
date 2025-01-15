@@ -237,12 +237,16 @@ class IFUCubeData():
         """Based on the ra,dec and wavelength footprint set up the size
         of the cube in the tangent plane projected coordinate system.
 
-
         Parameters
         ----------
-        footprint: tuple
-          holds min and max or ra,dec, and wavelength for the cube
-          footprint
+        corner_a: list
+            list of the alpha (ra) values of the corners of the cube
+        corner_b: list
+            list of the beta (dec) values of the corners of the cube
+        lambda_min: float
+            minimum wavelength of the cube
+        lambda_max: float
+            maximum wavelength of the cube
 
         """
         ra_min = np.min(corner_a)
@@ -383,9 +387,14 @@ class IFUCubeData():
 
         Parameters
         ----------
-        footprint : tuple
-           Holds the min and max alpha, beta and wavelength values of
-           cube on sky
+        corner_a: list
+            list of the alpha (ra) values of the corners of the cube
+        corner_b: list
+            list of the beta (dec) values of the corners of the cube
+        lambda_min: float
+            minimum wavelength of the cube
+        lambda_max: float
+            maximum wavelength of the cube
 
         """
         self.a_min = np.min(corner_a)
@@ -1472,7 +1481,7 @@ class IFUCubeData():
         subtract_background : boolean
            if TRUE then subtract the background found in the mrs_imatch step only
            needed for MIRI data
-        input: datamodel
+        input_model: datamodel
            input data model
 
         Returns
@@ -1709,14 +1718,14 @@ class IFUCubeData():
 
         Parameters
         ----------
+        input_model: datamodel
+           input data model
         this_par1 : str
            for MIRI this is the channel # for NIRSPEC this is the grating name
            only need for MIRI to distinguish which channel on the detector we have
         subtract_background : boolean
            if TRUE then subtract the background found in the mrs_imatch step only
            needed for MIRI data
-        input: datamodel
-           input data model
         offsets: dictionary
            optional dictionary of ra and dec offsets to apply
 
@@ -1838,8 +1847,11 @@ class IFUCubeData():
 
         Parameters
         ----------
-        input: datamodel
-        input data model
+        input_model: datamodel
+            input data model
+
+        offsets: flag
+            if not None, apply the ra and dec offsets to the ra and dec values
 
         Returns
         -------

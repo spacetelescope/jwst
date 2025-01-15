@@ -10,7 +10,7 @@ __all__ = ["SaturationStep"]
 
 
 class SaturationStep(Step):
-    """This Step sets saturation flags."""
+    """Set saturation flags."""
 
     class_alias = "saturation"
 

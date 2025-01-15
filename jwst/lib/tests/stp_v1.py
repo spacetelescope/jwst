@@ -29,7 +29,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-"""This script adds absolute pointing information to the FITS files provided
+"""Add absolute pointing information to the FITS files provided
 to it on the command line (one or more).
 
 Currently it only uses a constant value for the engineering keywords

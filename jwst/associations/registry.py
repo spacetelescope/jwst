@@ -275,6 +275,13 @@ class AssociationRegistry(dict):
         module : module
             The module, and all submodules, to be parsed.
 
+        global_constraints : dict
+            The global constraints to attach to the rule.
+
+        include_bases : bool
+            If True, include base classes not considered
+            rules.
+
         """
         for name, obj in get_marked(module, include_bases=include_bases):
 

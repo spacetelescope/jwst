@@ -13,7 +13,7 @@ __all__ = ["ChargeMigrationStep"]
 
 
 class ChargeMigrationStep(Step):
-    """This Step sets the CHARGELOSS flag for groups exhibiting significant
+    """Set the CHARGELOSS flag for groups exhibiting significant
     charge migration.
     """
 

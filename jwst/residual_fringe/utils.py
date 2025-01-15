@@ -854,6 +854,9 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
     channel : int, optional, default=1
         the channel processed. used to determine if other arrays need to be reversed given the direction of increasing
         wavelength down the detector in MIRIFULONG
+    
+    test : bool, optional, default=False
+        Unused.
 
     Returns
     -------
@@ -1057,7 +1060,7 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
     return res_fringe_fit, weighted_pix_num, nfringes, peak_freq, freq_min, freq_max
 
 def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, max_amp=None):
-    """This is the wrapper function for 1d residual fringe correction.
+    """Wrapper function for 1d residual fringe correction.
 
     Parameters
     ----------

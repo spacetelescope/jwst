@@ -428,8 +428,11 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     Parameters
     ----------
     input_model: ~jwst.datamodels.RampModel
-    i: integration #
-    sci_ngroups: number of frames/integration
+        The input models.
+    i: int
+        integration number
+    sci_ngroups: int
+        number of frames/integration
 
     return values
     -------------

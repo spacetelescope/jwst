@@ -820,8 +820,8 @@ def _shutter_id_to_str(open_shutters, ycen):
     ----------
     open_shutters : list
         List of IDs (shutter_id) of open shutters.
-    xcen : int
-        X coordinate of main shutter.
+    ycen : int
+        Y coordinate of main shutter.
 
     Returns
     -------
@@ -892,7 +892,7 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
     return order, wrange
 
 
-def ifuslit_to_slicer(slits, reference_files, input_model):
+def ifuslit_to_slicer(slits, reference_files):
     """The transform from ``slit_frame`` to ``slicer`` frame.
 
     Parameters
@@ -901,7 +901,6 @@ def ifuslit_to_slicer(slits, reference_files, input_model):
         A list of slit IDs for all slices.
     reference_files : dict
         {reference_type: reference_file_name}
-    input_model : `~jwst.datamodels.IFUImageModel`
 
     Returns
     -------
@@ -987,12 +986,10 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
     ----------
     slits : list
         A list of slit IDs for all IFU slits 0-29.
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
     disperser : `~jwst.datamodels.DisperserModel`
         A disperser model with the GWA correction applied to it.
-    filter : str
-        The filter used.
-    grating : str
-        The grating used in the observation.
     reference_files: dict
         Dictionary with reference files returned by CRDS.
     slit_y_range : list or tuple of size 2
@@ -1082,12 +1079,10 @@ def gwa_to_slit(open_slits, input_model, disperser,
     ----------
     open_slits : list
         A list of slit IDs for all open shutters/slitlets.
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
     disperser : dict
         A corrected disperser ASDF object.
-    filter : str
-        The filter used.
-    grating : str
-        The grating used in the observation.
     reference_files: dict
         Dictionary with reference files returned by CRDS.
 
@@ -1333,6 +1328,8 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
         `nrs_wcs_set_input` uses "detector to slit", validate_open_slits uses "slit to detector".
     wavelength_range : tuple
         The wavelength range for the combination of grating and filter.
+    slit_ymin, slit_ymax : float
+        The lower and upper bounds of the slit.
 
     """
     # If transform has inverse then it must be slit to detector
@@ -1530,7 +1527,7 @@ def msa_to_oteip(reference_files):
     return msa2fore_mapping | (fore & Identity(1))
 
 
-def oteip_to_v23(reference_files, input_model):
+def oteip_to_v23(reference_files):
     """Transform from ``oteip`` frame to ``v2v3`` frame.
 
     Parameters
@@ -1753,6 +1750,10 @@ def _nrs_wcs_set_input_lite(input_model, input_wcs, slit_name, transforms,
         Wavelength range for the combination of filter and grating.  Optional.
     open_slits : list of slits
         List of open slits.  Optional.
+    slit_y_low : float
+        The lower bound of the slit.
+    slit_y_high : float
+        The upper bound of the slit.
 
     Returns
     -------
@@ -1845,6 +1846,10 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None,
         Slit.name of an open slit.
     wavelength_range: list
         Wavelength range for the combination of filter and grating.
+    slit_y_low : float
+        The lower bound of the slit.
+    slit_y_high : float
+        The upper bound of the slit.
 
     Returns
     -------
@@ -1887,6 +1892,12 @@ def validate_open_slits(input_model, open_slits, reference_files):
     ----------
     input_model : jwst.datamodels.JwstDataModel
         Input data model
+
+    open_slits : list of SlitModel
+        List of open slits
+
+    reference_files : dict
+        Dictionary with reference files returned by CRDS.
 
     Returns
     -------

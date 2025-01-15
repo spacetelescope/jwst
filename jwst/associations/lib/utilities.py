@@ -207,7 +207,7 @@ def return_on_exception(exceptions=(Exception,), default=None):
 
 
 @return_on_exception(exceptions=(KeyError,), default=None)
-def getattr_from_list_nofail(*args, **kwargs):
+def getattr_from_list_nofail(*args, **kwargs): # noqa: D417
     """Call getattr_from_list without allows exceptions.
 
     If the specified exceptions are caught, return `default`
@@ -217,7 +217,7 @@ def getattr_from_list_nofail(*args, **kwargs):
     ----------
     See `getattr_from_list`
 
-    """
+    """ 
     return getattr_from_list(*args, **kwargs)
 
 

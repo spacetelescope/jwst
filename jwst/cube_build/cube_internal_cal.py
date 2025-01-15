@@ -28,6 +28,8 @@ def match_det2cube(instrument,
 
     Parameters
     ----------
+    instrument : str
+        Name of the instrument
     x : numpy.ndarray
        x values of pixels in slice
     y : numpy.ndarray
@@ -38,8 +40,22 @@ def match_det2cube(instrument,
       input slope model or file
     transform : transform
       wcs transform to transform x,y to alpha,beta, lambda
-    spaxel : list
-      list of spaxels holding information on each cube pixel.
+    acoord : numpy.ndarray
+      alpha coordinate of spaxel
+    zcoord : numpy.ndarray
+      beta coordinate of spaxel
+    crval_along : float
+      crval of along slice coordinate
+    crval3 : float
+      crval of lambda coordinate
+    cdelt_along : float
+      cdelt of along slice coordinate
+    cdelt3 : float
+      cdelt of lambda coordinate
+    naxis1 : int  
+      size of cube in axis 1
+    naxis2 : int
+      size of cube in axis 2
 
     Returns
     -------

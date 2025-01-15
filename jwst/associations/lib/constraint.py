@@ -958,10 +958,10 @@ def meets_conditions(value, conditions):
 
     Parameters
     ----------
-    values : str
+    value : str
         The value to be check with.
 
-    condition : regex,
+    conditions : regex,
         Regular expressions to match against.
 
     Returns

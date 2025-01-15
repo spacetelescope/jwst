@@ -1312,7 +1312,7 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
         is the "fast" variation of the flat, i.e. fast with respect to
         wavelength.
 
-    tab_flat_err : ndarray, 1-D
+    tab_flat_error : ndarray, 1-D
         The flat field error from the table part of the reference file.
 
     dispaxis : int

@@ -469,6 +469,8 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
 
     Parameters
     ----------
+    refmodel : PastasossModel
+        The reference model holding the wavecal models and scale extents
     pwcpos : float
         The pupil wheel position
     subarray: str

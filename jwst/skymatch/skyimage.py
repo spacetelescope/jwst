@@ -109,8 +109,9 @@ class NDArrayMappedAccessor(DataAccessor):
 
 
 class SkyImage:
-    """Container that holds information about properties of a *single*
-    image such as:
+    """Container that holds information about properties of a *single* image.
+
+    This includes:
 
     * image data;
     * WCS of the chip image;

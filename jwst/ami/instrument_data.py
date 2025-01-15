@@ -21,9 +21,6 @@ class NIRISS:
                  bandpass=None,
                  usebp=True,
                  firstfew=None,
-                 rotsearch_parameters=None,
-                 oversample=None,
-                 psf_offset=None,
                  run_bpfix=True
                  ):
         """Initialize NIRISS class for NIRISS/AMI instrument.
@@ -322,9 +319,6 @@ class NIRISS:
         ----------
         nwav: integer
             length of axis3 for 3D input
-
-        Returns
-        -------
 
         """
         self.nwav = nwav

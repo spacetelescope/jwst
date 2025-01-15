@@ -890,8 +890,8 @@ class NIRDataset(Dataset):
                 evenrefbottom = refvalues[amplifier]['even']['bottom']
                 #
                 # For now, just average the top and bottom corrections
-                oddrefsignal = self.average_with_None(oddreftop, oddrefbottom)
-                evenrefsignal = self.average_with_None(evenreftop, evenrefbottom)
+                oddrefsignal = self._average_with_None(oddreftop, oddrefbottom)
+                evenrefsignal = self._average_with_None(evenreftop, evenrefbottom)
                 if oddrefsignal is not None and evenrefsignal is not None:
                     if not self.is_irs2:
                         oddslice = (slice(datarowstart, datarowstop, 1),
@@ -911,7 +911,7 @@ class NIRDataset(Dataset):
             else:
                 reftop = refvalues[amplifier]['top']
                 refbottom = refvalues[amplifier]['bottom']
-                refsignal = self.average_with_None(reftop, refbottom)
+                refsignal = self._average_with_None(reftop, refbottom)
                 if refsignal is not None:
                     dataslice = (slice(datarowstart, datarowstop, 1),
                                  slice(datacolstart, datacolstop, 1))
@@ -920,17 +920,9 @@ class NIRDataset(Dataset):
                     pass
         return
 
-    def average_with_None(self, a, b):
+    def _average_with_None(self, a, b):
         """Average two numbers.  If one is None, return the
         other.  If both are None, return None.
-
-        Parameters
-        ----------
-        a, b:    Numbers or None
-
-        Returns
-        -------
-        result = Number or None
 
         """
         if a is None and b is None:
@@ -1062,27 +1054,19 @@ class NIRDataset(Dataset):
             2-d array of average reference pixel vector replicated horizontally
 
         """
-        combined = self.combine_with_NaNs(left, right)
+        combined = self._combine_with_NaNs(left, right)
         sidegroup = np.zeros((2048, 2048))
         for column in range(2048):
             sidegroup[:, column] = combined
         return sidegroup
 
-    def combine_with_NaNs(self, a, b):
+    def _combine_with_NaNs(self, a, b):
         """Combine 2 1-d arrays that have NaNs.
         Wherever both arrays are NaN, output is 0.0.
         Wherever a is NaN and b is not, return b.
         Wherever b is NaN and a is not, return a.
         Wherever neither a nor b is NaN, return the average of
         a and b.
-
-        Parameters
-        ----------
-        a, b:   numpy 1-d arrays of numbers
-
-        Returns
-        -------
-        result = numpy 1-d array of numbers
 
         """
         result = np.zeros(len(a), dtype=a.dtype)
@@ -2221,6 +2205,10 @@ def setup_dataset_for_zeroframe(input_dataset, saved_values):
     ----------
     input_dataset : Dataset
         Dataset to be corrected
+
+    saved_values : tuple
+        A tuple of saved values to be used to setup the final
+        corrected RampModel.
 
     """
     # Setup dimensions

@@ -729,8 +729,10 @@ class CalibOifits:
 
         Parameters
         ----------
-        targoimodel: AmiOIModlel, target
-        caloimodel: AmiOIModlel, reference star (calibrator)
+        targoimodel: AmiOIModlel
+            The target
+        caloimodel: AmiOIModlel
+            The reference star (calibrator)
 
         """
         self.targoimodel = targoimodel

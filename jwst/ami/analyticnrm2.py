@@ -44,7 +44,7 @@ def ffc(kx, ky, **kwargs):
     kx, ky: float, float
         x-component and y-component of image plane (spatial frequency) vector
 
-    kwargs options:
+    kwargs:
         pitch: float
             sampling pitch in radians in image plane
 
@@ -85,7 +85,7 @@ def ffs(kx, ky, **kwargs):
     kx, ky: float, float
         x-component and y-component of image plane (spatial frequency) vector
 
-    kwargs options:
+    kwargs:
         pitch: float
             sampling pitch in radians in image plane
 
@@ -124,7 +124,7 @@ def harmonicfringes(**kwargs):
 
     Parameters
     ----------
-    kwargs options:
+    kwargs:
         fov: integer, default=None
             number of detector pixels on a side
 
@@ -196,6 +196,7 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
         sampling pitch in radians in image plane
 
     affine2d: Affine2d object
+        The affine2d object
 
     Returns
     -------
@@ -243,7 +244,7 @@ def interf(kx, ky, **kwargs):
     kx, ky: float, float radians
         x-component and y-component of image plane (spatial frequency) vector
 
-    kwargs options:
+    kwargs:
         psfctr: 2D float array
             center of PSF, in simulation pixels (i.e. oversampled)
 
@@ -317,6 +318,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
         shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
     affine2d: Affine2d object
+        The affine2d object
 
     Returns
     -------
@@ -395,6 +397,7 @@ def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        The affine2d object
 
     Returns
     -------
@@ -442,6 +445,7 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        The affine2d object
 
     Returns
     -------
@@ -493,6 +497,7 @@ def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        The affine2d object
 
     Returns
     -------
@@ -544,6 +549,7 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        The affine2d object
 
     shape: string
         shape of hole; possible values are 'circ', 'hex', and 'fringe'

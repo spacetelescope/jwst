@@ -182,7 +182,7 @@ class Polygon(Region):
         return edges
 
     def scan(self, data):
-        """This is the main function which scans the polygon and creates the mask.
+        """Main function, which scans the polygon and creates the mask.
 
         Parameters
         ----------

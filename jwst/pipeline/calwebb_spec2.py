@@ -95,7 +95,7 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        input: str, Level2 Association, or ~jwst.datamodels.JwstDataModel
+        data: str, Level2 Association, or ~jwst.datamodels.JwstDataModel
             The exposure or association of exposures to process
 
         """
@@ -169,6 +169,12 @@ class Spec2Pipeline(Pipeline):
         ----------
         exp_product: dict
             A Level2b association product.
+
+        pool_name: str
+            The name of the asn pool.
+
+        asn_file: str
+            Name of the asn file to record as the table name in the output.
 
         """
         # Find all the member types in the product

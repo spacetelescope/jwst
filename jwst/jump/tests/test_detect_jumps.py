@@ -225,7 +225,7 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
     This makes sure that group 5 is getting flagged.
     Note that the first and last frames/groups are all flagged with DO_NOT_USE,
     due to the application of the first/last frame steps.
-    """
+    """ #noqa D404
     grouptime = 3.0
     ingain = 5.5
     inreadnoise = 6.5

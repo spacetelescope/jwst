@@ -48,8 +48,8 @@ def create_wavelengths(filtername):
 
     Parameters
     ----------
-        filtername: string
-            AMI filter name
+    filtername: string
+        AMI filter name
 
     """
     wl_ctr = filtwl_d[filtername]

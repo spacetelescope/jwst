@@ -134,6 +134,9 @@ def fitswcs_transform_from_model(wcsinfo, wavetable=None):
     wcsinfo : dict-like
         ``~jwst.meta.wcsinfo`` structure.
 
+    wavetable : `~astropy.table.Table`, None
+        A table with columns 'wavelength' and 'flux' to be used as a look-up table
+
     Return
     ------
     transform : `~astropy.modeling.core.Model`

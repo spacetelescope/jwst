@@ -1,4 +1,4 @@
-"""This module provides support for performing sky matching on cubes.
+"""Provides support for performing sky matching on cubes.
 on the sky. Primary use case would use the following
 generalized step: ``cube_skymatch``.
 
@@ -14,7 +14,9 @@ __all__ = ['SkyCube']
 
 class SkyCube():
     r"""Container that holds information about properties of a *single*
-    image such as:
+    image.
+    
+    These properties include:
 
     * image data;
     * data weights;

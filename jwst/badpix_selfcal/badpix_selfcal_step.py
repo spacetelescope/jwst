@@ -207,8 +207,8 @@ def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list)
     container : ModelContainer
         input data
 
-    exptype : str
-        exposure type to split on
+    exptypes : str
+        exposure types to split on
 
     Returns
     -------

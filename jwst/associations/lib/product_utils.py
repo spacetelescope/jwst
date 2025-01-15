@@ -36,7 +36,8 @@ def get_product_names(asns):
 
     Parameters
     ----------
-    asns : [`Association`[, ...]]
+    asns : list
+        [`Association`[, ...]]
 
     Returns
     -------

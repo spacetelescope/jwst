@@ -289,6 +289,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             The association candidate id to use. Since Level2
             associations require it, one must be specified.
 
+        kwargs : dict
+            Additional keyword arguments to be used when adding
+            members
+
         Notes
         -----
         This is a low-level shortcut into adding members, such as file names,
@@ -577,7 +581,7 @@ class Utility():
 
         Parameters
         ----------
-        associations : [asn(, ...)]
+        asns : [asn(, ...)]
             Associations to search for merging.
 
         Returns

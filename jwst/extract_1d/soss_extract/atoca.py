@@ -1325,7 +1325,10 @@ class _BaseOverlap:
             Default is False.
         tikho_kwargs : dictionary or None, optional
             Arguments passed to `tikho_solve`.
-        factor : the Tikhonov factor to use if tikhonov is True
+        factor : float
+            the Tikhonov factor to use if tikhonov is True
+        kwargs:
+            additional keyword arguments passed to `get_detector_model`.
         data : (N, M) array_like, optional
             A 2-D array of real values representing the detector image.
             Default is the object attribute `data`.

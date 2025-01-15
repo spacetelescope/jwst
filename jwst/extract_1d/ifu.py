@@ -362,7 +362,7 @@ def get_extract_parameters(ref_file, bkg_sigma_clip):
 
 
 def extract_ifu(input_model, source_type, extract_params):
-    """This function does the extraction.
+    """Do the extraction.
 
     Parameters
     ----------

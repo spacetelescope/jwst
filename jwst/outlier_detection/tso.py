@@ -151,9 +151,6 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
     np.ndarray
         The rolling median of the input array. Same dimensions as input.
 
-    Notes
-    -----
-
     """
     if w <= 1:
         raise ValueError("Rolling median window size must be greater than 1.")

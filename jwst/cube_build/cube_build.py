@@ -26,10 +26,12 @@ class CubeData():
 
         Parameters
         ----------
-        input_models : list of data models
+        input_models : list-like
+            list of data models
         par_filename: str
           cube parameter reference filename
-        pars : dictionary holding top level cube parameters
+        pars : dict
+            dictionary holding top level cube parameters
 
         """
         self.input_models = input_models

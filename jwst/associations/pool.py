@@ -45,6 +45,9 @@ class AssociationPool(Table):
         format : str
             The format of the input file.
 
+        kwargs : dict
+            Any other arguments to be passed to `astropy.io.ascii.read`.
+
         Returns
         -------
         AssociationPool

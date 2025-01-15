@@ -389,6 +389,7 @@ class Transforms:
         Parameters
         ----------
         path : Stream-like
+            The path to write to.
 
         """
         asdf_file = self.to_asdf()
@@ -697,6 +698,10 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
     ----------
     model : `~jwst.datamodels.JwstDataModel`
         The model to update.
+    
+    default_pa_v3 : float
+        The V3 position angle to use if the pointing information
+        is not found.
 
     default_roll_ref : float
         If pointing information cannot be retrieved,
@@ -1779,6 +1784,7 @@ def vector_to_angle(v):
     Parameters
     ----------
     v : [v0, v1, v2]
+        The unit direction vector.
 
     Returns
     -------
@@ -2228,7 +2234,8 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
 
     Parameters
     ----------
-    mnemonics : {mnemonic: [value[,...]]}
+    mnemonics : dict
+        {mnemonic: [value[,...]]}
 
     filled_only : bool
         Only return a matrix where observation times have all the mnemonics defined.
@@ -2278,7 +2285,8 @@ def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
 
     Parameters
     ----------
-    mnemonics : {mnemonic: [value[,...]]}
+    mnemonics : dict
+        {mnemonic: [value[,...]]}
 
     filled_only : bool
         Only return a matrix where observation times have all the mnemonics defined.

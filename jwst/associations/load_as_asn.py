@@ -46,7 +46,6 @@ class LoadAsAssociation(dict):
 
     @classmethod
     def load(cls, obj,
-             meta=DEFAULT_ASN_META,
              registry=AssociationRegistry,
              rule=Association,
              product_name_func=None):
@@ -162,7 +161,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         return asn
 
     @staticmethod
-    def model_product_name(model, *args, **kwargs):
+    def model_product_name(model):
         """Product a model product name based on the model.
 
         Parameters
@@ -180,7 +179,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         return product_name
 
     @staticmethod
-    def name_with_index(basename, obj, idx, *args, **kwargs):
+    def name_with_index(basename, obj, idx):
         """Produce a name with the basename and index appended.
 
         Parameters

@@ -14,7 +14,7 @@ log.setLevel(logging.DEBUG)
 
 
 def is_tso(model):
-    """Is data Time Series Observation data?
+    """Check if data are Time Series Observation data.
 
     Parameters
     ----------

@@ -130,7 +130,7 @@ def process_slit(input_model, slit, exp_type):
         Input data model. The ``CubeModel`` is used only for TSO data, i.e.
         ``NRS_BRIGHTOBJ`` exposure or internal lamp exposures with lamp_mode
         set to ``BRIGHTOBJ``.
-    slit_name : str or int
+    slit : str or int
         Slit name.
     exp_type : str
         The type of exposure. Supported types are

@@ -126,6 +126,7 @@ class Affine2d:
             default is None
 
         name: string, optional
+            name of the affine2d object
 
         Returns
         -------
@@ -243,7 +244,9 @@ class Affine2d:
 
     def distortphase(self, u, v):
         """Calculate the phase term in the Bracewell Fourier 2D affine
-        transformation theorem. The phase term is:
+        transformation theorem.
+        
+        The phase term is:
 
         1/|Delta| * exp{(2*Pi*i/Delta) * [(my*xo- x*yo) * u + (mx*yo-sy*xo)*v]}
 
@@ -304,6 +307,7 @@ def affinepars2header(hdr, affine2d):
         fits header to write affine2d parameters into
 
     affine2d: Affine2d object
+        affine2d object to write into
 
     Returns
     -------
@@ -1126,7 +1130,8 @@ def img_median_replace(img_model, box_size):
 
     Parameters
     ----------
-    img_model: image model containing input array to filter.
+    img_model: ImageModel
+        image model containing input array to filter.
 
     box_size: scalar
         box size for the median filter
@@ -1376,7 +1381,8 @@ def degrees_per_pixel(datamodel):
     
     Parameters
     ----------
-    datamodel: datamodel object
+    datamodel: jwst.datamodels object
+        input datamodel object
     
     Returns
     -------

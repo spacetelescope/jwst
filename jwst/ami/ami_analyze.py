@@ -36,12 +36,14 @@ def apply_LG_plus(
         AMI science image to be analyzed
     throughput_model : data model object
         Filter throughput data
+    nrm_model : data model object
+        Model of the non-redundant mask
     oversample : integer
         Oversampling factor
     rotation : float (degrees)
         Initial guess at rotation of science image relative to model
     psf_offset : string (two floats)
-        PSF offset values to use to create the model array\
+        PSF offset values to use to create the model array
     rotsearch_parameters : string ('start stop step')
         Rotation search parameters
     bandpass : synphot spectrum or array

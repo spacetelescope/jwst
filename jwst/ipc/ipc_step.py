@@ -23,7 +23,7 @@ class IPCStep(Step):
 
         Parameters
         ----------
-        input : data model object
+        step_input : data model object
             Science data model to be corrected.
 
         Returns

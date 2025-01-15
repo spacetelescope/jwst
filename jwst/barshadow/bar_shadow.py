@@ -175,7 +175,9 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
 def create_shutter_elements(barshadow_model):
     """Create the pieces that will be put together to make the barshadow
-    array for the slitlets.  The pieces are:
+    array for the slitlets.
+    
+    The pieces are:
 
         1. shutter_elements['first']
            Goes from the bottom edge of the array (at 1 shutter width from
@@ -198,13 +200,13 @@ def create_shutter_elements(barshadow_model):
 
     Parameters
     ----------
-       barshadow_model: BarshadowModel object
-           The barshadow model used to construct these pieces
+    barshadow_model: BarshadowModel object
+        The barshadow model used to construct these pieces
 
     Returns
     -------
-       shutter_elements: dict
-           Dictionary (specified above) with the pieces
+    shutter_elements: dict
+        Dictionary (specified above) with the pieces
 
     """
     shadow1x1 = barshadow_model.data1x1
@@ -475,10 +477,10 @@ def interpolate(rows, columns, array, default=np.nan):
 
     Parameters
     ----------
-    row: nddata array
+    rows: nddata array
         array of row indices
 
-    column: nddata array
+    columns: nddata array
         array of column indices
 
     array: nddata array

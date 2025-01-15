@@ -5,7 +5,7 @@ __all__ = ['RULE_FUNCTIONS', 'AttributeBlender', 'make_blender']
 
 
 def _multi(vals):
-    """This will either return the common value from a list of identical values
+    """Return either the common value from a list of identical values
     or 'MULTIPLE'.
     """
     uniq_vals = list(set(vals))

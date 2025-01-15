@@ -778,7 +778,7 @@ def test_miri_all_sat():
 
 
 def test_miri_first_last():
-    """This is a test of whether ramp fitting correctly handles having all 0th
+    """Test whether ramp fitting correctly handles having all 0th
     group dq flagged as DO_NOT_USE, and all final group dq flagged as
     DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based)
     group is flagged as a CR.  For such a ramp, the code removes the CR-flag

@@ -376,7 +376,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
 
 class RampFitStep(Step):
-    """This step fits a straight line to the value of counts vs. time to
+    """Fit a straight line to the value of counts vs. time to
     determine the mean count rate for each pixel.
     """
 

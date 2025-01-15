@@ -15,7 +15,7 @@ __all__ = ["GuiderCdsStep"]
 
 
 class GuiderCdsStep (Step):
-    """This step calculates the countrate for each pixel for FGS modes."""
+    """Calculate the countrate for each pixel for FGS modes."""
 
     class_alias = "guider_cds"
 

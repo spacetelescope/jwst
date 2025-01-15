@@ -22,7 +22,7 @@ __all__ = ["ResampleData"]
 
 
 class ResampleData:
-    """This is the controlling routine for the resampling process.
+    """Controlling routine for the resampling process.
 
     Notes
     -----
@@ -228,8 +228,10 @@ class ResampleData:
         Parameters
         ----------
         input_models : ModelLibrary
+            The input data models.
 
         indices : list
+            The indices of the input data models to be resampled together.
 
         compute_error : bool, optional
             If True, an approximate error image will be resampled

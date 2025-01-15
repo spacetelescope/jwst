@@ -194,7 +194,9 @@ def get_failed_open_shutters(shutter_refname):
 
 
 def create_slitlets(input_model, shutter_refname):
-    """A slitlet looks like this:
+    """Create a slitlet for each failed open shutter in the shutter_refname file.
+    
+    A slitlet looks like this:
 
     slitlets : list
         A list of slitlets. Each slitlet is a named tuple with

@@ -31,7 +31,7 @@ def get_center(exp_type, input, offsets=False):
     exp_type : str
         Keyword value
 
-    input_model : data model object
+    input : data model object
         science data to be corrected
 
     offsets : bool
@@ -175,7 +175,8 @@ def calculate_pathloss_vector(pathloss_refdata,
     pathloss_refdata : numpy ndarray
         The input pathloss data array
 
-    pathloss_wcs : wcs attribute from model
+    pathloss_wcs : WCS
+        wcs attribute from model
 
     xcenter : float
         The x-center of the target (-0.5 to 0.5)

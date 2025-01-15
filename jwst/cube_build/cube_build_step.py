@@ -1,4 +1,4 @@
-"""This is the main ifu spectral cube building routine."""
+"""Main ifu spectral cube building routine."""
 
 import time
 from jwst.datamodels import ModelContainer
@@ -71,7 +71,7 @@ class CubeBuildStep (Step):
 
 # ________________________________________________________________________________
     def process(self, input):
-        """This is the main routine for IFU spectral cube building.
+        """Main routine for IFU spectral cube building.
 
         Parameters
         ----------
