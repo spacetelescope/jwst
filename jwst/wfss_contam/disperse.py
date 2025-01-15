@@ -11,7 +11,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
                     sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
                     oversample_factor=2, extrapolate_sed=False, xoffset=0,
                     yoffset=0):
-    """This function take a list of pixels and disperses them using the information contained
+    """Takes in a list of pixels and disperses them using the information contained
     in the grism image WCS object and returns a list of dispersed pixels and fluxes.
 
     Parameters

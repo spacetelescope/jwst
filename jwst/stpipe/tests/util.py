@@ -8,6 +8,7 @@ import re
 
 class ListHandler(logging.Handler):
     def __init__(self):
+        """Initializes the handler."""
         self.records = []
         logging.Handler.__init__(self)
 
@@ -17,12 +18,12 @@ class ListHandler(logging.Handler):
 
 @contextlib.contextmanager
 def capture_log():
-    """Captures all LogRecords to a list, and returns the list::
+    """Captures all LogRecords to a list, and returns the list.
 
     with capture_log() as log:
         # ...do something...
 
-    # log is a list of all the captured LogRecords
+    log is a list of all the captured LogRecords
     """
     handler = ListHandler()
     log = logging.getLogger('stpipe')
@@ -49,7 +50,8 @@ def match_log(log, expected):
 
     Parameters
     ----------
-    log : list of LogRecord objects
+    log : list 
+        list of LogRecord objects
 
     expected : list of strings
         Each string may contain embedded regular expressions inside of

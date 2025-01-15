@@ -1,5 +1,5 @@
 """`skystatistics` module provides statistics computation class used by
-:py:func:`~jwst.skymatch.skymatch.match`
+:py:func:`~jwst.skymatch.skymatch.skymatch`
 and :py:class:`~jwst.skymatch.skyimage.SkyImage`.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
@@ -16,7 +16,7 @@ __author__ = 'Mihai Cara'
 
 
 class SkyStats():
-    """This is a superclass build on top of
+    """Wraps calls to
     :py:class:`stsci.imagestats.ImageStats`. Compared to
     :py:class:`stsci.imagestats.ImageStats`, `SkyStats` has
     "persistent settings" in the sense that object's parameters need to be

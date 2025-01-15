@@ -273,6 +273,9 @@ ignore = [
     "D102", # Missing docstring in public method
     "D103", # Missing docstring in public function
     "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic methods, e.g. __iter__
+    "D205", # 1 blank line required between summary line and description
+    "D401", # First line should be in imperative mood
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
     "ANN101", # Missing type annotation for self in method
@@ -298,6 +301,11 @@ ignore = [
 "jwst/ramp_fitting/tests/*" = [
     "E402", # module-level import not at top of file
 ]
+"jwst/**/tests/test_*.py" = [
+    "D107", # Missing docstring in __init__
+    "D417", # Undocumented parameter
+]
+
 
 [tool.mypy]
 warn_return_any = true

@@ -29,7 +29,7 @@ class PipeWithReference(Pipeline):
 
 
 class AnotherDummyStep(Step):
-    """This is a crazy do-nothing step that demonstrates configuration
+    """Crazy do-nothing step that demonstrates configuration
     argument parsing.
     """
 
@@ -98,7 +98,7 @@ class MakeListStep(Step):
 
 
 class OptionalRefTypeStep(Step):
-    """This is a do-nothing step that demonstrates optionally omitting
+    """Do-nothing step that demonstrates optionally omitting
     a reference file.
     """
 

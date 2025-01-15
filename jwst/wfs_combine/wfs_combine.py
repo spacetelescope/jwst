@@ -75,12 +75,7 @@ class DataSet:
         self.n_size = n_size
 
     def do_all(self):
-        """Short Summary
-        -------------
-        Execute all tasks for Wave Front Sensing Combination
-
-        Parameters
-        ----------
+        """Execute all tasks for Wave Front Sensing Combination.
 
         Returns
         -------
@@ -127,9 +122,7 @@ class DataSet:
         return new_model
 
     def create_aligned_2(self):
-        """Short Summary
-        -------------
-        Align image 2 in image 1's frame.
+        """Align image 2 in image 1's frame.
 
         Long Summary
         ------------
@@ -150,9 +143,6 @@ class DataSet:
         5. Around this nominal alignment, calculate refined (delta) offsets.
         6. Add the refined delta offsets to the nominal offsets.
         7. Do final alignment for original (not interpolated) image #2
-
-        Parameters
-        ----------
 
         Returns
         -------
@@ -230,12 +220,7 @@ class DataSet:
         return model_2_a
 
     def apply_final_offsets(self):
-        """Short Summary
-        -------------
-        Apply final offsets, aligning each array for image #2 to #1's frame
-
-        Parameters
-        ----------
+        """Apply final offsets, aligning each array for image #2 to #1's frame.
 
         Returns
         -------
@@ -254,16 +239,11 @@ class DataSet:
         return data_2_a, dq_2_a, err_2_a
 
     def get_wcs_offsets(self):
-        """Short Summary
-        -------------
-        Get the nominal offsets from the WCS information of each of the
+        """Get the nominal offsets from the WCS information of each of the
         2 input DataModel objects. From the difference in pointings (in
         pixels) of the 2 images, round off to the nearest integers as
         the specifications require that the pointings will differ by exact
         integers.
-
-        Parameters
-        ----------
 
         Returns
         -------

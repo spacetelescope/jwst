@@ -6,7 +6,7 @@ log.setLevel(logging.DEBUG)
 
 
 class DummyStep(Step):
-    """This is a dummy step that does dumb things."""
+    """Dummy step that does dumb things."""
 
     spec = """
     foo = string()

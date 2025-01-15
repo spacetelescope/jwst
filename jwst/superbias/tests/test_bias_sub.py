@@ -131,8 +131,7 @@ def test_full_step(setup_full_cube):
 
 
 def test_zeroframe(setup_full_cube):
-    """
-    """
+
     darr1 = [11800., 11793., 11823., 11789., 11857.]
     darr2 = [11800., 11793., 11823., 11789., 11857.]
     darr3 = [10579., 10594., 10620., 10583., 10621.]

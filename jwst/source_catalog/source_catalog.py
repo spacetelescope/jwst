@@ -31,44 +31,6 @@ log.setLevel(logging.DEBUG)
 class JWSTSourceCatalog:
     """Class for the JWST source catalog.
 
-    Parameters
-    ----------
-    model : `ImageModel`
-        The input `ImageModel`.  The data is assumed to be
-        background subtracted.
-
-    segment_image : `~photutils.segmentation.SegmentationImage`
-        A 2D segmentation image, with the same shape as the input data,
-        where sources are marked by different positive integer values.
-        A value of zero is reserved for the background.
-
-    convolved_data : data : 2D `~numpy.ndarray`
-        The 2D array used to calculate the source centroid and
-        morphological properties.
-
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-        This is needed to calculate the DAOFind sharpness and roundness
-        properties (DAOFind uses a special kernel that sums to zero).
-
-    aperture_params : `dict`
-        A dictionary containing the aperture parameters (radii, aperture
-        corrections, and background annulus inner and outer radii).
-
-    abvega_offset : float
-        Offset to convert from AB to Vega magnitudes.  The value
-        represents m_AB - m_Vega.
-
-    ci_star_thresholds : array-like of 2 floats
-        The concentration index thresholds for determining whether
-        a source is a star. The first threshold corresponds to the
-        concentration index calculated from the smallest and middle
-        aperture radii (see ``aperture_params``). The second threshold
-        corresponds to the concentration index calculated from the
-        middle and largest aperture radii. An object is considered
-        extended if both concentration indices are greater than the
-        corresponding thresholds, otherwise it is considered a star.
-
     Notes
     -----
     ``model.err`` is assumed to be the total error array corresponding
@@ -80,7 +42,47 @@ class JWSTSourceCatalog:
 
     def __init__(self, model, segment_img, convolved_data, kernel_fwhm,
                  aperture_params, abvega_offset, ci_star_thresholds):
+        """Initialize the source catalog.
 
+        Parameters
+        ----------
+        model : `ImageModel`
+            The input `ImageModel`.  The data is assumed to be
+            background subtracted.
+
+        segment_image : `~photutils.segmentation.SegmentationImage`
+            A 2D segmentation image, with the same shape as the input data,
+            where sources are marked by different positive integer values.
+            A value of zero is reserved for the background.
+
+        convolved_data : data : 2D `~numpy.ndarray`
+            The 2D array used to calculate the source centroid and
+            morphological properties.
+
+        kernel_fwhm : float
+            The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+            This is needed to calculate the DAOFind sharpness and roundness
+            properties (DAOFind uses a special kernel that sums to zero).
+
+        aperture_params : `dict`
+            A dictionary containing the aperture parameters (radii, aperture
+            corrections, and background annulus inner and outer radii).
+
+        abvega_offset : float
+            Offset to convert from AB to Vega magnitudes.  The value
+            represents m_AB - m_Vega.
+
+        ci_star_thresholds : array-like of 2 floats
+            The concentration index thresholds for determining whether
+            a source is a star. The first threshold corresponds to the
+            concentration index calculated from the smallest and middle
+            aperture radii (see ``aperture_params``). The second threshold
+            corresponds to the concentration index calculated from the
+            middle and largest aperture radii. An object is considered
+            extended if both concentration indices are greater than the
+            corresponding thresholds, otherwise it is considered a star.
+        
+        """
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
         self.model = model  # background was previously subtracted
@@ -550,8 +552,9 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def concentration_indices(self):
-        """A list of concentration indices, calculated as the flux
-        ratios of:
+        """A list of concentration indices.
+        
+        These are calculated as the flux ratios of:
 
             * the middle / smallest aperture radii/EE,
               e.g., CI_50_30 = aper50_flux / aper30_flux

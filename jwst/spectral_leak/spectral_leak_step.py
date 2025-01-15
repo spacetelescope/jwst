@@ -24,7 +24,8 @@ class SpectralLeakStep(Step):
 
         Parameters
         ----------
-        input : container of models containing 1-D extracted spectra
+        input : ModelContainer
+            container of models containing 1-D extracted spectra
 
         Returns
         -------

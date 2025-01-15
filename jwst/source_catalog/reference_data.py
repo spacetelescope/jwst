@@ -16,34 +16,37 @@ class ReferenceData:
     """Class for APCORR and ABVEGAOFFSET reference file data needed by
     `SourceCatalogStep`.
 
-    Parameters
-    ----------
-    model : `ImageModel`
-        An `ImageModel` of drizzled image.
-
-    reffile_paths : list of 2 str
-        The full path filename of the APCORR and ABVEGAOFFSET reference
-        files.
-
-    aperture_ee : tuple of 3 int
-        The aperture encircled energies to be used for aperture
-        photometry.  The values must be 3 strictly-increasing integers.
-        Valid values are defined in the APCORR reference files (20, 30,
-        40, 50, 60, 70, or 80).
-
-    Attributes
-    ----------
-    aperture_params : `dict`
-        A dictionary containing the aperture parameters (radii, aperture
-        corrections, and background annulus inner and outer radii).
-
-    abvega_offset : float
-        Offset to convert from AB to Vega magnitudes.  The value
-        represents m_AB - m_Vega.
-
     """
 
     def __init__(self, model, reffile_paths, aperture_ee):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        model : `ImageModel`
+            An `ImageModel` of drizzled image.
+
+        reffile_paths : list of 2 str
+            The full path filename of the APCORR and ABVEGAOFFSET reference
+            files.
+
+        aperture_ee : tuple of 3 int
+            The aperture encircled energies to be used for aperture
+            photometry.  The values must be 3 strictly-increasing integers.
+            Valid values are defined in the APCORR reference files (20, 30,
+            40, 50, 60, 70, or 80).
+
+        Attributes
+        ----------
+        aperture_params : `dict`
+            A dictionary containing the aperture parameters (radii, aperture
+            corrections, and background annulus inner and outer radii).
+
+        abvega_offset : float
+            Offset to convert from AB to Vega magnitudes.  The value
+            represents m_AB - m_Vega.
+
+        """
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
         self.model = model

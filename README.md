@@ -183,19 +183,30 @@ Guide](https://jwst-crds.stsci.edu/static/users_guide/index.html)
 
 The JWST CRDS server is available at  https://jwst-crds.stsci.edu
 
-It supports the automatic processing pipeline at STScI.
-Inside the STScI network, the same server is used by the pipeline by default with no modifications.
+To run the pipeline inside the STScI network, CRDS must be configured to find the CRDS server
+by setting the environment variable
+
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will obtain individual reference files within this context from a local shared disk.
+
 To run the pipeline outside the STScI network, CRDS must be configured by setting
 two environment variables:
 
     export CRDS_PATH=<locally-accessable-path>/crds_cache/jwst_ops
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will automatically download individual
+reference files within this context to the local cache specified by CRDS_PATH.
 
 ``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
 Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.
 
-To use a specific CRDS context, other than the current default, set the ``CRDS_CONTEXT``
+To use a specific CRDS context other than that 
+[automatically associated](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates) 
+with a given pipeline version, set the ``CRDS_CONTEXT``
 environment variable:
 
     export CRDS_CONTEXT=jwst_1179.pmap

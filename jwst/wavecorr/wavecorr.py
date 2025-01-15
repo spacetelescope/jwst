@@ -227,9 +227,12 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
     wcs : `~gwcs.wcs.WCS`
         The WCS object for this slit.
     xpix : ndarray, float, optional
+        Pixel in x at which to compute the dispersion.
+        If not provided, the dispersion is computed on a
+        grid based on ``wcs.bounding_box``.
     ypix : ndarray, float, optional
-        Compute the dispersion at the x, y pixels.
-        If not provided the dispersion is computed on a
+        Pixel in y at which to compute the dispersion.
+        If not provided, the dispersion is computed on a
         grid based on ``wcs.bounding_box``.
 
     Returns
@@ -255,9 +258,12 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
     wcs : `~gwcs.wcs.WCS`
         The WCS object for this slit.
     xpix : ndarray, float, optional
+        Pixel in x at which to compute the wavelength.
+        If not provided, the dispersion is computed on a
+        grid based on ``wcs.bounding_box``.
     ypix : ndarray, float, optional
-        Compute the wavelength at the x, y pixels.
-        If not provided the dispersion is computed on a
+        Pixel in y at which to compute the wavelength.
+        If not provided, the dispersion is computed on a
         grid based on ``wcs.bounding_box``.
 
     Returns

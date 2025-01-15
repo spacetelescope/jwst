@@ -57,6 +57,14 @@ class LogWatcher:
     """
 
     def __init__(self, message):
+        """Create a new LogWatcher.
+        
+        Parameters
+        ----------
+        message: str
+            The message to watch for.
+
+        """
         self.seen = False
         self.message = message
 

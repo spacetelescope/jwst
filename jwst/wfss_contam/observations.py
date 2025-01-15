@@ -58,7 +58,7 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
 
 
 class Observation:
-    """This class defines an actual observation. It is tied to a single grism image."""
+    """Defines an actual observation. It is tied to a single grism image."""
 
     def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=0,
                  sed_file=None, extrapolate_sed=False,
@@ -85,6 +85,9 @@ class Observation:
             Flag indicating whether to extrapolate wavelength range of SED
         boundaries : tuple
             Start/Stop coordinates of the FOV within the larger seed image.
+        offsets : tuple
+            Offset in x,y pixel coordinates to apply when computing the dispersion.
+            Accounts for offset from source cutout to full frame.
         renormalize : bool
             Flag indicating whether to renormalize SED's
         max_cpu : int
@@ -208,6 +211,8 @@ class Observation:
             Wavelength array from photom reference file
         sens_resp : float array
             Response (flux calibration) array from photom reference file
+        cache : bool
+            Flag indicating whether to cache results for later use
 
         """
         if cache:

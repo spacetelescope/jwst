@@ -11,7 +11,7 @@ import numpy as np
 from . skyimage import SkyImage, SkyGroup
 
 
-__all__ = ['match']
+__all__ = ['skymatch']
 
 
 __author__ = 'Mihai Cara'
@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def match(images, skymethod='global+match', match_down=True, subtract=False):
+def skymatch(images, skymethod='global+match', match_down=True, subtract=False):
     """A function to compute and/or "equalize" sky background in input images.
 
     .. note::
@@ -90,7 +90,6 @@ drizzlepac/astrodrizzle.html>`_
 
     subtract : bool (Default = False)
         Subtract computed sky value from image data.
-
 
     Raises
     ------
@@ -228,7 +227,7 @@ drizzlepac/astrodrizzle.html>`_.
         in sky levels.
 
     """
-    function_name = match.__name__
+    function_name = skymatch.__name__
 
     # Time it
     runtime_begin = datetime.now()

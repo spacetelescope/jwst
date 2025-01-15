@@ -1,6 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # (taken from photutils: should probably migrate into astropy.wcs)
-"""This module provides WCS helper tools."""
+"""WCS helper tools."""
 
 import astropy.units as u
 import numpy as np

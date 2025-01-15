@@ -19,36 +19,38 @@ log.setLevel(logging.DEBUG)
 class JWSTBackground:
     """Class to estimate a 2D background and background RMS noise in an
     image.
-
-    Parameters
-    ----------
-    data : 2D `~numpy.ndarray`
-        The input 2D array.
-
-    box_size : int or array_like (int)
-        The box size along each axis.  If ``box_size`` is a scalar then
-        a square box of size ``box_size`` will be used.  If ``box_size``
-        has two elements, they should be in ``(ny, nx)`` order.
-
-    coverage_mask : array_like (bool), optional
-        A boolean mask, with the same shape as ``data``, where a `True`
-        value indicates the corresponding element of ``data`` is masked.
-        Masked data are excluded from calculations. ``coverage_mask``
-        should be `True` where there is no coverage (i.e., no data) for
-        a given pixel (e.g., blank areas in a mosaic image). It should
-        not be used for bad pixels.
-
-    Attributes
-    ----------
-    background : 2D `~numpy.ndimage`
-        The estimated 2D background image.
-
-    background_rms : 2D `~numpy.ndimage`
-        The estimated 2D background RMS image.
-
     """
 
     def __init__(self, data, box_size=100, coverage_mask=None):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        data : 2D `~numpy.ndarray`
+            The input 2D array.
+
+        box_size : int or array_like (int)
+            The box size along each axis.  If ``box_size`` is a scalar then
+            a square box of size ``box_size`` will be used.  If ``box_size``
+            has two elements, they should be in ``(ny, nx)`` order.
+
+        coverage_mask : array_like (bool), optional
+            A boolean mask, with the same shape as ``data``, where a `True`
+            value indicates the corresponding element of ``data`` is masked.
+            Masked data are excluded from calculations. ``coverage_mask``
+            should be `True` where there is no coverage (i.e., no data) for
+            a given pixel (e.g., blank areas in a mosaic image). It should
+            not be used for bad pixels.
+
+        Attributes
+        ----------
+        background : 2D `~numpy.ndimage`
+            The estimated 2D background image.
+
+        background_rms : 2D `~numpy.ndimage`
+            The estimated 2D background RMS image.
+
+        """
         self.data = data
         self.box_size = np.asarray(box_size).astype(int)  # must be integer
         self.coverage_mask = coverage_mask
@@ -156,24 +158,26 @@ def convolve_data(data, kernel_fwhm, mask=None):
 class JWSTSourceFinder:
     """Class to detect sources, including deblending, using image
     segmentation.
-
-    Parameters
-    ----------
-    threshold : float
-        The data value to be used as the per-pixel detection threshold.
-
-    npixels : int
-        The number of connected pixels, each greater than the threshold,
-        that an object must have to be detected. ``npixels`` must be a
-        positive integer.
-
-    deblend : bool, optional
-        Whether to deblend overlapping sources. Source deblending
-        requires scikit-image.
-
     """
 
     def __init__(self, threshold, npixels, deblend=False):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        threshold : float
+            The data value to be used as the per-pixel detection threshold.
+
+        npixels : int
+            The number of connected pixels, each greater than the threshold,
+            that an object must have to be detected. ``npixels`` must be a
+            positive integer.
+
+        deblend : bool, optional
+            Whether to deblend overlapping sources. Source deblending
+            requires scikit-image.
+
+        """
         self.threshold = threshold
         self.npixels = npixels
         self.deblend = deblend
