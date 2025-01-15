@@ -82,8 +82,8 @@ of reference files if desired.
 
 The CRDS context is usually set by default to always give the 'best' reference files
 associated with a given pipeline version.
-To use a specific CRDS context other than that
-[automatically associated](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates)
+To use a specific CRDS context other than that `automatically associated
+<https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates>`
 with a given pipeline version, the environment variable ``CRDS_CONTEXT`` can be used, e.g.
 
 ::
