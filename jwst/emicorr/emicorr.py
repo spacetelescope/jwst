@@ -13,7 +13,7 @@ log.setLevel(logging.DEBUG)
 
 try:
     import bottleneck as bn
-except ImportError as err:
+except ImportError:
     warnings.warn("Please install the bottleneck package for improved "
                   "performance.  Falling back on numpy.  To install, "
                   "use pip install bottleneck.")
