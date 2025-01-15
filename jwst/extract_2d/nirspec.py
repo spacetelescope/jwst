@@ -19,8 +19,7 @@ log.setLevel(logging.DEBUG)
 
 
 def nrs_extract2d(input_model, slit_name=None):
-    """
-    Main extract_2d function for NIRSpec exposures.
+    """Main extract_2d function for NIRSpec exposures.
 
     Parameters
     ----------
@@ -28,6 +27,7 @@ def nrs_extract2d(input_model, slit_name=None):
         Input data model.
     slit_name : str or int
         Slit name.
+
     """
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -120,8 +120,7 @@ def nrs_extract2d(input_model, slit_name=None):
 
 
 def process_slit(input_model, slit, exp_type):
-    """
-    Construct a data model for each slit.
+    """Construct a data model for each slit.
 
     Extract the data.
 
@@ -156,8 +155,7 @@ def process_slit(input_model, slit, exp_type):
 
 
 def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
-    """
-    Set the slit attributes.
+    """Set the slit attributes.
 
     Parameters
     ----------
@@ -168,6 +166,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     xlo, xhi, ylo, yhi : float
         Indices into the data array where extraction should be done.
         These are converted to "pixel indices" - the center of a pixel.
+
     """
     output_model.name = str(slit.name)
     output_model.xstart = xlo + 1  # account for FITS 1-indexed origin
@@ -205,8 +204,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
 
 
 def offset_wcs(slit_wcs):
-    """
-    Prepend a Shift transform to the slit WCS to account for subarrays.
+    """Prepend a Shift transform to the slit WCS to account for subarrays.
 
     Parameters
     ----------
@@ -214,6 +212,7 @@ def offset_wcs(slit_wcs):
         The WCS for this  slit.
     slit_name : str
         The name of the slit.
+
     """
     xlo, xhi = _toindex(slit_wcs.bounding_box[0])
     ylo, yhi = _toindex(slit_wcs.bounding_box[1])
@@ -227,8 +226,7 @@ def offset_wcs(slit_wcs):
 
 
 def extract_slit(input_model, slit, exp_type):
-    """
-    Extract a slit from a full frame image.
+    """Extract a slit from a full frame image.
 
     Parameters
     ----------
@@ -243,6 +241,7 @@ def extract_slit(input_model, slit, exp_type):
     -------
     new_model : `~jwst.datamodels.SlitModel`
         The slit data model with WCS attached to it.
+
     """
     slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
     xlo, xhi, ylo, yhi = offset_wcs(slit_wcs)
@@ -295,8 +294,7 @@ class DitherMetadataError(Exception):
 
 
 def get_source_xpos(slit):
-    """
-    Compute the source position within the slit for a NIRSpec fixed slit.
+    """Compute the source position within the slit for a NIRSpec fixed slit.
 
     Parameters
     ----------
@@ -307,8 +305,8 @@ def get_source_xpos(slit):
     -------
     xpos : float
         X coordinate of the source as a fraction of the slit size.
-    """
 
+    """
     if not hasattr(slit.meta, "dither"):
         raise DitherMetadataError('meta.dither is not populated for the primary slit; '
                                   'Failed to estimate source position in slit.')

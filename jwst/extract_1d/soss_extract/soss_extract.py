@@ -24,7 +24,8 @@ log.setLevel(logging.DEBUG)
 
 def get_ref_file_args(ref_files):
     """Prepare the reference files for the extraction engine.
-    Parameters
+
+    Parameters.
     ----------
     ref_files : dict
         A dictionary of the reference file DataModels, along with values
@@ -35,8 +36,8 @@ def get_ref_file_args(ref_files):
     tuple
         The reference file args used with the extraction engine:
         (wavemaps, specprofiles, throughputs, kernels)
-    """
 
+    """
     pastasoss_ref = ref_files['pastasoss']
     pad = getattr(pastasoss_ref.traces[0], "padding", 0)
     if pad > 0:
@@ -121,7 +122,8 @@ def get_ref_file_args(ref_files):
 
 def get_trace_1d(ref_files, order):
     """Get the x, y, wavelength of the trace after applying the transform.
-    Parameters
+
+    Parameters.
     ----------
     ref_files : dict
         A dictionary of the reference file DataModels, along with values
@@ -133,8 +135,8 @@ def get_trace_1d(ref_files, order):
     -------
     xtrace, ytrace, wavetrace : array[float]
         The x, y and wavelength of the trace.
-    """
 
+    """
     pastasoss_ref = ref_files['pastasoss']
     pad = getattr(pastasoss_ref.traces[0], "padding", 0)
     if pad > 0:
@@ -168,8 +170,7 @@ def get_trace_1d(ref_files, order):
 
 
 def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_trace_profile, threshold=1e-4):
-    """
-    Parameters
+    """Parameters
     ----------
     scidata_bkg : array
         A single background subtracted NIRISS SOSS detector image.
@@ -184,12 +185,13 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tra
     threshold : float, optional:
         The pixels with an aperture[order 2] > `threshold` are considered contaminated
         and will be masked. Default is 1e-4.
+
     Returns
     -------
     func
         A spline estimator that provides the underlying flux as a function of wavelength
-    """
 
+    """
     # Unpack ref_file arguments
     wave_maps, spat_pros, thrpts, _ = ref_file_args
 
@@ -220,20 +222,21 @@ def estim_flux_first_order(scidata_bkg, scierr, scimask, ref_file_args, mask_tra
 
 
 def get_native_grid_from_trace(ref_files, spectral_order):
-    """
-    Make a 1d-grid of the pixels boundary and ready for ATOCA ExtractionEngine,
+    """Make a 1d-grid of the pixels boundary and ready for ATOCA ExtractionEngine,
     based on the wavelength solution.
-    Parameters
+
+    Parameters.
     ----------
     ref_files: dict
         A dictionary of the reference file DataModels.
     spectral_order: int
         The spectral order for which to return the trace parameters.
+
     Returns
     -------
     Grid of the pixels boundaries at the native sampling (1d array)
-    """
 
+    """
     # From wavelenght solution
     col, _, wave = get_trace_1d(ref_files, spectral_order)
 
@@ -257,20 +260,21 @@ def get_native_grid_from_trace(ref_files, spectral_order):
 
 
 def get_grid_from_trace(ref_files, spectral_order, n_os=1):
-    """
-    Make a 1d-grid of the pixels boundary and ready for ATOCA ExtractionEngine,
+    """Make a 1d-grid of the pixels boundary and ready for ATOCA ExtractionEngine,
     based on the wavelength solution.
-    Parameters
+
+    Parameters.
     ----------
     ref_files: dict
         A dictionary of the reference file DataModels.
     spectral_order: int
         The spectral order for which to return the trace parameters.
+
     Returns
     -------
     Grid of the pixels boundaries at the native sampling (1d array)
-    """
 
+    """
     wave, _ = get_native_grid_from_trace(ref_files, spectral_order)
 
     # Use pixel boundaries instead of the center values
@@ -289,15 +293,14 @@ def get_grid_from_trace(ref_files, spectral_order, n_os=1):
 
 
 def make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os, wv_range=None):
-    ''' Create the grid use for the simultaneous extraction of order 1 and 2.
+    """Create the grid use for the simultaneous extraction of order 1 and 2.
     The grid is made by:
     1) requiring that it satisfies the oversampling n_os
     2) trying to reach the specified tolerance for the spectral range shared between order 1 and 2
     3) trying to reach the specified tolerance in the rest of spectral range
     The max_grid_size overrules steps 2) and 3), so the precision may not be reached if
     the grid size needed is too large.
-    '''
-
+    """
     # Build native grid for each  orders.
     spectral_orders = [2, 1]
     grids_ord = dict()
@@ -432,8 +435,7 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
 
 
 def _build_null_spec_table(wave_grid):
-    """
-    Build a SpecModel of entirely bad values
+    """Build a SpecModel of entirely bad values.
 
     Parameters
     ----------
@@ -445,6 +447,7 @@ def _build_null_spec_table(wave_grid):
     spec : SpecModel
         Null SpecModel. Flux values are NaN, DQ flags are 1,
         but note that DQ gets overwritten at end of run_extract1d
+
     """
     wave_grid_cut = wave_grid[wave_grid > 0.58]  # same cutoff applied for valid data
     spec = datamodels.SpecModel()
@@ -519,8 +522,8 @@ def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, box_weights,
     spec_list : list of SpecModel
         List of the underlying spectra for each integration and order.
         The tikhonov tests are also included.
-    """
 
+    """
     # Init list of atoca 1d spectra
     spec_list = []
 
@@ -717,7 +720,7 @@ def compute_box_weights(ref_files, shape, width=40.):
 
 
 def decontaminate_image(scidata_bkg, tracemodels, subarray):
-    """Perform decontamination of the image based on the trace models"""
+    """Perform decontamination of the image based on the trace models."""
     # Which orders to extract.
     if subarray == 'SUBSTRIP96':
         order_list = [1, 2]
@@ -861,7 +864,8 @@ def model_single_order(data_order, err_order, ref_file_args, mask_fit,
 def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='model', tracemodels=None):
     """Perform the box-extraction on the image, while using the trace model to
     correct for contamination.
-    Parameters
+
+    Parameters.
     ----------
     decontaminated_data : array[float]
         A single backround subtracted NIRISS SOSS detector image.
@@ -879,10 +883,12 @@ def extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='mo
         'model' option uses `tracemodels` to replace the bad pixels.
     tracemodels : dict
         Dictionary of the modeled detector images for each order.
+
     Returns
     -------
     fluxes, fluxerrs, npixels : dict
         Each output is a dictionary, with each extracted order as a key.
+
     """
     # Init models with an empty dictionary if not given
     if tracemodels is None:
@@ -955,7 +961,8 @@ def run_extract1d(input_model, pastasoss_ref_name,
                   specprofile_ref_name, speckernel_ref_name, subarray,
                   soss_filter, soss_kwargs):
     """Run the spectral extraction on NIRISS SOSS data.
-    Parameters
+
+    Parameters.
     ----------
     input_model : DataModel
         The input DataModel.
@@ -977,8 +984,8 @@ def run_extract1d(input_model, pastasoss_ref_name,
     -------
     output_model : DataModel
         DataModel containing the extracted spectra.
-    """
 
+    """
     # Generate the atoca models or not (not necessarily for decontamination)
     generate_model = soss_kwargs['atoca'] or (soss_kwargs['bad_pix'] == 'model')
 

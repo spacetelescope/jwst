@@ -7,8 +7,7 @@ __all__ = ["SuperBiasStep"]
 
 
 class SuperBiasStep(Step):
-    """
-    SuperBiasStep: Performs super-bias subtraction by subtracting
+    """SuperBiasStep: Performs super-bias subtraction by subtracting
     super-bias reference data from the input science data model.
     """
 

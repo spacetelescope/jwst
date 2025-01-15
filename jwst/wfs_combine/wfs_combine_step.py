@@ -9,10 +9,7 @@ __all__ = ["WfsCombineStep"]
 
 
 class WfsCombineStep(Step):
-
-    """
-    This step combines pairs of dithered PSF images
-    """
+    """This step combines pairs of dithered PSF images."""
 
     class_alias = "calwebb_wfs-image3"
 

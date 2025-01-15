@@ -10,11 +10,7 @@ __all__ = ["Combine1dStep"]
 
 
 class Combine1dStep(Step):
-    """
-
-    Combine1dStep: Combine 1-D spectra
-
-    """
+    """Combine1dStep: Combine 1-D spectra."""
 
     class_alias = "combine_1d"
 

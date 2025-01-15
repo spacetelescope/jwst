@@ -1,5 +1,6 @@
 class Counter():
-    """Like itertools.count but access to the current value"""
+    """Like itertools.count but access to the current value."""
+
     def __init__(self, start=0, step=1, end=None):
         self.value = start
         self.step = step
@@ -16,10 +17,10 @@ class Counter():
         return self.value
 
     def next(self):
-        """python2 compatibility"""
+        """python2 compatibility."""
         return self.__next__()
 
     def set(self, value):
-        """Set new value for counter"""
+        """Set new value for counter."""
         self.value = value
         return self.value

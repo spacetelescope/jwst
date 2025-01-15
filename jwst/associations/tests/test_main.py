@@ -26,7 +26,7 @@ POOL_PATH = 'pool_018_all_exptypes.csv'
     ]
 )
 def test_asn_candidates(pool, all_candidates, case):
-    """Test candidate selection option"""
+    """Test candidate selection option."""
     args, n_expected = case
 
     if args:
@@ -58,7 +58,7 @@ def test_cmdline_status(args, expected, tmp_cwd):
     ]
 )
 def test_generate_version_id(version_id, expected, pool):
-    """Check that an association has been given the appropriate version id"""
+    """Check that an association has been given the appropriate version id."""
     regex = re.compile(expected)
     args = ['--dry-run', '-i', 'o001', '--version-id']
     if version_id:
@@ -95,7 +95,7 @@ def test_generate_version_id(version_id, expected, pool):
     ]
 )
 def test_toomanyoptions(args):
-    """Test argument parsing for failures"""
+    """Test argument parsing for failures."""
     pool = AssociationPool()
 
     with pytest.raises(SystemExit):
@@ -107,7 +107,7 @@ def test_toomanyoptions(args):
 # ########
 @pytest.fixture(scope='module')
 def pool():
-    """Retrieve pool path"""
+    """Retrieve pool path."""
     pool_path = t_path(os.path.join('data', POOL_PATH))
     pool = combine_pools(pool_path)
 
@@ -116,6 +116,6 @@ def pool():
 
 @pytest.fixture(scope='module')
 def all_candidates(pool):
-    """"Retrieve the all exposure pool"""
+    """"Retrieve the all exposure pool."""
     all_candidates = Main.cli(['--dry-run', '--all-candidates'], pool=pool)
     return all_candidates

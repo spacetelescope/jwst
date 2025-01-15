@@ -1,6 +1,4 @@
-"""
-Test for flat_field.combine_fast_slow
-"""
+"""Test for flat_field.combine_fast_slow."""
 import numpy as np
 import pytest
 from scipy.integrate import quad
@@ -24,7 +22,6 @@ def test_combine_fast_slow(flat_err_1, flat_err_2):
     coefficients to create the tab_flat array by evaluating the polynomial
     with those coefficients over the tab_wl array.
     """
-
     # Generate an array (tab_wl) of wavelengths, not uniformly spaced.
     wl_coeff = {'c0': 5., 'c1': 1., 'c2': -0.05}
     wl_poly = polynomial.Polynomial1D(degree=2, **wl_coeff)

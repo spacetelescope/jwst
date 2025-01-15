@@ -16,8 +16,7 @@ log.addHandler(logging.NullHandler())
 
 
 class Affine2d:
-    """
-    A class to help implement the Bracewell Fourier 2D affine transformation
+    """A class to help implement the Bracewell Fourier 2D affine transformation
     theorem to calculate appropriate coordinate grids in the Fourier domain (eg
     image space, momentum space), given an affine transformation of the
     original (eg pupil space, configuration space) space.  This class provides
@@ -98,8 +97,7 @@ class Affine2d:
         rotradccw=None,
         name="Affine",
     ):
-        """
-        Initialize with transformation constants
+        """Initialize with transformation constants.
 
         Parameters
         ----------
@@ -132,6 +130,7 @@ class Affine2d:
         Returns
         -------
         None
+
         """
         self.rotradccw = rotradccw
         if rotradccw is not None:
@@ -164,8 +163,7 @@ class Affine2d:
         )
 
     def forward(self, point):
-        """
-        Create the forward affine transformation, in ideal-to-distorted coordinates.
+        """Create the forward affine transformation, in ideal-to-distorted coordinates.
 
         Parameters
         ----------
@@ -176,6 +174,7 @@ class Affine2d:
         -------
         trans_point: float, float
             coordinates in distorted space
+
         """
         trans_point = np.array(
             (
@@ -187,8 +186,7 @@ class Affine2d:
         return trans_point
 
     def reverse(self, point):
-        """
-        Create the reverse affine transformation, in distorted-to-ideal coordinates.
+        """Create the reverse affine transformation, in distorted-to-ideal coordinates.
 
         Parameters
         ----------
@@ -199,6 +197,7 @@ class Affine2d:
         -------
         trans_point: float, float
             coordinates in ideal space
+
         """
         trans_point = (
             np.array(
@@ -219,8 +218,7 @@ class Affine2d:
         return trans_point
 
     def distortFargs(self, u, v):
-        """
-        Implement the (u,v) to (u',v') change in arguments of F. See class
+        """Implement the (u,v) to (u',v') change in arguments of F. See class
         documentation of Bracewell Fourier 2D affine transformation theorem.
 
         Parameters
@@ -237,14 +235,14 @@ class Affine2d:
             1st transformed argument of F
         vprime: float
             2nd transformed argument of F
+
         """
         uprime = (self.my * u - self.sy * v) / self.determinant
         vprime = (-self.sx * u + self.mx * v) / self.determinant
         return uprime, vprime
 
     def distortphase(self, u, v):
-        """
-        Calculate the phase term in the Bracewell Fourier 2D affine
+        """Calculate the phase term in the Bracewell Fourier 2D affine
         transformation theorem. The phase term is:
 
         1/|Delta| * exp{(2*Pi*i/Delta) * [(my*xo- x*yo) * u + (mx*yo-sy*xo)*v]}
@@ -263,6 +261,7 @@ class Affine2d:
         -------
         phase: complex array
             phase term divided by the determinant.
+
         """
         phase = np.exp(
             2
@@ -275,8 +274,7 @@ class Affine2d:
         return phase
 
     def get_rotd(self):
-        """
-        Calculate the rotation that was used to creat a pure rotation
+        """Calculate the rotation that was used to creat a pure rotation
         affine2d object.
 
         Parameters
@@ -287,6 +285,7 @@ class Affine2d:
         -------
         rotd: float
             rotation used to creat a pure rotation affine2d
+
         """
         if self.rotradccw:
             rotd = 180.0 * self.rotradccw / np.pi
@@ -296,9 +295,8 @@ class Affine2d:
 
 
 def affinepars2header(hdr, affine2d):
-    """
-    Write the affine2d parameters into fits header (will be modified or deleted
-    in later build)
+    """Write the affine2d parameters into fits header (will be modified or deleted
+    in later build).
 
     Parameters
     ----------
@@ -311,8 +309,8 @@ def affinepars2header(hdr, affine2d):
     -------
     hdr: fits header
         fits header, updated with affine2d parameters
-    """
 
+    """
     hdr["affine"] = (affine2d.name, "Affine2d in pupil: name")
     hdr["aff_mx"] = (affine2d.mx, "Affine2d in pupil: xmag")
     hdr["aff_my"] = (affine2d.my, "Affine2d in pupil: ymag")
@@ -326,8 +324,7 @@ def affinepars2header(hdr, affine2d):
 
 
 def makedisk(N, R, ctr=(0, 0)):
-    """
-    Calculate a 'disk', an array whose values =1 in a circular region near
+    """Calculate a 'disk', an array whose values =1 in a circular region near
     the center of the array, and =0 elsewhere.
 
     Parameters
@@ -346,6 +343,7 @@ def makedisk(N, R, ctr=(0, 0)):
     array: 2D integer array
         array whose values =1 in a circular region near the center of the
         array, and =0 elsewhere.
+
     """
     if N % 2 == 1:  # odd
         M = (N - 1) / 2
@@ -365,8 +363,7 @@ def makedisk(N, R, ctr=(0, 0)):
 
 
 def trim(m, s):
-    """
-    Remove the edge pixels from an index mask m.
+    """Remove the edge pixels from an index mask m.
 
     Parameters
     ----------
@@ -380,6 +377,7 @@ def trim(m, s):
     -------
     m_masked: (integer, integer) array
         2d index mask with edge pixels trimmed
+
     """
     xl, yl = [], []  # trimmed lists
     for ii in range(len(m[0])):
@@ -397,9 +395,8 @@ def trim(m, s):
 
 
 def avoidhexsingularity(rotation):
-    """
-    Avoid rotation of exact multiples of 15 degrees to avoid NaN's in
-    hextransformee()
+    """Avoid rotation of exact multiples of 15 degrees to avoid NaN's in
+    hextransformee().
 
     Parameters
     ----------
@@ -411,6 +408,7 @@ def avoidhexsingularity(rotation):
     rotation_adjusted: float
         replacement value for rotation with epsilon = 1.0e-12 degrees added.
         Precondition before using rotationdegrees in Affine2d for hex geometries
+
     """
     diagnostic = rotation / 15.0 - int(rotation / 15.0)
     epsilon = 1.0e-12
@@ -422,8 +420,7 @@ def avoidhexsingularity(rotation):
 
 
 def center_imagepeak(img, r="default", cntrimg=True):
-    """
-    Calculate a cropped version of the input image centered on the peak pixel.
+    """Calculate a cropped version of the input image centered on the peak pixel.
 
     Parameters
     ----------
@@ -440,6 +437,7 @@ def center_imagepeak(img, r="default", cntrimg=True):
     -------
     cropped: 2D float array
         Cropped to place the brightest pixel at the center of the img array
+
     """
     peakx, peaky, h = min_distance_to_edge(img, cntrimg=cntrimg)
     log.debug(" peakx=%g, peaky=%g, distance to edge=%g", peakx, peaky, h)
@@ -456,8 +454,7 @@ def center_imagepeak(img, r="default", cntrimg=True):
 
 
 def centerpoint(s):
-    """
-    Calculate center of image, accounting for odd/even pixel size;
+    """Calculate center of image, accounting for odd/even pixel size;
     used for jinc() and hex transform functions.
 
     Parameters
@@ -469,13 +466,13 @@ def centerpoint(s):
     -------
     center: 2D integer or float tuple
         center of image
+
     """
     return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
 
 
 def min_distance_to_edge(img, cntrimg=False):
-    """
-    Calculate the coordinates of the brightest pixel, and the distance between
+    """Calculate the coordinates of the brightest pixel, and the distance between
     the brightest pixel and the nearest edge of the input array.
 
     Parameters
@@ -492,6 +489,7 @@ def min_distance_to_edge(img, cntrimg=False):
 
     h: integer
         distance to the nearest image edge
+
     """
     if cntrimg is True:
         # Only look for the peak pixel at the center of the image
@@ -515,8 +513,7 @@ def min_distance_to_edge(img, cntrimg=False):
 
 
 def find_centroid(a, thresh):
-    """
-    Calculate the centroid of the image
+    """Calculate the centroid of the image.
 
     Parameters
     ----------
@@ -554,6 +551,7 @@ def find_centroid(a, thresh):
     center using:
     image_center = utils.centerpoint(s) + np.array((centroid[1], centroid[0])
     and everything holds together sensibly looking at DS9 images of a.
+
     """
     ft = matrix_dft.MatrixFourierTransform()
 
@@ -572,8 +570,7 @@ def find_centroid(a, thresh):
 
 
 def quadratic_extremum(p):
-    """
-    Calculate maximum of the quadratic
+    """Calculate maximum of the quadratic.
 
     Parameters
     ----------
@@ -584,6 +581,7 @@ def quadratic_extremum(p):
     -------
     y_max: float
         maximum of the quadratic
+
     """
     y_max = -p[1] / (2.0 * p[0]), -p[1] * p[1] / (4.0 * p[0]) + p[2]
 
@@ -591,8 +589,7 @@ def quadratic_extremum(p):
 
 
 def findpeak_1d(yvec, xvec):
-    """
-    Calculate the fit function extreme for a given input vector
+    """Calculate the fit function extreme for a given input vector.
 
     Parameters
     ----------
@@ -606,14 +603,14 @@ def findpeak_1d(yvec, xvec):
     -------
     quad_ext: float
         fit function extreme for a given input vector
+
     """
     p = np.polyfit(np.array(xvec), np.array(yvec), 2)
     return quadratic_extremum(p)
 
 
 def findslope(a, m):
-    """
-    Find slopes of an array
+    """Find slopes of an array.
 
     Parameters
     ----------
@@ -652,6 +649,7 @@ def findslope(a, m):
          a.shape[0 or 1]/(2 pi)
     Multiply the measured phase slope by this gain for pixels of incoming array
          centroid shift away from array center.
+
     """
     a_up = np.zeros(a.shape)
     a_dn = np.zeros(a.shape)
@@ -699,9 +697,8 @@ def findslope(a, m):
 
 
 def quadratic(p, x):
-    """
-    Calculate value of x at minimum or maximum value of y,
-    (value of quadratic function at argument)
+    """Calculate value of x at minimum or maximum value of y,
+    (value of quadratic function at argument).
 
     Parameters
     ----------
@@ -721,6 +718,7 @@ def quadratic(p, x):
 
     fit_val: 1D float array
         values of quadratic function at arguments in x array
+
     """
     maxx = -p[1] / (2.0 * p[0])
     maxy = -p[1] * p[1] / (4.0 * p[0]) + p[2]
@@ -730,10 +728,9 @@ def quadratic(p, x):
 
 
 def makeA(nh):
-    """
-    Writes the 'NRM matrix' that gets pseudo-inverted to provide
+    """Writes the 'NRM matrix' that gets pseudo-inverted to provide
     (arbitrarily constrained) zero-mean phases of the holes.
-    Algorithm is taken verbatim from Anand's pseudoinverse.py
+    Algorithm is taken verbatim from Anand's pseudoinverse.py.
 
     Parameters
     ----------
@@ -744,6 +741,7 @@ def makeA(nh):
     -------
     matrixA: 2D float array
          nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
+
     Notes
     -----
     Ax = b  where x are the nh hole phases, b the nh(nh-1)/2 fringe phases,
@@ -769,6 +767,7 @@ def makeA(nh):
     When tested against Alex'' nrm_model.py 'piston_phase' text output
     of fringe phases, these signs appear to be correct -
     anand@stsci.edu 12 Nov 2014
+
     """
     log.debug("-------")
     log.debug(" makeA:")
@@ -796,8 +795,7 @@ def makeA(nh):
 
 
 def fringes2pistons(fringephases, nholes):
-    """
-    For nrm_model.py to use to extract pistons out of fringes, given
+    """For nrm_model.py to use to extract pistons out of fringes, given
     its hole bookkeeping, which apparently matches that of this module,
     and is the same as Noah Gamper's.
 
@@ -813,6 +811,7 @@ def fringes2pistons(fringephases, nholes):
     -------
     np.dot(Apinv, fringephases): 1D integer array
         pistons in same units as fringe phases
+
     """
     Anrm = makeA(nholes)
     Apinv = np.linalg.pinv(Anrm)
@@ -821,10 +820,9 @@ def fringes2pistons(fringephases, nholes):
 
 
 def rebin(a=None, rc=(2, 2)):
-    """
-    Perform simple-minded flux-conserving binning using specified binning
+    """Perform simple-minded flux-conserving binning using specified binning
     kernel, clipping trailing size mismatch: eg a 10x3 array binned by
-    3 results in a 3x1 array
+    3 results in a 3x1 array.
 
     Parameters
     ----------
@@ -838,6 +836,7 @@ def rebin(a=None, rc=(2, 2)):
     -------
     binned_arr: float array
         binned array
+
     """
     binned_arr = krebin(a, (a.shape[0] // rc[0], a.shape[1] // rc[1]))
 
@@ -845,8 +844,7 @@ def rebin(a=None, rc=(2, 2)):
 
 
 def krebin(a, shape):
-    """
-    Klaus P's fastrebin from web
+    """Klaus P's fastrebin from web.
 
     Parameters
     ----------
@@ -860,6 +858,7 @@ def krebin(a, shape):
     -------
     reshaped_a: 2D float array
         reshaped input array
+
     """
     sh = shape[0], a.shape[0] // shape[0], shape[1], a.shape[1] // shape[1]
     reshaped_a = a.reshape(sh).sum(-1).sum(1)
@@ -868,8 +867,7 @@ def krebin(a, shape):
 
 
 def rcrosscorrelate(a=None, b=None):
-    """
-    Calculate cross correlation of two identically-shaped real arrays
+    """Calculate cross correlation of two identically-shaped real arrays.
 
     Parameters
     ----------
@@ -883,19 +881,17 @@ def rcrosscorrelate(a=None, b=None):
     -------
     c.real.copy():
         real part of array that is the correlation of the two input arrays.
-    """
 
+    """
     c = crosscorrelate(a=a, b=b) / (np.sqrt((a * a).sum()) * np.sqrt((b * b).sum()))
     return c.real.copy()
 
 
 def lambdasteps(lam, frac_width, steps=4):
-    """
-    Create array of increments of lambda
+    """Create array of increments of lambda.
 
     Parameters
-    ---------
-
+    ----------
     lam: float
         lambda
 
@@ -909,8 +905,8 @@ def lambdasteps(lam, frac_width, steps=4):
     -------
     lambda_array; 1D float array
         Array of increments of lambda
-    """
 
+    """
     frac = frac_width / 2.0
     steps = steps / 2.0
 
@@ -923,8 +919,7 @@ def lambdasteps(lam, frac_width, steps=4):
 
 
 def tophatfilter(lam_c, frac_width, npoints=10):
-    """
-    Create tophat filter list from array of lambda values
+    """Create tophat filter list from array of lambda values.
 
     Parameters
     ----------
@@ -941,6 +936,7 @@ def tophatfilter(lam_c, frac_width, npoints=10):
     -------
     filt: list
         tophat filter list
+
     """
     wllist = lambdasteps(lam_c, frac_width, steps=npoints)
     filt = []
@@ -950,9 +946,8 @@ def tophatfilter(lam_c, frac_width, npoints=10):
 
 
 def crosscorrelate(a=None, b=None):
-    """
-    Calculate cross correlation of two identically-shaped real or complex
-    arrays
+    """Calculate cross correlation of two identically-shaped real or complex
+    arrays.
 
     Parameters
     ----------
@@ -966,6 +961,7 @@ def crosscorrelate(a=None, b=None):
     -------
     fft.fftshift(c)
         complex array that is the correlation of the two input arrays.
+
     """
     if a.shape != b.shape:
         log.critical("crosscorrelate: need identical arrays")
@@ -995,10 +991,9 @@ def crosscorrelate(a=None, b=None):
 
 
 def rotate2dccw(vectors, thetarad):
-    """
-    Apply a CCW rotation to the given vectors. For a positive (CCW) rotation:
+    """Apply a CCW rotation to the given vectors. For a positive (CCW) rotation:
         x decreases under slight rotation
-        y increases under slight rotation
+        y increases under slight rotation.
 
     Parameters
     ----------
@@ -1012,6 +1007,7 @@ def rotate2dccw(vectors, thetarad):
     -------
     rot_vectors: array of floats
         rotated vectors
+
     """
     c, s = (np.cos(thetarad), np.sin(thetarad))
     ctrs_rotated = []
@@ -1025,8 +1021,7 @@ def rotate2dccw(vectors, thetarad):
 
 
 def findmax(mag, vals, mid=1.0):
-    """
-    Fit a quadratic to the given input arrays mag and vals, and calculate the
+    """Fit a quadratic to the given input arrays mag and vals, and calculate the
     value of mag at the extreme value of vals.
 
     Parameters
@@ -1047,6 +1042,7 @@ def findmax(mag, vals, mid=1.0):
 
     maxy: float
         value of vals corresponding to maxx
+
     """
     p = np.polyfit(mag, vals, 2)
     fitr = np.arange(0.95 * mid, 1.05 * mid, 0.01)
@@ -1056,8 +1052,7 @@ def findmax(mag, vals, mid=1.0):
 
 
 def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
-    """
-    For the pixel specified by (xc, yc), calculate the median value of the
+    """For the pixel specified by (xc, yc), calculate the median value of the
     good values within the box of size bsize neighboring pixels. If any of
     the box is outside the data, 0 will be returned.
 
@@ -1108,8 +1103,7 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
 
 def mas2rad(mas):
-    """
-    Convert angle in milli arc-sec to radians
+    """Convert angle in milli arc-sec to radians.
 
     Parameters
     ----------
@@ -1120,14 +1114,14 @@ def mas2rad(mas):
     -------
     rad: float
         angle in radians
+
     """
     rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
     return rad
 
 
 def img_median_replace(img_model, box_size):
-    """
-    Replace bad pixels (either due to a DQ value of DO_NOT_USE or having a
+    """Replace bad pixels (either due to a DQ value of DO_NOT_USE or having a
     value of NaN) with the median value of surrounding good pixels.
 
     Parameters
@@ -1141,6 +1135,7 @@ def img_median_replace(img_model, box_size):
     -------
     img_model: input image model whose input array has its bad pixels replaced
         by the median of the surrounding good-value pixels.
+
     """
     input_data = img_model.data
     input_dq = img_model.dq
@@ -1173,8 +1168,7 @@ def img_median_replace(img_model, box_size):
 
 
 def get_filt_spec(throughput_model):
-    """
-    Load filter throughput data into synphot spectrum object
+    """Load filter throughput data into synphot spectrum object.
 
     Parameters
     ----------
@@ -1185,6 +1179,7 @@ def get_filt_spec(throughput_model):
     Returns
     -------
     band: synphot Spectrum object
+
     """
     thruput = throughput_model.filter_table
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
@@ -1195,12 +1190,12 @@ def get_filt_spec(throughput_model):
     return band
 
 def get_flat_spec():
-    """
-    Produce a synphot spectrum object with constant (unity) flux
+    """Produce a synphot spectrum object with constant (unity) flux.
 
     Returns
     -------
     flatspec: synphot Spectrum object
+
     """
     flatspec = synphot.SourceSpectrum(synphot.models.ConstFlux1D, amplitude=1)
     
@@ -1208,11 +1203,10 @@ def get_flat_spec():
 
 
 def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
-    """
-    Get the observed spectrum through a filter.
+    """Get the observed spectrum through a filter.
     Largely copied from Poppy instrument.py
     Define nlambda bins of wavelengths, calculate effstim for each, normalize by effstim total.
-    nlambda should be calculated so there are ~10 wavelengths per resolution element (19 should work)
+    nlambda should be calculated so there are ~10 wavelengths per resolution element (19 should work).
 
     Parameters
     ----------
@@ -1231,7 +1225,6 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
         Array of shape (nlambda,2) containing wavelengths, final throughputs
 
     """
-
     wl_filt, th_filt = bandpass._get_arrays(bandpass.waveset)
 
     if trim:
@@ -1278,18 +1271,19 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
 
 
 def get_cw_beta(bandpass):
-    """
-    Convert input bandpass array into format expected by code:
-    Weighted mean wavelength of each wavelength bin, fractional bandpass
+    """Convert input bandpass array into format expected by code:
+    Weighted mean wavelength of each wavelength bin, fractional bandpass.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     bandpass: array 
         Array of weights, wavelengths
-    Returns:
-    --------
+
+    Returns
+    -------
     bandpass: array
         Weighted mean wavelength in meters, fractional bandpass
+
     """
     wt = bandpass[:, 0]
     wl = bandpass[:, 1]
@@ -1302,24 +1296,24 @@ def get_cw_beta(bandpass):
     return cw, beta
 
 def handle_bandpass(bandpass, throughput_model):
-    """
-    Logic for determining what to do with the input bandpass.
+    """Logic for determining what to do with the input bandpass.
     If user-provided, return in format expected by code. If none,
     fetch filter throughput and combine with flat spectrum to
     produce appropriate array.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     bandpass: Synphot spectrum or array, or None
         User-defined bandpass to override filter/source
     throughput_model: ThroughputModel
         Datamodel containing filter throughput info.
         Will not be used if bandpass is not None.
 
-    Returns:
-    --------
+    Returns
+    -------
     bandpass: array
         Array of weights, wavelengths used to generate model
+
     """
     if bandpass is not None:
         # bandpass can be user-defined synphot object or appropriate array
@@ -1348,10 +1342,9 @@ def handle_bandpass(bandpass, throughput_model):
 
 
 def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
-    """
-    Convert the CD matrix into RA, Dec pixel scale.
+    """Convert the CD matrix into RA, Dec pixel scale.
 
-    Parameters:
+    Parameters
     ----------
     vec: array
         2d, units of pixels
@@ -1364,12 +1357,12 @@ def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
     cd22: float 
         Linear transform matrix element (axis 2 w.r.t y)
 
-    Returns:
-    --------
+    Returns
+    -------
     Array containing x pixel scale vector, y pixel scale vector
 
-    Notes:
-    ------
+    Notes
+    -----
     Use the global header values explicitly, for clarity.
     CD inputs are 4 scalars, conceptually 2x2 array in units degrees/pixel
     
@@ -1378,17 +1371,17 @@ def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
 
 
 def degrees_per_pixel(datamodel):
-    """
-    Get pixel scale info from data model.
-    If it fails to find the right keywords, use 0.0656 as/pixel
+    """Get pixel scale info from data model.
+    If it fails to find the right keywords, use 0.0656 as/pixel.
     
-    Parameters:
+    Parameters
     ----------
     datamodel: datamodel object
     
-    Returns:
-    --------
+    Returns
+    -------
     pixel scale in degrees/pixel
+
     """
     wcsinfo = datamodel.meta.wcsinfo._instance
     if (

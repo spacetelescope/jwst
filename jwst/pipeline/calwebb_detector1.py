@@ -34,8 +34,7 @@ log.setLevel(logging.DEBUG)
 
 
 class Detector1Pipeline(Pipeline):
-    """
-    Detector1Pipeline: Apply all calibration steps to raw JWST
+    """Detector1Pipeline: Apply all calibration steps to raw JWST
     ramps to produce a 2-D slope product. Included steps are:
     group_scale, dq_init, saturation, ipc, superbias, refpix, rscd,
     lastframe, linearity, dark_current, persistence, jump detection,

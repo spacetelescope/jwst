@@ -10,8 +10,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, fringe_model):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Fringe-correct a JWST data model using a fringe model
 
@@ -36,8 +35,7 @@ def do_correction(input_model, fringe_model):
 
 
 def apply_fringe(input_model, fringe):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Fringe Correction: fringe-corrects data and error arrays by dividing these
     arrays by the respective values in the reference array (for the reference
@@ -56,8 +54,8 @@ def apply_fringe(input_model, fringe):
     -------
     output_model: JWST data model
         input science data model which has been fringe-corrected
-    """
 
+    """
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 

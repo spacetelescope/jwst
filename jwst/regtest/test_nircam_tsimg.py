@@ -8,7 +8,6 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_pipelines(rtdata_module):
     """Run stage 2 and 3 pipelines on NIRCam TSO image data."""
-
     rtdata = rtdata_module
 
     # Run the calwebb_tso-image2 pipeline on each of the 2 inputs
@@ -56,11 +55,9 @@ def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
 
 @pytest.mark.bigdata
 def test_nircam_setpointing_tsimg(rtdata, fitsdiff_default_kwargs):
-    """
-    Regression test of the set_telescope_pointing script on a level-1b
+    """Regression test of the set_telescope_pointing script on a level-1b
     NIRCam TSO imaging file.
     """
-
     rtdata.get_data("nircam/tsimg/jw06780001001_02103_00001-seg002_nrcblong_uncal.fits")
     # The add_wcs function overwrites its input, so output = input
     rtdata.output = rtdata.input

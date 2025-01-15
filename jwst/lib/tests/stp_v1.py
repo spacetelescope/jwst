@@ -29,8 +29,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-'''
-This script adds absolute pointing information to the FITS files provided
+"""This script adds absolute pointing information to the FITS files provided
 to it on the command line (one or more).
 
 Currently it only uses a constant value for the engineering keywords
@@ -57,7 +56,7 @@ PC2_2
 
 It does not currently place the new keywords in any particular location
 in the header other than what is required by the standard.
-'''
+"""
 from collections import namedtuple
 import logging
 
@@ -80,14 +79,13 @@ Pointing_Quaternions = namedtuple(
 
 
 def add_wcs(filename):
-    '''
-    Given the name of a valid partially populated level 1b JWST file,
+    """Given the name of a valid partially populated level 1b JWST file,
     determine the simple WCS parameters from the SIAF keywords in that
     file and the engineering parameters that contain information about
     the telescope pointing.
 
     It presumes all the accessed keywords are present (see first block).
-    '''
+    """
     hdulist = fits.open(filename, 'update')
     pheader = hdulist[0].header
     obsstart = float(pheader['EXPSTART'])
@@ -172,7 +170,7 @@ def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
 
 
 def vector_to_ra_dec(v):
-    """Returns tuple of spherical angles from unit direction Vector """
+    """Returns tuple of spherical angles from unit direction Vector."""
     ra = np.arctan2(v[1], v[0])
     dec = np.arcsin(v[2])
     if ra < 0.:
@@ -208,8 +206,7 @@ m_sifov_to_v = np.array(
 
 def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
              q, j2fgs_matrix, fsmcorr):
-    '''
-    v2ref (arcsec), v3ref (arcsec), v3idlyang (deg), vidlparity (+1 or -1),
+    """v2ref (arcsec), v3ref (arcsec), v3idlyang (deg), vidlparity (+1 or -1),
     are the relevant siaf parameters. The assumed units are shown in
     parentheses.
 
@@ -231,8 +228,7 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     The first is of (CRVAL1, CRVAL2, PA_y_axis)
     The second is of (V1ra, V1dec, V3pa)
     All angles are in decimal degrees.
-    '''
-
+    """
     q1, q2, q3, q4 = q
     m_eci2j = np.array(
         [[1. - 2. * q2 * q2 - 2. * q3 * q3,
@@ -303,8 +299,7 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
 
 
 def get_pointing(obsstart, obsend, result_type='first'):
-    """
-    Get telescope pointing engineering data.
+    """Get telescope pointing engineering data.
 
     Parameters
     ----------
@@ -334,6 +329,7 @@ def get_pointing(obsstart, obsend, result_type='first'):
     For the moment, the first found values will be used.
     This will need be re-examined when more information is
     available.
+
     """
     logger.info('Determining pointing between observations times (mjd):')
     logger.info(f'\tobsstart = {obsstart}')
@@ -443,11 +439,10 @@ def get_pointing(obsstart, obsend, result_type='first'):
 
 
 def get_pointing_stub(obsstart, obsend):
-    '''
-    For the time being this simply returns the same damn values regardless of
+    """For the time being this simply returns the same damn values regardless of
     the input time (awaiting the time that these parameters are actually
-    in the engineering database)
-    '''
+    in the engineering database).
+    """
     # The following values of q correspond to the engineering keyword values:
     # SA_ZATEST1, SA_ZATEST2, SA_ZATEST3, SA_ZATEST4
     q = np.array([-0.36915286, 0.33763282, 0.05758533, 0.86395264])
@@ -467,8 +462,7 @@ def get_pointing_stub(obsstart, obsend):
 
 
 def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
-    """
-    Computes the position angle of V3 (measured N to E) at the center af an aperture.
+    """Computes the position angle of V3 (measured N to E) at the center af an aperture.
 
     Parameters
     ----------

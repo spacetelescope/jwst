@@ -88,8 +88,8 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     -------
     output_model : MultiSpecModel
         This will contain the extracted spectrum.
-    """
 
+    """
     if not isinstance(input_model, datamodels.IFUCubeModel):
         log.error("Expected an IFU cube.")
         raise RuntimeError("Expected an IFU cube.")
@@ -332,6 +332,7 @@ def get_extract_parameters(ref_file, bkg_sigma_clip):
     -------
     dict
         The extraction parameters.
+
     """
     extract_params = {}
 
@@ -440,8 +441,8 @@ def extract_ifu(input_model, source_type, extract_params):
 
     x_center, y_center : float
         The x and y center of the extraction region
-    """
 
+    """
     data = input_model.data
     try:
         var_poisson = input_model.var_poisson
@@ -804,8 +805,8 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
         X and Y coordinates (in that order) of the pixel that has right
         ascension and declination coordinates closest to the target
         location.  The spectral extraction region should be centered here.
-    """
 
+    """
     if ra_targ is None or dec_targ is None:
         log.warning("TARG_RA and/or TARG_DEC not found; can't compute "
                     "pixel location of target.")
@@ -861,8 +862,8 @@ def celestial_to_cartesian(ra, dec):
         vernal equinox, y is the direction toward right ascension = 90
         degrees (6 hours) and declination = 0, and z is toward the north
         celestial pole.
-    """
 
+    """
     if hasattr(ra, 'shape'):
         shape = ra.shape + (3,)
     else:
@@ -899,8 +900,8 @@ def get_coordinates(input_model, x0, y0):
 
     wavelength : ndarray, 1-D
         The wavelength in micrometers at each pixel.
-    """
 
+    """
     if hasattr(input_model.meta, 'wcs'):
         wcs = input_model.meta.wcs
     else:
@@ -948,8 +949,8 @@ def nans_in_wavelength(wavelength, dq):
     dq : ndarray, 1-D, uint32
 
     slc : slice
-    """
 
+    """
     nelem = np.size(wavelength)
     slc = slice(nelem)
     if nelem == 0:
@@ -1009,8 +1010,8 @@ def separate_target_and_background(ref):
         that should be included as part of the background.  If there is no
         pixel in the reference image with a value of -1, `mask_bkg` will
         be set to None.
-    """
 
+    """
     mask_target = np.where(ref == 1., 1., 0.)
 
     if np.any(ref == -1.):
@@ -1039,8 +1040,8 @@ def im_centroid(data, mask_target):
     -------
     y0, x0 : tuple of two float
         The centroid of pixels flagged as source.
-    """
 
+    """
     # Collapse the science data along the dispersion direction to get a
     # 2-D image of the IFU field of view.  Multiplying by mask_target
     # zeros out all pixels that are not regarded as part of the target
@@ -1097,8 +1098,8 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
     -------
     temp : ndarray, same type and shape as `mask`
         A copy of `mask`, but shifted by `delta_y` and `delta_x`.
-    """
 
+    """
     if delta_x == 0 and delta_y == 0:
         return mask.copy()
 
@@ -1135,7 +1136,7 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
 
 
 def sigma_clip_extended_region(data, var_poisson, var_rnoise, var_flat, mask_targ, wmap, sigma_clip):
-    """ sigma clip the extraction region
+    """Sigma clip the extraction region.
 
     Parameters
     ----------
@@ -1166,6 +1167,7 @@ def sigma_clip_extended_region(data, var_poisson, var_rnoise, var_flat, mask_tar
     d_var_rnoise : ndarray, 1-D. Sigma-clipped var_rnoise array
     d_var_flat : ndarray, 1-D. Sigma-clipped var_flat array
     n_bkg : ndarray, 1-D, sum of pixels used in sigma clipped extracted region
+
     """
     shape = data.shape
     shape_ref = mask_targ.shape

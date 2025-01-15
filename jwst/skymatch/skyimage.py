@@ -1,5 +1,4 @@
-"""
-The ``skyimage`` module contains algorithms that are used by
+"""The ``skyimage`` module contains algorithms that are used by
 ``skymatch`` to manage all of the information for footprints (image outlines)
 on the sky as well as perform useful operations on these outlines such as
 computing intersections and statistics in the overlap regions.
@@ -27,16 +26,17 @@ __all__ = ['SkyImage', 'SkyGroup', 'DataAccessor', 'NDArrayInMemoryAccessor',
 
 
 class DataAccessor(abc.ABC):
-    """ Base class for all data accessors. Provides a common interface to
-        access data.
+    """Base class for all data accessors. Provides a common interface to
+    access data.
     """
+
     @abc.abstractmethod
     def get_data(self):  # pragma: no cover
         pass
 
     @abc.abstractmethod
     def set_data(self, data):  # pragma: no cover
-        """ Sets data.
+        """Sets data.
 
         Parameters
         ----------
@@ -52,7 +52,8 @@ class DataAccessor(abc.ABC):
 
 
 class NDArrayInMemoryAccessor(DataAccessor):
-    """ Acessor for in-memory `numpy.ndarray` data. """
+    """Acessor for in-memory `numpy.ndarray` data."""
+
     def __init__(self, data):
         super().__init__()
         self._data = data
@@ -68,7 +69,8 @@ class NDArrayInMemoryAccessor(DataAccessor):
 
 
 class NDArrayMappedAccessor(DataAccessor):
-    """ Data accessor for arrays stored in temporary files. """
+    """Data accessor for arrays stored in temporary files."""
+
     def __init__(self, data, tmpfile=None, prefix='tmp_skymatch_',
                  suffix='.npy', tmpdir=''):
         super().__init__()
@@ -107,8 +109,7 @@ class NDArrayMappedAccessor(DataAccessor):
 
 
 class SkyImage:
-    """
-    Container that holds information about properties of a *single*
+    """Container that holds information about properties of a *single*
     image such as:
 
     * image data;
@@ -125,7 +126,7 @@ class SkyImage:
     def __init__(self, image, wcs_fwd, wcs_inv, pix_area=1.0, convf=1.0,
                  mask=None, id=None, skystat=None, stepsize=None, meta=None,
                  reduce_memory_usage=True):
-        """ Initializes the SkyImage object.
+        """Initializes the SkyImage object.
 
         Parameters
         ----------
@@ -231,7 +232,7 @@ class SkyImage:
 
     @property
     def mask(self):
-        """ Set or get `SkyImage`'s ``mask`` data array or `None`. """
+        """Set or get `SkyImage`'s ``mask`` data array or `None`."""
         if self._mask is None:
             return None
         else:
@@ -278,7 +279,7 @@ class SkyImage:
 
     @property
     def image(self):
-        """ Set or get `SkyImage`'s ``image`` data array. """
+        """Set or get `SkyImage`'s ``image`` data array."""
         if self._image is None:
             return None
         else:
@@ -311,14 +312,14 @@ class SkyImage:
 
     @property
     def image_shape(self):
-        """ Get `SkyImage`'s ``image`` data shape. """
+        """Get `SkyImage`'s ``image`` data shape."""
         if self._image_shape is None and self._image is not None:
             self._image_shape = self._image.get_data_shape()
         return self._image_shape
 
     @property
     def id(self):
-        """ Set or get `SkyImage`'s `id`.
+        """Set or get `SkyImage`'s `id`.
 
         While `id` can be of any type, it is preferable that `id` be
         of a type with nice string representation.
@@ -332,8 +333,7 @@ class SkyImage:
 
     @property
     def pix_area(self):
-        """ Set or get mean pixel area.
-        """
+        """Set or get mean pixel area."""
         return self._pix_area
 
     @pix_area.setter
@@ -342,14 +342,12 @@ class SkyImage:
 
     @property
     def poly_area(self):
-        """ Get bounding polygon area in srad units.
-        """
+        """Get bounding polygon area in srad units."""
         return self._poly_area
 
     @property
     def sky(self):
-        """ Sky background value. See `calc_sky` for more details.
-        """
+        """Sky background value. See `calc_sky` for more details."""
         return self._sky
 
     @sky.setter
@@ -358,8 +356,7 @@ class SkyImage:
 
     @property
     def is_sky_valid(self):
-        """
-        Indicates whether sky value was successfully computed.
+        """Indicates whether sky value was successfully computed.
         Must be set externally.
         """
         return self._sky_is_valid
@@ -370,21 +367,18 @@ class SkyImage:
 
     @property
     def radec(self):
-        """
-        Get RA and DEC of the vertices of the bounding polygon as a
+        """Get RA and DEC of the vertices of the bounding polygon as a
         `~numpy.ndarray` of shape (N, 2) where N is the number of vertices + 1.
         """
         return self._radec
 
     @property
     def polygon(self):
-        """ Get image's bounding polygon.
-        """
+        """Get image's bounding polygon."""
         return self._polygon
 
     def intersection(self, skyimage):
-        """
-        Compute intersection of this `SkyImage` object and another
+        """Compute intersection of this `SkyImage` object and another
         `SkyImage`, `SkyGroup`, or
         :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
@@ -415,7 +409,7 @@ class SkyImage:
         return intersect_poly
 
     def calc_bounding_polygon(self, stepsize=None):
-        """ Compute image's bounding polygon.
+        """Compute image's bounding polygon.
 
         Parameters
         ----------
@@ -479,7 +473,7 @@ class SkyImage:
 
     @property
     def skystat(self):
-        """ Stores/retrieves a callable object that takes a either a 2D image
+        """Stores/retrieves a callable object that takes a either a 2D image
         (2D `numpy.ndarray`) or a list of pixel values (a Nx1 array) and
         returns a tuple of two values: some statistics
         (e.g., mean, median, etc.) and number of pixels/values from the input
@@ -498,8 +492,7 @@ class SkyImage:
 
     def set_builtin_skystat(self, skystat='median', lower=None, upper=None,
                             nclip=5, lsigma=4.0, usigma=4.0, binwidth=0.1):
-        """
-        Replace already set `skystat` with a "built-in" version of a
+        """Replace already set `skystat` with a "built-in" version of a
         statistics callable object used to measure sky background.
 
         See :py:class:`~jwst_pipeline.skymatch.skystatistics.SkyStats` for the
@@ -525,8 +518,7 @@ class SkyImage:
     #       should replace current 'calc_sky' once the bug is fixed.
     #
     def calc_sky(self, overlap=None, delta=True):
-        """
-        Compute sky background value.
+        """Compute sky background value.
 
         Parameters
         ----------
@@ -751,9 +743,7 @@ None, optional
 #         return skyval, npix, polyarea
 
     def copy(self):
-        """
-        Return a shallow copy of the `SkyImage` object.
-        """
+        """Return a shallow copy of the `SkyImage` object."""
         si = SkyImage(
             image=None,
             wcs_fwd=self.wcs_fwd,
@@ -780,8 +770,7 @@ None, optional
 
 
 class SkyGroup:
-    """
-    Holds multiple :py:class:`SkyImage` objects whose sky background values
+    """Holds multiple :py:class:`SkyImage` objects whose sky background values
     must be adjusted together.
 
     `SkyGroup` provides methods for obtaining bounding polygon of the group
@@ -816,10 +805,10 @@ class SkyGroup:
 
     @property
     def id(self):
-        """ Set or get `SkyImage`'s `id`.
+        """Set or get `SkyImage`'s `id`.
 
-            While `id` can be of any type, it is preferable that `id` be
-            of a type with nice string representation.
+        While `id` can be of any type, it is preferable that `id` be
+        of a type with nice string representation.
 
         """
         return self._id
@@ -830,8 +819,7 @@ class SkyGroup:
 
     @property
     def sky(self):
-        """ Sky background value. See `calc_sky` for more details.
-        """
+        """Sky background value. See `calc_sky` for more details."""
         return self._sky
 
     @sky.setter
@@ -843,8 +831,7 @@ class SkyGroup:
 
     @property
     def radec(self):
-        """
-        Get RA and DEC of the vertices of the bounding polygon as a
+        """Get RA and DEC of the vertices of the bounding polygon as a
         `~numpy.ndarray` of shape (N, 2) where N is the number of vertices + 1.
 
         """
@@ -852,13 +839,11 @@ class SkyGroup:
 
     @property
     def polygon(self):
-        """ Get image's bounding polygon.
-        """
+        """Get image's bounding polygon."""
         return self._polygon
 
     def intersection(self, skyimage):
-        """
-        Compute intersection of this `SkyImage` object and another
+        """Compute intersection of this `SkyImage` object and another
         `SkyImage`, `SkyGroup`, or
         :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
@@ -922,8 +907,7 @@ class SkyGroup:
             yield image
 
     def insert(self, idx, value):
-        """Inserts a `SkyImage` into the group.
-        """
+        """Inserts a `SkyImage` into the group."""
         if not isinstance(value, SkyImage):
             raise TypeError("Item must be of 'SkyImage' type")
         value.sky += self._sky
@@ -931,8 +915,7 @@ class SkyGroup:
         self._update_bounding_polygon()
 
     def append(self, value):
-        """Appends a `SkyImage` to the group.
-        """
+        """Appends a `SkyImage` to the group."""
         if not isinstance(value, SkyImage):
             raise TypeError("Item must be of 'SkyImage' type")
         value.sky += self._sky
@@ -940,8 +923,7 @@ class SkyGroup:
         self._update_bounding_polygon()
 
     def calc_sky(self, overlap=None, delta=True):
-        """
-        Compute sky background value.
+        """Compute sky background value.
 
         Parameters
         ----------
@@ -976,7 +958,6 @@ None, optional
             sky statistics.
 
         """
-
         if len(self._images) == 0:
             return None, 0, 0.0
 

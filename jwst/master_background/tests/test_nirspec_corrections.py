@@ -1,6 +1,4 @@
-"""
-Unit tests for master background NIRSpec corrections
-"""
+"""Unit tests for master background NIRSpec corrections."""
 import numpy as np
 import pytest
 
@@ -12,8 +10,7 @@ from jwst.master_background.nirspec_utils import (
 
 
 def test_ifu_pathloss_existence():
-    """Test the case where the input is missing a pathloss array"""
-
+    """Test the case where the input is missing a pathloss array."""
     input = datamodels.IFUImageModel((10, 10))
     result = correct_nrs_ifu_bkg(input)
 
@@ -21,8 +18,7 @@ def test_ifu_pathloss_existence():
 
 
 def test_ifu_correction():
-    """Test application of IFU corrections"""
-
+    """Test application of IFU corrections."""
     data = np.ones((5, 5))
     pl_ps = 2.1 * data
     pl_un = data / 1.9
@@ -37,8 +33,7 @@ def test_ifu_correction():
 
 
 def test_fs_correction():
-    """Test application of FS corrections"""
-
+    """Test application of FS corrections."""
     data = np.ones((5, 5))
     ff_ps = 1.5 * data
     ff_un = data / 1.2

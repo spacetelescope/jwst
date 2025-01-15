@@ -21,7 +21,7 @@ def find_all_wcs_ref_models_classes():
 
 @pytest.fixture
 def distortion_model():
-    """Create a distortion model that should pass all validation"""
+    """Create a distortion model that should pass all validation."""
     m = models.Shift(1) & models.Shift(2)
     dist = DistortionModel(model=m, input_units=u.pixel, output_units=u.arcsec)
 
@@ -49,7 +49,7 @@ def distortion_model():
 
 
 def test_distortion_schema(distortion_model, tmp_path):
-    """Make sure DistortionModel roundtrips"""
+    """Make sure DistortionModel roundtrips."""
     path = tmp_path / "test_dist.asdf"
     dist = distortion_model
     dist.save(path)
@@ -74,12 +74,12 @@ def test_distortion_schema(distortion_model, tmp_path):
 
 
 def test_distortion_strict_validation(distortion_model):
-    """Make sure strict validation works"""
+    """Make sure strict validation works."""
     distortion_model.validate()
 
 
 def test_distortion_schema_bad_valueerror(distortion_model):
-    """Check that ValueError is raised for ReferenceFile missing items"""
+    """Check that ValueError is raised for ReferenceFile missing items."""
     dist = DistortionModel(distortion_model, strict_validation=True)
     dist.meta.author = None
 
@@ -88,7 +88,7 @@ def test_distortion_schema_bad_valueerror(distortion_model):
 
 
 def test_distortion_schema_bad_assertionerror(distortion_model):
-    """Check that AssertionError is raised for distortion-specific missing items"""
+    """Check that AssertionError is raised for distortion-specific missing items."""
     dist = DistortionModel(distortion_model, strict_validation=True)
     dist.meta.instrument.channel = None
 
@@ -98,7 +98,7 @@ def test_distortion_schema_bad_assertionerror(distortion_model):
 
 @pytest.mark.parametrize("cls", find_all_wcs_ref_models_classes())
 def test_simplemodel_subclasses(cls):
-    """Test that expected validation warnings or errors are raised"""
+    """Test that expected validation warnings or errors are raised."""
     model = cls()
     with pytest.warns(ValidationWarning):
         model.validate()

@@ -1,6 +1,4 @@
-"""
-Utilities for naming source catalogs.
-"""
+"""Utilities for naming source catalogs."""
 
 import re
 from os.path import split, splitext, join, abspath, expanduser
@@ -9,8 +7,7 @@ from collections import namedtuple
 
 def replace_suffix_ext(filename, old_suffix_list, new_suffix,
                        output_ext='ecsv', output_dir=None):
-    """
-    Replace the suffix and extension of a filename.
+    """Replace the suffix and extension of a filename.
 
     If the last suffix in the input filename is in the
     ``old_suffix_list`` then it is replaced by the ``new_suffix``.
@@ -60,8 +57,8 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
     >>> replace_suffix_ext('jw12345_nrca_i2d.fits', ['i2d'], 'cat',
     ...                    output_dir='/jwst/my_catalogs')
         '/jwst/my_catalogs/jw12345_nrca_cat.ecsv'
-    """
 
+    """
     path, filename = split(filename)
     name, ext = splitext(filename)
     remove_suffix = '^(.+?)(_(' + '|'.join(old_suffix_list) + '))?$'
@@ -87,9 +84,7 @@ class SkyObject(namedtuple('SkyObject', ("label",
                                          "sky_bbox_ur",
                                          "is_extended",
                                          ), rename=False)):
-
-    """
-    Sky Object container for WFSS catalog information.
+    """Sky Object container for WFSS catalog information.
 
     This is a convenience object for storing the catalog information
     as a named tuple. The object has explicit fields to guard for changing
@@ -121,6 +116,7 @@ class SkyObject(namedtuple('SkyObject', ("label",
         Upper right corner of the minimum bounding box
     is_extended : bool
         Flag indicating if the object is extended
+
     """
 
     __slots__ = ()  # prevent instance dictionary creation for lower mem

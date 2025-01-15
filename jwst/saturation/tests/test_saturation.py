@@ -1,8 +1,4 @@
-"""
-
-Unit tests for saturation flagging
-
-"""
+"""Unit tests for saturation flagging."""
 
 import pytest
 import numpy as np
@@ -14,9 +10,9 @@ from jwst.saturation.saturation import flag_saturation, irs2_flag_saturation
 
 
 def test_basic_saturation_flagging(setup_nrc_cube):
-    '''Check that the saturation flag is set when a pixel value is above the
-       threshold given by the reference file.'''
-
+    """Check that the saturation flag is set when a pixel value is above the
+    threshold given by the reference file.
+    """
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -58,9 +54,7 @@ def test_nirspec_irs2_saturation_flagging(setup_nrs_irs2_cube):
 
 
 def test_nirspec_irs2_readpatt(setup_nrs_irs2_cube):
-    """
-    Tests that the readpatt framework (saturation in grouped data) is working for IRS2 processing.
-    """
+    """Tests that the readpatt framework (saturation in grouped data) is working for IRS2 processing."""
     data, satmap = setup_nrs_irs2_cube()
 
     pixx, pixy = 1000, 1000
@@ -78,9 +72,8 @@ def test_nirspec_irs2_readpatt(setup_nrs_irs2_cube):
 
 
 def test_nirspec_nrs_readpatt(setup_nrs_nrs_cube):
-    """
-    Tests that the readpatt framework (saturation in grouped data) is working for regular grouped
-    data (code follows all instruments except NIRSpec IRS2)
+    """Tests that the readpatt framework (saturation in grouped data) is working for regular grouped
+    data (code follows all instruments except NIRSpec IRS2).
     """
     data, satmap = setup_nrs_nrs_cube()
 
@@ -99,8 +92,7 @@ def test_nirspec_nrs_readpatt(setup_nrs_nrs_cube):
 
 
 def test_irs2_zero_frame(setup_nrs_irs2_cube):
-    """
-    Tests IRS2 ZEROFRAME processing.
+    """Tests IRS2 ZEROFRAME processing.
 
     This ensures ZEROFRAME data that is outside saturation and AD floor
     boundaries get zeroed out.
@@ -128,8 +120,8 @@ def test_irs2_zero_frame(setup_nrs_irs2_cube):
 
 def test_ad_floor_flagging(setup_nrc_cube):
     """Check that the ad_floor flag is set when a pixel value is zero or
-    negative."""
-
+    negative.
+    """
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -161,8 +153,8 @@ def test_ad_floor_flagging(setup_nrc_cube):
 
 def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
     """Check that the ad_floor flag is set when a pixel value is zero or
-    negative and the saturation flag when the pixel is above the saturation threshold."""
-
+    negative and the saturation flag when the pixel is above the saturation threshold.
+    """
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -198,10 +190,10 @@ def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
 
 
 def test_signal_fluctuation_flagging(setup_nrc_cube):
-    '''Check that once a pixel is flagged as saturated in a group, all
-       subsequent groups should also be flagged as saturated, even if the
-       signal value drops back below saturation.'''
-
+    """Check that once a pixel is flagged as saturated in a group, all
+    subsequent groups should also be flagged as saturated, even if the
+    signal value drops back below saturation.
+    """
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -230,8 +222,7 @@ def test_signal_fluctuation_flagging(setup_nrc_cube):
 
 
 def test_all_groups_saturated(setup_nrc_cube):
-    '''Check case where all groups are saturated.'''
-
+    """Check case where all groups are saturated."""
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -259,8 +250,7 @@ def test_all_groups_saturated(setup_nrc_cube):
 
 
 def test_subarray_extraction(setup_miri_cube):
-    '''Check the step correctly handles subarrays.'''
-
+    """Check the step correctly handles subarrays."""
     # Create input data
     # Create model of data with 0 value array
     ngroups = 50
@@ -292,8 +282,7 @@ def test_subarray_extraction(setup_miri_cube):
 
 
 def test_dq_propagation(setup_nrc_cube):
-    '''Check PIXELDQ propagation.'''
-
+    """Check PIXELDQ propagation."""
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -315,9 +304,9 @@ def test_dq_propagation(setup_nrc_cube):
 
 
 def test_no_sat_check(setup_nrc_cube):
-    '''Check that pixels flagged with NO_SAT_CHECK in the reference file get
-       added to the DQ mask and are not flagged as saturated.'''
-
+    """Check that pixels flagged with NO_SAT_CHECK in the reference file get
+    added to the DQ mask and are not flagged as saturated.
+    """
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -351,10 +340,10 @@ def test_no_sat_check(setup_nrc_cube):
 
 
 def test_nans_in_mask(setup_nrc_cube):
-    '''Check that pixels in the reference files that have value NaN are not
-       flagged as saturated in the data and that in the PIXELDQ array the
-       pixel is set to NO_SAT_CHECK.'''
-
+    """Check that pixels in the reference files that have value NaN are not
+    flagged as saturated in the data and that in the PIXELDQ array the
+    pixel is set to NO_SAT_CHECK.
+    """
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -382,8 +371,7 @@ def test_nans_in_mask(setup_nrc_cube):
 
 
 def test_full_step(setup_nrc_cube):
-    '''Test full run of the SaturationStep.'''
-
+    """Test full run of the SaturationStep."""
     # Create inputs, data, and saturation maps
     ngroups = 5
     nrows = 20
@@ -415,7 +403,7 @@ def test_full_step(setup_nrc_cube):
 
 @pytest.fixture(scope='function')
 def setup_nrc_cube():
-    ''' Set up fake NIRCam data to test.'''
+    """Set up fake NIRCam data to test."""
 
     def _cube(ngroups, nrows, ncols):
 
@@ -453,7 +441,7 @@ def setup_nrc_cube():
 
 @pytest.fixture(scope='function')
 def setup_miri_cube():
-    ''' Set up fake MIRI data to test.'''
+    """Set up fake MIRI data to test."""
 
     def _cube(xstart, ystart, ngroups, nrows, ncols):
 

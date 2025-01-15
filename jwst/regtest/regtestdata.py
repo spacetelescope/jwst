@@ -28,7 +28,7 @@ ARTIFACTORY_API_KEY_FILE = '/eng/ssb2/keys/svc_rodata.key'
 
 
 class RegtestData:
-    """Defines data paths on Artifactory and data retrieval methods"""
+    """Defines data paths on Artifactory and data retrieval methods."""
 
     def __init__(self, env="dev", inputs_root="jwst-pipeline",
                  results_root="jwst-pipeline-results", docopy=True,
@@ -134,7 +134,7 @@ class RegtestData:
 
     # The methods
     def get_data(self, path=None, docopy=None):
-        """Copy data from Artifactory remote resource to the CWD
+        """Copy data from Artifactory remote resource to the CWD.
 
         Updates self.input and self.input_remote upon completion
         """
@@ -151,7 +151,7 @@ class RegtestData:
         return self.input
 
     def data_glob(self, path=None, glob='*', docopy=None):
-        """Get a list of files"""
+        """Get a list of files."""
         if path is None:
             path = self.input_remote
         else:
@@ -179,7 +179,7 @@ class RegtestData:
         return file_paths
 
     def get_truth(self, path=None, docopy=None):
-        """Copy truth data from Artifactory remote resource to the CWD/truth
+        """Copy truth data from Artifactory remote resource to the CWD/truth.
 
         Updates self.truth and self.truth_remote on completion
         """
@@ -218,6 +218,7 @@ class RegtestData:
         get_members: bool
             If an association is the input, retrieve the members.
             Otherwise, do not.
+
         """
         if path is None:
             path = self.input_remote
@@ -255,7 +256,7 @@ class RegtestData:
 
 
 def run_step_from_dict(rtdata, **step_params):
-    """Run Steps with given parameter
+    """Run Steps with given parameter.
 
     Parameters
     ----------
@@ -278,8 +279,8 @@ def run_step_from_dict(rtdata, **step_params):
         'step': str                # The step to run, either a class or a config file
         'args': list,              # The arguments passed to `Step.from_cmdline`
     }
-    """
 
+    """
     # Get the data. If `step_params['input_path]` is not
     # specified, the presumption is that `rtdata.input` has
     # already been retrieved.
@@ -306,7 +307,7 @@ def run_step_from_dict(rtdata, **step_params):
 
 
 def run_step_from_dict_mock(rtdata, source, **step_params):
-    """Pretend to run Steps with given parameter but just copy data
+    """Pretend to run Steps with given parameter but just copy data.
 
     For long running steps where the result already exists, just
     copy the data from source
@@ -335,8 +336,8 @@ def run_step_from_dict_mock(rtdata, source, **step_params):
         'step': str                # The step to run, either a class or a config file
         'args': list,              # The arguments passed to `Step.from_cmdline`
     }
-    """
 
+    """
     # Get the data. If `step_params['input_path]` is not
     # specified, the presumption is that `rtdata.input` has
     # already been retrieved.
@@ -357,7 +358,7 @@ def run_step_from_dict_mock(rtdata, source, **step_params):
 
 
 def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix=True):
-    """Compare step outputs with truth
+    """Compare step outputs with truth.
 
     Parameters
     ----------
@@ -376,6 +377,7 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
     is_suffix: bool
         Interpret `output` as just a suffix on the expected output root.
         Otherwise, assume it is a full file name
+
     """
     __tracebackhide__ = True
     # If given only a suffix, get the root to change the suffix of.
@@ -397,7 +399,7 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
 
 
 def text_diff(from_path, to_path):
-    """Assertion helper for diffing two text files
+    """Assertion helper for diffing two text files.
 
     Parameters
     ----------
@@ -412,6 +414,7 @@ def text_diff(from_path, to_path):
     diffs: [str[,...]]
         A generator of a list of strings that are the differences.
         The output from `difflib.unified_diff`
+
     """
     __tracebackhide__ = True
     with open(from_path) as fh:
@@ -431,7 +434,7 @@ def text_diff(from_path, to_path):
 
 
 def _data_glob_local(*glob_parts):
-    """Perform a glob on the local path
+    """Perform a glob on the local path.
 
     Parameters
     ----------
@@ -442,14 +445,14 @@ def _data_glob_local(*glob_parts):
     -------
     file_paths: [str[, ...]]
         Full file paths that match the glob criterion
+
     """
     full_glob = Path().joinpath(*glob_parts)
     return _sys_glob(str(full_glob))
 
 
 def _data_glob_url(*url_parts, root=None):
-    """
-    Parameters
+    """Parameters
     ----------
     url: (str[,...])
         List of components that will be used to create a URL path
@@ -462,6 +465,7 @@ def _data_glob_url(*url_parts, root=None):
     -------
     url_paths: [str[, ...]]
         Full URLS that match the glob criterion
+
     """
     # Fix root root-ed-ness
     if root.endswith('/'):

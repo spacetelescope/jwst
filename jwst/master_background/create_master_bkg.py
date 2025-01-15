@@ -30,8 +30,8 @@ def create_background(wavelength, surf_bright):
         written to disk by calling:
 
         output_model.save(<filename>)
-    """
 
+    """
     wl_shape = wavelength.shape
     sb_shape = surf_bright.shape
     bad = False

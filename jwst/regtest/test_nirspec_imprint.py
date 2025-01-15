@@ -1,4 +1,4 @@
-"""Regression test for NIRSpec imprint subtraction"""
+"""Regression test for NIRSpec imprint subtraction."""
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -11,7 +11,8 @@ TRUTH_PATH = 'truth/test_nirspec_imprint'
 @pytest.fixture(scope='module')
 def run_spec2(rtdata_module):
     """Run the Spec2Pipeline on a spec2 ASN containing a single exposure
-    with multiple imprint exposures"""
+    with multiple imprint exposures.
+    """
     rtdata = rtdata_module
 
     # Setup the inputs
@@ -45,7 +46,7 @@ def run_spec2(rtdata_module):
     ['assign_wcs', 'imprint_subtract', 'cal']
 )
 def test_nirspec_imprint(run_spec2, fitsdiff_default_kwargs, suffix):
-    """Regression test matching output files"""
+    """Regression test matching output files."""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path=TRUTH_PATH)
 

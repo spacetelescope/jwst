@@ -18,8 +18,7 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 
 class LgModel:
-    """
-    A class for conveniently dealing with an "NRM object." 
+    """A class for conveniently dealing with an "NRM object.".
     
     This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
@@ -45,8 +44,7 @@ class LgModel:
         affine2d=None,
         **kwargs,
     ):
-        """
-        Set attributes of LgModel class.
+        """Set attributes of LgModel class.
 
         Parameters
         ----------
@@ -77,6 +75,7 @@ class LgModel:
 
         affine2d: Affine2d object
             Affine2d object
+
         """
         if "debug" in kwargs:
             self.debug = kwargs["debug"]
@@ -131,8 +130,7 @@ class LgModel:
             self.affine2d = affine2d
 
     def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
-        """
-        Simulate a detector-scale psf.
+        """Simulate a detector-scale psf.
 
         Use parameters input from the call and
         already stored in the object, and generate a simulation fits header
@@ -157,6 +155,7 @@ class LgModel:
         -------
         Object's 'psf': float 2D array
             simulated psf
+
         """
         # First set up conditions for choosing various parameters
         self.bandpass = bandpass
@@ -192,8 +191,7 @@ class LgModel:
     def make_model(
         self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
     ):
-        """
-        Generates the fringe model.
+        """Generates the fringe model.
 
         Use the attributes of the object with a bandpass that is either a single 
         wavelength or a list of tuples of the form 
@@ -223,6 +221,7 @@ class LgModel:
         -------
         Object's 'model': fringe model
             Generated fringe model
+
         """
         if fov:
             self.fov = fov
@@ -297,8 +296,7 @@ class LgModel:
         dqm=None,
         weighted=False,
     ):
-        """
-        Run a least-squares fit on an input image.
+        """Run a least-squares fit on an input image.
 
         Find the appropriate wavelength scale and rotation. 
         If a model is not specified then this
@@ -344,6 +342,7 @@ class LgModel:
         Returns
         -------
         None
+
         """
         self.model_in = modelin
         self.weighted = weighted
@@ -399,9 +398,8 @@ class LgModel:
         self.q4_phases = leastsqnrm.q4_phases(self.fringephase, n=self.N) # RC 8/24
 
     def create_modelpsf(self):
-        """
-        Make an image from the object's model and fit solutions, by setting the
-        LgModel object's modelpsf attribute
+        """Make an image from the object's model and fit solutions, by setting the
+        LgModel object's modelpsf attribute.
 
         Parameters
         ----------
@@ -410,6 +408,7 @@ class LgModel:
         Returns
         -------
         None
+
         """
         try:
             self.modelpsf = np.zeros((self.fov, self.fov))
@@ -424,8 +423,7 @@ class LgModel:
     def improve_scaling(
         self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
     ):
-        """
-        Determine the scale and rotation that best fits the data.  
+        """Determine the scale and rotation that best fits the data.
 
         Correlations
         are calculated in the image plane, in anticipation of data with many
@@ -455,6 +453,7 @@ class LgModel:
 
         self.gof: float
             goodness of fit
+
         """
         if not hasattr(self, "bandpass"):
             raise ValueError("This obj has no specified bandpass/wavelength")
@@ -520,8 +519,7 @@ class LgModel:
         return self.pixscale_factor, self.rot_measured, self.gof
 
     def set_pistons(self, phi_m):
-        """
-        Set piston's phi in meters of OPD at center wavelength LG++
+        """Set piston's phi in meters of OPD at center wavelength LG++.
 
         Parameters
         ----------
@@ -536,8 +534,7 @@ class LgModel:
         self.phi = phi_m
 
     def set_pixelscale(self, pixel_rad):
-        """
-        Set the detector pixel scale
+        """Set the detector pixel scale.
 
         Parameters
         ----------
@@ -547,13 +544,13 @@ class LgModel:
         Returns
         -------
         None
+
         """
         self.pixel = pixel_rad
 
 
 def goodness_of_fit(data, bestfit, diskR=8):
-    """
-    Calculate goodness of fit between the data and the fit.
+    """Calculate goodness of fit between the data and the fit.
 
     Parameters
     ----------
@@ -570,6 +567,7 @@ def goodness_of_fit(data, bestfit, diskR=8):
     -------
     gof: float
         goodness of fit
+
     """
     mask = (
         np.ones(data.shape)
@@ -587,8 +585,7 @@ def goodness_of_fit(data, bestfit, diskR=8):
 
 
 def run_data_correlate(data, model):
-    """
-    Calculate correlation between data and model
+    """Calculate correlation between data and model.
 
     Parameters
     ----------

@@ -1,4 +1,4 @@
-"""Constraint Tests"""
+"""Constraint Tests."""
 import pytest
 
 from jwst.associations.lib.constraint import (
@@ -9,7 +9,7 @@ from jwst.associations.lib.constraint import (
 
 
 def test_constraint_history():
-    """Test the saving and restoring of constraint values
+    """Test the saving and restoring of constraint values.
 
     A baseline case is also checked to ensure no cross-talk
     between constraints and to check restore without previous preserve.
@@ -30,13 +30,13 @@ def test_constraint_history():
 
 
 def test_sc_dup_names():
-    """Test that SimpleConstraint returns an empty dict"""
+    """Test that SimpleConstraint returns an empty dict."""
     sc = SimpleConstraint(name='sc_name')
     dups = sc.dup_names
     assert not len(dups)
 
 class TestDupNames:
-    """Test duplicate names in Constraint"""
+    """Test duplicate names in Constraint."""
 
     # Sub constraints
     sc1 = SimpleConstraint(name='sc1')
@@ -64,14 +64,14 @@ class TestDupNames:
 
 
 def test_sc_get_all_attr():
-    """Get attribute value of a simple constraint"""
+    """Get attribute value of a simple constraint."""
     name = 'my_sc'
     sc = SimpleConstraint(name=name, value='my_value')
     assert sc.get_all_attr('name') == [(sc, name)]
 
 
 def test_constraint_get_all_attr():
-    """Get attribute value of all constraints in a constraint"""
+    """Get attribute value of all constraints in a constraint."""
     names = ['sc1', 'sc2']
     constraints = [
         SimpleConstraint(name=name)
@@ -89,7 +89,7 @@ def test_constraint_get_all_attr():
 
 
 def test_constraint_get_all_attr_with_name():
-    """Get attribute value of all constraints with a name"""
+    """Get attribute value of all constraints with a name."""
     names = ['sc1', 'sc2']
     constraints = [
         SimpleConstraint(name=name)
@@ -101,7 +101,7 @@ def test_constraint_get_all_attr_with_name():
 
 
 def test_simpleconstraint_reprocess_match():
-    """Test options for reprocessing"""
+    """Test options for reprocessing."""
     sc = SimpleConstraint(
         value='my_value',
         reprocess_on_match=True
@@ -112,7 +112,7 @@ def test_simpleconstraint_reprocess_match():
 
 
 def test_simpleconstraint_reprocess_nomatch():
-    """Test options for reprocessing"""
+    """Test options for reprocessing."""
     sc = SimpleConstraint(
         value='my_value',
         reprocess_on_fail=True
@@ -123,7 +123,7 @@ def test_simpleconstraint_reprocess_nomatch():
 
 
 def test_constraint_reprocess_match():
-    """Test options for reprocessing"""
+    """Test options for reprocessing."""
     sc = SimpleConstraint(value='my_value')
     c = Constraint([sc], reprocess_on_match=True)
     match, reprocess = c.check_and_set('my_value')
@@ -132,7 +132,7 @@ def test_constraint_reprocess_match():
 
 
 def test_constraint_reprocess_nomatch():
-    """Test options for reprocessing"""
+    """Test options for reprocessing."""
     sc = SimpleConstraint(value='my_value')
     c = Constraint([sc], reprocess_on_fail=True)
     match, reprocess = c.check_and_set('bad_value')
@@ -141,14 +141,13 @@ def test_constraint_reprocess_nomatch():
 
 
 def test_abc():
-    """Test ABC itself"""
+    """Test ABC itself."""
     with pytest.raises(TypeError):
         SimpleConstraintABC()
 
 
 def test_simpleconstraint():
-    """Test initialization"""
-
+    """Test initialization."""
     # Basic initialization
     c = SimpleConstraint()
     assert c.value is None
@@ -165,8 +164,7 @@ def test_simpleconstraint():
 
 
 def test_simpleconstraint_checkset():
-    """Test check_and_set"""
-
+    """Test check_and_set."""
     # Check and set.
     c = SimpleConstraint()
     match, reprocess = c.check_and_set('my_value')
@@ -190,8 +188,7 @@ def test_simpleconstraint_checkset():
 
 
 def test_constraint_default():
-    """Test constraint operations"""
-
+    """Test constraint operations."""
     sc1 = SimpleConstraint()
     sc2 = SimpleConstraint()
     c = Constraint([sc1, sc2])
@@ -207,8 +204,7 @@ def test_invalid_init():
 
 
 def test_constraint_all():
-    """Test the all operation"""
-
+    """Test the all operation."""
     sc1 = SimpleConstraint(value='value_1')
     sc2 = SimpleConstraint(value='value_2')
     c = Constraint([sc1, sc2])
@@ -217,8 +213,7 @@ def test_constraint_all():
 
 
 def test_constraint_any_basic():
-    """Test the all operation"""
-
+    """Test the all operation."""
     sc1 = SimpleConstraint(value='value_1')
     sc2 = SimpleConstraint(value='value_2')
     c = Constraint([sc1, sc2], reduce=Constraint.any)
@@ -231,8 +226,7 @@ def test_constraint_any_basic():
 
 
 def test_constraint_any_remember():
-    """Ensure that any doesn't forget other or propositions"""
-
+    """Ensure that any doesn't forget other or propositions."""
     sc1 = SimpleConstraint(value='value_1')
     sc2 = SimpleConstraint(value='value_2')
     c = Constraint([sc1, sc2], reduce=Constraint.any)
@@ -247,7 +241,7 @@ def test_constraint_any_remember():
 
 
 def test_iteration():
-    """Test various iterations"""
+    """Test various iterations."""
     sc = SimpleConstraint()
     for idx in sc:
         assert isinstance(idx, SimpleConstraint)
@@ -271,7 +265,7 @@ def test_iteration():
 
 
 def test_name_index():
-    """Test for name indexing"""
+    """Test for name indexing."""
     sc1 = SimpleConstraint(name='sc1', value='value1')
     sc2 = SimpleConstraint(name='sc2', value='value2')
     c1 = Constraint([sc1, sc2])
@@ -309,7 +303,7 @@ def test_copy():
                          [(SimpleConstraint, 'SimpleConstraint:myname'),
                           (Constraint, 'Constraint:myname')])
 def test_id(klass, expected):
-    """Test constraint ID"""
+    """Test constraint ID."""
     c = klass(name='myname')
 
     assert c.id == expected

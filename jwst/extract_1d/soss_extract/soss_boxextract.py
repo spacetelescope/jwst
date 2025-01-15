@@ -6,7 +6,7 @@ log.setLevel(logging.DEBUG)
 
 
 def get_box_weights(centroid, n_pix, shape, cols=None):
-    """ Return the weights of a box aperture given the centroid and the width of
+    """Return the weights of a box aperture given the centroid and the width of
     the box in pixels. All pixels will have the same weights except at the ends
     of the box aperture.
 
@@ -26,8 +26,8 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     -------
     weights : array[float]
         An array of pixel weights to use with the box extraction.
-    """
 
+    """
     nrows, ncols = shape
 
     # Use all columns if not specified
@@ -60,7 +60,7 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
 
 
 def box_extract(scidata, scierr, scimask, box_weights, cols=None):
-    """ Perform a box extraction.
+    """Perform a box extraction.
 
     Parameters
     ----------
@@ -84,8 +84,8 @@ def box_extract(scidata, scierr, scimask, box_weights, cols=None):
         The flux in each column
     flux_var : array[float]
         The variance of the flux in each column
-    """
 
+    """
     nrows, ncols = scidata.shape
 
     # Use all columns if not specified
@@ -136,8 +136,7 @@ def box_extract(scidata, scierr, scimask, box_weights, cols=None):
 
 
 def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
-    """
-    Function to estimate pixel error empirically using the corresponding error
+    """Function to estimate pixel error empirically using the corresponding error
     of the nearest pixel value (`data`). Intended to be used in a box extraction
     when the bad pixels are modeled.
 
@@ -151,10 +150,12 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
         Map of the pixels where the uncertainty needs to be estimated.
     valid_pix : 2d array[bool]
         Map of valid pixels to be used to find the error empirically.
+
     Returns
     -------
     err_filled : 2d array[float]
         same as `err`, but the pixels to be estimated are filled with the estimated values.
+
     """
     # Tranform to 1d arrays
     data_to_estim = data[pix_to_estim]

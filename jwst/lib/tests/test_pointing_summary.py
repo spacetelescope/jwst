@@ -1,4 +1,4 @@
-"""Test module pointing_summary"""
+"""Test module pointing_summary."""
 import sys
 from pathlib import Path
 
@@ -22,13 +22,13 @@ GOOD_ENDTIME = '2016-01-19'
 
 @pytest.fixture
 def engdb():
-    """Setup the service to operate through the mock service"""
+    """Setup the service to operate through the mock service."""
     yield engdb_tools.ENGDB_Service()
 
 
 @pytest.fixture(scope='module')
 def data_path(tmp_cwd_module):
-    """Create data file with needed header parameters"""
+    """Create data file with needed header parameters."""
     model = ImageModel()
 
     model.meta.target.ra = 90.75541667
@@ -43,7 +43,7 @@ def data_path(tmp_cwd_module):
 
 
 def test_calc_pointing_deltas(engdb, data_path):
-    """Test `calc_pointing_deltas` basic running"""
+    """Test `calc_pointing_deltas` basic running."""
     truth = ('Delta(target=<SkyCoord (ICRS): (ra, dec) in deg'
              '\n    (90.75541667, -66.56055556)>, v1=<SkyCoord (ICRS): (ra, dec) in deg'
              '\n    (91.08142005, -66.60547869)>, refpoint=<SkyCoord (ICRS): (ra, dec) in deg'
@@ -57,7 +57,7 @@ def test_calc_pointing_deltas(engdb, data_path):
 
 
 def test_calc_deltas(engdb, data_path):
-    """Test `calc_deltas` basic running"""
+    """Test `calc_deltas` basic running."""
     with ImageModel(data_path) as model:
         deltas = ps.calc_deltas([model])
 

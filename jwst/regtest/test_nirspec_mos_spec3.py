@@ -27,7 +27,7 @@ def run_pipeline(rtdata_module):
                                        "v000000048", "v000000049",
                                        "v000000053", "v000000056"])
 def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwargs):
-    """Check results of calwebb_spec3"""
+    """Check results of calwebb_spec3."""
     rtdata = run_pipeline
 
     output = f"jw01345-o066_{source_id}_nirspec_f170lp-g235m_{suffix}.fits"

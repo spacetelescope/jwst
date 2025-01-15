@@ -7,8 +7,7 @@ __all__ = ["NSCleanStep"]
 
 
 class NSCleanStep(Step):
-    """
-    NSCleanStep: This step performs 1/f noise correction ("cleaning")
+    """NSCleanStep: This step performs 1/f noise correction ("cleaning")
     of NIRSpec images, using the "NSClean" method.
 
     NOTE: This step is a deprecated alias to the ``clean_flicker_noise`` step.
@@ -33,8 +32,7 @@ class NSCleanStep(Step):
     """
 
     def process(self, input):
-        """
-        Fit and subtract 1/f background noise from a NIRSpec image
+        """Fit and subtract 1/f background noise from a NIRSpec image.
 
         Parameters
         ----------
@@ -93,6 +91,7 @@ class NSCleanStep(Step):
         -------
         output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
             The 1/f corrected datamodel.
+
         """
         message = ("The 'nsclean' step is a deprecated alias to 'clean_flicker_noise' "
                    "and will be removed in future builds.")

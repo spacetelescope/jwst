@@ -23,8 +23,7 @@ DEFAULT_READNOISE_FILE = "jwst_fgs_readnoise_0000.fits"
 
 
 def guider_cds(model, gain_model=None, readnoise_model=None):
-    """
-    Extended Summary
+    """Extended Summary
     ----------------
     Calculate the count rate for each pixel in all integrations.
 
@@ -55,6 +54,7 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
     -------
     new_model : 'datamodels.GuiderCalModel'
         output data model
+
     """
     # get needed sizes and shapes
     imshape, n_int, grp_time, exp_type = get_dataset_info(model)
@@ -142,9 +142,8 @@ def guider_cds(model, gain_model=None, readnoise_model=None):
 
 
 def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
-    """
-    Extract gain and readnoise arrays in appropriate shape for the sci data from
-    the reference files
+    """Extract gain and readnoise arrays in appropriate shape for the sci data from
+    the reference files.
 
     Parameters
     ----------
@@ -168,6 +167,7 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
     readnoise_arr : ndarray, 2-D, float
         readnoise values from the ref file, or default value if ref file
         unavailable
+
     """
     # if no gain_model was retrieved, use the default value for all pixels
     if gain_model is None:
@@ -207,8 +207,7 @@ def get_ref_arr(model, imshape, gain_model=None, readnoise_model=None):
 
 
 def get_dataset_info(model):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Extract values for the image shape, the number of integrations,
     the group time, and the exposure type.
@@ -231,6 +230,7 @@ def get_dataset_info(model):
 
     exp_type: string
         exposure type
+
     """
     instrume = model.meta.instrument.name
     frame_time = model.meta.exposure.frame_time

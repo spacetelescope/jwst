@@ -27,8 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-"""
-Contains a number of helper functions useful for verifying header
+"""Contains a number of helper functions useful for verifying header
 card values.
 """
 
@@ -36,46 +35,34 @@ card values.
 import re
 
 def is_empty(val):
-    """
-    Verifies that the value is empty.
-    """
+    """Verifies that the value is empty."""
     return val == ''
 
 def is_integer(val):
-    """
-    Verifies that the value is an integer.
-    """
+    """Verifies that the value is an integer."""
     return isinstance(val, int)
 is_int = is_integer
 
 def is_float(val):
-    """
-    Verifies that the value is a float.
-    """
+    """Verifies that the value is a float."""
     return isinstance(val, float)
 
 def is_numeric(val):
-    """
-    Verifies that the value is numeric (either an integer or a
+    """Verifies that the value is numeric (either an integer or a
     float).
     """
     return isinstance(val, (int, float))
 
 def is_string(val):
-    """
-    Verifies that the value is a string.
-    """
+    """Verifies that the value is a string."""
     return isinstance(val, str)
 
 def is_bool(val):
-    """
-    Verifies that the value is a boolean ('T' or 'F').
-    """
+    """Verifies that the value is a boolean ('T' or 'F')."""
     return isinstance(val, bool)
 
 def is_date(val):
-    """
-    Verifies that the value is a date or datetime of the form::
+    """Verifies that the value is a date or datetime of the form::
 
         YYYY-MM-DD
 
@@ -88,9 +75,7 @@ def is_date(val):
         val) is not None
 
 def is_cds(val):
-    """
-    Verifies that the value is a CDS number.
-    """
+    """Verifies that the value is a CDS number."""
     if not isinstance(val, int):
         raise ValueError(
             "Expected integer value for CDS")
@@ -115,8 +100,7 @@ def is_cds(val):
     return success
 
 def in_range(val, min=0, max=0, inclusive=True):
-    """
-    Verifies that the value is in the given range [min, max].  If
+    """Verifies that the value is in the given range [min, max].  If
     *inclusive* is False, min and max will not be considered part
     of the valid range.
     """
@@ -130,10 +114,9 @@ def in_range(val, min=0, max=0, inclusive=True):
     return True
 
 def regex(val, pattern):
-    """
-    Verifies that the value matches the given regular expression.
+    """Verifies that the value matches the given regular expression.
     This uses Python's regular expression syntax, except a complete
-    match is always implied by surrounding the pattern in '^...$'
+    match is always implied by surrounding the pattern in '^...$'.
     """
     return re.match(val, '^%s$' % pattern)
 

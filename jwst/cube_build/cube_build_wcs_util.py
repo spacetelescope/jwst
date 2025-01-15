@@ -1,5 +1,4 @@
-""" Routines related to WCS procedures of cube_build
-"""
+"""Routines related to WCS procedures of cube_build."""
 import numpy as np
 from ..assign_wcs import nirspec
 from ..assign_wcs.util import wrap_ra
@@ -12,7 +11,7 @@ log.setLevel(logging.DEBUG)
 
 # ******************************************************************************
 def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
-    """ For MIRI channel data find the footprint of this data on the sky
+    """For MIRI channel data find the footprint of this data on the sky.
 
     For a specific channel on an exposure find the min and max of the
     spatial coordinates, either in alpha,beta or ra,dec depending
@@ -124,7 +123,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 
 
 def find_corners_NIRSPEC(input, instrument_info, coord_system):
-    """Find the sky footprint of a slice of a NIRSpec exposure
+    """Find the sky footprint of a slice of a NIRSpec exposure.
 
     For each slice find:
     a. the min and max spatial coordinates (along slice, across slice) or
@@ -140,6 +139,7 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
 
     Notes
     -----
+
     Returns
     -------
     min and max spatial coordinates and wavelength for slice.

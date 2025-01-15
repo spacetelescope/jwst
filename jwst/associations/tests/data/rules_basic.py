@@ -1,5 +1,4 @@
-"""Association Rules: Basic
-"""
+"""Association Rules: Basic."""
 
 from jwst.associations import Association
 from jwst.associations.registry import RegistryMarker
@@ -8,7 +7,7 @@ from jwst.associations.lib.constraint import ConstraintTrue
 
 @RegistryMarker.rule
 class Rule_1(Association):
-    """Basic rule"""
+    """Basic rule."""
 
     def __init__(self, version_id=None):
         self.constraints = ConstraintTrue()
@@ -19,7 +18,7 @@ class Rule_1(Association):
         self.data['members'].append(item)
 
     def is_item_member(self, item):
-        """Check if item is already a member of this association
+        """Check if item is already a member of this association.
 
         Parameters
         ----------
@@ -30,5 +29,6 @@ class Rule_1(Association):
         -------
         is_item_member: bool
             True if item is a member.
+
         """
         return item in self.data['members']

@@ -82,7 +82,8 @@ def run_detector1_multiprocess_jump(rtdata_module):
 def run_detector1_with_average_dark_current(rtdata_module):
     """Run detector1 pipeline on MIRI imaging data, providing an
     estimate of the average dark current for inclusion in ramp_fitting
-    poisson variance estimation."""
+    poisson variance estimation.
+    """
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024002001_02101_00001_mirimage_uncal.fits")
 
@@ -118,7 +119,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_image2(run_detector1, rtdata_module):
-    """Run image2 pipeline on the _rate file, saving intermediate products"""
+    """Run image2 pipeline on the _rate file, saving intermediate products."""
     rtdata = rtdata_module
     rtdata.input = 'jw01024001001_04101_00001_mirimage_rate.fits'
     args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
@@ -145,7 +146,8 @@ def run_image2(run_detector1, rtdata_module):
 @pytest.fixture(scope="module")
 def run_image3(run_image2, rtdata_module):
     """Get the level3 association json file (though not its members) and run
-    image3 pipeline on all _cal files listed in association"""
+    image3 pipeline on all _cal files listed in association.
+    """
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024-o001_20220501t155404_image3_001_asn.json")
     args = ["jwst.pipeline.Image3Pipeline", rtdata.input]
@@ -175,7 +177,7 @@ def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump,
 
 @pytest.mark.bigdata
 def test_detector1_mem_usage(rtdata_module):
-    """Determine the memory usage for Detector 1"""
+    """Determine the memory usage for Detector 1."""
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
     args = ["jwst.pipeline.Detector1Pipeline", rtdata.input]
@@ -212,7 +214,8 @@ def test_detector1_mem_usage(rtdata_module):
 def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_dark_current,
                                                     rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI imaging data with a specified
-    average dark current."""
+    average dark current.
+    """
     rtdata = rtdata_module
     rtdata.input = "jw01024002001_02101_00001_mirimage_uncal.fits"
     output = f"jw01024002001_02101_00001_mirimage_{suffix}.fits"
@@ -266,7 +269,7 @@ def test_miri_image_image3(run_image3, rtdata_module, fitsdiff_default_kwargs, s
 
 
 def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Assertion helper for the above tests"""
+    """Assertion helper for the above tests."""
     rtdata = rtdata_module
     rtdata.input = "jw01024001001_04101_00001_mirimage_uncal.fits"
     output = f"jw01024001001_04101_00001_mirimage_{suffix}.fits"

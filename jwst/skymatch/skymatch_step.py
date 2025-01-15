@@ -1,6 +1,5 @@
 #! /usr/bin/env python
-"""
-JWST pipeline step for sky matching.
+"""JWST pipeline step for sky matching.
 
 :Authors: Mihai Cara
 
@@ -33,8 +32,7 @@ __all__ = ['SkyMatchStep']
 
 
 class SkyMatchStep(Step):
-    """
-    SkyMatchStep: Subtraction or equalization of sky background in science
+    """SkyMatchStep: Subtraction or equalization of sky background in science
     images.
     """
 
@@ -190,8 +188,7 @@ class SkyMatchStep(Step):
         return sky_im
 
     def _set_sky_background(self, sky_image, library, step_status):
-        """
-        Parameters
+        """Parameters
         ----------
         sky_image : SkyImage
             SkyImage object containing sky image data and metadata.
@@ -202,6 +199,7 @@ class SkyMatchStep(Step):
         step_status : str
             Status of the sky subtraction step. Must be one of the following:
             'COMPLETE', 'SKIPPED'.
+
         """
         index = sky_image.meta['index']
         dm = library.borrow(index)

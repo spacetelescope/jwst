@@ -1,4 +1,4 @@
-"""Test asn_gather functionality"""
+"""Test asn_gather functionality."""
 import pytest
 
 from pathlib import Path
@@ -15,7 +15,7 @@ PRIMARY_NAME = PRIMARY_STEM + '_asn.json'
 
 @pytest.fixture(scope='module')
 def source_folder(tmp_path_factory):
-    """Create a set of source associations"""
+    """Create a set of source associations."""
     primary_members = [
         ('sci_1.txt', 'science'),
         ('sci_2.txt', 'science'),
@@ -47,7 +47,7 @@ def source_folder(tmp_path_factory):
                     (None, 'science')
                 ])
 def gather_simple(source_folder, tmp_path_factory, request):
-    """Do the actual gathering"""
+    """Do the actual gathering."""
     exp_types, excludes = request.param
 
     dest_folder = tmp_path_factory.mktemp('asn_gather_dest')
@@ -64,7 +64,7 @@ def gather_simple(source_folder, tmp_path_factory, request):
                     (None, 'science')
                 ])
 def gather_alternate(source_folder, tmp_path_factory, request):
-    """Gather but using an alternate source folder"""
+    """Gather but using an alternate source folder."""
     exp_types, excludes = request.param
 
     dest_folder = tmp_path_factory.mktemp('asn_gather_alternate_dest')
@@ -80,7 +80,7 @@ def gather_alternate(source_folder, tmp_path_factory, request):
 
 @pytest.fixture
 def gather(request, gather_simple, gather_alternate):
-    """Parametrize the gather fixtures"""
+    """Parametrize the gather fixtures."""
     type = request.param
     if type == 'gather_simple':
         return gather_simple
@@ -92,7 +92,7 @@ def gather(request, gather_simple, gather_alternate):
 
 @pytest.mark.parametrize('gather', ['gather_simple', 'gather_alternate'], indirect=True)
 def test_ispath(gather, request):
-    """Test that an association is generated"""
+    """Test that an association is generated."""
     dest_folder, asn_path, source_folder, exptypes, excludes = gather
 
     assert isinstance(asn_path, Path), f'Return a Path: {asn_path}'
@@ -100,7 +100,7 @@ def test_ispath(gather, request):
 
 @pytest.mark.parametrize('gather', ['gather_simple', 'gather_alternate'], indirect=True)
 def test_all_members(gather):
-    """Test to ensure all members are accounted for"""
+    """Test to ensure all members are accounted for."""
     dest_folder, asn_path, source_folder, exptypes, excludes = gather
 
     source_asn = LoadAsAssociation.load(source_folder / PRIMARY_NAME)
@@ -126,7 +126,7 @@ def test_all_members(gather):
 
 @pytest.mark.parametrize('gather', ['gather_simple', 'gather_alternate'], indirect=True)
 def test_copy(gather):
-    """Test that members are copied"""
+    """Test that members are copied."""
     dest_folder, asn_path, source_folder, exptypes, excludes = gather
 
     asn = LoadAsAssociation.load(asn_path)

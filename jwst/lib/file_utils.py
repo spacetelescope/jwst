@@ -1,4 +1,4 @@
-"""File utility functions"""
+"""File utility functions."""
 from contextlib import contextmanager
 import os
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 
 @contextmanager
 def pushdir(directory):
-    """Temporarily change to specified directory
+    """Temporarily change to specified directory.
 
     Parameters
     ----------
@@ -17,6 +17,7 @@ def pushdir(directory):
     -------
     new_directory: Path
         The directory changed to.
+
     """
     previous = os.getcwd()
     try:

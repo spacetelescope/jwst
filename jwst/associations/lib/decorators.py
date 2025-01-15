@@ -1,11 +1,11 @@
-"""
-Generic decorators
+"""Generic decorators.
 
 Notes
 -----
 Lifted from the `glue-viz`_ project.
 
 .. _glue-viz: https://github.com/glue-viz/glue
+
 """
 from functools import wraps
 
@@ -18,7 +18,7 @@ def _make_key(args, kwargs):
 
 
 def memoize(func):
-    """Save results of function calls to avoid repeated calculation"""
+    """Save results of function calls to avoid repeated calculation."""
     memo = {}
 
     @wraps(func)
@@ -47,9 +47,8 @@ def memoize(func):
 
 
 def clear_cache(func):
-    """
-    Clear the cache of a function that has potentially been
-    decorated by memoize. Safely ignores non-decorated functions
+    """Clear the cache of a function that has potentially been
+    decorated by memoize. Safely ignores non-decorated functions.
     """
     try:
         func.__memoize_cache.clear()
@@ -58,8 +57,8 @@ def clear_cache(func):
 
 
 def memoize_attr_check(attr):
-    """ Memoize a method call, cached both on arguments and given attribute
-    of first argument (which is presumably self)
+    """Memoize a method call, cached both on arguments and given attribute
+    of first argument (which is presumably self).
 
     Has the effect of re-calculating results if a specific attribute changes
     """
@@ -83,7 +82,8 @@ def memoize_attr_check(attr):
 
 def singleton(cls):
     """Turn a class into a singleton, such that new objects
-    in this class share the same instance"""
+    in this class share the same instance.
+    """
     instances = {}
 
     @wraps(cls)

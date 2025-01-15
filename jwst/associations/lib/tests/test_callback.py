@@ -1,4 +1,4 @@
-"""Test callback_registry"""
+"""Test callback_registry."""
 from jwst.associations.lib.callback_registry import CallbackRegistry
 
 

@@ -134,8 +134,7 @@ def miri_mrs():
                          [nirspec_tso, nirspec_fs_slitmodel, miri_lrs, miri_mrs])
 @pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
 def test_pixel_replace_no_container(input_model_function, algorithm):
-    """
-    Test pixel replace for modes with no container.
+    """Test pixel replace for modes with no container.
 
     This includes ImageModel, SlitModel, and IFUImageModel.
     """
@@ -206,8 +205,7 @@ def test_pixel_replace_multislit(input_model_function, algorithm):
 @pytest.mark.parametrize('input_model_function', [nirspec_ifu])
 @pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
 def test_pixel_replace_nirspec_ifu(tmp_cwd, input_model_function, algorithm):
-    """
-    Test pixel replacement for NIRSpec IFU.
+    """Test pixel replacement for NIRSpec IFU.
 
     Larger data and more WCS operations required for testing make
     this test take more than a minute, so marking this test 'slow'.

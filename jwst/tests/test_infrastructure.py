@@ -15,7 +15,7 @@ from jwst.tests.helpers import word_precision_check
 
 
 def test_word_precision_check():
-    """Test word_precision_check"""
+    """Test word_precision_check."""
     s1 = "a b c"
     s2 = "aa bb cc"
     s3 = "aa bb cc dd"
@@ -37,7 +37,7 @@ def test_word_precision_check():
     ], ids=['all', 'txt', 'fits']
 )
 def test_data_glob_local(glob_filter, nfiles, tmp_cwd):
-    """Test working of local globbing
+    """Test working of local globbing.
 
     Parameters
     ----------
@@ -46,6 +46,7 @@ def test_data_glob_local(glob_filter, nfiles, tmp_cwd):
 
     nfiles: int
         The number of files expected to find.
+
     """
     path = Path('datadir')
     path.mkdir()
@@ -67,7 +68,7 @@ def test_data_glob_local(glob_filter, nfiles, tmp_cwd):
     ]
 )
 def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
-    """Test globbing over a URL
+    """Test globbing over a URL.
 
     Parameters
     ----------
@@ -76,6 +77,7 @@ def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
 
     nfiles: int
         The number of files expected to find.
+
     """
     inputs_root = pytestconfig.getini('inputs_root')[0]
     env = request.config.getoption('env')
@@ -86,7 +88,7 @@ def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
 
 
 def test_submodules_can_be_imported():
-    """Make sure all package submodules can be imported"""
+    """Make sure all package submodules can be imported."""
     import jwst
 
     submodules = [mod for _, mod, ispkg in iter_modules(jwst.__path__) if ispkg]

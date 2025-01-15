@@ -128,11 +128,10 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
 
 @pytest.fixture(scope='module')
 def run_extract1d_null_order2(rtdata_module):
-    """
-    Test coverage for fix to error thrown when all of the pixels
+    """Test coverage for fix to error thrown when all of the pixels
     in order 2 are flagged as bad. Ensure graceful handling of the
     MaskOverlapError exception raise.
-    Pin tikfac and transform for faster runtime
+    Pin tikfac and transform for faster runtime.
     """
     rtdata = rtdata_module
     rtdata.get_data("niriss/soss/jw01201008001_04101_00001-seg003_nis_int72.fits")

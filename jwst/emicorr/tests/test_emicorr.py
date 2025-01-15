@@ -1,8 +1,4 @@
-"""
-
-Unit tests for EMI correction
-
-"""
+"""Unit tests for EMI correction."""
 
 
 import numpy as np

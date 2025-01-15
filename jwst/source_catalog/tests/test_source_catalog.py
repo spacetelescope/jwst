@@ -128,11 +128,11 @@ def test_model_without_apcorr_data(nircam_model_without_apcorr):
 
 
 def test_input_model_reset(nircam_model):
-    """ Changes to input model data are made in SourceCatalogStep - make sure that
-        these changes are correctly reversed so the input model data/err arrays
-        remain unchanged after processing (to avoid copying datamodel),
-        and that the units are in MJy/sr before and after."""
-
+    """Changes to input model data are made in SourceCatalogStep - make sure that
+    these changes are correctly reversed so the input model data/err arrays
+    remain unchanged after processing (to avoid copying datamodel),
+    and that the units are in MJy/sr before and after.
+    """
     original_data = nircam_model.data.copy()
     original_data_unit = nircam_model.meta.bunit_data
     original_err = nircam_model.err.copy()

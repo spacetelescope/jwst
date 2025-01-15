@@ -1,4 +1,4 @@
-"""Test Image rules
+"""Test Image rules.
 
 Image rules produce associations meant to be
 processed by CALIMAGE3.

@@ -15,8 +15,7 @@ __all__ = ["load_wcs"]
 
 
 def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
-    """
-    Create a gWCS object and store it in ``Model.meta``.
+    """Create a gWCS object and store it in ``Model.meta``.
 
     Parameters
     ----------
@@ -27,6 +26,7 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
         reference files that apply to this exposure.
     nrs_slit_y_range : list
         The slit y-range for a Nirspec slit. The center is (0, 0).
+
     """
     if reference_files:
         for ref_type, ref_file in reference_files.items():

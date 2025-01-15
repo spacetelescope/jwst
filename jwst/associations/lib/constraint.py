@@ -1,5 +1,4 @@
-"""Constraints
-"""
+"""Constraints."""
 import abc
 import collections
 from copy import deepcopy
@@ -28,7 +27,7 @@ logger.addHandler(logging.NullHandler())
 
 
 class SimpleConstraintABC(abc.ABC):
-    """Simple Constraint ABC
+    """Simple Constraint ABC.
 
     Parameters
     ----------
@@ -53,6 +52,7 @@ class SimpleConstraintABC(abc.ABC):
 
     matched : bool
         Last call to `check_and_set`
+
     """
 
     # Attributes to show in the string representation.
@@ -79,7 +79,7 @@ class SimpleConstraintABC(abc.ABC):
             self._constraint_attributes.update(kwargs)
 
     def __getattr__(self, name):
-        """Retrieve user defined attribute"""
+        """Retrieve user defined attribute."""
         if name.startswith('_'):
             return super().__getattribute__(name)
         if name in self._constraint_attributes:
@@ -87,7 +87,7 @@ class SimpleConstraintABC(abc.ABC):
         raise AttributeError(f'No such attribute {name}')
 
     def __setattr__(self, name, value):
-        """Store all attributes in the user dictionary"""
+        """Store all attributes in the user dictionary."""
         if not name.startswith('_'):
             self._constraint_attributes[name] = value
         else:
@@ -95,7 +95,7 @@ class SimpleConstraintABC(abc.ABC):
 
     @abc.abstractmethod
     def check_and_set(self, item):
-        """Check and set the constraint
+        """Check and set the constraint.
 
         Returns
         -------
@@ -104,6 +104,7 @@ class SimpleConstraintABC(abc.ABC):
 
                 - True if check is successful.
                 - List of `~jwst.associations.ProcessList`.
+
         """
         self.matched = True
         self.found_values.add(self.value)
@@ -111,7 +112,7 @@ class SimpleConstraintABC(abc.ABC):
 
     @property
     def dup_names(self): #  -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]
-        """Return dictionary of constraints with duplicate names
+        """Return dictionary of constraints with duplicate names.
 
         This method is meant to be overridden by classes
         that need to traverse a list of constraints.
@@ -121,26 +122,28 @@ class SimpleConstraintABC(abc.ABC):
         dups : {str: [constraint[,...]][,...]}
             Returns a mapping between the duplicated name
             and all the constraints that define that name.
+
         """
         return {}
 
     @property
     def id(self):
-        """Return identifyer for the constraint
+        """Return identifyer for the constraint.
 
         Returns
         -------
         id : str
             The identifyer
+
         """
         return f'{self.__class__.__name__}:{self.name}'
 
     def copy(self):
-        """Copy ourselves"""
+        """Copy ourselves."""
         return deepcopy(self)
 
     def get_all_attr(self, attribute, name=None):
-        """Return the specified attribute
+        """Return the specified attribute.
 
         This method exists solely to support `Constraint.get_all_attr`.
         This obviates the need for class/method checking.
@@ -160,6 +163,7 @@ class SimpleConstraintABC(abc.ABC):
         [(self, value)] : [(SimpleConstraint, object)]
             The value of the attribute in a tuple. If there is no attribute,
             an empty tuple is returned.
+
         """
         if name is None or name == self.name:
             value = getattr(self, attribute, None)
@@ -169,14 +173,14 @@ class SimpleConstraintABC(abc.ABC):
         return []
 
     def restore(self):
-        """Restore constraint state"""
+        """Restore constraint state."""
         try:
             self._constraint_attributes = self._ca_history.pop()
         except IndexError:
             logger.debug('No more attribute history to restore from. restore is a NOOP')
 
     def preserve(self):
-        """Save the current state of the constraints"""
+        """Save the current state of the constraints."""
         ca_copy = self._constraint_attributes.copy()
         ca_copy['found_values'] = self._constraint_attributes['found_values'].copy()
         self._ca_history.append(ca_copy)
@@ -205,14 +209,14 @@ class SimpleConstraintABC(abc.ABC):
 
 
 class ConstraintTrue(SimpleConstraintABC):
-    """Always return True"""
+    """Always return True."""
 
     def check_and_set(self, item):
         return super(ConstraintTrue, self).check_and_set(item)
 
 
 class SimpleConstraint(SimpleConstraintABC):
-    """A basic constraint
+    """A basic constraint.
 
     Parameters
     ----------
@@ -266,7 +270,6 @@ class SimpleConstraint(SimpleConstraintABC):
 
     Examples
     --------
-
     Create a constraint where the attribute `attr` of an object
     matches the value `my_value`:
 
@@ -338,7 +341,7 @@ class SimpleConstraint(SimpleConstraintABC):
             self.test = self.eq
 
     def check_and_set(self, item):
-        """Check and set the constraint
+        """Check and set the constraint.
 
         Returns
         -------
@@ -347,6 +350,7 @@ class SimpleConstraint(SimpleConstraintABC):
 
                 - True if check is successful.
                 - List of `~jwst.associations.ProcessList`.
+
         """
         source_value = self.sources(item)
 
@@ -379,7 +383,7 @@ class SimpleConstraint(SimpleConstraintABC):
 
 
 class AttrConstraint(SimpleConstraintABC):
-    """Test attribute of an item
+    """Test attribute of an item.
 
     Parameters
     ----------
@@ -473,7 +477,7 @@ class AttrConstraint(SimpleConstraintABC):
         self.matched = False
 
     def check_and_set(self, item):
-        """Check and set constraints based on item
+        """Check and set constraints based on item.
 
         Parameters
         ----------
@@ -487,6 +491,7 @@ class AttrConstraint(SimpleConstraintABC):
 
                 - True if check is successful.
                 - List of `~jwst.associations.ProcessList`.
+
         """
         reprocess = []
 
@@ -589,7 +594,7 @@ class AttrConstraint(SimpleConstraintABC):
 
 
 class Constraint:
-    """Constraint that is made up of SimpleConstraints
+    """Constraint that is made up of SimpleConstraints.
 
     Parameters
     ----------
@@ -655,7 +660,9 @@ class Constraint:
                       'value': 'a_value',
                       'name': 'simple',
                       'matched': False})
+
     """
+
     def __init__(
             self,
             init=None,
@@ -705,7 +712,7 @@ class Constraint:
 
     @property
     def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
-        """Return dictionary of constraints with duplicate names
+        """Return dictionary of constraints with duplicate names.
 
         This method is meant to be overridden by classes
         that need to traverse a list of constraints.
@@ -715,6 +722,7 @@ class Constraint:
         dups : {str: [constraint[,...]][,...]}
             Returns a mapping between the duplicated name
             and all the constraints that define that name.
+
         """
         attrs = self.get_all_attr('name')
         constraints, names = zip(*attrs)
@@ -730,21 +738,22 @@ class Constraint:
 
     @property
     def id(self):
-        """Return identifyer for the constraint
+        """Return identifyer for the constraint.
 
         Returns
         -------
         id : str
             The identifyer
+
         """
         return f'{self.__class__.__name__}:{self.name}'
 
     def append(self, constraint):
-        """Append a new constraint"""
+        """Append a new constraint."""
         self.constraints.append(constraint)
 
     def check_and_set(self, item, work_over=ListCategory.BOTH):
-        """Check and set the constraint
+        """Check and set the constraint.
 
         Returns
         -------
@@ -753,6 +762,7 @@ class Constraint:
 
                 - success : True if check is successful.
                 - List of `~jwst.associations.ProcessList`.
+
         """
         if work_over not in (self.work_over, ListCategory.BOTH):
             return False, []
@@ -773,11 +783,11 @@ class Constraint:
         return self.matched, list(chain(*reprocess))
 
     def copy(self):
-        """Copy ourselves"""
+        """Copy ourselves."""
         return deepcopy(self)
 
     def get_all_attr(self, attribute, name=None):
-        """Return the specified attribute for specified constraints
+        """Return the specified attribute for specified constraints.
 
         Parameters
         ----------
@@ -799,6 +809,7 @@ class Constraint:
         ------
         AttributeError
             If the attribute is not found.
+
         """
         result = []
         if name is None or name == self.name:
@@ -811,19 +822,18 @@ class Constraint:
         return result
 
     def preserve(self):
-        """Preserve all constraint states"""
+        """Preserve all constraint states."""
         for constraint in self.constraints:
             constraint.preserve()
 
     def restore(self):
-        """Restore all constraint states"""
+        """Restore all constraint states."""
         for constraint in self.constraints:
             constraint.restore()
 
     @staticmethod
     def all(item, constraints):
         """Return positive only if all results are positive."""
-
         # If there are no constraints, there is nothing to match.
         # Result is false.
         if len(constraints) == 0:
@@ -881,18 +891,18 @@ class Constraint:
 
     @staticmethod
     def notany(item, constraints):
-        """True if none of the constraints match"""
+        """True if none of the constraints match."""
         match, to_reprocess = Constraint.any(item, constraints)
         return not match, to_reprocess
 
     @staticmethod
     def notall(item, constraints):
-        """True if not all of the constraints match"""
+        """True if not all of the constraints match."""
         match, to_reprocess = Constraint.all(item, constraints)
         return not match, to_reprocess
 
     def __delitem__(self, key):
-        """Not implemented"""
+        """Not implemented."""
         raise NotImplementedError('Cannot delete a constraint by index.')
 
     # Make iterable
@@ -902,7 +912,7 @@ class Constraint:
 
     # Index implementation
     def __getitem__(self, key):
-        """Retrieve a named constraint"""
+        """Retrieve a named constraint."""
         for constraint in self.constraints:
             name = getattr(constraint, 'name', None)
             if name is not None and name == key:
@@ -928,7 +938,7 @@ class Constraint:
         return result
 
     def __setitem__(self, key, value):
-        """Not implemented"""
+        """Not implemented."""
         raise NotImplementedError('Cannot set constraints by index.')
 
     def __str__(self):
@@ -944,7 +954,7 @@ class Constraint:
 # Utilities
 # ---------
 def meets_conditions(value, conditions):
-    """Check whether value meets any of the provided conditions
+    """Check whether value meets any of the provided conditions.
 
     Parameters
     ----------
@@ -957,8 +967,8 @@ def meets_conditions(value, conditions):
     Returns
     -------
     True if any condition is meant.
-    """
 
+    """
     if not is_iterable(conditions):
         conditions = [conditions]
     for condition in conditions:
@@ -974,7 +984,7 @@ def meets_conditions(value, conditions):
 
 
 def reprocess_multivalue(item, source, values, constraint):
-    """Reprocess items that have a list of values
+    """Reprocess items that have a list of values.
 
     Parameters
     ----------
@@ -994,6 +1004,7 @@ def reprocess_multivalue(item, source, values, constraint):
     -------
     process_list : ProcessList
         The process list to put on the reprocess queue
+
     """
     reprocess_items = []
     for value in values:

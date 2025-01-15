@@ -1,6 +1,4 @@
-"""
-Unit tests for master background subtraction
-"""
+"""Unit tests for master background subtraction."""
 import numpy as np
 import pytest
 import json
@@ -21,8 +19,7 @@ from jwst.srctype import SourceTypeStep
 
 @pytest.fixture(scope='module')
 def user_background(tmp_path_factory):
-    """Generate a user background spectrum"""
-
+    """Generate a user background spectrum."""
     filename = tmp_path_factory.mktemp('master_background_user_input')
     filename = filename / 'user_background.fits'
     wavelength = np.linspace(0.5, 25, num=100)
@@ -122,7 +119,7 @@ def nirspec_cal_pair(nirspec_rate):
 
 @pytest.fixture
 def nirspec_asn(nirspec_cal_pair, tmp_cwd):
-    """Create an association with the mock data"""
+    """Create an association with the mock data."""
     sci, im2 = nirspec_cal_pair
 
     sci_filename = sci.meta.filename
@@ -162,8 +159,7 @@ def nirspec_asn(nirspec_cal_pair, tmp_cwd):
 
 @pytest.fixture(scope='function')
 def science_image():
-    """Generate science image """
-
+    """Generate science image."""
     image = datamodels.ImageModel((10, 10))
     image.meta.instrument.name = 'MIRI'
     image.meta.instrument.detector = 'MIRIMAGE'
@@ -184,8 +180,7 @@ def science_image():
 
 
 def test_master_background_userbg(tmp_cwd, user_background, science_image):
-    """Verify data can run through the step with a user-supplied background"""
-
+    """Verify data can run through the step with a user-supplied background."""
     # Run with a user-supplied background and verify this is recorded in header
     result = MasterBackgroundStep.call(
         science_image,
@@ -198,8 +193,7 @@ def test_master_background_userbg(tmp_cwd, user_background, science_image):
     assert result.meta.background.master_background_file == 'user_background.fits'
 
 def test_master_background_medfilt(tmp_cwd, nirspec_asn):
-    """Verify data can run through the step with a median filter"""
-
+    """Verify data can run through the step with a median filter."""
     # Load in the example association containing a cal science member
     # and a background x1d member that has a CR in it
     container = datamodels.open(nirspec_asn)
@@ -230,8 +224,7 @@ def test_master_background_medfilt(tmp_cwd, nirspec_asn):
     assert np.allclose(bkg_sub_pixels, 0)
 
 def test_master_background_logic(tmp_cwd, user_background, science_image):
-    """Verify if calspec 2 background step was run the master background step will be skipped"""
-
+    """Verify if calspec 2 background step was run the master background step will be skipped."""
     # the background step in calspec2 was done
     science_image.meta.cal_step.back_sub = 'COMPLETE'
 
@@ -256,8 +249,7 @@ def test_master_background_logic(tmp_cwd, user_background, science_image):
 
 
 def test_copy_background_to_surf_bright():
-    """Test the copy_background_to_surf_bright function"""
-
+    """Test the copy_background_to_surf_bright function."""
     wavelength = np.linspace(0.5, 25, num=100)
     surf_bright = np.linspace(2.0, 2.2, num=100) + (np.random.random(100) - 0.5) * 0.001
     sb_error = np.random.random(100) * 0.01 + 17.       # different from berror

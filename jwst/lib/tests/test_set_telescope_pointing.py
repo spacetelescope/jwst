@@ -1,6 +1,4 @@
-"""
-Test suite for set_telescope_pointing
-"""
+"""Test suite for set_telescope_pointing."""
 import logging
 import numpy as np
 import os
@@ -87,7 +85,7 @@ METAS_ISCLOSE = ['meta.wcsinfo.crpix1',
 
 @pytest.fixture(params=[('good_model', True), ('bad_model', False), ('fits_nomodel', False)])
 def file_case(request, tmp_path):
-    """Generate files with different model states"""
+    """Generate files with different model states."""
     case, allow = request.param
 
     if case == 'good_model':
@@ -114,7 +112,7 @@ def file_case(request, tmp_path):
 
 @pytest.mark.parametrize('allow_any_file', [True, False])
 def test_allow_any_file(file_case, allow_any_file):
-    """Test various files against whether they should be allowed or not
+    """Test various files against whether they should be allowed or not.
 
     Parameters
     ----------
@@ -124,6 +122,7 @@ def test_allow_any_file(file_case, allow_any_file):
 
     allow_any_file : bool
         Value of `allow_any_file` to try
+
     """
     path, allow = file_case
     with warnings.catch_warnings():
@@ -143,12 +142,12 @@ def test_allow_any_file(file_case, allow_any_file):
     [method for method in stp.Methods]
 )
 def test_method_string(method):
-    """Ensure that the value of the method is the string representation"""
+    """Ensure that the value of the method is the string representation."""
     assert f'{method}' == method.value
 
 
 def test_override_calc_wcs():
-    """Test matrix override in the full calculation"""
+    """Test matrix override in the full calculation."""
     t_pars = make_t_pars()
     t_pars.method = stp.Methods.OPS_TR_202111
     wcsinfo, vinfo, _ = stp.calc_wcs(t_pars)
@@ -169,7 +168,7 @@ def test_override_calc_wcs():
     [('m_eci2j', 'overridden'), ('m_j2fgs1', 'untouched')]
 )
 def test_override(attribute, expected):
-    """Test overriding of Transforms attributes"""
+    """Test overriding of Transforms attributes."""
     overrides = stp.Transforms(m_eci2j='overridden')
     to_override = stp.Transforms(m_eci2j='original', m_j2fgs1='untouched', override=overrides)
 
@@ -177,7 +176,7 @@ def test_override(attribute, expected):
 
 
 def test_transform_serialize(calc_transforms, tmp_path):
-    """Test serialization of Transforms"""
+    """Test serialization of Transforms."""
     transforms, t_pars = calc_transforms
 
     path = tmp_path / 'transforms.asdf'
@@ -190,7 +189,7 @@ def test_transform_serialize(calc_transforms, tmp_path):
 
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
 def test_methods(calc_transforms, matrix):
-    """Ensure expected calculate of the specified matrix
+    """Ensure expected calculate of the specified matrix.
 
     Parameters
     ----------
@@ -199,6 +198,7 @@ def test_methods(calc_transforms, matrix):
 
     matrix : str
         The matrix to compare
+
     """
     _test_methods(calc_transforms, matrix)
 
@@ -220,7 +220,7 @@ def test_coarse_202111_fgsid(calc_coarse_202111_fgsid):
 
 @pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
 def test_coarse_202111_fgsid_matrices(calc_coarse_202111_fgsid, matrix):
-    """Test COARSE_202111 matrices using various FGS settings
+    """Test COARSE_202111 matrices using various FGS settings.
 
     If an FGS is specifically used for science, the other FGS is the guider.
     For all other instruments, the assumption is that FGS1 is the guider, but
@@ -246,7 +246,7 @@ def test_change_engdb_url():
 
 
 def test_change_engdb_url_fail():
-    """Test changing the engineering database by call"""
+    """Test changing the engineering database by call."""
     with pytest.raises(Exception):
         stp.get_pointing(
             Time('2019-06-03T17:25:40', format='isot').mjd,
@@ -256,14 +256,13 @@ def test_change_engdb_url_fail():
 
 
 def test_strict_pointing(data_file_strict):
-    """Test failure on strict pointing"""
+    """Test failure on strict pointing."""
     with pytest.raises(ValueError):
         stp.add_wcs(data_file_strict, tolerance=0)
 
 
 def test_get_pointing():
     """Ensure that the averaging works."""
-
     (q,
      j2fgs_matrix,
      fsmcorr,
@@ -379,7 +378,7 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
 
 
 def test_add_wcs_with_db(data_file, tmp_path):
-    """Test using the database"""
+    """Test using the database."""
     expected_name = 'add_wcs_with_db.fits'
 
     stp.add_wcs(data_file)
@@ -402,7 +401,7 @@ def test_add_wcs_with_db(data_file, tmp_path):
 
 @pytest.mark.parametrize('fgsid', [1, 2])
 def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
-    """Test using the database"""
+    """Test using the database."""
     expected_name = f'add_wcs_with_mast_fgs{fgsid}.fits'
 
     # See if access to MAST is available.
@@ -435,7 +434,7 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
 
 
 def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
-    """Test using the database"""
+    """Test using the database."""
     expected_name = 'add_wcs_method_full_nosiafdb.fits'
 
     # Calculate
@@ -458,9 +457,7 @@ def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
 
 
 def test_default_siaf_values(data_file_nosiaf):
-    """
-    Test that FITS WCS default values were set.
-    """
+    """Test that FITS WCS default values were set."""
     with datamodels.Level1bModel(data_file_nosiaf) as model:
         model.meta.exposure.start_time = STARTTIME.mjd
         model.meta.exposure.end_time = ENDTIME.mjd
@@ -477,9 +474,7 @@ def test_default_siaf_values(data_file_nosiaf):
 
 
 def test_tsgrism_siaf_values(data_file_nosiaf):
-    """
-    Test that FITS WCS default values were set.
-    """
+    """Test that FITS WCS default values were set."""
     with datamodels.Level1bModel(data_file_nosiaf) as model:
         model.meta.exposure.start_time = STARTTIME.mjd
         model.meta.exposure.end_time = ENDTIME.mjd
@@ -493,9 +488,7 @@ def test_tsgrism_siaf_values(data_file_nosiaf):
 
 
 def test_mirim_tamrs_siaf_values(data_file_nosiaf):
-    """
-    Test that FITS WCS default values were set.
-    """
+    """Test that FITS WCS default values were set."""
     with datamodels.Level1bModel(data_file_nosiaf) as model:
         model.meta.exposure.start_time = STARTTIME.mjd
         model.meta.exposure.end_time = ENDTIME.mjd
@@ -551,18 +544,19 @@ def test_moving_target_tnotinrange(caplog, data_file_moving_target):
 # Utilities and fixtures
 # ######################
 def make_t_pars(detector='any', fgsid_telem=1, fgsid_user=None):
-    """Setup initial Transforms Parameters
+    """Setup initial Transforms Parameters.
 
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
 
     Parameters
-    ==========
+    ----------
     fgsid_telem : [1, 2]
         The FGS reference guider to report from telemetry.
 
     fgsid_user : [None, 1, 2]
         The user-specified FGS to use as the reference guider.
+
     """
     t_pars = stp.TransformParameters()
 
@@ -590,13 +584,13 @@ def make_t_pars(detector='any', fgsid_telem=1, fgsid_user=None):
 
 
 def _calc_coarse_202111_fgsid_idfunc(value):
-    """Created test IDS for calc_coarse_202111_fgsid"""
+    """Created test IDS for calc_coarse_202111_fgsid."""
     detector, fgsid_user, fgs_expected = value
     return f'{detector}-{fgsid_user}'
 
 
 def _test_methods(calc_transforms, matrix, truth_ext=''):
-    """Private function to ensure expected calculate of the specified matrix
+    """Private function to ensure expected calculate of the specified matrix.
 
     Parameters
     ----------
@@ -608,6 +602,7 @@ def _test_methods(calc_transforms, matrix, truth_ext=''):
 
     truth_ext : str
         Arbitrary extension to add to the truth file name.
+
     """
     transforms, t_pars = calc_transforms
 
@@ -627,8 +622,7 @@ def _test_methods(calc_transforms, matrix, truth_ext=''):
                         ('guider2', None, 1), ('guider2', 1, 1), ('guider2', 2, 1)),
                 ids=_calc_coarse_202111_fgsid_idfunc)
 def calc_coarse_202111_fgsid(request, tmp_path_factory):
-    """Calculate the transforms for COARSE_202111 with various FGS specifications
-    """
+    """Calculate the transforms for COARSE_202111 with various FGS specifications."""
     detector, fgsid_user, fgs_expected = request.param
 
     # Create transform parameters.
@@ -649,8 +643,7 @@ def calc_coarse_202111_fgsid(request, tmp_path_factory):
 @pytest.fixture(scope='module',
                 params=[method for method in stp.Methods])
 def calc_transforms(request, tmp_path_factory):
-    """Calculate matrices for specified method method
-    """
+    """Calculate matrices for specified method method."""
     t_pars = make_t_pars()
 
     # Set the method
@@ -728,7 +721,7 @@ def data_file_nosiaf():
 
 @pytest.fixture
 def data_file_fromsim(tmp_path):
-    """Create data using times that were executed during a simulation using the OTB Simulator"""
+    """Create data using times that were executed during a simulation using the OTB Simulator."""
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = Time('2022-02-02T22:24:58.942').mjd
     model.meta.exposure.end_time = Time('2022-02-02T22:26:24.836').mjd

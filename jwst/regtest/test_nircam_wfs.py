@@ -9,10 +9,10 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_pipelines(rtdata_module):
     """Run the calwebb_wfs-image2 and calwebb_wfs-image3 pipelines
-       on NIRCam WFS&C images. The calwebb_wfs-image3 pipeline is
-       run twice: once with default params and a second time with
-       the do_refine option turned on."""
-
+    on NIRCam WFS&C images. The calwebb_wfs-image3 pipeline is
+    run twice: once with default params and a second time with
+    the do_refine option turned on.
+    """
     rtdata = rtdata_module
 
     # Get the rate files and run the image2 pipeline on each
@@ -46,7 +46,7 @@ def run_pipelines(rtdata_module):
 
 @pytest.mark.bigdata
 def test_nicam_wfsimage_noextras(run_pipelines):
-    """Ensure that i2d files are not created"""
+    """Ensure that i2d files are not created."""
     i2ds = list(Path('.').glob('*i2d*'))
 
     assert not i2ds
@@ -61,8 +61,8 @@ def test_nicam_wfsimage_noextras(run_pipelines):
     ids=["cal1", "cal2", "wfscmb1", "wfscmb2"])
 def test_nircam_wfsimage(run_pipelines, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_wfs-image2 and calwebb_wfs-image3
-       pipelines on a dithered pair of NIRCam images."""
-
+    pipelines on a dithered pair of NIRCam images.
+    """
     # Run the pipeline and retrieve outputs
     rtdata = run_pipelines
     rtdata.output = output

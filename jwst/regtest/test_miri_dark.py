@@ -12,7 +12,7 @@ from jwst.stpipe import Step
      'jw04482014001_02102_00001_mirimage']
 )
 def test_miri_dark_pipeline(exposure, rtdata, fitsdiff_default_kwargs):
-    """Test the DarkPipeline on MIRI dark exposures"""
+    """Test the DarkPipeline on MIRI dark exposures."""
     rtdata.get_data(f"miri/image/{exposure}_uncal.fits")
 
     args = ["jwst.pipeline.DarkPipeline", rtdata.input]
@@ -31,7 +31,7 @@ def test_miri_dark_pipeline(exposure, rtdata, fitsdiff_default_kwargs):
     ['jw01033005001_04103_00001-seg003_mirimage']
 )
 def test_miri_segmented_dark(exposure, rtdata, fitsdiff_default_kwargs):
-    """Test the dark_current step on MIRI segmented exposures"""
+    """Test the dark_current step on MIRI segmented exposures."""
     rtdata.get_data(f"miri/image/{exposure}_linearity.fits")
 
     args = ["jwst.dark_current.DarkCurrentStep", rtdata.input]

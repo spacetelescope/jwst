@@ -1,6 +1,4 @@
-"""
-Tools for pool creation
-"""
+"""Tools for pool creation."""
 import logging
 from copy import copy
 
@@ -166,7 +164,7 @@ def mkpool(data,
 
 
 def from_cmdline(args=None):
-    """Collect command-line options and run mkpool
+    """Collect command-line options and run mkpool.
 
     Parameters
     ----------
@@ -175,6 +173,7 @@ def from_cmdline(args=None):
 
     Returns : dict
         Dict of the arguments and their values.
+
     """
     import argparse
 
@@ -225,7 +224,7 @@ def from_cmdline(args=None):
 
 
 def getheader(datum, **kwargs):
-    """Get header from the data item
+    """Get header from the data item.
 
     Parameters
     ----------
@@ -235,8 +234,8 @@ def getheader(datum, **kwargs):
     kwargs : dict
         Keyword arguments passed to `astropy.io.fits.getheader`.
         Relevant ones are `ext`, `extname`, or `extver`
-    """
 
+    """
     # Parse out HDU key
     try:
         key = kwargs['ext']

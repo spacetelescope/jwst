@@ -7,8 +7,7 @@ __all__ = ["IPCStep"]
 
 
 class IPCStep(Step):
-    """
-    IPCStep: Performs IPC correction by convolving the input science
+    """IPCStep: Performs IPC correction by convolving the input science
     data model with the IPC reference data.
     """
 
@@ -31,8 +30,8 @@ class IPCStep(Step):
         -------
         data model object
             IPC-corrected science data model.
-        """
 
+        """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
 

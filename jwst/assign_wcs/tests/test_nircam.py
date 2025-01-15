@@ -1,5 +1,4 @@
-"""
-Test NIRCAM grism WCS transformations.
+"""Test NIRCAM grism WCS transformations.
 
 Notes:
 These test the stability of the WFSS and TSO transformations based on the
@@ -170,10 +169,9 @@ def test_nircam_tso_available_frames(create_tso_wcs):
 
 @pytest.mark.parametrize('key', ['xref_sci', 'yref_sci'])
 def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
-    '''
-    TypeError for xref_sci because computing dither offset is attempted, get float - NoneType
-    ValueError for yref_sci because computing dither offset is not attempted
-    '''
+    """TypeError for xref_sci because computing dither offset is attempted, get float - NoneType
+    ValueError for yref_sci because computing dither offset is not attempted.
+    """
     with pytest.raises((TypeError, ValueError)):
         nircam.tsgrism(*tsgrism_inputs(missing_key=key))
 
@@ -205,7 +203,8 @@ def test_traverse_wfss_grisms():
 
 def test_traverse_tso_grism(create_tso_wcs):
     """Make sure that the TSO dispersion polynomials are reversable.
-    All assert statements are in pixel space so 1/1000 px seems easily acceptable"""
+    All assert statements are in pixel space so 1/1000 px seems easily acceptable.
+    """
     wcsobj = create_tso_wcs
     detector_to_grism = wcsobj.get_transform('direct_image', 'grism_detector')
     grism_to_detector = wcsobj.get_transform('grism_detector', 'direct_image')
@@ -248,8 +247,7 @@ def test_wfss_sip():
 
 
 def _sregion_to_footprint(s_region):
-    """
-    Parameters
+    """Parameters
     ----------
     s_region : str
         The S_REGION header keyword
@@ -258,13 +256,14 @@ def _sregion_to_footprint(s_region):
     -------
     footprint : np.array
         A 2D array of the footprint of the region, shape (N, 2)
+
     """
     no_prefix = re.sub(r"[a-zA-Z]", "", s_region)
     return np.array(no_prefix.split(), dtype=float).reshape(-1, 2)
 
 
 def test_update_s_region_imaging():
-    """Ensure the s_region keyword matches output of wcs.footprint()"""
+    """Ensure the s_region keyword matches output of wcs.footprint()."""
     model = ImageModel(create_hdul())
     model.meta.wcs = create_imaging_wcs()
     util.update_s_region_imaging(model)

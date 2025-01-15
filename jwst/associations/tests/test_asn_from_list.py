@@ -1,4 +1,4 @@
-"""Tests for asn_from_list"""
+"""Tests for asn_from_list."""
 
 import os
 import pytest
@@ -10,7 +10,7 @@ from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 
 
 def test_level2():
-    """Create a level 2 association"""
+    """Create a level 2 association."""
     items = ['a', 'b', 'c']
     asn = asn_from_list(items, rule=DMSLevel2bBase)
     assert asn['asn_rule'] == 'DMSLevel2bBase'
@@ -30,7 +30,7 @@ def test_level2():
 
 
 def test_level2_tuple():
-    """Test level 2 association when passing in a tuple"""
+    """Test level 2 association when passing in a tuple."""
     items = [('file_1.fits', 'science'), ('file_2.fits', 'background'),
              ('file_3.fits', 'target_acquisition'),('file_4.fits', '')]
     asn = asn_from_list(items, rule=DMSLevel2bBase)
@@ -51,7 +51,7 @@ def test_level2_tuple():
 
 
 def test_file_ext():
-    """check that the filename extension is correctly appended"""
+    """Check that the filename extension is correctly appended."""
     items = ['a', 'b', 'c']
     asn = asn_from_list(items, rule=DMSLevel2bBase)
     #check that extension defaults to json
@@ -66,7 +66,7 @@ def test_file_ext():
 
 
 def test_level2_from_cmdline(tmp_path):
-    """Create a level2 association from the command line"""
+    """Create a level2 association from the command line."""
     rule = 'DMSLevel2bBase'
     path = tmp_path / 'test_asn.json'
     inlist = ['a', 'b', 'c']
@@ -92,7 +92,7 @@ def test_level2_from_cmdline(tmp_path):
 
 
 def test_base_association():
-    """Create the simplest of associations"""
+    """Create the simplest of associations."""
     items = ['a', 'b', 'c']
     asn = asn_from_list(items, rule=Association)
     assert asn['asn_rule'] == 'Association'
@@ -101,7 +101,7 @@ def test_base_association():
 
 
 def test_base_roundtrip():
-    """Write/read created base association"""
+    """Write/read created base association."""
     items = ['a', 'b', 'c']
     asn = asn_from_list(items, rule=Association)
     name, serialized = asn.dump()
@@ -112,7 +112,7 @@ def test_base_roundtrip():
 
 
 def test_default_simple():
-    """Default Level3 association"""
+    """Default Level3 association."""
     product_name = 'test_product'
     items = ['a', 'b', 'c']
     asn = asn_from_list(items, product_name=product_name)
@@ -128,7 +128,7 @@ def test_default_simple():
 
 
 def test_default_with_type():
-    """Level3 association with types specified"""
+    """Level3 association with types specified."""
     product_name = 'test_product'
     items = {
         'a': 'science',
@@ -152,7 +152,7 @@ def test_default_with_type():
 
 
 def test_default_fail():
-    """Test default DMS_Level3_Base fail
+    """Test default DMS_Level3_Base fail.
 
     A product name needs to be included, but is not.
     """
@@ -162,7 +162,7 @@ def test_default_fail():
 
 
 def test_default_roundtrip():
-    """Create/Write/Read a Level3 association"""
+    """Create/Write/Read a Level3 association."""
     product_name = 'test_product'
     items = {
         'a': 'science',
@@ -182,8 +182,7 @@ def test_default_roundtrip():
 
 
 def test_cmdline_fails():
-    """Exercise the command line interface"""
-
+    """Exercise the command line interface."""
     # No arguments
     with pytest.raises(SystemExit):
         Main.cli([])
@@ -198,7 +197,7 @@ def test_cmdline_fails():
     ['json', 'yaml']
 )
 def test_cmdline_success(format, tmp_path):
-    """Create Level3 associations in different formats"""
+    """Create Level3 associations in different formats."""
     path = tmp_path / 'test_asn.json'
     product_name = 'test_product'
     inlist = ['a', 'b', 'c']
@@ -222,7 +221,7 @@ def test_cmdline_success(format, tmp_path):
 
 
 def test_cmdline_change_rules(tmp_path):
-    """Command line change the rule"""
+    """Command line change the rule."""
     rule = 'Association'
     path = tmp_path / 'test_asn.json'
     inlist = ['a', 'b', 'c']
@@ -238,7 +237,7 @@ def test_cmdline_change_rules(tmp_path):
 
 
 def test_api_list():
-    """Test api call with simple list"""
+    """Test api call with simple list."""
     product_name = 'test_product'
     inlist = ['a', 'b', 'c']
 
@@ -254,7 +253,7 @@ def test_api_list():
 
 
 def test_api_with_type():
-    """Test api call with type tuple"""
+    """Test api call with type tuple."""
     product_name = 'test_product'
     inlist = [
         ('a', 'science'),

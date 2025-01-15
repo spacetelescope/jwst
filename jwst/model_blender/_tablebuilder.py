@@ -8,7 +8,7 @@ _MISSING_VALUE = _MissingValueType()
 
 
 def _convert_dtype(value):
-    """Convert numarray column dtype into YAML-compatible format description"""
+    """Convert numarray column dtype into YAML-compatible format description."""
     if 'U' in value:
         # working with a string description
         str_len = int(value[value.find('U') + 1:])
@@ -23,8 +23,7 @@ def _convert_dtype(value):
 
 
 def table_to_schema(table):
-    """
-    Construct a schema for a table.
+    """Construct a schema for a table.
 
     Convert a "table" (a structured ndarray) to a stdatamodels
     sub-schema that will allow the "table" to be stored to a fits
@@ -39,6 +38,7 @@ def table_to_schema(table):
     -------
     subschema: dict
         stdatamodels for the "table" datatype.
+
     """
     return {
         'title': 'Combined header table',
@@ -54,8 +54,7 @@ def table_to_schema(table):
 
 
 class TableBuilder:
-    """
-    Class to build a metadata table.
+    """Class to build a metadata table.
 
     Used to incrementally build a metadata "table" (a numpy
     structured array) containing metadata from several models.
@@ -66,9 +65,9 @@ class TableBuilder:
     rec.array([('foo.fits',)],
          dtype=[('FN', '<U8')])
     """
+
     def __init__(self, attr_to_column):
-        """
-        Create a new `TableBuilder`.
+        """Create a new `TableBuilder`.
 
         Parameters
         ----------
@@ -76,6 +75,7 @@ class TableBuilder:
             A one-to-one mapping of attribute names (as
             dotted paths like "meta.filename") to column
             names (strings).
+
         """
         self.attr_to_column = attr_to_column
         self.columns = {col: [] for col in self.attr_to_column.values()}
@@ -83,8 +83,7 @@ class TableBuilder:
             raise ValueError(f"Invalid attr_to_column, mapping is not 1-to-1: {attr_to_column}")
 
     def header_to_row(self, header):
-        """
-        Add metadata in header to the table.
+        """Add metadata in header to the table.
 
         This function will add a complete row for each
         header. If header is missing a required attribute
@@ -96,6 +95,7 @@ class TableBuilder:
         ----------
         header: dict
             Often produced from ``Datamodel.to_flat_dict``.
+
         """
         row = {}
         for attr in self.attr_to_column:
@@ -108,13 +108,13 @@ class TableBuilder:
             self.columns[col].append(row[attr] if attr in row else _MISSING_VALUE)
 
     def build_table(self):
-        """
-        Build the final "table".
+        """Build the final "table".
 
         Returns
         -------
         table: numpy.ndarray
             Structured array containing fields with datatypes
+
         """
         arrays = []
         table_dtype = []

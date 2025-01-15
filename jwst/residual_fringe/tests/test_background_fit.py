@@ -1,6 +1,4 @@
-"""
-Unit test for Residual Fringe Correction fitting of the background
-"""
+"""Unit test for Residual Fringe Correction fitting of the background."""
 import pytest
 
 from pathlib import Path
@@ -11,8 +9,7 @@ from astropy.io import fits
 
 
 def read_fit_column(file):
-    """ This is really  a small regression test, testing that the background fitting is working """
-
+    """This is really  a small regression test, testing that the background fitting is working."""
     # Data was pulled out of an exposure by modifying residual_fringe.py to write out a column of data
     # The function we are testing is fit_1d_background_complex.
 
@@ -31,8 +28,7 @@ def read_fit_column(file):
 
 @pytest.mark.parametrize("file", ['good_col.fits', 'edge_col.fits'])
 def test_background_fit(file):
-    """ test fit_1d_background_complex"""
-
+    """Test fit_1d_background_complex."""
     (col_data, col_weight, col_wnum, bg_fit, store_freq) = read_fit_column(file)
 
     bg_fit2, _ = utils.fit_1d_background_complex(col_data, col_weight,

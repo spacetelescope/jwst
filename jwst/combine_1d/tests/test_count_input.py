@@ -1,6 +1,4 @@
-"""
-Test for combine1d.count_input
-"""
+"""Test for combine1d.count_input."""
 import numpy as np
 
 from jwst.combine_1d import combine1d
@@ -79,7 +77,6 @@ def create_input_spectra_1():
 
 def truth_array_1a():
     """Merged and sorted wavelengths from all input files."""
-
     # Wavelengths (merged and sorted) in input files.
     return np.array([1.372, 1.385, 1.391, 1.402, 1.701, 1.718, 1.719, 1.723,
                      1.979, 1.984, 1.991, 2.013, 2.212, 2.223, 2.228, 2.31,
@@ -106,7 +103,6 @@ def truth_array_1b():
     at the left edge of the first pixel to the wavelength at the right edge
     of the last pixel.
     """
-
     # n_input_spectra
     return np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
                      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], dtype=np.int64)
@@ -119,6 +115,5 @@ def truth_array_1c():
     of input wavelengths that are closer together than the spacing
     between pixels.
     """
-
     return np.array([1.3875, 1.71525, 1.99175, 2.24325, 2.48425, 2.72725],
                     dtype=np.float64)

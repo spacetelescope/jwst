@@ -35,8 +35,7 @@ SLITLESS_TYPES = ['NIS_SOSS', 'NIS_WFSS', 'NRC_WFSS']
 
 
 class Spec3Pipeline(Pipeline):
-    """
-    Spec3Pipeline: Processes JWST spectroscopic exposures from Level 2b to 3.
+    """Spec3Pipeline: Processes JWST spectroscopic exposures from Level 2b to 3.
 
     Included steps are:
     assign moving target wcs (assign_mtwcs)
@@ -72,12 +71,13 @@ class Spec3Pipeline(Pipeline):
 
     # Main processing
     def process(self, input):
-        """Entrypoint for this pipeline
+        """Entrypoint for this pipeline.
 
         Parameters
         ----------
         input: str, Level3 Association, or ~jwst.datamodels.JwstDataModel
             The exposure or association of exposures to process
+
         """
         self.log.info('Starting calwebb_spec3 ...')
         asn_exptypes = ['science', 'background']
@@ -304,12 +304,11 @@ class Spec3Pipeline(Pipeline):
         return
 
     def _create_nrsfs_slit_name(self, source_models):
-        """Create the complete slit_name product field for NIRSpec fixed-slit products
+        """Create the complete slit_name product field for NIRSpec fixed-slit products.
 
         Each unique value of slit name within the list of input source models
         is appended to the final slit name string.
         """
-
         slit_names = []
         slit_names.append(source_models[0].name.lower())
         for i in range(len(source_models)):
@@ -326,7 +325,6 @@ class Spec3Pipeline(Pipeline):
         The source_id value gets a "s", "b", or "v" character prepended
         to uniquely identify source, background, and virtual slits.
         """
-
         # Get the original source name and ID from the input models
         source_name = source_models[0].source_name
         source_id = source_models[0].source_id

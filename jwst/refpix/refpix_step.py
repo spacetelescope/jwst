@@ -10,9 +10,7 @@ __all__ = ["RefPixStep"]
 
 
 class RefPixStep(Step):
-    """
-    RefPixStep: Use reference pixels to correct bias drifts
-    """
+    """RefPixStep: Use reference pixels to correct bias drifts."""
 
     class_alias = "refpix"
 

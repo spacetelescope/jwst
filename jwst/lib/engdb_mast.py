@@ -1,6 +1,4 @@
-"""
-Access the JWST Engineering Mnemonic Database through MAST
-"""
+"""Access the JWST Engineering Mnemonic Database through MAST."""
 import json
 import logging
 from os import getenv
@@ -28,8 +26,7 @@ logger.addHandler(logging.NullHandler())
 
 
 class EngdbMast(EngdbABC):
-    """
-    Access the JWST Engineering Database through MAST
+    """Access the JWST Engineering Database through MAST.
 
     Parameters
     ----------
@@ -51,6 +48,7 @@ class EngdbMast(EngdbABC):
     ------
     RuntimeError
         Any and all failures with connecting with the MAST server.
+
     """
 
     #: The base URL for the engineering service.
@@ -91,7 +89,7 @@ class EngdbMast(EngdbABC):
         self.set_session()
 
     def cache(self, mnemonics, starttime, endtime, cache_path):
-        """Cache results for the list of mnemonics
+        """Cache results for the list of mnemonics.
 
         Parameters
         ----------
@@ -106,6 +104,7 @@ class EngdbMast(EngdbABC):
 
         cache_path : str or Path-like
             Path of the cache directory.
+
         """
         cache_path = Path(cache_path)
         cache_path.mkdir(parents=True, exist_ok=True)
@@ -115,7 +114,7 @@ class EngdbMast(EngdbABC):
             records.write(cache_path / f'{mnemonic}.ecsv', format='ascii.ecsv')
 
     def cache_as_local(self, mnemonics, starttime, endtime, cache_path):
-        """Cache results for the list of mnemonics, but in the EngdbLocal format
+        """Cache results for the list of mnemonics, but in the EngdbLocal format.
 
         The target format is native to what the EngdbDirect service provides.
 
@@ -132,6 +131,7 @@ class EngdbMast(EngdbABC):
 
         cache_path : str or Path-like
             Path of the cache directory.
+
         """
         cache_path = Path(cache_path)
         cache_path.mkdir(parents=True, exist_ok=True)
@@ -163,7 +163,7 @@ class EngdbMast(EngdbABC):
         copy2(metas_path, cache_path / 'meta.json')
 
     def configure(self, base_url=None, token=None):
-        """Configure from parameters and environment
+        """Configure from parameters and environment.
 
         Parameters
         ----------
@@ -176,6 +176,7 @@ class EngdbMast(EngdbABC):
             The MAST access token. If not defined, the environmental variable
             MAST_API_TOKEN is queried. A token is required.
             For more information, see 'https://auth.mast.stsci.edu/'
+
         """
         # Determine the database to use
         if base_url is None:
@@ -194,7 +195,7 @@ class EngdbMast(EngdbABC):
         self.timeout = getenv('ENG_TIMEOUT', TIMEOUT)
 
     def get_meta(self, *kwargs):
-        """Get the mnemonics meta info
+        """Get the mnemonics meta info.
 
         The MAST interface does not provide any meta.
         """
@@ -202,8 +203,7 @@ class EngdbMast(EngdbABC):
 
     def get_values(self, mnemonic, starttime, endtime,
                    time_format=None, include_obstime=False, include_bracket_values=False, zip_results=True):
-        """
-        Retrieve all results for a mnemonic in the requested time range.
+        """Retrieve all results for a mnemonic in the requested time range.
 
         Parameters
         ----------
@@ -238,6 +238,7 @@ class EngdbMast(EngdbABC):
         -------
         values : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
             Returns the list of values. See `include_obstime` and `zip` for modifications.
+
         """
         if not isinstance(starttime, Time):
             starttime = Time(starttime, format=time_format)
@@ -266,7 +267,7 @@ class EngdbMast(EngdbABC):
         return results.collection
 
     def set_session(self):
-        """Setup HTTP session"""
+        """Setup HTTP session."""
         self._req = requests.Request(method='GET',
                                      url=self.base_url + API_URI,
                                      headers={'Authorization': f'token {self.token}'})
@@ -285,8 +286,7 @@ class EngdbMast(EngdbABC):
             time_format=None,
             **other_kwargs
     ):
-        """
-        Retrieve all results for a mnemonic in the requested time range.
+        """Retrieve all results for a mnemonic in the requested time range.
 
         Parameters
         ----------
@@ -319,6 +319,7 @@ class EngdbMast(EngdbABC):
         -----
         The engineering service always returns the bracketing entries
         before and after the requested time range.
+
         """
         if not isinstance(starttime, Time):
             starttime = Time(starttime, format=time_format)
@@ -350,7 +351,7 @@ class EngdbMast(EngdbABC):
 
 
 class _ValueCollection:
-    """Engineering Value Collection
+    """Engineering Value Collection.
 
     Parameters
     ----------
@@ -369,6 +370,7 @@ class _ValueCollection:
     collection : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
         Returns the list of values.
         See `include_obstime` and `zip_results` for modifications.
+
     """
 
     def __init__(self, include_obstime=False, zip_results=True):
@@ -380,7 +382,7 @@ class _ValueCollection:
             self.collection = EngDB_Value([], [])
 
     def append(self, obstime, value):
-        """Append value to collection
+        """Append value to collection.
 
         Parameters
         ----------
@@ -389,6 +391,7 @@ class _ValueCollection:
 
         value : numeric
             Value from db.
+
         """
         # Make all the times readable
         obstime.format = 'isot'

@@ -18,8 +18,7 @@ log.setLevel(logging.DEBUG)
 
 
 def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclude_percentile=30.0):
-    """
-    Simple astropy background subtraction
+    """Simple astropy background subtraction.
 
     Parameters
     ----------
@@ -45,6 +44,7 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
     Improper background subtraction in input _i2d image leads to extra flux
     in the simulated dispersed image, and was one cause of flux scaling issues
     in a previous version.
+
     """
     if box_size is None:
         box_size = (int(data.shape[0]/5), int(data.shape[1]/5))
@@ -63,9 +63,7 @@ class Observation:
     def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=0,
                  sed_file=None, extrapolate_sed=False,
                  boundaries=[], offsets=[0, 0], renormalize=True, max_cpu=1):
-
-        """
-        Initialize all data and metadata for a given observation. Creates lists of
+        """Initialize all data and metadata for a given observation. Creates lists of
         direct image pixel values for selected objects.
 
         Parameters
@@ -91,8 +89,8 @@ class Observation:
             Flag indicating whether to renormalize SED's
         max_cpu : int
             Max number of cpu's to use when multiprocessing
-        """
 
+        """
         # Load all the info for this grism mode
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
@@ -195,8 +193,7 @@ class Observation:
                         self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
     def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
-        """
-        Compute dispersed pixel values for all sources identified in
+        """Compute dispersed pixel values for all sources identified in
         the segmentation map.
 
         Parameters
@@ -211,6 +208,7 @@ class Observation:
             Wavelength array from photom reference file
         sens_resp : float array
             Response (flux calibration) array from photom reference file
+
         """
         if cache:
             log.debug("Object caching ON")
@@ -236,8 +234,7 @@ class Observation:
             self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp)
 
     def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
-        """
-        Method that computes dispersion for a single source.
+        """Method that computes dispersion for a single source.
         To be called after create_pixel_list().
 
         Parameters
@@ -254,8 +251,8 @@ class Observation:
             Wavelength array from photom reference file
         sens_resp : float array
             Response (flux calibration) array from photom reference file
-        """
 
+        """
         sid = int(self.IDs[c])
         self.order = order
         self.wmin = wmin
@@ -365,8 +362,7 @@ class Observation:
         return this_object
 
     def disperse_chunk_from_cache(self, c, trans=None):
-        """Method that handles the dispersion. To be called after create_pixel_list()"""
-
+        """Method that handles the dispersion. To be called after create_pixel_list()."""
         if not self.cache:
             return
 

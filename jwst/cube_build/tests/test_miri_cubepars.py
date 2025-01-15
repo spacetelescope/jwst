@@ -1,6 +1,4 @@
-"""
-Unit test for Cube Build testing reading in MIRI cubepars ref file and using it
-"""
+"""Unit test for Cube Build testing reading in MIRI cubepars ref file and using it."""
 
 import numpy as np
 import pytest
@@ -13,8 +11,7 @@ from jwst.cube_build import instrument_defaults
 
 @pytest.fixture(scope='module')
 def miri_cube_pars(tmp_path_factory):
-    """ Set up the miri cube pars reference file  """
-
+    """Set up the miri cube pars reference file."""
     filename = tmp_path_factory.mktemp('cube_pars')
     filename = filename / 'miri_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
@@ -87,8 +84,7 @@ def miri_cube_pars(tmp_path_factory):
 
 
 def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
-    """ Test reading in the miri cube pars file """
-
+    """Test reading in the miri cube pars file."""
     instrument_info = instrument_defaults.InstrumentInfo()
     all_channel = []
     all_subchannel = []
@@ -183,8 +179,7 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
 
 
 def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
-    """ Read in the miri cube pars file and override some defaults """
-
+    """Read in the miri cube pars file and override some defaults."""
     instrument_info = instrument_defaults.InstrumentInfo()
     all_channel = []
     all_subchannel = []
@@ -327,9 +322,8 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
 
 def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
     """Read in the miri cube pars file. Test cube has correct values when
-    multiple bands are used
+    multiple bands are used.
     """
-
     instrument_info = instrument_defaults.InstrumentInfo()
     all_channel = []
     all_subchannel = []

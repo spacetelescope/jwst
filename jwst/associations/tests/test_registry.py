@@ -1,4 +1,4 @@
-"""Test the Registry"""
+"""Test the Registry."""
 
 from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
 
@@ -6,7 +6,7 @@ import pytest
 
 
 def test_registry_match(full_pool_rules):
-    """Test the match method"""
+    """Test the match method."""
     pool, rules, pool_fname = full_pool_rules
 
     assert len(rules.schemas) > 0
@@ -22,7 +22,7 @@ def test_registry_match(full_pool_rules):
 # Tests below for keyvalue_registry
 
 def test_dict_like():
-    """Test the basic to ensure similar to a dict"""
+    """Test the basic to ensure similar to a dict."""
     data = {'a': 1, 'b': 2}
     kvr = KeyValueRegistry(data)
     assert data.keys() == kvr.keys()

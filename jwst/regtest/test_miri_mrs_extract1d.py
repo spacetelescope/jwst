@@ -1,5 +1,4 @@
-"""Test Extract1dStep on MIRI data running the step various ways
-"""
+"""Test Extract1dStep on MIRI data running the step various ways."""
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -8,7 +7,7 @@ from jwst.stpipe import Step
 
 @pytest.mark.bigdata
 def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
-    """Test running extract_1d on an s3d cube containing a point source"""
+    """Test running extract_1d on an s3d cube containing a point source."""
     # input s3d are created using the same data that was used in test_miri_mrs_spec3_ifushort:
     # run calwebb_spec3 on miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json to create
     # the input data for this test.
@@ -29,7 +28,7 @@ def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_miri_mrs_extract1d_center(rtdata, fitsdiff_default_kwargs):
-    """Test running extract_1d on an s3d cube containing a point source with user-supplied center"""
+    """Test running extract_1d on an s3d cube containing a point source with user-supplied center."""
     # input s3d are created using the same data that was used in run_spec3_ifushort from test_miri_mrs_spec3.py
     # This test only uses the ch 2 s3d file.
 
@@ -51,7 +50,7 @@ def test_miri_mrs_extract1d_center(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_miri_mrs_extract1d_radius(rtdata, fitsdiff_default_kwargs):
-    """Test running extract_1d on an s3d cube containing a point source with user-supplied radius"""
+    """Test running extract_1d on an s3d cube containing a point source with user-supplied radius."""
     # input s3d are created using the same data that was used in run_spec3_ifushort from test_miri_mrs_spec3.py
     # This test only uses the ch 2 s3d file.
 
@@ -73,7 +72,7 @@ def test_miri_mrs_extract1d_radius(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_miri_mrs_extract1d_extended(rtdata, fitsdiff_default_kwargs):
-    """Test running extract_1d on an s3d cube for extended source"""
+    """Test running extract_1d on an s3d cube for extended source."""
     # input s3d are created using the same data that was used in
     # s3d IFULONG data created by running calspec3 on  IFULONG data in
     # jw01355-o005_20230109t002554_spec3_00001_asn.json

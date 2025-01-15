@@ -34,6 +34,7 @@ class ApCorrBase(abc.ABC):
         If the input apcorr_table cannot be reduced to a single row based on match criteria from input_model.
 
     """
+
     match_pars = {
         'MIRI': {
             'LRS': {'subarray': ['name']}
@@ -178,6 +179,7 @@ class ApCorrPhase(ApCorrBase):
         See ApCorrBase for more.
 
     """
+
     size_key = 'size'
 
     def __init__(self, *args, pixphase=0.5, **kwargs):
@@ -239,7 +241,6 @@ class ApCorrPhase(ApCorrBase):
             Table of aperture corrections values from apcorr reference file.
 
         """
-
         coefs = []
         for row in spec_table:
             try:
@@ -390,6 +391,7 @@ class ApCorrRadial(ApCorrBase):
 
 class ApCorr(ApCorrBase):
     """'Default' Aperture correction class for use with most spectroscopic modes."""
+
     size_key = 'size'
 
     def __init__(self, *args, **kwargs):

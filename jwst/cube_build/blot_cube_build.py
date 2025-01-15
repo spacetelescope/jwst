@@ -1,5 +1,4 @@
-""" Main module for blotting sky cube back to detector space
-"""
+"""Main module for blotting sky cube back to detector space."""
 import numpy as np
 import logging
 
@@ -17,7 +16,7 @@ log.setLevel(logging.DEBUG)
 class CubeBlot():
 
     def __init__(self, median_model, input_models):
-        """Class Blot holds the main variables for blotting sky cube to detector
+        """Class Blot holds the main variables for blotting sky cube to detector.
 
         Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These
@@ -26,7 +25,7 @@ class CubeBlot():
         data (instrument, channel, band, grating or filter).
 
         Parameters
-        ---------
+        ----------
         median_model: ifucube model
            The median input sky cube is created from a median stack of all the
            individual input_models mapped to the full IFU cube imprint on the
@@ -37,8 +36,8 @@ class CubeBlot():
         Returns
         -------
         CubeBlot class initialized
-        """
 
+        """
         # Pull out the needed information from the Median IFUCube
         self.median_skycube = median_model
         self.instrument = median_model.meta.instrument.name
@@ -109,8 +108,7 @@ class CubeBlot():
     # **********************************************************************
 
     def blot_info(self):
-        """ Prints the basic parameters of the blot image and median sky cube
-        """
+        """Prints the basic parameters of the blot image and median sky cube."""
         log.info('Information on Blotting')
         log.info('Working with instrument %s', self.instrument)
         log.info('Shape of sky cube %f %f %f',
@@ -137,7 +135,7 @@ class CubeBlot():
     # ************************************************************************
 
     def blot_images_miri(self):
-        """ Core blotting routine for MIRI
+        """Core blotting routine for MIRI.
 
         This is the main routine for blotting the MIRI median sky cube back to
         the detector space and creating a blotting image for each input model
@@ -222,7 +220,7 @@ class CubeBlot():
     # ************************************************************************
 
     def blot_images_nirspec(self):
-        """ Core blotting routine for NIRSPEC
+        """Core blotting routine for NIRSPEC.
 
         This is the main routine for blotting the NIRSPEC median sky cube back to
         the detector space and creating a blotting image for each input model.

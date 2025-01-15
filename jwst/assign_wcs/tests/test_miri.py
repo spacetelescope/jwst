@@ -1,8 +1,6 @@
-"""
-Test MIRI MRS WCS transformation against IDT team data.
+"""Test MIRI MRS WCS transformation against IDT team data.
 
 Notes:
-
 1. Test data use CDP-8b placeholder values computed by D. Law for the time being.
 
 """

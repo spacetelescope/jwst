@@ -14,9 +14,8 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_tso_spec2_pipeline(rtdata_module, request):
     """Run the calwebb_spec2 pipeline performed on NIRSpec
-        fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit)
+    fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
     """
-
     rtdata = rtdata_module
 
     # Get the input exposure
@@ -43,9 +42,8 @@ def run_tso_spec2_pipeline(rtdata_module, request):
                                     'flat_field', 'photom', 'calints', 'x1dints',
                                     'interpolatedflat'])
 def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs, suffix):
-    """
-        Regression test of calwebb_spec2 pipeline performed on NIRSpec
-        fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
+    """Regression test of calwebb_spec2 pipeline performed on NIRSpec
+    fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
     """
     rtdata = run_tso_spec2_pipeline
     output = replace_suffix(
@@ -62,7 +60,7 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
 
 @pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
-    """Test providing a user-supplied flat field to the FlatFieldStep"""
+    """Test providing a user-supplied flat field to the FlatFieldStep."""
     basename = 'jw02420001001_04101_00001-first100_nrs1'
     output_file = f'{basename}_flat_from_user_file.fits'
 
@@ -81,7 +79,7 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
-    """Test flat field inversion"""
+    """Test flat field inversion."""
     basename = 'jw02420001001_04101_00001-first100_nrs1'
     with dm.open(rtdata.get_data(f'nirspec/tso/{basename}_wavecorr.fits')) as data:
         flatted = FlatFieldStep.call(data)

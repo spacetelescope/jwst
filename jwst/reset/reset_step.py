@@ -7,8 +7,7 @@ __all__ = ["ResetStep"]
 
 
 class ResetStep(Step):
-    """
-    ResetStep: Performs a reset  correction by subtracting
+    """ResetStep: Performs a reset  correction by subtracting
     the reset correction reference data from the input science data model.
     """
 

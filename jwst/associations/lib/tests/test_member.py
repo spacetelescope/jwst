@@ -1,10 +1,10 @@
-"""Tests for Member"""
+"""Tests for Member."""
 
 from jwst.associations.lib.member import Member
 
 
 def test_member_from_member():
-    """Test member creation from a Member
+    """Test member creation from a Member.
 
     Note that this really is a smoke-screen test
     that tests both code and very basic functionality.

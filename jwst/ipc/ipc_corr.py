@@ -18,7 +18,7 @@ NumRefPixels = namedtuple("NumRefPixels",
 
 
 def do_correction(input_model, ipc_model):
-    """Execute all tasks for IPC correction
+    """Execute all tasks for IPC correction.
 
     Parameters
     ----------
@@ -33,8 +33,8 @@ def do_correction(input_model, ipc_model):
     -------
     output_model : data model object
         IPC-corrected science data.
-    """
 
+    """
     # Save some data params for easy use later
     sci_nints = input_model.data.shape[0]
     sci_ngroups = input_model.data.shape[1]
@@ -66,8 +66,8 @@ def ipc_correction(output, ipc_model):
     -------
     output : data model object
         IPC-corrected science data.
-    """
 
+    """
     log.debug("ipc_correction: nints=%d, ngroups=%d, size=%d,%d",
               output.meta.exposure.nints,
               output.meta.exposure.ngroups,
@@ -135,8 +135,8 @@ def get_num_ref_pixels(input_model):
             The number of reference columns at the left edge.
         right_columns : int
             The number of reference columns at the right edge.
-    """
 
+    """
     xstart = input_model.meta.subarray.xstart - 1       # zero indexed
     xsize = input_model.meta.subarray.xsize
     if input_model.meta.instrument.name == 'MIRI':
@@ -172,8 +172,8 @@ def get_ipc_slice(input_model, ipc_model):
         The data array for the IPC kernel.  If the IPC kernel is 4-D and
         the science data array is a subarray, `kernel` will be a slice of
         the reference image; otherwise, this will be the full image.
-    """
 
+    """
     if len(ipc_model.data.shape) == 2:
         return ipc_model.data
 
@@ -216,8 +216,8 @@ def ipc_convolve(output_data, kernel, nref):
             The number of reference columns at the left edge.
         right_columns : int
             The number of reference columns at the right edge.
-    """
 
+    """
     bottom_rows = nref.bottom_rows
     top_rows = nref.top_rows
     left_columns = nref.left_columns

@@ -1,4 +1,4 @@
-"""Utilities to prune JWST DMS associations"""
+"""Utilities to prune JWST DMS associations."""
 import logging
 from collections import defaultdict
 
@@ -16,7 +16,7 @@ logger.addHandler(logging.NullHandler())
 DupCount = 0
 
 def prune(asns):
-    """Remove duplicates and subset associations
+    """Remove duplicates and subset associations.
 
     Situations where extraneous associations can occur are:
 
@@ -40,13 +40,14 @@ def prune(asns):
     -------
     pruned : [Association[,...]]
         Pruned list of associations
+
     """
     pruned = prune_duplicate_associations(asns)
     pruned = prune_duplicate_products(pruned)
     return pruned
 
 def prune_duplicate_associations(asns):
-    """Remove duplicate associations in favor of lower level versions
+    """Remove duplicate associations in favor of lower level versions.
 
     Main use case: For Level 3 associations, multiple associations with the
     same membership, but different levels, can be created. Remove duplicate
@@ -89,7 +90,7 @@ def prune_duplicate_associations(asns):
 
 
 def prune_duplicate_products(asns):
-    """Remove duplicate products in favor of higher level versions
+    """Remove duplicate products in favor of higher level versions.
 
     The assumption is that there is only one product per association, before
     merging
@@ -100,6 +101,7 @@ def prune_duplicate_products(asns):
         Associations to prune
 
     Returns
+    -------
     pruned: [Association[,...]]
         Pruned list of associations
 
@@ -167,7 +169,7 @@ def prune_duplicate_products(asns):
 
 
 def prune_remove(remove_from, to_remove, known_dups):
-    """Remove or rename associations to be pruned
+    """Remove or rename associations to be pruned.
 
     Default behavior is to remove associations listed in the `to_remove`
     list from the `remove_from` list.
@@ -188,6 +190,7 @@ def prune_remove(remove_from, to_remove, known_dups):
     known_dups : [Association[,...]]
         Known duplicates. New ones are added by this function
         if debugging is in effect.
+
     """
     global DupCount
 
@@ -202,7 +205,7 @@ def prune_remove(remove_from, to_remove, known_dups):
 
 
 def identify_dups(asns):
-    """Separate associations based on whether they have already been identified as dups
+    """Separate associations based on whether they have already been identified as dups.
 
     Parameters
     ----------
@@ -210,8 +213,10 @@ def identify_dups(asns):
         Associations to prune
 
     Returns
+    -------
     identified, valid : [Association[,...]], [Association[,...]]
         Dup-identified and valid associations
+
     """
     identified = list()
     valid = list()

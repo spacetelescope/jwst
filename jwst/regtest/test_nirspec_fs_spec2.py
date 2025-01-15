@@ -36,11 +36,11 @@ asn_memberdict = {
 @pytest.fixture(scope="module", params=file_roots)  # ids=ids)
 def run_pipeline(rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
-       We currently test the following types of inputs:
-         1) Full-frame exposure (all slits will be extracted)
-         2) ALLSLITS subarray exposure (all slits will be extracted)
-         3) S400A1 subarray exposure (1 slit extracted)"""
-
+    We currently test the following types of inputs:
+      1) Full-frame exposure (all slits will be extracted)
+      2) ALLSLITS subarray exposure (all slits will be extracted)
+    3) S400A1 subarray exposure (1 slit extracted).
+    """
     rtdata = rtdata_module
     for fle in asn_memberdict[request.param]:
         rtdata.get_data('nirspec/fs/' + fle)
@@ -65,9 +65,9 @@ def run_pipeline(rtdata_module, request):
 @pytest.fixture(scope="module")
 def run_pipeline_pixel_replace(rtdata_module):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures including pixel replacement.
-       The run_pipeline fixture saves the output for step before pixel_replace, so no need to retest.
-       We currently test the following types of inputs:
-         Full-frame exposure (all slits will be extracted)
+    The run_pipeline fixture saves the output for step before pixel_replace, so no need to retest.
+    We currently test the following types of inputs:
+      Full-frame exposure (all slits will be extracted).
     """
     rtdata = rtdata_module
     rtdata.get_asn('nirspec/fs/jw01309_prtest_spec2_00001_asn.json')
@@ -87,8 +87,8 @@ def run_pipeline_pixel_replace(rtdata_module):
     "cal", "s2d", "x1d"])
 def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
-       NIRSpec FS exposures."""
-
+    NIRSpec FS exposures.
+    """
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = replace_suffix(
@@ -113,8 +113,8 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 )
 def test_nirspec_fs_spec2_pixel_replace(run_pipeline_pixel_replace, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_spec2 pipeline on a
-       NIRSpec FS exposures."""
-
+    NIRSpec FS exposures.
+    """
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline_pixel_replace
     rtdata.output = output
@@ -129,7 +129,7 @@ def test_nirspec_fs_spec2_pixel_replace(run_pipeline_pixel_replace, fitsdiff_def
 
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
-    """Test PathLossStep using correction_pars"""
+    """Test PathLossStep using correction_pars."""
     basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
     with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
@@ -148,7 +148,7 @@ def test_pathloss_corrpars(rtdata):
 
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
-    """Test PathLossStep using inversion"""
+    """Test PathLossStep using inversion."""
     basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
     with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
@@ -169,7 +169,7 @@ def test_pathloss_inverse(rtdata):
 
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
-    """Test PathLossStep forcing source type"""
+    """Test PathLossStep forcing source type."""
     basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
     with dm.open(rtdata.get_data(f'nirspec/fs/{basename}.fits')) as data:
         pls = PathLossStep()
@@ -187,8 +187,8 @@ def test_pathloss_source_type(rtdata):
 @pytest.mark.bigdata
 def test_nirspec_fs_rateints_spec2(rtdata_module):
     """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure.
-       This is a test that the pipeline completes when processing this
-       multi-integration input.
+    This is a test that the pipeline completes when processing this
+    multi-integration input.
     """
     rtdata = rtdata_module
 

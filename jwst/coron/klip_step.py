@@ -9,9 +9,7 @@ __all__ = ["KlipStep"]
 
 
 class KlipStep(Step):
-
-    """
-    KlipStep: Performs KLIP processing on a science target coronagraphic
+    """KlipStep: Performs KLIP processing on a science target coronagraphic
     exposure. The input science exposure is assumed to be a fully calibrated
     level-2b image. The processing is performed using a set of reference PSF
     images observed in the same coronagraphic mode.

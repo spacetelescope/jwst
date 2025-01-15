@@ -1,6 +1,4 @@
-"""
-Unit tests for background subtraction
-"""
+"""Unit tests for background subtraction."""
 import pytest
 from numpy.testing import assert_allclose
 
@@ -10,8 +8,7 @@ from jwst.background import BackgroundStep
 
 @pytest.fixture(scope='module')
 def background(tmp_path_factory):
-    """Generate a background image to feed to background step"""
-
+    """Generate a background image to feed to background step."""
     filename = tmp_path_factory.mktemp('background_input')
     filename = filename / 'background.fits'
     with datamodels.IFUImageModel((10, 10)) as image:
@@ -42,8 +39,7 @@ def background(tmp_path_factory):
 
 @pytest.fixture(scope='function')
 def science_image():
-    """Generate science image"""
-
+    """Generate science image."""
     image = datamodels.IFUImageModel((10, 10))
     image.data[:, :] = 100
     image.meta.instrument.name = 'NIRSPEC'
@@ -68,8 +64,7 @@ def science_image():
 
 
 def miri_rate_model(data_shape, value=1.0):
-    """
-    Generate a MIRI image subarray rate or rateints image.
+    """Generate a MIRI image subarray rate or rateints image.
 
     Parameters
     ----------
@@ -83,8 +78,8 @@ def miri_rate_model(data_shape, value=1.0):
     image : DataModel
         An open datamodel containing MIRI subarray rate or rateints
         data.
-    """
 
+    """
     if len(data_shape) == 2:
         image = datamodels.ImageModel(data_shape)
     else:
@@ -109,8 +104,7 @@ def miri_rate_model(data_shape, value=1.0):
 
 
 def test_nirspec_gwa(tmp_cwd, background, science_image):
-    """Verify NIRSPEC GWA logic for in the science and background"""
-
+    """Verify NIRSPEC GWA logic for in the science and background."""
     # open the background to read in the GWA values
     back_image = datamodels.open(background)
     science_image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
@@ -131,8 +125,7 @@ def test_nirspec_gwa(tmp_cwd, background, science_image):
 
 
 def test_nirspec_gwa_xtilt(tmp_cwd, background, science_image):
-    """Verify NIRSPEC GWA Xtilt must be the same in the science and background image"""
-
+    """Verify NIRSPEC GWA Xtilt must be the same in the science and background image."""
     # open the background to read in the GWA values
     back_image = datamodels.open(background)
     science_image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt
@@ -153,8 +146,7 @@ def test_nirspec_gwa_xtilt(tmp_cwd, background, science_image):
 
 
 def test_nirspec_gwa_ytilt(tmp_cwd, background, science_image):
-    """Verify NIRSPEC GWA Ytilt must be the same in the science and background image"""
-
+    """Verify NIRSPEC GWA Ytilt must be the same in the science and background image."""
     # open the background to read in the GWA values
     back_image = datamodels.open(background)
     science_image.meta.instrument.gwa_xtilt = back_image.meta.instrument.gwa_xtilt

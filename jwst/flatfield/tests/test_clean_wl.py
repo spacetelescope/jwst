@@ -1,6 +1,4 @@
-"""
-Test for flat_field.clean_wl
-"""
+"""Test for flat_field.clean_wl."""
 import numpy as np
 
 from jwst.flatfield import flat_field

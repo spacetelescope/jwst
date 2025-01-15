@@ -1,6 +1,4 @@
-"""
-Module for parsing APCORR and ABVEGAOFFSET reference file data.
-"""
+"""Module for parsing APCORR and ABVEGAOFFSET reference file data."""
 
 import logging
 
@@ -15,8 +13,7 @@ log.setLevel(logging.DEBUG)
 
 
 class ReferenceData:
-    """
-    Class for APCORR and ABVEGAOFFSET reference file data needed by
+    """Class for APCORR and ABVEGAOFFSET reference file data needed by
     `SourceCatalogStep`.
 
     Parameters
@@ -43,6 +40,7 @@ class ReferenceData:
     abvega_offset : float
         Offset to convert from AB to Vega magnitudes.  The value
         represents m_AB - m_Vega.
+
     """
 
     def __init__(self, model, reffile_paths, aperture_ee):
@@ -72,9 +70,7 @@ class ReferenceData:
 
     @staticmethod
     def _validate_aperture_ee(aperture_ee):
-        """
-        Validate the input ``aperture_ee``.
-        """
+        """Validate the input ``aperture_ee``."""
         aperture_ee = np.array(aperture_ee).astype(int)
         if not np.all(aperture_ee[1:] > aperture_ee[:-1]):
             raise ValueError('aperture_ee values must be strictly '
@@ -87,8 +83,7 @@ class ReferenceData:
 
     @lazyproperty
     def _aperture_ee_table(self):
-        """
-        Get the encircled energy table for the given instrument
+        """Get the encircled energy table for the given instrument
         configuration.
         """
         if self.instrument in ('NIRCAM', 'NIRISS'):
@@ -116,9 +111,7 @@ class ReferenceData:
         return ee_table
 
     def _get_ee_table_row(self, aperture_ee):
-        """
-        Get the encircled energy row for the input ``aperture_ee``.
-        """
+        """Get the encircled energy row for the input ``aperture_ee``."""
         ee_percent = np.round(self._aperture_ee_table['eefraction'] * 100)
         row_mask = (ee_percent == aperture_ee)
         ee_row = self._aperture_ee_table[row_mask]
@@ -135,8 +128,7 @@ class ReferenceData:
 
     @lazyproperty
     def aperture_params(self):
-        """
-        A dictionary containing the aperture parameters (radii, aperture
+        """A dictionary containing the aperture parameters (radii, aperture
         corrections, and background annulus inner and outer radii).
         """
         if self.apcorr_filename is None:
@@ -190,8 +182,7 @@ class ReferenceData:
 
     @lazyproperty
     def abvega_offset(self):
-        """
-        Offset to convert from AB to Vega magnitudes.
+        """Offset to convert from AB to Vega magnitudes.
 
         The value represents m_AB - m_Vega.
         """

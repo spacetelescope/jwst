@@ -9,14 +9,14 @@ __all__ = ['TSOPhotometryStep']
 
 
 class TSOPhotometryStep(Step):
-    """
-    Perform circular aperture photometry on imaging Time Series
+    """Perform circular aperture photometry on imaging Time Series
     Observations (TSO).
 
     Parameters
-    -----------
+    ----------
     input : str or `CubeModel`
         Filename for a FITS image or association table, or a `CubeModel`.
+
     """
 
     class_alias = "tso_photometry"

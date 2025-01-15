@@ -1,5 +1,4 @@
-"""
-    Stack individual coronagraphic PSF reference images into a cube model.
+"""Stack individual coronagraphic PSF reference images into a cube model.
 
 :Authors: Howard Bushouse
 
@@ -14,12 +13,10 @@ log.setLevel(logging.DEBUG)
 
 
 def make_cube(input_models):
-    """
-    make_cube: Stack all of the integrations from multiple PSF
+    """make_cube: Stack all of the integrations from multiple PSF
     reference exposures into a single CubeModel, for use in the
     coronagraphic alignment and PSF-subtraction steps.
     """
-
     # Get the number of input images
     num_refs = len(input_models)
 

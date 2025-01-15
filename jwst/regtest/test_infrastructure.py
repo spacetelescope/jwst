@@ -40,7 +40,7 @@ def test_fitsdiff_defaults(fitsdiff_default_kwargs):
 
 @pytest.fixture
 def two_tables(tmp_path):
-    """Return identical astropy tables written to 2 .ecsv file paths"""
+    """Return identical astropy tables written to 2 .ecsv file paths."""
     path1 = tmp_path / "catalog1.ecsv"
     path2 = tmp_path / "catalog2.ecsv"
     a = np.array([1, 4, 5], dtype=float)

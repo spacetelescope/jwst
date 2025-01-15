@@ -1,15 +1,15 @@
-"""General utility objects"""
+"""General utility objects."""
 
 
 class LoggingContext:
-    """Logging context manager
+    """Logging context manager.
 
     Keep logging configuration within a context
 
     Based on the Python 3 Logging Cookbook example
 
     Parameters
-    ==========
+    ----------
     logger: logging.Logger
         The logger to modify.
 
@@ -21,6 +21,7 @@ class LoggingContext:
 
     close: bool
         Close the handler when done.
+
     """
 
     def __init__(self, logger, level=None, handler=None, close=True):

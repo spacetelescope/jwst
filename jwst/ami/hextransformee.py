@@ -3,8 +3,7 @@ import numpy as np
 
 
 def gfunction(xi, eta, **kwargs):
-    """
-    Calculate the Fourier transform of one half of a hexagon that is bisected
+    """Calculate the Fourier transform of one half of a hexagon that is bisected
     from one corner to its diametrically opposite corner.
 
     Parameters
@@ -34,8 +33,8 @@ def gfunction(xi, eta, **kwargs):
     -------
     g*affine2d.distortphase(xi,eta): 2D complex array
         Fourier transform of one half of a hexagon.
-    """
 
+    """
     c = kwargs["c"]
     pixel = kwargs["pixel"]
     d = kwargs["d"]
@@ -70,8 +69,7 @@ def gfunction(xi, eta, **kwargs):
 
 
 def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
-    """
-    Calculate the complex array analytical transform of a (distorted if necessary) hexagon
+    """Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
 
     Parameters
     ----------

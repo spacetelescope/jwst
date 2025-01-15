@@ -9,8 +9,7 @@ __all__ = ["DarkCurrentStep"]
 
 
 class DarkCurrentStep(Step):
-    """
-    DarkCurrentStep: Performs dark current correction by subtracting
+    """DarkCurrentStep: Performs dark current correction by subtracting
     dark current reference data from the input science data model.
     """
 
@@ -87,7 +86,7 @@ class DarkCurrentStep(Step):
         1) Any value provided to the step parameter, either from
         the user or a parameter reference file
         2) The 2-D array stored in dark_model.average_dark_current
-        3) The scalar value stored in dark_model.meta.exposure.average_dark_current
+        3) The scalar value stored in dark_model.meta.exposure.average_dark_current.
 
         Inputs
         ------
@@ -112,8 +111,7 @@ class DarkCurrentStep(Step):
 
 
 def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
-    """
-    Save dark data from the dark current step as the appropriate dark model.
+    """Save dark data from the dark current step as the appropriate dark model.
 
     Parameters
     ----------
@@ -125,6 +123,7 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
 
     instrument: str
         The instrument name.
+
     """
     if instrument == "MIRI":
         out_dark_model = datamodels.DarkMIRIModel(
@@ -146,8 +145,7 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
 
 
 def dark_output_data_2_ramp_model(out_data, out_model):
-    """
-    Convert computed output data from the dark step to a RampModel.
+    """Convert computed output data from the dark step to a RampModel.
 
     Parameters
     ----------
@@ -161,8 +159,8 @@ def dark_output_data_2_ramp_model(out_data, out_model):
     ------
     out_model: RampModel
         The output ramp model from the dark current step.
-    """
 
+    """
     if out_data.cal_step == "SKIPPED":
         # If processing was skipped in the lower-level routines,
         # just return the unmodified input model

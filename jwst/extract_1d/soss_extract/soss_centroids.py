@@ -21,11 +21,11 @@ def center_of_mass(column, ypos, halfwidth):
         The half-size of the window in pixels.
 
     Returns
-    --------
+    -------
     ycom : float
         The center-of-mass of the pixels within the window.
-    """
 
+    """
     # Get the column shape and create a corresponding array of positions.
     dimy, = column.shape
     ypix = np.arange(dimy)
@@ -60,15 +60,15 @@ def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11):
         Order of the polynomial to fit to the extracted trace positions.
 
     Returns
-    --------
+    -------
     xtrace : array[float]
         The x coordinates of trace as computed from the best fit polynomial.
     ytrace : array[float]
         The y coordinates of trace as computed from the best fit polynomial.
     param : array[float]
         The best-fit polynomial parameters.
-    """
 
+    """
     # If no mask was given use all pixels.
     if mask is None:
         mask = np.zeros_like(scidata_bkg, dtype='bool')

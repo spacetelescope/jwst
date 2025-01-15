@@ -1,4 +1,4 @@
-"""Test degraded exposure info"""
+"""Test degraded exposure info."""
 from jwst.associations.tests.helpers import (
     combine_pools,
     t_path

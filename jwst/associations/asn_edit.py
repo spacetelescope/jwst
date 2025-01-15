@@ -13,8 +13,7 @@ class AsnFileWarning(Warning):
     pass
 
 def add(asn, filenames, exptype):
-    """
-    Add new filenames to association
+    """Add new filenames to association.
 
     Parameters
     ----------
@@ -39,7 +38,7 @@ def add(asn, filenames, exptype):
         If a filename to be added was not found in the filesystem
 
 
-     """
+    """
     for filename in filenames:
         path = _path(filename)
         expname = op.basename(path)
@@ -52,8 +51,7 @@ def add(asn, filenames, exptype):
 
 
 def reader(association_file):
-    """
-    Read the association file or die trying
+    """Read the association file or die trying.
 
     Parameters
     ----------
@@ -89,8 +87,7 @@ def reader(association_file):
 
 
 def remove(asn, filenames, ignore):
-    """
-    Remove the named files from the association
+    """Remove the named files from the association.
 
     Parameters
     ----------
@@ -137,8 +134,7 @@ def remove(asn, filenames, ignore):
 
 
 def writer(asn, output_file):
-    """
-    Write the association out to disk
+    """Write the association out to disk.
 
     Parameters
     ----------
@@ -155,7 +151,6 @@ def writer(asn, output_file):
 
 
     """
-
     asn_format = output_file.split('.')[-1]
     if asn_format != 'json':
         raise ValueError('Only json format supported for output: ' +
@@ -182,10 +177,7 @@ def writer(asn, output_file):
 # Internal functions
 
 def _lookup(asn, filename, ignore_suffix=False):
-    """
-    Look up the locations a file is found in an association
-    """
-
+    """Look up the locations a file is found in an association."""
     found = []
     path = _path(filename)
     basename = op.basename(path)
@@ -211,18 +203,12 @@ def _lookup(asn, filename, ignore_suffix=False):
 
 
 def _path(filename):
-    """
-    Command line filename processing
-    """
-
+    """Command line filename processing."""
     return op.abspath(op.expanduser(op.expandvars(filename)))
 
 
 def _rename(output_file):
-    """
-    Rename output file to prevent overwriting
-    """
-
+    """Rename output file to prevent overwriting."""
     trial = 0
     while 1:
         trial += 1

@@ -52,6 +52,7 @@ class FlatFieldStep(Step):
 
     use_correction_pars : boolean
         Use the flat stored in `correction_pars`
+
     """
 
     class_alias = "flat_field"
@@ -153,14 +154,13 @@ class FlatFieldStep(Step):
         switch for the flat_field step to SKIPPED in the copy, closes
         input_model, and returns the copy.
         """
-
         result = input_model.copy()
         result.meta.cal_step.flat_field = "SKIPPED"
         input_model.close()
         return result
 
     def _get_references(self, data, exposure_type):
-        """Retrieve required CRDS reference files
+        """Retrieve required CRDS reference files.
 
         Parameters
         ----------
@@ -174,8 +174,8 @@ class FlatFieldStep(Step):
         -------
         reference_file_models : {str: DataModel{,...}}
             Dictionary matching reference file types to open models
-        """
 
+        """
         # Get reference file paths
         reference_file_names = {}
         for reftype in self.reference_file_types:

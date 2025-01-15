@@ -20,8 +20,7 @@ def extract2d(input_model,
               extract_orders=None,
               mmag_extract=None,
               nbright=None):
-    """
-    The main extract_2d function
+    """The main extract_2d function.
 
     Parameters
     ----------

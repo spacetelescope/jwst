@@ -22,7 +22,7 @@ NUM_KNOTS = 80  # number of knots for bkg model if no other info provided
 
 
 def find_nearest(array, value):
-    """ Utility function to find the index of pixel with value in 'array' nearest to 'value'.
+    """Utility function to find the index of pixel with value in 'array' nearest to 'value'.
 
     Used by det_pixel_trace function
     """
@@ -31,9 +31,7 @@ def find_nearest(array, value):
 
 
 def slice_info(slice_map, c):
-    """ Function to take slice map and channel and find pixels in the slice and xrange of each slice
-    """
-
+    """Function to take slice map and channel and find pixels in the slice and xrange of each slice."""
     slice_inventory = np.unique(slice_map)
     slices_in_band = slice_inventory[np.where((slice_inventory >= 100 * c)
                                               & (slice_inventory < 100 * (c + 1)))]
@@ -71,8 +69,7 @@ def slice_info(slice_map, c):
 
 
 def fill_wavenumbers(wnums):
-    """
-    Function to take a wavenumber array with missing values (e.g., columns with on-slice and
+    """Function to take a wavenumber array with missing values (e.g., columns with on-slice and
     off-slice pixels), fit the good points using a polynomial, then run use the coefficients
     to estimate wavenumbers on the off-slice pixels.
     Note that these new values are physically meaningless but having them in the wavenum array
@@ -89,7 +86,6 @@ def fill_wavenumbers(wnums):
         the wavenumber array with off-slice pixels filled
 
     """
-
     # set the off-slice pixels to nans and get their indices
     wnums[wnums == 0] = np.nan
     idx = np.isfinite(wnums)
@@ -108,7 +104,7 @@ def fill_wavenumbers(wnums):
 
 
 def fit_quality_stats(stats):
-    """Get simple statistics for the fits
+    """Get simple statistics for the fits.
 
     :Parameters:
 
@@ -117,15 +113,14 @@ def fit_quality_stats(stats):
 
     :Returns:
 
-   median, stddev, max of stat numpy array
+    median, stddev, max of stat numpy array
 
     """
     return np.mean(stats), np.median(stats), np.std(stats),  np.amax(stats)
 
 
 def multi_sine(n):
-    """
-    Return a model composed of n sines
+    """Return a model composed of n sines.
 
     :Parameters:
 
@@ -137,7 +132,6 @@ def multi_sine(n):
     mdl, BayesFitting model
         the model composed of n sines
     """
-
     # make the first sine
     mdl = SineModel()
 
@@ -155,13 +149,12 @@ def multi_sine(n):
 
 
 def fit_envelope(wavenum, signal):
-    """ Fit the upper and lower envelope of signal using a univariate spline
+    """Fit the upper and lower envelope of signal using a univariate spline.
 
     :param wavenum:
     :param signal:
     :return:
     """
-
     # Detect troughs and mark their location. Define endpoints
     l_x = [wavenum[0]]
     l_y = [signal[0]]
@@ -192,9 +185,8 @@ def fit_envelope(wavenum, signal):
 
 
 def find_lines_resfringe(signal, max_amp):
-    """
-    *** Replaced with find_lines below. This version does not include some of the
-    feature finding functionality***
+    """*** Replaced with find_lines below. This version does not include some of the
+    feature finding functionality***.
 
     Take signal and max amp array, determine location of spectral
     features with amplitudes greater than max amp
@@ -203,7 +195,6 @@ def find_lines_resfringe(signal, max_amp):
     :param max_amp:
     :return:
     """
-
     r_x = np.arange(signal.shape[0] - 1)
 
     # setup the output arrays
@@ -231,15 +222,13 @@ def find_lines_resfringe(signal, max_amp):
 
 
 def find_lines(signal, max_amp):
-    """
-    Take signal and max amp array, determine location of spectral
-    features with amplitudes greater than max amp
+    """Take signal and max amp array, determine location of spectral
+    features with amplitudes greater than max amp.
 
     :param signal:
     :param max_amp:
     :return:
     """
-
     r_x = np.arange(signal.shape[0] - 1)
 
     # setup the output arrays
@@ -310,9 +299,8 @@ def find_lines(signal, max_amp):
 
 
 def check_res_fringes(res_fringe_fit, max_amp):
-    """
-    Check for regions where res fringe fit runs away (greater than max amp),
-    set the beat where this happens to 0 to avoid  making the fringes worse
+    """Check for regions where res fringe fit runs away (greater than max amp),
+    set the beat where this happens to 0 to avoid  making the fringes worse.
 
     :Parameters:
 
@@ -331,7 +319,6 @@ def check_res_fringes(res_fringe_fit, max_amp):
         flags where the fit was rejected
 
     """
-
     flags = np.zeros(res_fringe_fit.shape[0])
 
     # get fit envelope
@@ -423,7 +410,6 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
         fitter object, mainly used for testing
 
     """
-
     # first get the weighted pixel fraction
     weighted_pix_frac = (weights > 1e-05).sum() / flux.shape[0]
 
@@ -495,7 +481,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
 
 
 def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False):
-    """Determine the post correction fringe residual
+    """Determine the post correction fringe residual.
 
     Fit a single sine model to the corrected array to get the post correction fringe residual
 
@@ -563,7 +549,6 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
 
 def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes,
                                       pgram_res, col_snr2):
-
     """Fit the residual fringe signal.- Improved method
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
     :Parameters:
@@ -585,7 +570,7 @@ def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffr
         the 1D array of wavenum
     :Returns:
     res_fringe_fit: numpy array
-        the residual fringe fit data
+        the residual fringe fit data.
     """
     # initialize output to none
     res_fringe_fit = None
@@ -872,7 +857,6 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
 
     Returns
     -------
-
     bg_fit : numpy array
         the fitted background
 
@@ -883,7 +867,6 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, ch
         fitter object, mainly used for testing
 
     """
-
     # first get the weighted pixel fraction
     weighted_pix_frac = (weights > 1e-05).sum() / flux.shape[0]
 
@@ -975,6 +958,7 @@ def new_fit_1d_fringes_bayes_evidence_1d(res_fringes, weights, wavenum, ffreq, d
     -------
     res_fringe_fit : numpy array
         the residual fringe fit data
+
     """
     # initialize output to none
     res_fringe_fit = None
@@ -1092,8 +1076,8 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
     -------
     output : numpy array
         Modified version of input flux array
-    """
 
+    """
     # Restrict to just the non-zero positive fluxes
     indx = np.where(flux > 0)
     useflux = flux[indx]

@@ -1,6 +1,4 @@
-"""
-Module to detect sources using image segmentation.
-"""
+"""Module to detect sources using image segmentation."""
 
 import logging
 import warnings
@@ -19,8 +17,7 @@ log.setLevel(logging.DEBUG)
 
 
 class JWSTBackground:
-    """
-    Class to estimate a 2D background and background RMS noise in an
+    """Class to estimate a 2D background and background RMS noise in an
     image.
 
     Parameters
@@ -48,6 +45,7 @@ class JWSTBackground:
 
     background_rms : 2D `~numpy.ndimage`
         The estimated 2D background RMS image.
+
     """
 
     def __init__(self, data, box_size=100, coverage_mask=None):
@@ -57,14 +55,14 @@ class JWSTBackground:
 
     @lazyproperty
     def _background2d(self):
-        """
-        Estimate the 2D background and background RMS noise in an image.
+        """Estimate the 2D background and background RMS noise in an image.
 
         Returns
         -------
         background : `photutils.background.Background2D`
             A Background2D object containing the 2D background and
             background RMS noise estimates.
+
         """
         sigma_clip = SigmaClip(sigma=3.)
         bkg_estimator = MedianBackground()
@@ -95,22 +93,17 @@ class JWSTBackground:
 
     @lazyproperty
     def background(self):
-        """
-        The 2D background image.
-        """
+        """The 2D background image."""
         return self._background2d.background
 
     @lazyproperty
     def background_rms(self):
-        """
-        The 2D background RMS image.
-        """
+        """The 2D background RMS image."""
         return self._background2d.background_rms
 
 
 def make_kernel(kernel_fwhm):
-    """
-    Make a 2D Gaussian smoothing kernel that is used to filter the image
+    """Make a 2D Gaussian smoothing kernel that is used to filter the image
     before thresholding.
 
     Filtering the image will smooth the noise and maximize detectability
@@ -128,6 +121,7 @@ def make_kernel(kernel_fwhm):
     -------
     kernel : `astropy.convolution.Kernel2D`
         The output smoothing kernel, normalized such that it sums to 1.
+
     """
     sigma = kernel_fwhm * gaussian_fwhm_to_sigma
     kernel = Gaussian2DKernel(sigma)
@@ -136,8 +130,7 @@ def make_kernel(kernel_fwhm):
 
 
 def convolve_data(data, kernel_fwhm, mask=None):
-    """
-    Convolve the data with a Gaussian2D kernel.
+    """Convolve the data with a Gaussian2D kernel.
 
     Parameters
     ----------
@@ -150,6 +143,7 @@ def convolve_data(data, kernel_fwhm, mask=None):
     mask : array_like, bool, optional
         A boolean mask with the same shape as ``data``, where a `True`
         value indicates the corresponding element of ``data`` is masked.
+
     """
     kernel = make_kernel(kernel_fwhm)
 
@@ -160,8 +154,7 @@ def convolve_data(data, kernel_fwhm, mask=None):
 
 
 class JWSTSourceFinder:
-    """
-    Class to detect sources, including deblending, using image
+    """Class to detect sources, including deblending, using image
     segmentation.
 
     Parameters
@@ -177,6 +170,7 @@ class JWSTSourceFinder:
     deblend : bool, optional
         Whether to deblend overlapping sources. Source deblending
         requires scikit-image.
+
     """
 
     def __init__(self, threshold, npixels, deblend=False):
@@ -189,8 +183,7 @@ class JWSTSourceFinder:
         self.mode = 'exponential'
 
     def __call__(self, convolved_data, mask=None):
-        """
-        Parameters
+        """Parameters
         ----------
         convolved_data : 2D `numpy.ndarray`
             The 2D convolved array from which to detect sources.
@@ -208,6 +201,7 @@ class JWSTSourceFinder:
             where sources are marked by different positive integer values. A
             value of zero is reserved for the background. If no sources are
             found then `None` is returned.
+
         """
         if mask is not None:
             if mask.all():

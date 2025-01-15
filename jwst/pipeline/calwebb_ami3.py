@@ -16,11 +16,10 @@ log.setLevel(logging.DEBUG)
 
 
 class Ami3Pipeline(Pipeline):
-    """
-    Ami3Pipeline: Apply all level-3 calibration steps to an
+    """Ami3Pipeline: Apply all level-3 calibration steps to an
     association of level-2b AMI exposures. Included steps are:
     ami_analyze (fringe detection)
-    ami_normalize (normalize results by reference target)
+    ami_normalize (normalize results by reference target).
     """
 
     class_alias = "calwebb_ami3"

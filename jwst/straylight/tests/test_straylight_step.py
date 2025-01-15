@@ -1,6 +1,4 @@
-"""
-Unit tests for straylight step configuration
-"""
+"""Unit tests for straylight step configuration."""
 
 from stdatamodels.jwst.datamodels import CubeModel
 
@@ -11,8 +9,7 @@ import pytest
 
 @pytest.fixture(scope='module')
 def miri_mrs_short_tso():
-    """Set up MIRI MRS SHORT TSO data"""
-
+    """Set up MIRI MRS SHORT TSO data."""
     image = CubeModel((5, 1024, 1032))
     image.data = np.random.random((5, 1024, 1032))
     image.meta.instrument.name = 'MIRI'
@@ -27,6 +24,6 @@ def miri_mrs_short_tso():
 
 
 def test_call_straylight_mrsshort_tso(tmp_cwd, miri_mrs_short_tso):
-    """Test step is skipped for MRS IFUSHORT TSO data"""
+    """Test step is skipped for MRS IFUSHORT TSO data."""
     result = StraylightStep.call(miri_mrs_short_tso)
     assert result.meta.cal_step.straylight == 'SKIPPED'

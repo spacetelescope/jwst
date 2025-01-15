@@ -1,4 +1,4 @@
-"""Test the MAST Engineering interface"""
+"""Test the MAST Engineering interface."""
 import pytest
 import requests
 
@@ -25,8 +25,7 @@ EXPECTED_RECORDS = Table.read(EXPECTED_RESPONSE, format='ascii.csv')
 
 @pytest.fixture(scope='module')
 def is_alive():
-    """Check if the MAST portal is accessible
-    """
+    """Check if the MAST portal is accessible."""
     is_alive = False
     try:
         r = requests.get(engdb_mast.MAST_BASE_URL)
@@ -39,7 +38,7 @@ def is_alive():
 
 @pytest.fixture(scope='module')
 def engdb():
-    """Open a connection"""
+    """Open a connection."""
     try:
         engdb = engdb_mast.EngdbMast(base_url=engdb_mast.MAST_BASE_URL)
     except RuntimeError as exception:
@@ -48,7 +47,7 @@ def engdb():
 
 
 def test_aliveness(is_alive):
-    """Check connection creation
+    """Check connection creation.
 
     Failure is any failure from instantiation.
     """
@@ -56,7 +55,7 @@ def test_aliveness(is_alive):
 
 
 def test_get_records(engdb):
-    """Test getting records"""
+    """Test getting records."""
     records = engdb._get_records(*QUERY)
     assert engdb.response.text == EXPECTED_RESPONSE
     assert report_diff_values(records, EXPECTED_RECORDS)
@@ -87,6 +86,6 @@ def test_get_values(engdb, pars, expected):
 
 
 def test_negative_aliveness():
-    """Ensure failure occurs with a bad url"""
+    """Ensure failure occurs with a bad url."""
     with pytest.raises(RuntimeError):
         engdb_mast.EngdbMast(base_url='https://127.0.0.1/_engdb_mast_test', token='dummytoken')

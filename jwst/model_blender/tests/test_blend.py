@@ -1,4 +1,4 @@
-"""Test blend_models"""
+"""Test blend_models."""
 import pytest
 
 import numpy as np
@@ -44,7 +44,7 @@ MISSING_COLUMN = "TIME-OBS"
 
 
 def _make_data():
-    """Create a set of input models to blendmeta
+    """Create a set of input models to blendmeta.
 
     Returns
     -------
@@ -56,6 +56,7 @@ def _make_data():
           Input meta data.
         - output_values: dict
           Expected output values of the blended meta data.
+
     """
     models = [ImageModel() for i in range(N_MODELS)]
 
@@ -115,13 +116,14 @@ def make_data():
 
 @pytest.fixture(scope='module')
 def blend(make_data):
-    """Blend the meta data
+    """Blend the meta data.
 
     Parameters
     ----------
     make_data: (models, input_values, output_values)
         Results either from the `pytest.fixture.make_data`
         or from the results of `_make_data` directly.
+
     """
     models, input_values, output_values = make_data
     output = ImageModel()
@@ -131,12 +133,13 @@ def blend(make_data):
 
 
 def test_blendmeta(blend):
-    """Test blended metadata
+    """Test blended metadata.
 
     Parameters
     ----------
     blend: (newmeta, newtab, input_values, output_values)
         Results from `pytest.fixture.blend`
+
     """
     newmeta, newtab, models, input_values, output_values = blend
 
@@ -148,8 +151,7 @@ def test_blendmeta(blend):
 
 
 def build_fits_dict(schema):
-    """
-    Utility function to create a dict that maps FITS keywords to their
+    """Utility function to create a dict that maps FITS keywords to their
     metadata attribute in a input schema.
 
     Parameters
@@ -178,12 +180,13 @@ def build_fits_dict(schema):
 
 
 def test_blendtab(blend):
-    """Test blended table
+    """Test blended table.
 
     Parameters
     ----------
     blend: (newmeta, newtab, input_values, output_values)
         Results from `pytest.fixture.blend`
+
     """
     newmeta, newtab, models, input_values, output_values = blend
 

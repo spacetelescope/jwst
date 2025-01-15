@@ -29,7 +29,6 @@ def run_pipeline(rtdata_module):
                                     'jw01529003001_03103_00011_mirimage_user_mbsub.fits'])
 def test_miri_lrs_masterbg_user(run_pipeline, fitsdiff_default_kwargs, output):
     """Run a test for MIRI LRS data with a user-supplied background file."""
-
     rtdata = run_pipeline
     rtdata.output = output
 

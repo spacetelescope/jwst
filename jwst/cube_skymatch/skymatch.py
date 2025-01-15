@@ -1,5 +1,4 @@
-"""
-A module that provides functions for matching sky in overlapping cubes.
+"""A module that provides functions for matching sky in overlapping cubes.
 
 :Authors: Mihai Cara
 
@@ -21,8 +20,7 @@ log.setLevel(logging.DEBUG)
 
 
 def match(skycubes, subtract=False):
-    """
-    A function to compute and/or "equalize" sky background in input cubes.
+    """A function to compute and/or "equalize" sky background in input cubes.
 
     .. note::
         Sky matching ("equalization") is possible only for **overlapping**
@@ -45,7 +43,6 @@ def match(skycubes, subtract=False):
 
     Returns
     -------
-
     out_skycubes : list of SkyCube
         A list of `SkyCube` each containing sky background polynomial
         coefficients and, if requested, background-subtracted data.
@@ -161,8 +158,7 @@ def match(skycubes, subtract=False):
 
 
 def max_overlap_pair(cubes):
-    """
-    Find, in the input list of cubes, the pair that has the largest overlap
+    """Find, in the input list of cubes, the pair that has the largest overlap
     and remove these two cubes from the input list.
 
     """

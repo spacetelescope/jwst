@@ -7,11 +7,9 @@ from jwst.firstframe import FirstFrameStep
 
 
 def test_firstframe_set_groupdq():
+    """Test if the firstframe code set the groupdq flag on the first
+    group to 'do_not_use' for 5 groups.
     """
-    Test if the firstframe code set the groupdq flag on the first
-    group to 'do_not_use' for 5 groups
-    """
-
     # size of integration
     ngroups = 5
     xsize = 1032
@@ -52,11 +50,9 @@ def test_firstframe_set_groupdq():
 
 
 def test_firstframe_single_group():
+    """Test that the firstframe code does nothing when passed a single
+    group integration.
     """
-    Test that the firstframe code does nothing when passed a single
-    group integration
-    """
-
     # size of integration
     ngroups = 1
     xsize = 1032
@@ -87,11 +83,9 @@ def test_firstframe_single_group():
 
 
 def test_firstframe_add1_groupdq():
+    """Test if the firstframe code set the groupdq flag on the first
+    group to 'do_not_use' by adding 1 to the flag, not overwriting to 1.
     """
-    Test if the firstframe code set the groupdq flag on the first
-    group to 'do_not_use' by adding 1 to the flag, not overwriting to 1
-    """
-
     # size of integration
     ngroups = 5
     xsize = 1032
@@ -116,11 +110,9 @@ def test_firstframe_add1_groupdq():
 
 
 def test_firstframe_3groups():
+    """Test if the firstframe code set the groupdq flag on the first
+    group to 'do_not_use' or left it as is, which it should do for 3 frames.
     """
-    Test if the firstframe code set the groupdq flag on the first
-    group to 'do_not_use' or left it as is, which it should do for 3 frames
-    """
-
     # size of integration
     ngroups = 3
     xsize = 1032
@@ -219,14 +211,12 @@ def test_miri():
 
 
 def test_firstframe_bright_use_group1():
-    """
-    Test if the firstframe code when bright_use_group1 is set to True.
+    """Test if the firstframe code when bright_use_group1 is set to True.
     
     The groupdq flag for group 1 should not be set to DO_NOT_USE for the pixels that saturate 
     the 3rd group.  Otherwise, all other pixels should have their group1 groupdq 
     flags set to DO_NOT_USE.
     """
-
     # size of integration
     ngroups = 5
     xsize = 1032

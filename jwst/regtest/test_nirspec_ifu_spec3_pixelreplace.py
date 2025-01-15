@@ -1,4 +1,4 @@
-"""Regression tests for NIRSpec IFU"""
+"""Regression tests for NIRSpec IFU."""
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -8,7 +8,7 @@ TRUTH_PATH_PIXEL_REPLACE = 'truth/test_nirspec_ifu_pixel_replace'
 
 @pytest.fixture(scope='module')
 def run_spec3_multi_pixel_replace(rtdata_module):
-    """Run Spec3Pipeline with pixel replacement"""
+    """Run Spec3Pipeline with pixel replacement."""
     rtdata = rtdata_module
 
     step_params = {
@@ -45,7 +45,7 @@ def run_spec3_multi_pixel_replace(rtdata_module):
     ]
 )
 def test_spec3_multi_pixel_replace(run_spec3_multi_pixel_replace, fitsdiff_default_kwargs, output):
-    """Regression test matching output files"""
+    """Regression test matching output files."""
     rt.is_like_truth(
         run_spec3_multi_pixel_replace, fitsdiff_default_kwargs, output,
         truth_path='truth/test_nirspec_ifu_pixel_replace',

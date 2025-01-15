@@ -42,8 +42,7 @@ class DataModelTypeError(Exception):
 
 
 def find_row(fits_table, match_fields):
-    """
-    Find a row in a FITS table matching fields.
+    """Find a row in a FITS table matching fields.
 
     Parameters
     ----------
@@ -63,6 +62,7 @@ def find_row(fits_table, match_fields):
     -------
     row : int, or None
         FITS table row index, None if no match.
+
     """
     def _normalize_strings(field):
         if isinstance(field[0], str):
@@ -81,8 +81,7 @@ def find_row(fits_table, match_fields):
 
 
 class DataSet():
-    """
-    Input dataset to which the photom information will be applied
+    """Input dataset to which the photom information will be applied.
 
     Parameters
     ----------
@@ -91,8 +90,7 @@ class DataSet():
 
     def __init__(self, model, inverse=False, source_type=None, mrs_time_correction=False,
                  correction_pars=None):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Store vital params in DataSet object, such as
         instrument, detector, filter, pupil, and exposure type.
@@ -113,6 +111,7 @@ class DataSet():
 
         correction_pars : dict
             Correction meta-data from a previous run.
+
         """
         # Setup attributes necessary for calculation.
         if correction_pars:
@@ -189,12 +188,13 @@ class DataSet():
 
     @property
     def attributes(self):
-        """Retrieve DataSet attributes
+        """Retrieve DataSet attributes.
 
         Returns
         -------
         attributes : dict
             A dict of `DataSet` attributes.
+
         """
         attributes = vars(self)
 
@@ -206,20 +206,20 @@ class DataSet():
         return attributes
 
     def update(self, attributes):
-        """Set DataSet attributes
+        """Set DataSet attributes.
 
         Parameters
         ----------
         attributes : dict
             The attributes to be set on DataSet
+
         """
         for key, value in attributes.items():
             setattr(self, key, value)
 
     def calc_nirspec(self, ftab, area_fname):
-        """
-        Extended Summary
-        -------------
+        """Extended Summary
+        ----------------
         For the NIRSPEC instrument, reference file matching is based on
         FILTER and GRATING, as well as SLIT name for the fixed-slits mode.
         The routine will find the corresponding information in the reference
@@ -239,7 +239,6 @@ class DataSet():
         -------
 
         """
-
         # Normal fixed-slit exposures get handled as a MultiSlitModel
         if self.exptype == 'NRS_FIXEDSLIT':
 
@@ -376,9 +375,8 @@ class DataSet():
                 area_model.close()
 
     def calc_niriss(self, ftab):
-        """
-        Extended Summary
-        -------------
+        """Extended Summary
+        ----------------
         For NIRISS matching is based on FILTER and PUPIL, as well as ORDER
         for spectroscopic modes.
         There may be multiple entries for a given FILTER+PUPIL combination,
@@ -400,8 +398,8 @@ class DataSet():
 
         Returns
         -------
-        """
 
+        """
         # Handle MultiSlit models separately, which are used for NIRISS WFSS
         if isinstance(self.input, datamodels.MultiSlitModel):
 
@@ -445,9 +443,8 @@ class DataSet():
             self.photom_io(ftab.phot_table[row])
 
     def calc_miri(self, ftab):
-        """
-        Extended Summary
-        -------------
+        """Extended Summary
+        ----------------
         For MIRI imaging and LRS modes, matching is based on FILTER and SUBARRAY.
         MIRI MRS uses dedicated photom reference files per CHANNEL+BAND.
 
@@ -466,8 +463,8 @@ class DataSet():
 
         Returns
         -------
-        """
 
+        """
         # Imaging detector
         if self.detector == 'MIRIMAGE':
 
@@ -575,9 +572,8 @@ class DataSet():
         return
 
     def calc_nircam(self, ftab):
-        """
-        Extended Summary
-        -------------
+        """Extended Summary
+        ----------------
         For NIRCAM, matching is based on FILTER and PUPIL.
         The routine will find the corresponding information in the reference
         file, apply the conversion factors, and store the scalar conversion
@@ -594,6 +590,7 @@ class DataSet():
 
         Returns
         -------
+
         """
         # Handle WFSS data separately from regular imaging
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS':
@@ -623,9 +620,8 @@ class DataSet():
             self.photom_io(ftab.phot_table[row])
 
     def calc_fgs(self, ftab):
-        """
-        Extended Summary
-        -------------
+        """Extended Summary
+        ----------------
         For FGS, there is no matching required, because the instrument does
         not contain any filters or pupil wheel elements. The only mode is CLEAR.
 
@@ -640,8 +636,8 @@ class DataSet():
 
         Returns
         -------
-        """
 
+        """
         # Read the first (and only) row in the reference file
         self.photom_io(ftab.phot_table[0])
 
@@ -664,8 +660,8 @@ class DataSet():
 
         dqmap : 2-D ndarray
             Array of DQ flags per pixel
-        """
 
+        """
         import numpy as np
         from .. assign_wcs import nirspec       # for NIRSpec IFU data
         import gwcs
@@ -729,8 +725,7 @@ class DataSet():
         return wave2d, area2d, dqmap
 
     def photom_io(self, tabdata, order=None):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Combine photometric scalar and wavelength-dependent conversion factors
         and apply to the science dataset.
@@ -1009,8 +1004,7 @@ class DataSet():
 
     def create_2d_conversion(self, model, exptype, conversion, waves, relresps,
                              order, use_wavecorr=None, include_dispersion=False):
-        """
-        Create a 2D array of photometric conversion values based on
+        """Create a 2D array of photometric conversion values based on
         wavelengths per pixel and response as a function of wavelength.
 
         Parameters
@@ -1041,8 +1035,8 @@ class DataSet():
             2D array of computed photometric conversion values
         no_cal : int
             2D mask indicating where no conversion is available
-        """
 
+        """
         # Get the 2D wavelength array corresponding to the input
         # image pixel values
         wl_array = get_wavelengths(model, exptype, order, use_wavecorr)
@@ -1070,7 +1064,7 @@ class DataSet():
         return conversion, no_cal
 
     def get_dispersion_array(self, wavelength_array, dispaxis):
-        """Create an array of dispersion values from the wavelength array
+        """Create an array of dispersion values from the wavelength array.
 
         Parameters
         ----------
@@ -1119,8 +1113,8 @@ class DataSet():
             1D array of computed photometric conversion values
         no_cal : int
             1D mask indicating where no conversion is available
-        """
 
+        """
         # Get the 2D wavelength array corresponding to the input
         # image pixel values
         wl_array = model.spec_table['WAVELENGTH']
@@ -1155,8 +1149,7 @@ class DataSet():
         return conversion, no_cal
 
     def pixarea_from_ftab(self, ftab):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
         primary header of the photom reference file.
@@ -1165,6 +1158,7 @@ class DataSet():
         ----------
         ftab : `~jwst.datamodels.JwstDataModel`
             A photom reference file data model
+
         """
         area_ster, area_a2 = None, None
         area_ster = ftab.meta.photometry.pixelarea_steradians
@@ -1179,8 +1173,7 @@ class DataSet():
         return area_ster, area_a2
 
     def save_area_info(self, ftab, area_fname):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
         primary header of the pixel area reference file or (for NIRSpec data)
@@ -1198,8 +1191,8 @@ class DataSet():
 
         area_fname : str
             Pixel area reference file name
-        """
 
+        """
         use_pixarea_rfile =  False
         area_ster, area_a2 = None, None
         if area_fname is not None and area_fname != "N/A":
@@ -1267,8 +1260,7 @@ class DataSet():
             pix_area.close()
 
     def save_area_nirspec(self, pix_area):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Read the pixel area value from the PIXAREA column in the selected row
         of the AREA table in the area reference file.
@@ -1279,8 +1271,8 @@ class DataSet():
         ----------
         pix_area : `~jwst.datamodels.JwstDataModel`
             Pixel area reference file data model
-        """
 
+        """
         exp_type = self.exptype
         pixarea = pix_area.area_table['pixarea']
         if exp_type == 'NRS_MSASPEC':
@@ -1358,8 +1350,7 @@ class DataSet():
             self.input.meta.photometry.pixelarea_steradians = 1.
 
     def apply_photom(self, photom_fname, area_fname):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Open the reference file, retrieve the conversion factors from the reference
         file that are appropriate to the instrument mode. This can consist of both
@@ -1383,7 +1374,6 @@ class DataSet():
             output data model with the flux calibrations applied
 
         """
-
         ftab = datamodels.open(photom_fname)
 
         # Load the pixel area reference file, if it exists, and attach the

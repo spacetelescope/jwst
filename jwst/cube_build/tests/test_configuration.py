@@ -1,6 +1,4 @@
-"""
-Unit test for Cube Build testing setting up configuration
-"""
+"""Unit test for Cube Build testing setting up configuration."""
 
 import pytest
 from stdatamodels.jwst import datamodels
@@ -101,8 +99,7 @@ subarray_nirspec = {
 
 @pytest.fixture(scope='function')
 def miri_ifushort_short():
-    """ Generate a IFU image """
-
+    """Generate a IFU image."""
     input_model = datamodels.IFUImageModel()
     input_model.meta.wcsinfo._instance.update(wcsinfo)
     input_model.meta.instrument._instance.update(mirifushort_short)
@@ -113,8 +110,7 @@ def miri_ifushort_short():
 
 @pytest.fixture(scope='function')
 def miri_full_coverage():
-    """ Generate a IFU images SHORT, LONG for all three bands """
-
+    """Generate a IFU images SHORT, LONG for all three bands."""
     input_model1 = datamodels.IFUImageModel()
     input_model1.meta.wcsinfo._instance.update(wcsinfo)
     input_model1.meta.instrument._instance.update(mirifushort_short)
@@ -176,8 +172,7 @@ def miri_full_coverage():
 
 @pytest.fixture(scope='function')
 def nirspec_medium_coverage():
-    """ Generate a IFU images NIRSpec G140M, G235M """
-
+    """Generate a IFU images NIRSpec G140M, G235M."""
     input_model1 = datamodels.IFUImageModel()
     input_model1.meta.wcsinfo._instance.update(wcsinfo)
     input_model1.meta.instrument._instance.update(nirspec_G140M)
@@ -201,8 +196,7 @@ def nirspec_medium_coverage():
 
 
 def test_calspec2_config(tmp_cwd, miri_ifushort_short):
-    """ Determine cube based on calspec2 setup """
-
+    """Determine cube based on calspec2 setup."""
     pars_input = {}
     pars_input['channel'] = []
     pars_input['subchannel'] = []
@@ -248,8 +242,7 @@ def test_calspec2_config(tmp_cwd, miri_ifushort_short):
 
 
 def test_calspec3_config_miri(tmp_cwd, miri_full_coverage):
-    """ Test CalSpec3 MIRI configuration default band cubes"""
-
+    """Test CalSpec3 MIRI configuration default band cubes."""
     pars_input = {}
     pars_input['channel'] = []
     pars_input['subchannel'] = []
@@ -321,8 +314,7 @@ def test_calspec3_config_miri(tmp_cwd, miri_full_coverage):
 
 
 def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
-    """ Test CalSpec3 MIRI configuration default band cubes"""
-
+    """Test CalSpec3 MIRI configuration default band cubes."""
     pars_input = {}
     pars_input['channel'] = []
     pars_input['subchannel'] = []
@@ -375,8 +367,7 @@ def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
 
 
 def test_calspec3_config_nirspec(tmp_cwd, nirspec_medium_coverage):
-    """ Test CalSpec3 configuration for NIRSpec - default band cubes"""
-
+    """Test CalSpec3 configuration for NIRSpec - default band cubes."""
     pars_input = {}
     pars_input['channel'] = []
     pars_input['subchannel'] = []
@@ -423,8 +414,7 @@ def test_calspec3_config_nirspec(tmp_cwd, nirspec_medium_coverage):
 
 
 def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
-    """ Test CalSpec3 configuration for NIRSpec - Multiband cubes"""
-
+    """Test CalSpec3 configuration for NIRSpec - Multiband cubes."""
     pars_input = {}
     pars_input['channel'] = []
     pars_input['subchannel'] = []

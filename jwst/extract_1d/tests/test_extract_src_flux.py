@@ -1,6 +1,4 @@
-"""
-Test for extract_1d._extract_src_flux
-"""
+"""Test for extract_1d._extract_src_flux."""
 import math
 
 import numpy as np

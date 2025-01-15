@@ -1,6 +1,4 @@
-"""
-Submodule for performing outlier detection on imaging data.
-"""
+"""Submodule for performing outlier detection on imaging data."""
 
 import logging
 
@@ -38,8 +36,7 @@ def detect_outliers(
     in_memory,
     make_output_path,
 ):
-    """
-    Flag outliers in imaging data.
+    """Flag outliers in imaging data.
 
     input_models is expected to be a ModelLibrary
 

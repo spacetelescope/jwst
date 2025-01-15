@@ -1,4 +1,4 @@
-"""Test utility funcs"""
+"""Test utility funcs."""
 from stpipe.utilities import resolve_step_class_alias
 from jwst.stpipe import record_step_status, query_step_status
 
@@ -17,7 +17,7 @@ KNOWN_STEPS = set(jwst.pipeline.__all__ + jwst.step.__all__)
 
 
 def test_all_steps():
-    """Test finding all defined steps and pipelines"""
+    """Test finding all defined steps and pipelines."""
     found_steps = all_steps()
     diff = KNOWN_STEPS.symmetric_difference(found_steps)
     assert not diff, f'Steps not accounted for. Confirm and check suffix and CRDS calpars.\n{diff}'

@@ -1,6 +1,4 @@
-"""
-Tests for extract_1d background fitting
-"""
+"""Tests for extract_1d background fitting."""
 import numpy as np
 import pytest
 

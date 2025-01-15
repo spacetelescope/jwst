@@ -8,9 +8,7 @@ __all__ = ["HlspStep"]
 
 
 class HlspStep(Step):
-
-    """
-    HlspStep: Make High-Level Science Products (HLSP's) from the results of
+    """HlspStep: Make High-Level Science Products (HLSP's) from the results of
     coronagraphic exposure that's had KLIP processing applied to it.
     """
 

@@ -30,9 +30,7 @@ def run_pipeline(rtdata_module):
     'jw02459005001_03103_00001-seg001_nrca3_rateints.fits'],
     ids=['rate', 'rateints'])
 def test_nircam_detector1_subarray(run_pipeline, fitsdiff_default_kwargs, output):
-    """
-    Regression test of calwebb_detector1 pipeline performed on NIRSpec data.
-    """
+    """Regression test of calwebb_detector1 pipeline performed on NIRSpec data."""
     rtdata = run_pipeline
     rtdata.output = output
     rtdata.get_truth(os.path.join("truth/test_nircam_subarray_4amp", output))

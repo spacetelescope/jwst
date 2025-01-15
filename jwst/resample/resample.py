@@ -22,8 +22,7 @@ __all__ = ["ResampleData"]
 
 
 class ResampleData:
-    """
-    This is the controlling routine for the resampling process.
+    """This is the controlling routine for the resampling process.
 
     Notes
     -----
@@ -36,13 +35,13 @@ class ResampleData:
          between all input arrays and the output array.
       3. Updates output data model with output arrays from drizzle, including
          a record of metadata from all input models.
+
     """
 
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
                  pixfrac=1.0, kernel="square", fillval="NAN", wht_type="ivm",
                  good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
-        """
-        Parameters
+        """Parameters
         ----------
         input_models : library of objects
             library of data models, one for each input image
@@ -62,6 +61,7 @@ class ResampleData:
                 should be kept in memory or written out to disk and
                 deleted from memory. Default value is `True` to keep
                 all products in memory.
+
         """
         self.output_dir = None
         self.output_filename = output
@@ -150,7 +150,7 @@ class ResampleData:
 
 
     def _create_output_model(self, ref_input_model=None):
-        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        """Create a new blank model and update it's meta with info from ``ref_input_model``."""
         output_model = datamodels.ImageModel(None)  # tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
@@ -165,16 +165,14 @@ class ResampleData:
         return output_model
 
     def do_drizzle(self, input_models):
-        """Pick the correct drizzling mode based on self.single
-        """
+        """Pick the correct drizzling mode based on self.single."""
         if self.single:
             return self.resample_many_to_many(input_models)
         else:
             return self.resample_many_to_one(input_models)
 
     def _get_intensity_scale(self, img):
-        """
-        Compute an intensity scale from the input and output pixel area.
+        """Compute an intensity scale from the input and output pixel area.
 
         For imaging data, the scaling is used to account for differences
         between the nominal pixel area and the average pixel area for
@@ -193,6 +191,7 @@ class ResampleData:
         -------
         iscale : float
             The scale to apply to the input data before drizzling.
+
         """
         input_pixflux_area = img.meta.photometry.pixelarea_steradians
         if input_pixflux_area:
@@ -224,7 +223,7 @@ class ResampleData:
         return iscale
 
     def resample_group(self, input_models, indices, compute_error=False):
-        """Apply resample_many_to_many for one group
+        """Apply resample_many_to_many for one group.
 
         Parameters
         ----------
@@ -235,6 +234,7 @@ class ResampleData:
         compute_error : bool, optional
             If True, an approximate error image will be resampled
             alongside the science image.
+
         """
         output_model = None
 
@@ -763,7 +763,7 @@ class ResampleData:
         )
 
     def update_exposure_times(self, output_model, input_models):
-        """Modify exposure time metadata in-place"""
+        """Modify exposure time metadata in-place."""
         self._init_exptime_counters()
         with input_models:
             for _, indices in input_models.group_indices.items():
@@ -773,10 +773,9 @@ class ResampleData:
 
 
 def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
-    """
-    xmin, xmax, ymin, ymax - integer coordinates of pixel boundaries
+    """xmin, xmax, ymin, ymax - integer coordinates of pixel boundaries
     step - distance between points along an edge
-    shrink - number of pixels by which to reduce `shape`
+    shrink - number of pixels by which to reduce `shape`.
 
     Returns a list of points and the area of the rectangle
     """
@@ -824,8 +823,7 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
 
 
 def compute_image_pixel_area(wcs):
-    """ Computes pixel area in steradians.
-    """
+    """Computes pixel area in steradians."""
     if wcs.array_shape is None:
         raise ValueError("WCS must have array_shape attribute set.")
 
@@ -899,8 +897,7 @@ def compute_image_pixel_area(wcs):
 
 
 def copy_asn_info_from_library(library, output_model):
-    """
-    Transfer association information from the input library to the output model.
+    """Transfer association information from the input library to the output model.
 
     Parameters
     ----------
@@ -909,6 +906,7 @@ def copy_asn_info_from_library(library, output_model):
 
     output_model : DataModel
         The output data model to which the association information will be copied.
+
     """
     if not hasattr(library, "asn"):
         # No ASN table, occurs when input comes from ModelContainer in spectroscopic modes

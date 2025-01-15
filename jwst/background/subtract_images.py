@@ -6,8 +6,7 @@ log.setLevel(logging.DEBUG)
 
 
 def subtract(model1, model2):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Subtract one data model from another, and include updated DQ
     in output.
@@ -24,8 +23,8 @@ def subtract(model1, model2):
     -------
     output: JWST data model
         subtracted data model
-    """
 
+    """
     # Create the output model as a copy of the first input
     output = model1.copy()
 

@@ -6,9 +6,7 @@ from jwst.stpipe import Step
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
-    """
-    Run the calwebb_spec3 pipeline on a NIRSpec IFU moving target.
-    """
+    """Run the calwebb_spec3 pipeline on a NIRSpec IFU moving target."""
     rtdata = rtdata_module
 
     # Get the ASN file and input exposures

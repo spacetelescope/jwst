@@ -9,9 +9,7 @@ OUTSTEM_SELFCAL = "result_selfcalasn"
 
 @pytest.fixture(scope="module")
 def run_pipeline_background(rtdata_module):
-    '''Run the pipeline with asn in which the background exposures are marked as `background`.
-    '''
-
+    """Run the pipeline with asn in which the background exposures are marked as `background`."""
     rtdata = rtdata_module
     rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_asn.json")
     Step.from_cmdline(['calwebb_spec2', rtdata.input,
@@ -26,8 +24,7 @@ def run_pipeline_background(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_pipeline_selfcal(rtdata_module):
-    '''Identical pipeline run to above, but input asn sets all background exposures as `selfcal` type.
-    '''
+    """Identical pipeline run to above, but input asn sets all background exposures as `selfcal` type."""
     rtdata = rtdata_module
     rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_selfcal_asn.json")
     Step.from_cmdline(['calwebb_spec2', rtdata.input,
@@ -43,7 +40,6 @@ def run_pipeline_selfcal(rtdata_module):
 @pytest.mark.bigdata
 def test_miri_mrs_badpix_selfcal(run_pipeline_selfcal, fitsdiff_default_kwargs):
     """Run a test for MIRI MRS data with dedicated background exposures."""
-
     rtdata = run_pipeline_selfcal
 
     # Get the truth file
@@ -65,7 +61,6 @@ def test_miri_mrs_badpix_selfcal(run_pipeline_selfcal, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_miri_mrs_badpix_selfcal_bkg(basename, run_pipeline_background, fitsdiff_default_kwargs):
     """Run a test for MIRI MRS data with dedicated background exposures."""
-
     rtdata = run_pipeline_background
 
     # Get the truth file

@@ -34,7 +34,6 @@ def run_pipeline(rtdata_module):
     "assign_wcs", "msa_flagging", "flat_field", "cal", "s3d", "x1d"])
 def test_nirspec_lamp_ifu_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 on NIRSpec lamp in IFU mode."""
-
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = replace_suffix(

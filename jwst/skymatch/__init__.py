@@ -1,5 +1,4 @@
-"""
-This package provides support for sky background subtraction and equalization
+"""This package provides support for sky background subtraction and equalization
 (matching).
 
 """

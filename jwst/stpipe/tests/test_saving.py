@@ -1,4 +1,4 @@
-"""Test step/pipeline saving"""
+"""Test step/pipeline saving."""
 from glob import glob
 import os
 from os import path
@@ -12,8 +12,7 @@ data_name, data_ext = path.splitext(data_fn)
 
 
 def test_make_output_path():
-    """Test the basic make_output_file method"""
-
+    """Test the basic make_output_file method."""
     step = Step()
     output_path = step.make_output_path('junk_uncal.fits')
     assert output_path == 'junk_jwststep.fits'
@@ -35,7 +34,7 @@ def test_make_output_path():
 
 
 def test_save_step_default(mk_tmp_dirs):
-    """Default save should be current working directory"""
+    """Default save should be current working directory."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -50,7 +49,7 @@ def test_save_step_default(mk_tmp_dirs):
 
 
 def test_save_step_withoutput(mk_tmp_dirs):
-    """Default save should be current working directory"""
+    """Default save should be current working directory."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     output_file = 'junk.fits'
@@ -68,7 +67,7 @@ def test_save_step_withoutput(mk_tmp_dirs):
 
 
 def test_save_step_withoutputsuffix(mk_tmp_dirs):
-    """Default save should be current working directory"""
+    """Default save should be current working directory."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     output_file = 'junk_rate.fits'
@@ -86,7 +85,7 @@ def test_save_step_withoutputsuffix(mk_tmp_dirs):
 
 
 def test_save_step_withdir(mk_tmp_dirs):
-    """Save to specified folder"""
+    """Save to specified folder."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -105,7 +104,7 @@ def test_save_step_withdir(mk_tmp_dirs):
 
 
 def test_save_step_withdir_environment(mk_tmp_dirs):
-    """Save to specified folder"""
+    """Save to specified folder."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     os.environ['TSSWE_OUTPATH'] = tmp_data_path
@@ -126,7 +125,7 @@ def test_save_step_withdir_environment(mk_tmp_dirs):
 
 
 def test_save_step_withdir_withoutput(mk_tmp_dirs):
-    """Save to specified folder"""
+    """Save to specified folder."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     output_file = 'junk.fits'
@@ -149,7 +148,7 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
 
 
 def test_save_container(mk_tmp_dirs):
-    """Step with output_use_model"""
+    """Step with output_use_model."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -164,7 +163,7 @@ def test_save_container(mk_tmp_dirs):
 
 
 def test_save_container_usemodel(mk_tmp_dirs):
-    """Step with output_use_model"""
+    """Step with output_use_model."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -180,7 +179,7 @@ def test_save_container_usemodel(mk_tmp_dirs):
 
 
 def test_save_container_withfile(mk_tmp_dirs):
-    """Step with output_use_model"""
+    """Step with output_use_model."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -196,7 +195,7 @@ def test_save_container_withfile(mk_tmp_dirs):
 
 
 def test_save_pipeline_default(mk_tmp_dirs):
-    """Default save should be current working directory"""
+    """Default save should be current working directory."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     step_fn = 'save_pipeline.cfg'
 
@@ -229,7 +228,7 @@ def test_save_pipeline_default(mk_tmp_dirs):
 
 
 def test_save_pipeline_withdir(mk_tmp_dirs):
-    """Save to specified folder"""
+    """Save to specified folder."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     step_fn = 'save_pipeline.cfg'
     step_fn_path = path.join(path.dirname(__file__), 'steps', step_fn)
@@ -253,7 +252,7 @@ def test_save_pipeline_withdir(mk_tmp_dirs):
 
 
 def test_save_substep_withdir(mk_tmp_dirs):
-    """Save to specified folder"""
+    """Save to specified folder."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     step_fn = 'save_pipeline.cfg'
     step_fn_path = path.join(path.dirname(__file__), 'steps', step_fn)
@@ -290,7 +289,7 @@ def test_save_substep_withdir(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
@@ -303,7 +302,7 @@ def test_save_proper_pipeline(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_withdir(mk_tmp_dirs):
-    """Test how pipeline saving should work with output_dir"""
+    """Test how pipeline saving should work with output_dir."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -319,7 +318,7 @@ def test_save_proper_pipeline_withdir(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
-    """Test how pipeline saving should work with output_dir"""
+    """Test how pipeline saving should work with output_dir."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     output_name = 'junk.fits'
@@ -341,7 +340,7 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_substeps(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
@@ -358,7 +357,7 @@ def test_save_proper_pipeline_substeps(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
@@ -376,7 +375,7 @@ def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -397,7 +396,7 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
@@ -410,7 +409,7 @@ def test_save_proper_pipeline_container(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container_withdir(mk_tmp_dirs):
-    """Test how pipeline saving should work with output_dir"""
+    """Test how pipeline saving should work with output_dir."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -426,7 +425,7 @@ def test_save_proper_pipeline_container_withdir(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
-    """Test how pipeline saving should work with output_dir"""
+    """Test how pipeline saving should work with output_dir."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     output_name = 'junk.fits'
@@ -450,7 +449,7 @@ def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
@@ -470,7 +469,7 @@ def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container_substeps_skip(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
@@ -491,7 +490,7 @@ def test_save_proper_pipeline_container_substeps_skip(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
@@ -515,7 +514,7 @@ def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
@@ -544,7 +543,7 @@ def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
 
 
 def test_save_proper_pipeline_container_nosearch(mk_tmp_dirs):
-    """Test how pipeline saving should work"""
+    """Test how pipeline saving should work."""
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,

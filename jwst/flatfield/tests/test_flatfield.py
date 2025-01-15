@@ -28,8 +28,7 @@ from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES, NRS_SPEC_MODES
     ] + [("NIRSPEC", exptype) for exptype in NRS_IMAGING_MODES]
 )
 def test_flatfield_step_interface(instrument, exptype):
-    """Test that the basic interface works for data requiring a FLAT reffile"""
-
+    """Test that the basic interface works for data requiring a FLAT reffile."""
     shape = (20, 20)
 
     data = datamodels.ImageModel(shape)
@@ -77,7 +76,7 @@ def test_flatfield_step_interface(instrument, exptype):
 
 
 def exptypes():
-    """Generate NRS EXPTYPES from the schema enum, removing spec types"""
+    """Generate NRS EXPTYPES from the schema enum, removing spec types."""
     model = datamodels.ImageModel()
     alltypes = set(model.meta.exposure._schema['properties']['type']['enum'])
     spectypes = set(NRS_SPEC_MODES)
@@ -89,8 +88,7 @@ def exptypes():
     exptypes()
 )
 def test_nirspec_flatfield_step_interface(exptype):
-    """Test that the interface works all NIRSpec types"""
-
+    """Test that the interface works all NIRSpec types."""
     shape = (20, 20)
 
     data = datamodels.ImageModel(shape)
@@ -191,7 +189,7 @@ def create_nirspec_flats(shape, msa=False):
 
 
 def test_nirspec_bots_flat():
-    """Test that the interface works for NIRSpec BOTS data"""
+    """Test that the interface works for NIRSpec BOTS data."""
     shape = (3, 20, 20)
     w_shape = (10, 20, 20)
 

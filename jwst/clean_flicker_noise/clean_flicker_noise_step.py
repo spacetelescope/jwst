@@ -7,8 +7,7 @@ __all__ = ["CleanFlickerNoiseStep"]
 
 
 class CleanFlickerNoiseStep(Step):
-    """
-    CleanFlickerNoiseStep: This step performs flicker noise correction ("cleaning").
+    """CleanFlickerNoiseStep: This step performs flicker noise correction ("cleaning").
 
     Input data is expected to be a ramp file (RampModel), in between
     jump and ramp fitting steps, or a rate file (ImageModel or CubeModel).
@@ -41,8 +40,7 @@ class CleanFlickerNoiseStep(Step):
     """
 
     def process(self, input):
-        """
-        Fit and subtract 1/f background noise from a ramp data set.
+        """Fit and subtract 1/f background noise from a ramp data set.
 
         Parameters
         ----------
@@ -103,8 +101,8 @@ class CleanFlickerNoiseStep(Step):
         -------
         output_model : DataModel
             The flicker noise corrected datamodel
-        """
 
+        """
         # Open the input data model
         with datamodels.open(input) as input_model:
 

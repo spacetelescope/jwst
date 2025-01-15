@@ -27,8 +27,7 @@ __all__ = ["create_pipeline", "imaging", "tsgrism", "wfss"]
 
 
 def create_pipeline(input_model, reference_files):
-    """
-    Create the WCS pipeline based on EXP_TYPE.
+    """Create the WCS pipeline based on EXP_TYPE.
 
     Parameters
     ----------
@@ -42,8 +41,8 @@ def create_pipeline(input_model, reference_files):
     pipeline : list
         The pipeline list that is returned is suitable for
         input into  gwcs.wcs.WCS to create a GWCS object.
-    """
 
+    """
     log.debug(f'reference files used in NIRCAM WCS pipeline: {reference_files}')
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -52,8 +51,7 @@ def create_pipeline(input_model, reference_files):
 
 
 def imaging(input_model, reference_files):
-    """
-    The NIRCAM imaging WCS pipeline.
+    """The NIRCAM imaging WCS pipeline.
 
     Parameters
     ----------
@@ -73,6 +71,7 @@ def imaging(input_model, reference_files):
     -----
     It includes three coordinate frames - "detector", "v2v3", and "world",
     and uses the "distortion" reference file.
+
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
@@ -106,8 +105,7 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    """
-    Create the "detector" to "v2v3" transform for imaging mode.
+    """Create the "detector" to "v2v3" transform for imaging mode.
 
     Parameters
     ----------
@@ -190,8 +188,8 @@ def tsgrism(input_model, reference_files):
     are stored in keywords XREF_SCI, YREF_SCI.
     offset special requirements may be encoded in the X_OFFSET parameter,
     but those are handled in extract_2d.
-    """
 
+    """
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
         raise ValueError('The input exposure is not a NIRCAM time series grism')
@@ -308,8 +306,7 @@ def tsgrism(input_model, reference_files):
 
 
 def wfss(input_model, reference_files):
-    """
-    Create the WCS pipeline for a NIRCAM grism observation.
+    """Create the WCS pipeline for a NIRCAM grism observation.
 
     Parameters
     ----------
@@ -353,8 +350,8 @@ def wfss(input_model, reference_files):
     The values of the min and max corners, taken from the computed minimum
     bounding box are saved in the photometry catalog in units of RA, DEC
     so they can be translated to pixels by the dispersed image's imaging-wcs.
-    """
 
+    """
     # The input is the grism image
     if not isinstance(input_model, ImageModel):
         raise TypeError('The input data model must be an ImageModel.')

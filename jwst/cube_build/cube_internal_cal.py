@@ -1,5 +1,5 @@
-""" Routines for creating single band, single exposure IFU Cubes with
-the interpolation method = area , coord_system = internal_cal
+"""Routines for creating single band, single exposure IFU Cubes with
+the interpolation method = area , coord_system = internal_cal.
 """
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
@@ -16,7 +16,7 @@ def match_det2cube(instrument,
                    crval_along, crval3,
                    cdelt_along, cdelt3,
                    naxis1, naxis2):
-    """ Match detector pixels to output plane in local IFU coordinate system
+    """Match detector pixels to output plane in local IFU coordinate system.
 
     This routine assumes a 1-1 mapping in across slice to slice no.
     This routine assumes the output coordinate systems is local IFU plane.
@@ -44,8 +44,8 @@ def match_det2cube(instrument,
     Returns
     -------
     spaxel filled in with needed information on overlapping detector pixels
-    """
 
+    """
     x = _toindex(x)
     y = _toindex(y)
     pixel_dq = input_model.dq[y, x]

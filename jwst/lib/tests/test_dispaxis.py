@@ -1,6 +1,4 @@
-"""
-Test for dispaxis
-"""
+"""Test for dispaxis."""
 
 from jwst.lib import dispaxis
 

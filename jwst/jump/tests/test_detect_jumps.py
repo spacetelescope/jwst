@@ -77,7 +77,7 @@ def test_exec_time_many_crs(setup_inputs):
 
 def test_nocrs_noflux(setup_inputs):
     """"
-    All pixel values are zero. So slope should be zero
+    All pixel values are zero. So slope should be zero.
     """
     model, rnoise, gain = setup_inputs(ngroups=5)
     out_model = run_detect_jumps(model, gain, rnoise, 4.0, 5.0, 6.0, 'none', 200, 4, True)
@@ -87,7 +87,7 @@ def test_nocrs_noflux(setup_inputs):
 def test_nocrs_noflux_badgain_pixel(setup_inputs):
     """"
     all pixel values are zero. So slope should be zero, pixel with bad gain should
-    have pixel dq set to 'NO_GAIN_VALUE' and 'DO_NOT_USE'
+    have pixel dq set to 'NO_GAIN_VALUE' and 'DO_NOT_USE'.
     """
     model, rnoise, gain = setup_inputs(ngroups=5, nrows=20, ncols=20)
     gain.data[7, 7] = -10  # bad gain
@@ -113,7 +113,7 @@ def test_nocrs_noflux_subarray(setup_inputs):
 
 def test_onecr_10_groups_neighbors_flagged(setup_inputs):
     """"
-    A single CR in a 10 group exposure
+    A single CR in a 10 group exposure.
     """
     grouptime = 3.0
     ingain = 200
@@ -220,8 +220,7 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
 
 
 def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
-    """
-    This test is based on actual MIRI data that was having the incorrect
+    """This test is based on actual MIRI data that was having the incorrect
     group flagged with JUMP_DET (it was flagging group 2 instead of group 5).
     This makes sure that group 5 is getting flagged.
     Note that the first and last frames/groups are all flagged with DO_NOT_USE,
@@ -310,9 +309,8 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
 def add_crs(model, crs_frac):
     """"
     Randomly add a cosmic ray of magnitude CR_MAG to a fraction (crs_frac)
-    of the groups in the model's SCI array
+    of the groups in the model's SCI array.
     """
-
     num_ints = model.data.shape[0]
     num_groups = model.data.shape[1]
     num_rows = model.data.shape[2]
@@ -708,7 +706,7 @@ def test_single_CR_neighbor_flag(setup_inputs):
     """"
     A single CR in a 10 group exposure. Tests that:
     - if neighbor-flagging is set, the 4 neighboring pixels *ARE* flagged, and
-    - if neighbor-flagging is *NOT* set, the 4 neighboring pixels are *NOT* flagged
+    - if neighbor-flagging is *NOT* set, the 4 neighboring pixels are *NOT* flagged.
     """
     grouptime = 3.0
     ingain = 5
@@ -786,8 +784,7 @@ def test_proc(setup_inputs):
 
 
 def test_adjacent_CRs(setup_inputs):
-    """
-    Three CRs in a 10 group exposure; the CRs have overlapping neighboring
+    """Three CRs in a 10 group exposure; the CRs have overlapping neighboring
     pixels. This test makes sure that the correct pixels are flagged.
     """
     grouptime = 3.0

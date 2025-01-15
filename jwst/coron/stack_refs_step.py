@@ -8,9 +8,7 @@ __all__ = ["StackRefsStep"]
 
 
 class StackRefsStep(Step):
-
-    """
-    StackRefsStep: Stack multiple PSF reference exposures into a
+    """StackRefsStep: Stack multiple PSF reference exposures into a
     single CubeModel, for use by subsequent coronagraphic steps.
     """
 

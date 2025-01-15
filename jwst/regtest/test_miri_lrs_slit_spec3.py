@@ -1,5 +1,6 @@
-""" Test of the spec3 pipeline using MIRI LRS fixed-slit exposures.
-    This takes an association and generates the level 3 products."""
+"""Test of the spec3 pipeline using MIRI LRS fixed-slit exposures.
+This takes an association and generates the level 3 products.
+"""
 import pytest
 import numpy as np
 from gwcs import wcstools
@@ -16,8 +17,7 @@ from jwst import datamodels
     params=["default_wcs", "user_wcs", "user_wcs+shape", "user_wcs+shape1"]
 )
 def run_pipeline(rtdata_module, request):
-    """
-    Run the calwebb_spec3 pipeline on an ASN of nodded MIRI LRS
+    """Run the calwebb_spec3 pipeline on an ASN of nodded MIRI LRS
     fixed-slit exposures using different options for the WCS and output
     image shape for the resample step.
 
@@ -81,9 +81,9 @@ def run_pipeline(rtdata_module, request):
 @pytest.mark.parametrize("suffix", ["s2d", "x1d"])
 def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec3 pipeline on MIRI
-       LRS fixed-slit data using along-slit-nod pattern for
-       background subtraction."""
-
+    LRS fixed-slit data using along-slit-nod pattern for
+    background subtraction.
+    """
     # Run the pipeline and retrieve outputs
     rtdata = rtdata_module
 

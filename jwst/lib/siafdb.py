@@ -1,4 +1,4 @@
-"""SIAF Database Access
+"""SIAF Database Access.
 
 Provide a common interface to different versions of the SIAF.
 
@@ -51,7 +51,7 @@ SIAF_MAP = {'V2Ref': 'v2_ref', 'V3Ref': 'v3_ref', 'V3IdlYAngle': 'v3yangle', 'VI
 
 
 class SiafDb:
-    """Use pysiaf as the source of siaf information
+    """Use pysiaf as the source of siaf information.
 
     Parameters
     ----------
@@ -69,6 +69,7 @@ class SiafDb:
     The interpretation of `source` is as follows:
 
     """
+
     def __init__(self, source=None, prd=None):
         logger_pysiaf = logging.getLogger('pysiaf')
         log_level = logger_pysiaf.getEffectiveLevel()
@@ -85,7 +86,7 @@ class SiafDb:
         self.xml_path = self.get_xml_path(source, prd)
 
     def get_aperture(self, aperture, useafter=None):
-        """Get the pysiaf.Aperture for an aperture
+        """Get the pysiaf.Aperture for an aperture.
 
         Parameters
         ----------
@@ -98,6 +99,7 @@ class SiafDb:
         -------
         aperture : pysiaf.Aperture
             The aperture specification.
+
         """
         if not useafter:
             useafter = date.today().strftime('%Y-%m-%d')
@@ -108,8 +110,7 @@ class SiafDb:
         return aperture
 
     def get_wcs(self, aperture, to_detector=False, useafter=None):
-        """
-        Query the SIAF database file and get WCS values.
+        """Query the SIAF database file and get WCS values.
 
         Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
         and extract the following keywords:
@@ -131,6 +132,7 @@ class SiafDb:
         -------
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
+
         """
         aperture = self.get_aperture(aperture, useafter=useafter)
 
@@ -160,7 +162,7 @@ class SiafDb:
         return siaf
 
     def get_xml_path(self, source, prd):
-        """Determine the XML source to use
+        """Determine the XML source to use.
 
         Parameters
         ----------
@@ -184,8 +186,8 @@ class SiafDb:
         ------
         ValueError
             If `source` does not resolve to a folder or `prd` is not a valid PRD version.
-        """
 
+        """
         # If `source` is defined and valid, use that.
         xml_path = None
         if source is not None:
@@ -244,6 +246,7 @@ def nearest_prd(pysiaf_module, prd):
     -------
     prd_to_use, xml_path : str, Path
         The PRD name and path to the XML files of the PRD that is to be used.
+
     """
     prd = prd.upper()
     if not prd.startswith('PRDOPSSOC'):

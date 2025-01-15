@@ -16,8 +16,7 @@ log.setLevel(logging.DEBUG)
 
 def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
                             radius_outer):
-    """
-    Create a photometric catalog for NIRCam TSO imaging observations.
+    """Create a photometric catalog for NIRCam TSO imaging observations.
 
     Parameters
     ----------
@@ -39,8 +38,8 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     catalog : `~astropy.table.QTable`
         An astropy QTable (Quantity Table) containing the source
         photometry.
-    """
 
+    """
     if not isinstance(datamodel, CubeModel):
         raise ValueError('The input data model must be a CubeModel.')
 

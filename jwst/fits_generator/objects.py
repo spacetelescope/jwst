@@ -41,11 +41,11 @@ from ..fits_generator import util
 DEBUG_TYPES = True
 
 class ParseState():
-    """
-    Keeps track of the current state of the parser -- that is which
+    """Keeps track of the current state of the parser -- that is which
     HDU and card is currently being examined.  Used to give detailed
     information in error log messages.
     """
+
     def __init__(self):
         self.file = ''
         self.hdu = 0
@@ -60,12 +60,10 @@ class ParseState():
 
 
 class Object():
-    """
-    The base class of all objects that form the FITS file hierarchy.
-    """
+    """The base class of all objects that form the FITS file hierarchy."""
+
     def verify(self, value, error_collector, state):
-        """
-        Verifies *value* against the type.
+        """Verifies *value* against the type.
 
         Parameters
         ----------
@@ -89,13 +87,13 @@ class Object():
             Returns `True` if the value is valid, otherwise `False`.
             Extra information about the error will be logged to the
             *error_collector* function.
+
         """
         raise NotImplementedError(
             "This method must be overridden in the subclass.")
 
     def generate(self, input_files, error_collector, state):
-        """
-        Generates a new value of the type.
+        """Generates a new value of the type.
 
         Parameters
         ----------
@@ -118,13 +116,13 @@ class Object():
         -------
         result : object
             The generated object.
+
         """
         raise NotImplementedError(
             "This method must be overridden in the subclass.")
 
     def describe(self, stream, state):
-        """
-        Generates a document describing the given type.
+        """Generates a document describing the given type.
 
         Parameters
         ----------
@@ -138,6 +136,7 @@ class Object():
         Returns
         -------
         None
+
         """
         raise NotImplementedError(
             "This method must be overridden in the subclass.")
@@ -151,16 +150,12 @@ class Object():
 
 
 class Card(Object):
-    """
-    Defines how to verify and generate a key/value card.
+    """Defines how to verify and generate a key/value card."""
 
-    """
     def __init__(self, name, value='#UNKNOWN', comment='',
                  verify=None, generate=None, optional=True):
-        """
-        Parameters
+        """Parameters
         ----------
-
         name : str
             The key
 
@@ -211,6 +206,7 @@ class Card(Object):
             verification step will not complain if the card is
             missing.  When `False`, if the card is missing, an error
             will be emitted.
+
         """
         Object.__init__(self)
 
@@ -281,9 +277,7 @@ class Card(Object):
     generate.__doc__ = Object.generate.__doc__
 
     def get_comment(self, fitsfiles, error_collector, state):
-        """
-        Returns a comment for the card, given the input FITS file.
-        """
+        """Returns a comment for the card, given the input FITS file."""
         return self.comment
 
     def describe(self, stream, state):
@@ -292,17 +286,17 @@ class Card(Object):
 
 
 class Header(Object):
-    """
-    Defines a header, specifically the order and substance of the
+    """Defines a header, specifically the order and substance of the
     key/value cards it should contain.
     """
+
     def __init__(self, cards=None):
-        """
-        Parameters
+        """Parameters
         ----------
         cards : iterable of `Card` instances
 
             Defines how each card is verified and generated.
+
         """
         Object.__init__(self)
 
@@ -400,9 +394,7 @@ class Header(Object):
 
 
 class Data(Object):
-    """
-    Describes how a data section is verified and generated.
-    """
+    """Describes how a data section is verified and generated."""
 
     def __init__(self):
         Object.__init__(self)
@@ -428,16 +420,15 @@ class Data(Object):
 
 
 class HDU(Object):
-    """
-    Describes a single HDU (how a header and its data are bundled together.
-    """
+    """Describes a single HDU (how a header and its data are bundled together."""
+
     def __init__(self, header=None, data=None, name=None):
-        """
-        Parameters
+        """Parameters
         ----------
         header : `Header` instance
 
         data : `Data` instance
+
         """
         Object.__init__(self)
 
@@ -510,13 +501,10 @@ class HDU(Object):
 
 
 class File(list, Object):
-    """
-    Describes the order of the HDUs in a complete FITS file.
-    """
+    """Describes the order of the HDUs in a complete FITS file."""
 
     def __init__(self, hdus=[], name='FITS File'):
-        """
-        Parameters
+        """Parameters
         ----------
         hdus : list of `HDU` objects
 
@@ -524,6 +512,7 @@ class File(list, Object):
 
         name : string
             The name of the FITS file type
+
         """
         Object.__init__(self)
 

@@ -1,5 +1,4 @@
-""" Read in reference files for the cube_build setp
-"""
+"""Read in reference files for the cube_build setp."""
 from stdatamodels.jwst import datamodels
 
 import logging
@@ -15,7 +14,7 @@ def read_cubepars(par_filename,
                   all_grating,
                   all_filter,
                   instrument_info):
-    """ Read in cube parameter reference file
+    """Read in cube parameter reference file.
 
     Based on the instrument and channel/subchannels (MIRI) or
     grating/filter(NIRSPEC), read in the appropriate columns in the

@@ -20,8 +20,7 @@ __all__ = ["adjust_wcs", "transfer_wcs_correction"]
 
 def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
                scale_factor=1.0):
-    """
-    Apply corrections to an imaging WCS of 'cal' data models.
+    """Apply corrections to an imaging WCS of 'cal' data models.
 
     .. warning::
         This function is not designed to handle neither FITS WCS nor
@@ -62,9 +61,9 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
 
     Returns
     -------
-
     wcs : `gwcs.WCS`
         Adjusted WCS object.
+
     """
     # convert input angles to degrees:
     u_deg = units.Unit('deg')
@@ -115,8 +114,7 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0,
 
 
 def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
-    """
-    Applies the same *total* WCS correction that was applied by ``tweakreg`` (!)
+    """Applies the same *total* WCS correction that was applied by ``tweakreg`` (!)
     to the WCS in the ``from_image`` data model to the WCS of the ``to_image``
     data model. In some ways this function is analogous function to the
     ``tweakback`` function for HST available in the
@@ -152,7 +150,6 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
 
     Parameters
     ----------
-
     to_image : str, ImageModel
         Image model to which the correction should be applied/transferred to.
 
@@ -192,7 +189,6 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
 
     Returns
     -------
-
     Upon return, if the ``to_image`` argument is an `ImageModel` it will be
     modified with an updated ``ImageModel.meta.wcs`` WCS model.
     If ``to_image`` argument is a file name of an ``ImageModel``, that

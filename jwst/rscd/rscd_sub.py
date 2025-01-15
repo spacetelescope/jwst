@@ -12,8 +12,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(output_model, rscd_model, type):
-    """
-    Short Summary
+    """Short Summary
     -------------
     if type = baseline the correction sets initial groups in the integration
     to skip
@@ -36,7 +35,6 @@ def do_correction(output_model, rscd_model, type):
         RSCD-corrected science data
 
     """
-
     # Retrieve the reference parameters for this exposure type
     param = get_rscd_parameters(output_model, rscd_model)
 
@@ -60,8 +58,7 @@ def do_correction(output_model, rscd_model, type):
 
 
 def correction_skip_groups(output, group_skip):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Set the initial groups in integration to DO_NOT_USE to skip groups
     affected by RSCD effect
@@ -78,8 +75,8 @@ def correction_skip_groups(output, group_skip):
     -------
     output_model: ~jwst.datamodels.RampModel
         RSCD-corrected science data
-    """
 
+    """
     # General exposure parameters
     sci_ngroups = output.meta.exposure.ngroups
     sci_nints = output.meta.exposure.nints
@@ -126,8 +123,7 @@ def correction_skip_groups(output, group_skip):
 
 
 def correction_decay_function(output, param):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Applies rscd correction to science arrays
     The last frame value from the previous integration is calculated two ways:
@@ -162,7 +158,6 @@ def correction_decay_function(output, param):
         RSCD-corrected science data
 
     """
-
     # Save some data params for easy use later
     sci_nints = output.data.shape[0]       # number of integrations
     sci_ngroups = output.data.shape[1]     # number of groups
@@ -292,9 +287,8 @@ def correction_decay_function(output, param):
 
 
 def get_rscd_parameters(input_model, rscd_model):
-    """
-    Read in the parameters from the reference file
-    Store the parameters in a param dictionary
+    """Read in the parameters from the reference file
+    Store the parameters in a param dictionary.
 
     Parameters
     ----------
@@ -310,7 +304,6 @@ def get_rscd_parameters(input_model, rscd_model):
         dictionary of parameters
 
     """
-
     # Reference file parameters held in dictionary: param
     param = {}
 
@@ -425,10 +418,9 @@ def get_rscd_parameters(input_model, rscd_model):
 
 
 def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
-    """
-    Find the accumulated DN from the last integration
+    """Find the accumulated DN from the last integration
     This data should already have the Reset Anomaly correction
-    applied (if not - should we skip frames at the beginning ?)
+    applied (if not - should we skip frames at the beginning ?).
 
     a Check has already been made to make sure we have at least
     4 frames
@@ -444,8 +436,8 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     sat: the previous integration for this pixel saturated: yes/no
     dn_lastframe_23: extrapolated last frame using 2nd and 3rd to last frames
     dn_lastframe_fit: extrapolated last frame using the fit to the entire ramp
-    """
 
+    """
     dn_lastframe2 = input_model.data[i - 1][sci_ngroups - 2]
     dn_lastframe3 = input_model.data[i - 1][sci_ngroups - 3]
 
@@ -483,13 +475,11 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
 
 
 def ols_fit(y, dq):
-    """
-    An estimation of the lastframe value from the previous integration is
+    """An estimation of the lastframe value from the previous integration is
     needed for the RSCD correction.
     This routine does a simple ordinary least squares fit to
     non-saturating data.
     """
-
     sat_flag = dqflags.group['SATURATED']
     shape = y.shape
 

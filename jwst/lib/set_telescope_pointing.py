@@ -1,4 +1,4 @@
-"""Set Telescope Pointing from Observatory Engineering Telemetry
+"""Set Telescope Pointing from Observatory Engineering Telemetry.
 
 Calculate and update the pointing-related and world coordinate system-related
 keywords. Given a time period, usually defined by an exposure, the engineering
@@ -183,11 +183,12 @@ FGS_ACQ_WINDOW_INDEX = {
 
 # The available methods for transformation
 class Methods(Enum):
-    """Available methods to calculate V1 and aperture WCS information
+    """Available methods to calculate V1 and aperture WCS information.
 
     Current state-of-art is OPS_TR_202111. This method chooses either COARSE_TR_202111 or
     TRACK_TR_202111 depending on the guidance mode, as specified by header keyword PCS_MODE.
     """
+
     #: COARSE tracking mode algorithm, TR version 2021-11.
     COARSE_TR_202111 = ('coarse_tr_202111', 'calc_transforms_coarse_tr_202111', 'calc_wcs_tr_202111', COURSE_TR_202111_MNEMONICS)
     #: Method to use in OPS to use TR version 2021-11
@@ -215,12 +216,12 @@ class Methods(Enum):
 
     @property
     def calc_func(self):
-        """Function associated with the method"""
+        """Function associated with the method."""
         return globals()[self._calc_func]
 
     @property
     def func(self):
-        """Function associated with the method"""
+        """Function associated with the method."""
         return globals()[self._func_name]
 
     @property
@@ -309,8 +310,8 @@ GuideStarPosition.__new__.__defaults__ = ((None,) * 3)
 # Transforms
 @dataclasses.dataclass
 class Transforms:
-    """The matrices used in calculation of the M_eci2siaf transformation
-    """
+    """The matrices used in calculation of the M_eci2siaf transformation."""
+
     #: ECI to FGS1
     m_eci2fgs1: np.ndarray | None = None
     #: ECI to Guide Star
@@ -342,7 +343,7 @@ class Transforms:
 
     @classmethod
     def from_asdf(cls, asdf_file):
-        """Create Transforms from AsdfFile
+        """Create Transforms from AsdfFile.
 
         Parameters
         ----------
@@ -353,6 +354,7 @@ class Transforms:
         -------
         transforms : Transforms
             The Transforms instance.
+
         """
         if isinstance(asdf_file, asdf.AsdfFile):
             transforms = asdf_file.tree['transforms']
@@ -363,7 +365,7 @@ class Transforms:
         return cls(**transforms)
 
     def to_asdf(self):
-        """Serialize to AsdfFile
+        """Serialize to AsdfFile.
 
         Returns
         -------
@@ -374,6 +376,7 @@ class Transforms:
         -----
         The `override` transforms are not serialized, since the values of this transform
         automatically represent what is in the override.
+
         """
         self_dict = dataclasses.asdict(self)
         del self_dict['override']  # Do not serialize the override transforms
@@ -381,21 +384,23 @@ class Transforms:
         return asdf_file
 
     def write_to_asdf(self, path):
-        """Serialize to a file path
+        """Serialize to a file path.
 
         Parameters
         ----------
         path : Stream-like
+
         """
         asdf_file = self.to_asdf()
         asdf_file.write_to(path, all_array_storage='inline')
 
     def __getattribute__(self, name):
-        """If an override has been specified, return that value regardless
+        """If an override has been specified, return that value regardless.
 
         Notes
         -----
         This dunder method is called for ALL attributes. Tread carefully.
+
         """
         # If the attribute is not a field, just return its value. Like NOW.
         if name.startswith('_') or name not in self._fields or name == 'override':
@@ -406,8 +411,7 @@ class Transforms:
         return override_value if override_value is not None else object.__getattribute__(self, name)
 
     def __post_init__(self):
-        """Post-initialization of a DataClass"""
-
+        """Post-initialization of a DataClass."""
         # Create a simple list of fields to check against.
         self._fields = [field.name for field in dataclasses.fields(self)]
 
@@ -419,8 +423,8 @@ WCSRef.__new__.__defaults__ = (None, None, None)
 
 @dataclasses.dataclass
 class TransformParameters:
-    """Parameters required the calculations
-    """
+    """Parameters required the calculations."""
+
     #: If telemetry cannot be determined, use existing information in the observation's header.
     allow_default: bool = False
     #: The V3 position angle to use if the pointing information is not found.
@@ -472,12 +476,12 @@ class TransformParameters:
     v3pa_at_gs: float | None = None
 
     def as_reprdict(self):
-        """Return a dict where all values are REPR of their values"""
+        """Return a dict where all values are REPR of their values."""
         r = dict((field.name, repr(getattr(self, field.name))) for field in dataclasses.fields(self))
         return r
 
     def update_pointing(self):
-        """Update pointing information"""
+        """Update pointing information."""
         self.pointing = get_pointing(self.obsstart, self.obsend,
                                      mnemonics_to_read=self.method.mnemonics,
                                      engdb_url=self.engdb_url,
@@ -551,7 +555,6 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
 
     Notes
     -----
-
     This function adds absolute pointing information to the JWST
     datamodels provided. By default, only Stage 1 and Stage 2a exposures are
     allowed to be updated. These have the suffixes of "uncal", "rate", and
@@ -646,13 +649,12 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
 
 
 def update_mt_kwds(model):
-    """Add/update the Moving target header keywords
+    """Add/update the Moving target header keywords.
 
     If the target type is "moving_target" check for the moving target position
     table. If this is available calculate the moving target position keywords
     and insert or update MT_RA & MT_DEC.
     """
-
     if model.hasattr('moving_target'):
         time_mt = Time(model.moving_target.time, format='isot')
         time_mt = [t.mjd for t in time_mt]
@@ -683,7 +685,7 @@ def update_mt_kwds(model):
 def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd=None, engdb_url=None,
                fgsid=None, tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
-    """Update WCS pointing information
+    """Update WCS pointing information.
 
     Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
@@ -736,6 +738,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
         None for either if telemetry calculations were not
         performed. In particular, FGS GUIDER data does
         not need `transforms`.
+
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
@@ -777,7 +780,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, prd
 
 
 def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
-    """ Update WCS pointing from header information
+    """Update WCS pointing from header information.
 
     For Fine Guidance guiding observations, nearly everything
     in the `wcsinfo` meta information is already populated,
@@ -806,8 +809,8 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
 
     default_v3yangle : float
         Default SIAF Y-angle.
-    """
 
+    """
     logger.info('Updating WCS for Fine Guidance.')
 
     crpix1, crpix2, crval1, crval2, pc_matrix = calc_wcs_guiding(
@@ -832,7 +835,7 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
 
 
 def update_wcs_from_telem(model, t_pars: TransformParameters):
-    """Update WCS pointing information
+    """Update WCS pointing information.
 
     Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
@@ -852,6 +855,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     -------
     transforms : Transforms or None
         If available, the transformation matrices.
+
     """
     logger.info('Updating wcs from telemetry.')
     transforms = None  # Assume no transforms are calculated.
@@ -960,6 +964,7 @@ def update_s_region(model, siaf):
         The model to update in-place.
     siaf : namedtuple
         The ``SIAF`` tuple with values populated from the PRD database.
+
     """
     vertices = siaf.vertices_idl
     xvert = vertices[:4]
@@ -989,7 +994,7 @@ def update_s_region(model, siaf):
 
 
 def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
-    """Calculate V1 and WCS over a time period
+    """Calculate V1 and WCS over a time period.
 
     Parameters
     ----------
@@ -1004,6 +1009,7 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
     obstimes, wcsinfos, vinfos : [astropy.time.Time[,...]], [WCSRef[,...]], [WCSRef[,...]]
         A 3-tuple is returned with the WCS pointings for
         the aperture and the V1 axis
+
     """
     # Setup structures
     obstimes = list()
@@ -1030,7 +1036,7 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
 
 
 def calc_wcs(t_pars: TransformParameters):
-    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
+    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates.
 
     Parameters
     ----------
@@ -1042,6 +1048,7 @@ def calc_wcs(t_pars: TransformParameters):
     wcsinfo, vinfo, transforms : WCSRef, WCSRef, Transforms
         A 3-tuple is returned with the WCS pointing for
         the aperture and the V1 axis, and the transformation matrices.
+
     """
     if t_pars.siaf is None:
         t_pars.siaf = SIAF()
@@ -1057,7 +1064,7 @@ def calc_wcs(t_pars: TransformParameters):
 
 
 def calc_wcs_tr_202111(transforms: Transforms):
-    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
+    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates.
 
     A refactor of `calc_wcs_orig` to use the standard `calc_wcs_from_matrix` instead of the specific `calc_aperture_wcs`.
 
@@ -1071,6 +1078,7 @@ def calc_wcs_tr_202111(transforms: Transforms):
     wcsinfo, vinfo: WCSRef, WCSRef
         A 2-tuple is returned with the WCS pointing for
         the aperture and the V1 axis.
+
     """
     # Calculate the V1 WCS information
     vinfo = calc_wcs_from_matrix(transforms.m_eci2v)
@@ -1083,7 +1091,7 @@ def calc_wcs_tr_202111(transforms: Transforms):
 
 
 def calc_transforms(t_pars: TransformParameters):
-    """Calculate transforms  which determine reference point celestial WCS
+    """Calculate transforms  which determine reference point celestial WCS.
 
     This implements Eq. 3 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
     From Section 3:
@@ -1111,7 +1119,7 @@ def calc_transforms(t_pars: TransformParameters):
 
 
 def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
-    """Modified COARSE calculation
+    """Modified COARSE calculation.
 
     This implements Eq. 45 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
     From Section 4:
@@ -1196,7 +1204,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
 
 
 def calc_transforms_track_tr_202111(t_pars: TransformParameters):
-    """Calculate transforms for TRACK/FINEGUIDE guiding
+    """Calculate transforms for TRACK/FINEGUIDE guiding.
 
     This implements Eq. 46 from Technical Report JWST-STScI-003222, SM-12, Rev. C,  2021-11
     From Section 5:
@@ -1273,7 +1281,7 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
 
 
 def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
-    """Calculate transforms in OPS using TR 2021-11
+    """Calculate transforms in OPS using TR 2021-11.
 
     This implements the ECI-to-SIAF transformation from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     The actual implementation depends on the guide star mode, represented by the header keyword PCS_MODE.
@@ -1289,13 +1297,14 @@ def calc_transforms_ops_tr_202111(t_pars: TransformParameters):
     -------
     transforms : Transforms
         The list of coordinate matrix transformations
+
     """
     method = method_from_pcs_mode(t_pars.pcs_mode)
     return method.func(t_pars)
 
 
 def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
-    """Calculate the Velocity Aberration correction
+    """Calculate the Velocity Aberration correction.
 
     This implements Eq. 40 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.5:
@@ -1378,6 +1387,7 @@ def calc_attitude_matrix(wcs, yangle, position):
     -------
     m : np.array(3,3)
         The transformation matrix
+
     """
     # Convert to radians
     ra = wcs.ra * D2R
@@ -1415,6 +1425,7 @@ def calc_wcs_from_matrix(m):
     -------
     wcs : WCSRef
         The WCS.
+
     """
     # V1 RA/Dec is the first row of the transform
     v1_ra, v1_dec = vector_to_angle(m[0])
@@ -1439,7 +1450,7 @@ def calc_wcs_from_matrix(m):
 
 
 def calc_eci2j_matrix(q):
-    """Calculate ECI to J-frame matrix from quaternions
+    """Calculate ECI to J-frame matrix from quaternions.
 
     This implements Eq. 24 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
     From Section 3.2.1:
@@ -1478,7 +1489,7 @@ def calc_eci2j_matrix(q):
 
 
 def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
-    """Calculate the J-frame to FGS1 transformation
+    """Calculate the J-frame to FGS1 transformation.
 
     This implements Eq. 25 from Technical Report JWST-STScI-003222, SM-12. Rev. C, 2021-11
     From Section 3.2.2:
@@ -1505,6 +1516,7 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
     matrix, as defined in the engineering telemetry, is actually for
     FGS1-to-J-frame. However, all documentation has always
     referred to this J-to-FGS1.
+
     """
     if np.isclose(j2fgs_matrix, 0.).all():
         logger.warning('J-Frame to FGS1 engineering parameters are all zero.')
@@ -1527,7 +1539,7 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
 
 
 def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units='arcsec'):
-    """Calculate Fine Steering Mirror correction matrix
+    """Calculate Fine Steering Mirror correction matrix.
 
     Parameters
     ----------
@@ -1550,6 +1562,7 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     -------
     transform : np.array((3, 3))
         The transformation matrix
+
     """
     version = fsmcorr_version.lower()
     units = fsmcorr_units.lower()
@@ -1602,7 +1615,7 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
 
 
 def calc_sifov2v_matrix():
-    """Calculate the SI-FOV to V-Frame matrix
+    """Calculate the SI-FOV to V-Frame matrix.
 
     This is currently defined as the inverse Euler rotation
     about an angle of 7.8 arcmin. Here returns the pre-calculate
@@ -1612,7 +1625,7 @@ def calc_sifov2v_matrix():
 
 
 def calc_v2siaf_matrix(siaf):
-    """Calculate the SIAF transformation matrix
+    """Calculate the SIAF transformation matrix.
 
     This implements Eq. 12 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.1:
@@ -1646,7 +1659,7 @@ def calc_v2siaf_matrix(siaf):
 
 
 def calc_position_angle(point, ref):
-    """Calculate position angle from reference to point
+    """Calculate position angle from reference to point.
 
     Algorithm implemented is from JWST Technical Report JWST-STScI-001550, SM-12,
     2017-11-08, Rev A., Section 5.2, page 29, final equation:
@@ -1672,6 +1685,7 @@ def calc_position_angle(point, ref):
     -------
     point_pa : float
       The POINT position angle, in radians
+
     """
     y = cos(ref.dec) * sin(ref.ra - point.ra)
     x = sin(ref.dec) * cos(point.dec) - \
@@ -1688,8 +1702,7 @@ def calc_position_angle(point, ref):
 
 def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
                  engdb_url=None, tolerance=60, reduce_func=None):
-    """
-    Get telescope pointing engineering data.
+    """Get telescope pointing engineering data.
 
     Parameters
     ----------
@@ -1730,6 +1743,7 @@ def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
     For the moment, the first found values will be used.
     This will need be re-examined when more information is
     available.
+
     """
     if reduce_func is None:
         reduce_func = pointing_from_average
@@ -1752,7 +1766,7 @@ def get_pointing(obsstart, obsend, mnemonics_to_read=TRACK_TR_202111_MNEMONICS,
 
 
 def vector_to_angle(v):
-    """Returns tuple of spherical angles from unit direction Vector
+    """Returns tuple of spherical angles from unit direction Vector.
 
     This implements Eq. 10 & 11 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
@@ -1780,7 +1794,7 @@ def vector_to_angle(v):
 
 
 def angle_to_vector(alpha, delta):
-    """Convert spherical angles to unit vector
+    """Convert spherical angles to unit vector.
 
     This implements Eq. 9 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
@@ -1794,6 +1808,7 @@ def angle_to_vector(alpha, delta):
     -------
     v : [float, float, float]
         Unit vector
+
     """
     v0 = cos(delta) * cos(alpha)
     v1 = cos(delta) * sin(alpha)
@@ -1803,8 +1818,7 @@ def angle_to_vector(alpha, delta):
 
 
 def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
-    """
-    Computes the position angle of V3 (measured N to E)
+    """Computes the position angle of V3 (measured N to E)
     at the center af an aperture.
 
     Parameters
@@ -1854,7 +1868,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
 
 
 def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111_MNEMONICS, engdb_url=None):
-    """Retrieve pointing mnemonics from the engineering database
+    """Retrieve pointing mnemonics from the engineering database.
 
     Parameters
     ----------
@@ -1952,10 +1966,10 @@ def get_mnemonics(obsstart, obsend, tolerance, mnemonics_to_read=TRACK_TR_202111
 
 
 def all_pointings(mnemonics_to_read, mnemonics):
-    """V1 of making pointings
+    """V1 of making pointings.
 
     Parameters
-    ==========
+    ----------
     mnemonics_to_read: {str: bool[,...]}
         The mnemonics to read. Key is the mnemonic name.
         Value is a boolean indicating whether the mnemonic
@@ -1965,9 +1979,10 @@ def all_pointings(mnemonics_to_read, mnemonics):
         The values for each pointing mnemonic
 
     Returns
-    =======
+    -------
     pointings : [Pointing[,...]]
         List of pointings.
+
     """
     pointings = []
     filled = fill_mnemonics_chronologically(mnemonics)
@@ -2027,8 +2042,7 @@ def all_pointings(mnemonics_to_read, mnemonics):
 
 
 def populate_model_from_siaf(model, siaf):
-    """
-    Populate the WCS keywords of a Level1bModel from the SIAF.
+    """Populate the WCS keywords of a Level1bModel from the SIAF.
 
     Parameters
     ----------
@@ -2036,6 +2050,7 @@ def populate_model_from_siaf(model, siaf):
         Input data as Level1bModel.
     siaf : namedtuple
         The WCS keywords read in from the SIAF.
+
     """
     # Update values from the SIAF for all exposures.
     model.meta.wcsinfo.v2_ref = siaf.v2_ref
@@ -2073,10 +2088,10 @@ def populate_model_from_siaf(model, siaf):
 
 
 def first_pointing(mnemonics_to_read, mnemonics):
-    """Return first pointing
+    """Return first pointing.
 
     Parameters
-    ==========
+    ----------
     mnemonics_to_read: {str: bool[,...]}
         The mnemonics to read. Key is the mnemonic name.
         Value is a boolean indicating whether the mnemonic
@@ -2086,7 +2101,7 @@ def first_pointing(mnemonics_to_read, mnemonics):
         The values for each pointing mnemonic
 
     Returns
-    =======
+    -------
     pointing : Pointing
         First pointing.
 
@@ -2096,10 +2111,10 @@ def first_pointing(mnemonics_to_read, mnemonics):
 
 
 def pointing_from_average(mnemonics_to_read, mnemonics):
-    """Determine single pointing from average of available pointings
+    """Determine single pointing from average of available pointings.
 
     Parameters
-    ==========
+    ----------
     mnemonics_to_read: {str: bool[,...]}
         The mnemonics to read. Key is the mnemonic name.
         Value is a boolean indicating whether the mnemonic
@@ -2109,7 +2124,7 @@ def pointing_from_average(mnemonics_to_read, mnemonics):
         The values for each pointing mnemonic
 
     Returns
-    =======
+    -------
     pointing : Pointing
         Pointing from average.
 
@@ -2204,7 +2219,7 @@ def pointing_from_average(mnemonics_to_read, mnemonics):
 
 
 def fill_mnemonics_chronologically(mnemonics, filled_only=True):
-    """Return time-ordered mnemonic list with progressive values
+    """Return time-ordered mnemonic list with progressive values.
 
     The different set of mnemonics used for observatory orientation
     appear at different cadences. This routine creates a time-ordered dictionary
@@ -2221,6 +2236,7 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
     Returns
     -------
     filled_by_time : {obstime: {mnemonic: value}}
+
     """
     # Collect all information by observation time and order.
     by_obstime = defaultdict(dict)
@@ -2253,7 +2269,7 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
 
 
 def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
-    """Return time-ordered mnemonic list with progressive values
+    """Return time-ordered mnemonic list with progressive values.
 
     The different set of mnemonics used for observatory orientation
     appear at different cadences. This routine creates a time-ordered dictionary
@@ -2270,6 +2286,7 @@ def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
     Returns
     -------
     filled_by_time : astropy.table.Table
+
     """
     filled = fill_mnemonics_chronologically(mnemonics, filled_only=filled_only)
 
@@ -2291,7 +2308,7 @@ def fill_mnemonics_chronologically_table(mnemonics, filled_only=True):
 
 
 def calc_estimated_gs_wcs(t_pars: TransformParameters):
-    """Calculate the estimated guide star RA/DEC/Y-angle
+    """Calculate the estimated guide star RA/DEC/Y-angle.
 
     This implements Eq. 18, 19, 20 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2:
@@ -2305,8 +2322,8 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
     -------
     gs_wcs : WCSRef
         Estimated RA, Dec, and Y-angle. All in degrees.
-    """
 
+    """
     # Determine the ECI to Guide star transformation
     t = calc_m_eci2gs(t_pars)
     m_eci2gs = t.m_eci2gs
@@ -2319,7 +2336,7 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
 
 
 def calc_v3pags(t_pars: TransformParameters):
-    """Calculate the V3 Position Angle at the Guide Star
+    """Calculate the V3 Position Angle at the Guide Star.
 
     This implements Eq. 21 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
 
@@ -2338,8 +2355,8 @@ def calc_v3pags(t_pars: TransformParameters):
     Modification for `jwst` release post-1.11.3: The commanded position of the guide
     star is always relative to FGS1. Hence, the aperture to use for the SIAF
     transformation is always FGS1.
-    """
 
+    """
     # Determine Guides Star estimated WCS information.
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
@@ -2354,7 +2371,7 @@ def calc_v3pags(t_pars: TransformParameters):
 
 
 def calc_m_eci2gs(t_pars: TransformParameters):
-    """Calculate the M_eci2gs matrix as per TR presented in 2021-07
+    """Calculate the M_eci2gs matrix as per TR presented in 2021-07.
 
     This implements Eq. 16 & 17 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2:
@@ -2402,8 +2419,8 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     However, in the code, note that the transformations go to FGS1, but then
     is suddenly referred to thereafter as FGSX. The assumption to make is that X is always 1,
     for FGS1.
-    """
 
+    """
     # Initial state of the transforms
     t = Transforms(override=t_pars.override_transforms)
 
@@ -2427,7 +2444,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
 
 def calc_m_fgs12fgsx(fgsid, siaf_db):
-    """Calculate the FGS1 to FGSx matrix
+    """Calculate the FGS1 to FGSx matrix.
 
     This implements Eq. 27 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.3:
@@ -2477,7 +2494,7 @@ def calc_m_fgs12fgsx(fgsid, siaf_db):
 
 
 def calc_m_fgsx2gs(gs_commanded):
-    """Calculate the FGS1 to commanded Guide Star frame
+    """Calculate the FGS1 to commanded Guide Star frame.
 
     This implements Eq. 29 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.4.
@@ -2491,6 +2508,7 @@ def calc_m_fgsx2gs(gs_commanded):
     -------
     m_fgsx2gs : numpy.array(3, 3)
         The DCM transform from FGSx (1 or 2) to Guide Star ICS frame
+
     """
     m_gs2fgsx = calc_m_gs2fgsx(gs_commanded)
     m_fgsx2gs = m_gs2fgsx.transpose()
@@ -2500,7 +2518,7 @@ def calc_m_fgsx2gs(gs_commanded):
 
 
 def calc_m_gs2fgsx(gs_commanded):
-    """Calculate the Guides Star frame to FGSx ICS frame
+    """Calculate the Guides Star frame to FGSx ICS frame.
 
     This implements Eq. 30 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3.2.4.
@@ -2514,6 +2532,7 @@ def calc_m_gs2fgsx(gs_commanded):
     -------
     m_gs2fgsx : numpy.array(3, 3)
         The guide star to FGSx transformation
+
     """
     in_rads = gs_commanded * A2R
     x, y = in_rads
@@ -2534,7 +2553,7 @@ def calc_m_gs2fgsx(gs_commanded):
 
 
 def trans_fgs2v(fgsid, ideal, siaf_db):
-    """Transform an Ideal coordinate to V coordinates
+    """Transform an Ideal coordinate to V coordinates.
 
     Parameters
     ----------
@@ -2551,6 +2570,7 @@ def trans_fgs2v(fgsid, ideal, siaf_db):
     -------
     v : numpy.array(2)
         The V-frame coordinates in arcseconds
+
     """
     ideal_rads = ideal * A2R
     ideal_vec = cart_to_vector(ideal_rads)
@@ -2565,7 +2585,7 @@ def trans_fgs2v(fgsid, ideal, siaf_db):
 
 
 def cart_to_vector(coord):
-    """Convert Cartesian to a unit vector
+    """Convert Cartesian to a unit vector.
 
     This implements Eq. 6 from Technical Report JWST-STScI-003222, SM-12, Rev. C, 2021-11
     From Section 3:
@@ -2584,6 +2604,7 @@ def cart_to_vector(coord):
     -------
     vector : numpy.array(3)
         The vector version
+
     """
     vector = np.array([
         coord[0],
@@ -2609,12 +2630,13 @@ def pa_to_roll_ref(pa: float, siaf: SIAF):
     -------
     roll_ref : float
         The roll reference, in degrees
+
     """
     return pa - siaf.v3yangle
 
 
 def t_pars_from_model(model, **t_pars_kwargs):
-    """Initialize TransformParameters from a DataModel
+    """Initialize TransformParameters from a DataModel.
 
     Parameters
     ----------
@@ -2629,6 +2651,7 @@ def t_pars_from_model(model, **t_pars_kwargs):
     -------
     t_par : TransformParameters
         The initialized parameters.
+
     """
     t_pars = TransformParameters(**t_pars_kwargs)
 
@@ -2699,7 +2722,7 @@ def t_pars_from_model(model, **t_pars_kwargs):
 
 
 def dcm(alpha, delta, angle):
-    """Construct the Direction Cosine Matrix (DCM)
+    """Construct the Direction Cosine Matrix (DCM).
 
     Typical usage is passing of (RA, DEC, PositionAngle).
     All values must be in radians.
@@ -2719,6 +2742,7 @@ def dcm(alpha, delta, angle):
     -------
     dcm : nd.array((3, 3))
         The 3x3 direction cosine matrix
+
     """
     dcm = np.array(
         [[cos(delta) * cos(alpha),
@@ -2736,7 +2760,7 @@ def dcm(alpha, delta, angle):
 
 # Determine calculation method from tracking mode.
 def method_from_pcs_mode(pcs_mode):
-    """Determine transform/wcs calculation method from PCS_MODE
+    """Determine transform/wcs calculation method from PCS_MODE.
 
     Pointing Control System Mode (PCS_MODE) contains the string representing
     which mode the JWST tracking system is in. The orientation calculation
@@ -2756,6 +2780,7 @@ def method_from_pcs_mode(pcs_mode):
     ------
     ValueError
         If `pcs_mode` does not uniquely define the method to use.
+
     """
     if pcs_mode is None or pcs_mode in ['NONE', 'COARSE']:
         return Methods.COARSE_TR_202111
@@ -2768,7 +2793,7 @@ def method_from_pcs_mode(pcs_mode):
 
 
 def get_reduce_func_from_exptype(exp_type):
-    """Determine preferred pointing reduction based on exposure type
+    """Determine preferred pointing reduction based on exposure type.
 
     Parameters
     ----------
@@ -2779,6 +2804,7 @@ def get_reduce_func_from_exptype(exp_type):
     -------
     reduce_func : func
         The preferred reduction function.
+
     """
     if exp_type in FGS_ACQ_EXP_TYPES:
         reduce_func = functools.partial(gs_position_acq, exp_type=exp_type)
@@ -2793,7 +2819,7 @@ def get_reduce_func_from_exptype(exp_type):
 
 
 def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
-    """Get the guide star position from guide star telemetry for FGS
+    """Get the guide star position from guide star telemetry for FGS.
 
     The ACQ1 and ACQ2 exposures share nearly the same time range of mnemonics
     with ACQ2 being slightly longer. As such, the information needed by
@@ -2810,7 +2836,7 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
     to be with respect to the actual acquisition box in the exposure.
 
     Parameters
-    ==========
+    ----------
     mnemonics_to_read: {str: bool[,...]}
         The mnemonics to read. Key is the mnemonic name.
         Value is a boolean indicating whether the mnemonic
@@ -2824,9 +2850,10 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
         'fgs_acq1' or 'fgs_acq2'
 
     Returns
-    =======
+    -------
     gs_position : GuideStarPosition
         The guide star position
+
     """
     exp_type = exp_type.lower()
     if exp_type not in FGS_ACQ_EXP_TYPES:
@@ -2859,7 +2886,7 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type='fgs_acq1'):
 
 
 def gs_position_fgtrack(mnemonics_to_read, mnemonics):
-    """Get the guide star position from guide star telemetry for FGS FINEGUIDE/TRACK
+    """Get the guide star position from guide star telemetry for FGS FINEGUIDE/TRACK.
 
     For FGS FINEGUIDE and TRACK modes, the position of the guide star is
     given by mnemonics IFGS_TFGGS_[X|Y] in arcseconds (Ideal system).
@@ -2872,7 +2899,7 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
     These do not change during the duration of the exposure, so the first values are used.
 
     Parameters
-    ==========
+    ----------
     mnemonics_to_read: {str: bool[,...]}
         The mnemonics to read. Key is the mnemonic name.
         Value is a boolean indicating whether the mnemonic
@@ -2882,9 +2909,10 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
         The values for each pointing mnemonic
 
     Returns
-    =======
+    -------
     gs_position : GuideStarPosition
         The guide star position
+
     """
     # Remove the zero positions.
     ordered = fill_mnemonics_chronologically_table(mnemonics)
@@ -2906,7 +2934,7 @@ def gs_position_fgtrack(mnemonics_to_read, mnemonics):
 
 
 def gs_position_id(mnemonics_to_read, mnemonics):
-    """Get the guide star position from guide star telemetry for FGS ID
+    """Get the guide star position from guide star telemetry for FGS ID.
 
     For FGS ID, the position of the guide star is given by mnemonics
     IFGS_ID_[X|Y] in arcseconds (Ideal system). This mode is when the desired guide star is identified.
@@ -2917,7 +2945,7 @@ def gs_position_id(mnemonics_to_read, mnemonics):
     There is a box defined by the IFGS_ID_DET* mnemonics.
 
     Parameters
-    ==========
+    ----------
     mnemonics_to_read: {str: bool[,...]}
         The mnemonics to read. Key is the mnemonic name.
         Value is a boolean indicating whether the mnemonic
@@ -2927,7 +2955,7 @@ def gs_position_id(mnemonics_to_read, mnemonics):
         The values for each pointing mnemonic
 
     Returns
-    =======
+    -------
     gs_position : GuideStarPosition
         The guide star position
 
@@ -2951,7 +2979,7 @@ def gs_position_id(mnemonics_to_read, mnemonics):
 
 
 def gs_ideal_to_subarray(gs_position, aperture, flip=False):
-    """Calculate pixel position for the guide star in the acquisition subarray
+    """Calculate pixel position for the guide star in the acquisition subarray.
 
     Parameters
     ----------
@@ -2968,6 +2996,7 @@ def gs_ideal_to_subarray(gs_position, aperture, flip=False):
     -------
     x, y : float
         The pixel position relative to the subarray
+
     """
     position_pixel = aperture.idl_to_det(*gs_position.position)
     position_subarray = (position_pixel[0] - gs_position.corner[0],
@@ -2987,7 +3016,7 @@ def gs_ideal_to_subarray(gs_position, aperture, flip=False):
 
 
 def calc_wcs_guiding(model, t_pars: TransformParameters, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
-    """Calculate WCS info for FGS guiding
+    """Calculate WCS info for FGS guiding.
 
     For Fine Guidance guiding observations, nearly everything
     in the `wcsinfo` meta information is already populated,
@@ -3021,6 +3050,7 @@ def calc_wcs_guiding(model, t_pars: TransformParameters, default_roll_ref=0.0, d
     -------
     crpix1, crpix2, crval1, crval2, pc1_1, pc1_2, pc2_1, pc2_2 : float
         The WCS info.
+
     """
     # Determine reference pixel
 

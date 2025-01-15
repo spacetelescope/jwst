@@ -7,8 +7,7 @@ __all__ = ["GroupScaleStep"]
 
 
 class GroupScaleStep(Step):
-    """
-    GroupScaleStep: Rescales group data to account for on-board
+    """GroupScaleStep: Rescales group data to account for on-board
     frame averaging that did not use FRMDIVSR = NFRAMES.
     All groups in the exposure are rescaled by FRMDIVSR/NFRAMES.
     """

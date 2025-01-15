@@ -10,8 +10,7 @@ log.setLevel(logging.DEBUG)
 
 
 def average_LG(lg_products):
-    """
-    Averages the LG results for a set of AMI exposures
+    """Averages the LG results for a set of AMI exposures.
 
     Parameters
     ----------
@@ -22,8 +21,8 @@ def average_LG(lg_products):
     -------
     output_model: Fringe model object
         Averaged fringe data
-    """
 
+    """
     # Create the output model as a copy of the first input model
     log.debug('create output as copy of %s', lg_products[0])
     output_model = datamodels.AmiLgModel(lg_products[0]).copy()

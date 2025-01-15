@@ -17,7 +17,7 @@ guider_list = ['FGS_ID-IMAGE', 'FGS_ID-STACK', 'FGS_ACQ1', 'FGS_ACQ2',
 
 
 def correct_model(input_model, mask_model):
-    """Perform the dq_init step on a JWST datamodel
+    """Perform the dq_init step on a JWST datamodel.
 
     Parameters
     ----------
@@ -31,15 +31,15 @@ def correct_model(input_model, mask_model):
     -------
     output_model : JWST datamodel
         The corrected JWST datamodel
-    """
 
+    """
     output_model = do_dqinit(input_model, mask_model)
 
     return output_model
 
 
 def do_dqinit(output_model, mask_model):
-    """Perform the dq_init step on a JWST datamodel
+    """Perform the dq_init step on a JWST datamodel.
 
     Parameters
     ----------
@@ -53,8 +53,8 @@ def do_dqinit(output_model, mask_model):
     -------
     output_model : JWST datamodel
         The corrected JWST datamodel
-    """
 
+    """
     # Inflate empty DQ array, if necessary
     check_dimensions(output_model)
 
@@ -89,7 +89,7 @@ def check_dimensions(input_model):
     the image plane of the input model science data
     If it has dimensions (0,0), create an array of zeros with the same shape
     as the image plane of the input model. For the FGS modes, the
-    GuiderRawModel has only a regular dq array (no pixeldq or groupdq)
+    GuiderRawModel has only a regular dq array (no pixeldq or groupdq).
 
     Parameters
     ----------
@@ -99,8 +99,8 @@ def check_dimensions(input_model):
     Returns
     -------
     None
-    """
 
+    """
     input_shape = input_model.data.shape
 
     if isinstance(input_model, datamodels.GuiderRawModel):

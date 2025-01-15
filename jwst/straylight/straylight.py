@@ -77,8 +77,7 @@ def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx,
 
 
 def correct_xartifact(input_model, modelpars):
-    """
-    Corrects the MIRI MRS data for 'straylight' produced by the cross-artifact.
+    """Corrects the MIRI MRS data for 'straylight' produced by the cross-artifact.
 
     Parameters
     ----------
@@ -94,7 +93,6 @@ def correct_xartifact(input_model, modelpars):
         Straylight-subtracted science data.
 
     """
-
     # Save some data parameters for easy use later
     nrows, ncols = input_model.data.shape
 

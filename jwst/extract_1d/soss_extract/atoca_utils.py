@@ -1,7 +1,6 @@
-"""
-Utilities for the ATOCA (Darveau-Bernier 2021, in prep).
+"""Utilities for the ATOCA (Darveau-Bernier 2021, in prep).
 ATOCA: Algorithm to Treat Order ContAmination (English)
-       Algorithme de Traitement d’Ordres ContAmines (French)
+       Algorithme de Traitement d’Ordres ContAmines (French).
 
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
@@ -40,8 +39,8 @@ def arange_2d(starts, stops, dtype=None):
         2D array of ranges.
     mask : array[bool]
         Mask indicating valid elements.
-    """
 
+    """
     # Ensure starts and stops are arrays.
     starts = np.asarray(starts)
     stops = np.asarray(stops)
@@ -101,8 +100,8 @@ def sparse_k(val, k, n_k):
     -------
     mat : array
         Sparse matrix to be returned
-    """
 
+    """
     # Length of axis 0
     n_i = len(k)
 
@@ -130,14 +129,14 @@ def unsparse(matrix, fill_value=np.nan):
         Value to fill 2D array for undefined positions; default to np.nan
 
     Returns
-    ------
+    -------
     out : 2d array
         values of the matrix. The shape of the array is given by:
         (matrix.shape[0], maximum number of defined value in a column).
     col_out : 2d array
         position of the columns. Same shape as `out`.
-    """
 
+    """
     col, row, val = find(matrix.T)
     n_row, n_col = matrix.shape
 
@@ -163,9 +162,10 @@ def unsparse(matrix, fill_value=np.nan):
 
 
 def get_wave_p_or_m(wave_map, dispersion_axis=1):
-    """ Compute upper and lower boundaries of a pixel map,
+    """Compute upper and lower boundaries of a pixel map,
     given the pixel central value.
-    Parameters
+
+    Parameters.
     ----------
     wave_map : array[float]
         2d-map of the pixel central wavelength
@@ -176,6 +176,7 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
     -------
     wave_upper, wave_lower
     The wavelength upper and lower boundaries of each pixel, given the central value.
+
     """
     # Get wavelength boundaries of each pixels
     wave_left, wave_right = get_wv_map_bounds(wave_map, dispersion_axis=dispersion_axis)
@@ -195,8 +196,9 @@ def get_wave_p_or_m(wave_map, dispersion_axis=1):
 
 
 def get_wv_map_bounds(wave_map, dispersion_axis=1):
-    """ Compute boundaries of a pixel map, given the pixel central value.
-    Parameters
+    """Compute boundaries of a pixel map, given the pixel central value.
+
+    Parameters.
     ----------
     wave_map : array[float]
         2d-map of the pixel central wavelength
@@ -209,6 +211,7 @@ def get_wv_map_bounds(wave_map, dispersion_axis=1):
         Wavelength of top edge for each pixel
     wave_bottom : array[float]
         Wavelength of bottom edge for each pixel
+
     """
     if dispersion_axis == 1:
         # Simpler to use transpose
@@ -268,8 +271,8 @@ def oversample_grid(wave_grid, n_os=1):
     -------
     wave_grid_os : array[float]
         The oversampled wavelength grid.
-    """
 
+    """
     # Convert n_os to an array.
     n_os = np.asarray(n_os)
 
@@ -327,8 +330,8 @@ def extrapolate_grid(wave_grid, wave_range, poly_ord):
     -------
     wave_grid_ext : array[float]
         The extrapolated 1D wavelength grid.
-    """
 
+    """
     # Define delta_wave as a function of wavelength by fitting a polynomial.
     delta_wave = np.diff(wave_grid)
     pars = np.polyfit(wave_grid[:-1], delta_wave, poly_ord)
@@ -395,8 +398,8 @@ def _grid_from_map(wave_map, trace_profile):
         Output wavelength grid
     cols : array[int]
         Column indices used.
-    """
 
+    """
     # Use only valid columns.
     mask = (trace_profile > 0).any(axis=0) & (wave_map > 0).any(axis=0)
 
@@ -439,8 +442,8 @@ def grid_from_map(wave_map, trace_profile, wave_range=None, n_os=1, poly_ord=1):
     -------
     grid_os : array[float]
         Wavelength grid with oversampling applied
-    """
 
+    """
     # Different treatment if wave_range is given.
     if wave_range is None:
         out, _ = _grid_from_map(wave_map, trace_profile)
@@ -498,8 +501,8 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
     wave_grid_soss : array[float]
         Wavelength grid optimized for extracting SOSS spectra across
         order 1 and order 2.
-    """
 
+    """
     # Check n_os input, default value is 2 for all orders.
     if n_os is None:
         n_os = [2, 2]
@@ -545,7 +548,7 @@ def get_soss_grid(wave_maps, trace_profiles, wave_min=0.55, wave_max=3.0, n_os=N
 
 
 def _trim_grids(all_grids, grid_range=None):
-    """ Remove all parts of the grids that are not in range
+    """Remove all parts of the grids that are not in range
     or that are already covered by grids with higher priority,
     i.e. preceding in the list.
     """
@@ -624,11 +627,13 @@ def make_combined_adaptive_grid(all_grids, all_estimate, grid_range=None,
         The desired absolute tolerance. Default is 0 to prioritize `rtol`.
     max_total_size : int, optional
         maximum size of the output grid. Default is 1 000 000.
+
     Returns
     -------
     os_grid : 1D array
         Oversampled combined grid which minimizes the integration error based on
         Romberg's method
+
     """
     # Save parameters for adapt_grid
     kwargs = dict(max_iter=max_iter, rtol=rtol, tol=tol)
@@ -712,8 +717,8 @@ def _romberg_diff(b, c, k):
     -------
     R(n, m) : float or array[float]
         Difference between integral estimates of Rombergs method.
-    """
 
+    """
     tmp = 4.0**k
     diff = (tmp * c - b) / (tmp - 1.0)
 
@@ -747,8 +752,8 @@ def _difftrap(fct, intervals, numtraps):
         The sum of function values at the new trapezoid boundaries
         compared to numtraps = numtraps/2. When numtraps = 1 they
         are divided by two.
-    """
 
+    """
     # Convert input intervals to numpy array
     intervals = np.asarray(intervals)
 
@@ -820,8 +825,8 @@ def get_n_nodes(grid, fct, divmax=10, tol=1.48e-4, rtol=1.48e-4):
         the specified tolerance.
     residual : array[float]
         Estimate of the error in each intervals. Same length as n_grid.
-    """
 
+    """
     # Initialize some variables.
     n_intervals = len(grid) - 1
     i_bad = np.arange(n_intervals)
@@ -910,8 +915,8 @@ def estim_integration_err(grid, fct):
     Returns
     -------
     err, rel_err: error and relative error of each integrations, with length = length(grid) - 1
-    """
 
+    """
     # Change the 1D grid into a 2D set of intervals.
     intervals = np.array([grid[:-1], grid[1:]])
     intrange = np.diff(grid)
@@ -966,6 +971,7 @@ def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
         The desired absolute tolerance. Default is 0 to prioritize `rtol`.
     max_grid_size: int, optional
         maximum size of the output grid. Default is None, so no constraint.
+
     Returns
     -------
     os_grid  : 1D array
@@ -973,9 +979,11 @@ def adapt_grid(grid, fct, max_iter=10, rtol=10e-6, tol=0.0, max_grid_size=None):
         Romberg's method
     convergence_flag: bool
         Whether the estimated tolerance was reach everywhere or not.
+
     See Also
     --------
     scipy.integrate.quadrature.romberg
+
     References
     ----------
     [1] 'Romberg's method' https://en.wikipedia.org/wiki/Romberg%27s_method
@@ -1052,8 +1060,8 @@ class ThroughputSOSS(interp1d):
             A wavelength array.
         throughput : array[float]
             The throughput values corresponding to the wavelengths.
-        """
 
+        """
         # Interpolate
         super().__init__(wavelength, throughput, kind='cubic', fill_value=0,
                          bounds_error=False)
@@ -1084,8 +1092,8 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         fill_value : str
             How to extrapolate when needed. Only default "extrapolate"
             currently implemented.
-        """
 
+        """
         # Mask where wv_map is equal to 0
         wave_map = np.ma.array(wave_map, mask=(wave_map == 0))
 
@@ -1191,12 +1199,13 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
             Wavelength where the kernel is projected.
         wave_c : array[float]
             Central wavelength of the kernel.
+
         Returns
         -------
         out : array[float]
             The kernel value.
-        """
 
+        """
         wave_center = self.wave_center
         poly = self.poly
         fill_value = self.fill_value
@@ -1264,7 +1273,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
 
 
 def gaussians(x, x0, sig, amp=None):
-    """Gaussian function
+    """Gaussian function.
 
     Parameters
     ----------
@@ -1281,8 +1290,8 @@ def gaussians(x, x0, sig, amp=None):
     -------
     values : array[float]
         Array of gaussian values for input x.
-    """
 
+    """
     # Amplitude term
     if amp is None:
         amp = 1. / np.sqrt(2. * np.pi * sig**2.)
@@ -1293,7 +1302,7 @@ def gaussians(x, x0, sig, amp=None):
 
 
 def fwhm2sigma(fwhm):
-    """Convert a full width half max to a standard deviation, assuming a gaussian
+    """Convert a full width half max to a standard deviation, assuming a gaussian.
 
     Parameters
     ----------
@@ -1304,15 +1313,15 @@ def fwhm2sigma(fwhm):
     -------
     sigma : float
         Standard deviation of a gaussian.
-    """
 
+    """
     sigma = fwhm / np.sqrt(8. * np.log(2.))
 
     return sigma
 
 
 def to_2d(kernel, grid_range):
-    """ Build a 2d kernel array with a constant 1D kernel (input)
+    """Build a 2d kernel array with a constant 1D kernel (input).
 
     Parameters
     ----------
@@ -1326,8 +1335,8 @@ def to_2d(kernel, grid_range):
     kernel_2d : array[float]
         2D array of input 1D kernel tiled over axis with
         length equal to difference of grid_range values.
-    """
 
+    """
     # Assign range where the convolution is defined on the grid
     a, b = grid_range
 
@@ -1341,7 +1350,7 @@ def to_2d(kernel, grid_range):
 
 
 def _get_wings(fct, grid, h_len, i_a, i_b):
-    """Compute values of the kernel at grid[+-h_len]
+    """Compute values of the kernel at grid[+-h_len].
 
     Parameters
     ----------
@@ -1367,8 +1376,8 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
         Kernel values at left wing.
     right : array[float]
         Kernel values at right wing.
-    """
 
+    """
     # Save length of the non-convolved grid
     n_k = len(grid)
 
@@ -1408,7 +1417,7 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
 
 
 def trpz_weight(grid, length, shape, i_a, i_b):
-    """Compute weights due to trapezoidal integration
+    """Compute weights due to trapezoidal integration.
 
     Parameters
     ----------
@@ -1429,8 +1438,8 @@ def trpz_weight(grid, length, shape, i_a, i_b):
     -------
     out : array[float]
         2D array with shape according to input shape
-    """
 
+    """
     # Index of each element on the convolution matrix
     # with respect to the non-convolved grid
     # `i_grid` has the shape (N_k_convolved, kernel_length - 1)
@@ -1458,7 +1467,7 @@ def trpz_weight(grid, length, shape, i_a, i_b):
 
 def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
     """Build a compact kernel 2d array based on a kernel function
-    and a grid to project the kernel
+    and a grid to project the kernel.
 
     Parameters
     ----------
@@ -1483,8 +1492,8 @@ def fct_to_array(fct, grid, grid_range, thresh=1e-5, length=None):
     -------
     kern_array : array[float]
         2D array of kernel projected onto grid.
-    """
 
+    """
     # Assign range where the convolution is defined on the grid
     i_a, i_b = grid_range
 
@@ -1571,11 +1580,11 @@ def cut_ker(ker, n_out=None, thresh=None):
         If n_out is specified, this is ignored.
 
     Returns
-    ------
+    -------
     ker : array[float]
         The same kernel matrix as the input ker, but with the cut applied.
-    """
 
+    """
     # Assign kernel length and number of kernels
     n_ker, n_k_c = ker.shape
 
@@ -1629,7 +1638,7 @@ def cut_ker(ker, n_out=None, thresh=None):
 
 def sparse_c(ker, n_k, i_zero=0):
     """Convert a convolution kernel in compact form (N_ker, N_k_convolved)
-    to sparse form (N_k_convolved, N_k)
+    to sparse form (N_k_convolved, N_k).
 
     Parameters
     ----------
@@ -1645,8 +1654,8 @@ def sparse_c(ker, n_k, i_zero=0):
     -------
     matrix : array[float]
         Sparse form of the input convolution kernel
-    """
 
+    """
     # Assign kernel length and convolved axis length
     n_ker, n_k_c = ker.shape
 
@@ -1689,7 +1698,7 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
     the kernel. If the default sparse matrix option is chosen,
     the convolution can be applied on an array f | f = fct(grid)
     by a simple matrix multiplication:
-    f_convolved = c_matrix.dot(f)
+    f_convolved = c_matrix.dot(f).
 
     Parameters
     ----------
@@ -1727,8 +1736,8 @@ def get_c_matrix(kernel, grid, bounds=None, i_bounds=None, norm=True,
     length: int, optional
         Only used when `kernel` is callable to define the maximum
         length of the kernel.
-    """
 
+    """
     # Define range where the convolution is defined on the grid.
     # If `i_bounds` is not specified, try with `bounds`.
     if i_bounds is None:
@@ -1798,7 +1807,6 @@ class NyquistKer:
         fill_value : str
             Argument for `interp1d` to choose fill method to get FWHM.
         """
-
         # Delta grid
         d_grid = np.diff(grid)
 
@@ -1827,8 +1835,8 @@ class NyquistKer:
         Returns
         -------
         Value of the gaussian kernel for each set of (x, x0)
-        """
 
+        """
         # Get the sigma of each gaussian
         sig = self.fct_sig(x0)
 
@@ -1853,6 +1861,7 @@ def finite_diff(x):
     diff_matrix : array[float]
         Sparse matrix. When applied to x `diff_matrix.dot(x)`,
         the result is the same as np.diff(x)
+
     """
     n_x = len(x)
 
@@ -1864,7 +1873,7 @@ def finite_diff(x):
 
 
 def finite_second_d(grid):
-    """Returns the second derivative operator based on grid
+    """Returns the second derivative operator based on grid.
 
     Parameters
     ----------
@@ -1877,8 +1886,8 @@ def finite_second_d(grid):
         Operator to compute the second derivative, so that
         f" = second_d.dot(f), where f is a function
         projected on `grid`.
-    """
 
+    """
     # Finite difference operator
     d_matrix = finite_diff(grid)
 
@@ -1898,7 +1907,7 @@ def finite_second_d(grid):
 
 
 def finite_first_d(grid):
-    """Returns the first derivative operator based on grid
+    """Returns the first derivative operator based on grid.
 
     Parameters
     ----------
@@ -1911,8 +1920,8 @@ def finite_first_d(grid):
         Operator to compute the second derivative, so that
         f' = first_d.dot(f), where f is a function
         projected on `grid`.
-    """
 
+    """
     # Finite difference operator
     d_matrix = finite_diff(grid)
 
@@ -1948,10 +1957,12 @@ def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0
         norm_factor * scale_factor.dot(tikhonov_matrix)
         where scale_factor = 1/(estimate_derivative)**pwr_law
         and norm_factor = 1/sum(scale_factor)
+
     Returns
     -------
     t_mat : array[float]
         The tikhonov matrix.
+
     """
     if d_grid:
         input_grid = grid
@@ -2003,7 +2014,7 @@ def get_tikho_matrix(grid, n_derivative=1, d_grid=True, estimate=None, pwr_law=0
 
 
 def curvature_finite(factors, log_reg2, log_chi2):
-    """Compute the curvature in log space using finite differences
+    """Compute the curvature in log space using finite differences.
 
     Parameters
     ----------
@@ -2047,8 +2058,9 @@ def curvature_finite(factors, log_reg2, log_chi2):
 
 
 def get_finite_derivatives(x_array, y_array):
-    """ Compute first and second finite derivatives
-    Parameters
+    """Compute first and second finite derivatives.
+
+    Parameters.
     ----------
     x_array : array[float]
         1D array of x values.
@@ -2061,6 +2073,7 @@ def get_finite_derivatives(x_array, y_array):
         Mean of left and right finite derivatives
     second_d : array[float]
         Second finite derivative
+
     """
     # Compute first finite derivative
     first_d = np.diff(y_array) / np.diff(x_array)
@@ -2074,7 +2087,7 @@ def get_finite_derivatives(x_array, y_array):
 
 
 def _get_interp_idx_array(idx, relative_range, max_length):
-    """ Generate array given the relative range around an index.
+    """Generate array given the relative range around an index.
 
     Parameters
     ----------
@@ -2089,8 +2102,8 @@ def _get_interp_idx_array(idx, relative_range, max_length):
     -------
     array[int]
         Output array of indices
-    """
 
+    """
     # Convert to absolute index range
     abs_range = [idx + d_idx for d_idx in relative_range]
 
@@ -2105,7 +2118,7 @@ def _get_interp_idx_array(idx, relative_range, max_length):
 
 
 def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
-    """ Find minimum of a grid using akima spline interpolation to get a finer estimate
+    """Find minimum of a grid using akima spline interpolation to get a finer estimate.
 
     Parameters
     ----------
@@ -2119,12 +2132,13 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
     interp_index : iterable[int], optional
         Relative range of grid indices around the minimum value to interpolate
         across. If not specified, defaults to [-2,4].
+
     Returns
     -------
     min_fac : float
         The factor with minimized error/curvature.
-    """
 
+    """
     if interp_index is None:
         interp_index = [-2, 4]
 
@@ -2170,8 +2184,9 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate, interp_index=None):
 
 
 def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
-    """ Find the root of y_val - thresh (so the intersection between thresh and y_val)
-    Parameters
+    """Find the root of y_val - thresh (so the intersection between thresh and y_val).
+
+    Parameters.
     ----------
     factors : array[float]
         1D array of Tikhonov factors for which value array is calculated
@@ -2192,8 +2207,8 @@ def _find_intersect(factors, y_val, thresh, interpolate, search_range=None):
     float
         Factor corresponding to the best approximation of the intersection
         point.
-    """
 
+    """
     if search_range is None:
         search_range = [0, 3]
 
@@ -2263,15 +2278,15 @@ LOSS_FUNCTIONS = {'soft_l1': soft_l1, 'cauchy': cauchy, 'linear': linear}
 
 
 class TikhoTests(dict):
-    """
-    Class to save Tikhonov tests for different factors.
-    All the tests are stored in the attribute `tests` as a dictionary
+    """Class to save Tikhonov tests for different factors.
+    All the tests are stored in the attribute `tests` as a dictionary.
 
     Parameters
     ----------
     test_dict : dict
         Dictionary holding arrays for `factors`, `solution`, `error`, and `reg`
         by default.
+
     """
 
     DEFAULT_TRESH_DERIVATIVE = (('chi2', 1e-5),
@@ -2279,14 +2294,14 @@ class TikhoTests(dict):
                                 ('chi2_cauchy', 1e-3))
 
     def __init__(self, test_dict=None, default_chi2='chi2_cauchy'):
-        """
-        Parameters
+        """Parameters
         ----------
         test_dict : dict
             Dictionary holding arrays for `factors`, `solution`, `error`, and `reg`
             by default.
         default_chi2: string
             Type of chi2 loss used by default. Options are chi2, chi2_soft_l1, chi2_cauchy.
+
         """
         # Define the number of data points
         # (length of the "b" vector in the tikhonov regularisation)
@@ -2320,7 +2335,7 @@ class TikhoTests(dict):
 #         self['chi2_cauchy'] = self.compute_chi2(loss='cauchy')
 
     def compute_chi2(self, tests=None, n_points=None, loss='linear'):
-        """ Calculates the reduced chi squared statistic
+        """Calculates the reduced chi squared statistic.
 
         Parameters
         ----------
@@ -2334,6 +2349,7 @@ class TikhoTests(dict):
         -------
         float
             Sum of the squared error array divided by the number of data points
+
         """
         # If not given, take the tests from the object
         if tests is None:
@@ -2358,7 +2374,7 @@ class TikhoTests(dict):
         return chi2
 
     def get_chi2_derivative(self, key=None):
-        """ Compute derivative of the chi2 with respect to log10(factors)
+        """Compute derivative of the chi2 with respect to log10(factors).
 
         Parameters
         ----------
@@ -2371,6 +2387,7 @@ class TikhoTests(dict):
             factors array, shortened to match length of derivative.
         d_chi2 : array[float]
             derivative of chi squared array with respect to log10(factors)
+
         """
         if key is None:
             key = self.default_chi2
@@ -2410,7 +2427,8 @@ class TikhoTests(dict):
         It is determined by taking the factor giving the highest logL on
         the detector or the highest curvature of the l-curve,
         depending on the chosen mode.
-        Parameters
+
+        Parameters.
         ----------
         tests : dictionary, optional
             Results of tikhonov extraction tests for different factors.
@@ -2432,6 +2450,7 @@ class TikhoTests(dict):
         -------
         float
             Best scale factor as determined by the selected algorithm
+
         """
         if key is None:
             key = self.default_chi2
@@ -2505,8 +2524,7 @@ class TikhoTests(dict):
 
 
 class Tikhonov:
-    """
-    Tikhonov regularization to solve the ill-posed problem A.x = b, where
+    """Tikhonov regularization to solve the ill-posed problem A.x = b, where
     A is accidentally singular or close to singularity. Tikhonov regularization
     adds a regularization term in the equation and aim to minimize the
     equation: ||A.x - b||^2 + ||gamma.x||^2
@@ -2514,8 +2532,7 @@ class Tikhonov:
     """
 
     def __init__(self, a_mat, b_vec, t_mat, valid=True):
-        """
-        Parameters
+        """Parameters
         ----------
         a_mat : matrix-like object (2d)
             matrix A in the system to solve A.x = b
@@ -2526,8 +2543,8 @@ class Tikhonov:
         valid : bool, optional
             If True, solve the system only for valid indices. The
             invalid values will be set to np.nan. Default is True.
-        """
 
+        """
         # Save input matrix
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -2552,10 +2569,9 @@ class Tikhonov:
         return
 
     def solve(self, factor=1.0):
-        """
-        Minimize the equation ||A.x - b||^2 + ||gamma.x||^2
+        """Minimize the equation ||A.x - b||^2 + ||gamma.x||^2
         by solving (A_T.A + gamma_T.gamma).x = A_T.b
-        gamma is the Tikhonov matrix multiplied by a scale factor
+        gamma is the Tikhonov matrix multiplied by a scale factor.
 
         Parameters
         ----------
@@ -2563,9 +2579,10 @@ class Tikhonov:
             multiplicative constant of the regularization matrix
 
         Returns
-        ------
+        -------
         array
             Solution of the system (1d array)
+
         """
         # Get needed attributes
         a_mat_2 = self.a_mat_2
@@ -2597,8 +2614,7 @@ class Tikhonov:
         return solution
 
     def test_factors(self, factors):
-        """
-        Test multiple factors
+        """Test multiple factors.
 
         Parameters
         ----------
@@ -2606,11 +2622,11 @@ class Tikhonov:
             1D array of factors to test
 
         Returns
-        ------
+        -------
         dict
             Dictionary of test results
-        """
 
+        """
         log.info('Testing factors...')
 
         # Get relevant attributes

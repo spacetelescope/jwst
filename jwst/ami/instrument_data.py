@@ -26,8 +26,7 @@ class NIRISS:
                  psf_offset=None,
                  run_bpfix=True
                  ):
-        """
-        Initialize NIRISS class for NIRISS/AMI instrument.
+        """Initialize NIRISS class for NIRISS/AMI instrument.
 
         Module for defining all instrument characteristics including data format, 
         wavelength info, and mask geometry.
@@ -65,6 +64,7 @@ class NIRISS:
 
         run_bpfix : boolean
             Run Fourier bad pixel fix on cropped data
+
         """
         self.run_bpfix = run_bpfix
         self.usebp = usebp
@@ -128,8 +128,7 @@ class NIRISS:
         self.threshold = self.cvsupport_threshold[filt]
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
-        """
-        Override pixel scale in header
+        """Override pixel scale in header.
 
         Parameters
         ----------
@@ -152,8 +151,7 @@ class NIRISS:
         self.pscale_rad = utils.mas2rad(self.pscale_mas)
 
     def read_data_model(self, input_model):
-        """
-        Retrieve info from input data model and store in NIRISS class.
+        """Retrieve info from input data model and store in NIRISS class.
         Trim refpix and roughly center science data and dq array.
         Run Fourier bad pixel correction before returning science data.
 
@@ -168,8 +166,8 @@ class NIRISS:
             Cropped, centered, optionally cleaned AMI data
         dqmask_ctrd:
             Cropped, centered mask of bad pixels
-        """
 
+        """
         # all instrumentdata attributes will be available when oifits files written out
         scidata = copy.deepcopy(np.array(input_model.data))
         bpdata = copy.deepcopy(np.array(input_model.dq))
@@ -318,8 +316,7 @@ class NIRISS:
         return scidata_ctrd, dqmask_ctrd
 
     def reset_nwav(self, nwav):
-        """
-        Reset self.nwav
+        """Reset self.nwav.
 
         Parameters
         ----------
@@ -328,12 +325,12 @@ class NIRISS:
 
         Returns
         -------
+
         """
         self.nwav = nwav
 
     def mast2sky(self):
-        """
-        Rotate hole center coordinates.
+        """Rotate hole center coordinates.
 
         Rotation of coordinates is:
             Clockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = -1
@@ -350,6 +347,7 @@ class NIRISS:
         -------
         ctrs_rot: array
             Rotated coordinates to be put in OIFITS files.
+
         """
         mask_ctrs = copy.deepcopy(self.mask.ctrs)
         # rotate by an extra 90 degrees (RAC 9/21)

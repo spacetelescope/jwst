@@ -13,7 +13,7 @@ log.setLevel(logging.DEBUG)
 
 
 def create_spectral_wcs(ra, dec, wavelength):
-    """Assign a WCS for sky coordinates and a table of wavelengths
+    """Assign a WCS for sky coordinates and a table of wavelengths.
 
     Parameters
     ----------
@@ -28,14 +28,14 @@ def create_spectral_wcs(ra, dec, wavelength):
     wavelength: ndarray
         The wavelength in microns at each pixel of the extracted spectrum.
 
-    Returns:
-    --------
+    Returns
+    -------
     wcs: a gwcs.wcs.WCS object
         This takes a float or sequence of float and returns a tuple of
         the right ascension, declination, and wavelength (or sequence of
         wavelengths) at the pixel(s) specified by the input argument.
-    """
 
+    """
     input_frame = cf.CoordinateFrame(naxes=1, axes_type=("SPATIAL",),
                                      axes_order=(0,), unit=(u.pix,),
                                      name="pixel_frame")

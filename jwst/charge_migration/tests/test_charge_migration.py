@@ -19,8 +19,7 @@ CHLO_DNU = CHLO + DNU
 
 
 def test_pix_0():
-    """
-    Having all data in ramp below the signal threshold, the only non-GOOD
+    """Having all data in ramp below the signal threshold, the only non-GOOD
     groups in the output GROUPDQ should be those DNU propagated from the input.
     """
     ngroups, nints, nrows, ncols = 10, 1, 1, 1
@@ -46,8 +45,7 @@ def test_pix_0():
 
 
 def test_pix_1():
-    """
-    Tests groups whose data exceeds the signal threshold; 1 group is already
+    """Tests groups whose data exceeds the signal threshold; 1 group is already
     flagged as DNU from a previous calibration step, and 1 group is GOOD.
     Also tests groups whose data does not exceed the signal threshold;
     similarly 1 group is already flagged as DNU from a previous calibration
@@ -88,9 +86,7 @@ def test_pix_1():
 
 
 def test_pix_2():
-    """
-    Test a later group being below the threshold.
-    """
+    """Test a later group being below the threshold."""
     ngroups, nints, nrows, ncols = 10, 1, 1, 1
     ramp_model, pixdq, groupdq, err = create_mod_arrays(
         ngroups, nints, nrows, ncols)
@@ -112,8 +108,7 @@ def test_pix_2():
 
 
 def nearest_neighbor_base(chg_thresh, pixel):
-    """
-    Set up ramp array that is 5, 5 with 10 groups.
+    """Set up ramp array that is 5, 5 with 10 groups.
     The flagging starts in group 3 (zero based) in the pixel tested.
     """
     nints, ngroups, nrows, ncols = 1, 10, 5, 5
@@ -135,8 +130,7 @@ def nearest_neighbor_base(chg_thresh, pixel):
 
 
 def test_nearest_neighbor_1():
-    """
-    CHARGELOSS center
+    """CHARGELOSS center
     The flagging starts in group 3 (zero based) in the pixel tested.
     """
     chg_thresh = 4000.
@@ -163,8 +157,7 @@ def test_nearest_neighbor_1():
 
 
 def test_nearest_neighbor_2():
-    """
-    CHARGELOSS corner
+    """CHARGELOSS corner
     The flagging starts in group 3 (zero based) in the pixel tested.
     """
     chg_thresh = 4000.
@@ -191,8 +184,7 @@ def test_nearest_neighbor_2():
 
 
 def test_nearest_neighbor_3():
-    """
-    CHARGELOSS Edge
+    """CHARGELOSS Edge
     The flagging starts in group 3 (zero based) in the pixel tested.
     """
     chg_thresh = 4000.
@@ -219,8 +211,7 @@ def test_nearest_neighbor_3():
 
 
 def test_too_few_groups():
-    """
-    Test that processing for datasets having too few (<3) groups per integration
+    """Test that processing for datasets having too few (<3) groups per integration
     are skipped.
     """
     ngroups, nints, nrows, ncols = 2, 1, 1, 1
@@ -238,8 +229,7 @@ def test_too_few_groups():
 
 
 def create_mod_arrays(ngroups, nints, nrows, ncols):
-    """
-    For an input datacube (NIRISS), create arrays having
+    """For an input datacube (NIRISS), create arrays having
     the specified dimensions for the pixel DQ, the group DQ, and the
     ERR extensions, and create datamodels for the ramp. All groups
     in all arrays have initial values set to 0.

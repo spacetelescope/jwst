@@ -36,10 +36,9 @@ def dummy_source_catalog():
 
 @pytest.mark.parametrize("inplace", [True, False])
 def test_rename_catalog_columns(dummy_source_catalog, inplace):
-    """
-    Test that a catalog with 'xcentroid' and 'ycentroid' columns
+    """Test that a catalog with 'xcentroid' and 'ycentroid' columns
     passed to _renamed_catalog_columns successfully renames those columns
-    to 'x' and 'y' (and does so "inplace" modifying the input catalog)
+    to 'x' and 'y' (and does so "inplace" modifying the input catalog).
     """
     renamed_catalog = tweakreg_step._rename_catalog_columns(dummy_source_catalog)
 
@@ -57,10 +56,9 @@ def test_rename_catalog_columns(dummy_source_catalog, inplace):
 
 @pytest.mark.parametrize("missing", ["x", "y", "xcentroid", "ycentroid"])
 def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
-    """
-    Test that passing a catalog that is missing either "x" or "y"
+    """Test that passing a catalog that is missing either "x" or "y"
     (or "xcentroid" and "ycentroid" which is renamed to "x" or "y")
-    results in an exception indicating that a required column is missing
+    results in an exception indicating that a required column is missing.
     """
     # if the column we want to remove is not in the table, first run
     # rename to rename columns this should add the column we want to remove
@@ -73,8 +71,7 @@ def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
 
 @pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
 def test_is_wcs_correction_small(offset, is_good):
-    """
-    Test that the _is_wcs_correction_small method returns True for a small
+    """Test that the _is_wcs_correction_small method returns True for a small
     wcs correction and False for a "large" wcs correction. The values in this
     test are selected based on the current step default parameters:
         - use2dhist
@@ -120,10 +117,7 @@ def test_expected_failure_bad_starfinder():
 
 
 def test_write_catalog(dummy_source_catalog, tmp_cwd):
-    '''
-    Covers an issue where catalog write did not respect self.output_dir
-    '''
-
+    """Covers an issue where catalog write did not respect self.output_dir."""
     OUTDIR = 'outdir'
     step = tweakreg_step.TweakRegStep()
     os.mkdir(OUTDIR)
@@ -178,9 +172,8 @@ def example_input(example_wcs):
 
 @pytest.mark.parametrize("with_shift", [True, False])
 def test_tweakreg_step(example_input, with_shift):
-    """
-    A simplified unit test for basic operation of the TweakRegStep
-    when run with or without a small shift in the input image sources
+    """A simplified unit test for basic operation of the TweakRegStep
+    when run with or without a small shift in the input image sources.
     """
     if with_shift:
         # shift 9 pixels so that the sources in one of the 2 images
@@ -276,8 +269,7 @@ def custom_catalog_path(tmp_path):
 @pytest.mark.parametrize("custom", [True, False])
 @pytest.mark.slow
 def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, custom, monkeypatch):
-    """
-    Test that TweakRegStep uses a custom catalog provided by the user
+    """Test that TweakRegStep uses a custom catalog provided by the user
     when the correct set of options are provided. The combinations here can be confusing
     and this test attempts to test all likely combinations of:
         - a catalog in a `catfile`
@@ -285,7 +277,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
         - a catalog in the metadata
     combined with step options:
         - `use_custom_catalogs` (True/False)
-        - a "valid" file passed as `catfile`
+        - a "valid" file passed as `catfile`.
     """
     example_input[0].meta.group_id = 'a'
     example_input[1].meta.group_id = 'b'
@@ -377,9 +369,7 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
 
 @pytest.mark.parametrize("with_shift", [True, False])
 def test_sip_approx(example_input, with_shift):
-    """
-    Test the output FITS WCS.
-    """
+    """Test the output FITS WCS."""
     if with_shift:
         # shift 9 pixels so that the sources in one of the 2 images
         # appear at different locations (resulting in a correct wcs update)

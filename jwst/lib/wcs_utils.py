@@ -28,8 +28,8 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     -------
     wl_array : 2-D ndarray
         An array of wavelengths corresponding to the data in `model`.
-    """
 
+    """
     # Use the existing wavelength array, if there is one
     if hasattr(model, "wavelength"):
         wl_array = model.wavelength.copy()

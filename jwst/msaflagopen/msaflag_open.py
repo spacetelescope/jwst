@@ -25,8 +25,7 @@ FLAGGABLE_STATES = ['Internal state', 'TA state', 'state']
 
 
 def do_correction(input_model, shutter_refname, wcs_refnames):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Apply DQ flag to pixels affected by failed open MSA shutters
 
@@ -60,8 +59,7 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
 
 
 def flag(input_datamodel, failed_slitlets, wcs_refnames):
-    """
-    Takes the list of failed open shutters from the failedopen reference file
+    """Takes the list of failed open shutters from the failedopen reference file
     and calculates the pixels affected using the WCS model.
     The affected pixels in the science data have their DQ flags combined with
     that for the MSA_FAILED_OPEN standard flag.  All other science data
@@ -135,8 +133,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
 
 
 def boundingbox_to_indices(data_model, bounding_box):
-    """
-    Takes a bounding_box (tuple of tuples: ((x1, x2), (y1, y2)) and
+    """Takes a bounding_box (tuple of tuples: ((x1, x2), (y1, y2)) and
     a datamodel and calculates the range of indices in the X and Y dimensions
     of the overlap between the bounding box and the datamodel's data array.
 
@@ -179,9 +176,8 @@ def wcs_to_dq(wcs_array, FLAG):
 
 
 def get_failed_open_shutters(shutter_refname):
-    """
-    Return a list of shutters which satisfy the condition that at
-    least one of the states in FLAGGABLE_STATES is set to 'open'
+    """Return a list of shutters which satisfy the condition that at
+    least one of the states in FLAGGABLE_STATES is set to 'open'.
     """
     # Open the bad shutter reference file data model
     f1 = open(shutter_refname, 'r')
@@ -198,8 +194,7 @@ def get_failed_open_shutters(shutter_refname):
 
 
 def create_slitlets(input_model, shutter_refname):
-    """
-    A slitlet looks like this:
+    """A slitlet looks like this:
 
     slitlets : list
         A list of slitlets. Each slitlet is a named tuple with
@@ -219,7 +214,6 @@ def create_slitlets(input_model, shutter_refname):
     The only ones that matter are "name" (must be unique), xcen, ycen, quadrant (from msaoper
     file), ymin, ymax (should be -0.5, 0.5), nshutters (should be 1)
     """
-
     failedopenlist = get_failed_open_shutters(shutter_refname)
 
     slitlets = []
@@ -236,18 +230,14 @@ def create_slitlets(input_model, shutter_refname):
 
 
 def id_from_xy(x, y):
-    """
-    Calculate the shutter_id from the x and y of a shutter
-    """
-
+    """Calculate the shutter_id from the x and y of a shutter."""
     shutter_id = x + (y - 1) * SHUTTERS_PER_ROW
     return shutter_id
 
 
 def or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax):
-    """
-    Bitwise-or the slice of the dq array with the section corresponding to the
-    failed open shutter
+    """Bitwise-or the slice of the dq array with the section corresponding to the
+    failed open shutter.
     """
     dq_array[..., ymin:ymax, xmin:xmax] = np.bitwise_or(dq_array[..., ymin:ymax, xmin:xmax], dq_subarray)
     return dq_array

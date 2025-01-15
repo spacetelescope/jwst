@@ -28,15 +28,13 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 #
-"""
-Apply adjustments to an imaging JWST GWCS object. Input files can be
+"""Apply adjustments to an imaging JWST GWCS object. Input files can be
 ``DataModel``s serialized to ASDF or ASDF-in-FITS files, or they could be
 "simple" ASDF files storing just the GWCS model in the root of the ASDF file
 under the key ``'wcs'``, i.e., ``asdf_file.tree['wcs']``.
 
 Examples
 --------
-
 From command line::
 
     % adjust_wcs [-h] (-u | --suffix SUFFIX | -f FILE) [--overwrite]
@@ -47,6 +45,7 @@ From command line::
     % adjust_wcs data_model_*_cal.fits -u -s 1.002
 
     % adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -r 0.2 arcsec -o 0.0023 deg
+
 """
 import argparse
 import glob

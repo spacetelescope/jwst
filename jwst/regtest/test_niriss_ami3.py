@@ -33,7 +33,7 @@ def run_step_with_cal(rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("obs, suffix", [("012", "ami-oi"), ("015", "psf-ami-oi")])
 def test_niriss_ami3_exp(run_pipeline, obs, suffix, fitsdiff_default_kwargs):
-    """Check exposure-level results of calwebb_ami3"""
+    """Check exposure-level results of calwebb_ami3."""
     rtdata = run_pipeline
 
     output = f"jw01093{obs}001_03102_00001_nis_a3002_{suffix}.fits"
@@ -47,7 +47,7 @@ def test_niriss_ami3_exp(run_pipeline, obs, suffix, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_niriss_ami3_product(run_pipeline, fitsdiff_default_kwargs):
-    """Check final products of calwebb_ami3"""
+    """Check final products of calwebb_ami3."""
     rtdata = run_pipeline
 
     output = "jw01093012001_aminorm-oi.fits"

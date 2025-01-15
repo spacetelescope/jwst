@@ -1,5 +1,4 @@
-"""Association Definitions: DMS Level3 product associations
-"""
+"""Association Definitions: DMS Level3 product associations."""
 import logging
 
 from jwst.associations.registry import RegistryMarker
@@ -54,7 +53,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 @RegistryMarker.rule
 class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
-    """Level 3 Gather Target Acquisitions
+    """Level 3 Gather Target Acquisitions.
 
     Characteristics:
         - Association type: Not applicable
@@ -64,6 +63,7 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
     Notes
     -----
     For first loop, simply send acquisitions and confirms back.
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -86,7 +86,7 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
 
 @RegistryMarker.rule
 class Asn_Lv3AMI(AsnMixin_Science):
-    """Level 3 Aperture Mask Interferometry Association
+    """Level 3 Aperture Mask Interferometry Association.
 
     Characteristics:
         - Association type: ``ami3``
@@ -100,6 +100,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
     Tracking Issues:
 
         - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`_
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -135,15 +136,14 @@ class Asn_Lv3AMI(AsnMixin_Science):
         super(Asn_Lv3AMI, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'ami3'
         super(Asn_Lv3AMI, self)._init_hook(item)
 
 
 @RegistryMarker.rule
 class Asn_Lv3Image(AsnMixin_Science):
-    """Level 3 Science Image Association
+    """Level 3 Science Image Association.
 
     Characteristics:
         - Association type: ``image3``
@@ -181,15 +181,14 @@ class Asn_Lv3Image(AsnMixin_Science):
         super(Asn_Lv3Image, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'image3'
         super(Asn_Lv3Image, self)._init_hook(item)
 
 
 @RegistryMarker.rule
 class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
-    """Level 3 Background Image Association
+    """Level 3 Background Image Association.
 
     Characteristics:
         - Association type: ``image3``
@@ -225,15 +224,14 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
         super(Asn_Lv3ImageBackground, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'image3'
         super(Asn_Lv3ImageBackground, self)._init_hook(item)
 
 
 @RegistryMarker.rule
 class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
-    """Level 3 Coronagraphy Association
+    """Level 3 Coronagraphy Association.
 
     Characteristics:
         - Association type: ``coron3``
@@ -249,6 +247,7 @@ class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
 
         - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
         - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -287,7 +286,7 @@ class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
-    """Level 3 MIRI MRS Association
+    """Level 3 MIRI MRS Association.
 
     Characteristics:
         - Association type: ``spec3``
@@ -325,7 +324,7 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
-    """Level 3 MIRI MRS Association Auxiliary data
+    """Level 3 MIRI MRS Association Auxiliary data.
 
     Characteristics:
         - Association type: ``spec3``
@@ -368,7 +367,7 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
-    """Level 3 Coronagraphy Association
+    """Level 3 Coronagraphy Association.
 
     Characteristics:
         - Association type: ``coron3``
@@ -384,6 +383,7 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
 
         - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
         - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -427,7 +427,7 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_Lv3NRCCoronImage(AsnMixin_Science):
-    """Level 3 Coronagraphy Association handled as regular imaging
+    """Level 3 Coronagraphy Association handled as regular imaging.
 
     Characteristics:
         - Association type: ``image3``
@@ -489,13 +489,12 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
         return dms_product_name_coronimage(self)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'image3'
         super(Asn_Lv3NRCCoronImage, self)._init_hook(item)
 
     def is_item_coron(self, item):
-        """Override to ignore coronographic designation
+        """Override to ignore coronographic designation.
 
         Coronagraphic data is to be processed both as coronagraphic
         (by default), but also as just plain imaging. Coronagraphic
@@ -508,7 +507,7 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
-    """Level 3 NIRSpec Fixed-slit Science
+    """Level 3 NIRSpec Fixed-slit Science.
 
     Characteristics:
         - Association type: ``spec3``
@@ -554,7 +553,7 @@ class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3NRSIFU(AsnMixin_Spectrum):
-    """Level 3 IFU gratings Association
+    """Level 3 IFU gratings Association.
 
     Characteristics:
         - Association type: ``spec3``
@@ -603,13 +602,13 @@ class Asn_Lv3NRSIFU(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
-
-    """Level 3 Spectral Association
+    """Level 3 Spectral Association.
 
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
     """
+
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
@@ -649,7 +648,7 @@ class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
-    """Level 3 slitless, target-based or single-object spectrographic Association
+    """Level 3 slitless, target-based or single-object spectrographic Association.
 
     Characteristics:
         - Association type: ``spec3``
@@ -709,13 +708,13 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
-
-    """Level 3 Spectral Association
+    """Level 3 Spectral Association.
 
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
     """
+
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
@@ -746,7 +745,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
-    """Level 3 slit-like, multi-object spectrographic Association
+    """Level 3 slit-like, multi-object spectrographic Association.
 
     Characteristics:
         - Association type: ``spec3``
@@ -793,7 +792,7 @@ class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
-    """Level 3 slit-like, target-based or single-object spectrographic Association
+    """Level 3 slit-like, target-based or single-object spectrographic Association.
 
     Characteristics:
         - Association type: ``spec3``
@@ -837,7 +836,7 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
         super(Asn_Lv3SpectralTarget, self).__init__(*args, **kwargs)
 
     def finalize(self):
-        """Finalize association
+        """Finalize association.
 
         For NRS Fixed-slit, finalization means creating new members for the
         background nods.
@@ -858,7 +857,7 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3TSO(AsnMixin_Science):
-    """Level 3 Time-Series Association
+    """Level 3 Time-Series Association.
 
     Characteristics:
         - Association type: ``tso3``
@@ -975,13 +974,12 @@ class Asn_Lv3TSO(AsnMixin_Science):
         super(Asn_Lv3TSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'tso3'
         super(Asn_Lv3TSO, self)._init_hook(item)
 
     def _validate_candidates(self, member):
-        """Allow only observation-type candidates
+        """Allow only observation-type candidates.
 
         Parameters
         ----------
@@ -992,8 +990,8 @@ class Asn_Lv3TSO(AsnMixin_Science):
         -------
         True if candidate type is observation.
         False otherwise.
-        """
 
+        """
         # If a group candidate, reject.
         if self.acid.type.lower() != 'observation':
             return False
@@ -1003,7 +1001,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_Lv3WFSCMB(AsnMixin_Science):
-    """Level 3 Wavefront Control & Sensing Association
+    """Level 3 Wavefront Control & Sensing Association.
 
     For coarse and fine phasing, dither pairs need to
     be associated to be combined.  The optical path
@@ -1066,14 +1064,13 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         super(Asn_Lv3WFSCMB, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'wfs-image3'
         super(Asn_Lv3WFSCMB, self)._init_hook(item)
 
     @property
     def dms_product_name(self):
-        """Define product name
+        """Define product name.
 
         Modification is to append the `expspcin` value
         after the calibration suffix.
@@ -1092,7 +1089,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         return product_name.lower()
 
     def _has_pair(self, entry=None):
-        """Check if current product has two members
+        """Check if current product has two members.
 
         If `entry` is given, it is counted as one of the
         members. If not, the existing member list is only
@@ -1107,6 +1104,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         -------
         bool
             True if there are two members.
+
         """
         if entry is None:
             count = 2
@@ -1116,7 +1114,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         return len(self.current_product['members']) == count
 
     def _validate_candidates(self, member):
-        """Disallow GROUP candidates
+        """Disallow GROUP candidates.
 
         Parameters
         ----------
@@ -1127,8 +1125,8 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         -------
         False if candidate is GROUP.
         True otherwise.
-        """
 
+        """
         # If a group candidate, reject.
         if self.acid.type.lower() == 'group':
             return False
@@ -1137,7 +1135,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
 
 @RegistryMarker.rule
 class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
-    """Level 3 WFSS/Grism Association
+    """Level 3 WFSS/Grism Association.
 
     Characteristics:
         - Association type: ``spec3``
@@ -1177,7 +1175,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3ImageMosaic(AsnMixin_Science):
-    """Level 3 Science Image Mosaic Association
+    """Level 3 Science Image Mosaic Association.
 
     Characteristics:
         - Association type: ``image3``
@@ -1223,20 +1221,19 @@ class Asn_Lv3ImageMosaic(AsnMixin_Science):
         super(Asn_Lv3ImageMosaic, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'image3'
         super(Asn_Lv3ImageMosaic, self)._init_hook(item)
 
     def _validate_candidates(self, item):
-        """Allow only mosaic asn candidates
+        """Allow only mosaic asn candidates.
 
         Returns
         -------
         True if candidate type is mosaic.
         False otherwise.
-        """
 
+        """
         # If a group candidate, reject.
         if self.acid.type.lower() != 'mosaic':
             return False

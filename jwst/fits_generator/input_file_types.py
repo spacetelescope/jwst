@@ -27,8 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-"""
-This file contains classes for loading the different input file types
+"""This file contains classes for loading the different input file types
 we handle, currently:
 
   - FITS
@@ -52,9 +51,8 @@ from ..fits_generator import objects
 from ..fits_generator import template
 
 class FITSGetter:
-    """
-    A getter used by both FITS and data files.
-    """
+    """A getter used by both FITS and data files."""
+
     def __init__(self, mapping, key=None, hdu=None):
         self._mapping = mapping
         self._key = key
@@ -64,8 +62,7 @@ class FITSGetter:
         return self._mapping[item]
 
     def __call__(self, key=None, hdu=None, default=''):
-        """
-        Get the keyword 'key' in the given hdu number 'hdu'.
+        """Get the keyword 'key' in the given hdu number 'hdu'.
 
         If *key* is None, the name of the output key will be used.
 
@@ -83,22 +80,19 @@ class FITSGetter:
         return self._mapping[use_hdu].header.get(use_key, default)
 
 class InputFileType():
-    """
-    Base class for an input file type.
-    """
+    """Base class for an input file type."""
+
     type_name = "unknown"
 
     def __init__(self, obj):
-        """
-        Given a file path or object representing that file, create a
+        """Given a file path or object representing that file, create a
         new file type object.
         """
         raise NotImplementedError()
 
     @staticmethod
     def is_file(file_id):
-        """
-        *file_id* is the first 6 characters of the file.  Returns
+        """*file_id* is the first 6 characters of the file.  Returns
         `True` if the magic token indicates that the file is probably
         of this type.
         """
@@ -106,31 +100,26 @@ class InputFileType():
 
     @staticmethod
     def is_object(obj):
-        """
-        Returns `True` if *obj* is a Python object representing the
+        """Returns `True` if *obj* is a Python object representing the
         contents of a file of this type.
         """
         raise NotImplementedError()
 
     def get_getter(self, name, hdu):
-        """
-        Returns a callable object used to get values from the file.
+        """Returns a callable object used to get values from the file.
         This callable object is present in the generator template
         namespace and used to get values from the input file.
         """
         raise NotImplementedError()
 
     def get_name(self):
-        """
-        Get the logical name of the input file.  This name is used as
+        """Get the logical name of the input file.  This name is used as
         the function name present in the generator template namespace.
         """
         raise NotImplementedError()
 
     def close(self):
-        """
-        Close the input file if necessary.
-        """
+        """Close the input file if necessary."""
         pass
 
 class InputFITSFile(InputFileType):
@@ -228,8 +217,7 @@ class InputAPTFile(InputFileType):
         return 'apt'
 
 def get_inputfiles(input_files):
-    """
-    Given a list of file paths, creates a dictionary mapping the
+    """Given a list of file paths, creates a dictionary mapping the
     file's logical name (the function name used in the generator
     template namespace) to a InputFileType object that can be used to
     get values from that file.
@@ -314,8 +302,8 @@ def is_swts(hdulist):
 
 def is_miri(hdulist):
     """Returns True if the file is MIRI data.  These files have a
-    INSTRUME keyword set to 'MIRI'."""
-
+    INSTRUME keyword set to 'MIRI'.
+    """
     keywordname = 'INSTRUME'
     target_value = 'MIRI'
     if hdulist[0].header[keywordname].strip() == target_value:
@@ -324,7 +312,7 @@ def is_miri(hdulist):
         return False
 
 def is_miri_ifu(hdulist):
-    """Returns True if the EXP_TYPE keyword is set to MIR_MRS"""
+    """Returns True if the EXP_TYPE keyword is set to MIR_MRS."""
     keywordname = 'EXP_TYPE'
     target_value = 'MIR_MRS'
     try:
@@ -336,7 +324,7 @@ def is_miri_ifu(hdulist):
         return False
 
 def is_miri_lrs(hdulist):
-    """Returns True if the filter (FWA_POS) is P750L"""
+    """Returns True if the filter (FWA_POS) is P750L."""
     keywordname = 'FWA_POS'
     target_value = 'P750L'
     try:
@@ -349,7 +337,8 @@ def is_miri_lrs(hdulist):
 
 def is_nirspec_fm1(hdulist):
     """Returns True if the file is NIRSpec FM1 data.  These files
-    have a DATE-OBS in the first half of 2011"""
+    have a DATE-OBS in the first half of 2011.
+    """
     instrument = hdulist[0].header['INSTRUME']
     if instrument != 'NIRSPEC':
         return False
@@ -364,7 +353,8 @@ def is_nirspec_fm1(hdulist):
 
 def is_nircam_fm1(hdulist):
     """Returns True is the file is NIRCAM FM1 data.  These files
-    have a DATE-OBS after the first half of 2012"""
+    have a DATE-OBS after the first half of 2012.
+    """
     instrument = hdulist[0].header['INSTRUME']
     if instrument != 'NIRCAM':
         return False
@@ -380,7 +370,8 @@ def is_nircam_fm1(hdulist):
 def is_nirspec_ips(hdulist):
     """Returns True if the file is NIRSpec IPS simulation data.  These
     file have keywords that begin with 'IPS' - I choose IPSDET as a sentinel
-    for these type of data"""
+    for these type of data.
+    """
     keywordname = 'IPSDET'
     try:
         if hdulist[0].header[keywordname].strip():
@@ -390,7 +381,7 @@ def is_nirspec_ips(hdulist):
 
 def is_nirspec_irs2(hdulist):
     """Returns true if the file uses NIRSPEC IRS2 readout pattern.  The
-    READOUT keyword will contain the string "IRS2"
+    READOUT keyword will contain the string "IRS2".
     """
     keywordname = 'READOUT'
     try:
@@ -426,7 +417,8 @@ def is_niriss(hdulist):
 
 def is_niriss_spec_vert(hdulist):
     """Returns True if the NIRISS spectrum is horizontal i.e. for
-    PUPIL = GR700XD or FILTER = GR150R. """
+    PUPIL = GR700XD or FILTER = GR150R.
+    """
     try:
         if hdulist[0].header['PWCCRPUP'].strip() == 'GR700XD' or \
                 hdulist[0].header['FWCCRFIL'].strip() == 'GR150R':
@@ -438,7 +430,8 @@ def is_niriss_spec_vert(hdulist):
 
 def is_niriss_spec_horiz(hdulist):
     """Returns True if the NIRISS spectrum is vertical, i.e. for
-    FILTER = GR150C. """
+    FILTER = GR150C.
+    """
     try:
         if hdulist[0].header['FWCCRFIL'].strip() == 'GR150C':
             return True

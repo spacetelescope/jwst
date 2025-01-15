@@ -23,7 +23,7 @@ conf.use_memmap = False
 
 @pytest.fixture(scope="session")
 def artifactory_repos(pytestconfig):
-    """Provides Artifactory inputs_root and results_root"""
+    """Provides Artifactory inputs_root and results_root."""
     inputs_root = pytestconfig.getini('inputs_root')
     # in pytest 8 inputs_root will be None
     # in pytest <8 inputs_root will be []
@@ -58,8 +58,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def postmortem(request, fixturename):
-    """Retrieve a fixture object if a test failed, else return None
-    """
+    """Retrieve a fixture object if a test failed, else return None."""
     try:
         if request.node.report_setup.passed:
             try:
@@ -166,8 +165,7 @@ def generate_artifactory_json(request, artifactory_repos):
 
 
 def generate_upload_schema(pattern, target, recursive=False, schema=None):
-    """
-    Generate JSON schema for Artifactory upload specfile using JFROG.
+    """Generate JSON schema for Artifactory upload specfile using JFROG.
 
     Docs can be found at
     https://www.jfrog.com/confluence/display/RTF/Using+File+Specs
@@ -195,6 +193,7 @@ def generate_upload_schema(pattern, target, recursive=False, schema=None):
     -------
     upload_schema : dict
         Dictionary specifying the upload schema
+
     """
     recursive = repr(recursive).lower()
     if schema is None:
@@ -214,7 +213,7 @@ def generate_upload_schema(pattern, target, recursive=False, schema=None):
 
 
 def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
-    """Provides the RemoteResource class"""
+    """Provides the RemoteResource class."""
     inputs_root, results_root = artifactory_repos
     return RegtestData(env=envopt, inputs_root=inputs_root,
                        results_root=results_root)
@@ -231,7 +230,7 @@ def rtdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
 
 
 def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
-    """Provides the RemoteResource class"""
+    """Provides the RemoteResource class."""
     inputs_root, results_root = artifactory_repos
     return SDPPoolsSource(env=envopt, inputs_root=inputs_root,
                           results_root=results_root)
@@ -337,24 +336,24 @@ def pytest_addoption(parser):
 
 @pytest.fixture
 def sdp_pool(request):
-    """Retrieve a specific SDP pool to test"""
+    """Retrieve a specific SDP pool to test."""
     return request.config.getoption('--sdp-pool')
 
 
 @pytest.fixture
 def standard_pool(request):
-    """Retrieve a specific standard pool to test"""
+    """Retrieve a specific standard pool to test."""
     return request.config.getoption('--standard-pool')
 
 
 def pytest_generate_tests(metafunc):
-    """Prefetch and parametrize a set of test pools"""
+    """Prefetch and parametrize a set of test pools."""
     if 'pool_path' in metafunc.fixturenames:
         pool_path_fixture(metafunc)
 
 
 def pool_path_fixture(metafunc):
-    """Define the pool_path fixture
+    """Define the pool_path fixture.
 
     This is needed to build a list during test collection for the test
     `jwst.regtest.test_associations_sdp_pools.test_against_standard`
@@ -363,6 +362,7 @@ def pool_path_fixture(metafunc):
     ----------
     metafunc: pytest.Metafunc
         The pytest test generation inspection object.
+
     """
     # If doing "big data" regressions has not been requested,
     # do not invoke any tests.

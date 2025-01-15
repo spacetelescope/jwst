@@ -1,4 +1,4 @@
-"""Test for duplication/missing associations"""
+"""Test for duplication/missing associations."""
 import logging
 
 from jwst.associations.tests.helpers import (
@@ -14,8 +14,7 @@ from jwst.tests.helpers import LogWatcher
 
 
 def test_duplicate_names(monkeypatch):
-    """
-    For Level 3 association, there should be no association
+    """For Level 3 association, there should be no association
     with the same product name.
     """
     pool = AssociationPool.read(t_path('data/jw00632_dups.csv'))
@@ -34,7 +33,7 @@ def test_duplicate_names(monkeypatch):
 
 
 def test_duplicate_generate():
-    """Test for duplicate/overwrite association
+    """Test for duplicate/overwrite association.
 
     The pool has two exposures, one without a valid `asn_candidate`,
     and one with a valid observation `asn_candidate`.
@@ -57,8 +56,7 @@ def test_duplicate_generate():
 
 
 def test_duplicate_main():
-    """Test the same but with Main
-    """
+    """Test the same but with Main."""
     cmd_args = [
         t_path('data/pool_duplicate.csv'),
         '--dry-run',

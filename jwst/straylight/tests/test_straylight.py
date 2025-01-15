@@ -1,14 +1,11 @@
-"""
-Unit tests for straylight correction
-"""
+"""Unit tests for straylight correction."""
 
 from jwst.straylight.straylight import makemodel_ccode, makemodel_composite
 import numpy as np
 
 
 def test_correct_mrs_xartifact():
-    """ Test Correct Straylight routine gives expected results for small region """
-
+    """Test Correct Straylight routine gives expected results for small region."""
     image = np.zeros((1024, 1032))
     image[:, 300] = 100
     istart, istop = 0, 516

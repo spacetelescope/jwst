@@ -1,4 +1,4 @@
-"""Key/Value Registry"""
+"""Key/Value Registry."""
 
 from collections import UserDict
 
@@ -12,7 +12,7 @@ __all__ = [
 
 
 class KeyValueRegistry(UserDict):
-    """Provide a dict-like registry
+    """Provide a dict-like registry.
 
     Differences from just a `dict`:
         - Can be given single item or a 2-tuple.
@@ -31,6 +31,7 @@ class KeyValueRegistry(UserDict):
 
     default : str or object
         The default to use when key is `None`
+
     """
 
     def __init__(self, items=None, default=None):
@@ -50,12 +51,12 @@ class KeyValueRegistry(UserDict):
             self.update({None: default_dict[self.default]})
 
     def update(self, item):
-        """Add item to registry"""
+        """Add item to registry."""
         item_dict = make_dict(item)
         super(KeyValueRegistry, self).update(item_dict)
 
     def __call__(self, item):
-        """Add item by calling instance
+        """Add item by calling instance.
 
         This allows an instance to be used as a decorator.
         """
@@ -85,7 +86,7 @@ class KeyValueRegistryNoKeyFound(KeyValueRegistryError):
 # Utilities
 # *********
 def make_dict(item):
-    """Create a dict from an item
+    """Create a dict from an item.
 
     Parameters
     ----------
@@ -93,6 +94,7 @@ def make_dict(item):
         If dict, just return dict.
         If 2-tuple, return dict with the key/value pair
         If just object, use `__name__` as key
+
     """
     try:
         item_dict = dict(item)

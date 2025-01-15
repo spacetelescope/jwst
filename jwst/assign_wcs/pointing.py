@@ -44,8 +44,7 @@ def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
 
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
-    """
-    Computes the position of V3 (measured N to E) at the center af an aperture.
+    """Computes the position of V3 (measured N to E) at the center af an aperture.
 
     Parameters
     ----------
@@ -96,8 +95,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
 
 
 def wcsinfo_from_model(input_model):
-    """
-    Create a dict {wcs_keyword: array_of_values} pairs from a data model.
+    """Create a dict {wcs_keyword: array_of_values} pairs from a data model.
 
     Parameters
     ----------
@@ -128,8 +126,7 @@ def wcsinfo_from_model(input_model):
 
 
 def fitswcs_transform_from_model(wcsinfo, wavetable=None):
-    """
-    Create a WCS object using from datamodel.meta.wcsinfo.
+    """Create a WCS object using from datamodel.meta.wcsinfo.
     Transforms assume 0-based coordinates.
 
     Parameters
@@ -168,8 +165,7 @@ def frame_from_fits(ff):
 
 
 def frame_from_model(wcsinfo):
-    """
-    Initialize a coordinate frame based on values in model.meta.wcsinfo.
+    """Initialize a coordinate frame based on values in model.meta.wcsinfo.
 
     Parameters
     ----------
@@ -248,8 +244,7 @@ def create_fitswcs(inp, input_frame=None):
 
 
 def dva_corr_model(va_scale, v2_ref, v3_ref):
-    """
-    Create transformation that accounts for differential velocity aberration
+    """Create transformation that accounts for differential velocity aberration
     (scale).
 
     Parameters

@@ -25,7 +25,7 @@ def run_pipeline(rtdata_module):
 @pytest.mark.parametrize("suffix", ["psfalign", "psfsub", "crfints"])
 @pytest.mark.parametrize("obs", ["002", "003"])
 def test_nircam_coron3_sci_exp(run_pipeline, suffix, obs, fitsdiff_default_kwargs):
-    """Check intermediate results of calwebb_coron3"""
+    """Check intermediate results of calwebb_coron3."""
     rtdata = run_pipeline
 
     output = "jw01386" + obs + "001_03108_00001_nrcalong_c1020_" + suffix + ".fits"
@@ -41,7 +41,7 @@ def test_nircam_coron3_sci_exp(run_pipeline, suffix, obs, fitsdiff_default_kwarg
 @pytest.mark.parametrize("suffix", ["crfints"])
 @pytest.mark.parametrize("exposure", ["00001", "00002", "00003", "00004"])
 def test_nircam_coron3_psf_exp(run_pipeline, suffix, exposure, fitsdiff_default_kwargs):
-    """Check intermediate results of calwebb_coron3"""
+    """Check intermediate results of calwebb_coron3."""
     rtdata = run_pipeline
 
     output = "jw01386001001_0310a_" + exposure + "_nrcalong_c1020_" + suffix + ".fits"
@@ -56,7 +56,7 @@ def test_nircam_coron3_psf_exp(run_pipeline, suffix, exposure, fitsdiff_default_
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["psfstack", "i2d"])
 def test_nircam_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
-    """Check final products of calwebb_coron3"""
+    """Check final products of calwebb_coron3."""
     rtdata = run_pipeline
 
     output = "jw01386-c1020_t001_nircam_f410m-maskrnd-sub320a335r_mini_" + suffix + ".fits"

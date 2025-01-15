@@ -1,4 +1,4 @@
-"""Test ProcessList, ProcessQueue, ProcessQueueSorted"""
+"""Test ProcessList, ProcessQueue, ProcessQueueSorted."""
 
 from jwst.associations.tests.helpers import (
     combine_pools,
@@ -52,7 +52,7 @@ def test_process_queue():
 
 
 def test_process_queue_sorted():
-    """Test the sorted process queue"""
+    """Test the sorted process queue."""
     items_to_add = [
         [
             ProcessList([1], ['r1'], work_over=ListCategory.RULES),

@@ -1,11 +1,8 @@
-"""
-Entry point implementations.
-"""
+"""Entry point implementations."""
 
 
 def get_steps():
-    """
-    Return tuples describing the stpipe.Step subclasses provided
+    """Return tuples describing the stpipe.Step subclasses provided
     by this package.  This method is registered with the stpipe.steps
     entry point.
 
@@ -16,6 +13,7 @@ def get_steps():
         subclass name.  The second element is an optional class
         alias.  The third element indicates that the class
         is a subclass of Pipeline.
+
     """
     # Unit tests ensure that this list is kept in sync with the actual
     # class definitions.  We need to avoid importing jwst.pipeline and

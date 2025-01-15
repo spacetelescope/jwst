@@ -5,9 +5,8 @@ __all__ = ['RULE_FUNCTIONS', 'AttributeBlender', 'make_blender']
 
 
 def _multi(vals):
-    """
-    This will either return the common value from a list of identical values
-    or 'MULTIPLE'
+    """This will either return the common value from a list of identical values
+    or 'MULTIPLE'.
     """
     uniq_vals = list(set(vals))
     num_vals = len(uniq_vals)
@@ -54,41 +53,40 @@ and should not be used for new schemas.
 
 
 class AttributeBlender:
-    """
-    Single attribute metadata blender
-    """
+    """Single attribute metadata blender."""
+
     def __init__(self, blend_function):
-        """
-        Create a new metadata attribute blender.
+        """Create a new metadata attribute blender.
 
         Parameters
         ----------
         blend_function: callable
             Function to blend accumulated metadata values
+
         """
         self.blend_function = blend_function
         self.values = []
 
     def accumulate(self, value):
-        """
-        Add a metadata value for blending.
+        """Add a metadata value for blending.
 
         Parameters
         ----------
         value:
             Value for this metadata attribute to use
             when blending.
+
         """
         self.values.append(value)
 
     def finalize(self):
-        """
-        Blend the accumulated metadata values.
+        """Blend the accumulated metadata values.
 
         Returns
         -------
         value:
             The blended result.
+
         """
         if not self.values:
             return None
@@ -96,8 +94,7 @@ class AttributeBlender:
 
 
 def make_blender(rule):
-    """
-    Make a `AttributeBlender` instance using the provided rule
+    """Make a `AttributeBlender` instance using the provided rule.
 
     Parameters
     ----------
@@ -108,5 +105,6 @@ def make_blender(rule):
     -------
     attr_blender: `AttrBlender`
         Blender instance using the provided rule.
+
     """
     return AttributeBlender(RULE_FUNCTIONS[rule])

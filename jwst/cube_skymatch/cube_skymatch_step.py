@@ -1,6 +1,5 @@
 #! /usr/bin/env python
-"""
-JWST pipeline step for sky matching.
+"""JWST pipeline step for sky matching.
 
 :Authors: Mihai Cara
 
@@ -28,10 +27,7 @@ __all__ = ['CubeSkyMatchStep']
 
 
 class CubeSkyMatchStep(Step):
-    """
-    SkyMatchStep: Subtraction or equalization of sky background in science images.
-
-    """
+    """SkyMatchStep: Subtraction or equalization of sky background in science images."""
 
     class_alias = "cube_skymatch"
 
@@ -216,8 +212,7 @@ class CubeSkyMatchStep(Step):
             model2d.meta.background.polynomial_info[index] = bkgmeta
 
     def _apply_sky_2d(self, model2d, channel):
-        """ Apply/subtract sky from 2D image data. """
-
+        """Apply/subtract sky from 2D image data."""
         index = _find_channel_bkg_index(model2d, channel)
         if index is None:
             raise ValueError("Background data for channel '{}' not present in "
@@ -289,8 +284,7 @@ def _find_associated_2d_image(cube, models2d):
     # not work. I created it mostly as a placeholder so that the rest of the
     # code could be developed. However, at this moment it is not clear how
     # a 2D image from which a cube was created could be identified.
-    """
-    Returns a tuple consisting of a 2D image and channel number from which
+    """Returns a tuple consisting of a 2D image and channel number from which
     a cube was created.
 
     """
@@ -305,8 +299,7 @@ def _find_associated_2d_image(cube, models2d):
 
 
 def _find_channel_bkg_index(model2d, channel):
-    """
-    Return the index of the background subschema corresponding to a given
+    """Return the index of the background subschema corresponding to a given
     channel.
 
     """

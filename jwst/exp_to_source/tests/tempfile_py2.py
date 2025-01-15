@@ -8,11 +8,12 @@ from tempfile import (mkdtemp, mkstemp)
 
 @contextmanager
 def TemporaryDirectory(suffix='', prefix='tmp', dir=None):
-    """Provide Python3 functionality
+    """Provide Python3 functionality.
 
     Notes
     -----
     See the python3 documentation
+
     """
     path = mkdtemp(suffix, prefix, dir)
     try:

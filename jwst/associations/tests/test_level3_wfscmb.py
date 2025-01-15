@@ -9,18 +9,14 @@ from jwst.associations.main import Main
 
 
 def jitter_name_base(fname):
-    """
-    Remove the post fix from a pool applicate file name.
-    """
+    """Remove the post fix from a pool applicate file name."""
     sf = fname.split("_")
     new_name = "_".join([el for el in sf[:-1]])
     return new_name
 
 
 def get_jitter_not_jitter(pool_path):
-    """
-    Get a list of pool candidates marked as jitter.
-    """
+    """Get a list of pool candidates marked as jitter."""
     with open(pool_path, "r") as fd:
         lines = fd.readlines()
     header = lines[0]
@@ -46,9 +42,7 @@ def get_jitter_not_jitter(pool_path):
 
 
 def get_expnames(asn):
-    """
-    Get the list of all exp_names in an association file.
-    """
+    """Get the list of all exp_names in an association file."""
     expnames = []
     for product in asn["products"]:
         members = product["members"]
@@ -58,8 +52,7 @@ def get_expnames(asn):
 
 
 def jitter_present(jitter, associations):
-    """
-    For level 3 images make sure pool candidates identifed as
+    """For level 3 images make sure pool candidates identifed as
     jitter are not present in association files.
     """
     for asn in associations:
@@ -78,8 +71,7 @@ def jitter_present(jitter, associations):
 
 
 def test_level3_wfscmb_jitter_suppression(tmp_path):
-    """
-    Make sure no candidate from the pool with DMS_NOTE equal to
+    """Make sure no candidate from the pool with DMS_NOTE equal to
     WFSC_LOS_JITTER is in any association.
     """
     pfile = "data/pool_033_wfs_jitter.csv"

@@ -1,4 +1,4 @@
-"""Regression tests for NIRSpec IFU"""
+"""Regression tests for NIRSpec IFU."""
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -10,7 +10,7 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 
 @pytest.fixture(scope='module')
 def run_spec2(rtdata_module):
-    """Run the Spec2Pipeline on a spec2 ASN containing a single exposure"""
+    """Run the Spec2Pipeline on a spec2 ASN containing a single exposure."""
     rtdata = rtdata_module
 
     # Setup the inputs
@@ -44,15 +44,14 @@ def run_spec2(rtdata_module):
      'nsclean', 'pathloss', 's3d', 'srctype', 'x1d']
 )
 def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
-    """Regression test matching output files"""
+    """Regression test matching output files."""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path=TRUTH_PATH)
 
 
 @pytest.fixture
 def run_photom(rtdata):
-    """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT"""
-
+    """Run the photom step on an NRS IFU exposure with SRCTYPE=POINT."""
     # Setup the inputs
     rate_name = 'jw01251004001_03107_00002_nrs1_pathloss.fits'
     rate_path = INPUT_PATH + '/' + rate_name
@@ -70,15 +69,14 @@ def run_photom(rtdata):
 
 @pytest.mark.bigdata
 def test_photom(run_photom, fitsdiff_default_kwargs):
-    """Test the photom step on an NRS IFU exposure with a point source"""
+    """Test the photom step on an NRS IFU exposure with a point source."""
     rt.is_like_truth(run_photom, fitsdiff_default_kwargs, 'photomstep',
                      truth_path=TRUTH_PATH)
 
 
 @pytest.fixture
 def run_extract1d(rtdata):
-    """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT"""
-
+    """Run the extract_1d step on an NRS IFU cube with SRCTYPE=POINT."""
     # Setup the inputs
     cube_name = 'jw01251004001_03107_00002_nrs1_s3d.fits'
     cube_path = INPUT_PATH + '/' + cube_name
@@ -96,6 +94,6 @@ def run_extract1d(rtdata):
 
 @pytest.mark.bigdata
 def test_extract1d(run_extract1d, fitsdiff_default_kwargs):
-    """Test the extract_1d step on an NRS IFU cube with a point source"""
+    """Test the extract_1d step on an NRS IFU cube with a point source."""
     rt.is_like_truth(run_extract1d, fitsdiff_default_kwargs, 'extract1dstep',
                      truth_path=TRUTH_PATH)

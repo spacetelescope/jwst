@@ -6,10 +6,7 @@ from jwst.associations import asn_edit
 
 
 def main():
-    """
-    Parse command line, read, edit, write association file
-    """
-
+    """Parse command line, read, edit, write association file."""
     # Parse command line arguments
     description_text = """
 Edit Association File

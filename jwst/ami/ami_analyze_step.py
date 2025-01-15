@@ -44,8 +44,7 @@ class AmiAnalyzeStep(Step):
         return Step.save_model(self, model, *args, **kwargs)
 
     def override_bandpass(self):
-        """
-        Read bandpass from asdf file and use it to override the default.
+        """Read bandpass from asdf file and use it to override the default.
 
         Expects an array of [effstims, wave_m] 
         (i.e. np.array((effstims,wave_m)).T) stored as 'bandpass' in asdf file,
@@ -56,8 +55,8 @@ class AmiAnalyzeStep(Step):
         -------
             bandpass: array
                 Array of [countrates, wavelengths]
-        """
 
+        """
         try:
             with asdf.open(self.bandpass, lazy_load=False) as af:
                 bandpass = np.array(af['bandpass'])
@@ -89,8 +88,7 @@ class AmiAnalyzeStep(Step):
             raise Exception((message1 + message2))
 
     def override_affine2d(self):
-        """
-        Read user-input affine transform from ASDF file. 
+        """Read user-input affine transform from ASDF file.
 
         Makes an Affine2d object (see utils.Affine2D class). 
         Input should contain mx,my,sx,sy,xo,yo,rotradccw.
@@ -134,8 +132,7 @@ class AmiAnalyzeStep(Step):
         return affine2d
 
     def process(self, input):
-        """
-        Performs analysis of an AMI mode exposure by applying the LG algorithm.
+        """Performs analysis of an AMI mode exposure by applying the LG algorithm.
 
         Parameters
         ----------
@@ -150,6 +147,7 @@ class AmiAnalyzeStep(Step):
             AMI tables of observables for each integration from LG algorithm fringe fitting in OIFITS format
         amilgmodel: AmiLGFitModel object
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
+
         """
         # Retrieve the parameter values
         oversample = self.oversample

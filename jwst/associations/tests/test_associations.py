@@ -68,7 +68,7 @@ def test_multi_rules():
 
 
 def test_base_instantiation():
-    """Create an association without any initialization"""
+    """Create an association without any initialization."""
     assert Association()
 
 
@@ -120,7 +120,7 @@ def test_base_instantiation():
     ]
 )
 def test_global_constraints(constraints, pool, n_asns):
-    """Test that global constraints get applied to all rules"""
+    """Test that global constraints get applied to all rules."""
     rules = AssociationRegistry(
         global_constraints=constraints
     )

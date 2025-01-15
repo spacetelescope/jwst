@@ -1,5 +1,4 @@
-"""Replace bad pixels in the input images with the median of the surrounding pixels.
-"""
+"""Replace bad pixels in the input images with the median of the surrounding pixels."""
 
 import logging
 import numpy as np
@@ -37,8 +36,8 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
     -------
     median_value : float
         The calculated median value
-    """
 
+    """
     # Set the half box size
     hbox = int(bsize / 2)
 
@@ -83,8 +82,8 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
     -------
     img_model : image model
         The updated image model with the bad pixels replaced
-    """
 
+    """
     n_ints, _, _ = img_model.data.shape
     for nimage in range(n_ints):
         img_int = img_model.data[nimage]
@@ -118,8 +117,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
 
 def separate_non_science_pixels(img_dq, bad_locations):
-    """
-    For the median filter, we don't care about the NON_SCIENCE pixels, but they
+    """For the median filter, we don't care about the NON_SCIENCE pixels, but they
     produce a ton of warnings that clog up the alignment algorithm and make it
     run really slowly. In this function, we take all the bad pixels and pull out
     the ones with NON_SCIENCE flags so we can set them to 0 without running the
@@ -133,11 +131,12 @@ def separate_non_science_pixels(img_dq, bad_locations):
         2xN (row, col) tuple of flagged pixel indices
 
     Returns
-    ------
+    -------
     science_pixels : tuple
         2xN tuple of (row, col) flagged science pixels
     non_science_pixels : tuple
         2xN tuple of (row, col) flagged non_science pixels
+
     """
 
     def is_science(pix):

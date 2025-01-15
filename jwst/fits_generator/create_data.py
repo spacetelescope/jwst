@@ -18,10 +18,10 @@ from . import create_dms_data
 
 
 def get_proposals(base_directory='.'):
-    '''Returns a list of all proposals (files that end in .prop)
+    """Returns a list of all proposals (files that end in .prop)
     that are below the baseDirectory.  Returns a list of
-    (directory, proposalfilename) tuples'''
-
+    (directory, proposalfilename) tuples.
+    """
     proposal_list = []
     for dirname, subdirlist, filelist in os.walk(base_directory):
         for name in filelist:
@@ -30,7 +30,7 @@ def get_proposals(base_directory='.'):
     return proposal_list
 
 def write_observation_identifiers(id):
-    '''Write out an ObservationIdentifiers.dat file'''
+    """Write out an ObservationIdentifiers.dat file."""
     filename = 'ObservationIdentifiers.dat'
     #
     #  Delete file if it exists
@@ -58,7 +58,7 @@ def write_observation_identifiers(id):
     return filename
 
 def remove_observation_identifiers(obsid):
-    '''Remove the observation identifiers file'''
+    """Remove the observation identifiers file."""
     try:
         os.remove(obsid)
     except:
@@ -89,8 +89,7 @@ def pre_clean():
     return
 
 def run(base_directory='.', level='1b'):
-    '''Do it'''
-
+    """Do it."""
     proposals = get_proposals(base_directory=base_directory)
 
     for proposal in proposals:

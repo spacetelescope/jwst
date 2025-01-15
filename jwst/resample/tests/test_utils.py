@@ -1,4 +1,4 @@
-"""Test various utility functions"""
+"""Test various utility functions."""
 from astropy import coordinates as coord
 from astropy import wcs as fitswcs
 from astropy.modeling import models as astmodels
@@ -97,7 +97,7 @@ def wcs_slicedwcs(wcs_gwcs):
     ]
 )
 def test_build_mask(dq, bitvalues, expected):
-    """Test logic of mask building
+    """Test logic of mask building.
 
     Parameters
     ----------
@@ -109,6 +109,7 @@ def test_build_mask(dq, bitvalues, expected):
 
     expected: numpy.array
         Expected mask array
+
     """
     result = build_mask(dq, bitvalues)
     assert_array_equal(result, expected)
@@ -116,7 +117,7 @@ def test_build_mask(dq, bitvalues, expected):
 
 @pytest.mark.parametrize("weight_type", ["ivm", "exptime"])
 def test_build_driz_weight(weight_type):
-    """Check that correct weight map is returned of different weight types"""
+    """Check that correct weight map is returned of different weight types."""
     model = ImageModel((10, 10))
     model.dq[0] = DO_NOT_USE
     model.meta.exposure.measurement_time = 10.0
@@ -130,7 +131,7 @@ def test_build_driz_weight(weight_type):
 
 @pytest.mark.parametrize("weight_type", ["ivm", None])
 def test_build_driz_weight_zeros(weight_type):
-    """Check that zero or not finite weight maps get set to 1"""
+    """Check that zero or not finite weight maps get set to 1."""
     model = ImageModel((10, 10))
     model.var_rnoise += 1
 
@@ -140,9 +141,7 @@ def test_build_driz_weight_zeros(weight_type):
 
 
 def test_find_dispersion_axis():
-    """
-    Test the find_dispersion_axis() function
-    """
+    """Test the find_dispersion_axis() function."""
     dm = SlitModel()
 
     dm.meta.wcsinfo.dispersion_direction = 1    # horizontal

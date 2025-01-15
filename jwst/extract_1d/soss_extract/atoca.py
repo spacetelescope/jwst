@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-Main classes for the ATOCA (Darveau-Bernier 2021, in prep).
+"""Main classes for the ATOCA (Darveau-Bernier 2021, in prep).
 ATOCA: Algorithm to Treat Order ContAmination (English)
-       Algorithme de Traitement d’Ordres ContAmines (French)
+       Algorithme de Traitement d’Ordres ContAmines (French).
 
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
@@ -56,8 +55,7 @@ class _BaseOverlap:
                  orders=None, global_mask=None, mask_trace_profile=None,
                  wave_grid=None, wave_bounds=None, n_os=2,
                  threshold=1e-3, c_kwargs=None):
-        """
-        Parameters
+        """Parameters
         ----------
         wave_map : (N_ord, N, M) list or array of 2-D arrays
             A list or array of the central wavelength position for each
@@ -109,8 +107,8 @@ class _BaseOverlap:
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
             If dictionary, the same c_kwargs will be used for each order.
-        """
 
+        """
         # If no orders specified extract on orders 1 and 2.
         if orders is None:
             orders = [1, 2]
@@ -230,7 +228,7 @@ class _BaseOverlap:
         return
 
     def get_attributes(self, *args, i_order=None):
-        """Return list of attributes
+        """Return list of attributes.
 
         Parameters
         ----------
@@ -244,8 +242,8 @@ class _BaseOverlap:
         Returns
         -------
         getattr(arg) for arg in args, with i_order indexing if provided
-        """
 
+        """
         if i_order is None:
             out = [getattr(self, arg) for arg in args]
         else:
@@ -257,8 +255,9 @@ class _BaseOverlap:
         return out
 
     def update_wave_map(self, wave_map):
-        """Update internal wave_map
-        Parameters
+        """Update internal wave_map.
+
+        Parameters.
         ----------
         wave_map : array[float]
             Wavelength maps for each order
@@ -266,6 +265,7 @@ class _BaseOverlap:
         Returns
         -------
         None
+
         """
         dtype = self.dtype
         self.wave_map = [wave_n.astype(dtype).copy() for wave_n in wave_map]
@@ -273,8 +273,9 @@ class _BaseOverlap:
         return
 
     def update_trace_profile(self, trace_profile):
-        """Update internal trace_profiles
-        Parameters
+        """Update internal trace_profiles.
+
+        Parameters.
         ----------
         trace_profile : array[float]
             Trace profiles for each order
@@ -282,6 +283,7 @@ class _BaseOverlap:
         Returns
         -------
         None
+
         """
         dtype = self.dtype
 
@@ -291,8 +293,9 @@ class _BaseOverlap:
         return
 
     def update_throughput(self, throughput):
-        """Update internal throughput values
-        Parameters
+        """Update internal throughput values.
+
+        Parameters.
         ----------
         throughput : array[float] or callable
             Throughput values for each order, given either as an array
@@ -301,8 +304,8 @@ class _BaseOverlap:
         Returns
         -------
         None
-        """
 
+        """
         # Update the throughput values.
         throughput_new = []
         for throughput_n in throughput:  # Loop over orders.
@@ -328,8 +331,9 @@ class _BaseOverlap:
         return
 
     def update_kernels(self, kernels, c_kwargs):
-        """Update internal kernels
-        Parameters
+        """Update internal kernels.
+
+        Parameters.
         ----------
         kernels : array, callable or sparse matrix
             Convolution kernel to be applied on the spectrum (f_k) for each order.
@@ -341,8 +345,8 @@ class _BaseOverlap:
         Returns
         -------
         None
-        """
 
+        """
         # Check the c_kwargs inputs
         # If not given
         if c_kwargs is None:
@@ -379,8 +383,9 @@ class _BaseOverlap:
         return
 
     def get_mask_wave(self, i_order):
-        """Generate mask bounded by limits of wavelength grid
-        Parameters
+        """Generate mask bounded by limits of wavelength grid.
+
+        Parameters.
         ----------
         i_order : int
             Order to select the wave_map on which a mask
@@ -391,8 +396,8 @@ class _BaseOverlap:
         array[bool]
             A mask with True where wave_map is outside the bounds
             of wave_grid
-        """
 
+        """
         wave = self.wave_map[i_order]
         imin, imax = self.i_bounds[i_order]
         wave_min = self.wave_grid[imin]
@@ -419,8 +424,8 @@ class _BaseOverlap:
             Mask that combines global_mask, wavelength mask, trace_profile mask
         mask_ord : array[bool]
             Mask applied to each order
-        """
 
+        """
         # Get needed attributes
         args = ('threshold', 'n_orders', 'mask_trace_profile', 'trace_profile')
         needed_attr = self.get_attributes(*args)
@@ -470,8 +475,8 @@ class _BaseOverlap:
         Returns
         -------
         None
-        """
 
+        """
         # Get general mask
         general_mask = self.general_mask
 
@@ -491,17 +496,19 @@ class _BaseOverlap:
 
     def _get_i_bnds(self, wave_bounds=None):
         """Define wavelength boundaries for each order using the order's mask.
-        Parameters
+
+        Parameters.
         ----------
         wave_bounds : list[float], optional
             Minimum and maximum values of masked wavelength map. If not given,
             calculated from internal wave_map and mask_ord for each order.
+
         Returns
         -------
         list[float]
             Wavelength boundaries for each order
-        """
 
+        """
         wave_grid = self.wave_grid
         i_bounds = self.i_bounds
 
@@ -531,9 +538,8 @@ class _BaseOverlap:
 
     def update_i_bnds(self):
         """Update the grid limits for the extraction.
-        Needs to be done after modification of the mask
+        Needs to be done after modification of the mask.
         """
-
         # Get old and new boundaries.
         i_bnds_old = self.i_bounds
         i_bnds_new = self._get_i_bnds()
@@ -554,21 +560,17 @@ class _BaseOverlap:
         return
 
     def wave_grid_c(self, i_order):
-        """Return wave_grid for the convolved flux at a given order.
-        """
-
+        """Return wave_grid for the convolved flux at a given order."""
         index = slice(*self.i_bounds[i_order])
 
         return self.wave_grid[index]
 
     def get_w(self, i_order):
-        """Dummy method to init this class"""
-
+        """Dummy method to init this class."""
         return np.array([]), np.array([])
 
     def compute_weights(self):
-        """
-        Compute integration weights
+        """Compute integration weights.
 
         The weights depend on the integration method used to solve
         the integral of the flux over a pixel and are encoded
@@ -578,8 +580,8 @@ class _BaseOverlap:
         -------
         weights, weights_k_idx : list
             Lists of weights and corresponding grid indices
-        """
 
+        """
         # Init lists
         weights, weights_k_idx = [], []
         for i_order in range(self.n_orders):  # For each orders
@@ -600,7 +602,6 @@ class _BaseOverlap:
         """Save the matrix product of the weighs (w), the throughput (t),
         the wavelength (lam) and the convolution matrix for faster computation.
         """
-
         if self.w_t_wave_c is None:
             self.w_t_wave_c = [[] for _ in range(self.n_orders)]
 
@@ -611,9 +612,8 @@ class _BaseOverlap:
 
     def grid_from_map(self, i_order=0):
         """Return the wavelength grid and the columns associated
-        to a given order index (i_order)
+        to a given order index (i_order).
         """
-
         attrs = ['wave_map', 'trace_profile']
         wave_map, trace_profile = self.get_attributes(*attrs, i_order=i_order)
 
@@ -641,13 +641,13 @@ class _BaseOverlap:
             Default is `self.mask_ord[i_order]`
 
         Returns
-        ------
+        -------
         wave_grid : array[float]
             The wavelength grid.
         noise : array[float]
             The associated noise array.
-        """
 
+        """
         # Use object attributes if not given
         if data is None:
             data = self.data
@@ -707,11 +707,11 @@ class _BaseOverlap:
             instead of the whole system: (P/sig).(w.T.lambda.c_n)
 
         Returns
-        ------
+        -------
         array[float]
             Sparse matrix of b_n coefficients
-        """
 
+        """
         # Force to compute if b_n never computed.
         if self.pixel_mapping[i_order] is None:
             same = False
@@ -782,7 +782,8 @@ class _BaseOverlap:
         TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
               There will be only one matrix multiplication:
               (P/sig).(w.T.lambda.c_n).
-        Parameters
+
+        Parameters.
         ----------
         data : (N, M) array_like, optional
             A 2-D array of real values representing the detector image.
@@ -807,10 +808,10 @@ class _BaseOverlap:
             Default is the object attribute `t_list`
 
         Returns
-        ------
+        -------
         A and b from Ax = b being the system to solve.
-        """
 
+        """
         # Get the detector model
         b_matrix, data = self.get_detector_model(data, error, mask, trace_profile, throughput)
 
@@ -826,7 +827,8 @@ class _BaseOverlap:
         TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
               There will be only one matrix multiplication:
               (P/sig).(w.T.lambda.c_n).
-        Parameters
+
+        Parameters.
         ----------
         data : (N, M) array_like, optional
             A 2-D array of real values representing the detector image.
@@ -851,11 +853,11 @@ class _BaseOverlap:
             Default is the object attribute `t_list`
 
         Returns
-        ------
+        -------
         B, pix_array : array[float]
             From the linear equation B.dot(flux) = pix_array
-        """
 
+        """
         # Check if inputs are suited for quick mode;
         # Quick mode if `t_list` is not specified.
         quick = (throughput is None)
@@ -914,7 +916,7 @@ class _BaseOverlap:
     def set_tikho_matrix(self, t_mat=None, t_mat_func=None, fargs=None, fkwargs=None):
         """Set the tikhonov matrix attribute.
         The matrix can be directly specified as an input, or
-        it can be built using `t_mat_func`
+        it can be built using `t_mat_func`.
 
         Parameters
         ----------
@@ -934,8 +936,8 @@ class _BaseOverlap:
         Returns
         -------
         None
-        """
 
+        """
         # Generate the matrix with the function
         if t_mat is None:
 
@@ -969,7 +971,6 @@ class _BaseOverlap:
         if not defined yet. If so, all arguments are passed
         to `set_tikho_matrix`. The result is saved as an attribute.
         """
-
         if self.tikho_mat is None:
             self.set_tikho_matrix(**kwargs)
 
@@ -991,6 +992,7 @@ class _BaseOverlap:
         -------
         array[float]
             Grid of Tikhonov factors.
+
         """
         # Get some values from the object
         mask, wave_grid = self.get_attributes('mask', 'wave_grid')
@@ -1017,8 +1019,7 @@ class _BaseOverlap:
 
     def get_tikho_tests(self, factors, tikho=None, tikho_kwargs=None, data=None,
                         error=None, mask=None, trace_profile=None, throughput=None):
-        """
-        Test different factors for Tikhonov regularization.
+        """Test different factors for Tikhonov regularization.
 
         Parameters
         ----------
@@ -1051,10 +1052,10 @@ class _BaseOverlap:
             Default is the object attribute `t_list`
 
         Returns
-        ------
+        -------
         dictionary of the tests results
-        """
 
+        """
         # Build the system to solve
         b_matrix, pix_array = self.get_detector_model(data, error, mask, trace_profile, throughput)
 
@@ -1076,8 +1077,7 @@ class _BaseOverlap:
         return tests
 
     def best_tikho_factor(self, tests=None, fit_mode='all', mode_kwargs=None):
-        """
-        Compute the best scale factor for Tikhonov regularization.
+        """Compute the best scale factor for Tikhonov regularization.
         It is determined by taking the factor giving the lowest reduced chi2 on
         the detector, the highest curvature of the l-curve or when the improvement
         on the chi2 (so the derivative of the chi2, 'd_chi2') reaches a certain threshold.
@@ -1105,8 +1105,8 @@ class _BaseOverlap:
             The mode used to determine the best factor.
         results : dict
             A dictionary holding the factors computed for each mode requested.
-        """
 
+        """
         # Use pre-run tests if not specified
         if tests is None:
             tests = self.tikho_tests
@@ -1186,7 +1186,8 @@ class _BaseOverlap:
 
     def rebuild(self, spectrum=None, i_orders=None, same=False, fill_value=0.0):
         """Build current model image of the detector.
-        Parameters
+
+        Parameters.
         ----------
         spectrum : callable or array-like, optional
             flux as a function of wavelength if callable
@@ -1205,8 +1206,8 @@ class _BaseOverlap:
         -------
         array[float]
             The modeled detector image.
-        """
 
+        """
         # If no spectrum given compute it.
         if spectrum is None:
             spectrum = self.__call__()
@@ -1255,8 +1256,8 @@ class _BaseOverlap:
         -------
         array[float]
             The log-likelihood of the spectrum.
-        """
 
+        """
         # If no spectrum given compute it.
         if spectrum is None:
             spectrum = self.__call__()
@@ -1281,7 +1282,6 @@ class _BaseOverlap:
         """Simply pass `matrix` and `result`
         to `scipy.spsolve` and apply index.
         """
-
         # Get valid indices
         idx = np.nonzero(result)[0]
 
@@ -1305,16 +1305,14 @@ class _BaseOverlap:
 
     @staticmethod
     def _solve_tikho(matrix, result, t_mat, **kwargs):
-        """Solve system using Tikhonov regularization"""
-
+        """Solve system using Tikhonov regularization."""
         # Note that the indexing is applied inside the function
         tikho = atoca_utils.Tikhonov(matrix, result, t_mat)
 
         return tikho.solve(**kwargs)
 
     def __call__(self, tikhonov=False, tikho_kwargs=None, factor=None, **kwargs):
-        """
-        Extract underlying flux on the detector.
+        """Extract underlying flux on the detector.
         All parameters are passed to `build_sys` method.
         TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
               There will be only one matrix multiplication:
@@ -1348,10 +1346,10 @@ class _BaseOverlap:
             Default is the object attribute `t_list`
 
         Returns
-        -----
+        -------
         spectrum (f_k): solution of the linear system
-        """
 
+        """
         # Solve with the specified solver.
         if tikhonov:
             # Build the system to solve
@@ -1415,6 +1413,7 @@ class _BaseOverlap:
         -------
         pix_center, bin_val : array[float]
             The pixel centers and the associated integrated values.
+
         """
         # Take the value from the order if not given...
 
@@ -1492,15 +1491,13 @@ class _BaseOverlap:
 
 
 class ExtractionEngine(_BaseOverlap):
-    """
-    Run the ATOCA algorithm (Darveau-Bernier 2021, in prep).
+    """Run the ATOCA algorithm (Darveau-Bernier 2021, in prep).
 
     This version models the pixels of the detector using an oversampled trapezoidal integration.
     """
 
     def __init__(self, wave_map, trace_profile, *args, **kwargs):
-        """
-        Parameters
+        """Parameters
         ----------
         trace_profile : (N_ord, N, M) list or array of 2-D arrays
             A list or array of the spatial profile for each order
@@ -1556,8 +1553,8 @@ class ExtractionEngine(_BaseOverlap):
             Inputs keywords arguments to pass to
             `convolution.get_c_matrix` function for each order.
             If dictionary, the same c_kwargs will be used for each order.
-        """
 
+        """
         # Get wavelength at the boundary of each pixel
         wave_p, wave_m = [], []
         for wave in wave_map:  # For each order
@@ -1573,8 +1570,7 @@ class ExtractionEngine(_BaseOverlap):
         super().__init__(wave_map, trace_profile, *args, **kwargs)
 
     def _get_lo_hi(self, grid, i_order):
-        """
-        Find the lowest (lo) and highest (hi) index
+        """Find the lowest (lo) and highest (hi) index
         of wave_grid for each pixels and orders.
 
         Parameters
@@ -1588,8 +1584,8 @@ class ExtractionEngine(_BaseOverlap):
         -------
         lo, hi : array[float]
             Arrays of indices for lowest and highest values.
-        """
 
+        """
         log.debug('Computing lowest and highest indices of wave_grid.')
 
         # Get needed attributes
@@ -1616,8 +1612,9 @@ class ExtractionEngine(_BaseOverlap):
         return lo, hi
 
     def get_mask_wave(self, i_order):
-        """Generate mask bounded by limits of wavelength grid
-        Parameters
+        """Generate mask bounded by limits of wavelength grid.
+
+        Parameters.
         ----------
         i_order : int
             Order to select the wave_map on which a mask
@@ -1628,8 +1625,8 @@ class ExtractionEngine(_BaseOverlap):
         array[bool]
             A mask with True where wave_map is outside the bounds
             of wave_grid
-        """
 
+        """
         attrs = ['wave_p', 'wave_m', 'i_bounds']
         wave_p, wave_m, i_bnds = self.get_attributes(*attrs, i_order=i_order)
         wave_min = self.wave_grid[i_bnds[0]]
@@ -1649,15 +1646,15 @@ class ExtractionEngine(_BaseOverlap):
             Order to set the value of n in output arrays.
 
         Returns
-        ------
+        -------
         w_n : array
             2D array of weights at this specific order `n`. The shape is given by:
             (number of pixels, max number of wavelengths covered by a pixel)
         k_n : array
             2D array of the wavelength grid indices corresponding to the weights.
             Same shape as w_n
-        """
 
+        """
         log.debug('Computing weights and k.')
 
         # Get needed attributes

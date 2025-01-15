@@ -43,13 +43,13 @@ def run_pipeline_offsetSR(request, rtdata_module):
 
 @pytest.mark.bigdata
 def test_nircam_tsgrism_stage2_offsetSR(run_pipeline_offsetSR, fitsdiff_default_kwargs):
-    """
-    Test coverage for offset special requirement specifying nonzero offset in X.
+    """Test coverage for offset special requirement specifying nonzero offset in X.
 
     Test data are two observations of Gliese 436, one with offset specified and one without.
     Quantitatively we just ensure that the outputs are identical to the inputs, but qualitatively
     can check that the spectral lines fall at the same wavelengths in both cases,
-    which is why the zero-offset case is also included here."""
+    which is why the zero-offset case is also included here.
+    """
     rtdata = run_pipeline_offsetSR
     rtdata.output = rtdata.input.replace("rate", "x1d")
     rtdata.get_truth("truth/test_nircam_tsgrism_stages/" + rtdata.output.split('/')[-1])
@@ -101,9 +101,7 @@ def test_nircam_tsgrism_stage3_whtlt(run_pipelines):
 
 @pytest.mark.bigdata
 def test_nircam_setpointing_tsgrism(rtdata, fitsdiff_default_kwargs):
-    """
-    Regression test of the set_telescope_pointing script on a level-1b NIRCam file.
-    """
+    """Regression test of the set_telescope_pointing script on a level-1b NIRCam file."""
     rtdata.get_data("nircam/tsgrism/jw02459001001_03103_00001-seg001_nrcalong_uncal.fits")
     # The add_wcs function overwrites its input
     rtdata.output = rtdata.input

@@ -9,8 +9,7 @@ import pytest
 
 @pytest.fixture(scope='module')
 def make_datamodel():
-    """Make data for white light tests"""
-
+    """Make data for white light tests."""
     model = datamodels.MultiSpecModel()
     model.meta.exposure.group_time = 0.15904
     model.meta.exposure.ngroups = 60

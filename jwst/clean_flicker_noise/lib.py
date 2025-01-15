@@ -2,8 +2,7 @@ import numpy as np
 
 
 class NSClean:
-    """
-    NSClean is the base class for removing residual correlated
+    """NSClean is the base class for removing residual correlated
     read noise from JWST NIRSpec images.  It is intended for use
     on Level 2a pipeline products, i.e. IRS2 corrected slope
     images. All processing is done in detector coordinates, with
@@ -15,8 +14,7 @@ class NSClean:
     
     def __init__(self, detector, mask, fc=1/(2*2048/16), kill_width=1/(2*2048/16)/4,
                  buffer_sigma=1.5, sigrej=3.0, weights_kernel_sigma=32):
-        """
-        JWST NIRSpec background modeling and subtraction -AKA "clean" (NSClean)
+        """JWST NIRSpec background modeling and subtraction -AKA "clean" (NSClean).
 
         Parameters
         ----------
@@ -48,6 +46,7 @@ class NSClean:
 
         weights_kernel_sigma : int
             Used to assign weights for MASK mode fitting.
+
         """
         self.detector = detector
         self.mask = mask
@@ -109,8 +108,7 @@ class NSClean:
 
 
     def fit(self, data):
-        """
-        Fit a background model to the supplied frame of data.
+        """Fit a background model to the supplied frame of data.
 
         Parameters
         ----------
@@ -128,6 +126,7 @@ class NSClean:
         -----
         Fitting is done line by line because the matrices get very big if one
         tries to project out Fourier vectors from the entire 2K x 2K image area.
+
         """
         model = np.zeros((self.ny, self.nx), dtype=np.float32)  # Build the model here
         for y in np.arange(self.ny)[4:-4]:
@@ -193,8 +192,7 @@ class NSClean:
 
 
     def clean(self, data, buff=True):
-        """
-        "Clean" NIRspec images by fitting and subtracting the
+        """"Clean" NIRspec images by fitting and subtracting the
         instrumental background. This is intended to improve the
         residual correlated noise (vertical banding) that is
         sometimes seen.  Because the banding is not seen by the
@@ -220,8 +218,8 @@ class NSClean:
         -------
         data : array_like
             The data, but with less striping and the background subtracted.
-        """
 
+        """
         # Transform the data to detector space with the IRS2 zipper running along the bottom.
         if self.detector == 'NRS2':
             # Transpose and flip for NRS2
@@ -251,8 +249,7 @@ class NSClean:
 
 
 def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
-    """
-    Make a lowpass Fourier filter
+    """Make a lowpass Fourier filter.
 
     Parameters
     ----------
@@ -273,8 +270,8 @@ def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
     -------
     filt : array
        Filter array
-    """
 
+    """
     # Make frequencies vector
     freq = np.fft.rfftfreq(n, d=d)
 
@@ -290,8 +287,7 @@ def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
 
 
 def med_abs_deviation(d, median=True):
-    """
-    Median absolute deviation
+    """Median absolute deviation.
 
     Computes the median and the median absolute deviation (MAD). For normally
     distributed data, multiply the MAD by 1.4826 to approximate standard deviation. 
@@ -313,6 +309,7 @@ def med_abs_deviation(d, median=True):
 
     mad : float
         median absolute deviation
+
     """
     d = d[np.isfinite(d)]  # Exclude NaNs
     m = np.median(d)
@@ -324,8 +321,7 @@ def med_abs_deviation(d, median=True):
 
 
 class NSCleanSubarray:
-    """
-    NSCleanSubarray is the base class for removing residual correlated
+    """NSCleanSubarray is the base class for removing residual correlated
     read noise from generic JWST near-IR Subarray images.  It is
     intended for use on Level 2a pipeline products, i.e. slope images.
     """
@@ -338,8 +334,7 @@ class NSCleanSubarray:
 
     def __init__(self, data, mask, fc=(1061, 1211, 49943, 49957),
                  exclude_outliers=True, weights_kernel_sigma=None):
-        """
-        Background modeling and subtraction for generic JWST near-IR subarrays.
+        """Background modeling and subtraction for generic JWST near-IR subarrays.
 
         Parameters
         ----------
@@ -369,11 +364,13 @@ class NSCleanSubarray:
             default for subarrays results in nearly equal weighting of all background
             samples.
 
-        Notes:
+        Notes
+        -----
         1) NSCleanSubarray works in detector coordinates. Both the data and mask
            need to be transposed and flipped so that slow-scan runs from bottom
            to top as displayed in SAOImage DS9. The fast scan direction is 
            required to run from left to right.
+
         """
         # Definitions
         self.data = np.array(data, dtype=np.float32)
@@ -442,8 +439,7 @@ class NSCleanSubarray:
 
 
     def fit(self, return_fit=False, weight_fit=False):
-        """
-        Fit a background model to the data.
+        """Fit a background model to the data.
 
         Parameters
         ----------
@@ -458,8 +454,8 @@ class NSCleanSubarray:
         -------
         rfft : numpy array
             The computed Fourier transform.
-        """
 
+        """
         # To build the incomplete Fourier matrix, we require the index of each
         # clock tick of each valid pixel in the background samples. For consistency with
         # numpy's notation, we call this 'm' and require it to be a column vector.
@@ -518,8 +514,7 @@ class NSCleanSubarray:
             return(rfft)
 
     def clean(self, weight_fit=True, return_model=False):
-        """
-        Clean the data
+        """Clean the data.
 
         Parameters
         ----------
@@ -534,6 +529,7 @@ class NSCleanSubarray:
         -------
         data : array-like of float
             The cleaned data array.
+
         """ 
         self.fit(weight_fit=weight_fit)  # Fit the background model
         if return_model:

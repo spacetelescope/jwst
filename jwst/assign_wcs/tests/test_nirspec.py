@@ -1,6 +1,4 @@
-"""
-Test functions for NIRSPEC WCS - all modes.
-"""
+"""Test functions for NIRSPEC WCS - all modes."""
 import functools
 import os.path
 import shutil
@@ -53,16 +51,12 @@ def _compare_slits(s1, s2):
 
 
 def get_file_path(filename):
-    """
-    Construct an absolute path.
-    """
+    """Construct an absolute path."""
     return os.path.join(data_path, filename)
 
 
 def create_hdul(detector='NRS1'):
-    """
-    Create a fits HDUList instance.
-    """
+    """Create a fits HDUList instance."""
     hdul = fits.HDUList()
     phdu = fits.PrimaryHDU()
     phdu.header['instrume'] = 'NIRSPEC'
@@ -81,9 +75,7 @@ def create_hdul(detector='NRS1'):
 
 
 def create_reference_files(datamodel):
-    """
-    Create a dict {reftype: reference_file}.
-    """
+    """Create a dict {reftype: reference_file}."""
     refs = {}
     step = assign_wcs_step.AssignWcsStep()
     for reftype in assign_wcs_step.AssignWcsStep.reference_file_types:
@@ -147,9 +139,7 @@ def create_nirspec_fs_file(grating, filter, lamp="N/A"):
 
 
 def test_nirspec_imaging():
-    """
-    Test Nirspec Imaging mode using build 6 reference files.
-    """
+    """Test Nirspec Imaging mode using build 6 reference files."""
     # Test creating the WCS
     f = create_nirspec_imaging_file()
     im = datamodels.ImageModel(f)
@@ -164,9 +154,7 @@ def test_nirspec_imaging():
 
 
 def test_nirspec_ifu_against_esa(wcs_ifu_grating):
-    """
-    Test Nirspec IFU mode using CV3 reference files.
-    """
+    """Test Nirspec IFU mode using CV3 reference files."""
     with fits.open(get_file_path('Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits')) as ref:
         # Test NRS1
         pyw = astwcs.WCS(ref['SLITY1'].header)
@@ -194,9 +182,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
 
 
 def test_nirspec_fs_esa():
-    """
-    Test Nirspec FS mode using build 6 reference files.
-    """
+    """Test Nirspec FS mode using build 6 reference files."""
     # Test creating the WCS
     filename = create_nirspec_fs_file(grating="G140M", filter="F100LP")
     im = datamodels.ImageModel(filename)
@@ -236,9 +222,7 @@ def test_nirspec_fs_esa():
 
 
 def test_correct_tilt():
-    """
-    Example provided by Catarina.
-    """
+    """Example provided by Catarina."""
     disp = datamodels.DisperserModel()
     xtilt = 0.35896975
     ytilt = 0.1343827
@@ -271,10 +255,7 @@ def test_correct_tilt():
 
 
 def test_msa_configuration_normal():
-    """
-    Test the get_open_msa_slits function.
-    """
-
+    """Test the get_open_msa_slits function."""
     # Test 1: Reasonably normal as well
     prog_id = '1234'
     msa_meta_id = 12
@@ -288,9 +269,7 @@ def test_msa_configuration_normal():
 
 
 def test_msa_configuration_no_background():
-    """
-    Test the get_open_msa_slits function.
-    """
+    """Test the get_open_msa_slits function."""
     # Test 2: Two main shutters, not allowed and should fail
     prog_id = '1234'
     msa_meta_id = 13
@@ -302,10 +281,7 @@ def test_msa_configuration_no_background():
 
 
 def test_msa_configuration_all_background():
-    """
-    Test the get_open_msa_slits function.
-    """
-
+    """Test the get_open_msa_slits function."""
     # Test 3:  No non-background, not acceptable.
     prog_id = '1234'
     msa_meta_id = 14
@@ -319,10 +295,7 @@ def test_msa_configuration_all_background():
 
 
 def test_msa_configuration_row_skipped():
-    """
-    Test the get_open_msa_slits function.
-    """
-
+    """Test the get_open_msa_slits function."""
     # Test 4: One row is skipped, should be acceptable.
     prog_id = '1234'
     msa_meta_id = 15
@@ -336,9 +309,7 @@ def test_msa_configuration_row_skipped():
 
 
 def test_msa_configuration_multiple_returns():
-    """
-    Test the get_open_msa_slits function.
-    """
+    """Test the get_open_msa_slits function."""
     # Test 4: One row is skipped, should be acceptable.
     prog_id = '1234'
     msa_meta_id = 16
@@ -355,9 +326,7 @@ def test_msa_configuration_multiple_returns():
 
 
 def test_msa_fs_configuration():
-    """
-    Test the get_open_msa_slits function with FS and MSA slits defined.
-    """
+    """Test the get_open_msa_slits function with FS and MSA slits defined."""
     prog_id = '1234'
     msa_meta_id = 12
     msaconfl = get_file_path('msa_fs_configuration.fits')
@@ -387,9 +356,7 @@ def test_msa_fs_configuration():
 
 
 def test_msa_fs_configuration_unsupported(tmp_path):
-    """
-    Test the get_open_msa_slits function with unsupported FS defined.
-    """
+    """Test the get_open_msa_slits function with unsupported FS defined."""
     # modify an existing MSA file to add a bad row
     msaconfl = get_file_path('msa_fs_configuration.fits')
     bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
@@ -411,9 +378,7 @@ def test_msa_fs_configuration_unsupported(tmp_path):
 
 
 def test_msa_missing_source(tmp_path):
-    """
-    Test the get_open_msa_slits function with missing source information.
-    """
+    """Test the get_open_msa_slits function with missing source information."""
     # modify an existing MSA file to remove source info
     msaconfl = get_file_path('msa_fs_configuration.fits')
     bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
@@ -447,9 +412,7 @@ def test_msa_missing_source(tmp_path):
 
 
 def test_msa_nan_source_posn(tmp_path):
-    """
-    Test the get_open_msa_slits function with nan values for source position.
-    """
+    """Test the get_open_msa_slits function with nan values for source position."""
     # modify an existing MSA file to remove source info
     msaconfl = get_file_path('msa_fs_configuration.fits')
     bad_confl = str(tmp_path / 'nan_msa_fs_configuration.fits')
@@ -532,7 +495,7 @@ def test_missing_msa_file():
 
 
 def test_open_slits():
-    """ Test that get_open_slits works with MSA data.
+    """Test that get_open_slits works with MSA data.
 
     Issue #2321
     """
@@ -548,9 +511,7 @@ def test_open_slits():
 
 
 def test_shutter_size_on_sky():
-    """
-    Test the size of a MOS shutter on sky is ~ .2 x .4 arcsec.
-    """
+    """Test the size of a MOS shutter on sky is ~ .2 x .4 arcsec."""
     image = create_nirspec_mos_file()
     model = datamodels.ImageModel(image)
     msaconfl = get_file_path('msa_configuration.fits')
@@ -724,7 +685,6 @@ def wcs_ifu_grating():
 
 def test_functional_ifu_grating(wcs_ifu_grating):
     """Compare Nirspec instrument model with IDT model for IFU grating."""
-
     # setup test
     model_file = 'ifu_grating_functional_ESA_v1_20180619.txt'
     im, refs = wcs_ifu_grating('G395H', 'F290LP', gwa_xtil=0.35986012, gwa_ytil=0.13448857)
@@ -1083,7 +1043,7 @@ def test_ifu_bbox():
 
 @pytest.fixture
 def ifu_world_coord(wcs_ifu_grating):
-    """ Return RA, DEC, LAM for all slices in the NRS IFU."""
+    """Return RA, DEC, LAM for all slices in the NRS IFU."""
     ra_all = []
     dec_all = []
     lam_all = []
@@ -1103,7 +1063,7 @@ def ifu_world_coord(wcs_ifu_grating):
 
 @pytest.mark.parametrize("slice", [1, 17])
 def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
-    """ Test that the number of valid outputs from a slice forward transform
+    """Test that the number of valid outputs from a slice forward transform
     equals the valid pixels within the slice from the slice backward transform.
     """
     ra_all, dec_all, lam_all = ifu_world_coord

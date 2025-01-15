@@ -20,7 +20,6 @@ INITIAL_OUTLIER_FRACTION = 1e-3
 @pytest.fixture(scope="module")
 def known_bkg():
     """Make a simplified version of the reference background model data."""
-
     ny, nx = DETECTOR_SHAPE
     y, x = np.mgrid[:ny, :nx]
     gradient = x * y / (nx*ny)
@@ -31,8 +30,8 @@ def known_bkg():
 @pytest.fixture(scope="module")
 def mock_data(known_bkg):
     """Synthetic data with NaNs, noise, and the known background structure
-    but rescaled. Later tests will ensure we can retrieve the proper scaling."""
-
+    but rescaled. Later tests will ensure we can retrieve the proper scaling.
+    """
     err_scaling = 0.05
     nan_fraction = INITIAL_NAN_FRACTION
 
@@ -66,8 +65,7 @@ def mock_data(known_bkg):
 
 @pytest.fixture(scope='module')
 def make_wfss_datamodel(data_path, mock_data):
-
-    """Generate WFSS Observation"""
+    """Generate WFSS Observation."""
     wcsinfo = {
         'dec_ref': -27.79156387419731,
         'ra_ref': 53.16247756038121,
@@ -127,7 +125,7 @@ def make_wfss_datamodel(data_path, mock_data):
 
 @pytest.fixture
 def make_nrc_wfss_datamodel(make_wfss_datamodel):
-    """Make a NIRCAM WFSS datamodel and call AssignWCS to populate its WCS"""
+    """Make a NIRCAM WFSS datamodel and call AssignWCS to populate its WCS."""
     data = make_wfss_datamodel.copy()
     data.meta.instrument.filter = 'F250M'
     data.meta.instrument.pupil = 'GRISMC'
@@ -143,7 +141,7 @@ def make_nrc_wfss_datamodel(make_wfss_datamodel):
 
 @pytest.fixture
 def make_nis_wfss_datamodel(make_wfss_datamodel):
-    """Make a NIRISS WFSS datamodel and call AssignWCS to populate its WCS"""
+    """Make a NIRISS WFSS datamodel and call AssignWCS to populate its WCS."""
     data = make_wfss_datamodel.copy()
     data.meta.instrument.filter = 'GR150C'
     data.meta.instrument.pupil = 'F090W'
@@ -157,8 +155,7 @@ def make_nis_wfss_datamodel(make_wfss_datamodel):
 
 @pytest.fixture()
 def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
-    """Mock background reference file"""
-
+    """Mock background reference file."""
     bkg_fname = "ref_bkg.fits"
     bkg_image = make_wfss_datamodel.copy()
     bkg_image.data = known_bkg
@@ -171,8 +168,8 @@ def shared_tests(sci, mask, original_data_mean):
     """Tests that are common to all WFSS modes
     Note that NaN fraction test in test_nrc_wfss_background and test_nis_wfss_background
     cannot be applied to the full run tests because the background reference files contain
-    NaNs in some cases (specifically for NIRISS)"""
-
+    NaNs in some cases (specifically for NIRISS).
+    """
     # re-mask data so "real" sources are ignored here
     sci[~mask] = np.nan
 
@@ -234,7 +231,8 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
     The residual structure in the background will not look as nice as in 
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
-    while the data is synthetic and just has a mock gradient"""
+    while the data is synthetic and just has a mock gradient.
+    """
     data = make_nrc_wfss_datamodel.copy()
     data.meta.instrument.pupil = pupil
 
@@ -257,7 +255,8 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
     The residual structure in the background will not look as nice as in 
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
-    while the data is synthetic and just has a mock gradient"""
+    while the data is synthetic and just has a mock gradient.
+    """
     data = make_nis_wfss_datamodel.copy()
     data.meta.instrument.filter = filt
 

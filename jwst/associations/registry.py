@@ -1,4 +1,4 @@
-"""Association Registry"""
+"""Association Registry."""
 import importlib.util
 from inspect import (
     getmembers,
@@ -36,7 +36,7 @@ _ASN_RULE = 'association_rules.py'
 
 
 class AssociationRegistry(dict):
-    """The available associations
+    """The available associations.
 
     Parameters
     ----------
@@ -73,6 +73,7 @@ class AssociationRegistry(dict):
     In practice, this is one step in a larger loop over all items to
     be associated. This does not account for adding items to already
     existing associations. See :py:func:`~jwst.associations.generate` for more information.
+
     """
 
     def __init__(self,
@@ -112,7 +113,7 @@ class AssociationRegistry(dict):
 
     @property
     def rule_set(self):
-        """Rules within the Registry"""
+        """Rules within the Registry."""
         return self._rule_set
 
     def match(self, item, version_id=None, allow=None, ignore=None):
@@ -143,6 +144,7 @@ class AssociationRegistry(dict):
                 List of associations item belongs to. Empty if none match
             reprocess_list : [AssociationReprocess, ...]
                 List of reprocess events.
+
         """
         if allow is None:
             allow = self.rule_set
@@ -159,7 +161,7 @@ class AssociationRegistry(dict):
         return associations, process_list
 
     def validate(self, association):
-        """Validate a given association
+        """Validate a given association.
 
         Parameters
         ----------
@@ -175,6 +177,7 @@ class AssociationRegistry(dict):
         ------
         AssociationNotValidError
             Association did not validate
+
         """
 
         # Change rule validation from an exception
@@ -207,7 +210,7 @@ class AssociationRegistry(dict):
             first=True,
             **kwargs
     ):
-        """Load a previously serialized association
+        """Load a previously serialized association.
 
         Parameters
         ----------
@@ -235,6 +238,7 @@ class AssociationRegistry(dict):
         ------
         AssociationError
             Cannot create or validate the association.
+
         """
         results = []
         for rule_name, rule in self.items():
@@ -264,12 +268,13 @@ class AssociationRegistry(dict):
                  global_constraints=None,
                  include_bases=None
                  ):
-        """Parse out all rules and callbacks in a module and add them to the registry
+        """Parse out all rules and callbacks in a module and add them to the registry.
 
         Parameters
         ----------
         module : module
             The module, and all submodules, to be parsed.
+
         """
         for name, obj in get_marked(module, include_bases=include_bases):
 
@@ -301,7 +306,7 @@ class AssociationRegistry(dict):
                 )
 
     def add_rule(self, name, obj, global_constraints=None):
-        """Add object as rule to registry
+        """Add object as rule to registry.
 
         Parameters
         ----------
@@ -313,6 +318,7 @@ class AssociationRegistry(dict):
 
         global_constraints : dict
             The global constraints to attach to the rule.
+
         """
         try:
             rule_name = '_'.join([self.name, name])
@@ -328,7 +334,7 @@ class AssociationRegistry(dict):
 
 
 class RegistryMarker:
-    """Mark rules, callbacks, and modules for inclusion into a registry"""
+    """Mark rules, callbacks, and modules for inclusion into a registry."""
 
     class Schema:
         def __init__(self, obj):
@@ -342,7 +348,7 @@ class RegistryMarker:
 
     @staticmethod
     def mark(obj):
-        """Mark that an object should be part of the registry
+        """Mark that an object should be part of the registry.
 
         Parameters
         ----------
@@ -373,7 +379,7 @@ class RegistryMarker:
 
     @staticmethod
     def rule(obj):
-        """Mark object as rule
+        """Mark object as rule.
 
         Parameters
         ----------
@@ -394,6 +400,7 @@ class RegistryMarker:
 
         - _asnreg_mark : True
               Attributed added to object and set to True
+
         """
         obj._asnreg_role = 'rule'
         RegistryMarker.mark(obj)
@@ -401,7 +408,7 @@ class RegistryMarker:
 
     @staticmethod
     def callback(event):
-        """Mark object as a callback for an event
+        """Mark object as a callback for an event.
 
         Parameters
         ----------
@@ -427,6 +434,7 @@ class RegistryMarker:
               The events this callable object is a callback for.
         - _asnreg_mark : True
               Indicated that the object has been marked.
+
         """
         def decorator(func):
             try:
@@ -442,13 +450,13 @@ class RegistryMarker:
 
     @staticmethod
     def schema(filename):
-        """Mark a file as a schema source"""
+        """Mark a file as a schema source."""
         schema = RegistryMarker.Schema(filename)
         return schema
 
     @staticmethod
     def utility(class_obj):
-        """Mark the class as a Utility class"""
+        """Mark the class as a Utility class."""
         class_obj._asnreg_role = 'utility'
         RegistryMarker.mark(class_obj)
         return class_obj
@@ -461,10 +469,10 @@ class RegistryMarker:
 
 # Utilities
 def import_from_file(filename):
-    """Import a file as a module
+    """Import a file as a module.
 
     Parameters
-    ---------
+    ----------
     filename : str
         The file to import
 
@@ -472,6 +480,7 @@ def import_from_file(filename):
     -------
     module : python module
         The imported module
+
     """
     path = expandvars(expanduser(filename))
     module_name = basename(path).split('.')[0]
@@ -482,7 +491,7 @@ def import_from_file(filename):
 
 
 def get_marked(module, predicate=None, include_bases=False):
-    """Recursively get all executable objects
+    """Recursively get all executable objects.
 
     Parameters
     ----------
@@ -501,6 +510,7 @@ def get_marked(module, predicate=None, include_bases=False):
     -------
     class object : generator
         A generator that will yield all class members in the module.
+
     """
     def is_method(obj):
         return isfunction(obj) or ismethod(obj)
@@ -522,17 +532,18 @@ def get_marked(module, predicate=None, include_bases=False):
 
 
 def valid_class(obj):
-    """Verify if a given object could be used as a rule class
+    """Verify if a given object could be used as a rule class.
 
     Parameters
-    ------------
+    ----------
     obj : obj
         Object to check
 
     Returns
-    --------
+    -------
     is_valid : bool
         True if the object could be considered a rule class
+
     """
     is_valid = type(obj) is not EnumMeta and isclass(obj)
     return is_valid

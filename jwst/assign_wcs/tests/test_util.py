@@ -1,6 +1,4 @@
-"""
-Test the utility functions
-"""
+"""Test the utility functions."""
 
 import os
 
@@ -22,9 +20,7 @@ data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
 def get_file_path(filename):
-    """
-    Construct an absolute path.
-    """
+    """Construct an absolute path."""
     return os.path.join(data_path, filename)
 
 

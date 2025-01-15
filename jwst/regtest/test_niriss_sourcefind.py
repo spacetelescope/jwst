@@ -9,11 +9,9 @@ from jwst.tweakreg import tweakreg_catalog
 @pytest.mark.bigdata
 @pytest.mark.parametrize("starfinder", ["iraf", "segmentation"], )
 def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
-    '''
-    Test that the IRAF and segmentation star finders give expected results for undersampled NIRISS data
-    It is well known that DAOStarFinder gives bad results so is not included in this test
-    '''
-
+    """Test that the IRAF and segmentation star finders give expected results for undersampled NIRISS data
+    It is well known that DAOStarFinder gives bad results so is not included in this test.
+    """
     stem = "jw01088003001_01101_00005"
     rtdata.get_data(f"niriss/imaging/{stem}_nis_cal.fits")
     model = datamodels.ImageModel(rtdata.input)

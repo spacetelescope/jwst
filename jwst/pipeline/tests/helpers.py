@@ -1,4 +1,4 @@
-"""test helpers"""
+"""test helpers."""
 
 import json
 import os
@@ -19,7 +19,7 @@ SCRIPT_DATA_PATH = path.join(SCRIPT_PATH, 'data')
 @pytest.fixture
 def update_asn_basedir(asn_file, root=None):
     """Create an association with filenames update
-    for a different directory
+    for a different directory.
 
     Parameters
     ----------
@@ -33,6 +33,7 @@ def update_asn_basedir(asn_file, root=None):
     -------
     updated_asn_path: str
         The updated association file path
+
     """
     if root is None:
         root = os.getcwd()

@@ -106,8 +106,7 @@ def test_flag_cr(sci_blot_image_pair):
 
 
 def mock_data(rng):
-    """Make some mock data with a "real" source at 7,7"""
-    
+    """Make some mock data with a "real" source at 7,7."""
     j, k = SIGNAL_LOC
     data = rng.normal(loc=BACKGROUND, size=SHAPE, scale=SIGMA)
     err = np.zeros(SHAPE) + SIGMA
@@ -180,7 +179,8 @@ def scimodel_base():
 @pytest.fixture
 def we_three_sci(scimodel_base):
     """Provide 3 science images with different noise but identical source
-    and same background level"""
+    and same background level.
+    """
     rng = np.random.default_rng(99)
     all_sci = [scimodel_base]
     for i in range(2):
@@ -195,7 +195,7 @@ def we_three_sci(scimodel_base):
 
 
 def assign_wcs_to_models(models, exptype, tsovisit, detector="ANY"):
-    """Assign the same WCS to all models"""
+    """Assign the same WCS to all models."""
     for m in models:
         m.meta.exposure.type = exptype
         m.meta.instrument.name = EXPTYPE_TO_INSTRUMENT[exptype.split("_")[0]]
@@ -220,13 +220,14 @@ def mirimage_three_sci(we_three_sci):
     This is the default/base model set for the test suite, everything is default.
     So just need to assign the WCS, identical for all.
     This fixture is separated from we_three_sci so the latter
-    can be reused for other instruments and modes"""
+    can be reused for other instruments and modes
+    """
     return assign_wcs_to_models(we_three_sci, "MIR_IMAGE", False)
 
 
 @pytest.fixture
 def mirimage_50_sci(scimodel_base):
-    """Provide 50 MIRI TSO imaging science observations"""
+    """Provide 50 MIRI TSO imaging science observations."""
     # first call AssignWcsStep on the base model, all WCSs will be the same after copy
     scimodel_base = AssignWcsStep.call(scimodel_base)
     scimodel_base.meta.visit.tsovisit = True
@@ -246,9 +247,8 @@ def mirimage_50_sci(scimodel_base):
 
 
 def container_to_cube(container):
-    """
-    Utility function to convert the test container to a cube
-    for some tests
+    """Utility function to convert the test container to a cube
+    for some tests.
     """
     cube_data = np.array([i.data for i in container])
     cube_err = np.array([i.err for i in container])
@@ -263,7 +263,7 @@ def container_to_cube(container):
 
 @pytest.mark.parametrize("do_resample", [True, False])
 def test_outlier_step_no_outliers(mirimage_three_sci, do_resample, tmp_cwd):
-    """Test whole step, no outliers"""
+    """Test whole step, no outliers."""
     container = ModelContainer(list(mirimage_three_sci))
     container[0].var_rnoise[10, 10] = 1E9
     pristine = ModelContainer([m.copy() for m in container])
@@ -276,7 +276,7 @@ def test_outlier_step_no_outliers(mirimage_three_sci, do_resample, tmp_cwd):
 
 
 def test_outlier_step_weak_cr_imaging(mirimage_three_sci, tmp_cwd):
-    """Test whole step with an outlier including saving intermediate and results files"""
+    """Test whole step with an outlier including saving intermediate and results files."""
     container = ModelLibrary(mirimage_three_sci)
 
     # Drop a CR on the science array
@@ -419,7 +419,7 @@ def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
 
 @pytest.fixture
 def three_sci_as_asn(mirimage_three_sci, tmp_cwd):
-    """Create an association with the 3 science images"""
+    """Create an association with the 3 science images."""
     for model in mirimage_three_sci:
         model.save(model.meta.filename)
     filenames = [model.meta.filename for model in mirimage_three_sci]
@@ -447,7 +447,7 @@ def three_sci_as_asn(mirimage_three_sci, tmp_cwd):
 
 
 def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
-    """Test whole step with an outlier including saving intermediate and results files"""
+    """Test whole step with an outlier including saving intermediate and results files."""
     container = ModelLibrary(three_sci_as_asn, on_disk=True)
 
     # Save all the data into a separate array before passing into step
@@ -500,7 +500,7 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
 
 
 def test_outlier_step_square_source_no_outliers(mirimage_three_sci, tmp_cwd):
-    """Test whole step with square source with sharp edges, no outliers"""
+    """Test whole step with square source with sharp edges, no outliers."""
     container = ModelLibrary(list(mirimage_three_sci))
 
     # put a square source in all three exposures
@@ -536,8 +536,7 @@ def test_outlier_step_square_source_no_outliers(mirimage_three_sci, tmp_cwd):
 
 
 def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
-    """Test whole step with an outlier for an example coronagraphic mode"""
-
+    """Test whole step with an outlier for an example coronagraphic mode."""
     exptype="MIR_LYOT"
     we_three_sci = assign_wcs_to_models(we_three_sci, exptype, False)
     container = ModelContainer(we_three_sci)
@@ -569,9 +568,9 @@ def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
 
 @pytest.mark.parametrize("rolling_window_width", [7, 0])
 def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
-    '''Test outlier detection with rolling median on time-varying source
-    This test fails if rolling_window_width is set to 0, i.e., take simple median
-    '''
+    """Test outlier detection with rolling median on time-varying source
+    This test fails if rolling_window_width is set to 0, i.e., take simple median.
+    """
     im = ModelContainer(mirimage_50_sci)
 
     # Drop a weak CR on the science array
@@ -610,7 +609,7 @@ def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
 
 
 def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
-    """Test creation of median on disk vs in memory"""
+    """Test creation of median on disk vs in memory."""
     lib_on_disk = ModelLibrary(three_sci_as_asn, on_disk=True)
     lib_in_memory = ModelLibrary(three_sci_as_asn, on_disk=False)
 
@@ -669,7 +668,7 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
 
 
 def make_resamp(input_models):
-    """All defaults are same as what is run by default by outlier detection"""
+    """All defaults are same as what is run by default by outlier detection."""
     in_memory = not input_models._on_disk
     resamp = ResampleData(
         input_models,

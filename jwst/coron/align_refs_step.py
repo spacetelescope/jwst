@@ -1,4 +1,4 @@
-""" Replace bad pixels and align psf image with target image."""
+"""Replace bad pixels and align psf image with target image."""
 
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst import datamodels
@@ -12,9 +12,7 @@ __all__ = ["AlignRefsStep"]
 
 
 class AlignRefsStep(Step):
-
-    """
-    AlignRefsStep: Align coronagraphic PSF images
+    """AlignRefsStep: Align coronagraphic PSF images
     with science target images.
     """
 

@@ -8,8 +8,7 @@ from jwst.coron import klip
 
 
 def test_fourier_imshift():
-    """ Test of fourier_imshift() in imageregistration.py """
-
+    """Test of fourier_imshift() in imageregistration.py."""
     image = np.zeros((5, 5), dtype=np.float64)
     image[1:4, 1:4] += 1.0
     image[2, 2] += 2.0
@@ -29,8 +28,7 @@ def test_fourier_imshift():
 
 
 def test_shift_subtract():
-    """ Test of shift_subtract() in imageregistration.py """
-
+    """Test of shift_subtract() in imageregistration.py."""
     target = np.arange((15), dtype=np.float64).reshape((3, 5))
     reference = target + 0.1
     reference[1, 0] -= 0.2
@@ -66,8 +64,7 @@ def test_shift_subtract():
 
 
 def test_align_fourierLSQ():
-    """ Test of align_fourierLSQ() in imageregistration.py """
-
+    """Test of align_fourierLSQ() in imageregistration.py."""
     target = np.arange((15), dtype=np.float64).reshape((3, 5))
     reference = target + 0.1
     reference[1, 0] -= 0.2
@@ -83,8 +80,7 @@ def test_align_fourierLSQ():
 
 
 def test_align_array():
-    """ Test of align_array() in imageregistration.py """
-
+    """Test of align_array() in imageregistration.py."""
     temp = np.arange((15), dtype=np.float64).reshape((3, 5))
     targ = np.zeros((3, 3, 5), dtype=np.float64)
     targ[:] = temp
@@ -146,8 +142,7 @@ def test_align_array():
 
 
 def test_align_models():
-    """ Test of align_models() in imageregistration.py """
-
+    """Test of align_models() in imageregistration.py."""
     temp = np.arange((15), dtype=np.float32).reshape((3, 5))
     targ = np.zeros((3, 3, 5), dtype=np.float32)
     targ[:] = temp
@@ -187,8 +182,7 @@ def test_align_models():
 
 
 def test_KLT():
-    """ Test of KarhunenLoeveTransform() in klip.py """
-
+    """Test of KarhunenLoeveTransform() in klip.py."""
     temp = np.arange((15), dtype=np.float32).reshape((3, 5))
     refs = np.zeros((3, 3, 5))
     refs[:] = temp
@@ -287,8 +281,7 @@ def test_KLT():
 
 
 def test_klip():
-    """ Test of klip() in klip.py """
-
+    """Test of klip() in klip.py."""
     target_model_data = np.array(
         [
             [

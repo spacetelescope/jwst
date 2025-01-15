@@ -1,10 +1,10 @@
-"""Association Member"""
+"""Association Member."""
 from collections import UserDict
 from copy import copy
 
 
 class Member(UserDict):
-    """Member of an association
+    """Member of an association.
 
     Parameters
     ----------
@@ -20,7 +20,9 @@ class Member(UserDict):
     ----------
     item: obj
         The original item that created this member.
+
     """
+
     def __init__(self, initialdata=None, item=None):
         self.item = None
 
@@ -34,7 +36,7 @@ class Member(UserDict):
             self.item = copy(item)
 
     def __eq__(self, other):
-        """Compare members
+        """Compare members.
 
         If both Members have attributes `expname` and `exptype`,
         compare only those attributes. Otherwise, use the default

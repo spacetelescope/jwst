@@ -1,4 +1,4 @@
-""" This package provides support for image intensity subtraction and equalization
+"""This package provides support for image intensity subtraction and equalization
 (matching) for MIRI images.
 
 """

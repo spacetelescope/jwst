@@ -41,7 +41,7 @@ def container():
 
 
 def reset_group_id(container):
-    """Remove group_id from all models in container"""
+    """Remove group_id from all models in container."""
     for m in container:
         try:
             del m.meta.group_id

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Regression test okifying script.
+"""Regression test okifying script.
 
 Requires JFrog CLI (https://jfrog.com/getcli/) configured with credentials
 that have write access to the jwst-pipeline repository.
@@ -50,7 +49,7 @@ def artifactory_copy(specfile, dry_run=False):
 
 
 def artifactory_folder_copy(specfile, dry_run=False):
-    """Copy a folder after removing target folder"""
+    """Copy a folder after removing target folder."""
     jfrog_args = []
     if dry_run:
         jfrog_args.append('--dry-run')
@@ -73,7 +72,7 @@ def artifactory_folder_copy(specfile, dry_run=False):
 
 
 def artifactory_dispatch(okify_op, specfile, dry_run):
-    """Perform the indicated artifactory operation
+    """Perform the indicated artifactory operation.
 
     Parameters
     ----------
@@ -87,6 +86,7 @@ def artifactory_dispatch(okify_op, specfile, dry_run):
 
     dry_run : bool
         True to just show what would be done
+
     """
     if okify_op == 'file_copy':
         artifactory_copy(os.path.abspath(specfile), dry_run=dry_run)
@@ -98,13 +98,12 @@ def artifactory_dispatch(okify_op, specfile, dry_run):
 
 def artifactory_get_breadcrumbs(build_number, suffix):
     """Download specfiles or other breadcrumb from Artifactory associated with
-    a build number and return a list of their locations on the local file system
+    a build number and return a list of their locations on the local file system.
 
     An example search for build 586 would be:
 
     jfrog rt search jwst-pipeline-results/*_GITHUB_CI_*-586/*_okify.json
     """
-
     # Retrieve all the okify specfiles for failed tests.
     args = list(
         ['jfrog', 'rt', 'dl']

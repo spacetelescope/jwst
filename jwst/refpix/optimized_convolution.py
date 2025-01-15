@@ -11,12 +11,10 @@ log.setLevel(logging.DEBUG)
 
 
 def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
-    """
-    Make convolution kernels from Fourier coefficients in the reference file.
+    """Make convolution kernels from Fourier coefficients in the reference file.
 
-    Parameters:
-    -----------
-
+    Parameters
+    ----------
     sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
         Data model containing the Fourier coefficients from the reference files for
         Simple Improved Reference Subtraction (SIRS)
@@ -30,13 +28,12 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
     halfwidth : int
         Half-width of convolution kernel to build from reference file's coefficients
 
-    Returns:
-    --------
+    Returns
+    -------
     kernels: list
         List of kernels appropriate for convolution with the left and right reference pixels.
 
     """
-
     gamma, zeta = get_conv_kernel_coeffs(sirs_kernel_model, detector)
     if gamma is None or zeta is None:
         log.info(f'Optimized convolution kernel coefficients NOT found for detector {detector}')
@@ -63,12 +60,10 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
 
 
 def get_conv_kernel_coeffs(sirs_kernel_model, detector):
-    """
-    Get the convolution kernels coefficients from the reference file
+    """Get the convolution kernels coefficients from the reference file.
 
-    Parameters:
-    -----------
-
+    Parameters
+    ----------
     sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
         Data model containing the Fourier coefficients from the reference files for
         Simple Improved Reference Subtraction (SIRS)
@@ -76,14 +71,14 @@ def get_conv_kernel_coeffs(sirs_kernel_model, detector):
     detector : str
         Name of the detector of the input data
 
-    Returns:
-    --------
-
+    Returns
+    -------
     gamma: numpy array
         Fourier coefficients
 
     zeta: numpy array
         Fourier coefficients
+
     """
     mdl_dict = sirs_kernel_model.to_flat_dict()
     gamma, zeta = None, None
@@ -101,12 +96,10 @@ def get_conv_kernel_coeffs(sirs_kernel_model, detector):
 
 
 def apply_conv_kernel(data, kernels, sigreject=4.0):
-    """
-    Apply the convolution kernel.
+    """Apply the convolution kernel.
 
-    Parameters:
-    -----------
-
+    Parameters
+    ----------
     data : 2-D numpy array
         Data to be corrected
 
@@ -116,11 +109,11 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
     sigreject: float
         Number of sigmas to reject as outliers
 
-    Returns:
-    --------
-
+    Returns
+    -------
     data : 2-D numpy array
         Data model with convolution
+
     """
     data = data.astype(float)
     npix = data.shape[-1]

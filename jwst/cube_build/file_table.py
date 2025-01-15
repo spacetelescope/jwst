@@ -1,5 +1,4 @@
-""" Dictionary holding defaults for cube_build
-"""
+"""Dictionary holding defaults for cube_build."""
 from stdatamodels.jwst import datamodels
 import logging
 log = logging.getLogger(__name__)
@@ -7,8 +6,7 @@ log.setLevel(logging.DEBUG)
 
 
 class FileTable():
-    """ Dictionary contains defaults for MIRI and NIRSPEC data
-    """
+    """Dictionary contains defaults for MIRI and NIRSPEC data."""
 
     def __init__(self):
 
@@ -94,8 +92,7 @@ class FileTable():
 
     def set_file_table(self,
                        input_models):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Fill in the MasterTable which holds the files that the cube will be constructed
         from. Since MIRI has 2 channels per image this MASTERTable helps to figure out
@@ -109,6 +106,7 @@ class FileTable():
         -------
         MasterTable filled in with files needed
         instrument name
+
         """
 # ________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
@@ -150,6 +148,6 @@ class ErrorNoAssignWCS(Exception):
 
 
 class NotIFUImageModel(Exception):
-    """ Raise Exception if data is not of type IFUImageModel
-    """
+    """Raise Exception if data is not of type IFUImageModel."""
+
     pass

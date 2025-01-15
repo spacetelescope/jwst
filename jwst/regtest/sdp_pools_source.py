@@ -8,7 +8,7 @@ from jwst.regtest.regtestdata import RegtestData
 
 
 class SDPPoolsSource(RegtestData):
-    """Retrieve the SDP pools from the test data source
+    """Retrieve the SDP pools from the test data source.
 
     This class defines a common relationship between test collection, via
     `jwst.regtest.conftest.pool_path_fixture` and the test using said fixture,
@@ -28,13 +28,13 @@ class SDPPoolsSource(RegtestData):
 
     @property
     def pool_paths(self):
-        """Get the association pools"""
+        """Get the association pools."""
         if self._pool_paths is None:
             self._pool_paths = self.data_glob(self.test_dir + '/pools', glob='*.csv')
         return self._pool_paths
 
     def truth_paths(self, pool):
-        """Get the truth associations"""
+        """Get the truth associations."""
         paths = []
         truth_pool_path = '/'.join(self.ref_loc) + '/' + pool
         for path in self.data_glob(truth_pool_path, glob='*.json'):

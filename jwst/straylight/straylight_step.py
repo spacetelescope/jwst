@@ -8,9 +8,7 @@ __all__ = ["StraylightStep"]
 
 
 class StraylightStep (Step):
-    """
-    StraylightStep: Performs straylight correction image using a Mask file.
-    """
+    """StraylightStep: Performs straylight correction image using a Mask file."""
 
     class_alias = "straylight"
 

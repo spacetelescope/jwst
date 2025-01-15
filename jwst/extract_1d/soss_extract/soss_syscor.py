@@ -20,8 +20,8 @@ def make_profile_mask(ref_2d_profile, threshold=1e-3):
     -------
     bkg_mask : array[bool]
         Pixel mask in the trace based on the 2d profile reference file.
-    """
 
+    """
     bkg_mask = (ref_2d_profile > threshold)
 
     return bkg_mask
@@ -46,8 +46,8 @@ def aperture_mask(xref, yref, halfwidth, shape):
     -------
     aper_mask : array[bool]
         Pixel mask in the trace based on the given trace positions.
-    """
 
+    """
     # Create a coordinate grid.
     x = np.arange(shape[1])
     y = np.arange(shape[0])
@@ -84,8 +84,8 @@ def soss_background(scidata, scimask, bkg_mask=None):
         Column-wise background values
     npix_bkg : array[float]
         Number of pixels used to calculate each column value in col_bkg
-    """
 
+    """
     # Check the validity of the input.
     data_shape = scidata.shape
 
@@ -142,8 +142,8 @@ def make_background_mask(deepstack, width=28):
         Pixel mask in the trace based on the deepstack or
         non-finite in the image.
     :rtype: array[bool]
-    """
 
+    """
     # Get the dimensions of the input image.
     nrows, ncols = np.shape(deepstack)
 
@@ -202,8 +202,8 @@ def soss_oneoverf_correction(scidata, scimask, deepstack, bkg_mask=None,
         Number of pixels used in each column
     bias : float
         Net change to the image, if zero_bias was False
-    """
 
+    """
     # Check the validity of the input.
     data_shape = scidata.shape
 

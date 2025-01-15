@@ -14,7 +14,7 @@ def simple_wcs():
     xcenter = shape[1] // 2.0
 
     def simple_wcs_function(x, y):
-        """ Simple WCS for testing """
+        """Simple WCS for testing."""
         crpix1 = xcenter
         crpix3 = 1.0
         cdelt1 = 0.1
@@ -63,7 +63,7 @@ def simple_wcs_transpose():
     ycenter = shape[0] // 2.0
 
     def simple_wcs_function(x, y):
-        """ Simple WCS for testing """
+        """Simple WCS for testing."""
         crpix2 = ycenter
         crpix3 = 1.0
         cdelt1 = 0.1
@@ -104,7 +104,7 @@ def simple_wcs_ifu():
     xcenter = shape[1] // 2.0
 
     def simple_wcs_function(x, y, z):
-        """ Simple WCS for testing """
+        """Simple WCS for testing."""
         crpix1 = xcenter
         crpix3 = 1.0
         cdelt1 = 0.1

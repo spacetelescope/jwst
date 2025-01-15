@@ -1,4 +1,4 @@
-"""Engineering DB common library"""
+"""Engineering DB common library."""
 import abc
 from collections import namedtuple
 
@@ -20,7 +20,7 @@ TIMEOUT = 10 * 60  # 10 minutes
 
 
 class EngdbABC(abc.ABC):
-    """Access the JWST Engineering Database
+    """Access the JWST Engineering Database.
 
     This is the minimal API for the service definition. Concrete implementations
     may provide other parameters and attributes.
@@ -33,28 +33,30 @@ class EngdbABC(abc.ABC):
     service_kwargs : dict
         Service-specific keyword arguments. Refer to the concrete implementations
         of EngdbABC.
+
     """
+
     @property
     @abc.abstractmethod
     def base_url(self):
-        """The URL of the service in use"""
+        """The URL of the service in use."""
         pass
 
     @property
     @abc.abstractmethod
     def endtime(self):
-        """The endtime of the search"""
+        """The endtime of the search."""
         pass
 
     @property
     @abc.abstractmethod
     def response(self):
-        """The `requests.Response` information"""
+        """The `requests.Response` information."""
         pass
 
     @property
     def starttime(self):
-        """The start time of the search"""
+        """The start time of the search."""
         pass
 
     @abc.abstractmethod
@@ -63,7 +65,7 @@ class EngdbABC(abc.ABC):
 
     @abc.abstractmethod
     def get_meta(self, mnemonic='', **service_kwargs):
-        """Get the mnemonics meta info
+        """Get the mnemonics meta info.
 
         Parameters
         ----------
@@ -78,14 +80,14 @@ class EngdbABC(abc.ABC):
         service_kwargs : dict
             Service-specific keyword arguments. Refer to the concrete implementations
             of EngdbABC.
+
         """
         pass
 
     @abc.abstractmethod
     def get_values(self, mnemonic, starttime, endtime,
                    time_format=None, include_obstime=False, include_bracket_values=False, zip_results=True):
-        """
-        Retrieve all results for a mnemonic in the requested time range.
+        """Retrieve all results for a mnemonic in the requested time range.
 
         Parameters
         ----------
@@ -125,13 +127,13 @@ class EngdbABC(abc.ABC):
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
+
         """
         pass
 
 
 def mnemonic_data_fname(mnemonic):
-    """
-    Construct the file name for the cached data of the specified mnemonic
+    """Construct the file name for the cached data of the specified mnemonic.
 
     Parameters
     ----------
@@ -142,5 +144,6 @@ def mnemonic_data_fname(mnemonic):
     -------
     file_name: str
         The name of the file containing the mnemonic's cached data.
+
     """
     return mnemonic.lower() + DATA

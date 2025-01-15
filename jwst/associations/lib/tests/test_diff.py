@@ -1,4 +1,4 @@
-"""Test association diffing"""
+"""Test association diffing."""
 import json
 import pytest
 
@@ -268,14 +268,14 @@ NODIFF_ASNS = [
 
 
 def test_duplicate_members():
-    """Test duplicate members"""
+    """Test duplicate members."""
     product = badcandidate_asn['products'][0]
     with pytest.raises(asn_diff.DuplicateMembersError):
         asn_diff.check_duplicate_members(product)
 
 
 def test_equivalency():
-    """Test that two associations equivalency
+    """Test that two associations equivalency.
 
     Success is the fact that no errors happen.
     """
@@ -295,7 +295,7 @@ def test_equivalency():
     ]
 )
 def test_fails(mismatched, standard=standard_asn):
-    """Test cases of failures
+    """Test cases of failures.
 
     Parameters
     ----------
@@ -304,6 +304,7 @@ def test_fails(mismatched, standard=standard_asn):
 
     standard: Association
         The standard association.
+
     """
     with pytest.raises(AssertionError):
         left_asns = asn_diff.separate_products(mismatched)
@@ -313,7 +314,7 @@ def test_fails(mismatched, standard=standard_asn):
 
 @pytest.mark.usefixtures('tmp_cwd')
 def test_fromfiles():
-    """Test from files
+    """Test from files.
 
     Success is the fact that no errors happen.
     """
@@ -333,8 +334,7 @@ def test_fromfiles():
     ]
 )
 def test_nodiff_order(left_indexes, right_indexes):
-    """Associations should have no difference, regardless of order"""
-
+    """Associations should have no difference, regardless of order."""
     # Order the associations as specified in the indexes.
     left_asns = [NODIFF_ASNS[idx] for idx in left_indexes]
     right_asns = [NODIFF_ASNS[idx] for idx in right_indexes]
@@ -355,7 +355,7 @@ def test_separate_products():
 
 
 def test_subset_product():
-    """Test subset identification"""
+    """Test subset identification."""
     left, right = asn_diff.separate_products(asns_subset)
     try:
         asn_diff.compare_product_membership(left['products'][0], right['products'][0])

@@ -6,12 +6,10 @@ from jwst.rscd.rscd_sub import correction_skip_groups
 
 
 def test_rscd_baseline_set_groupdq():
-    """
-    For a 2 integration exposure, test if the rscd code sets the groupdq flag on
+    """For a 2 integration exposure, test if the rscd code sets the groupdq flag on
     the n groups to 'do_not_use' for the 2nd integration and did not change the
-    groupdq flags in the 1st integration
+    groupdq flags in the 1st integration.
     """
-
     exposure = {
         'integration_start' : None,
         'integration_end':  None,
@@ -74,11 +72,9 @@ def test_rscd_baseline_set_groupdq():
 
 
 def test_rscd_baseline_too_few_groups():
-    """
-    Test that the baseline algorithm is skipped if too few groups are present
+    """Test that the baseline algorithm is skipped if too few groups are present
     in the integrations.
     """
-
     # size of exposure
     xsize = 10
     ysize = 10
@@ -123,8 +119,7 @@ def test_rscd_baseline_too_few_groups():
 
 
 def test_rscd_tso():
-    """
-    The RSCD correction is generally skipped for TSO data, but some users
+    """The RSCD correction is generally skipped for TSO data, but some users
     have been running it on TSO data. So this test was added. 
     Test for TSO segmented data that the correct groups are flagged as 'DO_NOT_USE'
     for integration 2 and higher. Set up the segmented data so the segment

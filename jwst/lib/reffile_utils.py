@@ -9,8 +9,7 @@ log.setLevel(logging.DEBUG)
 
 
 def is_subarray(input_model):
-    """
-    Check to see if a data model comes from a subarray readout.
+    """Check to see if a data model comes from a subarray readout.
     If the data dimensions are less than 2048x2048 (or 1032x1024
     for MIRI), it is assumed to be a subarray.
 
@@ -23,8 +22,8 @@ def is_subarray(input_model):
     -------
     True is the primary data array of the model is smaller than
     full-frame, False otherwise.
-    """
 
+    """
     # Get the dimensions of the model's primary data array
     nrows = input_model.data.shape[-2]
     ncols = input_model.data.shape[-1]
@@ -45,8 +44,7 @@ def is_subarray(input_model):
 
 
 def ref_matches_sci(sci_model, ref_model):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Check to see if the science model has the same subarray
     characteristics as the reference model. Also performs error
@@ -65,8 +63,8 @@ def ref_matches_sci(sci_model, ref_model):
     -------
     True if the science model has the same subarray parameters
     as the reference model, False otherwise.
-    """
 
+    """
     # Get the reference file subarray parameters
     xstart_ref = ref_model.meta.subarray.xstart
     xsize_ref = ref_model.meta.subarray.xsize
@@ -198,8 +196,7 @@ def ref_matches_sci(sci_model, ref_model):
 
 
 def get_subarray_data(sci_model, ref_model):
-    """
-    Extract a subarray from the data attribute of a reference file
+    """Extract a subarray from the data attribute of a reference file
     data model that matches the subarray characteristics of a
     science data model. Only the extracted data array is returned.
 
@@ -214,8 +211,8 @@ def get_subarray_data(sci_model, ref_model):
     Returns
     -------
     array: 2-D extracted data array
-    """
 
+    """
     # Make sure xstart/ystart exist in science data model
     if sci_model.meta.subarray.xstart is None or sci_model.meta.subarray.ystart is None:
 
@@ -293,8 +290,7 @@ def get_subarray_data(sci_model, ref_model):
 
 
 def get_subarray_model(sci_model, ref_model):
-    """
-    Create a subarray version of a reference file model that matches
+    """Create a subarray version of a reference file model that matches
     the subarray characteristics of a science data model. A new
     model is created that contains subarrays of all data arrays
     contained in the reference file model.
@@ -311,8 +307,8 @@ def get_subarray_model(sci_model, ref_model):
     -------
     sub_model: JWST data model
         subarray version of the reference file model
-    """
 
+    """
     # Get the science model subarray params
     xstart_sci = sci_model.meta.subarray.xstart
     xsize_sci = sci_model.meta.subarray.xsize
@@ -389,9 +385,7 @@ def get_subarray_model(sci_model, ref_model):
 
 
 class MatchRowError(Exception):
-    """
-    Raised when more than one row is matched in a FITS table or list of dict.
-    """
+    """Raised when more than one row is matched in a FITS table or list of dict."""
 
     def __init__(self, message):
         if message is None:
@@ -400,8 +394,7 @@ class MatchRowError(Exception):
 
 
 def find_row(ldict, match_keys):
-    """
-    Find a row in a FITS table matching fields.
+    """Find a row in a FITS table matching fields.
 
     Parameters
     ----------
@@ -433,6 +426,7 @@ def find_row(ldict, match_keys):
     -------
     row : int, or None
         FITS table row index, None if no match.
+
     """
     def _normalize_strings(field):
         if isinstance(field[0], str):

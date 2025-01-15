@@ -26,7 +26,7 @@ def test_nirspec_image2(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
-    """Test providing a user-supplied flat field to the FlatFieldStep"""
+    """Test providing a user-supplied flat field to the FlatFieldStep."""
     basename = 'jw03290001001_03101_00001_nrs2'
     output_file = f'{basename}_flat_from_user_file.fits'
     data = rtdata.get_data(f'nirspec/imaging/{basename}_assign_wcs.fits')
@@ -43,7 +43,7 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
-    """Test flat field inversion"""
+    """Test flat field inversion."""
     input_file = 'nirspec/imaging/jw03290001001_03101_00001_nrs2_assign_wcs.fits'
     with dm.open(rtdata.get_data(input_file)) as data:
         flatted = FlatFieldStep.call(data)
@@ -59,7 +59,7 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_correction_pars(rtdata, fitsdiff_default_kwargs):
-    """Test use of correction parameters"""
+    """Test use of correction parameters."""
     input_file = 'nirspec/imaging/jw03290001001_03101_00001_nrs2_assign_wcs.fits'
     with dm.open(rtdata.get_data(input_file)) as data:
 

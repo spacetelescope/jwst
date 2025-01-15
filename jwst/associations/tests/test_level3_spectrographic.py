@@ -44,7 +44,7 @@ class TestLevel3Spec(BasePoolRule):
 
 
 def nirspec_params_id(fixture_value):
-    """Give fixture parameters ids"""
+    """Give fixture parameters ids."""
     cid, asn_type, asn_name, product_name, exptypes = fixture_value
     return asn_name
 

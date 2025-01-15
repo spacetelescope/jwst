@@ -1,40 +1,40 @@
-"""
-    Summary
-    -------
-    MatrixDFT: Matrix-based discrete Fourier transforms for computing PSFs.
-    See Soummer et al. 2007 JOSA
-    The main user interface in this module is a class MatrixFourierTransform.
-    Internally this will call one of several subfunctions depending on the
-    specified centering type. These have to do with where the (0, 0) element of
-    the Fourier transform is located, i.e. where the PSF center ends up.
-        - 'FFTSTYLE' centered on one pixel
-        - 'SYMMETRIC' centerd on crosshairs between middle pixel
-        - 'ADJUSTABLE', always centered in output array depending on
-          whether it is even or odd
-    'ADJUSTABLE' is the default.
-    This module was originally called "Slow Fourier Transform", and this
-    terminology still appears in some places in the code.  Note that this is
-    'slow' only in the sense that if you perform the exact same calculation as
-    an FFT, the FFT algorithm is much faster. However this algorithm gives you
-    much more flexibility in choosing array sizes and sampling, and often lets
-    you replace "fast calculations on very large arrays" with "relatively slow
-    calculations on much smaller ones".
+"""Summary.
+-------
+MatrixDFT: Matrix-based discrete Fourier transforms for computing PSFs.
+See Soummer et al. 2007 JOSA
+The main user interface in this module is a class MatrixFourierTransform.
+Internally this will call one of several subfunctions depending on the
+specified centering type. These have to do with where the (0, 0) element of
+the Fourier transform is located, i.e. where the PSF center ends up.
+- 'FFTSTYLE' centered on one pixel
+- 'SYMMETRIC' centerd on crosshairs between middle pixel
+- 'ADJUSTABLE', always centered in output array depending on
+whether it is even or odd
+'ADJUSTABLE' is the default.
+This module was originally called "Slow Fourier Transform", and this
+terminology still appears in some places in the code.  Note that this is
+'slow' only in the sense that if you perform the exact same calculation as
+an FFT, the FFT algorithm is much faster. However this algorithm gives you
+much more flexibility in choosing array sizes and sampling, and often lets
+you replace "fast calculations on very large arrays" with "relatively slow
+calculations on much smaller ones".
 
-    Example
-    -------
-    mf = matrixDFT.MatrixFourierTransform()
-    result = mf.perform(pupilArray, focalplane_size, focalplane_npix)
+Example:
+-------
+mf = matrixDFT.MatrixFourierTransform()
+result = mf.perform(pupilArray, focalplane_size, focalplane_npix)
 
-    History
-    -------
-    Code originally by A. Sivaramakrishnan
-    2010-11-05 Revised normalizations for flux conservation consistent
-        with Soummer et al. 2007. Updated documentation.  -- M. Perrin
-    2011-2012: Various enhancements, detailed history not kept, sorry.
-    2012-05-18: module renamed SFT.py -> matrixDFT.py
-    2012-09-26: minor big fixes
-    2015-01-21: Eliminate redundant code paths, correct parity flip,
-                PEP8 formatting pass (except variable names)-- J. Long
+History
+-------
+Code originally by A. Sivaramakrishnan
+2010-11-05 Revised normalizations for flux conservation consistent
+with Soummer et al. 2007. Updated documentation.  -- M. Perrin
+2011-2012: Various enhancements, detailed history not kept, sorry.
+2012-05-18: module renamed SFT.py -> matrixDFT.py
+2012-09-26: minor big fixes
+2015-01-21: Eliminate redundant code paths, correct parity flip,
+PEP8 formatting pass (except variable names)-- J. Long
+
 """
 
 __all__ = ['MatrixFourierTransform']
@@ -53,8 +53,7 @@ CENTERING_CHOICES = (FFTSTYLE, SYMMETRIC, ADJUSTABLE, FFTRECT)
 
 def matrix_dft(plane, nlamD, npix,
                offset=None, inverse=False, centering=FFTSTYLE):
-    """
-    Perform a matrix discrete Fourier transform with selectable output
+    """Perform a matrix discrete Fourier transform with selectable output
     sampling and centering. Where parameters can be supplied as either
     scalars or 2-tuples, the first element of the 2-tuple is used for the
     Y dimension and the second for the X dimension. This ordering matches
@@ -63,7 +62,7 @@ def matrix_dft(plane, nlamD, npix,
     of the input array in pixels and use 'FFTSTYLE' centering. (n.b. When
     using `numpy.fft.fft2` you must `numpy.fft.fftshift` the input pupil both
     before and after applying fft2 or else it will introduce a checkerboard
-    pattern in the signs of alternating pixels!)
+    pattern in the signs of alternating pixels!).
 
     Parameters
     ----------
@@ -102,8 +101,8 @@ def matrix_dft(plane, nlamD, npix,
     -------
     norm_coeff * t2; float, ndarray
         normalized FT coeffs
-    """
 
+    """
     npupY, npupX = plane.shape
 
     if np.isscalar(npix):
@@ -232,7 +231,9 @@ class MatrixFourierTransform:
             is deprecated.
     2015-01-21: Internals updated to use refactored `matrix_dft` function,
                 docstrings made consistent with each other -- J. Long
+
     """
+
     def __init__(self, centering="ADJUSTABLE", verbose=False):
         self.verbose = verbose
         centering = centering.upper()
@@ -261,7 +262,7 @@ class MatrixFourierTransform:
                 )
 
     def perform(self, pupil, nlamD, npix, offset=None):
-        """Forward matrix discrete Fourier Transform
+        """Forward matrix discrete Fourier Transform.
 
         Parameters
         ----------
@@ -289,6 +290,7 @@ class MatrixFourierTransform:
         -------
         complex ndarray
             The Fourier transform of the input
+
         """
         self._validate_args(nlamD, npix, offset)
         _log.debug(
@@ -304,7 +306,7 @@ class MatrixFourierTransform:
                           centering=self.centering, offset=offset)
 
     def inverse(self, image, nlamD, npix, offset=None):
-        """Inverse matrix discrete Fourier Transform
+        """Inverse matrix discrete Fourier Transform.
 
         Parameters
         ----------
@@ -327,10 +329,12 @@ class MatrixFourierTransform:
             For ADJUSTABLE-style transforms, an offset in pixels by which the
             PSF will be displaced from the central pixel (or cross). Given as
             (offsetY, offsetX).
+
         Returns
         -------
         complex ndarray
             The Fourier transform of the input
+
         """
         self._validate_args(nlamD, npix, offset)
         _log.debug(

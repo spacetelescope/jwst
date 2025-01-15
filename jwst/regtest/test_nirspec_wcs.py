@@ -14,7 +14,7 @@ from jwst.assign_wcs import AssignWcsStep, nirspec
                           'jw01309022001_04102_00001_nrs2_rate.fits'],
                          ids=['full', 'allslits'])
 def test_nirspec_fixedslit_wcs(rtdata, input_file):
-    """Test NIRSpec fixed slit wcs"""
+    """Test NIRSpec fixed slit wcs."""
     rtdata.get_data(f"nirspec/fs/{input_file}")
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
@@ -38,7 +38,7 @@ def test_nirspec_fixedslit_wcs(rtdata, input_file):
                           ('jw02674004001_03101_00001_nrs1_rate.fits', 'jw02674004001_01_msa.fits')],
                          ids=['mos', 'mos_fs'])
 def test_nirspec_mos_wcs(rtdata, input_file, msa_file):
-    """Test NIRSpec MOS wcs"""
+    """Test NIRSpec MOS wcs."""
     # Get MSA meta file
     rtdata.get_data(f'nirspec/mos/{msa_file}')
     rtdata.get_data(f"nirspec/mos/{input_file}")
@@ -68,7 +68,7 @@ def test_nirspec_mos_wcs(rtdata, input_file, msa_file):
                           'jw01251004001_03107_00001_nrs2_rate.fits'],
                          ids=['nrs1', 'nrs2'])
 def test_nirspec_ifu_wcs(rtdata, input_file):
-    """Test NIRSpec IFU wcs"""
+    """Test NIRSpec IFU wcs."""
     rtdata.get_data(f"nirspec/ifu/{input_file}")
 
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
@@ -91,7 +91,7 @@ def test_nirspec_ifu_wcs(rtdata, input_file):
 
 
 def assert_wcs_grid_allclose(wcs, wcs_truth):
-    """Assertion helper verifying the RA/DEC/(lam) are the same for 2 WCSs"""
+    """Assertion helper verifying the RA/DEC/(lam) are the same for 2 WCSs."""
     __tracebackhide__ = True
     # Compute RA, Dec[, lambda] values at each pixel in bounding box.
     grid = grid_from_bounding_box(wcs.bounding_box)

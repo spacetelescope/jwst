@@ -1,4 +1,4 @@
-"""asn_gather: Copy data that is listed in an association"""
+"""asn_gather: Copy data that is listed in an association."""
 import logging
 from pathlib import Path
 import subprocess
@@ -15,7 +15,7 @@ LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 def asn_gather(association, destination=None, exp_types=None, exclude_types=None,
                source_folder=None,
                shellcmd='rsync -urv --no-perms --chmod=ugo=rwX'):
-    """Copy members of an association from one location to another
+    """Copy members of an association from one location to another.
 
     The association is copied into the destination, re-written such that the member
     list points to the new location of the members.
@@ -48,6 +48,7 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
     -------
     dest_asn : pathlib.Path
         The copied association.
+
     """
     from .load_as_asn import LoadAsAssociation
 
@@ -113,7 +114,7 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
 
 
 def from_cmdline(args=None):
-    """Collect asn_gather arguments from the commandline
+    """Collect asn_gather arguments from the commandline.
 
     Parameters
     ----------
@@ -122,6 +123,7 @@ def from_cmdline(args=None):
 
     Returns : dict
         Dict of the arguments and their values.
+
     """
     import argparse
 

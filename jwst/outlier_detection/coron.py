@@ -1,6 +1,4 @@
-"""
-Submodule for performing outlier detection on coronagraphy data.
-"""
+"""Submodule for performing outlier detection on coronagraphy data."""
 
 import logging
 
@@ -28,8 +26,7 @@ def detect_outliers(
     snr,
     make_output_path,
 ):
-    """
-    Flag outliers in coronography data.
+    """Flag outliers in coronography data.
 
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """

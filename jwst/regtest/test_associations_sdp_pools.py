@@ -1,5 +1,4 @@
-"""Test using SDP-generated pools
-"""
+"""Test using SDP-generated pools."""
 import logging
 from pathlib import Path
 import re
@@ -196,11 +195,10 @@ SPECIAL_POOLS = {
 # #####
 @pytest.mark.filterwarnings('error')
 def test_against_standard(sdpdata_module, pool_path, slow):
-    """Compare a generated association against a standard
+    """Compare a generated association against a standard.
 
     Success is when no other AssertionError occurs.
     """
-
     # Parse pool name
     pool = Path(pool_path).stem
     proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')

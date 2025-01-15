@@ -10,8 +10,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(model):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Rescales all groups in an exposure by FRMDIVSR/NFRAMES, to
     account for incorrect scaling when on-board frame averaging
@@ -24,8 +23,8 @@ def do_correction(model):
     ----------
     model: data model object
         science data to be corrected. Model is modified in place.
-    """
 
+    """
     # Get the meta data values that we need
     nframes = model.meta.exposure.nframes
     frame_divisor = model.meta.exposure.frame_divisor

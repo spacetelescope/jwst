@@ -12,8 +12,7 @@ PEDESTAL_INDX_MIRIFULONG = (50, 974, 474, 507)
 PEDESTAL_INDX_MIRIFUSHORT = (50, 974, 503, 516)
 
 class BadpixSelfcalStep(Step):
-    """
-    BadpixSelfcalStep: Flags residual artifacts as bad pixels in the DQ array
+    """BadpixSelfcalStep: Flags residual artifacts as bad pixels in the DQ array
     of a JWST exposure using a median filter and percentile cutoffs.
 
     All input exposures in the association file (or manually-provided bkg_list) are combined
@@ -35,19 +34,17 @@ class BadpixSelfcalStep(Step):
     """
 
     def save_model(self, model, *args, **kwargs):
-        """Override save_model to suppress index 0 when save_model is True"""
+        """Override save_model to suppress index 0 when save_model is True."""
         kwargs["idx"] = None
         return Step.save_model(self, model, *args, **kwargs)
 
     def save_bkg(self, bkg_list, suffix="badpix_selfcal_bkg"):
-        """Save the background exposures to file with correct indexing
-        """
+        """Save the background exposures to file with correct indexing."""
         for i, bkg_model in enumerate(bkg_list):
             self.save_model(bkg_model, suffix=suffix + f"_{str(i)}")
 
     def process(self, input, selfcal_list=None, bkg_list=None):
-        """
-        Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
+        """Flag residual artifacts as bad pixels in the DQ array of a JWST exposure.
 
         Parameters
         ----------
@@ -79,6 +76,7 @@ class BadpixSelfcalStep(Step):
         the force_single parameter is set True.
         In that case, the input exposure will be used as the sole background exposure,
         i.e., true self-calibration.
+
         """
         input_sci, selfcal_list, bkg_list = _parse_inputs(input, selfcal_list, bkg_list)
 
@@ -142,8 +140,7 @@ class BadpixSelfcalStep(Step):
 
 
 def _parse_inputs(input, selfcal_list, bkg_list):
-    """
-    Parse the input to the step. This is a helper function that is used in the
+    """Parse the input to the step. This is a helper function that is used in the
     command line interface to the step.
 
     Parameters
@@ -165,6 +162,7 @@ def _parse_inputs(input, selfcal_list, bkg_list):
         input science data to be corrected
 
     selfcal_list : list of ImageModels or filenames to use for selfcal
+
     """
     if selfcal_list is None:
         selfcal_list = []
@@ -202,8 +200,7 @@ def _parse_inputs(input, selfcal_list, bkg_list):
 
 
 def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list) -> list:
-    """
-    Split a ModelContainer into a list of ImageModels based on exposure type.
+    """Split a ModelContainer into a list of ImageModels based on exposure type.
 
     Parameters
     ----------
@@ -217,6 +214,7 @@ def split_container_by_asn_exptype(container: dm.ModelContainer, exptypes: list)
     -------
     split_list : list of lists
         lists of ImageModels
+
     """
     split_list = []
     for exptype in exptypes:

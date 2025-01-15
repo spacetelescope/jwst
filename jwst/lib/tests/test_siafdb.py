@@ -1,4 +1,4 @@
-"""Test the siaf db classes"""
+"""Test the siaf db classes."""
 from contextlib import nullcontext as does_not_raise
 import os
 from pathlib import Path
@@ -36,7 +36,7 @@ OLD_PRD_PATH = PYSIAF_PRD_PATH / OLD_PRD / 'SIAFXML' / 'SIAFXML'
     (SIAFXML_PATH, OLD_PRD, SIAFXML_PATH, does_not_raise()),
 ])
 def test_create(source, prd, xml_path, exception, jail_environ):
-    """Test the the right objects are created"""
+    """Test the the right objects are created."""
     source_actual = source
     if source == 'XML_DATA':
         os.environ['XML_DATA'] = str(XML_DATA_SIAFXML_PATH)
@@ -95,8 +95,7 @@ def test_get_wcs(aperture, to_detector, expected):
     ('PRDOPSSOC-999', 'ANYPRD', does_not_raise()),
 ])
 def test_nearest_prd(prd, expected, exception):
-    """Test nearest prd finding"""
-
+    """Test nearest prd finding."""
     with exception:
         prd_to_use, _ = siafdb.nearest_prd(pysiaf, prd)
         if expected != 'ANYPRD':

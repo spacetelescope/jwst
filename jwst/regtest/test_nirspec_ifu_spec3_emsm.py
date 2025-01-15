@@ -1,4 +1,4 @@
-"""Regression tests for NIRSpec IFU"""
+"""Regression tests for NIRSpec IFU."""
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -10,7 +10,7 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 
 @pytest.fixture(scope='module')
 def run_spec3_multi_emsm(rtdata_module):
-    """Run Spec3Pipeline"""
+    """Run Spec3Pipeline."""
     rtdata = rtdata_module
 
     step_params = {
@@ -38,7 +38,7 @@ def run_spec3_multi_emsm(rtdata_module):
     ]
 )
 def test_spec3_multi_emsm(run_spec3_multi_emsm, fitsdiff_default_kwargs, output):
-    """Regression test matching output files"""
+    """Regression test matching output files."""
     rt.is_like_truth(
         run_spec3_multi_emsm, fitsdiff_default_kwargs, output,
         truth_path=TRUTH_PATH,

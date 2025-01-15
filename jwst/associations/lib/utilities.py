@@ -1,4 +1,4 @@
-"""General Utilities"""
+"""General Utilities."""
 from ast import literal_eval
 from functools import wraps
 import logging
@@ -13,13 +13,14 @@ logger.addHandler(logging.NullHandler())
 
 
 def constrain_on_candidates(candidates):
-    """Create a constraint based on a list of candidates
+    """Create a constraint based on a list of candidates.
 
     Parameters
     ----------
     candidates : (str, ...) or None
         List of candidate id's.
         If None, then all candidates are matched.
+
     """
     from .dms_base import DMSAttrConstraint
     if candidates is not None and len(candidates):
@@ -42,7 +43,7 @@ def constrain_on_candidates(candidates):
 
 
 def evaluate(value):
-    """Evaluate a value
+    """Evaluate a value.
 
     Parameters
     ----------
@@ -54,6 +55,7 @@ def evaluate(value):
     type or str
         The evaluation. If the value cannot be
         evaluated, the value is simply returned
+
     """
     try:
         evaled = literal_eval(value)
@@ -68,7 +70,7 @@ def filter_discovered_only(
         candidate_ruleset,
         keep_candidates=True,
 ):
-    """Return only those associations that have multiple candidates
+    """Return only those associations that have multiple candidates.
 
     Parameters
     ----------
@@ -95,6 +97,7 @@ def filter_discovered_only(
     This utility is only meant to run on associations that have
     been constructed. Associations that have been Association.dump
     and then Association.load will not return proper results.
+
     """
     from .prune import identify_dups
 
@@ -131,7 +134,7 @@ def filter_discovered_only(
 
 
 def getattr_from_list(adict, attributes, invalid_values=None):
-    """Retrieve value from dict using a list of attributes
+    """Retrieve value from dict using a list of attributes.
 
     Parameters
     ----------
@@ -155,6 +158,7 @@ def getattr_from_list(adict, attributes, invalid_values=None):
     ------
     KeyError
         None of the attributes are found in the dict.
+
     """
     if invalid_values is None:
         invalid_values = set()
@@ -176,7 +180,7 @@ def getattr_from_list(adict, attributes, invalid_values=None):
 
 
 def return_on_exception(exceptions=(Exception,), default=None):
-    """Decorator to force functions raising exceptions to return a value
+    """Decorator to force functions raising exceptions to return a value.
 
     Parameters
     ----------
@@ -185,6 +189,7 @@ def return_on_exception(exceptions=(Exception,), default=None):
 
     default: obj
         The value to return when a specified exception occurs
+
     """
     def decorator(func):
         @wraps(func)
@@ -211,12 +216,13 @@ def getattr_from_list_nofail(*args, **kwargs):
     Parameters
     ----------
     See `getattr_from_list`
+
     """
     return getattr_from_list(*args, **kwargs)
 
 
 def is_iterable(obj):
-    """General iterator check"""
+    """General iterator check."""
     return not isinstance(obj, str) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')

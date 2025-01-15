@@ -1,6 +1,4 @@
-"""
-Define the I/O methods for Level 3 associations
-"""
+"""Define the I/O methods for Level 3 associations."""
 import json as json_lib
 import logging
 import numpy as np
@@ -19,7 +17,8 @@ __all__: list = []
 
 # Define JSON encoder to convert `Member` to `dict`
 class AssociationEncoder(json_lib.JSONEncoder):
-    """Encode to handle Associations"""
+    """Encode to handle Associations."""
+
     def default(self, obj):
 
         # Convert Member to a simple dict
@@ -29,11 +28,11 @@ class AssociationEncoder(json_lib.JSONEncoder):
 
 @Association.ioregistry
 class json():
-    """Load and store associations as JSON"""
+    """Load and store associations as JSON."""
 
     @staticmethod
     def load(cls, serialized):
-        """Unserialize an association from JSON
+        """Unserialize an association from JSON.
 
         Parameters
         ----------
@@ -53,6 +52,7 @@ class json():
         ------
         AssociationNotValidError
             Cannot create or validate the association.
+
         """
         if isinstance(serialized, str):
             loader = json_lib.loads
@@ -85,6 +85,7 @@ class json():
             Tuple where the first item is the suggested
             Name for the JSON file.
             Second item is the string containing the JSON serialization.
+
         """
         asn_filename = asn.asn_name
         if not asn_filename.endswith('.json'):
@@ -95,11 +96,11 @@ class json():
 
 @Association.ioregistry
 class yaml():
-    """Load and store associations as YAML"""
+    """Load and store associations as YAML."""
 
     @staticmethod
     def load(cls, serialized):
-        """Unserialize an association from YAML
+        """Unserialize an association from YAML.
 
         Parameters
         ----------
@@ -119,6 +120,7 @@ class yaml():
         ------
         AssociationNotValidError
             Cannot create or validate the association.
+
         """
         try:
             serialized.seek(0)
@@ -137,7 +139,7 @@ class yaml():
     def dump(asn):
         """Create YAML representation.
 
-         Parameters
+        Parameters
         ----------
         asn : Association
             The association to serialize
@@ -149,6 +151,7 @@ class yaml():
             Tuple where the first item is the suggested
             Name for the YAML file.
             Second item is the string containing the YAML serialization.
+
         """
         asn_filename = asn.asn_name
         if not asn.asn_name.endswith('.yaml'):
@@ -158,12 +161,12 @@ class yaml():
 
 # Register YAML representers
 def np_str_representer(dumper, data):
-    """Convert numpy.str_ into standard YAML string"""
+    """Convert numpy.str_ into standard YAML string."""
     return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
 yaml_lib.add_representer(np.str_, np_str_representer)
 
 
 def member_representer(dumper, member):
-    """Convert a Member to its basic dict representation"""
+    """Convert a Member to its basic dict representation."""
     return dumper.represent_dict(member.data)
 yaml_lib.add_representer(Member, member_representer)

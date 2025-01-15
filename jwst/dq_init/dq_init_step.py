@@ -26,7 +26,7 @@ class DQInitStep(Step):
     reference_file_types = ['mask']
 
     def process(self, step_input):
-        """Perform the dq_init calibration step
+        """Perform the dq_init calibration step.
 
         Parameters
         ----------
@@ -37,8 +37,8 @@ class DQInitStep(Step):
         -------
         output_model : JWST datamodel
             result JWST datamodel
-        """
 
+        """
         # Try to open the input as a regular RampModel
         try:
             input_model = datamodels.RampModel(step_input)

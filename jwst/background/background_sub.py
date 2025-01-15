@@ -15,9 +15,8 @@ log.setLevel(logging.DEBUG)
 
 
 class ImageSubsetArray:
-    """
-    This class is intended to keep track of where different images
-    may relate to each other when using e.g. subarray observations
+    """This class is intended to keep track of where different images
+    may relate to each other when using e.g. subarray observations.
     """
 
     def __init__(self, model):
@@ -63,7 +62,7 @@ class ImageSubsetArray:
         im.close()
 
     def overlaps(self, other):
-        """Find whether this subset and another overlap"""
+        """Find whether this subset and another overlap."""
         return not (
                 self.imax <= other.imin
                 or other.imax <= self.imin
@@ -72,11 +71,9 @@ class ImageSubsetArray:
         )
 
     def get_subset_array(self, other):
+        """Pull out the overlapping part of two arrays, and put data/err/DQ
+        to match the science image pixels.
         """
-        Pull out the overlapping part of two arrays, and put data/err/DQ
-        to match the science image pixels
-        """
-
         imin = max(self.imin, other.imin)
         imax = min(self.imax, other.imax)
         jmin = max(self.jmin, other.jmin)
@@ -125,8 +122,7 @@ class ImageSubsetArray:
 
 
 def background_sub(input_model, bkg_list, sigma, maxiters):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Subtract the background signal from a JWST exposure by subtracting
     the average of one or more background exposures from it.
@@ -155,7 +151,6 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
         background-subtracted target data model
 
     """
-
     # Compute the average of the background images associated with
     # the target exposure
     bkg_model = average_background(input_model,
@@ -174,13 +169,12 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 
 
 def average_background(input_model, bkg_list, sigma, maxiters):
-    """
-    Average multiple background exposures into a combined data model.
+    """Average multiple background exposures into a combined data model.
     Processes backgrounds from various DataModel types, including those
     having 2D (rate) or 3D (rateints) backgrounds.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     input_model : JWST data model
         input target exposure data model
 
@@ -194,12 +188,12 @@ def average_background(input_model, bkg_list, sigma, maxiters):
     maxiters : int or None, optional
         Maximum number of sigma-clipping iterations to perform
 
-    Returns:
-    --------
+    Returns
+    -------
     avg_bkg : data model
         The averaged background exposure
-    """
 
+    """
     # Determine the dimensionality of the input file
     bkg_dim = len(input_model.data.shape)
     image_shape = input_model.data.shape[-2:]

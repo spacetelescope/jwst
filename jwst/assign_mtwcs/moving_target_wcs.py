@@ -1,5 +1,4 @@
-"""
-Adjust the WCS of a moving target exposure.
+"""Adjust the WCS of a moving target exposure.
 
 Computes the average RA and DEC of a moving
 target in all exposures in an association and adds a step to
@@ -80,7 +79,7 @@ def assign_moving_target_wcs(input_models):
 
 
 def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
-    """ Add a "moving_target" frame to the WCS pipeline.
+    """Add a "moving_target" frame to the WCS pipeline.
 
     Parameters
     ----------
@@ -97,6 +96,7 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
     -------
     new_wcs : `~gwcs.WCS`
         The WCS for the moving target observation.
+
     """
     pipeline = wcs._pipeline[:-1]
 

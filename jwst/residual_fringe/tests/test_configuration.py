@@ -1,6 +1,4 @@
-"""
-Unit test for Residual Fringe Correction for testing interface
-"""
+"""Unit test for Residual Fringe Correction for testing interface."""
 
 import pytest
 import numpy as np
@@ -26,8 +24,7 @@ def miri_image():
 
 
 def test_call_residual_fringe(tmp_cwd,  miri_image):
-    """ test defaults of step are set up and user input are defined correctly """
-
+    """Test defaults of step are set up and user input are defined correctly."""
     # testing the ignore_regions_min
     # There has to be an equal number of min and max ignore region values
     # --ignore_region_min="4.9,"  --ignore_region_max='5.5,"

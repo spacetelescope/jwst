@@ -7,11 +7,9 @@ from jwst.lastframe import LastFrameStep
 
 
 def test_lastframe_set_groupdq():
-    """
-    Test if the lastframe code set the groupdq flag on the last
+    """Test if the lastframe code set the groupdq flag on the last
     group to 'do_not_use'. For ngroups >= 3, lastframe should be flagged.
     """
-
     # size of integration
     ngroups = 3
     xsize = 1032
@@ -52,11 +50,9 @@ def test_lastframe_set_groupdq():
 
 
 def test_lastframe_ngroup2():
-    """
-    Test if the lastframe code set the groupdq flag on the last
+    """Test if the lastframe code set the groupdq flag on the last
     group to 'do_not_use'. Lastframe should not be flagged with ngroups=2.
     """
-
     # size of integration
     ngroups = 2
     xsize = 1032
@@ -86,11 +82,9 @@ def test_lastframe_ngroup2():
 
 
 def test_lastframe_single_group():
+    """Test that the lastframe code does nothing when passed a single
+    group integration.
     """
-    Test that the lastframe code does nothing when passed a single
-    group integration
-    """
-
     # size of integration
     ngroups = 1
     xsize = 1032
@@ -121,11 +115,9 @@ def test_lastframe_single_group():
 
 
 def test_lastframe_add1_groupdq():
+    """Test if the lastframe code set the groupdq flag on the first
+    group to 'do_not_use' by adding 1 to the flag, not overwriting to 1.
     """
-    Test if the lastframe code set the groupdq flag on the first
-    group to 'do_not_use' by adding 1 to the flag, not overwriting to 1
-    """
-
     # size of integration
     ngroups = 5
     xsize = 1032

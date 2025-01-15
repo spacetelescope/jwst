@@ -1,4 +1,4 @@
-"""Test Level2 background nods"""
+"""Test Level2 background nods."""
 import pytest
 
 from jwst.associations.tests.helpers import (
@@ -52,7 +52,7 @@ def test_nrs_msa_nod_subpix():
 
 
 def test_nrs_fixedslit_nod():
-    """Test NIRSpec Fixed-slit background nods"""
+    """Test NIRSpec Fixed-slit background nods."""
     pool = combine_pools(t_path('data/pool_024_nirspec_fss_nods.csv'))
     constraint_all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(
@@ -68,7 +68,7 @@ def test_nrs_fixedslit_nod():
 
 
 def test_nrs_fixedslit_nod_chop():
-    """Test NIRSpec Fixed-slit background nods"""
+    """Test NIRSpec Fixed-slit background nods."""
     pool = combine_pools(t_path('data/pool_025_nirspec_fss_nod_chop.csv'))
     constraint_all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(
@@ -90,7 +90,7 @@ def test_nrs_fixedslit_nod_chop():
                          [('pool_024b_nirspec_fss_nods', 10),
                           ('pool_024c_nirspec_fss_nods', 40)])
 def test_nrs_fixedslit_5point(pool_name, n_asn):
-    """Test NIRSpec Fixed-slit background nod S1600A1 5 point + subpixel"""
+    """Test NIRSpec Fixed-slit background nod S1600A1 5 point + subpixel."""
     pool = combine_pools(t_path(f'data/{pool_name}.csv'))
     constraint_all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(

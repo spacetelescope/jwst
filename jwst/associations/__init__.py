@@ -1,4 +1,4 @@
-"""Association Generator
+"""Association Generator.
 
 The Association Generator takes a list of items, an Association Pool, and
 creates sub-lists of those items depending on each item's attributes. How the
@@ -14,7 +14,7 @@ from jwst import __version__
 
 # Utility
 def libpath(filepath):
-    '''Return the full path to the module library.'''
+    """Return the full path to the module library."""
     from os.path import (
         abspath,
         dirname,

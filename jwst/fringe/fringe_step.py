@@ -9,8 +9,7 @@ __all__ = ["FringeStep"]
 
 
 class FringeStep(Step):
-    """
-    FringeStep: Apply fringe correction to a science image using a fringe
+    """FringeStep: Apply fringe correction to a science image using a fringe
     reference image.
     """
 

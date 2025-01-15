@@ -96,8 +96,7 @@ def test_ideal_to_v23_fs():
 
 
 def test_skipped():
-    """ Test all conditions that lead to skipping wavecorr."""
-
+    """Test all conditions that lead to skipping wavecorr."""
     hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
     im = datamodels.ImageModel(hdul)
 
@@ -169,8 +168,7 @@ def test_skipped():
     
     
 def test_mos_slit_status():
-    """ Test conditions that are skipped for mos slitlets."""
-
+    """Test conditions that are skipped for mos slitlets."""
     hdul = create_nirspec_mos_file()
     msa_meta = os.path.join(jwst.__path__[0], *['assign_wcs', 'tests', 'data', 'msa_configuration.fits'])
     hdul[0].header['MSAMETFL'] = msa_meta

@@ -1,6 +1,4 @@
-"""
-This module contains lists of modes grouped in different ways
-"""
+"""This module contains lists of modes grouped in different ways."""
 from ..associations.lib.dms_base import (ACQ_EXP_TYPES, IMAGE2_SCIENCE_EXP_TYPES,
                                          IMAGE2_NONSCIENCE_EXP_TYPES,
                                          SPEC2_SCIENCE_EXP_TYPES)
@@ -88,7 +86,7 @@ def is_nrs_autoflat(datamodel):
 
 
 def is_moving_target(datamodel):
-    """ Determine if a moving target exposure."""
+    """Determine if a moving target exposure."""
     if (hasattr(datamodel.meta.target, 'type') \
             and datamodel.meta.target.type is not None \
             and datamodel.meta.target.type.lower() == 'moving'):

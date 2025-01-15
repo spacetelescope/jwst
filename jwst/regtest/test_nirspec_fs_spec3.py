@@ -10,9 +10,7 @@ from stdatamodels.jwst import datamodels
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
-    """
-    Run the calwebb_spec3 pipeline on NIRSpec Fixed-Slit exposures.
-    """
+    """Run the calwebb_spec3 pipeline on NIRSpec Fixed-Slit exposures."""
     rtdata = rtdata_module
 
     # Get the ASN file and input exposures

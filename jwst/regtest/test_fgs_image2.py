@@ -18,7 +18,7 @@ def run_fgs_image2(rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ['flat_field', 'cal', 'i2d'])
 def test_fgs_image2(run_fgs_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Regression test for FGS data in the image2 pipeline"""
+    """Regression test for FGS data in the image2 pipeline."""
     rtdata = rtdata_module
     output = f"jw01029001001_04201_00001_guider2_{suffix}.fits"
     rtdata.output = output

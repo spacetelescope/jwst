@@ -1,6 +1,4 @@
-"""
-Test for flat_field.interpolate_flat
-"""
+"""Test for flat_field.interpolate_flat."""
 
 import numpy as np
 

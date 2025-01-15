@@ -1,4 +1,4 @@
-"""Regression tests for Moving Target MIRI MRS mode"""
+"""Regression tests for Moving Target MIRI MRS mode."""
 import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
@@ -11,8 +11,7 @@ TRUTH_PATH = 'truth/test_miri_mrs_spec3_moving_target/'
 
 @pytest.fixture(scope='module')
 def run_spec3_moving_target(rtdata_module):
-    """Run the Spec3Pipeline dithered flight data """
-
+    """Run the Spec3Pipeline dithered flight data."""
     # Association has 2 exposures from IFUSHORT
 
     rtdata = rtdata_module
@@ -42,8 +41,7 @@ def run_spec3_moving_target(rtdata_module):
 
 )
 def test_spec3_moving_target(run_spec3_moving_target, fitsdiff_default_kwargs, output):
-    """Regression test matching output files"""
-
+    """Regression test matching output files."""
     rtdata = run_spec3_moving_target
     rtdata.output = output
 

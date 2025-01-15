@@ -1,6 +1,4 @@
-"""
-Unit test for mrs_imatch apply background
-"""
+"""Unit test for mrs_imatch apply background."""
 
 import pytest
 
@@ -45,8 +43,7 @@ subarray = {
 
 @pytest.fixture(scope='function')
 def miri_dither_ch12():
-    """ Generate 4 dithered channel 12 data  """
-
+    """Generate 4 dithered channel 12 data."""
     input_model1 = datamodels.IFUImageModel((30, 30))
     input_model1.meta.wcsinfo._instance.update(wcsinfo)
     input_model1.meta.instrument._instance.update(mirifushort_short)
@@ -89,8 +86,7 @@ def miri_dither_ch12():
 
 
 def test_apply_background_2d(tmp_cwd, miri_dither_ch12):
-    """ Test if  background polynomial is set it is subtracted correctly"""
-
+    """Test if  background polynomial is set it is subtracted correctly."""
     all_models = ModelContainer(miri_dither_ch12)
 
     # test if given a background polynomial - apply_background_2d gives the correct answer

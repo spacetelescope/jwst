@@ -1,6 +1,4 @@
-"""
-Access the JWST Engineering Mnemonic Database through direct connection
-"""
+"""Access the JWST Engineering Mnemonic Database through direct connection."""
 
 from astropy.time import Time
 import logging
@@ -31,8 +29,7 @@ __all__ = [
 
 
 class EngdbDirect(EngdbABC):
-    """
-    Access the JWST Engineering Database through direct connection
+    """Access the JWST Engineering Database through direct connection.
 
     Parameters
     ----------
@@ -46,6 +43,7 @@ class EngdbDirect(EngdbABC):
     service_kwargs : dict
         Service-specific keyword arguments that are not relevant to this implementation
         of EngdbABC.
+
     """
 
     #: The base URL for the engineering service.
@@ -92,12 +90,13 @@ class EngdbDirect(EngdbABC):
         self._default_format = result_format
 
     def configure(self, base_url=None):
-        """Configure from parameters and environment
+        """Configure from parameters and environment.
 
         Parameters
         ----------
         base_url : str
             The base url for the engineering RESTful service
+
         """
         # Determine the database to use.
         if base_url is None:
@@ -113,7 +112,7 @@ class EngdbDirect(EngdbABC):
         self.timeout = getenv('ENG_TIMEOUT', TIMEOUT)
 
     def get_meta(self, mnemonic='', result_format=None):
-        """Get the mnemonics meta info
+        """Get the mnemonics meta info.
 
         Parameters
         ----------
@@ -123,6 +122,7 @@ class EngdbDirect(EngdbABC):
         result_format : str
             The format to request from the service.
             If None, the `default_format` is used.
+
         """
         if result_format is None:
             result_format = self.default_format
@@ -154,8 +154,7 @@ class EngdbDirect(EngdbABC):
             include_bracket_values=False,
             zip_results=True
     ):
-        """
-        Retrieve all results for a mnemonic in the requested time range.
+        """Retrieve all results for a mnemonic in the requested time range.
 
         Parameters
         ----------
@@ -195,6 +194,7 @@ class EngdbDirect(EngdbABC):
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
+
         """
         records = self._get_records(
             mnemonic=mnemonic,
@@ -223,7 +223,7 @@ class EngdbDirect(EngdbABC):
         return results.collection
 
     def set_session(self):
-        """Setup HTTP session"""
+        """Setup HTTP session."""
         s = requests.Session()
         retries = Retry(total=10, backoff_factor=1.0, status_forcelist=FORCE_STATUSES, raise_on_status=True)
         s.mount('https://', HTTPAdapter(max_retries=retries))
@@ -238,8 +238,7 @@ class EngdbDirect(EngdbABC):
             result_format=None,
             time_format=None
     ):
-        """
-        Retrieve all results for a mnemonic in the requested time range.
+        """Retrieve all results for a mnemonic in the requested time range.
 
         Parameters
         ----------
@@ -276,6 +275,7 @@ class EngdbDirect(EngdbABC):
         -----
         The engineering service always returns the bracketing entries
         before and after the requested time range.
+
         """
         if result_format is None:
             result_format = self.default_format
@@ -312,7 +312,7 @@ class EngdbDirect(EngdbABC):
 
 
 class _ValueCollection():
-    """Engineering Value Collection
+    """Engineering Value Collection.
 
     Parameters
     ----------
@@ -331,7 +331,9 @@ class _ValueCollection():
     collection : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
         Returns the list of values.
         See `include_obstime` and `zip_results` for modifications.
+
     """
+
     def __init__(self, include_obstime=False, zip_results=True):
         self._include_obstime = include_obstime
         self._zip_results = zip_results
@@ -353,7 +355,7 @@ class _ValueCollection():
         return collection
 
     def append(self, obstime, value):
-        """Append value to collection
+        """Append value to collection.
 
         Parameters
         ----------
@@ -367,6 +369,7 @@ class _ValueCollection():
         Notes
         -----
         The `obstime` is converted to an `astropy.time.Time`
+
         """
         # Convert from milliseconds to seconds before appending.
         self.obstimes.append(obstime / 1000.)
@@ -377,7 +380,7 @@ class _ValueCollection():
 # Utilities
 # #########
 def extract_db_time(db_date):
-    """Extract date from date string in the Database
+    """Extract date from date string in the Database.
 
     Parameters
     ----------
@@ -397,6 +400,7 @@ def extract_db_time(db_date):
 
     where the plus could be a minus. What is returned is
     the actual 13 digit number before the plus/minus.
+
     """
     match = re.match(r'\/Date\((\d{13})(.*)\)\/', db_date)
     milliseconds = int(match.group(1))

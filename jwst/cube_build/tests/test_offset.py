@@ -1,6 +1,4 @@
-"""
-Unit test for Cube Build testing setting up configuration
-"""
+"""Unit test for Cube Build testing setting up configuration."""
 
 import pytest
 import math
@@ -19,8 +17,7 @@ from jwst import assign_wcs
 
 @pytest.fixture(scope='module')
 def offset_file(tmp_path_factory):
-    """ Generate a offset file """
-
+    """Generate a offset file."""
     filename = tmp_path_factory.mktemp('offset')
     filename = filename / 'offset.asdf'
     
@@ -41,8 +38,7 @@ def offset_file(tmp_path_factory):
 
 @pytest.fixture(scope='module')
 def offset_file_arcmin(tmp_path_factory):
-    """ Generate a offset file with units = arcmin """
-
+    """Generate a offset file with units = arcmin."""
     filename = tmp_path_factory.mktemp('offset')
     filename = filename / 'offset_arcmin.asdf'
     
@@ -61,8 +57,7 @@ def offset_file_arcmin(tmp_path_factory):
 
 @pytest.fixture(scope='function')
 def miri_ifushort_short_2files():
-    """ Generate input model with 2 IFU images """
-
+    """Generate input model with 2 IFU images."""
     observation = {
     'date': '2019-01-01',
     'time': '17:00:00'}
@@ -136,8 +131,7 @@ def miri_ifushort_short_2files():
 
 
 def test_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
-    """ Test validation of the offset configuration"""
-
+    """Test validation of the offset configuration."""
     # first test that it is a valid asdf file and has what is needed
     step = CubeBuildStep()
     step.input_models = miri_ifushort_short_2files
@@ -148,8 +142,7 @@ def test_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
 
     
 def test2_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
-    """ Test validation of the offset configuration"""
-
+    """Test validation of the offset configuration."""
     # Test changing one of the filenames so it is not in the list given
     # in the offset_file 
     step = CubeBuildStep()
@@ -163,8 +156,7 @@ def test2_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
 
 
 def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcmin):
-    """ Test offsets are not used when units are arc minutes"""
-
+    """Test offsets are not used when units are arc minutes."""
     # test is the if the user set the units to arcmins
     step = CubeBuildStep()
     step.input_models = miri_ifushort_short_2files
@@ -174,8 +166,7 @@ def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcm
         step.check_offset_file()
 
 def test_read_offset_file(miri_ifushort_short_2files, offset_file):
-    """ Test offset file has been read in correctly"""
-
+    """Test offset file has been read in correctly."""
     step = CubeBuildStep()
     step.input_models = miri_ifushort_short_2files
     step.offset_file = offset_file

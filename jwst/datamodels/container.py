@@ -34,8 +34,7 @@ logger.addHandler(logging.NullHandler())
 
 
 class ModelContainer(Sequence):
-    """
-    A container for holding DataModels.
+    """A container for holding DataModels.
 
     This functions like a list for holding DataModel objects.  It can be
     iterated through like a list, DataModels within the container can be
@@ -221,9 +220,7 @@ to supply custom catalogs.
         self.close()
 
     def copy(self, memo=None):
-        """
-        Returns a deep copy of the models in this model container.
-        """
+        """Returns a deep copy of the models in this model container."""
         result = self.__class__(init=None)
         for m in self._models:
             result.append(m.copy(memo=memo))
@@ -231,13 +228,13 @@ to supply custom catalogs.
 
     @staticmethod
     def read_asn(filepath):
-        """
-        Load fits files from a JWST association file.
+        """Load fits files from a JWST association file.
 
         Parameters
         ----------
         filepath : str
             The path to an association file.
+
         """
         # Prevent circular import:
         from ..associations import AssociationNotValidError, load_asn
@@ -251,13 +248,13 @@ to supply custom catalogs.
         return asn_data
 
     def from_asn(self, asn_data):
-        """
-        Load fits files from a JWST association file.
+        """Load fits files from a JWST association file.
 
         Parameters
         ----------
         asn_data : ~jwst.associations.Association
             An association dictionary
+
         """
         # match the asn_exptypes to the exptype in the association and retain
         # only those file that match, as a list, if asn_exptypes is set to none
@@ -322,8 +319,7 @@ to supply custom catalogs.
              path=None,
              save_model_func=None,
              **kwargs):
-        """
-        Write out models in container to FITS or ASDF.
+        """Write out models in container to FITS or ASDF.
 
         Parameters
         ----------
@@ -345,6 +341,7 @@ to supply custom catalogs.
         -------
         output_paths: [str[, ...]]
             List of output file paths of where the models were saved.
+
         """
         output_paths = []
         for idx, model in enumerate(self):
@@ -367,8 +364,7 @@ to supply custom catalogs.
 
     @property
     def models_grouped(self):
-        """
-        Returns a list of a list of datamodels grouped by exposure.
+        """Returns a list of a list of datamodels grouped by exposure.
         Assign a grouping ID by exposure, if not already assigned.
 
         If ``model.meta.group_id`` does not exist or it is `None`, then data
@@ -434,9 +430,7 @@ to supply custom catalogs.
 
     @property
     def group_names(self):
-        """
-        Return list of names for the JwstDataModel groups by exposure.
-        """
+        """Return list of names for the JwstDataModel groups by exposure."""
         result = []
         for group in self.models_grouped:
             result.append(group[0].meta.group_id)
@@ -450,19 +444,18 @@ to supply custom catalogs.
 
     @property
     def crds_observatory(self):
-        """
-        Get the CRDS observatory for this container.  Used when selecting
+        """Get the CRDS observatory for this container.  Used when selecting
         step/pipeline parameter files when the container is a pipeline input.
 
         Returns
         -------
         str
+
         """
         return "jwst"
 
     def get_crds_parameters(self):
-        """
-        Get CRDS parameters for this container.  Used when selecting
+        """Get CRDS parameters for this container.  Used when selecting
         step/pipeline parameter files when the container is a pipeline input.
 
         Returns
@@ -473,14 +466,14 @@ to supply custom catalogs.
         -----
         stpipe requires ModelContainer to have a crds_observatory attribute in order
         to pass through step.run(), but it is never accessed.
+
         """
         msg = ("stpipe uses the get_crds_parameters method from the 0th model in the "
                "ModelContainer. This method is currently not used.")
         raise NotImplementedError(msg)
 
     def ind_asn_type(self, asn_exptype):
-        """
-        Determine the indices of models corresponding to ``asn_exptype``.
+        """Determine the indices of models corresponding to ``asn_exptype``.
 
         Parameters
         ----------
@@ -491,6 +484,7 @@ to supply custom catalogs.
         -------
         ind : list
             Indices of models in ModelContainer._models matching ``asn_exptype``.
+
         """
         ind = []
         for i, model in enumerate(self._models):

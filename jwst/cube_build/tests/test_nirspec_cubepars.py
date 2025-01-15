@@ -1,6 +1,4 @@
-"""
-Unit test for Cube Build for reading nirspec cube pars ref file and using it
-"""
+"""Unit test for Cube Build for reading nirspec cube pars ref file and using it."""
 
 import numpy as np
 import pytest
@@ -13,8 +11,7 @@ from jwst.cube_build import instrument_defaults
 
 @pytest.fixture(scope='module')
 def nirspec_cube_pars(tmp_path_factory):
-    """ Set up the nirspec cube pars reference file  """
-
+    """Set up the nirspec cube pars reference file."""
     filename = tmp_path_factory.mktemp('cube_pars')
     filename = filename / 'nirspec_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
@@ -116,8 +113,7 @@ def nirspec_cube_pars(tmp_path_factory):
 
 
 def test_nirspec_cubepars(tmp_cwd, nirspec_cube_pars):
-    """ Read in the nirspec cube pars file """
-
+    """Read in the nirspec cube pars file."""
     instrument_info = instrument_defaults.InstrumentInfo()
     all_channel = []
     all_subchannel = []

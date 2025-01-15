@@ -138,10 +138,9 @@ def setup_inputs():
 
 def add_circles_to_data(data, center_coords, radii, fill_val=None):
     """Modifies `data` to add circles at positions specified by `center_coords`
-       of sizes specified by `radii`. The magnitude of each circle is 10x its
-       radius (bigger snowballs are brighter).
+    of sizes specified by `radii`. The magnitude of each circle is 10x its
+    radius (bigger snowballs are brighter).
     """
-
     X, Y = np.ogrid[:data.shape[0], :data.shape[1]]
 
     for i, _ in enumerate(radii):
@@ -311,8 +310,8 @@ def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
     jump-flagged pixels for a snowball to be flagged, is set to FALSE.
 
     This test also tests if the `expand_factor` keyword, which controls how many
-    pixels out a snowball is grown, is being used properly"""
-
+    pixels out a snowball is grown, is being used properly
+    """
     # make datamodel
     override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
                                                                  ysize=100)
@@ -355,8 +354,8 @@ def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
     jump-flagged pixels for a snowball to be flagged, is set to FALSE.
 
     This test also tests if the `expand_factor` keyword, which controls how many
-    pixels out a snowball is grown, is being used properly"""
-
+    pixels out a snowball is grown, is being used properly
+    """
     # make datamodel
     override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
                                                                  ysize=100)

@@ -11,9 +11,8 @@ log.setLevel(logging.DEBUG)
 
 
 def expfunc_bounded(x, a, b, c, x0):
-    """
-    Short Summary
-    --------------
+    """Short Summary
+    -------------
     Time dependent flux loss function.
 
     The model parameters are a,b,c, x0. x0 is the reference day from which the
@@ -39,16 +38,15 @@ def expfunc_bounded(x, a, b, c, x0):
     Returns
     -------
     The time-dependent correction flux loss array.
-    """
 
+    """
     temp = a * np.exp(-b * (x - x0) / 100) + c
     temp[temp > 1] = 1
     return temp
 
 
 def get_correction_function(side, timecoeff, mid_time):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Constructing the time and wavelength dependent function
 
@@ -75,7 +73,6 @@ def get_correction_function(side, timecoeff, mid_time):
     Time-wavelength dependent photom loss correction
 
     """
-
     binwave = timecoeff[side]['binwave']
     a = timecoeff[side]['acoeff']
     b = timecoeff[side]['bcoeff']
@@ -92,8 +89,7 @@ def get_correction_function(side, timecoeff, mid_time):
 
 
 def time_correction(input, detector, ftab, mid_time):
-    """
-    Find the time and wavelength dependent photom correction for MRS data.
+    """Find the time and wavelength dependent photom correction for MRS data.
 
     Parameters
     ----------
@@ -113,8 +109,8 @@ def time_correction(input, detector, ftab, mid_time):
     -------
     result : numpy array
         An array of corrections to apply to data.
-    """
 
+    """
     # Read in the time-wavelength dependent coefficients
     # for each channel from the MRS photom reference file
     table_ch = {}

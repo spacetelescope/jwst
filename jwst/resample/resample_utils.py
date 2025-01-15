@@ -71,6 +71,7 @@ def make_output_wcs(input_models, ref_wcs=None,
     -------
     output_wcs : object
         WCS object, with defined domain, covering entire set of input frames
+
     """
     if ref_wcs is None:
         sregion_list = []
@@ -121,14 +122,12 @@ def make_output_wcs(input_models, ref_wcs=None,
 
 
 def shape_from_bounding_box(bounding_box):
-    """ Return a numpy shape based on the provided bounding_box
-    """
+    """Return a numpy shape based on the provided bounding_box."""
     return tuple(int(axs[1] - axs[0] + 0.5) for axs in bounding_box[::-1])
 
 
 def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
-    """ Return a pixel grid map from input frame to output frame.
-    """
+    """Return a pixel grid map from input frame to output frame."""
     if shape:
         bb = wcs_bbox_from_shape(shape)
         log.debug("Bounding box from data shape: {}".format(bb))
@@ -143,8 +142,7 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
 
 
 def reproject(wcs1, wcs2):
-    """
-    Given two WCSs or transforms return a function which takes pixel
+    """Given two WCSs or transforms return a function which takes pixel
     coordinates in the first WCS or transform and computes them in the second
     one. It performs the forward transformation of ``wcs1`` followed by the
     inverse of ``wcs2``.
@@ -160,8 +158,8 @@ def reproject(wcs1, wcs2):
     _reproject : func
         Function to compute the transformations.  It takes x, y
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
-    """
 
+    """
     try:
         # Here we want to use the WCS API functions so that a Sliced WCS
         # will work as well. However, the API functions do not accept
@@ -192,8 +190,7 @@ def reproject(wcs1, wcs2):
 
 
 def build_driz_weight(model, weight_type=None, good_bits=None):
-    """Create a weight map for use by drizzle
-    """
+    """Create a weight map for use by drizzle."""
     dqmask = build_mask(model.dq, good_bits)
 
     if weight_type == 'ivm':
@@ -220,7 +217,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
 
 
 def build_mask(dqarr, bitvalue):
-    """Build a bit mask from an input DQ array and a bitvalue flag
+    """Build a bit mask from an input DQ array and a bitvalue flag.
 
     In the returned bit mask, 1 is good, 0 is bad
     """
@@ -239,8 +236,7 @@ def is_sky_like(frame):
 
 
 def is_flux_density(bunit):
-    """
-    Differentiate between surface brightness and flux density data units.
+    """Differentiate between surface brightness and flux density data units.
 
     Parameters
     ----------
@@ -251,6 +247,7 @@ def is_flux_density(bunit):
     -------
     bool
         True if the units are equivalent to flux density units.
+
     """
     try:
         flux_density = u.Unit(bunit).is_equivalent(u.Jy)
@@ -260,7 +257,7 @@ def is_flux_density(bunit):
 
 
 def decode_context(context, x, y):
-    """ Get 0-based indices of input images that contributed to (resampled)
+    """Get 0-based indices of input images that contributed to (resampled)
     output pixel with coordinates ``x`` and ``y``.
 
     Parameters
@@ -276,7 +273,6 @@ def decode_context(context, x, y):
 
     Returns
     -------
-
     A list of `numpy.ndarray` objects each containing indices of input images
     that have contributed to an output pixel with coordinates ``x`` and ``y``.
     The length of returned list is equal to the number of input coordinate
@@ -284,7 +280,6 @@ def decode_context(context, x, y):
 
     Examples
     --------
-
     An example context array for an output image of array shape ``(5, 6)``
     obtained by resampling 80 input images.
 
@@ -359,10 +354,9 @@ def _resample_range(data_shape, bbox=None):
 
 
 def check_for_tmeasure(model):
-    '''
-    Check if the measurement_time keyword is present in the datamodel
+    """Check if the measurement_time keyword is present in the datamodel
     for use in exptime weighting. If not, revert to using exposure_time.
-    '''
+    """
     try:
         tmeasure = model.meta.exposure.measurement_time
         if tmeasure is not None:

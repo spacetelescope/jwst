@@ -11,26 +11,23 @@ __all__ = ["ModelLibrary"]
 
 
 class ModelLibrary(AbstractModelLibrary):
-    """
-    JWST implementation of the ModelLibrary, a container designed to allow
+    """JWST implementation of the ModelLibrary, a container designed to allow
     efficient processing of datamodel instances created from an association.
     See the `stpipe library documentation <https://stpipe.readthedocs.io/en/latest/model_library.html`
     for details.
     """
+
     @property
     def crds_observatory(self):
         return "jwst"
 
     @property
     def exptypes(self):
-        """
-        List of exposure types for all members in the library.
-        """
+        """List of exposure types for all members in the library."""
         return [member["exptype"] for member in self._members]
 
     def indices_for_exptype(self, exptype):
-        """
-        Determine the indices of models corresponding to ``exptype``.
+        """Determine the indices of models corresponding to ``exptype``.
 
         Parameters
         ----------
@@ -45,6 +42,7 @@ class ModelLibrary(AbstractModelLibrary):
         Notes
         -----
         Library does NOT need to be open (i.e., this can be called outside the `with` context)
+
         """
         return [i for i, member in enumerate(self._members) if member["exptype"].lower() == exptype.lower()]
 
@@ -67,8 +65,7 @@ class ModelLibrary(AbstractModelLibrary):
         return asn_data
 
     def _filename_to_group_id(self, filename):
-        """
-        Compute a "group_id" without loading the file as a DataModel
+        """Compute a "group_id" without loading the file as a DataModel.
 
         This function will return the meta.group_id stored in the ASDF
         extension (if it exists) or a group_id calculated from the
@@ -108,9 +105,7 @@ class ModelLibrary(AbstractModelLibrary):
         return model.meta.asn.exptype
 
     def _model_to_group_id(self, model):
-        """
-        Compute a "group_id" from a model using the DataModel interface
-        """
+        """Compute a "group_id" from a model using the DataModel interface."""
         if group_id := getattr(model.meta, "group_id", None):
             return group_id
         if hasattr(model.meta, "observation"):
@@ -149,9 +144,7 @@ def _attrs_to_group_id(
         activity_id,
         exposure_number,
     ):
-    """
-    Combine a number of file metadata values into a ``group_id`` string
-    """
+    """Combine a number of file metadata values into a ``group_id`` string."""
     for val in (program_number, observation_number, visit_number, visit_group, sequence_id, activity_id, exposure_number):
         if val is None:
             raise NoGroupID(f"Missing required value for group_id: {val}")

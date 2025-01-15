@@ -23,7 +23,7 @@ def run_pipeline(rtdata_module):
 @pytest.mark.parametrize("suffix", ["crfints", "psfalign", "psfsub"])
 @pytest.mark.parametrize("exposure", ["4", "5"])
 def test_miri_coron3_sci_exp(run_pipeline, suffix, exposure, fitsdiff_default_kwargs):
-    """Check intermediate results of calwebb_coron3"""
+    """Check intermediate results of calwebb_coron3."""
     rtdata = run_pipeline
 
     output = "jw0138600" + exposure + "001_04101_00001_mirimage_c1002_" + suffix + ".fits"
@@ -38,7 +38,7 @@ def test_miri_coron3_sci_exp(run_pipeline, suffix, exposure, fitsdiff_default_kw
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["psfstack", "i2d"])
 def test_miri_coron3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
-    """Check final products of calwebb_coron3"""
+    """Check final products of calwebb_coron3."""
     rtdata = run_pipeline
 
     output = "jw01386-c1002_t001_miri_f1140c-mask1140_" + suffix + ".fits"

@@ -1,4 +1,4 @@
-"""Provide a visual progress bar facility
+"""Provide a visual progress bar facility.
 
 The actual functionality is provided by the external library `progress`
 
@@ -16,7 +16,8 @@ logger.addHandler(logging.NullHandler())
 
 
 class _BarStub:
-    """Stub the Bar functionality"""
+    """Stub the Bar functionality."""
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -38,7 +39,7 @@ except ModuleNotFoundError:
 
 
 def Bar(*args, log_level=logging.INFO, log_cutoff=logging.INFO, **kwargs):
-    """Actually use Bar only if logging level is appropriate
+    """Actually use Bar only if logging level is appropriate.
 
     Parameters
     ----------
@@ -54,6 +55,7 @@ def Bar(*args, log_level=logging.INFO, log_cutoff=logging.INFO, **kwargs):
 
     **kwargs : **kwargs
         Keyword arguments for `progress.Bar` class
+
     """
     if log_level <= log_cutoff:
         return _Bar(*args, **kwargs)

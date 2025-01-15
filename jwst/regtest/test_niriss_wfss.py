@@ -1,4 +1,4 @@
-"""Regression tests for NIRISS WFSS mode"""
+"""Regression tests for NIRISS WFSS mode."""
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 
 @pytest.fixture(scope='module')
 def run_nis_wfss_spec2(rtdata_module):
-    """Run the calwebb_spec2 pipeline on NIRISS WFSS exposures"""
+    """Run the calwebb_spec2 pipeline on NIRISS WFSS exposures."""
     rtdata = rtdata_module
 
     # These are the 4 WFSS exposures we'll be processing
@@ -48,7 +48,7 @@ def run_nis_wfss_spec2(rtdata_module):
     ['assign_wcs', 'bsub', 'cal', 'esec', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
 )
 def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Regression test for calwebb_spec2 applied to NIRISS WFSS data"""
+    """Regression test for calwebb_spec2 applied to NIRISS WFSS data."""
     rtdata = rtdata_module
     rtdata.input = "jw01324001001_03101_00001_nis_rate.fits"
     output = "jw01324001001_03101_00001_nis_" + suffix + ".fits"
@@ -61,7 +61,7 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
 
 @pytest.fixture(scope='module')
 def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module):
-    """Run the calwebb_spec3 pipeline"""
+    """Run the calwebb_spec3 pipeline."""
     rtdata = rtdata_module
 
     # Get the level3 association file and run the spec3 pipeline on it.
@@ -76,7 +76,7 @@ def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module):
 @pytest.mark.parametrize('suffix', ['cal', 'x1d', 'c1d'])
 @pytest.mark.parametrize('source_id', ['s000000015', 's000000104'])
 def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fitsdiff_default_kwargs):
-    """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
+    """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data."""
     rtdata = rtdata_module
     rtdata.input = "jw01324-o001_20220629t171902_spec3_003_asn.json"
     output = "jw01324-o001_" + source_id + "_niriss_f115w-gr150c-gr150r_" + suffix + ".fits"

@@ -21,8 +21,7 @@ __all__ = ['Tso3Pipeline']
 
 
 class Tso3Pipeline(Pipeline):
-    """
-    TSO3Pipeline: Applies level 3 processing to TSO-mode data from
+    """TSO3Pipeline: Applies level 3 processing to TSO-mode data from
                     any JWST instrument.
 
     Included steps are:
@@ -51,15 +50,14 @@ class Tso3Pipeline(Pipeline):
     reference_file_types = ['gain', 'readnoise']
 
     def process(self, input):
-        """
-        Run the TSO3Pipeline
+        """Run the TSO3Pipeline.
 
         Parameters
         ----------
         input: Level3 Association, json format
             The exposures to process
-        """
 
+        """
         self.log.info('Starting calwebb_tso3...')
         asn_exptypes = ['science']
 

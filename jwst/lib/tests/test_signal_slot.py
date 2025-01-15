@@ -1,4 +1,4 @@
-"""Test signal_slot.py"""
+"""Test signal_slot.py."""
 
 from jwst.lib import signal_slot as ss
 
@@ -7,13 +7,13 @@ REFLECT_CALLED = 'reflect: called.'
 
 
 def reflect(*args):
-    """Handler function that simply reflects the input args"""
+    """Handler function that simply reflects the input args."""
     print(REFLECT_CALLED)
     return args
 
 
 def list_append(inlist, new_item):
-    """Append new_item to inlist"""
+    """Append new_item to inlist."""
     inlist.append(new_item)
     return inlist, new_item
 
@@ -24,7 +24,7 @@ class AClass:
         self.kwargs = None
 
     def set_and_reflect(self, *args, **kwargs):
-        """Handler function that simply reflects the input args
+        """Handler function that simply reflects the input args.
 
         Keyword arguments become an attribute
         """
@@ -33,14 +33,14 @@ class AClass:
 
 
 def test_basic_structure():
-    """Test initialization and basic structure"""
+    """Test initialization and basic structure."""
     signal = ss.Signal()
 
     assert len(signal._slots) == 0
 
 
 def test_emit(capsys):
-    """Test emitting a signal"""
+    """Test emitting a signal."""
     signal = ss.Signal()
     signal.connect(reflect)
     signal.emit()
@@ -49,7 +49,7 @@ def test_emit(capsys):
 
 
 def test_implicit_emit(capsys):
-    """Test implicating emission of signal"""
+    """Test implicating emission of signal."""
     signal = ss.Signal()
     signal.connect(reflect)
     signal()
@@ -58,7 +58,7 @@ def test_implicit_emit(capsys):
 
 
 def test_call():
-    """Test calling a signal and getting results"""
+    """Test calling a signal and getting results."""
     def another_reflect(*args):
         return reflect(*args)
 
@@ -72,7 +72,7 @@ def test_call():
 
 
 def test_reduce():
-    """Test reducing results to a single result"""
+    """Test reducing results to a single result."""
     def another_list_append(inlist, new_item):
         return list_append(inlist, new_item)
 
@@ -85,7 +85,7 @@ def test_reduce():
 
 
 def test_disable():
-    """Test disable/enable of a signal"""
+    """Test disable/enable of a signal."""
     signal = ss.Signal()
     signal.connect(reflect)
 
@@ -106,7 +106,7 @@ def test_disable():
 
 
 def test_single_shot():
-    """Test single shot signals"""
+    """Test single shot signals."""
     signal = ss.Signal()
     signal.connect(reflect, single_shot=True)
     result = list(signal.call())
@@ -116,7 +116,7 @@ def test_single_shot():
 
 
 def test_disconnect():
-    """Disconnect a slot"""
+    """Disconnect a slot."""
     signal = ss.Signal()
     signal.connect(reflect)
     result = list(signal.call())
@@ -127,7 +127,7 @@ def test_disconnect():
 
 
 def test_clear():
-    """Test clearing all slots"""
+    """Test clearing all slots."""
     signal = ss.Signal()
     signal.connect(reflect)
     result = list(signal.call())
@@ -138,7 +138,7 @@ def test_clear():
 
 
 def test_call_method():
-    """Test with method slots"""
+    """Test with method slots."""
     signal = ss.Signal()
     aclass = AClass()
     signal.connect(aclass.set_and_reflect)

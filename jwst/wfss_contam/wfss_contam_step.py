@@ -9,9 +9,7 @@ __all__ = ["WfssContamStep"]
 
 
 class WfssContamStep(Step):
-    """
-    This Step performs contamination correction of WFSS spectra.
-    """
+    """This Step performs contamination correction of WFSS spectra."""
 
     class_alias = "wfss_contam"
 

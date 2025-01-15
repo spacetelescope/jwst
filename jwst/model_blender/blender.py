@@ -10,8 +10,7 @@ __all__ = ['ModelBlender']
 
 
 class ModelBlender:
-    """
-    Class to "blend" metadata from several datamodels.
+    """Class to "blend" metadata from several datamodels.
 
     Tht output "blended" model will contain:
 
@@ -29,9 +28,9 @@ class ModelBlender:
     >>> blender.finalize_model(combined_model)  # doctest: +SKIP
 
     """
+
     def __init__(self, blend_ignore_attrs=None):
-        """
-        Create a new `ModelBlender`.
+        """Create a new `ModelBlender`.
 
         Parameters
         ----------
@@ -41,6 +40,7 @@ class ModelBlender:
             These attributes must be strings containing the dotted
             path of each attribute (for example "meta.filename").
             (Note that "meta.wcs" will always be ignored).
+
         """
         self._model_type = None
         self._first_header_meta = None
@@ -51,8 +51,7 @@ class ModelBlender:
             self._blend_ignore_attrs.extend(blend_ignore_attrs)
 
     def accumulate(self, model):
-        """
-        Blend metadata for model.
+        """Blend metadata for model.
 
         Process model adding its metadata to the blended
         metadata and the metadata table.
@@ -61,6 +60,7 @@ class ModelBlender:
         ----------
         model: `jwst.datamodels.JwstDataModel`
             The datamodel to blend.
+
         """
         if self._first_header_meta is None:
             self._model_type = type(model)
@@ -119,8 +119,7 @@ class ModelBlender:
         return self._table_builder.build_table()
 
     def finalize_model(self, model):
-        """
-        Update model with the blend results.
+        """Update model with the blend results.
 
         Add blended metadata and the accumulated metadata table to
         the provided datamodel. The update process involves:
@@ -137,6 +136,7 @@ class ModelBlender:
             A datamodel that will have its metadata set
             to the blended metadata and have the metadata
             table assigned to the "hdrtab" attribute.
+
         """
         # update metadata of the output model based on the results
         # of the "blenders"

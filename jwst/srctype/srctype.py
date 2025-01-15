@@ -8,8 +8,7 @@ log.setLevel(logging.DEBUG)
 
 
 def set_source_type(input_model, source_type=None):
-    """
-    Set source_type based on APT input, user specification, exposure type,
+    """Set source_type based on APT input, user specification, exposure type,
     or default values.
 
     Parameters
@@ -28,8 +27,8 @@ def set_source_type(input_model, source_type=None):
                   `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
                   or `~jwst.datamodels.SlitModel`
         The updated model.
-    """
 
+    """
     # Get the exposure type of the input model
     exptype = input_model.meta.exposure.type
     if exptype is None:

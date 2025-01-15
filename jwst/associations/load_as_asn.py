@@ -1,4 +1,4 @@
-"""Treat various objects as Associations"""
+"""Treat various objects as Associations."""
 
 from functools import partial
 from os import path as os_path
@@ -27,7 +27,7 @@ DEFAULT_ASN_META = {
 
 
 class LoadAsAssociation(dict):
-    """Read in or create an association
+    """Read in or create an association.
 
     Parameters
     ----------
@@ -41,6 +41,7 @@ class LoadAsAssociation(dict):
     method to read an association or create one from
     a string or `Datamodel` object, or a list of such
     objects.
+
     """
 
     @classmethod
@@ -49,7 +50,7 @@ class LoadAsAssociation(dict):
              registry=AssociationRegistry,
              rule=Association,
              product_name_func=None):
-        """ Load object and return an association of it
+        """Load object and return an association of it.
 
         Parameters
         ----------
@@ -81,6 +82,7 @@ class LoadAsAssociation(dict):
         -------
         association : Association
             An association created using given obj
+
         """
         try:
             with open(obj) as fp:
@@ -104,12 +106,11 @@ class LoadAsAssociation(dict):
 
 
 class LoadAsLevel2Asn(LoadAsAssociation):
-    """Read in or create a Level2 association
-    """
+    """Read in or create a Level2 association."""
 
     @classmethod
     def load(cls, obj, basename=None):
-        """ Open object and return a Level2 association of it
+        """Open object and return a Level2 association of it.
 
         Parameters
         ----------
@@ -132,6 +133,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         -------
         association : DMSLevel2bBase
             An association created using given obj
+
         """
         product_name_func = cls.model_product_name
         if basename is not None:
@@ -172,13 +174,14 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         -------
         product_name : str
             The basename of filename from the model
+
         """
         product_name, ext = os_path.splitext(model.meta.filename)
         return product_name
 
     @staticmethod
     def name_with_index(basename, obj, idx, *args, **kwargs):
-        """Produce a name with the basename and index appended
+        """Produce a name with the basename and index appended.
 
         Parameters
         ----------
@@ -199,6 +202,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         Notes
         -----
         If the index is less than or equal to 1, no appending is done.
+
         """
         basename, extension = os_path.splitext(os_path.basename(basename))
         if idx > 1:

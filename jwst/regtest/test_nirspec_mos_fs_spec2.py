@@ -8,7 +8,6 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
     """Run the calwebb_spec2 pipeline on a single NIRSpec MOS/FS exposure."""
-
     rtdata = rtdata_module
 
     # Get the MSA metadata file referenced in the input exposure
@@ -41,7 +40,6 @@ def run_pipeline(rtdata_module):
     "cal", "s2d", "x1d"])
 def test_nirspec_mos_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 on a NIRSpec MOS/FS exposure."""
-
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = f"jw02674004001_03101_00001_nrs1_{suffix}.fits"

@@ -22,8 +22,7 @@ GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
 
 class ResampleStep(Step):
-    """
-    Resample input data onto a regular grid using the drizzle algorithm.
+    """Resample input data onto a regular grid using the drizzle algorithm.
 
     .. note::
         When supplied via ``output_wcs``, a custom WCS overrides other custom
@@ -31,9 +30,10 @@ class ResampleStep(Step):
         ``output_wcs.bounding_box``), ``crpix``
 
     Parameters
-    -----------
+    ----------
     input :  ~jwst.datamodels.JwstDataModel or ~jwst.associations.Association
         Single filename for either a single image or an association table.
+
     """
 
     class_alias = "resample"
@@ -126,8 +126,7 @@ class ResampleStep(Step):
 
     @staticmethod
     def check_list_pars(vals, name, min_vals=None):
-        """
-        Validate step parameters that may take a 2-element list.
+        """Validate step parameters that may take a 2-element list.
 
         Parameters
         ----------
@@ -148,6 +147,7 @@ class ResampleStep(Step):
         ------
         ValueError
             If the values do not have expected values.
+
         """
         if vals is None:
             return None
@@ -165,8 +165,7 @@ class ResampleStep(Step):
 
     @staticmethod
     def load_custom_wcs(asdf_wcs_file, output_shape=None):
-        """
-        Load a custom output WCS from an ASDF file.
+        """Load a custom output WCS from an ASDF file.
 
         Parameters
         ----------
@@ -181,6 +180,7 @@ class ResampleStep(Step):
         -------
         wcs : WCS
             The output WCS to resample into.
+
         """
         if not asdf_wcs_file:
             return None
@@ -221,9 +221,7 @@ class ResampleStep(Step):
         return wcs
 
     def get_drizpars(self):
-        """
-        Load all drizzle-related parameter values into kwargs list.
-        """
+        """Load all drizzle-related parameter values into kwargs list."""
         # Define the keys pulled from step parameters
         kwargs = dict(
             pixfrac=self.pixfrac,
@@ -259,9 +257,7 @@ class ResampleStep(Step):
         return kwargs
 
     def update_fits_wcs(self, model):
-        """
-        Update FITS WCS keywords of the resampled image.
-        """
+        """Update FITS WCS keywords of the resampled image."""
         # Delete any SIP-related keywords first
         pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
         regex = re.compile(pattern)

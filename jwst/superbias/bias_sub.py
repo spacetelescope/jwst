@@ -11,8 +11,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, bias_model):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Execute all tasks for Super-Bias Subtraction
 
@@ -30,7 +29,6 @@ def do_correction(input_model, bias_model):
         bias-subtracted science data
 
     """
-
     # Check for subarray mode and extract subarray from the
     # bias reference data if necessary
     if not reffile_utils.ref_matches_sci(input_model, bias_model):
@@ -48,8 +46,7 @@ def do_correction(input_model, bias_model):
 
 
 def subtract_bias(output, bias):
-    """
-    Subtracts a superbias image from a science data set, subtracting the
+    """Subtracts a superbias image from a science data set, subtracting the
     superbias from each group of each integration in the science data.
     The DQ flags in the bias reference image are propagated into the science
     data pixeldq array. The error array is unchanged.
@@ -68,7 +65,6 @@ def subtract_bias(output, bias):
         bias-subtracted science data
 
     """
-
     # combine the science and superbias DQ arrays
     output.pixeldq = np.bitwise_or(output.pixeldq, bias.dq)
 

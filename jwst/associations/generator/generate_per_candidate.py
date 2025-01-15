@@ -57,6 +57,7 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
     -----
     Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
+
     """
     logger.info('Generating based on the per-candidate algorithm.')
 
@@ -131,7 +132,7 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
 
 
 def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_default=False):
-    """Generate associations based on a candidate ID
+    """Generate associations based on a candidate ID.
 
     Parameters
     ----------
@@ -157,6 +158,7 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
     -------
     associations : [Association[,...]]
         List of associations
+
     """
     cid, ctype = cid_ctype
     logger.info(f'Generating associations on candidate {cid_ctype}')
@@ -177,7 +179,7 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
 
 
 def ids_by_ctype(pool):
-    """Groups candidate ids by the candidate type
+    """Groups candidate ids by the candidate type.
 
     Parameters
     ----------
@@ -189,6 +191,7 @@ def ids_by_ctype(pool):
     ids_by_ctype : {ctype: counter}
         Dict with the key of the candidate type. Value is a
         `collections.Counter` object of the ids and their counts.
+
     """
     ids_by_ctype = collections.defaultdict(list)
     for exp_candidates in pool['asn_candidate']:
@@ -209,7 +212,7 @@ def ids_by_ctype(pool):
 
 
 def pool_from_candidate(pool, candidate):
-    """Create a pool containing only the candidate
+    """Create a pool containing only the candidate.
 
     Parameters
     ----------
@@ -223,6 +226,7 @@ def pool_from_candidate(pool, candidate):
     -------
     candidate_pool : AssociationPool
         Pool containing only the candidate
+
     """
     candidate_pool = pool[[candidate in row['asn_candidate'] for row in pool]]
     return candidate_pool

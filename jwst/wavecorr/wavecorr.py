@@ -1,5 +1,4 @@
-"""
-Module for applying wavelength corrections to NIRSpec MOS and FS
+"""Module for applying wavelength corrections to NIRSpec MOS and FS
 slits in which the source is off center. The correction is applied
 only to point sources.
 
@@ -42,7 +41,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, wavecorr_file):
-    """ Main wavecorr correction function for NIRSpec MOS and FS.
+    """Main wavecorr correction function for NIRSpec MOS and FS.
 
     Parameters
     ----------
@@ -50,8 +49,8 @@ def do_correction(input_model, wavecorr_file):
         Input data model.
     wavecorr_file : str
         Wavecorr reference file name.
-    """
 
+    """
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
                                 'NRS_AUTOFLAT']
 
@@ -91,7 +90,7 @@ def do_correction(input_model, wavecorr_file):
 
 
 def apply_zero_point_correction(slit, reffile):
-    """ Apply the NIRSpec wavelength zero-point correction.
+    """Apply the NIRSpec wavelength zero-point correction.
 
     Parameters
     ----------
@@ -104,6 +103,7 @@ def apply_zero_point_correction(slit, reffile):
     -------
     completed : bool
         A flag to report whether the zero-point correction was added or skipped.
+
     """
     log.info(f'slit name {slit.name}')
     slit_wcs = slit.meta.wcs
@@ -148,7 +148,7 @@ def apply_zero_point_correction(slit, reffile):
 
 def calculate_wavelength_correction_transform(lam, dispersion, freference, 
                                               source_xpos, aperture_name):
-    """ Generate a WCS transform for the NIRSpec wavelength zero-point correction
+    """Generate a WCS transform for the NIRSpec wavelength zero-point correction
     and add it to the WCS for each slit.
 
     Parameters
@@ -170,6 +170,7 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
         A model which takes wavelength inputs and returns zero-point
         corrected wavelengths.  Returns None if an invertible model
         cannot be generated.
+
     """
     # Open the zero point reference model
     with datamodels.WaveCorrModel(freference) as wavecorr:
@@ -219,7 +220,7 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
 
 
 def compute_dispersion(wcs, xpix=None, ypix=None):
-    """ Compute the pixel dispersion.
+    """Compute the pixel dispersion.
 
     Parameters
     ----------
@@ -247,7 +248,7 @@ def compute_dispersion(wcs, xpix=None, ypix=None):
 
 
 def compute_wavelength(wcs, xpix=None, ypix=None):
-    """ Compute the pixel wavelength.
+    """Compute the pixel wavelength.
 
     Parameters
     ----------
@@ -273,8 +274,7 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
 
 
 def _is_point_source(slit, exp_type):
-    """
-    Determine if a source is a point source.
+    """Determine if a source is a point source.
 
     Parameters
     ----------
@@ -282,6 +282,7 @@ def _is_point_source(slit, exp_type):
         A slit object.
     exp_type : str
         The exposure type
+
     """
     result = False
 

@@ -18,7 +18,7 @@ CANDIDATE_RULESET = 'candidate'
 
 def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=True, discover=False,
                       version_id=None, finalize=True, merge=False, ignore_default=False):
-    """Generate associations on a specified pool
+    """Generate associations on a specified pool.
 
     Association candidates are filtered based on global constraints added to the rules.
 
@@ -63,6 +63,7 @@ def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=T
     -----
     Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
+
     """
     logger.info('Generating based on the per-pool algorithm')
     

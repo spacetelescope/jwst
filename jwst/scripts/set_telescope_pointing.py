@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Set the initial world coordinate system for JWST exposures
+"""Set the initial world coordinate system for JWST exposures.
 
 The JWST engineering database is queried for the JWST observatory
 orientation parameters, and converts that orientation to a WCS

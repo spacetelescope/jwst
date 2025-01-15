@@ -1,4 +1,4 @@
-"""Test initializing steps using ASDF and CRDS"""
+"""Test initializing steps using ASDF and CRDS."""
 from pathlib import Path
 import pytest
 
@@ -14,8 +14,7 @@ DEFAULT_RESULT = [DEFAULT_PAR1, DEFAULT_PAR2, False]
 
 
 def test_asdf_roundtrip_pipeline(tmp_cwd):
-    """Save a Pipeline pars and re-instantiate with the save parameters"""
-
+    """Save a Pipeline pars and re-instantiate with the save parameters."""
     # Save the parameters
     par_path = 'mkp_pars.asdf'
     args = [
@@ -45,7 +44,7 @@ def test_asdf_roundtrip_pipeline(tmp_cwd):
 
 
 def test_asdf_from_call():
-    """Test using an ASDF file from call"""
+    """Test using an ASDF file from call."""
     config_file = t_path(
         Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
     )
@@ -55,7 +54,7 @@ def test_asdf_from_call():
 
 
 def test_from_command_line():
-    """Test creating Step from command line using ASDF"""
+    """Test creating Step from command line using ASDF."""
     config_file = t_path(
         Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
     )
@@ -70,7 +69,7 @@ def test_from_command_line():
 
 
 def test_from_command_line_override():
-    """Test creating Step from command line using ASDF"""
+    """Test creating Step from command line using ASDF."""
     config_file = t_path(
         Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
     )
@@ -85,20 +84,20 @@ def test_from_command_line_override():
 
 
 def test_makeliststep_missingpars():
-    """Test the testing step class when given insufficient information"""
+    """Test the testing step class when given insufficient information."""
     with pytest.raises(ValidationError):
         MakeListStep.call()
 
 
 def test_makeliststep_test():
-    """Test the testing step class for basic operation"""
+    """Test the testing step class for basic operation."""
     result = MakeListStep.call(par1=DEFAULT_PAR1, par2=DEFAULT_PAR2)
 
     assert result == DEFAULT_RESULT
 
 
 def test_step_from_asdf():
-    """Test initializing step completely from config"""
+    """Test initializing step completely from config."""
     config_file = t_path(
         Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
     )
@@ -111,7 +110,7 @@ def test_step_from_asdf():
 
 
 def test_step_from_asdf_api_override():
-    """Test initializing step completely from config"""
+    """Test initializing step completely from config."""
     config_file = t_path(
         Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
     )
@@ -120,7 +119,7 @@ def test_step_from_asdf_api_override():
 
 
 def test_makeliststep_call_config_file():
-    """Test override step asdf with .cfg"""
+    """Test override step asdf with .cfg."""
     config_file = t_path(
         Path('steps') / 'makelist.cfg'
     )
@@ -129,7 +128,7 @@ def test_makeliststep_call_config_file():
 
 
 def test_makeliststep_call_from_within_pipeline():
-    """Test override step asdf with .cfg"""
+    """Test override step asdf with .cfg."""
     config_file = t_path(
         Path('steps') / 'makelist_pipeline.cfg'
     )
@@ -138,7 +137,7 @@ def test_makeliststep_call_from_within_pipeline():
 
 
 def test_step_from_asdf_noname():
-    """Test initializing step completely from config without a name specified"""
+    """Test initializing step completely from config without a name specified."""
     root = 'jwst_generic_pars-makeliststep_0002'
     config_file = t_path(
         Path('steps') / (root + '.asdf')

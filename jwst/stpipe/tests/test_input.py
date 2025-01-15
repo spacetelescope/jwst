@@ -1,4 +1,4 @@
-"""Test input directory usage and input defaults"""
+"""Test input directory usage and input defaults."""
 
 from os import path
 import pytest
@@ -14,8 +14,7 @@ from jwst.stpipe.tests.util import t_path
 
 
 def test_default_input_with_container(mk_tmp_dirs):
-    """Test default input name from a ModelContainer"""
-
+    """Test default input name from a ModelContainer."""
     model_path = t_path('data/flat.fits')
     with ModelContainer([model_path]) as container:
         step = StepWithContainer()
@@ -25,7 +24,7 @@ def test_default_input_with_container(mk_tmp_dirs):
 
 
 def test_default_input_with_full_model():
-    """Test default input name retrieval with actual model"""
+    """Test default input name retrieval with actual model."""
     model_path = t_path('data/flat.fits')
     with datamodels.open(model_path) as model:
         step = StepWithModel()
@@ -35,8 +34,7 @@ def test_default_input_with_full_model():
 
 
 def test_default_input_with_new_model():
-    """Test getting input name with new model"""
-
+    """Test getting input name with new model."""
     step = StepWithModel()
 
     model = JwstDataModel()
@@ -46,7 +44,7 @@ def test_default_input_with_new_model():
 
 
 def test_default_input_dir(mk_tmp_dirs):
-    """Test defaults"""
+    """Test defaults."""
     input_file = t_path('data/flat.fits')
 
     step = Step.from_cmdline([
@@ -60,7 +58,7 @@ def test_default_input_dir(mk_tmp_dirs):
 
 
 def test_set_input_dir(mk_tmp_dirs):
-    """Simply set the path"""
+    """Simply set the path."""
     input_file = t_path('data/flat.fits')
 
     step = Step.from_cmdline([
@@ -74,7 +72,7 @@ def test_set_input_dir(mk_tmp_dirs):
 
 
 def test_use_input_dir(mk_tmp_dirs):
-    """Test with a specified path"""
+    """Test with a specified path."""
     input_dir = t_path('data')
     input_file = 'flat.fits'
 
@@ -89,7 +87,7 @@ def test_use_input_dir(mk_tmp_dirs):
 
 
 def test_fail_input_dir(mk_tmp_dirs):
-    """Fail with a bad file path"""
+    """Fail with a bad file path."""
     input_file = 'flat.fits'
 
     with pytest.raises(FileNotFoundError):
@@ -100,7 +98,7 @@ def test_fail_input_dir(mk_tmp_dirs):
 
 
 def test_input_dir_with_model(mk_tmp_dirs):
-    """Use with an already opened DataModel"""
+    """Use with an already opened DataModel."""
     with datamodels.open(t_path('data/flat.fits')) as model:
         step = StepWithModel()
         step.run(model)

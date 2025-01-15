@@ -14,7 +14,7 @@ pytestmark = pytest.mark.bigdata
 
 @pytest.fixture(scope='module')
 def run_spec2_mbkg(rtdata_module):
-    """Run Spec2 on MSA data with background slits"""
+    """Run Spec2 on MSA data with background slits."""
     rtdata = rtdata_module
 
     # Get data
@@ -35,7 +35,7 @@ def run_spec2_mbkg(rtdata_module):
 
 @pytest.fixture(scope='module')
 def run_spec2_mbkg_user(rtdata_module):
-    """Run Spec2 on MSA data with a user-supplied master bkg spectrum"""
+    """Run Spec2 on MSA data with a user-supplied master bkg spectrum."""
     rtdata = rtdata_module
 
     # Get data
@@ -58,7 +58,7 @@ def run_spec2_mbkg_user(rtdata_module):
 
 
 def test_masterbkg_rerun(rtdata):
-    """Test to ensure sequential runs of the step are consistent"""
+    """Test to ensure sequential runs of the step are consistent."""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
         corrected = mbs.run(data)
@@ -73,7 +73,7 @@ def test_masterbkg_rerun(rtdata):
 
 
 def test_masterbkg_corrpars(rtdata):
-    """Test for correction parameters"""
+    """Test for correction parameters."""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
         corrected = mbs.run(data)
@@ -94,7 +94,7 @@ def test_masterbkg_corrpars(rtdata):
     ['masterbg1d', 'masterbg2d', 'bkgx1d', 'cal', 's2d', 'x1d']
 )
 def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
-    """Run spec2 with master background"""
+    """Run spec2 with master background."""
     rtdata = run_spec2_mbkg
 
     # Adjust tolerance for machine precision with float32 drizzle code
@@ -109,7 +109,7 @@ def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     ['cal', 's2d', 'x1d']
 )
 def test_nirspec_mos_mbkg_user(suffix, run_spec2_mbkg_user, fitsdiff_default_kwargs):
-    """Run spec2 with master background and user-supplied mbkg"""
+    """Run spec2 with master background and user-supplied mbkg."""
     rtdata = run_spec2_mbkg_user
 
     output_filename = f"jw01448011001_02101_00001_nrs2_user_bg_{suffix}.fits"
@@ -126,7 +126,6 @@ def test_nirspec_mos_mbkg_user(suffix, run_spec2_mbkg_user, fitsdiff_default_kwa
 
 def test_nirspec_fs_mbkg_user(rtdata, fitsdiff_default_kwargs):
     """Run a test for NIRSpec FS data with a user-supplied background file."""
-
     # Get user-supplied background
     user_background = "jw01309-o022_b000000021_nirspec_f290lp-g395h-s200a1-allslits_x1d.fits"
     rtdata.get_data(f"nirspec/fs/{user_background}")

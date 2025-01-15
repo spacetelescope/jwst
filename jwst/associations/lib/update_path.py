@@ -1,9 +1,9 @@
-"""Update path of members in an association"""
+"""Update path of members in an association."""
 from os.path import (join, basename)
 
 
 def update_path(asn, file_path, target='expname'):
-    """Update path of members in an association
+    """Update path of members in an association.
 
     Parameters
     ----------
@@ -15,12 +15,13 @@ def update_path(asn, file_path, target='expname'):
 
     target : str
         Key to replace
+
     """
     update_key_value(asn, target, (file_path, ), mod_func=_replace_path)
 
 
 def update_key_value(obj, target, func_args, mod_func=None):
-    """Update all instances of a key using a modifier
+    """Update all instances of a key using a modifier.
 
     Parameters
     ----------
@@ -42,6 +43,7 @@ def update_key_value(obj, target, func_args, mod_func=None):
     The first argument to `mode_func` will always be the value of the
     target key. Any other arguments given will then be passed to the
     the function.
+
     """
     if mod_func is None:
         def mod_func(value, args):
@@ -59,7 +61,7 @@ def update_key_value(obj, target, func_args, mod_func=None):
 
 
 def _replace_path(old_path, new_path):
-    """Replace the path prefix of the basename
+    """Replace the path prefix of the basename.
 
     Parameters
     ----------
@@ -73,6 +75,7 @@ def _replace_path(old_path, new_path):
     -------
     new_full_path : str
         The basename of the path with the
+
     """
     file_name = basename(old_path)
     new_full_path = join(new_path, file_name)

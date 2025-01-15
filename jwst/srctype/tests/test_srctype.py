@@ -1,6 +1,4 @@
-"""
-Test the srctype step on exposures with various settings
-"""
+"""Test the srctype step on exposures with various settings."""
 from stdatamodels.jwst import datamodels
 
 from jwst.srctype import srctype
@@ -151,8 +149,7 @@ def test_no_sourcetype():
 
 
 def test_nrs_msaspec():
-    """Test for when exposure type is NRS_MSASPEC
-    """
+    """Test for when exposure type is NRS_MSASPEC."""
     input = datamodels.MultiSlitModel()
     input.meta.exposure.type = "NRS_MSASPEC"
 
@@ -171,8 +168,7 @@ def test_nrs_msaspec():
 
 
 def test_nrs_fixedslit():
-    """Test for when exposure type is NRS_FIXEDSLIT
-    """
+    """Test for when exposure type is NRS_FIXEDSLIT."""
     input = datamodels.MultiSlitModel()
     input.meta.exposure.type = "NRS_FIXEDSLIT"
     input.meta.instrument.fixed_slit = "S200A1"
@@ -201,8 +197,7 @@ def test_nrs_fixedslit():
 
 
 def test_valid_user_spec():
-    """ Overwrite source_type with valid user-specified value
-    """
+    """Overwrite source_type with valid user-specified value."""
     input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'NRS_IFU'
@@ -218,8 +213,7 @@ def test_valid_user_spec():
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM",
                                      "NIS_SOSS", "MIR_LRS-SLITLESS"])
 def test_tso_types(exptype):
-    """ Test for when visit is tso.
-    """
+    """Test for when visit is tso."""
     input = datamodels.ImageModel()
     input.meta.observation.bkgdtarg = False
     input.meta.dither.primary_type = 'NONE'
@@ -232,8 +226,7 @@ def test_tso_types(exptype):
 
 
 def test_exptype_is_none():
-    """ Test for when exposure type is None.
-    """
+    """Test for when exposure type is None."""
     with pytest.raises(RuntimeError):
         input = datamodels.ImageModel((10, 10))
         input.meta.exposure.type = None

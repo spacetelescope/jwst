@@ -14,13 +14,13 @@ __all__ = ["AssignMTWcsStep"]
 
 
 class AssignMTWcsStep(Step):
-    """
-    AssignMTWcsStep: Create a gWCS object for a moving target.
+    """AssignMTWcsStep: Create a gWCS object for a moving target.
 
     Parameters
     ----------
     input : `~jwst.associations.Association`
         A JWST association file.
+
     """
 
     class_alias = "assign_mtwcs"

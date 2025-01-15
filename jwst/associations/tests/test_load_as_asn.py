@@ -1,4 +1,4 @@
-"""Test LoadAsAssociation"""
+"""Test LoadAsAssociation."""
 
 import pytest
 
@@ -20,8 +20,7 @@ DEFAULT_NAME = 'singleton'
     ]
 )
 def test_suffix_removal(test_input, expected):
-    """Ensure appropriate suffix removal is occurring"""
-
+    """Ensure appropriate suffix removal is occurring."""
     asn = LoadAsLevel2Asn.load([test_input])
     assert asn['products'][0]['name'] == expected
 

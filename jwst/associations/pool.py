@@ -1,6 +1,4 @@
-"""
-Association Pools
-"""
+"""Association Pools."""
 from collections import UserDict
 
 from astropy.io.ascii import convert_numpy
@@ -13,7 +11,7 @@ DEFAULT_FORMAT = 'ascii'
 
 
 class AssociationPool(Table):
-    """Association Pool
+    """Association Pool.
 
     An ``AssociationPool`` is essentially an astropy Table with the
     following default behaviors:
@@ -21,6 +19,7 @@ class AssociationPool(Table):
     - ASCII tables with a default delimiter of `|`
     - All values are read in as strings
     """
+
     def __init__(self, *args, **kwargs):
         super(AssociationPool, self).__init__(*args, **kwargs)
         self.meta['pool_file'] = self.meta.get('pool_file', 'in-memory')
@@ -33,7 +32,7 @@ class AssociationPool(Table):
             format=DEFAULT_FORMAT,
             **kwargs
     ):
-        """Read in a Pool file
+        """Read in a Pool file.
 
         Parameters
         ----------
@@ -50,6 +49,7 @@ class AssociationPool(Table):
         -------
         AssociationPool
             The ``AssociationPool`` representation of the file.
+
         """
         table = super(AssociationPool, cls).read(
             filename, delimiter=delimiter,
@@ -88,6 +88,7 @@ class AssociationPool(Table):
 
         args, kwargs : obj
             Other parameters that ``astropy.io.ascii.write`` can accept.
+
         """
         delimiter = kwargs.pop('delimiter', DEFAULT_DELIMITER)
         format = kwargs.pop('format', DEFAULT_FORMAT)
@@ -105,11 +106,12 @@ class AssociationPool(Table):
             )
 
 class PoolRow(UserDict):
-    """A row from an AssociationPool
+    """A row from an AssociationPool.
 
     Class to create a copy of an AssociationPool row without copying
     all of the astropy.Table.Row private attributes.
     """
+
     def __init__(self, init=None):
         dict_init = dict(init)
         super().__init__(dict_init)
@@ -123,7 +125,7 @@ def _convert_to_str():
     func, type_ = convert_numpy(str)
 
     def convert_func(vals):
-        """Lowercase the conversion"""
+        """Lowercase the conversion."""
         results = func(vals)
         results = [result.lower() for result in results]
         return results

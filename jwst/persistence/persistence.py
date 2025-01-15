@@ -42,8 +42,8 @@ def no_NaN(input_model, fill_value,
     JWST data model
         A copy of `input_model` with NaNs and/or zeros in the `data`
         attribute replaced with `fill_value`.
-    """
 
+    """
     mask = None
 
     if zap_nan:
@@ -64,7 +64,7 @@ def no_NaN(input_model, fill_value,
 
 
 class DataSet():
-    """Input dataset to which persistence will be applied
+    """Input dataset to which persistence will be applied.
 
     Attributes
     ----------
@@ -113,6 +113,7 @@ class DataSet():
 
     nresets : int
         The number of resets (frames) at the beginning of each integration.
+
     """
 
     def __init__(self, output_obj, input_traps_filled,
@@ -150,8 +151,8 @@ class DataSet():
 
         persat_model : persistence saturation model
             Persistence saturation limit (full well) reference file.
-        """
 
+        """
         log.debug("input_traps_filled = %s", str(input_traps_filled))
         log.debug("flag_pers_cutoff = %g", flag_pers_cutoff)
         log.debug("save_persistence = %s", str(save_persistence))
@@ -175,7 +176,7 @@ class DataSet():
         self.nresets = 0
 
     def do_all(self):
-        """Execute all tasks for persistence correction
+        """Execute all tasks for persistence correction.
 
         Returns
         -------
@@ -194,8 +195,8 @@ class DataSet():
 
         skipped : bool
             This will be True if the step has been skipped.
-        """
 
+        """
         # Initial value, indicates that processing was done successfully.
         skipped = False
 
@@ -416,8 +417,8 @@ class DataSet():
         tuple of two slice objects
             The elements are the Y and X slices that are intended to be
             used to extract a subarray from the reference file.
-        """
 
+        """
         sci_shape = sci.shape
         sci_nx = sci_shape[-1]
         sci_ny = sci_shape[-2]
@@ -465,8 +466,8 @@ class DataSet():
         bool
             True if both are full-frame or if they are the same subarray;
             False otherwise.
-        """
 
+        """
         slc_test_y = slice(0, ref.shape[-2])
         slc_test_x = slice(0, ref.shape[-1])
 
@@ -492,8 +493,8 @@ class DataSet():
         refsub : data model
             `refsub` is a copy of `ref`, but the data attribute in `refsub`
             includes only the relevant slice.
-        """
 
+        """
         refsub = ref.copy()
         # If the reference file data might have a dimension greater than
         # two, use this syntax:
@@ -520,8 +521,8 @@ class DataSet():
 
         par3 : ndarray
             Column "decay_param" from the trappars table.
-        """
 
+        """
         data = self.trappars_model.trappars_table
         par0 = data["capture0"].copy()
         par1 = data["capture1"].copy()
@@ -566,8 +567,8 @@ class DataSet():
         slope : ndarray, 2-D
             The ramp slope in units of fraction of the persistence
             saturation limit per second.
-        """
 
+        """
         (_, ngroups, ny, nx) = self.output_obj.shape
         if ngroups == 1:
             # This won't be accurate, because there's only one group.
@@ -672,8 +673,8 @@ class DataSet():
         -------
         tuple of three floats
             These are the capture parameters for the current trap family.
-        """
 
+        """
         (par0, par1, par2) = par[0:3]
 
         return par0[k], par1[k], par2[k]
@@ -695,8 +696,8 @@ class DataSet():
         -------
         float
             This is the decay parameter for the current trap family.
-        """
 
+        """
         par3 = par[3]
 
         return par3[k]
@@ -720,8 +721,8 @@ class DataSet():
             Integration number.  This is needed because the number of
             resets before the first integration can be different from the
             number of resets between integrations.
-        """
 
+        """
         shape = self.output_obj.data.shape
 
         self.tframe = self.output_obj.meta.exposure.frame_time
@@ -781,8 +782,8 @@ class DataSet():
         -------
         ndarray, 2-D
             The computed traps_filled at the end of the integration.
-        """
 
+        """
         data = self.output_obj.data[integ, :, :, :]
 
         t_frame = self.tframe
@@ -869,8 +870,8 @@ class DataSet():
         -------
         ndarray, 2-D
             The computed traps_filled at the end of the integration.
-        """
 
+        """
         (par0, par1, par2) = capture_param_k
         if par1 == 0:
             log.error("Capture parameter is zero; parameters are %g, %g, %g",
@@ -935,8 +936,8 @@ class DataSet():
         -------
         ndarray, 2-D
             The computed traps_filled at the end of the integration.
-        """
 
+        """
         (par0, par1, par2) = capture_param_k
         par1 = abs(par1)        # the minus sign will be specified explicitly
 
@@ -1006,8 +1007,8 @@ class DataSet():
         -------
         ndarray, 2-D
             The computed cr_filled at the end of the integration.
-        """
 
+        """
         (par0, par1, par2) = capture_param_k
         # cr_filled will be incremented group-by-group, depending on
         # where cosmic rays were found in each group.
@@ -1065,8 +1066,8 @@ class DataSet():
         decayed : ndarray, 2-D
             Image of the computed number of trap decays for each pixel,
             for the current trap family.
-        """
 
+        """
         if decay_param == 0.:
             decayed = traps_filled * 0.
         else:

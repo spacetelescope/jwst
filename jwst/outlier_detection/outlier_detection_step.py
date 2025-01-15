@@ -33,11 +33,12 @@ class OutlierDetectionStep(Step):
     NaN values matching the DQ flags.
 
     Parameters
-    -----------
+    ----------
     input_data : asn file, ~jwst.datamodels.ModelContainer, or ~jwst.datamodels.ModelLibrary
         Single filename association table, datamodels.ModelContainer, or datamodels.ModelLibrary.
         For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
         ModelContainer is expected.
+
     """
 
     class_alias = "outlier_detection"
@@ -64,7 +65,6 @@ class OutlierDetectionStep(Step):
 
     def process(self, input_data):
         """Perform outlier detection processing on input data."""
-
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
         if mode is None:
@@ -191,7 +191,8 @@ class OutlierDetectionStep(Step):
     def _get_asn_id(self, input_models):
         """Find association ID for any allowed input model type,
         and update make_output_path such that the association ID
-        is included in intermediate and output file names."""
+        is included in intermediate and output file names.
+        """
         # handle if input_models isn't open
         if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)

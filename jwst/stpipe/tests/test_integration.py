@@ -22,8 +22,7 @@ def test_get_steps():
 
 
 def _get_subclass_names(class_, ignore=None, ignore_tests=True):
-    """
-    Iterate through names of all subclasses (recursively) of a class ignoring
+    """Iterate through names of all subclasses (recursively) of a class ignoring
     all subclasses with names in ignore (and ignoring any subclasses of
     ignored classes). Also optionally ignore all classes defined in tests modules.
     """

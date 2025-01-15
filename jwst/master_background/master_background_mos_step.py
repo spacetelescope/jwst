@@ -1,4 +1,4 @@
-"""Master Background Pipeline for applying Master Background to NIRSpec MOS data"""
+"""Master Background Pipeline for applying Master Background to NIRSpec MOS data."""
 from stpipe.step import preserve_step_pars
 from jwst.stpipe import record_step_status
 
@@ -22,7 +22,7 @@ GLOBAL_PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'outpu
 
 
 class MasterBackgroundMosStep(Pipeline):
-    """Apply master background processing to NIRSpec MOS data
+    """Apply master background processing to NIRSpec MOS data.
 
     For MOS, and ignoring FS, the calibration process needs to occur
     twice: Once to calibrate background slits and create a master background.
@@ -45,6 +45,7 @@ class MasterBackgroundMosStep(Pipeline):
       - Expand out the 1D master background to match the 2D wavelength grid of the slit
       - Reverse-calibrate the 2D background, using the correction arrays calculated above.
       - Subtract the background from the input slit data
+
     """
 
     class_alias = "master_background_mos"
@@ -74,7 +75,7 @@ class MasterBackgroundMosStep(Pipeline):
     prefetch_references = False
 
     def process(self, data):
-        """Compute and subtract a master background spectrum
+        """Compute and subtract a master background spectrum.
 
         Parameters
         ----------
@@ -118,6 +119,7 @@ class MasterBackgroundMosStep(Pipeline):
         Returns
         -------
         result : `~jwst.datamodels.MultiSlitModel`
+
         """
         with datamodels.open(data) as data_model:
             # If some type of background processing had already been done. Abort.
@@ -176,7 +178,7 @@ class MasterBackgroundMosStep(Pipeline):
         return result
 
     def set_pars_from_parent(self):
-        """Set substep parameters from the parents substeps when needed"""
+        """Set substep parameters from the parents substeps when needed."""
         if not self.parent:
             return
 
@@ -210,7 +212,7 @@ class MasterBackgroundMosStep(Pipeline):
         return bkg_model
 
     def _classify_slits(self, data):
-        """Determine how many Slits are background and source types
+        """Determine how many Slits are background and source types.
 
         Parameters
         ----------
@@ -221,8 +223,8 @@ class MasterBackgroundMosStep(Pipeline):
         -------
         num_bkg, num_src : int, int
             The number of background slits and the number of source slits.
-        """
 
+        """
         # Loop over all the Slit instances in the input data model and
         # count how many are background vs source.
         num_bkg = num_src = 0
@@ -236,7 +238,7 @@ class MasterBackgroundMosStep(Pipeline):
 
     def _calc_master_background(
         self, data, user_background=None, sigma_clip=3, median_kernel=1):
-        """Calculate master background from background slits
+        """Calculate master background from background slits.
 
         Parameters
         ----------
@@ -260,8 +262,8 @@ class MasterBackgroundMosStep(Pipeline):
         bkg_x1d_spectra : `~jwst.datamodels.MultiSlitModel`
             The 1D extracted background spectra used to determine the master background.
             Returns None when a user_background is provided.
-        """
 
+        """
         # Since the parameters for the substeps are modified during processing,
         # wrap the processing in a context manager that restores all parameters.
         with preserve_step_pars(self):

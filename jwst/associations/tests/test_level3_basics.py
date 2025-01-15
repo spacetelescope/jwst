@@ -1,4 +1,4 @@
-"""Test general Level 3 rules environment"""
+"""Test general Level 3 rules environment."""
 import pytest
 
 from jwst.associations.tests.helpers import (
@@ -40,7 +40,7 @@ def test_meta():
     ]
 )
 def test_targacq(pool_file):
-    """Test for existence of target acquisitions in associations"""
+    """Test for existence of target acquisitions in associations."""
     rules = registry_level3_only()
     pool = combine_pools(t_path(pool_file))
     asns = generate(pool, rules)

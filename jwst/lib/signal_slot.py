@@ -1,5 +1,4 @@
-""" A signal/slot implementation
-"""
+"""A signal/slot implementation."""
 from collections import namedtuple
 import inspect
 import logging
@@ -19,7 +18,7 @@ Slot = namedtuple('Slot', ['func', 'single_shot'])
 
 
 class Signal():
-    """Signal
+    """Signal.
 
     A Signal, when triggered, call the connected slots.
 
@@ -46,7 +45,7 @@ class Signal():
             self.connect(func)
 
     def emit(self, *args, **kwargs):
-        """Invoke slots attached to the signal
+        """Invoke slots attached to the signal.
 
         No return of results is expected.
 
@@ -57,6 +56,7 @@ class Signal():
 
         kwargs: {key: value[, ...]}
             Keyword arguments to pass to the slots.
+
         """
         for _ in self.call(*args, **kwargs):
             pass
@@ -78,6 +78,7 @@ class Signal():
         -------
         generator
             A generator returning the result from each slot.
+
         """
         for slot in self.slots:
             try:
@@ -92,7 +93,7 @@ class Signal():
                 )
 
     def reduce(self, *args, **kwargs):
-        """Return a reduction of all the slots
+        """Return a reduction of all the slots.
 
         Parameters
         ----------
@@ -110,7 +111,6 @@ class Signal():
 
         Notes
         -----
-
         Each slot is given the results of the previous
         slot as a new positional argument list. As such, if multiple
         arguments are required, each slot should return a tuple that
@@ -138,7 +138,7 @@ class Signal():
         self.set_enabled(state, push=False)
 
     def set_enabled(self, state, push=False):
-        """Set whether signal is active or not
+        """Set whether signal is active or not.
 
         Parameters
         ----------
@@ -147,6 +147,7 @@ class Signal():
 
         push: boolean
             If True, current state is saved.
+
         """
         if push:
             self._states.append(self._enabled)
@@ -156,14 +157,16 @@ class Signal():
         self._enabled = self._states.pop()
 
     def connect(self, func, single_shot=False):
-        """Connect a function to the signal
-        Parameters
+        """Connect a function to the signal.
+
+        Parameters.
         ----------
         func: function or method
             The function/method to call when the signal is activated
 
         single_shot: bool
             If True, the function/method is removed after being called.
+
         """
         slot = Slot(
             func=func,
@@ -179,13 +182,14 @@ class Signal():
         ]
 
     def clear(self, single_shot=False):
-        """Clear slots
+        """Clear slots.
 
         Parameters
         ----------
         single_shot: bool
             If True, only remove single shot
             slots.
+
         """
         logger.debug(
             'Signal {}: Clearing slots'.format(
@@ -203,7 +207,7 @@ class Signal():
 
     @property
     def slots(self):
-        """Generator returning slots"""
+        """Generator returning slots."""
         if not self.enabled:
             return
 
@@ -224,7 +228,7 @@ class Signal():
 
 
 class SignalsErrorBase(Exception):
-    '''Base Signals Error'''
+    """Base Signals Error."""
 
     default_message = ''
 
@@ -236,12 +240,13 @@ class SignalsErrorBase(Exception):
 
 
 class SignalsNotAClass(SignalsErrorBase):
-    '''Must add a Signal Class'''
+    """Must add a Signal Class."""
+
     default_message = 'Signal must be a class.'
 
 
 class Signals(dict):
-    '''Manage the signals.'''
+    """Manage the signals."""
 
     def __setitem__(self, key, value):
         if key not in self:

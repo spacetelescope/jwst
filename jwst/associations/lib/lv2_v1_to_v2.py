@@ -1,4 +1,4 @@
-"""Convert old-style Level2 associations to new style"""
+"""Convert old-style Level2 associations to new style."""
 import argparse
 import json
 import logging
@@ -13,7 +13,7 @@ handler.setLevel(logging.DEBUG)
 
 
 def lv2_v1_to_v2(asn_v1):
-    """Convert old-style Level2 associations to new style
+    """Convert old-style Level2 associations to new style.
 
     Parameters
     ----------
@@ -24,8 +24,8 @@ def lv2_v1_to_v2(asn_v1):
     -------
     asn_v2 : dict
         A 'new-style' association
-    """
 
+    """
     asn_v2 = dict(asn_v1)
     products = []
     members_to_add = []

@@ -1,4 +1,4 @@
-"""Test for various WFSS modes"""
+"""Test for various WFSS modes."""
 from os import path
 
 from jwst.associations import AssociationPool
@@ -9,8 +9,7 @@ REQUIRED_ASN_TYPES = set(['image2', 'spec2', 'image3', 'spec3'])
 
 
 def test_niriss_wfss():
-    """Test association properties for NIRISS WFSS"""
-
+    """Test association properties for NIRISS WFSS."""
     pool = AssociationPool.read(
         t_path(path.join('data', 'jw87800_20180412T163456_pool.csv'))
     )

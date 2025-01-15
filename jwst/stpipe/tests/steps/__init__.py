@@ -6,7 +6,7 @@ from jwst.datamodels import ModelContainer
 
 
 class StepWithReference(Step):
-    """Step that refers to a reference file"""
+    """Step that refers to a reference file."""
 
     reference_file_types = ['flat']
 
@@ -15,7 +15,7 @@ class StepWithReference(Step):
 
 
 class PipeWithReference(Pipeline):
-    """Pipeline calling step with reference"""
+    """Pipeline calling step with reference."""
 
     spec = """
     """
@@ -29,8 +29,7 @@ class PipeWithReference(Pipeline):
 
 
 class AnotherDummyStep(Step):
-    """
-    This is a crazy do-nothing step that demonstrates configuration
+    """This is a crazy do-nothing step that demonstrates configuration
     argument parsing.
     """
 
@@ -75,7 +74,7 @@ class WithDefaultsStep(Step):
 
 
 class MakeListStep(Step):
-    """Make a list of all arguments and parameters"""
+    """Make a list of all arguments and parameters."""
 
     spec = """
     par1 = float() # Control the frobulization
@@ -99,8 +98,7 @@ class MakeListStep(Step):
 
 
 class OptionalRefTypeStep(Step):
-    """
-    This is a do-nothing step that demonstrates optionally omitting
+    """This is a do-nothing step that demonstrates optionally omitting
     a reference file.
     """
 
@@ -112,7 +110,7 @@ class OptionalRefTypeStep(Step):
 
 
 class PostHookStep(Step):
-    """A step to try out hooks"""
+    """A step to try out hooks."""
 
     spec = """
     """
@@ -126,7 +124,7 @@ class PostHookStep(Step):
 
 
 class PostHookWithReturnStep(Step):
-    """A step to try out hooks"""
+    """A step to try out hooks."""
 
     spec = """
     """
@@ -140,7 +138,7 @@ class PostHookWithReturnStep(Step):
 
 
 class PreHookStep(Step):
-    """A step to try out hooks"""
+    """A step to try out hooks."""
 
     spec = """
     """
@@ -154,9 +152,7 @@ class PreHookStep(Step):
 
 
 class SaveStep(Step):
-    """
-    Step with explicit save.
-    """
+    """Step with explicit save."""
 
     spec = """
     """
@@ -171,7 +167,7 @@ class SaveStep(Step):
 
 
 class StepWithContainer(Step):
-    """A step with a model"""
+    """A step with a model."""
 
     spec = """
     """
@@ -193,7 +189,7 @@ class StepWithContainer(Step):
 
 
 class StepWithModel(Step):
-    """A step with a model"""
+    """A step with a model."""
 
     spec = """
     """
@@ -205,7 +201,7 @@ class StepWithModel(Step):
 
 
 class EmptyPipeline(Pipeline):
-    """A pipeline that has no substeps"""
+    """A pipeline that has no substeps."""
 
     spec = """
     par1 = string(default='Name the atomizer') # Control the frobulization
@@ -217,7 +213,7 @@ class EmptyPipeline(Pipeline):
 
 
 class ProperPipeline(Pipeline):
-    """Pipeline with proper output setup"""
+    """Pipeline with proper output setup."""
 
     spec = """
     """
@@ -248,7 +244,7 @@ class ProperPipeline(Pipeline):
 
 
 class SavePipeline(Pipeline):
-    """Save model in pipeline"""
+    """Save model in pipeline."""
 
     spec = """
     """
@@ -268,7 +264,7 @@ class SavePipeline(Pipeline):
 
 
 class MakeListPipeline(Pipeline):
-    """A pipeline that calls MakeListStep"""
+    """A pipeline that calls MakeListStep."""
 
     spec = """
     par1 = string(default='Name the atomizer') # Control the frobulization

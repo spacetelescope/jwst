@@ -1,4 +1,4 @@
-"""Project default for pytest"""
+"""Project default for pytest."""
 import os
 import tempfile
 import pytest
@@ -11,7 +11,7 @@ from jwst.associations.tests.helpers import t_path
 
 @pytest.fixture
 def jail_environ():
-    """Lock changes to the environment"""
+    """Lock changes to the environment."""
     original = os.environ.copy()
     try:
         yield
@@ -21,7 +21,7 @@ def jail_environ():
 
 @pytest.fixture(scope='session')
 def full_pool_rules(request):
-    """Setup to use the full example pool and registry"""
+    """Setup to use the full example pool and registry."""
     pool_fname = t_path('data/mega_pool.csv')
     pool = AssociationPool.read(pool_fname)
     rules = AssociationRegistry()
@@ -47,15 +47,14 @@ def mk_tmp_dirs():
 @pytest.fixture
 def slow(request):
     """Setup slow fixture for tests to identify if --slow
-    has been specified
+    has been specified.
     """
     return request.config.getoption('--slow')
 
 
 @pytest.fixture(scope="module")
 def tmp_cwd_module(request, tmp_path_factory):
-    """
-    Run test in a pristine temporary working directory, scoped to module.
+    """Run test in a pristine temporary working directory, scoped to module.
     This allows a fixture using it to produce files in a
     temporary directory, and then have the tests access them.
     """

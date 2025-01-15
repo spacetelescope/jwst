@@ -1,4 +1,4 @@
-"""Regression tests for MIRI MRS modes"""
+"""Regression tests for MIRI MRS modes."""
 import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
@@ -10,8 +10,7 @@ TRUTH_PATH = 'truth/test_miri_mrs'
 
 @pytest.fixture(scope='module')
 def run_spec3_ifushort(rtdata_module):
-    """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
-
+    """Run the Spec3Pipeline on association with 2 bands on IFUSHORT."""
     # Test has bands medium and long for IFUSHORT
 
     rtdata = rtdata_module
@@ -31,8 +30,7 @@ def run_spec3_ifushort(rtdata_module):
 
 @pytest.fixture(scope='module')
 def run_spec3_ifulong(rtdata_module):
-    """Run the Spec3Pipeline dithered flight data """
-
+    """Run the Spec3Pipeline dithered flight data."""
     # Test has bands medium and long for IFULONG
 
     rtdata = rtdata_module
@@ -51,8 +49,7 @@ def run_spec3_ifulong(rtdata_module):
 
 @pytest.fixture(scope='module')
 def run_spec3_ifushort_emsm(rtdata_module):
-    """Run the Spec3Pipeline (cube_build using weighting emsm) on association with 2 bands on IFUSHORT"""
-
+    """Run the Spec3Pipeline (cube_build using weighting emsm) on association with 2 bands on IFUSHORT."""
     # Test has bands medium and long for IFUSHORT
 
     rtdata = rtdata_module
@@ -73,8 +70,7 @@ def run_spec3_ifushort_emsm(rtdata_module):
 
 @pytest.fixture(scope='module')
 def run_spec3_ifushort_extract1d(rtdata_module):
-    """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
-
+    """Run the Spec3Pipeline on association with 2 bands on IFUSHORT."""
     # Test has bands medium and long for IFUSHORT
 
     rtdata = rtdata_module
@@ -111,7 +107,7 @@ def run_spec3_ifushort_extract1d(rtdata_module):
         ]
 )
 def test_spec3_ifulong(run_spec3_ifulong, fitsdiff_default_kwargs, output):
-    """Regression test matching output files"""
+    """Regression test matching output files."""
     rtdata = run_spec3_ifulong
     rtdata.output = output
 
@@ -137,8 +133,7 @@ def test_spec3_ifulong(run_spec3_ifulong, fitsdiff_default_kwargs, output):
     ],
 )
 def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
-    """Regression test matching output files"""
-
+    """Regression test matching output files."""
     rtdata = run_spec3_ifushort
     rtdata.output = output
 
@@ -164,8 +159,7 @@ def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
     ],
 )
 def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, output):
-    """Regression test using weighting = 'emsm' """
-
+    """Regression test using weighting = 'emsm'."""
     rtdata = run_spec3_ifushort_emsm
     rtdata.output = output
 
@@ -188,8 +182,8 @@ def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, o
 )
 def test_spec3_ifushort_extract1d(run_spec3_ifushort_extract1d, fitsdiff_default_kwargs, output):
     """Regression test for extract_1d using ifu_set_srctype=POINT, ifu_rscale=3.0,
-    ifu_rfcorr=true"""
-
+    ifu_rfcorr=true.
+    """
     rtdata = run_spec3_ifushort_extract1d
     rtdata.output = output
 

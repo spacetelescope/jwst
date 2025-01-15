@@ -1,6 +1,4 @@
-"""
-Test mkpool
-"""
+"""Test mkpool."""
 from glob import glob
 import os
 import pytest
@@ -62,13 +60,13 @@ def test_mkpool(exposures):
 
 @pytest.mark.parametrize('opt_cols', OPT_COLS)
 def test_opt_cols(mkpool_with_args, opt_cols):
-    """Ensure that optional arguments are properly used"""
+    """Ensure that optional arguments are properly used."""
     _test_opt_cols(mkpool_with_args, opt_cols)
 
 
 @pytest.mark.parametrize('opt_cols', OPT_COLS)
 def test_opt_cols_cmdline(mkpool_cmdline, opt_cols):
-    """Ensure that the command line with optional arguments are properly used"""
+    """Ensure that the command line with optional arguments are properly used."""
     _test_opt_cols(mkpool_cmdline, opt_cols)
 
 
@@ -97,7 +95,7 @@ def exposures(request):
 
 @pytest.fixture(scope='module')
 def mkpool_cmdline(exposures):
-    """Create a pool with optional arguments from the commandline"""
+    """Create a pool with optional arguments from the commandline."""
     args = ['pool.csv']
     for column, value in OPT_COLS:
         args.append(f'--{column.replace("_", "-")}')
@@ -112,7 +110,7 @@ def mkpool_cmdline(exposures):
 
 @pytest.fixture(scope='module')
 def mkpool_with_args(exposures):
-    """Create a pool with all optional arguments specified"""
+    """Create a pool with all optional arguments specified."""
     kargs = {column: value for column, value in OPT_COLS}
     pool = mkpool(exposures, **kargs)
 
@@ -120,7 +118,7 @@ def mkpool_with_args(exposures):
 
 
 def _test_opt_cols(mkpool_with_args, opt_cols):
-    """Ensure that optional arguments are properly used"""
+    """Ensure that optional arguments are properly used."""
     column, expected = opt_cols
     if column == 'asn_candidate':
         expected = '[' + str(('o001', 'observation')) + ', ' + str(expected)[1:]
@@ -128,7 +126,7 @@ def _test_opt_cols(mkpool_with_args, opt_cols):
 
 
 def _test_nonheader_cols(mkpool_with_args):
-    """Ensure that non-header defaults are properly set"""
+    """Ensure that non-header defaults are properly set."""
     opt_dict = dict(OPT_COLS)
     for column, expected in NON_HEADER_COLS.items():
         if column in opt_dict:

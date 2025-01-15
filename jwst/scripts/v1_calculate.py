@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""V1 Calculation based on time and engineering database info
-"""
+"""V1 Calculation based on time and engineering database info."""
 import argparse
 import logging
 from sys import stdout

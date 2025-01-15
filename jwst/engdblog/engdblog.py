@@ -4,7 +4,7 @@ from ..stpipe import Step
 
 
 class EngDBLogStep(Step):
-    """Pipeline step to retrieve selected engineering mnemonic values
+    """Pipeline step to retrieve selected engineering mnemonic values.
 
     Notes
     -----
@@ -19,6 +19,7 @@ class EngDBLogStep(Step):
 
     DMS-458 The Calibration software shall retrieve relevant engineering
         data from the Engineering Database.
+
     """
 
     spec = """
@@ -29,8 +30,7 @@ class EngDBLogStep(Step):
     """
 
     def process(self, mnemonics):
-        """
-        Step processing
+        """Step processing.
 
         Parameters
         ----------
@@ -41,8 +41,8 @@ class EngDBLogStep(Step):
         -------
         {mnemonic: values[, ...]}
             `dict` of the specified mnemonics and their values
-        """
 
+        """
         result = {}
         stime = self.stime
         etime = self.etime

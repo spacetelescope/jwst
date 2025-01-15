@@ -1,4 +1,4 @@
-"""Configure Association Logging"""
+"""Configure Association Logging."""
 
 import sys
 import logging
@@ -17,7 +17,8 @@ DMS_DEFAULT_FORMAT = (
 
 
 class ContextFilter():
-    """Set Association Generator logging context"""
+    """Set Association Generator logging context."""
+
     def __init__(self):
         self.context = {}
 
@@ -33,7 +34,8 @@ class ContextFilter():
 
 
 class LogLevelFilter():
-    """Filter on a specific level"""
+    """Filter on a specific level."""
+
     def __init__(self, level):
         self.__level = level
 
@@ -42,7 +44,7 @@ class LogLevelFilter():
 
 
 class DMSFormatter(logging.Formatter):
-    """DMS-specific formatting"""
+    """DMS-specific formatting."""
 
     def format(self, record):
         log_parts = []
@@ -150,7 +152,7 @@ def log_config(name=None,
                logger_config=None,
                config=None,
                merge=True):
-    """Setup logging with defaults
+    """Setup logging with defaults.
 
     logging.dictConfig is used with optional default
     configuration dict.
@@ -217,8 +219,8 @@ def log_config(name=None,
 
     For the rest of the config, and dict.update is done on each of
     the top-level keys from the `config`.
-    """
 
+    """
     global context
 
     if user_name is None:

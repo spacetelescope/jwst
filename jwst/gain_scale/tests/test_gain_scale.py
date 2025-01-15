@@ -1,6 +1,4 @@
-"""
-Unit tests for gain_scale correction
-"""
+"""Unit tests for gain_scale correction."""
 
 from stdatamodels.jwst.datamodels import CubeModel
 
@@ -11,8 +9,7 @@ import pytest
 
 
 def test_correction(make_cubemodel):
-    """Make sure correct gain factor is applied
-    """
+    """Make sure correct gain factor is applied."""
     datmod = make_cubemodel(2, 50, 50)
     gf = datmod.meta.exposure.gain_factor
     # run on a copy (the detection to make the copy or not would have happened at _step.py)
@@ -26,8 +23,7 @@ def test_correction(make_cubemodel):
 
 
 def test_step(make_cubemodel):
-    """Make sure correct gain factor is applied at step level
-    """
+    """Make sure correct gain factor is applied at step level."""
     datmod = make_cubemodel(2, 50, 50)
     gf = datmod.meta.exposure.gain_factor
     output = GainScaleStep.call(datmod)
@@ -41,7 +37,7 @@ def test_step(make_cubemodel):
 
 @pytest.fixture(scope='function')
 def make_cubemodel():
-    '''Cube model for testing'''
+    """Cube model for testing."""
 
     def _dm(nints, ysize, xsize):
         # create the data arrays

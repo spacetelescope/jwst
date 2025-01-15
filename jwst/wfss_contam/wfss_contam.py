@@ -15,8 +15,7 @@ log.setLevel(logging.DEBUG)
 
 
 def contam_corr(input_model, waverange, photom, max_cores):
-    """
-    The main WFSS contamination correction function
+    """The main WFSS contamination correction function.
 
     Parameters
     ----------
@@ -175,7 +174,6 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
 
 def copy_slit_info(input_slit, output_slit):
-
     """Copy meta info from one slit to another.
 
     Parameters

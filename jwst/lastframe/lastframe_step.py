@@ -6,8 +6,7 @@ __all__ = ["LastFrameStep"]
 
 
 class LastFrameStep(Step):
-    """
-    LastFrameStep: This is a MIRI specific task.  If the number of groups
+    """LastFrameStep: This is a MIRI specific task.  If the number of groups
     is greater than 2, the GROUP data quality flags for the final group will
     be set to DO_NOT_USE.
     """

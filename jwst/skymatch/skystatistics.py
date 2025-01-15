@@ -1,5 +1,4 @@
-"""
-`skystatistics` module provides statistics computation class used by
+"""`skystatistics` module provides statistics computation class used by
 :py:func:`~jwst.skymatch.skymatch.match`
 and :py:class:`~jwst.skymatch.skyimage.SkyImage`.
 
@@ -17,8 +16,7 @@ __author__ = 'Mihai Cara'
 
 
 class SkyStats():
-    """
-    This is a superclass build on top of
+    """This is a superclass build on top of
     :py:class:`stsci.imagestats.ImageStats`. Compared to
     :py:class:`stsci.imagestats.ImageStats`, `SkyStats` has
     "persistent settings" in the sense that object's parameters need to be
@@ -32,7 +30,7 @@ class SkyStats():
         """Initializes the SkyStats object.
 
         Parameters
-        -----------
+        ----------
         skystat : {'mode', 'median', 'mode', 'midpt'}, optional
             Sets the statistics that will be returned by `~SkyStats.calc_sky`.
             The following statistics are supported: 'mean', 'mode', 'midpt',
@@ -104,16 +102,16 @@ cgi-bin/gethelp.cgi?gstatistics>`_
         return imstat.midpt
 
     def calc_sky(self, data):
-        """ Computes statistics on data.
+        """Computes statistics on data.
 
         Parameters
-        -----------
+        ----------
         data : numpy.ndarray
             A numpy array of values for which the statistics needs to be
             computed.
 
         Returns
-        --------
+        -------
         statistics : tuple
             A tuple of two values: (`skyvalue`, `npix`), where `skyvalue` is
             the statistics specified by the `skystat` parameter during the

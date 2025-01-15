@@ -1,5 +1,4 @@
-"""
-Test NIRISS grism WCS transformations.
+"""Test NIRISS grism WCS transformations.
 
 Notes:
 These test the stability of the WFSS transformations based on the

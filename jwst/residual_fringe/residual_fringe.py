@@ -57,9 +57,7 @@ class ResidualFringeCorrection():
         self.diagnostic_mode = True
 
     def do_correction(self):
-
-        """
-        Short Summary
+        """Short Summary
         -------------
         Residual Fringe-correct a JWST data model using a residual fringe model
 
@@ -77,7 +75,6 @@ class ResidualFringeCorrection():
         residual fringe-corrected science data model
 
         """
-
         # Check that the fringe flat has been applied
         if self.input_model.meta.cal_step.fringe != 'COMPLETE':
             raise ErrorNoFringeFlat("The fringe flat step has not been run on file %s",
@@ -508,7 +505,6 @@ class ResidualFringeCorrection():
         return self.model
 
     def calc_weights(self):
-
         """Make a weights array based on flux. This is a placeholder function,
         for now just returns a normalised flux array to use as weights array.
         This is because any smoothing results in incorrect rfc around emission lines.
@@ -524,7 +520,6 @@ class ResidualFringeCorrection():
         weights array which is just a copy of the flux array, normalised by the mean
 
         """
-
         weights = np.zeros(self.input_model.data.shape)
         for c in np.arange(weights.shape[1]):
             flux_1d = self.input_model.data[:, c]

@@ -6,8 +6,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(output_model, gain_factor):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Rescales all integrations in an exposure by gain_factor, to
     account for non-standard detector gain settings. The SCI,
@@ -24,7 +23,6 @@ def do_correction(output_model, gain_factor):
         Output datamodel with rescaled data
 
     """
-
     # Apply the gain factor to the SCI and ERR arrays
     log.info('Rescaling by {0}'.format(gain_factor))
     output_model.data *= gain_factor

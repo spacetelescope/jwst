@@ -47,6 +47,7 @@ def generate(pool, rules, version_id=None, finalize=True):
     -----
     Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
+
     """
     associations = []
     if isinstance(version_id, bool):
@@ -119,7 +120,7 @@ def generate_from_item(
         associations,
         rules,
         process_list):
-    """Either match or generate a new association
+    """Either match or generate a new association.
 
     Parameters
     ----------
@@ -152,8 +153,8 @@ def generate_from_item(
             List of new associations item creates. Empty if none match
         process_list : [ProcessList, ...]
             List of process events.
-    """
 
+    """
     # Setup the rules allowed to be examined.
     if process_list.rules is None or len(process_list.rules) == 0:
         allowed_rules = list(rules.values())
@@ -199,7 +200,7 @@ def generate_from_item(
 
 
 def match_item(item, associations):
-    """Match item to a list of associations
+    """Match item to a list of associations.
 
     Parameters
     ----------
@@ -218,6 +219,7 @@ def match_item(item, associations):
             List of associations item belongs to. Empty if none match
         process_list : [ProcessList, ...]
             List of process events.
+
     """
     item_associations = []
     process_list = []

@@ -59,8 +59,8 @@ def _get_irs2_parameters(input_model, n=None, r=None):
         param.r: int
             The number of reference pixels read out before jumping back to
             the normal pixel region.
-    """
 
+    """
     try:
         # Try to get keyword values
         n_norm = input_model.meta.exposure.nrs_normal
@@ -84,7 +84,6 @@ def _get_irs2_parameters(input_model, n=None, r=None):
 
 def normal_shape(input_model, n=None, r=None, detector=None):
     """Determine the shape of the 'normal' pixel data."""
-
     if isinstance(input_model, np.ndarray):
         shape = input_model.shape
     else:
@@ -136,8 +135,8 @@ def make_mask(input_model, n=None, r=None):
     irs2_mask: 1-D boolean array
         Boolean index mask with length equal to the last axis of
         the data shape.
-    """
 
+    """
     param = _get_irs2_parameters(input_model, n=n, r=r)
     refout = param.refout
     n_norm = param.n
@@ -208,8 +207,8 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
     Returns
     -------
     The normal pixel data (i.e. without embedded reference pixels).
-    """
 
+    """
     if detector is None:
         # Select columns.
         norm_data = irs2_data[..., irs2_mask]
@@ -252,8 +251,8 @@ def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
         and for "NRS2" the mask will first be reversed.
         For IRS2 data in detector orientation, `detector` should be None
         (the default), and the mask will be applied to the columns.
-    """
 
+    """
     if detector is None:
         # Mask specifies columns.
         irs2_data[..., irs2_mask] = norm_data.copy()

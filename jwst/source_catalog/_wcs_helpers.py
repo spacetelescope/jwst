@@ -1,16 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # (taken from photutils: should probably migrate into astropy.wcs)
-"""
-This module provides WCS helper tools.
-"""
+"""This module provides WCS helper tools."""
 
 import astropy.units as u
 import numpy as np
 
 
 def pixel_scale_angle_at_skycoord(skycoord, wcs, offset=1 * u.arcsec):
-    """
-    Calculate the pixel coordinate and scale and WCS rotation angle at
+    """Calculate the pixel coordinate and scale and WCS rotation angle at
     the position of a SkyCoord coordinate.
 
     Parameters
@@ -46,6 +43,7 @@ def pixel_scale_angle_at_skycoord(skycoord, wcs, offset=1 * u.arcsec):
     If distortions are present in the image, the x and y pixel scales
     likely differ.  This function computes a single pixel scale along
     the North/South axis.
+
     """
     # Convert to pixel coordinates
     xpos, ypos = wcs.world_to_pixel(skycoord)

@@ -39,15 +39,13 @@ from astropy.io import fits as pyfits
 from astropy.time import Time
 
 def get_templates_dir():
-    """
-    Returns a path to the directory containing definitions of the file
+    """Returns a path to the directory containing definitions of the file
     types.
     """
     return os.path.join(os.path.dirname(__file__), 'templates')
 
 def get_fitsfile(fitsfile):
-    """
-    Given a filename or pyfits.HDUList object, returns a (filename,
+    """Given a filename or pyfits.HDUList object, returns a (filename,
     pyfits.HDUList, opened) triple.
     """
     from . import input_file_types
@@ -59,8 +57,7 @@ def get_fitsfile(fitsfile):
         return fitsfile._hdulist.filename, fitsfile._hdulist, False
 
 def get_error_collector(error_collector=None):
-    """
-    Get a usable error collecting function.  If `error_collector` is
+    """Get a usable error collecting function.  If `error_collector` is
     `None`, returns a default function that writes to `stderr`.
     """
     def error_collector_stderr(s, state):
@@ -89,20 +86,14 @@ def toMJD(timestring):
     return oldtime.mjd
 
 def issequence(obj):
-    """
-    Returns True if object quacks like a sequence.
-    """
+    """Returns True if object quacks like a sequence."""
     return getattr(obj, '__iter__', False)
 
 if sys.hexversion >= 0x02060000:
     def iscallable(obj):
-        """
-        Returns True if object quacks like a callable.
-        """
+        """Returns True if object quacks like a callable."""
         return isinstance(obj, collections.abc.Callable)
 else:
     def iscallable(obj):
-        """
-        Returns True if object quacks like a callable.
-        """
+        """Returns True if object quacks like a callable."""
         return hasattr(obj, '__call__')

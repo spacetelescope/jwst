@@ -9,9 +9,7 @@ __all__ = ["EmiCorrStep"]
 
 
 class EmiCorrStep(Step):
-    """
-    EmiCorrStep: Apply MIRI EMI correction to a science image.
-    """
+    """EmiCorrStep: Apply MIRI EMI correction to a science image."""
 
     class_alias = "emicorr"
 

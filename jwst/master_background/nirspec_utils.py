@@ -27,6 +27,7 @@ def apply_master_background(source_model, bkg_model, inverse=False):
     -------
     output_model: `~jwst.datamodels.MultiSlitModel`
         The output background-subtracted data model.
+
     """
     from .master_background_step import subtract_2d_background
 
@@ -65,6 +66,7 @@ def map_to_science_slits(input_model, master_bkg):
     -------
     output_model: `~jwst.datamodels.MultiSlitModel`
         The output data model containing background signal.
+
     """
     from .expand_to_2d import expand_to_2d
 
@@ -99,6 +101,7 @@ def create_background_from_multispec(bkg_model, sigma_clip=3, median_kernel=1):
         The 1D master background spectrum created from the inputs.
     x1d: `jwst.datamodels.MultiSpecModel`
         The 1D extracted background spectra of the inputs.
+
     """
     from ..combine_1d.combine1d import combine_1d_spectra
 
@@ -141,8 +144,8 @@ def correct_nrs_ifu_bkg(input_model):
     input_model : `~jwst.datamodels.IFUIMAGEModel`
         An updated (in place) version of the input with the data
         replaced by the corrected 2D background.
-    """
 
+    """
     log.info('Applying point source pathloss updates to IFU background')
 
     # Try to load the appropriate pathloss correction arrays
@@ -180,6 +183,7 @@ def correct_nrs_fs_bkg(input_model):
     input_model : `~jwst.datamodels.SlitModel`
         An updated (in place) version of the input with the data
         replaced by the corrected 2D background.
+
     """
     log.info('Applying point source updates to FS background')
 
@@ -240,8 +244,7 @@ def correct_nrs_fs_bkg(input_model):
 
 
 def is_background_msa_slit(slit):
-    """
-    Check if an MSA slitlet is a background source.
+    """Check if an MSA slitlet is a background source.
 
     Parameters
     ----------
@@ -252,6 +255,7 @@ def is_background_msa_slit(slit):
     -------
     bool
         True if the slit is background; False if it is not.
+
     """
     name = str(slit.source_name).upper()
     if ("BKG" in name) or ("BACKGROUND" in name):

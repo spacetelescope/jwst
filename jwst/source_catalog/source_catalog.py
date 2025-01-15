@@ -1,6 +1,4 @@
-"""
-Module to calculate the source catalog.
-"""
+"""Module to calculate the source catalog."""
 
 import logging
 import warnings
@@ -31,8 +29,7 @@ log.setLevel(logging.DEBUG)
 
 
 class JWSTSourceCatalog:
-    """
-    Class for the JWST source catalog.
+    """Class for the JWST source catalog.
 
     Parameters
     ----------
@@ -78,6 +75,7 @@ class JWSTSourceCatalog:
     to the input science ``model.data`` array. It is assumed to include
     *all* sources of error, including the Poisson error of the sources,
     and have the same shape and units as the science data array.
+
     """
 
     def __init__(self, model, segment_img, convolved_data, kernel_fwhm,
@@ -107,8 +105,7 @@ class JWSTSourceCatalog:
         self.meta = {}
 
     def convert_to_jy(self):
-        """
-        Convert the data and errors from MJy/sr to Jy and convert to
+        """Convert the data and errors from MJy/sr to Jy and convert to
         `~astropy.unit.Quantity` objects.
         """
         in_unit = 'MJy/sr'
@@ -130,11 +127,9 @@ class JWSTSourceCatalog:
             self.model.meta.bunit_err = unit.name
 
     def convert_from_jy(self):
-        """
-        Convert the data and errors from Jy to MJy/sr and change from
+        """Convert the data and errors from Jy to MJy/sr and change from
         `~astropy.unit.Quantity` objects to `~numpy.ndarray`.
         """
-
         if self.model.meta.photometry.pixelarea_steradians is None:
             log.warning("Pixel area is None. Can't convert from Jy.")
         else:
@@ -150,8 +145,7 @@ class JWSTSourceCatalog:
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):
-        """
-        Convert flux (and error) to AB magnitude (and error).
+        """Convert flux (and error) to AB magnitude (and error).
 
         Parameters
         ----------
@@ -162,6 +156,7 @@ class JWSTSourceCatalog:
         -------
         abmag, abmag_err : `~astropy.ndarray`
             The output AB magnitude and error arrays.
+
         """
         # ignore RunTimeWarning if flux or flux_err contains NaNs
         with warnings.catch_warnings():
@@ -179,8 +174,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def segment_colnames(self):
-        """
-        A dictionary of the output table column names and descriptions
+        """A dictionary of the output table column names and descriptions
         for the segment catalog.
         """
         desc = {}
@@ -224,8 +218,7 @@ class JWSTSourceCatalog:
         return list(desc.keys())
 
     def set_segment_properties(self):
-        """
-        Calculate the segment-based source photometry and morphologies.
+        """Calculate the segment-based source photometry and morphologies.
 
         The values are set as dynamic attributes.
         """
@@ -254,16 +247,14 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def xypos(self):
-        """
-        The (x, y) source positions, defined from the segmentation
+        """The (x, y) source positions, defined from the segmentation
         image.
         """
         return np.transpose((self.xcentroid, self.ycentroid))
 
     @lazyproperty
     def _xypos_finite(self):
-        """
-        The (x, y) source positions, where non-finite positions are
+        """The (x, y) source positions, where non-finite positions are
         set to a large negative value.
 
         At this position the aperture will not overlap the data, thus
@@ -276,52 +267,40 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _xypos_nonfinite_mask(self):
-        """
-        A 1D boolean mask where `True` values denote sources where
+        """A 1D boolean mask where `True` values denote sources where
         either the xcentroid or the ycentroid is not finite.
         """
         return ~np.isfinite(self.xypos).all(axis=1)
 
     @lazyproperty
     def _isophotal_abmag(self):
-        """
-        The isophotal AB magnitude and error.
-        """
+        """The isophotal AB magnitude and error."""
         return self.convert_flux_to_abmag(self.isophotal_flux,
                                           self.isophotal_flux_err)
 
     @lazyproperty
     def isophotal_abmag(self):
-        """
-        The isophotal AB magnitude.
-        """
+        """The isophotal AB magnitude."""
         return self._isophotal_abmag[0]
 
     @lazyproperty
     def isophotal_abmag_err(self):
-        """
-        The isophotal AB magnitude error.
-        """
+        """The isophotal AB magnitude error."""
         return self._isophotal_abmag[1]
 
     @lazyproperty
     def isophotal_vegamag(self):
-        """
-        The isophotal Vega magnitude.
-        """
+        """The isophotal Vega magnitude."""
         return self.isophotal_abmag - self.abvega_offset
 
     @lazyproperty
     def isophotal_vegamag_err(self):
-        """
-        The isophotal Vega magnitude error.
-        """
+        """The isophotal Vega magnitude error."""
         return self.isophotal_abmag_err
 
     @lazyproperty
     def sky_orientation(self):
-        """
-        The orientation of the source major axis as the position angle
+        """The orientation of the source major axis as the position angle
         in degrees measured East of North.
         """
         # NOTE: crpix1 and crpix2 are 1-based values
@@ -332,8 +311,7 @@ class JWSTSourceCatalog:
         return (180.0 * u.deg) - angle + self.orientation
 
     def _make_aperture_colnames(self, name):
-        """
-        Make the aperture column names.
+        """Make the aperture column names.
 
         There are separate columns for the flux/magnitude for each of
         the encircled energies and the total flux/magnitude.
@@ -347,6 +325,7 @@ class JWSTSourceCatalog:
         -------
         colnames : list of str
             A list of the output column names.
+
         """
         colnames = []
         for aper_ee in self.aperture_ee:
@@ -358,8 +337,7 @@ class JWSTSourceCatalog:
         return colnames
 
     def _make_aperture_descriptions(self, name):
-        """
-        Make aperture column descriptions.
+        """Make aperture column descriptions.
 
         Parameters
         ----------
@@ -370,6 +348,7 @@ class JWSTSourceCatalog:
         -------
         descriptions : list of str
             A list of the output column descriptions.
+
         """
         if name == 'flux':
             ftype = 'Flux'
@@ -397,50 +376,37 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def aperture_flux_colnames(self):
-        """
-        The aperture flux column names.
-        """
+        """The aperture flux column names."""
         return self._make_aperture_colnames('flux')
 
     @lazyproperty
     def aperture_flux_descriptions(self):
-        """
-        The aperture flux column descriptions.
-        """
+        """The aperture flux column descriptions."""
         return self._make_aperture_descriptions('flux')
 
     @lazyproperty
     def aperture_abmag_colnames(self):
-        """
-        The aperture AB magnitude column names.
-        """
+        """The aperture AB magnitude column names."""
         return self._make_aperture_colnames('abmag')
 
     @lazyproperty
     def aperture_abmag_descriptions(self):
-        """
-        The aperture AB magnitude column descriptions.
-        """
+        """The aperture AB magnitude column descriptions."""
         return self._make_aperture_descriptions('abmag')
 
     @lazyproperty
     def aperture_vegamag_colnames(self):
-        """
-        The aperture Vega magnitude column names.
-        """
+        """The aperture Vega magnitude column names."""
         return self._make_aperture_colnames('vegamag')
 
     @lazyproperty
     def aperture_vegamag_descriptions(self):
-        """
-        The aperture Vega magnitude column descriptions.
-        """
+        """The aperture Vega magnitude column descriptions."""
         return self._make_aperture_descriptions('vegamag')
 
     @lazyproperty
     def aperture_colnames(self):
-        """
-        A dictionary of the output table column names and descriptions
+        """A dictionary of the output table column names and descriptions
         for the aperture catalog.
         """
         desc = {}
@@ -463,8 +429,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _aper_local_background(self):
-        """
-        Estimate the local background and error using a circular annulus
+        """Estimate the local background and error using a circular annulus
         aperture.
 
         The local background is the sigma-clipped median value in the
@@ -505,21 +470,16 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def aper_bkg_flux(self):
-        """
-        The aperture local background flux (per pixel).
-        """
+        """The aperture local background flux (per pixel)."""
         return self._aper_local_background[0]
 
     @lazyproperty
     def aper_bkg_flux_err(self):
-        """
-        The aperture local background flux error (per pixel).
-        """
+        """The aperture local background flux error (per pixel)."""
         return self._aper_local_background[1]
 
     def set_aperture_properties(self):
-        """
-        Calculate the aperture photometry.
+        """Calculate the aperture photometry.
 
         The values are set as dynamic attributes.
         """
@@ -552,8 +512,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def extras_colnames(self):
-        """
-        A dictionary of the output table column names and descriptions
+        """A dictionary of the output table column names and descriptions
         for the additional catalog values.
         """
         desc = {}
@@ -571,25 +530,19 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _ci_ee_indices(self):
-        """
-        The EE indices for the concentration indices.
-        """
+        """The EE indices for the concentration indices."""
         # NOTE: the EE values are always in increasing order
         return (0, 1), (1, 2), (0, 2)
 
     @lazyproperty
     def ci_colnames(self):
-        """
-        The column names of the three concentration indices.
-        """
+        """The column names of the three concentration indices."""
         return [f'CI_{self.aperture_ee[j]}_{self.aperture_ee[i]}'
                 for (i, j) in self._ci_ee_indices]
 
     @lazyproperty
     def ci_colname_descriptions(self):
-        """
-        The concentration indices column descriptions.
-        """
+        """The concentration indices column descriptions."""
         return ['Concentration index calculated as '
                 f'({self.aperture_flux_colnames[2*j]} / '
                 f'{self.aperture_flux_colnames[2*i]})' for (i, j) in
@@ -597,8 +550,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def concentration_indices(self):
-        """
-        A list of concentration indices, calculated as the flux
+        """A list of concentration indices, calculated as the flux
         ratios of:
 
             * the middle / smallest aperture radii/EE,
@@ -615,41 +567,32 @@ class JWSTSourceCatalog:
                 for flux1, flux2 in fluxes]
 
     def set_ci_properties(self):
-        """
-        Set the concentration indices as dynamic attributes.
-        """
+        """Set the concentration indices as dynamic attributes."""
         for name, value in zip(self.ci_colnames, self.concentration_indices):
             setattr(self, name, value)
 
     @lazyproperty
     def is_extended(self):
-        """
-        Boolean indicating whether the source is extended.
-        """
+        """Boolean indicating whether the source is extended."""
         mask1 = self.concentration_indices[0] > self.ci_star_thresholds[0]
         mask2 = self.concentration_indices[1] > self.ci_star_thresholds[1]
         return np.logical_and(mask1, mask2)
 
     @lazyproperty
     def _kernel_size(self):
-        """
-        The DAOFind kernel size (in both x and y dimensions).
-        """
+        """The DAOFind kernel size (in both x and y dimensions)."""
         # always odd
         return 2 * int(max(2.0, 1.5 * self.kernel_sigma)) + 1
 
     @lazyproperty
     def _kernel_center(self):
-        """
-        The DAOFind kernel x/y center.
-        """
+        """The DAOFind kernel x/y center."""
         return (self._kernel_size - 1) // 2
 
     @lazyproperty
     def _kernel_mask(self):
-        """
-        The DAOFind kernel circular mask.
-        NOTE: 1=good pixels, 0=masked pixels
+        """The DAOFind kernel circular mask.
+        NOTE: 1=good pixels, 0=masked pixels.
         """
         yy, xx = np.mgrid[0:self._kernel_size, 0:self._kernel_size]
         radius = np.sqrt((xx - self._kernel_center) ** 2
@@ -658,8 +601,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _daofind_kernel(self):
-        """
-        The DAOFind kernel, a 2D circular Gaussian normalized to have
+        """The DAOFind kernel, a 2D circular Gaussian normalized to have
         zero sum.
         """
         size = self._kernel_size
@@ -675,16 +617,13 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _daofind_convolved_data(self):
-        """
-        The DAOFind convolved data.
-        """
+        """The DAOFind convolved data."""
         return ndimage.convolve(self.model.data.value, self._daofind_kernel,
                                 mode='constant', cval=0.0)
 
     @lazyproperty
     def _daofind_cutout(self):
-        """
-        3D array containing 2D cutouts centered on each source from the
+        """3D array containing 2D cutouts centered on each source from the
         input data.
 
         The cutout size always matches the size of the DAOFind kernel,
@@ -704,8 +643,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _daofind_cutout_conv(self):
-        """
-        3D array containing 2D cutouts centered on each source from the
+        """3D array containing 2D cutouts centered on each source from the
         DAOFind convolved data.
 
         The cutout size always matches the size of the DAOFind kernel,
@@ -725,8 +663,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def sharpness(self):
-        """
-        The DAOFind source sharpness statistic.
+        """The DAOFind source sharpness statistic.
 
         The sharpness statistic measures the ratio of the difference
         between the height of the central pixel and the mean of the
@@ -752,8 +689,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def roundness(self):
-        """
-        The DAOFind source roundness statistic based on symmetry.
+        """The DAOFind source roundness statistic based on symmetry.
 
         The roundness characteristic computes the ratio of a measure of
         the bilateral symmetry of the object to a measure of the
@@ -787,9 +723,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _kdtree_query(self):
-        """
-        The distance in pixels to the nearest neighbor and its index.
-        """
+        """The distance in pixels to the nearest neighbor and its index."""
         if self.n_sources == 1:
             return [np.nan], [np.nan]
 
@@ -800,8 +734,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def nn_label(self):
-        """
-        The label number of the nearest neighbor.
+        """The label number of the nearest neighbor.
 
         A label value of -1 is returned if there is only one detected
         source and for sources with a non-finite xcentroid or ycentroid.
@@ -817,9 +750,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def nn_dist(self):
-        """
-        The distance in pixels to the nearest neighbor.
-        """
+        """The distance in pixels to the nearest neighbor."""
         nn_dist = self._kdtree_query[0]
         if self.n_sources == 1:
             # NaN if only one detected source
@@ -831,8 +762,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def aper_total_flux(self):
-        """
-        The aperture-corrected total flux for sources, based on the flux
+        """The aperture-corrected total flux for sources, based on the flux
         in largest aperture.
 
         The aperture-corrected total flux should be used only for
@@ -845,8 +775,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def aper_total_flux_err(self):
-        """
-        The aperture-corrected total flux error for sources,
+        """The aperture-corrected total flux error for sources,
         based on the flux in largest aperture.
 
         The aperture-corrected total flux error should be used only for
@@ -859,16 +788,13 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def _abmag_total(self):
-        """
-        The total AB magnitude and error.
-        """
+        """The total AB magnitude and error."""
         return self.convert_flux_to_abmag(self.aper_total_flux,
                                           self.aper_total_flux_err)
 
     @lazyproperty
     def aper_total_abmag(self):
-        """
-        The aperture-corrected total AB magnitude.
+        """The aperture-corrected total AB magnitude.
 
         The aperture-corrected total magnitude should be used only for
         unresolved sources.
@@ -877,8 +803,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def aper_total_abmag_err(self):
-        """
-        The aperture-corrected total AB magnitude error.
+        """The aperture-corrected total AB magnitude error.
 
         The aperture-corrected total magnitude error should be used only
         for unresolved sources.
@@ -887,8 +812,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def aper_total_vegamag(self):
-        """
-        The aperture-corrected total Vega magnitude.
+        """The aperture-corrected total Vega magnitude.
 
         The aperture-corrected total magnitude should be used only for
         unresolved sources.
@@ -897,8 +821,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def aper_total_vegamag_err(self):
-        """
-        The aperture-corrected total Vega magnitude error.
+        """The aperture-corrected total Vega magnitude error.
 
         The aperture-corrected total magnitude error should be used only
         for unresolved sources.
@@ -907,9 +830,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def colnames(self):
-        """
-        The column name order for the final source catalog.
-        """
+        """The column name order for the final source catalog."""
         colnames = self.segment_colnames[0:4]
         colnames.extend(self.aperture_colnames)
         colnames.extend(self.extras_colnames)
@@ -918,8 +839,7 @@ class JWSTSourceCatalog:
 
     @staticmethod
     def format_columns(catalog):
-        """
-        Format the values in the output catalog.
+        """Format the values in the output catalog.
 
         Parameters
         ----------
@@ -930,6 +850,7 @@ class JWSTSourceCatalog:
         -------
         result : `~astropy.table.Table`
             The formated catalog.
+
         """
         # output formatting requested by the JPWG (2020.02.05)
         for colname in catalog.colnames:
@@ -948,9 +869,7 @@ class JWSTSourceCatalog:
 
     @lazyproperty
     def catalog(self):
-        """
-        The final source catalog.
-        """
+        """The final source catalog."""
         self.convert_to_jy()
         self.set_segment_properties()
         self.set_aperture_properties()

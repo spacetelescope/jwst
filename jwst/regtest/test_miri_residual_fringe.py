@@ -1,4 +1,4 @@
-"""Test ResidualFringeStep on MIRI MRS"""
+"""Test ResidualFringeStep on MIRI MRS."""
 import pytest
 
 from astropy.io.fits.diff import FITSDiff
@@ -8,8 +8,7 @@ from jwst.stpipe import Step
 @pytest.mark.slow
 @pytest.mark.bigdata
 def test_residual_fringe_cal(rtdata, fitsdiff_default_kwargs):
-    """Run residual fringe correction on MIRI IFUShort """
-
+    """Run residual fringe correction on MIRI IFUShort."""
     input_file = 'jw01523001001_03101_00001_mirifushort_cal.fits'
     rtdata.get_data(f"miri/mrs/{input_file}")
 

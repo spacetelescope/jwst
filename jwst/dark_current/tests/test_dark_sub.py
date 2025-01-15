@@ -1,6 +1,4 @@
-"""
-Unit tests for dark current correction
-"""
+"""Unit tests for dark current correction."""
 
 import pytest
 import numpy as np
@@ -24,7 +22,7 @@ DELIM = "-" * 80
 
 @pytest.fixture(scope='function')
 def setup_nrc_cube():
-    '''Set up fake NIRCam data to test.'''
+    """Set up fake NIRCam data to test."""
 
     def _cube(readpatt, ngroups, nframes, groupgap, nrows, ncols):
 
@@ -74,7 +72,6 @@ def _params():
 
     Note groupgap = nskip
     """
-
     # Dictionary of NIRCam readout patterns
     readpatterns = dict(
         DEEP8=dict(ngroups=20, nframes=8, nskip=12),
@@ -102,10 +99,10 @@ def _params():
 # Refac done
 @pytest.mark.parametrize('readpatt, ngroups, nframes, groupgap, nrows, ncols', _params())
 def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, nrows, ncols):
-    '''Check that if nframes>1 or groupgap>0, then the pipeline reconstructs
-       the dark reference file to match the frame averaging and groupgap
-       settings of the exposure.'''
-
+    """Check that if nframes>1 or groupgap>0, then the pipeline reconstructs
+    the dark reference file to match the frame averaging and groupgap
+    settings of the exposure.
+    """
     # Create data and dark model
     data, dark_model = setup_nrc_cube(readpatt, ngroups, nframes, groupgap, nrows, ncols)
     dark = DarkData(dark_model=dark_model)
@@ -150,10 +147,10 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
 
 # Refac done
 def test_more_sci_frames(make_rampmodel, make_darkmodel):
-    '''Check that data is unchanged if there are more frames in the science
+    """Check that data is unchanged if there are more frames in the science
     data is than in the dark reference file and verify that when the dark is not applied,
-    the data is correctly flagged as such'''
-
+    the data is correctly flagged as such.
+    """
     # size of integration
     nints = 1
     ngroups = 7
@@ -192,9 +189,9 @@ def test_more_sci_frames(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_sub_by_frame(make_rampmodel, make_darkmodel):
-    '''Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
-    directly subtracted frame by frame'''
-
+    """Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
+    directly subtracted frame by frame.
+    """
     # size of integration
     nints = 1
     ngroups = 10
@@ -233,8 +230,7 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_nan(make_rampmodel, make_darkmodel):
-    '''Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly'''
-
+    """Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly."""
     # size of integration
     nints = 1
     ngroups = 10
@@ -271,8 +267,7 @@ def test_nan(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_dq_combine(make_rampmodel, make_darkmodel):
-    '''Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data.'''
-
+    """Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data."""
     # size of integration
     nints = 1
     ngroups = 5
@@ -313,8 +308,7 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_2_int(make_rampmodel, make_darkmodel):
-    '''Verify the dark correction is done by integration for MIRI observations'''
-
+    """Verify the dark correction is done by integration for MIRI observations."""
     # size of integration
     nints = 2
     ngroups = 10
@@ -353,9 +347,9 @@ def test_2_int(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_frame_avg(make_rampmodel, make_darkmodel):
-    '''Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
-    subtracted group-by-group from science data groups and the ERR arrays are not modified'''
-
+    """Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
+    subtracted group-by-group from science data groups and the ERR arrays are not modified.
+    """
     # size of integration
     nints = 1
     ngroups = 5
@@ -399,9 +393,7 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
 
 # ------------------------------------------------------------------------------
 def test_basic_step(make_rampmodel, make_darkmodel):
-    """
-    Same as test_more_sci_frames above, but done calling the step code.
-    """
+    """Same as test_more_sci_frames above, but done calling the step code."""
     # size of integration
     nints, ngroups, nrows, ncols = 1, 10, 200, 200
 
@@ -436,9 +428,7 @@ def test_basic_step(make_rampmodel, make_darkmodel):
 
 
 def test_average_dark_current(make_rampmodel, make_darkmodel):
-    """
-    Test setting of average dark current.
-    """
+    """Test setting of average dark current."""
     # size of integration
     nints, ngroups, nrows, ncols = 1, 10, 200, 200
 
@@ -469,7 +459,7 @@ def test_average_dark_current(make_rampmodel, make_darkmodel):
 
 @pytest.fixture(scope='function')
 def make_rampmodel():
-    '''Make MIRI Ramp model for testing'''
+    """Make MIRI Ramp model for testing."""
 
     def _ramp(nints, ngroups, ysize, xsize):
 
@@ -496,7 +486,7 @@ def make_rampmodel():
 
 @pytest.fixture(scope='function')
 def make_darkmodel():
-    '''Make MIRI dark model for testing'''
+    """Make MIRI dark model for testing."""
 
     def _dark(ngroups, ysize, xsize):
         # create the data and groupdq arrays

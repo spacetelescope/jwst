@@ -1,5 +1,4 @@
-"""V1 Calculation based on time and engineering database info
-"""
+"""V1 Calculation based on time and engineering database info."""
 from collections import defaultdict
 import logging
 
@@ -17,7 +16,7 @@ __all__ = ['v1_calculate_from_models', 'v1_calculate_over_time']
 
 
 def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwargs):
-    """Calculate V1 over the time period for the given models
+    """Calculate V1 over the time period for the given models.
 
     Returns a table of V1 pointings for all input models.
     The table has the following columns:
@@ -43,6 +42,7 @@ def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwarg
     -------
     v1_table : astropy.table.Table
         Table of V1 pointing
+
     """
     # Initialize structures.
     v1_dict = defaultdict(list)
@@ -76,7 +76,7 @@ def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwarg
 
 
 def v1_calculate_over_time(obsstart, obsend, siaf_path=None, **calc_wcs_from_time_kwargs):
-    """Calculate V1 over the given time period
+    """Calculate V1 over the given time period.
 
     Returns a table of all V1 pointings that can be retrieved from the engineering database
     that exist between, inclusively, the start and end times.
@@ -104,6 +104,7 @@ def v1_calculate_over_time(obsstart, obsend, siaf_path=None, **calc_wcs_from_tim
     -------
     v1_table : astropy.table.Table
         Table of V1 pointing
+
     """
     # Initialize structures.
     siaf = siafdb.SIAF(v2_ref=0., v3_ref=0., v3yangle=0., vparity=1.)
@@ -124,7 +125,7 @@ def v1_calculate_over_time(obsstart, obsend, siaf_path=None, **calc_wcs_from_tim
 
 
 def simplify_table(v1_table):
-    """Convert pure object-based table to ASCII/Human-friendly
+    """Convert pure object-based table to ASCII/Human-friendly.
 
     The tables as produced by the `v1_calculate` functions use native objects.
     For instance, the "obstime" column contains `astropy.time.Time` objects and
@@ -141,6 +142,7 @@ def simplify_table(v1_table):
     -------
     formatted: astropy.table.Table
         Reformatted table.
+
     """
     source_formatted = [str(v) for v in v1_table['source']]
     obstime_formatted = v1_table['obstime'].isot

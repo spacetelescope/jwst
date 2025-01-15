@@ -11,11 +11,10 @@ log.setLevel(logging.DEBUG)
 
 
 def align_fourierLSQ(reference, target, mask=None):
-    '''LSQ optimization with Fourier shift alignment
+    """LSQ optimization with Fourier shift alignment.
 
     Parameters
     ----------
-
         reference : numpy.ndarray
             A 2D (``NxK``) image to be aligned to
 
@@ -29,15 +28,14 @@ def align_fourierLSQ(reference, target, mask=None):
 
     Returns
     -------
-
         results : numpy.ndarray
             A 1D vector containing (`xshift`, `yshift`, `beta`) values from
             LSQ optimization, where `xshift` and `yshift` are the misalignment
             of target from reference and `beta` is the fraction by which the
             target intensity must be reduced to match the intensity
             of the reference.
-    '''
 
+    """
     init_pars = [0., 0., 1.]
     results, _ = optimize.leastsq(shift_subtract, init_pars,
                                   args=(reference, target, mask),
@@ -47,11 +45,10 @@ def align_fourierLSQ(reference, target, mask=None):
 
 
 def shift_subtract(params, reference, target, mask=None):
-    '''Use Fourier Shift theorem for subpixel shifts.
+    """Use Fourier Shift theorem for subpixel shifts.
 
     Parameters
     ----------
-
         params : tuple
             xshift, yshift, beta
 
@@ -66,11 +63,10 @@ def shift_subtract(params, reference, target, mask=None):
 
     Returns
     -------
-
         1D numpy.ndarray of target-reference residual after
         applying shift and intensity fraction.
 
-    '''
+    """
     shift = params[:2]
     beta = params[2]
 
@@ -83,11 +79,10 @@ def shift_subtract(params, reference, target, mask=None):
 
 
 def fourier_imshift(image, shift):
-    '''  Shift an image by use of Fourier shift theorem
+    """Shift an image by use of Fourier shift theorem.
 
     Parameters
     ----------
-
         image : numpy.ndarray
             A 2D (``NxK``) or 3D (``LxNxK``) image.
 
@@ -97,11 +92,10 @@ def fourier_imshift(image, shift):
 
     Returns
     -------
-
         offset : numpy.ndarray
             Shifted image
 
-    '''
+    """
     ndim = len(image.shape)
 
     if ndim == 2:
@@ -130,13 +124,11 @@ def fourier_imshift(image, shift):
 
 
 def align_array(reference, target, mask=None, return_aligned=True):
-    """
-    Computes shifts between target image (or image "slices") and the reference
+    """Computes shifts between target image (or image "slices") and the reference
     image and re-aligns input images to the target.
 
     Parameters
     ----------
-
     reference : numpy.ndarray
         A 2D (``NxK``) reference image to which input images will be aligned.
 
@@ -151,7 +143,6 @@ def align_array(reference, target, mask=None, return_aligned=True):
 
     Returns
     -------
-
         A tuple containing the aligned image (2D or 3D image of the same shape
         as input target image) and a 1D vector of three elements in the case
         of 2D input `target` image of (xshift, yshift, beta) values from
@@ -159,7 +150,6 @@ def align_array(reference, target, mask=None, return_aligned=True):
         slice in the `target` array.
 
     """
-
     if len(target.shape) == 2:
         shifts = align_fourierLSQ(reference, target, mask=mask)
         if return_aligned:
@@ -186,13 +176,11 @@ def align_array(reference, target, mask=None, return_aligned=True):
 
 
 def align_models(reference, target, mask):
-    """
-    Computes shifts between target image (or image "slices") and the reference
+    """Computes shifts between target image (or image "slices") and the reference
     image and re-aligns target images to the reference.
 
     Parameters
     ----------
-
     reference : CubeModel
         3D (``LxNxK`` first index used to select 2D slices)
         reference image to which target images will be aligned.
@@ -208,12 +196,10 @@ def align_models(reference, target, mask):
 
     Returns
     -------
-
         A QuadModel containing aligned copies of the input ``target``
         cubes aligned to each slice in the input ``reference`` cube.
 
     """
-
     # Create output CubeModel of required dimensions. Since all science integrations
     # are assumed to have the same shift, the output is just a shifted copy of the
     # 3-D PSF cube

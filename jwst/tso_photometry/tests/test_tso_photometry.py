@@ -12,8 +12,7 @@ ycenter = 50.
 
 
 def mk_data_array(shape, value, background, xcenter, ycenter, radius):
-    """Create a data array"""
-
+    """Create a data array."""
     data = np.zeros(shape, dtype=np.float32) + background
 
     xlow = int(math.floor(xcenter - radius))
@@ -36,8 +35,7 @@ def mk_data_array(shape, value, background, xcenter, ycenter, radius):
 
 
 def dummy_wcs(x, y):
-    """Placeholder WCS"""
-
+    """Placeholder WCS."""
     global xcenter, ycenter
 
     crpix1 = xcenter
@@ -55,8 +53,7 @@ def dummy_wcs(x, y):
 
 
 def set_meta(datamodel, sub64p=False):
-    """Assign some metadata"""
-
+    """Assign some metadata."""
     datamodel.meta.exposure.nints = datamodel.data.shape[0]
     datamodel.meta.exposure.integration_time = 10.7
     datamodel.meta.exposure.start_time = 58704.62847
@@ -88,7 +85,6 @@ def set_meta(datamodel, sub64p=False):
 
 def include_int_times(datamodel):
     """Create an int_times table and copy it into the data model."""
-
     int_start = datamodel.meta.exposure.integration_start
 
     nrows = int_start + shape[0] + 2            # create a few extra rows

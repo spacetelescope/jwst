@@ -1,5 +1,4 @@
-"""Association Definitions: DMS Level3 product associations
-"""
+"""Association Definitions: DMS Level3 product associations."""
 
 from jwst.associations import Association
 from jwst.associations.registry import RegistryMarker
@@ -15,9 +14,9 @@ class DMS_Level3_Base_Set2(Association):
 
 @RegistryMarker.rule
 class Asn_Dither_Set2(DMS_Level3_Base_Set2):
-    """Non-Association Candidate Dither Associations"""
+    """Non-Association Candidate Dither Associations."""
 
 
 @RegistryMarker.rule
 class Asn_WFS_Set2(DMS_Level3_Base_Set2):
-    """Wavefront Sensing association"""
+    """Wavefront Sensing association."""

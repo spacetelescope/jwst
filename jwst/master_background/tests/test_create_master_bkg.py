@@ -1,6 +1,4 @@
-"""
-Test for master_background.create_master_bkg
-"""
+"""Test for master_background.create_master_bkg."""
 import numpy as np
 
 from jwst.master_background import create_master_bkg

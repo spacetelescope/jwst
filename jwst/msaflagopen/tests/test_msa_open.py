@@ -78,8 +78,7 @@ def make_nirspec_mos_model():
 
 
 def test_or_subarray_with_array():
-    """test bitwise or with array and subarray."""
-
+    """Test bitwise or with array and subarray."""
     dq_array = np.ones((20, 20), dtype=int) * 1
     dq_subarray = np.ones((10, 10), dtype=int) * 2
 
@@ -97,8 +96,7 @@ def test_or_subarray_with_array():
 
 
 def test_id_from_xy():
-    """Test id from x y location of shutter"""
-
+    """Test id from x y location of shutter."""
     # First row of msaoper.json
     data = {"Q": 1, "x": 1, "y": 1, "state": "closed", "TA state": "closed",
             "Internal state": "normal", "Vignetted": "yes"}
@@ -114,8 +112,7 @@ def test_id_from_xy():
 
 
 def test_get_failed_open_shutters():
-    """test that failed open shutters are returned from reference file"""
-
+    """Test that failed open shutters are returned from reference file."""
     # Set up data model to retrieve reference file
     dm = ImageModel()
     dm.meta.instrument.name = 'NIRSPEC'
@@ -135,8 +132,7 @@ def test_get_failed_open_shutters():
 
 
 def test_create_slitlets():
-    """Test that slitlets are Slit type and have all the necessary fields"""
-
+    """Test that slitlets are Slit type and have all the necessary fields."""
     dm = ImageModel()
     dm.meta.instrument.name = 'NIRSPEC'
     dm.meta.observation.date = '2016-09-05'
@@ -157,8 +153,7 @@ def test_create_slitlets():
 
 
 def test_wcs_to_dq():
-    """Test that non nan values are assigned the values of flags"""
-
+    """Test that non nan values are assigned the values of flags."""
     # Make data array
     grid = np.zeros((10, 10))
     wcs_array = np.array((grid, grid))

@@ -43,8 +43,8 @@ def expand_to_2d(input, m_bkg_spec, allow_mos=False):
     background : `~jwst.datamodels.JwstDataModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
-    """
 
+    """
     with datamodels.open(m_bkg_spec) as bkg:
         if hasattr(bkg, 'spec'):                # MultiSpecModel
             if len(bkg.spec) > 1:
@@ -101,8 +101,8 @@ def bkg_for_container(input, tab_wavelength, tab_background, allow_mos=False):
     background : `~jwst.datamodels.ModelContainer`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
-    """
 
+    """
     background = ModelContainer()
     for input_model in input:
         temp = create_bkg(input_model, tab_wavelength, tab_background,
@@ -139,8 +139,8 @@ def create_bkg(input, tab_wavelength, tab_background, allow_mos=False):
     background : `~jwst.datamodels.JwstDataModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
-    """
 
+    """
     # Handle individual NIRSpec FS, NIRSpec MOS
     if isinstance(input, datamodels.MultiSlitModel):
         background = bkg_for_multislit(input, tab_wavelength, tab_background,
@@ -189,6 +189,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background, allow_mos=False):
     background : `~jwst.datamodels.MultiSlitModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
+
     """
     from .nirspec_utils import correct_nrs_fs_bkg
 
@@ -267,8 +268,8 @@ def bkg_for_image(input, tab_wavelength, tab_background):
     background : `~jwst.datamodels.ImageModel`
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
-    """
 
+    """
     background = input.copy()
     min_wave = np.amin(tab_wavelength)
     max_wave = np.amax(tab_wavelength)
@@ -293,7 +294,7 @@ def bkg_for_image(input, tab_wavelength, tab_background):
 
 
 def bkg_for_ifu_image(input, tab_wavelength, tab_background):
-    """Create a 2-D background for an IFUImageModel
+    """Create a 2-D background for an IFUImageModel.
 
     Parameters
     ----------

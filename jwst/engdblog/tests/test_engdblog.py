@@ -1,6 +1,4 @@
-"""
-Test the engdblog step
-"""
+"""Test the engdblog step."""
 import os
 import pytest
 from tempfile import TemporaryDirectory

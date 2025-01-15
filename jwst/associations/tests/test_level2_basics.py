@@ -1,4 +1,4 @@
-"""Test basic usage of Level2 associations"""
+"""Test basic usage of Level2 associations."""
 import re
 
 from jwst.associations.tests.helpers import (
@@ -23,7 +23,7 @@ def from_level2_schema():
 
 
 def generate_from_pool(pool_path):
-    """Generate associations from pools"""
+    """Generate associations from pools."""
     rules = registry_level2_only()
     pool = combine_pools(t_path(pool_path))
     asns = generate(pool, rules)
@@ -31,15 +31,16 @@ def generate_from_pool(pool_path):
 
 
 def cmd_from_pool(pool_path, args):
-    """Run commandline on pool
+    """Run commandline on pool.
 
     Parameters
-    ---------
+    ----------
     pool_path: str
         The pool to run on.
 
     args: [arg(, ...)]
         Additional command line arguments in the form `sys.argv`
+
     """
     full_args = [
         '--dry-run',

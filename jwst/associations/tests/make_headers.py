@@ -1,6 +1,4 @@
-"""
-Make header-only images from real images
-"""
+"""Make header-only images from real images."""
 from glob import glob
 import os.path as ospath
 
@@ -11,12 +9,12 @@ outpath = './data/exposures'
 
 
 def actual_path(path):
-    """Returns fully-qualified path"""
+    """Returns fully-qualified path."""
     return ospath.abspath(ospath.expandvars(ospath.expanduser(path)))
 
 
 def get_headers(files, outpath):
-    """Make header-only FITS files from FITS files
+    """Make header-only FITS files from FITS files.
 
     Parameters
     ----------
@@ -25,6 +23,7 @@ def get_headers(files, outpath):
 
     outpath: str
         The output path to place the header-only files
+
     """
     for path in files:
         name = ospath.basename(path)

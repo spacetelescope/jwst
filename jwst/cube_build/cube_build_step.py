@@ -1,5 +1,4 @@
-""" This is the main ifu spectral cube building routine.
-"""
+"""This is the main ifu spectral cube building routine."""
 
 import time
 from jwst.datamodels import ModelContainer
@@ -16,7 +15,7 @@ __all__ = ["CubeBuildStep"]
 
 
 class CubeBuildStep (Step):
-    """CubeBuildStep: Creates a 3-D spectral cube
+    """CubeBuildStep: Creates a 3-D spectral cube.
 
     Notes
     -----
@@ -78,8 +77,8 @@ class CubeBuildStep (Step):
         ----------
         input : list of objects or str
            list of datamodels or string name of input fits file or association.
-        """
 
+        """
         self.log.info('Starting IFU Cube Building Step')
 
         t0 = time.time()
@@ -427,8 +426,7 @@ class CubeBuildStep (Step):
 # ******************************************************************************
 
     def read_user_input(self):
-        """Read user input options for channel, subchannel, filter, or grating"""
-
+        """Read user input options for channel, subchannel, filter, or grating."""
         # Determine if any of the input parameters channel, band, filter or
         # grating have been set.
 
@@ -555,8 +553,7 @@ class CubeBuildStep (Step):
         For each file in the input  assocation check that there is a corresponding
         file in the offset file.
 
-       """
-
+        """
         # validate the offset file using the schema file
         DATA_PATH = Path(__file__).parent
         

@@ -8,8 +8,7 @@ __all__ = ["BarShadowStep"]
 
 
 class BarShadowStep(Step):
-    """
-    BarShadowStep: Inserts the bar shadow and wavelength arrays
+    """BarShadowStep: Inserts the bar shadow and wavelength arrays
     into the data.
 
     Bar shadow correction depends on the position of a pixel along the slit
@@ -28,7 +27,7 @@ class BarShadowStep(Step):
     reference_file_types = ['barshadow']
 
     def process(self, input):
-        """Perform the barshadow correction step
+        """Perform the barshadow correction step.
 
         Parameters
         ----------
@@ -39,8 +38,8 @@ class BarShadowStep(Step):
         -------
         result : jwst datamodel
             JWST datamodel object with barshadow extension(s) added
-        """
 
+        """
         # Open the input data model
         with datamodels.open(input) as input_model:
             exp_type = input_model.meta.exposure.type

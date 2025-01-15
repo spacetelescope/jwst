@@ -11,8 +11,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(output, bright_use_group1=False):
-    """
-    Short Summary
+    """Short Summary
     -------------
     The sole correction is to add the DO_NOT_USE flat to the GROUP data
     quality flags for the first group, if the number of groups is greater
@@ -31,7 +30,6 @@ def do_correction(output, bright_use_group1=False):
         firstframe-corrected science data
 
     """
-
     # Save some data params for easy use later
     sci_ngroups = output.data.shape[1]
 

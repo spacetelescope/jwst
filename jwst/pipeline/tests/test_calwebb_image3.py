@@ -18,11 +18,9 @@ LOGCFG_CONTENT = f"[*] \n \
 
 @pytest.fixture(scope='module')
 def make_dummy_cal_file(tmp_cwd_module):
-    '''
-    Make and save a dummy cal file in the temporary working directory
-    Partially copied from test_calwebb_image2.py
-    '''
-
+    """Make and save a dummy cal file in the temporary working directory
+    Partially copied from test_calwebb_image2.py.
+    """
     image = ImageModel((2048, 2048))
     image.data[:, :] = 1
     image.meta.instrument.name = 'NIRCAM'
@@ -66,9 +64,7 @@ def make_dummy_association(make_dummy_cal_file):
 
 @pytest.mark.parametrize("in_memory", [True, False])
 def test_run_image3_pipeline(make_dummy_association, in_memory):
-    '''
-    Two-product association passed in, run pipeline, skipping most steps
-    '''
+    """Two-product association passed in, run pipeline, skipping most steps."""
     # save warnings to logfile so can be checked later
     with open(LOGCFG, 'w') as f:
         f.write(LOGCFG_CONTENT)
@@ -105,9 +101,7 @@ def test_run_image3_single_file(make_dummy_cal_file):
 
 
 def _is_run_complete(logfile):
-    '''
-    Check that the pipeline runs to completion
-    '''
+    """Check that the pipeline runs to completion."""
     msg = "Step Image3Pipeline done"
     with open(LOGFILE, 'r') as f:
         log = f.read()

@@ -7,8 +7,7 @@ __all__ = ["RscdStep"]
 
 
 class RscdStep(Step):
-    """
-    RscdStep: Performs an RSCD correction to MIRI data.
+    """RscdStep: Performs an RSCD correction to MIRI data.
     Baseline version flags the first N groups as 'DO_NOT_USE' in
     the 2nd and later integrations in a copy of the input
     science data model.

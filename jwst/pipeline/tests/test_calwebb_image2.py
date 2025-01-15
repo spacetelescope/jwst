@@ -15,11 +15,9 @@ LOGCFG = "test_logs.cfg"
 
 @pytest.fixture(scope='module')
 def make_dummy_rate_file(tmp_cwd_module):
-    '''
-    Make and save a dummy rate file in the temporary working directory
-    Partially copied from test_background.py
-    '''
-
+    """Make and save a dummy rate file in the temporary working directory
+    Partially copied from test_background.py.
+    """
     image = ImageModel((2048, 2048))
     image.data[:, :] = 1
     image.meta.instrument.name = 'NIRCAM'
@@ -60,9 +58,7 @@ def make_dummy_association(make_dummy_rate_file):
 
 @pytest.fixture(scope='module', params=[OUTPUT_FILE])
 def run_image2_pipeline_file(make_dummy_rate_file, request):
-    '''
-    Run pipeline, skipping most steps
-    '''
+    """Run pipeline, skipping most steps."""
     args = ["calwebb_image2", INPUT_FILE, 
             "--steps.flat_field.skip=true",
             "--steps.photom.skip=true",
@@ -74,10 +70,9 @@ def run_image2_pipeline_file(make_dummy_rate_file, request):
 
 @pytest.fixture(scope='module', params=[OUTPUT_FILE_ASN])
 def run_image2_pipeline_asn(make_dummy_association, request):
-    '''
-    Two-product association passed in. This should trigger a warning
+    """Two-product association passed in. This should trigger a warning
     and the output_file parameter should be ignored.
-    '''
+    """
     # save warnings to logfile so can be checked later
     logcfg_content = f"[*] \n \
         level = INFO \n \
@@ -96,10 +91,9 @@ def run_image2_pipeline_asn(make_dummy_association, request):
 
 
 def test_output_file_rename_file(run_image2_pipeline_file):
-    '''
-    Covers a bug where the output_file parameter was not being
+    """Covers a bug where the output_file parameter was not being
     respected in calls to Image2Pipeline.
-    '''
+    """
     assert os.path.exists(INPUT_FILE) #ensures tmp_cwd_module is working
     custom_stem = OUTPUT_FILE.split('.')[0]
     for extension in ['cal']:
@@ -107,10 +101,9 @@ def test_output_file_rename_file(run_image2_pipeline_file):
 
 
 def test_output_file_norename_asn(run_image2_pipeline_asn):
-    '''
-    Ensure output_file parameter is ignored, with warning,
+    """Ensure output_file parameter is ignored, with warning,
     when multiple products are in the same association.
-    '''
+    """
     # ensure tmp_cwd_module is successfully keeping all files in cwd
     assert os.path.exists(INPUT_ASN) 
     assert os.path.exists(INPUT_FILE) 

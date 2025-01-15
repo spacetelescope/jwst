@@ -10,8 +10,8 @@ def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
                       weights=None, order=0):
     """Build matrices and vectors to enable least-squares fits.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     image : 2-D ndarray
         The array may have been transposed so that the dispersion direction
         is the second index.
@@ -36,8 +36,8 @@ def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
         Polynomial order for fitting to each column of background.
         Default 0 (uniform background).
 
-    Returns:
-    --------
+    Returns
+    -------
     matrix : ndarray, 3-D, float64
         Design matrix for each pixel, shape (npixels, npar, npar)
 
@@ -101,7 +101,6 @@ def _fit_background_for_box_extraction(
         image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         profile_bg, weights, bg_smooth_length, bkg_fit_type, bkg_order):
     """Fit a background level for box extraction."""
-
     # Start by copying the input image
     input_background = image.copy()
 
@@ -228,7 +227,6 @@ def _optimal_extract(
         weights, profile_bg, fit_bkg, bkg_order,
         bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model):
     """Perform optimal extraction."""
-
     # Background fitting needs to be done simultaneously with the
     # fitting of the spectra in this case.  If we are not fitting a
     # background, pass -1 for the order of the polynomial correction.
@@ -322,8 +320,8 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
               bg_smooth_length=0, fit_bkg=False, bkg_fit_type='poly', bkg_order=0):
     """Extract the spectrum, optionally subtracting background.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     image : 2-D ndarray
         The array may have been transposed so that the dispersion direction
         is the second index.
@@ -376,8 +374,8 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         This argument must be positive or zero, and it is only used if
         background regions have been specified and if `bkg_fit` is `poly`.
 
-    Returns:
-    --------
+    Returns
+    -------
     fluxes : ndarray, n-D, float64
         The extracted spectrum/spectra.  Units are currently arbitrary.
         The first dimension is the same as the length of profiles_2d
@@ -418,7 +416,6 @@ def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
         hopefully also similar in value).
 
     """
-
     nobjects = len(profiles_2d)  # hopefully at least one!
     model = np.zeros(image.shape)
 

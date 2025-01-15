@@ -144,8 +144,7 @@ def setup_subarray_inputs(
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
-    """
-    Create a simple input to instantiate RampFitStep and execute a call to test
+    """Create a simple input to instantiate RampFitStep and execute a call to test
     the step class and class method.
     """
     override_gain, override_readnoise = generate_miri_reffiles
@@ -260,8 +259,7 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
 
 
 def one_group_suppressed(nints, suppress, setup_inputs):
-    """
-    Creates three pixel ramps.
+    """Creates three pixel ramps.
     The first ramp has no good groups.
     The second ramp has one good group.
     The third ramp has all good groups.

@@ -1,4 +1,4 @@
-"""Base classes which define the Level2 Associations"""
+"""Base classes which define the Level2 Associations."""
 from collections import deque
 import copy
 import logging
@@ -118,7 +118,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             self.data['asn_pool'] = 'none'
 
     def get_exposure_type(self, item, default='science'):
-        """General Level 2 override of exposure type definition
+        """General Level 2 override of exposure type definition.
 
         The exposure type definition is overridden from the default
         for the following cases:
@@ -132,10 +132,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         default : str or None
             The default exposure type.
             If None, routine will raise LookupError
+
         Returns
         -------
         exposure_type
             Always what is defined as `default`
+
         """
         self.original_exposure_type = super(DMSLevel2bBase, self).get_exposure_type(item, default=default)
         if self.original_exposure_type == 'psf':
@@ -143,7 +145,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return self.original_exposure_type
 
     def members_by_type(self, member_type):
-        """Get list of members by their exposure type"""
+        """Get list of members by their exposure type."""
         member_type = member_type.lower()
         try:
             members = self.current_product['members']
@@ -159,7 +161,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return result
 
     def has_science(self):
-        """Does association have a science member
+        """Does association have a science member.
 
         -------
         bool
@@ -184,7 +186,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return no_suffix_path
 
     def make_member(self, item):
-        """Create a member from the item
+        """Create a member from the item.
 
         Parameters
         ----------
@@ -195,8 +197,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         -------
         member : Member
             The member
-        """
 
+        """
         # Set exposure error status.
         try:
             exposerr = item['exposerr']
@@ -225,7 +227,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return member
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+        """Post-check and pre-add initialization."""
         self.data['target'] = item['targetid']
         self.data['program'] = '{:0>5s}'.format(item['program'])
         self.data['asn_pool'] = basename(
@@ -242,6 +244,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         ----------
         item : dict
             The item to be adding.
+
         """
         member = self.make_member(item)
         if self.is_member(member):
@@ -259,7 +262,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                    product_name_func=None,
                    acid='o999',
                    **kwargs):
-        """Force adding items to the association
+        """Force adding items to the association.
 
         Parameters
         ----------
@@ -356,12 +359,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.sequence = next(self._sequence)
 
     def update_asn(self):
-        """Update association info based on current members"""
+        """Update association info based on current members."""
         super(DMSLevel2bBase, self).update_asn()
         self.current_product['name'] = self.dms_product_name()
 
     def validate_candidates(self, member):
-        """Allow only OBSERVATION or BACKGROUND candidates
+        """Allow only OBSERVATION or BACKGROUND candidates.
 
         Parameters
         ----------
@@ -374,8 +377,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         True if candidate is BACKGROUND and at least one
         member is background.
         Otherwise, False
-        """
 
+        """
         # If an observation, then we're good.
         if self.acid.type.lower() == 'observation':
             return True
@@ -399,9 +402,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return json_repr
 
     def __str__(self):
-        """Create human readable version of the association
-        """
-
+        """Create human readable version of the association."""
         result = ['Association {:s}'.format(self.asn_name)]
 
         # Parameters of the association
@@ -438,12 +439,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
 @RegistryMarker.utility
 class Utility():
-    """Utility functions that understand DMS Level 3 associations"""
+    """Utility functions that understand DMS Level 3 associations."""
 
     @staticmethod
     @RegistryMarker.callback('finalize')
     def finalize(associations):
-        """Check validity and duplications in an association list
+        """Check validity and duplications in an association list.
 
         Parameters
         ----------
@@ -454,6 +455,7 @@ class Utility():
         -------
         finalized_associations : [association[, ...]]
             The validated list of associations
+
         """
         finalized_asns = []
         lv2_asns = []
@@ -475,7 +477,7 @@ class Utility():
 
     @staticmethod
     def merge_asns(associations):
-        """merge level2 associations
+        """Merge level2 associations.
 
         Parameters
         ----------
@@ -486,6 +488,7 @@ class Utility():
         -------
         associations : [association(, ...)]
             List of associations, some of which may be merged.
+
         """
         others = []
         lv2_asns = []
@@ -501,7 +504,7 @@ class Utility():
 
     @staticmethod
     def rename_to_level2a(level1b_name, use_integrations=False):
-        """Rename a Level 1b Exposure to another level
+        """Rename a Level 1b Exposure to another level.
 
         Parameters
         ----------
@@ -515,6 +518,7 @@ class Utility():
         -------
         str
             The Level 2a name
+
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
@@ -539,12 +543,12 @@ class Utility():
 
     @staticmethod
     def resequence(*args, **kwargs):
-        """Resequence the numbers to conform to level 3 asns"""
+        """Resequence the numbers to conform to level 3 asns."""
         return Utility_Level3.resequence(*args, **kwargs)
 
     @staticmethod
     def sort_by_candidate(asns):
-        """Sort associations by candidate
+        """Sort associations by candidate.
 
         Parameters
         ----------
@@ -563,12 +567,13 @@ class Utility():
         aXXXX > cXXXX > oXXX
 
         If this changes, a comparison function will need be implemented
+
         """
         return sorted(asns, key=lambda asn: asn['asn_id'])
 
     @staticmethod
     def _merge_asns(asns):
-        """Merge associations by `asn_type` and `asn_id`
+        """Merge associations by `asn_type` and `asn_id`.
 
         Parameters
         ----------
@@ -579,6 +584,7 @@ class Utility():
         -------
         associations : [association(, ...)]
             List of associations, some of which may be merged.
+
         """
         merged = {}
         for asn in asns:
@@ -624,7 +630,7 @@ class Utility():
 # Basic constraints
 # -----------------
 class Constraint_Base(Constraint):
-    """Select on program and instrument"""
+    """Select on program and instrument."""
 
     def __init__(self):
         super(Constraint_Base, self).__init__([
@@ -642,7 +648,7 @@ class Constraint_Base(Constraint):
 
 
 class Constraint_Background(DMSAttrConstraint):
-    """Select backgrounds"""
+    """Select backgrounds."""
 
     def __init__(self):
         super(Constraint_Background, self).__init__(
@@ -656,7 +662,8 @@ class Constraint_Background(DMSAttrConstraint):
 
 class Constraint_ExtCal(Constraint):
     """Remove any nis_extcals from the associations, they
-       are NOT to receive level-2b or level-3 processing!"""
+    are NOT to receive level-2b or level-3 processing!
+    """
 
     def __init__(self):
         super(Constraint_ExtCal, self).__init__(
@@ -672,7 +679,7 @@ class Constraint_ExtCal(Constraint):
 
 
 class Constraint_Imprint(Constraint):
-    """Select on imprint exposures"""
+    """Select on imprint exposures."""
 
     def __init__(self):
         super(Constraint_Imprint, self).__init__(
@@ -688,7 +695,7 @@ class Constraint_Imprint(Constraint):
 
 
 class Constraint_Imprint_Special(Constraint):
-    """Select on imprint exposures"""
+    """Select on imprint exposures."""
 
     def __init__(self, association=None):
         # If an association is not provided, the check for original
@@ -723,7 +730,7 @@ class Constraint_Imprint_Special(Constraint):
 
 
 class Constraint_Mode(Constraint):
-    """Select on instrument and optical path"""
+    """Select on instrument and optical path."""
 
     def __init__(self):
         super(Constraint_Mode, self).__init__([
@@ -803,7 +810,7 @@ class Constraint_Mode(Constraint):
 
 
 class Constraint_Image_Science(DMSAttrConstraint):
-    """Select on science images"""
+    """Select on science images."""
 
     def __init__(self):
         super(Constraint_Image_Science, self).__init__(
@@ -814,7 +821,7 @@ class Constraint_Image_Science(DMSAttrConstraint):
 
 
 class Constraint_Image_Nonscience(Constraint):
-    """Select on non-science images"""
+    """Select on non-science images."""
 
     def __init__(self):
         super(Constraint_Image_Nonscience, self).__init__(
@@ -848,7 +855,7 @@ class Constraint_Image_Nonscience(Constraint):
 
 
 class Constraint_Single_Science(Constraint):
-    """Allow only single science exposure
+    """Allow only single science exposure.
 
     Parameters
     ----------
@@ -869,6 +876,7 @@ class Constraint_Single_Science(Constraint):
     to provide a closure. Otherwise if the function is a bound method,
     that method may end up pointing to an instance that is not calling
     this constraint.
+
     """
 
     def __init__(self, has_science_fn, exposure_type_fn, **sc_kwargs):
@@ -888,7 +896,7 @@ class Constraint_Single_Science(Constraint):
 
 
 class Constraint_Special(DMSAttrConstraint):
-    """Select on backgrounds and other auxiliary images"""
+    """Select on backgrounds and other auxiliary images."""
 
     def __init__(self):
         super(Constraint_Special, self).__init__(
@@ -901,12 +909,14 @@ class Constraint_Special(DMSAttrConstraint):
 
 
 class Constraint_Spectral_Science(Constraint):
-    """Select on spectral science
+    """Select on spectral science.
 
     Parameters
+    ----------
     exclude_exp_types : [exp_type[, ...]]
         List of exposure types to not consider from
         from the general list.
+
     """
 
     def __init__(self, exclude_exp_types=None):
@@ -930,7 +940,7 @@ class Constraint_Spectral_Science(Constraint):
 
 
 class Constraint_Target(Constraint):
-    """Select on target id"""
+    """Select on target id."""
 
     def __init__(self):
         constraints = [
@@ -956,17 +966,16 @@ class Constraint_Target(Constraint):
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
 class AsnMixin_Lv2Image:
-    """Level 2 Image association base"""
+    """Level 2 Image association base."""
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
 
 
 class AsnMixin_Lv2Nod:
-    """Associations that need to create nodding associations
+    """Associations that need to create nodding associations.
 
     For some spectrographic modes, background spectra are taken by
     nodding between different slits, or internal slit positions.
@@ -978,8 +987,7 @@ class AsnMixin_Lv2Nod:
 
     @staticmethod
     def nod_background_overlap(science_item, background_item):
-        """
-        Check that a candidate background nod will not overlap with science.
+        """Check that a candidate background nod will not overlap with science.
 
         For NIRSpec fixed slit or MOS data, this returns True if the
         background candidate shares a primary dither point with the
@@ -1072,7 +1080,7 @@ class AsnMixin_Lv2Nod:
         return False
 
     def make_nod_asns(self):
-        """Make background nod Associations
+        """Make background nod Associations.
 
         For observing modes, such as NIRSpec MSA, exposures can be
         nodded, such that the object is in a different position in the
@@ -1089,7 +1097,6 @@ class AsnMixin_Lv2Nod:
             the current one.
 
         """
-
         for product in self['products']:
             members = product['members']
 
@@ -1140,7 +1147,7 @@ class AsnMixin_Lv2Nod:
             return results
 
     def finalize(self):
-        """Finalize association
+        """Finalize association.
 
         For some spectrographic modes, background spectra are taken by
         nodding between different slits, or internal slit positions.
@@ -1170,12 +1177,13 @@ class AsnMixin_Lv2Special:
     ----------
     original_exposure_type : str
         The original exposure type of what is referred to as the "science" member
+
     """
 
     original_exposure_type = None
 
     def get_exposure_type(self, item, default='science'):
-        """Override to force exposure type to always be science
+        """Override to force exposure type to always be science.
 
         The only case where this should not happen is if the association
         already has its science, and the current item is an imprint. Leave
@@ -1188,10 +1196,12 @@ class AsnMixin_Lv2Special:
         default : str or None
             The default exposure type.
             If None, routine will raise LookupError
+
         Returns
         -------
         exposure_type
             Always what is defined as `default`
+
         """
         self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(item, default=default)
         if self.has_science():
@@ -1201,20 +1211,19 @@ class AsnMixin_Lv2Special:
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
+    """Level 2 Spectral association base."""
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         super(AsnMixin_Lv2Spectral, self)._init_hook(item)
         self.data['asn_type'] = 'spec2'
 
 
 class AsnMixin_Lv2WFSS:
-    """Utility and overrides for WFSS associations"""
+    """Utility and overrides for WFSS associations."""
 
     def add_catalog_members(self):
-        """Add catalog and direct image member based on direct image members"""
+        """Add catalog and direct image member based on direct image members."""
         directs = self.members_by_type('direct_image')
         if not directs:
             raise AssociationNotValidError(
@@ -1268,7 +1277,7 @@ class AsnMixin_Lv2WFSS:
         )
 
     def finalize(self):
-        """Finalize the association
+        """Finalize the association.
 
         For WFSS, this involves taking all the direct image exposures,
         determine which one is first after last science exposure,
@@ -1286,7 +1295,7 @@ class AsnMixin_Lv2WFSS:
         return super(AsnMixin_Lv2WFSS, self).finalize()
 
     def get_exposure_type(self, item, default='science'):
-        """Modify exposure type depending on dither pointing index
+        """Modify exposure type depending on dither pointing index.
 
         If an imaging exposure as been found, treat is as a direct image.
         """
@@ -1300,7 +1309,7 @@ class AsnMixin_Lv2WFSS:
 
     @staticmethod
     def find_closest_direct(science, directs):
-        """Find the direct image that is closest to the science
+        """Find the direct image that is closest to the science.
 
         Closeness is defined as number difference in the exposure sequence number,
         as defined in the column EXPSPCIN.
@@ -1317,6 +1326,7 @@ class AsnMixin_Lv2WFSS:
         -------
         closest : dict
             The direct image that is the "closest"
+
         """
         closest = directs[0]  # If the search fails, just use the first.
         try:
@@ -1342,19 +1352,21 @@ class AsnMixin_Lv2WFSS:
         return closest
 
     def _get_opt_element(self):
-        """Get string representation of the optical elements
+        """Get string representation of the optical elements.
 
         Returns
         -------
         opt_elem: str
             The Level3 Product name representation
             of the optical elements.
+
         Notes
         -----
         This is an override for the method in `DMSBaseMixin`.
         The optical element is retrieved from the chosen direct image
         found in `self.direct_image`, determined in the `self.finalize`
         method.
+
         """
         item = self.direct_image.item
         opt_elems = []

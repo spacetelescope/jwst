@@ -30,8 +30,7 @@ __all__ = ["create_pipeline", "imaging", "lrs", "ifu"]
 
 
 def create_pipeline(input_model, reference_files):
-    """
-    Create the WCS pipeline for MIRI modes.
+    """Create the WCS pipeline for MIRI modes.
 
     Parameters
     ----------
@@ -51,8 +50,7 @@ def create_pipeline(input_model, reference_files):
 
 
 def imaging(input_model, reference_files):
-    """
-    The MIRI Imaging WCS pipeline.
+    """The MIRI Imaging WCS pipeline.
 
     It includes three coordinate frames -
     "detector", "v2v3" and "world".
@@ -66,7 +64,6 @@ def imaging(input_model, reference_files):
         Uses "distortion" and "filteroffset" reference files.
 
     """
-
     # Create the Frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
@@ -112,8 +109,7 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    """
-    Create the "detector" to "v2v3" transform for the MIRI Imager.
+    """Create the "detector" to "v2v3" transform for the MIRI Imager.
 
     1. Filter dependent shift in (x,y) (!with an opposite
        sign to that delivered by the IT) (uses the "filteroffset" ref file)
@@ -158,8 +154,7 @@ def imaging_distortion(input_model, reference_files):
 
 
 def lrs(input_model, reference_files):
-    """
-    The LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
+    """The LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
 
     Notes
     -----
@@ -228,14 +223,12 @@ def lrs(input_model, reference_files):
 
 
 def lrs_xytoabl(input_model, reference_files):
-    """
-    The first part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
+    """The first part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
 
     Transform from subarray (x, y) to (alpha, beta, lambda) using
     the "specwcs" and "distortion" reference files.
 
     """
-
     # subarray to full array transform
     subarray2full = subarray_transform(input_model)
 
@@ -375,14 +368,12 @@ def lrs_xytoabl(input_model, reference_files):
     return dettoabl
 
 def lrs_abltov2v3l(input_model, reference_files):
-    """
-    The second part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
+    """The second part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
 
     Transform from (alpha, beta, lambda) to (v2, v3, lambda) using
     the "specwcs" and "distortion" reference files.
 
     """
-
     # subarray to full array transform
     subarray2full = subarray_transform(input_model)
 
@@ -439,8 +430,7 @@ def lrs_abltov2v3l(input_model, reference_files):
     return abl_to_v2v3l
 
 def ifu(input_model, reference_files):
-    """
-    The MIRI MRS WCS pipeline.
+    """The MIRI MRS WCS pipeline.
 
     It has the following coordinate frames:
     "detector", "alpha_beta", "v2v3", "world".
@@ -493,8 +483,7 @@ def ifu(input_model, reference_files):
 
 
 def detector_to_abl(input_model, reference_files):
-    """
-    Create the transform from "detector" to "alpha_beta" frame.
+    """Create the transform from "detector" to "alpha_beta" frame.
 
     Transform description:
     forward transform
@@ -570,8 +559,7 @@ def detector_to_abl(input_model, reference_files):
 
 
 def abl_to_v2v3l(input_model, reference_files):
-    """
-    Create the transform from "alpha_beta" to "v2v3" frame.
+    """Create the transform from "alpha_beta" to "v2v3" frame.
 
     Transform description:
     forward transform
@@ -643,8 +631,7 @@ exp_type2transform = {'mir_image': imaging,
 
 
 def get_wavelength_range(input_model, path=None):
-    """
-    Return the wavelength range used for computing the WCS.
+    """Return the wavelength range used for computing the WCS.
 
     Needs access to the reference file used to construct the WCS object.
 
@@ -654,6 +641,7 @@ def get_wavelength_range(input_model, path=None):
         Data model after assign_wcs has been run.
     path : str
         Directory where the reference file is. (optional)
+
     """
     fname = input_model.meta.ref_file.wavelengthrange.name.split('/')[-1]
     if path is None and not os.path.exists(fname):
@@ -675,12 +663,13 @@ def get_wavelength_range(input_model, path=None):
 
 def store_dithered_position(input_model):
     """Store the location of the dithered pointing
-    location in the dither metadata
+    location in the dither metadata.
 
     Parameters
     ----------
     input_model : `jwst.datamodels.ImageModel`
         Data model containing dither offset information
+
     """
     # V2_ref and v3_ref should be in arcsec
     idltov23 = IdealToV2V3(

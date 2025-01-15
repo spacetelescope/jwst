@@ -9,8 +9,7 @@ __all__ = ["JumpStep"]
 
 
 class JumpStep(Step):
-    """
-    JumpStep: Performs CR/jump detection on each ramp integration within an
+    """JumpStep: Performs CR/jump detection on each ramp integration within an
     exposure. The 2-point difference method is applied.
     """
 

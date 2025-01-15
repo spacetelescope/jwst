@@ -1,4 +1,4 @@
-""" Class Data Type is used to read in the input data. It also determines
+"""Class Data Type is used to read in the input data. It also determines
 if the input data is a single science exposure, an association table, a
 single datamodel or several data models stored in a ModelContainer.
 """
@@ -15,9 +15,7 @@ log.setLevel(logging.DEBUG)
 
 # ******************************************************************************
 class DataTypes():
-
-    """ Class to handle reading input data to cube_build.
-    """
+    """Class to handle reading input data to cube_build."""
 
     template = {"asn_rule": "",
                 "target": "",
@@ -34,7 +32,7 @@ class DataTypes():
                 }
 
     def __init__(self, input, single, output_file, output_dir):
-        """ Read in input data and determine what type of input data.
+        """Read in input data and determine what type of input data.
 
         Open the input data using datamodels and determine if data is
         a single input model, an association, or a set of input models
@@ -66,7 +64,6 @@ class DataTypes():
            Input data was not of correct form
 
         """
-
         self.input_models = []
         self.output_name = None
 
@@ -106,14 +103,12 @@ class DataTypes():
             self.output_name = output_dir + '/' + self.output_name
 
     def close(self):
-        """
-        Close any files opened by this instance
-        """
+        """Close any files opened by this instance."""
         [f.close() for f in self._opened]
 
 # _______________________________________________________________________________
     def build_product_name(self, filename):
-        """ Determine the base of output name if an input data is a fits filename.
+        """Determine the base of output name if an input data is a fits filename.
 
         Parameters
         ----------
@@ -125,8 +120,8 @@ class DataTypes():
         -------
         single_product : str
           Output base filename.
-        """
 
+        """
         indx = filename.rfind('.fits')
         indx_try = filename.rfind('_rate.fits')
         indx_try2 = filename.rfind('_cal.fits')
@@ -143,6 +138,6 @@ class DataTypes():
 
 
 class NotIFUImageModel(Exception):
-    """ Raise Exception if data is not of type IFUImageModel
-    """
+    """Raise Exception if data is not of type IFUImageModel."""
+
     pass

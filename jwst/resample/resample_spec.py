@@ -29,8 +29,7 @@ __all__ = ["ResampleSpecData"]
 
 
 class ResampleSpecData(ResampleData):
-    """
-    This is the controlling routine for the resampling process for spectral data.
+    """This is the controlling routine for the resampling process for spectral data.
 
     Notes
     -----
@@ -43,13 +42,13 @@ class ResampleSpecData(ResampleData):
          between all input arrays and the output array.
       3. Updates output data model with output arrays from drizzle, including
          a record of metadata from all input models.
+
     """
 
     def __init__(self, input_models, output=None, single=False, blendheaders=False,
                  pixfrac=1.0, kernel="square", fillval=0, wht_type="ivm",
                  good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
-        """
-        Parameters
+        """Parameters
         ----------
         input_models : list of objects
             list of data models, one for each input image
@@ -59,6 +58,7 @@ class ResampleSpecData(ResampleData):
 
         kwargs : dict
             Other parameters
+
         """
         self.output_dir = None
         self.output_filename = output
@@ -184,7 +184,7 @@ class ResampleSpecData(ResampleData):
             log.info(f'Computed output pixel scale: {3600.0 * pscale:.5g} arcsec.')
 
     def _create_output_model(self, ref_input_model=None):
-        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        """Create a new blank model and update it's meta with info from ``ref_input_model``."""
         output_model = datamodels.SlitModel(None)
 
         # update meta data and wcs
@@ -199,8 +199,7 @@ class ResampleSpecData(ResampleData):
         return output_model
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None):
-        """
-        Create a spatial/spectral WCS covering the footprint of the input.
+        """Create a spatial/spectral WCS covering the footprint of the input.
 
         Creates the output frame by linearly fitting RA, Dec along the slit
         and producing a lookup table to interpolate wavelengths in the
@@ -231,6 +230,7 @@ class ResampleSpecData(ResampleData):
         -------
         output_wcs : `~gwcs.WCS`
             A gwcs WCS object defining the output frame WCS.
+
         """
         all_wcs = [m.meta.wcs for m in input_models if m is not refmodel]
         if refmodel:
@@ -464,9 +464,7 @@ class ResampleSpecData(ResampleData):
         return output_wcs
 
     def _max_spatial_extent(self, wcs_list, transform):
-        """
-        Compute spatial coordinate limits for all nods in the tangent plane.
-        """
+        """Compute spatial coordinate limits for all nods in the tangent plane."""
         limits_x = [np.inf, -np.inf]
         limits_y = [np.inf, -np.inf]
         for wcs in wcs_list:
@@ -490,8 +488,7 @@ class ResampleSpecData(ResampleData):
         return *limits_x, *limits_y
 
     def build_interpolated_output_wcs(self, input_models):
-        """
-        Create a spatial/spectral WCS output frame using all the input models.
+        """Create a spatial/spectral WCS output frame using all the input models.
 
         Creates output frame by linearly fitting RA, Dec along the slit and
         producing a lookup table to interpolate wavelengths in the dispersion
@@ -506,8 +503,8 @@ class ResampleSpecData(ResampleData):
         -------
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS
-        """
 
+        """
         # for each input model convert slit x,y to ra,dec,lam
         # use first input model to set spatial scale
         # use center of appended ra and dec arrays to set up
@@ -746,8 +743,7 @@ class ResampleSpecData(ResampleData):
         return output_wcs
 
     def build_nirspec_lamp_output_wcs(self, input_models):
-        """
-        Create a spatial/spectral WCS output frame for NIRSpec lamp mode
+        """Create a spatial/spectral WCS output frame for NIRSpec lamp mode.
 
         Creates output frame by linearly fitting x_msa, y_msa along the slit and
         producing a lookup table to interpolate wavelengths in the dispersion
@@ -762,6 +758,7 @@ class ResampleSpecData(ResampleData):
         -------
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS.
+
         """
         model = input_models[0]
         wcs = model.meta.wcs
@@ -856,9 +853,7 @@ class ResampleSpecData(ResampleData):
 
 
 def find_dispersion_axis(refmodel):
-    """
-    Find the dispersion axis (0-indexed) of the given 2D wavelength array
-    """
+    """Find the dispersion axis (0-indexed) of the given 2D wavelength array."""
     dispaxis = refmodel.meta.wcsinfo.dispersion_direction
     # Change from 1 --> X and 2 --> Y to 0 --> X and 1 --> Y.
     return dispaxis - 1
@@ -949,6 +944,7 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
     -------
     pixel_scale : float
         The spatial scale in degrees.
+
     """
     # Get the coordinates for the center of the array
     if fiducial is None:

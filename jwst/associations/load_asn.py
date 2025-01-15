@@ -1,4 +1,4 @@
-"""Load an Association from a file or object"""
+"""Load an Association from a file or object."""
 from inspect import isclass
 
 from . import (
@@ -15,7 +15,7 @@ def load_asn(
         registry=AssociationRegistry,
         **kwargs
 ):
-    """Load an Association from a file or object
+    """Load an Association from a file or object.
 
     Parameters
     ----------
@@ -59,6 +59,7 @@ def load_asn(
 
     If no registry is specified, the default `Association.load`
     method is used.
+
     """
     if registry is None:
         return Association.load(serialized, format=format, validate=validate)

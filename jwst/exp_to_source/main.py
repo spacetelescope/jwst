@@ -23,6 +23,7 @@ class Main():
     sources: {source: MultiExposureModel, ...}
         A dict keyed on source name whose value is
         the corresponding MultiExposureModel.
+
     """
 
     def __init__(self, args=None):

@@ -102,8 +102,7 @@ def create_model_3d():
 
 
 def test_roll_angle():
-    """
-    A sanity test - when V2_REF = 0 and V3_REF = 0,
+    """A sanity test - when V2_REF = 0 and V3_REF = 0,
     for V2, V3 close to the origin
     ROLL_REF should be approximately PA_V3 .
 
@@ -122,9 +121,7 @@ def test_roll_angle():
 
 
 def test_v23_to_sky():
-    """
-    Test taken from INS report.
-    """
+    """Test taken from INS report."""
     ra_ref = 165  # in deg
     dec_ref = 54  # in deg
     v2_ref = -503.654472 / 3600  # in deg
@@ -144,7 +141,7 @@ def test_v23_to_sky():
 
 
 def test_frame_from_model_3d(tmp_path, create_model_3d):
-    """ Tests creating a frame from a data model. """
+    """Tests creating a frame from a data model."""
     # Test CompositeFrame initialization (celestial and spectral)
     im = create_model_3d
     frame = pointing.frame_from_model(im)
@@ -165,7 +162,7 @@ def test_frame_from_model_3d(tmp_path, create_model_3d):
 
 
 def test_frame_from_model_2d(tmp_path, create_model_2d):
-    """ Tests creating a frame from a data model. """
+    """Tests creating a frame from a data model."""
     # Test 2D spatial custom frame
     im = create_model_2d
     frame = pointing.frame_from_model(im)
@@ -175,7 +172,7 @@ def test_frame_from_model_2d(tmp_path, create_model_2d):
 
 
 def test_create_fitswcs(tmp_path, create_model_3d):
-    """GWCS from create_fitswcs function and astropy.wcs give same result"""
+    """GWCS from create_fitswcs function and astropy.wcs give same result."""
     im = create_model_3d
     w3d = pointing.create_fitswcs(im)
     gra, gdec, glam = w3d(1, 1, 1)

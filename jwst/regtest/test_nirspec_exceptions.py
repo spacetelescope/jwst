@@ -10,11 +10,9 @@ from jwst.tests.helpers import LogWatcher
 
 @pytest.mark.bigdata
 def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, monkeypatch):
+    """Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
+    that's missing an MSAMETFL. Exception should be raised.
     """
-        Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
-        that's missing an MSAMETFL. Exception should be raised.
-    """
-
     # Get the input file, don't get the MSA file
     rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
 
@@ -36,11 +34,9 @@ def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, monkeypatch):
 
 @pytest.mark.bigdata
 def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, monkeypatch):
+    """Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
+    that's missing an MSAMETFL. Exception should NOT be raised.
     """
-        Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
-        that's missing an MSAMETFL. Exception should NOT be raised.
-    """
-
     # Get the input file, don't get the MSA file
     rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
 
@@ -63,11 +59,9 @@ def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, monkeypatch
 
 @pytest.mark.bigdata
 def test_nirspec_assignwcs_skip(rtdata, fitsdiff_default_kwargs, caplog):
+    """Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
+    with the AssignWcs step skipped. The pipeline should abort.
     """
-        Test of calwebb_spec2 pipeline performed on NIRSpec MSA exposure
-        with the AssignWcs step skipped. The pipeline should abort.
-    """
-
     # Get the input file
     rtdata.get_data('nirspec/mos/jw01180025001_05101_00001_nrs2_rate.fits')
 
@@ -83,12 +77,10 @@ def test_nirspec_assignwcs_skip(rtdata, fitsdiff_default_kwargs, caplog):
 
 @pytest.mark.bigdata
 def test_nirspec_nrs2_nodata_api(rtdata, fitsdiff_default_kwargs):
+    """Test of calwebb_spec2 pipeline performed on NIRSpec IFU exposure
+    that has a filter/grating combination that produces no data on
+    the NRS2 detector. Pipeline should raise an exception.
     """
-        Test of calwebb_spec2 pipeline performed on NIRSpec IFU exposure
-        that has a filter/grating combination that produces no data on
-        the NRS2 detector. Pipeline should raise an exception.
-    """
-
     # Get the input file
     rtdata.get_data('nirspec/ifu/jw01128009001_0310c_00004_nrs2_rate.fits')
 
@@ -102,12 +94,10 @@ def test_nirspec_nrs2_nodata_api(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 def test_nirspec_nrs2_nodata_strun(rtdata, fitsdiff_default_kwargs, caplog):
+    """Test of calwebb_spec2 pipeline performed on NIRSpec IFU exposure
+    that has a filter/grating combination that produces no data on
+    the NRS2 detector. Pipeline should return with non-zero exit status.
     """
-        Test of calwebb_spec2 pipeline performed on NIRSpec IFU exposure
-        that has a filter/grating combination that produces no data on
-        the NRS2 detector. Pipeline should return with non-zero exit status.
-    """
-
     # Get the input file
     rtdata.get_data('nirspec/ifu/jw01128009001_0310c_00004_nrs2_rate.fits')
 

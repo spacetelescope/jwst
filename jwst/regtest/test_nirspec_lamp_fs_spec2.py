@@ -34,7 +34,6 @@ def run_pipeline(rtdata_module):
     "assign_wcs", "extract_2d", "flat_field", "cal", "s2d", "x1d"])
 def test_nirspec_lamp_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 on NIRSpec lamp in Fixed-Slit mode."""
-
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = replace_suffix(

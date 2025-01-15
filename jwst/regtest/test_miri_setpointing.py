@@ -5,10 +5,7 @@ from jwst.lib.set_telescope_pointing import add_wcs
 
 @pytest.mark.bigdata
 def test_miri_setpointing(rtdata, fitsdiff_default_kwargs):
-    """
-    Regression test of the set_telescope_pointing script on a level-1b MIRI image.
-    """
-
+    """Regression test of the set_telescope_pointing script on a level-1b MIRI image."""
     # Get the input level-1b file
     rtdata.get_data("miri/mrs/jw01282004001_02101_00001_mirifulong_uncal.fits")
 

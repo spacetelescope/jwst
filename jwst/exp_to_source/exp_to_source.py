@@ -1,5 +1,4 @@
-"""exp_to_source: Reformat Level2b multi-source data to be source-based.
-"""
+"""exp_to_source: Reformat Level2b multi-source data to be source-based."""
 import logging
 
 from collections import defaultdict
@@ -29,6 +28,7 @@ def exp_to_source(inputs):
         Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
         The key is the ID of each source, i.e. ``source_id``.
+
     """
     result = defaultdict(MultiExposureModel)
 
@@ -104,6 +104,7 @@ def multislit_to_container(inputs):
         Returns a dict of ModelContainer instances wherein each
         instance contains ImageModels of slits belonging to the same source.
         The key is the ID of each slit, i.e. ``source_id``.
+
     """
     containers = exp_to_source(inputs)
     for id in containers:

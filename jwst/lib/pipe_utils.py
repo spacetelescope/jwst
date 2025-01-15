@@ -1,4 +1,4 @@
-"""Pipeline utilities objects"""
+"""Pipeline utilities objects."""
 
 import logging
 
@@ -25,6 +25,7 @@ def is_tso(model):
     -------
     is_tso : bool
        `True` if the model represents TSO data
+
     """
     is_tso = False
 
@@ -66,8 +67,8 @@ def is_irs2(model):
     -------
     bool
        `True` if the data are in IRS2 format
-    """
 
+    """
     if isinstance(model, np.ndarray):
         shape = model.shape
     else:
@@ -102,6 +103,7 @@ def match_nans_and_flags(input_model):
         Input model containing some combination of data, dq, err, var_rnoise,
         var_poisson, and var_flat extensions. These extensions must all have
         matching dimensions if present.
+
     """
     # Check for datamodel input or slit instance
     if (not isinstance(input_model, JwstDataModel)

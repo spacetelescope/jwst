@@ -12,8 +12,7 @@ log.setLevel(logging.DEBUG)
 
 class FringeFitter:
     def __init__(self, instrument_data, **kwargs):
-        """
-        Fit fringes to get interferometric observables for the data.
+        """Fit fringes to get interferometric observables for the data.
 
         For the given information on the instrument and mask, calculate the
         fringe observables (visibilities and closure phases in the image plane.
@@ -30,6 +29,7 @@ class FringeFitter:
             psf_offset - subpixel centering of your data, if known
             npix - number of data pixels to use. Default is the shape of the data frame.
             find_rotation - will find the best pupil rotation that matches the data
+
         """
         self.instrument_data = instrument_data
 
@@ -65,10 +65,9 @@ class FringeFitter:
             log.info("leastsqnrm.matrix_operations() - equally-weighted")
 
     def fit_fringes_all(self, input_model):
-        """
-        Extract the input data from input_model, and generate the best model to
+        """Extract the input data from input_model, and generate the best model to
         match the data (centering, scaling, rotation)
-        May allow parallelization by integration (later)
+        May allow parallelization by integration (later).
 
         Parameters
         ----------
@@ -83,8 +82,8 @@ class FringeFitter:
             AMI tables of observables for each integration from LG algorithm fringe fitting in OIFITS format
         lgfit:
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
-        """
 
+        """
         # scidata, dqmask are already centered around peak
         self.scidata, self.dqmask = self.instrument_data.read_data_model(input_model)
 
@@ -110,9 +109,8 @@ class FringeFitter:
         return output_model, output_model_multi, lgfit
         
     def make_lgfitmodel(self):
-        """
-        Populate the LGFitModel with the output of the fringe fitting
-        (LG algorithm)
+        """Populate the LGFitModel with the output of the fringe fitting
+        (LG algorithm).
 
         Parameters
         ----------
@@ -121,6 +119,7 @@ class FringeFitter:
         -------
         m: AmiLgFitModel object
             LG analysis centered data, fit, residual, and model info
+
         """
         nslices = len(self.nrm_list)
         # 3d arrays of centered data, models, and residuals (data - model)
@@ -157,8 +156,7 @@ class FringeFitter:
 
 
     def fit_fringes_single_integration(self, slc):
-        """
-        Generate the best model to match a single slice.
+        """Generate the best model to match a single slice.
 
         Parameters
         ----------
@@ -186,7 +184,6 @@ class FringeFitter:
         -----------------------------------------------------------------------------
         
         """
-
         nrm = lg_model.LgModel(self.instrument_data.nrm_model,
                                 mask=self.instrument_data.mask,
                                 pixscale=self.instrument_data.pscale_rad,

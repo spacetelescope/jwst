@@ -24,8 +24,7 @@ def detect_outliers(
     snr,
     make_output_path,
 ):
-    """
-    Flag outliers in tso data.
+    """Flag outliers in tso data.
 
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """
@@ -67,8 +66,7 @@ def detect_outliers(
 
 
 def weight_no_resample(input_model, good_bits):
-    """
-    give weights to model without resampling
+    """Give weights to model without resampling.
 
     Notes
     -----
@@ -82,6 +80,7 @@ def weight_no_resample(input_model, good_bits):
     preserve the original behavior. If it is determined later that exposure
     time or inverse variance weighting should be used here, build_driz_weight
     should be re-implemented.
+
     """
     weighted_cube = input_model.copy()
     dqmask = build_mask(input_model.dq, good_bits)
@@ -94,8 +93,7 @@ def compute_rolling_median(
         weight_threshold: np.ndarray,
         w: int=25
 ) -> np.ndarray:
-    '''
-    Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
+    """Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
 
     Parameters
     ----------
@@ -112,8 +110,8 @@ def compute_rolling_median(
     -------
     np.ndarray
         The rolling median of the input data. Same dimensions as input.
-    '''
 
+    """
     sci = model.data
     weight = model.wht
     badmask = np.less(weight, weight_threshold)
@@ -133,8 +131,7 @@ def compute_rolling_median(
 
 
 def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
-    """
-    Calculate the median of a moving window over the zeroth axis of an N-d array.
+    """Calculate the median of a moving window over the zeroth axis of an N-d array.
     Algorithm works by expanding the array into an additional dimension
     where the new axis has the same length as the window size. Each entry in that
     axis is a copy of the original array shifted by 1 with respect to the previous
@@ -156,6 +153,7 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
 
     Notes
     -----
+
     """
     if w <= 1:
         raise ValueError("Rolling median window size must be greater than 1.")

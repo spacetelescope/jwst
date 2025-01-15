@@ -45,6 +45,7 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
     output_model: ramp model
         The science data with reference output and reference pixels
         subtracted.
+
     """
     #
     """Readout parameters
@@ -194,7 +195,7 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
 
 
 def float_to_complex(data):
-    """Convert real and imaginary parts to complex"""
+    """Convert real and imaginary parts to complex."""
     nelem = len(data)
 
     return data[0:-1:2] + 1j * data[1:nelem:2]
@@ -255,8 +256,8 @@ def strip_ref_pixels(output_model, irs2_mask):
         True means the element corresponds to a normal pixel in the raw,
         IRS2-format data.  False corresponds either to a reference output
         pixel or to one of the interspersed reference pixel values.
-    """
 
+    """
     detector = output_model.meta.instrument.detector
 
     if detector == "NRS1":
@@ -352,8 +353,8 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
     refpix_r : int, optional
         Number of reference samples before stepping back in to collect
         regular samples.
-    """
 
+    """
     nx = data.shape[-1]                 # 3200
     nrows = len(output)
 
@@ -415,8 +416,8 @@ def decode_mask(output, mask):
     -------
     bits : list
         A list of the indices of bits set in the `mask` value.
-    """
 
+    """
     # The bit number corresponds to a count of groups of reads of the
     # interleaved reference pixels. The 32-bit unsigned integer encoding
     # has increasing index, from left to right.
@@ -432,8 +433,7 @@ def decode_mask(output, mask):
 
 def replace_refpix(bad_pix, data, bad_mask, is_irs2, low_limit, high_limit,
                    scipix_n, refpix_r, axis=-2):
-    """
-    Replace a bad reference pixel with its nearest neighboring value.
+    """Replace a bad reference pixel with its nearest neighboring value.
 
     The nearest reference group above and below the bad pixel
     are checked for good values in pixels with the same parity as the
@@ -474,6 +474,7 @@ def replace_refpix(bad_pix, data, bad_mask, is_irs2, low_limit, high_limit,
     axis : int, optional
         Indicates the axis containing the reference pixel values.
         Set to -2 for science orientation, -1 for detector orientation.
+
     """
     # nearest reference pixel group, respecting parity
     ref_period = scipix_n + refpix_r
@@ -537,8 +538,7 @@ def replace_refpix(bad_pix, data, bad_mask, is_irs2, low_limit, high_limit,
 
 
 def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False):
-    """
-    Flag bad reference pixels and replace with nearest good values.
+    """Flag bad reference pixels and replace with nearest good values.
 
     Parameters
     ----------
@@ -555,6 +555,7 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
     replace_only : bool, optional
         If set, previously flagged bad values will be replaced, but new outliers
         will not be flagged.
+
     """
     data = datamodel.data
     pixeldq = datamodel.pixeldq
@@ -710,8 +711,8 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
         only the normal pixel data (including the reference pixels on each
         edge).  The shape is expected to be (ngroups, ny, nx), where
         nx = ny = 2048.
-    """
 
+    """
     shape = data0.shape
     ngroups = shape[0]
     ny = shape[1]
@@ -994,7 +995,6 @@ def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm
 
 def ols_line(x, y):
     """Fit a straight line using ordinary least squares."""
-
     xf = x.ravel()
     yf = y.ravel()
     if len(xf) < 1 or len(yf) < 1:

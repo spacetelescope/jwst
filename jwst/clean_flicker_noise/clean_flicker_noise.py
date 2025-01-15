@@ -29,8 +29,7 @@ NRS_FS_REGION = [922, 1116]
 
 
 def make_rate(input_model, input_dir='', return_cube=False):
-    """
-    Make a rate model from a ramp model.
+    """Make a rate model from a ramp model.
 
     Parameters
     ----------
@@ -50,6 +49,7 @@ def make_rate(input_model, input_dir='', return_cube=False):
     -------
     rate_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
         The rate or rateints model.
+
     """
     # Call the ramp fit step on a copy of the input
     # Use software default values for parameters
@@ -77,8 +77,7 @@ def make_rate(input_model, input_dir='', return_cube=False):
 
 def post_process_rate(input_model, input_dir='', assign_wcs=False,
                       msaflagopen=False, flat_dq=False):
-    """
-    Post-process the input rate model, as needed.
+    """Post-process the input rate model, as needed.
 
     Parameters
     ----------
@@ -106,6 +105,7 @@ def post_process_rate(input_model, input_dir='', assign_wcs=False,
     -------
     output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
         The updated model.
+
     """
     output_model = input_model
 
@@ -142,8 +142,7 @@ def post_process_rate(input_model, input_dir='', assign_wcs=False,
 
 
 def mask_ifu_slices(input_model, mask):
-    """
-    Flag pixels within IFU slices.
+    """Flag pixels within IFU slices.
 
     Find pixels located within IFU slices, according to the WCS,
     and flag them in the mask, so that they do not get used.
@@ -161,6 +160,7 @@ def mask_ifu_slices(input_model, mask):
     -------
     mask : array-like of bool
         2D output mask with additional flags for science pixels
+
     """
     log.info("Finding slice pixels for an IFU image")
 
@@ -203,8 +203,7 @@ def mask_ifu_slices(input_model, mask):
 
 
 def mask_slits(input_model, mask):
-    """
-    Flag pixels within science regions.
+    """Flag pixels within science regions.
 
     Find pixels located within MOS or fixed slit footprints
     and flag them in the mask, so that they do not get used.
@@ -222,8 +221,8 @@ def mask_slits(input_model, mask):
     -------
     mask : array-like of bool
         2D output mask with additional flags for slit pixels
-    """
 
+    """
     log.info("Finding slit/slitlet pixels")
 
     # Get the slit-to-msa frame transform from the WCS object
@@ -251,8 +250,7 @@ def mask_slits(input_model, mask):
 def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
                        fit_histogram=False, lower_half_only=False,
                        verbose=False):
-    """
-    Flag signal and bad pixels in the image mask.
+    """Flag signal and bad pixels in the image mask.
 
     Given an image, estimate the background level and a sigma value for the
     mean background.
@@ -307,6 +305,7 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
     verbose : bool, optional
         If set, DEBUG level messages are issued with details on the
         computed statistics.
+
     """
     # Sigma limit for basic stats
     sigma_limit = 3.0
@@ -421,8 +420,7 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
 
 def create_mask(input_model, mask_science_regions=False,
                 n_sigma=2.0, fit_histogram=False, single_mask=False):
-    """
-    Create a mask identifying background pixels.
+    """Create a mask identifying background pixels.
 
     Parameters
     ----------
@@ -457,6 +455,7 @@ def create_mask(input_model, mask_science_regions=False,
     -------
     mask : array-like of bool
         2D or 3D image mask
+
     """
     exptype = input_model.meta.exposure.type.lower()
 
@@ -531,8 +530,7 @@ def create_mask(input_model, mask_science_regions=False,
 
 def background_level(image, mask, background_method='median',
                      background_box_size=None):
-    """
-    Fit a low-resolution background level.
+    """Fit a low-resolution background level.
 
     Parameters
     ----------
@@ -562,6 +560,7 @@ def background_level(image, mask, background_method='median',
         The background level: a single value, if `background_method`
         is 'median' or None, or an array matching the input image size
         if `background_method` is 'model'.
+
     """
     if background_method is None:
         background = 0.0
@@ -607,8 +606,7 @@ def background_level(image, mask, background_method='median',
 
 
 def fft_clean_full_frame(image, mask, detector):
-    """
-    Fit and remove background noise in frequency space for a full-frame image.
+    """Fit and remove background noise in frequency space for a full-frame image.
 
     Parameters
     ----------
@@ -625,8 +623,8 @@ def fft_clean_full_frame(image, mask, detector):
     -------
     cleaned_image : array-like of float
         The cleaned image.
-    """
 
+    """
     # Instantiate the cleaner
     cleaner = NSClean(detector, mask)
 
@@ -643,8 +641,7 @@ def fft_clean_full_frame(image, mask, detector):
 def fft_clean_subarray(image, mask, detector, npix_iter=512,
                        fc=(1061, 1211, 49943, 49957),
                        exclude_outliers=True, sigrej=4, minfrac=0.05):
-    """
-    Fit and remove background noise in frequency space for a subarray image.
+    """Fit and remove background noise in frequency space for a subarray image.
 
     Parameters
     ----------
@@ -686,6 +683,7 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
     -------
     cleaned_image : array-like of float
         The cleaned image.
+
     """
     # Flip the image to detector coords. NRS1 requires a transpose
     # of the axes, while NRS2 requires a transpose and flip.
@@ -810,8 +808,7 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
 
 
 def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
-    """
-    Fit and remove background noise via median values along one image axis.
+    """Fit and remove background noise via median values along one image axis.
 
     Parameters
     ----------
@@ -837,6 +834,7 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     -------
     cleaned_image : array-like of float
         The cleaned image.
+
     """
     # Masked median along slow axis
     masked_image = np.ma.array(image, mask=~mask)
@@ -884,8 +882,7 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
 
 
 def _check_input(exp_type, fit_method):
-    """
-    Check for valid input data and options.
+    """Check for valid input data and options.
 
     Parameters
     ----------
@@ -898,6 +895,7 @@ def _check_input(exp_type, fit_method):
     -------
     valid : bool
         True if the input is valid.
+
     """
     message = None
     miri_allowed = ['MIR_IMAGE']
@@ -918,8 +916,7 @@ def _check_input(exp_type, fit_method):
 
 
 def _make_intermediate_model(input_model, intermediate_data):
-    """
-    Make a data model to contain intermediate outputs.
+    """Make a data model to contain intermediate outputs.
 
     The output model type depends on the shape of the input
     intermediate data.
@@ -936,6 +933,7 @@ def _make_intermediate_model(input_model, intermediate_data):
     intermediate_model : ~jwst.datamodel.JwstDataModel`
         A model containing only the intermediate data and top-level
         metadata matching the input.
+
     """
     if intermediate_data.ndim == 4:
         intermediate_model = datamodels.RampModel(data=intermediate_data)
@@ -951,8 +949,7 @@ def _make_intermediate_model(input_model, intermediate_data):
 
 def _standardize_parameters(
         exp_type, subarray, slowaxis, background_method, fit_by_channel):
-    """
-    Standardize input parameters.
+    """Standardize input parameters.
 
     Check input parameters against input exposure type and assemble
     values needed for subsequent correction.
@@ -983,6 +980,7 @@ def _standardize_parameters(
     fc : tuple of int
         Frequency cutoff values for use with FFT correction,
         by input subarray.
+
     """
     # Get axis to correct, by instrument
     if exp_type.startswith('MIR'):
@@ -1017,8 +1015,7 @@ def _standardize_parameters(
 
 def _make_processed_rate_image(
         input_model, single_mask, input_dir, exp_type, mask_science_regions):
-    """
-    Make a draft rate image and postprocess if needed.
+    """Make a draft rate image and postprocess if needed.
 
     Parameters
     ----------
@@ -1044,6 +1041,7 @@ def _make_processed_rate_image(
     -------
     image_model : `~jwst.datamodel.JwstDataModel`
         The processed rate image or cube.
+
     """
     if isinstance(input_model, datamodels.RampModel):
         image_model = make_rate(input_model, return_cube=(not single_mask),
@@ -1069,8 +1067,7 @@ def _make_processed_rate_image(
 def _make_scene_mask(
         user_mask, image_model, mask_science_regions,
         n_sigma, fit_histogram, single_mask, save_mask):
-    """
-    Make a scene mask from user input or rate image.
+    """Make a scene mask from user input or rate image.
 
     If provided, the user mask is opened as a datamodel and directly
     returned. Otherwise, the mask is generated from the rate data in
@@ -1109,6 +1106,7 @@ def _make_scene_mask(
     mask_model : `~jwst.datamodel.JwstDataModel` or None
         A datamodel containing the background mask, if `save_mask`
         is True.
+
     """
     # Check for a user-supplied mask image. If provided, use it.
     if user_mask is not None:
@@ -1138,8 +1136,7 @@ def _make_scene_mask(
 
 
 def _check_data_shapes(input_model, background_mask):
-    """
-    Check data shape for input model and background mask.
+    """Check data shape for input model and background mask.
 
     Parameters
     ----------
@@ -1159,6 +1156,7 @@ def _check_data_shapes(input_model, background_mask):
         Number of integrations in the input data.
     ngroups : int
         Number of groups in the input data.
+
     """
     mismatch = True
     image_shape = input_model.data.shape[-2:]
@@ -1193,8 +1191,7 @@ def _check_data_shapes(input_model, background_mask):
 def _clean_one_image(image, mask, background_method, background_box_size,
                      n_sigma, fit_method, detector, fc, axis_to_correct,
                      fit_by_channel):
-    """
-    Clean an image by fitting and removing background noise.
+    """Clean an image by fitting and removing background noise.
 
     Parameters
     ----------
@@ -1234,6 +1231,7 @@ def _clean_one_image(image, mask, background_method, background_box_size,
     success : bool
         True if cleaning proceeded as expected; False if
         cleaning failed and the step should be skipped.
+
     """
     success = True
 
@@ -1291,8 +1289,7 @@ def _clean_one_image(image, mask, background_method, background_box_size,
 
 
 def _mask_unusable(mask, dq):
-    """
-    Mask unusable data, according to DQ.
+    """Mask unusable data, according to DQ.
 
     Currently, JUMP and DO_NOT_USE flags are used.
     The mask is updated in place
@@ -1303,6 +1300,7 @@ def _mask_unusable(mask, dq):
         Input mask, updated in place.
     dq : array-like of int
         DQ flag array matching the mask shape.
+
     """
     dnu = (dq & dqflags.group['DO_NOT_USE']) > 0
     mask[dnu] = False
@@ -1316,8 +1314,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
                   mask_science_regions=False, n_sigma=2.0, fit_histogram=False,
                   single_mask=True, user_mask=None, save_mask=False,
                   save_background=False, save_noise=False):
-    """
-    Apply the 1/f noise correction.
+    """Apply the 1/f noise correction.
 
     Parameters
     ----------
@@ -1396,6 +1393,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         Completion status.  If errors were encountered, status = 'SKIPPED'
         and the output data matches the input data.  Otherwise,
         status = 'COMPLETE'.
+
     """
     # Track the completion status, for various failure conditions
     status = 'SKIPPED'

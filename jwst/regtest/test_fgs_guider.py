@@ -1,4 +1,4 @@
-"""Regression tests for FGS Guidestar in ID and FINEGUIDE modes"""
+"""Regression tests for FGS Guidestar in ID and FINEGUIDE modes."""
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -15,7 +15,7 @@ GUIDER_SUFFIXES = ['cal', 'dq_init', 'guider_cds']
 
 @pytest.fixture(scope='module', params=FILE_ROOTS, ids=FILE_ROOTS)
 def run_guider_pipelines(rtdata_module, request):
-    """Run pipeline for guider data"""
+    """Run pipeline for guider data."""
     rtdata = rtdata_module
     rtdata.get_data('fgs/level1b/' + request.param + '_uncal.fits')
 
@@ -33,6 +33,6 @@ def run_guider_pipelines(rtdata_module, request):
 @pytest.mark.bigdata
 @pytest.mark.parametrize('suffix', GUIDER_SUFFIXES, ids=GUIDER_SUFFIXES)
 def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
-    """Regression for FGS Guider data"""
+    """Regression for FGS Guider data."""
     rt.is_like_truth(run_guider_pipelines, fitsdiff_default_kwargs, suffix,
                      'truth/test_fgs_guider', is_suffix=True)

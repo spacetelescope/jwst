@@ -1,5 +1,4 @@
-"""
-Submodule defined for performing outlier detection on IFU data.
+"""Submodule defined for performing outlier detection on IFU data.
 
 This is the controlling routine for the outlier detection process.
 It loads and sets the various input data and parameters needed to flag
@@ -25,6 +24,7 @@ This routine performs the following operations::
   5. Normalize minimum difference to local median of difference array
   6. Select outliers by flagging those normalized minimum values > threshold_percent
   7. Updates input ImageModel DQ arrays with mask of detected outliers.
+
 """
 
 import logging
@@ -52,8 +52,7 @@ def detect_outliers(
     threshold_percent,
     make_output_path,
 ):
-    """
-    Flag outliers in ifu data.
+    """Flag outliers in ifu data.
 
     See `OutlierDetectionStep.spec` for documentation of these arguments.
     """
@@ -113,8 +112,7 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
                   save_intermediate_results,
                   ifu_second_check,
                   make_output_path):
-    """
-    Flag outlier pixels on IFU. In general we are searching for pixels that
+    """Flag outlier pixels on IFU. In general we are searching for pixels that
     are a form of a bad pixel but not in bad pixel mask, because the bad pixels vary with
     time. This program will flag the DQ of input images as DO_NOT_USE and OUTLIER and set
     the associated science pixel to a Nan. This routine only works on data from one detector.
@@ -148,8 +146,8 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
     make_output_path : function
         The functools.partial instance to pass to save_median. Has no effect if
         save_intermediate_results is False.
-    """
 
+    """
     # set up array to hold group differences
     diffarr = np.zeros([ndet_files, ny, nx])
     j = 0
@@ -275,8 +273,7 @@ def flag_outliers(input_models, idet, uq_det, ndet_files,
 
 
 def _find_detector_parameters(input_models):
-    """Find the size of data and the axis to form the differences (perpendicular to disaxis) """
-
+    """Find the size of data and the axis to form the differences (perpendicular to disaxis)."""
     if input_models[0].meta.instrument.name.upper() == 'MIRI':
         diffaxis = 1
     elif input_models[0].meta.instrument.name.upper() == 'NIRSPEC':
@@ -286,8 +283,7 @@ def _find_detector_parameters(input_models):
 
 
 def create_optional_results_model(opt_info):
-    """
-    Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.
+    """Creates an OutlierOutputModel from the computed arrays from outlier detection on IFU data.
 
     Parameter
     ---------
@@ -296,10 +292,11 @@ def create_optional_results_model(opt_info):
     opt_info: tuple
     The output arrays needed for the OultierOutputModel.
 
-    Return
-    ---------
+    Return:
+    ------
     opt_model : OutlierIFUOutputModel
         The optional OutlierIFUOutputModel to be returned from the outlier_detection_ifu step.
+
     """
     (kernsize_x, kernsize_y, threshold_percent,
      diffarr, minarr, normarr, minnorm) = opt_info

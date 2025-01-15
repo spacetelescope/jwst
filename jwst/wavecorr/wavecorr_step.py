@@ -8,9 +8,7 @@ __all__ = ["WavecorrStep"]
 
 
 class WavecorrStep(Step):
-    """
-    This step applies wavelength offsets to off-center NIRSpec sources.
-    """
+    """This step applies wavelength offsets to off-center NIRSpec sources."""
 
     class_alias = "wavecorr"
 

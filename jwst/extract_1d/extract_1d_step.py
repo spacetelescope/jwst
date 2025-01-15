@@ -11,7 +11,7 @@ __all__ = ["Extract1dStep"]
 
 
 class Extract1dStep(Step):
-    """Extract a 1-d spectrum from 2-d data
+    """Extract a 1-d spectrum from 2-d data.
 
     Attributes
     ----------
@@ -346,8 +346,8 @@ class Extract1dStep(Step):
         JWST data model
             This will be `input_model` if the step was skipped; otherwise,
             it will be a model containing 1-D extracted spectra.
-        """
 
+        """
         # Open the input and figure out what type of model it is
         if isinstance(input, ModelContainer):
             input_model = input

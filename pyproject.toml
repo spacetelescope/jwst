@@ -263,7 +263,16 @@ exclude = [
 ]
 line-length = 130
 
-lint.ignore = [
+[tool.ruff.lint]
+select = [
+    "D",
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "E722", # Do not use bare `except`
     "ANN101", # Missing type annotation for self in method

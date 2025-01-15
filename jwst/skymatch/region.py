@@ -1,7 +1,4 @@
-"""
-Polygon filling algorithm.
-
-"""
+"""Polygon filling algorithm."""
 # Original author: Nadezhda Dencheva
 #
 # modifications by Mihai Cara: removed functionality not needed for the
@@ -34,15 +31,15 @@ class ValidationError(Exception):
 
 
 class Region():
-    """
-    Base class for regions.
+    """Base class for regions.
 
     Parameters
-    -------------
+    ----------
     rid : int or string
         region ID
     coordinate_system : astropy.wcs.CoordinateSystem instance or a string
         in the context of WCS this would be an instance of wcs.CoordinateSysem
+
     """
 
     def __init__(self, rid, coordinate_system):
@@ -50,8 +47,7 @@ class Region():
         self._rid = rid
 
     def __contains__(self, x, y):
-        """
-        Determines if a pixel is within a region.
+        """Determines if a pixel is within a region.
 
         Parameters
         ----------
@@ -63,12 +59,12 @@ class Region():
         True or False
 
         Subclasses must define this method.
+
         """
         raise NotImplementedError("__contains__")
 
     def scan(self, mask):
-        """
-        Sets mask values to region id for all pixels within the region.
+        """Sets mask values to region id for all pixels within the region.
         Subclasses must define this method.
 
         Parameters
@@ -80,13 +76,13 @@ class Region():
         -------
         mask : array where the value of the elements is the region ID or 0 (for
             pixels which are not included in any region).
+
         """
         raise NotImplementedError("scan")
 
 
 class Polygon(Region):
-    """
-    Represents a 2D polygon region with multiple vertices
+    """Represents a 2D polygon region with multiple vertices.
 
     Parameters
     ----------
@@ -142,8 +138,7 @@ class Polygon(Region):
         return x, y, w, h
 
     def _construct_ordered_GET(self):
-        """
-        Construct a Global Edge Table (GET)
+        """Construct a Global Edge Table (GET).
 
         The GET is an OrderedDict. Keys are scan  line numbers,
         ordered from bbox.ymin to bbox.ymax, where bbox is the
@@ -154,6 +149,7 @@ class Polygon(Region):
         -------
         GET: OrderedDict
             {scan_line: [edge1, edge2]}
+
         """
         # edges is a list of Edge objects which define a polygon
         # with these vertices
@@ -172,9 +168,7 @@ class Polygon(Region):
         return GET
 
     def get_edges(self):
-        """
-        Create a list of Edge objects from vertices
-        """
+        """Create a list of Edge objects from vertices."""
         edges = []
         for i in range(1, len(self._vertices)):
             name = 'E' + str(i - 1)
@@ -188,8 +182,7 @@ class Polygon(Region):
         return edges
 
     def scan(self, data):
-        """
-        This is the main function which scans the polygon and creates the mask
+        """This is the main function which scans the polygon and creates the mask.
 
         Parameters
         ----------
@@ -263,8 +256,7 @@ class Polygon(Region):
         return data
 
     def update_AET(self, y, AET):
-        """
-        Update the Active Edge Table (AET)
+        """Update the Active Edge Table (AET).
 
         Add edges from GET to AET for which ymin of the edge is
         equal to the y of the scan line.
@@ -284,7 +276,7 @@ class Polygon(Region):
         return AET
 
     def __contains__(self, px):
-        """even-odd algorithm or smth else better should be used"""
+        """even-odd algorithm or smth else better should be used."""
         # minx = self._vertices[:,0].min()
         # maxx = self._vertices[:,0].max()
         # miny = self._vertices[:,1].min()
@@ -298,8 +290,7 @@ class Polygon(Region):
 
 
 class Edge():
-    """
-    Edge representation
+    """Edge representation.
 
     An edge has a "start" and "stop" (x,y) vertices and an entry in the
     GET table of a polygon. The GET entry is a list of these values:
@@ -353,8 +344,7 @@ class Edge():
         return self._ymax
 
     def compute_GET_entry(self):
-        """
-        Compute the entry in the Global Edge Table
+        """Compute the entry in the Global Edge Table.
 
         [ymax, x@ymin, 1/m]
 
@@ -375,8 +365,7 @@ class Edge():
         return entry
 
     def compute_AET_entry(self, edge):
-        """
-        Compute the entry for an edge in the current Active Edge Table
+        """Compute the entry for an edge in the current Active Edge Table.
 
         [ymax, x_intersect, 1/m]
         note: currently 1/m is not used

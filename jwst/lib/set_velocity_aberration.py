@@ -1,5 +1,4 @@
-'''
-This script adds velocity aberration correction information to the FITS
+"""This script adds velocity aberration correction information to the FITS
 files provided to it on the command line (one or more).
 
 It assumes the following keywords are present in the file header:
@@ -16,7 +15,7 @@ VA_SCALE (dimensionless scale factor)
 
 It does not currently place the new keywords in any particular location
 in the header other than what is required by the standard.
-'''
+"""
 
 import logging
 import numpy as np
@@ -33,8 +32,8 @@ SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
 
 
 def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
-    """ Computes constant scale factor due to velocity aberration as well as
-    corrected ``RA`` and ``DEC`` values, in vector form
+    """Computes constant scale factor due to velocity aberration as well as
+    corrected ``RA`` and ``DEC`` values, in vector form.
 
     Parameters
     ----------
@@ -59,6 +58,7 @@ def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
 
     u_corr : numpy.array([ua0, ua1, ua2])
         Apparent position vector in the moving telescope frame.
+
     """
     beta = np.array([velocity_x, velocity_y, velocity_z]) / SPEED_OF_LIGHT
     beta2 = np.dot(beta, beta)  # |beta|^2
@@ -78,7 +78,7 @@ def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
 
 
 def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
-    """ Computes constant scale factor due to velocity aberration as well as
+    """Computes constant scale factor due to velocity aberration as well as
     corrected ``RA`` and ``DEC`` values.
 
     Parameters
@@ -116,8 +116,7 @@ def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
 
 
 def add_dva(filename, force_level1bmodel=True):
-    """
-    Given the name of a valid partially populated level 1b JWST file,
+    """Given the name of a valid partially populated level 1b JWST file,
     determine the velocity aberration scale factor and apparent target position
     in the moving (telescope) frame.
 
@@ -130,6 +129,7 @@ def add_dva(filename, force_level1bmodel=True):
     force_level1bmodel : bool, optional.
         If True, the input file will be force-opened as a Level1bModel.  If False,
         the file will be opened using the generic DataModel.  The default is True.
+
     """
     if force_level1bmodel:
         model = Level1bModel(filename)

@@ -7,8 +7,7 @@ __all__ = ["LinearityStep"]
 
 
 class LinearityStep(Step):
-    """
-    LinearityStep: This step performs a correction for non-linear
+    """LinearityStep: This step performs a correction for non-linear
     detector response, using the "classic" polynomial method.
     """
 

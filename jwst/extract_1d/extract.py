@@ -63,6 +63,7 @@ EXACT = "exact match"
 
 class ContinueError(Exception):
     """Custom error to pass continue from a function inside a loop."""
+
     pass
 
 
@@ -81,8 +82,8 @@ def read_extract1d_ref(refname):
     ref_dict : dict or None
         If the extract1d reference file is specified, ref_dict will be the
         dictionary returned by json.load().
-    """
 
+    """
     refname_type = refname[-4:].lower()
     if refname == "N/A":
         ref_dict = None
@@ -220,8 +221,8 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
         Information copied from `ref_dict`.  The items will be selected
         based on `slitname` and `sp_order`.  Default values will be
         assigned if `ref_dict` is None.
-    """
 
+    """
     extract_params = {'match': NO_MATCH}  # initial value
     if ref_dict is None:
         # There is no extract1d reference file; use "reasonable" default values.
@@ -373,6 +374,7 @@ def log_initial_parameters(extract_params):
     ----------
     extract_params : dict
         Information read from the reference file.
+
     """
     if "dispaxis" not in extract_params:
         return
@@ -397,6 +399,7 @@ def create_poly(coeff):
     -------
     `astropy.modeling.polynomial.Polynomial1D` or None
         None is returned if `coeff` is empty.
+
     """
     n = len(coeff)
     if n < 1:
@@ -583,7 +586,7 @@ def get_spectral_order(slit):
 def is_prism(input_model):
     """Determine whether the current observing mode used a prism.
 
-    Extended summary
+    Extended Summary
     ----------------
     The reason for this test is so we can skip spectral extraction if the
     spectral order is zero and the exposure was not made using a prism.
@@ -687,8 +690,8 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
     allow_partial : bool, optional
         If True, partial pixel weights are set where the pixel index intersects
         the limit values.  If False, only whole integer weights are set.
-    """
 
+    """
     # Both limits are inclusive
     profile[(idx >= lower_limit) & (idx <= upper_limit)] = 1.0
 
@@ -949,6 +952,7 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
     spec_center : float
         Index value for the center of the aperture along the
         dispersion axis.
+
     """
     weights = profile.copy()
     weights[weights <= 0] = 0.0
@@ -1019,6 +1023,7 @@ def location_from_wcs(input_model, slit):
         to the location at each point in the wavelength array. If the
         input data is resampled, the trace corresponds directly to the
         location.
+
     """
     if slit is not None:
         shape = slit.data.shape[-2:]
@@ -1186,6 +1191,7 @@ def _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_yp
     trace : ndarray of float
         Fractional pixel positions in the y (cross-dispersion direction)
         of the trace for each x (dispersion direction) pixel.
+
     """
     x, y = grid_from_bounding_box(bounding_box)
     nx = int(bounding_box[0][1] - bounding_box[0][0])
@@ -1250,6 +1256,7 @@ def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
     trace : ndarray of float
         Fractional pixel positions in the x (cross-dispersion direction)
         of the trace for each y (dispersion direction) pixel.
+
     """
     x, y = grid_from_bounding_box(bounding_box)
     ny = int(bounding_box[1][1] - bounding_box[1][0])
@@ -1655,8 +1662,8 @@ def create_extraction(input_model, slit, output_model,
         If `save_scene_model` is True, the return value is an ImageModel or CubeModel
         matching the input data, containing the flux model generated during
         extraction.
-    """
 
+    """
     if slit is None:
         data_model = input_model
     else:
@@ -2030,6 +2037,7 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
         If `save_scene_model` is True, the return value is an ImageModel or CubeModel
         matching the input data, containing a model of the flux as defined by the
         aperture, created during extraction. Otherwise, the return value is None.
+
     """
     # Set "meta_source" to either the first model in a container,
     # or the individual input model, for convenience

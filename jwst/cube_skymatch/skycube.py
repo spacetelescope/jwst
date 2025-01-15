@@ -1,5 +1,4 @@
-"""
-This module provides support for performing sky matching on cubes.
+"""This module provides support for performing sky matching on cubes.
 on the sky. Primary use case would use the following
 generalized step: ``cube_skymatch``.
 
@@ -14,8 +13,7 @@ __all__ = ['SkyCube']
 
 
 class SkyCube():
-    r"""
-    Container that holds information about properties of a *single*
+    r"""Container that holds information about properties of a *single*
     image such as:
 
     * image data;
@@ -45,7 +43,7 @@ class SkyCube():
                  weights=None, cube_weight=1.0,
                  bkg_deg=0, bkg_center=None,
                  id=None, meta=None):
-        r""" Initializes the SkyCube object.
+        r"""Initializes the SkyCube object.
 
         Parameters
         ----------
@@ -173,7 +171,7 @@ class SkyCube():
 
     @property
     def weights(self):
-        """ Set or get ``weights`` cube. """
+        """Set or get ``weights`` cube."""
         return self._weights
 
     @weights.setter
@@ -190,24 +188,22 @@ class SkyCube():
 
     @property
     def mask(self):
-        """ Get mask of valid voxels computed from weights cube. """
+        """Get mask of valid voxels computed from weights cube."""
         return self._mask
 
     @property
     def wcs(self):
-        """ Get WCS. """
+        """Get WCS."""
         return self._wcs
 
     @property
     def data(self):
-        """ Get cube data.
-        """
+        """Get cube data."""
         return self._data
 
     @property
     def cube_weight(self):
-        """ Set or get cube's weight.
-        """
+        """Set or get cube's weight."""
         return self._cube_weight
 
     @cube_weight.setter
@@ -219,32 +215,29 @@ class SkyCube():
 
     @property
     def bkg_coeff(self):
-        """ Get background polynomial coefficients [].
+        """Get background polynomial coefficients [].
         Returns a 3D ``numpy.ndarray``.
         """
         return self._bkg_coeff
 
     @property
     def bkg_degree(self):
-        """ Get background polynomial degree.
-        """
+        """Get background polynomial degree."""
         return self._bkg_degree
 
     @property
     def bkg_status(self):
-        """
-        Retrieve status of the background computations:
+        """Retrieve status of the background computations:
         0 - OK
         1 - not computed
-        2 - fit failed
+        2 - fit failed.
 
         """
         return self._bkg_status
 
     @property
     def id(self):
-        """
-        Set or get `SkyCube`'s `id`.
+        """Set or get `SkyCube`'s `id`.
 
         While `id` can be of any type, it is preferable that `id` be
         of a type with nice string representation.
@@ -258,14 +251,14 @@ class SkyCube():
 
     @property
     def skysub_data(self):
-        """ Retrieve sky background-subtracted data. """
+        """Retrieve sky background-subtracted data."""
         if self._bkg_status > 0:
             return self._data
 
         return self._data - self.bkg_cube
 
     def subtract_sky(self):
-        """ Subtract computed sky from cube data. """
+        """Subtract computed sky from cube data."""
         if self._bkg_status > 0:
             return self._data
 
@@ -305,8 +298,7 @@ class SkyCube():
         self._vander = v.reshape((-1, v.shape[-1]))
 
     def free_intermediate_arrays(self):
-        """ Releases references to internal intermediate arrays.
-        """
+        """Releases references to internal intermediate arrays."""
         self._mgx = None
         self._mgy = None
         self._mgz = None
@@ -339,8 +331,7 @@ class SkyCube():
         self._bkg_cube_dirty = False
 
     def overlap_measure(self, other_cube):
-        """
-        Get a measure of the overlap between two cubes.
+        """Get a measure of the overlap between two cubes.
 
         Currently, this function returns the number of common valid
         (``weights``>0) pixels in both cubes. If ``weights`` is ``None``,
@@ -368,7 +359,7 @@ class SkyCube():
 
     @property
     def skystat(self):
-        """ Stores/retrieves a callable object that takes a either a 2D image
+        """Stores/retrieves a callable object that takes a either a 2D image
         (2D `numpy.ndarray`) or a list of pixel values (a Nx1 array) and
         returns a tuple of two values: some statistics
         (e.g., mean, median, etc.) and number of pixels/values from the input
@@ -386,8 +377,7 @@ class SkyCube():
         self._skystat = skystat
 
     def combine_with_other(self, other):
-        """
-        Combine this cube with another cube to create a "mosaic". This cube
+        """Combine this cube with another cube to create a "mosaic". This cube
         will be updated with data from the other cube.
 
         """

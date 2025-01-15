@@ -12,14 +12,13 @@ MEMORY = 100  # 100 bytes
 
 # Utilities
 def t_path(partial_path):
-    """Construction the full path for test files"""
+    """Construction the full path for test files."""
     test_dir = os.path.join(os.path.dirname(__file__), 'data')
     return os.path.join(test_dir, partial_path)
 
 
 def test_open_association():
-    """Test for opening an association"""
-
+    """Test for opening an association."""
     asn_file = t_path('association.json')
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")

@@ -41,8 +41,7 @@ from . import template
 from . import util
 
 def select_type(fitsfile, level):
-    """
-    Auto-selects the appropriate output filetype based on an input
+    """Auto-selects the appropriate output filetype based on an input
     file.
 
     Parameters
@@ -52,6 +51,7 @@ def select_type(fitsfile, level):
 
     level : string
         The level of FITS file to generate.  May be '1a' or '1b'.
+
     """
     if level not in ('1a', '1b', '2a'):
         raise ValueError("level must be 1a, 1b or 2a")
@@ -129,8 +129,7 @@ def select_type(fitsfile, level):
 
 
 def verify(fitsfile, filetype, error_collector=None):
-    """
-    Verifies that a FITS file matches a particular filetype
+    """Verifies that a FITS file matches a particular filetype
     definition.
 
     Parameters
@@ -152,6 +151,7 @@ def verify(fitsfile, filetype, error_collector=None):
     -------
     success : boolean
         Returns `True` if verification passes 100%, `False` otherwise.
+
     """
     if filetype is None:
         filetype = select_type(fitsfile, '1b')
@@ -171,8 +171,7 @@ def verify(fitsfile, filetype, error_collector=None):
 
 
 def generate(input_files, filetype=None, level='1b', error_collector=None, verify=True):
-    """
-    Converts a FITS file to one that matches a particular filetype
+    """Converts a FITS file to one that matches a particular filetype
     definition.
 
     Parameters
@@ -204,6 +203,7 @@ def generate(input_files, filetype=None, level='1b', error_collector=None, verif
     -------
     hdulist : `pyfits.HDUList`
       The content of the output FITS file.
+
     """
     data_files = input_file_types.get_inputfiles(input_files)
 
@@ -234,8 +234,7 @@ def generate(input_files, filetype=None, level='1b', error_collector=None, verif
 
 
 def describe(filetype, format='rst', output=None):
-    """
-    Generates a document describing the structure of a given FITS
+    """Generates a document describing the structure of a given FITS
     file.
 
     Parameters
@@ -254,6 +253,7 @@ def describe(filetype, format='rst', output=None):
     output : file-like object
         The content will be written to the given file-like object,
         otherwise the content will be returned as a string.
+
     """
     class Unclosable(StringIO):
         def close(self):
@@ -297,9 +297,7 @@ def describe(filetype, format='rst', output=None):
 
 
 def list_filetypes():
-    """
-    Return a list of all of the available filetypes.
-    """
+    """Return a list of all of the available filetypes."""
     types_dir = util.get_filetypes_dir()
 
     filetypes = []
@@ -313,8 +311,7 @@ def list_filetypes():
 
 
 def guess_filename(hdulist):
-    """
-    Based on the given HDUList, guess at a standards-compliant output
+    """Based on the given HDUList, guess at a standards-compliant output
     file name.
     """
     # TODO: Or, we could just get this from the FILENAME keyword

@@ -12,8 +12,8 @@ import numpy as np
 
 def test_coeff_dq():
     """Test linearity algorithm with random data ramp (does algorithm match expected algorithm)
-    also test a variety of dq flags and expected output """
-
+    also test a variety of dq flags and expected output.
+    """
     # size of integration
     nints = 1
     ngroups = 160
@@ -107,8 +107,7 @@ def test_coeff_dq():
 
 
 def test_saturation():
-    """Check that correction is not applied for groups flagged as SATURATED in GROUPDQ"""
-
+    """Check that correction is not applied for groups flagged as SATURATED in GROUPDQ."""
     # size of integration
     nints = 1
     ngroups = 16
@@ -132,8 +131,8 @@ def test_saturation():
 
 def test_nolincorr():
     """Check that correction is not applied for pixels flagged NO_LIN_CORR in the DQ array
-    of the reference file."""
-
+    of the reference file.
+    """
     # size of integration
     nints = 1
     ngroups = 10
@@ -174,8 +173,8 @@ def test_nolincorr():
 def test_pixeldqprop():
     """Check that linearity reference file DQ values are populated into the PIXELDQ array of the data
     This does not fully test mapping, as we have not provided a dq_def to define the
-    mapping of dq flags in the reference file. it's a straightforward mapping (1-1)"""
-
+    mapping of dq flags in the reference file. it's a straightforward mapping (1-1).
+    """
     # size of integration
     nints = 1
     ngroups = 10
@@ -228,8 +227,8 @@ def test_pixeldqprop():
 
 def test_lin_subarray():
     """Test that the pipeline properly extracts the subarray from the reference file.
-    put dq flags in specific pixels and make sure they match in the output subarray file"""
-
+    put dq flags in specific pixels and make sure they match in the output subarray file.
+    """
     # create input data
     # create model of data with 0 value array
     ngroups = 50
@@ -292,8 +291,7 @@ def test_lin_subarray():
 
 
 def test_err_array():
-    """Test that the error array is not changed by the linearity step"""
-
+    """Test that the error array is not changed by the linearity step."""
     # size of integration
     ngroups = 10
     xsize = 1032
@@ -322,8 +320,7 @@ def test_err_array():
 
 
 def make_rampmodel(nints, ngroups, ysize, xsize):
-    """Function to provide ramp model to tests"""
-
+    """Function to provide ramp model to tests."""
     dm_ramp = RampModel((nints, ngroups, ysize, xsize))
     dm_ramp.data += 1
 

@@ -1,7 +1,7 @@
 """blendmeta - Merge metadata from multiple models.
 
-    This module will create a new metadata instance and table from a
-    list of input datamodels or filenames.
+This module will create a new metadata instance and table from a
+list of input datamodels or filenames.
 """
 
 from .blender import ModelBlender
@@ -12,8 +12,7 @@ __all__ = ['blendmodels']
 # Primary functional interface for the code
 
 def blendmodels(product, inputs, ignore=None):
-    """
-    Blend datamodel metadata.
+    """Blend datamodel metadata.
 
     Parameters
     ----------
@@ -31,6 +30,7 @@ def blendmodels(product, inputs, ignore=None):
         These attributes must be strings containing the dotted
         path of each attribute (for example "meta.filename").
         (Note that "meta.wcs" will always be ignored).
+
     """
     blender = ModelBlender(blend_ignore_attrs=ignore)
     for model in inputs:

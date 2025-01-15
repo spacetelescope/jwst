@@ -20,8 +20,7 @@ __all__ = ['Coron3Pipeline']
 
 
 def to_container(model):
-    """Convert to a ModelContainer of ImageModels for each plane"""
-
+    """Convert to a ModelContainer of ImageModels for each plane."""
     container = ModelContainer()
     for plane in range(model.shape[0]):
         image = datamodels.ImageModel()
@@ -88,6 +87,7 @@ class Coron3Pipeline(Pipeline):
         ----------
         user_input : str, Level3 Association, or ~jwst.datamodels.JwstDataModel
             The exposure or association of exposures to process
+
         """
         self.log.info('Starting calwebb_coron3 ...')
         asn_exptypes = ['science', 'psf']

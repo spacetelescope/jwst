@@ -1,4 +1,4 @@
-"""Test that the stdatamodels.jwst.datamodels API is replicated in jwst.datamodels"""
+"""Test that the stdatamodels.jwst.datamodels API is replicated in jwst.datamodels."""
 
 import pytest
 import pkgutil

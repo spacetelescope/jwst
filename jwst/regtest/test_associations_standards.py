@@ -1,5 +1,4 @@
-"""Test against Level2 standard associations
-"""
+"""Test against Level2 standard associations."""
 import os
 from pathlib import Path
 import pytest
@@ -40,7 +39,7 @@ DEF_ARGS: list = []
 
 
 class MakePars():
-    """Setup the test parameters """
+    """Setup the test parameters."""
 
     def __init__(
             self,
@@ -98,7 +97,7 @@ standards = [
 # Tests
 # #####
 def generate_id(value):
-    """Generate test ids based on the parametrized input"""
+    """Generate test ids based on the parametrized input."""
     return value.pool_root
 
 

@@ -1,6 +1,4 @@
-"""
-Unit test for mrs_imatch testing setting up configuration
-"""
+"""Unit test for mrs_imatch testing setting up configuration."""
 
 import pytest
 
@@ -29,8 +27,7 @@ mirifulong_long = {
 
 @pytest.fixture(scope='function')
 def miri_dither_ch12():
-    """ Generate 4 dithered channel 12 data  """
-
+    """Generate 4 dithered channel 12 data."""
     input_model1 = datamodels.IFUImageModel((20, 20))
     input_model1.meta.instrument._instance.update(mirifushort_short)
     input_model1.meta.cal_step.assign_wcs = 'COMPLETE'
@@ -58,8 +55,7 @@ def miri_dither_ch12():
 
 
 def test_imatch_background_subtracted(tmp_cwd, miri_dither_ch12):
-    """ Test if data is already background subtracted - raise error"""
-
+    """Test if data is already background subtracted - raise error."""
     all_models = ModelContainer(miri_dither_ch12)
     # modify the data set background subtracted
     new_container = []
@@ -74,8 +70,7 @@ def test_imatch_background_subtracted(tmp_cwd, miri_dither_ch12):
 
 
 def test_imatch_default_run(tmp_cwd, miri_dither_ch12):
-    """ Test mrs_imatch test is skipped by default """
-
+    """Test mrs_imatch test is skipped by default."""
     all_models = ModelContainer(miri_dither_ch12)
 
     # test if default running results in skipping step
@@ -87,8 +82,7 @@ def test_imatch_default_run(tmp_cwd, miri_dither_ch12):
 
     
 def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):
-    """ Test if background polynomial is already determined - reset it"""
-
+    """Test if background polynomial is already determined - reset it."""
     all_models = ModelContainer(miri_dither_ch12)
 
     # added a background and test is reset background
@@ -121,8 +115,7 @@ def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):
 
 
 def test_find_channel_index(tmp_cwd, miri_dither_ch12):
-    """ Test if correct channel index is returned """
-
+    """Test if correct channel index is returned."""
     # channel 1 - model only has 1 background polynomial
     input_model12 = datamodels.IFUImageModel((20, 20))
     input_model12.meta.instrument._instance.update(mirifushort_short)
@@ -259,8 +252,7 @@ def test_find_channel_index(tmp_cwd, miri_dither_ch12):
 
 
 def test_get_2d_pixgrid():
-    """ Test if x,y grid for channel is formed correctly  """
-
+    """Test if x,y grid for channel is formed correctly."""
     # test if channel 1 then left side of detector
     # test shape of x (1/2 detector) and min,max (0,511) + 4 reference pixels
     input_model12 = datamodels.IFUImageModel((20, 20))

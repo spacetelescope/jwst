@@ -20,9 +20,8 @@ def library_function():
 
 
 class FlatField(Step):
-    """
-    An example flat-fielding Step.
-    """
+    """An example flat-fielding Step."""
+
     spec = """
         threshold = float(default=0.0)  # The threshold below which to remove
         multiplier = float(default=1.0) # Multiply by this number
@@ -40,9 +39,7 @@ class FlatField(Step):
 
 
 class Combine(Step):
-    """
-    A Step that combines a list of images.
-    """
+    """A Step that combines a list of images."""
 
     def process(self, images):
         combined = np.zeros((50, 50))
@@ -52,18 +49,14 @@ class Combine(Step):
 
 
 class Display(Step):
-    """
-    A Step to display an image.
-    """
+    """A Step to display an image."""
 
     def process(self, image):
         pass
 
 
 class MultiplyBy2(Step):
-    """
-    A Step that does the incredibly complex thing of multiplying by 2.
-    """
+    """A Step that does the incredibly complex thing of multiplying by 2."""
 
     def process(self, image):
         with datamodels.ImageModel(image) as dm:
@@ -73,9 +66,7 @@ class MultiplyBy2(Step):
 
 
 class MyPipeline(Pipeline):
-    """
-    A test pipeline.
-    """
+    """A test pipeline."""
 
     step_defs = {
         'flat_field': FlatField,
@@ -133,7 +124,7 @@ def test_pipeline_python(tmp_cwd):
 
 
 def test_prefetch(tmp_cwd, monkeypatch):
-    """Test prefetching"""
+    """Test prefetching."""
 
     # Setup mock to crds to flag if the call was made.
     class MockGetRef:

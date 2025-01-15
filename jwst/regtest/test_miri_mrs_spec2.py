@@ -1,4 +1,4 @@
-"""Regression tests for MIRI MRS modes in calwebb_spec2"""
+"""Regression tests for MIRI MRS modes in calwebb_spec2."""
 import pytest
 
 from gwcs.wcstools import grid_from_bounding_box
@@ -17,7 +17,7 @@ TRUTH_PATH = 'truth/test_miri_mrs'
 
 @pytest.fixture(scope='module')
 def run_spec2(rtdata_module):
-    """Run the Spec2Pipeline on a single exposure"""
+    """Run the Spec2Pipeline on a single exposure."""
     rtdata = rtdata_module
 
     # Get the input rate file
@@ -52,8 +52,7 @@ def run_spec2(rtdata_module):
     ['assign_wcs', 'cal', 'flat_field', 'fringe', 'photom', 's3d', 'srctype', 'straylight', 'x1d']
 )
 def test_miri_mrs_spec2(run_spec2, fitsdiff_default_kwargs, suffix, rtdata_module):
-    """Regression test of the calwebb_spec2 pipeline on a MIRI MRS long-wave exposure"""
-
+    """Regression test of the calwebb_spec2 pipeline on a MIRI MRS long-wave exposure."""
     rtdata = rtdata_module
     rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path=TRUTH_PATH)
 

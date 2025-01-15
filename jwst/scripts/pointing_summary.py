@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Pointing verification
+"""Pointing verification.
 
 Review contents of a set of given models for pointing information.
 Compare the calculated V1 and REFPOINT pointing with the proposed TARGET pointing.

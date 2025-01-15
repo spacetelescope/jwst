@@ -8,8 +8,7 @@ __all__ = ["PixelReplaceStep"]
 
 
 class PixelReplaceStep(Step):
-    """
-    PixelReplaceStep: Module for replacing flagged bad pixels with an estimate
+    """PixelReplaceStep: Module for replacing flagged bad pixels with an estimate
     of their flux, prior to spectral extraction.
 
     Attributes
@@ -23,6 +22,7 @@ class PixelReplaceStep(Step):
         creation of source profile, in cross-dispersion direction. The total number of columns
         used in the profile will be twice this number; on array edges, take adjacent columns until
         this number is reached.
+
     """
 
     class_alias = "pixel_replace"
@@ -47,6 +47,7 @@ class PixelReplaceStep(Step):
             This will be `input` if the step was skipped; otherwise,
             it will be a model containing data arrays with estimated fluxes
             for any bad pixels, now flagged as TO-BE-DETERMINED (DQ bit 7?).
+
         """
         with datamodels.open(input) as input_model:
             # If more than one 2d spectrum exists in input, call replacement

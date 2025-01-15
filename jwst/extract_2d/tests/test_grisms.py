@@ -1,5 +1,4 @@
-"""
-Test NIRCAM grism extract_2d functionality.
+"""Test NIRCAM grism extract_2d functionality.
 
 Notes:
 No images are needed here to check the location
@@ -13,6 +12,7 @@ For the testing catalog:
 objects 9 and 19 should have order 1 extracted
 object 25 should have partial boxes for both orders
 object 26 should be excluded
+
 """
 import os
 import pytest
@@ -71,9 +71,7 @@ wcs_tso_kw = {'wcsaxes': 2, 'ra_ref': 86.9875, 'dec_ref': 23.423,
 
 
 def get_file_path(filename):
-    """
-    Construct an absolute path.
-    """
+    """Construct an absolute path."""
     return os.path.join(data_path, filename)
 
 
@@ -199,7 +197,7 @@ def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
 @pytest.mark.filterwarnings("ignore: Card is too long")
 def test_create_box_fits():
     """Make sure that a box is created around a source catalog object.
-    This version allows use of the FITS WCS to translate the source location
+    This version allows use of the FITS WCS to translate the source location.
 
     The objects selected here should be contained on the image
     """
@@ -260,7 +258,7 @@ def test_create_box_gwcs():
 
 
 def setup_image_cat():
-    """basic setup for image header and references."""
+    """Basic setup for image header and references."""
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     hdul = create_hdul(exptype='NRC_WFSS', pupil='GRISMR', wcskeys=wcs_wfss_kw)
     im = ImageModel(hdul)
@@ -280,13 +278,14 @@ def test_create_specific_orders():
     are created.. instead of the default in the reference
     file.
 
-     Notes
-     -----
+    Notes
+    -----
      The filter warning is for fits card length
 
      objects 9 and 19 should have order 1 extracted
      object 25 should have partial boxes for both orders
      object 26 should have order 2 excluded at order 1 partial
+
     """
     imwcs, refs = setup_image_cat()
     extract_orders = [1]  # just extract the first order
@@ -308,7 +307,6 @@ def test_extract_tso_subarray():
     detector. This does an actual test of the
     extraction with a small CubeModel
     """
-
     wcsimage = create_tso_wcsimage(subarray=True)
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage,
@@ -349,7 +347,6 @@ def test_extract_tso_height():
     detector. This does an actual test of the
     extraction with a small CubeModel
     """
-
     wcsimage = create_tso_wcsimage(subarray=False)
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage,
@@ -428,13 +425,14 @@ def test_extract_wfss_object():
 def test_wfss_extract_custom_height():
     """Test WFSS extraction with a user supplied half height.
 
-     Notes
-     -----
-     The filter warning is for fits card length
+    Notes
+    -----
+    The filter warning is for fits card length
 
-     objects 9 and 19 should have order 1 extracted
-     object 25 should have partial boxes for both orders
-     object 26 should have order 2 excluded at order 1 partial
+    objects 9 and 19 should have order 1 extracted
+    object 25 should have partial boxes for both orders
+    object 26 should have order 2 excluded at order 1 partial
+
     """
     imwcs, refs = setup_image_cat()
     imwcs.meta.wcsinfo._instance['dispersion_direction'] = 1
@@ -453,7 +451,7 @@ def test_wfss_extract_custom_height():
 
 
 def test_wfss_extract_custom_wavelength_range():
-    """ Test WFSS extraction with a user supplied wavelength_range. """
+    """Test WFSS extraction with a user supplied wavelength_range."""
     imwcs, refs = setup_image_cat()
     test_boxes = create_grism_bbox(imwcs, mmag_extract=99., wavelength_range={1: (3.01, 4.26)})
 

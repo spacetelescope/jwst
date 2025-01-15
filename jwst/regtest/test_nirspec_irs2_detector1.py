@@ -1,6 +1,7 @@
-""" Test for the detector1 pipeline using NIRSpec data in IRS2 mode. This takes
-    an uncal file and generates the stage 1 FITS files (rate) along with the
-    intermediate products."""
+"""Test for the detector1 pipeline using NIRSpec data in IRS2 mode. This takes
+an uncal file and generates the stage 1 FITS files (rate) along with the
+intermediate products.
+"""
 
 import pytest
 from astropy.io.fits.diff import FITSDiff
@@ -59,9 +60,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
                                     'rate'])
 def test_nirspec_irs2_detector1(run_detector1pipeline, rtdata_module,
                                 fitsdiff_default_kwargs, suffix):
-    """
-    Regression test of calwebb_detector1 pipeline performed on NIRSpec IRS2 data.
-    """
+    """Regression test of calwebb_detector1 pipeline performed on NIRSpec IRS2 data."""
     rtdata = rtdata_module
 
     output_filename = f"jw01335004001_03101_00002_nrs2_{suffix}.fits"

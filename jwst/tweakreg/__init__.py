@@ -1,7 +1,4 @@
-"""
-This package provides support for image alignment.
-
-"""
+"""This package provides support for image alignment."""
 
 __author__ = 'Mihai Cara'
 

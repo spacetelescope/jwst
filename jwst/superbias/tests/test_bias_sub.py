@@ -1,8 +1,4 @@
-"""
-
-Unit tests for superbias subtraction
-
-"""
+"""Unit tests for superbias subtraction."""
 
 import pytest
 import numpy as np
@@ -13,8 +9,7 @@ from jwst.superbias.bias_sub import do_correction
 
 
 def test_basic_superbias_subtraction(setup_full_cube):
-    '''Check basic superbias subtraction.'''
-
+    """Check basic superbias subtraction."""
     # Create inputs, data, and superbiases
     ngroups = 5
     nrows = 2048
@@ -36,9 +31,9 @@ def test_basic_superbias_subtraction(setup_full_cube):
 
 
 def test_subarray_correction(setup_subarray_cube):
-    '''Check that the proper subarray is extracted from the full frame
-       reference file during subtraction.'''
-
+    """Check that the proper subarray is extracted from the full frame
+    reference file during subtraction.
+    """
     # Create inputs, subarray SUB320A335R data, and superbiases
     ngroups = 5
     nrows = 320
@@ -64,9 +59,9 @@ def test_subarray_correction(setup_subarray_cube):
 
 
 def test_dq_propagation(setup_full_cube):
-    '''Check that the PIXELDQ array of the science exposure is correctly
-       combined with the reference file DQ array.'''
-
+    """Check that the PIXELDQ array of the science exposure is correctly
+    combined with the reference file DQ array.
+    """
     # Create inputs, data, and superbiases
     ngroups = 5
     nrows = 2048
@@ -88,9 +83,9 @@ def test_dq_propagation(setup_full_cube):
 
 
 def test_nans_in_superbias(setup_full_cube):
-    '''Check that no superbias subtraction is done for pixels that have a
-       value of NaN in the reference file.'''
-
+    """Check that no superbias subtraction is done for pixels that have a
+    value of NaN in the reference file.
+    """
     # Create inputs, data, and superbiases
     ngroups = 5
     nrows = 2048
@@ -116,8 +111,7 @@ def test_nans_in_superbias(setup_full_cube):
 
 
 def test_full_step(setup_full_cube):
-    '''Test full run of the SuperBiasStep.'''
-
+    """Test full run of the SuperBiasStep."""
     # Create inputs, data, and superbiases
     ngroups = 5
     nrows = 2048
@@ -174,7 +168,7 @@ def test_zeroframe(setup_full_cube):
 
 @pytest.fixture(scope='function')
 def setup_full_cube():
-    ''' Set up fake NIRCam FULL data to test.'''
+    """Set up fake NIRCam FULL data to test."""
 
     def _cube(ngroups, nrows, ncols):
 
@@ -213,7 +207,7 @@ def setup_full_cube():
 
 @pytest.fixture(scope='function')
 def setup_subarray_cube():
-    ''' Set up fake NIRCam subarray data to test.'''
+    """Set up fake NIRCam subarray data to test."""
 
     def _cube(xstart, ystart, ngroups, nrows, ncols):
 

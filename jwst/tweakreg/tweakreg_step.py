@@ -1,5 +1,4 @@
-"""
-JWST pipeline step for image alignment.
+"""JWST pipeline step for image alignment.
 
 :Authors: Mihai Cara
 
@@ -41,8 +40,7 @@ __all__ = ['TweakRegStep']
 
 
 class TweakRegStep(Step):
-    """
-    TweakRegStep: Image alignment based on catalogs of sources detected in
+    """TweakRegStep: Image alignment based on catalogs of sources detected in
     input images.
     """
 
@@ -373,8 +371,7 @@ class TweakRegStep(Step):
 
 
     def _write_catalog(self, catalog, filename):
-        '''
-        Determine output filename for catalog based on outfile for step
+        """Determine output filename for catalog based on outfile for step
         and output dir, then write catalog to file.
 
         Parameters
@@ -388,8 +385,8 @@ class TweakRegStep(Step):
         -------
         catalog_filename : str
             Filename where the catalog was saved
-        '''
 
+        """
         catalog_filename = str(filename).replace(
                     '.fits', '_cat.{}'.format(self.catalog_format)
                 )
@@ -447,8 +444,7 @@ class TweakRegStep(Step):
 
 
 def _parse_catfile(catfile):
-    """
-    Parse a text file containing at 2 whitespace-delimited columns
+    """Parse a text file containing at 2 whitespace-delimited columns
         column 1: str, datamodel filename
         column 2: str, catalog filename
     into a dictionary with datamodel filename keys and catalog filename
@@ -463,6 +459,7 @@ def _parse_catfile(catfile):
 
     Raises:
         VaueError if catfile contains >2 columns
+
     """
     if catfile is None or not catfile.strip():
         return None

@@ -9,9 +9,7 @@ __all__ = ["BackgroundStep"]
 
 
 class BackgroundStep(Step):
-    """
-    BackgroundStep:  Subtract background exposures from target exposures.
-    """
+    """BackgroundStep:  Subtract background exposures from target exposures."""
 
     class_alias = "background"
 
@@ -32,8 +30,7 @@ class BackgroundStep(Step):
     bkg_suffix = 'combinedbackground'
 
     def process(self, input, bkg_list):
-        """
-        Subtract the background signal from target exposures by subtracting
+        """Subtract the background signal from target exposures by subtracting
         designated background images from them.
 
         Parameters
@@ -48,8 +45,8 @@ class BackgroundStep(Step):
         -------
         result: JWST data model
             the background-subtracted target data model
-        """
 
+        """
         # Load the input data model
         with datamodels.open(input) as input_model:
 

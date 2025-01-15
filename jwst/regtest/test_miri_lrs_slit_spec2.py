@@ -12,7 +12,8 @@ from jwst.extract_1d import Extract1dStep
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
     """Run the calwebb_spec2 pipeline on an ASN of nodded MIRI LRS
-       fixedslit exposures."""
+    fixedslit exposures.
+    """
     rtdata = rtdata_module
 
     # Get the spec2 ASN and its members
@@ -38,8 +39,9 @@ def run_pipeline(rtdata_module):
     "cal", "pixel_replace", "s2d", "x1d"])
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, suffix, rtdata_module):
     """Regression test of the calwebb_spec2 pipeline on MIRI
-       LRS fixedslit data using along-slit-nod pattern for
-       background subtraction."""
+    LRS fixedslit data using along-slit-nod pattern for
+    background subtraction.
+    """
     rtdata = rtdata_module
     output = f"jw01530005001_03103_00001_mirimage_{suffix}.fits"
     rtdata.output = output

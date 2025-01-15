@@ -45,7 +45,7 @@ CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
 @pytest.fixture(scope='module')
 def data_path():
-    """Provide a test data model"""
+    """Provide a test data model."""
     data_path = t_path(join('data', 'miri_data.fits'))
     return data_path
 
@@ -60,7 +60,7 @@ def data_path():
     ]
 )
 def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected_fn):
-    """Test setting of disable_crds_steppars"""
+    """Test setting of disable_crds_steppars."""
     if env_set:
         os.environ['STPIPE_DISABLE_CRDS_STEPPARS'] = env_set
 
@@ -76,14 +76,14 @@ def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected
 
 
 def test_parameters_from_crds():
-    """Test retrieval of parameters from CRDS"""
+    """Test retrieval of parameters from CRDS."""
     with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
         pars = WhiteLightStep.get_config_from_reference(data)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
 def test_parameters_from_crds_fail():
-    """Test retrieval of parameters from CRDS"""
+    """Test retrieval of parameters from CRDS."""
     with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
         data.meta.instrument.name = 'NIRSPEC'
         pars = WhiteLightStep.get_config_from_reference(data)
@@ -98,14 +98,14 @@ def test_parameters_from_crds_fail():
     ]
 )
 def test_reftype(cfg_file, expected_reftype):
-    """Test that reftype is produced as expected"""
+    """Test that reftype is produced as expected."""
     step = Step.from_config_file(t_path(join('steps', cfg_file)))
     assert step.__class__.get_config_reftype() == expected_reftype
     assert step.get_config_reftype() == expected_reftype
 
 
 def test_saving_pars(tmp_path):
-    """Save the step parameters from the commandline"""
+    """Save the step parameters from the commandline."""
     cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
     saved_path = os.path.join(tmp_path, 'savepars.asdf')
     Step.from_cmdline([
@@ -152,7 +152,7 @@ def test_saving_pars(tmp_path):
     ]
 )
 def test_export_config(step_obj, expected, tmp_path):
-    """Test retrieving of configuration parameters"""
+    """Test retrieving of configuration parameters."""
     config_path = tmp_path / "config.asdf"
     step_obj.export_config(config_path)
 
@@ -285,12 +285,12 @@ def test_export_config(step_obj, expected, tmp_path):
     ]
 )
 def test_getpars(step_obj, full_spec, expected):
-    """Test retrieving of configuration parameters"""
+    """Test retrieving of configuration parameters."""
     assert step_obj.get_pars(full_spec=full_spec) == expected
 
 
 def test_hook():
-    """Test the running of hooks"""
+    """Test the running of hooks."""
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hook.cfg')
     step = Step.from_config_file(step_fn)
 
@@ -304,7 +304,7 @@ def test_hook():
 
 
 def test_hook_with_return():
-    """Test the running of hooks"""
+    """Test the running of hooks."""
     step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hookreturn.cfg')
     step = Step.from_config_file(step_fn)
 
@@ -599,7 +599,7 @@ def test_print_configspec():
 
 
 def test_call_with_config(caplog, tmp_cwd):
-    """Test call using a config file with substeps
+    """Test call using a config file with substeps.
 
     In particular, from JP-1482, there was a case where a substep parameter
     was not being overridden. Test for that case.
@@ -613,8 +613,7 @@ def test_call_with_config(caplog, tmp_cwd):
 
 
 def test_finalize_logging(monkeypatch):
-    """
-    Check that the jwst version and crds context are logged
+    """Check that the jwst version and crds context are logged
     when a step/pipeline is run.
     """
     pipeline = EmptyPipeline()

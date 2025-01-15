@@ -11,8 +11,7 @@ __all__ = ["SpectralLeakStep"]
 
 
 class SpectralLeakStep(Step):
-    """
-    The MIRI MRS has a spectral leak in which 6 micron light leaks into the
+    """The MIRI MRS has a spectral leak in which 6 micron light leaks into the
     12 micron channel.  This step applies a correction to the 12 micron channel.
     """
 
@@ -33,8 +32,8 @@ class SpectralLeakStep(Step):
             The corrected data model. This will be "input" if the step is skipped,
             otherwise it will be a corrected 1D extracted spectrum that contains
             the MRS channel 3B range.
-        """
 
+        """
         ch1b = None
         ch3a = None
         ich3a = None

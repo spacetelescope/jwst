@@ -1,4 +1,4 @@
-"""Check formatting of the level 3 product names"""
+"""Check formatting of the level 3 product names."""
 import re
 
 import pytest

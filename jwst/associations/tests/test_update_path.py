@@ -1,4 +1,4 @@
-"""Test utility update_path"""
+"""Test utility update_path."""
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.associations.lib.update_path import update_path

@@ -26,9 +26,7 @@
 # TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
-"""
-Utilities
-"""
+"""Utilities."""
 import importlib.util
 import inspect
 import logging
@@ -60,12 +58,13 @@ COMPLETE = "COMPLETE"
 SKIPPED = "SKIPPED"
 
 def all_steps():
-    """List all classes subclassed from Step
+    """List all classes subclassed from Step.
 
     Returns
     -------
     steps : dict
         Key is the classname, value is the class
+
     """
     from jwst.stpipe import Step
 
@@ -88,7 +87,7 @@ def all_steps():
 
 
 def load_local_pkg(fpath):
-    """Generator producing all modules under fpath
+    """Generator producing all modules under fpath.
 
     Parameters
     ----------
@@ -99,6 +98,7 @@ def load_local_pkg(fpath):
     -------
     generator
         `module` for each module found in the package.
+
     """
     package_fpath, package = os.path.split(fpath)
     package_fpath_len = len(package_fpath) + 1
@@ -142,6 +142,7 @@ def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
     -------
     generator
         A generator, return the next file.
+
     """
     basename_regex = re.compile(basename_regex)
     path_exclude_regex = re.compile(path_exclude_regex)
@@ -154,7 +155,7 @@ def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
 
 
 def record_step_status(datamodel, cal_step, success=True):
-    """Record whether or not a step completed in meta.cal_step
+    """Record whether or not a step completed in meta.cal_step.
 
     Parameters
     ----------
@@ -166,6 +167,7 @@ def record_step_status(datamodel, cal_step, success=True):
 
     success : bool
         If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+
     """
     if success:
         status = COMPLETE
@@ -187,7 +189,7 @@ def record_step_status(datamodel, cal_step, success=True):
 
 
 def query_step_status(datamodel, cal_step):
-    """Query the status of a step in meta.cal_step
+    """Query the status of a step in meta.cal_step.
     
     Parameters
     ----------
@@ -208,6 +210,7 @@ def query_step_status(datamodel, cal_step):
     of models, so checking the zeroth model instance may not always be correct.
     However, this is not currently done in the pipeline. This function should be
     updated to accommodate that use-case as needed.
+
     """
     if isinstance(datamodel, Sequence):
         return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
@@ -216,7 +219,7 @@ def query_step_status(datamodel, cal_step):
 
 
 def invariant_filename(save_model_func):
-    """Restore meta.filename after save_model"""
+    """Restore meta.filename after save_model."""
 
     @wraps(save_model_func)
     def save_model(model, **kwargs):

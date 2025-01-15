@@ -28,8 +28,7 @@ def extract_tso_object(input_model,
                        tsgrism_extract_height=None,
                        extract_orders=None,
                        compute_wavelength=True):
-    """
-    Extract the spectrum for a NIRCam TSO grism observation.
+    """Extract the spectrum for a NIRCam TSO grism observation.
 
     Parameters
     ----------
@@ -75,8 +74,8 @@ def extract_tso_object(input_model,
     during the extract2d process and then directly used.
 
     https://jwst-docs.stsci.edu/near-infrared-camera/nircam-observing-modes/nircam-time-series-observations/nircam-grism-time-series
-    """
 
+    """
     # Check for reference files
     if not isinstance(reference_files, dict):
         raise TypeError("Expected a dictionary for reference_files")
@@ -281,8 +280,7 @@ def extract_grism_objects(input_model,
                           compute_wavelength=True,
                           wfss_extract_half_height=None,
                           nbright=None):
-    """
-    Extract 2d boxes around each objects spectra for each order.
+    """Extract 2d boxes around each objects spectra for each order.
 
     Parameters
     ----------
@@ -359,6 +357,7 @@ def extract_grism_objects(input_model,
     Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
             variable. The cross-dispersion size is taken from the minimum
             bounding box.
+
     """
     if reference_files is None or not reference_files:
         raise TypeError("Expected a dictionary for reference_files")
@@ -526,8 +525,7 @@ def extract_grism_objects(input_model,
 
 
 def clamp(value, minval, maxval):
-    """
-    Return the value clipped between minval and maxval.
+    """Return the value clipped between minval and maxval.
 
     Parameters
     ----------
@@ -542,13 +540,13 @@ def clamp(value, minval, maxval):
     -------
     value: float
         The value that falls within the min-max range or the minimum limit
+
     """
     return max(minval, min(value, maxval))
 
 
 def compute_dispersion(wcs):
-    """
-    Compute the pixel dispersion.
+    """Compute the pixel dispersion.
 
     Make a model for the pixel dispersion from the grismconf specs
 
@@ -567,8 +565,7 @@ def compute_dispersion(wcs):
 
 
 def compute_tso_wavelength_array(slit):
-    """
-    Compute the wavelength array for a slit with gwcs object
+    """Compute the wavelength array for a slit with gwcs object.
 
     Parameters
     ----------
@@ -579,6 +576,7 @@ def compute_tso_wavelength_array(slit):
     -------
     wavelength : numpy.array
         The wavelength array
+
     """
     wcs = slit.meta.wcs
     full_transform = slit.meta.wcs.forward_transform
@@ -588,8 +586,7 @@ def compute_tso_wavelength_array(slit):
 
 
 def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel) -> tuple[float, float]:
-    """
-    In the case that an Offset Special Requirement is requested in the APT,
+    """In the case that an Offset Special Requirement is requested in the APT,
     the source is no longer at the aperture reference point.
     The dither.x_offset and dither.y_offset values encode the offset
     in units of arcseconds. They need to be translated from Ideal to 
@@ -611,8 +608,8 @@ def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel
     -----
     The wavelength is not used for the distortion calculation between
     v2v3 and direct image coordinates, so this can be hardcoded to NaN.
-    """
 
+    """
     idltov23 = IdealToV2V3(input_model.meta.wcsinfo.v3yangle,
                 input_model.meta.wcsinfo.v2_ref,
                 input_model.meta.wcsinfo.v3_ref,
@@ -625,8 +622,7 @@ def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel
 
 
 def compute_wfss_wavelength(slit):
-    """
-    Compute the wavelength array for a slit with gwcs object
+    """Compute the wavelength array for a slit with gwcs object.
 
     Parameters
     ----------
@@ -637,8 +633,8 @@ def compute_wfss_wavelength(slit):
     -------
     wavelength : numpy.array
         The wavelength array
-    """
 
+    """
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     wavelength = slit.meta.wcs(x, y)[2]
     return wavelength

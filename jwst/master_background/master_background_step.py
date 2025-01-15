@@ -15,9 +15,7 @@ __all__ = ["MasterBackgroundStep"]
 
 
 class MasterBackgroundStep(Step):
-    """
-    MasterBackgroundStep:  Compute and subtract master background from spectra
-    """
+    """MasterBackgroundStep:  Compute and subtract master background from spectra."""
 
     class_alias = "master_background"
 
@@ -30,8 +28,7 @@ class MasterBackgroundStep(Step):
     """
 
     def process(self, input):
-        """
-        Compute and subtract a master background spectrum
+        """Compute and subtract a master background spectrum.
 
         Parameters
         ----------
@@ -62,8 +59,8 @@ class MasterBackgroundStep(Step):
         -------
         result : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.ModelContainer`
             The background-subtracted science datamodel(s)
-        """
 
+        """
         with datamodels.open(input) as input_data:
             # Make the input data available to self
             self.input_data = input_data
@@ -203,8 +200,7 @@ class MasterBackgroundStep(Step):
 
     @property
     def _do_sub(self):
-        """
-        Decide if subtraction is to be done
+        """Decide if subtraction is to be done.
 
         Encapsulates logic that checks if background step has already been run
         on the data, or if the user has selected to force_subtract regardless.
@@ -213,6 +209,7 @@ class MasterBackgroundStep(Step):
         -------
         do_sub : bool
             If ``True``, do the subtraction
+
         """
         do_sub = True
         if not self.force_subtract:
@@ -255,13 +252,13 @@ class MasterBackgroundStep(Step):
         return do_sub
 
     def save_container(self, container, suffix="", asn_id="", force=True):
-        """Save all models in container for intermediate background subtraction"""
+        """Save all models in container for intermediate background subtraction."""
         for i, model in enumerate(container):
             self.save_model(model, suffix=suffix, force=force, asn_id=asn_id, idx=i)
 
 
 def copy_background_to_surf_bright(spectrum):
-    """Copy the background column to the surf_bright column in a MultiSpecModel in-place"""
+    """Copy the background column to the surf_bright column in a MultiSpecModel in-place."""
     for spec in spectrum.spec:
         spec.spec_table['SURF_BRIGHT'][:] = spec.spec_table['BACKGROUND'].copy()
         spec.spec_table['SB_ERROR'][:] = spec.spec_table['BKGD_ERROR'].copy()
@@ -272,8 +269,7 @@ def copy_background_to_surf_bright(spectrum):
 
 
 def split_container(container):
-    """Divide a ModelContainer with science and background into one of each
-    """
+    """Divide a ModelContainer with science and background into one of each."""
     background = ModelContainer()
     science = ModelContainer()
 
@@ -294,7 +290,7 @@ def split_container(container):
 
 
 def subtract_2d_background(source, background):
-    """Subtract a 2D background
+    """Subtract a 2D background.
 
     Parameters
     ----------
@@ -310,6 +306,7 @@ def subtract_2d_background(source, background):
     -------
     `~jwst.datamodels.JwstDataModel`
         Background subtracted from source.
+
     """
 
     def _subtract_2d_background(model, background):

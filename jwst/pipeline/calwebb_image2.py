@@ -19,8 +19,7 @@ __all__ = ['Image2Pipeline']
 
 
 class Image2Pipeline(Pipeline):
-    """
-    Image2Pipeline: Processes JWST imaging-mode slope data from Level-2a to
+    """Image2Pipeline: Processes JWST imaging-mode slope data from Level-2a to
     Level-2b.
 
     Included steps are:
@@ -94,10 +93,10 @@ class Image2Pipeline(Pipeline):
             pool_name=' ',
             asn_file=' ',
     ):
-        """Process an exposure found in the association product
+        """Process an exposure found in the association product.
 
         Parameters
-        ---------
+        ----------
         exp_product: dict
             A Level2b association product.
 
@@ -107,6 +106,7 @@ class Image2Pipeline(Pipeline):
         asn_file: str
             The name of the association file.
             Used for recording purposes only.
+
         """
         # Find all the member types in the product
         members_by_type = defaultdict(list)

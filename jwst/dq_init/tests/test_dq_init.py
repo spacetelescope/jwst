@@ -20,9 +20,9 @@ ids = ["GuiderRawModel-Stack", "GuiderRawModel-Image", "RampModel", "RampModel"]
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
 def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type):
-    """ Check that PIXELDQ is initialized with the information from the reference file.
-    test that a flagged value in the reference file flags the PIXELDQ array"""
-
+    """Check that PIXELDQ is initialized with the information from the reference file.
+    test that a flagged value in the reference file flags the PIXELDQ array.
+    """
     # create raw input data for step
     dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
 
@@ -70,7 +70,6 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
 
 def test_groupdq():
     """Check that GROUPDQ extension is added to the data and all values are initialized to zero."""
-
     # size of integration
     instrument = 'MIRI'
     nints = 1
@@ -109,7 +108,6 @@ def test_groupdq():
 
 def test_err():
     """Check that a 4-D ERR array is initialized and all values are zero."""
-
     # size of integration
     instrument = 'MIRI'
     nints = 1
@@ -215,12 +213,10 @@ def test_dq_subarray():
 
 
 def test_dq_add1_groupdq():
-    """
-    Test if the dq_init code set the groupdq flag on the first
+    """Test if the dq_init code set the groupdq flag on the first
     group to 'do_not_use' by adding 1 to the flag, not overwriting to 1
     Also test whether two flags on the same pixel are added together.
     """
-
     # size of integration
     nints = 1
     ngroups = 5
@@ -266,8 +262,7 @@ ids = ["GuiderRawModel-Image", "RampModel"]
 
 @pytest.mark.parametrize(args, test_data_multiple, ids=ids)
 def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector):
-    """Test that the full step runs"""
-
+    """Test that the full step runs."""
     # create raw input data for step
     dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type)
 

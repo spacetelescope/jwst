@@ -19,19 +19,19 @@ log.setLevel(logging.DEBUG)
 
 class InputSpectrumModel:
     """Attributes:
-        wavelength
-        flux
-        flux_error
-        surf_bright
-        sb_error
-        dq
-        nelem
-        weight
-        unit_weight
-        right_ascension
-        declination
-        source_id
-        source_type
+    wavelength
+    flux
+    flux_error
+    surf_bright
+    sb_error
+    dq
+    nelem
+    weight
+    unit_weight
+    right_ascension
+    declination
+    source_id
+    source_type.
     """
 
     def __init__(self, ms, spec, exptime_key):
@@ -51,8 +51,8 @@ class InputSpectrumModel:
             A string identifying which keyword to use to get the exposure
             time, which is used as a weight; or "unit_weight", which means
             to use weight = 1.
-        """
 
+        """
         self.wavelength = spec.spec_table.field("wavelength").copy()
 
         self.flux = spec.spec_table.field("flux").copy()
@@ -110,16 +110,16 @@ class InputSpectrumModel:
 
 class OutputSpectrumModel:
     """Attributes:
-        wavelength
-        flux
-        flux_error
-        surf_bright
-        sb_error
-        dq
-        weight
-        count
-        wcs
-        normalized
+    wavelength
+    flux
+    flux_error
+    surf_bright
+    sb_error
+    dq
+    weight
+    count
+    wcs
+    normalized.
     """
 
     def __init__(self):
@@ -148,8 +148,8 @@ class OutputSpectrumModel:
         ----------
         input_spectra : list of InputSpectrumModel objects
             List of input spectra.
-        """
 
+        """
         (wl, n_input_spectra) = count_input(input_spectra)
 
         self.wavelength = np.sort(compute_output_wl(wl, n_input_spectra))
@@ -183,8 +183,8 @@ class OutputSpectrumModel:
             List of input spectra.
         sigma_clip : float, optional
             Factor for clipping outliers in spectral combination.
-        """
 
+        """
         # This is the data type for the output spectrum.  We'll use double
         # precision for accumulating sums for most columns, but for the DQ
         # array, use the correct output data type.
@@ -315,8 +315,8 @@ class OutputSpectrumModel:
             Total, per wavelength weights.
         count : ndarray, 1-D
             Total count of spectra contributing to each wavelength.
-        """
 
+        """
         # Catch warnings for all NaN slices in an array.
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
@@ -363,8 +363,8 @@ class OutputSpectrumModel:
         -------
         output_model : `~jwst.datamodels.JwstDataModel`, CombinedSpecModel object
             A table of combined spectral data.
-        """
 
+        """
         if not self.normalized:
             log.warning("Data have not been divided by"
                         " the sum of the weights.")
@@ -429,8 +429,8 @@ def count_input(input_spectra):
         For each element of `wl`, the corresponding element of
         `n_input_spectra` is the number of input spectra that cover the
         wavelength in `wl`.
-    """
 
+    """
     # Create an array with all the input wavelengths (i.e. the union
     # of the input wavelengths).
     wl = None
@@ -519,8 +519,8 @@ def compute_output_wl(wl, n_input_spectra):
     -------
     wavelength :  1-D array
         Array of wavelengths for the output spectrum.
-    """
 
+    """
     nwl = len(wl)
 
     # sigma is an array of the standard deviation at each element
@@ -616,8 +616,8 @@ def check_exptime(exptime_key):
     exptime_key : str
         The value will be either "integration_time", "exposure_time",
         or "unit_weight".
-    """
 
+    """
     exptime_lwr = exptime_key.lower()
     if exptime_lwr.startswith("integration") or \
        exptime_lwr == "effinttm":
@@ -659,8 +659,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     -------
     output_model : `~jwst.datamodels.JwstDataModel`
         A datamodels.CombinedSpecModel object.
-    """
 
+    """
     log.debug("Using exptime_key = {}.".format(exptime_key))
 
     exptime_key = check_exptime(exptime_key)

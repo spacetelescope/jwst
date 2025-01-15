@@ -1,4 +1,4 @@
-"""Pointing Summary
+"""Pointing Summary.
 
 Review contents of a set of given models for pointing information.
 Compare the calculated V1 and REFPOINT pointing with the proposed
@@ -29,6 +29,7 @@ Examples
 >>> delta_refpoint = t["delta_refpoint"][0]
 >>> "%.13f" % delta_refpoint
 '0.0404431476150'
+
 """
 from collections import defaultdict, namedtuple
 import logging
@@ -49,7 +50,7 @@ Delta = namedtuple('Delta', 'target, v1, refpoint, delta_v1, delta_refpoint')
 
 
 def calc_pointing_deltas(model):
-    """Calculate pointing deltas
+    """Calculate pointing deltas.
 
     Parameters
     ----------
@@ -67,6 +68,7 @@ def calc_pointing_deltas(model):
         - 'refpoint':       `SkyCoord` of the reference point
         - 'delta_v1':       Difference between V1 and proposed TARGET
         - 'delta_refpoint': Difference between reference pixel pointing and TARGET
+
     """
     # Retrieve the info from the model
     target = SkyCoord(model.meta.target.ra * u.degree, model.meta.target.dec * u.degree)
@@ -85,7 +87,7 @@ def calc_pointing_deltas(model):
 
 
 def calc_deltas(exposures, extra_meta=None):
-    """Create table of pointing deltas
+    """Create table of pointing deltas.
 
     Parameters
     ----------
@@ -107,6 +109,7 @@ def calc_deltas(exposures, extra_meta=None):
         - refpoint:       `SkyCoord` of the reference point
         - delta_v1:       target - V1 separation
         - delta_refpoint: target - refpoint separation
+
     """
     # Initialize structures
     targets = list()

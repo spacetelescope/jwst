@@ -1,6 +1,4 @@
-"""
-Module for the source catalog step.
-"""
+"""Module for the source catalog step."""
 
 import os
 
@@ -18,13 +16,13 @@ __all__ = ["SourceCatalogStep"]
 
 
 class SourceCatalogStep(Step):
-    """
-    Create a final catalog of source photometry and morphologies.
+    """Create a final catalog of source photometry and morphologies.
 
     Parameters
-    -----------
+    ----------
     input : str or `ImageModel`
         A FITS filename or an `ImageModel` of a drizzled image.
+
     """
 
     class_alias = "source_catalog"

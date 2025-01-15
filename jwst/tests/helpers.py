@@ -1,15 +1,15 @@
-"""Handy helpful pytest helpers helping pytest test"""
+"""Handy helpful pytest helpers helping pytest test."""
 from os import path as op
 
 
 def abspath(filepath):
-    """Get the absolute file path"""
+    """Get the absolute file path."""
     return op.abspath(op.expanduser(op.expandvars(filepath)))
 
 
 # Check strings based on words using length precision
 def word_precision_check(str1, str2, length=5):
-    """Check to strings word-by-word based for word length
+    """Check to strings word-by-word based for word length.
 
     The strings are checked word for word, but only for the first
     `length` characters
@@ -26,6 +26,7 @@ def word_precision_check(str1, str2, length=5):
     -------
     match: boolean
         True if the strings match
+
     """
     words1 = str1.split()
     words2 = str2.split()
@@ -40,8 +41,7 @@ def word_precision_check(str1, str2, length=5):
 
 
 class LogWatcher:
-    """
-    The pytest caplog fixture only works for the root
+    """The pytest caplog fixture only works for the root
     logger. We use all sorts of loggers which can lead
     to random test failures with caplog.
 
@@ -55,6 +55,7 @@ class LogWatcher:
     to False. This allows the same watcher to be reused for
     multiple function calls.
     """
+
     def __init__(self, message):
         self.seen = False
         self.message = message

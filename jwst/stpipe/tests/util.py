@@ -1,6 +1,4 @@
-"""
-Contains a number of testing utilities.
-"""
+"""Contains a number of testing utilities."""
 
 import contextlib
 import logging
@@ -19,13 +17,12 @@ class ListHandler(logging.Handler):
 
 @contextlib.contextmanager
 def capture_log():
-    """
-    Captures all LogRecords to a list, and returns the list::
+    """Captures all LogRecords to a list, and returns the list::
 
-       with capture_log() as log:
-           # ...do something...
+    with capture_log() as log:
+        # ...do something...
 
-       # log is a list of all the captured LogRecords
+    # log is a list of all the captured LogRecords
     """
     handler = ListHandler()
     log = logging.getLogger('stpipe')
@@ -35,8 +32,7 @@ def capture_log():
 
 
 def pattern_to_re(pattern):
-    """
-    Converts a pattern containing embedded regular expressions inside
+    """Converts a pattern containing embedded regular expressions inside
     {{ }} to a Python regular expression.
     """
     regex = []
@@ -49,8 +45,7 @@ def pattern_to_re(pattern):
 
 
 def match_log(log, expected):
-    """
-    Matches a log to an expected log.
+    """Matches a log to an expected log.
 
     Parameters
     ----------
@@ -65,6 +60,7 @@ def match_log(log, expected):
     Raises
     ------
     ValueError : when one of the entries doesn't match
+
     """
     for a, b in zip(log, expected):
         msg = a
@@ -88,6 +84,6 @@ def match_log(log, expected):
 
 
 def t_path(partial_path):
-    """Construction the full path for test files"""
+    """Construction the full path for test files."""
     test_dir = os.path.dirname(__file__)
     return os.path.join(test_dir, partial_path)

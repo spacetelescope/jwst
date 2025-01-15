@@ -71,13 +71,11 @@ def test_background_subtract(direct_image_with_gradient):
 
 
 def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
-    '''
-    Coverage for bug where wavelength oversampling led to double-counted fluxes
+    """Coverage for bug where wavelength oversampling led to double-counted fluxes.
 
     note: segmentation_map fixture needs to be able to find module-scoped direct_image
     fixture, so it must be imported here
-    '''
-
+    """
     # manual input of input params set the same as test_observations.py
     x0 = 300.5
     y0 = 300.5

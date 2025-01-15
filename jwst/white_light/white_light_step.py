@@ -8,8 +8,7 @@ __all__ = ["WhiteLightStep"]
 
 
 class WhiteLightStep(Step):
-    """
-    WhiteLightStep: Computes integrated flux as a function of time for a
+    """WhiteLightStep: Computes integrated flux as a function of time for a
     multi-integration spectroscopic observation.
     """
 

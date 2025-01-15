@@ -26,11 +26,11 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
     -------
     int or None : The dispersion direction
 
--    None  the dispersion direction is not meaningful or not defined
--       1  the dispersion direction is horizontal ("sky" coordinates)
--       2  the dispersion direction is vertical ("sky" coordinates)
-    """
+    -    None  the dispersion direction is not meaningful or not defined
+    -       1  the dispersion direction is horizontal ("sky" coordinates)
+    -       2  the dispersion direction is vertical ("sky" coordinates)
 
+    """
     exposure_type = exposure_type.upper()
     if grating is not None:
         grating = grating.upper()

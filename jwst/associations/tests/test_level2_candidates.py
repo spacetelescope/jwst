@@ -1,4 +1,4 @@
-"""Test Level2 candidate operation"""
+"""Test Level2 candidate operation."""
 import pytest
 
 from jwst.associations.tests.helpers import (

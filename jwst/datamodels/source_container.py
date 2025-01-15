@@ -13,8 +13,7 @@ VALID_INITS = (
 
 
 class SourceModelContainer(ModelContainer):
-    """
-    A container to make MultiExposureModel look like ModelContainer
+    """A container to make MultiExposureModel look like ModelContainer.
 
     The `MultiExposureModel.exposures` list contains the data for each exposure
     from a common slit id. Though the information is the same, the structures
@@ -49,7 +48,7 @@ class SourceModelContainer(ModelContainer):
 
     @property
     def multiexposure(self):
-        """Return the MultiExposureModel that is being wrapped
+        """Return the MultiExposureModel that is being wrapped.
 
         The result will be updated with any new data in the
         container.
@@ -65,8 +64,7 @@ class SourceModelContainer(ModelContainer):
              dir_path=None,
              save_model_func=None,
              *args, **kwargs):
-        """Save out the container as a MultiExposureModel"""
-
+        """Save out the container as a MultiExposureModel."""
         if save_model_func is None:
             self.multiexposure.save(
                 path=path,

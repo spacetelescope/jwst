@@ -1,6 +1,4 @@
-"""
-Unit test for Cube Build testing for various wcs functions
-"""
+"""Unit test for Cube Build testing for various wcs functions."""
 
 import numpy as np
 import math
@@ -25,8 +23,7 @@ slice_gap[:, 80:] = 4
 
 
 def dummy_wcs(x, y):
-    """ Simple WCS for testing """
-
+    """Simple WCS for testing."""
     global xcenter, ycenter, shape, slice_gap
 
     # for given shape and wcs this will result in
@@ -71,8 +68,7 @@ def dummy_wcs(x, y):
 
 
 def test_coord_trans1():
-    """ Test finding xi,eta and cos 90, ra 45 """
-
+    """Test finding xi,eta and cos 90, ra 45."""
     crval1 = 45.0
     crval2 = 90.0
     diff_ra = 3.0  # in arc seconds
@@ -89,7 +85,7 @@ def test_coord_trans1():
 
 
 def test_coord_trans2():
-    """ Test finding ci,eta and cos 45, ra 45 """
+    """Test finding ci,eta and cos 45, ra 45."""
     crval1 = 45.0
     crval2 = 45.0
     diff_ra = 5.0  # in arc seconds
@@ -106,8 +102,7 @@ def test_coord_trans2():
 
 
 def test_coord_trans3():
-    """ Test going from ra,dec -> xi,eta -> ra,dec """
-
+    """Test going from ra,dec -> xi,eta -> ra,dec."""
     crval1 = 27.89
     crval2 = 56.08
     diff_ra = 5.0  # in arc seconds
@@ -125,8 +120,7 @@ def test_coord_trans3():
 
 
 def test_wrap_ra():
-    """ Test function wrap_ra but all ra on same side of 0/360 border """
-
+    """Test function wrap_ra but all ra on same side of 0/360 border."""
     # test 1  wrap ra should do nothing
     ra = np.zeros(5, dtype=float)
     ra[0] = 0.26
@@ -159,7 +153,7 @@ def test_wrap_ra():
 
 
 def test_setup_wcs():
-    """ setting size of IFU given input min,max and cdelts """
+    """Setting size of IFU given input min,max and cdelts."""
     ra1 = 98.83006930071556
     dec1 = -66.8274397956464
     ra2 = 98.8334511693978

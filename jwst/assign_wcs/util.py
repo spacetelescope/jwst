@@ -1,7 +1,4 @@
-"""
-Utility function for assign_wcs.
-
-"""
+"""Utility function for assign_wcs."""
 import logging
 import functools
 import numpy as np
@@ -44,7 +41,7 @@ class MSAFileError(Exception):
 
 
 class NoDataOnDetectorError(StpipeExitException):
-    """WCS solution indicates no data on detector
+    """WCS solution indicates no data on detector.
 
     When WCS solutions are available, the solutions indicate that no data
     will be present, raise this exception.
@@ -73,8 +70,7 @@ def _domain_to_bounding_box(domain):
 
 
 def reproject(wcs1, wcs2):
-    """
-    Given two WCSs return a function which takes pixel coordinates in
+    """Given two WCSs return a function which takes pixel coordinates in
     the first WCS and computes their location in the second one.
 
     It performs the forward transformation of ``wcs1`` followed by the
@@ -90,6 +86,7 @@ def reproject(wcs1, wcs2):
     _reproject : func
         Function to compute the transformations.  It takes x, y
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
+
     """
 
     def _reproject(x, y):
@@ -197,13 +194,11 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
 
 
 def compute_fiducial(wcslist, bounding_box=None):
-    """
-    For a celestial footprint this is the center.
+    """For a celestial footprint this is the center.
     For a spectral footprint, it is the beginning of the range.
 
     This function assumes all WCSs have the same output coordinate frame.
     """
-
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
@@ -231,9 +226,8 @@ def compute_fiducial(wcslist, bounding_box=None):
 
 
 def is_fits(input_img):
-    """
-    Returns
-    --------
+    """Returns
+    -------
     isFits: tuple
         An ``(isfits, fitstype)`` tuple.  The values of ``isfits`` and
         ``fitstype`` are specified as:
@@ -249,8 +243,8 @@ def is_fits(input_img):
     In the case that the input has a valid FITS filename but runs into some
     error upon opening, this routine will raise that exception for the calling
     routine/user to handle.
-    """
 
+    """
     isfits = False
     fitstype = None
     names = ['fits', 'fit', 'FITS', 'FIT']
@@ -292,8 +286,7 @@ def is_fits(input_img):
 
 
 def subarray_transform(input_model):
-    """
-    Return an offset model if the observation uses a subarray.
+    """Return an offset model if the observation uses a subarray.
 
     Parameters
     ----------
@@ -305,6 +298,7 @@ def subarray_transform(input_model):
     subarray2full : `~astropy.modeling.core.Model` or ``None``
         Returns a (combination of ) ``Shift`` models if a subarray is used.
         Returns ``None`` if a full frame observation.
+
     """
     tr_xstart = astmodels.Identity(1)
     tr_ystart = astmodels.Identity(1)
@@ -329,9 +323,7 @@ def subarray_transform(input_model):
 
 
 def not_implemented_mode(input_model, ref, slit_y_range=None):
-    """
-    Return ``None`` if assign_wcs has not been implemented for a mode.
-    """
+    """Return ``None`` if assign_wcs has not been implemented for a mode."""
     exp_type = input_model.meta.exposure.type
     message = "WCS for EXP_TYPE of {0} is not implemented.".format(exp_type)
     log.critical(message)
@@ -339,7 +331,7 @@ def not_implemented_mode(input_model, ref, slit_y_range=None):
 
 
 def get_object_info(catalog_name=None):
-    """Return a list of SkyObjects from the direct image
+    """Return a list of SkyObjects from the direct image.
 
     The source_catalog step catalog items are read into a list
     of  SkyObjects which can be referenced by catalog id. Only
@@ -422,7 +414,7 @@ def create_grism_bbox(input_model,
                       wfss_extract_half_height=None,
                       wavelength_range=None,
                       nbright=None):
-    """Create bounding boxes for each object in the catalog
+    """Create bounding boxes for each object in the catalog.
 
     The sky coordinates in the catalog image are first related
     to the grism image. They need to go through the WCS object
@@ -706,14 +698,14 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
 
 
 def get_num_msa_open_shutters(shutter_state):
-    """
-    Return the number of open shutters in a slitlet.
+    """Return the number of open shutters in a slitlet.
 
     Parameters
     ----------
     shutter_state : str
         ``Slit.shutter_state`` attribute - a combination of
         ``1`` - open shutter, ``0`` - closed shutter, ``x`` - main shutter.
+
     """
     num = shutter_state.count('1')
     if 'x' in shutter_state:
@@ -738,6 +730,7 @@ def transform_bbox_from_shape(shape, order="C"):
     bbox : tuple
         Bounding box in y, x order if order is "C" (default)
         Boundsing box in x, y order if order is "F"
+
     """
     bbox = ((-0.5, shape[-2] - 0.5),
             (-0.5, shape[-1] - 0.5))
@@ -749,6 +742,7 @@ def wcs_bbox_from_shape(shape):
     """Create a bounding box from the shape of the data.
 
     This is appropriate to attach to a wcs object
+
     Parameters
     ----------
     shape : tuple
@@ -758,6 +752,7 @@ def wcs_bbox_from_shape(shape):
     -------
     bbox : tuple
         Bounding box in x, y order.
+
     """
     bbox = ((-0.5, shape[-1] - 0.5),
             (-0.5, shape[-2] - 0.5))
@@ -783,6 +778,7 @@ def bounding_box_from_subarray(input_model, order='C'):
     bbox : tuple
         Bounding box in y, x order if order is "C" (default)
         Boundsing box in x, y order if order is "F"
+
     """
     bb_xstart = -0.5
     bb_xend = -0.5
@@ -799,22 +795,20 @@ def bounding_box_from_subarray(input_model, order='C'):
 
 
 def update_s_region_imaging(model):
-    """
-    Update the ``S_REGION`` keyword using ``WCS.footprint``.
-    """
+    """Update the ``S_REGION`` keyword using ``WCS.footprint``."""
     s_region = compute_s_region_imaging(model.meta.wcs, shape=model.data.shape, center=False)
     if s_region is not None:
         model.meta.wcsinfo.s_region = s_region
 
 
 def compute_footprint_spectral(model):
-    """
-    Determine spatial footprint for spectral observations using the instrument model.
+    """Determine spatial footprint for spectral observations using the instrument model.
 
     Parameters
     ----------
     model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
+
     """
     swcs = model.meta.wcs
     bbox = swcs.bounding_box
@@ -845,19 +839,19 @@ def compute_footprint_spectral(model):
 
 
 def update_s_region_spectral(model):
-    """ Update the S_REGION keyword.
-    """
+    """Update the S_REGION keyword."""
     footprint, spectral_region = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
     model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def compute_footprint_nrs_slit(slit):
-    """ Compute the footprint of a Nirspec slit using the instrument model.
+    """Compute the footprint of a Nirspec slit using the instrument model.
 
     Parameters
     ----------
     slit : `~jwst.datamodels.SlitModel`
+
     """
     slit2world = slit.meta.wcs.get_transform("slit_frame", "world")
     # Define the corners of a virtual slit. The center of the slit is (0, 0).
@@ -881,16 +875,14 @@ def update_s_region_nrs_slit(slit):
 
 
 def update_s_region_keyword(model, footprint):
-    """ Update the S_REGION keyword.
-    """
+    """Update the S_REGION keyword."""
     s_region = compute_s_region_keyword(footprint)
     if s_region is not None:
         model.meta.wcsinfo.s_region = s_region
 
 
 def compute_footprint_nrs_ifu(dmodel, mod):
-    """
-    Determine NIRSPEC IFU footprint using the instrument model.
+    """Determine NIRSPEC IFU footprint using the instrument model.
 
     For efficiency this function uses the transforms directly,
     instead of the WCS object. The common transforms in the WCS
@@ -912,6 +904,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
         The spatial footprint
     spectral_region : tuple
         The wavelength range for the observation.
+
     """
     ra_total = []
     dec_total = []
@@ -965,8 +958,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
 
 
 def update_s_region_nrs_ifu(output_model, mod):
-    """
-    Update S_REGION for NRS_IFU observations using calculated footprint.
+    """Update S_REGION for NRS_IFU observations using calculated footprint.
 
     Parameters
     ----------
@@ -974,6 +966,7 @@ def update_s_region_nrs_ifu(output_model, mod):
         The output of assign_wcs.
     mod : module
         The imported ``nirspec`` module.
+
     """
     footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
     update_s_region_keyword(output_model, footprint)
@@ -981,13 +974,13 @@ def update_s_region_nrs_ifu(output_model, mod):
 
 
 def update_s_region_mrs(output_model):
-    """
-    Update S_REGION for MIRI_MRS observations using the WCS transforms.
+    """Update S_REGION for MIRI_MRS observations using the WCS transforms.
 
     Parameters
     ----------
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
+
     """
     footprint, spectral_region = compute_footprint_spectral(output_model)
     update_s_region_keyword(output_model, footprint)
@@ -995,13 +988,13 @@ def update_s_region_mrs(output_model):
 
 
 def velocity_correction(velosys):
-    """
-    Compute wavelength correction to Barycentric reference frame.
+    """Compute wavelength correction to Barycentric reference frame.
 
     Parameters
     ----------
     velosys : float
         Radial velocity wrt Barycenter [m / s].
+
     """
     correction = (1 / (1 + velosys / c.value))
     model = astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
@@ -1023,10 +1016,10 @@ def wrap_ra(ravalues):
         input RA values
 
     Returns
-    ------
+    -------
     a numpy array of ra values all on "same side" of 0/360 border
-    """
 
+    """
     ravalues_array = np.array(ravalues)
     index_good = np.where(np.isfinite(ravalues_array))
     ravalues_wrap = ravalues_array[index_good].copy()
@@ -1051,8 +1044,7 @@ def wrap_ra(ravalues):
 
 
 def in_ifu_slice(slice_wcs, ra, dec, lam):
-    """
-    Given RA, DEC and LAM return the x, y positions within a slice.
+    """Given RA, DEC and LAM return the x, y positions within a slice.
 
     Parameters
     ----------
@@ -1065,6 +1057,7 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
     -------
     x, y : float, ndarray
         x, y locations within the slice.
+
     """
     slicer2world = slice_wcs.get_transform('slicer', 'world')
     slx, sly, sllam = slicer2world.inverse(ra, dec, lam)
@@ -1080,8 +1073,7 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
                         max_inv_pix_error=0.01, inv_degree=None,
                         npoints=12, crpix=None, projection='TAN',
                         imwcs=None, **kwargs):
-    """
-    Update ``datamodel.meta.wcsinfo`` based on a FITS WCS + SIP approximation
+    """Update ``datamodel.meta.wcsinfo`` based on a FITS WCS + SIP approximation
     of a GWCS object. By default, this function will approximate
     the datamodel's GWCS object stored in ``datamodel.meta.wcs`` but it can
     also approximate a user-supplied GWCS object when provided via
@@ -1269,11 +1261,10 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
 
 
 def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
-    """ Add a FITS WCS approximation for imaging mode to WFSS headers.
+    """Add a FITS WCS approximation for imaging mode to WFSS headers.
 
     Parameters
     ----------
-
     wfss_model : `~ImageModel`
         Input WFSS model (NRC or NIS).
     imaging : func, callable
@@ -1303,7 +1294,6 @@ def get_wcs_reference_files(datamodel):
 
     Parameters
     ----------
-
     datamodel : `~ImageModel`
         Input WFSS file (NRC or NIS).
 

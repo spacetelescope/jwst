@@ -22,9 +22,8 @@ _POOL_NAME = "some_pool"
 
 @pytest.fixture
 def example_asn_path(tmp_path):
-    """
-    Fixture that creates a simple association, saves it (and the models)
-    to disk, and returns the path of the saved association
+    """Fixture that creates a simple association, saves it (and the models)
+    to disk, and returns the path of the saved association.
     """
     fns = []
     for i in range(_N_MODELS):
@@ -56,16 +55,14 @@ def example_asn_path(tmp_path):
 
 @pytest.fixture
 def example_library(example_asn_path):
-    """
-    Fixture that builds off of `example_asn_path` and returns a
-    library created from the association with default options
+    """Fixture that builds off of `example_asn_path` and returns a
+    library created from the association with default options.
     """
     return ModelLibrary(example_asn_path)
 
 
 def _set_custom_member_attr(example_asn_path, member_index, attr, value):
-    """
-    Helper function to modify the association at `example_asn_path`
+    """Helper function to modify the association at `example_asn_path`
     by adding an attribute `attr` to the member list (at index
     `member_index`) with value `value`. This is used to modify
     the `group_id` or `exptype` of a certain member for some tests.
@@ -78,18 +75,15 @@ def _set_custom_member_attr(example_asn_path, member_index, attr, value):
 
 
 def test_load_asn(example_library):
-    """
-    Test that __len__ returns the number of models/members loaded
-    from the association (and does not require opening the library)
+    """Test that __len__ returns the number of models/members loaded
+    from the association (and does not require opening the library).
     """
     assert len(example_library) == _N_MODELS
 
 
 @pytest.mark.parametrize("attr", ["group_names", "group_indices"])
 def test_group_with_no_datamodels_open(example_asn_path, attr, monkeypatch):
-    """
-    Test that the "grouping" methods do not call datamodels.open
-    """
+    """Test that the "grouping" methods do not call datamodels.open."""
     # patch datamodels.open to always raise an exception
     # this will serve as a smoke test to see if any of the attribute
     # accesses (or instance creation) attempts to open models
@@ -111,11 +105,10 @@ def test_group_with_no_datamodels_open(example_asn_path, attr, monkeypatch):
         ('42', '26', '42'),
     ])
 def test_group_id_override(example_asn_path, asn_group_id, meta_group_id, expected_group_id):
-    """
-    Test that overriding a models group_id via:
+    """Test that overriding a models group_id via:
         - the association member entry
         - the model.meta.group_id
-    overwrites the automatically calculated group_id (with the asn taking precedence)
+    overwrites the automatically calculated group_id (with the asn taking precedence).
     """
     if asn_group_id:
         _set_custom_member_attr(example_asn_path, 0, 'group_id', asn_group_id)

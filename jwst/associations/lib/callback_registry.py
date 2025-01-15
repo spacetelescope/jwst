@@ -1,4 +1,4 @@
-"""Callback registry"""
+"""Callback registry."""
 
 from jwst.lib.signal_slot import Signal
 
@@ -6,13 +6,13 @@ __all__ = ['CallbackRegistry']
 
 
 class CallbackRegistry():
-    """Callback registry"""
+    """Callback registry."""
 
     def __init__(self):
         self.registry = dict()
 
     def add(self, event, callback):
-        """Add a callback to an event"""
+        """Add a callback to an event."""
         try:
             signal = self.registry[event]
         except KeyError:
@@ -21,7 +21,7 @@ class CallbackRegistry():
         self.registry[event] = signal
 
     def reduce(self, event, *args):
-        """Perform a reduction on the event args
+        """Perform a reduction on the event args.
 
         Parameters
         ----------
@@ -51,12 +51,13 @@ class CallbackRegistry():
         return result
 
     def add_decorator(self, event):
-        """Add callbacks by decoration
+        """Add callbacks by decoration.
 
         Parameters
         ----------
         event : str
             The name of event to attach the object to.
+
         """
         def decorator(func):
             self.add(event, func)

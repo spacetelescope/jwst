@@ -1,5 +1,4 @@
-"""
-JWST pipeline step for image intensity matching for MIRI images.
+"""JWST pipeline step for image intensity matching for MIRI images.
 
 :Authors: Mihai Cara
 
@@ -17,10 +16,7 @@ __all__ = ['MRSIMatchStep', 'apply_background_2d']
 
 
 class MRSIMatchStep(Step):
-    """
-    MRSIMatchStep: Subtraction or equalization of sky background in MIRI MRS science images.
-
-    """
+    """MRSIMatchStep: Subtraction or equalization of sky background in MIRI MRS science images."""
 
     class_alias = "mrs_imatch"
 
@@ -124,45 +120,44 @@ class MRSIMatchStep(Step):
 
 
 def apply_background_2d(model2d, channel=None, subtract=True):
-    """ Apply (subtract or add back) background values computed from
-        ``meta.background`` polynomials to 2D image data.
+    """Apply (subtract or add back) background values computed from
+    ``meta.background`` polynomials to 2D image data.
 
-        This function modifies the input ``model2d``'s data.
+    This function modifies the input ``model2d``'s data.
 
-        .. warning::
-           This function does not check whether background was previously
-           applied to image data (through ``meta.background.subtracted``).
+    .. warning::
+       This function does not check whether background was previously
+       applied to image data (through ``meta.background.subtracted``).
 
-        .. warning::
-           This function does not modify input model's
-           ``meta.background.subtracted`` attribute to indicate that
-           background has been applied to model's data. User is responsible
-           for setting ``meta.background.subtracted`` after background
-           was applied to all channels. Partial application of background
-           (i.e., to only *some channels* as opposite to *all* channels) is
-           not recommended.
+    .. warning::
+       This function does not modify input model's
+       ``meta.background.subtracted`` attribute to indicate that
+       background has been applied to model's data. User is responsible
+       for setting ``meta.background.subtracted`` after background
+       was applied to all channels. Partial application of background
+       (i.e., to only *some channels* as opposite to *all* channels) is
+       not recommended.
 
-        Parameters
-        ----------
-        model2d : `jwst.datamodels.image.ImageModel`
-            A `jwst.datamodels.image.ImageModel` from whose data background
-            needs to be subtracted (or added back).
+    Parameters
+    ----------
+    model2d : `jwst.datamodels.image.ImageModel`
+        A `jwst.datamodels.image.ImageModel` from whose data background
+        needs to be subtracted (or added back).
 
-        channel : str, int, list, None, optional
-            This parameter indicates for which channel background values should
-            be applied. An integer value is automatically converted to a string
-            type. A string type input value indicates **a single** channel
-            to which background should be applied. ``channel`` can also be a
-            list of several string or integer single channel values.
-            The default value of `None` indicates that background should be
-            applied to all channels.
+    channel : str, int, list, None, optional
+        This parameter indicates for which channel background values should
+        be applied. An integer value is automatically converted to a string
+        type. A string type input value indicates **a single** channel
+        to which background should be applied. ``channel`` can also be a
+        list of several string or integer single channel values.
+        The default value of `None` indicates that background should be
+        applied to all channels.
 
-        subtract : bool, optional
-            Indicates whether to subtract or add back background values to
-            input model data. By default background is subtracted from data.
+    subtract : bool, optional
+        Indicates whether to subtract or add back background values to
+        input model data. By default background is subtracted from data.
 
     """
-
     mpolyinfo = model2d.meta.background.polynomial_info
 
     if channel is None:
@@ -399,8 +394,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
 
 
 def _find_channel_bkg_index(model2d, channel):
-    """
-    Return the index of the background subschema corresponding to a given
+    """Return the index of the background subschema corresponding to a given
     channel.
 
     """

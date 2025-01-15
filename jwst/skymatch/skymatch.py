@@ -1,5 +1,4 @@
-"""
-A module that provides functions for matching sky in overlapping images.
+"""A module that provides functions for matching sky in overlapping images.
 
 :Authors: Mihai Cara
 
@@ -26,8 +25,7 @@ log.setLevel(logging.DEBUG)
 
 
 def match(images, skymethod='global+match', match_down=True, subtract=False):
-    """
-    A function to compute and/or "equalize" sky background in input images.
+    """A function to compute and/or "equalize" sky background in input images.
 
     .. note::
        Sky matching ("equalization") is possible only for **overlapping**
@@ -35,7 +33,6 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
     Parameters
     ----------
-
     images : list of SkyImage or SkyGroup
         A list of of :py:class:`~jwst.skymatch.skyimage.SkyImage` or
         :py:class:`~jwst.skymatch.skyimage.SkyGroup` objects.
@@ -97,7 +94,6 @@ drizzlepac/astrodrizzle.html>`_
 
     Raises
     ------
-
     TypeError
         The `images` argument must be a Python list of
         :py:class:`~jwst.skymatch.skyimage.SkyImage` and/or
@@ -106,7 +102,6 @@ drizzlepac/astrodrizzle.html>`_
 
     Notes
     -----
-
     :py:func:`match` provides new algorithms for sky value computations
     and enhances previously available algorithms used by, e.g.,
     `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/\

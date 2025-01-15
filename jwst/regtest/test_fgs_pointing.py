@@ -1,4 +1,4 @@
-"""Test suite for ensuring correct FGS pointing"""
+"""Test suite for ensuring correct FGS pointing."""
 import logging
 from pathlib import Path
 import pytest
@@ -170,14 +170,14 @@ META_FGS2 = {
 
 @pytest.mark.parametrize('attr', WCS_ATTRIBUTES)
 def test_wcs_calc_guiding(get_guider_wcs, attr):
-    """Test the WCS calculation"""
+    """Test the WCS calculation."""
     exp_type, detector, wcs = get_guider_wcs
 
     assert allclose(wcs[attr], FGS_TRUTHS[f'{exp_type}-{detector}'][attr])
 
 
 def get_guider_wcs_id(path):
-    """Generate ids for get_guider_wcs"""
+    """Generate ids for get_guider_wcs."""
     id = path.stem
     return id
 
@@ -196,7 +196,7 @@ def get_guider_wcs(request):
 
 @pytest.mark.parametrize('attr', META_ATTRIBUTES)
 def test_update_wcs(update_wcs, attr):
-    """Test that meta info gets updated"""
+    """Test that meta info gets updated."""
     model, expected = update_wcs
     wcsinfo = model.meta.wcsinfo.instance
 
@@ -208,7 +208,7 @@ def test_update_wcs(update_wcs, attr):
 # ---------
 @pytest.fixture(scope='module')
 def update_wcs(make_level1b):
-    """Update the model wcs info"""
+    """Update the model wcs info."""
     model, expected = make_level1b
 
     stp.update_wcs(model)

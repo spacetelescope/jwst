@@ -27,9 +27,7 @@ log.setLevel(logging.DEBUG)
 
 
 class DarkPipeline(Pipeline):
-    """
-
-    DarkPipeline: Apply detector-level calibration steps to raw JWST
+    """DarkPipeline: Apply detector-level calibration steps to raw JWST
     dark ramp to produce a corrected 4-D ramp product.
     Included steps are: group_scale, dq_init, saturation, ipc,
     superbias, refpix, rscd, lastframe, and linearity.

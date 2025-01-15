@@ -1,4 +1,4 @@
-"""Regression test for WFSS contam correction of NIRCam data"""
+"""Regression test for WFSS contam correction of NIRCam data."""
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -6,7 +6,7 @@ from jwst.regtest import regtestdata as rt
 
 @pytest.fixture(scope='module')
 def run_wfss_contam(rtdata_module):
-    """Run the wfss_contam step"""
+    """Run the wfss_contam step."""
     rtdata = rtdata_module
 
     # Get input data files
@@ -34,7 +34,7 @@ def run_wfss_contam(rtdata_module):
     ['simul', 'contam', 'wfsscontamstep']
 )
 def test_nrc_wfss_contam(run_wfss_contam, fitsdiff_default_kwargs, suffix):
-    """Regression test for wfss_contam applied to NIRCam WFSS data"""
+    """Regression test for wfss_contam applied to NIRCam WFSS data."""
     rt.is_like_truth(
         run_wfss_contam, fitsdiff_default_kwargs, suffix, 'truth/test_nircam_wfss_contam'
     )

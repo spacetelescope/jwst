@@ -9,7 +9,7 @@ from jwst.associations.lib.dms_base import DMSBaseMixin
 
 @RegistryMarker.rule
 class Asn_DMS_Base(DMSBaseMixin, Association):
-    """Basic DMS rule"""
+    """Basic DMS rule."""
 
     def __init__(self, version_id=None):
         self.constraints = ConstraintTrue()
@@ -23,7 +23,7 @@ class Asn_DMS_Base(DMSBaseMixin, Association):
         self.data['members'].append(item)
 
     def finalize(self):
-        """Perform finalization steps"""
+        """Perform finalization steps."""
         return [self]
 
 
@@ -32,11 +32,11 @@ RegistryMarker.callback('finalize')(general_asn_finalize)
 
 
 class Utility:
-    """Should not be part of the utilities"""
+    """Should not be part of the utilities."""
 
     @staticmethod
     def not_valid_function():
-        """Should not be part of the utilities"""
+        """Should not be part of the utilities."""
 
 
 @RegistryMarker.utility
@@ -45,4 +45,4 @@ class ValidUtility:
 
     @staticmethod
     def valid_function():
-        "yes, i'm good"
+        """yes, i'm good."""

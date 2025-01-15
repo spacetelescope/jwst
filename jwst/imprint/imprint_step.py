@@ -7,8 +7,7 @@ __all__ = ["ImprintStep"]
 
 
 class ImprintStep(Step):
-    """
-    ImprintStep: Removes NIRSpec MSA imprint structure from an exposure
+    """ImprintStep: Removes NIRSpec MSA imprint structure from an exposure
     by subtracting an imprint (a.k.a. leakcal) exposure.
     """
 

@@ -1,4 +1,4 @@
-"""Test suffix replacement"""
+"""Test suffix replacement."""
 
 import logging
 import pytest
@@ -18,8 +18,7 @@ def enable_logging():
 
 
 def test_suffix_existence(enable_logging):
-    """Generate current suffix list and compare"""
-
+    """Generate current suffix list and compare."""
     calculated_suffixes = s.find_suffixes()
     found_suffixes = s.combine_suffixes(
         to_add=(calculated_suffixes, s.SUFFIXES_TO_ADD),
@@ -34,7 +33,7 @@ def test_suffix_existence(enable_logging):
     s.KNOW_SUFFIXES
 )
 def test_suffix_removal(suffix, enable_logging):
-    """Test suffix removal"""
+    """Test suffix removal."""
     basename = 'file'
     full_fpath = basename + '_' + suffix
     removed_path, separator = s.remove_suffix(full_fpath)
@@ -47,7 +46,7 @@ def test_suffix_removal(suffix, enable_logging):
     s.KNOW_SUFFIXES
 )
 def test_suffix_replacement(suffix, enable_logging, base='file', new='junk', sep='_'):
-    """Test suffix replacement"""
+    """Test suffix replacement."""
     full_path = base + sep + suffix
     replaced = s.replace_suffix(full_path, new)
     assert replaced == base + sep + new

@@ -24,7 +24,6 @@ def run_pipeline(rtdata_module):
                                     'jw01529003001_03103_00011_mirimage_mbsub.fits'])
 def test_miri_lrs_dedicated_mbkg(run_pipeline, fitsdiff_default_kwargs, output):
     """Run a test for MIRI LRS data with dedicated background exposures."""
-
     rtdata = run_pipeline
     rtdata.output = output
 

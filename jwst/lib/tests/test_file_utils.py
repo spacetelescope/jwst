@@ -1,4 +1,4 @@
-"""Test file utilities"""
+"""Test file utilities."""
 import os
 import pytest
 
@@ -6,7 +6,7 @@ from jwst.lib.file_utils import pushdir
 
 
 def test_pushdir():
-    """Test for successful change"""
+    """Test for successful change."""
     # Retrieve what the /tmp folder really is
     current = os.getcwd()
     try:

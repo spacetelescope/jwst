@@ -8,8 +8,7 @@ log.setLevel(logging.DEBUG)
 
 
 def get_photom_data(phot_model, filter, pupil, order):
-    """
-    Retrieves wavelength and response data from photom ref file
+    """Retrieves wavelength and response data from photom ref file
     for the filter+pupil (grism) mode in use.
 
     Parameters
@@ -29,8 +28,8 @@ def get_photom_data(phot_model, filter, pupil, order):
         Array of wavelengths from the ref file
     relresps : float array
         Array of response (flux calibration) values from the ref file
-    """
 
+    """
     # Get the appropriate row of data from the reference table
     phot_table = phot_model.phot_table
     fields_to_match = {'filter': filter, 'pupil': pupil, 'order': order}
@@ -62,8 +61,7 @@ def get_photom_data(phot_model, filter, pupil, order):
 
 
 def create_1d_sens(data_waves, ref_waves, relresps):
-    """
-    Create a 1D array of photometric conversion values based on
+    """Create a 1D array of photometric conversion values based on
     wavelengths per pixel and response as a function of wavelength.
 
     Parameters
@@ -81,8 +79,8 @@ def create_1d_sens(data_waves, ref_waves, relresps):
         1D array of computed photometric conversion values
     no_cal : int array
         1D mask indicating where no conversion is available
-    """
 
+    """
     # Interpolate the photometric response values onto the
     # 1D wavelength grid of the data
     sens_1d = np.interp(data_waves, ref_waves, relresps, left=np.nan, right=np.nan)

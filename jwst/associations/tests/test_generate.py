@@ -1,4 +1,4 @@
-"""Test basic generate operations"""
+"""Test basic generate operations."""
 
 from jwst.associations.tests.helpers import t_path
 
@@ -11,7 +11,7 @@ from jwst.associations import (
 
 
 def test_simple():
-    """Test generate on simple registry"""
+    """Test generate on simple registry."""
     registry = AssociationRegistry(
         [t_path('data/rules_basic.py')],
         include_default=False
@@ -25,7 +25,7 @@ def test_simple():
 
 
 def test_unserialize():
-    """Test basic unserializing"""
+    """Test basic unserializing."""
     asn_file = t_path(
         'data/asn_mosaic.json'
     )

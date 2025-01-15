@@ -9,7 +9,7 @@ from jwst.extract_1d.apply_apcorr import ApCorrRadial, select_apcorr
 
 @pytest.fixture(scope='module')
 def dummy_nirspec_ref(tmp_path_factory):
-    """ Generate a dummy apcorr ref file """
+    """Generate a dummy apcorr ref file."""
     filename = tmp_path_factory.mktemp('dummy_apcorr')
     filename = filename / 'dummy_nirspec_apcorr.asdf'
 
@@ -52,7 +52,7 @@ def dummy_nirspec_ref(tmp_path_factory):
 
 @pytest.fixture(scope='module')
 def dummy_miri_ref(tmp_path_factory):
-    """ Generate a dummy apcorr ref file """
+    """Generate a dummy apcorr ref file."""
     filename = tmp_path_factory.mktemp('dummy_apcorr')
     filename = filename / 'dummy_miri_apcorr.asdf'
 

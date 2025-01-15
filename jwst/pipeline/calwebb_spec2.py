@@ -45,8 +45,7 @@ GRISM_TYPES = ['NRC_TSGRISM'] + WFSS_TYPES
 
 
 class Spec2Pipeline(Pipeline):
-    """
-    Spec2Pipeline: Processes JWST spectroscopic exposures from Level 2a to 2b.
+    """Spec2Pipeline: Processes JWST spectroscopic exposures from Level 2a to 2b.
     Accepts a single exposure or an association as input.
 
     Included steps are:
@@ -92,12 +91,13 @@ class Spec2Pipeline(Pipeline):
 
     # Main processing
     def process(self, data):
-        """Entrypoint for this pipeline
+        """Entrypoint for this pipeline.
 
         Parameters
         ----------
         input: str, Level2 Association, or ~jwst.datamodels.JwstDataModel
             The exposure or association of exposures to process
+
         """
         self.log.info('Starting calwebb_spec2 ...')
 
@@ -163,14 +163,14 @@ class Spec2Pipeline(Pipeline):
             pool_name=' ',
             asn_file=' ',
     ):
-        """Process an exposure found in the association product
+        """Process an exposure found in the association product.
 
         Parameters
-        ---------
+        ----------
         exp_product: dict
             A Level2b association product.
-        """
 
+        """
         # Find all the member types in the product
         members_by_type = defaultdict(list)
         for member in exp_product['members']:
@@ -413,7 +413,7 @@ class Spec2Pipeline(Pipeline):
         return calibrated
 
     def _step_verification(self, exp_type, input, members_by_type, multi_int):
-        """Verify whether requested steps can operate on the given data
+        """Verify whether requested steps can operate on the given data.
 
         Though ideally this would all be controlled through the pipeline
         parameters, the desire to keep the number of config files down has
@@ -422,7 +422,6 @@ class Spec2Pipeline(Pipeline):
         Once step and pipeline parameters are retrieved from CRDS, this
         logic can be removed.
         """
-
         # Check for NIRSpec MSA bad shutter flagging.
         if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_LAMP',
                                                            'NRS_AUTOFLAT', 'NRS_AUTOWAVE']:
@@ -504,11 +503,10 @@ class Spec2Pipeline(Pipeline):
             self.wfss_contam.skip = True
 
     def _process_grism(self, data):
-        """WFSS & Grism processing
+        """WFSS & Grism processing.
 
         WFSS/Grism data need flat_field before extract_2d.
         """
-
         # Apply flat-field correction
         calibrated = self.flat_field.run(data)
 
@@ -651,7 +649,7 @@ class Spec2Pipeline(Pipeline):
         return calib_mos
 
     def _process_niriss_soss(self, data):
-        """Process SOSS
+        """Process SOSS.
 
         New SOSS extraction requires input to extract_1d step in units
         of DN/s, with photom step to be run afterwards.
@@ -666,7 +664,7 @@ class Spec2Pipeline(Pipeline):
         return calibrated
 
     def _process_common(self, data):
-        """Common spectral processing"""
+        """Common spectral processing."""
         calibrated = self.srctype.run(data)
         calibrated = self.straylight.run(calibrated)
         calibrated = self.flat_field.run(calibrated)
@@ -680,7 +678,6 @@ class Spec2Pipeline(Pipeline):
 
     def _extract_nirspec_msa_slits(self, resampled):
         """Extract NIRSpec MSA slits with separate handling for FS slits."""
-
         # Check for fixed slits mixed in with MSA spectra:
         # they need separate reference files
         resamp_mos = datamodels.MultiSlitModel()

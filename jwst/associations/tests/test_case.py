@@ -1,4 +1,4 @@
-"""Test case insensitivity"""
+"""Test case insensitivity."""
 import pytest
 
 from jwst.associations.tests.helpers import (
@@ -54,7 +54,7 @@ from jwst.associations.main import Main
     ]
 )
 def test_candidate_observation_caseagnostic(partial_args, n_asns):
-    """Use the extensive candidate test as a test for case"""
+    """Use the extensive candidate test as a test for case."""
     with mkstemp_pool_file(
             t_path('data/pool_001_candidates_lower.csv')
     ) as pool_path:

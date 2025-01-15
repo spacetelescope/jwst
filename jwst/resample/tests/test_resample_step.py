@@ -622,7 +622,7 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
 
 
 def test_weight_type(nircam_rate, tmp_cwd):
-    """Check that weight_type of exptime and ivm work"""
+    """Check that weight_type of exptime and ivm work."""
     im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
     _set_photom_kwd(im1)
     im1.var_rnoise[:] = 0
@@ -761,8 +761,7 @@ def test_build_nirspec_output_wcs(nirspec_cal_pair):
 
 
 def test_wcs_keywords(nircam_rate):
-    """Make sure certain wcs keywords are removed after resample
-    """
+    """Make sure certain wcs keywords are removed after resample."""
     im = AssignWcsStep.call(nircam_rate)
     result = ResampleStep.call(im)
 
@@ -782,7 +781,7 @@ def test_wcs_keywords(nircam_rate):
                          [(1, 'ivm'), (2, 'ivm'), (3, 'ivm'), (9, 'ivm'),
                           (1, 'exptime'), (2, 'exptime'), (3, 'exptime'), (9, 'exptime')])
 def test_resample_variance(nircam_rate, n_images, weight_type):
-    """Test that resampled variance and error arrays are computed properly"""
+    """Test that resampled variance and error arrays are computed properly."""
     err = 0.02429
     var_rnoise = 0.00034
     var_poisson = 0.00025
@@ -808,7 +807,7 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
 
 @pytest.mark.parametrize("shape", [(0, ), (10, 1)])
 def test_resample_undefined_variance(nircam_rate, shape):
-    """Test that resampled variance and error arrays are computed properly"""
+    """Test that resampled variance and error arrays are computed properly."""
     im = AssignWcsStep.call(nircam_rate)
     im.var_rnoise = np.ones(shape, dtype=im.var_rnoise.dtype.type)
     im.var_poisson = np.ones(shape, dtype=im.var_poisson.dtype.type)

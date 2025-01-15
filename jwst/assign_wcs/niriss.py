@@ -43,6 +43,7 @@ def create_pipeline(input_model, reference_files):
     pipeline : list
         The pipeline list that is returned is suitable for
         input into  gwcs.wcs.WCS to create a GWCS object.
+
     """
     log.debug(f'reference files used in NIRISS WCS pipeline: {reference_files}')
     exp_type = input_model.meta.exposure.type.lower()
@@ -52,8 +53,7 @@ def create_pipeline(input_model, reference_files):
 
 
 def niriss_soss_set_input(model, order_number):
-    """
-    Extract a WCS fr a specific spectral order.
+    """Extract a WCS fr a specific spectral order.
 
     Parameters
     ----------
@@ -67,7 +67,6 @@ def niriss_soss_set_input(model, order_number):
     WCS - the WCS corresponding to the spectral order.
 
     """
-
     # Make sure the spectral order is available.
     if order_number < 1 or order_number > 3:
         raise ValueError('Order must be between 1 and 3')
@@ -113,8 +112,7 @@ def niriss_bounding_box(input_model):
 
 
 def niriss_soss(input_model, reference_files):
-    """
-    The NIRISS SOSS WCS pipeline.
+    """The NIRISS SOSS WCS pipeline.
 
     Parameters
     ----------
@@ -136,8 +134,8 @@ def niriss_soss(input_model, reference_files):
     "detector" and "world".
 
     It uses the "specwcs" reference file.
-    """
 
+    """
     # Get the target RA and DEC, they will be used for setting the WCS RA
     # and DEC based on a conversation with Kevin Volk.
     try:
@@ -212,8 +210,7 @@ def niriss_soss(input_model, reference_files):
 
 
 def imaging(input_model, reference_files):
-    """
-    The NIRISS imaging WCS pipeline.
+    """The NIRISS imaging WCS pipeline.
 
     Parameters
     ----------
@@ -234,6 +231,7 @@ def imaging(input_model, reference_files):
     It includes three coordinate frames -
     "detector" "v2v3" and "world".
     It uses the "distortion" reference file.
+
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
@@ -268,7 +266,7 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    """ Create the transform from "detector" to "v2v3".
+    """Create the transform from "detector" to "v2v3".
 
     Parameters
     ----------
@@ -321,8 +319,7 @@ def imaging_distortion(input_model, reference_files):
 
 
 def wfss(input_model, reference_files):
-    """
-    Create the WCS pipeline for a NIRISS grism observation.
+    """Create the WCS pipeline for a NIRISS grism observation.
 
     Parameters
     ----------
@@ -384,7 +381,6 @@ def wfss(input_model, reference_files):
     Source catalog use moved to extract_2d.
 
     """
-
     # The input is the grism image
     if not isinstance(input_model, ImageModel):
         raise TypeError('The input data model must be an ImageModel.')

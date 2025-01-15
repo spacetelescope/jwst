@@ -91,7 +91,7 @@ class BasePoolRule():
 
 
 def make_megapool():
-    """Combine the individual test pools into one
+    """Combine the individual test pools into one.
 
     Notes
     -----
@@ -99,6 +99,7 @@ def make_megapool():
     the folder the test pools reside in. The package
     does need to have been installed.
     `python -c 'import jwst.associations.tests.helpers as helpers; helpers.make_megapool()'`
+
     """
     pool_files = glob('pool_*.csv')
     pool_files.sort()
@@ -129,13 +130,13 @@ def not_none(value):
 
 
 def t_path(partial_path):
-    """Construction the full path for test files"""
+    """Construction the full path for test files."""
     test_dir = os.path.dirname(__file__)
     return os.path.join(test_dir, partial_path)
 
 
 def combine_pools(pools, **pool_kwargs):
-    """Combine pools into a single pool
+    """Combine pools into a single pool.
 
     Parameters
     ----------
@@ -152,6 +153,7 @@ def combine_pools(pools, **pool_kwargs):
     -------
     AssociationPool|astropy.table.Table
         The combined pool
+
     """
     if not is_iterable(pools):
         pools = [pools]
@@ -182,7 +184,7 @@ def combine_pools(pools, **pool_kwargs):
 
 
 def parse_value(v, global_env=None, local_env=None):
-    """Evaluate if indicated"""
+    """Evaluate if indicated."""
     if global_env is None:
         global_env = globals()
     if local_env is None:
@@ -200,7 +202,7 @@ def parse_value(v, global_env=None, local_env=None):
 
 
 def fmt_cand(candidate_list):
-    """Format the candidate field
+    """Format the candidate field.
 
     Parameters
     ----------
@@ -216,6 +218,7 @@ def fmt_cand(candidate_list):
     candidate_list_field: str
         A string of the list of candidates, with any evaluation
         performed.
+
     """
     evaled_list = []
     for cid, ctype in candidate_list:
@@ -236,17 +239,17 @@ def fmt_cand(candidate_list):
 
 
 def fmt_fname(expnum):
-    """Format the filename"""
+    """Format the filename."""
     return 'jw_{:0>5d}_uncal.fits'.format(expnum)
 
 
 def generate_params(request):
-    """Simple param reflection for pytest.fixtures"""
+    """Simple param reflection for pytest.fixtures."""
     return request.param
 
 
 def func_fixture(f, **kwargs):
-    """Create a true decorator for pytest.fixture
+    """Create a true decorator for pytest.fixture.
 
     Parameters
     ----------
@@ -255,6 +258,7 @@ def func_fixture(f, **kwargs):
 
     kwargs: dict
         Keyword arguments to pass to pytest.fixture
+
     """
     @pytest.fixture(**kwargs)
     def duped(request, *duped_args, **duped_kwargs):
@@ -264,7 +268,7 @@ def func_fixture(f, **kwargs):
 
 @contextmanager
 def mkstemp_pool_file(pools, **pool_kwargs):
-    """Make an actual pool file"""
+    """Make an actual pool file."""
     pool = combine_pools(pools, **pool_kwargs)
     with TemporaryDirectory() as path:
         pool_path = os.path.join(path, 'pool')
@@ -277,14 +281,14 @@ def mkstemp_pool_file(pools, **pool_kwargs):
 
 
 def generate_pool_paths(request):
-    """Fixture to create temporary files for pools"""
+    """Fixture to create temporary files for pools."""
     pool_file = t_path(request.param)
     with mkstemp_pool_file(pool_file) as pool_path:
         yield pool_path
 
 
 def get_rule_names(rules):
-    """Return rules names found in a registry
+    """Return rules names found in a registry.
 
     Parameters
     ----------
@@ -295,6 +299,7 @@ def get_rule_names(rules):
     -------
     rule_names: list
         The list of rule names
+
     """
     return [
         rule._asn_rule()
@@ -303,17 +308,17 @@ def get_rule_names(rules):
 
 
 def level3_rule_path():
-    """Return the path to the level 3 rules"""
+    """Return the path to the level 3 rules."""
     return t_path('../lib/rules_level3.py')
 
 
 def level2_rule_path():
-    """Return the path to the level 2 rules"""
+    """Return the path to the level 2 rules."""
     return t_path('../lib/rules_level2b.py')
 
 
 def registry_level3_only(global_constraints=None):
-    """Get registry with only Level3 rules"""
+    """Get registry with only Level3 rules."""
     return AssociationRegistry(
         definition_files=[level3_rule_path()],
         include_default=False,
@@ -322,7 +327,7 @@ def registry_level3_only(global_constraints=None):
 
 
 def registry_level2_only(global_constraints=None):
-    """Get registry with only Level2 rules"""
+    """Get registry with only Level2 rules."""
     return AssociationRegistry(
         definition_files=[level2_rule_path()],
         include_default=False,

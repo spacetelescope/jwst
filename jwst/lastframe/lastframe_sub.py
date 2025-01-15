@@ -11,8 +11,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(output):
-    """
-    Short Summary
+    """Short Summary
     -------------
     The sole correction is to reset to DO_NOT_USE the GROUP data quality flags
     for the final group, if the number of groups is greater than 2.
@@ -28,7 +27,6 @@ def do_correction(output):
         lastframe-corrected science data
 
     """
-
     # Save some data params for easy use later
     sci_ngroups = output.data.shape[1]
 

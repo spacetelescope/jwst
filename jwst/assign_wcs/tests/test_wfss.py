@@ -19,7 +19,7 @@ data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
 def create_nircam_slit(model, x0, y0, order):
-    """ Create a SlitModel representing a grism slit."""
+    """Create a SlitModel representing a grism slit."""
     ymin = 0
     xmin = 0
     # ymax = 58
@@ -36,7 +36,7 @@ def create_nircam_slit(model, x0, y0, order):
 
 
 def create_niriss_slit(model, x0, y0, order):
-    """ Create a SlitModel representing a grism slit."""
+    """Create a SlitModel representing a grism slit."""
     ymin = y0
     xmin = x0
     model = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &

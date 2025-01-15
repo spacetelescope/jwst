@@ -16,20 +16,16 @@ DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 
 
 class DataSet:
-    """
-    Two dithered input wavefront sensing images to be combined
-
-    """
+    """Two dithered input wavefront sensing images to be combined."""
 
     def __init__(self, infile_1, infile_2, outfile, do_refine, flip_dithers, psf_size,
                  blur_size, n_size):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Assign models to input files.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         infile_1: string
             First input file
         infile_2: string
@@ -46,8 +42,8 @@ class DataSet:
             amount of smoothing to apply before finding the initial centroid
         n_size: int
             size of interpolation box
-        """
 
+        """
         if outfile == "":
             log.error('No output product specified in the association table.')
 
@@ -79,8 +75,7 @@ class DataSet:
         self.n_size = n_size
 
     def do_all(self):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Execute all tasks for Wave Front Sensing Combination
 
@@ -91,8 +86,8 @@ class DataSet:
         -------
         new_model: data model object
             combined input file data
-        """
 
+        """
         self.off_x, self.off_y = self.get_wcs_offsets()
 
         # If the shift in x is negative, switch the two images
@@ -132,8 +127,7 @@ class DataSet:
         return new_model
 
     def create_aligned_2(self):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Align image 2 in image 1's frame.
 
@@ -164,8 +158,8 @@ class DataSet:
         -------
         model_2_a:  Data Model object
            aligned model for input image #2
-        """
 
+        """
         self.off_x, self.off_y = self.get_wcs_offsets()
         log.info(f"x,y offset in integer pixels from WCS: {self.off_x} {self.off_y}")
         if self.do_refine:
@@ -236,8 +230,7 @@ class DataSet:
         return model_2_a
 
     def apply_final_offsets(self):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Apply final offsets, aligning each array for image #2 to #1's frame
 
@@ -252,8 +245,8 @@ class DataSet:
             aligned DQ array of image #2
         err_2_a: 2D float array
             aligned ERR array of image #2
-        """
 
+        """
         data_2_a = self.do_2d_shifts(self.input_2.data)
         dq_2_a = self.do_2d_shifts(self.input_2.dq)
         err_2_a = self.do_2d_shifts(self.input_2.err)
@@ -261,8 +254,7 @@ class DataSet:
         return data_2_a, dq_2_a, err_2_a
 
     def get_wcs_offsets(self):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Get the nominal offsets from the WCS information of each of the
         2 input DataModel objects. From the difference in pointings (in
@@ -279,6 +271,7 @@ class DataSet:
             difference (#2 -#1) in pointing in pixels in the x-direction
         off_y: integer
             difference (#2 -#1) in pointing in pixels in the y-direction
+
         """
         wcs1 = self.input_1.meta.wcs
         wcs2 = self.input_2.meta.wcs
@@ -303,8 +296,7 @@ class DataSet:
         return off_x, off_y
 
     def create_combined(self, image1, image2):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Create combined image from aligned input images. In the combined image:
 
@@ -343,8 +335,8 @@ class DataSet:
             combined DQ array
         err_comb: 2d float array
             combined ERR array
-        """
 
+        """
         data1 = image1.data.astype(float)
         data2 = image2.data.astype(float)
         dq1 = image1.dq.copy()
@@ -384,21 +376,22 @@ class DataSet:
         return data_comb, dq_comb, err_comb, data_diff
 
     def do_2d_shifts(self, a):
-        """
-        Short Summary
+        """Short Summary
         -------------
         Create 2d output array by shifting 2d array input by (off_x, off_y),
         where output has same dimensions as input.
+
         Parameters
         ----------
         a: 2d float array
             input array
+
         Returns
         -------
         b: 2d float array
             shifted array of input a
-        """
 
+        """
         ai_x, af_x = get_final_index_range(self.off_x, a.shape[1])
         ai_y, af_y = get_final_index_range(self.off_y, a.shape[0])
 
@@ -415,26 +408,27 @@ class DataSet:
 
 
 def get_final_index_range(offset, length):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Get the initial and final indices for the given offset and array length:
     For offset <= 0: i = 0,  f = length - abs(offset)
     For offset > 0: i = offset,  f = length
+
     Parameters
     ----------
     offset: integer
         offset
     length: integer
         length of (1D) array
+
     Returns
     -------
     i: integer
         initial index
     f: integer
         final index
-    """
 
+    """
     i = int((abs(offset) + offset) / 2)
     f = length + int((-abs(offset) + offset) / 2)
 
@@ -442,8 +436,7 @@ def get_final_index_range(offset, length):
 
 
 def gauss_kern(size, sizey=None):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Returns a normalized 2D gauss kernel array for convolution.
 
@@ -473,8 +466,7 @@ def gauss_kern(size, sizey=None):
 
 
 def interp_array(sci_data, dq_data, n_size):
-    """
-    Short Summary
+    """Short Summary
     -------------
     For bad DQ values as given by the input DQ array, do a
     bilinear interpolation over the corresponding SCI values and return
@@ -493,8 +485,8 @@ def interp_array(sci_data, dq_data, n_size):
     -------
     sci_data: 2D float array
         interpolated SCI image
-    """
 
+    """
     wh_bad_dq = np.where(np.bitwise_and(dq_data, DO_NOT_USE))
     num_bad_dq = len(wh_bad_dq[0])
 
@@ -522,8 +514,7 @@ def interp_array(sci_data, dq_data, n_size):
 
 
 def create_griddata_array(sci_data, pixel, n_size):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Create interpolation array for input to scipy's griddata. This array
     consists of the coordinates and the pixel value for each of
@@ -576,8 +567,7 @@ def create_griddata_array(sci_data, pixel, n_size):
 
 
 def get_index_range(offset, length):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Get the initial and final indices for the given offset and array length:
     For offset <= 0: i = 0,  f = length - abs(offset)
@@ -595,6 +585,7 @@ def get_index_range(offset, length):
     -------
         initial index : integer
         final index : integer
+
     """
     if offset > 0:
         initial_1 = 0
@@ -611,8 +602,7 @@ def get_index_range(offset, length):
 
 
 def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Apply nominal offsets (of image #2 relative to image #1) to determine
     the overlap in interpolated images.
@@ -658,8 +648,8 @@ def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
         overlapping subarray for interpolated image 1
     sub_2: 2d float array
         overlapping subarray for interpolated image 2
-    """
 
+    """
     # From the nominal offsets, determine array indices to shift image #2
     #     onto frame #1
     initial_x_1, final_x_1, initial_x_2, final_x_2 = get_index_range(nom_off_x, sci_int_2.shape[1])
@@ -672,8 +662,7 @@ def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
 
 
 def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Get the overlap of the 2 images (based on the offsets), and
     calculate the two dimensional cross correlation image between 2 image subarrays.

@@ -1,6 +1,4 @@
-"""
-Test script for set_velocity_aberration.py
-"""
+"""Test script for set_velocity_aberration.py."""
 import subprocess
 
 from numpy import isclose
@@ -31,8 +29,7 @@ def test_compute_va_effects_zero_velocity():
 
 
 def test_velocity_aberration_script(tmp_path):
-    """Test the whole script on a FITS file"""
-
+    """Test the whole script on a FITS file."""
     path = tmp_path / "velocity_aberration_tmpfile.fits"
     model = dm.ImageModel()
     model.meta.ephemeris.velocity_x_bary = GOOD_VELOCITY[0]

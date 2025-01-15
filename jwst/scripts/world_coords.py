@@ -30,8 +30,7 @@
 # DAMAGE.
 
 
-"""
-A tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU) and
+"""A tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU) and
 apply the WCS transforms to all pixels in a slit. For each slit it writes the results
 as a cube with four planes (wavelength, ra, dec, y_slit) in a separate fits extension.
 The file is saved with a suffix 'world_coordinates'.
@@ -58,8 +57,7 @@ from jwst.assign_wcs import nirspec
 
 
 def main(filenames, mode):
-    """
-    Loop over the input files and apply the proper method to
+    """Loop over the input files and apply the proper method to
     create the output file.
 
     Parameters
@@ -69,6 +67,7 @@ def main(filenames, mode):
     mode : str or None
         The exposure mode to use if exposure type
         is not in the image header
+
     """
     methods = {
         'nrs_ifu': ifu_coords,
@@ -118,9 +117,8 @@ def main(filenames, mode):
 
 
 def build_output_files(filenames):
-    """
-    Create a list of output files of the same length
-    as the list of input files
+    """Create a list of output files of the same length
+    as the list of input files.
 
     Parameters
     ----------
@@ -129,8 +127,8 @@ def build_output_files(filenames):
 
     returns a list of output file names
     removes output file from filenames
-    """
 
+    """
     # Check to see if the last file is an output file
     output = filenames[-1]
     if os.path.exists(output) and not os.path.isdir(output):
@@ -177,8 +175,7 @@ def build_output_files(filenames):
 
 
 def compute_world_coordinates(model):
-    """
-    Computes wavelengths, and space coordinates of a NIRSPEC
+    """Computes wavelengths, and space coordinates of a NIRSPEC
     FS or MOS observation after running extract_2d.
 
     Parameters
@@ -187,6 +184,7 @@ def compute_world_coordinates(model):
         An image with extracted slits, i.e. the output of extract2d.
 
     returns a fits hdulist
+
     """
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
@@ -230,8 +228,7 @@ def compute_world_coordinates(model):
 
 
 def get_update_method(methods, model, mode):
-    """
-    Find the method to convert the input file to output
+    """Find the method to convert the input file to output.
 
     Parameters
     ----------
@@ -245,6 +242,7 @@ def get_update_method(methods, model, mode):
         is not found in the model
 
     returns the update function
+
     """
     exp_type = model.meta.exposure.type
     if exp_type is None and mode is not None:
@@ -271,8 +269,7 @@ def get_update_method(methods, model, mode):
 
 
 def ifu_coords(model):
-    """
-    Computes wavelengths, and space coordinates of a NIRSPEC
+    """Computes wavelengths, and space coordinates of a NIRSPEC
     IFU exposure after running assign_wcs.
 
     Parameters
@@ -282,6 +279,7 @@ def ifu_coords(model):
 
 
     returns a fits hdulist
+
     """
     ifu_slits = nirspec.nrs_ifu_wcs(model)
 
@@ -324,8 +322,7 @@ def ifu_coords(model):
 
 
 def imaging_coords(model):
-    """
-    Computes wavelengths, and space coordinates of a NIRSPEC
+    """Computes wavelengths, and space coordinates of a NIRSPEC
     imaging exposure after running assign_wcs.
 
     Parameters
@@ -335,6 +332,7 @@ def imaging_coords(model):
 
 
     returns a fits hdulist
+
     """
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
@@ -368,13 +366,13 @@ def imaging_coords(model):
 
 
 def warn_user(*argv):
-    """
-    Send a warning message to stderr
+    """Send a warning message to stderr.
 
     Parameters
     ----------
     argv : strings
         One or more strings to be printed
+
     """
     print(' '.join(argv), file=sys.stderr)
 

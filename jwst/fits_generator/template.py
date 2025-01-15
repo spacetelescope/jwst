@@ -128,8 +128,7 @@ class TemplateParserBase:
             )
 
     def _line_iter(self, filename):
-        """
-        Iterates through the lines of a file, transparently handling
+        """Iterates through the lines of a file, transparently handling
         continuation lines and #include directives.
         """
         old_filename = self._filename
@@ -446,8 +445,7 @@ def merge_cards(gen, val, debug=False):
     return gen
 
 def get_generator(filetype, debug=False):
-    """
-    Loads a file template and returns an instance of its top-level
+    """Loads a file template and returns an instance of its top-level
     `File` class.
     """
     if os.path.exists(filetype):

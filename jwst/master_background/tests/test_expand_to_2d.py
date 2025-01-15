@@ -1,6 +1,4 @@
-"""
-Test for master_background.expand_to_2d
-"""
+"""Test for master_background.expand_to_2d."""
 import numpy as np
 
 from stdatamodels.jwst import datamodels
@@ -9,7 +7,7 @@ from jwst.master_background import expand_to_2d
 
 
 def test_expand_to_2d_1():
-    """Test 1"""
+    """Test 1."""
     input = slit_data_a()               # MultiSlitModel
     m_bkg_spec = user_bkg_spec_a()      # MultiSpecModel
     bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
@@ -19,7 +17,7 @@ def test_expand_to_2d_1():
 
 
 def test_expand_to_2d_2():
-    """Test 2"""
+    """Test 2."""
     # Same input data as in the first test.
     input = slit_data_a()               # MultiSlitModel
     # Check that expand_to_2d works if the wavelength array is reversed.
@@ -33,7 +31,7 @@ def test_expand_to_2d_2():
 
 
 def test_expand_to_2d_3():
-    """Test 3"""
+    """Test 3."""
     input = image_data_c()              # ImageModel
     m_bkg_spec = user_bkg_spec_c()      # CombinedSpecModel
     bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
@@ -50,8 +48,8 @@ def slit_data_a():
     Returns
     -------
     input_model : `~jwst.datamodels.MultiSlitModel`
-    """
 
+    """
     # Create a MultiSlitModel object.
     data_shape = (5, 9)
     data = np.zeros(data_shape, dtype=np.float32) + 10.
@@ -79,8 +77,8 @@ def image_data_c():
     Returns
     -------
     input_model : `~jwst.datamodels.ImageModel`
-    """
 
+    """
     data_shape = (9, 5)
     data = np.zeros(data_shape, dtype=np.float32) + 10.
     dq = np.zeros(data_shape, dtype=np.uint32)
@@ -88,7 +86,6 @@ def image_data_c():
 
     def mock_wcs(x, y):
         """Fake wcs method."""
-
         # One row of wavelengths.
         temp_wl = np.linspace(1.3, 4.8, num=data_shape[1], endpoint=True,
                               retstep=False, dtype=np.float32)
@@ -126,8 +123,8 @@ def user_bkg_spec_a():
     Returns
     -------
     m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
-    """
 
+    """
     # This data type is used for creating a MultiSpecModel.
     spec_dtype = datamodels.SpecModel().spec_table.dtype
 
@@ -172,8 +169,8 @@ def user_bkg_spec_b():
     Returns
     -------
     m_bkg_spec : `~jwst.datamodels.MultiSpecModel`
-    """
 
+    """
     # This data type is used for creating a MultiSpecModel.
     spec_dtype = datamodels.SpecModel().spec_table.dtype
 
@@ -207,8 +204,8 @@ def user_bkg_spec_c():
     Returns
     -------
     m_bkg_spec : `~jwst.datamodels.CombinedSpecModel`
-    """
 
+    """
     # This is the data type of an output table from combine_1d.
     spec_table_dtype = datamodels.CombinedSpecModel().spec_table.dtype
 
@@ -237,8 +234,8 @@ def truth_array_a():
     -------
     truth_a : ndarray, 2-D, float64
         An array to compare with the data in the output from `expand_to_2d`.
-    """
 
+    """
     truth_a = np.array([[0., 14.603571, 17.057364, 19.059263, 20.748844,
                          22.21304, 23.506573, 24.658548, 0.],
                         [0., 15.213889, 17.548525, 19.470137, 21.102207,
@@ -261,8 +258,8 @@ def truth_array_c():
     -------
     truth_c : ndarray, 2-D, float64
         An array to compare with the data in the output from `expand_to_2d`.
-    """
 
+    """
     truth_c = np.array([[0., 17.057364, 20.748844, 23.506573, 0.],
                         [0., 17.548523, 21.102207, 23.77871, 0.],
                         [13., 18.018988, 21.444334, 24.04857, 0.],

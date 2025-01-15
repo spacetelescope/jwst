@@ -28,8 +28,7 @@ __all__ = ["RampFitStep"]
 
 
 def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
-    """
-    Get readnoise array for calculation of variance of noiseless ramps, and
+    """Get readnoise array for calculation of variance of noiseless ramps, and
     the gain array in case optimal weighting is to be done. The returned
     readnoise has been multiplied by the gain.
 
@@ -55,6 +54,7 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
 
     gain_2d : float, 2D array
         gain subarray
+
     """
     if reffile_utils.ref_matches_sci(model, gain_model):
         gain_2d = gain_model.data
@@ -72,8 +72,7 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
 
 
 def create_image_model(input_model, image_info):
-    """
-    Creates an ImageModel from the computed arrays from ramp_fit.
+    """Creates an ImageModel from the computed arrays from ramp_fit.
 
     Parameter
     ---------
@@ -83,10 +82,11 @@ def create_image_model(input_model, image_info):
     image_info: tuple
         The ramp fitting arrays needed for the ImageModel.
 
-    Return
-    ---------
+    Return:
+    ------
     out_model: ImageModel
         The output ImageModel to be returned from the ramp fit step.
+
     """
     data, dq, var_poisson, var_rnoise, err = image_info
 
@@ -107,8 +107,7 @@ def create_image_model(input_model, image_info):
 
 
 def create_integration_model(input_model, integ_info, int_times):
-    """
-    Creates an ImageModel from the computed arrays from ramp_fit.
+    """Creates an ImageModel from the computed arrays from ramp_fit.
 
     Parameter
     ---------
@@ -121,10 +120,11 @@ def create_integration_model(input_model, integ_info, int_times):
     int_times : astropy.io.fits.fitsrec.FITS_rec or None
         Integration times.
 
-    Return
-    ---------
+    Return:
+    ------
     int_model : CubeModel
         The output CubeModel to be returned from the ramp fit step.
+
     """
     data, dq, var_poisson, var_rnoise, err = integ_info
     int_model = datamodels.CubeModel(
@@ -146,8 +146,7 @@ def create_integration_model(input_model, integ_info, int_times):
 
 
 def create_optional_results_model(input_model, opt_info):
-    """
-    Creates an ImageModel from the computed arrays from ramp_fit.
+    """Creates an ImageModel from the computed arrays from ramp_fit.
 
     Parameter
     ---------
@@ -156,10 +155,11 @@ def create_optional_results_model(input_model, opt_info):
     opt_info: tuple
         The ramp fitting arrays needed for the RampFitOutputModel.
 
-    Return
-    ---------
+    Return:
+    ------
     opt_model: RampFitOutputModel
         The optional RampFitOutputModel to be returned from the ramp fit step.
+
     """
     (slope, sigslope, var_poisson, var_rnoise,
         yint, sigyint, pedestal, weights, crmag) = opt_info
@@ -181,8 +181,7 @@ def create_optional_results_model(input_model, opt_info):
 
 
 def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
-    """
-    Compute the variances due to the readnoise for all integrations.
+    """Compute the variances due to the readnoise for all integrations.
 
     Parameters
     ----------
@@ -213,6 +212,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
     var_r4 : ndarray
         Hypercube of segment- and integration-specific values for the slope
         variance due to read noise only, 4-D float
+
     """
     nint, ngroups, nrows, ncols = groupdq.shape
 
@@ -278,8 +278,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
 
 
 def calc_segs(rn_sect, gdq_sect, group_time):
-    """
-    Calculate several quantities needed for the readnoise variance, in the
+    """Calculate several quantities needed for the readnoise variance, in the
     data section.
 
     Parameters
@@ -309,6 +308,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
     max_seg : int
         maximum number of segments in a ramp
+
     """
     (ngroups, asize2, asize1) = gdq_sect.shape
     npix = asize1 * asize2
@@ -376,9 +376,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
 
 class RampFitStep(Step):
-
-    """
-    This step fits a straight line to the value of counts vs. time to
+    """This step fits a straight line to the value of counts vs. time to
     determine the mean count rate for each pixel.
     """
 

@@ -21,8 +21,7 @@ WFSS_TYPES = set(['nrc_wfss', 'nis_wfss'])
 
 
 class AssignWcsStep(Step):
-    """
-    AssignWcsStep: Create a gWCS object and store it in ``Model.meta``.
+    """AssignWcsStep: Create a gWCS object and store it in ``Model.meta``.
 
     Reference file types:
 
@@ -46,6 +45,7 @@ class AssignWcsStep(Step):
     ----------
     input : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.CubeModel`
         Input exposure.
+
     """
 
     class_alias = "assign_wcs"

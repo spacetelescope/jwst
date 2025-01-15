@@ -6,8 +6,7 @@ __all__ = ["GainScaleStep"]
 
 
 class GainScaleStep(Step):
-    """
-    GainScaleStep: Rescales countrate data to account for use of a
+    """GainScaleStep: Rescales countrate data to account for use of a
     non-standard gain value. All integrations are multiplied by the
     factor GAINFACT.
     """

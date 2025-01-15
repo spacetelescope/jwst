@@ -30,7 +30,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
 
 
 def test_wfs_duplicate_product_names():
-    """Test for duplicate product names"""
+    """Test for duplicate product names."""
     global level3_asns
 
     name_list = [

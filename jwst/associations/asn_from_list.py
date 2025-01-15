@@ -1,4 +1,4 @@
-"""Create an association from a list"""
+"""Create an association from a list."""
 import argparse
 import sys
 
@@ -9,7 +9,7 @@ __all__ = ['asn_from_list']
 
 
 def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
-    """Create an association from a list
+    """Create an association from a list.
 
     Parameters
     ----------
@@ -33,15 +33,15 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
     This is a lower-level tool for artificially creating
     an association. As such, the association created may not be valid.
     It is presumed the user knows what they are doing.
-    """
 
+    """
     asn = rule()
     asn._add_items(items, **kwargs)
     return asn
 
 
 class Main():
-    """Command-line interface for list_to_asn
+    """Command-line interface for list_to_asn.
 
     Parameters
     ----------
@@ -50,12 +50,14 @@ class Main():
             - `None`: `sys.argv` is then used.
             - `[str, ...]`: A list of strings which create the command line
               with the similar structure as `sys.argv`
+
     """
+
     def __init__(self, args=None):
         self.configure(args)
 
     def asn_from_list(self):
-        """Create the associaton from the list"""
+        """Create the associaton from the list."""
         parsed = self.parsed
         self.asn = asn_from_list(
             parsed.filelist,
@@ -66,7 +68,7 @@ class Main():
 
     @classmethod
     def cli(cls, args=None):
-        """Command-line interface to creating an association from a list
+        """Command-line interface to creating an association from a list.
 
         Parameters
         ----------
@@ -75,6 +77,7 @@ class Main():
                 - `None`: `sys.argv` is then used.
                 - `[str, ...]`: A list of strings which create the command line
                   with the similar structure as `sys.argv`
+
         """
         association = cls(args=args)
         association.asn_from_list()
@@ -82,7 +85,7 @@ class Main():
         return association
 
     def configure(self, args=None):
-        """Configure
+        """Configure.
 
         Parameters
         ----------
@@ -91,6 +94,7 @@ class Main():
                 - `None`: `sys.argv` is then used.
                 - `[str, ...]`: A list of strings which create the command line
                   with the similar structure as `sys.argv`
+
         """
         if args is None:
             args = sys.argv[1:]
@@ -159,7 +163,7 @@ class Main():
         self.rule = AssociationRegistry(parsed.ruledefs, include_bases=True)[parsed.rule]
 
     def save(self):
-        """Save association"""
+        """Save association."""
         parsed = self.parsed
         with open(parsed.output_file, 'w') as outfile:
             name, serialized = self.asn.dump(format=parsed.format)
@@ -167,7 +171,7 @@ class Main():
 
 
 def main(args=None):
-    """Command-line entrypoint for asn_from_list
+    """Command-line entrypoint for asn_from_list.
 
     Wrapper around `Main.cli` so that the return is either True or an exception
 
@@ -178,5 +182,6 @@ def main(args=None):
             - `None`: `sys.argv` is then used.
             - `[str, ...]`: A list of strings which create the command line
               with the similar structure as `sys.argv`
+
     """
     Main.cli(args=args)

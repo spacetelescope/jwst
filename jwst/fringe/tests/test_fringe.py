@@ -1,8 +1,4 @@
-"""
-
-Unit tests for fringe correction
-
-"""
+"""Unit tests for fringe correction."""
 
 import pytest
 import numpy as np
@@ -16,8 +12,7 @@ FRINGE_CONSTANT = 2.  # correction will be input data divided by this factor
 
 
 def test_data_correction(setup_inputs):
-    ''' Test both good and NaN pixels. '''
-
+    """Test both good and NaN pixels."""
     shape = (4, 5)
     input_model, fringe_model = setup_inputs(shape)
 
@@ -45,7 +40,7 @@ def test_data_correction(setup_inputs):
 
 @pytest.fixture
 def setup_inputs():
-    ''' Create input and fringe models.'''
+    """Create input and fringe models."""
     def _setup(shape=(2, 2)):
 
         input_data = (np.ones(shape[0] * shape[1])).reshape(shape) * 6.

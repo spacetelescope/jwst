@@ -34,8 +34,8 @@ def mk_data(shape):
         var_p is the contribution of Poisson noise to the variance (float32)
         var_r is the contribution of read noise to the variance (float32)
         var_f is the contribution of the flat-field to the variance (float32).
-    """
 
+    """
     nelem = 1
     for k in shape:
         nelem *= k
@@ -71,8 +71,8 @@ def mk_wavelength(shape, min_wl, max_wl, dispaxis=1):
     wl : 2-D ndarray
         The array of wavelengths.  The values will vary in the dispersion
         direction but be constant in the cross-dispersion direction.
-    """
 
+    """
     # The wavelength attribute is always 2-D.
     if len(shape) > 2:
         shape = shape[-2:]
@@ -110,6 +110,7 @@ def mk_soss_spec(settings, speclen):
     model : MultiSpecModel
         The simulated output of extract_1d to be calibrated; this is
         the SOSS-specific ordering to be tested.
+
     """
     model = MultiSpecModel()
     for i, inspec in enumerate(settings):
@@ -166,8 +167,8 @@ def create_input(instrument, detector, exptype,
     -------
     input_model : `~jwst.datamodels.JwstDataModel`
         An open data model object of the appropriate type.
-    """
 
+    """
     data = None  # Not defined for niriss_soss
     if instrument == 'NIRISS':
         if exptype == 'NIS_WFSS':
@@ -401,8 +402,8 @@ def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec fixed-slit photom reference file.
-    """
 
+    """
     filter = ["F100LP", "F100LP", "F100LP", "F100LP", "F100LP",
               "F100LP", "F100LP", "F100LP", "F100LP", "F100LP",
               "F170LP", "F170LP", "F170LP", "F170LP", "F170LP",
@@ -473,8 +474,8 @@ def create_photom_nrs_msa(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec MSA photom reference file.
-    """
 
+    """
     filter = ["F100LP", "F100LP", "F170LP", "F170LP"]
     grating = ["G140M", "G235M", "G140M", "G235M"]
 
@@ -531,8 +532,8 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS WFSS photom reference file.
-    """
 
+    """
     filter = ["GR150C", "GR150C", "GR150C", "GR150C",
               "GR150R", "GR150R", "GR150R", "GR150R"]
     pupil = ["F140M", "F140M", "F200W", "F200W",
@@ -587,8 +588,8 @@ def create_photom_niriss_soss(min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS SOSS photom reference file.
-    """
 
+    """
     filter = ["CLEAR", "CLEAR"]
     pupil = ["GR700XD", "GR700XD"]
     order = [1, 2]
@@ -641,8 +642,8 @@ def create_photom_niriss_image(min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRISS image photom reference file.
-    """
 
+    """
     # The middle row should be selected.
     filter = ["F430M", "CLEAR", "CLEAR"]
     pupil = ["F090W", "F140M", "F140W"]
@@ -685,8 +686,8 @@ def create_photom_miri_mrs(shape, value, pixel_area, photmjsr):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI MRS photom reference file.
-    """
 
+    """
     data = np.zeros(shape, dtype=np.float32) + value
     err = np.ones(shape, dtype=np.float32)
     dq = np.zeros(shape, dtype=np.uint32)
@@ -720,8 +721,8 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI LRS photom reference file.
-    """
 
+    """
     filter = ["F560W", "P750L", "F1000W"]
     subarray = ["GENERIC", "FULL", "GENERIC"]
 
@@ -779,8 +780,8 @@ def create_photom_miri_image(min_wl=16.5, max_wl=19.5,
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a MIRI image photom reference file.
-    """
 
+    """
     filter = ["F1800W", "F2100W", "F2550W"]
     subarray = ["SUB256", "SUB256", "SUB256"]
 
@@ -824,8 +825,8 @@ def create_photom_nircam_image(min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRCam image photom reference file.
-    """
 
+    """
     filter = ["F090W", "F115W", "F150W", "F200W"]
     pupil = ["F162M", "F164N", "CLEAR", "WLP8"]
 
@@ -868,8 +869,8 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRCam WFSS photom reference file.
-    """
 
+    """
     filter = ["F277W", "F322W2", "F356W", "F410M", "F444W"]
     pupil = ["GRISMR", "GRISMR", "GRISMR", "GRISMR", "GRISMR"]
     order = [1, 1, 1, 1, 1]
@@ -919,8 +920,8 @@ def create_photom_fgs_image(value):
     -------
     ftab : `~jwst.datamodels.JwstDataModel`
         An open data model for a NIRSpec fixed-slit photom reference file.
-    """
 
+    """
     photmjsr = [value]
     uncertainty = [0.0]
 
@@ -951,8 +952,8 @@ def create_pixel_area_ref(shape, area_ster, area_a2):
     -------
     area_ref : `~jwst.datamodels.JwstDataModel`
         An open data model for a pixel area reference file.
-    """
 
+    """
     data = np.ones(shape, dtype=np.float32)
     area_ref = datamodels.PixelAreaModel(data=data)
     area_ref.meta.photometry.pixelarea_steradians = area_ster
@@ -982,8 +983,8 @@ def create_msa_pixel_area_ref(quadrant, shutter_x, shutter_y, pixarea):
     -------
     area_ref : `~jwst.datamodels.JwstDataModel`
         An open data model for a pixel area reference file.
-    """
 
+    """
     dtype = np.dtype([('quadrant', '<i2'),
                       ('shutter_x', '<i2'),
                       ('shutter_y', '<i2'),
@@ -1033,8 +1034,8 @@ def find_row_in_ftab(input_model, ftab, select, slitname=None, order=None):
     ------
     RuntimeError
         If no matching row is found in `ftab`.
-    """
 
+    """
     if 'filter' in select:
         filter = input_model.meta.instrument.filter
         filter_c = ftab.phot_table['filter']
@@ -1076,8 +1077,7 @@ def find_row_in_ftab(input_model, ftab, select, slitname=None, order=None):
 
 
 def test_nirspec_fs():
-    """Test calc_nirspec, fixed-slit data"""
-
+    """Test calc_nirspec, fixed-slit data."""
     input_model = create_input('NIRSPEC', 'NRS1', 'NRS_FIXEDSLIT',
                                filter='F170LP', grating='G235M')
     save_input = input_model.copy()
@@ -1146,8 +1146,7 @@ def test_nirspec_fs():
 
 
 def test_nirspec_bright():
-    """Test calc_nirspec, bright-object data"""
-
+    """Test calc_nirspec, bright-object data."""
     input_model = create_input('NIRSPEC', 'NRS1', 'NRS_BRIGHTOBJ',
                                filter='F170LP', grating='G235M')
     save_input = input_model.copy()
@@ -1205,8 +1204,7 @@ def test_nirspec_bright():
 
 
 def test_nirspec_msa():
-    """Test calc_nirspec, MSA data"""
-
+    """Test calc_nirspec, MSA data."""
     input_model = create_input('NIRSPEC', 'NRS1', 'NRS_MSASPEC',
                                filter='F170LP', grating='G235M')
     save_input = input_model.copy()
@@ -1254,8 +1252,7 @@ def test_nirspec_ifu():
 
 
 def test_niriss_wfss():
-    """Test calc_niriss, WFSS data"""
-
+    """Test calc_niriss, WFSS data."""
     input_model = create_input('NIRISS', 'NIS', 'NIS_WFSS',
                                filter='GR150R', pupil='F140M')
     save_input = input_model.copy()
@@ -1290,8 +1287,7 @@ def test_niriss_wfss():
 
 
 def test_niriss_soss():
-    """Test calc_niriss, SOSS data"""
-
+    """Test calc_niriss, SOSS data."""
     input_model = create_input('NIRISS', 'NIS', 'NIS_SOSS',
                                filter='CLEAR', pupil='GR700XD')
     save_input = input_model.copy()
@@ -1319,8 +1315,7 @@ def test_niriss_soss():
 
 
 def test_niriss_image():
-    """Test calc_niriss, image data"""
-
+    """Test calc_niriss, image data."""
     input_model = create_input('NIRISS', 'NIS', 'NIS_IMAGE',
                                filter='CLEAR', pupil='F140M')
     save_input = input_model.copy()
@@ -1343,12 +1338,10 @@ def test_niriss_image():
 
 
 def test_expected_failure_niriss_cubemodel():
-    """
-    Test that passing a CubeModel to calc_niriss raises an exception
+    """Test that passing a CubeModel to calc_niriss raises an exception
     This occurs when extract_1d step is skipped, e.g. for NIRISS SOSS data
     in FULL subarray.
     """
-
     input_model = create_input('NIRISS', 'NIS', 'NIS_SOSS',
                                filter='CLEAR', pupil='GR700XD')
     ds = photom.DataSet(input_model)
@@ -1358,12 +1351,10 @@ def test_expected_failure_niriss_cubemodel():
 
 
 def test_expected_failure_soss_imagemodel():
-    """
-    Test that passing a CubeModel to calc_niriss raises an exception
+    """Test that passing a CubeModel to calc_niriss raises an exception
     This occurs when extract_1d step is skipped, e.g. for NIRISS SOSS data
     in FULL subarray.
     """
-
     input_model = create_input('NIRISS', 'NIS', 'NIS_SOSS',
                                filter='CLEAR', pupil='GR700XD')
     ds = photom.DataSet(input_model)
@@ -1373,8 +1364,7 @@ def test_expected_failure_soss_imagemodel():
 
 
 def test_miri_mrs():
-    """Test calc_miri, MRS data"""
-
+    """Test calc_miri, MRS data."""
     input_model = create_input('MIRI', 'MIRIFULONG', 'MIR_MRS',
                                filter='F1500W', band='LONG')
     save_input = input_model.copy()
@@ -1408,8 +1398,7 @@ def test_miri_mrs():
 
 
 def test_miri_lrs():
-    """Test calc_miri, LRS data"""
-
+    """Test calc_miri, LRS data."""
     input_model = create_input('MIRI', 'MIRIMAGE', 'MIR_LRS-FIXEDSLIT',
                                filter='P750L')
     save_input = input_model.copy()
@@ -1440,8 +1429,7 @@ def test_miri_lrs():
 
 
 def test_miri_image():
-    """Test calc_miri, image data"""
-
+    """Test calc_miri, image data."""
     input_model = create_input('MIRI', 'MIRIMAGE', 'MIR_IMAGE',
                                filter='F1800W')
     save_input = input_model.copy()
@@ -1468,8 +1456,7 @@ def test_miri_image():
 
 
 def test_nircam_image():
-    """Test calc_nircam, image data"""
-
+    """Test calc_nircam, image data."""
     input_model = create_input('NIRCAM', 'NRCA3', 'NRC_IMAGE',
                                filter='F150W', pupil='CLEAR')
     save_input = input_model.copy()
@@ -1492,8 +1479,7 @@ def test_nircam_image():
 
 
 def test_nircam_spec():
-    """Test calc_nircam, WFSS data"""
-
+    """Test calc_nircam, WFSS data."""
     input_model = create_input('NIRCAM', 'NRCALONG', 'NRC_WFSS',
                                filter='F356W', pupil='GRISMR')
     save_input = input_model.copy()
@@ -1533,8 +1519,7 @@ def test_nircam_spec():
 
 
 def test_fgs():
-    """Test calc_fgs"""
-
+    """Test calc_fgs."""
     input_model = create_input('FGS', 'GUIDER1', 'FGS_IMAGE')
     save_input = input_model.copy()
     ds = photom.DataSet(input_model)
@@ -1558,8 +1543,7 @@ def test_fgs():
 
 
 def test_apply_photom_1():
-    """Test apply_photom"""
-
+    """Test apply_photom."""
     # apply_photom() calls calc_niriss, etc., depending on EXP_TYPE.  We've
     # already tested each of these above.  The unique test in this function
     # is checking that the pixel area keywords are populated correctly.
@@ -1596,8 +1580,7 @@ def test_apply_photom_1():
 
 @pytest.mark.parametrize('srctype', ['POINT', 'EXTENDED'])
 def test_apply_photom_2(srctype):
-    """Test apply_photom"""
-
+    """Test apply_photom."""
     # Check that for NIRSpec data and for an extended source, the conversion
     # factor is divided by the pixel area.
 

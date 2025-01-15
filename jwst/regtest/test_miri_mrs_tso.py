@@ -1,4 +1,4 @@
-"""Regression test for MIRI MRS TSO mode"""
+"""Regression test for MIRI MRS TSO mode."""
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -11,7 +11,7 @@ TRUTH_PATH = 'truth/test_miri_mrs_tso'
 
 @pytest.fixture(scope='module')
 def run_spec2(rtdata_module):
-    """Run the Spec2Pipeline on a single exposure"""
+    """Run the Spec2Pipeline on a single exposure."""
     rtdata = rtdata_module
 
     # Setup the inputs
@@ -35,7 +35,7 @@ def run_spec2(rtdata_module):
 @pytest.mark.parametrize(
     'suffix', ['assign_wcs', 'calints', 'flat_field', 'fringe', 'photom', 'srctype'])
 def test_spec2(rtdata_module, run_spec2, fitsdiff_default_kwargs, suffix):
-    """Test ensuring the calwebb_tso-spec2 is operating appropriately for MIRI MRS TSO data"""
+    """Test ensuring the calwebb_tso-spec2 is operating appropriately for MIRI MRS TSO data."""
     rtdata = rtdata_module
     output = f"jw01556001001_04102_00001-seg001_mirifushort_{suffix}.fits"
     rtdata.output = output

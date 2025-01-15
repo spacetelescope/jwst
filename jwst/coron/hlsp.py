@@ -1,5 +1,4 @@
-"""
-    Create High-Level Science Products for a KLIP-processed coronagraphic
+"""Create High-Level Science Products for a KLIP-processed coronagraphic
     exposure.
 
 :Authors: Howard Bushouse
@@ -17,11 +16,9 @@ log.setLevel(logging.DEBUG)
 
 
 def snr_image(target_model):
-    """
-    Compute the signal-to-noise ratio map for a KLIP-processed image. The SNR
+    """Compute the signal-to-noise ratio map for a KLIP-processed image. The SNR
     image is computed as the ratio of the input image DATA and ERR arrays.
     """
-
     # Initialize the output model as a copy of the input model
     output_model = target_model.copy()
 
@@ -33,8 +30,7 @@ def snr_image(target_model):
 
 
 def contrast_curve(target_model, width):
-    """
-    Compute "contrast curve" data for a PSF-subtracted image.
+    """Compute "contrast curve" data for a PSF-subtracted image.
     What's computed is the 1-sigma noise in a series of concentric annuli
     centered at the geometric center of the image. The width of the annuli
     is set by the input argument "width". A mask array is used iteratively to
@@ -42,7 +38,6 @@ def contrast_curve(target_model, width):
     is computed. Annuli are defined to the nearest pixel. No partial-pixel
     computations are performed.
     """
-
     # Get the target array size and center
     nrows = target_model.data.shape[0]
     ncols = target_model.data.shape[1]

@@ -33,13 +33,13 @@ def example_model():
 
 @pytest.mark.parametrize("oversample", [2, 4])
 def test_ami_analyze_even_oversample_fail(example_model, oversample):
-    """Make sure ami_analyze fails if oversample is even"""
+    """Make sure ami_analyze fails if oversample is even."""
     with pytest.raises(ValueError, match="Oversample value must be an odd integer."):
         AmiAnalyzeStep.call(example_model, oversample=oversample)
 
 
 def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
-    """Make sure that ami_analyze fails if no throughput reffile is available"""
+    """Make sure that ami_analyze fails if no throughput reffile is available."""
 
     def mockreturn(input_model, reftype, observatory=None, asn_exptypes=None):
         return "N/A"

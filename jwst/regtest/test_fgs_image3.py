@@ -16,7 +16,7 @@ def run_fgs_image3(rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ['i2d', 'segm'])
 def test_fgs_image3(run_fgs_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Regression test for FGS data in the image3 pipeline"""
+    """Regression test for FGS data in the image3 pipeline."""
     rtdata = rtdata_module
     output = f"jw01029-o001_t009_fgs_clear_{suffix}.fits"
     rtdata.output = output

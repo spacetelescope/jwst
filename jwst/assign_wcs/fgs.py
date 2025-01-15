@@ -1,6 +1,4 @@
-"""
-FGS WCS pipeline - depends on EXP_TYPE.
-"""
+"""FGS WCS pipeline - depends on EXP_TYPE."""
 import logging
 
 from astropy import units as u
@@ -22,8 +20,7 @@ __all__ = ["create_pipeline", "imaging"]
 
 
 def create_pipeline(input_model, reference_files):
-    """
-    Create a ``gWCS.pipeline`` using models from reference files.
+    """Create a ``gWCS.pipeline`` using models from reference files.
 
     Parameters
     ----------
@@ -32,6 +29,7 @@ def create_pipeline(input_model, reference_files):
     reference_files : dict
         {reftype: file_name} mapping.
         Reference files.
+
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -41,8 +39,7 @@ def create_pipeline(input_model, reference_files):
 
 
 def imaging(input_model, reference_files):
-    """
-    The FGS imaging WCS pipeline.
+    """The FGS imaging WCS pipeline.
 
     It includes 3 coordinate frames - "detector", "v2v3" and "world".
     Uses a ``distortion`` reference file.
@@ -59,6 +56,7 @@ def imaging(input_model, reference_files):
     -------
     pipeline : list
         The WCS pipeline.
+
     """
     # Create coordinate frames for the ``imaging`` mode.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
@@ -99,9 +97,7 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    """
-    Create the transform from "detector" to "v2v3".
-    """
+    """Create the transform from "detector" to "v2v3"."""
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
 

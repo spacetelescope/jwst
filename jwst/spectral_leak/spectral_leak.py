@@ -7,8 +7,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(sp_leak_ref, ch1b, ch3a):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Using the spectral leak reference correction and spectrum containing CH1 B
     correct the CH 3 A spectrum.
@@ -27,8 +26,8 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     -------
     output_model : ~jwst.datamodels.RampModel
         Spectral leak corrected science data
-    """
 
+    """
     wave1b = ch1b.spec[0].spec_table.WAVELENGTH
     spec1b = ch1b.spec[0].spec_table.FLUX
 

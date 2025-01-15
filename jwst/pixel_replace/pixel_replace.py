@@ -30,8 +30,7 @@ class PixelReplacement:
     LOG_SLICE = ['column', 'row']
 
     def __init__(self, input_model, **pars):
-        """
-        Initialize the class with input data model.
+        """Initialize the class with input data model.
 
         Parameters
         ----------
@@ -42,6 +41,7 @@ class PixelReplacement:
         pars : dict, optional
             Optional parameters to modify how pixel replacement
             will execute.
+
         """
         self.input = input_model
         self.pars = dict()
@@ -63,8 +63,7 @@ class PixelReplacement:
             raise Exception
 
     def replace(self):
-        """
-        Process the input DataModel, unpack any model that holds
+        """Process the input DataModel, unpack any model that holds
         more than one 2D spectrum, then apply selected algorithm
         to each 2D spectrum in input.
         """
@@ -222,8 +221,7 @@ class PixelReplacement:
             return
 
     def fit_profile(self, model):
-        """
-        Replace pixels with the profile fit method.
+        """Replace pixels with the profile fit method.
 
         Fit a profile to adjacent columns, scale profile to
         column with missing pixel(s), and find flux estimate
@@ -453,8 +451,7 @@ class PixelReplacement:
         return model_replaced
 
     def mingrad(self, model):
-        """
-        Replace pixels with the minimum gradient replacement method.
+        """Replace pixels with the minimum gradient replacement method.
 
         Test the gradient along the spatial and spectral axes using
         immediately adjacent pixels.  Pick whichever dimension has the minimum
@@ -581,8 +578,7 @@ class PixelReplacement:
         return model_replaced
 
     def custom_slice(self, dispaxis, index):
-        """
-        Construct slice for ease of use with varying
+        """Construct slice for ease of use with varying
         dispersion axis.
 
         Parameters
@@ -599,6 +595,7 @@ class PixelReplacement:
         -------
         Tuple
             Slice constructed using np.s_
+
         """
         if dispaxis == self.HORIZONTAL:
             return np.s_[:, index]
@@ -608,8 +605,9 @@ class PixelReplacement:
             raise Exception
 
     def profile_mse(self, scale, median, current):
-        """Function to feed optimization routine
-        Parameters
+        """Function to feed optimization routine.
+
+        Parameters.
         ----------
         scale : float
             Initial estimate of scale factor to bring
@@ -625,7 +623,7 @@ class PixelReplacement:
         -------
         float
             Mean squared error for minimization purposes
-        """
 
+        """
         return (np.nansum((current - (median * scale)) ** 2.) /
                 (len(median) - np.count_nonzero(np.isnan(current))))

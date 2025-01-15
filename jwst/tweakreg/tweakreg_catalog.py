@@ -17,8 +17,7 @@ log.setLevel(logging.DEBUG)
 
 
 def _SourceFinderWrapper(data, threshold, mask=None, **kwargs):
-    """
-    Wrapper function for photutils.source_finder.SourceFinder to make input
+    """Wrapper function for photutils.source_finder.SourceFinder to make input
     and output consistent with DAOStarFinder and IRAFStarFinder.
     see `photutils segmentation tutorial <https://photutils.readthedocs.io/en/stable/segmentation.html>`_.
 
@@ -37,8 +36,8 @@ def _SourceFinderWrapper(data, threshold, mask=None, **kwargs):
     -------
     sources : `~astropy.table.QTable`
         A table containing the found sources.
-    """
 
+    """
     default_kwargs = {'npixels': 10,
                       'progress_bar': False,
                       }
@@ -64,9 +63,8 @@ def _SourceFinderWrapper(data, threshold, mask=None, **kwargs):
 
 
 def _IRAFStarFinderWrapper(data, threshold, mask=None, **kwargs):
-    """
-    Wrapper function for `photutils.detection.IRAFStarFinder` to make inputs
-    and outputs consistent across the three allowed detection methods
+    """Wrapper function for `photutils.detection.IRAFStarFinder` to make inputs
+    and outputs consistent across the three allowed detection methods.
 
     Parameters
     ----------
@@ -83,8 +81,8 @@ def _IRAFStarFinderWrapper(data, threshold, mask=None, **kwargs):
     -------
     sources : `~astropy.table.QTable`
         A table containing the found sources.
-    """
 
+    """
     # defaults are not necessary to repeat here when running full pipeline step
     # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
     default_kwargs = {'fwhm': 2.5,}
@@ -103,9 +101,8 @@ def _IRAFStarFinderWrapper(data, threshold, mask=None, **kwargs):
 
 
 def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
-    """
-    Wrapper function for `photutils.detection.DAOStarFinder` to make inputs
-    and outputs consistent across the three allowed detection methods
+    """Wrapper function for `photutils.detection.DAOStarFinder` to make inputs
+    and outputs consistent across the three allowed detection methods.
 
     Parameters
     ----------
@@ -122,8 +119,8 @@ def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
     -------
     sources : `~astropy.table.QTable`
         A table containing the found sources.
-    """
 
+    """
     # defaults are not necessary to repeat here when running full pipeline step
     # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
     default_kwargs = {'fwhm': 2.5,}
@@ -149,8 +146,7 @@ def _DaoStarFinderWrapper(data, threshold, mask=None, **kwargs):
 
 
 def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='iraf', starfinder_kwargs={}):
-    """
-    Create a catalog of point-line sources to be used for image
+    """Create a catalog of point-line sources to be used for image
     alignment in tweakreg.
 
     Parameters
@@ -189,6 +185,7 @@ def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='ira
     -------
     catalog : `~astropy.Table`
         An astropy Table containing the source catalog.
+
     """
     if not isinstance(model, ImageModel):
         raise TypeError('The input model must be an ImageModel.')

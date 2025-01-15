@@ -1,5 +1,4 @@
-"""
-    Python implementation of the KLIP algorithm based on the
+"""Python implementation of the KLIP algorithm based on the
     Mathematica script from Remi Soummer.
 
 :Authors: Mihai Cara
@@ -14,8 +13,7 @@ log.setLevel(logging.DEBUG)
 
 
 def klip(target_model, refs_model, truncate):
-    """
-    Parameters
+    """Parameters
     ----------
     target_model : CubeModel (NINTS x NROWS x NCOLS)
         The input images of the target. Multiple integrations within
@@ -29,8 +27,8 @@ def klip(target_model, refs_model, truncate):
 
     truncate : int
         Indicates how many rows to keep in the Karhunen-Loeve transform.
-    """
 
+    """
     # Initialize the output models as copies of the input target model
     output_target = target_model.copy()
     output_psf = target_model.copy()
@@ -89,8 +87,7 @@ def klip(target_model, refs_model, truncate):
 
 
 def KarhunenLoeveTransform(m, normalize=False):
-    """
-    Returns Karhunen-Loeve Transform of the input, eigenvalues, and
+    """Returns Karhunen-Loeve Transform of the input, eigenvalues, and
     a matrix of eigenvectors.
 
     """

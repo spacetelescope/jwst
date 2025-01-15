@@ -7,8 +7,7 @@ __all__ = ["FirstFrameStep"]
 
 
 class FirstFrameStep(Step):
-    """
-    FirstFrameStep: This is a MIRI specific task.  If the number of groups
+    """FirstFrameStep: This is a MIRI specific task.  If the number of groups
     is greater than 3, the DO_NOT_USE group data quality flag is added to
     first group.
     """

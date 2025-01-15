@@ -1,4 +1,4 @@
-"""Association Candidate Identifier"""
+"""Association Candidate Identifier."""
 from ast import literal_eval
 import re
 
@@ -13,7 +13,7 @@ _DISCOVERED_ID_START = 3001
 
 
 class ACID():
-    """Association Candidate Identifer
+    """Association Candidate Identifer.
 
     Parameters
     ----------
@@ -40,7 +40,9 @@ class ACID():
         'oXXX' for OBSERVATION, 'c1XXX' for 'MOSAIC' or
         other PPS-defined candidates, and 'a3XXX' for
         'DISCOVERED' associations.
+
     """
+
     def __init__(self, input):
         try:
             self.id, self.type = literal_eval(input)
@@ -52,7 +54,8 @@ class ACID():
 
 
 class ACIDMixin():
-    """Enable ACID for rules"""
+    """Enable ACID for rules."""
+
     def __init__(self, *args, **kwargs):
 
         # Initialize discovered association ID
@@ -61,7 +64,7 @@ class ACIDMixin():
         super(ACIDMixin, self).__init__(*args, **kwargs)
 
     def acid_from_constraints(self):
-        """Determine ACID from constraints"""
+        """Determine ACID from constraints."""
         for constraint in self.constraints:
             if getattr(constraint, 'is_acid', False):
                 value = re.sub(

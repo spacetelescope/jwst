@@ -16,10 +16,9 @@ LOGCFG = "test_logs.cfg"
 
 @pytest.fixture(scope='module')
 def make_dummy_rate_file(tmp_cwd_module):
-    '''
-    Make and save a dummy rate file in the temporary working directory
-    Partially copied from test_background.py
-    '''
+    """Make and save a dummy rate file in the temporary working directory
+    Partially copied from test_background.py.
+    """
     image = IFUImageModel((2048, 2048))
     image.data[:, :] = 1
 
@@ -59,10 +58,9 @@ def make_dummy_association(make_dummy_rate_file):
 
 @pytest.fixture(scope='module', params=[OUTPUT_FILE])
 def run_spec2_pipeline(make_dummy_rate_file, request):
-    '''
-    Run pipeline, saving one intermediate step  
-    and skipping most of the rest for runtime
-    '''
+    """Run pipeline, saving one intermediate step
+    and skipping most of the rest for runtime.
+    """
     args = ["calwebb_spec2", INPUT_FILE, 
             "--steps.badpix_selfcal.skip=true",
             "--steps.msa_flagging.skip=true",
@@ -80,10 +78,9 @@ def run_spec2_pipeline(make_dummy_rate_file, request):
 
 @pytest.fixture(scope='module', params=[OUTPUT_FILE_ASN])
 def run_spec2_pipeline_asn(make_dummy_association, request):
-    '''
-    Two-product association passed in. This should trigger a warning
+    """Two-product association passed in. This should trigger a warning
     and the output_file parameter should be ignored.
-    '''
+    """
     # save warnings to logfile so can be checked later
     logcfg_content = f"[*] \n \
         level = INFO \n \
@@ -108,12 +105,11 @@ def run_spec2_pipeline_asn(make_dummy_association, request):
 
 
 def test_output_file_rename(run_spec2_pipeline):
-    '''
-    Covers a bug where the output_file parameter was not being
+    """Covers a bug where the output_file parameter was not being
     respected in calls to Spec2Pipeline.
     _s3d file expected from cube_build save_results=true
-    _cal file expected from pipeline finishing
-    '''
+    _cal file expected from pipeline finishing.
+    """
     assert os.path.exists(INPUT_FILE)
     custom_stem = OUTPUT_FILE.split('.')[0]
     for extension in ['s3d', 'cal']:
@@ -121,10 +117,9 @@ def test_output_file_rename(run_spec2_pipeline):
 
 
 def test_output_file_norename_asn(run_spec2_pipeline_asn):
-    '''
-    Ensure output_file parameter is ignored, with warning,
+    """Ensure output_file parameter is ignored, with warning,
     when multiple products are in the same association.
-    '''
+    """
     # ensure tmp_cwd_module is successfully keeping all files in cwd
     assert os.path.exists(INPUT_ASN) 
     assert os.path.exists(INPUT_FILE) 

@@ -1,4 +1,4 @@
-""" Utilities for product manipulation."""
+"""Utilities for product manipulation."""
 from collections import Counter
 import logging
 
@@ -7,7 +7,7 @@ logger.addHandler(logging.NullHandler())
 
 
 def sort_by_candidate(asns):
-    """Sort associations by candidate
+    """Sort associations by candidate.
 
     Parameters
     ----------
@@ -26,12 +26,13 @@ def sort_by_candidate(asns):
     aXXXX > cXXXX > oXXX
 
     If this changes, a comparison function will need be implemented
+
     """
     return sorted(asns, key=lambda asn: asn['asn_id'])
 
 
 def get_product_names(asns):
-    """Return product names from associations and flag duplicates
+    """Return product names from associations and flag duplicates.
 
     Parameters
     ----------
@@ -41,6 +42,7 @@ def get_product_names(asns):
     -------
     product_names, duplicates : set(str[, ...]), [str[,...]]
         2-tuple consisting of the set of product names and the list of duplicates.
+
     """
     product_names = [
         asn['products'][0]['name']

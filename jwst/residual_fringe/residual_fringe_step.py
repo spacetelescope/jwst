@@ -9,13 +9,13 @@ __all__ = ["ResidualFringeStep"]
 
 
 class ResidualFringeStep(Step):
-    """
-    ResidualFringeStep: Apply residual fringe correction to a science image
+    """ResidualFringeStep: Apply residual fringe correction to a science image
     using parameters in the residual fringe reference file.
 
     Parameters
     ----------
     input_data : asn file or single file
+
     """
 
     class_alias = 'residual_fringe'

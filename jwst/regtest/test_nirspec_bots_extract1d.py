@@ -9,7 +9,6 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_extract(rtdata_module, request):
     """Run the extract1d step with custom parameters on BOTS data (S1600A1 slit)."""
-
     rtdata = rtdata_module
 
     # Get the custom reference file and input exposure
@@ -29,9 +28,8 @@ def run_extract(rtdata_module, request):
 
 @pytest.mark.bigdata
 def test_nirspec_bots_custom_extraction(run_extract, fitsdiff_default_kwargs):
-    """
-        Regression test of calwebb_spec2 pipeline performed on NIRSpec
-        fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
+    """Regression test of calwebb_spec2 pipeline performed on NIRSpec
+    fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit).
     """
     rtdata = run_extract
     output = 'jw01118005001_04101_00001-first20_nrs1_x1dints.fits'

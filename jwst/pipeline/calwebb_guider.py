@@ -18,8 +18,7 @@ log.setLevel(logging.DEBUG)
 
 
 class GuiderPipeline(Pipeline):
-    """
-    GuiderPipeline: For FGS observations, apply all calibration
+    """GuiderPipeline: For FGS observations, apply all calibration
     steps to raw JWST ramps to produce a 3-D slope product.
     Included steps are: dq_init, guider_cds, and flat_field.
     """

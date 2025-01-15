@@ -15,7 +15,7 @@ SLITRATIO = 1.15     # Ratio of slit spacing to slit height
 
 
 def do_correction(input_model, barshadow_model=None, inverse=False, source_type=None, correction_pars=None):
-    """Do the Bar Shadow Correction
+    """Do the Bar Shadow Correction.
 
     Parameters
     ----------
@@ -39,8 +39,8 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
     output_model, corrections : `~jwst.datamodels.MultiSlitModel`, jwst.datamodels.JwstDataModel
         Science data model with correction applied and barshadow extensions added,
         and a model of the correction arrays.
-    """
 
+    """
     # Input is a MultiSlitModel science data model.
     # A MultislitModel has a member ".slits" that behaves like
     # a list of Slits, each of which has several data arrays and
@@ -89,7 +89,7 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
 
 
 def _calc_correction(slitlet, barshadow_model, source_type):
-    """Calculate the barshadow correction for a slitlet
+    """Calculate the barshadow correction for a slitlet.
 
     Parameters
     ----------
@@ -106,6 +106,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     -------
     correction : jwst.datamodels.SlitModel
         The correction to be applied
+
     """
     slitlet_number = slitlet.slitlet_id
 
@@ -195,15 +196,16 @@ def create_shutter_elements(barshadow_model):
             Goes from the center of the last open shutter to the top edge of the shutter
             array (1 shutter width from the center of the last open shutter)
 
-       Parameters:
-
+    Parameters
+    ----------
        barshadow_model: BarshadowModel object
            The barshadow model used to construct these pieces
 
-       Returns:
-
+    Returns
+    -------
        shutter_elements: dict
            Dictionary (specified above) with the pieces
+
     """
     shadow1x1 = barshadow_model.data1x1
     shadow1x3 = barshadow_model.data1x3
@@ -220,32 +222,34 @@ def create_shutter_elements(barshadow_model):
 
 def create_first(shadow1x1):
     """Create the first half shutter in the bar shadow array.
-    Use rows 1-501 in the shadow1x1 array
+    Use rows 1-501 in the shadow1x1 array.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow1x1: nddata array
         The 1x1 shadow array from the barshadow model
 
-    Returns:
-
+    Returns
+    -------
     The array to use as shutter_elements['first']
+
     """
     return shadow1x1[:501, :]
 
 
 def create_open_open(shadow1x3):
     """Create the two half shutters obtained from two open shutters
-    Use rows 1-501 in the shadow1x3 array
+    Use rows 1-501 in the shadow1x3 array.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow1x3: nddata array
         The 1x3 shadow array from the barshadow model
 
-    Returns:
-
+    Returns
+    -------
     The array to use as shutter_elements['open_open']
+
     """
     return shadow1x3[:501, :]
 
@@ -253,16 +257,17 @@ def create_open_open(shadow1x3):
 def create_open_closed(shadow1x1):
     """Create the two half shutters obtained from one open and
     one closed shutter
-    Use rows 501-1001 in the shadow1x1 array
+    Use rows 501-1001 in the shadow1x1 array.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow1x1: nddata array
         The 1x1 shadow array from the barshadow model
 
-    Returns:
-
+    Returns
+    -------
     The array to use as shutter_elements['open_closed']
+
     """
     return shadow1x1[500:, :]
 
@@ -270,16 +275,17 @@ def create_open_closed(shadow1x1):
 def create_closed_open(shadow1x1):
     """Create the two half shutters obtained from one closed and
     one open shutter
-    Use rows 1-501 in the shadow1x1 array
+    Use rows 1-501 in the shadow1x1 array.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow1x1: nddata array
         The 1x1 shadow array from the barshadow model
 
-    Returns:
-
+    Returns
+    -------
     The array to use as shutter_elements['closed_open']
+
     """
     return shadow1x1[:501, :]
 
@@ -288,31 +294,33 @@ def create_closed_closed():
     """Create the two half shutters obtained from two closed shutters
     Uses 0.01 somewhat arbitrarily, although this case shouldn't occur
     very often, only when there are 2 or more consecutive closed shutters
-    in a slitlet
+    in a slitlet.
 
-    Parameters:
-
+    Parameters
+    ----------
     None
 
-    Returns:
-
+    Returns
+    -------
     The array to use as shutter_elements['closed_closed']
+
     """
     return 0.01 * np.ones((501, 101))
 
 
 def create_last(shadow1x1):
     """Create the last half shutter in the bar shadow array.
-    Use rows 501-1001 in the shadow1x1 array
+    Use rows 501-1001 in the shadow1x1 array.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow1x1: nddata array
         The 1x1 shadow array from the barshadow model
 
-    Returns:
-
+    Returns
+    -------
     The array to use as shutter_elements['last']
+
     """
     return shadow1x1[501:, :]
 
@@ -321,8 +329,8 @@ def create_shadow(shutter_elements, shutter_status):
     """Create a bar shadow reference array on the fly from the shutter
     elements dictionary.
 
-    Parameters:
-
+    Parameters
+    ----------
     shutter_elements: dict
         The shutter elements dictionary
 
@@ -332,8 +340,8 @@ def create_shadow(shutter_elements, shutter_status):
            1:  Open
            x:  Contains source
 
-    Returns:
-
+    Returns
+    -------
     shadow_array: nddata array
         The constructed bar shadow array
 
@@ -360,11 +368,11 @@ def create_shadow(shutter_elements, shutter_status):
 def create_empty_shadow_array(nshutters):
     """Create the empty bar shadow array.
 
-    Parameters:
-
+    Parameters
+    ----------
     nshutters: int
         The length of the slit in shutters
-https://github.com/spacetelescope/gwcs/actions/runs/11661031952/job/32464576263
+    https://github.com/spacetelescope/gwcs/actions/runs/11661031952/job/32464576263
     Returns:
 
     empty_shadow: nddata_array
@@ -381,18 +389,18 @@ https://github.com/spacetelescope/gwcs/actions/runs/11661031952/job/32464576263
 
 
 def add_first_half_shutter(shadow, shadow_element):
-    """Add the first half shutter to the shadow array
+    """Add the first half shutter to the shadow array.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow: nddata array
         The bar shadow array.
 
     shadow_element: nddata array
         the shutter_elements['first'] array.  Should be 501 rows (Y) by 101 columns (wavelength)
 
-    Returns:
-
+    Returns
+    -------
     shadow: nddata array
         The bar shadow array with the first half shutter inserted
 
@@ -402,10 +410,10 @@ def add_first_half_shutter(shadow, shadow_element):
 
 
 def add_next_shutter(shadow, shadow_element, first_row):
-    """Add a single internal shutter and advance the last row by 501
+    """Add a single internal shutter and advance the last row by 501.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow: nddata array
         The bar shadow array.
 
@@ -415,8 +423,8 @@ def add_next_shutter(shadow, shadow_element, first_row):
     first_row: int
         The first row to place the shutter element
 
-    Returns:
-
+    Returns
+    -------
     shadow: nddata array
         The bar shadow array with the double internal shutter inserted
 
@@ -435,8 +443,8 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     """Add the last half shutter from the 1x1 array.  The last half shutter
     is rows 501-1001.
 
-    Parameters:
-
+    Parameters
+    ----------
     shadow: nddata array
         The bar shadow array.
 
@@ -446,8 +454,8 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     first_row: int
         The first row to place the shadow element
 
-    Returns:
-
+    Returns
+    -------
     shadow: nddata array
         The bar shadow array with the last half shutter inserted
 
@@ -463,10 +471,10 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
 
 
 def interpolate(rows, columns, array, default=np.nan):
-    """Interpolate row and column vectors in array
+    """Interpolate row and column vectors in array.
 
-    Parameters:
-
+    Parameters
+    ----------
     row: nddata array
         array of row indices
 
@@ -479,10 +487,11 @@ def interpolate(rows, columns, array, default=np.nan):
     default: number
         value to use in output array when input index is nan (default np.nan)
 
-    Returns:
-
+    Returns
+    -------
     correction: nddata array
         array of correction factors, or default when not calculated
+
     """
     nrows, ncolumns = rows.shape
     correction = np.ones((nrows, ncolumns))
@@ -524,20 +533,21 @@ def interpolate(rows, columns, array, default=np.nan):
 
 
 def has_uniform_source(slitlet, force_type=None):
-    """Determine whether the slitlet contains a uniform source
+    """Determine whether the slitlet contains a uniform source.
 
-    Parameters:
-
+    Parameters
+    ----------
     slitlet: slitlet object
         The slitlet being interrogated
 
     force_type : string or None
         Source type to force to and decide upon.
 
-    Returns:
-
+    Returns
+    -------
     answer: boolean
         True if the slitlet contains a uniform source
+
     """
     source_type = force_type if force_type else slitlet.source_type
 

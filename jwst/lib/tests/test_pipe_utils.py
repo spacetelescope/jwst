@@ -1,4 +1,4 @@
-"""Test utilities"""
+"""Test utilities."""
 import pytest
 
 import numpy as np
@@ -30,7 +30,7 @@ exp_types.extend([
     exp_types
 )
 def test_is_tso_from_exptype(exp_type, expected):
-    """Test is_tso integrity based on exp_type"""
+    """Test is_tso integrity based on exp_type."""
     model = datamodels.JwstDataModel()
     model.meta.exposure.type = exp_type.upper()
     assert pipe_utils.is_tso(model) is expected
@@ -44,14 +44,14 @@ def test_is_tso_from_exptype(exp_type, expected):
     ]
 )
 def test_is_tso_from_tsoflag(tsovisit, expected):
-    """Test is_tso integrity based on the TSO flag"""
+    """Test is_tso integrity based on the TSO flag."""
     model = datamodels.JwstDataModel()
     model.meta.visit.tsovisit = tsovisit
     assert pipe_utils.is_tso(model) is expected
 
 
 def test_is_tso_nrcgrism_nints1():
-    """Test is_tso with NRC_TSGRISM and NINTS=1"""
+    """Test is_tso with NRC_TSGRISM and NINTS=1."""
     model = datamodels.JwstDataModel()
     model.meta.exposure.type = "NRC_TSGRISM"
     model.meta.visit.tsovisit = False
@@ -70,7 +70,7 @@ def test_is_tso_nrcgrism_nints1():
 
 
 def test_is_irs2_1():
-    """Test is_irs2 using a numpy array"""
+    """Test is_irs2 using a numpy array."""
     x = np.ones((2048, 2), dtype=np.float32)
     assert not pipe_utils.is_irs2(x)
     x = np.ones((3200, 2), dtype=np.float32)
@@ -78,7 +78,7 @@ def test_is_irs2_1():
 
 
 def test_is_irs2_2():
-    """Test is_irs2 using a jwst data model"""
+    """Test is_irs2 using a jwst data model."""
     x = np.ones((2048, 2), dtype=np.float32)
     model = datamodels.ImageModel(data=x)
     assert not pipe_utils.is_irs2(model)

@@ -1,6 +1,4 @@
-"""
-Unit tests for group_scale correction
-"""
+"""Unit tests for group_scale correction."""
 
 from stdatamodels.jwst.datamodels import RampModel
 
@@ -12,7 +10,7 @@ import pytest
 
 def test_nframes_or_frame_divisor_is_none(make_rampmodel):
     """If nframes or frame_divisor is None, skip correction.
-    Here I am just setting nframes=None
+    Here I am just setting nframes=None.
     """
     datmod = make_rampmodel(2, None, 4, 2048, 2048)
     do_correction(datmod)
@@ -21,8 +19,7 @@ def test_nframes_or_frame_divisor_is_none(make_rampmodel):
 
 
 def test_nframes_equal_frame_divisor(make_rampmodel):
-    """If nframes and frame_divisor are equal, skip correction
-    """
+    """If nframes and frame_divisor are equal, skip correction."""
     datmod = make_rampmodel(2, 4, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
     print(output.meta.exposure.frame_divisor,
@@ -31,8 +28,7 @@ def test_nframes_equal_frame_divisor(make_rampmodel):
 
 
 def test_nframes_not_equal_frame_divisor(make_rampmodel):
-    """If nframes and frame_divisor are not equal, do correction
-    """
+    """If nframes and frame_divisor are not equal, do correction."""
     datmod = make_rampmodel(2, 2, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
@@ -46,8 +42,7 @@ def test_nframes_not_equal_frame_divisor(make_rampmodel):
 
 
 def test_nframes_is_none(make_rampmodel):
-    """Make sure step is skipped if nframes is None
-    """
+    """Make sure step is skipped if nframes is None."""
     datmod = make_rampmodel(2, None, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
 
@@ -79,7 +74,6 @@ def test_scale_value(make_rampmodel):
     """Compare the ratio of the FRMDIVSR/NFRAMES from the data model input and
     compare to the output of the pipeline.
     """
-
     datmod = make_rampmodel(2, 2, 4, 2048, 2048)
 
     # Calculate the scale based off of the input.
@@ -101,7 +95,7 @@ def test_scale_value(make_rampmodel):
 
 @pytest.fixture(scope='function')
 def make_rampmodel():
-    '''Make NIRSPEC IRS2 model for testing'''
+    """Make NIRSPEC IRS2 model for testing."""
 
     # NRS1 and NRS2 are size  2048x2048 pixels
     def _dm(ngroups, nframes, frame_divisor, ysize, xsize):

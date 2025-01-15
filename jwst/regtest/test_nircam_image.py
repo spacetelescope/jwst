@@ -12,7 +12,7 @@ from jwst.stpipe import Step
 
 @pytest.fixture(scope="module")
 def run_detector1pipeline(rtdata_module):
-    """Run calwebb_detector1 on NIRCam imaging long data"""
+    """Run calwebb_detector1 on NIRCam imaging long data."""
     rtdata = rtdata_module
     rtdata.get_data("nircam/image/jw01538046001_03105_00001_nrcalong_uncal.fits")
 
@@ -70,7 +70,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_image2pipeline(run_detector1pipeline, rtdata_module):
-    """Run calwebb_image2 on NIRCam imaging long data"""
+    """Run calwebb_image2 on NIRCam imaging long data."""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_rate.fits"
     args = ["calwebb_image2", rtdata.input,
@@ -82,7 +82,7 @@ def run_image2pipeline(run_detector1pipeline, rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_image3pipeline(run_image2pipeline, rtdata_module):
-    """Run calwebb_image3 on NIRCam imaging long data"""
+    """Run calwebb_image3 on NIRCam imaging long data."""
     rtdata = rtdata_module
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
     # produce fresh _cal files for the image3 pipeline.  We won't check these
@@ -148,7 +148,7 @@ def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_defau
 
 @pytest.mark.bigdata
 def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
-    """Test that WCS object works as expected"""
+    """Test that WCS object works as expected."""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_uncal.fits"
     output = "jw01538046001_03105_00001_nrcalong_assign_wcs.fits"
@@ -167,7 +167,7 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
 
 @pytest.mark.bigdata
 def test_nircam_image_stage3_tweakreg(run_image3pipeline):
-    """Test that tweakreg doesn't attach a catalog and that it updates the wcs"""
+    """Test that tweakreg doesn't attach a catalog and that it updates the wcs."""
     files = glob("*tweakreg.fits")
     for filename in files:
         with datamodels.open(filename) as model:
@@ -184,7 +184,7 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["i2d"])
 def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Test that resampled i2d looks good for NIRCam imaging"""
+    """Test that resampled i2d looks good for NIRCam imaging."""
     rtdata = rtdata_module
     rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
     output = f"jw01538-o046_t024_nircam_clear-f444w_{suffix}.fits"
@@ -212,7 +212,7 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
 
 @pytest.mark.bigdata
 def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
-    """Test that segmentation map looks good for NIRCam imaging"""
+    """Test that segmentation map looks good for NIRCam imaging."""
     rtdata = rtdata_module
     rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
     output = "jw01538-o046_t024_nircam_clear-f444w_segm.fits"
@@ -225,7 +225,7 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
 
 @pytest.mark.bigdata
 def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
-    """Test optional frame-averaged darks output from DarkCurrentStep"""
+    """Test optional frame-averaged darks output from DarkCurrentStep."""
     rtdata.get_data("nircam/image/jw01205015001_03101_00001_nrcb1_ramp.fits")
 
     dark_file = 'jw01205015001_03101_00001_nrcb1_frame_averaged_dark.fits'

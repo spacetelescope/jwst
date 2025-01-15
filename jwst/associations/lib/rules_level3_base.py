@@ -1,4 +1,4 @@
-"""Base classes which define the Level3 Associations"""
+"""Base classes which define the Level3 Associations."""
 from collections import defaultdict
 import logging
 from os.path import (
@@ -135,6 +135,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         -------
         product_name : str
             The product name
+
         """
         return self._dms_product_name(self)
 
@@ -151,6 +152,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         -------
         product_name : str
             The product name
+
         """
         target = association._get_target()
 
@@ -190,7 +192,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return product_name.lower()
 
     def update_asn(self, item=None, member=None):
-        """Update association meta information
+        """Update association meta information.
 
         Parameters
         ----------
@@ -207,6 +209,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         -----
         If both `item` and `member` are given,
         information in `member` will take precedence.
+
         """
         super(DMS_Level3_Base, self).update_asn(item=item, member=member)
 
@@ -246,7 +249,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         product['name'] = self.dms_product_name
 
     def make_member(self, item):
-        """Create a member from the item
+        """Create a member from the item.
 
         Parameters
         ----------
@@ -257,6 +260,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         -------
         member : Member
             The member
+
         """
         try:
             exposerr = item['exposerr']
@@ -290,8 +294,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return member
 
     def make_fixedslit_bkg(self):
-        """Add a background to a MIR_lrs-fixedslit observation"""
-
+        """Add a background to a MIR_lrs-fixedslit observation."""
         # check to see if these are nodded backgrounds, if they are setup
         # the background members, otherwise return the original association
         # to test for the string 'nod' we need to copy and pop the value out of the set
@@ -337,7 +340,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+        """Post-check and pre-add initialization."""
         super(DMS_Level3_Base, self)._init_hook(item)
 
         # Set which sequence counter should be used.
@@ -372,7 +375,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                    product_name=None,
                    with_exptype=False,
                    **kwargs):
-        """ Force adding items to the association
+        """Force adding items to the association.
 
         Parameters
         ----------
@@ -398,6 +401,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         This is a low-level shortcut into adding members, such as file names,
         to an association. All defined shortcuts and other initializations are
         by-passed, resulting in a potentially unusable association.
+
         """
         if product_name is None:
             raise AssociationNotValidError(
@@ -454,11 +458,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
 @RegistryMarker.utility
 class Utility():
-    """Utility functions that understand DMS Level 3 associations"""
+    """Utility functions that understand DMS Level 3 associations."""
 
     @staticmethod
     def resequence(associations):
-        """Resequence the numbering for the Level3 association types"""
+        """Resequence the numbering for the Level3 association types."""
         counters = defaultdict(lambda: defaultdict(Counter))
         for asn in associations:
             asn.sequence = next(
@@ -492,6 +496,7 @@ class Utility():
         -------
         str
             The Level 2b name
+
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
@@ -524,7 +529,7 @@ class Utility():
 
     @staticmethod
     def get_candidate_list(value):
-        """Parse the candidate list from a item value
+        """Parse the candidate list from a item value.
 
         Parameters
         ----------
@@ -536,6 +541,7 @@ class Utility():
         -------
         [ACID, ...]
             The list of parsed candidates.
+
         """
         result = []
         evaled = evaluate(value)
@@ -549,7 +555,7 @@ class Utility():
     @staticmethod
     @RegistryMarker.callback('finalize')
     def finalize(associations):
-        """Check validity and duplications in an association list
+        """Check validity and duplications in an association list.
 
         Parameters
         ----------
@@ -560,6 +566,7 @@ class Utility():
         -------
         finalized_associations : [association[, ...]]
             The validated list of associations
+
         """
         finalized_asns = []
         lv3_asns = []
@@ -597,7 +604,7 @@ def dms_product_name_noopt(asn):
     """Define product name without any optical elements.
 
     Parameters
-    ---------
+    ----------
     asn : Association
         The association for which the product
         name is to be created.
@@ -606,6 +613,7 @@ def dms_product_name_noopt(asn):
     -------
     product_name : str
         The product name
+
     """
     target = asn._get_target()
 
@@ -621,10 +629,10 @@ def dms_product_name_noopt(asn):
 
 
 def dms_product_name_sources(asn):
-    """Produce source-based product names
+    """Produce source-based product names.
 
     Parameters
-    ---------
+    ----------
     asn : Association
         The association for which the product
         name is to be created.
@@ -633,6 +641,7 @@ def dms_product_name_sources(asn):
     -------
     product_name : str
         The product name
+
     """
     instrument = asn._get_instrument()
 
@@ -672,7 +681,7 @@ def dms_product_name_nrsfs_sources(asn):
     slit name, to be filled in later by the pipeline.
 
     Parameters
-    ---------
+    ----------
     asn : Association
         The association for which the product
         name is to be created.
@@ -681,6 +690,7 @@ def dms_product_name_nrsfs_sources(asn):
     -------
     product_name : str
         The product name
+
     """
     instrument = asn._get_instrument()
 
@@ -710,10 +720,10 @@ def dms_product_name_nrsfs_sources(asn):
 
 def dms_product_name_coronimage(asn):
     """Produce image-based product name
-       for coronagraphic data
+       for coronagraphic data.
 
     Parameters
-    ---------
+    ----------
     asn : Association
         The association for which the product
         name is to be created.
@@ -722,8 +732,8 @@ def dms_product_name_coronimage(asn):
     -------
     product_name : str
         The product name
-    """
 
+    """
     target = asn._get_target()
 
     instrument = asn._get_instrument()
@@ -764,7 +774,8 @@ def dms_product_name_coronimage(asn):
 # Basic constraints
 # -----------------
 class Constraint_Base(Constraint):
-    """Select on program and instrument"""
+    """Select on program and instrument."""
+
     def __init__(self):
         super(Constraint_Base, self).__init__(
             [
@@ -782,7 +793,8 @@ class Constraint_Base(Constraint):
 
 
 class Constraint_IFU(DMSAttrConstraint):
-    """Constrain on IFU exposures"""
+    """Constrain on IFU exposures."""
+
     def __init__(self):
         super(Constraint_IFU, self).__init__(
             name='exp_type',
@@ -798,7 +810,8 @@ class Constraint_IFU(DMSAttrConstraint):
 
 
 class Constraint_Image(DMSAttrConstraint):
-    """Select on exposure type"""
+    """Select on exposure type."""
+
     def __init__(self):
         super(Constraint_Image, self).__init__(
             name='exp_type',
@@ -814,7 +827,8 @@ class Constraint_Image(DMSAttrConstraint):
 
 
 class Constraint_MSA(Constraint):
-    """Constrain on NIRSpec MSA exposures that are spectral"""
+    """Constrain on NIRSpec MSA exposures that are spectral."""
+
     def __init__(self):
         super(Constraint_MSA, self).__init__(
             [
@@ -835,7 +849,8 @@ class Constraint_MSA(Constraint):
 
 
 class Constraint_Obsnum(DMSAttrConstraint):
-    """Select on OBSNUM"""
+    """Select on OBSNUM."""
+
     def __init__(self):
         super(Constraint_Obsnum, self).__init__(
             name='obs_num',
@@ -846,7 +861,8 @@ class Constraint_Obsnum(DMSAttrConstraint):
 
 
 class Constraint_Optical_Path(Constraint):
-    """Select on optical path"""
+    """Select on optical path."""
+
     def __init__(self):
         super(Constraint_Optical_Path, self).__init__([
             DMSAttrConstraint(
@@ -884,7 +900,8 @@ class Constraint_Optical_Path(Constraint):
 
 
 class Constraint_Spectral(DMSAttrConstraint):
-    """Constrain on spectral exposure types"""
+    """Constrain on spectral exposure types."""
+
     def __init__(self):
         super(Constraint_Spectral, self).__init__(
             name='exp_type',
@@ -902,14 +919,16 @@ class Constraint_Spectral(DMSAttrConstraint):
 
 
 class Constraint_Target(Constraint):
-    """Select on target
+    """Select on target.
 
     Parameters
     ----------
     association: Association
         If specified, use the `get_exposure_type` method
         to as part of the target selection.
+
     """
+
     def __init__(self, association=None):
         constraints = [Constraint([
             DMSAttrConstraint(
@@ -942,23 +961,26 @@ class Constraint_Target(Constraint):
 # Base Mixins
 # -----------
 class AsnMixin_AuxData:
-    """Process special and non-science exposures as science.
-    """
+    """Process special and non-science exposures as science."""
+
     def get_exposure_type(self, item, default='science'):
-        """Override to force exposure type to always be science
-        Parameters
+        """Override to force exposure type to always be science.
+
+        Parameters.
         ----------
         item : dict
             The pool entry for which the exposure type is determined
         default : str or None
             The default exposure type.
             If None, routine will raise LookupError
+
         Returns
         -------
         exposure_type : 'science'
             Returns as science for most Exposures
         exposure_type : 'target_acquisition'
             Returns target_acquisition for mir_tacq
+
         """
         NEVER_CHANGE = ['target_acquisition']
         exp_type = super().get_exposure_type(item, default=default)
@@ -968,7 +990,8 @@ class AsnMixin_AuxData:
 
 
 class AsnMixin_Coronagraphy:
-    """Basic overrides for Coronagraphy associations"""
+    """Basic overrides for Coronagraphy associations."""
+
     def __init__(self, *args, **kwargs):
 
         # PSF is required
@@ -982,13 +1005,13 @@ class AsnMixin_Coronagraphy:
         super().__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'coron3'
         super()._init_hook(item)
 
 
 class AsnMixin_Science(DMS_Level3_Base):
-    """Basic science constraints"""
+    """Basic science constraints."""
 
     def __init__(self, *args, **kwargs):
 
@@ -1046,10 +1069,9 @@ class AsnMixin_Science(DMS_Level3_Base):
 
 
 class AsnMixin_Spectrum(AsnMixin_Science):
-    """All things that are spectrum"""
+    """All things that are spectrum."""
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
+        """Post-check and pre-add initialization."""
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)

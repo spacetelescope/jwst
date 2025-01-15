@@ -20,8 +20,8 @@ def zero_roll(a, shift):
     -------
     result : array
         The array with the rows shifted.
-    """
 
+    """
     result = np.zeros_like(a)
     if shift >= 0:
         result[shift:] = a[:-shift]
@@ -51,8 +51,8 @@ def robust_polyfit(x, y, order, maxiter=5, nstd=3.):
     -------
     param : array[float]
         best-fit polynomial parameters.
-    """
 
+    """
     mask = np.ones_like(x, dtype='bool')
     for niter in range(maxiter):
 
@@ -91,8 +91,8 @@ def get_image_dim(image, header=None):
     refpix_mask : array[bool]
         Boolean array indicating which pixels are light-sensitive (True)
         and which are reference pixels (False).
-    """
 
+    """
     # Dimensions of the subarray.
     dimy, dimx = np.shape(image)
 

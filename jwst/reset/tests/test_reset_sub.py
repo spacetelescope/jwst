@@ -1,6 +1,4 @@
-"""
-Unit tests for reset anomaly correction
-"""
+"""Unit tests for reset anomaly correction."""
 
 import pytest
 import numpy as np
@@ -13,8 +11,7 @@ from jwst.reset.reset_sub import (
 
 
 def test_correction(make_rampmodel, make_resetmodel):
-    '''Check that data is unchanged for science data for groups > number of groups of reset '''
-
+    """Check that data is unchanged for science data for groups > number of groups of reset."""
     # size of integration
     nints = 1
     ngroups = 15
@@ -53,8 +50,7 @@ def test_correction(make_rampmodel, make_resetmodel):
 
 
 def test_nan(make_rampmodel, make_resetmodel):
-    '''Verify that when a reset  has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly'''
-
+    """Verify that when a reset  has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly."""
     # size of integration
     nints = 1
     ngroups = 10
@@ -88,8 +84,7 @@ def test_nan(make_rampmodel, make_resetmodel):
 
 
 def test_dq_combine(make_rampmodel, make_resetmodel):
-    '''Verify that the DQ array of the reset is correctly combined with the PIXELDQ array of the science data.'''
-
+    """Verify that the DQ array of the reset is correctly combined with the PIXELDQ array of the science data."""
     # size of integration
     nints = 1
     ngroups = 5
@@ -130,8 +125,7 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
 
 
 def test_2_int(make_rampmodel, make_resetmodel):
-    '''Verify the reset correction is done by integration for MIRI observations'''
-
+    """Verify the reset correction is done by integration for MIRI observations."""
     # size of integration
     nints = 2
     ngroups = 10
@@ -169,7 +163,7 @@ def test_2_int(make_rampmodel, make_resetmodel):
 
 @pytest.fixture(scope='function')
 def make_rampmodel():
-    '''Make MIRI Ramp model for testing'''
+    """Make MIRI Ramp model for testing."""
     def _ramp(nints, ngroups, ysize, xsize):
         # create the data and groupdq arrays
         csize = (nints, ngroups, ysize, xsize)
@@ -196,7 +190,7 @@ def make_rampmodel():
 
 @pytest.fixture(scope='function')
 def make_resetmodel():
-    '''Make MIRI Reset model for testing'''
+    """Make MIRI Reset model for testing."""
     def _reset(nints, ngroups, ysize, xsize):
         # create the data and groupdq arrays
         nints = 2

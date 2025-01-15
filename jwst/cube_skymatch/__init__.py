@@ -1,4 +1,4 @@
-""" skymatch
+"""skymatch.
 
 This package provides support for sky background subtraction and equalization
 (matching).

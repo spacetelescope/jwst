@@ -23,8 +23,7 @@ ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
 
 def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Call function in stcal for flagging for saturated pixels.
 
@@ -49,8 +48,8 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     output_model : `~jwst.datamodels.RampModel`
         Data model with saturation, A/D floor, and do not use flags set in
         the GROUPDQ array
-    """
 
+    """
     ngroups = output_model.meta.exposure.ngroups
     nframes = output_model.meta.exposure.nframes
 
@@ -95,8 +94,7 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
 
 
 def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
-    """
-    Short Summary
+    """Short Summary
     -------------
     For NIRSPEC IRS2 mode only, apply flagging for saturation based on threshold
     values stored in the saturation reference file and A/D floor based on
@@ -124,8 +122,8 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     output_model : `~jwst.datamodels.RampModel`
         Data model with saturation, A/D floor, and do not use flags set in
         the GROUPDQ array
-    """
 
+    """
     # Create the output model as a copy of the input
     groupdq = output_model.groupdq
 
@@ -266,8 +264,7 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
 
 
 def adjacency_sat(flag_temp, saturated, n_pix_grow_sat):
-    """
-    flag_temp : ndarray
+    """flag_temp : ndarray
         2D array of saturated groups.
 
     saturated : int

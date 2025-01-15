@@ -1,6 +1,4 @@
-"""
-Test DQ operations in Combine1dStep
-"""
+"""Test DQ operations in Combine1dStep."""
 import numpy as np
 
 from stdatamodels.jwst import datamodels
@@ -9,7 +7,7 @@ from jwst.combine_1d import Combine1dStep
 
 
 def test_dq():
-    """Test that DQ exclusion works"""
+    """Test that DQ exclusion works."""
     spec1 = create_spec_model(flux=1e-9)
     spec2 = create_spec_model(flux=1e-9)
     ms = datamodels.MultiSpecModel()
@@ -50,7 +48,7 @@ def test_err():
 
 
 def test_nan():
-    """Test that nan exclusion works"""
+    """Test that nan exclusion works."""
     spec1 = create_spec_model(flux=1e-9)
     spec2 = create_spec_model(flux=1e-9)
     ms = datamodels.MultiSpecModel()
@@ -67,7 +65,7 @@ def test_nan():
 
 
 def test_sigmaclip():
-    """Test that sigma clipping works"""
+    """Test that sigma clipping works."""
     spec1 = create_spec_model(flux=1e-9)
     spec2 = create_spec_model(flux=1e-9)
     spec3 = create_spec_model(flux=1e-9)
@@ -91,8 +89,7 @@ def test_sigmaclip():
 
 
 def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
-    """Create a SpecModel"""
-
+    """Create a SpecModel."""
     wavelength = np.arange(*wave_range, step=(wave_range[1] - wave_range[0]) / npoints)
     flux = np.full(npoints, flux)
     error = np.full(npoints, error)

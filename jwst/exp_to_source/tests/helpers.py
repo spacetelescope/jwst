@@ -7,7 +7,7 @@ INPUT_FILES_GLOB = 'data/jwst_nod?_cal.fits'
 
 
 def t_path(partial_path):
-    """Construction the full path for test files"""
+    """Construction the full path for test files."""
     test_dir = os.path.dirname(__file__)
     return os.path.join(test_dir, partial_path)
 

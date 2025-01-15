@@ -9,8 +9,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(output_model, reset_model):
-    """
-    Short Summary
+    """Short Summary
     -------------
     Subtracts reset correction from science arrays, combines
     error arrays in quadrature, and updates data quality array based on
@@ -34,7 +33,6 @@ def do_correction(output_model, reset_model):
         reset-subtracted science data
 
     """
-
     # Save some data params for easy use later
     sci_nints = output_model.meta.exposure.nints      # num ints in input data
     sci_ngroups = output_model.meta.exposure.ngroups  # num groups in input data

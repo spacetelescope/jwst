@@ -1,8 +1,7 @@
 from stdatamodels import schema as dm_schema
 
 def parse_schema(schema):
-    """
-    Parse an ASDF schema for model blending instructions.
+    """Parse an ASDF schema for model blending instructions.
 
     Parameters
     ----------
@@ -26,6 +25,7 @@ def parse_schema(schema):
 
     schema_ignores: list
         list of attributes that will not be blended
+
     """
     def callback(subschema, path, combiner, ctx, recurse):
         if len(path) <= 1:

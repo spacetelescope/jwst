@@ -1,6 +1,6 @@
-""" Work horse routines used for building ifu spectra cubes
+"""Work horse routines used for building ifu spectra cubes
 (including the main loop over files and the construction of
-final spaxel fluxes)
+final spaxel fluxes).
 """
 
 import numpy as np
@@ -45,8 +45,7 @@ class IFUCubeData():
                  instrument_info,
                  master_table,
                  **pars_cube):
-        """ Class IFUCube holds the high level data for each IFU Cube
-        """
+        """Class IFUCube holds the high level data for each IFU Cube."""
         self.input_models_this_cube = []  # list of files use to make cube working on
 
         self.pipeline = pipeline
@@ -135,8 +134,8 @@ class IFUCubeData():
 
     # **************************************************************
     def check_ifucube(self):
-        """ Perform some quick checks that the type of cube to be produced
-        conforms to rules
+        """Perform some quick checks that the type of cube to be produced
+        conforms to rules.
 
         Raises
         ------
@@ -166,8 +165,7 @@ class IFUCubeData():
 
     # ________________________________________________________________________________
     def define_cubename(self):
-        """ Define the base output name
-        """
+        """Define the base output name."""
         if self.pipeline == 2:
             newname = self.output_name_base + '_' + self.suffix + '.fits'
         else:
@@ -236,7 +234,7 @@ class IFUCubeData():
     # _______________________________________________________________________
 
     def set_geometry(self, corner_a, corner_b, lambda_min, lambda_max):
-        """ Based on the ra,dec and wavelength footprint set up the size
+        """Based on the ra,dec and wavelength footprint set up the size
         of the cube in the tangent plane projected coordinate system.
 
 
@@ -245,8 +243,8 @@ class IFUCubeData():
         footprint: tuple
           holds min and max or ra,dec, and wavelength for the cube
           footprint
-        """
 
+        """
         ra_min = np.min(corner_a)
         ra_max = np.max(corner_a)
 
@@ -388,8 +386,8 @@ class IFUCubeData():
         footprint : tuple
            Holds the min and max alpha, beta and wavelength values of
            cube on sky
-        """
 
+        """
         self.a_min = np.min(corner_a)
         self.a_max = np.max(corner_a)
 
@@ -489,9 +487,7 @@ class IFUCubeData():
 # _______________________________________________________________________
 
     def print_cube_geometry(self):
-        """Print out the general properties of the size of the IFU Cube
-        """
-
+        """Print out the general properties of the size of the IFU Cube."""
         log.info('Cube Geometry:')
         if self.coord_system == 'internal_cal':
             log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (along slice, across slice)')
@@ -536,7 +532,7 @@ class IFUCubeData():
 # ________________________________________________________________________________
 
     def build_ifucube(self):
-        """ Create the IFU cube
+        """Create the IFU cube.
 
         1. Loop over every band contained in the IFU cube and read in the data
         associated with the band
@@ -560,7 +556,6 @@ class IFUCubeData():
         Returns an ifu cube
 
         """
-
         self.output_name = self.define_cubename()
         total_num = self.naxis1 * self.naxis2 * self.naxis3
 
@@ -788,8 +783,8 @@ class IFUCubeData():
 
     # ********************************************************************************
     def build_ifucube_single(self):
-        """ Build a set of single mode IFU cubes used for outlier detection
-        and background matching
+        """Build a set of single mode IFU cubes used for outlier detection
+        and background matching.
 
         Loop over every band contained in the IFU cube and read in the data
         associated with the band. Map each band to the output cube  coordinate
@@ -913,10 +908,7 @@ class IFUCubeData():
 
     # **************************************************************************
     def determine_cube_parameters_internal(self):
-        """Determine the spatial and spectral ifu size for coord_system = internal_cal
-
-        """
-
+        """Determine the spatial and spectral ifu size for coord_system = internal_cal."""
         # ____________________________________________________________
         # internal_cal is for only 1 file and weighting= area
         # no msm or emsm  information is needed
@@ -1211,7 +1203,7 @@ class IFUCubeData():
 
     def setup_ifucube_wcs(self):
         """Function to determine the min and max coordinates of the spectral
-        cube
+        cube.
 
         Loop over every datamodel contained in the cube and find the WCS
         of the output cube that contains all the data.
@@ -1461,8 +1453,7 @@ class IFUCubeData():
     def map_detector_to_outputframe(self, this_par1,
                                     subtract_background,
                                     input_model):
-
-        """Loop over a file and map the detector pixels to the output cube
+        """Loop over a file and map the detector pixels to the output cube.
 
         The output frame is on the SKY (ra-dec)
 
@@ -1504,6 +1495,7 @@ class IFUCubeData():
             weighting parameter association with coord1,coord2
         softrad_det : numpy.ndarray
             weighting parameter association with coord1,coord2
+
         """
         # initialize alpha_det and beta_det to None. These are filled in
         # if the instrument is MIRI and the weighting is miripsf
@@ -1711,7 +1703,7 @@ class IFUCubeData():
     def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background,
                               offsets):
         """Loop over a file and map the detector pixels to the output cube
-        The output frame is on the SKY (ra-dec)
+        The output frame is on the SKY (ra-dec).
 
         Return the coordinates of all the detector pixel in the output frame.
 
@@ -1839,8 +1831,7 @@ class IFUCubeData():
 
     # ______________________________________________________________________
     def map_nirspec_pixel_to_sky(self, input_model, offsets):
-
-        """Loop over a file and map the detector pixels to the output cube
+        """Loop over a file and map the detector pixels to the output cube.
 
         The output frame is on the SKY (ra-dec)
         Return the coordinates of all the detector pixel in the output frame.
@@ -1855,7 +1846,6 @@ class IFUCubeData():
         x, y, ra, dec, lambda, slice_no
 
         """
-
         # check if we have an ra and dec offset file
         raoffset = 0.0
         decoffset = 0.0 
@@ -2055,10 +2045,7 @@ class IFUCubeData():
                           softrad_det,
                           weight_det,
                           scalerad_det):
-
-        """ Given a specific wavelength, find the closest value in the wavelength_table
-
-        """
+        """Given a specific wavelength, find the closest value in the wavelength_table."""
         ifound = (np.abs(wavelength_table - w)).argmin()
         rois_det[iw] = rois_table[ifound]
         roiw_det[iw] = roiw_table[ifound]
@@ -2068,9 +2055,7 @@ class IFUCubeData():
 
     # ********************************************************************************
     def find_spaxel_flux(self):
-
-        """Depending on the interpolation method, find the flux for each spaxel value
-        """
+        """Depending on the interpolation method, find the flux for each spaxel value."""
         # currently these are the same but in the future there could be a difference in
         # how the spaxel flux is determined according to self.interpolation.
         if self.interpolation == 'area':
@@ -2088,10 +2073,7 @@ class IFUCubeData():
 
     # ********************************************************************************
     def set_final_dq_flags(self):
-
-        """ Set up the final dq flags, Good data(0) , NON_SCIENCE or DO_NOT_USE
-        """
-
+        """Set up the final dq flags, Good data(0) , NON_SCIENCE or DO_NOT_USE."""
         # An initial set of dq flags was set in overlap_fov_with_spaxel or
         # overlap_slice_with_spaxel. The initial dq dlags are defined in ifu_cube
         # class:
@@ -2192,7 +2174,7 @@ class IFUCubeData():
 
     # ********************************************************************************
     def setup_final_ifucube_model(self, model_ref):
-        """ Set up the final meta WCS info of IFUCube along with other fits keywords
+        """Set up the final meta WCS info of IFUCube along with other fits keywords.
 
         return IFUCube model
 
@@ -2448,10 +2430,9 @@ class IFUCubeData():
 
     # ********************************************************************************
     def find_ra_dec_offset(self, filename):
-        """ Match the filename in the offset list with input_model.meta.filename and return 
-        the corresponding Ra and Dec offset
+        """Match the filename in the offset list with input_model.meta.filename and return
+        the corresponding Ra and Dec offset.
         """
-        
         index = self.offsets['filename'].index(filename)
         raoffset = self.offsets['raoffset'][index]
         decoffset = self.offsets['decoffset'][index]
@@ -2459,10 +2440,9 @@ class IFUCubeData():
     
     # ********************************************************************************
     def offset_coord(self, ra, dec, raoffset, decoffset):
-        """ Given an ra,dec and ra offset and dec offset, use astropy SkyCoord functions
-            to apply the offsets
+        """Given an ra,dec and ra offset and dec offset, use astropy SkyCoord functions
+        to apply the offsets.
         """
-        
         coord = SkyCoord(ra, dec, unit='deg')
         coord_new = coord.spherical_offsets_by(raoffset, decoffset)
 
@@ -2472,13 +2452,14 @@ class IFUCubeData():
         return ra_new, dec_new
     
 class IncorrectInput(Exception):
-    """ Raises an exception if input parameter, Interpolation, is set to area
+    """Raises an exception if input parameter, Interpolation, is set to area
     when more than one file is used to build the cube.
     """
+
     pass
 
 
 class IncorrectParameter(Exception):
-    """ Raises an exception if cube building  parameter is nan
-    """
+    """Raises an exception if cube building  parameter is nan."""
+
     pass

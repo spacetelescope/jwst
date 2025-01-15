@@ -60,8 +60,7 @@ subarray_clocks = {
 
 
 def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
-    """
-    EMI-correct a JWST data model using an emicorr model
+    """EMI-correct a JWST data model using an emicorr model.
 
     Parameters
     ----------
@@ -109,8 +108,7 @@ def apply_emicorr(output_model, emicorr_model,
         onthefly_corr_freq, save_onthefly_reffile,
         save_intermediate_results=False, nints_to_phase=None,
         nbins_all=None, scale_reference=True, use_n_cycles=3):
-    """
-    -> NOTE: This is translated from IDL code fix_miri_emi.pro
+    """-> NOTE: This is translated from IDL code fix_miri_emi.pro.
 
     EMI-corrects data by the following procedure:
          [repeat recursively for each discrete EMI frequency desired]
@@ -169,6 +167,7 @@ def apply_emicorr(output_model, emicorr_model,
     -------
     output_model : JWST data model
         input science data model which has been emi-corrected
+
     """
     # get the subarray case and other info
     detector = output_model.meta.instrument.detector
@@ -474,7 +473,7 @@ def apply_emicorr(output_model, emicorr_model,
 
 
 def sloper(data):
-    """ Fit slopes to all pix of a ramp, using numerical recipies plane-adding
+    """Fit slopes to all pix of a ramp, using numerical recipies plane-adding
      returning intercept image.
 
     Parameters
@@ -489,6 +488,7 @@ def sloper(data):
 
     intercept: numpy array
         slope intercept values
+
     """
     ngroups, ny, nx = np.shape(data)
     frametime = 1.0   # use 1.0 for per-frame slopes, otherwise put a real time here
@@ -516,7 +516,7 @@ def sloper(data):
 
 
 def minmed(data, minval=False, avgval=False, maxval=False):
-    """ Returns the median image of a stack of images, or if there are 2 or less
+    """Returns the median image of a stack of images, or if there are 2 or less
     non-zero frames, returns the minimum (or this minimum can be forced).
 
     Parameters
@@ -537,8 +537,8 @@ def minmed(data, minval=False, avgval=False, maxval=False):
     -------
     medimg : numpy array
         Median image of a stack of images
-    """
 
+    """
     ngroups, ny, nx = np.shape(data)
     medimg = np.zeros((ny, nx))
     # use a mask to ignore nans for calculations
@@ -557,7 +557,7 @@ def minmed(data, minval=False, avgval=False, maxval=False):
 
 
 def get_subarcase(subarray_cases, subarray, readpatt, detector):
-    """ Get the rowclocks and frameclocks values for the given configuration.
+    """Get the rowclocks and frameclocks values for the given configuration.
 
     Parameters
     ----------
@@ -584,6 +584,7 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
 
     frequencies : list
         List of frequencies to correct according to subarray name
+
     """
     subname, rowclocks, frameclocks, frequencies = None, None, None, None
 
@@ -625,8 +626,9 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
 
 
 def get_frequency_info(freqs_names_vals, frequency_name):
-    """Get the frequency number from the given dictionary
-    Parameters
+    """Get the frequency number from the given dictionary.
+
+    Parameters.
     ----------
     freqs_names_vals : dict or model object
         Either default corrections dictionary or datamodel
@@ -641,6 +643,7 @@ def get_frequency_info(freqs_names_vals, frequency_name):
 
     phase_amplitudes : array
         1-D array of the corresponding phase amplidues for this frequency
+
     """
     if isinstance(freqs_names_vals, dict):
         for freq_nme, val in freqs_names_vals.items():
@@ -675,6 +678,7 @@ def rebin(arr, newshape):
     -------
     arr : numpy array
         rebinned array
+
     """
     assert len(arr.shape) == len(newshape)
 
@@ -686,7 +690,7 @@ def rebin(arr, newshape):
 
 
 def mk_reffile(freq_pa_dict, emicorr_ref_filename):
-    """ Create the reference file hdulist object.
+    """Create the reference file hdulist object.
 
     Parameters
     ----------
@@ -700,6 +704,7 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     Returns
     -------
     Nothing
+
     """
     # save the reference file if save_intermediate_results=True and no CRDS file exists
     emicorr_model = datamodels.EmiModel(freq_pa_dict)

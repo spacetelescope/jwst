@@ -1,5 +1,4 @@
-"""
-Test suite for engdb_tools
+"""Test suite for engdb_tools.
 
 Notes
 -----
@@ -7,6 +6,7 @@ This file has been named specifically so it is not
 automatically found by py.test. This is because, to test,
 a connection to the internal engineering service is needed,
 which is generally not available.
+
 """
 import os
 import pytest
@@ -29,7 +29,7 @@ NODATA_ENDTIME = '2014-01-02'
 
 
 def is_alive(url):
-    """Check if a url is alive
+    """Check if a url is alive.
 
     Parameters
     ----------
@@ -40,6 +40,7 @@ def is_alive(url):
     -------
     is_alive: bool
         True if alive
+
     """
     is_alive = False
     try:
@@ -52,7 +53,7 @@ def is_alive(url):
 
 @pytest.fixture
 def engdb():
-    """Setup the service to operate through the mock service"""
+    """Setup the service to operate through the mock service."""
     yield engdb_tools.ENGDB_Service()
 
 
@@ -139,7 +140,7 @@ def test_meta(engdb):
 
 
 def test_unzip(engdb):
-    """Test forunzipped versions of content"""
+    """Test forunzipped versions of content."""
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
         include_obstime=True,

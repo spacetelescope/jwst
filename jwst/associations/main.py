@@ -1,4 +1,4 @@
-"""Main entry for the association generator"""
+"""Main entry for the association generator."""
 import os
 import sys
 import argparse
@@ -21,8 +21,7 @@ logger = log_config(name=__package__)
 
 
 class Main():
-    """
-    Generate Associations from an Association Pool
+    """Generate Associations from an Association Pool.
 
     Parameters
     ----------
@@ -52,13 +51,15 @@ class Main():
     -----
     Refer to the :ref:`Association Generator <associations>`
     documentation for a full description.
+
     """
+
     def __init__(self, args=None, pool=None):
         self.configure(args=args, pool=pool)
 
     @classmethod
     def cli(cls, args=None, pool=None):
-        """Run the full association generation process
+        """Run the full association generation process.
 
         Parameters
         ----------
@@ -77,6 +78,7 @@ class Main():
         -------
         generator : Main
             A fully executed association generator.
+
         """
         generator_cli = cls(args=args, pool=pool)
         generator_cli.generate()
@@ -86,7 +88,6 @@ class Main():
     @property
     def orphaned(self):
         """The pool of exposures that do not belong to any association."""
-
         not_in_asn = np.ones((len(self.pool),), dtype=bool)
         for asn in self.associations:
             try:
@@ -99,7 +100,7 @@ class Main():
         return orphaned
 
     def configure(self, args=None, pool=None):
-        """Configure to prepare for generation
+        """Configure to prepare for generation.
 
         Parameters
         ----------
@@ -113,6 +114,7 @@ class Main():
         pool : None or AssociationPool
             If `None`, a pool file must be specified in the `args`.
             Otherwise, an `AssociationPool`
+
         """
         self.parse_args(args, has_pool=pool)
         parsed = self.parsed
@@ -155,7 +157,7 @@ class Main():
             parsed.all_candidates = True
 
     def generate(self):
-        """Generate the associations"""
+        """Generate the associations."""
         logger.info('Generating associations.')
         parsed = self.parsed
         if parsed.per_pool_algorithm:
@@ -179,7 +181,7 @@ class Main():
         logger.debug(self.__str__())
 
     def parse_args(self, args=None, has_pool=False):
-        """Set command line arguments
+        """Set command line arguments.
 
         Parameters
         ----------
@@ -190,8 +192,8 @@ class Main():
 
         has_pool : bool-like
             Do not require `pool` from the command line if a pool is already in hand.
-        """
 
+        """
         if args is None:
             args = sys.argv[1:]
         if isinstance(args, str):
@@ -321,8 +323,7 @@ class Main():
         self.parsed = parser.parse_args(args=args)
 
     def save(self):
-        """Save the associations to disk.
-        """
+        """Save the associations to disk."""
         if self.parsed.dry_run:
             return
 
@@ -357,7 +358,7 @@ class Main():
 
 
 def main(args=None, pool=None):
-    """Command-line entrypoint for the association generator
+    """Command-line entrypoint for the association generator.
 
     Wrapper around `Main.cli` so that the return is either True or an exception.
 
@@ -373,6 +374,7 @@ def main(args=None, pool=None):
     pool : None or AssociationPool
         If `None`, a pool file must be specified in the `args`.
         Otherwise, an `AssociationPool`
+
     """
     Main.cli(args, pool)
 
@@ -381,7 +383,8 @@ def main(args=None, pool=None):
 # Utilities
 # #########
 class DeprecateNoMerge(argparse.Action):
-    """Deprecate the `--no-merge` option"""
+    """Deprecate the `--no-merge` option."""
+
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         super(DeprecateNoMerge, self).__init__(option_strings, dest, const=True, nargs=0, **kwargs)
 

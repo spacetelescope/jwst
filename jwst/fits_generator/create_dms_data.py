@@ -131,8 +131,8 @@ def sanitize(header, keyword, type=float, default=0.0):
 
     In this case, we return the value of the keyword
 
-    Parameters:
-
+    Parameters
+    ----------
     header: fits Header object
     ------
 
@@ -153,6 +153,7 @@ def sanitize(header, keyword, type=float, default=0.0):
 
     The default value returned if the keyword doesn't exist, or is of the wrong type
     and cannot be converted
+
     """
     try:
         value = header[keyword]
@@ -167,21 +168,19 @@ def sanitize(header, keyword, type=float, default=0.0):
     return converted_value
 
 def get_nircam_subarray(header):
-    """Get subarray parameters from NIRCAM data header
+    """Get subarray parameters from NIRCAM data header.
 
     Parameters
     ----------
-
     header : fits Header object
         The header of the data whose subarray parameters are to be determined
 
     Returns
     -------
-
     detector_row_start, detector_column_start : tuple of ints
         The 1-indexed values of the starting row and column
-    """
 
+    """
     #
     # ROWSTART and COLSTART are zero-indexed, ROWCORNR and COLCORNR
     # are 1-indexed
@@ -230,8 +229,8 @@ def flip_rotate(input_hdulist):
     rotated 180 degrees like NRS2.
     FGS 2 (#498) needs to be flipped across x=y and then flipped along the
     Y direction.
-    Returns a FITS HDUList with the data flipped and rotated accordingly"""
-
+    Returns a FITS HDUList with the data flipped and rotated accordingly.
+    """
     header = input_hdulist[0].header
 
     sca = getSCA_ID(input_hdulist)
@@ -549,7 +548,8 @@ def flip_rotate(input_hdulist):
 
 def create_subarrays(input_hdulist, subarrays):
     """Given a full-frame image, create subarrays from it.  Returns a list
-    of filenames corresponding to the subarrays created"""
+    of filenames corresponding to the subarrays created.
+    """
     subarray_files = []
     #
     #  Extract the data

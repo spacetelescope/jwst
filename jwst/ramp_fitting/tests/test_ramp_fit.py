@@ -717,9 +717,8 @@ class TestMethods:
 
 
 def test_twenty_groups_two_segments():
-    """
-    Test to verify weighting of multiple segments in combination:
-    a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments)
+    """Test to verify weighting of multiple segments in combination:
+    a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments).
     """
     (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.)
     model1, gdq, rnoise, pixdq, err, gain = setup_small_cube(
@@ -762,8 +761,7 @@ def test_twenty_groups_two_segments():
 
 
 def test_miri_all_sat():
-    """
-    Test of all groups in all integrations being saturated; all output arrays
+    """Test of all groups in all integrations being saturated; all output arrays
     (particularly variances) should be 0.
     """
     (ngroups, nints, nrows, ncols, deltatime) = (3, 2, 2, 2, 6.)
@@ -780,8 +778,7 @@ def test_miri_all_sat():
 
 
 def test_miri_first_last():
-    """
-    This is a test of whether ramp fitting correctly handles having all 0th
+    """This is a test of whether ramp fitting correctly handles having all 0th
     group dq flagged as DO_NOT_USE, and all final group dq flagged as
     DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based)
     group is flagged as a CR.  For such a ramp, the code removes the CR-flag
@@ -821,8 +818,7 @@ def test_miri_first_last():
 
 
 def test_miri_no_good_pixel():
-    """
-    With no good data, MIRI will remove all groups where all pixels are bad.
+    """With no good data, MIRI will remove all groups where all pixels are bad.
     If all groups are bad, NoneType is returned for all return values from
     ramp_fit.  This test is to force this return of NoneType.
     """
@@ -848,9 +844,8 @@ def test_miri_no_good_pixel():
 
 
 def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
-    """
-    dims : tuple
-        nints, ngroups, nrows, ncols
+    """Dims : tuple
+        nints, ngroups, nrows, ncols.
 
     frame_data : tuple
         nframes, groupgap
@@ -915,9 +910,7 @@ def setup_inputs_ramp_model_new(dims, frame_data, timing, variance):
 
 def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
                      gain=1., readnoise=10.):
-    """
-    Create input MIRI datacube having the specified dimensions
-    """
+    """Create input MIRI datacube having the specified dimensions."""
     gain = np.ones(shape=(nrows, ncols), dtype=np.float32) * gain
     err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)

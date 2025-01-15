@@ -1,4 +1,4 @@
-"""Access the JWST Engineering Mnemonic Database
+"""Access the JWST Engineering Mnemonic Database.
 
 The engineering mnemonics are provided by multiple services, all of which require a level of authentication.
 
@@ -23,7 +23,7 @@ Depending on the frequency a mnemonic is updated, there can be no values. If
 values are always desired, the nearest, bracketing values outside the time
 range can be requested.
 
-Warning
+Warning:
 =======
 
 Many mnemonics are updated very quickly, up to 16Hz. When in doubt, specify a
@@ -31,7 +31,7 @@ very short time frame, and request bracketing values. Otherwise, the request
 can return a very large amount of data, risking timeout, unnecessary memory
 consumption, or access restrictions.
 
-Examples
+Examples:
 ========
 
 The typical workflow is as follows:
@@ -61,6 +61,7 @@ ENG_RETRIES
 
 ENG_TIMEOUT
     Number of seconds before timing out a network connection. Default is 600 seconds (10 minutes)
+
 """
 import logging
 
@@ -73,7 +74,7 @@ logger.addHandler(logging.NullHandler())
 
 
 def ENGDB_Service(base_url=None, **service_kwargs):
-    """Access the JWST Engineering Database
+    """Access the JWST Engineering Database.
 
     Access can be either through the public MAST API
     or by direct connection to the database server.
@@ -91,8 +92,8 @@ def ENGDB_Service(base_url=None, **service_kwargs):
     -------
     service : `~jwst.lib.engdb_lib.EngdbABC`
         The engineering database service to use.
-    """
 
+    """
     # Determine the database to use
     for db_attempt in [EngdbMast, EngdbDirect]:
         try:

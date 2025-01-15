@@ -1,5 +1,4 @@
-""" Dictionary of basic instrument parameters
-"""
+"""Dictionary of basic instrument parameters."""
 
 import logging
 log = logging.getLogger(__name__)
@@ -9,12 +8,11 @@ log.setLevel(logging.DEBUG)
 class InstrumentInfo():
 
     def __init__(self):
-        """ Dictionary of basic instrument parameters
+        """Dictionary of basic instrument parameters.
 
         These parameters are filled in from the cube reference file
         and  MIRI resolution reference file
         """
-
         self.multich_wavelength = []
         self.multich_sroi = []
         self.multich_wroi = []

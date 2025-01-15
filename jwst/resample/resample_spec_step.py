@@ -18,14 +18,14 @@ GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
 
 class ResampleSpecStep(Step):
-    """
-    ResampleSpecStep: Resample input data onto a regular grid using the
+    """ResampleSpecStep: Resample input data onto a regular grid using the
     drizzle algorithm.
 
     Parameters
-    -----------
+    ----------
     input : `~jwst.datamodels.MultiSlitModel`, `~jwst.datamodels.ModelContainer`, Association
         A singe datamodel, a container of datamodels, or an association file
+
     """
 
     class_alias = "resample_spec"
@@ -114,8 +114,7 @@ class ResampleSpecStep(Step):
         return result
 
     def _process_multislit(self, input_models):
-        """
-        Resample MultiSlit data
+        """Resample MultiSlit data.
 
         Parameters
         ----------
@@ -126,6 +125,7 @@ class ResampleSpecStep(Step):
         -------
         result : `~jwst.datamodels.MultiSlitModel`
             The resampled output, one per source
+
         """
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
@@ -163,9 +163,7 @@ class ResampleSpecStep(Step):
         return result
 
     def get_drizpars(self):
-        """
-        Load all drizzle-related parameter values into kwargs list.
-        """
+        """Load all drizzle-related parameter values into kwargs list."""
         # Define the keys pulled from step parameters
         kwargs = dict(
             pixfrac=self.pixfrac,
@@ -196,8 +194,7 @@ class ResampleSpecStep(Step):
         return kwargs
 
     def _process_slit(self, input_models):
-        """
-        Resample Slit data
+        """Resample Slit data.
 
         Parameters
         ----------
@@ -209,6 +206,7 @@ class ResampleSpecStep(Step):
         -------
         result : `~jwst.datamodels.SlitModel`
             The resampled output
+
         """
         # Make sure all input models have consistent NaN and DO_NOT_USE values
         for model in input_models:
@@ -235,8 +233,7 @@ class ResampleSpecStep(Step):
         return result
 
     def update_slit_metadata(self, model):
-        """
-        Update slit attributes in the resampled slit image.
+        """Update slit attributes in the resampled slit image.
 
         This is needed because model.slit attributes are not in model.meta, so
         the normal update() method doesn't work with them. Updates output_model

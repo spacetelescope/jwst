@@ -52,7 +52,6 @@ def test_model_roundtrip(tmp_path, run_exp_to_source):
 
 def test_container_structure():
     """Test for container usage."""
-
     # Setup input
     inputs = [MultiSlitModel(f) for f in helpers.INPUT_FILES]
     container = ModelContainer(inputs)
@@ -81,7 +80,6 @@ def test_container_structure():
 
 def test_slit_exptype():
     """Test for slit exposure type handling."""
-
     # Setup input
     inputs = [MultiSlitModel(f) for f in helpers.INPUT_FILES]
     container = ModelContainer(inputs)

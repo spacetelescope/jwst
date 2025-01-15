@@ -1,6 +1,6 @@
-""" Test for the detector1 pipeline using NIRISS image mode, starting with
-    an uncal file. Results from all intermediate steps, including
-    charge_migration, are saved for comparisons with truth files.
+"""Test for the detector1 pipeline using NIRISS image mode, starting with
+an uncal file. Results from all intermediate steps, including
+charge_migration, are saved for comparisons with truth files.
 """
 
 import pytest
@@ -139,8 +139,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
                                     "refpix", "linearity", "dark_current",
                                     "charge_migration", "jump", "rate", "rateints"])
 def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Test detector1 pipeline for NIRISS imaging data with noise cleaning.
-    """
+    """Test detector1 pipeline for NIRISS imaging data with noise cleaning."""
     truth_dir = 'test_niriss_image'
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
@@ -152,17 +151,14 @@ def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_k
                                     "cfn_ramp", "cfn_rate", "cfn_rateints"])
 def test_niriss_image_detector1_with_clean_flicker_noise(
         run_detector1_with_clean_flicker_noise, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Regression test of detector1 pipeline performed on NIRISS imaging data.
-    """
+    """Regression test of detector1 pipeline performed on NIRISS imaging data."""
     truth_dir = 'test_niriss_image_clean_flicker_noise'
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
 
 @pytest.mark.bigdata
 def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
-    """Make sure tweakreg is skipped when sources are not found.
-    """
-
+    """Make sure tweakreg is skipped when sources are not found."""
     rtdata.input = "niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json"
     rtdata.get_asn("niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json")
 
@@ -192,8 +188,7 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_niriss_image_detector1_multiprocess_rate(
         run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
-    """
-    Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
+    """Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
     on two processors.
     """
     truth_dir = 'test_niriss_image'
@@ -205,8 +200,7 @@ def test_niriss_image_detector1_multiprocess_rate(
 @pytest.mark.parametrize("suffix", ["rate", "fitopt"])
 def test_niriss_image_detector1_multiprocess_rate_save_opt(
         run_detector1_multiprocess_rate_save_opt, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """
-    Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
+    """Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
     on two processors and the optional results product.
     """
     truth_dir = 'test_niriss_image'
@@ -217,8 +211,7 @@ def test_niriss_image_detector1_multiprocess_rate_save_opt(
 @pytest.mark.bigdata
 def test_niriss_image_detector1_multiprocess_jump(
         run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
-    """
-    Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
+    """Runs test_niriss_image_detector1[rate], but with ramp fitting run with multiprocessing
     on two processors.
     """
     truth_dir = 'test_niriss_image'
@@ -227,7 +220,7 @@ def test_niriss_image_detector1_multiprocess_jump(
 
 
 def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir):
-    """Assertion helper for the above tests"""
+    """Assertion helper for the above tests."""
     rtdata = rtdata_module
     rtdata.input = "jw01094001002_02107_00001_nis_uncal.fits"
     output = f"jw01094001002_02107_00001_nis_{suffix}.fits"

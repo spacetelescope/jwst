@@ -18,10 +18,9 @@ log.addHandler(logging.NullHandler())
 
 
 def g_eeAG(xi, eta, **kwargs):
-    """
-    Calculate the Fourier transform of one half of a hexagon that is bisected
+    """Calculate the Fourier transform of one half of a hexagon that is bisected
     from one corner to its diametrically opposite corner.
-    { DG: how does this compare to  g_eeGEN() ? }
+    { DG: how does this compare to  g_eeGEN() ? }.
 
     Parameters
     ----------
@@ -50,6 +49,7 @@ def g_eeAG(xi, eta, **kwargs):
     -------
     g: 2D complex array
         Fourier transform of one half of a hexagon.
+
     """
     c = kwargs['c']
     pixel = kwargs['pixel']
@@ -76,8 +76,7 @@ def g_eeAG(xi, eta, **kwargs):
 
 
 def glimit(xi, eta, **kwargs):
-    """
-    Calculate the analytic limit of the Fourier transform of one half of the
+    """Calculate the analytic limit of the Fourier transform of one half of the
         hexagon along eta=0.
 
     Parameters
@@ -109,6 +108,7 @@ def glimit(xi, eta, **kwargs):
     g: complex
         analytic limit of the Fourier transform of one half of the hexagon
         along eta=0
+
     """
     c = kwargs['c']
     pixel = kwargs['pixel']
@@ -130,8 +130,7 @@ def glimit(xi, eta, **kwargs):
 
 
 def centralpix_limit():
-    """
-    Calculate the analytic limit of the Fourier transform of one half of the
+    """Calculate the analytic limit of the Fourier transform of one half of the
     hexagon at the origin.
 
     Parameters
@@ -143,6 +142,7 @@ def centralpix_limit():
     g: float
         analytic limit of the Fourier transform of one half of the hexagon
         at the origin.
+
     """
     g = np.sqrt(3) / 4.0
 
@@ -150,8 +150,7 @@ def centralpix_limit():
 
 
 def mas2rad(mas):
-    """
-    Convert angle in milli arc-sec to radians
+    """Convert angle in milli arc-sec to radians.
 
     Parameters
     ----------
@@ -162,6 +161,7 @@ def mas2rad(mas):
     -------
     rad: float
         angle in radians
+
     """
     rad = mas * (10**(-3)) / (3600 * 180 / np.pi)
     return rad
@@ -169,8 +169,7 @@ def mas2rad(mas):
 
 def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
              pitch=mas2rad(65)):
-    """
-    Calculate the hexagonal hole Fourier transform by adding the transforms
+    """Calculate the hexagonal hole Fourier transform by adding the transforms
     of the 2 symmetric parts.
 
     Parameters
@@ -194,6 +193,7 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
     -------
     np.abs(hex_complex): 2D float array
         hexagonal hole Fourier transform by adding the transforms
+
     """
     if c is None:
         c = float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5

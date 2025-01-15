@@ -58,12 +58,10 @@ def create_reference_files(datamodel):
 
 @pytest.fixture(scope="module")
 def background():
-    """
-    Create background IFUImageModel for testing. This is a mockup of the expected
+    """Create background IFUImageModel for testing. This is a mockup of the expected
     background data in a .rate file.
-    Three components: random noise, low-order variability, and outliers
+    Three components: random noise, low-order variability, and outliers.
     """
-
     # random noise
     rng = np.random.default_rng(seed=77)
     shp = (1024, 1032)
@@ -114,8 +112,8 @@ def sci(background):
 @pytest.fixture(scope="module")
 def asn(tmp_cwd_module, background, sci):
     """Create association for testing. Needs at least
-    two background images to properly test the step."""
-
+    two background images to properly test the step.
+    """
     sci_path = tmp_cwd_module / "sci.fits"
     sci.save(sci_path)
 
@@ -163,11 +161,10 @@ def asn(tmp_cwd_module, background, sci):
 def test_input_parsing(asn, sci, background):
     """Test that the input parsing function correctly identifies the science,
     background, and selfcal exposures in the association file
-    given association vs imagemodel inputs, and selfcal_list vs not
+    given association vs imagemodel inputs, and selfcal_list vs not.
 
     Note that science exposure gets added to selfcal_list later, not in parse_inputs
     """
-
     # basic association case. Both background and selfcal get into the list
     input_sci, selfcal_list, bkg_list = _parse_inputs(asn, [], [])
     assert isinstance(input_sci, dm.IFUImageModel)
@@ -200,11 +197,9 @@ def test_input_parsing(asn, sci, background):
 
 
 def test_background_flagger_mrs(background):
-    """
-    Ensure the right number of outliers are found, and that
+    """Ensure the right number of outliers are found, and that
     true outliers are among those.
     """
-
     bg = background.data
 
     # pass into the MRSBackgroundFlagger and check it found the right pixels
@@ -221,11 +216,9 @@ def test_background_flagger_mrs(background):
 
 
 def test_apply_flags(background):
-    """
-    Ensure that flagged pixels are set to NaN in the data and err arrays,
+    """Ensure that flagged pixels are set to NaN in the data and err arrays,
     and that the DQ flag is set to 1.
     """
-
     flagged_indices = np.array(outlier_indices).T
     flagged_indices = (flagged_indices[0], flagged_indices[1])
 
@@ -276,7 +269,7 @@ def test_expected_fail_sci(sci):
 @pytest.fixture(scope="module")
 def vertical_striping():
     """2-D array with vertical stripes and some outliers, used to test that
-    the step is flagging in the correct (along-dispersion) direction
+    the step is flagging in the correct (along-dispersion) direction.
     """
     shp = (102, 96)
     stripes = np.zeros(shp)
@@ -294,14 +287,12 @@ def vertical_striping():
 
 @pytest.mark.parametrize("dispaxis", [None, 1, 2])
 def test_dispersion_direction(vertical_striping, dispaxis):
-    """
-    Test that the flagging operates as expected as a function of direction.
+    """Test that the flagging operates as expected as a function of direction.
 
     Of the four outliers, only one lies atop a stripe, so the step should only
     flag one in four as an outlier unless median filter occurs in the along-stripe
     direction.
     """
-
     flagged_indices = badpix_selfcal(vertical_striping, dispaxis=dispaxis)
 
     if dispaxis == 2:

@@ -1,6 +1,4 @@
-"""
-Unit test for Cube Build testing reading in MIRI cubepars ref file and using it
-"""
+"""Unit test for Cube Build testing reading in MIRI cubepars ref file and using it."""
 
 import numpy as np
 import os
@@ -19,8 +17,7 @@ from jwst.datamodels import ModelContainer
 
 @pytest.fixture(scope='module')
 def miri_cube_pars(tmp_path_factory):
-    """ Set up the miri cube pars reference file  """
-
+    """Set up the miri cube pars reference file."""
     filename = tmp_path_factory.mktemp('cube_pars')
     filename = filename / 'miri_cube_pars.fits'
     hdu0 = fits.PrimaryHDU()
@@ -106,7 +103,7 @@ def miri_image():
 
 @pytest.mark.parametrize("as_filename", [True, False])
 def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filename):
-    """ test defaults of step are set up and user input are defined correctly """
+    """Test defaults of step are set up and user input are defined correctly."""
     if as_filename:
         fn = tmp_path / 'miri.fits'
         miri_image.save(fn)

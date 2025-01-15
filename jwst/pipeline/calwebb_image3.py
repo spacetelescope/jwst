@@ -17,8 +17,7 @@ __all__ = ['Image3Pipeline']
 
 
 class Image3Pipeline(Pipeline):
-    """
-    Image3Pipeline: Applies level 3 processing to imaging-mode data from
+    """Image3Pipeline: Applies level 3 processing to imaging-mode data from
                     any JWST instrument.
 
     Included steps are:
@@ -47,13 +46,13 @@ class Image3Pipeline(Pipeline):
     }
 
     def process(self, input_data):
-        """
-        Run the Image3Pipeline
+        """Run the Image3Pipeline.
 
         Parameters
         ----------
         input_data: Level3 Association, or ~jwst.datamodels.ModelLibrary
             The exposures to process
+
         """
         self.log.info('Starting calwebb_image3 ...')
 
@@ -105,12 +104,10 @@ class Image3Pipeline(Pipeline):
 
 
     def _load_input_as_library(self, input):
-        """
-        Load any valid input type into a ModelLibrary, including
+        """Load any valid input type into a ModelLibrary, including
         single datamodels, associations, ModelLibrary instances, and
         filenames pointing to those types.
         """
-
         if isinstance(input, ModelLibrary):
             return input
 

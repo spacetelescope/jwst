@@ -1,6 +1,4 @@
-"""
-JWST-specific Step and Pipeline base classes.
-"""
+"""JWST-specific Step and Pipeline base classes."""
 from functools import wraps
 import logging
 import warnings
@@ -31,7 +29,7 @@ class JwstStep(Step):
 
 
     def load_as_level2_asn(self, obj):
-        """Load object as an association
+        """Load object as an association.
 
         Loads the specified object into a Level2 association.
         If necessary, prepend `Step.input_dir` to all members.
@@ -45,6 +43,7 @@ class JwstStep(Step):
         -------
         association : jwst.associations.lib.rules_level2_base.DMSLevel2bBase
             Association
+
         """
         # Prevent circular import:
         from ..associations.load_as_asn import LoadAsLevel2Asn
@@ -55,7 +54,7 @@ class JwstStep(Step):
         return asn
 
     def load_as_level3_asn(self, obj):
-        """Load object as an association
+        """Load object as an association.
 
         Loads the specified object into a Level3 association.
         If necessary, prepend `Step.input_dir` to all members.
@@ -69,6 +68,7 @@ class JwstStep(Step):
         -------
         association : jwst.associations.lib.rules_level3_base.DMS_Level3_Base
             Association
+
         """
         # Prevent circular import:
         from ..associations.load_as_asn import LoadAsAssociation

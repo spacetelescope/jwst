@@ -106,8 +106,7 @@ def test_level2_asn_names_with_version(pool_params):
 
 
 def test_bad_expnames():
-    """
-    Ensure warning gets raised during load_asn when the association file
+    """Ensure warning gets raised during load_asn when the association file
     contains path data in the expname.
     """
     bad_asn = "./data/asn_level2_bad_path.json"
