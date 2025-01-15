@@ -14,8 +14,9 @@ log.setLevel(logging.DEBUG)
 try:
     import bottleneck as bn
 except ImportError as err:
-    msg = "Please install the bottleneck package for improved performance.  Falling back on numpy.  To install, use pip install bottleneck."
-    warnings.warn(msg)
+    warnings.warn("Please install the bottleneck package for improved "
+                  "performance.  Falling back on numpy.  To install, "
+                  "use pip install bottleneck.")
     bn = np   # set bn as an alias for numpy
 
 subarray_clocks = {
