@@ -6,16 +6,17 @@ import numpy as np
 import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
+import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 try:
     import bottleneck as bn
-except:
-    bn = np
-    log.info('Bottleneck package unavailable. Suggest pip install'
-             ' bottleneck to improve performance.')
+except ImportError as err:
+    msg = "Please install the bottleneck package for improved performance.  Falling back on numpy.  To install, use pip install bottleneck."
+    warnings.warn(msg)
+    bn = np   # set bn as an alias for numpy
 
 subarray_clocks = {
 
