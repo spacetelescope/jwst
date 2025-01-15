@@ -113,6 +113,10 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   Flag to enable saving a model of the 2D flux as defined by the extraction aperture or PSF model.
   If True, the model is saved to disk with suffix "scene_model".
 
+``--save_residual_image``
+  Flag to enable saving the residual image (from the input minus the scene model)
+  If True, the model is saved to disk with suffix "residual".
+
 Step Arguments for IFU Data
 ---------------------------
 
