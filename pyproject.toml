@@ -292,7 +292,6 @@ select = [
     # "LOG",
 ]
 ignore = [
-    "E722", # do not use bare 'except'
 ]
 
 [tool.ruff.lint.pydocstyle]
