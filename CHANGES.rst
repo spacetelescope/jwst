@@ -1,3 +1,292 @@
+1.17.1 (2025-01-02)
+===================
+
+refpix (detector1)
+------------------
+
+- Bugfix for the new SIRS reference pixel subtraction. (`#9037
+  <https://github.com/spacetelescope/jwst/issues/9037>`_)
+
+
+tweakreg (image3)
+-----------------
+
+- Changed the default values for ``sharplo``, ``sharphi``, ``roundlo``, and
+  ``roundhi`` to the values appropriate for the current default algorith for
+  source finding in the ``tweakreg`` step. (`#9036
+  <https://github.com/spacetelescope/jwst/issues/9036>`_)
+
+
+1.17.0 (2024-12-20)
+===================
+
+General
+-------
+
+- Rename default branch to main. (`#8210
+  <https://github.com/spacetelescope/jwst/issues/8210>`_)
+- Added mypy type checking to CI checks (`#8852
+  <https://github.com/spacetelescope/jwst/issues/8852>`_)
+- Give regtest okify results unique subdirectories. (`#8885
+  <https://github.com/spacetelescope/jwst/issues/8885>`_)
+- Include xml and db test data as package data for lib tests. (`#8935
+  <https://github.com/spacetelescope/jwst/issues/8935>`_)
+- Update minimum required version of crds to allow for "data release style"
+  contexts. (`#8950 <https://github.com/spacetelescope/jwst/issues/8950>`_)
+- remove ``okify_regtests`` script (move to ``ci_watson``) (`#8957
+  <https://github.com/spacetelescope/jwst/issues/8957>`_)
+- When blending metadata don't store columns containing all missing value
+  (nans). (`#8958 <https://github.com/spacetelescope/jwst/issues/8958>`_)
+- Increase asdf upper pin to 5 (`#8966
+  <https://github.com/spacetelescope/jwst/issues/8966>`_)
+
+
+Documentation
+-------------
+
+- use ``towncrier`` to handle change log entries (`#8671
+  <https://github.com/spacetelescope/jwst/issues/8671>`_)
+- Mention possible need to provide package name to strun when using aliases.
+  (`#8926 <https://github.com/spacetelescope/jwst/issues/8926>`_)
+
+
+``stpipe``
+----------
+
+- Add warning that ``Step.__call__`` is deprecated. (`#8761
+  <https://github.com/spacetelescope/jwst/issues/8761>`_)
+- Remove all uses of Step.__call__ to allow it's deprecation. (`#8945
+  <https://github.com/spacetelescope/jwst/issues/8945>`_)
+
+
+Data Models
+-----------
+
+- Remove memory-saving options from ModelContainer (`#8831
+  <https://github.com/spacetelescope/jwst/issues/8831>`_)
+- Update ModelLibrary to use meta.asn.exptype instead of meta.exptype. (`#8918
+  <https://github.com/spacetelescope/jwst/issues/8918>`_)
+
+
+Associations
+------------
+
+- Add mosaic association candidates to list of level three candidate types
+  requiring members from more than one observation (`#8843
+  <https://github.com/spacetelescope/jwst/issues/8843>`_)
+
+
+Scripts
+-------
+
+- Remove the outdated schema_editor script. (`#8909
+  <https://github.com/spacetelescope/jwst/issues/8909>`_)
+
+
+Pipeline
+--------
+
+- Fixed a bug leading to incorrect area extensions, and sometimes crashes, in
+  the coron3 pipeline (`#8907
+  <https://github.com/spacetelescope/jwst/issues/8907>`_)
+- Add 'mbsub' to the list of known suffixes, for ``master_background``
+  correction in ``calwebb_spec3``. (`#8927
+  <https://github.com/spacetelescope/jwst/issues/8927>`_)
+- Transfer wcsinfo metadata to new MultiSlitModel created during
+  ``calwebb_spec2`` processing of NIRSpec MSA data. (`#8947
+  <https://github.com/spacetelescope/jwst/issues/8947>`_)
+
+
+ami_analyze / ami_normalize / ami_average (ami3)
+------------------------------------------------
+
+- Change how AMI observables are averaged: average fringe quantities before
+  calculating additional observables. Update their error calculation: use
+  covariance of amplitudes/phases (and derived quantities) and standard error
+  of the mean. Code now expects an ASDF filename string for user-supplied
+  affine2d and bandpass input arguments. Example file creation in
+  documentation. (`#8846
+  <https://github.com/spacetelescope/jwst/issues/8846>`_)
+- Use mask and pupil geometry constants from NRM reference file, and apply
+  affine distortion from commissioning to LG model as default. (`#8974
+  <https://github.com/spacetelescope/jwst/issues/8974>`_)
+
+
+assign_wcs (image2, spec2)
+--------------------------
+
+- Use the range of points in the TabularModel to adjust the bounding_box in a
+  MIRI LRS FIXEDSLIT observation.
+  Ignore the bounding_box in running the inverse WCS transform when computing
+  crpix. (`#8554 <https://github.com/spacetelescope/jwst/issues/8554>`_)
+- Catch NaN values in msa tables for source positions in slit and replace with
+  slit center. (`#8874 <https://github.com/spacetelescope/jwst/issues/8874>`_)
+- Use pixel vertices to define s_region instead of pixel centers." (`#8897
+  <https://github.com/spacetelescope/jwst/issues/8897>`_)
+- Fix all bounding box assignments to wcs objects so that they are correctly
+  and
+  specifically assigned as order ``F`` boxes. This ensures consistency with the
+  assumptions made by GWCS for bounding boxes. (`#8963
+  <https://github.com/spacetelescope/jwst/issues/8963>`_)
+- Fix negative SHUTTRID values under numpy 2 (`#8978
+  <https://github.com/spacetelescope/jwst/issues/8978>`_)
+
+
+background (image2, spec2)
+--------------------------
+
+- Fixed crash when combining full and subarray observations for background
+  subtraction. (`#8787 <https://github.com/spacetelescope/jwst/issues/8787>`_)
+- Apply bitwise operations in correct order when counting good pixels in the
+  background mask during WFSS background subtraction. (`#8916
+  <https://github.com/spacetelescope/jwst/issues/8916>`_)
+- Compute scaling for WFSS background subtraction using error-weighted mean
+  (`#8990 <https://github.com/spacetelescope/jwst/issues/8990>`_)
+
+
+combine_1d (spec3)
+------------------
+
+- Fix wavelength sort order for single input spectrum. (`#8927
+  <https://github.com/spacetelescope/jwst/issues/8927>`_)
+
+
+cube_build (spec2 IFU, spec3)
+-----------------------------
+
+- For moving-target IFU data, set RA, Dec header information of s3d products
+  according to the mean of input models instead of the first input model.
+  (`#8911 <https://github.com/spacetelescope/jwst/issues/8911>`_)
+- Tweak the cube_build spaxel debugging option to provide filename info and
+  match outputs to the stated ordering. (`#8913
+  <https://github.com/spacetelescope/jwst/issues/8913>`_)
+
+
+emicorr (detector1 MIR)
+-----------------------
+
+- Removed the interleaved noise array and do interleaving of noise and
+  subtraction in-place to avoid creating 2 arrays of equal dimensions to data.
+  (`#8849 <https://github.com/spacetelescope/jwst/issues/8849>`_)
+
+
+extract_1d (spec2, spec3)
+-------------------------
+
+- Refactor the core extraction algorithm and aperture definition modules for
+  slit and slitless extractions, for greater efficiency and maintainability.
+  Extraction reference files in FITS format are no longer supported. Current
+  behavior for extractions proceeding from extract1d reference files in JSON
+  format is preserved, with minor improvements: DQ arrays are populated and
+  error propagation is improved for some aperture types. (`#8961
+  <https://github.com/spacetelescope/jwst/issues/8961>`_)
+- Set order 2 weights to 1.0 for NIRISS SOSS SUBSTRIP96 data to avoid a
+  spurious flux drop in spectra around 1.5um. (`#8983
+  <https://github.com/spacetelescope/jwst/issues/8983>`_)
+
+
+firstframe (detector1 MIR)
+--------------------------
+
+- Update the firstframe step to optionally not flag when a ramp saturates in
+  group 3 (`#8952 <https://github.com/spacetelescope/jwst/issues/8952>`_)
+
+
+jump (detector1)
+----------------
+
+- Add maximum_shower_amplitude parameter to MIRI cosmic rays showers routine
+  to fix accidental flagging of bright science pixels. (`#8890
+  <https://github.com/spacetelescope/jwst/issues/8890>`_)
+
+
+master_background (spec2 MOS, spec3)
+------------------------------------
+
+- Include resample, pixel_replace and extract_1d into MOS background pipeline
+  (`#8847 <https://github.com/spacetelescope/jwst/issues/8847>`_)
+- Fix ModelContainer handling for user background input. (`#8927
+  <https://github.com/spacetelescope/jwst/issues/8927>`_)
+- Added pixel-to-pixel sigma clipping on input backgrounds in the NIRSpec MOS
+  master_background_mos step.  Added option to median filter master background
+  spectrum in both the master_background and master_background_mos steps.
+  (`#8932 <https://github.com/spacetelescope/jwst/issues/8932>`_)
+
+
+outlier_detection (image3, tso3, spec3, coron3)
+-----------------------------------------------
+
+- Fix a bug that caused intermediate files to conflict for different slits when
+  a MultiSlitModel was processed. (`#8782
+  <https://github.com/spacetelescope/jwst/issues/8782>`_)
+- Decrease the amount of file I/O required to compute the median when in_memory
+  is set to False. (`#8782
+  <https://github.com/spacetelescope/jwst/issues/8782>`_)
+- For slit spectra, threshold outliers with a median error across exposures
+  instead of input error from the exposure itself. (`#8828
+  <https://github.com/spacetelescope/jwst/issues/8828>`_)
+- Moved median computers out of the jwst repository and into stcal. (`#8840
+  <https://github.com/spacetelescope/jwst/issues/8840>`_)
+- Update documentation to clarify the interaction between pipeline-level and
+  step-level `--in_memory` flags. (`#8851
+  <https://github.com/spacetelescope/jwst/issues/8851>`_)
+- Avoid modifying input and saving duplicate files when resample_data=False.
+  (`#8853 <https://github.com/spacetelescope/jwst/issues/8853>`_)
+- Remove deprecated nlow and nhigh parameters from outlier detection step.
+  (`#8870 <https://github.com/spacetelescope/jwst/issues/8870>`_)
+- reorganize outlier detection documentation (`#8880
+  <https://github.com/spacetelescope/jwst/issues/8880>`_)
+
+
+refpix (detector1)
+------------------
+
+- Implemented SIRS algorithm instead of running median for side pixels of NIR
+  full-frame data. Running median is still default. (`#8726
+  <https://github.com/spacetelescope/jwst/issues/8726>`_)
+
+
+resample (image2, image3, coron3)
+---------------------------------
+
+- Ignore the bounding_box in the inverse WCS transform in reproject. (`#8554
+  <https://github.com/spacetelescope/jwst/issues/8554>`_)
+- Permit creating drizzled models one at a time in many-to-many mode. (`#8782
+  <https://github.com/spacetelescope/jwst/issues/8782>`_)
+- Updated resample code to support the new ``drizzle`` API, see
+  https://github.com/spacetelescope/drizzle/pull/134 for more details. (`#8866
+  <https://github.com/spacetelescope/jwst/issues/8866>`_)
+- Use s_region list to calculate output footprint instead of re-computing via
+  WCS transforms (`#8893
+  <https://github.com/spacetelescope/jwst/issues/8893>`_)
+- Removed allowed_memory parameter and DMODEL_ALLOWED_MEMORY environment
+  variable (`#8975 <https://github.com/spacetelescope/jwst/issues/8975>`_)
+
+
+resample_spec (spec2 MOS, spec3)
+--------------------------------
+
+- Update NIRSpec spectral resampling to add a missing correction factor in
+  resampled WCS tangent plane transformation. (`#8908
+  <https://github.com/spacetelescope/jwst/issues/8908>`_)
+
+
+rscd (detector1 MIR)
+--------------------
+
+- Updated RSCD step to work on segmented data (`#8946
+  <https://github.com/spacetelescope/jwst/issues/8946>`_)
+
+
+skymatch (image3)
+-----------------
+
+- Ignore the bounding_box of an observation when computing sky statistics.
+  (`#8554 <https://github.com/spacetelescope/jwst/issues/8554>`_)
+- Resolve warnings emitted by NumPy 2 when running skymatch. (`#8892
+  <https://github.com/spacetelescope/jwst/issues/8892>`_)
+
+
 1.16.1 (2024-10-30)
 ===================
 

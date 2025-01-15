@@ -16,6 +16,9 @@
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 > [!WARNING]
+> Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
+> this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
+> 
 > Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 ## Installation
@@ -59,7 +62,7 @@ You can also install a specific version:
 
     conda create -n <env_name> python=3.11
     conda activate <env_name>
-    pip install jwst==1.9.4
+    pip install jwst==1.16.1
 
 ### Installing the development version from Github
 
@@ -89,22 +92,43 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_stable-deps.txt
-    conda activate jwstdp-1.12.5
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_stable-deps.txt
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-linux-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-linux-x86_64
+
+MacOS arm64:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-arm64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-arm64
+
+MacOS x86_64:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-x86_64
+
+
+Starting with the jwst 1.16.1 release, we updated our release procedures to use 
+[stasis](https://github.com/spacetelescope/stasis). Each DMS delivery has its own installation instructions, 
+which may be found in the corresponding release documentation, e.g.:
+https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed. You can find the list of available releases at the  
+[top-level stasis domain](https://ssb.stsci.edu/stasis/releases/jwst/).
+
+For releases prior to 1.16.1, please instead follow the directions below. The complete list of releases prior to 1.16.1
+is available on [astroconda-releases](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
+
+Linux:
+
+    conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_stable-deps.txt
+    conda activate jwstdp-1.16.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-1.12.5
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_macos-stable-deps.txt
-
-Each DMS delivery has its own installation instructions, which may be found in
-the corresponding release documentation linked from this page:
-https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
-The installation procedures may change from time to time, so consulting the
-documentation page for the specific version in question is the best way to get
-that version installed.
+    conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.16.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_macos-stable-deps.txt
 
 
 ### Installing for Developers
@@ -216,8 +240,10 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.16.1              | B11.1.1   | 2024.3.1 | 1298         | 2024-11-13 | TBD         | Final release candidate for B11.1             |
-| 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 | TBD         | First release candidate for B11.1             |
+| 1.17.1              | B11.2     | TBD      | 1321         | 2024-01-02 | TBD         | Second release candidate for B11.2            |
+| 1.17.0              | B11.2     | TBD      | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
+| 1.16.1              | B11.1.1   | 2024.3.1 | 1303         | 2024-11-13 | 2024-12-06  | Final release candidate for B11.1             |
+| 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 |             | First release candidate for B11.1             |
 | 1.15.1              | B11.0     | 2024.2.2 | 1293         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |
 | 1.15.0              | B11.0rc1  |          | 1274         | 2024-06-26 |             | First release candidate for B11.0             |
 | 1.14.1              |           |          | 1240         | 2024-06-27 |             | PyPI-only release for external users          |
