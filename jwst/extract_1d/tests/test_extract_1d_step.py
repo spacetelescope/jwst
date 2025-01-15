@@ -204,14 +204,15 @@ def test_save_output_single(tmp_path, mock_nirspec_fs_one_slit):
     mock_nirspec_fs_one_slit.meta.filename = 'test_s2d.fits'
     result = Extract1dStep.call(mock_nirspec_fs_one_slit,
                                 save_results=True, save_profile=True,
-                                save_scene_model=True, output_dir=str(tmp_path),
-                                suffix='x1d')
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path), suffix='x1d')
 
     output_path = str(tmp_path / 'test_x1d.fits')
 
     assert os.path.isfile(output_path)
     assert os.path.isfile(output_path.replace('x1d', 'profile'))
     assert os.path.isfile(output_path.replace('x1d', 'scene_model'))
+    assert os.path.isfile(output_path.replace('x1d', 'residual'))
 
     result.close()
 
@@ -222,7 +223,8 @@ def test_save_output_multiple(tmp_path, mock_nirspec_fs_one_slit):
 
     result = Extract1dStep.call(input_container,
                                 save_results=True, save_profile=True,
-                                save_scene_model=True, output_dir=str(tmp_path),
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path),
                                 suffix='x1d', output_file='test')
 
     output_paths = [str(tmp_path / 'test_0_x1d.fits'),
@@ -232,6 +234,7 @@ def test_save_output_multiple(tmp_path, mock_nirspec_fs_one_slit):
         assert os.path.isfile(output_path)
         assert os.path.isfile(output_path.replace('x1d', 'profile'))
         assert os.path.isfile(output_path.replace('x1d', 'scene_model'))
+        assert os.path.isfile(output_path.replace('x1d', 'residual'))
 
     result.close()
     input_container.close()
@@ -241,7 +244,8 @@ def test_save_output_multislit(tmp_path, mock_nirspec_mos):
     mock_nirspec_mos.meta.filename = 'test_s2d.fits'
     result = Extract1dStep.call(mock_nirspec_mos,
                                 save_results=True, save_profile=True,
-                                save_scene_model=True, output_dir=str(tmp_path),
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path),
                                 suffix='x1d')
 
     output_path = str(tmp_path / 'test_x1d.fits')
@@ -252,6 +256,7 @@ def test_save_output_multislit(tmp_path, mock_nirspec_mos):
     for slit in mock_nirspec_mos.slits:
         assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_profile'))
         assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_scene_model'))
+        assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_residual'))
 
     result.close()
 
@@ -261,7 +266,8 @@ def test_save_output_multiple_multislit(tmp_path, mock_nirspec_mos):
                                       mock_nirspec_mos.copy()])
     result = Extract1dStep.call(input_container,
                                 save_results=True, save_profile=True,
-                                save_scene_model=True, output_dir=str(tmp_path),
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path),
                                 suffix='x1d', output_file='test')
 
     for i in range(2):
@@ -272,6 +278,7 @@ def test_save_output_multiple_multislit(tmp_path, mock_nirspec_mos):
         for slit in mock_nirspec_mos.slits:
             assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_profile.fits'))
             assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_scene_model.fits'))
+            assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_residual.fits'))
 
     result.close()
     input_container.close()

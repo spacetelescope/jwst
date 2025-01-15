@@ -93,6 +93,10 @@ class Extract1dStep(Step):
         If True, a model of the 2D flux as defined by the extraction aperture
         is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
 
+    save_residual_image : bool
+        If True, the residual image (from the input minus the scene model)
+        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
+
     center_xy : int or None
         A list of 2 pixel coordinate values at which to place the center
         of the IFU extraction aperture, overriding any centering done by the step.
@@ -193,6 +197,7 @@ class Extract1dStep(Step):
     log_increment = integer(default=50)  # increment for multi-integration log messages
     save_profile = boolean(default=False)  # save spatial profile to disk
     save_scene_model = boolean(default=False)  # save flux model to disk
+    save_residual_image = boolean(default=False)  # save residual image to disk
 
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
@@ -448,12 +453,13 @@ class Extract1dStep(Step):
 
                 profile = None
                 scene_model = None
+                residual = None
                 if isinstance(model, datamodels.IFUCubeModel):
                     # Call the IFU specific extraction routine
                     extracted = self._extract_ifu(model, exp_type, extract_ref, apcorr_ref)
                 else:
                     # Call the general extraction routine
-                    extracted, profile, scene_model = extract.run_extract1d(
+                    extracted, profile, scene_model, residual = extract.run_extract1d(
                         model,
                         extract_ref,
                         apcorr_ref,
@@ -470,6 +476,7 @@ class Extract1dStep(Step):
                         self.optimize_psf_location,
                         self.save_profile,
                         self.save_scene_model,
+                        self.save_residual_image,
                     )
 
                 # Set the step flag to complete in each model
@@ -488,6 +495,10 @@ class Extract1dStep(Step):
                 # Save model if needed
                 if self.save_scene_model and scene_model is not None:
                     self._save_intermediate(scene_model, 'scene_model', idx)
+
+                # Save residual if needed
+                if self.save_residual_image and residual is not None:
+                    self._save_intermediate(residual, 'residual', idx)
 
             # If only one result, return the model instead of the container
             if len(result) == 1:
