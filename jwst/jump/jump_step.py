@@ -17,10 +17,7 @@ __all__ = ["JumpStep"]
 
 
 class JumpStep(Step):
-    """
-    JumpStep: Performs CR/jump detection on each ramp integration within an
-    exposure. The 2-point difference method is applied.
-    """
+    """Step class to perform just detection using two point difference."""
 
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR sigma rejection threshold
@@ -80,7 +77,20 @@ class JumpStep(Step):
     class_alias = 'jump'
 
     def process(self, step_input):
+        """Step method to execute step computations.
 
+        Parameter
+        ---------
+        step_input : RampModel
+            The ramp model input from the previous step.
+
+        Return:
+        ------
+        result : RampModel
+            The ramp model with jump step as COMPLETE and jumps detected or
+            the jump step is SKIPPED.
+
+        """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
             tstart = time.time()
@@ -133,8 +143,18 @@ class JumpStep(Step):
         return result
 
     def _setup_jump_data(self, result):
-        """
-        Create a JumpData instance to be used by STCAL jump.
+        """Create a JumpData instance to be used by STCAL jump.
+
+        Parameter
+        ---------
+        result : RampModel
+            The ramp model input from the previous step.
+
+        Return:
+        ------
+        jump_data : JumpData
+            The data container to be used to run the STCAL detect_jumps_data.
+
         """
         # Get the gain and readnoise reference files
         gain_filename = self.get_reference_file(result, 'gain')
