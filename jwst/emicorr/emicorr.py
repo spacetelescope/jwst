@@ -3,7 +3,6 @@
 #
 
 import numpy as np
-import bottleneck as bn
 import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
@@ -11,6 +10,12 @@ from stdatamodels.jwst import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+try:
+    import bottleneck as bn
+except:
+    bn = np
+    log.info('Bottleneck package unavailable. Suggest pip install'
+             ' bottleneck to improve performance.')
 
 subarray_clocks = {
 
