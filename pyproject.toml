@@ -292,6 +292,7 @@ select = [
     # "LOG",
 ]
 ignore = [
+    "E741", # ambiguous variable name (O/0, l/I, etc.)
 ]
 
 [tool.ruff.lint.pydocstyle]

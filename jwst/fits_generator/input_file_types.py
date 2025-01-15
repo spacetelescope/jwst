@@ -332,7 +332,7 @@ def is_miri_ifu(hdulist):
             return True
         else:
             return False
-    except:
+    except KeyError:
         return False
 
 def is_miri_lrs(hdulist):
@@ -344,7 +344,7 @@ def is_miri_lrs(hdulist):
             return True
         else:
             return False
-    except:
+    except KeyError:
         return False
 
 def is_nirspec_fm1(hdulist):
@@ -385,7 +385,7 @@ def is_nirspec_ips(hdulist):
     try:
         if hdulist[0].header[keywordname].strip():
             return True
-    except:
+    except KeyError:
         return False
 
 def is_nirspec_irs2(hdulist):
@@ -411,7 +411,7 @@ def is_tfi(hdulist):
             return True
         else:
             return False
-    except:
+    except KeyError:
         return False
 
 def is_niriss(hdulist):
@@ -421,7 +421,7 @@ def is_niriss(hdulist):
             return True
         else:
             return False
-    except:
+    except KeyError:
         return False
 
 def is_niriss_spec_vert(hdulist):
@@ -433,7 +433,7 @@ def is_niriss_spec_vert(hdulist):
             return True
         else:
             return False
-    except:
+    except KeyError:
         return False
 
 def is_niriss_spec_horiz(hdulist):
@@ -444,7 +444,7 @@ def is_niriss_spec_horiz(hdulist):
             return True
         else:
             return False
-    except:
+    except KeyError:
         return False
 
 input_file_types = [

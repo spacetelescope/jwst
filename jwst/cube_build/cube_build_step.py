@@ -8,6 +8,7 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 import asdf
+from asdf.exceptions import ValidationError
 from ..assign_wcs.util import update_s_region_keyword
 from ..stpipe import Step, record_step_status
 from pathlib import Path
@@ -562,7 +563,7 @@ class CubeBuildStep (Step):
 
         try:
             af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
-        except:
+        except ValidationError:
             schema_message = ('Validation Error for offset file. Fix the offset file. \n' + \
                               'The offset file needs to have the same number of elements ' + \
                               'in the three lists: filename, raoffset and decoffset.\n' +\

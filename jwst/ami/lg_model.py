@@ -168,14 +168,14 @@ class LgModel:
         nspec = 0
         # accumulate polychromatic oversampled psf in the object
 
-        for w, ll in bandpass:  # w: wavelength's weight, l: lambda (wavelength)
+        for w, l in bandpass:  # w: wavelength's weight, l: lambda (wavelength)
             self.psf_over += w * analyticnrm2.psf(
                 self.pixel,  # det pixel, rad
                 fov,  # in detpix number
                 over,
                 self.ctrs,
                 self.d,
-                ll,
+                l,
                 self.phi,
                 psf_offset,  # det pixels
                 self.affine2d,
@@ -251,12 +251,12 @@ class LgModel:
             (self.N * (self.N - 1) + 1, self.over * self.fov, self.over * self.fov)
         )
 
-        for w, ll in bandpass:  # w: weight, l: lambda (wavelength)
+        for w, l in bandpass:  # w: weight, l: lambda (wavelength)
             # model_array returns the envelope and fringe model as a list of
             #   oversampled fov x fov slices
             pb, ff = analyticnrm2.model_array(
                 self.modelctrs,
-                ll,
+                l,
                 self.over,
                 self.modelpix,
                 self.fov,

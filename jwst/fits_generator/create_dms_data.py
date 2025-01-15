@@ -666,7 +666,7 @@ def split_data_and_refout(hdulist):
     hdulist[0].data = detectordata
     try:
         del hdulist[1]
-    except:
+    except IndexError:
         pass
     refhdu = fits.ImageHDU()
     refhdu.data = refout

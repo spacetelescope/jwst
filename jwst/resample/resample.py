@@ -806,7 +806,7 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     b = np.s_[0:sx]  # bottom edge
     r = np.s_[sx:sx + sy]  # right edge
     t = np.s_[sx + sy:2 * sx + sy]  # top edge
-    ll = np.s_[2 * sx + sy:2 * sx + 2 * sy]  # left
+    l = np.s_[2 * sx + sy:2 * sx + 2 * sy]  # left
 
     x[b] = np.linspace(xmin, xmax, sx, False)
     y[b] = ymin
@@ -814,13 +814,13 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     y[r] = np.linspace(ymin, ymax, sy, False)
     x[t] = np.linspace(xmax, xmin, sx, False)
     y[t] = ymax
-    x[ll] = xmin
-    y[ll] = np.linspace(ymax, ymin, sy, False)
+    x[l] = xmin
+    y[l] = np.linspace(ymax, ymin, sy, False)
 
     area = (xmax - xmin) * (ymax - ymin)
     center = (0.5 * (xmin + xmax), 0.5 * (ymin + ymax))
 
-    return x, y, area, center, b, r, t, ll
+    return x, y, area, center, b, r, t, l
 
 
 def compute_image_pixel_area(wcs):
@@ -849,7 +849,7 @@ def compute_image_pixel_area(wcs):
     ra, dec, center = np.nan, np.nan, (np.nan, np.nan)
     while xmin < xmax and ymin < ymax:
         try:
-            x, y, image_area, center, b, r, t, ll = _get_boundary_points(
+            x, y, image_area, center, b, r, t, l = _get_boundary_points(
                 xmin=xmin,
                 xmax=xmax,
                 ymin=ymin,
@@ -867,7 +867,7 @@ def compute_image_pixel_area(wcs):
         limits = [ymin, xmax, ymax, xmin]
 
         for j in range(4):
-            sl = [b, r, t, ll][k]
+            sl = [b, r, t, l][k]
             if not (np.all(np.isfinite(ra[sl])) and
                     np.all(np.isfinite(dec[sl]))):
                 limits[k] += dxy[k]

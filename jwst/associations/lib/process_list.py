@@ -177,7 +177,7 @@ class ProcessQueue(deque):
         while True:
             try:
                 yield self.popleft()
-            except:
+            except Exception:
                 break
 
 
@@ -252,7 +252,7 @@ class ProcessListQueue:
         while True:
             try:
                 yield self.popleft()
-            except:
+            except Exception:
                 break
 
     def __str__(self):

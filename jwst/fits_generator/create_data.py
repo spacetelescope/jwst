@@ -37,7 +37,7 @@ def write_observation_identifiers(id):
     #
     try:
         os.remove(filename)
-    except:
+    except FileNotFoundError:
         pass
 ##     try:
     f1 = open(filename, 'w')
@@ -61,7 +61,7 @@ def remove_observation_identifiers(obsid):
     '''Remove the observation identifiers file'''
     try:
         os.remove(obsid)
-    except:
+    except FileNotFoundError:
         pass
     return
 
@@ -77,10 +77,10 @@ def pre_clean():
         for file in previous_files:
             try:
                 os.remove(file)
-            except:
+            except FileNotFoundError:
                 pass
         os.chdir('..')
-    except:
+    except FileNotFoundError:
         os.mkdir('previous')
     filelist = os.listdir('.')
     for file in filelist:
