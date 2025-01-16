@@ -54,8 +54,7 @@ def slow(request):
 
 @pytest.fixture(scope="module")
 def tmp_cwd_module(request, tmp_path_factory):
-    """
-    Run test in a pristine temporary working directory, scoped to module.
+    """Run test in a pristine temporary working directory, scoped to module.
     This allows a fixture using it to produce files in a
     temporary directory, and then have the tests access them.
     """
