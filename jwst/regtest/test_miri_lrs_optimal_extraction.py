@@ -24,6 +24,7 @@ def run_spec2_optimal(rtdata_module):
             "--steps.extract_1d.optimize_psf_location=true",
             "--steps.extract_1d.save_profile=true",
             "--steps.extract_1d.save_scene_model=true",
+            "--steps.extract_1d.save_residual_image=true",
             ]
     Step.from_cmdline(args)
 
@@ -47,12 +48,13 @@ def run_spec3_optimal(rtdata_module):
             "--steps.extract_1d.optimize_psf_location=true",
             "--steps.extract_1d.save_profile=true",
             "--steps.extract_1d.save_scene_model=true",
+            "--steps.extract_1d.save_residual_image=true",
             ]
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["x1d", "profile", "scene_model"])
+@pytest.mark.parametrize("suffix", ["x1d", "profile", "scene_model", "residual"])
 def test_miri_lrs_slit_spec2_optimal(
         run_spec2_optimal, fitsdiff_default_kwargs, rtdata_module, suffix):
     """Regression test for MIRI LRS FS optimal extraction in spec2."""
@@ -69,8 +71,11 @@ def test_miri_lrs_slit_spec2_optimal(
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["0_x1d", "1_x1d", "0_profile",  "1_profile",
-                                    "0_scene_model", "1_scene_model", "c1d"])
+@pytest.mark.parametrize("suffix", ["0_x1d", "1_x1d",
+                                    "0_profile",  "1_profile",
+                                    "0_scene_model", "1_scene_model",
+                                    "0_residual", "1_residual",
+                                    "c1d"])
 def test_miri_lrs_slit_spec3_optimal(
         run_spec3_optimal, fitsdiff_default_kwargs, rtdata_module, suffix):
     """Regression test for MIRI LRS FS optimal extraction in spec3."""
