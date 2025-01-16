@@ -1625,6 +1625,7 @@ def create_extraction(input_model, slit, output_model,
 
         # Convert the sum to an average, for surface brightness.
         npixels_temp = np.where(npixels > 0., npixels, 1.)
+        npixels_squared = npixels_temp ** 2
         if extract_params['extraction_type'] == 'optimal':
             # surface brightness makes no sense for an optimal extraction
             surf_bright = np.zeros_like(sum_flux)
@@ -1633,13 +1634,13 @@ def create_extraction(input_model, slit, output_model,
             sb_var_flat = np.zeros_like(sum_flux)
         else:
             surf_bright = sum_flux / npixels_temp  # may be reset below
-            sb_var_poisson = f_var_poisson / npixels_temp / npixels_temp
-            sb_var_rnoise = f_var_rnoise / npixels_temp / npixels_temp
-            sb_var_flat = f_var_flat / npixels_temp / npixels_temp
+            sb_var_poisson = f_var_poisson / npixels_squared
+            sb_var_rnoise = f_var_rnoise / npixels_squared
+            sb_var_flat = f_var_flat / npixels_squared
         background /= npixels_temp
-        b_var_poisson = b_var_poisson / npixels_temp / npixels_temp
-        b_var_rnoise = b_var_rnoise / npixels_temp / npixels_temp
-        b_var_flat = b_var_flat / npixels_temp / npixels_temp
+        b_var_poisson = b_var_poisson / npixels_squared
+        b_var_rnoise = b_var_rnoise / npixels_squared
+        b_var_flat = b_var_flat / npixels_squared
 
         del npixels_temp
 
@@ -1664,9 +1665,9 @@ def create_extraction(input_model, slit, output_model,
                 sb_var_rnoise[:] = 0.
                 sb_var_flat[:] = 0.
                 background[:] /= pixel_solid_angle  # MJy / sr
-                b_var_poisson = b_var_poisson / pixel_solid_angle / pixel_solid_angle
-                b_var_rnoise = b_var_rnoise / pixel_solid_angle / pixel_solid_angle
-                b_var_flat = b_var_flat / pixel_solid_angle / pixel_solid_angle
+                b_var_poisson = b_var_poisson / pixel_solid_angle ** 2
+                b_var_rnoise = b_var_rnoise / pixel_solid_angle ** 2
+                b_var_flat = b_var_flat / pixel_solid_angle ** 2
             else:
                 flux = sum_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
                 f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
