@@ -3,11 +3,11 @@ import math
 
 from .utils import rotate2dccw
 
-class NRMDefinition():
+class NRMDefinition:
+    """Defines the geometry of the NRM mask."""
 
     def __init__(self, nrm_model, maskname='jwst_ami', chooseholes=None):
-        """
-        Set attributes of NRMDefinition class.
+        """Set attributes of NRMDefinition class.
 
         Get hole centers and other mask geometry details from NRMModel, apply rotations/flips
         as necessary and set them as attributes.
@@ -21,8 +21,8 @@ class NRMDefinition():
         chooseholes: list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask, optional
             If None, use real seven-hole mask
-        """
 
+        """
         if maskname not in ['jwst_ami','jwst_g7s6c']:
             raise ValueError("Mask name not supported")
 
@@ -35,8 +35,7 @@ class NRMDefinition():
         self.read_nrm_model(nrm_model, chooseholes=chooseholes)
 
     def read_nrm_model(self, nrm_model, chooseholes=None):
-        """
-        Calculate hole centers with appropriate rotation.
+        """Calculate hole centers with appropriate rotation.
 
         Parameters
         ----------
@@ -51,8 +50,8 @@ class NRMDefinition():
             flat-to-flat distance of mask holes
         ctrs_asbuilt: array
             Actual hole centers [meters]
-        """
 
+        """
         ctrs_asdesigned = np.array([[nrm_model.x_a1, nrm_model.y_a1],        # B4 -> B4
                             [nrm_model.x_a2, nrm_model.y_a2],       # C5 -> C2
                             [nrm_model.x_a3, nrm_model.y_a3],       # B3 -> B5
@@ -69,7 +68,7 @@ class NRMDefinition():
         # Debug orientations with b4,c6,[c2]
         allholes = ('b4', 'c2', 'b5', 'b2', 'c1', 'b6', 'c6')
 
-        for hole, coords in zip(allholes,ctrs_asdesigned):
+        for hole, coords in zip(allholes,ctrs_asdesigned, strict=False):
             holedict[hole] = coords
 
         if chooseholes:  # holes B4 B5 C6 asbuilt for orientation testing
@@ -95,9 +94,7 @@ class NRMDefinition():
         self.ctrs = ctrs_asbuilt
 
     def showmask(self):
-        """
-        Calculate the diameter of the smallest centered circle (D)
-        enclosing the live mask area
+        """Calculate the diameter of the smallest centered circle (D) enclosing the live mask area.
 
         Returns
         -------

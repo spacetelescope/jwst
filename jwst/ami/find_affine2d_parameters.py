@@ -9,8 +9,7 @@ log.setLevel(logging.DEBUG)
 
 
 def create_afflist_rot(rotdegs):
-    """
-    Create a list of affine objects with various rotations.
+    """Create a list of affine objects with various rotations.
 
     Find which affine rotation fits an image plane data best.
 
@@ -23,19 +22,19 @@ def create_afflist_rot(rotdegs):
     -------
     alist: list
         Affine2d objects having various rotations
+
     """
     alist = []
-    for nrot, rotd in enumerate(rotdegs):
+    for rotd in rotdegs:
         rotd_ = utils.avoidhexsingularity(rotd)
         alist.append(utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0,
-                                    name="affrot_{0:+.3f}".format(rotd_)))
+                                    name=f"affrot_{rotd_:+.3f}"))
     return alist
 
 
-def find_rotation(imagedata, nrm_model, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
+def find_rotation(imagedata, nrm_model, psf_offset, rotdegs,
                   pixel, npix, bandpass, over, holeshape):
-    """
-    Create an affine2d object using the known rotation and scale.
+    """Create an affine2d object using the known rotation and scale.
 
     Parameters
     ----------
@@ -50,24 +49,6 @@ def find_rotation(imagedata, nrm_model, psf_offset, rotdegs, mx, my, sx, sy, xo,
 
     rotdegs: list of floats
         range of rotations to search (degrees)
-
-    mx: float
-        dimensionless x-magnification
-
-    my: float
-        dimensionless y-magnification
-
-    sx: float
-        dimensionless x shear
-
-    sy: float
-        dimensionless y shear
-
-    xo: float
-        x-offset in pupil space
-
-    yo: float
-        y-offset in pupil space
 
     pixel: float
         pixel size
@@ -97,7 +78,7 @@ def find_rotation(imagedata, nrm_model, psf_offset, rotdegs, mx, my, sx, sy, xo,
 
     crosscorr_rots = []
 
-    for (rot, aff) in zip(rotdegs, affine2d_list):
+    for (_rot, aff) in zip(rotdegs, affine2d_list, strict=False):
         jw = lg_model.LgModel(nrm_model, mask='jwst_ami', holeshape=holeshape, over=over, affine2d=aff)
 
         jw.set_pixelscale(pixel)
@@ -112,6 +93,6 @@ def find_rotation(imagedata, nrm_model, psf_offset, rotdegs, mx, my, sx, sy, xo,
 
     # return convenient affine2d
     new_affine2d = utils.Affine2d(rotradccw=np.pi * rot_measured_d / 180.0,
-                                  name="{0:.4f}".format(rot_measured_d))
+                                  name=f"{rot_measured_d:.4f}")
 
     return new_affine2d

@@ -43,14 +43,15 @@ PUPL_CRC = 6.603464  # / Circumscribing diameter for JWST primary
 
 
 def create_wavelengths(filtername):
-    """
-    Extend filter support slightly past half power points.
+    """Extend filter support slightly past half power points.
+
     Filter transmissions are quasi-rectangular.
 
     Parameters
     ----------
-        filtername: string
-            AMI filter name
+    filtername: string
+        AMI filter name
+
     """
     wl_ctr = filtwl_d[filtername]
     wl_hps = filthp_d[filtername]
@@ -62,9 +63,9 @@ def create_wavelengths(filtername):
 
 
 def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
-    """
-    Calculate psf at low, center, and high wavelengths of filter.
-    Coadd psfs and perform fft-style transform of image w/ dft
+    """Calculate psf at low, center, and high wavelengths of filter.
+
+    Coadd psfs and perform fft-style transform of image w/ dft.
 
     Parameters
     ----------
@@ -84,7 +85,6 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
     -------
     Absolute value of FT(image) in filter - the CV Vsq array
 
-
     """
     wls = create_wavelengths(filtername)
     log.info(
@@ -99,8 +99,7 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
 
 
 def transform_image(image):
-    """
-    Take Fourier transform of image
+    """Take Fourier transform of image.
 
     Parameters
     ----------
@@ -121,8 +120,7 @@ def transform_image(image):
 
 
 def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
-    """
-    Calculate the PSF
+    """Calculate the PSF.
 
     Parameters
     ----------
@@ -142,6 +140,7 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     -------
     image_intensity: numpy array
         Monochromatic unnormalized psf
+
     """
     reselt = wl / PUPLDIAM  # radian
     nlamD = fovnpix * pxsc_rad / reselt  # Soummer nlamD FOV in reselts
@@ -155,9 +154,7 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
 
 
 def bad_pixels(data, median_size, median_tres):
-    """
-    Identify bad pixels by subtracting median-filtered data and searching for
-    outliers.
+    """Identify bad pixels by subtracting median-filtered data and searching for outliers.
 
     Parameters
     ----------
@@ -172,26 +169,24 @@ def bad_pixels(data, median_size, median_tres):
     -------
     pxdq: int array
         Bad pixel mask identified by median filtering
-    """
 
+    """
     mfil_data = median_filter(data, size=median_size)
     diff_data = np.abs(data - mfil_data)
     pxdq = diff_data > median_tres * np.median(diff_data)
     pxdq = pxdq.astype("int")
 
     log.info(
-        "         Identified %.0f bad pixels (%.2f%%)"
-        % (np.sum(pxdq), np.sum(pxdq) / np.prod(pxdq.shape) * 100.0)
+        f"         Identified {np.sum(pxdq):.0f} bad pixels "
+        f"({100.0*np.sum(pxdq)/np.prod(pxdq.shape):.2f}%)"
     )
-    log.info("         %.3f" % np.max(diff_data / np.median(diff_data)))
+    log.info(f"         {np.max(diff_data / np.median(diff_data)):.3f}")
 
     return pxdq
 
 
 def fourier_corr(data, pxdq, fmas):
-    """
-    Compute and apply the bad pixel corrections based on Section 2.5 of
-    Ireland 2013.
+    """Compute and apply the bad pixel corrections based on Section 2.5 of Ireland 2013.
 
     Parameters
     ----------
@@ -213,8 +208,8 @@ def fourier_corr(data, pxdq, fmas):
     for sparse aperture masking, Monthly Notices of the Royal Astronomical
     Society, Volume 433, Issue 2, 01 August 2013, Pages 1718–1728,
     https://doi.org/10.1093/mnras/stt859
-    """
 
+    """
     # Get the dimensions.
     ww = np.where(pxdq > 0.5)
     ww_ft = np.where(fmas)
@@ -252,9 +247,8 @@ def fourier_corr(data, pxdq, fmas):
 
 
 def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
-    """
-    Apply the Fourier bad pixel correction to pixels
-    flagged DO_NOT_USE or JUMP_DET.
+    """Apply the Fourier bad pixel correction to pixels flagged DO_NOT_USE or JUMP_DET.
+
     Original code implementation by Jens Kammerer.
 
     Parameters
@@ -316,7 +310,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     # Compute field-of-view and Fourier sampling.
     fov = 2 * sh * pxsc / 1000.0  # arcsec
     fsam = filtwl_d[filt] / (fov / 3600.0 / 180.0 * np.pi)  # m/pix
-    log.info("      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix" % (fov, fsam))
+    log.info(f"      FOV = {fov:.1f} arcsec, Fourier sampling = {fsam:.3f} m/pix")
 
     #
     cvis = calc_pupil_support(filt, 2 * sh, pxsc_rad, pupil_mask)
@@ -336,7 +330,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
     # Go through all frames.
     for j in range(imsz[0]):
-        log.info("         Frame %.0f of %.0f" % (j + 1, imsz[0]))
+        log.info(f"         Frame {j+1:.0f} of {imsz[0]:.0f}")
 
         # Now cut out the subframe.
         # no need to cut out sub-frame; data already cropped
@@ -374,8 +368,8 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             # noise.
             pxdq_new = np.sum(temp[pxdq_cut < 0.5])
             log.info(
-                "         Iteration %.0f: %.0f new bad pixels, sdev of norm noise = %.3f"
-                % (k + 1, pxdq_new, np.std(fmas_data[pmas]))
+                f"         Iteration {k+1:.0f}: {pxdq_new:.0f} new bad pixels, "
+                f"sdev of norm noise = {np.std(fmas_data[pmas]):.3f}"
             )
 
             # If no new bad pixels were identified, terminate the

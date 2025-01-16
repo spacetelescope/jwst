@@ -1,3 +1,5 @@
+"""Handles aperture mask imaging (AMI) data."""
+
 from .ami_analyze_step import AmiAnalyzeStep
 
 # from .ami_average_step import AmiAverageStep

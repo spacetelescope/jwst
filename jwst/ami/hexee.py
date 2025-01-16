@@ -18,9 +18,8 @@ log.addHandler(logging.NullHandler())
 
 
 def g_eeAG(xi, eta, **kwargs):
-    """
-    Calculate the Fourier transform of one half of a hexagon that is bisected
-    from one corner to its diametrically opposite corner.
+    """Fourier transform a half-hexagon that is bisected from one corner to its diametrically opposite corner.
+
     { DG: how does this compare to  g_eeGEN() ? }
 
     Parameters
@@ -31,25 +30,27 @@ def g_eeAG(xi, eta, **kwargs):
     eta: 2D float array
         hexagon's coordinate center at center of symmetry, normal to xi
 
-    c (optional, via **kwargs): tuple(float, float)
-        coordinates of center
+    kwargs: dict
+        c (optional, via **kwargs): tuple(float, float)
+            coordinates of center
 
-    pixel (optional, via **kwargs): float
-        pixel scale
+        pixel (optional, via **kwargs): float
+            pixel scale
 
-    d (optional, via **kwargs): float
-        flat-to-flat distance across hexagon
+        d (optional, via **kwargs): float
+            flat-to-flat distance across hexagon
 
-    lambda (optional, via **kwargs): float
-        wavelength
+        lambda (optional, via **kwargs): float
+            wavelength
 
-    minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation
+        minus: (optional, via **kwargs) boolean
+            if set, use flipped sign of xi in calculation
 
     Returns
     -------
     g: 2D complex array
         Fourier transform of one half of a hexagon.
+
     """
     c = kwargs['c']
     pixel = kwargs['pixel']
@@ -75,40 +76,36 @@ def g_eeAG(xi, eta, **kwargs):
     return g
 
 
-def glimit(xi, eta, **kwargs):
-    """
-    Calculate the analytic limit of the Fourier transform of one half of the
-        hexagon along eta=0.
+def glimit(xi, **kwargs):
+    """Calculate analytic limit of the Fourier transform of one half of the hexagon along eta=0.
 
     Parameters
     ----------
     xi: 2D float array
         hexagon's coordinate center at center of symmetry, along flat edge
 
-    eta: 2D float array
-        hexagon's coordinate center at center of symmetry, normal to xi;
-        not currently used
+    kwargs: dict
+        c (optional, via **kwargs): tuple(float, float)
+            coordinates of center
 
-    c (optional, via **kwargs): tuple(float, float)
-        coordinates of center
+        pixel (optional, via **kwargs): float
+            pixel scale
 
-    pixel (optional, via **kwargs): float
-        pixel scale
+        d (optional, via **kwargs): float
+            flat-to-flat distance across hexagon
 
-    d (optional, via **kwargs): float
-        flat-to-flat distance across hexagon
+        lam: (optional, via **kwargs): float
+            wavelength
 
-    lam: (optional, via **kwargs): float
-        wavelength
-
-    minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation
+        minus: (optional, via **kwargs) boolean
+            if set, use flipped sign of xi in calculation
 
     Returns
     -------
     g: complex
         analytic limit of the Fourier transform of one half of the hexagon
         along eta=0
+
     """
     c = kwargs['c']
     pixel = kwargs['pixel']
@@ -130,19 +127,14 @@ def glimit(xi, eta, **kwargs):
 
 
 def centralpix_limit():
-    """
-    Calculate the analytic limit of the Fourier transform of one half of the
-    hexagon at the origin.
-
-    Parameters
-    ----------
-    None
+    """Calculate analytic limit of the Fourier transform of one half of the hexagon at the origin.
 
     Returns
     -------
     g: float
         analytic limit of the Fourier transform of one half of the hexagon
         at the origin.
+
     """
     g = np.sqrt(3) / 4.0
 
@@ -150,8 +142,7 @@ def centralpix_limit():
 
 
 def mas2rad(mas):
-    """
-    Convert angle in milli arc-sec to radians
+    """Convert angle in milli arc-sec to radians.
 
     Parameters
     ----------
@@ -162,16 +153,16 @@ def mas2rad(mas):
     -------
     rad: float
         angle in radians
+
     """
     rad = mas * (10**(-3)) / (3600 * 180 / np.pi)
     return rad
 
 
-def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
-             pitch=mas2rad(65)):
-    """
-    Calculate the hexagonal hole Fourier transform by adding the transforms
-    of the 2 symmetric parts.
+def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
+    """Calculate the hexagonal hole Fourier transform.
+
+    Computation works by adding the transforms of the 2 symmetric parts.
 
     Parameters
     ----------
@@ -194,9 +185,12 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
     -------
     np.abs(hex_complex): 2D float array
         hexagonal hole Fourier transform by adding the transforms
+
     """
     if c is None:
         c = float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5
+    if pitch is None:
+        pitch = mas2rad(65)
 
     log.debug('hex_eeAG: center: %s, s: %s', c, s)
 
@@ -210,11 +204,11 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
     # The "yval" will be the same for all points;
     # loop over the xi values to replace NaN strip with limiting behavior.
     for index, val in enumerate(xnan):
-        h1 = glimit(xnan[index], ynan[index], d=d, c=c, lam=lam, pixel=pitch,
+        h1 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch,
                     minus=False)
-        h2 = glimit(xnan[index], ynan[index], d=d, c=c, lam=lam, pixel=pitch,
+        h2 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch,
                     minus=True)
-        hex_complex[xnan[index], ynan[index]] = h1 + h2
+        hex_complex[val, ynan[index]] = h1 + h2
 
     (xnan, ynan) = np.where(np.isnan(hex_complex))
 

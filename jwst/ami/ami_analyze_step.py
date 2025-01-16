@@ -17,6 +17,9 @@ SY_COMM = -7.27008e-03
 XO_COMM = 0.
 YO_COMM = 0.
 
+class BandpassError:
+    pass
+
 class AmiAnalyzeStep(Step):
     """Performs analysis of an AMI mode exposure by applying the LG algorithm."""
 
@@ -31,21 +34,36 @@ class AmiAnalyzeStep(Step):
         usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew = integer(default=None) # If not None, process only the first few integrations
         chooseholes = string(default=None) # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
-        affine2d = string(default='commissioning') # ASDF file containing user-defined affine parameters OR 'commssioning'
+        affine2d = string(default='commissioning')
+        # ASDF file containing user-defined affine parameters OR 'commssioning'
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
     """
 
     reference_file_types = ['throughput', 'nrm']
 
     def save_model(self, model, *args, **kwargs):
-        # Override save_model to change suffix based on list of results
+        """Override save_model to change suffix based on list of results.
+
+        Parameters
+        ----------
+        model: data model
+            The model to save
+
+        *args, **kwargs: tuple, dict
+            Arguments to pass to the stpipe Step.save_model method
+
+        Returns
+        -------
+        output_paths : [str[, ...]]
+            List of output file paths the model(s) were saved in.
+
+        """
         if "idx" in kwargs and kwargs.get("suffix", None) is None:
             kwargs["suffix"] = ["ami-oi", "amimulti-oi", "amilg"][kwargs.pop("idx")]
         return Step.save_model(self, model, *args, **kwargs)
 
     def override_bandpass(self):
-        """
-        Read bandpass from asdf file and use it to override the default.
+        """Read bandpass from asdf file and use it to override the default.
 
         Expects an array of [effstims, wave_m]
         (i.e. np.array((effstims,wave_m)).T) stored as 'bandpass' in asdf file,
@@ -56,8 +74,8 @@ class AmiAnalyzeStep(Step):
         -------
             bandpass: array
                 Array of [countrates, wavelengths]
-        """
 
+        """
         try:
             with asdf.open(self.bandpass, lazy_load=False) as af:
                 bandpass = np.array(af['bandpass'])
@@ -72,25 +90,26 @@ class AmiAnalyzeStep(Step):
 
             # update attribute and return
             self.bandpass = bandpass
-            return bandpass
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             message = f'File {self.bandpass} could not be found at the specified location.'
-            raise Exception(message)
+            raise BandpassError(message) from e
 
-        except KeyError:
+        except KeyError as e:
             message1 = 'ASDF file does not contain the required "bandpass" key. '
             message2 = 'See step documentation for info on creating a custom bandpass ASDF file.'
-            raise Exception((message1 + message2))
+            raise BandpassError(message1 + message2) from e
 
-        except (IndexError, ValueError):
+        except (IndexError, ValueError) as e:
             message1 = f'Could not use bandpass from {self.bandpass}. It may have the wrong shape. '
             message2 = 'See documentation for info on creating a custom bandpass ASDF file.'
-            raise Exception((message1 + message2))
+            raise BandpassError(message1 + message2) from e
+
+        else:
+            return bandpass
 
     def override_affine2d(self):
-        """
-        Read user-input affine transform from ASDF file.
+        """Read user-input affine transform from ASDF file.
 
         Makes an Affine2d object (see utils.Affine2D class).
         Input should contain mx,my,sx,sy,xo,yo,rotradccw.
@@ -109,7 +128,6 @@ class AmiAnalyzeStep(Step):
                 self.log.info(f'Using affine transform from ASDF file {self.affine2d}')
             # now self.affine2d updated from string to object
             self.affine2d = affine2d
-            return affine2d
 
         except FileNotFoundError:
             self.log.info(f'File {self.affine2d} could not be found at the specified location.')
@@ -119,27 +137,29 @@ class AmiAnalyzeStep(Step):
         except KeyError:
             message1 = 'ASDF file does not contain all of the required keys: mx, my, sx, sy ,xo, yo, rotradccw. '
             message2 = 'See step documentation for info on creating a custom affine2d ASDF file.'
-            self.log.info((message1 + message2))
+            self.log.info(message1 + message2)
             self.log.info('\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****')
             affine2d = None
 
         except (IndexError, TypeError, ValueError):
             message1 = f'Could not use affine2d from {self.affine2d}. '
             message2 = 'See documentation for info on creating a custom bandpass ASDF file.'
-            self.log.info((message1 + message2))
+            self.log.info(message1 + message2)
             self.log.info('\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****')
             affine2d = None
+
+        else:
+            return affine2d
 
         self.affine2d = affine2d
         return affine2d
 
-    def process(self, input):
-        """
-        Performs analysis of an AMI mode exposure by applying the LG algorithm.
+    def process(self, fname):
+        """Performs analysis of an AMI mode exposure by applying the LG algorithm.
 
         Parameters
         ----------
-        input: string
+        fname: string
             input file name
 
         Returns
@@ -150,6 +170,7 @@ class AmiAnalyzeStep(Step):
             AMI tables of observables for each integration from LG algorithm fringe fitting in OIFITS format
         amilgmodel: AmiLGFitModel object
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
+
         """
         # Retrieve the parameter values
         oversample = self.oversample
@@ -178,7 +199,7 @@ class AmiAnalyzeStep(Step):
             raise ValueError("Oversample value must be an odd integer.")
 
         # Open the input data model. Can be 2D or 3D image
-        with datamodels.open(input) as input_model:
+        with datamodels.open(fname) as input_model:
             # Get the name of the filter throughput reference file to use
             throughput_reffile = self.get_reference_file(input_model, 'throughput')
             self.log.info(f'Using filter throughput reference file {throughput_reffile}')

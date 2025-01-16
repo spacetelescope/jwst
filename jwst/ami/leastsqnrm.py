@@ -12,8 +12,7 @@ log.addHandler(logging.NullHandler())
 
 
 def flip(holearray):
-    """
-    Change sign of 2nd coordinate of holes
+    """Change sign of 2nd coordinate of holes.
 
     Parameters
     ----------
@@ -24,8 +23,8 @@ def flip(holearray):
     ------
     fliparray: 2D float array
         flipped coordinates of holes
-    """
 
+    """
     fliparray = holearray.copy()
     fliparray[:, 1] = -1 * holearray[:, 1]
 
@@ -33,8 +32,7 @@ def flip(holearray):
 
 
 def rotatevectors(vectors, thetarad):
-    """
-    Rotate vectors by specified angle
+    """Rotate vectors by specified angle.
 
     Parameters
     ----------
@@ -49,6 +47,7 @@ def rotatevectors(vectors, thetarad):
     -------
     rot_vectors: 2D float array
         rotated vectors
+
     """
     c, s = (np.cos(thetarad), np.sin(thetarad))
     ctrs_rotated = []
@@ -63,8 +62,7 @@ def rotatevectors(vectors, thetarad):
 
 
 def mas2rad(mas):
-    """
-    Convert angle in milli arc-sec to radians
+    """Convert angle in milli arc-sec to radians.
 
     Parameters
     ----------
@@ -75,15 +73,14 @@ def mas2rad(mas):
     -------
     rad: float
         angle in radians
-    """
 
+    """
     rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
     return rad
 
 
 def rad2mas(rad):
-    """
-    Convert input angle in radians to milli arc sec
+    """Convert input angle in radians to milli arc sec.
 
     Parameters
     ----------
@@ -94,6 +91,7 @@ def rad2mas(rad):
     -------
     mas: float
         input angle in milli arc sec
+
     """
     mas = rad * (3600.0 * 180 / np.pi) * 10.0**3
 
@@ -101,7 +99,8 @@ def rad2mas(rad):
 
 
 def sin2deltapistons(coeffs):
-    """
+    """Calculate the sine of the piston difference.
+
     Each baseline has one sine and one cosine fringe with a coefficient that
     depends on the piston difference between the two holes that make the
     baseline.  For a 7-hole mask there are 21 baselines and therefore there
@@ -117,6 +116,7 @@ def sin2deltapistons(coeffs):
     -------
     delta: 1D float array
         sine of piston differences
+
     """
     asize = int((len(coeffs) - 1) / 2)
 
@@ -128,12 +128,13 @@ def sin2deltapistons(coeffs):
 
 
 def cos2deltapistons(coeffs):
-    """
+    """Calculate the cosine of the piston difference.
+
     Each baseline has one sine and one cosine fringe with a coefficient that
     depends on the piston difference between the two holes that make the
     baseline.  For a 7-hole mask there are 21 baselines and therefore there
     are 42 sine and cosine terms that contribute to the fringe model. This
-    function calculate the cosine of this piston difference.
+    function calculates the cosine of this piston difference.
 
     Parameters
     ----------
@@ -144,6 +145,7 @@ def cos2deltapistons(coeffs):
     -------
     delta: 1D float array
         cosine of piston differences
+
     """
     asize = int((len(coeffs) - 1) / 2)
 
@@ -159,9 +161,7 @@ def cos2deltapistons(coeffs):
 
 
 def replacenan(array):
-    """
-    Replace singularities encountered in the analytical hexagon Fourier
-    transform with the analytically derived limits.
+    """Replace singularities in analytical hexagon Fourier transform with the analytically derived limits.
 
     Parameters
     ----------
@@ -172,6 +172,7 @@ def replacenan(array):
     -------
     array: 2D float array
         input array with NaNs replaced with analytically derived limits
+
     """
     nanpos = np.where(np.isnan(array))
     array[nanpos] = np.pi / 4
@@ -180,8 +181,7 @@ def replacenan(array):
 
 
 def primarybeam(kx, ky):
-    """
-    Calculate the envelope intensity for circular holes & monochromatic light
+    """Calculate the envelope intensity for circular holes & monochromatic light.
 
     Parameters
     ----------
@@ -192,6 +192,7 @@ def primarybeam(kx, ky):
     ------
     env_int: 2D float array
         envelope intensity for circular holes & monochromatic light
+
     """
     R = (
         (primarybeam.d / primarybeam.lam)
@@ -211,8 +212,7 @@ def primarybeam(kx, ky):
 
 
 def hexpb():
-    """
-    Calculate the primary beam for hexagonal holes.
+    """Calculate the primary beam for hexagonal holes.
 
     Parameters
     ----------
@@ -222,6 +222,7 @@ def hexpb():
     -------
     pb * pb.conj(): 2D float array
         primary beam for hexagonal holes
+
     """
     pb = hexee.hex_eeAG(
         s=hexpb.size,
@@ -235,8 +236,7 @@ def hexpb():
 
 
 def ffc(kx, ky):
-    """
-    Calculate cosine terms of analytic model.
+    """Calculate cosine terms of analytic model.
 
     Parameters
     ----------
@@ -247,6 +247,7 @@ def ffc(kx, ky):
     -------
     cos_array: 2D float array
         cosine terms of analytic model
+
     """
     cos_array = 2 * np.cos(
         2
@@ -262,8 +263,7 @@ def ffc(kx, ky):
 
 
 def ffs(kx, ky):
-    """
-    Calculate sine terms of analytic model.
+    """Calculate sine terms of analytic model.
 
     Parameters
     ----------
@@ -274,6 +274,7 @@ def ffs(kx, ky):
     -------
     sin_array: 2D float array
         sine terms of analytic model
+
     """
     sin_array = -2 * np.sin(
         2
@@ -292,8 +293,7 @@ def ffs(kx, ky):
 def model_array(
     ctrs, lam, oversample, pitch, fov, d, centering="PIXELCENTERED", shape="circ"
 ):
-    """
-    Create a model using the specified wavelength.
+    """Create a model using the specified wavelength.
 
     Parameters
     ----------
@@ -332,6 +332,7 @@ def model_array(
 
     ffmodel: list of 3 2D float arrays
         model array
+
     """
     if centering == "PIXELCORNER":
         off = np.array([0.0, 0.0])
@@ -392,7 +393,7 @@ def model_array(
 
     ffmodel = []
     ffmodel.append(ffc.N * np.ones(ffc.size))
-    for q, r in enumerate(alist):
+    for r in alist:
         # r[0] and r[1] are holes i and j, x-coord: 0, y-coord: 1
         ffc.ri = ctrs[int(r[0])]
         ffc.rj = ctrs[int(r[1])]
@@ -415,10 +416,9 @@ def model_array(
 
 
 def weighted_operations(img, model, dqm=None):
-    """
-    Performs least squares matrix operations to solve A x = b, where A is the
-    model, b is the data (image), and x is the coefficient vector we are solving
-    for.
+    """Performs least squares matrix operations to solve A x = b weighting by Poisson variance.
+
+    A is the model, b is the data (image), and x is the coefficient vector we are solving for.
 
     Here we are weighting data by Poisson variance:
       x = inv(At.W.A).(At.W.b)
@@ -452,8 +452,8 @@ def weighted_operations(img, model, dqm=None):
     Notes
     -----
     Use matrix_operations() for equal weighting of data.
-    """
 
+    """
     # Remove not-to-be-fit data from the flattened "img" data vector
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
     flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
@@ -506,9 +506,9 @@ def weighted_operations(img, model, dqm=None):
 
 
 def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
-    """
-    Use least squares matrix operations to solve A x = b, where A is the model,
-    b is the data (img), and x is the coefficient vector we are solving for.
+    """Use least squares matrix operations to solve A x = b.
+
+    A is the model, b is the data (img), and x is the coefficient vector we are solving for.
     In 2-D, data x = inv(At.A).(At.b).  If a flux is given, it will be used it
     to normalize the data.
 
@@ -522,6 +522,9 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
     flux: float
         normalization factor
+
+    linfit: bool
+        whether to perform linear fit
 
     dqm: 2D bool array
         bad pixel mask slice
@@ -537,8 +540,8 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     cond: float
         condition number of the inverse of the product of model and its
         transpose
-    """
 
+    """
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
     flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
     log.info("fringefitting.leastsqnrm.matrix_operations(): ")
@@ -653,8 +656,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
 
 def multiplyenv(env, fringeterms):
-    """
-    Multiply the envelope by each fringe 'image'.
+    """Multiply the envelope by each fringe 'image'.
 
     Parameters
     ----------
@@ -668,6 +670,7 @@ def multiplyenv(env, fringeterms):
     -------
     full: 3D float array
         envelope multiplied by each fringe 'image'
+
     """
     # The envelope has size (fov, fov). This multiplies the envelope by each
     #    of the 43 slices in the fringe model
@@ -679,8 +682,8 @@ def multiplyenv(env, fringeterms):
         )
     )
 
-    for i, val in enumerate(fringeterms):
-        full[:, :, i] = env * fringeterms[i]
+    for i, fringeterm in enumerate(fringeterms):
+        full[:, :, i] = env * fringeterm
 
     log.debug("Total number of fringe terms: %s", len(fringeterms) - 1)
 
@@ -688,13 +691,12 @@ def multiplyenv(env, fringeterms):
 
 
 def tan2visibilities(coeffs):
-    """
-
-    From the solution to the fit, calculate the fringe amplitude and phase.
+    """From the solution to the fit, calculate the fringe amplitude and phase.
 
     Parameters
     ----------
     coeffs: 1D float array
+        The coefficients providing the fit solution.
 
     Returns
     -------
@@ -731,8 +733,9 @@ def tan2visibilities(coeffs):
 
 
 def populate_antisymmphasearray(deltaps, n=7):
-    """
-    Populate the antisymmetric fringe phase array:
+    """Populate the antisymmetric fringe phase array:.
+
+    This array takes the form:
 
     fringephasearray[0,q+1:] = coeffs[0:6]
     fringephasearray[1,q+2:] = coeffs[6:11]
@@ -753,6 +756,7 @@ def populate_antisymmphasearray(deltaps, n=7):
     -------
     arr: 2D float array
         fringe phases between each pair of holes
+
     """
     # Initialize fringe phase array
     arr = np.zeros((n, n))
@@ -770,8 +774,7 @@ def populate_antisymmphasearray(deltaps, n=7):
 
 
 def populate_symmamparray(amps, n=7):
-    """
-    Populate the symmetric fringe amplitude array
+    """Populate the symmetric fringe amplitude array.
 
     Parameters
     ----------
@@ -785,6 +788,7 @@ def populate_symmamparray(amps, n=7):
     -------
     arr: 2D float array
         fringe amplitude array
+
     """
     arr = np.zeros((n, n))
 
@@ -801,9 +805,7 @@ def populate_symmamparray(amps, n=7):
     return arr
 
 def t3_amplitudes(amps, n=7):
-    """
-    Populate the triple-product amplitude array
-    (NOT closure amplitudes)
+    """Populate the triple-product amplitude array (NOT closure amplitudes).
 
     Parameters
     ----------
@@ -817,8 +819,8 @@ def t3_amplitudes(amps, n=7):
     -------
     cpamps: 1D float array
         triple product amplitude array
-    """
 
+    """
     arr = populate_symmamparray(amps, n=n)
 
     cpamps = np.zeros(int(comb(n, 3)))
@@ -839,8 +841,7 @@ def t3_amplitudes(amps, n=7):
 
 
 def redundant_cps(deltaps, n=7):
-    """
-    Calculate closure phases for each set of 3 holes
+    """Calculate closure phases for each set of 3 holes.
 
     Parameters
     ----------
@@ -854,6 +855,7 @@ def redundant_cps(deltaps, n=7):
     -------
     cps: 1D float array
         closure phases
+
     """
     arr = populate_antisymmphasearray(deltaps, n=n)  # fringe phase array
 
@@ -875,8 +877,7 @@ def redundant_cps(deltaps, n=7):
 
 
 def closurephase(deltap, n=7):
-    """
-    Calculate closure phases between each pair of holes
+    """Calculate closure phases between each pair of holes.
 
     Parameters
     ----------
@@ -890,6 +891,7 @@ def closurephase(deltap, n=7):
     -------
     cps: 1D float array
         closure phases
+
     """
     # p is a triangular matrix set up to calculate closure phases
     if n == 7:
@@ -935,8 +937,7 @@ def closurephase(deltap, n=7):
 
 
 def closure_amplitudes(amps, n=7):
-    """
-    Calculate closure amplitudes
+    """Calculate closure amplitudes.
 
     Parameters
     ----------
@@ -950,6 +951,7 @@ def closure_amplitudes(amps, n=7):
     -------
     CAs: 1D float array
         closure amplitudes
+
     """
     arr = populate_symmamparray(amps, n=n)  # fringe amp array
     nn = 0
@@ -973,8 +975,7 @@ def closure_amplitudes(amps, n=7):
     return cas
 
 def q4_phases(deltaps, n=7):
-    """
-    Calculate phases for each set of 4 holes
+    """Calculate phases for each set of 4 holes.
 
     Parameters
     ----------
@@ -988,6 +989,7 @@ def q4_phases(deltaps, n=7):
     -------
     quad_phases: 1D float array
         quad phases
+
     """
     arr = populate_antisymmphasearray(deltaps, n=n)  # fringe phase array
     nn = 0

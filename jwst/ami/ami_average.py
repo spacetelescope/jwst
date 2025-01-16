@@ -10,8 +10,7 @@ log.setLevel(logging.DEBUG)
 
 
 def average_LG(lg_products):
-    """
-    Averages the LG results for a set of AMI exposures
+    """Averages the LG results for a set of AMI exposures.
 
     Parameters
     ----------
@@ -22,26 +21,26 @@ def average_LG(lg_products):
     -------
     output_model: Fringe model object
         Averaged fringe data
-    """
 
+    """
     # Create the output model as a copy of the first input model
     log.debug('create output as copy of %s', lg_products[0])
     output_model = datamodels.AmiLgModel(lg_products[0]).copy()
 
     # Find the input product with the smallest fit_image image size
     sizes = []
-    for input in lg_products:
-        prod = datamodels.AmiLgModel(input)
+    for inp in lg_products:
+        prod = datamodels.AmiLgModel(inp)
         sizes.append(prod.fit_image.shape[0])
         prod.close()
     min_size = min(sizes)
     log.debug('minimum size of fit_image=%d', min_size)
 
     # Loop over inputs, adding their values to the output
-    for prod_num, input in enumerate(lg_products):
+    for prod_num, inp in enumerate(lg_products):
 
-        log.info('Accumulate data from %s', input)
-        prod = datamodels.AmiLgModel(input)
+        log.info('Accumulate data from %s', inp)
+        prod = datamodels.AmiLgModel(inp)
 
         prod_size = prod.fit_image.shape[0]
         if prod_size > min_size:

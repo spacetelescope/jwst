@@ -5,9 +5,7 @@ __all__ = ["AmiAverageStep"]
 
 
 class AmiAverageStep(Step):
-    """
-    AmiAverageStep: Averages LG results for multiple NIRISS AMI mode exposures
-    """
+    """Average LG results for multiple NIRISS AMI mode exposures."""
 
     class_alias = "ami_average"
 
@@ -16,19 +14,15 @@ class AmiAverageStep(Step):
     """
 
     def flatten_input(self, input_items):
-        """Remove any nested list/tuple structure and return generator
-        to provide iterable simple list with no nested structure.
-        """
+        """Return generator to provide iterable simple list with no nested structure."""
         for item in input_items:
-            if isinstance(item, (list, tuple)):
+            if isinstance(item, (list | tuple)):
                 yield from self.flatten_input(item)
             else:
                 yield item
 
     def process(self, *input_list):
-        """
-        Averages the results of LG analysis for a set of multiple NIRISS AMI
-        mode exposures.
+        """Averages the results of LG analysis for a set of multiple NIRISS AMI mode exposures.
 
         Parameters
         ----------
@@ -39,8 +33,8 @@ class AmiAverageStep(Step):
         -------
         result: AmiLgModel object
             Averaged AMI data model
-        """
 
+        """
         # Input may be a simple list if run in interactive environment,
         # but processing from command line wraps list of inputs in a tuple.
         # Flatten this object into a simple list.

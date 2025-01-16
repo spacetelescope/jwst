@@ -11,9 +11,7 @@ log.addHandler(logging.NullHandler())
 
 
 def normalize_LG(target_model, reference_model):
-    """
-    Normalizes the LG results for a science target by the
-    LG results for a reference target
+    """Normalizes the LG results for a science target by the LG results for a reference target.
 
     Parameters
     ----------
@@ -27,8 +25,8 @@ def normalize_LG(target_model, reference_model):
     -------
     output_model: AmiOIModel data model
         Normalized interferometric observables for the target
-    """
 
+    """
     # Initialize the calibration (normalization) class and apply the normalizations
     norm_model = oifits.CalibOifits(target_model, reference_model)
     output_model = norm_model.calibrate()

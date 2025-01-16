@@ -18,7 +18,6 @@ def apply_LG_plus(
     throughput_model,
     nrm_model,
     oversample,
-    rotation,
     psf_offset,
     rotsearch_parameters,
     bandpass,
@@ -28,8 +27,7 @@ def apply_LG_plus(
     affine2d,
     run_bpfix,
 ):
-    """
-    Applies the image plane algorithm (LG-PLUS) to an AMI exposure
+    """Applies the image plane algorithm (LG-PLUS) to an AMI exposure.
 
     Parameters
     ----------
@@ -37,12 +35,12 @@ def apply_LG_plus(
         AMI science image to be analyzed
     throughput_model : data model object
         Filter throughput data
+    nrm_model : data model object
+        NRM model data
     oversample : integer
         Oversampling factor
-    rotation : float (degrees)
-        Initial guess at rotation of science image relative to model
     psf_offset : string (two floats)
-        PSF offset values to use to create the model array\
+        PSF offset values to use to create the model array
     rotsearch_parameters : string ('start stop step')
         Rotation search parameters
     bandpass : synphot spectrum or array

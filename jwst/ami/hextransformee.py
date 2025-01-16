@@ -3,9 +3,7 @@ import numpy as np
 
 
 def gfunction(xi, eta, **kwargs):
-    """
-    Calculate the Fourier transform of one half of a hexagon that is bisected
-    from one corner to its diametrically opposite corner.
+    """Fourier transform a half-hexagon bisected from one corner to its diametrically opposite corner.
 
     Parameters
     ----------
@@ -15,27 +13,28 @@ def gfunction(xi, eta, **kwargs):
     eta: 2D float array
         hexagon's coordinate center at center of symmetry, normal to xi
 
-    c (optional, via **kwargs): tuple(float, float)
-        coordinates of center
+    kwargs: dict
+        c (optional, via **kwargs): tuple(float, float)
+            coordinates of center
 
-    pixel (optional, via **kwargs): float
-        pixel scale
+        pixel (optional, via **kwargs): float
+            pixel scale
 
-    d (optional, via **kwargs): float
-        flat-to-flat distance across hexagon
+        d (optional, via **kwargs): float
+            flat-to-flat distance across hexagon
 
-    lam (optional, via **kwargs): float
-        wavelength
+        lam (optional, via **kwargs): float
+            wavelength
 
-    minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation
+        minus: (optional, via **kwargs) boolean
+            if set, use flipped sign of xi in calculation
 
     Returns
     -------
     g*affine2d.distortphase(xi,eta): 2D complex array
         Fourier transform of one half of a hexagon.
-    """
 
+    """
     c = kwargs["c"]
     pixel = kwargs["pixel"]
     d = kwargs["d"]
@@ -70,8 +69,7 @@ def gfunction(xi, eta, **kwargs):
 
 
 def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
-    """
-    Calculate the complex array analytical transform of a (distorted if necessary) hexagon
+    """Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
 
     Parameters
     ----------
@@ -91,6 +89,7 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
         sampling pitch in radians in image plane
 
     affine2d: Affine2d object
+        distortion object
 
     Returns
     -------

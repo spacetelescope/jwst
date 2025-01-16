@@ -18,8 +18,7 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 
 class LgModel:
-    """
-    A class for conveniently dealing with an "NRM object."
+    """A class for conveniently dealing with an "NRM object.
 
     This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
@@ -45,8 +44,7 @@ class LgModel:
         affine2d=None,
         **kwargs,
     ):
-        """
-        Set attributes of LgModel class.
+        """Set attributes of LgModel class.
 
         Parameters
         ----------
@@ -77,6 +75,11 @@ class LgModel:
 
         affine2d: Affine2d object
             Affine2d object
+
+        kwargs: dict
+            debug: boolean
+                if set, print debug
+
         """
         if "debug" in kwargs:
             self.debug = kwargs["debug"]
@@ -131,8 +134,7 @@ class LgModel:
             self.affine2d = affine2d
 
     def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
-        """
-        Simulate a detector-scale psf.
+        """Simulate a detector-scale psf.
 
         Use parameters input from the call and
         already stored in the object, and generate a simulation fits header
@@ -157,6 +159,7 @@ class LgModel:
         -------
         Object's 'psf': float 2D array
             simulated psf
+
         """
         # First set up conditions for choosing various parameters
         self.bandpass = bandpass
@@ -192,8 +195,7 @@ class LgModel:
     def make_model(
         self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
     ):
-        """
-        Generates the fringe model.
+        """Generates the fringe model.
 
         Use the attributes of the object with a bandpass that is either a single
         wavelength or a list of tuples of the form
@@ -223,6 +225,7 @@ class LgModel:
         -------
         Object's 'model': fringe model
             Generated fringe model
+
         """
         if fov:
             self.fov = fov
@@ -266,8 +269,8 @@ class LgModel:
                 affine2d=self.affine2d,
             )
 
-            log.debug("Passed to model_array: psf_offset: {0}".format(psf_offset))
-            log.debug("Primary beam in the model created: {0}".format(pb))
+            log.debug(f"Passed to model_array: psf_offset: {psf_offset}")
+            log.debug(f"Primary beam in the model created: {pb}")
             self.model_beam += pb
             self.fringes += ff
 
@@ -289,16 +292,12 @@ class LgModel:
         self,
         image,
         reference=None,
-        pixguess=None,
-        rotguess=0,
-        psf_offset=(0, 0),
         modelin=None,
         savepsfs=False,
         dqm=None,
         weighted=False,
     ):
-        """
-        Run a least-squares fit on an input image.
+        """Run a least-squares fit on an input image.
 
         Find the appropriate wavelength scale and rotation.
         If a model is not specified then this
@@ -317,20 +316,8 @@ class LgModel:
         reference: 2D float array
             input reference image
 
-        pixguess: float
-            estimate of pixel scale of the data
-
-        rotguess: float
-            estimate of rotation
-
         modelin: 2D array
             optional model image
-
-        weighted: boolean
-            use weighted operations in the least squares routine
-
-        centering: string, default=None
-            type of centering
 
         savepsfs: boolean
             save the psfs for writing to file (currently unused)
@@ -339,11 +326,8 @@ class LgModel:
             bad pixel mask of same dimensions as image
 
         weighted: boolean
-            weight
+            use weighted operations in the least squares routine
 
-        Returns
-        -------
-        None
         """
         self.model_in = modelin
         self.weighted = weighted
@@ -360,8 +344,8 @@ class LgModel:
                 if np.isnan(image.any()):
                     raise ValueError(
                         "Must have non-NaN image to "
-                        + "crosscorrelate for scale. Reference "
-                        + "image should also be centered."
+                        "crosscorrelate for scale. Reference "
+                        "image should also be centered."
                     )
             else:
                 self.reference = reference
@@ -399,18 +383,7 @@ class LgModel:
         self.q4_phases = leastsqnrm.q4_phases(self.fringephase, n=self.N) # RC 8/24
 
     def create_modelpsf(self):
-        """
-        Make an image from the object's model and fit solutions, by setting the
-        LgModel object's modelpsf attribute
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
+        """Make an image from the object's model and fit solutions by setting the modelpsf attribute."""
         try:
             self.modelpsf = np.zeros((self.fov, self.fov))
         except AttributeError:
@@ -421,11 +394,8 @@ class LgModel:
 
         return None
 
-    def improve_scaling(
-        self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
-    ):
-        """
-        Determine the scale and rotation that best fits the data.
+    def improve_scaling(self, img):
+        """Determine the scale and rotation that best fits the data.
 
         Correlations
         are calculated in the image plane, in anticipation of data with many
@@ -435,15 +405,6 @@ class LgModel:
         ----------
         img: 2D float array
             input image
-
-        scaleguess: float
-            initial estimate of pixel scale in radians
-
-        rotstart: float
-            estimate of rotation
-
-        centering: string, default='PIXELCENTERED'
-            type of centering
 
         Returns
         -------
@@ -455,6 +416,7 @@ class LgModel:
 
         self.gof: float
             goodness of fit
+
         """
         if not hasattr(self, "bandpass"):
             raise ValueError("This obj has no specified bandpass/wavelength")
@@ -496,7 +458,7 @@ class LgModel:
         self.corrs = np.zeros(len(radlist))
 
         self.rots = radlist
-        for q, rad in enumerate(radlist):
+        for q, _rad in enumerate(radlist):
             psf = self.simulate(
                 bandpass=self.bandpass,
                 fov=reffov,
@@ -520,40 +482,30 @@ class LgModel:
         return self.pixscale_factor, self.rot_measured, self.gof
 
     def set_pistons(self, phi_m):
-        """
-        Set piston's phi in meters of OPD at center wavelength LG++
+        """Set piston's phi in meters of OPD at center wavelength LG++.
 
         Parameters
         ----------
-        phi: float
+        phi_m: float
             piston angle
-
-        Returns
-        -------
-        None
 
         """
         self.phi = phi_m
 
     def set_pixelscale(self, pixel_rad):
-        """
-        Set the detector pixel scale
+        """Set the detector pixel scale.
 
         Parameters
         ----------
         pixel_rad: float
             Detector pixel scale
 
-        Returns
-        -------
-        None
         """
         self.pixel = pixel_rad
 
 
 def goodness_of_fit(data, bestfit, diskR=8):
-    """
-    Calculate goodness of fit between the data and the fit.
+    """Calculate goodness of fit between the data and the fit.
 
     Parameters
     ----------
@@ -570,6 +522,7 @@ def goodness_of_fit(data, bestfit, diskR=8):
     -------
     gof: float
         goodness of fit
+
     """
     mask = (
         np.ones(data.shape)
@@ -587,8 +540,7 @@ def goodness_of_fit(data, bestfit, diskR=8):
 
 
 def run_data_correlate(data, model):
-    """
-    Calculate correlation between data and model
+    """Calculate correlation between data and model.
 
     Parameters
     ----------

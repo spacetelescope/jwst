@@ -14,8 +14,7 @@ log.addHandler(logging.NullHandler())
 
 
 def jinc(x, y):
-    """
-    Compute 2d Jinc for given coordinates
+    """Compute 2d Jinc for given coordinates.
 
     Parameters
     ----------
@@ -26,6 +25,7 @@ def jinc(x, y):
     -------
     jinc_2d: float array
         2d jinc at the given coordinates, with NaNs replaced by pi/4.
+
     """
     R = (jinc.d / jinc.lam) * jinc.pitch *  \
         np.sqrt((x - jinc.offx) * (x - jinc.offx) +
@@ -37,15 +37,14 @@ def jinc(x, y):
 
 
 def ffc(kx, ky, **kwargs):
-    """
-    Calculate cosine terms of analytic model.
+    """Calculate cosine terms of analytic model.
 
     Parameters
     ----------
     kx, ky: float, float
         x-component and y-component of image plane (spatial frequency) vector
 
-    kwargs options:
+    kwargs: dict
         pitch: float
             sampling pitch in radians in image plane
 
@@ -64,8 +63,8 @@ def ffc(kx, ky, **kwargs):
     -------
     cos_array: 2D float array
         cosine terms of analytic model
-    """
 
+    """
     ko = kwargs['c']  # the PSF ctr
     baseline = kwargs['baseline']  # hole centers' vector
     lam = kwargs['lam']  # m
@@ -79,15 +78,14 @@ def ffc(kx, ky, **kwargs):
 
 
 def ffs(kx, ky, **kwargs):
-    """
-    Calculate sine terms of analytic model.
+    """Calculate sine terms of analytic model.
 
     Parameters
     ----------
     kx, ky: float, float
         x-component and y-component of image plane (spatial frequency) vector
 
-    kwargs options:
+    kwargs: dict
         pitch: float
             sampling pitch in radians in image plane
 
@@ -106,6 +104,7 @@ def ffs(kx, ky, **kwargs):
     -------
     sin_array: 2D float array
         sine terms of analytic model
+
     """
     ko = kwargs['c']  # the PSF ctr
     baseline = kwargs['baseline']  # hole centers' vector
@@ -120,13 +119,14 @@ def ffs(kx, ky, **kwargs):
 
 
 def harmonicfringes(**kwargs):
-    """
-    Calculate the sine and cosine fringes. This is in image space and, for later
+    """Calculate the sine and cosine fringes.
+
+    This is in image space and, for later
     versions, this works in the oversampled space that is each slice of the model.
 
     Parameters
     ----------
-    kwargs options:
+    kwargs: dict
         fov: integer, default=None
             number of detector pixels on a side
 
@@ -150,6 +150,7 @@ def harmonicfringes(**kwargs):
     Returns
     -------
     Sine and cosine fringes: float arrays
+
     """
     fov = kwargs['fov']  # in detpix
     pitch = kwargs['pitch']  # detpixscale
@@ -173,10 +174,11 @@ def harmonicfringes(**kwargs):
 
 
 def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
-    """
+    """Calculate the wavefront for a single hole.
+
     Long Summary
     ------------
-    Calculate the wavefront for a single hole. This routine returns the complex
+    This routine returns the complex
     amplitude array of fringes phi to units of meters, which is more physical for
     broadband simulations.
 
@@ -198,11 +200,13 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
         sampling pitch in radians in image plane
 
     affine2d: Affine2d object
+        the affine2d object
 
     Returns
     -------
     phasor: complex
         Calculate wavefront for a single hole
+
     """
     kxprime, kyprime = affine2d.distortFargs(kx, ky)
     return np.exp(-2 * np.pi * 1j *
@@ -211,8 +215,7 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
 
 
 def image_center(fov, oversample, psf_offset):
-    """
-    Calculate the Image center location in oversampled pixels
+    """Calculate the Image center location in oversampled pixels.
 
     Parameters
     ----------
@@ -229,8 +232,8 @@ def image_center(fov, oversample, psf_offset):
     -------
     offsets_from_center: 2D integer array
         offset of the psf center from the array center.
-    """
 
+    """
     offsets_from_center = np.array(utils.centerpoint((oversample * fov, oversample * fov))) + \
         np.array((psf_offset[1], psf_offset[0])) * oversample
 
@@ -238,15 +241,14 @@ def image_center(fov, oversample, psf_offset):
 
 
 def interf(kx, ky, **kwargs):
-    """
-    Calculate the complex amplitudes for all holes.
+    """Calculate the complex amplitudes for all holes.
 
     Parameters
     ----------
     kx, ky: float, float radians
         x-component and y-component of image plane (spatial frequency) vector
 
-    kwargs options:
+    kwargs: dict
         psfctr: 2D float array
             center of PSF, in simulation pixels (i.e. oversampled)
 
@@ -268,8 +270,8 @@ def interf(kx, ky, **kwargs):
     -------
     fringe_complexamp: 2D complex array
         interference for all holes
-    """
 
+    """
     psfctr = kwargs['c']
     ctrs = kwargs['ctrs']  # hole centers
     phi = kwargs['phi']
@@ -288,8 +290,7 @@ def interf(kx, ky, **kwargs):
 def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
                 phi=None,
                 shape='circ', affine2d=None):
-    """
-    Create a model using the specified wavelength.
+    """Create a model using the specified wavelength.
 
     Parameters
     ----------
@@ -321,6 +322,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
         shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
     affine2d: Affine2d object
+        the affine2d object
 
     Returns
     -------
@@ -329,6 +331,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
 
     ffmodel: list of fringe arrays
         list of fringe arrays
+
     """
     nholes = ctrs.shape[0]
     if phi is None:
@@ -367,10 +370,8 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
     return primary_beam, ffmodel
 
 
-def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
-    """
-    Calculate the Amplitude Spread Function (a.k.a. image plane complex
-    amplitude) for a circular aperture.
+def asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
+    """Calculate the Amplitude Spread Function (a.k.a. image plane complex amplitude) for a circular aperture.
 
     Parameters
     ----------
@@ -399,12 +400,14 @@ def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        the affine2d object
 
     Returns
     -------
     asf: 2D real array
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a circular aperture
+
     """
     pitch = detpixel / float(oversample)
     ImCtr = image_center(fov, oversample, psf_offset)
@@ -418,9 +421,7 @@ def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
 
 
 def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
-    """
-    Amplitude Spread Function (a.k.a. image plane complex amplitude)
-    for a fringe
+    """Amplitude Spread Function (a.k.a. image plane complex amplitude) for a fringe.
 
     Parameters
     ----------
@@ -446,12 +447,14 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        the affine2d object
 
     Returns
     -------
     fringing: 2D complex array
-      Amplitude Spread Function (a.k.a. image plane complex amplitude) for
+        Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a fringe
+
     """
     pitch = detpixel / float(oversample)
     ImCtr = image_center(fov, oversample, psf_offset)
@@ -465,10 +468,8 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
                            affine2d=affine2d)
 
 
-def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
-    """
-    Amplitude Spread Function (a.k.a. image plane complex amplitude)
-    for a hexagonal aperture
+def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
+    """Amplitude Spread Function (a.k.a. image plane complex amplitude) for a hexagonal aperture.
 
     Parameters
     ----------
@@ -481,28 +482,24 @@ def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     oversample: integer
         oversampling factor
 
-    ctrs: 2D float array
-        centers of holes
-
     d: float
         flat-to-flat distance across hexagon
 
     lam: float
         wavelength
 
-    phi: float
-        distance of fringe from hole center in units of waves
-
     psf_offset: 2D float array
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        the affine2d object
 
     Returns
     -------
     asf: 2D complex array
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a hexagonal aperture
+
     """
     pitch = detpixel / float(oversample)
 
@@ -518,8 +515,7 @@ def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
 
 def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
         shape='circ'):
-    """
-    Calculate the PSF for the requested shape
+    """Calculate the PSF for the requested shape.
 
     Parameters
     ----------
@@ -548,6 +544,7 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
         offset from image center in detector pixels
 
     affine2d: Affine2d object
+        the affine2d object
 
     shape: string
         shape of hole; possible values are 'circ', 'hex', and 'fringe'
@@ -555,8 +552,8 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
     Returns
     -------
     PSF - 2D float array
-    """
 
+    """
     # Now deal with primary beam shapes...
     if shape == 'circ':
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
@@ -576,7 +573,7 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
     else:
         raise ValueError(
-            "pupil shape %s not supported - choices: 'circonly', 'circ', 'hexonly', 'hex', 'fringeonly'"
-            % shape)
+            f"pupil shape {shape} not supported - choices: 'circonly', 'circ', 'hexonly', 'hex', 'fringeonly'"
+            )
 
     return (asf_2d * asf_2d.conj()).real

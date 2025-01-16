@@ -262,6 +262,7 @@ exclude = [
     "build",
     "*.ipynb",
     "jwst/fits_generator", # no longer used, will be removed soon
+    "**/tests/test_*.py",
 ]
 line-length = 130
 
@@ -271,7 +272,7 @@ select = [
     "E",      # pycodestyle (part of default flake8)
     "W",      # pycodestyle (part of default flake8)
     "D",      # pydocstyle
-    "N",      # pep8-naming (naming conventions)
+    # "N",      # pep8-naming (naming conventions)
     "A",      # flake8-builtins (prevent shadowing of builtins)
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
     "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
@@ -291,8 +292,9 @@ select = [
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 ignore = [
+    "D100", # Missing docstring in public module
     "D203", # 1 blank line required before class docstring. ignore in favor of D211
-    "D212", # Multi-line docstring summary should start at the second line. ignore in favor of D213
+    "D213", # Multi-line docstring summary should start at the second line. ignore in favor of D212
     "D400", # First line should end with a period. Note D415 is enabled. (end with ., ?, or !)
     "D401", # First line should be in imperative mood
     "D404", # First word of the docstring should not be "This"
@@ -300,10 +302,8 @@ ignore = [
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "UP008", # use super() instead of super(class, self). no harm being explicit
     "UP015", # unnecessary open(file, "r"). no harm being explicit
+    "TRY003", # prevents custom exception messages not defined in exception itself.
 ]
-
-[tool.ruff.lint.pydocstyle]
-convention = "numpy"
 
 [tool.ruff.lint.flake8-annotations]
 ignore-fully-untyped = true  # Turn of annotation checking for fully untyped code
@@ -314,6 +314,9 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
     "F401", # unused import
     "F403", # import with *
     "F405", # ambiguous import from *
+]
+"**/tests/__init__.py" = [
+    "D104", # missing docstring in public package
 ]
 "jwst/associations/tests*" = [
     "F841", # unused variable
