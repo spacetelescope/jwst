@@ -11,8 +11,6 @@ from stdatamodels.jwst import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-SLITRATIO = 1.15     # Ratio of slit spacing to slit height
-
 
 def do_correction(input_model, barshadow_model=None, inverse=False, source_type=None, correction_pars=None):
     """Do the Bar Shadow Correction
@@ -54,7 +52,7 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
     # -1 to 1 in their Y value WCS.
 
     exp_type = input_model.meta.exposure.type
-    log.debug('EXP_TYPE = %s' % exp_type)
+    log.debug(f'EXP_TYPE = {exp_type}')
 
     # Create output as a copy of the input science data model
     output_model = input_model.copy()
@@ -88,6 +86,13 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
     return output_model, corrections
 
 
+def _slit_ratio(quadrant):
+    # Should be calculated by quadrant, from the MSA reference file
+    # Current approximations for Q1-4 are:
+    slit_scale = [1.14392, 1.1500415, 1.1503992, 1.1435773]
+    return slit_scale[quadrant - 1]
+
+
 def _calc_correction(slitlet, barshadow_model, source_type):
     """Calculate the barshadow correction for a slitlet
 
@@ -109,6 +114,19 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     """
     slitlet_number = slitlet.slitlet_id
 
+    # Correction only applies to extended/uniform sources
+    correction = datamodels.SlitModel(data=np.ones(slitlet.data.shape))
+    if not has_uniform_source(slitlet, source_type):
+        log.info("Bar shadow correction skipped for "
+                 f"slitlet {slitlet_number} (source not uniform)")
+        return correction
+
+    # No correction for zero length slitlets
+    shutter_status = slitlet.shutter_state
+    if len(shutter_status) == 0:
+        log.info(f"Slitlet {slitlet_number} has zero length, correction skipped")
+        return correction
+
     # Create the pieces that are put together to make the barshadow model
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
@@ -116,58 +134,38 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     y_increment = barshadow_model.cdelt2
     shutter_height = 1.0 / y_increment
 
-    # The correction only applies to extended/uniform sources
-    correction = datamodels.SlitModel(data=np.ones(slitlet.data.shape))
-    if has_uniform_source(slitlet, source_type):
-        shutter_status = slitlet.shutter_state
-        if len(shutter_status) > 0:
-            shadow = create_shadow(shutter_elements, shutter_status)
+    shadow = create_shadow(shutter_elements, shutter_status)
 
-            # For each pixel in the slit subarray,
-            # make a grid of indices for pixels in the subarray
-            x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1, 1))
+    # For each pixel in the slit subarray,
+    # make a grid of indices for pixels in the subarray
+    x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1, 1))
 
-            # Create the transformation from slit_frame to detector
-            det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
+    # Create the transformation from slit_frame to detector
+    det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
 
-            # Use this transformation to calculate x, y, and wavelength
-            xslit, yslit, wavelength = det2slit(x, y)
+    # Use this transformation to calculate x, y, and wavelength
+    xslit, yslit, wavelength = det2slit(x, y)
 
-            # If the source position is off-center in the slit, renormalize the yslit
-            # values so that it appears as if the source is centered, which is the appropriate
-            # way to compute the shadow correction for extended/uniform sources (doesn't
-            # depend on source location).
-            if len(shutter_status) > 1:
-                middle = (len(shutter_status) - 1) / 2.0
-                src_loc = shutter_status.find('x')
-                if src_loc != -1 and float(src_loc) != middle:
-                    yslit -= np.nanmean(yslit)
+    # The returned y values are scaled to where the slit height is 1
+    # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
+    # so that the separation between the slit centers is 1,
+    # i.e. slit height + interslit bar
+    yslit = yslit / _slit_ratio(slitlet.quadrant)
 
-            # The returned y values are scaled to where the slit height is 1
-            # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
-            # so that the separation between the slit centers is 1,
-            # i.e. slit height + interslit bar
-            yslit = yslit / SLITRATIO
+    # Find the fiducial shutter to align the constructed shadow with the real array
+    src_loc = shutter_status.find('x')
+    index_of_fiducial = len(shutter_status) - src_loc
 
-            # Convert the Y and wavelength to a pixel location in the  bar shadow array;
-            # the fiducial should always be at the center of the slitlet, regardless of
-            # where the source is centered.
-            index_of_fiducial = (len(shutter_status) - 1) / 2.0
+    # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
+    # the last in the shadow array.  So the center of the first shutter referred to in
+    # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
+    # shutter center has an index shutter_height greater.
+    index_of_fiducial_in_array = shadow.shape[0] - shutter_height * index_of_fiducial
+    yrow = index_of_fiducial_in_array + yslit * shutter_height
+    wcol = (wavelength - w0) / wave_increment
 
-            # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
-            # the last in the shadow array.  So the center of the first shutter referred to in
-            # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
-            # shutter center has an index shutter_height greater.
-            index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
-            yrow = index_of_fiducial_in_array + yslit * shutter_height
-            wcol = (wavelength - w0) / wave_increment
-
-            # Interpolate the bar shadow correction for non-Nan pixels
-            correction.data = interpolate(yrow, wcol, shadow)
-        else:
-            log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
-    else:
-        log.info("Bar shadow correction skipped for slitlet %d (source not uniform)" % slitlet_number)
+    # Interpolate the bar shadow correction for non-Nan pixels
+    correction.data = interpolate(yrow, wcol, shadow)
 
     return correction
 
@@ -364,7 +362,7 @@ def create_empty_shadow_array(nshutters):
 
     nshutters: int
         The length of the slit in shutters
-https://github.com/spacetelescope/gwcs/actions/runs/11661031952/job/32464576263
+
     Returns:
 
     empty_shadow: nddata_array
