@@ -389,7 +389,7 @@ def compare_product_membership(left, right, strict_expname=True):
 
     # Determine how to compare expnames
     if strict_expname:
-        def munge_expname(expname): 
+        def munge_expname(expname):
             return expname
     else:
         munge_expname = exposure_name

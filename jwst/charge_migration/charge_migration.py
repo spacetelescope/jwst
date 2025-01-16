@@ -73,8 +73,8 @@ def flag_pixels(data, gdq, signal_threshold):
     chargeloss_pix = np.where((data > signal_threshold) & (gdq != DNU))
 
     new_gdq = gdq.copy()
-    
-    for k in range(len(chargeloss_pix[0])): 
+
+    for k in range(len(chargeloss_pix[0])):
         integ, group = chargeloss_pix[0][k], chargeloss_pix[1][k]
         row, col = chargeloss_pix[2][k], chargeloss_pix[3][k]
         new_gdq[integ, group:, row, col] |= CHLO_DNU

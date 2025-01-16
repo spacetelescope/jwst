@@ -522,10 +522,24 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     spectrace_2 = np.array([xtrace_order2, ytrace_order2, wave_grid])
 
     # Make wavemap from wavelength solution for order 1
-    wavemap_1 = calc_2d_wave_map(wave_grid, xtrace_order1, ytrace_order1, np.zeros_like(xtrace_order1), oversample=1, padding=padsize)
+    wavemap_1 = calc_2d_wave_map(
+        wave_grid,
+        xtrace_order1,
+        ytrace_order1,
+        np.zeros_like(xtrace_order1),
+        oversample=1,
+        padding=padsize,
+    )
 
     # Make wavemap from wavelength solution for order 2
-    wavemap_2 = calc_2d_wave_map(wave_grid, xtrace_order2, ytrace_order2, np.zeros_like(xtrace_order2), oversample=1, padding=padsize)
+    wavemap_2 = calc_2d_wave_map(
+        wave_grid,
+        xtrace_order2,
+        ytrace_order2,
+        np.zeros_like(xtrace_order2),
+        oversample=1,
+        padding=padsize,
+    )
 
     # Extrapolate wavemap to FULL frame
     wavemap_1[:SUBARRAY_YMIN - padsize, :] = wavemap_1[SUBARRAY_YMIN - padsize]

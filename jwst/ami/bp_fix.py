@@ -209,10 +209,10 @@ def fourier_corr(data, pxdq, fmas):
 
     References
     ----------
-    M. J. Ireland, Phase errors in diffraction-limited imaging: contrast limits 
-    for sparse aperture masking, Monthly Notices of the Royal Astronomical 
-    Society, Volume 433, Issue 2, 01 August 2013, Pages 1718–1728, 
-    https://doi.org/10.1093/mnras/stt859 
+    M. J. Ireland, Phase errors in diffraction-limited imaging: contrast limits
+    for sparse aperture masking, Monthly Notices of the Royal Astronomical
+    Society, Volume 433, Issue 2, 01 August 2013, Pages 1718–1728,
+    https://doi.org/10.1093/mnras/stt859
     """
 
     # Get the dimensions.
