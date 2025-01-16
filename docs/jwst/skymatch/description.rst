@@ -14,7 +14,7 @@ typically applied before doing cosmic-ray rejection and combining multiple
 images into a mosaic. When running the ``skymatch`` step in a matching mode,
 it compares *total* signal levels in *the overlap regions* of a set of input
 images and computes the signal offsets either for each image *or a set/group of
-images* that will minimize -- in a least squares sense -- the residuals across
+images* (see Image Groups section below) that will minimize -- in a least squares sense -- the residuals across
 the entire set. This comparison is performed directly on the input images
 without resampling them onto a common grid. The overlap regions are computed
 directly on the sky (celestial sphere) for each pair of input images.
