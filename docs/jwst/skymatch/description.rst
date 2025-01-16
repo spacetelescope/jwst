@@ -82,9 +82,9 @@ level can be computed and applied to all these images because we can assume
 that for the next exposure we will get a similar background structure, albeit
 with an offset level (common to all images in an exposure). Using grouped
 images with a common background level offers several advantages:
-more data are used to compute the single sky level and it also allows adjusting
-background level of images (in the group) that do not overlap individually
-with any other images in other exposures. This is the default operating mode
+more data are used to compute the single sky level, and the
+background level of images that do not overlap individually
+with any other images in other exposures can still be adjusted (as long as they belong to a group). This is the default operating mode
 for the ``skymatch`` step.
 
 Identification of images that belong to the same "exposure" and therefore
