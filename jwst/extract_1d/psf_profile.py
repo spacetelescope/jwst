@@ -26,7 +26,7 @@ def open_psf(psf_refname, exp_type):
     Parameters
     ----------
     psf_refname : str
-        The name of the psf reference file. 
+        The name of the psf reference file.
     exp_type : str
         The exposure type of the data.
 
@@ -52,7 +52,7 @@ def open_psf(psf_refname, exp_type):
         except (ValueError, AttributeError):
             raise NotImplementedError(f'PSF file for EXP_TYPE {exp_type} '
                                       f'could not be read as SpecPsfModel.') from None
-    return psf_model 
+    return psf_model
 
 
 def _normalize_profile(profile, dispaxis):
