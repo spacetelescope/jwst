@@ -67,7 +67,7 @@ Here we just note that some components (e.g., in-field zodiacal light)
 result in reproducible background structures in all detectors when they are
 exposed simultaneously, while other components (e.g. stray light, thermal
 emission) can produce varying background from one exposure to the next
-exposure.
+exposure. The type of background structure that dominates a particular dataset affects the optimal way to group images in the skymatch step.
 
 Image Groups
 ------------
