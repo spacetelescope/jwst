@@ -113,7 +113,7 @@ class NSCleanStep(Step):
                 fit_by_channel=self.fit_by_channel,
                 background_method=self.background_method,
                 background_box_size=self.background_box_size,
-                mask_science_regions=self.mask_spectral_regions, 
+                mask_science_regions=self.mask_spectral_regions,
                 flat_filename=flat_filename, n_sigma=self.n_sigma,
                 fit_histogram=self.fit_histogram, single_mask=self.single_mask,
                 user_mask=self.user_mask, save_mask=self.save_mask,
