@@ -63,7 +63,7 @@ For a detailed discussion of JWST background components, please see
 <https://doi.org/10.48550/arXiv.2211.09890>`_ and
 `"JWST Background Model" section in the JWST User Documentation
 <https://jwst-docs.stsci.edu/jwst-general-support/jwst-background-model>`_
-Here we just note that some components (i.e., in-field zodiacal light)
+Here we just note that some components (e.g., in-field zodiacal light)
 result in reproducible background structures in all detectors when they are
 exposed simultaneously while other components (such as stray light, thermal
 emission) can produce varying background from one exposure to the next
