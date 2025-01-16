@@ -261,34 +261,45 @@ exclude = [
     ".eggs",
     "build",
     "*.ipynb",
+    "jwst/fits_generator", # no longer used, will be removed soon
 ]
 line-length = 130
 
 [tool.ruff.lint]
 select = [
-    "F", # Pyflakes (part of default flake8)
-    "E", # pycodestyle (part of default flake8)
-    "W", # pycodestyle (part of default flake8)
-    # "A", # flake8-builtins (prevent shadowing of builtins)
-    # "ANN",    # flake8-annotations (best practices for type annotations)
-    # "BLE",    # flake8-blind-except (prevent blind except statements)
-    # "C4",     # flake8-comprehensions (best practices for comprehensions)
-    # "T10",    # flake8-debugger (prevent debugger statements in code)
-    # "FA",     # flake8-future-annotations (correct usage future annotations)
-    # "ISC",    # flake8-implicit-str-concat (prevent implicit string concat)
-    # "ICN",    # flake8-import-conventions (enforce import conventions)
-    # "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
-    # "RSE",    # flake8-raise (best practices for raising exceptions)
-    # "SLOT",   # flake8-slots (require __slots__ for immutable classes)
-    # "TID",    # flake8-tidy-imports (prevent banned api and best import practices)
-    # "TCH",    # flake8-type-checking (move type checking imports into type checking blocks)
-    # "INT",    # flake8-gettext (when to use printf style strings)
-    # "PGH",    # pygrep (simple grep checks)
-    # "FLY",    # flynt (f-string conversion where possible)
-    # "LOG",
+    "F",      # Pyflakes (part of default flake8)
+    "E",      # pycodestyle (part of default flake8)
+    "W",      # pycodestyle (part of default flake8)
+    "D",      # pydocstyle
+    "N",      # pep8-naming (naming conventions)
+    "A",      # flake8-builtins (prevent shadowing of builtins)
+    "ARG",    # flake8-unused-arguments (prevent unused arguments)
+    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
+    "C4",     # flake8-comprehensions (best practices for comprehensions)
+    "ICN",    # flake8-import-conventions (enforce import conventions)
+    "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
+    "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
+    "LOG",    # flake8-logging
+    "NPY",    # numpy-specific rules
+    "PGH",    # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
+    "PTH",    # flake8-use-pathlib (enforce using Pathlib instead of os)
+    "SLF",    # flake8-self (prevent using private class members outside class)
+    "SLOT",   # flake8-slots (require __slots__ for immutable classes)
+    "T20",    # flake8-print (prevent print statements in code)
+    "TRY",    # tryceratops (best practices for try/except blocks)
+    "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
+    "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 ignore = [
+    "D203", # 1 blank line required before class docstring. ignore in favor of D211
+    "D212", # Multi-line docstring summary should start at the second line. ignore in favor of D213
+    "D400", # First line should end with a period. Note D415 is enabled. (end with ., ?, or !)
+    "D401", # First line should be in imperative mood
+    "D404", # First word of the docstring should not be "This"
+    "D416", # Section headers should end with a colon
     "E741", # ambiguous variable name (O/0, l/I, etc.)
+    "UP008", # use super() instead of super(class, self). no harm being explicit
+    "UP015", # unnecessary open(file, "r"). no harm being explicit
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -297,25 +308,17 @@ convention = "numpy"
 [tool.ruff.lint.flake8-annotations]
 ignore-fully-untyped = true  # Turn of annotation checking for fully untyped code
 
-[tool.ruff.lint.extend-per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "jwst/**/__init__.py" = [
     "E402", # module-level import not at top of file
     "F401", # unused import
     "F403", # import with *
     "F405", # ambiguous import from *
 ]
-"jwst/fits_generator/*" = [
-    "F821", # undefined name
-]
-"jwst/fits_generator/tests/*" = [
-    "F841", # unused variable
-]
 "jwst/associations/tests*" = [
     "F841", # unused variable
 ]
-"jwst/ramp_fitting/tests/*" = [
-    "E402", # module-level import not at top of file
-]
+"!jwst/ami/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "SLF", "SLOT", "T20", "TRY", "UP", "YTT"]
 
 [tool.mypy]
 warn_return_any = true
