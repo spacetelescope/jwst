@@ -79,7 +79,7 @@ When background is dominated by zodiacal light, images taken at the same time
 (e.g., NIRCam images from all short-wave detectors) can be sky matched
 together; that is, a single background
 level can be computed and applied to all these images because we can assume
-that for the next exposure we will get a similar background structure albeit
+that for the next exposure we will get a similar background structure, albeit
 with an offset level (common to all images in an exposure). Using grouped
 images with a common background level offers several advantages such as
 more data are used to compute the single sky level and it also allows adjusting
