@@ -81,7 +81,7 @@ together; that is, a single background
 level can be computed and applied to all these images because we can assume
 that for the next exposure we will get a similar background structure, albeit
 with an offset level (common to all images in an exposure). Using grouped
-images with a common background level offers several advantages such as
+images with a common background level offers several advantages:
 more data are used to compute the single sky level and it also allows adjusting
 background level of images (in the group) that do not overlap individually
 with any other images in other exposures. This is the default operating mode
