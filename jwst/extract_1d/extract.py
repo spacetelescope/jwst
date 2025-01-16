@@ -1980,46 +1980,15 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
         # Define source of metadata
         slit = None
 
-        # This default value for slitname is not really a slit name.
-        # It may be assigned a better value below, in the sections for
-        # ImageModel or SlitModel.
+        # Default the slitname to the exp_type, in case there's no
+        # better value available
         slitname = exp_type
-
         if isinstance(input_model, datamodels.ImageModel):
+            # Get the slit name from the input model
             if hasattr(input_model, "name") and input_model.name is not None:
                 slitname = input_model.name
 
-            sp_order = get_spectral_order(input_model)
-            if sp_order == 0 and not prism_mode:
-                log.info("Spectral order 0 is a direct image, skipping ...")
-            else:
-                log.info(f'Processing spectral order {sp_order}')
-                try:
-                    profile_model, scene_model, residual = create_extraction(
-                        input_model, slit, output_model,
-                        extract_ref_dict, slitname, sp_order, exp_type,
-                        apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
-                        save_profile=save_profile, save_scene_model=save_scene_model,
-                        save_residual_image=save_residual_image,
-                        psf_ref_name=psf_ref_name,
-                        extraction_type=extraction_type,
-                        smoothing_length=smoothing_length,
-                        bkg_fit=bkg_fit, bkg_order=bkg_order,
-                        subtract_background=subtract_background,
-                        use_source_posn=use_source_posn,
-                        position_offset=position_offset,
-                        model_nod_pair=model_nod_pair,
-                        optimize_psf_location=optimize_psf_location)
-                except ContinueError:
-                    pass
-
         elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
-            # This branch will be invoked for inputs that are a CubeModel, which typically includes
-            # NIRSpec BrightObj (fixed slit) mode, as well as inputs that are a
-            # single SlitModel, which typically includes data from a single resampled/combined slit
-            # instance from level-3 processing of NIRSpec fixed slits and MOS modes.
-
-            # Replace the default value for slitname with a more accurate value, if possible.
             # For NRS_BRIGHTOBJ, the slit name comes from the slit model info
             if exp_type == 'NRS_BRIGHTOBJ' and hasattr(input_model, "name"):
                 slitname = input_model.name
@@ -2032,34 +2001,33 @@ def run_extract1d(input_model, extract_ref_name="N/A", apcorr_ref_name=None,
                 else:
                     slitname = input_model.meta.instrument.fixed_slit
 
-            sp_order = get_spectral_order(input_model)
-            if sp_order == 0 and not prism_mode:
-                log.info("Spectral order 0 is a direct image, skipping ...")
-            else:
-                log.info(f'Processing spectral order {sp_order}')
-
-                try:
-                    profile_model, scene_model, residual = create_extraction(
-                        input_model, slit, output_model,
-                        extract_ref_dict, slitname, sp_order, exp_type,
-                        apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
-                        save_profile=save_profile, save_scene_model=save_scene_model,
-                        save_residual_image=save_residual_image,
-                        psf_ref_name=psf_ref_name,
-                        extraction_type=extraction_type,
-                        smoothing_length=smoothing_length,
-                        bkg_fit=bkg_fit, bkg_order=bkg_order,
-                        subtract_background=subtract_background,
-                        use_source_posn=use_source_posn,
-                        position_offset=position_offset,
-                        model_nod_pair=model_nod_pair,
-                        optimize_psf_location=optimize_psf_location)
-                except ContinueError:
-                    pass
-
         else:
             log.error("The input file is not supported for this step.")
             raise RuntimeError("Can't extract a spectrum from this file.")
+
+        sp_order = get_spectral_order(input_model)
+        if sp_order == 0 and not prism_mode:
+            log.info("Spectral order 0 is a direct image, skipping ...")
+        else:
+            log.info(f'Processing spectral order {sp_order}')
+            try:
+                profile_model, scene_model, residual = create_extraction(
+                    input_model, slit, output_model,
+                    extract_ref_dict, slitname, sp_order, exp_type,
+                    apcorr_ref_model=apcorr_ref_model, log_increment=log_increment,
+                    save_profile=save_profile, save_scene_model=save_scene_model,
+                    save_residual_image=save_residual_image,
+                    psf_ref_name=psf_ref_name,
+                    extraction_type=extraction_type,
+                    smoothing_length=smoothing_length,
+                    bkg_fit=bkg_fit, bkg_order=bkg_order,
+                    subtract_background=subtract_background,
+                    use_source_posn=use_source_posn,
+                    position_offset=position_offset,
+                    model_nod_pair=model_nod_pair,
+                    optimize_psf_location=optimize_psf_location)
+            except ContinueError:
+                pass
 
     # Copy the integration time information from the INT_TIMES table to keywords in the output file.
     if pipe_utils.is_tso(input_model):
