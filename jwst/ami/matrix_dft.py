@@ -200,7 +200,7 @@ def matrix_idft(*args, **kwargs):
     return matrix_dft(*args, **kwargs)
 
 
-matrix_idft.__doc__ = matrix_dft.__doc__.replace(
+matrix_idft.__doc__ = matrix_dft.__doc__.replace( # type: ignore[union-attr]
     'Perform a matrix discrete Fourier transform',
     'Perform an inverse matrix discrete Fourier transform'
 )

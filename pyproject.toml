@@ -321,7 +321,8 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
 "jwst/associations/tests*" = [
     "F841", # unused variable
 ]
-"jwst/*.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "SLF", "SLOT", "T20", "TRY", "UP", "YTT"]
+"jwst/__init__.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "SLF", "SLOT", "T20", "TRY", "UP", "YTT"]
+"jwst/conftest.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "SLF", "SLOT", "T20", "TRY", "UP", "YTT"]
 "pytest_jwst/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "SLF", "SLOT", "T20", "TRY", "UP", "YTT"]
 # "jwst/ami/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "SLF", "SLOT", "T20", "TRY", "UP", "YTT"]
 "jwst/assign_mtwcs/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "SLF", "SLOT", "T20", "TRY", "UP", "YTT"]
