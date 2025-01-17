@@ -494,7 +494,10 @@ class DataSet():
                 photom_corr = miri_imager.time_corr_photom(ftab.timecoeff[row], mid_time)
 
                 data = np.array(
-                    [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr'] + photom_corr, ftab.phot_table[row]['uncertainty'])],
+                    [(self.filter,
+                      self.subarray,
+                      ftab.phot_table[row]['photmjsr'] + photom_corr,
+                      ftab.phot_table[row]['uncertainty'])],
                     dtype=[
                         ("filter", "O"),
                         ("subarray", "O"),

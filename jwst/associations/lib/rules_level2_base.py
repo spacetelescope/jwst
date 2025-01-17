@@ -694,7 +694,7 @@ class Constraint_Imprint_Special(Constraint):
         # If an association is not provided, the check for original
         # exposure type is ignored.
         if association is None:
-            def sources(item): 
+            def sources(item):
                 return 'not imprint'
         else:
             def sources(item):

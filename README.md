@@ -16,6 +16,9 @@
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 > [!WARNING]
+> Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
+> this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
+> 
 > Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 ## Installation
@@ -89,6 +92,34 @@ used for Linux and Mac OS systems.
 
 Linux:
 
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-linux-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-linux-x86_64
+
+MacOS arm64:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-arm64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-arm64
+
+MacOS x86_64:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-x86_64
+
+
+Starting with the jwst 1.16.1 release, we updated our release procedures to use 
+[stasis](https://github.com/spacetelescope/stasis). Each DMS delivery has its own installation instructions, 
+which may be found in the corresponding release documentation, e.g.:
+https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed. You can find the list of available releases at the  
+[top-level stasis domain](https://ssb.stsci.edu/stasis/releases/jwst/).
+
+For releases prior to 1.16.1, please instead follow the directions below. The complete list of releases prior to 1.16.1
+is available on [astroconda-releases](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
+
+Linux:
+
     conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_stable-deps.txt
     conda activate jwstdp-1.16.1
     pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_stable-deps.txt
@@ -98,13 +129,6 @@ MacOS:
     conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_macos-stable-deps.txt
     conda activate jwstdp-1.16.1
     pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_macos-stable-deps.txt
-
-Each DMS delivery has its own installation instructions, which may be found in
-the corresponding release documentation linked from this page:
-https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
-The installation procedures may change from time to time, so consulting the
-documentation page for the specific version in question is the best way to get
-that version installed.
 
 
 ### Installing for Developers
@@ -159,19 +183,30 @@ Guide](https://jwst-crds.stsci.edu/static/users_guide/index.html)
 
 The JWST CRDS server is available at  https://jwst-crds.stsci.edu
 
-It supports the automatic processing pipeline at STScI.
-Inside the STScI network, the same server is used by the pipeline by default with no modifications.
+To run the pipeline inside the STScI network, CRDS must be configured to find the CRDS server
+by setting the environment variable
+
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will obtain individual reference files within this context from a local shared disk.
+
 To run the pipeline outside the STScI network, CRDS must be configured by setting
 two environment variables:
 
     export CRDS_PATH=<locally-accessable-path>/crds_cache/jwst_ops
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will automatically download individual
+reference files within this context to the local cache specified by CRDS_PATH.
 
 ``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
 Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.
 
-To use a specific CRDS context, other than the current default, set the ``CRDS_CONTEXT``
+To use a specific CRDS context other than that 
+[automatically associated](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates) 
+with a given pipeline version, set the ``CRDS_CONTEXT``
 environment variable:
 
     export CRDS_CONTEXT=jwst_1179.pmap

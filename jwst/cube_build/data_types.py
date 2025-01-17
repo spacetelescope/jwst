@@ -75,7 +75,7 @@ class DataTypes():
         # if input if an association name or ModelContainer then it is opened as a container
 
         input_models = datamodels.open(input)
-        # if input is a filename, we will need to close the opened file 
+        # if input is a filename, we will need to close the opened file
         self._opened = [input_models]
 
         if isinstance(input_models, datamodels.IFUImageModel):
