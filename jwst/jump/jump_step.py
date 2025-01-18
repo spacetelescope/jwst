@@ -168,13 +168,13 @@ class JumpStep(Step):
             if reffile_utils.ref_matches_sci(result, gain_m):
                 gain_2d = gain_m.data
             else:
-                log.info('Extracting gain subarray to match science data')
+                self.log.info('Extracting gain subarray to match science data')
                 gain_2d = reffile_utils.get_subarray_data(result, gain_m)
 
             if reffile_utils.ref_matches_sci(result, rnoise_m):
                 rnoise_2d = rnoise_m.data
             else:
-                log.info('Extracting readnoise subarray to match science data')
+                self.log.info('Extracting readnoise subarray to match science data')
                 rnoise_2d = reffile_utils.get_subarray_data(result, rnoise_m)
 
         # Instantiate a JumpData class and populate it based on the input RampModel.
