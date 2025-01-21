@@ -6,18 +6,9 @@ import numpy as np
 import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
-import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-try:
-    import bottleneck as bn
-except ImportError:
-    warnings.warn("Please install the bottleneck package for improved "
-                  "performance.  Falling back on numpy.  To install, "
-                  "use pip install bottleneck.")
-    bn = np   # set bn as an alias for numpy
 
 subarray_clocks = {
 
@@ -549,13 +540,13 @@ def minmed(data, minval=False, avgval=False, maxval=False):
     n = data.size
     if n > 0:
         if n <= 2 or minval:
-            medimg = bn.nanmin(data, axis=0)
+            medimg = np.nanmin(data, axis=0)
         if maxval:
-            medimg = bn.nanmax(data, axis=0)
+            medimg = np.nanmax(data, axis=0)
         if not minval and not maxval and not avgval:
-            medimg = bn.nanmedian(data, axis=0)
+            medimg = np.nanmedian(data, axis=0)
         if avgval:
-            medimg = bn.nanmean(data, axis=0)
+            medimg = np.nanmean(data, axis=0)
     return medimg
 
 
