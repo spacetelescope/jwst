@@ -371,15 +371,19 @@ def get_extract_parameters(ref_dict, input_model, slitname, sp_order, meta,
                     extract_params['model_nod_pair'] = model_nod_pair
 
                     # Check for a valid PSF file
-                    if extract_params['psf'] == 'N/A':
+                    extraction_type = str(extraction_type).lower()
+                    if extract_params['psf'] == 'N/A' and extraction_type != 'box':
+                        log.warning("No PSF file available. Setting extraction type to 'box'.")
                         extraction_type = 'box'
 
                     # Set the extraction type to 'box' or 'optimal'
-                    if str(extraction_type).lower() == 'none':
+                    if extraction_type == 'none':
                         if extract_params['use_source_posn']:
                             extract_params['extraction_type'] = 'optimal'
                         else:
                             extract_params['extraction_type'] = 'box'
+                        log.info(f"Using extraction type '{extract_params['extraction_type']}' "
+                                 f"for use_source_posn = {extract_params['use_source_posn']}")
                     else:
                         extract_params['extraction_type'] = extraction_type
 

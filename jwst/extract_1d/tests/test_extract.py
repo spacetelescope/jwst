@@ -242,11 +242,14 @@ def test_get_extract_parameters_smoothing_bad_value(
 
 @pytest.mark.parametrize('use_source', [None, True, False])
 def test_get_extract_parameters_extraction_type_none(
-        mock_nirspec_fs_one_slit, extract1d_ref_dict, use_source):
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, use_source, log_watcher):
     input_model = mock_nirspec_fs_one_slit
+
+    log_watcher.message = "Using extraction type"
     params = ex.get_extract_parameters(
         extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
         extraction_type=None, use_source_posn=use_source, psf_ref_name='available')
+    log_watcher.assert_seen()
 
     # Extraction type is set to optimal if use_source_posn is True
     if use_source is None or use_source is True:
@@ -259,11 +262,17 @@ def test_get_extract_parameters_extraction_type_none(
 
 @pytest.mark.parametrize('extraction_type', [None, 'box', 'optimal'])
 def test_get_extract_parameters_no_psf(
-        mock_nirspec_fs_one_slit, extract1d_ref_dict, extraction_type):
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, extraction_type, log_watcher):
     input_model = mock_nirspec_fs_one_slit
+
+    log_watcher.message = "Setting extraction type to 'box'"
     params = ex.get_extract_parameters(
         extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
         extraction_type=extraction_type, psf_ref_name='N/A')
+
+    # Warning message issued if extraction type was not already 'box'
+    if extraction_type != 'box':
+        log_watcher.assert_seen()
 
     # Extraction type is always box if no psf is available
     assert params['extraction_type'] == 'box'

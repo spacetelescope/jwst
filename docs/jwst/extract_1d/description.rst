@@ -343,7 +343,7 @@ are used instead:
   residuals of the scene modeled by the PSF at that location.  This option is
   strongly recommended if `model_nod_pair` is True, since the negative nod location is less
   reliably estimated than the positive trace location.
-* `subtract_background`: Unlike box extraction, the background levels can be modeled and removed
+* `subtract_background`: Unlike during box extraction, the background levels can be modeled and removed
   during optimal extraction without explicitly setting a background region.  It is recommended to
   set this parameter to True if background subtraction was skipped prior to extraction. Set this
   parameter to False if a negative nod trace is present but not modeled (`model_nod_pair = False`).
