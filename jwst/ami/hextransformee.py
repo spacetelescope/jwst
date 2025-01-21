@@ -3,7 +3,10 @@ import numpy as np
 
 
 def gfunction(xi, eta, **kwargs):
-    """Fourier transform a half-hexagon bisected from one corner to its diametrically opposite corner.
+    """Fourier transform a half-hexagon.
+
+    By half-hexagon, it is meant that
+    the hexagon is bisected from one corner to its diametrically opposite corner.
 
     Parameters
     ----------
@@ -134,6 +137,6 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
         affine2d=affine2d,
         minus=True,
     )
-    hex_complex[int(c[0]), int(c[1])] = (np.sqrt(3) / 2.0)
+    hex_complex[int(c[0]), int(c[1])] = np.sqrt(3) / 2.0
 
     return hex_complex

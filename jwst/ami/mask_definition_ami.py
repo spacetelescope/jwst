@@ -3,10 +3,11 @@ import math
 
 from .utils import rotate2dccw
 
+
 class NRMDefinition:
     """Defines the geometry of the NRM mask."""
 
-    def __init__(self, nrm_model, maskname='jwst_ami', chooseholes=None):
+    def __init__(self, nrm_model, maskname="jwst_ami", chooseholes=None):
         """Set attributes of NRMDefinition class.
 
         Get hole centers and other mask geometry details from NRMModel, apply rotations/flips
@@ -23,10 +24,10 @@ class NRMDefinition:
             If None, use real seven-hole mask
 
         """
-        if maskname not in ['jwst_ami','jwst_g7s6c']:
+        if maskname not in ["jwst_ami", "jwst_g7s6c"]:
             raise ValueError("Mask name not supported")
 
-        self.maskname = maskname # there's only one mask but this is used in oifits
+        self.maskname = maskname  # there's only one mask but this is used in oifits
         self.hdia = nrm_model.flat_to_flat
         self.activeD = nrm_model.diameter
         self.OD = nrm_model.pupil_circumscribed
@@ -52,23 +53,25 @@ class NRMDefinition:
             Actual hole centers [meters]
 
         """
-        ctrs_asdesigned = np.array([[nrm_model.x_a1, nrm_model.y_a1],        # B4 -> B4
-                            [nrm_model.x_a2, nrm_model.y_a2],       # C5 -> C2
-                            [nrm_model.x_a3, nrm_model.y_a3],       # B3 -> B5
-                            [nrm_model.x_a4, nrm_model.y_a4],       # B6 -> B2
-                            [nrm_model.x_a5, nrm_model.y_a5],       # C6 -> C1
-                            [nrm_model.x_a6, nrm_model.y_a6],        # B2 -> B6
-                            [nrm_model.x_a7, nrm_model.y_a7]])        # C1 -> C6
-
-
+        ctrs_asdesigned = np.array(
+            [
+                [nrm_model.x_a1, nrm_model.y_a1],  # B4 -> B4
+                [nrm_model.x_a2, nrm_model.y_a2],  # C5 -> C2
+                [nrm_model.x_a3, nrm_model.y_a3],  # B3 -> B5
+                [nrm_model.x_a4, nrm_model.y_a4],  # B6 -> B2
+                [nrm_model.x_a5, nrm_model.y_a5],  # C6 -> C1
+                [nrm_model.x_a6, nrm_model.y_a6],  # B2 -> B6
+                [nrm_model.x_a7, nrm_model.y_a7],
+            ]
+        )  # C1 -> C6
 
         holedict = {}  # as_built names, C2 open, C5 closed, but as designed coordinates
         # Assemble holes by actual open segment names (as_built).  Either the full mask or the
         # subset-of-holes mask will be V2-reversed after the as_designed centers are defined
         # Debug orientations with b4,c6,[c2]
-        allholes = ('b4', 'c2', 'b5', 'b2', 'c1', 'b6', 'c6')
+        allholes = ("b4", "c2", "b5", "b2", "c1", "b6", "c6")
 
-        for hole, coords in zip(allholes,ctrs_asdesigned, strict=False):
+        for hole, coords in zip(allholes, ctrs_asdesigned, strict=False):
             holedict[hole] = coords
 
         if chooseholes:  # holes B4 B5 C6 asbuilt for orientation testing
@@ -106,4 +109,3 @@ class NRMDefinition:
             radii.append(math.sqrt(ctr[0] * ctr[0] + ctr[1] * ctr[1]))
 
         return 2.0 * (max(radii) + 0.5 * self.hdia)
-

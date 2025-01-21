@@ -57,7 +57,7 @@ class FringeFitter:
         if "npix" in kwargs:
             self.npix = kwargs["npix"]
         else:
-            self.npix = 'default'
+            self.npix = "default"
         # Default: unweighted fit
         self.weighted = False
         if "weighted" in kwargs:
@@ -80,7 +80,8 @@ class FringeFitter:
         output_model: AmiOIModel object
             AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
         output_model_multi: AmiOIModel object
-            AMI tables of observables for each integration from LG algorithm fringe fitting in OIFITS format
+            AMI tables of observables for each integration
+            from LG algorithm fringe fitting in OIFITS format
         lgfit:
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
 
@@ -98,14 +99,13 @@ class FringeFitter:
         for slc in range(self.instrument_data.nwav):
             self.nrm_list.append(self.fit_fringes_single_integration(slc))
 
-
         # Now save final output model(s) of all slices, averaged slices to AmiOiModels
         # averaged
         oifits_model = oifits.RawOifits(self)
         output_model = oifits_model.make_oifits()
 
         # multi-integration
-        oifits_model_multi = oifits.RawOifits(self,method='multi')
+        oifits_model_multi = oifits.RawOifits(self, method="multi")
         output_model_multi = oifits_model_multi.make_oifits()
 
         # Save cropped/centered data, model, residual in AmiLgFitModel
@@ -124,24 +124,24 @@ class FringeFitter:
         """
         nslices = len(self.nrm_list)
         # 3d arrays of centered data, models, and residuals (data - model)
-        ctrd_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
-        n_ctrd_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
-        model_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
-        n_model_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
-        resid_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
-        n_resid_arr = np.zeros((nslices,self.scidata.shape[1],self.scidata.shape[2]))
+        ctrd_arr = np.zeros((nslices, self.scidata.shape[1], self.scidata.shape[2]))
+        n_ctrd_arr = np.zeros((nslices, self.scidata.shape[1], self.scidata.shape[2]))
+        model_arr = np.zeros((nslices, self.scidata.shape[1], self.scidata.shape[2]))
+        n_model_arr = np.zeros((nslices, self.scidata.shape[1], self.scidata.shape[2]))
+        resid_arr = np.zeros((nslices, self.scidata.shape[1], self.scidata.shape[2]))
+        n_resid_arr = np.zeros((nslices, self.scidata.shape[1], self.scidata.shape[2]))
         # Model parameters
-        solns_arr = np.zeros((nslices,44))
+        solns_arr = np.zeros((nslices, 44))
 
-        for i,nrmslc in enumerate(self.nrm_list):
+        for i, nrmslc in enumerate(self.nrm_list):
             datapeak = nrmslc.reference.max()
-            ctrd_arr[i,:,:] = nrmslc.reference
-            n_ctrd_arr[i,:,:] = nrmslc.reference/datapeak
-            model_arr[i,:,:] = nrmslc.modelpsf
-            n_model_arr[i,:,:] = nrmslc.modelpsf/datapeak
-            resid_arr[i,:,:] = nrmslc.residual
-            n_resid_arr[i,:,:] = nrmslc.residual/datapeak
-            solns_arr[i,:] = nrmslc.soln
+            ctrd_arr[i, :, :] = nrmslc.reference
+            n_ctrd_arr[i, :, :] = nrmslc.reference / datapeak
+            model_arr[i, :, :] = nrmslc.modelpsf
+            n_model_arr[i, :, :] = nrmslc.modelpsf / datapeak
+            resid_arr[i, :, :] = nrmslc.residual
+            n_resid_arr[i, :, :] = nrmslc.residual / datapeak
+            solns_arr[i, :] = nrmslc.soln
 
         # Populate datamodel
         m = datamodels.AmiLgFitModel()
@@ -153,12 +153,11 @@ class FringeFitter:
         m.norm_resid_image = n_resid_arr
         m.solns_table = np.recarray(
             solns_arr.shape[0],
-            dtype=[('coeffs', 'f8', solns_arr.shape[1])],
+            dtype=[("coeffs", "f8", solns_arr.shape[1])],
             buf=solns_arr,
         )
 
         return m
-
 
     def fit_fringes_single_integration(self, slc):
         """Generate the best model to match a single slice.
@@ -189,49 +188,61 @@ class FringeFitter:
         -----------------------------------------------------------------------------
 
         """
-        nrm = lg_model.LgModel(self.instrument_data.nrm_model,
-                                mask=self.instrument_data.mask,
-                                pixscale=self.instrument_data.pscale_rad,
-                                holeshape=self.instrument_data.holeshape,
-                                affine2d=self.instrument_data.affine2d,
-                                over=self.oversample)
+        nrm = lg_model.LgModel(
+            self.instrument_data.nrm_model,
+            mask=self.instrument_data.mask,
+            pixscale=self.instrument_data.pscale_rad,
+            holeshape=self.instrument_data.holeshape,
+            affine2d=self.instrument_data.affine2d,
+            over=self.oversample,
+        )
 
         nrm.bandpass = self.instrument_data.wls[0]
 
-        if self.npix == 'default':
-            self.npix = self.scidata[slc,:, :].shape[0]
+        if self.npix == "default":
+            self.npix = self.scidata[slc, :, :].shape[0]
 
         self.ctrd = self.scidata[slc]
         self.dqslice = self.dqmask[slc]
 
-        nrm.reference = self.ctrd  # self.ctrd is the cropped image centered on the brightest pixel
+        nrm.reference = (
+            self.ctrd
+        )  # self.ctrd is the cropped image centered on the brightest pixel
 
         if self.psf_offset_ff is None:
             # returned values have offsets x-y flipped:
-            # Finding centroids the Fourier way assumes no bad pixels case - Fourier domain mean slope
+            # Finding centroids the Fourier way assumes no bad pixels case:
+            # Fourier domain mean slope
             centroid = utils.find_centroid(self.ctrd, self.instrument_data.threshold)
             # centroid represents offsets from brightest pixel ctr
-            # use flipped centroids to update centroid of image for JWST - check parity for GPI, Vizier,...
+            # use flipped centroids to update centroid of image for JWST:
+            # check parity for GPI, Vizier,...
             # pixel coordinates: - note the flip of [0] and [1] to match DS9 view
             nrm.xpos = centroid[1]  # flip 0 and 1 to convert
             nrm.ypos = centroid[0]  # flip 0 and 1
             nrm.psf_offset = nrm.xpos, nrm.ypos  # renamed .bestcenter to .psf_offset
         else:
-            nrm.psf_offset = self.psf_offset_ff  # user-provided psf_offsetoffsets from array center are here.
+            nrm.psf_offset = (
+                self.psf_offset_ff
+            )  # user-provided psf_offsetoffsets from array center are here.
 
-        nrm.make_model(fov=self.ctrd.shape[0],
-                       bandpass=nrm.bandpass,
-                       over=self.oversample,
-                       psf_offset=nrm.psf_offset,
-                       pixscale=nrm.pixel)
+        nrm.make_model(
+            fov=self.ctrd.shape[0],
+            bandpass=nrm.bandpass,
+            over=self.oversample,
+            psf_offset=nrm.psf_offset,
+            pixscale=nrm.pixel,
+        )
 
-        nrm.fit_image(self.ctrd,
-                      modelin=nrm.model,
-                      psf_offset=nrm.psf_offset,
-                      dqm=self.dqslice,
-                      weighted=self.weighted)
+        nrm.fit_image(
+            self.ctrd,
+            modelin=nrm.model,
+            psf_offset=nrm.psf_offset,
+            dqm=self.dqslice,
+            weighted=self.weighted,
+        )
 
         nrm.create_modelpsf()
         # model now stored as nrm.modelpsf, also nrm.residual
-        self.nrm = nrm # this gets updated with each slice
-        return nrm # to fit_fringes_all, where the output model will be created from list of nrm objects
+        self.nrm = nrm  # this gets updated with each slice
+        return nrm  # to fit_fringes_all, where output model is created from list of nrm objects

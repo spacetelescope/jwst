@@ -39,22 +39,22 @@ PEP8 formatting pass (except variable names)-- J. Long
 
 """
 
-__all__ = ['MatrixFourierTransform']
+__all__ = ["MatrixFourierTransform"]
 
 import numpy as np
 
 import logging
-_log = logging.getLogger('poppy')
 
-FFTSTYLE = 'FFTSTYLE'
-FFTRECT = 'FFTRECT'
-SYMMETRIC = 'SYMMETRIC'
-ADJUSTABLE = 'ADJUSTABLE'
+_log = logging.getLogger("poppy")
+
+FFTSTYLE = "FFTSTYLE"
+FFTRECT = "FFTRECT"
+SYMMETRIC = "SYMMETRIC"
+ADJUSTABLE = "ADJUSTABLE"
 CENTERING_CHOICES = (FFTSTYLE, SYMMETRIC, ADJUSTABLE, FFTRECT)
 
 
-def matrix_dft(plane, nlam_d, npix,
-               offset=None, inverse=False, centering=FFTSTYLE):
+def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTYLE):
     """Perform a matrix discrete Fourier transform with selectable output sampling and centering.
 
     Where parameters can be supplied as either
@@ -196,13 +196,13 @@ def matrix_dft(plane, nlam_d, npix,
 
 
 def matrix_idft(*args, **kwargs):
-    kwargs['inverse'] = True
+    kwargs["inverse"] = True
     return matrix_dft(*args, **kwargs)
 
 
-matrix_idft.__doc__ = matrix_dft.__doc__.replace( # type: ignore[union-attr]
-    'Perform a matrix discrete Fourier transform',
-    'Perform an inverse matrix discrete Fourier transform'
+matrix_idft.__doc__ = matrix_dft.__doc__.replace(  # type: ignore[union-attr]
+    "Perform a matrix discrete Fourier transform",
+    "Perform an inverse matrix discrete Fourier transform",
 )
 
 
@@ -251,21 +251,22 @@ class MatrixFourierTransform:
                 "'centering' must be one of [ADJUSTABLE, SYMMETRIC, FFTSTYLE]"
             )
         self.centering = centering
-        _log.debug("MatrixFourierTransform initialized using centering "
-                   f"type = {centering}")
+        _log.debug(
+            "MatrixFourierTransform initialized using centering " f"type = {centering}"
+        )
 
     def _validate_args(self, nlam_d, npix, offset):
         if self.centering == SYMMETRIC:
             if not np.isscalar(nlam_d) or not np.isscalar(npix):
                 raise RuntimeError(
-                    f'The selected centering mode, {self.centering}, does not support '
-                    'rectangular arrays.'
+                    f"The selected centering mode, {self.centering}, does not support "
+                    "rectangular arrays."
                 )
         if self.centering == FFTSTYLE or self.centering == SYMMETRIC:
             if offset is not None:
                 raise RuntimeError(
-                    f'The selected centering mode, {self.centering}, does not support '
-                    'position offsets.'
+                    f"The selected centering mode, {self.centering}, does not support "
+                    "position offsets."
                 )
 
     def perform(self, pupil, nlam_d, npix, offset=None):
@@ -306,10 +307,8 @@ class MatrixFourierTransform:
             f"output region size {nlam_d} in lambda / D units, "
             f"output array size {npix} pixels, "
             f"offset {offset}"
-
         )
-        return matrix_dft(pupil, nlam_d, npix,
-                          centering=self.centering, offset=offset)
+        return matrix_dft(pupil, nlam_d, npix, centering=self.centering, offset=offset)
 
     def inverse(self, image, nlam_d, npix, offset=None):
         """Inverse matrix discrete Fourier Transform.
@@ -350,5 +349,4 @@ class MatrixFourierTransform:
             f"output array size {npix} pixels, "
             f"offset {offset}"
         )
-        return matrix_idft(image, nlam_d, npix,
-                           centering=self.centering, offset=offset)
+        return matrix_idft(image, nlam_d, npix, centering=self.centering, offset=offset)

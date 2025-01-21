@@ -61,7 +61,8 @@ def apply_lg_plus(
     oifitsmodel: AmiOIModel object
         AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
     oifitsmodel_multi: AmiOIModel object
-        AMI tables of observables for each integration from LG algorithm fringe fitting in OIFITS format
+        AMI tables of observables for each integration
+        from LG algorithm fringe fitting in OIFITS format
     amilgmodel: AmiLGFitModel object
         AMI cropped data, model, and residual data from LG algorithm fringe fitting
 
@@ -91,9 +92,9 @@ def apply_lg_plus(
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_copy.data = input_copy.data[:, ystart - 1:ystop, xstart - 1:xstop]
-        input_copy.dq = input_copy.dq[:, ystart - 1:ystop, xstart - 1:xstop]
-        input_copy.err = input_copy.err[:, ystart - 1:ystop, xstart - 1:xstop]
+        input_copy.data = input_copy.data[:, ystart - 1 : ystop, xstart - 1 : xstop]
+        input_copy.dq = input_copy.dq[:, ystart - 1 : ystop, xstart - 1 : xstop]
+        input_copy.err = input_copy.err[:, ystart - 1 : ystop, xstart - 1 : xstop]
 
     data = input_copy.data
     dim = data.shape[-1]  # 80 px
@@ -126,10 +127,12 @@ def apply_lg_plus(
     if affine2d is None:
         log.info("Searching for best-fit affine transform")
         rotsearch_d = np.append(
-        np.arange(
-            rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2]
-        ),
-        rotsearch_parameters[1],
+            np.arange(
+                rotsearch_parameters[0],
+                rotsearch_parameters[1],
+                rotsearch_parameters[2],
+            ),
+            rotsearch_parameters[1],
         )
 
         log.info(f"Initial values to use for rotation search: {rotsearch_d}")
@@ -140,7 +143,8 @@ def apply_lg_plus(
         meddata = np.median(data, axis=0)
         nan_locations = np.where(np.isnan(meddata))
         log.info(
-            f"Replacing {len(nan_locations[0])} NaNs in median image with median of surrounding pixels"
+            f"Replacing {len(nan_locations[0])} NaNs "
+            "in median image with median of surrounding pixels"
         )
         box_size = 3
         hbox = int(box_size / 2)
@@ -148,7 +152,7 @@ def apply_lg_plus(
             y_box = nan_locations[0][i_pos]
             x_box = nan_locations[1][i_pos]
             box = meddata[
-                y_box - hbox:y_box + hbox + 1, x_box - hbox:x_box + hbox + 1
+                y_box - hbox : y_box + hbox + 1, x_box - hbox : x_box + hbox + 1
             ]
             median_fill = np.nanmedian(box)
             if np.isnan(median_fill):
@@ -172,28 +176,33 @@ def apply_lg_plus(
             oversample,
             holeshape,
         )
-        log.info(f'Found rotation: {affine2d.rotradccw:.4f} rad ({np.rad2deg(affine2d.rotradccw):.4f} deg)')
+        log.info(
+            f"Found rotation: {affine2d.rotradccw:.4f} rad "
+            f"({np.rad2deg(affine2d.rotradccw):.4f} deg)"
+        )
         # the affine2d returned here has only rotation...
         # to use rotation and scaling/shear, do some matrix multiplication here??
 
-    log.info('Using affine transform with parameters:')
-    log.info(f'\tmx={affine2d.mx:.6f}\tmy={affine2d.my:.6f}')
-    log.info(f'\tsx={affine2d.sx:.6f}\tsy={affine2d.sy:.6f}')
-    log.info(f'\txo={affine2d.xo:.6f}\tyo={affine2d.yo:.6f}')
-    log.info(f'\trotradccw={affine2d.rotradccw}')
+    log.info("Using affine transform with parameters:")
+    log.info(f"\tmx={affine2d.mx:.6f}\tmy={affine2d.my:.6f}")
+    log.info(f"\tsx={affine2d.sx:.6f}\tsy={affine2d.sy:.6f}")
+    log.info(f"\txo={affine2d.xo:.6f}\tyo={affine2d.yo:.6f}")
+    log.info(f"\trotradccw={affine2d.rotradccw}")
 
-    niriss = instrument_data.NIRISS(filt,
-                                    nrm_model,
-                                    bandpass=bandpass,
-                                    affine2d=affine2d,
-                                    firstfew=firstfew,
-                                    usebp=usebp,
-                                    chooseholes=chooseholes,
-                                    run_bpfix=run_bpfix)
+    niriss = instrument_data.NIRISS(
+        filt,
+        nrm_model,
+        bandpass=bandpass,
+        affine2d=affine2d,
+        firstfew=firstfew,
+        usebp=usebp,
+        chooseholes=chooseholes,
+        run_bpfix=run_bpfix,
+    )
 
-    ff_t = nrm_core.FringeFitter(niriss,
-                                 psf_offset_ff=psf_offset_ff,
-                                 oversample=oversample)
+    ff_t = nrm_core.FringeFitter(
+        niriss, psf_offset_ff=psf_offset_ff, oversample=oversample
+    )
 
     oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
 

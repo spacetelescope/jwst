@@ -44,6 +44,7 @@ PUPL_CRC = 6.603464  # / Circumscribing diameter for JWST primary
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 
+
 def create_wavelengths(filtername):
     """Extend filter support slightly past half power points.
 
@@ -219,7 +220,7 @@ def fourier_corr(data, pxdq, fmas):
     # Compute the B_Z matrix from Section 2.5 of Ireland 2013. This matrix
     # maps the bad pixels onto their Fourier power in the domain Z, which is
     # the complement of the pupil support.
-    B_Z = np.zeros((len(ww[0]), len(ww_ft[0]) * 2)) # noqa: N806
+    B_Z = np.zeros((len(ww[0]), len(ww_ft[0]) * 2))  # noqa: N806
     xh = data.shape[0] // 2
     yh = data.shape[1] // 2
     xx, yy = np.meshgrid(
@@ -235,8 +236,8 @@ def fourier_corr(data, pxdq, fmas):
 
     # Compute the corrections for the bad pixels using the Moore-Penrose pseudo
     # inverse of B_Z (Equation 19 of Ireland 2013).
-    B_Z_ct = np.transpose(np.conj(B_Z)) # noqa: N806
-    B_Z_mppinv = np.dot(B_Z_ct, np.linalg.inv(np.dot(B_Z, B_Z_ct))) # noqa: N806
+    B_Z_ct = np.transpose(np.conj(B_Z))  # noqa: N806
+    B_Z_mppinv = np.dot(B_Z_ct, np.linalg.inv(np.dot(B_Z, B_Z_ct)))  # noqa: N806
 
     # Apply the corrections for the bad pixels.
     data_out = deepcopy(data)
@@ -324,9 +325,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     ramp = np.arange(2 * sh) - 2 * sh // 2
     xx, yy = np.meshgrid(ramp, ramp)
     dist = np.sqrt(xx**2 + yy**2)
-    pmas = (
-        dist > 9.0 * filtwl_d[filt] / diam * 180.0 / np.pi * 1000.0 * 3600.0 / pxsc
-    )
+    pmas = dist > 9.0 * filtwl_d[filt] / diam * 180.0 / np.pi * 1000.0 * 3600.0 / pxsc
 
     # Go through all frames.
     for j in range(imsz[0]):

@@ -18,7 +18,10 @@ log.addHandler(logging.NullHandler())
 
 
 def g_eeag(xi, eta, **kwargs):
-    """Fourier transform a half-hexagon that is bisected from one corner to its diametrically opposite corner.
+    """Fourier transform a half-hexagon.
+
+    By half-hexagon, it is meant that
+    the hexagon is bisected from one corner to its diametrically opposite corner.
 
     { DG: how does this compare to  g_eeGEN() ? }
 
@@ -52,25 +55,26 @@ def g_eeag(xi, eta, **kwargs):
         Fourier transform of one half of a hexagon.
 
     """
-    c = kwargs['c']
-    pixel = kwargs['pixel']
-    d = kwargs['d']
-    lam = kwargs['lam']
+    c = kwargs["c"]
+    pixel = kwargs["pixel"]
+    d = kwargs["d"]
+    lam = kwargs["lam"]
     xi = (d / lam) * pixel * (xi - c[0])
     eta = (d / lam) * pixel * (eta - c[1])
 
-    if kwargs['minus'] is True:
+    if kwargs["minus"] is True:
         xi = -1 * xi
     i = 1j
     pi = np.pi
 
     g1 = np.exp(-i * pi * (2 * eta / np.sqrt(3) + xi))
-    g2 = (np.sqrt(3) * eta - 3 * xi)
-    g3 = (np.exp(i * pi * np.sqrt(3) * eta) - np.exp(i * pi *
-                                                     (4 * eta / np.sqrt(3) + xi)))
-    g4 = (np.sqrt(3) * eta + 3 * xi)
-    g5 = (np.exp(i * pi * eta / np.sqrt(3)) - np.exp(i * pi * xi))
-    g6 = (4 * pi * pi * (eta * eta * eta - 3 * eta * xi * xi))
+    g2 = np.sqrt(3) * eta - 3 * xi
+    g3 = np.exp(i * pi * np.sqrt(3) * eta) - np.exp(
+        i * pi * (4 * eta / np.sqrt(3) + xi)
+    )
+    g4 = np.sqrt(3) * eta + 3 * xi
+    g5 = np.exp(i * pi * eta / np.sqrt(3)) - np.exp(i * pi * xi)
+    g6 = 4 * pi * pi * (eta * eta * eta - 3 * eta * xi * xi)
     g = g1 * (g2 * g3 + g4 * g5) / g6
 
     return g
@@ -107,20 +111,19 @@ def glimit(xi, **kwargs):
         along eta=0
 
     """
-    c = kwargs['c']
-    pixel = kwargs['pixel']
-    d = kwargs['d']
-    lam = kwargs['lam']
+    c = kwargs["c"]
+    pixel = kwargs["pixel"]
+    d = kwargs["d"]
+    lam = kwargs["lam"]
     xi = (d / lam) * pixel * (xi - c[0])
 
-    if kwargs['minus'] is True:
+    if kwargs["minus"] is True:
         xi = -1 * xi
 
     pi = np.pi
 
-    g1 = (np.exp(-1j * pi * xi) / (2 * np.sqrt(3) * pi * pi * xi * xi))
-    g2 = (-1 + 1j * pi * xi + np.exp(1j * pi * xi) - 2j * pi * xi *
-          np.exp(1J * pi * xi))
+    g1 = np.exp(-1j * pi * xi) / (2 * np.sqrt(3) * pi * pi * xi * xi)
+    g2 = -1 + 1j * pi * xi + np.exp(1j * pi * xi) - 2j * pi * xi * np.exp(1j * pi * xi)
     g = g1 * g2
 
     return g
@@ -155,7 +158,7 @@ def mas2rad(mas):
         angle in radians
 
     """
-    rad = mas * (10**(-3)) / (3600 * 180 / np.pi)
+    rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
     return rad
 
 
@@ -192,7 +195,7 @@ def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     if pitch is None:
         pitch = mas2rad(65)
 
-    log.debug('hex_eeag: center: %s, s: %s', c, s)
+    log.debug("hex_eeag: center: %s, s: %s", c, s)
 
     h1 = np.fromfunction(g_eeag, s, d=d, c=c, lam=lam, pixel=pitch, minus=False)
     h2 = np.fromfunction(g_eeag, s, d=d, c=c, lam=lam, pixel=pitch, minus=True)
@@ -204,10 +207,8 @@ def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     # The "yval" will be the same for all points;
     # loop over the xi values to replace NaN strip with limiting behavior.
     for index, val in enumerate(xnan):
-        h1 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch,
-                    minus=False)
-        h2 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch,
-                    minus=True)
+        h1 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch, minus=False)
+        h2 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch, minus=True)
         hex_complex[val, ynan[index]] = h1 + h2
 
     (xnan, ynan) = np.where(np.isnan(hex_complex))
@@ -218,9 +219,17 @@ def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     if log.getEffectiveLevel() <= logging.DEBUG:
         hr = hex_complex.real
         hi = hex_complex.imag
-        log.debug('hex_eeag: hr.min: %s, hr.mean: %s, hr.max: %s',
-                  hr.min(), hr.mean(), hr.max())
-        log.debug('hex_eeag: hi.min: %s, hi.mean: %s, hi.max: %s',
-                  hi.min(), hi.mean(), hi.max())
+        log.debug(
+            "hex_eeag: hr.min: %s, hr.mean: %s, hr.max: %s",
+            hr.min(),
+            hr.mean(),
+            hr.max(),
+        )
+        log.debug(
+            "hex_eeag: hi.min: %s, hi.mean: %s, hi.max: %s",
+            hi.min(),
+            hi.mean(),
+            hi.max(),
+        )
 
     return np.abs(hex_complex)

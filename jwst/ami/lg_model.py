@@ -94,13 +94,13 @@ class LgModel:
         # get these from mask_definition_ami instead
         if mask is None:
             log.info("Using JWST AMI mask geometry from LgModel")
-            mask = mask_definition_ami.NRMDefinition(nrm_model,
-                maskname="jwst_ami", chooseholes=chooseholes
+            mask = mask_definition_ami.NRMDefinition(
+                nrm_model, maskname="jwst_ami", chooseholes=chooseholes
             )
         elif isinstance(mask, str):
-            mask = mask_definition_ami.NRMDefinition(nrm_model,
-                maskname=mask, chooseholes=chooseholes
-            ) # retain ability to possibly  use other named masks, for now
+            mask = mask_definition_ami.NRMDefinition(
+                nrm_model, maskname=mask, chooseholes=chooseholes
+            )  # retain ability to possibly  use other named masks, for now
         self.ctrs = mask.ctrs
         self.d = mask.hdia
         self.D = mask.activeD
@@ -378,12 +378,14 @@ class LgModel:
         self.fringeamp, self.fringephase = leastsqnrm.tan2visibilities(self.soln)
         self.fringepistons = utils.fringes2pistons(self.fringephase, len(self.ctrs))
         self.redundant_cps = leastsqnrm.redundant_cps(self.fringephase, n=self.N)
-        self.t3_amplitudes = leastsqnrm.t3_amplitudes(self.fringeamp, n=self.N) # RC 8/24
+        self.t3_amplitudes = leastsqnrm.t3_amplitudes(
+            self.fringeamp, n=self.N
+        )  # RC 8/24
         self.redundant_cas = leastsqnrm.closure_amplitudes(self.fringeamp, n=self.N)
-        self.q4_phases = leastsqnrm.q4_phases(self.fringephase, n=self.N) # RC 8/24
+        self.q4_phases = leastsqnrm.q4_phases(self.fringephase, n=self.N)  # RC 8/24
 
     def create_modelpsf(self):
-        """Make an image from the object's model and fit solutions by setting the modelpsf attribute."""
+        """Make an image from the object's model and fit solutions by setting modelpsf attribute."""
         try:
             self.modelpsf = np.zeros((self.fov, self.fov))
         except AttributeError:

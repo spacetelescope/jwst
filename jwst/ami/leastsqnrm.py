@@ -161,7 +161,9 @@ def cos2deltapistons(coeffs):
 
 
 def replacenan(array):
-    """Replace singularities in analytical hexagon Fourier transform with the analytically derived limits.
+    """Replace singularities in analytical hexagon Fourier transform.
+
+    Replace NaN values with the analytically derived limits.
 
     Parameters
     ----------
@@ -553,7 +555,6 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     log.info(f"\tflatimg {flatimg.shape:}")
     log.info(f"\tflatdqm {flatdqm.shape:}")
 
-
     log.info("")
     log.info("\ttype(dqm) %s", type(dqm))
     if dqm is not None:
@@ -579,9 +580,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
     log.info(f"\tflatmodel_nan {flatmodel_nan.shape:}")
     log.info(f"\tflatmodel     {flatmodel.shape:}")
-    log.info(
-        f"\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}"
-    )
+    log.info(f"\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}")
     log.info("flat model dimensions %s", np.shape(flatmodel))
     log.info("flat image dimensions %s", np.shape(flatimg))
 
@@ -619,7 +618,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
             from linearfit import linearfit  # type: ignore[import-not-found]
 
             # dependent variables
-            M = np.asmatrix(flatimg) # noqa: N806
+            M = np.asmatrix(flatimg)  # noqa: N806
 
             # photon noise
             noise = np.sqrt(np.abs(flatimg))
@@ -629,9 +628,9 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
             # uniform weight
             wy = weights
-            S = np.asmatrix(np.diag(wy)) # noqa: N806
+            S = np.asmatrix(np.diag(wy))  # noqa: N806
             # matrix of independent variables
-            C = np.asmatrix(flatmodeltransp) # noqa: N806
+            C = np.asmatrix(flatmodeltransp)  # noqa: N806
 
             # initialize object
             result = linearfit.LinearFit(M, S, C)
@@ -764,7 +763,7 @@ def populate_antisymmphasearray(deltaps, n=7):
     step = 0
     n = n - 1
     for h in range(n):
-        arr[h, h + 1:] = deltaps[step:step + n]
+        arr[h, h + 1 :] = deltaps[step : step + n]
         step += n
         n -= 1
 
@@ -796,13 +795,14 @@ def populate_symmamparray(amps, n=7):
     n = n - 1
 
     for h in range(n):
-        arr[h, h + 1:] = amps[step:step + n]
+        arr[h, h + 1 :] = amps[step : step + n]
         step += n
         n -= 1
 
     arr += arr.T
 
     return arr
+
 
 def t3_amplitudes(amps, n=7):
     """Populate the triple-product amplitude array (NOT closure amplitudes).
@@ -974,6 +974,7 @@ def closure_amplitudes(amps, n=7):
 
     return cas
 
+
 def q4_phases(deltaps, n=7):
     """Calculate phases for each set of 4 holes.
 
@@ -1004,7 +1005,7 @@ def q4_phases(deltaps, n=7):
                         + arr[ll + ii + jj + kk + 3, kk + jj + ii + 2]
                         - arr[ii, kk + ii + jj + 2]
                         - arr[jj + ii + 1, ll + ii + jj + kk + 3]
-                        )
+                    )
                 nn = nn + ll + 1
 
     return quad_phases

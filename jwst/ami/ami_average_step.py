@@ -43,6 +43,6 @@ class AmiAverageStep(Step):
         # Call the LG average routine for the list of inputs
         result = ami_average.average_lg(input_list)
 
-        result.meta.cal_step.ami_average = 'COMPLETE'
+        result.meta.cal_step.ami_average = "COMPLETE"
 
         return result

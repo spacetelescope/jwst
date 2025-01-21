@@ -14,19 +14,21 @@ log.setLevel(logging.DEBUG)
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 
+
 class NIRISS:
     """Module for defining NIRISS data format, wavelength info, and mask geometry."""
 
-    def __init__(self,
-                 filt,
-                 nrm_model,
-                 chooseholes=None,
-                 affine2d=None,
-                 bandpass=None,
-                 usebp=True,
-                 firstfew=None,
-                 run_bpfix=True
-                 ):
+    def __init__(
+        self,
+        filt,
+        nrm_model,
+        chooseholes=None,
+        affine2d=None,
+        bandpass=None,
+        usebp=True,
+        firstfew=None,
+        run_bpfix=True,
+    ):
         """Initialize NIRISS class for NIRISS/AMI instrument.
 
         Parameters
@@ -44,7 +46,8 @@ class NIRISS:
             Affine2d object
 
         bandpass: synphot spectrum or array
-            None, synphot object or [(wt,wlen),(wt,wlen),...].  Monochromatic would be e.g. [(1.0, 4.3e-6)]
+            None, synphot object or [(wt,wlen),(wt,wlen),...].
+            Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
             the given bandpass, so you could simulate, for example,
             a 21cm psf through something called "F430M"!
@@ -92,11 +95,9 @@ class NIRISS:
         self.telname = "JWST"
         self.instrument = "NIRISS"
         self.arrname = "jwst_ami"
-        self.holeshape = 'hex'
+        self.holeshape = "hex"
         self.mask = NRMDefinition(
-            self.nrm_model,
-            maskname=self.arrname,
-            chooseholes=self.chooseholes
+            self.nrm_model, maskname=self.arrname, chooseholes=self.chooseholes
         )
 
         # save affine deformation of pupil object or create a no-deformation object.
@@ -201,7 +202,6 @@ class NIRISS:
         self.ra_uncertainty = input_model.meta.target.ra_uncertainty
         self.dec_uncertainty = input_model.meta.target.dec_uncertainty
 
-
         datestr = input_model.meta.visit.start_time.replace(" ", "T")
         self.date = datestr  # is this the right start time?
         self.year = datestr[:4]
@@ -220,8 +220,10 @@ class NIRISS:
                     scidata = scidata[: self.firstfew, :, :]
                     bpdata = bpdata[: self.firstfew, :, :]
                 else:
-                    log.warning(f"Input firstfew={self.firstfew:d} is greater than "
-                                "the number of integrations")
+                    log.warning(
+                        f"Input firstfew={self.firstfew:d} is greater than "
+                        "the number of integrations"
+                    )
                     log.warning("All integrations will be analyzed")
             self.nwav = scidata.shape[0]
             [self.wls.append(self.wls[0]) for f in range(self.nwav - 1)]
@@ -274,10 +276,10 @@ class NIRISS:
         # Roughly center scidata, bpdata around peak pixel position
         peakx, peaky, r = utils.min_distance_to_edge(med_im)
         scidata_ctrd = scidata[
-            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+            :, int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)
         ]
         bpdata_ctrd = bpdata[
-            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+            :, int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)
         ]
 
         log.info(
@@ -286,7 +288,9 @@ class NIRISS:
         )  # +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
-            log.info('Applying Fourier bad pixel correction to cropped data, updating DQ array')
+            log.info(
+                "Applying Fourier bad pixel correction to cropped data, updating DQ array"
+            )
             scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(
                 scidata_ctrd,
                 bpdata_ctrd,

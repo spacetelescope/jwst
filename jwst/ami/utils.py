@@ -448,7 +448,7 @@ def center_imagepeak(img, r="default", cntrimg=True):
         pass
 
     cropped = img[
-        int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+        int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)
     ]
 
     return cropped
@@ -671,12 +671,12 @@ def findslope(a):
     c = centerpoint(a.shape)
     c = (int(c[0]), int(c[1]))
     sigh, sigv = (
-        tilt[0][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].std(),
-        tilt[1][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].std(),
+        tilt[0][c[0] - 1 : c[0] + 1, c[1] - 1 : c[1] + 1].std(),
+        tilt[1][c[0] - 1 : c[0] + 1, c[1] - 1 : c[1] + 1].std(),
     )
     avgh, avgv = (
-        tilt[0][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].mean(),
-        tilt[1][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].mean(),
+        tilt[0][c[0] - 1 : c[0] + 1, c[1] - 1 : c[1] + 1].mean(),
+        tilt[1][c[0] - 1 : c[0] + 1, c[1] - 1 : c[1] + 1].mean(),
     )
 
     # second stage mask cleaning: 5 sig rejection of mask
@@ -688,14 +688,14 @@ def findslope(a):
     tv[newmaskv] = tilt[1][newmaskv]
 
     # determine units of tilt -
-    G = a.shape[0] / (2.0 * np.pi), a.shape[1] / (2.0 * np.pi) # noqa: N806
+    G = a.shape[0] / (2.0 * np.pi), a.shape[1] / (2.0 * np.pi)  # noqa: N806
 
     slopes = G[0] * tilt[0][newmaskh].mean(), G[1] * tilt[1][newmaskv].mean()
     return slopes
 
 
 def quadratic(p, x):
-    """Calculate value of x at minimum or maximum value of y given coefficients of quadratic function.
+    """Calculate value of x at min or max value of y given coefficients of quadratic function.
 
     Parameters
     ----------
@@ -972,8 +972,8 @@ def crosscorrelate(a=None, b=None):
 
     fac = np.sqrt(a.shape[0] * a.shape[1])
 
-    A = fft.fft2(a) / fac #noqa: N806
-    B = fft.fft2(b) / fac #noqa: N806
+    A = fft.fft2(a) / fac  # noqa: N806
+    B = fft.fft2(b) / fac  # noqa: N806
     c = fft.ifft2(A * B.conj()) * fac * fac
 
     log.debug("----------------")
@@ -1086,8 +1086,8 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     # Extract the region of interest for the data
     try:
-        data_array = input_array[yc - hbox:yc + hbox + 1, xc - hbox:xc + hbox + 1]
-        dq_array = input_dq_array[yc - hbox:yc + hbox + 1, xc - hbox:xc + hbox + 1]
+        data_array = input_array[yc - hbox : yc + hbox + 1, xc - hbox : xc + hbox + 1]
+        dq_array = input_dq_array[yc - hbox : yc + hbox + 1, xc - hbox : xc + hbox + 1]
     except IndexError:
         # If the box is outside the data, return 0
         log.warning("Box for median filter is outside the data")
@@ -1154,7 +1154,6 @@ def img_median_replace(img_model, box_size):
 
     # check to see if any of the pixels are bad
     if num_nan + num_dq_bad > 0:
-
         log.info(
             f"Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels"
         )
@@ -1198,6 +1197,7 @@ def get_filt_spec(throughput_model):
     )
     return band
 
+
 def get_flat_spec():
     """Produce a synphot spectrum object with constant (unity) flux.
 
@@ -1216,7 +1216,8 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
 
     Largely copied from Poppy instrument.py
     Define nlambda bins of wavelengths, calculate effstim for each, normalize by effstim total.
-    nlambda should be calculated so there are ~10 wavelengths per resolution element (19 should work)
+    nlambda should be calculated so there are ~10 wavelengths per resolution element
+    (19 should work)
 
     Parameters
     ----------
@@ -1235,7 +1236,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
         Array of shape (nlambda,2) containing wavelengths, final throughputs
 
     """
-    wl_filt, th_filt = bandpass._get_arrays(bandpass.waveset) # noqa: SLF001
+    wl_filt, th_filt = bandpass._get_arrays(bandpass.waveset)  # noqa: SLF001
 
     if trim:
         log.debug(f"Trimming bandpass to above {trim:.1e} throughput")
@@ -1254,12 +1255,20 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     effstims = []
 
     binfac = ptsin // nlambda
-    log.debug("Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda))
+    log.debug(
+        "Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda)
+    )
     for wave in wavesteps:
-        log.debug(f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
-                  f"with width {deltawave.to(u.micron):.2f}")
-        box = synphot.spectrum.SpectralElement(synphot.models.Box1D, amplitude=1, x_0=wave,
-                                               width=deltawave) * bandpass
+        log.debug(
+            f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
+            f"with width {deltawave.to(u.micron):.2f}"
+        )
+        box = (
+            synphot.spectrum.SpectralElement(
+                synphot.models.Box1D, amplitude=1, x_0=wave, width=deltawave
+            )
+            * bandpass
+        )
 
         binset = np.linspace(wave - deltawave, wave + deltawave, 30)
         binset = binset[binset >= 0]  # remove any negative values
@@ -1307,6 +1316,7 @@ def get_cw_beta(bandpass):
     beta = ew / cw  # fractional bandpass
     return cw, beta
 
+
 def handle_bandpass(bandpass, throughput_model):
     """Determine what to do with the input bandpass.
 
@@ -1339,11 +1349,13 @@ def handle_bandpass(bandpass, throughput_model):
 
     else:
         # Default behavior: get the filter and source spectrum
-        log.info(f'Reading throughput model data for {throughput_model.meta.instrument.filter}.')
+        log.info(
+            f"Reading throughput model data for {throughput_model.meta.instrument.filter}."
+        )
         filt_spec = get_filt_spec(throughput_model)
-        log.info('Using flat spectrum model.')
+        log.info("Using flat spectrum model.")
         flat_spec = get_flat_spec()
-        nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
+        nspecbin = 19  # how many wavelngth bins used across bandpass -- affects runtime
         bandpass = combine_src_filt(
             filt_spec,
             flat_spec,
@@ -1400,10 +1412,10 @@ def degrees_per_pixel(datamodel):
     """
     wcsinfo = datamodel.meta.wcsinfo
     if (
-        hasattr(wcsinfo, "cd1_1") and
-        hasattr(wcsinfo, "cd1_2") and
-        hasattr(wcsinfo, "cd2_1") and
-        hasattr(wcsinfo, "cd2_2")
+        hasattr(wcsinfo, "cd1_1")
+        and hasattr(wcsinfo, "cd1_2")
+        and hasattr(wcsinfo, "cd2_1")
+        and hasattr(wcsinfo, "cd2_2")
     ):
         cd11 = datamodel.meta.wcsinfo.cd1_1
         cd12 = datamodel.meta.wcsinfo.cd1_2
