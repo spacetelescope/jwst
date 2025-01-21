@@ -77,7 +77,7 @@ def test_utils_findmax():
 def test_utils_makeA():
     """Test of makeA in utils module"""
     nh = 4  # number of holes
-    arr = utils.makeA(nh)
+    arr = utils.make_a(nh)
 
     true_arr = np.array(
         [
@@ -777,8 +777,8 @@ def test_hexee_glimit():
     Calculate the analytic limit of the Fourier transform of one half of the
     hexagon along eta=0.
     """
-    xi, eta, kwargs = setup_hexee()
-    g = hexee.glimit(xi, eta, **kwargs)
+    xi, _, kwargs = setup_hexee()
+    g = hexee.glimit(xi, **kwargs)
 
     true_g = np.array(
         [
@@ -817,9 +817,9 @@ def test_analyticnrm2_psf(setup_sf):
 
 def test_analyticnrm2_asf_hex(setup_sf):
     """Test of asf_hex() in the analyticnrm2 module FOR HEX"""
-    pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
+    pixel, fov, oversample, _ctrs, d, lam, _phi, psf_offset, aff_obj = setup_sf
 
-    asf = asf_hex(pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj)
+    asf = asf_hex(pixel, fov, oversample, d, lam, psf_offset, aff_obj)
 
     true_asf = np.array(
         [

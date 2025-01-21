@@ -246,7 +246,6 @@ class AmiAnalyzeStep(Step):
                     self.log.info("Using affine parameters from commissioning.")
                 else:
                     affine2d = self.override_affine2d()
-            # and if it is None, rotation search done in apply_lg_plus
 
             # Get the name of the NRM reference file to use
             nrm_reffile = self.get_reference_file(input_model, "nrm")
@@ -262,7 +261,6 @@ class AmiAnalyzeStep(Step):
                     throughput_model,
                     nrm_model,
                     oversample,
-                    rotate,
                     psf_offset,
                     rotsearch_parameters,
                     bandpass,

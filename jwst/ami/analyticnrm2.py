@@ -386,7 +386,7 @@ def model_array(
         asf_pb = asf(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     elif shape == "hex":
         asf_pb = asf_hex(
-            pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d
+            pitch, fov, oversample, d, lam, psf_offset, affine2d
         )
     else:
         raise KeyError(
@@ -636,13 +636,13 @@ def psf(
             detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
         )
         asf_2d = (
-            asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+            asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
             * asf_fringe
         )
 
     elif shape == "hexonly":
         asf_2d = asf_hex(
-            detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d
+            detpixel, fov, oversample, d, lam, psf_offset, affine2d
         )
 
     elif shape == "fringeonly":

@@ -513,18 +513,13 @@ def min_distance_to_edge(img, cntrimg=False):
     return peakx, peaky, h  # the 'half side' each way from the peak pixel
 
 
-def find_centroid(a, thresh):
+def find_centroid(a):
     """Calculate the centroid of the image.
 
     Parameters
     ----------
     a: 2D square float
         input image array
-
-    thresh: float
-        Threshold for the absolute value of the FT(a). Normalize abs(CV = FT(a))
-        for unity peak, and define the support of good CV when this is above
-        threshold, then find the phase slope of the CV only over this support.
 
     Returns
     -------
@@ -561,11 +556,7 @@ def find_centroid(a, thresh):
 
     cvmod = cvmod / cvmod.max()  # normalize to unity peak
 
-    cvmask = np.where(cvmod >= thresh)
-
-    cvmask_edgetrim = trim(cvmask, a.shape[0])
-
-    htilt, vtilt = findslope(cvpha, cvmask_edgetrim)
+    htilt, vtilt = findslope(cvpha)
 
     return htilt, vtilt
 
@@ -1410,7 +1401,7 @@ def degrees_per_pixel(datamodel):
     pixel scale in degrees/pixel
 
     """
-    wcsinfo = datamodel.meta.wcsinfo
+    wcsinfo = datamodel.meta.wcsinfo._instance # noqa: SLF001
     if (
         hasattr(wcsinfo, "cd1_1")
         and hasattr(wcsinfo, "cd1_2")

@@ -213,7 +213,7 @@ class FringeFitter:
             # returned values have offsets x-y flipped:
             # Finding centroids the Fourier way assumes no bad pixels case:
             # Fourier domain mean slope
-            centroid = utils.find_centroid(self.ctrd, self.instrument_data.threshold)
+            centroid = utils.find_centroid(self.ctrd)
             # centroid represents offsets from brightest pixel ctr
             # use flipped centroids to update centroid of image for JWST:
             # check parity for GPI, Vizier,...
@@ -237,7 +237,6 @@ class FringeFitter:
         nrm.fit_image(
             self.ctrd,
             modelin=nrm.model,
-            psf_offset=nrm.psf_offset,
             dqm=self.dqslice,
             weighted=self.weighted,
         )

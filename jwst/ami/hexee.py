@@ -207,8 +207,8 @@ def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     # The "yval" will be the same for all points;
     # loop over the xi values to replace NaN strip with limiting behavior.
     for index, val in enumerate(xnan):
-        h1 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch, minus=False)
-        h2 = glimit(val, ynan[index], d=d, c=c, lam=lam, pixel=pitch, minus=True)
+        h1 = glimit(val, d=d, c=c, lam=lam, pixel=pitch, minus=False)
+        h2 = glimit(val, d=d, c=c, lam=lam, pixel=pitch, minus=True)
         hex_complex[val, ynan[index]] = h1 + h2
 
     (xnan, ynan) = np.where(np.isnan(hex_complex))
