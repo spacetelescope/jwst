@@ -9,7 +9,7 @@ import textwrap
 from astropy import __version__
 from astropy.utils.diff import diff_values
 
-from astropy.io.fits.card import BLANK_CARD, Card
+from astropy.io.fits.card import BLANK_CARD
 
 from astropy.io.fits.hdu.hdulist import HDUList
 from astropy.io.fits.hdu.table import _TableLikeHDU
