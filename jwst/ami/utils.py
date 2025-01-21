@@ -216,7 +216,7 @@ class Affine2d:
 
         return trans_point
 
-    def distortFargs(self, u, v):
+    def distort_f_args(self, u, v):
         """Implement the (u,v) to (u',v') change in arguments of F.
 
         See class documentation of Bracewell Fourier 2D affine transformation theorem.
@@ -323,7 +323,7 @@ def affinepars2header(hdr, affine2d):
     return hdr
 
 
-def makedisk(N, R, ctr=(0, 0)):
+def makedisk(n, r, ctr=(0, 0)):
     """Calculate a 'disk'.
 
     Disk is defined as an array whose values =1 in a circular region near
@@ -331,10 +331,10 @@ def makedisk(N, R, ctr=(0, 0)):
 
     Parameters
     ----------
-    N: integer
+    n: integer
         size of 1 dimension of the array to be returned
 
-    R: integer
+    r: integer
         radius of disk
 
     ctr: (integer, integer)
@@ -347,19 +347,19 @@ def makedisk(N, R, ctr=(0, 0)):
         array, and =0 elsewhere.
 
     """
-    if N % 2 == 1:  # odd
-        M = (N - 1) / 2
-        xx = np.linspace(-M - ctr[0], M - ctr[0], N)
-        yy = np.linspace(-M - ctr[1], M - ctr[1], N)
-    if N % 2 == 0:  # even
-        M = N / 2
-        xx = np.linspace(-M - ctr[0], M - ctr[0] - 1, N)
-        yy = np.linspace(-M - ctr[1], M - ctr[1] - 1, N)
+    if n % 2 == 1:  # odd
+        m = (n - 1) / n
+        xx = np.linspace(-m - ctr[0], m - ctr[0], n)
+        yy = np.linspace(-m - ctr[1], m - ctr[1], n)
+    if n % 2 == 0:  # even
+        m = n / 2
+        xx = np.linspace(-m - ctr[0], m - ctr[0] - 1, n)
+        yy = np.linspace(-m - ctr[1], m - ctr[1] - 1, n)
 
     (x, y) = np.meshgrid(xx, yy.T)
-    r = np.sqrt((x**2) + (y**2))
-    array = np.zeros((N, N))
-    array[r < R] = 1
+    rad = np.sqrt((x**2) + (y**2))
+    array = np.zeros((n, n))
+    array[rad < r] = 1
 
     return array
 
@@ -669,14 +669,14 @@ def findslope(a):
     tilt = np.zeros(a.shape), np.zeros(a.shape)
     tilt = (a_r - a_l) / 2.0, (a_up - a_dn) / 2.0  # raw estimate of phase slope
     c = centerpoint(a.shape)
-    C = (int(c[0]), int(c[1]))
+    c = (int(c[0]), int(c[1]))
     sigh, sigv = (
-        tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std(),
-        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std(),
+        tilt[0][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].std(),
+        tilt[1][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].std(),
     )
     avgh, avgv = (
-        tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean(),
-        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean(),
+        tilt[0][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].mean(),
+        tilt[1][c[0] - 1:c[0] + 1, c[1] - 1:c[1] + 1].mean(),
     )
 
     # second stage mask cleaning: 5 sig rejection of mask
@@ -688,7 +688,7 @@ def findslope(a):
     tv[newmaskv] = tilt[1][newmaskv]
 
     # determine units of tilt -
-    G = a.shape[0] / (2.0 * np.pi), a.shape[1] / (2.0 * np.pi)
+    G = a.shape[0] / (2.0 * np.pi), a.shape[1] / (2.0 * np.pi) # noqa: N806
 
     slopes = G[0] * tilt[0][newmaskh].mean(), G[1] * tilt[1][newmaskv].mean()
     return slopes
@@ -724,7 +724,7 @@ def quadratic(p, x):
     return maxx, maxy, fit_val
 
 
-def makeA(nh):
+def make_a(nh):
     """Write the 'NRM matrix'.
 
     The NRM matrix later (?) gets pseudo-inverted to provide (arbitrarily constrained)
@@ -740,7 +740,7 @@ def makeA(nh):
 
     Returns
     -------
-    matrixA: 2D float array
+    matrix_a: 2D float array
          nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
 
     Notes
@@ -759,9 +759,9 @@ def makeA(nh):
         (-1 +1  0  0  ...)
         (0 -1 +1  0  ...)
 
-    which is implemented in makeA() as:
-        matrixA[row,h2] = -1
-        matrixA[row,h1] = +1
+    which is implemented in make_a() as:
+        matrix_a[row,h2] = -1
+        matrix_a[row,h1] = +1
 
     To change the convention just reverse the signs of the 'ones'.
 
@@ -771,11 +771,11 @@ def makeA(nh):
 
     """
     log.debug("-------")
-    log.debug(" makeA:")
+    log.debug(" make_a:")
 
     ncols = (nh * (nh - 1)) // 2
     nrows = nh
-    matrixA = np.zeros((ncols, nrows))
+    matrix_a = np.zeros((ncols, nrows))
 
     row = 0
     for h2 in range(nh):
@@ -785,14 +785,14 @@ def makeA(nh):
             else:
                 log.debug(" row: %s, h1: %s, h2: %s", row, h1, h2)
 
-                matrixA[row, h2] = -1
-                matrixA[row, h1] = +1
+                matrix_a[row, h2] = -1
+                matrix_a[row, h1] = +1
                 row += 1
 
-    log.debug("matrixA:")
-    log.debug(" %s", matrixA)
+    log.debug("matrix_a:")
+    log.debug(" %s", matrix_a)
 
-    return matrixA
+    return matrix_a
 
 
 def fringes2pistons(fringephases, nholes):
@@ -816,10 +816,10 @@ def fringes2pistons(fringephases, nholes):
         pistons in same units as fringe phases
 
     """
-    Anrm = makeA(nholes)
-    Apinv = np.linalg.pinv(Anrm)
+    a_nrm = make_a(nholes)
+    a_p_inv = np.linalg.pinv(a_nrm)
 
-    return np.dot(Apinv, fringephases)
+    return np.dot(a_p_inv, fringephases)
 
 
 def rebin(a=None, rc=(2, 2)):
@@ -972,8 +972,8 @@ def crosscorrelate(a=None, b=None):
 
     fac = np.sqrt(a.shape[0] * a.shape[1])
 
-    A = fft.fft2(a) / fac
-    B = fft.fft2(b) / fac
+    A = fft.fft2(a) / fac #noqa: N806
+    B = fft.fft2(b) / fac #noqa: N806
     c = fft.ifft2(A * B.conj()) * fac * fac
 
     log.debug("----------------")

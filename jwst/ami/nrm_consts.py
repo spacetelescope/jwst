@@ -1,7 +1,3 @@
-# Module containing constants that were previously in separate modules
-# have been moved here
-#
-
 import numpy as np
 
 # Constants used in nrm_model.py

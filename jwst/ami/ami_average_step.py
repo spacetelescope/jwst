@@ -41,7 +41,7 @@ class AmiAverageStep(Step):
         input_list = list(self.flatten_input(input_list))
 
         # Call the LG average routine for the list of inputs
-        result = ami_average.average_LG(input_list)
+        result = ami_average.average_lg(input_list)
 
         result.meta.cal_step.ami_average = 'COMPLETE'
 

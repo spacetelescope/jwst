@@ -155,7 +155,7 @@ class AmiAnalyzeStep(Step):
         return affine2d
 
     def process(self, fname):
-        """Performs analysis of an AMI mode exposure by applying the LG algorithm.
+        """Perform analysis of an AMI mode exposure by applying the LG algorithm.
 
         Parameters
         ----------
@@ -224,7 +224,7 @@ class AmiAnalyzeStep(Step):
                     self.log.info("Using affine parameters from commissioning.")
                 else:
                     affine2d = self.override_affine2d()
-            # and if it is None, rotation search done in apply_LG_plus
+            # and if it is None, rotation search done in apply_lg_plus
 
             # Get the name of the NRM reference file to use
             nrm_reffile = self.get_reference_file(input_model, 'nrm')
@@ -235,7 +235,7 @@ class AmiAnalyzeStep(Step):
                 datamodels.NRMModel(nrm_reffile) as nrm_model,
             ):
                 # Apply the LG+ methods to the data
-                oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_LG_plus(
+                oifitsmodel, oifitsmodel_multi, amilgmodel = ami_analyze.apply_lg_plus(
                     input_model,
                     throughput_model,
                     nrm_model,

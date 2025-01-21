@@ -753,13 +753,13 @@ def test_leastsqnrm_multiplyenv():
 # ---------------------------------------------------------------
 # hexee module tests:
 #
-def test_hexee_g_eeAG():
-    """Test of g_eeAG() in the hexee module.
+def test_hexee_g_eeag():
+    """Test of g_eeag() in the hexee module.
     Calculate the Fourier transform of one half of a hexagon that is
     bisected from one corner to its diametrically opposite corner.
     """
     xi, eta, kwargs = setup_hexee()
-    g = hexee.g_eeAG(xi, eta, **kwargs)
+    g = hexee.g_eeag(xi, eta, **kwargs)
 
     true_g = np.array(
         [

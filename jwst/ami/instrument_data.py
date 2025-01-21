@@ -11,6 +11,8 @@ import copy
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+JUMP_DET = dqflags.pixel["JUMP_DET"]
 
 class NIRISS:
     """Module for defining NIRISS data format, wavelength info, and mask geometry."""
@@ -304,8 +306,6 @@ class NIRISS:
             log.info(
                 "usebp flag set to TRUE: bad pixels will be excluded from model fit"
             )
-            DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
-            JUMP_DET = dqflags.pixel["JUMP_DET"]
             dq_dnu = bpdata_ctrd & DO_NOT_USE == DO_NOT_USE
             dq_jump = bpdata_ctrd & JUMP_DET == JUMP_DET
             dqmask_ctrd = dq_dnu | dq_jump

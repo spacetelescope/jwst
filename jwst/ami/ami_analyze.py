@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def apply_LG_plus(
+def apply_lg_plus(
     input_model,
     throughput_model,
     nrm_model,
@@ -27,7 +27,7 @@ def apply_LG_plus(
     affine2d,
     run_bpfix,
 ):
-    """Applies the image plane algorithm (LG-PLUS) to an AMI exposure.
+    """Apply the image plane algorithm (LG-PLUS) to an AMI exposure.
 
     Parameters
     ----------
@@ -117,7 +117,7 @@ def apply_LG_plus(
     # model requires single pixel scale, so average X and Y scales
     # (this is done again in instrument_data?)
     pscale_deg = np.mean([pscaledegx, pscaledegy])
-    PIXELSCALE_r = np.deg2rad(pscale_deg)
+    pixelscale_r = np.deg2rad(pscale_deg)
     holeshape = "hex"
 
     # Throughput (combined filter and source spectrum) calculated here
@@ -166,7 +166,7 @@ def apply_LG_plus(
             sy,
             xo,
             yo,
-            PIXELSCALE_r,
+            pixelscale_r,
             dim,
             bandpass,
             oversample,

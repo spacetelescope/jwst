@@ -27,11 +27,11 @@ def jinc(x, y):
         2d jinc at the given coordinates, with NaNs replaced by pi/4.
 
     """
-    R = (jinc.d / jinc.lam) * jinc.pitch *  \
+    r = (jinc.d / jinc.lam) * jinc.pitch *  \
         np.sqrt((x - jinc.offx) * (x - jinc.offx) +
                 (y - jinc.offy) * (y - jinc.offy))
 
-    jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * R) / (2.0 * R))
+    jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * r) / (2.0 * r))
 
     return jinc_2d
 
@@ -70,7 +70,7 @@ def ffc(kx, ky, **kwargs):
     lam = kwargs['lam']  # m
     pitch = kwargs['pitch']  # pitch for calcn = detpixscale/oversample
     affine2d = kwargs['affine2d']
-    kxprime, kyprime = affine2d.distortFargs(kx - ko[0], ky - ko[1])
+    kxprime, kyprime = affine2d.distort_f_args(kx - ko[0], ky - ko[1])
 
     cos_array = 2 * np.cos(2 * np.pi * pitch * (kxprime * baseline[0] + kyprime * baseline[1]) / lam)
 
@@ -111,7 +111,7 @@ def ffs(kx, ky, **kwargs):
     lam = kwargs['lam']  # m
     pitch = kwargs['pitch']  # pitch for calcn = detpixscale/oversample
     affine2d = kwargs['affine2d']
-    kxprime, kyprime = affine2d.distortFargs(kx - ko[0], ky - ko[1])
+    kxprime, kyprime = affine2d.distort_f_args(kx - ko[0], ky - ko[1])
 
     sin_array = 2 * np.sin(2 * np.pi * pitch * (kxprime * baseline[0] + kyprime * baseline[1]) / lam)
 
@@ -161,13 +161,13 @@ def harmonicfringes(**kwargs):
     affine2d = kwargs['affine2d']
 
     cpitch = pitch / oversample
-    ImCtr = image_center(fov, oversample, psf_offset)
+    im_ctr = image_center(fov, oversample, psf_offset)
 
-    return (np.fromfunction(ffc, (fov * oversample, fov * oversample), c=ImCtr,
+    return (np.fromfunction(ffc, (fov * oversample, fov * oversample), c=im_ctr,
                             baseline=baseline,
                             lam=lam, pitch=cpitch,
                             affine2d=affine2d),
-            np.fromfunction(ffs, (fov * oversample, fov * oversample), c=ImCtr,
+            np.fromfunction(ffs, (fov * oversample, fov * oversample), c=im_ctr,
                             baseline=baseline,
                             lam=lam, pitch=cpitch,
                             affine2d=affine2d))
@@ -208,7 +208,7 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
         Calculate wavefront for a single hole
 
     """
-    kxprime, kyprime = affine2d.distortFargs(kx, ky)
+    kxprime, kyprime = affine2d.distort_f_args(kx, ky)
     return np.exp(-2 * np.pi * 1j *
                   ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)) * \
         affine2d.distortphase(kx, ky)
@@ -410,10 +410,10 @@ def asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
 
     """
     pitch = detpixel / float(oversample)
-    ImCtr = image_center(fov, oversample, psf_offset)
+    im_ctr = image_center(fov, oversample, psf_offset)
 
     return np.fromfunction(jinc, (oversample * fov, oversample * fov),
-                           c=ImCtr,
+                           c=im_ctr,
                            D=d,
                            lam=lam,
                            pitch=pitch,
@@ -457,10 +457,10 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
 
     """
     pitch = detpixel / float(oversample)
-    ImCtr = image_center(fov, oversample, psf_offset)
+    im_ctr = image_center(fov, oversample, psf_offset)
 
     return np.fromfunction(interf, (oversample * fov, oversample * fov),
-                           c=ImCtr,
+                           c=im_ctr,
                            ctrs=ctrs,
                            phi=phi,
                            lam=lam,
@@ -503,10 +503,10 @@ def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
     """
     pitch = detpixel / float(oversample)
 
-    ImCtr = image_center(fov, oversample, psf_offset)
+    im_ctr = image_center(fov, oversample, psf_offset)
 
     return hextransformee.hextransform(s=(oversample * fov, oversample * fov),
-                                       c=ImCtr,
+                                       c=im_ctr,
                                        d=d,
                                        lam=lam,
                                        pitch=pitch,

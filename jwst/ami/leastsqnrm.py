@@ -194,7 +194,7 @@ def primarybeam(kx, ky):
         envelope intensity for circular holes & monochromatic light
 
     """
-    R = (
+    r = (
         (primarybeam.d / primarybeam.lam)
         * primarybeam.pitch
         * np.sqrt(
@@ -202,7 +202,7 @@ def primarybeam(kx, ky):
             + (ky - primarybeam.offy) * (ky - primarybeam.offy)
         )
     )
-    pb = replacenan(jv(1, np.pi * R) / (2.0 * R))
+    pb = replacenan(jv(1, np.pi * r) / (2.0 * r))
 
     pb = pb.transpose()
 
@@ -224,7 +224,7 @@ def hexpb():
         primary beam for hexagonal holes
 
     """
-    pb = hexee.hex_eeAG(
+    pb = hexee.hex_eeag(
         s=hexpb.size,
         c=(hexpb.offx, hexpb.offy),
         d=hexpb.d,
@@ -416,7 +416,7 @@ def model_array(
 
 
 def weighted_operations(img, model, dqm=None):
-    """Performs least squares matrix operations to solve A x = b weighting by Poisson variance.
+    """Perform least squares matrix operations to solve A x = b weighting by Poisson variance.
 
     A is the model, b is the data (image), and x is the coefficient vector we are solving for.
 
@@ -487,10 +487,10 @@ def weighted_operations(img, model, dqm=None):
         flatmodel[:, fringe] = np.delete(flatmodel_nan[:, fringe], nanlist)
 
     # A.w
-    Aw = flatmodel * weights[:, np.newaxis]
+    aw = flatmodel * weights[:, np.newaxis]
     bw = flatimg * weights
     # resids are pixel value residuals, flattened to 1d vector
-    x, rss, rank, singvals = np.linalg.lstsq(Aw, bw, rcond=None)
+    x, rss, rank, singvals = np.linalg.lstsq(aw, bw, rcond=None)
 
     # actual residuals in image:
     res = flatimg - np.dot(flatmodel, x)
@@ -619,7 +619,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
             from linearfit import linearfit  # type: ignore[import-not-found]
 
             # dependent variables
-            M = np.asmatrix(flatimg)
+            M = np.asmatrix(flatimg) # noqa: N806
 
             # photon noise
             noise = np.sqrt(np.abs(flatimg))
@@ -629,9 +629,9 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
             # uniform weight
             wy = weights
-            S = np.asmatrix(np.diag(wy))
+            S = np.asmatrix(np.diag(wy)) # noqa: N806
             # matrix of independent variables
-            C = np.asmatrix(flatmodeltransp)
+            C = np.asmatrix(flatmodeltransp) # noqa: N806
 
             # initialize object
             result = linearfit.LinearFit(M, S, C)

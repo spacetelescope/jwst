@@ -329,8 +329,8 @@ class RawOifits:
         v2coord = self.tuv[:, 1, 0]
         u2coord = self.tuv[:, 1, 1]
 
-        flagVis = [False] * self.n_baselines
-        flagT3 = [False] * self.n_closure_phases
+        flag_vis = [False] * self.n_baselines
+        flag_t3 = [False] * self.n_closure_phases
 
         # Average observables (or don't), and get uncertainties
         # Unwrap phases
@@ -461,8 +461,8 @@ class RawOifits:
         oim.vis['VISPHIERR'] = self.e_visphi
         oim.vis['UCOORD'] = ucoord
         oim.vis['VCOORD'] = vcoord
-        oim.vis['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        oim.vis['FLAG'] = flagVis
+        oim.vis['STA_INDEX'] = self._format_staindex_v2(self.bholes)
+        oim.vis['FLAG'] = flag_vis
 
         # oi_vis2 extension data
         oim.vis2['TARGET_ID'] = 1
@@ -473,8 +473,8 @@ class RawOifits:
         oim.vis2['VIS2ERR'] = self.e_vis2
         oim.vis2['UCOORD'] = ucoord
         oim.vis2['VCOORD'] = vcoord
-        oim.vis2['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        oim.vis2['FLAG'] = flagVis
+        oim.vis2['STA_INDEX'] = self._format_staindex_v2(self.bholes)
+        oim.vis2['FLAG'] = flag_vis
 
         # oi_t3 extension data
         oim.t3['TARGET_ID'] = 1
@@ -488,8 +488,8 @@ class RawOifits:
         oim.t3['V1COORD'] = v1coord
         oim.t3['U2COORD'] = u2coord
         oim.t3['V2COORD'] = v2coord
-        oim.t3['STA_INDEX'] = self._format_STAINDEX_T3(self.tholes)
-        oim.t3['FLAG'] = flagT3
+        oim.t3['STA_INDEX'] = self._format_staindex_t3(self.tholes)
+        oim.t3['FLAG'] = flag_t3
 
         # oi_wavelength extension data
         oim.wavelength["EFF_WAVE"] = wl
@@ -669,8 +669,8 @@ class RawOifits:
         qarray = np.array(qlist).astype(int)
         return qarray, np.array(uvwlist)
 
-    def _format_STAINDEX_T3(self, tab):
-        """Converts sta_index to save oifits T3 in the appropriate format.
+    def _format_staindex_t3(self, tab):
+        """Convert sta_index to save oifits T3 in the appropriate format.
 
         Parameters
         ----------
@@ -696,8 +696,8 @@ class RawOifits:
             sta_index.append(line)
         return sta_index
 
-    def _format_STAINDEX_V2(self, tab):
-        """Converts sta_index to save oifits V2 in the appropriate format.
+    def _format_staindex_v2(self, tab):
+        """Convert sta_index to save oifits V2 in the appropriate format.
 
         Parameters
         ----------

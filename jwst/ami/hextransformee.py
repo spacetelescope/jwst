@@ -44,25 +44,25 @@ def gfunction(xi, eta, **kwargs):
     affine2d = kwargs["affine2d"]
 
     i = 1j
-    Pi = np.pi
+    pi = np.pi
 
-    xip, etap = affine2d.distortFargs(xi, eta)
+    xip, etap = affine2d.distort_f_args(xi, eta)
 
     if kwargs["minus"] is True:
         xip = -1 * xip
 
     g = (
-        np.exp(-i * Pi * (2 * etap / np.sqrt(3) + xip))
+        np.exp(-i * pi * (2 * etap / np.sqrt(3) + xip))
         * (
             (np.sqrt(3) * etap - 3 * xip)
             * (
-                np.exp(i * Pi * np.sqrt(3) * etap)
-                - np.exp(i * Pi * (4 * etap / np.sqrt(3) + xip))
+                np.exp(i * pi * np.sqrt(3) * etap)
+                - np.exp(i * pi * (4 * etap / np.sqrt(3) + xip))
             )
             + (np.sqrt(3) * etap + 3 * xip)
-            * (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
+            * (np.exp(i * pi * etap / np.sqrt(3)) - np.exp(i * pi * xip))
         )
-        / (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
+        / (4 * pi * pi * (etap * etap * etap - 3 * etap * xip * xip))
     )
 
     return g * affine2d.distortphase(xi, eta)

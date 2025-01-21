@@ -195,7 +195,7 @@ class LgModel:
     def make_model(
         self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
     ):
-        """Generates the fringe model.
+        """Generate the fringe model.
 
         Use the attributes of the object with a bandpass that is either a single
         wavelength or a list of tuples of the form
@@ -504,7 +504,7 @@ class LgModel:
         self.pixel = pixel_rad
 
 
-def goodness_of_fit(data, bestfit, diskR=8):
+def goodness_of_fit(data, bestfit, disk_r=8):
     """Calculate goodness of fit between the data and the fit.
 
     Parameters
@@ -515,7 +515,7 @@ def goodness_of_fit(data, bestfit, diskR=8):
     bestfit: 2D float array
         fit to input image
 
-    diskR: integer
+    disk_r: integer
         radius of disk
 
     Returns
@@ -527,7 +527,7 @@ def goodness_of_fit(data, bestfit, diskR=8):
     mask = (
         np.ones(data.shape)
         + utils.makedisk(data.shape[0], 2)
-        - utils.makedisk(data.shape[0], diskR)
+        - utils.makedisk(data.shape[0], disk_r)
     )
 
     difference = np.ma.masked_invalid(mask * (bestfit - data))

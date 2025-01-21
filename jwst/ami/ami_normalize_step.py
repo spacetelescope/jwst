@@ -17,7 +17,7 @@ class AmiNormalizeStep(Step):
     """
 
     def process(self, target, reference):
-        """Normalizes the LG results for a science target, using the LG results for a reference target.
+        """Normalize the LG results for a science target, using the LG results for a reference target.
 
         Parameters
         ----------
@@ -38,7 +38,7 @@ class AmiNormalizeStep(Step):
         reference_model = datamodels.AmiOIModel(reference)
 
         # Call the normalization routine
-        result = ami_normalize.normalize_LG(target_model, reference_model)
+        result = ami_normalize.normalize_lg(target_model, reference_model)
 
         result.meta.cal_step.ami_normalize = "COMPLETE"
 

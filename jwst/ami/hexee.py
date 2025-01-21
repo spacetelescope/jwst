@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def g_eeAG(xi, eta, **kwargs):
+def g_eeag(xi, eta, **kwargs):
     """Fourier transform a half-hexagon that is bisected from one corner to its diametrically opposite corner.
 
     { DG: how does this compare to  g_eeGEN() ? }
@@ -62,15 +62,15 @@ def g_eeAG(xi, eta, **kwargs):
     if kwargs['minus'] is True:
         xi = -1 * xi
     i = 1j
-    Pi = np.pi
+    pi = np.pi
 
-    g1 = np.exp(-i * Pi * (2 * eta / np.sqrt(3) + xi))
+    g1 = np.exp(-i * pi * (2 * eta / np.sqrt(3) + xi))
     g2 = (np.sqrt(3) * eta - 3 * xi)
-    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi *
+    g3 = (np.exp(i * pi * np.sqrt(3) * eta) - np.exp(i * pi *
                                                      (4 * eta / np.sqrt(3) + xi)))
     g4 = (np.sqrt(3) * eta + 3 * xi)
-    g5 = (np.exp(i * Pi * eta / np.sqrt(3)) - np.exp(i * Pi * xi))
-    g6 = (4 * Pi * Pi * (eta * eta * eta - 3 * eta * xi * xi))
+    g5 = (np.exp(i * pi * eta / np.sqrt(3)) - np.exp(i * pi * xi))
+    g6 = (4 * pi * pi * (eta * eta * eta - 3 * eta * xi * xi))
     g = g1 * (g2 * g3 + g4 * g5) / g6
 
     return g
@@ -116,11 +116,11 @@ def glimit(xi, **kwargs):
     if kwargs['minus'] is True:
         xi = -1 * xi
 
-    Pi = np.pi
+    pi = np.pi
 
-    g1 = (np.exp(-1j * Pi * xi) / (2 * np.sqrt(3) * Pi * Pi * xi * xi))
-    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi *
-          np.exp(1J * Pi * xi))
+    g1 = (np.exp(-1j * pi * xi) / (2 * np.sqrt(3) * pi * pi * xi * xi))
+    g2 = (-1 + 1j * pi * xi + np.exp(1j * pi * xi) - 2j * pi * xi *
+          np.exp(1J * pi * xi))
     g = g1 * g2
 
     return g
@@ -159,7 +159,7 @@ def mas2rad(mas):
     return rad
 
 
-def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
+def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     """Calculate the hexagonal hole Fourier transform.
 
     Computation works by adding the transforms of the 2 symmetric parts.
@@ -192,10 +192,10 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     if pitch is None:
         pitch = mas2rad(65)
 
-    log.debug('hex_eeAG: center: %s, s: %s', c, s)
+    log.debug('hex_eeag: center: %s, s: %s', c, s)
 
-    h1 = np.fromfunction(g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=False)
-    h2 = np.fromfunction(g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=True)
+    h1 = np.fromfunction(g_eeag, s, d=d, c=c, lam=lam, pixel=pitch, minus=False)
+    h2 = np.fromfunction(g_eeag, s, d=d, c=c, lam=lam, pixel=pitch, minus=True)
     hex_complex = h1 + h2
 
     # There will be a strip of NaNs down the middle (eta-axis)
@@ -218,9 +218,9 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     if log.getEffectiveLevel() <= logging.DEBUG:
         hr = hex_complex.real
         hi = hex_complex.imag
-        log.debug('hex_eeAG: hr.min: %s, hr.mean: %s, hr.max: %s',
+        log.debug('hex_eeag: hr.min: %s, hr.mean: %s, hr.max: %s',
                   hr.min(), hr.mean(), hr.max())
-        log.debug('hex_eeAG: hi.min: %s, hi.mean: %s, hi.max: %s',
+        log.debug('hex_eeag: hi.min: %s, hi.mean: %s, hi.max: %s',
                   hi.min(), hi.mean(), hi.max())
 
     return np.abs(hex_complex)
