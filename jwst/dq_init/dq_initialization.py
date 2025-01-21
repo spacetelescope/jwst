@@ -31,8 +31,8 @@ def correct_model(input_model, mask_model):
     -------
     output_model : JWST datamodel
         The corrected JWST datamodel
-
     """
+
     output_model = do_dqinit(input_model, mask_model)
 
     return output_model
@@ -53,8 +53,8 @@ def do_dqinit(output_model, mask_model):
     -------
     output_model : JWST datamodel
         The corrected JWST datamodel
-
     """
+
     # Inflate empty DQ array, if necessary
     check_dimensions(output_model)
 
@@ -99,8 +99,8 @@ def check_dimensions(input_model):
     Returns
     -------
     None
-
     """
+
     input_shape = input_model.data.shape
 
     if isinstance(input_model, datamodels.GuiderRawModel):
@@ -110,7 +110,7 @@ def check_dimensions(input_model):
             # a shape of (0,0).
             # If that's the case, create the array
             if input_model.dq.shape == (0, 0):
-                input_model.dq = np.zeros(input_shape[-2:]).astype('uint32')
+                input_model.dq = np.zeros((input_shape[-2:])).astype('uint32')
             else:
                 log.error("DQ array has the wrong shape: (%d, %d)" %
                           input_model.dq.shape)
@@ -123,7 +123,7 @@ def check_dimensions(input_model):
             # If that's the case, create the array
             if input_model.pixeldq.shape == (0, 0):
                 input_model.pixeldq = \
-                    np.zeros(input_shape[-2:]).astype('uint32')
+                    np.zeros((input_shape[-2:])).astype('uint32')
             else:
                 log.error("Pixeldq array has the wrong shape: (%d, %d)" %
                           input_model.pixeldq.shape)
@@ -131,7 +131,7 @@ def check_dimensions(input_model):
         # Perform the same check for the input model groupdq array
         if input_model.groupdq.shape != input_shape:
             if input_model.groupdq.shape == (0, 0, 0, 0):
-                input_model.groupdq = np.zeros(input_shape).astype('uint8')
+                input_model.groupdq = np.zeros((input_shape)).astype('uint8')
             else:
                 log.error("Groupdq array has wrong shape: (%d, %d, %d, %d)" %
                           input_model.groupdq.shape)
