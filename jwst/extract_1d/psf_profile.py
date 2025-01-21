@@ -129,15 +129,16 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
     return [sprofile, nod_profile * -1]
 
 
-def _profile_residual(param, cutout, cutout_var, xidx, yidx, psf_subpix, psf_data,
-                      dispaxis, fit_bkg=True):
+def _profile_residual(shifts_to_optimize, cutout, cutout_var, xidx, yidx,
+                      psf_subpix, psf_data, dispaxis, fit_bkg=True):
     """Residual function to minimize for optimizing trace locations."""
-    if len(param) > 1:
-        nod_offset = param[1]
+    if len(shifts_to_optimize) > 1:
+        nod_offset = shifts_to_optimize[1]
     else:
         nod_offset = None
     sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
-                                     extra_shift=param[0], nod_offset=nod_offset)
+                                     extra_shift=shifts_to_optimize[0],
+                                     nod_offset=nod_offset)
     extract_kwargs = {'extraction_type': 'optimal',
                       'fit_bkg': fit_bkg,
                       'bkg_fit_type': 'poly',
@@ -160,14 +161,13 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
                 optimize_shifts=True, model_nod_pair=True):
     """Create a spatial profile from a PSF reference.
 
-    This is intended to provide PSF-based profiles for point sources,
-    for slit-like data containing one positive trace and, optionally,
-    one negative trace resulting from nod subtraction.  The location of
-    the positive trace should be provided in the `trace` input parameter;
-    the negative trace location will be guessed from the input metadata.
-    If a negative trace is modeled, it is recommended that `optimize_shifts`
-    also be set to True, to improve the initial guess for the trace
-    location.
+    Provides PSF-based profiles for point sources in slit-like data containing
+    one positive trace and, optionally, one negative trace resulting from nod
+    subtraction.  The location of the positive trace should be provided in the
+    `trace` input parameter; the negative trace location will be guessed from
+    the input metadata. If a negative trace is modeled, it is recommended that
+    `optimize_shifts` also be set to True, to improve the initial guess for the
+    trace location.
 
     Parameters
     ----------
@@ -184,7 +184,7 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     psf_ref_name : str
         PSF reference filename.
     optimize_shifts : bool, optional
-        If True, the spatial location of the trace will be optimized via
+        If True, the spatial location of the trace will be optimized by
         minimizing the residuals in a scene model compared to the data in
         the first integration of `input_model`.
     model_nod_pair : bool, optional
