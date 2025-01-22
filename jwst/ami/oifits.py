@@ -19,8 +19,8 @@ class RawOifits:
         Class to store AMI data in the format required to write out to OIFITS files.
 
         Takes fringefitter class, which contains nrm_list and instrument_data attributes,
-        all info needed to write oifits. Angular quantities of input are in radians from 
-        fringe fitting; converted to degrees for saving. Populate the structure needed to 
+        all info needed to write oifits. Angular quantities of input are in radians from
+        fringe fitting; converted to degrees for saving. Populate the structure needed to
         write out oifits files according to schema.
         Produces averaged and multi-integration versions, with sigma-clipped stats over
         integrations.
@@ -35,7 +35,7 @@ class RawOifits:
 
         Notes
         -----
-        Based on ObservablesFromText from ImPlaneIA, e.g. 
+        Based on ObservablesFromText from ImPlaneIA, e.g.
         https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
         """
         self.fringe_fitter = fringefitter
@@ -48,8 +48,10 @@ class RawOifits:
 
         self.method = method
         if self.method not in ["mean", "median", "multi"]:
-            log.warning('"method" for saving OIFITS file must be one of ["mean","median","multi"]. Defaulting to use mean!')
-            self.method = "mean" 
+            msg = ('method for saving OIFITS file must be one of ["mean","median","multi"]. '
+                   'Defaulting to use mean!')
+            log.warning(msg)
+            self.method = "mean"
 
         self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
         self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
@@ -114,7 +116,7 @@ class RawOifits:
         """
         Average all the observables.
 
-        Calculate covariance matrices between fringe amplitudes/fringe phases, 
+        Calculate covariance matrices between fringe amplitudes/fringe phases,
         and between triple product amps/closure phases, and closure amplitudes/quad phases.
         Convert r, theta (modulus, phase) to x,y. Calculate cov(x,y). Rotate resulting
         2x2 matrix back to r, theta. Take sqrt of relevant covariance element to be error.
@@ -168,12 +170,12 @@ class RawOifits:
             avg_fp, _, std_fp = sigma_clipped_stats(self.fringe_phases, axis=0)
             avg_sqv, _, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             avg_pist, _, err_pist = sigma_clipped_stats(self.pistons, axis=0)
-        else:  # median
-            _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21. std_fa is just for comparing to covariance
+        else:  # median. std_fa is just for comparing to covariance
+            _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21
             _, avg_fp, std_fp  = sigma_clipped_stats(self.fringe_phases, axis=0)  # 21
             _, avg_sqv, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             _, avg_pist, err_pist = sigma_clipped_stats(self.pistons, axis=0)
-        
+
         err_pist = err_pist/np.sqrt(self.nslices) # standard error of the mean
         err_fa, err_fp = self.err_from_covmat(covmats_fringes)
 
@@ -184,14 +186,14 @@ class RawOifits:
         avg_t3amp = leastsqnrm.t3_amplitudes(avg_fa, n=self.n_holes)
         avg_cp = leastsqnrm.redundant_cps(avg_fp, n=self.n_holes)
         err_t3amp, err_cp = self.err_from_covmat(covmats_triples)
-        
+
         avg_ca = leastsqnrm.closure_amplitudes(avg_fa, n=self.n_holes)
         avg_q4phi = leastsqnrm.q4_phases(avg_fp, n=self.n_holes)
         err_ca, err_q4phi = self.err_from_covmat(covmats_quads)
 
-        return (avg_sqv, err_sqv, avg_fa, err_fa, 
-                avg_fp, err_fp, avg_cp, err_cp, 
-                avg_t3amp, err_t3amp, avg_ca, err_ca, 
+        return (avg_sqv, err_sqv, avg_fa, err_fa,
+                avg_fp, err_fp, avg_cp, err_cp,
+                avg_t3amp, err_t3amp, avg_ca, err_ca,
                 avg_q4phi, err_q4phi, avg_pist, err_pist)
 
     def err_from_covmat(self, covmatlist):
@@ -202,7 +204,7 @@ class RawOifits:
         divided by sqrt(N_ints), for use as observable errors (standard error of the mean).
         If using median, error calculation is questionable because this is NOT the standard
         error of the median.
-        
+
         Parameters
         ----------
         covmatlist: array
@@ -226,7 +228,7 @@ class RawOifits:
         Calculate covariance matrices from each pair of observables.
 
         For each baseline/triple/quad, calculate covariance between each
-        fringe amplitude/phase quantity. 
+        fringe amplitude/phase quantity.
 
         Parameters
         ----------
@@ -276,13 +278,13 @@ class RawOifits:
         """
         Calculate covariance in polar coordinates.
 
-        Calculate covariance in x, y coordinates, then rotate covariance matrix 
+        Calculate covariance in x, y coordinates, then rotate covariance matrix
         by **average** phase (over integrations) to get matrix in (r,theta).
 
         Parameters
         ----------
         rr: array
-            complex number modulus 
+            complex number modulus
         theta: array
             complex number phase
         averfunc: function
@@ -298,7 +300,7 @@ class RawOifits:
         yy = rr * np.sin(theta)
         cov_mat_xy = np.cov(xx, yy)
         return self.rotate_matrix(cov_mat_xy, averfunc(theta))
-        
+
 
     def make_oifits(self):
         """
@@ -364,17 +366,17 @@ class RawOifits:
 
 
         elif self.method == "mean":
-            (self.vis2, self.e_vis2, self.visamp, self.e_visamp, 
-            self.visphi, self.e_visphi, self.closure_phases, self.e_cp, 
-            self.t3amp, self.e_t3amp, self.camp, self.e_camp, 
+            (self.vis2, self.e_vis2, self.visamp, self.e_visamp,
+            self.visphi, self.e_visphi, self.closure_phases, self.e_cp,
+            self.t3amp, self.e_t3amp, self.camp, self.e_camp,
             self.q4phi, self.e_q4phi, self.pist, self.e_pist) =  self.average_observables(np.mean)
 
         else:  # take the median
-            (self.vis2, self.e_vis2, self.visamp, self.e_visamp, 
-            self.visphi, self.e_visphi, self.closure_phases, self.e_cp, 
-            self.t3amp, self.e_t3amp, self.camp, self.e_camp, 
+            (self.vis2, self.e_vis2, self.visamp, self.e_visamp,
+            self.visphi, self.e_visphi, self.closure_phases, self.e_cp,
+            self.t3amp, self.e_t3amp, self.camp, self.e_camp,
             self.q4phi, self.e_q4phi, self.pist, self.e_pist) =  self.average_observables(np.median)
-        
+
         # Convert angular quantities from radians to degrees
         self.visphi = np.rad2deg(self.visphi)
         self.e_visphi = np.rad2deg(self.e_visphi)
@@ -401,7 +403,7 @@ class RawOifits:
 
         pscale = instrument_data.pscale_mas / 1000.0  # arcsec
         # Size of the image to extract NRM data
-        isz = self.fringe_fitter.scidata.shape[1]  
+        isz = self.fringe_fitter.scidata.shape[1]
         fov = [pscale * isz] * self.n_holes
         fovtype = ["RADIUS"] * self.n_holes
 
@@ -649,9 +651,9 @@ class RawOifits:
         return np.array(blist).astype(int), np.array(bllist)
 
     def _makequads_all(self):
-        """ 
+        """
         Calculate all four-hole combinations (quads)
-        
+
         Returns
         -------
         qarray: int array of four-hole quads (0-based)
@@ -685,7 +687,7 @@ class RawOifits:
         sta_index: list
             Hole triples indices
         int array of triangles
-        """    
+        """
         sta_index = []
         for x in tab:
             ap1 = int(x[0])
@@ -712,7 +714,7 @@ class RawOifits:
         sta_index: list
             Hole baseline indices
         int array of baselines
-        """    
+        """
         sta_index = []
         for x in tab:
             ap1 = int(x[0])

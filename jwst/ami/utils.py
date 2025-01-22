@@ -1203,7 +1203,7 @@ def get_flat_spec():
     flatspec: synphot Spectrum object
     """
     flatspec = synphot.SourceSpectrum(synphot.models.ConstFlux1D, amplitude=1)
-    
+
     return flatspec
 
 
@@ -1284,7 +1284,7 @@ def get_cw_beta(bandpass):
 
     Parameters:
     -----------
-    bandpass: array 
+    bandpass: array
         Array of weights, wavelengths
     Returns:
     --------
@@ -1335,7 +1335,7 @@ def handle_bandpass(bandpass, throughput_model):
         log.info(f'Reading throughput model data for {throughput_model.meta.instrument.filter}.')
         filt_spec = get_filt_spec(throughput_model)
         log.info('Using flat spectrum model.')
-        flat_spec = get_flat_spec() 
+        flat_spec = get_flat_spec()
         nspecbin = 19 # how many wavelngth bins used across bandpass -- affects runtime
         bandpass = combine_src_filt(
             filt_spec,
@@ -1361,7 +1361,7 @@ def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
         Linear transform matrix element (axis 1 w.r.t y)
     cd21: float
         Linear transform matrix element (axis 2 w.r.t x)
-    cd22: float 
+    cd22: float
         Linear transform matrix element (axis 2 w.r.t y)
 
     Returns:
@@ -1372,7 +1372,7 @@ def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
     ------
     Use the global header values explicitly, for clarity.
     CD inputs are 4 scalars, conceptually 2x2 array in units degrees/pixel
-    
+
     """
     return np.array((cd11 * vec[0] + cd12 * vec[1], cd21 * vec[0] + cd22 * vec[1]))
 
@@ -1381,11 +1381,11 @@ def degrees_per_pixel(datamodel):
     """
     Get pixel scale info from data model.
     If it fails to find the right keywords, use 0.0656 as/pixel
-    
+
     Parameters:
     ----------
     datamodel: datamodel object
-    
+
     Returns:
     --------
     pixel scale in degrees/pixel

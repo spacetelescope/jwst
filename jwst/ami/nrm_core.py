@@ -56,7 +56,7 @@ class FringeFitter:
         else:
             self.npix = 'default'
         # Default: unweighted fit
-        self.weighted = False    
+        self.weighted = False
         if "weighted" in kwargs:
             self.weighted = kwargs["weighted"]
         if self.weighted is True:
@@ -108,7 +108,7 @@ class FringeFitter:
         lgfit = self.make_lgfitmodel()
 
         return output_model, output_model_multi, lgfit
-        
+
     def make_lgfitmodel(self):
         """
         Populate the LGFitModel with the output of the fringe fitting
@@ -169,7 +169,7 @@ class FringeFitter:
         -------
         nrm: LgModel object
             Model with best fit results
-        
+
         Notes
         -----
         After nrm.fit_image is called, these attributes are stored in nrm object:
@@ -184,7 +184,7 @@ class FringeFitter:
         cond            --- matrix condition for inversion
         fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
         -----------------------------------------------------------------------------
-        
+
         """
 
         nrm = lg_model.LgModel(self.instrument_data.nrm_model,
@@ -216,13 +216,13 @@ class FringeFitter:
         else:
             nrm.psf_offset = self.psf_offset_ff  # user-provided psf_offsetoffsets from array center are here.
 
-        nrm.make_model(fov=self.ctrd.shape[0], 
+        nrm.make_model(fov=self.ctrd.shape[0],
                        bandpass=nrm.bandpass,
                        over=self.oversample,
                        psf_offset=nrm.psf_offset,
                        pixscale=nrm.pixel)
 
-        nrm.fit_image(self.ctrd, 
+        nrm.fit_image(self.ctrd,
                       modelin=nrm.model,
                       psf_offset=nrm.psf_offset,
                       dqm=self.dqslice,

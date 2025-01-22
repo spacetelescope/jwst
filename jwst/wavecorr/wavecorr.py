@@ -99,7 +99,7 @@ def apply_zero_point_correction(slit, reffile):
         Slit data to be corrected.
     reffile : str
         The ``wavecorr`` reference file.
-        
+
     Returns
     -------
     completed : bool
@@ -107,7 +107,7 @@ def apply_zero_point_correction(slit, reffile):
     """
     log.info(f'slit name {slit.name}')
     slit_wcs = slit.meta.wcs
-        
+
     # Retrieve the source position and aperture name from metadata
     source_xpos = slit.source_xpos
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
@@ -126,27 +126,27 @@ def apply_zero_point_correction(slit, reffile):
     if wave2wavecorr is None: # pragma: no cover
         completed = False
         return completed
-    else:        
+    else:
         # Make a new frame to insert into the slit wcs object
-        slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), 
+        slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1),
                                   unit=("", ""), axes_names=('x_slit', 'y_slit'))
         spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                                 axes_names=('wavelength',))
         wcorr_frame = cf.CompositeFrame(
             [slit_spatial, spec], name='wavecorr_frame')
-        
+
         # Insert the new transform into the slit wcs object
         wave2wavecorr = Identity(2) & wave2wavecorr
         slit_wcs.insert_frame('slit_frame', wave2wavecorr, wcorr_frame)
-        
+
         # Update the stored wavelengths for the slit
         slit.wavelength = compute_wavelength(slit_wcs)
-        
+
         completed = True
         return completed
-    
 
-def calculate_wavelength_correction_transform(lam, dispersion, freference, 
+
+def calculate_wavelength_correction_transform(lam, dispersion, freference,
                                               source_xpos, aperture_name):
     """ Generate a WCS transform for the NIRSpec wavelength zero-point correction
     and add it to the WCS for each slit.
@@ -163,7 +163,7 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
         X position of the source as a fraction of the slit size.
     aperture_name : str
         Aperture name.
-        
+
     Returns
     -------
     model : `~astropy.modeling.tabular.Tabular1D`or None
@@ -180,7 +180,7 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
                 break
         else:
             log.info(f'No wavelength zero-point correction found for slit {aperture_name}')
-        
+
     # Set lookup table to extrapolate at bounds to recover wavelengths
     # beyond model bounds, particularly for the red and blue ends of
     # prism observations.  fill_value = None sets the lookup tables
@@ -188,7 +188,7 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
     # from scipy.interpolate.interpn
     offset_model.bounds_error = False
     offset_model.fill_value = None
-        
+
     # Average the wavelength and dispersion across 2D extracted slit and remove nans
     # So that we have a 1D wavelength array for building a 1D lookup table wcs transform
     lam_mean = np.nanmean(lam, axis=0)
@@ -196,23 +196,23 @@ def calculate_wavelength_correction_transform(lam, dispersion, freference,
     nan_lams = np.isnan(lam_mean) | np.isnan(disp_mean)
     lam_mean = lam_mean[~nan_lams]
     disp_mean = disp_mean[~nan_lams]
-    
+
     # Calculate the corrected wavelengths
     pixel_corrections = offset_model(lam_mean, source_xpos)
     lam_corrected = lam_mean + (pixel_corrections * disp_mean)
-    
+
     # Check to make sure that the corrected wavelengths are monotonically increasing
     if np.all(np.diff(lam_corrected) > 0):
-        # monotonically increasing        
+        # monotonically increasing
         # Build a look up table to transform between corrected and uncorrected wavelengths
-        wave2wavecorr = tabular.Tabular1D(points=lam_mean, 
-                                          lookup_table=lam_corrected, 
-                                          bounds_error=False, 
-                                          fill_value=None, 
+        wave2wavecorr = tabular.Tabular1D(points=lam_mean,
+                                          lookup_table=lam_corrected,
+                                          bounds_error=False,
+                                          fill_value=None,
                                           name='wave2wavecorr')
-    
+
         return wave2wavecorr
-    
+
     else:
         # output wavelengths are not monotonically increasing
         return None
@@ -267,7 +267,7 @@ def compute_wavelength(wcs, xpix=None, ypix=None):
     """
     if xpix is None or ypix is None:
         xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
-        
+
     _, _, lam = wcs(xpix, ypix)
     return lam
 

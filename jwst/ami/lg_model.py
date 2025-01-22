@@ -19,8 +19,8 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 class LgModel:
     """
-    A class for conveniently dealing with an "NRM object." 
-    
+    A class for conveniently dealing with an "NRM object."
+
     This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
     Simulates PSF (broadband or monochromatic)
@@ -195,8 +195,8 @@ class LgModel:
         """
         Generates the fringe model.
 
-        Use the attributes of the object with a bandpass that is either a single 
-        wavelength or a list of tuples of the form 
+        Use the attributes of the object with a bandpass that is either a single
+        wavelength or a list of tuples of the form
         [(weight1, wavl1), (weight2, wavl2),...].  The model is
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
@@ -300,7 +300,7 @@ class LgModel:
         """
         Run a least-squares fit on an input image.
 
-        Find the appropriate wavelength scale and rotation. 
+        Find the appropriate wavelength scale and rotation.
         If a model is not specified then this
         method will find the appropriate wavelength scale, rotation (and
         hopefully centering as well -- This is not written into the object yet,
@@ -425,7 +425,7 @@ class LgModel:
         self, img, scaleguess=None, rotstart=0.0, centering="PIXELCENTERED"
     ):
         """
-        Determine the scale and rotation that best fits the data.  
+        Determine the scale and rotation that best fits the data.
 
         Correlations
         are calculated in the image plane, in anticipation of data with many

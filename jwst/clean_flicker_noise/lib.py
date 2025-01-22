@@ -12,7 +12,7 @@ class NSClean:
     method automatically transposes and flips the data as
     necessary.
     """
-    
+
     def __init__(self, detector, mask, fc=1/(2*2048/16), kill_width=1/(2*2048/16)/4,
                  buffer_sigma=1.5, sigrej=3.0, weights_kernel_sigma=32):
         """
@@ -95,8 +95,8 @@ class NSClean:
 
         # Build a 1-dimensional Gaussian kernel for "buffing". Buffing is in the
         # dispersion direction only. In detector coordinates, this is axis zero. Even though
-        # the kernel is 1-dimensional, we must still use a 2-dimensional array to 
-        # represent it. I tried broadcasting a vector, but that made a kernel 2048 
+        # the kernel is 1-dimensional, we must still use a 2-dimensional array to
+        # represent it. I tried broadcasting a vector, but that made a kernel 2048
         # columns wide (in detector space).
         _y = np.arange(self.ny)
         _mu = self.nx//2 + 1
@@ -131,7 +131,7 @@ class NSClean:
         """
         model = np.zeros((self.ny, self.nx), dtype=np.float32)  # Build the model here
         for y in np.arange(self.ny)[4:-4]:
-            
+
             # Get data and weights for this line
             d = data[y][self.mask[y]]  # unmasked (useable) data
             # The line below uses a vector to represent a diagonal weight matrix.
@@ -159,7 +159,7 @@ class NSClean:
             k = np.arange(self.nvec).reshape((1,-1))  # Must be a row vector to broadcast. We can optimize
                                                       # the code later by putting this into object instantiation
                                                       # since it is the same for every line. For now, leave it
-                                                      # here since the cost is negligible and it may aid 
+                                                      # here since the cost is negligible and it may aid
                                                       # comprehension.
 
             # Build the basis matrix
@@ -172,7 +172,7 @@ class NSClean:
             pinv_PB = np.matmul(np.linalg.inv(np.matmul(AH, A)), AH)
 
             # Solve for the Fourier transform of this line's background samples.
-            # The way that we have done it, this multiplies the input data by the 
+            # The way that we have done it, this multiplies the input data by the
             # number of samples used for the fit.
             rfft = np.zeros(self.nx//2 + 1, dtype=np.complex64)
             rfft[:k.shape[1]] = np.matmul(pinv_PB, p*d)
@@ -247,7 +247,7 @@ class NSClean:
             data = data.transpose()
 
         # Done
-        return data 
+        return data
 
 
 def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
@@ -294,7 +294,7 @@ def med_abs_deviation(d, median=True):
     Median absolute deviation
 
     Computes the median and the median absolute deviation (MAD). For normally
-    distributed data, multiply the MAD by 1.4826 to approximate standard deviation. 
+    distributed data, multiply the MAD by 1.4826 to approximate standard deviation.
     If median=True (the default), this returns a tuple containing (median, MAD).
     Otherwise, only the MAD is returned.
 
@@ -372,7 +372,7 @@ class NSCleanSubarray:
         Notes:
         1) NSCleanSubarray works in detector coordinates. Both the data and mask
            need to be transposed and flipped so that slow-scan runs from bottom
-           to top as displayed in SAOImage DS9. The fast scan direction is 
+           to top as displayed in SAOImage DS9. The fast scan direction is
            required to run from left to right.
         """
         # Definitions
@@ -424,7 +424,7 @@ class NSCleanSubarray:
             self.mask[bdpx != 0] = False
             self.data -= m  # STUB - Median subtract
 
-        # Build the apodizing filter. This has unity gain at low frequency to capture 1/f. It 
+        # Build the apodizing filter. This has unity gain at low frequency to capture 1/f. It
         # also has unity gain at Nyquist to capture alternating column noise.
         # At mid frequencies, the gain is zero.  Unity gain at low frequencies.
         self.apodizer = np.zeros(len(self.rfftfreq), dtype=np.float32)
@@ -534,7 +534,7 @@ class NSCleanSubarray:
         -------
         data : array-like of float
             The cleaned data array.
-        """ 
+        """
         self.fit(weight_fit=weight_fit)  # Fit the background model
         if return_model:
             return self.model
