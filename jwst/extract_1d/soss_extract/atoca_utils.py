@@ -225,7 +225,7 @@ def oversample_grid(wave_grid, n_os):
         msg = 'n_os must be a scalar or an array of size len(wave_grid) - 1.'
         log.critical(msg)
         raise ValueError(msg)
-    
+
     # Compute the oversampled grid.
     intervals = 1/n_os
     intervals = np.insert(np.repeat(intervals, n_os),0,0)
@@ -313,7 +313,7 @@ def _extrapolate_grid(wave_grid, wave_range, poly_ord=1):
                 break
             if next_delta < min_delta:
                 raise RuntimeError('Extrapolation failed to converge.')
-                
+
         # Sort extrapolated values (and keep only unique)
         grid_right = np.unique(grid_right)
 
@@ -1141,7 +1141,7 @@ def _fct_to_array(fct, grid, grid_range, thresh):
     # Assign range where the convolution is defined on the grid
     i_a, i_b = grid_range
 
-    # Init 2-D array with first dimension length 1, with the value at kernel's center 
+    # Init 2-D array with first dimension length 1, with the value at kernel's center
     out = fct(grid, grid)[i_a:i_b][np.newaxis,...]
 
     # Add wings: Generate a 2D array of the grid iteratively until

@@ -42,7 +42,7 @@ def test_make_background_mask():
             expected_bad_frac = 1/4
         else:
             expected_bad_frac = 1/2
-        
+
         bad_frac = np.sum(mask)/mask.size
         # test that bad fraction is computed properly for all modes
         assert np.isclose(bad_frac, expected_bad_frac)

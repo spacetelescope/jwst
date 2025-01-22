@@ -65,7 +65,7 @@ def test_model_image(monkeypatch_setup,
     assert wave_grid.dtype == np.float64
     for spec in spec_list:
         assert isinstance(spec, SpecModel)
-    
+
     factors = np.array([getattr(spec.meta.soss_extract1d, "factor", np.nan) for spec in spec_list])
     chi2s = np.array([getattr(spec.meta.soss_extract1d, "chi2", np.nan) for spec in spec_list])
     orders = np.array([spec.spectral_order for spec in spec_list])
@@ -73,7 +73,7 @@ def test_model_image(monkeypatch_setup,
 
     assert tikfac in factors
 
-    # ensure outputs have the shapes we expect for each order and blue/red 
+    # ensure outputs have the shapes we expect for each order and blue/red
     n_good = []
     for order in [1,2]:
         for color in ["RED", "BLUE"]:
@@ -100,7 +100,7 @@ def test_model_image(monkeypatch_setup,
             # but it is the same for the red part of order 1 and the red part of order 2
             if color == "RED":
                 assert this_factors[-1] == tikfac
-            
+
             # check that the output spectra contain good data
             for spec in this_spec:
                 spec = np.array([[s[0], s[1]] for s in spec.spec_table])
@@ -111,7 +111,7 @@ def test_model_image(monkeypatch_setup,
     n_good = np.array(n_good)
     assert np.all(n_good >= 1)
     assert np.all(n_good - n_good[0] == 0)
-                       
+
 
 def test_model_image_tikfac_specified(monkeypatch_setup,
                                         imagemodel,
@@ -119,7 +119,7 @@ def test_model_image_tikfac_specified(monkeypatch_setup,
                                         ref_files,):
     """Ensure spec_list is a single-element list per order if tikfac is specified"""
     scidata, scierr = imagemodel
-    
+
     refmask = np.zeros_like(detector_mask)
     box_width = 5.0
     box_weights, wavelengths = _compute_box_weights(ref_files, DATA_SHAPE, box_width)
@@ -141,7 +141,7 @@ def test_model_image_wavegrid_specified(monkeypatch_setup,
                                         ref_files,):
     """Ensure wave_grid is used if specified.
     Also specify tikfac because it makes the code run faster to not have to re-derive it.
-    
+
     Note the failure with SossWaveGridModel passed as input. What should be done about that?
     """
     scidata, scierr = imagemodel

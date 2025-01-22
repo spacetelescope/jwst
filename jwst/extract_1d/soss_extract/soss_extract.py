@@ -236,9 +236,9 @@ def _get_native_grid_from_trace(ref_files, spectral_order):
 
     Returns
     -------
-    wave : 
+    wave :
         Grid of the pixels boundaries at the native sampling (1d array)
-    col : 
+    col :
         The column number of the pixel
     """
 
@@ -394,7 +394,7 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     ----------
     f_order : np.array
         The solution f_k of the linear system.
-    
+
     grid_order : np.array
         The wavelength grid of the solution, usually oversampled compared to the pixel grid.
 
@@ -413,7 +413,7 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     Returns
     -------
     spec : SpecModel
-        
+
     """
     # Make sure the input is not modified
     ref_file_args = ref_file_args.copy()
@@ -845,7 +845,7 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
         The range of Tikhonov factors to test, in log space.
     save_tiktests : bool, optional.
         If True, save the intermediate models and spectra for each Tikhonov factor tested.
-    
+
     Returns
     -------
     model : np.array
@@ -854,7 +854,7 @@ def _model_single_order(data_order, err_order, ref_file_args, mask_fit,
         If save_tiktests is True, returns a list of the model spectra for each Tikhonov factor tested,
         with the best-fitting spectrum last in the list.
         If save_tiktests is False, returns a one-element list with the best-fitting spectrum.
-    
+
     Notes
     -----
     The last spectrum in the list of SpecModels lacks the "chi2", "chi2_soft_l1", "chi2_cauchy", and "reg"

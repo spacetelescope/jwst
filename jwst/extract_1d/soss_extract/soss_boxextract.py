@@ -146,7 +146,7 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     -------
     err_filled : 2d array[float]
         same as `err`, but the pixels to be estimated are filled with the estimated values.
-    
+
     Notes
     -----
     For uncorrelated noise, the average error on the replaced pixels will be roughly

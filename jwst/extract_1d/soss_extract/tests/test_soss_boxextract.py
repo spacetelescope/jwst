@@ -50,7 +50,7 @@ def test_box_extract(trace1d, box_weights, imagemodel):
 
     data, err = imagemodel
     mask = np.isnan(data)
-    
+
     for order in [0,1]:
         weights = box_weights[order]
         cols, flux, flux_err, npix = box_extract(data, err, mask, weights)

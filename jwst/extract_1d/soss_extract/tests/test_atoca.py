@@ -23,7 +23,7 @@ def test_extraction_engine_init(
     engine,
 ):
     """Test the init of the engine with default/good inputs"""
-    
+
     # test wave_grid became unique
     assert engine.wave_grid.dtype == np.float64
     unq = np.unique(wave_grid)
@@ -36,7 +36,7 @@ def test_extraction_engine_init(
         assert engine.trace_profile[order].dtype == np.float64
         assert engine.kernels[order].dtype == np.float64
         assert engine.mask_trace_profile[order].dtype == np.bool_
-        
+
         assert np.allclose(engine.wave_map[order], wave_map[order])
         assert np.allclose(engine.trace_profile[order], trace_profile[order])
         assert np.allclose(engine.mask_trace_profile[order], mask_trace_profile[order])
@@ -44,7 +44,7 @@ def test_extraction_engine_init(
         # test derived attributes
         assert engine.data_shape == DATA_SHAPE
         assert engine.n_orders == 2
-        
+
     # test wave_p and wave_m. separate unit test for their calculation
     for att in ["wave_p", "wave_m"]:
         wave = getattr(engine, att)
@@ -87,7 +87,7 @@ def test_extraction_engine_init(
         assert np.all(mask[outside])
 
         # a bit paradoxically, engine.mask_ord does not contain a single order's mask_trace_profile
-        # instead, it's mask_trace_profile[0] AND mask_trace_profile[1], i.e., 
+        # instead, it's mask_trace_profile[0] AND mask_trace_profile[1], i.e.,
         # the trace profiles of BOTH orders are UNmasked in the masks of each order
         # the general mask and wavelength bounds are then applied, so the
         # only difference between mask_ord[0] and mask_ord[1] are the wavelength bounds
@@ -176,7 +176,7 @@ def test_get_attributes(engine):
             assert np.allclose(att_list[i][j], expected[i][j])
 
     # test i_order not None
-    att_list = engine.get_attributes(*name_list, i_order=1) 
+    att_list = engine.get_attributes(*name_list, i_order=1)
     expected = [engine.wave_map[1], engine.wave_grid[1]]
     for i in range(len(expected)):
         assert np.allclose(att_list[i], expected[i])
@@ -269,7 +269,7 @@ def test_get_pixel_mapping(engine):
         w_t_wave_c = engine.w_t_wave_c[order]
         assert w_t_wave_c.dtype == np.float64
         assert w_t_wave_c.shape == expected_shape
-    
+
         # check if quick=True works
         mapping_quick = engine.get_pixel_mapping(order, quick=True)
         assert np.allclose(mapping.data, mapping_quick.data)
@@ -295,7 +295,7 @@ def test_rebuild(engine):
 
 
 def test_build_sys(imagemodel, engine):
-    
+
     data, error = imagemodel
     matrix, result = engine.build_sys(data, error)
     assert result.size == engine.n_wavepoints
@@ -314,7 +314,7 @@ def test_get_detector_model(imagemodel, engine):
 
 
 def test_estimate_tikho_factors(engine):
-    
+
     factor = engine.estimate_tikho_factors(f_lam)
     assert isinstance(factor, float)
 
@@ -363,7 +363,7 @@ def test_best_tikho_factor(engine, tikho_tests):
         factor = engine.best_tikho_factor(tests, mode)
         assert isinstance(factor, float)
         best_factors.append(factor)
-    
+
     # ensure fit_mode=all found one of the three others
     assert best_factors[0] in best_factors[1:]
 
@@ -392,7 +392,7 @@ def test_call(engine, tikho_tests, imagemodel):
         assert not np.all(np.isnan(diff))
         diff = diff[~np.isnan(diff)]
         assert np.all(np.abs(diff) < 0.05)
-    
+
     # test bad input, failing to put factor in for Tikhonov solver
     with pytest.raises(ValueError):
         engine(data, error, tikhonov=True)
@@ -407,6 +407,6 @@ def test_compute_likelihood(engine, imagemodel):
     for slope in test_slopes:
         spectrum = partial(f_lam, m=slope)
         logl.append(engine.compute_likelihood(spectrum, data, error))
-    
+
     assert np.argmax(logl) == np.argwhere(test_slopes == SPECTRAL_SLOPE)
     assert np.all(np.array(logl) < 0)

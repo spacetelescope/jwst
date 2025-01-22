@@ -237,7 +237,7 @@ def _rotate(x, y, angle, origin=(0, 0)):
     # apply transformation
     x_new, y_new = R @ (xy - xy_center) + xy_center
 
-    # interpolate rotated positions onto x-pixel column values 
+    # interpolate rotated positions onto x-pixel column values
     # interpolate new coordinates onto original x values and mask values
     # outside of the domain of the image 0<=x<=2047 and 0<=y<=255.
     y_new = interp1d(x_new, y_new, fill_value="extrapolate")(x)

@@ -161,7 +161,7 @@ class ExtractionEngine:
 
         # turn kernels into sparse matrix
         self.kernels = self._create_kernels(kernels)
-        
+
         # Compute integration weights. see method self.get_w() for details.
         self.weights, self.weights_k_idx = self.compute_weights()
 
@@ -241,7 +241,7 @@ class ExtractionEngine:
         c_kwargs = []
         for ker in kernels:
             try:
-                kwargs_ker = {'thresh': ker.min_value} 
+                kwargs_ker = {'thresh': ker.min_value}
             except AttributeError:
                 # take the get_c_matrix defaults
                 kwargs_ker = {}
@@ -893,7 +893,7 @@ class ExtractionEngine:
         # Set invalid pixels negative
         lo[mask], hi[mask] = -1, -2
 
-        return lo, hi   
+        return lo, hi
 
 
     def get_mask_wave(self, i_order):

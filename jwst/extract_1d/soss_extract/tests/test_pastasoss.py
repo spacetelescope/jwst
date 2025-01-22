@@ -11,14 +11,14 @@ from .conftest import TRACE_END_IDX, PWCPOS, WAVE_BNDS_O1, WAVE_BNDS_O2
 """Test coverage for the helper functions in pastasoss.py"""
 
 def test_wavecal_models(refmodel):
-    
+
     wave_bnds = [WAVE_BNDS_O1, WAVE_BNDS_O2]
     for order in [1,2]:
         idx = order-1
         bnds = wave_bnds[idx]
         x = np.arange(0, TRACE_END_IDX[idx]+1)
         wavelengths = _get_wavelengths(refmodel, x, PWCPOS, order)
-        
+
         # check shapes
         assert wavelengths.shape == x.shape
         assert np.isclose(wavelengths[0], bnds[0])
@@ -41,7 +41,7 @@ def test_find_spectral_order_index(refmodel):
     for order in [1,2]:
         idx = _find_spectral_order_index(refmodel, order)
         assert idx == order-1
-    
+
     for order in [0, "bad", None]:
         with pytest.raises(ValueError):
             _find_spectral_order_index(refmodel, order)
@@ -57,7 +57,7 @@ def test_get_soss_traces(refmodel):
                 PWCPOS,
                 order,
                 subarray)
-            
+
             assert str(order_out) == order
             # since always interpolated back to original x, x_new should equal x
             x_in, y_in = refmodel.traces[idx].trace.T.copy()
@@ -70,7 +70,7 @@ def test_get_soss_traces(refmodel):
             # about pivot_x, pivot_y
             assert y_new.shape == wavelengths.shape
             # TODO: add meaningful tests of y
-            
+
 
 def test_extrapolate_to_wavegrid(refmodel):
 
@@ -78,7 +78,7 @@ def test_extrapolate_to_wavegrid(refmodel):
     wavemax = 5.5
     nwave = 501
     wave_grid = np.linspace(wavemin, wavemax, nwave)
-    
+
     # only test first order
     x = np.arange(0, TRACE_END_IDX[0]+1)
     wl = _get_wavelengths(refmodel, x, PWCPOS, 1)

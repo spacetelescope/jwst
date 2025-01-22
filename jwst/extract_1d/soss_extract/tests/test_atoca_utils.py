@@ -22,7 +22,7 @@ def test_arange_2d():
     starts_wrong_shape = starts[1:]
     with pytest.raises(ValueError):
         au.arange_2d(starts_wrong_shape, stops)
-    
+
     stops_too_small = np.copy(stops)
     stops_too_small[2] = 4
     with pytest.raises(ValueError):
@@ -127,7 +127,7 @@ def test_oversample_irregular(os_factor):
     # oversampling function removes duplicates,
     # this is tested in previous test, and just complicates counting for this test
     # for FIBONACCI, unique is just removing zeroth element
-    fib_unq = np.unique(FIBONACCI) 
+    fib_unq = np.unique(FIBONACCI)
     n_os = np.ones((fib_unq.size-1,), dtype=int)
     n_os[2:5] = os_factor
     n_os[3] = os_factor*2
@@ -160,7 +160,7 @@ WAVELENGTHS = np.linspace(1.5, 3.0, 50) + np.sin(np.linspace(0, np.pi/2, 50))
 def test_extrapolate_grid(wave_range):
 
     extrapolated = au._extrapolate_grid(WAVELENGTHS, wave_range, 1)
-    
+
     assert extrapolated.max() > wave_range[1]
     assert extrapolated.min() < wave_range[0]
     assert np.all(extrapolated[1:] >= extrapolated[:-1])
@@ -286,7 +286,7 @@ def test_trim_grids():
 
     all_grids = [grid0, grid1, grid2, grid3]
     trimmed_grids = au._trim_grids(all_grids, grid_range)
-    
+
     assert len(trimmed_grids) == len(all_grids)
     assert trimmed_grids[0].size == grid0.size
     assert trimmed_grids[1].size == 0
@@ -301,7 +301,7 @@ def test_make_combined_adaptive_grid():
     grid0 = np.linspace(0, np.pi/2, 6) # kept entirely.
     grid1 = np.linspace(0, np.pi/2, 15) # removed entirely. Finer spacing doesn't matter, preceded by grid0
     grid2 = np.linspace(np.pi/2, np.pi, 11) # kept from pi/2 to pi
-    
+
     # purposely make same lower index for grid2 as upper index for grid0 to test uniqueness of output
 
     all_grids = [grid0, grid1, grid2]
@@ -310,7 +310,7 @@ def test_make_combined_adaptive_grid():
     rtol = 1e-3
     combined_grid = au.make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
                                 max_iter=10, rtol=rtol, max_total_size=100)
-    
+
     numerical_integral = np.trapz(xsinx(combined_grid), combined_grid)
 
     assert np.unique(combined_grid).size == combined_grid.size
@@ -360,12 +360,12 @@ def test_webb_kernel(webb_kernels, wave_map):
     # but contains values that are in wave_trace
     assert kern.wave_center.size == kern.wave_kernels.shape[1]
     assert all(np.isin(kern.wave_center, wave_trace))
-    
+
     # test min value
     assert kern.min_value > 0
     assert np.isin(kern.min_value, kern.kernels)
     assert isinstance(kern.min_value, float)
-    
+
     # test the polynomial fit has the proper shape. hard-coded to a first-order, i.e., linear fit
     # since the throughput is constant in wavelength, the slopes should be close to zero
     # and the y-intercepts should be close to kern.wave_center
@@ -379,7 +379,7 @@ def test_webb_kernel(webb_kernels, wave_map):
     pix_half = kern.n_pix//2
     wl_test = np.linspace(min_trace, max_trace, 10)
     pixels_test = np.array([-pix_half-1, 0, pix_half, pix_half+1])
-    
+
     data_in = kern.kernels[:,0]
     m = kern.min_value
     expected = np.array([m, np.max(data_in), m, m])
@@ -391,7 +391,7 @@ def test_webb_kernel(webb_kernels, wave_map):
     assert np.allclose(interp[:,0], expected, rtol=1e-3)
 
     # call the kernel object directly
-    # this takes a wavelength and a central wavelength of the kernel, 
+    # this takes a wavelength and a central wavelength of the kernel,
     # then converts to pixels to use self.f_ker internally
     kern_val = kern(wl_test, wl_test)
     assert kern(wl_test, wl_test).ndim == 1

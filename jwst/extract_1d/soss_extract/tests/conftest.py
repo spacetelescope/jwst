@@ -63,7 +63,7 @@ def trace_profile(wave_map):
     yy, xx = np.meshgrid(np.arange(DATA_SHAPE[0]), np.arange(DATA_SHAPE[1]))
     yy = yy.astype(np.float32) - xx.astype(np.float32)*0.08
     yy = yy.T
-    
+
     profile_ord2 = np.zeros_like(yy)
     full = (yy >= 3) & (yy < 9)
     half0 = (yy >= 9) & (yy < 11)
@@ -105,7 +105,7 @@ def trace1d(wave_map, trace_profile):
         ytrace = ytrace[:end_idx]
         xtrace = np.arange(0, end_idx)
 
-        trace_list.append((xtrace, ytrace, wavetrace))        
+        trace_list.append((xtrace, ytrace, wavetrace))
 
     return trace_list
 
@@ -135,7 +135,7 @@ def throughput():
         thru = maxthru - dist*scaling
         thru[thru<thresh] = thresh
         return thru
-    
+
     thru_o1 = partial(filter_function, wl_max=1.7)
     thru_o2 = partial(filter_function, wl_max=0.7)
 
@@ -164,7 +164,7 @@ def webb_kernels(wave_map):
     min_val = 1
     kernel_width = n_os*n_pix - (n_os - 1)
     ctr_idx = kernel_width//2
-    
+
     kernels = []
     for order in [0,1]:
         # set up wavelength grid over which kernel is defined
@@ -178,7 +178,7 @@ def webb_kernels(wave_map):
         triangle_function[triangle_function<=min_val] = min_val
         kernel = np.ones((kernel_width, wavelengths.size), dtype=float)*triangle_function[:,None]
         kernel/=np.sum(kernel)
-        
+
         kernels.append(au.WebbKernel(wave_kernel, kernel, wave_trace, n_pix))
 
     return kernels
@@ -197,7 +197,7 @@ def mask_trace_profile(trace_profile):
         if cut_hi is not None:
             trace[:,cut_hi:] = 1
         return trace.astype(bool)
-    
+
     trace_o1 = mask_from_trace(trace_profile[0], cut_low=0, cut_hi=199)
     trace_o2 = mask_from_trace(trace_profile[1], cut_low=0, cut_hi=175)
     return [trace_o1, trace_o2]
@@ -236,8 +236,8 @@ def f_lam(wl, m=SPECTRAL_SLOPE, b=0):
     """
     Estimator for flux as function of wavelength
     Returns linear function of wl with slope m and intercept b
-    
-    This function is also used in this test suite as 
+
+    This function is also used in this test suite as
     """
     return m*wl + b
 
@@ -283,7 +283,7 @@ def refmodel(trace1d):
     also have coefficients equal to 0 except for the constant and linear terms"""
     model = PastasossModel()
     model.meta.pwcpos_cmd = 245.76
-    
+
     trace0 = {"pivot_x": 189.0,
               "pivot_y": 5.0,
               "spectral_order": 1,
