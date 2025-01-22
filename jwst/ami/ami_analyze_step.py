@@ -46,7 +46,8 @@ class AmiAnalyzeStep(Step):
     reference_file_types = ["throughput", "nrm"]
 
     def save_model(self, model, *args, **kwargs):
-        """Override save_model to change suffix based on list of results.
+        """
+        Override save_model to change suffix based on list of results.
 
         Parameters
         ----------
@@ -67,7 +68,8 @@ class AmiAnalyzeStep(Step):
         return Step.save_model(self, model, *args, **kwargs)
 
     def override_bandpass(self):
-        """Read bandpass from asdf file and use it to override the default.
+        """
+        Read bandpass from asdf file and use it to override the default.
 
         Expects an array of [effstims, wave_m]
         (i.e. np.array((effstims,wave_m)).T) stored as 'bandpass' in asdf file,
@@ -119,7 +121,8 @@ class AmiAnalyzeStep(Step):
             return bandpass
 
     def override_affine2d(self):
-        """Read user-input affine transform from ASDF file.
+        """
+        Read user-input affine transform from ASDF file.
 
         Makes an Affine2d object (see utils.Affine2D class).
         Input should contain mx,my,sx,sy,xo,yo,rotradccw.
@@ -147,8 +150,10 @@ class AmiAnalyzeStep(Step):
             affine2d = None
 
         except KeyError:
-            message1 = ("ASDF file does not contain all of the required keys: "
-                        "mx, my, sx, sy ,xo, yo, rotradccw. ")
+            message1 = (
+                "ASDF file does not contain all of the required keys: "
+                "mx, my, sx, sy ,xo, yo, rotradccw. "
+            )
             message2 = "See step documentation for info on creating a custom affine2d ASDF file."
             self.log.info(message1 + message2)
             self.log.info("\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****")
@@ -170,7 +175,8 @@ class AmiAnalyzeStep(Step):
         return affine2d
 
     def process(self, fname):
-        """Perform analysis of an AMI mode exposure by applying the LG algorithm.
+        """
+        Perform analysis of an AMI mode exposure by applying the LG algorithm.
 
         Parameters
         ----------

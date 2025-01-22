@@ -11,7 +11,8 @@ log.setLevel(logging.DEBUG)
 
 
 class FringeFitter:
-    """Fit fringes to get interferometric observables for the data.
+    """
+    Fit fringes to get interferometric observables for the data.
 
     For the given information on the instrument and mask, calculate the
     fringe observables (visibilities and closure phases in the image plane.
@@ -19,7 +20,8 @@ class FringeFitter:
     """
 
     def __init__(self, instrument_data, **kwargs):
-        """Initialize the FringeFitter object.
+        """
+        Initialize the FringeFitter object.
 
         Parameters
         ----------
@@ -68,7 +70,8 @@ class FringeFitter:
             log.info("leastsqnrm.matrix_operations() - equally-weighted")
 
     def fit_fringes_all(self, input_model):
-        """Generate the best model to match the data (centering, scaling, rotation).
+        """
+        Generate the best model to match the data (centering, scaling, rotation).
 
         Parameters
         ----------
@@ -114,7 +117,8 @@ class FringeFitter:
         return output_model, output_model_multi, lgfit
 
     def make_lgfitmodel(self):
-        """Populate the LGFitModel with the output of the fringe fitting (LG algorithm).
+        """
+        Populate the LGFitModel with the output of the fringe fitting (LG algorithm).
 
         Returns
         -------
@@ -160,7 +164,8 @@ class FringeFitter:
         return m
 
     def fit_fringes_single_integration(self, slc):
-        """Generate the best model to match a single slice.
+        """
+        Generate the best model to match a single slice.
 
         Parameters
         ----------

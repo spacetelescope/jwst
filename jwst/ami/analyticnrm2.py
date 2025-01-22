@@ -14,7 +14,8 @@ log.addHandler(logging.NullHandler())
 
 
 def jinc(x, y):
-    """Compute 2d Jinc for given coordinates.
+    """
+    Compute 2d Jinc for given coordinates.
 
     Parameters
     ----------
@@ -39,7 +40,8 @@ def jinc(x, y):
 
 
 def ffc(kx, ky, **kwargs):
-    """Calculate cosine terms of analytic model.
+    """
+    Calculate cosine terms of analytic model.
 
     Parameters
     ----------
@@ -82,7 +84,8 @@ def ffc(kx, ky, **kwargs):
 
 
 def ffs(kx, ky, **kwargs):
-    """Calculate sine terms of analytic model.
+    """
+    Calculate sine terms of analytic model.
 
     Parameters
     ----------
@@ -125,7 +128,8 @@ def ffs(kx, ky, **kwargs):
 
 
 def harmonicfringes(**kwargs):
-    """Calculate the sine and cosine fringes.
+    """
+    Calculate the sine and cosine fringes.
 
     This is in image space and, for later
     versions, this works in the oversampled space that is each slice of the model.
@@ -192,10 +196,9 @@ def harmonicfringes(**kwargs):
 
 
 def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
-    """Calculate the wavefront for a single hole.
+    """
+    Calculate the wavefront for a single hole.
 
-    Long Summary
-    ------------
     This routine returns the complex
     amplitude array of fringes phi to units of meters, which is more physical for
     broadband simulations.
@@ -236,7 +239,8 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
 
 
 def image_center(fov, oversample, psf_offset):
-    """Calculate the Image center location in oversampled pixels.
+    """
+    Calculate the Image center location in oversampled pixels.
 
     Parameters
     ----------
@@ -264,7 +268,8 @@ def image_center(fov, oversample, psf_offset):
 
 
 def interf(kx, ky, **kwargs):
-    """Calculate the complex amplitudes for all holes.
+    """
+    Calculate the complex amplitudes for all holes.
 
     Parameters
     ----------
@@ -330,7 +335,8 @@ def model_array(
     shape="circ",
     affine2d=None,
 ):
-    """Create a model using the specified wavelength.
+    """
+    Create a model using the specified wavelength.
 
     Parameters
     ----------
@@ -385,9 +391,7 @@ def model_array(
     if shape == "circ":
         asf_pb = asf(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     elif shape == "hex":
-        asf_pb = asf_hex(
-            pitch, fov, oversample, d, lam, psf_offset, affine2d
-        )
+        asf_pb = asf_hex(pitch, fov, oversample, d, lam, psf_offset, affine2d)
     else:
         raise KeyError(
             "Must provide a valid hole shape. Current supported shapes are"
@@ -424,7 +428,8 @@ def model_array(
 
 
 def asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
-    """Calculate the Amplitude Spread Function for a circular aperture.
+    """
+    Calculate the Amplitude Spread Function for a circular aperture.
 
     Amplitude Spread Function is also know as image plane complex amplitude.
 
@@ -479,7 +484,8 @@ def asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
 
 
 def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
-    """Amplitude Spread Function (a.k.a. image plane complex amplitude) for a fringe.
+    """
+    Amplitude Spread Function (a.k.a. image plane complex amplitude) for a fringe.
 
     Parameters
     ----------
@@ -530,7 +536,8 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
 
 
 def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
-    """Amplitude Spread Function (a.k.a. image plane complex amplitude) for a hexagonal aperture.
+    """
+    Amplitude Spread Function (a.k.a. image plane complex amplitude) for a hexagonal aperture.
 
     Parameters
     ----------
@@ -579,7 +586,8 @@ def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
 def psf(
     detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shape="circ"
 ):
-    """Calculate the PSF for the requested shape.
+    """
+    Calculate the PSF for the requested shape.
 
     Parameters
     ----------
@@ -641,9 +649,7 @@ def psf(
         )
 
     elif shape == "hexonly":
-        asf_2d = asf_hex(
-            detpixel, fov, oversample, d, lam, psf_offset, affine2d
-        )
+        asf_2d = asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
 
     elif shape == "fringeonly":
         asf_fringe = asffringe(

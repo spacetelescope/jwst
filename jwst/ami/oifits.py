@@ -14,7 +14,8 @@ log.setLevel(logging.DEBUG)
 
 
 class RawOifits:
-    """Store AMI data in the format required to write out to OIFITS files.
+    """
+    Store AMI data in the format required to write out to OIFITS files.
 
     Takes fringefitter class, which contains nrm_list and instrument_data attributes,
     all info needed to write oifits. Angular quantities of input are in radians from
@@ -31,7 +32,8 @@ class RawOifits:
     """
 
     def __init__(self, fringefitter, method="mean"):
-        """Initialize the RawOifits object.
+        """
+        Initialize the RawOifits object.
 
         Parameters
         ----------
@@ -95,7 +97,8 @@ class RawOifits:
         )  # squared visibilities
 
     def rotate_matrix(self, cov_mat, theta):
-        """Rotate a covariance matrix by an angle.
+        """
+        Rotate a covariance matrix by an angle.
 
         Parameters
         ----------
@@ -116,7 +119,8 @@ class RawOifits:
         return np.linalg.multi_dot([np.transpose(r_mat), cov_mat, r_mat])
 
     def average_observables(self, averfunc):
-        """Average all the observables.
+        """
+        Average all the observables.
 
         Calculate covariance matrices between fringe amplitudes/fringe phases,
         and between triple product amps/closure phases, and closure amplitudes/quad phases.
@@ -217,7 +221,8 @@ class RawOifits:
         )
 
     def err_from_covmat(self, covmatlist):
-        """Derive observable errors from their covariance matrices.
+        """
+        Derive observable errors from their covariance matrices.
 
         Return sqrt of [0,0] and [1,1] elements of each of a list of covariance matrices,
         divided by sqrt(N_ints), for use as observable errors (standard error of the mean).
@@ -248,7 +253,8 @@ class RawOifits:
         return err_00, err_11
 
     def observable_covariances(self, averfunc):
-        """Calculate covariance matrices from each pair of observables.
+        """
+        Calculate covariance matrices from each pair of observables.
 
         For each baseline/triple/quad, calculate covariance between each
         fringe amplitude/phase quantity.
@@ -301,7 +307,8 @@ class RawOifits:
         )
 
     def cov_r_theta(self, rr, theta, averfunc):
-        """Calculate covariance in polar coordinates.
+        """
+        Calculate covariance in polar coordinates.
 
         Calculate covariance in x, y coordinates, then rotate covariance matrix
         by **average** phase (over integrations) to get matrix in (r,theta).
@@ -327,7 +334,8 @@ class RawOifits:
         return self.rotate_matrix(cov_mat_xy, averfunc(theta))
 
     def make_oifits(self):
-        """Populate AmiOIModel.
+        """
+        Populate AmiOIModel.
 
         Perform final manipulations of observable arrays, calculate uncertainties,
         and populate AmiOIModel.
@@ -554,7 +562,8 @@ class RawOifits:
         return oim
 
     def init_oimodel_arrays(self, oimodel):
-        """Set dtypes and initialize shapes for AmiOiModel arrays.
+        """
+        Set dtypes and initialize shapes for AmiOiModel arrays.
 
         Supports averaged or multi-integration versions of oimodel.
 
@@ -658,7 +667,8 @@ class RawOifits:
         oimodel.wavelength = np.zeros(1, dtype=wavelength_dtype)
 
     def _maketriples_all(self):
-        """Calculate all three-hole combinations, baselines.
+        """
+        Calculate all three-hole combinations, baselines.
 
         Returns
         -------
@@ -684,7 +694,8 @@ class RawOifits:
         return tarray, np.array(uvlist)
 
     def _makebaselines(self):
-        """Calculate all hole pairs, baselines.
+        """
+        Calculate all hole pairs, baselines.
 
         Returns
         -------
@@ -703,7 +714,8 @@ class RawOifits:
         return np.array(blist).astype(int), np.array(bllist)
 
     def _makequads_all(self):
-        """Calculate all four-hole combinations (quads).
+        """
+        Calculate all four-hole combinations (quads).
 
         Returns
         -------
@@ -730,7 +742,8 @@ class RawOifits:
         return qarray, np.array(uvwlist)
 
     def _format_staindex_t3(self, tab):
-        """Convert sta_index to save oifits T3 in the appropriate format.
+        """
+        Convert sta_index to save oifits T3 in the appropriate format.
 
         Parameters
         ----------
@@ -757,7 +770,8 @@ class RawOifits:
         return sta_index
 
     def _format_staindex_v2(self, tab):
-        """Convert sta_index to save oifits V2 in the appropriate format.
+        """
+        Convert sta_index to save oifits V2 in the appropriate format.
 
         Parameters
         ----------
@@ -784,7 +798,8 @@ class RawOifits:
 
 
 class CalibOifits:
-    """Produce a final calibrated AmiOIModel.
+    """
+    Produce a final calibrated AmiOIModel.
 
     Calibrate (normalize) an AMI observation by subtracting closure phases
     of a reference star from those of a target and dividing visibility amplitudes
@@ -792,7 +807,8 @@ class CalibOifits:
     """
 
     def __init__(self, targoimodel, caloimodel):
-        """Initialize the CalibOifits object.
+        """
+        Initialize the CalibOifits object.
 
         Parameters
         ----------
@@ -827,7 +843,8 @@ class CalibOifits:
         self.calib_oimodel.array = np.zeros(nrows, dtype=modified_dtype)
 
     def calibrate(self):
-        """Calibrate the target AmiOIModel by the calibrator (reference star) AmiOIModel.
+        """
+        Calibrate the target AmiOIModel by the calibrator (reference star) AmiOIModel.
 
         Returns
         -------

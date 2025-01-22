@@ -8,7 +8,8 @@ class NRMDefinition:
     """Defines the geometry of the NRM mask."""
 
     def __init__(self, nrm_model, maskname="jwst_ami", chooseholes=None):
-        """Set attributes of NRMDefinition class.
+        """
+        Set attributes of NRMDefinition class.
 
         Get hole centers and other mask geometry details from NRMModel, apply rotations/flips
         as necessary and set them as attributes.
@@ -36,7 +37,8 @@ class NRMDefinition:
         self.read_nrm_model(nrm_model, chooseholes=chooseholes)
 
     def read_nrm_model(self, nrm_model, chooseholes=None):
-        """Calculate hole centers with appropriate rotation.
+        """
+        Calculate hole centers with appropriate rotation.
 
         Parameters
         ----------
@@ -97,7 +99,8 @@ class NRMDefinition:
         self.ctrs = ctrs_asbuilt
 
     def showmask(self):
-        """Calculate the diameter of the smallest centered circle (D) enclosing the live mask area.
+        """
+        Calculate the diameter of the smallest centered circle (D) enclosing the live mask area.
 
         Returns
         -------

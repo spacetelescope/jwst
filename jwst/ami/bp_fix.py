@@ -46,7 +46,8 @@ JUMP_DET = dqflags.pixel["JUMP_DET"]
 
 
 def create_wavelengths(filtername):
-    """Extend filter support slightly past half power points.
+    """
+    Extend filter support slightly past half power points.
 
     Filter transmissions are quasi-rectangular.
 
@@ -66,7 +67,8 @@ def create_wavelengths(filtername):
 
 
 def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
-    """Calculate psf at low, center, and high wavelengths of filter.
+    """
+    Calculate psf at low, center, and high wavelengths of filter.
 
     Coadd psfs and perform fft-style transform of image w/ dft.
 
@@ -102,7 +104,8 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
 
 
 def transform_image(image):
-    """Take Fourier transform of image.
+    """
+    Take Fourier transform of image.
 
     Parameters
     ----------
@@ -123,7 +126,8 @@ def transform_image(image):
 
 
 def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
-    """Calculate the PSF.
+    """
+    Calculate the PSF.
 
     Parameters
     ----------
@@ -157,7 +161,8 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
 
 
 def bad_pixels(data, median_size, median_tres):
-    """Identify bad pixels by subtracting median-filtered data and searching for outliers.
+    """
+    Identify bad pixels by subtracting median-filtered data and searching for outliers.
 
     Parameters
     ----------
@@ -189,7 +194,8 @@ def bad_pixels(data, median_size, median_tres):
 
 
 def fourier_corr(data, pxdq, fmas):
-    """Compute and apply the bad pixel corrections based on Section 2.5 of Ireland 2013.
+    """
+    Compute and apply the bad pixel corrections based on Section 2.5 of Ireland 2013.
 
     Parameters
     ----------
@@ -250,7 +256,8 @@ def fourier_corr(data, pxdq, fmas):
 
 
 def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
-    """Apply the Fourier bad pixel correction to pixels flagged DO_NOT_USE or JUMP_DET.
+    """
+    Apply the Fourier bad pixel correction to pixels flagged DO_NOT_USE or JUMP_DET.
 
     Original code implementation by Jens Kammerer.
 

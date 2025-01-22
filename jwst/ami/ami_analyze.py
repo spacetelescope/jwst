@@ -27,7 +27,8 @@ def apply_lg_plus(
     affine2d,
     run_bpfix,
 ):
-    """Apply the image plane algorithm (LG-PLUS) to an AMI exposure.
+    """
+    Apply the image plane algorithm (LG-PLUS) to an AMI exposure.
 
     Parameters
     ----------

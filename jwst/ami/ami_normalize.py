@@ -11,7 +11,8 @@ log.addHandler(logging.NullHandler())
 
 
 def normalize_lg(target_model, reference_model):
-    """Normalize the LG results for a science target by the LG results for a reference target.
+    """
+    Normalize the LG results for a science target by the LG results for a reference target.
 
     Parameters
     ----------

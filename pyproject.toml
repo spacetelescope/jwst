@@ -106,8 +106,9 @@ sdp = [
 ]
 test = [
     "ci-watson>=0.5.0",
-    "ruff",
-    "pre-commit",
+    "numpydoc>=1.8.0",
+    "ruff>=0.9.2",
+    "pre-commit>=4.1.0",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
@@ -254,6 +255,15 @@ omit = [
 [tool.setuptools_scm]
 write_to = "jwst/_version.py"
 
+[tool.numpydoc_validation]
+checks = [
+    "all",
+    "EX01", # No examples section found
+    "SA01", # See Also section not found
+    "ES01", # No extended summary found
+    "PR01", # Parameters not documented. Already caught by ruff
+]
+
 [tool.ruff]
 exclude = [
     "jwst/extern",
@@ -277,8 +287,6 @@ select = [
     "F",      # Pyflakes (part of default flake8)
     "E",      # pycodestyle (part of default flake8)
     "W",      # pycodestyle (part of default flake8)
-    "D",      # pydocstyle
-    "D213",   # Multi-line docstring summary should start at the second line
     "N",      # pep8-naming (naming conventions)
     "A",      # flake8-builtins (prevent shadowing of builtins)
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
@@ -299,8 +307,6 @@ select = [
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 ignore = [
-    "D100", # Missing docstring in public module
-    "D212", # Multi-line docstring summary should start at the second line. ignore in favor of D213
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "UP008", # use super() instead of super(class, self). no harm being explicit
     "UP015", # unnecessary open(file, "r"). no harm being explicit
@@ -308,8 +314,8 @@ ignore = [
     "ISC001", # single line implicit string concatenation. formatter recommends ignoring this.
 ]
 
-[tool.ruff.lint.pydocstyle]
-convention = "numpy"
+# [tool.ruff.lint.pydocstyle]
+# convention = "numpy"
 
 [tool.ruff.lint.pycodestyle]
 # Formatter autofixes to 88, but error thrown only above 100

@@ -3,7 +3,8 @@ import numpy as np
 
 
 def gfunction(xi, eta, **kwargs):
-    """Fourier transform a half-hexagon.
+    """
+    Fourier transform a half-hexagon.
 
     By half-hexagon, it is meant that
     the hexagon is bisected from one corner to its diametrically opposite corner.
@@ -72,7 +73,8 @@ def gfunction(xi, eta, **kwargs):
 
 
 def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
-    """Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
+    """
+    Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
 
     Parameters
     ----------

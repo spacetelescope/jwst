@@ -12,7 +12,8 @@ log.addHandler(logging.NullHandler())
 
 
 def flip(holearray):
-    """Change sign of 2nd coordinate of holes.
+    """
+    Change sign of 2nd coordinate of holes.
 
     Parameters
     ----------
@@ -32,7 +33,8 @@ def flip(holearray):
 
 
 def rotatevectors(vectors, thetarad):
-    """Rotate vectors by specified angle.
+    """
+    Rotate vectors by specified angle.
 
     Parameters
     ----------
@@ -62,7 +64,8 @@ def rotatevectors(vectors, thetarad):
 
 
 def mas2rad(mas):
-    """Convert angle in milli arc-sec to radians.
+    """
+    Convert angle in milli arc-sec to radians.
 
     Parameters
     ----------
@@ -80,7 +83,8 @@ def mas2rad(mas):
 
 
 def rad2mas(rad):
-    """Convert input angle in radians to milli arc sec.
+    """
+    Convert input angle in radians to milli arc sec.
 
     Parameters
     ----------
@@ -99,7 +103,8 @@ def rad2mas(rad):
 
 
 def sin2deltapistons(coeffs):
-    """Calculate the sine of the piston difference.
+    """
+    Calculate the sine of the piston difference.
 
     Each baseline has one sine and one cosine fringe with a coefficient that
     depends on the piston difference between the two holes that make the
@@ -128,7 +133,8 @@ def sin2deltapistons(coeffs):
 
 
 def cos2deltapistons(coeffs):
-    """Calculate the cosine of the piston difference.
+    """
+    Calculate the cosine of the piston difference.
 
     Each baseline has one sine and one cosine fringe with a coefficient that
     depends on the piston difference between the two holes that make the
@@ -161,7 +167,8 @@ def cos2deltapistons(coeffs):
 
 
 def replacenan(array):
-    """Replace singularities in analytical hexagon Fourier transform.
+    """
+    Replace singularities in analytical hexagon Fourier transform.
 
     Replace NaN values with the analytically derived limits.
 
@@ -183,7 +190,8 @@ def replacenan(array):
 
 
 def primarybeam(kx, ky):
-    """Calculate the envelope intensity for circular holes & monochromatic light.
+    """
+    Calculate the envelope intensity for circular holes & monochromatic light.
 
     Parameters
     ----------
@@ -214,7 +222,8 @@ def primarybeam(kx, ky):
 
 
 def hexpb():
-    """Calculate the primary beam for hexagonal holes.
+    """
+    Calculate the primary beam for hexagonal holes.
 
     Parameters
     ----------
@@ -238,7 +247,8 @@ def hexpb():
 
 
 def ffc(kx, ky):
-    """Calculate cosine terms of analytic model.
+    """
+    Calculate cosine terms of analytic model.
 
     Parameters
     ----------
@@ -265,7 +275,8 @@ def ffc(kx, ky):
 
 
 def ffs(kx, ky):
-    """Calculate sine terms of analytic model.
+    """
+    Calculate sine terms of analytic model.
 
     Parameters
     ----------
@@ -295,7 +306,8 @@ def ffs(kx, ky):
 def model_array(
     ctrs, lam, oversample, pitch, fov, d, centering="PIXELCENTERED", shape="circ"
 ):
-    """Create a model using the specified wavelength.
+    """
+    Create a model using the specified wavelength.
 
     Parameters
     ----------
@@ -418,7 +430,8 @@ def model_array(
 
 
 def weighted_operations(img, model, dqm=None):
-    """Perform least squares matrix operations to solve A x = b weighting by Poisson variance.
+    """
+    Perform least squares matrix operations to solve A x = b weighting by Poisson variance.
 
     A is the model, b is the data (image), and x is the coefficient vector we are solving for.
 
@@ -508,7 +521,8 @@ def weighted_operations(img, model, dqm=None):
 
 
 def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
-    """Use least squares matrix operations to solve A x = b.
+    """
+    Use least squares matrix operations to solve A x = b.
 
     A is the model, b is the data (img), and x is the coefficient vector we are solving for.
     In 2-D, data x = inv(At.A).(At.b).  If a flux is given, it will be used it
@@ -655,7 +669,8 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
 
 def multiplyenv(env, fringeterms):
-    """Multiply the envelope by each fringe 'image'.
+    """
+    Multiply the envelope by each fringe 'image'.
 
     Parameters
     ----------
@@ -690,7 +705,8 @@ def multiplyenv(env, fringeterms):
 
 
 def tan2visibilities(coeffs):
-    """From the solution to the fit, calculate the fringe amplitude and phase.
+    """
+    From the solution to the fit, calculate the fringe amplitude and phase.
 
     Parameters
     ----------
@@ -732,7 +748,8 @@ def tan2visibilities(coeffs):
 
 
 def populate_antisymmphasearray(deltaps, n=7):
-    """Populate the antisymmetric fringe phase array:.
+    """
+    Populate the antisymmetric fringe phase array:.
 
     This array takes the form:
 
@@ -773,7 +790,8 @@ def populate_antisymmphasearray(deltaps, n=7):
 
 
 def populate_symmamparray(amps, n=7):
-    """Populate the symmetric fringe amplitude array.
+    """
+    Populate the symmetric fringe amplitude array.
 
     Parameters
     ----------
@@ -805,7 +823,8 @@ def populate_symmamparray(amps, n=7):
 
 
 def t3_amplitudes(amps, n=7):
-    """Populate the triple-product amplitude array (NOT closure amplitudes).
+    """
+    Populate the triple-product amplitude array (NOT closure amplitudes).
 
     Parameters
     ----------
@@ -841,7 +860,8 @@ def t3_amplitudes(amps, n=7):
 
 
 def redundant_cps(deltaps, n=7):
-    """Calculate closure phases for each set of 3 holes.
+    """
+    Calculate closure phases for each set of 3 holes.
 
     Parameters
     ----------
@@ -877,7 +897,8 @@ def redundant_cps(deltaps, n=7):
 
 
 def closurephase(deltap, n=7):
-    """Calculate closure phases between each pair of holes.
+    """
+    Calculate closure phases between each pair of holes.
 
     Parameters
     ----------
@@ -937,7 +958,8 @@ def closurephase(deltap, n=7):
 
 
 def closure_amplitudes(amps, n=7):
-    """Calculate closure amplitudes.
+    """
+    Calculate closure amplitudes.
 
     Parameters
     ----------
@@ -976,7 +998,8 @@ def closure_amplitudes(amps, n=7):
 
 
 def q4_phases(deltaps, n=7):
-    """Calculate phases for each set of 4 holes.
+    """
+    Calculate phases for each set of 4 holes.
 
     Parameters
     ----------

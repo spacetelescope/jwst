@@ -1,7 +1,8 @@
-"""Matrix-based discrete Fourier transforms for computing PSFs.
+"""
+Matrix-based discrete Fourier transforms for computing PSFs.
 
-Summary
--------
+Extended Summary
+----------------
 MatrixDFT: Matrix-based discrete Fourier transforms for computing PSFs.
 See Soummer et al. 2007 JOSA
 The main user interface in this module is a class MatrixFourierTransform.
@@ -55,7 +56,8 @@ CENTERING_CHOICES = (FFTSTYLE, SYMMETRIC, ADJUSTABLE, FFTRECT)
 
 
 def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTYLE):
-    """Perform a matrix discrete Fourier transform with selectable output sampling and centering.
+    """
+    Perform a matrix discrete Fourier transform with selectable output sampling and centering.
 
     Where parameters can be supplied as either
     scalars or 2-tuples, the first element of the 2-tuple is used for the
@@ -207,7 +209,8 @@ matrix_idft.__doc__ = matrix_dft.__doc__.replace(  # type: ignore[union-attr]
 
 
 class MatrixFourierTransform:
-    """Implements a discrete matrix Fourier transform for optical propagation.
+    """
+    Implements a discrete matrix Fourier transform for optical propagation.
 
     Follows the algorithms discussed in Soummer et al. 2007 JOSA 15 24.
 
@@ -224,7 +227,8 @@ class MatrixFourierTransform:
     """
 
     def __init__(self, centering="ADJUSTABLE", verbose=False):
-        """Initialize the MatrixFourierTransform object.
+        """
+        Initialize the MatrixFourierTransform object.
 
         Parameters
         ----------
@@ -270,7 +274,8 @@ class MatrixFourierTransform:
                 )
 
     def perform(self, pupil, nlam_d, npix, offset=None):
-        """Forward matrix discrete Fourier Transform.
+        """
+        Forward matrix discrete Fourier Transform.
 
         Parameters
         ----------
@@ -311,7 +316,8 @@ class MatrixFourierTransform:
         return matrix_dft(pupil, nlam_d, npix, centering=self.centering, offset=offset)
 
     def inverse(self, image, nlam_d, npix, offset=None):
-        """Inverse matrix discrete Fourier Transform.
+        """
+        Inverse matrix discrete Fourier Transform.
 
         Parameters
         ----------

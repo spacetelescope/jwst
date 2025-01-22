@@ -18,7 +18,8 @@ log.addHandler(logging.NullHandler())
 
 
 def g_eeag(xi, eta, **kwargs):
-    """Fourier transform a half-hexagon.
+    """
+    Fourier transform a half-hexagon.
 
     By half-hexagon, it is meant that
     the hexagon is bisected from one corner to its diametrically opposite corner.
@@ -81,7 +82,8 @@ def g_eeag(xi, eta, **kwargs):
 
 
 def glimit(xi, **kwargs):
-    """Calculate analytic limit of the Fourier transform of one half of the hexagon along eta=0.
+    """
+    Calculate analytic limit of the Fourier transform of one half of the hexagon along eta=0.
 
     Parameters
     ----------
@@ -130,7 +132,8 @@ def glimit(xi, **kwargs):
 
 
 def centralpix_limit():
-    """Calculate analytic limit of the Fourier transform of one half of the hexagon at the origin.
+    """
+    Calculate analytic limit of the Fourier transform of one half of the hexagon at the origin.
 
     Returns
     -------
@@ -145,7 +148,8 @@ def centralpix_limit():
 
 
 def mas2rad(mas):
-    """Convert angle in milli arc-sec to radians.
+    """
+    Convert angle in milli arc-sec to radians.
 
     Parameters
     ----------
@@ -163,7 +167,8 @@ def mas2rad(mas):
 
 
 def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
-    """Calculate the hexagonal hole Fourier transform.
+    """
+    Calculate the hexagonal hole Fourier transform.
 
     Computation works by adding the transforms of the 2 symmetric parts.
 

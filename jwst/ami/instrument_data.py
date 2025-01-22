@@ -29,7 +29,8 @@ class NIRISS:
         firstfew=None,
         run_bpfix=True,
     ):
-        """Initialize NIRISS class for NIRISS/AMI instrument.
+        """
+        Initialize NIRISS class for NIRISS/AMI instrument.
 
         Parameters
         ----------
@@ -128,7 +129,8 @@ class NIRISS:
         self.threshold = self.cvsupport_threshold[filt]
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
-        """Override pixel scale in header.
+        """
+        Override pixel scale in header.
 
         Parameters
         ----------
@@ -137,10 +139,6 @@ class NIRISS:
 
         pscaley_deg: float, degrees
             pixel scale in y-direction
-
-        Returns
-        -------
-        None
 
         """
         if pscalex_deg is not None:
@@ -151,7 +149,8 @@ class NIRISS:
         self.pscale_rad = utils.mas2rad(self.pscale_mas)
 
     def read_data_model(self, input_model):
-        """Read the NIRISS data model.
+        """
+        Read the NIRISS data model.
 
         Retrieve info from input data model and store in NIRISS class.
         Trim refpix and roughly center science data and dq array.
@@ -320,7 +319,8 @@ class NIRISS:
         return scidata_ctrd, dqmask_ctrd
 
     def reset_nwav(self, nwav):
-        """Reset self.nwav parameter.
+        """
+        Reset self.nwav parameter.
 
         Parameters
         ----------
@@ -331,7 +331,8 @@ class NIRISS:
         self.nwav = nwav
 
     def mast2sky(self):
-        """Rotate hole center coordinates.
+        """
+        Rotate hole center coordinates.
 
         Rotation of coordinates is:
             Clockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = -1
