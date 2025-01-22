@@ -1,0 +1,1 @@
+Update barshadow correction to scale correctly to NIRSpec MOS data in long slit mode.
