@@ -679,9 +679,10 @@ def copy_keyword_info(slit, slitname, spec):
         if hasattr(slit, key):
             setattr(spec, key, getattr(slit, key))
 
-    # copy over some attributes only if they are present and not None
+    # Copy over some attributes only if they are present and not None
     copy_populated_attributes = ["source_name", "source_alias",
-                                 "source_type", "stellarity"]
+                                 "source_type", "stellarity",
+                                 "quadrant", "slit_xscale", "slit_yscale"]
     for key in copy_populated_attributes:
         if getattr(slit, key, None) is not None:
             setattr(spec, key, getattr(slit, key))
