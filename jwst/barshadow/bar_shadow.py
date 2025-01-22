@@ -93,8 +93,8 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
     Parameters
     ----------
-    slitlet : jwst.datamodels.SlitModel
-        The slitlet to calculate for.
+    slitlet : `~jwst.datamodels.SlitModel`
+        The slitlet to calculate the correction for.
 
     barshadow_model : `~jwst.datamodels.BarshadowModel`
         Bar shadow data model from reference file.
@@ -104,7 +104,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
     Returns
     -------
-    correction : jwst.datamodels.SlitModel
+    correction : `~jwst.datamodels.SlitModel`
         The correction to be applied.
     """
     slitlet_number = slitlet.slitlet_id
@@ -369,7 +369,7 @@ def has_uniform_source(slitlet, force_type=None):
 
     Parameters
     ----------
-    slitlet : SlitModel
+    slitlet : `~jwst.datamodels.SlitModel`
         The slitlet being interrogated.
     force_type : str or None
         Source type to force to and decide upon.

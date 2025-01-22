@@ -13,17 +13,16 @@ def test_create_shutter_elements():
     barshadow_model = datamodels.BarshadowModel(data1x1=d1x1, data1x3=d1x3)
     shutter_elements = bar.create_shutter_elements(barshadow_model)
 
-    assert np.allclose(shutter_elements['first'], d1x1[:501, :], atol=1.e-10)
-    assert np.allclose(shutter_elements['open_open'], d1x3[:501, :],
-                       atol=1.e-10)
-    assert np.allclose(shutter_elements['open_closed'], d1x1[500:, :],
-                       atol=1.e-10)
-    assert np.allclose(shutter_elements['closed_open'], d1x1[:501, :],
-                       atol=1.e-10)
-    assert np.allclose(shutter_elements['closed_closed'],
-                       min_closed * np.ones((501, 101), dtype=np.float64),
-                       atol=1.e-10)
-    assert np.allclose(shutter_elements['last'], d1x1[501:, :], atol=1.e-10)
+    assert np.allclose(shutter_elements["first"], d1x1[:501, :], atol=1.0e-10)
+    assert np.allclose(shutter_elements["open_open"], d1x3[:501, :], atol=1.0e-10)
+    assert np.allclose(shutter_elements["open_closed"], d1x1[500:, :], atol=1.0e-10)
+    assert np.allclose(shutter_elements["closed_open"], d1x1[:501, :], atol=1.0e-10)
+    assert np.allclose(
+        shutter_elements["closed_closed"],
+        min_closed * np.ones((501, 101), dtype=np.float64),
+        atol=1.0e-10,
+    )
+    assert np.allclose(shutter_elements["last"], d1x1[501:, :], atol=1.0e-10)
 
 
 def test_create_shadow():
@@ -39,23 +38,23 @@ def test_create_shadow():
     shadow = bar.create_shadow(shutter_elements, shutter_status)
 
     # first
-    assert np.allclose(shadow[0:500, :], d1x1[0:500, :], atol=1.e-10)
+    assert np.allclose(shadow[0:500, :], d1x1[0:500, :], atol=1.0e-10)
     # open_open
-    assert np.allclose(shadow[501:1000, :], d1x3[1:500, :], atol=1.e-10)
+    assert np.allclose(shadow[501:1000, :], d1x3[1:500, :], atol=1.0e-10)
     # open_closed
-    assert np.allclose(shadow[1001:1500, :], d1x1[501:1000, :], atol=1.e-10)
+    assert np.allclose(shadow[1001:1500, :], d1x1[501:1000, :], atol=1.0e-10)
     # closed_closed
-    assert np.allclose(shadow[1501:2000, :], min_closed, atol=1.e-10)
+    assert np.allclose(shadow[1501:2000, :], min_closed, atol=1.0e-10)
     # closed_open
-    assert np.allclose(shadow[2001:2500, :], d1x1[1:500, :], atol=1.e-10)
+    assert np.allclose(shadow[2001:2500, :], d1x1[1:500, :], atol=1.0e-10)
     # open_open
-    assert np.allclose(shadow[2501:3000, :], d1x3[1:500, :], atol=1.e-10)
+    assert np.allclose(shadow[2501:3000, :], d1x3[1:500, :], atol=1.0e-10)
     # open_open
-    assert np.allclose(shadow[3001:3500, :], d1x3[1:500, :], atol=1.e-10)
+    assert np.allclose(shadow[3001:3500, :], d1x3[1:500, :], atol=1.0e-10)
     # open_open
-    assert np.allclose(shadow[3501:4000, :], d1x3[1:500, :], atol=1.e-10)
+    assert np.allclose(shadow[3501:4000, :], d1x3[1:500, :], atol=1.0e-10)
     # last
-    assert np.allclose(shadow[4001:4500, :], d1x1[502:1001, :], atol=1.e-10)
+    assert np.allclose(shadow[4001:4500, :], d1x1[502:1001, :], atol=1.0e-10)
 
 
 def test_create_empty_shadow_array():
@@ -63,8 +62,8 @@ def test_create_empty_shadow_array():
     shadow = bar.create_empty_shadow_array(nshutters)
 
     assert shadow.shape == (2000, 101)
-    assert shadow.min() == 0.
-    assert shadow.max() == 0.
+    assert shadow.min() == 0.0
+    assert shadow.max() == 0.0
 
 
 def test_add_first_half_shutter():
@@ -75,7 +74,7 @@ def test_add_first_half_shutter():
     shadow_element = rng.random((501, 101))
     shadow = bar.add_first_half_shutter(shadow, shadow_element)
 
-    assert np.allclose(shadow[0:501, :], shadow_element, atol=1.e-10)
+    assert np.allclose(shadow[0:501, :], shadow_element, atol=1.0e-10)
 
 
 def test_add_next_shutter():
@@ -90,20 +89,21 @@ def test_add_next_shutter():
     shadow[:, :] = dummy_value
     shadow = bar.add_next_shutter(shadow, shadow_element, first_row)
 
-    assert np.allclose(shadow[0:first_row, :], dummy_value, atol=1.e-10)
+    assert np.allclose(shadow[0:first_row, :], dummy_value, atol=1.0e-10)
 
     # This column is the average of 1.7 and shadow_element[0, :].
-    assert np.allclose(shadow[first_row, :],
-                       (dummy_value + shadow_element[0, :]) / 2.,
-                       atol=1.e-9)
+    assert np.allclose(
+        shadow[first_row, :], (dummy_value + shadow_element[0, :]) / 2.0, atol=1.0e-9
+    )
 
     first_row += 1
     last_row = first_row + 500
 
-    assert np.allclose(shadow[first_row:last_row, :], shadow_element[1:, :],
-                       atol=1.e-10)
+    assert np.allclose(
+        shadow[first_row:last_row, :], shadow_element[1:, :], atol=1.0e-10
+    )
 
-    assert np.allclose(shadow[last_row:, :], dummy_value, atol=1.e-10)
+    assert np.allclose(shadow[last_row:, :], dummy_value, atol=1.0e-10)
 
 
 def test_add_last_half_shutter():
@@ -119,40 +119,43 @@ def test_add_last_half_shutter():
     shadow[:, :] = dummy_value
     shadow = bar.add_last_half_shutter(shadow, shadow_element, first_row)
 
-    assert np.allclose(shadow[0:first_row, :], dummy_value, atol=1.e-10)
+    assert np.allclose(shadow[0:first_row, :], dummy_value, atol=1.0e-10)
 
     # This column is the average of 1.3 and shadow_element[0, :].
-    assert np.allclose(shadow[first_row, :],
-                       (dummy_value + shadow_element[0, :]) / 2.,
-                       atol=1.e-9)
+    assert np.allclose(
+        shadow[first_row, :], (dummy_value + shadow_element[0, :]) / 2.0, atol=1.0e-9
+    )
 
     first_row += 1
     last_row = first_row + 500
 
-    assert np.allclose(shadow[first_row:last_row, :], shadow_element[1:, :],
-                       atol=1.e-10)
+    assert np.allclose(
+        shadow[first_row:last_row, :], shadow_element[1:, :], atol=1.0e-10
+    )
 
 
 def test_interpolate():
-    """Test barshadow interpolation.
+    """
+    Test barshadow interpolation.
 
     This was originally a test for a local implementation of a bilinear
     interpolation scheme (`bar_shadow.interpolate`).  The local
     implementation is now replaced by scipy.ndimage.map_coordinates,
-    but this test is retained to verify that the drop-in replacement is valid.
+    but this test is retained to verify that the drop-in replacement is
+    equivalent.
     """
-    d1x1 = np.arange(101 * 1001, dtype=np.float64) / (101. * 1001. - 1.)
+    d1x1 = np.arange(101 * 1001, dtype=np.float64) / (101.0 * 1001.0 - 1.0)
     d1x1 = d1x1.reshape(1001, 101)
     d1x3 = d1x1.copy()
     barshadow_model = datamodels.BarshadowModel(data1x1=d1x1, data1x3=d1x3)
     shutter_elements = bar.create_shutter_elements(barshadow_model)
 
-    shutter_status = "11x101"                   # 6 shutters
+    shutter_status = "11x101"  # 6 shutters
     # shadow will have shape (7 * 500, 101)     # 7 = len(shutter_status) + 1
     shadow = bar.create_shadow(shutter_elements, shutter_status)
 
-    rows = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 100.
-    columns = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 3400.
+    rows = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 100.0
+    columns = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 3400.0
     rows = rows.reshape(5, 7)
     columns = columns.reshape(5, 7)
 
@@ -181,10 +184,10 @@ def test_has_uniform_source():
     # assume that the source is extended.
     assert bar.has_uniform_source(slitlet)
 
-    slitlet.source_type = 'POINT'
-    assert not bar.has_uniform_source(slitlet)          # not extended
+    slitlet.source_type = "POINT"
+    assert not bar.has_uniform_source(slitlet)  # not extended
 
-    slitlet.source_type = 'UNKNOWN'
+    slitlet.source_type = "UNKNOWN"
     # Since source_type is not 'POINT', the step will assume that the
     # source is extended.
     assert bar.has_uniform_source(slitlet)
