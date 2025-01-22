@@ -21,9 +21,13 @@ repos:
     hooks:
       - id: ruff
         args: ["--fix"]
-      # - id: ruff-format
+      - id: ruff-format
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.9
     hooks:
       - id: bandit
         args: ["-r", "-ll", "-x", "jwst/*test*,jwst/**/*test*,jwst/fits_generator", "jwst"]
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.8.0
+    hooks:
+      - id: numpydoc-validation
