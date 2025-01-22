@@ -39,7 +39,8 @@ wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
 
 slit_fields_num = ["shutter_id", "dither_position", "xcen", "ycen",
                    "ymin", "ymax", "quadrant", "source_id",
-                   "stellarity", "source_xpos", "source_ypos"]
+                   "stellarity", "source_xpos", "source_ypos",
+                   "slit_xscale", "slit_yscale"]
 
 
 slit_fields_str = ["name", "shutter_state", "source_name", "source_alias"]
@@ -319,6 +320,21 @@ def test_msa_configuration_normal():
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
                              0.13, -0.31716078999999997, -0.18092266)
+    _compare_slits(slitlet_info[0], ref_slit)
+
+
+def test_msa_configuration_slit_scales():
+    prog_id = '1234'
+    msa_meta_id = 12
+    msaconfl = get_file_path('msa_configuration.fits')
+    dither_position = 1
+
+    # mock slit scale for quadrant 4
+    slit_scales = {4: (2.0, 3.0)}
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
+                                              slit_y_range=[-.5, .5], slit_scales=slit_scales)
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
+                             0.13, -0.31716078999999997, -0.18092266, 0.0, 0.0, 2.0, 3.0)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
