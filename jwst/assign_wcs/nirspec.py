@@ -547,7 +547,8 @@ def get_msa_slit_scales(msa_ref_file):
     Returns
     -------
     scales : dict
-        todo: update.
+        Keys are integer quadrant values (one-indexed).  Values
+        are 2-tuples of float values (scale_x, scale_y).
     """
     msa = MSAModel(msa_ref_file)
     scales = {}
