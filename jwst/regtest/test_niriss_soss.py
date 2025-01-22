@@ -166,7 +166,7 @@ def run_spec2_substrip96(rtdata_module):
     Solving for the optimal Tikhonov factor is time-consuming, and the code to do
     so is identical between substrip96 and substrip256 data. Therefore just set
     it to a reasonable value here.
-    
+
     Similarly, computing the wave_grid is already tested for other modes and is also
     time-consuming. Therefore, set it to be just 1000 evenly spaced grid points here.
     """
