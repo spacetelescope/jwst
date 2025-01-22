@@ -261,6 +261,7 @@ checks = [
     "EX01", # No examples section found
     "SA01", # See Also section not found
     "ES01", # No extended summary found
+    "RT02", # First line of return should contain only the type
     "PR01", # Parameters not documented. Already caught by ruff
 ]
 
@@ -313,9 +314,6 @@ ignore = [
     "TRY003", # prevents custom exception messages not defined in exception itself.
     "ISC001", # single line implicit string concatenation. formatter recommends ignoring this.
 ]
-
-# [tool.ruff.lint.pydocstyle]
-# convention = "numpy"
 
 [tool.ruff.lint.pycodestyle]
 # Formatter autofixes to 88, but error thrown only above 100
