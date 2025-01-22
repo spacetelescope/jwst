@@ -86,13 +86,6 @@ def do_correction(input_model, barshadow_model=None, inverse=False, source_type=
     return output_model, corrections
 
 
-def _slit_ratio(quadrant):
-    # Should be calculated by quadrant, from the MSA reference file
-    # Current approximations for Q1-4 are:
-    slit_scale = [1.14392, 1.1500415, 1.1503992, 1.1435773]
-    return slit_scale[quadrant - 1]
-
-
 def _calc_correction(slitlet, barshadow_model, source_type):
     """Calculate the barshadow correction for a slitlet
 
@@ -150,7 +143,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
     # so that the separation between the slit centers is 1,
     # i.e. slit height + interslit bar
-    yslit = yslit / _slit_ratio(slitlet.quadrant)
+    yslit = yslit / slitlet.slit_yscale
 
     # Find the fiducial shutter to align the constructed shadow with the real array
     src_loc = shutter_status.find('x')
