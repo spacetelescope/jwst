@@ -1,15 +1,15 @@
 import numpy as np
-import numpy.random as rn
-
+from scipy import ndimage
 from stdatamodels.jwst import datamodels
 
 from jwst.barshadow import bar_shadow as bar
 
 
 def test_create_shutter_elements():
-
-    d1x1 = rn.random_sample((1001, 101))
-    d1x3 = rn.random_sample((1001, 101))
+    rng = np.random.default_rng(seed=42)
+    d1x1 = rng.random((1001, 101))
+    d1x3 = rng.random((1001, 101))
+    min_closed = np.min(d1x1)
     barshadow_model = datamodels.BarshadowModel(data1x1=d1x1, data1x3=d1x3)
     shutter_elements = bar.create_shutter_elements(barshadow_model)
 
@@ -21,68 +21,16 @@ def test_create_shutter_elements():
     assert np.allclose(shutter_elements['closed_open'], d1x1[:501, :],
                        atol=1.e-10)
     assert np.allclose(shutter_elements['closed_closed'],
-                       0.01 * np.ones((501, 101), dtype=np.float64),
+                       min_closed * np.ones((501, 101), dtype=np.float64),
                        atol=1.e-10)
     assert np.allclose(shutter_elements['last'], d1x1[501:, :], atol=1.e-10)
 
 
-def test_create_first():
-
-    shadow1x1 = rn.random_sample((1001, 101))
-
-    shadow = bar.create_first(shadow1x1)
-
-    assert np.allclose(shadow, shadow1x1[:501, :], atol=1.e-10)
-
-
-def test_create_open_open():
-
-    shadow1x3 = rn.random_sample((1001, 101))
-
-    shadow = bar.create_open_open(shadow1x3)
-
-    assert np.allclose(shadow, shadow1x3[:501, :], atol=1.e-10)
-
-
-def test_create_open_closed():
-
-    shadow1x1 = rn.random_sample((1001, 101))
-
-    shadow = bar.create_open_closed(shadow1x1)
-
-    assert np.allclose(shadow, shadow1x1[500:, :], atol=1.e-10)
-
-
-def test_create_closed_open():
-
-    shadow1x1 = rn.random_sample((1001, 101))
-
-    shadow = bar.create_closed_open(shadow1x1)
-
-    assert np.allclose(shadow, shadow1x1[:501, :], atol=1.e-10)
-
-
-def test_create_closed_closed():
-
-    shadow = bar.create_closed_closed()
-
-    assert np.allclose(shadow, 0.01 * np.ones((501, 101), dtype=np.float64),
-                       atol=1.e-10)
-
-
-def test_create_last():
-
-    shadow1x1 = rn.random_sample((1001, 101))
-
-    shadow = bar.create_last(shadow1x1)
-
-    assert np.allclose(shadow, shadow1x1[501:, :], atol=1.e-10)
-
-
 def test_create_shadow():
-
-    d1x1 = rn.random_sample((1001, 101))
-    d1x3 = rn.random_sample((1001, 101))
+    rng = np.random.default_rng(seed=42)
+    d1x1 = rng.random((1001, 101))
+    d1x3 = rng.random((1001, 101))
+    min_closed = np.min(d1x1)
     barshadow_model = datamodels.BarshadowModel(data1x1=d1x1, data1x3=d1x3)
     shutter_elements = bar.create_shutter_elements(barshadow_model)
 
@@ -97,7 +45,7 @@ def test_create_shadow():
     # open_closed
     assert np.allclose(shadow[1001:1500, :], d1x1[501:1000, :], atol=1.e-10)
     # closed_closed
-    assert np.allclose(shadow[1501:2000, :], 0.01, atol=1.e-10)
+    assert np.allclose(shadow[1501:2000, :], min_closed, atol=1.e-10)
     # closed_open
     assert np.allclose(shadow[2001:2500, :], d1x1[1:500, :], atol=1.e-10)
     # open_open
@@ -111,7 +59,6 @@ def test_create_shadow():
 
 
 def test_create_empty_shadow_array():
-
     nshutters = 3
     shadow = bar.create_empty_shadow_array(nshutters)
 
@@ -121,20 +68,21 @@ def test_create_empty_shadow_array():
 
 
 def test_add_first_half_shutter():
-
     nshutters = 3
     shadow = bar.create_empty_shadow_array(nshutters)
-    shadow_element = rn.random_sample((501, 101))
+
+    rng = np.random.default_rng(seed=42)
+    shadow_element = rng.random((501, 101))
     shadow = bar.add_first_half_shutter(shadow, shadow_element)
 
     assert np.allclose(shadow[0:501, :], shadow_element, atol=1.e-10)
 
 
 def test_add_next_shutter():
-
     nshutters = 3
     shadow = bar.create_empty_shadow_array(nshutters)
-    shadow_element = rn.random_sample((501, 101))
+    rng = np.random.default_rng(seed=42)
+    shadow_element = rng.random((501, 101))
     # The actual value of first_row would be a multiple of 500.
     first_row = 97
     dummy_value = 1.7
@@ -159,10 +107,11 @@ def test_add_next_shutter():
 
 
 def test_add_last_half_shutter():
-
     nshutters = 7
     shadow = bar.create_empty_shadow_array(nshutters)
-    shadow_element = rn.random_sample((501, 101))
+    rng = np.random.default_rng(seed=42)
+    shadow_element = rng.random((501, 101))
+
     # The actual value of first_row would be a multiple of 500.
     first_row = 1819
     dummy_value = 1.3
@@ -185,7 +134,13 @@ def test_add_last_half_shutter():
 
 
 def test_interpolate():
+    """Test barshadow interpolation.
 
+    This was originally a test for a local implementation of a bilinear
+    interpolation scheme (`bar_shadow.interpolate`).  The local
+    implementation is now replaced by scipy.ndimage.map_coordinates,
+    but this test is retained to verify that the drop-in replacement is valid.
+    """
     d1x1 = np.arange(101 * 1001, dtype=np.float64) / (101. * 1001. - 1.)
     d1x1 = d1x1.reshape(1001, 101)
     d1x3 = d1x1.copy()
@@ -201,7 +156,9 @@ def test_interpolate():
     rows = rows.reshape(5, 7)
     columns = columns.reshape(5, 7)
 
-    correction = bar.interpolate(rows, columns, shadow, default=np.nan)
+    correction = ndimage.map_coordinates(
+        shadow, [rows, columns], cval=np.nan, order=1
+    )
 
     compare = np.array([[0., 0.09993018, 0.19986036, 0.29979054,
                          0.39972072, 0.24989818, 0.10007564],
@@ -217,7 +174,6 @@ def test_interpolate():
 
 
 def test_has_uniform_source():
-
     data = np.zeros((10, 100), dtype=np.float32)
     slitlet = datamodels.SlitModel(data=data)
 
