@@ -31,7 +31,7 @@ repos:
     rev: v1.8.0
     hooks:
       - id: numpydoc-validation
-        exclude: "jwst/(\
+        exclude: "(setup.py|docs|jwst/(\
           ami|\
           assign_mtwcs|\
           assign_wcs|\
@@ -100,4 +100,4 @@ repos:
           wfs_combine|\
           wfss_contam|\
           white_light|\
-          )"
+          ))"
