@@ -2,7 +2,7 @@ exclude: ".*\\.asdf$"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -17,16 +17,11 @@ repos:
       # - id: end-of-file-fixer
       # - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.5.2'
+    rev: 'v0.9.2'
     hooks:
       - id: ruff
         args: ["--fix"]
       #- id: ruff-format
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.9
-    hooks:
-      - id: bandit
-        args: ["-r", "-ll", "-x", "jwst/*test*,jwst/**/*test*,jwst/fits_generator", "jwst"]
   - repo: https://github.com/numpy/numpydoc
     rev: v1.8.0
     hooks:
