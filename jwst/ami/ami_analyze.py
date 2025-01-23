@@ -99,17 +99,6 @@ def apply_lg_plus(
     data = input_copy.data
     dim = data.shape[-1]  # 80 px
 
-    # Initialize transformation parameters:
-    #   mx, my: dimensionless magnifications
-    #   sx, sy: dimensionless shears
-    #   x0, y0: offsets in pupil space
-    mx = 1.0
-    my = 1.0
-    sx = 0.0
-    sy = 0.0
-    xo = 0.0
-    yo = 0.0
-
     psf_offset_ff = None
     # get filter, pixel scale from input_model,
     # make bandpass array for find_rotation, instrument_data calls
@@ -164,12 +153,6 @@ def apply_lg_plus(
             nrm_model,
             psf_offset,
             rotsearch_d,
-            mx,
-            my,
-            sx,
-            sy,
-            xo,
-            yo,
             pixelscale_r,
             dim,
             bandpass,

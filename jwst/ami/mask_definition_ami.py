@@ -61,9 +61,9 @@ class NRMDefinition:
                 [nrm_model.x_a4, nrm_model.y_a4],  # B6 -> B2
                 [nrm_model.x_a5, nrm_model.y_a5],  # C6 -> C1
                 [nrm_model.x_a6, nrm_model.y_a6],  # B2 -> B6
-                [nrm_model.x_a7, nrm_model.y_a7],
+                [nrm_model.x_a7, nrm_model.y_a7],  # C1 -> C6
             ]
-        )  # C1 -> C6
+        )
 
         holedict = {}  # as_built names, C2 open, C5 closed, but as designed coordinates
         # Assemble holes by actual open segment names (as_built).  Either the full mask or the

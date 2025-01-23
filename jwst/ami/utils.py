@@ -345,7 +345,7 @@ def makedisk(n, r, ctr=(0, 0)):
         array, and =0 elsewhere.
     """
     if n % 2 == 1:  # odd
-        m = (n - 1) / n
+        m = (n - 1) / 2
         xx = np.linspace(-m - ctr[0], m - ctr[0], n)
         yy = np.linspace(-m - ctr[1], m - ctr[1], n)
     if n % 2 == 0:  # even
