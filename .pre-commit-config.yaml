@@ -31,72 +31,75 @@ repos:
     rev: v1.8.0
     hooks:
       - id: numpydoc-validation
-        exclude: "(setup.py|docs|jwst/(\
-          assign_mtwcs|\
-          assign_wcs|\
-          associations|\
-          background|\
-          badpix_selfcal|\
-          barshadow|\
-          charge_migration|\
-          clean_flicker_noise|\
-          combine_1d|\
-          coron|\
-          cube_build|\
-          cube_skymatch|\
-          dark_current|\
-          datamodels|\
-          dq_init|\
-          emicorr|\
-          engdblog|\
-          exp_to_source|\
-          extract_1d|\
-          extract_2d|\
-          firstframe|\
-          fits_generator|\
-          flatfield|\
-          fringe|\
-          gain_scale|\
-          group_scale|\
-          guider_cds|\
-          imprint|\
-          ipc|\
-          jump|\
-          lastframe|\
-          lib|\
-          linearity|\
-          master_background|\
-          model_blender|\
-          mrs_imatch|\
-          msaflagopen|\
-          nsclean|\
-          outlier_detection|\
-          pathloss|\
-          persistence|\
-          photom|\
-          pipeline|\
-          pixel_replace|\
-          ramp_fitting|\
-          refpix|\
-          regtest|\
-          resample|\
-          reset|\
-          residual_fringe|\
-          rcsd|\
-          saturation|\
-          scripts|\
-          skymatch|\
-          source_catalog|\
-          spectral_leak|\
-          srctype|\
-          stpipe|\
-          straylight|\
-          superbias|\
-          tests|\
-          tso_photometry|\
-          tweakreg|\
-          wavecorr|\
-          wfs_combine|\
-          wfss_contam|\
-          white_light|\
-          ))"
+        exclude: |
+          (?x)^(
+            jwst/assign_mtwcs/.* |
+            jwst/assign_wcs/.* |
+            jwst/associations/.* |
+            jwst/background/.* |
+            jwst/badpix_selfcal/.* |
+            jwst/barshadow/.* |
+            jwst/charge_migration/.* |
+            jwst/clean_flicker_noise/.* |
+            jwst/combine_1d/.* |
+            jwst/coron/.* |
+            jwst/cube_build/.* |
+            jwst/cube_skymatch/.* |
+            jwst/dark_current/.* |
+            jwst/datamodels/.* |
+            jwst/dq_init/.* |
+            jwst/emicorr/.* |
+            jwst/engdblog/.* |
+            jwst/exp_to_source/.* |
+            jwst/extract_1d/.* |
+            jwst/extract_2d/.* |
+            jwst/firstframe/.* |
+            jwst/fits_generator/.* |
+            jwst/flatfield/.* |
+            jwst/fringe/.* |
+            jwst/gain_scale/.* |
+            jwst/group_scale/.* |
+            jwst/guider_cds/.* |
+            jwst/imprint/.* |
+            jwst/ipc/.* |
+            jwst/jump/.* |
+            jwst/lastframe/.* |
+            jwst/lib/.* |
+            jwst/linearity/.* |
+            jwst/master_background/.* |
+            jwst/model_blender/.* |
+            jwst/mrs_imatch/.* |
+            jwst/msaflagopen/.* |
+            jwst/nsclean/.* |
+            jwst/outlier_detection/.* |
+            jwst/pathloss/.* |
+            jwst/persistence/.* |
+            jwst/photom/.* |
+            jwst/pipeline/.* |
+            jwst/pixel_replace/.* |
+            jwst/ramp_fitting/.* |
+            jwst/refpix/.* |
+            jwst/regtest/.* |
+            jwst/resample/.* |
+            jwst/reset/.* |
+            jwst/residual_fringe/.* |
+            jwst/rcsd/.* |
+            jwst/saturation/.* |
+            jwst/scripts/.* |
+            jwst/skymatch/.* |
+            jwst/source_catalog/.* |
+            jwst/spectral_leak/.* |
+            jwst/srctype/.* |
+            jwst/stpipe/.* |
+            jwst/straylight/.* |
+            jwst/superbias/.* |
+            jwst/tests/.* |
+            jwst/tso_photometry/.* |
+            jwst/tweakreg/.* |
+            jwst/wavecorr/.* |
+            jwst/wfs_combine/.* |
+            jwst/wfss_contam/.* |
+            jwst/white_light/.* |
+            setup.py |
+            tests/.*
+          )$
