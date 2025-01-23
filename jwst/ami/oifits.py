@@ -440,7 +440,7 @@ class RawOifits:
 
         # prepare arrays for OI_ARRAY ext
         self.staxy = instrument_data.ctrs_inst
-        tel_name = ["A%i" % x for x in np.arange(self.n_holes) + 1]
+        tel_name = [f"A{x:d}" % x for x in np.arange(self.n_holes) + 1]
         sta_name = tel_name
         diameter = [0] * self.n_holes
 

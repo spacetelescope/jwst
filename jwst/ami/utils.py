@@ -1248,7 +1248,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
 
     binfac = ptsin // nlambda
     log.debug(
-        "Binning spectrum by %i: from %i points to %i points" % (binfac, ptsin, nlambda)
+        f"Binning spectrum by {binfac:d} from {ptsin:d} points to {nlambda:d} points"
     )
     for wave in wavesteps:
         log.debug(

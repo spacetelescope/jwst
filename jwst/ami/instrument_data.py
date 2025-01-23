@@ -279,8 +279,8 @@ class NIRISS:
         ]
 
         log.info(
-            "Cropping all integrations to %ix%i pixels around peak (%i,%i)"
-            % (2 * r + 1, 2 * r + 1, peakx + 4, peaky)
+            f"Cropping all integrations to {2 * r + 1:d}x{2 * r + 1:d} pixels "
+            f"around peak ({peakx + 4:d},{peaky:d})"
         )  # +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:

@@ -287,14 +287,14 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
     pxdq = np.where(dqmask, pxdq0, 0)
     nflagged_dnu = np.count_nonzero(pxdq)
-    log.info("%i pixels flagged DO_NOT_USE in cropped data" % nflagged_dnu)
+    log.info(f"{nflagged_dnu:d} pixels flagged DO_NOT_USE in cropped data")
 
     # DNU, some other pixels are now NaNs in cal level products.
     # Replace them with 0, then
     # add DO_NOT_USE flags to positions in DQ array so they will be corrected.
     nanidxlist = np.argwhere(np.isnan(data))
     if len(nanidxlist) > 1:
-        log.info("Identified %i NaN pixels to correct" % len(nanidxlist))
+        log.info(f"Identified {len(nanidxlist):d} NaN pixels to correct")
         for idx in nanidxlist:
             data[idx[0], idx[1], idx[2]] = 0
             pxdq0[idx[0], idx[1], idx[2]] += 1  # add DNU flag to each nan pixel
