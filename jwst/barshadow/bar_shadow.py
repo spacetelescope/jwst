@@ -10,6 +10,9 @@ from stdatamodels.jwst import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+# Fallback value for ratio of slit spacing to slit height
+SLITRATIO = 1.15
+
 
 def do_correction(
     input_model,
@@ -147,7 +150,12 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
     # so that the separation between the slit centers is 1,
     # i.e. slit height + interslit bar
-    yslit = yslit / slitlet.slit_yscale
+    if slitlet.slit_yscale is None:
+        log.warning(f'Slit height scale factor not found. '
+                    f'Using default value {SLITRATIO}.')
+        yslit = yslit / SLITRATIO
+    else:
+        yslit = yslit / slitlet.slit_yscale
 
     # Find the fiducial shutter to align the constructed shadow with the real array
     src_loc = shutter_status.find("x")

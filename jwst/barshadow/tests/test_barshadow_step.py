@@ -163,3 +163,28 @@ def test_barshadow_correction_pars(nirspec_mos_model):
 
     result.close()
     inverse_result.close()
+
+
+def test_barshadow_step_missing_scale(nirspec_mos_model, log_watcher):
+    model = nirspec_mos_model.copy()
+    model.slits[0].slit_yscale = None
+
+    log_watcher.message = "Using default value"
+    result = BarShadowStep.call(model)
+    log_watcher.assert_seen()
+
+    # correction ran and has an appropriate correction - the
+    # default value is close enough for most purposes.
+    assert result.meta.cal_step.barshadow == "COMPLETE"
+
+    # maximum correction value should be 1.0, minimum should be above zero
+    shadow = result.slits[0].barshadow
+    assert np.nanmax(shadow) <= 1.0
+    assert np.nanmin(shadow) > 0.0
+
+    # data should have been divided by barshadow
+    nnan = ~np.isnan(result.slits[0].data)
+    assert np.allclose(
+        result.slits[0].data[nnan] * shadow[nnan], model.slits[0].data[nnan]
+    )
+    result.close()
