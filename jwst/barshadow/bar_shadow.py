@@ -151,8 +151,9 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     # so that the separation between the slit centers is 1,
     # i.e. slit height + interslit bar
     if slitlet.slit_yscale is None:
-        log.warning(f'Slit height scale factor not found. '
-                    f'Using default value {SLITRATIO}.')
+        log.warning(
+            f"Slit height scale factor not found. Using default value {SLITRATIO}."
+        )
         yslit = yslit / SLITRATIO
     else:
         yslit = yslit / slitlet.slit_yscale
