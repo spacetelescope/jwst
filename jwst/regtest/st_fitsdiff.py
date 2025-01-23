@@ -130,7 +130,11 @@ class STFITSDiff(FITSDiff):
             Provide a different relative and absolute tolerance for the given extensions, e.g.
             extension_tolerances = {'sci': {'rtol': 1e-3, 'atol': 1e-2},
                                     'err': {'rtol': 1e-1, 'atol': 1e-2},
-                                    'VAR_RNOISE': {'rtol': 2, 'atol': 1}}
+                                    'VAR_RNOISE': {'rtol': 2, 'atol': 1},
+                                    'default': {'rtol': 1e-5, 'atol': 1e-7}}
+            It does not matter if the keys in the dictionary are upper or lower case.
+            The key 'default' is optional, i.e. if it is not provided then the default values will
+            be used, otherwise the default value will be the one in the dictionary.
 
         """
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
@@ -441,12 +445,17 @@ class STHDUDiff(HDUDiff):
             nans = [np.isnan(a).size, np.isnan(b).size]
             # Calculate stats
             values = np.abs(np.abs(anonan) - np.abs(bnonan))
+            relative_values = values / np.abs(bnonan)
             stats = {'mean_value_in_a': np.mean(anonan),
                      'mean_value_in_b': np.mean(bnonan),
-                     'max_diff': max(values),
-                     'min_diff': min(values),
-                     'mean_diff': np.mean(values),
-                     'std_dev_diff': np.std(values)}
+                     'max_abs_diff': max(values),
+                     'min_abs_diff': min(values),
+                     'mean_abs_diff': np.mean(values),
+                     'std_dev_abs_diff': np.std(values),
+                     'max_rel_diff': max(relative_values),
+                     'min_rel_diff': min(relative_values),
+                     'mean_rel_diff': np.mean(relative_values),
+                     'std_dev_rel_diff': np.std(relative_values)}
             # Calculate difference percentages
             percentages = {}
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
@@ -535,6 +544,7 @@ class STHDUDiff(HDUDiff):
             self._writeln(" Data contains differences:")
             report_data_diff()
             if self.report_pixel_loc_diffs:
+                self._writeln(" Data differs at the following locations:")
                 self.diff_data.report(self._fileobj, indent=self._indent + 1)
 
 
