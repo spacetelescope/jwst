@@ -1406,10 +1406,10 @@ def degrees_per_pixel(datamodel):
     """
     wcsinfo = datamodel.meta.wcsinfo._instance  # noqa: SLF001
     if (
-        hasattr(wcsinfo, "cd1_1")
-        and hasattr(wcsinfo, "cd1_2")
-        and hasattr(wcsinfo, "cd2_1")
-        and hasattr(wcsinfo, "cd2_2")
+        "cd1_1" in wcsinfo
+        and "cd1_2" in wcsinfo
+        and "cd2_1" in wcsinfo
+        and "cd2_2" in wcsinfo
     ):
         cd11 = datamodel.meta.wcsinfo.cd1_1
         cd12 = datamodel.meta.wcsinfo.cd1_2
@@ -1423,7 +1423,7 @@ def degrees_per_pixel(datamodel):
         dysky = _cdmatrix_to_sky(dypix, cd11, cd12, cd21, cd22)
         log.debug("Used CD matrix for pixel scales")
         return np.linalg.norm(dxsky, ord=2), np.linalg.norm(dysky, ord=2)
-    elif hasattr(wcsinfo, "cdelt1") and hasattr(wcsinfo, "cdelt2"):
+    elif "cdelt1" in wcsinfo and "cdelt2" in wcsinfo:
         log.debug("Used CDELT[12] for pixel scales")
         return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
     else:
