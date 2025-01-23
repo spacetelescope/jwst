@@ -444,8 +444,9 @@ class STHDUDiff(HDUDiff):
             # Get the number of NaN in each array
             nans = [np.isnan(a).size, np.isnan(b).size]
             # Calculate stats
-            values = np.abs(np.abs(anonan) - np.abs(bnonan))
-            relative_values = values / np.abs(bnonan)
+            values = np.abs(anonan - bnonan)
+            nozeros = (values != 0.0) & (bnonan != 0.0)
+            relative_values = values[nozeros] / np.abs(bnonan[nozeros])
             stats = {'mean_value_in_a': np.mean(anonan),
                      'mean_value_in_b': np.mean(bnonan),
                      'max_abs_diff': max(values),
@@ -453,7 +454,7 @@ class STHDUDiff(HDUDiff):
                      'mean_abs_diff': np.mean(values),
                      'std_dev_abs_diff': np.std(values),
                      'max_rel_diff': max(relative_values),
-                     'min_rel_diff': min(relative_values),
+                     'min_rel_diff': min(values / np.abs(bnonan)),
                      'mean_rel_diff': np.mean(relative_values),
                      'std_dev_rel_diff': np.std(relative_values)}
             # Calculate difference percentages
