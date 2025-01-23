@@ -83,7 +83,7 @@ repos:
             jwst/resample/.* |
             jwst/reset/.* |
             jwst/residual_fringe/.* |
-            jwst/rcsd/.* |
+            jwst/rscd/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
             jwst/skymatch/.* |
@@ -100,6 +100,9 @@ repos:
             jwst/wfs_combine/.* |
             jwst/wfss_contam/.* |
             jwst/white_light/.* |
+            jwst/conftest.py |
+            .*/tests/.* |
             setup.py |
-            tests/.*
+            pytest_jwst/.* |
+            docs/.*
           )$
