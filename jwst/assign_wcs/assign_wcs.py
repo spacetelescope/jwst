@@ -2,7 +2,8 @@ import logging
 import importlib
 from gwcs.wcs import WCS
 from .util import (update_s_region_spectral, update_s_region_imaging,
-                   update_s_region_nrs_ifu, update_s_region_mrs)
+                   update_s_region_nrs_ifu, update_s_region_mrs,
+                   update_s_region_lrs)
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
 from ..lib.wcs_utils import get_wavelengths
@@ -72,8 +73,12 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
 
         if output_model.meta.exposure.type.lower() not in exclude_types:
             imaging_types = IMAGING_TYPES.copy()
-            imaging_types.update(['mir_lrs-fixedslit', 'mir_lrs-slitless'])
-            if output_model.meta.exposure.type.lower() in imaging_types:
+            imaging_lrs_types = ['mir_lrs-fixedslit']
+            imaging_types.update(['mir_lrs-slitless'])
+            if output_model.meta.exposure.type.lower() in imaging_lrs_types:
+                print('*** Going to update the s_region value for lrs fixed slit')    
+                update_s_region_lrs(output_model)
+            elif output_model.meta.exposure.type.lower() in IMAGING_TYPES:
                 try:
                     update_s_region_imaging(output_model)
                 except Exception as exc:

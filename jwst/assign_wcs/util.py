@@ -807,6 +807,81 @@ def update_s_region_imaging(model):
         model.meta.wcsinfo.s_region = s_region
 
 
+def update_s_region_lrs(model):
+    """
+    Update the ``S_REGION`` keyword using V2,V3 of the slit corners from reference file`.
+    """
+    print('*********In update_s_region_lrs')
+    s_region_org = model.meta.wcsinfo.s_region
+    print('original s region', s_region_org)
+    spatial_box = s_region_org
+    s = spatial_box.split(' ')
+    a1 = float(s[3])
+    b1 = float(s[4])
+    a2 = float(s[5])
+    b2 = float(s[6])
+    a3 = float(s[7])
+    b3 = float(s[8])
+    a4 = float(s[9])
+    b4 = float(s[10])
+
+    #s_region = compute_s_region_imaging(model.meta.wcs, shape=model.data.shape, center=False)
+    #print(s_region)
+    #spatial_box = s_region
+    #s = spatial_box.split(' ')
+    #na1 = float(s[3])
+    #nb1 = float(s[4])
+    #na2 = float(s[5])
+    #nb2 = float(s[6])
+    #na3 = float(s[7])
+    #nb3 = float(s[8])
+    #na4 = float(s[9])
+    #nb4 = float(s[10])
+
+    #print((a1 - na1)*3600)
+    #print((a2 - na2)*3600)
+    #print((a3 - na3)*3600)
+    #print((a4 - na4)*3600)
+    #print((b1 - nb1)*3600)
+    #print((b2 - nb2)*3600)
+    #print((b3 - nb3)*3600)
+    #print((b4 - nb4)*3600)
+    
+    v2,v3= np.array([-412.54598854, -412.50298855,-417.21103301, -417.25301145]),\
+        np.array([-401.01798362, -400.50498252, -400.11702824, -400.63101748])    
+
+    #lam = 0
+    #s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
+    #print(s)
+    lam = 7.6
+    lam = 0.0
+    s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
+    a = s[0]
+    b = s[1]
+    
+    print(a)
+    print(b)
+    print('Difference of v2,v3 values to original')
+    print( (a1 - a[0])*3600)
+    print( (a2 - a[1])*3600)
+    print( (a3 - a[2])*3600)
+    print( (a4 - a[3])*3600)
+    print((b1 - b[0])*3600)
+    print((b2 - b[1])*3600)
+    print((b3 - b[2])*3600)
+    print((b4 - b[3])*3600)
+
+    footprint = np.array([[a[0], b[0]],
+                          [a[1], b[1]],
+                          [a[2], b[2]],
+                          [a[3], b[3]]])
+
+    update_s_region_keyword(model, footprint)
+    #print(model.meta.wcsinfo.s_region)
+    #if s_region is not None:
+    #    model.meta.wcsinfo.s_region = s_region
+
+
 def compute_footprint_spectral(model):
     """
     Determine spatial footprint for spectral observations using the instrument model.
