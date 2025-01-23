@@ -16,17 +16,16 @@ def normalize_lg(target_model, reference_model):
 
     Parameters
     ----------
-    target_model: AmiOIModel data model
+    target_model : AmiOIModel data model
         The target data to be normalized
 
-    reference_model: AmiOIModel data model
+    reference_model : AmiOIModel data model
         The reference data
 
     Returns
     -------
-    output_model: AmiOIModel data model
+    output_model : AmiOIModel data model
         Normalized interferometric observables for the target
-
     """
     # Initialize the calibration (normalization) class and apply the normalizations
     norm_model = oifits.CalibOifits(target_model, reference_model)

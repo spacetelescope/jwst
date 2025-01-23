@@ -11,13 +11,14 @@ def gfunction(xi, eta, **kwargs):
 
     Parameters
     ----------
-    xi: 2D float array
-        hexagon's coordinate center at center of symmetry, along flat edge
+    xi : 2D float array
+        Hexagon's coordinate center at center of symmetry, along flat edge
 
-    eta: 2D float array
-        hexagon's coordinate center at center of symmetry, normal to xi
+    eta : 2D float array
+        Hexagon's coordinate center at center of symmetry, normal to xi
 
-    kwargs: dict
+    **kwargs : dict
+        Keyword arguments
         c (optional, via **kwargs): tuple(float, float)
             coordinates of center
 
@@ -37,7 +38,6 @@ def gfunction(xi, eta, **kwargs):
     -------
     g*affine2d.distortphase(xi,eta): 2D complex array
         Fourier transform of one half of a hexagon.
-
     """
     c = kwargs["c"]
     pixel = kwargs["pixel"]
@@ -78,29 +78,28 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
 
     Parameters
     ----------
-    s: (int,int) tuple
-        size of hexagonal primary beam
+    s : (int,int) tuple
+        Size of hexagonal primary beam
 
-    c: (float,float) tuple
-        location of center of hexagonal primary beam
+    c : (float,float) tuple
+        Location of center of hexagonal primary beam
 
-    d: float
-        flat-to-flat distance across hexagon
+    d : float
+        Flat-to-flat distance across hexagon
 
-    lam: float
-        wavelength
+    lam : float
+        Vavelength
 
-    pitch: float
-        sampling pitch in radians in image plane
+    pitch : float
+        Sampling pitch in radians in image plane
 
-    affine2d: Affine2d object
-        distortion object
+    affine2d : Affine2d object
+        Distortion object
 
     Returns
     -------
-    hex_complex:
-        complex array analytical transform of a hexagon
-
+    hex_complex : 2D complex array
+        Complex array analytical transform of a hexagon
     """
     if c is None:
         c = (float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5)

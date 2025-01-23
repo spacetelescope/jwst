@@ -25,16 +25,16 @@ class FringeFitter:
 
         Parameters
         ----------
-        instrument_data: jwst.ami.instrument_data.NIRISS object
+        instrument_data : jwst.ami.instrument_data.NIRISS object
             Information on the mask geometry (namely # holes), instrument,
             wavelength obs mode.
 
-        kwargs: dict
+        **kwargs : dict
+            Keyword arguments.
             oversample - model oversampling (also how fine to measure the centering)
             psf_offset - subpixel centering of your data, if known
             npix - number of data pixels to use. Default is the shape of the data frame.
             find_rotation - will find the best pupil rotation that matches the data
-
         """
         self.instrument_data = instrument_data
 
@@ -75,23 +75,22 @@ class FringeFitter:
 
         Parameters
         ----------
-        input_model: instance Data Model
+        input_model : instance Data Model
             DM object for input
 
         Returns
         -------
-        output_model: AmiOIModel object
+        output_model : AmiOIModel object
             AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
-        output_model_multi: AmiOIModel object
+        output_model_multi : AmiOIModel object
             AMI tables of observables for each integration
             from LG algorithm fringe fitting in OIFITS format
-        lgfit:
+        lgfit : AmiLgFitModel object
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
 
         Notes
         -----
         May allow parallelization by integration (later)
-
         """
         # scidata, dqmask are already centered around peak
         self.scidata, self.dqmask = self.instrument_data.read_data_model(input_model)
@@ -122,9 +121,8 @@ class FringeFitter:
 
         Returns
         -------
-        m: AmiLgFitModel object
+        m : AmiLgFitModel object
             LG analysis centered data, fit, residual, and model info
-
         """
         nslices = len(self.nrm_list)
         # 3d arrays of centered data, models, and residuals (data - model)
@@ -169,12 +167,12 @@ class FringeFitter:
 
         Parameters
         ----------
-        slc: numpy array
+        slc : numpy array
             2D slice of data
 
         Returns
         -------
-        nrm: LgModel object
+        nrm : LgModel object
             Model with best fit results
 
         Notes
@@ -191,7 +189,6 @@ class FringeFitter:
         cond            --- matrix condition for inversion
         fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
         -----------------------------------------------------------------------------
-
         """
         nrm = lg_model.LgModel(
             self.instrument_data.nrm_model,

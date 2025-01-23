@@ -1,8 +1,6 @@
 """
 Matrix-based discrete Fourier transforms for computing PSFs.
 
-Extended Summary
-----------------
 MatrixDFT: Matrix-based discrete Fourier transforms for computing PSFs.
 See Soummer et al. 2007 JOSA
 The main user interface in this module is a class MatrixFourierTransform.
@@ -22,13 +20,6 @@ much more flexibility in choosing array sizes and sampling, and often lets
 you replace "fast calculations on very large arrays" with "relatively slow
 calculations on much smaller ones".
 
-Example
--------
-mf = matrixDFT.MatrixFourierTransform()
-result = mf.perform(pupilArray, focalplane_size, focalplane_npix)
-
-History
--------
 Code originally by A. Sivaramakrishnan
 2010-11-05 Revised normalizations for flux conservation consistent
 with Soummer et al. 2007. Updated documentation.  -- M. Perrin
@@ -38,6 +29,10 @@ with Soummer et al. 2007. Updated documentation.  -- M. Perrin
 2015-01-21: Eliminate redundant code paths, correct parity flip,
 PEP8 formatting pass (except variable names)-- J. Long
 
+Examples
+--------
+mf = matrixDFT.MatrixFourierTransform()
+result = mf.perform(pupilArray, focalplane_size, focalplane_npix)
 """
 
 __all__ = ["MatrixFourierTransform"]
@@ -85,6 +80,10 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
         to 'N_B' in Soummer et al. 2007 4.2). This will be the # of pixels in
         the image plane for a forward transformation, in the pupil plane for an
         inverse. If given as a tuple, interpreted as (npix_y, npix_x).
+    offset : 2-tuple of floats (offset_y, offset_x)
+        For ADJUSTABLE-style transforms, an offset in pixels by which the PSF
+        will be displaced from the central pixel (or cross). Given as
+        (offset_y, offset_x).
     inverse : bool, optional
         Is this a forward or inverse transformation? (Default is False,
         implying a forward transformation.)
@@ -97,16 +96,11 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
         * FFTSTYLE puts the zero-order term in a single pixel.
         * SYMMETRIC spreads the zero-order term evenly between the center
           four pixels
-    offset : 2-tuple of floats (offset_y, offset_x)
-        For ADJUSTABLE-style transforms, an offset in pixels by which the PSF
-        will be displaced from the central pixel (or cross). Given as
-        (offset_y, offset_x).
 
     Returns
     -------
     norm_coeff * t2; float, ndarray
-        normalized FT coeffs
-
+        Normalized FT coeffs
     """
     npup_y, npup_x = plane.shape
 
@@ -213,9 +207,6 @@ class MatrixFourierTransform:
     Implements a discrete matrix Fourier transform for optical propagation.
 
     Follows the algorithms discussed in Soummer et al. 2007 JOSA 15 24.
-
-    History
-    -------
     Code by Sivaramakrishnan based on Soummer et al.
     2010-01 Documentation updated by Perrin
     2013-01 'choice' keyword renamed to 'centering' for clarity. 'choice' is
@@ -223,7 +214,6 @@ class MatrixFourierTransform:
             is deprecated.
     2015-01-21: Internals updated to use refactored `matrix_dft` function,
                 docstrings made consistent with each other -- J. Long
-
     """
 
     def __init__(self, centering="ADJUSTABLE", verbose=False):
@@ -244,7 +234,6 @@ class MatrixFourierTransform:
         verbose : bool
             Deprecated. use poppy.conf.default_logging_level to set DEBUG level
             logging.
-
         """
         self.verbose = verbose
         centering = centering.upper()
@@ -303,7 +292,6 @@ class MatrixFourierTransform:
         -------
         complex ndarray
             The Fourier transform of the input
-
         """
         self._validate_args(nlam_d, npix, offset)
         _log.debug(
@@ -345,7 +333,6 @@ class MatrixFourierTransform:
         -------
         complex ndarray
             The Fourier transform of the input
-
         """
         self._validate_args(nlam_d, npix, offset)
         _log.debug(

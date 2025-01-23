@@ -28,7 +28,6 @@ class RawOifits:
     -----
     Based on ObservablesFromText from ImPlaneIA, e.g.
     https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
-
     """
 
     def __init__(self, fringefitter, method="mean"):
@@ -37,12 +36,11 @@ class RawOifits:
 
         Parameters
         ----------
-        fringefitter: FringeFitter object
+        fringefitter : FringeFitter object
             Object containing nrm_list attribute (list of nrm objects)
             and other info needed for OIFITS files
-        method: string
+        method : str
             Method to average observables: mean or median. Default mean.
-
         """
         self.fringe_fitter = fringefitter
         self.n_holes = 7
@@ -102,16 +100,15 @@ class RawOifits:
 
         Parameters
         ----------
-        cov_mat: array
+        cov_mat : array
             The matrix to be rotated
-        theta: float
+        theta : float
             Angle by which to rotate the matrix (radians)
 
         Returns
         -------
-        cv_rotated: array
+        cv_rotated : array
             The rotated matrix
-
         """
         c, s = np.cos(theta), np.sin(theta)
         r_mat = [[c, -s], [s, c]]
@@ -130,44 +127,43 @@ class RawOifits:
 
         Parameters
         ----------
-        averfunc: function
-            np.mean (default) or np.median
+        averfunc : function
+            Function for averaging, either np.mean (default) or np.median
 
         Returns
         -------
-        avg_sqv: array
+        avg_sqv : array
             Averaged squared visibilites
-        err_sqv: array
+        err_sqv : array
             Standard error of the mean of averaged squared visibilities
-        avg_fa: array
+        avg_fa : array
             Averaged fringe (visibility) amplitudes
-        err_fa: array
+        err_fa : array
             Standard error of the mean of averaged fringe (visibility) amplitudes
-        avg_fp: array
+        avg_fp : array
             Averaged fringe phases (rad)
-        err_fp: array
+        err_fp : array
             Standard error of the mean of averaged fringe phases (rad)
-        avg_cp: array
+        avg_cp : array
             Averaged closure phases (rad)
-        err_cp: array
+        err_cp : array
             Standard error of the mean of averaged closure phases (rad)
-        avg_t3amp: array
+        avg_t3amp : array
             Averaged triple amplitudes
-        err_t3amp: array
+        err_t3amp : array
             Standard error of the mean of averaged triple amplitudes
-        avg_ca: array
+        avg_ca : array
             Averaged closure amplitudes
-        err_ca: array
+        err_ca : array
             Standard error of the mean of averaged closure amplitudes
-        avg_q4phi: array
+        avg_q4phi : array
             Averaged quad phases
-        err_q4phi: array
+        err_q4phi : array
             Standard error of the mean of averaged quad phases
-        avg_pist: array
+        avg_pist : array
             Averaged segment pistons
-        err_pist: array
+        err_pist : array
             Standard error of the mean of averaged segment pistons
-
         """
         covmats_fringes, covmats_triples, covmats_quads = self.observable_covariances(
             averfunc
@@ -231,17 +227,16 @@ class RawOifits:
 
         Parameters
         ----------
-        covmatlist: array
-            array of covariance matrices for each baseline/triple/quad
+        covmatlist : array
+            Array of covariance matrices for each baseline/triple/quad
             shape e.g. (21,2,2) or (35,2,2)
 
         Returns
         -------
-        err_00: array
-            standard errors of the mean of the first observable. shape e.g. (21)
-        err_11: array
-            standard errors of the mean of the second observable. shape e.g. (21)
-
+        err_00 : array
+            Standard errors of the mean of the first observable. shape e.g. (21)
+        err_11 : array
+            Standard errors of the mean of the second observable. shape e.g. (21)
         """
         err_00 = np.sqrt(np.array([covmat[0, 0] for covmat in covmatlist])) / np.sqrt(
             self.nslices
@@ -261,18 +256,17 @@ class RawOifits:
 
         Parameters
         ----------
-        averfunc: function
-            np.mean (default) or np.median
+        averfunc : function
+            Function for averaging, either np.mean (default) or np.median
 
         Returns
         -------
-        cov_mat_fringes: array
+        cov_mat_fringes : array
             Array of 21 covariance matrices for fringes (amplitudes, phases)
-        cov_mat_triples: array
+        cov_mat_triples : array
             Array of 35 covariance matrices for triples (t3 amplitudes, closure phases)
-        cov_mat_quads: array
+        cov_mat_quads : array
             Array of 35 covariance matrices for quads (closure amplitudes, quad phases)
-
         """
         # loop over 21 baselines
         cov_mat_fringes = []
@@ -315,18 +309,17 @@ class RawOifits:
 
         Parameters
         ----------
-        rr: array
-            complex number modulus
-        theta: array
-            complex number phase
-        averfunc: function
-            np.mean (default) or np.median
+        rr : array
+            Complex number modulus
+        theta : array
+            Complex number phase
+        averfunc : function
+            Function for averaging, either np.mean (default) or np.median
 
         Returns
         -------
-        cov_mat_r_theta: array (2,2)
+        cov_mat_r_theta : array (2,2)
             Covariance matrix in r, theta coordinates
-
         """
         xx = rr * np.cos(theta)
         yy = rr * np.sin(theta)
@@ -342,9 +335,8 @@ class RawOifits:
 
         Returns
         -------
-        m: AmiOIModel
+        m : AmiOIModel
             Fully populated datamodel
-
         """
         self.make_obsarrays()
         instrument_data = self.fringe_fitter.instrument_data
@@ -569,9 +561,8 @@ class RawOifits:
 
         Parameters
         ----------
-        oimodel: AmiOIModel object
-            empty model
-
+        oimodel : AmiOIModel object
+            Empty model
         """
         if self.method == "multi":
             # update dimensions of arrays for multi-integration oifits
@@ -672,10 +663,9 @@ class RawOifits:
 
         Returns
         -------
-        tarray: integer array
+        tarray : int array
             Triple hole indices (0-indexed),
             float array of two uv vectors in all triangles
-
         """
         tlist = []
         uvlist = []
@@ -699,10 +689,10 @@ class RawOifits:
 
         Returns
         -------
-        barray: list
+        barray : list
             Hole pairs indices, 0-indexed
-        float array of baselines
-
+        float array
+            Array of baselines
         """
         blist = []
         bllist = []
@@ -719,9 +709,10 @@ class RawOifits:
 
         Returns
         -------
-        qarray: int array of four-hole quads (0-based)
-        uvwlist: numpy array of u, v, w vectors for each quad
-
+        qarray : int array
+            Array of four-hole quads (0-based)
+        uvwlist : numpy array
+            Array of u, v, w vectors for each quad
         """
         qlist = []
         uvwlist = []
@@ -747,15 +738,13 @@ class RawOifits:
 
         Parameters
         ----------
-        tab: array
-            table of indices
+        tab : array
+            Table of indices
 
         Returns
         -------
-        sta_index: list
+        sta_index : list of int triples
             Hole triples indices
-        int array of triangles
-
         """
         sta_index = []
         for x in tab:
@@ -775,15 +764,13 @@ class RawOifits:
 
         Parameters
         ----------
-        tab: array
-            table of indices
+        tab : array
+            Table of indices
 
         Returns
         -------
-        sta_index: list
+        sta_index : list
             Hole baseline indices
-        int array of baselines
-
         """
         sta_index = []
         for x in tab:
@@ -812,11 +799,10 @@ class CalibOifits:
 
         Parameters
         ----------
-        targoimodel: AmiOIModlel
-            target
-        caloimodel: AmiOIModlel
-            reference star (calibrator)
-
+        targoimodel : AmiOIModlel
+            The target
+        caloimodel : AmiOIModlel
+            The reference star (calibrator)
         """
         self.targoimodel = targoimodel
         self.caloimodel = caloimodel
@@ -848,9 +834,8 @@ class CalibOifits:
 
         Returns
         -------
-        calib_oimodel: AmiOIModel
+        calib_oimodel : AmiOIModel
             Calibrated AMI datamodel
-
         """
         cp_out = self.targoimodel.t3["T3PHI"] - self.caloimodel.t3["T3PHI"]
         sqv_out = self.targoimodel.vis2["VIS2DATA"] / self.caloimodel.vis2["VIS2DATA"]

@@ -1,4 +1,4 @@
-"""Handles aperture mask imaging (AMI) data."""
+"""Handle aperture mask imaging (AMI) data."""
 
 from .ami_analyze_step import AmiAnalyzeStep
 

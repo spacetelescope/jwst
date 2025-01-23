@@ -19,14 +19,13 @@ def jinc(x, y):
 
     Parameters
     ----------
-    x,y: floats
-        input coordinates
+    x, y : float, float
+        Input coordinates
 
     Returns
     -------
-    jinc_2d: float array
+    jinc_2d : float array
         2d jinc at the given coordinates, with NaNs replaced by pi/4.
-
     """
     r = (
         (jinc.d / jinc.lam)
@@ -45,10 +44,11 @@ def ffc(kx, ky, **kwargs):
 
     Parameters
     ----------
-    kx, ky: float, float
-        x-component and y-component of image plane (spatial frequency) vector
+    kx, ky : float, float
+        X-component and y-component of image plane (spatial frequency) vector
 
-    kwargs: dict
+    **kwargs : dict
+        Keyword arguments
         pitch: float
             sampling pitch in radians in image plane
 
@@ -65,9 +65,8 @@ def ffc(kx, ky, **kwargs):
 
     Returns
     -------
-    cos_array: 2D float array
-        cosine terms of analytic model
-
+    cos_array : 2D float array
+        Cosine terms of analytic model
     """
     ko = kwargs["c"]  # the PSF ctr
     baseline = kwargs["baseline"]  # hole centers' vector
@@ -89,10 +88,11 @@ def ffs(kx, ky, **kwargs):
 
     Parameters
     ----------
-    kx, ky: float, float
-        x-component and y-component of image plane (spatial frequency) vector
+    kx, ky : float, float
+        X-component and y-component of image plane (spatial frequency) vector
 
-    kwargs: dict
+    **kwargs : dict
+        Keyword arguments
         pitch: float
             sampling pitch in radians in image plane
 
@@ -109,9 +109,8 @@ def ffs(kx, ky, **kwargs):
 
     Returns
     -------
-    sin_array: 2D float array
-        sine terms of analytic model
-
+    sin_array : 2D float array
+        Sine terms of analytic model
     """
     ko = kwargs["c"]  # the PSF ctr
     baseline = kwargs["baseline"]  # hole centers' vector
@@ -136,7 +135,8 @@ def harmonicfringes(**kwargs):
 
     Parameters
     ----------
-    kwargs: dict
+    **kwargs : dict
+        Keyword arguments
         fov: integer, default=None
             number of detector pixels on a side
 
@@ -159,8 +159,8 @@ def harmonicfringes(**kwargs):
 
     Returns
     -------
-    Sine and cosine fringes: float arrays
-
+    (cosine_fringes, sine_fringes) : tuple
+        Sine and cosine fringes: float arrays
     """
     fov = kwargs["fov"]  # in detpix
     pitch = kwargs["pitch"]  # detpixscale
@@ -205,29 +205,28 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
 
     Parameters
     ----------
-    kx, ky: float
-        image plane coords in units of sampling pitch (oversampled, or not)
+    kx, ky : float
+        Image plane coords in units of sampling pitch (oversampled, or not)
 
-    hx, hy: float
-        hole centers in meters
+    hx, hy : float
+        Hole centers in meters
 
-    lam: float
-        wavelength
+    lam : float
+        Wavelength
 
-    phi_m: float
-        distance of fringe from hole center in units of meters
+    phi_m : float
+        Distance of fringe from hole center in units of meters
 
-    pitch: float
-        sampling pitch in radians in image plane
+    pitch : float
+        Sampling pitch in radians in image plane
 
-    affine2d: Affine2d object
-        the affine2d object
+    affine2d : Affine2d object
+        The affine2d object
 
     Returns
     -------
-    phasor: complex
+    phasor : complex
         Calculate wavefront for a single hole
-
     """
     kxprime, kyprime = affine2d.distort_f_args(kx, ky)
     return np.exp(
@@ -244,20 +243,19 @@ def image_center(fov, oversample, psf_offset):
 
     Parameters
     ----------
-    fov: integer
-        number of detector pixels of field of view
+    fov : int
+        Number of detector pixels of field of view
 
-    oversample: integer
-        number of samples per detector pixel pitch
+    oversample : int
+        Number of samples per detector pixel pitch
 
-    psf_offset: 2D integer array
-        offset from image center in detector pixels
+    psf_offset : 2D int array
+        Offset from image center in detector pixels
 
     Returns
     -------
-    offsets_from_center: 2D integer array
-        offset of the psf center from the array center.
-
+    offsets_from_center : 2D int array
+        Offset of the psf center from the array center.
     """
     offsets_from_center = (
         np.array(utils.centerpoint((oversample * fov, oversample * fov)))
@@ -273,32 +271,32 @@ def interf(kx, ky, **kwargs):
 
     Parameters
     ----------
-    kx, ky: float, float radians
-        x-component and y-component of image plane (spatial frequency) vector
+    kx, ky : float, float radians
+        X-component and y-component of image plane (spatial frequency) vector
 
-    kwargs: dict
-        psfctr: 2D float array
+    **kwargs : dict
+        Keyword arguments
+        psfctr : 2D float array
             center of PSF, in simulation pixels (i.e. oversampled)
 
-        ctrs: 2D float array
+        ctrs : 2D float array
             centers of holes
 
-        phi: float
+        phi : float
             distance of fringe from hole center in units of waves
 
-        lam: float
+        lam : float
             wavelength
 
-        pitch: float
+        pitch : float
             sampling pitch in radians in image plane
 
-        affine2d: Affine2d object
+        affine2d : Affine2d object
 
     Returns
     -------
-    fringe_complexamp: 2D complex array
-        interference for all holes
-
+    fringe_complexamp : 2D complex array
+        Interference for all holes
     """
     psfctr = kwargs["c"]
     ctrs = kwargs["ctrs"]  # hole centers
@@ -340,44 +338,43 @@ def model_array(
 
     Parameters
     ----------
-    ctrs: 2D float array
-        centers of holes
+    ctrs : 2D float array
+        Centers of holes
 
-    lam: float
-        wavelength in the bandpass for this particular model
+    lam : float
+        Wavelength in the bandpass for this particular model
 
-    oversample: integer
-        oversampling factor
+    oversample : int
+        Oversampling factor
 
-    pitch: float
-        sampling pitch in radians in image plane
+    pitch : float
+        Sampling pitch in radians in image plane
 
-    fov: integer
-        number of detector pixels on a side.
+    fov : int
+        Number of detector pixels on a side.
 
-    d: float
-        hole diameter for 'circ'; flat to flat distance for 'hex
+    d : float
+        Hole diameter for 'circ'; flat to flat distance for 'hex
 
-    psf_offset: 2D integer array
-        offset from image center in detector pixels
+    psf_offset : 2D int array
+        Offset from image center in detector pixels
 
-    phi: float
-        distance of fringe from hole center in units of waves
+    phi : float
+        Distance of fringe from hole center in units of waves
 
-    shape: string
-        shape of hole; possible values are 'circ', 'hex', and 'fringe'
+    shape : str
+        Shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
-    affine2d: Affine2d object
-        the affine2d object
+    affine2d : Affine2d object
+        The affine2d object
 
     Returns
     -------
-    primary_beam; float 2D array
-        array of primary beam,
+    primary_beam : float 2D array
+        Array of primary beam,
 
-    ffmodel: list of fringe arrays
-        list of fringe arrays
-
+    ffmodel : list of fringe arrays
+        List of fringe arrays
     """
     nholes = ctrs.shape[0]
     if phi is None:
@@ -435,39 +432,32 @@ def asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
 
     Parameters
     ----------
-    detpixel: float
-        pixel scale
+    detpixel : float
+        Pixel scale
 
-    fov: integer
-        number of detector pixels on a side
+    fov : int
+        Number of detector pixels on a side
 
-    oversample: integer
-        oversampling factor
+    oversample : int
+        Oversampling factor
 
-    ctrs: float, float
-        coordinates of hole center
+    d : float
+        Hole diameter
 
-    d: float
-        hole diameter
+    lam : float
+        Wavelength
 
-    lam: float
-        wavelength
+    psf_offset : 2D float array
+        Offset from image center in detector pixels
 
-    phi: float
-        distance of fringe from hole center in units of waves
-
-    psf_offset: 2D float array
-        offset from image center in detector pixels
-
-    affine2d: Affine2d object
-        the affine2d object
+    affine2d : Affine2d object
+        The affine2d object
 
     Returns
     -------
-    asf: 2D real array
+    asf : 2D real array
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a circular aperture
-
     """
     pitch = detpixel / float(oversample)
     im_ctr = image_center(fov, oversample, psf_offset)
@@ -489,36 +479,35 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
 
     Parameters
     ----------
-    detpixel: float
-        pixel scale
+    detpixel : float
+        Pixel scale
 
-    fov: integer
-        number of detector pixels on a side
+    fov : int
+        Number of detector pixels on a side
 
-    oversample: integer
-        oversampling factor
+    oversample : int
+        Oversampling factor
 
-    ctrs: 2D float array
-        centers of holes
+    ctrs : 2D float array
+        Centers of holes
 
-    lam: float
-        wavelength
+    lam : float
+        Wavelength
 
-    phi: float
-        distance of fringe from hole center in units of waves
+    phi : float
+        Distance of fringe from hole center in units of waves
 
-    psf_offset: 2D float array
-        offset from image center in detector pixels
+    psf_offset : 2D float array
+        Offset from image center in detector pixels
 
-    affine2d: Affine2d object
-        the affine2d object
+    affine2d : Affine2d object
+        The affine2d object
 
     Returns
     -------
-    fringing: 2D complex array
+    fringing : 2D complex array
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a fringe
-
     """
     pitch = detpixel / float(oversample)
     im_ctr = image_center(fov, oversample, psf_offset)
@@ -541,33 +530,32 @@ def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
 
     Parameters
     ----------
-    detpixel: float
-        pixel scale
+    detpixel : float
+        Pixel scale
 
-    fov: integer
-        number of detector pixels on a side
+    fov : int
+        Number of detector pixels on a side
 
-    oversample: integer
-        oversampling factor
+    oversample : int
+        Oversampling factor
 
-    d: float
-        flat-to-flat distance across hexagon
+    d : float
+        Flat-to-flat distance across hexagon
 
-    lam: float
-        wavelength
+    lam : float
+        Wavelength
 
-    psf_offset: 2D float array
-        offset from image center in detector pixels
+    psf_offset : 2D float array
+        Offset from image center in detector pixels
 
-    affine2d: Affine2d object
-        the affine2d object
+    affine2d : Affine2d object
+        The affine2d object
 
     Returns
     -------
-    asf: 2D complex array
+    asf : 2D complex array
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a hexagonal aperture
-
     """
     pitch = detpixel / float(oversample)
 
@@ -591,40 +579,40 @@ def psf(
 
     Parameters
     ----------
-    detpixel: float
-        pixel scale
+    detpixel : float
+        Pixel scale
 
-    fov: integer
-        number of detector pixels on a side
+    fov : int
+        Number of detector pixels on a side
 
-    oversample: integer
-        oversampling factor
+    oversample : int
+        Oversampling factor
 
-    ctrs: 2D float array
-        centers of holes
+    ctrs : 2D float array
+        Centers of holes
 
-    d: float
-        hole diameter for 'circ'; flat-to-flat distance across for 'hex'
+    d : float
+        Hole diameter for 'circ'; flat-to-flat distance across for 'hex'
 
-    lam: float
-        wavelength
+    lam : float
+        Wavelength
 
-    phi: float
-        distance of fringe from hole center in units of waves
+    phi : float
+        Distance of fringe from hole center in units of waves
 
-    psf_offset: 2D float array
-        offset from image center in detector pixels
+    psf_offset : 2D float array
+        Offset from image center in detector pixels
 
-    affine2d: Affine2d object
-        the affine2d object
+    affine2d : Affine2d object
+        The affine2d object
 
-    shape: string
-        shape of hole; possible values are 'circ', 'hex', and 'fringe'
+    shape : str
+        Shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
     Returns
     -------
-    PSF - 2D float array
-
+    PSF : 2D float array
+        The point-spread function
     """
     # Now deal with primary beam shapes...
     if shape == "circ":

@@ -23,18 +23,17 @@ class AmiAverageStep(Step):
 
     def process(self, *input_list):
         """
-        Averages the results of LG analysis for a set of multiple NIRISS AMI mode exposures.
+        Average the results of LG analysis for a set of multiple NIRISS AMI mode exposures.
 
         Parameters
         ----------
-        input_list: list
-            input file names
+        *input_list : list
+            Input file names
 
         Returns
         -------
-        result: AmiLgModel object
+        result : AmiLgModel object
             Averaged AMI data model
-
         """
         # Input may be a simple list if run in interactive environment,
         # but processing from command line wraps list of inputs in a tuple.

@@ -34,40 +34,39 @@ class NIRISS:
 
         Parameters
         ----------
-        filt: string
-            filter name
+        filt : str
+            Filter name
 
-        nrm_model: NRMModel datamodel
-            datamodel containing mask geometry information
+        nrm_model : NRMModel datamodel
+            Datamodel containing mask geometry information
 
-        chooseholes: list
+        chooseholes : list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
 
-        affine2d: Affine2d object
+        affine2d : Affine2d object
             Affine2d object
 
-        bandpass: synphot spectrum or array
+        bandpass : synphot spectrum or array
             None, synphot object or [(wt,wlen),(wt,wlen),...].
             Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
             the given bandpass, so you could simulate, for example,
             a 21cm psf through something called "F430M"!
 
-        usebp : boolean
+        usebp : bool
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
 
-        firstfew : integer
+        firstfew : int
             If not None, process only the first few integrations
 
-        chooseholes : string
+        chooseholes : str
             If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
 
         affine2d : Affine2D object
             None or user-defined Affine2d object
 
-        run_bpfix : boolean
+        run_bpfix : bool
             Run Fourier bad pixel fix on cropped data
-
         """
         self.run_bpfix = run_bpfix
         self.usebp = usebp
@@ -134,12 +133,11 @@ class NIRISS:
 
         Parameters
         ----------
-        pscalex_deg: float, degrees
-            pixel scale in x-direction
+        pscalex_deg : float, degrees
+            Pixel scale in x-direction
 
-        pscaley_deg: float, degrees
-            pixel scale in y-direction
-
+        pscaley_deg : float, degrees
+            Pixel scale in y-direction
         """
         if pscalex_deg is not None:
             self.pscalex_deg = pscalex_deg
@@ -158,16 +156,15 @@ class NIRISS:
 
         Parameters
         ----------
-        input_model: instance Data Model
+        input_model : instance Data Model
             DM object for input
 
         Returns
         -------
-        scidata_ctrd: numpy array
+        scidata_ctrd : numpy array
             Cropped, centered, optionally cleaned AMI data
-        dqmask_ctrd:
+        dqmask_ctrd :
             Cropped, centered mask of bad pixels
-
         """
         # all instrumentdata attributes will be available when oifits files written out
         scidata = copy.deepcopy(np.array(input_model.data))
@@ -324,9 +321,8 @@ class NIRISS:
 
         Parameters
         ----------
-        nwav: integer
-            length of axis3 for 3D input
-
+        nwav : int
+            Length of axis3 for 3D input
         """
         self.nwav = nwav
 
@@ -339,17 +335,16 @@ class NIRISS:
             Counterclockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = 1
         Hole center coords are in the V2, V3 plane in meters.
 
-        Notes
-        -----
-            Nov. 2024 email discussion with Tony Sohn, Paul Goudfrooij confirmed V2/V3 coordinate
-            rotation back to "North up" equatorial orientation should use ROLL_REF + V3I_YANG
-            (= PA_APER).
-
         Returns
         -------
-        ctrs_rot: array
+        ctrs_rot : array
             Rotated coordinates to be put in OIFITS files.
 
+        Notes
+        -----
+        Nov. 2024 email discussion with Tony Sohn, Paul Goudfrooij confirmed V2/V3 coordinate
+        rotation back to "North up" equatorial orientation should use ROLL_REF + V3I_YANG
+        (= PA_APER).
         """
         mask_ctrs = copy.deepcopy(self.mask.ctrs)
         # rotate by an extra 90 degrees (RAC 9/21)

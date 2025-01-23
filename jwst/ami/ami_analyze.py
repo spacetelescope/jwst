@@ -38,35 +38,34 @@ def apply_lg_plus(
         Filter throughput data
     nrm_model : data model object
         NRM model data
-    oversample : integer
+    oversample : int
         Oversampling factor
-    psf_offset : string (two floats)
+    psf_offset : str (two floats)
         PSF offset values to use to create the model array
-    rotsearch_parameters : string ('start stop step')
+    rotsearch_parameters : str ('start stop step')
         Rotation search parameters
     bandpass : synphot spectrum or array
         Synphot spectrum or array to override filter/source
-    usebp : boolean
+    usebp : bool
         If True, exclude pixels marked DO_NOT_USE from fringe fitting
-    firstfew : integer
+    firstfew : int
         If not None, process only the first few integrations
-    chooseholes : string
+    chooseholes : str
         If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
     affine2d : user-defined Affine2D object
         None or user-defined Affine2d object
-    run_bpfix : boolean
+    run_bpfix : bool
         Run Fourier bad pixel fix on cropped data
 
     Returns
     -------
-    oifitsmodel: AmiOIModel object
+    oifitsmodel : AmiOIModel object
         AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
-    oifitsmodel_multi: AmiOIModel object
+    oifitsmodel_multi : AmiOIModel object
         AMI tables of observables for each integration
         from LG algorithm fringe fitting in OIFITS format
-    amilgmodel: AmiLGFitModel object
+    amilgmodel : AmiLGFitModel object
         AMI cropped data, model, and residual data from LG algorithm fringe fitting
-
     """
     # Create copy of input_model to avoid overwriting input
     input_copy = copy.deepcopy(input_model)

@@ -1,14 +1,18 @@
-# Python implementation: anand@stsci.edu 6 Mar 2013
-# Algorithm: eelliott@stsci.edu -  Applied Optics, Vol 44, No. 8 10 March 2005
-# Sabatke et al.
-# Erin Elliott's analytical hexagon-aperture PSF, page 1361 equation 5
-# Coordinate center at center of symmetry, and flat edge along xi axis
-#     ---  eta
-#   /     \ ^
-#   \     / |
-#     ---   -> xi
-# hex(xi,eta) = g(xi,eta) + g(-xi,eta)
-#
+r"""
+Fourier transforms and related functions for a half-hexagon.
+
+Python implementation: anand@stsci.edu 6 Mar 2013
+Algorithm: eelliott@stsci.edu -  Applied Optics, Vol 44, No. 8 10 March 2005
+Sabatke et al.
+Erin Elliott's analytical hexagon-aperture PSF, page 1361 equation 5
+Coordinate center at center of symmetry, and flat edge along xi axis
+    ---  eta
+  /     \ ^
+  \     / |
+    ---   -> xi
+hex(xi,eta) = g(xi,eta) + g(-xi,eta)
+"""
+
 import logging
 import numpy as np
 
@@ -28,13 +32,14 @@ def g_eeag(xi, eta, **kwargs):
 
     Parameters
     ----------
-    xi: 2D float array
-        hexagon's coordinate center at center of symmetry, along flat edge
+    xi : 2D float array
+        Hexagon's coordinate center at center of symmetry, along flat edge
 
-    eta: 2D float array
-        hexagon's coordinate center at center of symmetry, normal to xi
+    eta : 2D float array
+        Hexagon's coordinate center at center of symmetry, normal to xi
 
-    kwargs: dict
+    **kwargs : dict
+        Keyword arguments
         c (optional, via **kwargs): tuple(float, float)
             coordinates of center
 
@@ -52,9 +57,8 @@ def g_eeag(xi, eta, **kwargs):
 
     Returns
     -------
-    g: 2D complex array
+    g : 2D complex array
         Fourier transform of one half of a hexagon.
-
     """
     c = kwargs["c"]
     pixel = kwargs["pixel"]
@@ -87,10 +91,11 @@ def glimit(xi, **kwargs):
 
     Parameters
     ----------
-    xi: 2D float array
-        hexagon's coordinate center at center of symmetry, along flat edge
+    xi : 2D float array
+        Hexagon's coordinate center at center of symmetry, along flat edge
 
-    kwargs: dict
+    **kwargs : dict
+        Keyword arguments
         c (optional, via **kwargs): tuple(float, float)
             coordinates of center
 
@@ -108,10 +113,9 @@ def glimit(xi, **kwargs):
 
     Returns
     -------
-    g: complex
-        analytic limit of the Fourier transform of one half of the hexagon
+    g : complex
+        Analytic limit of the Fourier transform of one half of the hexagon
         along eta=0
-
     """
     c = kwargs["c"]
     pixel = kwargs["pixel"]
@@ -137,10 +141,9 @@ def centralpix_limit():
 
     Returns
     -------
-    g: float
-        analytic limit of the Fourier transform of one half of the hexagon
+    g : float
+        Analytic limit of the Fourier transform of one half of the hexagon
         at the origin.
-
     """
     g = np.sqrt(3) / 4.0
 
@@ -153,14 +156,13 @@ def mas2rad(mas):
 
     Parameters
     ----------
-    mas: float
-        angle in milli arc-sec
+    mas : float
+        Angle in milli arc-sec
 
     Returns
     -------
-    rad: float
-        angle in radians
-
+    rad : float
+        Angle in radians
     """
     rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
     return rad
@@ -174,26 +176,25 @@ def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
 
     Parameters
     ----------
-    s: (int,int) tuple
-        size of hexagonal primary beam
+    s : (int,int) tuple
+        Size of hexagonal primary beam
 
-    c: (float,float) tuple
-        location of center of hexagonal primary beam
+    c : (float,float) tuple
+        Location of center of hexagonal primary beam
 
-    d: float
-        flat-to-flat distance across hexagon
+    d : float
+        Flat-to-flat distance across hexagon
 
-    lam: float
-        wavelength
+    lam : float
+        Wavelength
 
-    pitch: float
-        sampling pitch in radians in image plane
+    pitch : float
+        Sampling pitch in radians in image plane
 
     Returns
     -------
-    np.abs(hex_complex): 2D float array
-        hexagonal hole Fourier transform by adding the transforms
-
+    np.abs(hex_complex) : 2D float array
+        Hexagonal hole Fourier transform by adding the transforms
     """
     if c is None:
         c = float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5

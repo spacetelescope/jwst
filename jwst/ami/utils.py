@@ -105,33 +105,32 @@ class Affine2d:
 
         Parameters
         ----------
-        mx: float
-            dimensionless x-magnification
+        mx : float
+            Dimensionless x-magnification
 
-        my: float
-            dimensionless y-magnification
+        my : float
+            Dimensionless y-magnification
 
-        sx: float
-            dimensionless x shear
+        sx : float
+            Dimensionless x shear
 
-        sy: float
-            dimensionless y shear
+        sy : float
+            Dimensionless y shear
 
-        xo: float
-            x-offset in pupil space
+        xo : float
+            X-offset in pupil space
 
-        yo: float
-            y-offset in pupil space
+        yo : float
+            Y-offset in pupil space
 
-        rotradccw: float
-            a counter-clockwise rotation of *THE VECTOR FROM THE ORIGIN TO A
+        rotradccw : float
+            A counter-clockwise rotation of *THE VECTOR FROM THE ORIGIN TO A
             POINT*, in a FIXED COORDINATE FRAME, by this angle (radians)
             (as viewed in ds9 or with fits NAXIS1 on X and NAXIS2 on Y);
             default is None
 
-        name: string, optional
-            name of the Affine2d object to store in name attribute
-
+        name : str, optional
+            Name of the Affine2d object to store in name attribute
         """
         self.rotradccw = rotradccw
         if rotradccw is not None:
@@ -169,14 +168,13 @@ class Affine2d:
 
         Parameters
         ----------
-        point: float, float
-            coordinates in ideal space, which to apply forward transform
+        point : float, float
+            Coordinates in ideal space, which to apply forward transform
 
         Returns
         -------
-        trans_point: float, float
-            coordinates in distorted space
-
+        trans_point : float, float
+            Coordinates in distorted space
         """
         trans_point = np.array(
             (
@@ -193,14 +191,13 @@ class Affine2d:
 
         Parameters
         ----------
-        point: float, float
-            coordinates in distorted space, which to apply reverse transform
+        point : float, float
+            Coordinates in distorted space, which to apply reverse transform
 
         Returns
         -------
-        trans_point: float, float
-            coordinates in ideal space
-
+        trans_point : float, float
+            Coordinates in ideal space
         """
         trans_point = (
             np.array(
@@ -228,19 +225,18 @@ class Affine2d:
 
         Parameters
         ----------
-        u: float
+        u : float
             1st argument of F
 
-        v: float
+        v : float
             2nd argument of F
 
         Returns
         -------
-        uprime: float
+        uprime : float
             1st transformed argument of F
-        vprime: float
+        vprime : float
             2nd transformed argument of F
-
         """
         uprime = (self.my * u - self.sy * v) / self.determinant
         vprime = (-self.sx * u + self.mx * v) / self.determinant
@@ -258,17 +254,16 @@ class Affine2d:
 
         Parameters
         ----------
-        u: float
+        u : float
             1st argument of F, in units of inverse length units
 
-        v: float
+        v : float
             2nd argument of F, in units of inverse length units
 
         Returns
         -------
-        phase: complex array
-            phase term divided by the determinant.
-
+        phase : complex array
+            Phase term divided by the determinant.
         """
         phase = np.exp(
             2
@@ -284,15 +279,10 @@ class Affine2d:
         """
         Calculate the rotation that was used to creat a pure rotation affine2d object.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
-        rotd: float
-            rotation used to creat a pure rotation affine2d
-
+        rotd : float
+            Rotation used to creat a pure rotation affine2d
         """
         if self.rotradccw:
             rotd = 180.0 * self.rotradccw / np.pi
@@ -307,17 +297,16 @@ def affinepars2header(hdr, affine2d):
 
     Parameters
     ----------
-    hdr: fits header
-        fits header to write affine2d parameters into
+    hdr : fits header
+        FITS header to write affine2d parameters into
 
-    affine2d: Affine2d object
+    affine2d : Affine2d object
         The affine2d object to write into
 
     Returns
     -------
-    hdr: fits header
-        fits header, updated with affine2d parameters
-
+    hdr : fits header
+        FITS header, updated with affine2d parameters
     """
     hdr["affine"] = (affine2d.name, "Affine2d in pupil: name")
     hdr["aff_mx"] = (affine2d.mx, "Affine2d in pupil: xmag")
@@ -340,21 +329,20 @@ def makedisk(n, r, ctr=(0, 0)):
 
     Parameters
     ----------
-    n: integer
-        size of 1 dimension of the array to be returned
+    n : int
+        Size of 1 dimension of the array to be returned
 
-    r: integer
-        radius of disk
+    r : int
+        Radius of disk
 
-    ctr: (integer, integer)
-        center of disk
+    ctr : (int, int)
+        Center of disk
 
     Returns
     -------
-    array: 2D integer array
-        array whose values =1 in a circular region near the center of the
+    array : 2D integer array
+        Array whose values =1 in a circular region near the center of the
         array, and =0 elsewhere.
-
     """
     if n % 2 == 1:  # odd
         m = (n - 1) / n
@@ -379,17 +367,16 @@ def trim(m, s):
 
     Parameters
     ----------
-    m: (integer, integer) array
+    m : (int, int) array
         2d index mask
 
-    s: integer
-        side of the parent array that was used to generate m.
+    s : int
+        Side of the parent array that was used to generate m.
 
     Returns
     -------
-    m_masked: (integer, integer) array
+    m_masked : (integer, integer) array
         2d index mask with edge pixels trimmed
-
     """
     xl, yl = [], []  # trimmed lists
     for ii in range(len(m[0])):
@@ -412,15 +399,14 @@ def avoidhexsingularity(rotation):
 
     Parameters
     ----------
-    rotation: float
-       rotation in degrees int or float
+    rotation : float
+       Rotation in degrees int or float
 
     Returns
     -------
-    rotation_adjusted: float
-        replacement value for rotation with epsilon = 1.0e-12 degrees added.
+    rotation_adjusted : float
+        Replacement value for rotation with epsilon = 1.0e-12 degrees added.
         Precondition before using rotationdegrees in Affine2d for hex geometries
-
     """
     diagnostic = rotation / 15.0 - int(rotation / 15.0)
     epsilon = 1.0e-12
@@ -437,20 +423,19 @@ def center_imagepeak(img, r="default", cntrimg=True):
 
     Parameters
     ----------
-    img: 2D float array
-        input image array
+    img : 2D float array
+        Input image array
 
-    r: integer
-        offset for center determination
+    r : int
+        Offset for center determination
 
-    cntrimg: boolean
+    cntrimg : bool
         If True, center on the peak pixel
 
     Returns
     -------
-    cropped: 2D float array
+    cropped : 2D float array
         Cropped to place the brightest pixel at the center of the img array
-
     """
     peakx, peaky, h = min_distance_to_edge(img, cntrimg=cntrimg)
     log.debug(" peakx=%g, peaky=%g, distance to edge=%g", peakx, peaky, h)
@@ -474,14 +459,13 @@ def centerpoint(s):
 
     Parameters
     ----------
-    s: 2D integer or float tuple
-        array shape
+    s : 2D int or float tuple
+        Array shape
 
     Returns
     -------
-    center: 2D integer or float tuple
-        center of image
-
+    center : 2D int or float tuple
+        Center of image
     """
     return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
 
@@ -492,19 +476,19 @@ def min_distance_to_edge(img, cntrimg=False):
 
     Parameters
     ----------
-    img: 2D array
-        input array
+    img : 2D array
+        Input array
 
-    cntrimg: boolean
-        if True, only look for the peak pixel near the center of the image
+    cntrimg : bool
+        If True, only look for the peak pixel near the center of the image
 
     Returns
     -------
-    peakx, peaky: integer, integer
+    peakx, peaky : integer, integer
+        Coordinates of the peak pixel
 
-    h: integer
-        distance to the nearest image edge
-
+    h : integer
+        Distance to the nearest image edge
     """
     if cntrimg is True:
         # Only look for the peak pixel at the center of the image
@@ -524,7 +508,7 @@ def min_distance_to_edge(img, cntrimg=False):
     h1 = min((dhigh[1], dlow[1]))
     h = min(h0, h1)
 
-    return peakx, peaky, h  # the 'half side' each way from the peak pixel
+    return peakx, peaky, h
 
 
 def find_centroid(a):
@@ -533,12 +517,12 @@ def find_centroid(a):
 
     Parameters
     ----------
-    a: 2D square float
-        input image array
+    a : 2D square float
+        Input image array
 
     Returns
     -------
-    htilt, vtilt: float, float
+    htilt, vtilt : float, float
         Centroid of a, as offset from array center, as calculated by the DFT's.
 
     Notes
@@ -562,7 +546,6 @@ def find_centroid(a):
     center using:
     image_center = utils.centerpoint(s) + np.array((centroid[1], centroid[0])
     and everything holds together sensibly looking at DS9 images of a.
-
     """
     ft = matrix_dft.MatrixFourierTransform()
 
@@ -582,14 +565,13 @@ def quadratic_extremum(p):
 
     Parameters
     ----------
-    p: float, float, float
-        quadratic coefficients
+    p : float, float, float
+        Quadratic coefficients
 
     Returns
     -------
-    y_max: float
-        maximum of the quadratic
-
+    y_max : float
+        Maximum of the quadratic
     """
     y_max = -p[1] / (2.0 * p[0]), -p[1] * p[1] / (4.0 * p[0]) + p[2]
 
@@ -602,17 +584,16 @@ def findpeak_1d(yvec, xvec):
 
     Parameters
     ----------
-    yvec: 1D float array
-       function values for input vector
+    yvec : 1D float array
+       Function values for input vector
 
-    xvec: 1D float array
-       input vector
+    xvec : 1D float array
+       Input vector
 
     Returns
     -------
-    quad_ext: float
-        fit function extreme for a given input vector
-
+    quad_ext : float
+        Fit function extreme for a given input vector
     """
     p = np.polyfit(np.array(xvec), np.array(yvec), 2)
     return quadratic_extremum(p)
@@ -624,13 +605,13 @@ def findslope(a):
 
     Parameters
     ----------
-    a: 2D float array
-        phase slope array
+    a : 2D float array
+        Phase slope array
 
     Returns
     -------
-    slopes: 2D float array
-        slopes
+    slopes : 2D float array
+        Slopes
 
     Notes
     -----
@@ -656,7 +637,6 @@ def findslope(a):
          a.shape[0 or 1]/(2 pi)
     Multiply the measured phase slope by this gain for pixels of incoming array
          centroid shift away from array center.
-
     """
     a_up = np.zeros(a.shape)
     a_dn = np.zeros(a.shape)
@@ -709,23 +689,22 @@ def quadratic(p, x):
 
     Parameters
     ----------
-    p: float, float, float
-        coefficients of quadratic function: p[0]*x*x + p[1]*x + p[2]
+    p : float, float, float
+        Coefficients of quadratic function: p[0]*x*x + p[1]*x + p[2]
 
-    x: 1D float array
-        arguments of p()
+    x : 1D float array
+        Arguments of p()
 
     Returns
     -------
-    maxx: float
-        value of x at minimum or maximum value of y
+    maxx : float
+        Value of x at minimum or maximum value of y
 
-    maxy: float
-        max y = -b^2/4a occurs at x = -b^2/2a
+    maxy : float
+        Max y = -b^2/4a occurs at x = -b^2/2a
 
-    fit_val: 1D float array
-        values of quadratic function at arguments in x array
-
+    fit_val : 1D float array
+        Values of quadratic function at arguments in x array
     """
     maxx = -p[1] / (2.0 * p[0])
     maxy = -p[1] * p[1] / (4.0 * p[0]) + p[2]
@@ -746,13 +725,13 @@ def make_a(nh):
 
     Parameters
     ----------
-    nh: integer
-        number of holes in NR mask
+    nh : int
+        Number of holes in NR mask
 
     Returns
     -------
     matrix_a: 2D float array
-         nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
+        Shape nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
 
     Notes
     -----
@@ -779,7 +758,6 @@ def make_a(nh):
     When tested against Alex'' nrm_model.py 'piston_phase' text output
     of fringe phases, these signs appear to be correct -
     anand@stsci.edu 12 Nov 2014
-
     """
     log.debug("-------")
     log.debug(" make_a:")
@@ -816,17 +794,16 @@ def fringes2pistons(fringephases, nholes):
 
     Parameters
     ----------
-    fringephases: 1D integer array
-        fringe phases
+    fringephases : 1D int array
+        Fringe phases
 
-    nholes: integer
-        number of holes
+    nholes : int
+        Number of holes
 
     Returns
     -------
-    np.dot(Apinv, fringephases): 1D integer array
-        pistons in same units as fringe phases
-
+    np.dot(Apinv, fringephases) : 1D int array
+        Pistons in same units as fringe phases
     """
     a_nrm = make_a(nholes)
     a_p_inv = np.linalg.pinv(a_nrm)
@@ -843,17 +820,16 @@ def rebin(a=None, rc=(2, 2)):
 
     Parameters
     ----------
-    a: 2D float array
-        input array to bin
+    a : 2D float array
+        Input array to bin
 
-    rc: 2D float array
-        binning kernel
+    rc : 2D float array
+        Binning kernel
 
     Returns
     -------
-    binned_arr: float array
-        binned array
-
+    binned_arr : float array
+        Binned array
     """
     binned_arr = krebin(a, (a.shape[0] // rc[0], a.shape[1] // rc[1]))
 
@@ -862,21 +838,20 @@ def rebin(a=None, rc=(2, 2)):
 
 def krebin(a, shape):
     """
-    Klaus P's fastrebin from web.
+    Rebin, applying Klaus P's fastrebin from web.
 
     Parameters
     ----------
-    a: 2D float array
-        input array to rebin
+    a : 2D float array
+        Input array to rebin
 
-    shape: tuple (integer, integer)
-        dimensions of array 'a' binned down by dimensions of binning kernel
+    shape : tuple (int, int)
+        Dimensions of array 'a' binned down by dimensions of binning kernel
 
     Returns
     -------
     reshaped_a: 2D float array
-        reshaped input array
-
+        Reshaped input array
     """
     sh = shape[0], a.shape[0] // shape[0], shape[1], a.shape[1] // shape[1]
     reshaped_a = a.reshape(sh).sum(-1).sum(1)
@@ -890,17 +865,16 @@ def rcrosscorrelate(a=None, b=None):
 
     Parameters
     ----------
-    a: 2D float array
-        first input array
+    a : 2D float array
+        First input array
 
-    b: 2D float array
-        second input array
+    b : 2D float array
+        Second input array
 
     Returns
     -------
-    c.real.copy():
-        real part of array that is the correlation of the two input arrays.
-
+    c.real.copy() :
+        Real part of array that is the correlation of the two input arrays.
     """
     c = crosscorrelate(a=a, b=b) / (np.sqrt((a * a).sum()) * np.sqrt((b * b).sum()))
     return c.real.copy()
@@ -912,20 +886,19 @@ def lambdasteps(lam, frac_width, steps=4):
 
     Parameters
     ----------
-    lam: float
-        lambda
+    lam : float
+        Lambda
 
-    frac_width: float
-        fractional bandwidth
+    frac_width : float
+        Fractional bandwidth
 
-    steps: integer
+    steps : int
         With lam and frac, determines bin size of lambda array
 
     Returns
     -------
-    lambda_array; 1D float array
+    lambda_array : 1D float array
         Array of increments of lambda
-
     """
     frac = frac_width / 2.0
     steps = steps / 2.0
@@ -944,20 +917,19 @@ def tophatfilter(lam_c, frac_width, npoints=10):
 
     Parameters
     ----------
-    lam_c: float
-        lambda
+    lam_c : float
+        Lambda
 
-    frac_width: float
-        fractional bandwidth
+    frac_width : float
+        Fractional bandwidth
 
-    npoints: integer
-        number of bins in lambda array
+    npoints : int
+        Number of bins in lambda array
 
     Returns
     -------
-    filt: list
-        tophat filter list
-
+    filt : list
+        Tophat filter list
     """
     wllist = lambdasteps(lam_c, frac_width, steps=npoints)
     filt = []
@@ -972,17 +944,16 @@ def crosscorrelate(a=None, b=None):
 
     Parameters
     ----------
-    a: 2D complex float array
-        first input array
+    a : 2D complex float array
+        First input array
 
-    b: 2D complex float array
-        second input array
+    b : 2D complex float array
+        Second input array
 
     Returns
     -------
     fft.fftshift(c)
-        complex array that is the correlation of the two input arrays.
-
+        Complex array that is the correlation of the two input arrays.
     """
     if a.shape != b.shape:
         log.critical("crosscorrelate: need identical arrays")
@@ -1021,17 +992,16 @@ def rotate2dccw(vectors, thetarad):
 
     Parameters
     ----------
-    vectors: list
+    vectors : list
        2D vectors
 
-    thetarad: float
-       rotation
+    thetarad : float
+       Rotation
 
     Returns
     -------
-    rot_vectors: array of floats
-        rotated vectors
-
+    rot_vectors : array of floats
+        Rotated vectors
     """
     c, s = (np.cos(thetarad), np.sin(thetarad))
     ctrs_rotated = []
@@ -1050,23 +1020,22 @@ def findmax(mag, vals, mid=1.0):
 
     Parameters
     ----------
-    mag: 1D float array
-        array for abscissa
+    mag : 1D float array
+        Array for abscissa
 
-    vals: 1D float array
-        array for ordinate
+    vals : 1D float array
+        Array for ordinate
 
-    mid: float
-        midpoint of range
+    mid : float
+        Midpoint of range
 
     Returns
     -------
-    maxx: float
-        value of mag at the extreme value of vals
+    maxx : float
+        Value of mag at the extreme value of vals
 
-    maxy: float
-        value of vals corresponding to maxx
-
+    maxy : float
+        Value of vals corresponding to maxx
     """
     p = np.polyfit(mag, vals, 2)
     fitr = np.arange(0.95 * mid, 1.05 * mid, 0.01)
@@ -1085,22 +1054,21 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     Parameters
     ----------
-    input_array: ndarray
+    input_array : ndarray
         2D input array to filter
-    input_dq_array: ndarray
+    input_dq_array : ndarray
         2D input data quality array
-    bsize: scalar
-        square box size of the data to extract
-    xc: scalar
-        x position of the data extraction
-    yc: scalar
-        y position of the data extraction
+    bsize : scalar
+        Square box size of the data to extract
+    xc : scalar
+        X position of the data extraction
+    yc : scalar
+        Y position of the data extraction
 
     Returns
     -------
-    median_value: float
-        median value of good values within box of neighboring pixels
-
+    median_value : float
+        Median value of good values within box of neighboring pixels
     """
     # set the half box size
     hbox = int(bsize / 2)
@@ -1135,14 +1103,13 @@ def mas2rad(mas):
 
     Parameters
     ----------
-    mas: float
-        angle in milli arc-sec
+    mas : float
+        Angle in milli arc-sec
 
     Returns
     -------
     rad : float
-        angle in radians
-
+        Angle in radians
     """
     rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
     return rad
@@ -1157,17 +1124,17 @@ def img_median_replace(img_model, box_size):
 
     Parameters
     ----------
-    img_model: image model
+    img_model : image model
         Image model containing input array to filter.
 
-    box_size: scalar
-        box size for the median filter
+    box_size : scalar
+        Box size for the median filter
 
     Returns
     -------
-    img_model: input image model whose input array has its bad pixels replaced
+    img_model : datamodel
+        Input image model whose input array has its bad pixels replaced
         by the median of the surrounding good-value pixels.
-
     """
     input_data = img_model.data
     input_dq = img_model.dq
@@ -1204,14 +1171,14 @@ def get_filt_spec(throughput_model):
 
     Parameters
     ----------
-    throughput_model: ThroughputModel
+    throughput_model : ThroughputModel
         Datamodel containing normalized fractional throughput
         data for one of the four AMI filters
 
     Returns
     -------
-    band: synphot Spectrum object
-
+    band : synphot Spectrum object
+        Filter bandpass
     """
     thruput = throughput_model.filter_table
     wl_list = np.asarray([tup[0] for tup in thruput])  # angstroms
@@ -1228,8 +1195,8 @@ def get_flat_spec():
 
     Returns
     -------
-    flatspec: synphot Spectrum object
-
+    flatspec : synphot Spectrum object
+        Spectrum with constant flux
     """
     flatspec = synphot.SourceSpectrum(synphot.models.ConstFlux1D, amplitude=1)
 
@@ -1247,20 +1214,19 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
 
     Parameters
     ----------
-    bandpass: synphot Spectrum
-        filter bandpass (from get_filt_spec)
-    srcspec: synphot Spectrum
-         source spectrum (from get_src_spec)
-    trim: float, None
-        if not None, trim bandpass to where throughput greater than trim
-    nlambda: integer
-        number of wavelengths across filter to return
+    bandpass : synphot Spectrum
+        Filter bandpass (from get_filt_spec)
+    srcspec : synphot Spectrum
+         Source spectrum (from get_src_spec)
+    trim : float, None
+        If not None, trim bandpass to where throughput greater than trim
+    nlambda : int
+        Number of wavelengths across filter to return
 
     Returns
     -------
-    finalsrc: numpy array
+    finalsrc : numpy array
         Array of shape (nlambda,2) containing wavelengths, final throughputs
-
     """
     wl_filt, th_filt = bandpass._get_arrays(bandpass.waveset)  # noqa: SLF001
 
@@ -1324,14 +1290,13 @@ def get_cw_beta(bandpass):
 
     Parameters
     ----------
-    bandpass: array
+    bandpass : array
         Array of weights, wavelengths
 
     Returns
     -------
-    bandpass: array
+    bandpass : array
         Weighted mean wavelength in meters, fractional bandpass
-
     """
     wt = bandpass[:, 0]
     wl = bandpass[:, 1]
@@ -1354,17 +1319,16 @@ def handle_bandpass(bandpass, throughput_model):
 
     Parameters
     ----------
-    bandpass: Synphot spectrum or array, or None
+    bandpass : Synphot spectrum or array, or None
         User-defined bandpass to override filter/source
-    throughput_model: ThroughputModel
+    throughput_model : ThroughputModel
         Datamodel containing filter throughput info.
         Will not be used if bandpass is not None.
 
     Returns
     -------
-    bandpass: array
+    bandpass : array
         Array of weights, wavelengths used to generate model
-
     """
     if bandpass is not None:
         # bandpass can be user-defined synphot object or appropriate array
@@ -1400,26 +1364,26 @@ def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
 
     Parameters
     ----------
-    vec: array
+    vec : array
         2d, units of pixels
-    cd11: float
+    cd11 : float
         Linear transform matrix element (axis 1 w.r.t x)
-    cd12: float
+    cd12 : float
         Linear transform matrix element (axis 1 w.r.t y)
-    cd21: float
+    cd21 : float
         Linear transform matrix element (axis 2 w.r.t x)
-    cd22: float
+    cd22 : float
         Linear transform matrix element (axis 2 w.r.t y)
 
     Returns
     -------
-    Array containing x pixel scale vector, y pixel scale vector
+    np.ndarray
+        Array containing x pixel scale vector, y pixel scale vector
 
     Notes
     -----
     Use the global header values explicitly, for clarity.
     CD inputs are 4 scalars, conceptually 2x2 array in units degrees/pixel
-
     """
     return np.array((cd11 * vec[0] + cd12 * vec[1], cd21 * vec[0] + cd22 * vec[1]))
 
@@ -1432,13 +1396,13 @@ def degrees_per_pixel(datamodel):
 
     Parameters
     ----------
-    datamodel: datamodel object
+    datamodel : datamodel object
         NIRISS data model containing WCS information
 
     Returns
     -------
-    pixel scale in degrees/pixel
-
+    float
+        Pixel scale in degrees/pixel
     """
     wcsinfo = datamodel.meta.wcsinfo._instance  # noqa: SLF001
     if (

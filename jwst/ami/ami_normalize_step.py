@@ -22,17 +22,16 @@ class AmiNormalizeStep(Step):
 
         Parameters
         ----------
-        target: string or model
-            target input
+        target : str or model
+            Target input
 
-        reference: string or model
-            reference input
+        reference : str or model
+            Reference input
 
         Returns
         -------
-        result: AmiOIModel object
+        result : AmiOIModel object
             AMI data model that's been normalized
-
         """
         # Open the target and reference input models
         target_model = datamodels.AmiOIModel(target)

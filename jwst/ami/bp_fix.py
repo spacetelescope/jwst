@@ -1,3 +1,5 @@
+"""Pipeline implementation of Jens Kammerer's bp_fix code based on Ireland 2013 algorithm."""
+
 import numpy as np
 import logging
 
@@ -10,9 +12,6 @@ from stdatamodels.jwst.datamodels import dqflags
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 logging.captureWarnings(True)
-
-
-"""pipeline implementation of Jens Kammerer's bp_fix code based on Ireland 2013 algorithm"""
 
 micron = 1.0e-6
 filts = ["F277W", "F380M", "F430M", "F480M", "F356W", "F444W"]
@@ -53,9 +52,13 @@ def create_wavelengths(filtername):
 
     Parameters
     ----------
-    filtername: string
+    filtername : str
         AMI filter name
 
+    Returns
+    -------
+    tuple
+        Tuple of wavelengths. Center, low, and high.
     """
     wl_ctr = filtwl_d[filtername]
     wl_hps = filthp_d[filtername]
@@ -74,22 +77,22 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
 
     Parameters
     ----------
-    filtername: string
+    filtername : str
         AMI filter name
 
-    sqfov_npix: float
+    sqfov_npix : float
         Square field of view in number of pixels
 
-    pxsc_rad: float
+    pxsc_rad : float
         Detector pixel scale in rad/px
 
-    pupil_mask: array
+    pupil_mask : array
         Pupil mask model (NRM)
 
     Returns
     -------
-    Absolute value of FT(image) in filter - the CV Vsq array
-
+    np.array
+        Absolute value of FT(image) in filter - the CV Vsq array
     """
     wls = create_wavelengths(filtername)
     log.info(
@@ -109,13 +112,13 @@ def transform_image(image):
 
     Parameters
     ----------
-    image: numpy array
+    image : numpy array
         Science image
 
     Returns
     -------
-    Absolute value of FT(image)
-
+    np.array
+        Absolute value of FT(image)
     """
     ft = matrixDFT.MatrixFourierTransform()
     ftimage = ft.perform(
@@ -131,23 +134,22 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
 
     Parameters
     ----------
-    wl: float
+    wl : float
         Wavelength (meters)
 
-    fovnpix: float
+    fovnpix : float
         Square field of view in number of pixels
 
-    pxsc_rad: float
+    pxsc_rad : float
         Detector pixel scale in rad/px
 
-    pupil_mask: array
+    pupil_mask : array
         Pupil mask model (NRM)
 
     Returns
     -------
-    image_intensity: numpy array
+    image_intensity : numpy array
         Monochromatic unnormalized psf
-
     """
     reselt = wl / PUPLDIAM  # radian
     nlam_d = fovnpix * pxsc_rad / reselt  # Soummer nlamD FOV in reselts
@@ -166,18 +168,17 @@ def bad_pixels(data, median_size, median_tres):
 
     Parameters
     ----------
-    data: numpy array
+    data : numpy array
         Science data
-    median_size: float
+    median_size : float
         Median filter size (pixels)
-    median_tres: float
+    median_tres : float
         Empirically determined threshold
 
     Returns
     -------
-    pxdq: int array
+    pxdq : int array
         Bad pixel mask identified by median filtering
-
     """
     mfil_data = median_filter(data, size=median_size)
     diff_data = np.abs(data - mfil_data)
@@ -199,16 +200,16 @@ def fourier_corr(data, pxdq, fmas):
 
     Parameters
     ----------
-    data: numpy array
+    data : numpy array
         Science data
-    pxdq: numpy array
+    pxdq : numpy array
         Bad pixel mask
-    fmas:
+    fmas : numpy array
         FT of science data
 
     Returns
     -------
-    data_out: numpy array
+    data_out : numpy array
         Corrected science data
 
     References
@@ -217,7 +218,6 @@ def fourier_corr(data, pxdq, fmas):
     for sparse aperture masking, Monthly Notices of the Royal Astronomical
     Society, Volume 433, Issue 2, 01 August 2013, Pages 1718–1728,
     https://doi.org/10.1093/mnras/stt859
-
     """
     # Get the dimensions.
     ww = np.where(pxdq > 0.5)
@@ -263,24 +263,23 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
     Parameters
     ----------
-    data: array
+    data : array
         Cropped science data
-    pxdq0: array
+    pxdq0 : array
         Cropped DQ array
-    filt: string
+    filt : str
         AMI filter name
-    pxsc: float
+    pxsc : float
         Pixel scale, mas/pixel
-    nrm_model: datamodel object
+    nrm_model : datamodel object
         NRM pupil datamodel
 
     Returns
     -------
-    data: numpy array
+    data : numpy array
         Corrected data
-    pxdq:
+    pxdq : numpy array
         Mask of bad pixels, updated if new ones were found
-
     """
     dq_dnu = pxdq0 & DO_NOT_USE == DO_NOT_USE
     dq_jump = pxdq0 & JUMP_DET == JUMP_DET

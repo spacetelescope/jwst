@@ -261,8 +261,11 @@ checks = [
     "EX01", # No examples section found
     "SA01", # See Also section not found
     "ES01", # No extended summary found
+    "GL08", # Object does not have a docstring. Ruff catches these, and allows more granular ignores.
+    "PR01", # Parameters not documented. Already caught by ruff.
+    "PR09", # Parameter description should finish with a period
     "RT02", # First line of return should contain only the type
-    "PR01", # Parameters not documented. Already caught by ruff
+    "RT05", # Return value description should finish with a period
 ]
 
 [tool.ruff]
@@ -288,6 +291,7 @@ select = [
     "F",      # Pyflakes (part of default flake8)
     "E",      # pycodestyle (part of default flake8)
     "W",      # pycodestyle (part of default flake8)
+    "D",      # docstrings, see also numpydoc pre-commit action
     "N",      # pep8-naming (naming conventions)
     "A",      # flake8-builtins (prevent shadowing of builtins)
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
@@ -308,6 +312,7 @@ select = [
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 ignore = [
+    "D100", # missing docstring in public module
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "UP008", # use super() instead of super(class, self). no harm being explicit
     "UP015", # unnecessary open(file, "r"). no harm being explicit
@@ -315,11 +320,13 @@ ignore = [
     "ISC001", # single line implicit string concatenation. formatter recommends ignoring this.
 ]
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
 [tool.ruff.lint.pycodestyle]
 # Formatter autofixes to 88, but error thrown only above 100
 # This is primarily relevant for docstrings
 max-line-length = 100 
-
 
 [tool.ruff.lint.flake8-annotations]
 ignore-fully-untyped = true  # Turn of annotation checking for fully untyped code

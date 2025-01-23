@@ -50,38 +50,38 @@ class LgModel:
 
         Parameters
         ----------
-        nrm_model: NRMModel datamodel
-            datamodel containing mask geometry information
+        nrm_model : NRMModel datamodel
+            Datamodel containing mask geometry information
 
-        mask: string
-            keyword for built-in values
+        mask : str
+            Keyword for built-in values
 
-        holeshape: string
-           shape of apertures, default="hex"
+        holeshape : str
+           Shape of apertures, default="hex"
 
-        pixscale: float
-           initial estimate of pixel scale in radians
+        pixscale : float
+           Initial estimate of pixel scale in radians
 
-        over: integer
-           oversampling factor
+        over : int
+           Oversampling factor
 
-        pixweight: 2D float array, default None
-            weighting array
+        pixweight : 2D float array, default None
+            Weighting array
 
-        phi: float 1D array
-            distance of fringe from hole center in units of waves
+        phi : float 1D array
+            Distance of fringe from hole center in units of waves
 
-        chooseholes: list of strings, default None
+        chooseholes : list of strings, default None
             E.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
             If None, use the real seven-hole mask.
 
-        affine2d: Affine2d object
+        affine2d : Affine2d object
             Affine2d object
 
-        kwargs: dict
+        **kwargs : dict
+            Keyword arguments
             debug: boolean
                 if set, print debug
-
         """
         if "debug" in kwargs:
             self.debug = kwargs["debug"]
@@ -146,23 +146,22 @@ class LgModel:
 
         Parameters
         ----------
-        fov: integer, default=None
-            number of detector pixels on a side
+        fov : int, default=None
+            Number of detector pixels on a side
 
-        bandpass: 2D float array, default=None
-            array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
+        bandpass : 2D float array, default=None
+            Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
 
-        over: integer
+        over : int
             Oversampling factor
 
-        psf_offset: detector pixels
+        psf_offset : detector pixels
             Center offset from center of array
 
         Returns
         -------
-        Object's 'psf': float 2D array
-            simulated psf
-
+        Object's 'psf' : float 2D array
+            Simulated psf
         """
         # First set up conditions for choosing various parameters
         self.bandpass = bandpass
@@ -210,26 +209,25 @@ class LgModel:
 
         Parameters
         ----------
-        fov: integer, default=None
-            number of detector pixels on a side
+        fov : int, default=None
+            Number of detector pixels on a side
 
-        bandpass: 2D float array, default=None
-            array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
+        bandpass : 2D float array, default=None
+            Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
 
-        over: integer
-           oversampling factor
+        over : int
+           Cversampling factor
 
-        psf_offset: detector pixels
+        psf_offset : detector pixels
             Center offset from center of array
 
-        pixscale: float, default=None
-            pixel scale
+        pixscale : float, default=None
+            Pixel scale
 
         Returns
         -------
         Object's 'model': fringe model
             Generated fringe model
-
         """
         if fov:
             self.fov = fov
@@ -315,24 +313,23 @@ class LgModel:
 
         Parameters
         ----------
-        image: 2D float array
-            input image
+        image : 2D float array
+            Input image
 
-        reference: 2D float array
-            input reference image
+        reference : 2D float array
+            Input reference image
 
-        modelin: 2D array
-            optional model image
+        modelin : 2D array
+            Optional model image
 
-        savepsfs: boolean
-            save the psfs for writing to file (currently unused)
+        savepsfs : bool
+            Save the psfs for writing to file (currently unused)
 
-        dqm: 2D array
-            bad pixel mask of same dimensions as image
+        dqm : 2D array
+            Bad pixel mask of same dimensions as image
 
-        weighted: boolean
-            use weighted operations in the least squares routine
-
+        weighted : bool
+            Use weighted operations in the least squares routine
         """
         self.model_in = modelin
         self.weighted = weighted
@@ -411,20 +408,19 @@ class LgModel:
 
         Parameters
         ----------
-        img: 2D float array
-            input image
+        img : 2D float array
+            Input image
 
         Returns
         -------
         self.pixscale_factor: float
-            improved estimate of pixel scale in radians
+            Improved estimate of pixel scale in radians
 
-        self.rot_measured: float
-            value of mag at the extreme value of rotation from quadratic fit
+        self.rot_measured : float
+            Value of mag at the extreme value of rotation from quadratic fit
 
-        self.gof: float
-            goodness of fit
-
+        self.gof : float
+            Goodness of fit
         """
         if not hasattr(self, "bandpass"):
             raise ValueError("This obj has no specified bandpass/wavelength")
@@ -495,9 +491,8 @@ class LgModel:
 
         Parameters
         ----------
-        phi_m: float
-            piston angle
-
+        phi_m : float
+            Piston angle
         """
         self.phi = phi_m
 
@@ -507,9 +502,8 @@ class LgModel:
 
         Parameters
         ----------
-        pixel_rad: float
+        pixel_rad : float
             Detector pixel scale
-
         """
         self.pixel = pixel_rad
 
@@ -520,20 +514,19 @@ def goodness_of_fit(data, bestfit, disk_r=8):
 
     Parameters
     ----------
-    data: 2D float array
-        input image
+    data : 2D float array
+        Input image
 
-    bestfit: 2D float array
-        fit to input image
+    bestfit : 2D float array
+        Fit to input image
 
-    disk_r: integer
-        radius of disk
+    disk_r : int
+        Radius of disk
 
     Returns
     -------
-    gof: float
-        goodness of fit
-
+    gof : float
+        Goodness of fit
     """
     mask = (
         np.ones(data.shape)
@@ -556,17 +549,16 @@ def run_data_correlate(data, model):
 
     Parameters
     ----------
-    data: 2D float array
-        reference image
+    data : 2D float array
+        Reference image
 
-    model: 2D float array
-        simulated psf
+    model : 2D float array
+        Simulated psf
 
     Returns
     -------
     cor: 2D float array
-        correlation between data and model
-
+        Correlation between data and model
     """
     sci = data
     log.debug("shape sci: %s", np.shape(sci))

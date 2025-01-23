@@ -51,17 +51,16 @@ class AmiAnalyzeStep(Step):
 
         Parameters
         ----------
-        model: data model
+        model : data model
             The model to save
 
-        *args, **kwargs: tuple, dict
+        *args, **kwargs : tuple, dict
             Arguments to pass to the stpipe Step.save_model method
 
         Returns
         -------
         output_paths : [str[, ...]]
             List of output file paths the model(s) were saved in.
-
         """
         if "idx" in kwargs and kwargs.get("suffix", None) is None:
             kwargs["suffix"] = ["ami-oi", "amimulti-oi", "amilg"][kwargs.pop("idx")]
@@ -78,9 +77,8 @@ class AmiAnalyzeStep(Step):
 
         Returns
         -------
-            bandpass: array
-                Array of [countrates, wavelengths]
-
+        bandpass : array
+            Array of [countrates, wavelengths]
         """
         try:
             with asdf.open(self.bandpass, lazy_load=False) as af:
@@ -126,6 +124,11 @@ class AmiAnalyzeStep(Step):
 
         Makes an Affine2d object (see utils.Affine2D class).
         Input should contain mx,my,sx,sy,xo,yo,rotradccw.
+
+        Returns
+        -------
+        affine2d : Affine2d object
+            User-defined affine transform
         """
         try:
             with asdf.open(self.affine2d, lazy_load=False) as af:
@@ -180,19 +183,18 @@ class AmiAnalyzeStep(Step):
 
         Parameters
         ----------
-        fname: string
-            input file name
+        fname : str
+            Input file name
 
         Returns
         -------
-        oifitsmodel: AmiOIModel object
+        oifitsmodel : AmiOIModel object
             AMI tables of median observables from LG algorithm fringe fitting in OIFITS format
-        oifitsmodel_multi: AmiOIModel object
+        oifitsmodel_multi : AmiOIModel object
             AMI tables of observables for each integration
             from LG algorithm fringe fitting in OIFITS format
-        amilgmodel: AmiLGFitModel object
+        amilgmodel : AmiLGFitModel object
             AMI cropped data, model, and residual data from LG algorithm fringe fitting
-
         """
         # Retrieve the parameter values
         oversample = self.oversample

@@ -16,14 +16,13 @@ def create_afflist_rot(rotdegs):
 
     Parameters
     ----------
-    rotdegs: float 1D array
+    rotdegs : float 1D array
         Search window for rotation fine_tuning, in degrees
 
     Returns
     -------
-    alist: list
+    alist : list
         Affine2d objects having various rotations
-
     """
     alist = []
     for rotd in rotdegs:
@@ -42,38 +41,37 @@ def find_rotation(
 
     Parameters
     ----------
-    imagedata: 2D float array
-        image data
+    imagedata : 2D float array
+        Image data
 
-    nrm_model: NRMModel datamodel
-        datamodel containing mask geometry information
+    nrm_model : NRMModel datamodel
+        Datamodel containing mask geometry information
 
-    psf_offset: 2D float array
-        offset from image center in detector pixels
+    psf_offset : 2D float array
+        Offset from image center in detector pixels
 
-    rotdegs: list of floats
-        range of rotations to search (degrees)
+    rotdegs : list of floats
+        Range of rotations to search (degrees)
 
-    pixel: float
-        pixel size
+    pixel : float
+        Pixel size
 
-    npix: integer
-        number of detector pixels on a side
+    npix : int
+        Number of detector pixels on a side
 
-    bandpass: 2D float array, default=None
-        array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
+    bandpass : 2D float array, default=None
+        Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
 
-    over: integer
-        oversampling factor
+    over : int
+        Oversampling factor
 
-    holeshape: string
-        shape of hole; possible values are 'circ', 'hex', and 'fringe'
+    holeshape : str
+        Shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
     Returns
     -------
-    new_affine2d: Affine2d object
+    new_affine2d : Affine2d object
         Affine2d object using the known rotation and scale.
-
     """
     if hasattr(rotdegs, "__iter__") is False:
         rotdegs = (rotdegs,)

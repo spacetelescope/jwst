@@ -11,18 +11,17 @@ log.setLevel(logging.DEBUG)
 
 def average_lg(lg_products):
     """
-    Averages the LG results for a set of AMI exposures.
+    Average the LG results for a set of AMI exposures.
 
     Parameters
     ----------
-    lg_products: file list
+    lg_products : file list
         List of LG product file names to be averaged
 
     Returns
     -------
-    output_model: Fringe model object
+    output_model : Fringe model object
         Averaged fringe data
-
     """
     # Create the output model as a copy of the first input model
     log.debug("create output as copy of %s", lg_products[0])

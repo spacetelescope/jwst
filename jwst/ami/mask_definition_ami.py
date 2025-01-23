@@ -16,14 +16,13 @@ class NRMDefinition:
 
         Parameters
         ----------
-        nrm_model: NRMModel
-            datamodel containing NRM reference file data
-        maskname: string
+        nrm_model : NRMModel
+            Datamodel containing NRM reference file data
+        maskname : str
             Identifier for mask geometry; default 'jwst_ami', optional
-        chooseholes: list
+        chooseholes : list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask, optional
             If None, use real seven-hole mask
-
         """
         if maskname not in ["jwst_ami", "jwst_g7s6c"]:
             raise ValueError("Mask name not supported")
@@ -42,18 +41,17 @@ class NRMDefinition:
 
         Parameters
         ----------
-        nrm_model: NRMModel
-            datamodel containing NRM reference file data
-        chooseholes: list
+        nrm_model : NRMModel
+            Datamodel containing NRM reference file data
+        chooseholes : list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
 
         Returns
         -------
-        f2f: float
-            flat-to-flat distance of mask holes
-        ctrs_asbuilt: array
+        f2f : float
+            Flat-to-flat distance of mask holes
+        ctrs_asbuilt : array
             Actual hole centers [meters]
-
         """
         ctrs_asdesigned = np.array(
             [
@@ -104,8 +102,8 @@ class NRMDefinition:
 
         Returns
         -------
-        Diameter of the smallest centered circle
-
+        float
+            Diameter of the smallest centered circle
         """
         radii = []
         for ctr in self.ctrs:
