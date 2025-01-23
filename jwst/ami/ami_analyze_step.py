@@ -33,8 +33,8 @@ class AmiAnalyzeStep(Step):
         psf_offset = string(default='0.0 0.0') # PSF offset values to use to create the model array
         rotation_search = string(default='-3 3 1') # Rotation search parameters: start, stop, step
         bandpass = string(default=None) # ASDF file containing array to override filter/source
-        usebp = boolean(default=True)
         # If True, exclude pixels marked DO_NOT_USE from fringe fitting
+        usebp = boolean(default=True)
         firstfew = integer(default=None) # If not None, process only the first few integrations
         chooseholes = string(default=None)
         # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
@@ -177,14 +177,14 @@ class AmiAnalyzeStep(Step):
         self.affine2d = affine2d
         return affine2d
 
-    def process(self, fname):
+    def process(self, input_data):
         """
         Perform analysis of an AMI mode exposure by applying the LG algorithm.
 
         Parameters
         ----------
-        fname : str
-            Input file name
+        input_data : str or datamodel
+            Input file name or datamodel
 
         Returns
         -------
@@ -223,7 +223,7 @@ class AmiAnalyzeStep(Step):
             raise ValueError("Oversample value must be an odd integer.")
 
         # Open the input data model. Can be 2D or 3D image
-        with datamodels.open(fname) as input_model:
+        with datamodels.open(input_data) as input_model:
             # Get the name of the filter throughput reference file to use
             throughput_reffile = self.get_reference_file(input_model, "throughput")
             self.log.info(

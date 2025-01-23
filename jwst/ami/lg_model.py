@@ -380,9 +380,8 @@ class LgModel:
         self.fringeamp, self.fringephase = leastsqnrm.tan2visibilities(self.soln)
         self.fringepistons = utils.fringes2pistons(self.fringephase, len(self.ctrs))
         self.redundant_cps = leastsqnrm.redundant_cps(self.fringephase, n=self.N)
-        self.t3_amplitudes = leastsqnrm.t3_amplitudes(
-            self.fringeamp, n=self.N
-        )  # RC 8/24
+        # RC 8/24
+        self.t3_amplitudes = leastsqnrm.t3_amplitudes(self.fringeamp, n=self.N)
         self.redundant_cas = leastsqnrm.closure_amplitudes(self.fringeamp, n=self.N)
         self.q4_phases = leastsqnrm.q4_phases(self.fringephase, n=self.N)  # RC 8/24
 
@@ -462,7 +461,7 @@ class LgModel:
         self.corrs = np.zeros(len(radlist))
 
         self.rots = radlist
-        for q, _rad in enumerate(radlist):
+        for q in range(len(radlist)):
             psf = self.simulate(
                 bandpass=self.bandpass,
                 fov=reffov,

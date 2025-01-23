@@ -2,7 +2,6 @@
 Matrix-based discrete Fourier transforms for computing PSFs.
 
 MatrixDFT: Matrix-based discrete Fourier transforms for computing PSFs.
-See Soummer et al. 2007 JOSA
 The main user interface in this module is a class MatrixFourierTransform.
 Internally this will call one of several subfunctions depending on the
 specified centering type. These have to do with where the (0, 0) element of
@@ -28,6 +27,11 @@ with Soummer et al. 2007. Updated documentation.  -- M. Perrin
 2012-09-26: minor big fixes
 2015-01-21: Eliminate redundant code paths, correct parity flip,
 PEP8 formatting pass (except variable names)-- J. Long
+
+References
+----------
+Soummer et al. 2007, Opt. Express  15, 15935-15951 (2007)
+https://doi.org/10.1364/OE.15.015935
 
 Examples
 --------

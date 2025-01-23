@@ -29,17 +29,17 @@ def average_lg(lg_products):
 
     # Find the input product with the smallest fit_image image size
     sizes = []
-    for inp in lg_products:
-        prod = datamodels.AmiLgModel(inp)
+    for product in lg_products:
+        prod = datamodels.AmiLgModel(product)
         sizes.append(prod.fit_image.shape[0])
         prod.close()
     min_size = min(sizes)
     log.debug("minimum size of fit_image=%d", min_size)
 
     # Loop over inputs, adding their values to the output
-    for prod_num, inp in enumerate(lg_products):
-        log.info("Accumulate data from %s", inp)
-        prod = datamodels.AmiLgModel(inp)
+    for prod_num, product in enumerate(lg_products):
+        log.info("Accumulate data from %s", product)
+        prod = datamodels.AmiLgModel(product)
 
         prod_size = prod.fit_image.shape[0]
         if prod_size > min_size:
