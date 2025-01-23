@@ -32,7 +32,6 @@ repos:
     hooks:
       - id: numpydoc-validation
         exclude: "(setup.py|docs|jwst/(\
-          ami|\
           assign_mtwcs|\
           assign_wcs|\
           associations|\
