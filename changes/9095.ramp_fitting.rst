@@ -1,0 +1,4 @@
+Add code to enable users to select firstgroup and lastgroup parameters when performing
+ramp fitting. It works by setting the DO_NOT_USE bit in the GROUPDQ extension for groups
+outside the selected range.  Added a unit test and updated the docs.
+

@@ -40,6 +40,10 @@ segment of length greater than one.
 Once all segments have been determined, slopes and variances are determined for
 each one.
 
+The range of groups to be fitted can be limited using the ``--firstgroup`` and
+``--lastgroup`` parameters.  This works by setting the DO_NOT_USE DQ bit in the GROUPDQ
+attribute for all groups outside the range selected.
+
 Pixels are processed simultaneously in blocks using the array-based functionality of numpy.
 The size of the block depends on the image size and the number of groups per
 integration.
