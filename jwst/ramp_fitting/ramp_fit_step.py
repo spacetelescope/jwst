@@ -462,7 +462,7 @@ class RampFitStep(Step):
             # and groups after lastgroup
             firstgroup = self.firstgroup
             lastgroup = self.lastgroup
-            
+
             if firstgroup is None:
                 firstgroup = 0
             if lastgroup is None:
