@@ -468,13 +468,13 @@ class RampFitStep(Step):
             if lastgroup is None:
                 lastgroup = ngroups - 1
             if firstgroup < 0:
-                log.warning(f"first group < 0, reset to 0")
+                log.warning("first group < 0, reset to 0")
                 firstgroup = 0
             if lastgroup >= ngroups:
                 log.warning(f"Last group number >= #groups ({ngroups}), reset to {ngroups-1}")
             if firstgroup >= lastgroup:
                 log.warning(f"firstgroup ({firstgroup}) cannot be >= lastgroup ({lastgroup})")
-                log.warning(f"Group selectors ignored")
+                log.warning("Group selectors ignored")
                 firstgroup = 0
                 lastgroup = ngroups - 1
             if firstgroup > 0:
