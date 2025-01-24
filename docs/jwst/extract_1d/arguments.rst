@@ -29,6 +29,7 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   Box extraction is suitable for any input data (point sources and extended sources;
   resampled and unresampled images).  Optimal extraction is best suited for unresampled
   point sources. Currently, optimal extraction is only available for MIRI LRS Fixed Slit data.
+  The default extraction type is 'box'.
 
 ``--use_source_posn``
   Specify whether the target and background extraction
@@ -50,13 +51,14 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   from nod subtraction is modeled alongside the positive source during
   extraction.  This will be attempted only if the input data has been background
   subtracted and the dither pattern type indicates that 2 nods were used.
+  The default value is True.
 
 ``--optimize_psf_location``
   Flag to enable PSF location optimization during optimal extraction.
   If True, and the extraction type is 'optimal', then the placement of
   the PSF model for the source location (and negative nod, if present)
   will be iteratively optimized. This parameter is recommended if
-  negative nods are modeled.
+  negative nods are modeled.  The default value is True.
 
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the
