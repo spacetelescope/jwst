@@ -391,6 +391,8 @@ class RampFitStep(Step):
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
         suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group
+        firstgroup = integer(default=None)   # Ignore groups before this one (zero indexed)
+        lastgroup = integer(default=None)   # Ignore groups after this one (zero indexed)
         maximum_cores = string(default='1')
         # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
     """
@@ -414,7 +416,7 @@ class RampFitStep(Step):
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
 
-            # Cork on a copy
+            # Work on a copy
             result = input_model.copy()
 
             max_cores = self.maximum_cores
@@ -455,6 +457,30 @@ class RampFitStep(Step):
                 buffsize //= 10
 
             int_times = result.int_times
+
+            # Set the DO_NOT_USE bit in the groupdq values for groups before firstgroup
+            # and groups after lastgroup
+            firstgroup = self.firstgroup
+            lastgroup = self.lastgroup
+            
+            if firstgroup is None:
+                firstgroup = 0
+            if lastgroup is None:
+                lastgroup = ngroups - 1
+            if firstgroup < 0:
+                log.warning(f"first group < 0, reset to 0")
+                firstgroup = 0
+            if lastgroup >= ngroups:
+                log.warning(f"Last group number >= #groups ({ngroups}), reset to {ngroups-1}")
+            if firstgroup >= lastgroup:
+                log.warning(f"firstgroup ({firstgroup}) cannot be >= lastgroup ({lastgroup})")
+                log.warning(f"Group selectors ignored")
+                firstgroup = 0
+                lastgroup = ngroups - 1
+            if firstgroup > 0:
+                result.groupdq[:,:firstgroup] = np.bitwise_or(result.groupdq[:,:firstgroup], dqflags.group['DO_NOT_USE'])
+            if lastgroup < (ngroups - 1):
+                result.groupdq[:,(lastgroup+1):] = np.bitwise_or(result.groupdq[:,(lastgroup+1):], dqflags.group['DO_NOT_USE'])
 
             # Before the ramp_fit() call, copy the input model ("_W" for weighting)
             # for later reconstruction of the fitting array tuples.
