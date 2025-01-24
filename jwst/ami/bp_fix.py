@@ -187,7 +187,7 @@ def bad_pixels(data, median_size, median_tres):
 
     log.info(
         f"         Identified {np.sum(pxdq):.0f} bad pixels "
-        f"({100.0*np.sum(pxdq)/np.prod(pxdq.shape):.2f}%)"
+        f"({100.0 * np.sum(pxdq) / np.prod(pxdq.shape):.2f}%)"
     )
     log.info(f"         {np.max(diff_data / np.median(diff_data)):.3f}")
 
@@ -335,7 +335,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
     # Go through all frames.
     for j in range(imsz[0]):
-        log.info(f"         Frame {j+1:.0f} of {imsz[0]:.0f}")
+        log.info(f"         Frame {j + 1:.0f} of {imsz[0]:.0f}")
 
         # Now cut out the subframe.
         # no need to cut out sub-frame; data already cropped
@@ -373,7 +373,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             # noise.
             pxdq_new = np.sum(temp[pxdq_cut < 0.5])
             log.info(
-                f"         Iteration {k+1:.0f}: {pxdq_new:.0f} new bad pixels, "
+                f"         Iteration {k + 1:.0f}: {pxdq_new:.0f} new bad pixels, "
                 f"sdev of norm noise = {np.std(fmas_data[pmas]):.3f}"
             )
 

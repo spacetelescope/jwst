@@ -620,8 +620,7 @@ def psf(
             detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
         )
         asf_2d = (
-            asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
-            * asf_fringe
+            asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d) * asf_fringe
         )
 
     elif shape == "circonly":

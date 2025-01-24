@@ -249,7 +249,7 @@ class MatrixFourierTransform:
             )
         self.centering = centering
         _log.debug(
-            "MatrixFourierTransform initialized using centering " f"type = {centering}"
+            f"MatrixFourierTransform initialized using centering type = {centering}"
         )
 
     def _validate_args(self, nlam_d, npix, offset):

@@ -233,8 +233,7 @@ class AmiAnalyzeStep(Step):
             # Check for a valid reference file or user-provided bandpass
             if (throughput_reffile == "N/A") & (bandpass is None):
                 raise RuntimeError(
-                    "No THROUGHPUT reference file found. "
-                    "ami_analyze cannot continue."
+                    "No THROUGHPUT reference file found. ami_analyze cannot continue."
                 )
 
             # If there's a user-defined bandpass or affine, handle it

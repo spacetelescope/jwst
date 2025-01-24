@@ -164,7 +164,7 @@ Now that you've forked, cloned, made a new branch for your feature, and installe
 it in a new environment for development of `jwst`, you are ready to make changes
 to the code. As you make changes, make sure to `git commit -m <"some message">` frequently
 (in case you need to undo something by reverting back to a previous commit - you
-cant do this if you commit everything at once!). Changes should be tested locally
+can't do this if you commit everything at once!). Changes should be tested locally
 using pytest; see [Writing and Running Unit Tests](#writing-and-running-unit-tests)
 for details.
 
@@ -400,7 +400,19 @@ The following three style checks are performed:
         >> ruff check .
 
     from within the `jwst` repository. Ruff will automatically pick up the appropriate configuration from
-    our `.ruff.toml` file, and perform only the checks that are turned on for our repository.
+    our `.ruff.toml` file, and perform only the checks that are turned on for our repository. To run ruff's
+	auto-formatter, which automatically fixes simple things like single vs double quotes, whitespace, etc.,
+	use the command
+
+	    >> ruff format filename.py
+	
+	---
+	**Note:** The ruff formatter does *not* respect the file ignore list provided in `.ruff.toml`, which means
+	that if you run `ruff format .` from the top-level `jwst/` folder, it will re-format the entire code base.
+	Please do not do this; it makes pull requests more challenging to review. It's recommended to apply
+	`ruff format` in its own separate commit so it can be reverted easily if needed.
+
+	---
 
 * **Numpy docstring style**
 
