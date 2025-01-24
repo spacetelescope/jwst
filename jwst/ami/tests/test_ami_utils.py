@@ -16,8 +16,7 @@ def test_centerpoint(shape, center):
 def test_find_centroid():
     arr = np.zeros((30, 30), dtype='f4')
     arr[15, 15] = 1
-    thresh = 0.02
-    assert np.allclose(utils.find_centroid(arr, thresh), (0.5, 0.5))
+    assert np.allclose(utils.find_centroid(arr), (0.5, 0.5))
 
 
 @pytest.mark.parametrize("mas, rad", [
