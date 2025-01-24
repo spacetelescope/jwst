@@ -74,3 +74,13 @@ class LogWatcher:
 
         # reset flag after check
         self.seen = False
+
+    def assert_not_seen(self):
+        """Check if message has not been seen.
+
+        After calling, the `seen` attribute is reset to False.
+        """
+        assert not self.seen, f"{self.message} is in logs"
+
+        # reset flag after check
+        self.seen = False

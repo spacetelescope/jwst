@@ -15,6 +15,7 @@ from jwst.assign_wcs import nirspec, AssignWcsStep
 from jwst.flatfield import FlatFieldStep
 from jwst.clean_flicker_noise.lib import NSClean, NSCleanSubarray
 from jwst.lib.basic_utils import LoggingContext
+from jwst.lib.reffile_utils import ref_matches_sci, get_subarray_model
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.ramp_fitting import RampFitStep
 
@@ -581,7 +582,15 @@ def background_level(image, mask, background_method='median',
             bkg_estimator = MedianBackground()
 
             if background_box_size is None:
-                background_box_size = [32, 32]
+                # use 32 x 32 if possible, otherwise take next largest box
+                # size that evenly divides the image (minimum 1)
+                background_box_size = []
+                recommended = np.arange(1, 33)
+                for i_size in image.shape:
+                    divides_evenly = (i_size % recommended == 0)
+                    background_box_size.append(recommended[divides_evenly][-1])
+                log.debug(f'Using box size {background_box_size}')
+
             box_division_remainder = (image.shape[0] % background_box_size[0],
                                       image.shape[1] % background_box_size[1])
             if not np.allclose(box_division_remainder, 0):
@@ -1015,8 +1024,63 @@ def _standardize_parameters(
     return axis_to_correct, background_method, fit_by_channel, fc
 
 
+def _read_flat_file(input_model, flat_filename):
+    """
+    Read flat data from an input file path.
+
+    Flat data is assumed to be full frame.  Subarrays matching the input
+    data are extracted as needed.
+
+    Only the flat image is returned: error and DQ arrays are ignored.
+    Any zeros or NaNs in the flat image are set to a smoothed local average
+    value (via `background_level`, with background_method = 'model') before
+    returning, to avoid impacting the background and noise fits near
+    missing flat data.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.JwstDataModel`
+        The input data.
+    flat_filename : str
+        File path for a full-frame flat image.
+
+    Returns
+    -------
+    flat_data : array-like of float
+        A 2D flat image array matching the input data.
+    """
+    if flat_filename is None:
+        return None
+
+    # Open the provided flat as FlatModel
+    log.debug('Dividing by flat data prior to fitting')
+    flat = datamodels.FlatModel(flat_filename)
+
+    # Extract subarray from reference data, if necessary
+    if ref_matches_sci(input_model, flat):
+        flat_data = flat.data
+    else:
+        log.debug("Extracting matching subarray from flat")
+        sub_flat = get_subarray_model(input_model, flat)
+        flat_data = sub_flat.data
+        sub_flat.close()
+    flat.close()
+
+    # Set any zeros or non-finite values in the flat data to a smoothed local value
+    bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
+    if np.any(bad_data):
+        smoothed_flat = background_level(flat_data, ~bad_data, background_method='model')
+        try:
+            flat_data[bad_data] = smoothed_flat[bad_data]
+        except IndexError:
+            # 2D model failed, median value returned instead
+            flat_data[bad_data] = smoothed_flat
+
+    return flat_data
+
+
 def _make_processed_rate_image(
-        input_model, single_mask, input_dir, exp_type, mask_science_regions):
+        input_model, single_mask, input_dir, exp_type, mask_science_regions, flat):
     """
     Make a draft rate image and postprocess if needed.
 
@@ -1039,6 +1103,9 @@ def _make_processed_rate_image(
         If set, science regions should be masked, so run `assign_wcs`
         and `msaflagopen` for NIRSpec and `flatfield` for MIRI
         after creating the draft rate image.
+    flat : array-like of float or None
+        If not None, the draft rate will be divided by the flat array
+        before returning. The provided flat must match the rate shape.
 
     Returns
     -------
@@ -1062,6 +1129,13 @@ def _make_processed_rate_image(
             image_model, assign_wcs=assign_wcs,
             msaflagopen=flag_open, flat_dq=flat_dq,
             input_dir=input_dir)
+
+    # Divide by the flat if provided
+    if flat is not None:
+        # Make a copy if necessary so we don't change the input rate file
+        if image_model is input_model:
+            image_model = input_model.copy()
+        image_model.data /= flat
 
     return image_model
 
@@ -1192,7 +1266,7 @@ def _check_data_shapes(input_model, background_mask):
 
 def _clean_one_image(image, mask, background_method, background_box_size,
                      n_sigma, fit_method, detector, fc, axis_to_correct,
-                     fit_by_channel):
+                     fit_by_channel, flat):
     """
     Clean an image by fitting and removing background noise.
 
@@ -1223,6 +1297,9 @@ def _clean_one_image(image, mask, background_method, background_box_size,
     fit_by_channel : bool
         Option to fit noise in detector channels separately,
         used for `fit_method` = 'median'
+    flat : array-like of float or None
+        If not None, the image is divided by the flat before fitting background
+        and noise.  Flat data must match the shape of the image.
 
     Returns
     -------
@@ -1239,6 +1316,10 @@ def _clean_one_image(image, mask, background_method, background_box_size,
 
     # Make sure data is float32
     image = image.astype(np.float32)
+
+    # If provided, divide the image by the flat
+    if flat is not None:
+        image /= flat
 
     # Find and replace/mask NaNs
     nan_pix = np.isnan(image)
@@ -1284,6 +1365,10 @@ def _clean_one_image(image, mask, background_method, background_box_size,
     # Restore the background level
     cleaned_image += background
 
+    # Restore the flat structure
+    if flat is not None:
+        cleaned_image *= flat
+
     # Restore NaNs in cleaned image
     cleaned_image[nan_pix] = np.nan
 
@@ -1313,7 +1398,8 @@ def _mask_unusable(mask, dq):
 def do_correction(input_model, input_dir=None, fit_method='median',
                   fit_by_channel=False, background_method='median',
                   background_box_size=None,
-                  mask_science_regions=False, n_sigma=2.0, fit_histogram=False,
+                  mask_science_regions=False, flat_filename=None,
+                  n_sigma=2.0, fit_histogram=False,
                   single_mask=True, user_mask=None, save_mask=False,
                   save_background=False, save_noise=False):
     """
@@ -1352,6 +1438,10 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         boxes for slits/slices, as well as any regions known to be
         affected by failed-open MSA shutters.  For MIRI imaging, mask
         regions of the detector not used for science.
+
+    flat_filename : str, optional
+        Path to a flat field image to apply to the data before fitting
+        noise/background.
 
     n_sigma : float, optional
         N-sigma rejection level for finding outliers.
@@ -1417,10 +1507,13 @@ def do_correction(input_model, input_dir=None, fit_method='median',
     axis_to_correct, background_method, fit_by_channel, fc = _standardize_parameters(
             exp_type, subarray, slowaxis, background_method, fit_by_channel)
 
+    # Read the flat file, if provided
+    flat = _read_flat_file(input_model, flat_filename)
+
     # Make a rate file if needed
     if user_mask is None:
         image_model = _make_processed_rate_image(
-            input_model, single_mask, input_dir, exp_type, mask_science_regions)
+            input_model, single_mask, input_dir, exp_type, mask_science_regions, flat)
     else:
         image_model = input_model
 
@@ -1477,7 +1570,7 @@ def do_correction(input_model, input_dir=None, fit_method='median',
             # Clean the image
             cleaned_image, background, success = _clean_one_image(
                 image, mask, background_method, background_box_size, n_sigma,
-                fit_method, detector, fc, axis_to_correct, fit_by_channel)
+                fit_method, detector, fc, axis_to_correct, fit_by_channel, flat)
 
             if not success:
                 # Cleaning failed for internal reasons - probably the
