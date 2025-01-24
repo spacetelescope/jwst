@@ -258,6 +258,19 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
 
     assert len(cube_model.int_times) == nints
 
+def test_set_groups(generate_miri_reffiles, setup_inputs):
+    # Test results when using the firstgroup and lastgroup options
+    ngroups = 20
+    rampmodel, gdq, rnmodel, pixdq, err, gain = setup_inputs(ngroups=ngroups)
+    # Set up data array as group# squared
+    # This has the property that the slope=(firstgroup+lastgroup)
+    squares = np.array([k*k for k in range(ngroups)],dtype=np.float32)
+    rampmodel.data[0,:] = squares[:, np.newaxis, np.newaxis]
+    firstgroup = 3
+    lastgroup = 11
+    slopes, cubemodel = RampFitStep.call(rampmodel, override_gain=gain, override_readnoise=rnmodel,
+                                         firstgroup=firstgroup, lastgroup=lastgroup)
+    np.testing.assert_allclose(slopes.data, firstgroup+lastgroup, rtol=1e-7)
 
 def one_group_suppressed(nints, suppress, setup_inputs):
     """
