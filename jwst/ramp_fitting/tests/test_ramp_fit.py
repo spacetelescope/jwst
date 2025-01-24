@@ -1004,4 +1004,3 @@ def base_print(label, arr):
     arr_str = np.array2string(arr, max_line_width=np.nan, separator=", ")
     print(label)
     print(arr_str)
-

@@ -987,15 +987,12 @@ def test_preserve_refpix(detector, irs2, preserve):
     if not irs2:
         # parameter ignored for non-irs2 data
         assert out.data.shape == (1, ngroups, ysize, xsize)
-        assert out.err.shape == (1, ngroups, ysize, xsize)
         assert out.pixeldq.shape == (ysize, xsize)
     elif preserve:
         # output data shape is the same
         assert out.data.shape == (1, ngroups, ysize, xsize)
-        assert out.err.shape == (1, ngroups, ysize, xsize)
         assert out.pixeldq.shape == (ysize, xsize)
     else:
         # output data is trimmed to remove interleaved refpix
         assert out.data.shape == (1, ngroups, xsize, xsize)
-        assert out.err.shape == (1, ngroups, xsize, xsize)
         assert out.pixeldq.shape == (xsize, xsize)

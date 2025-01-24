@@ -61,7 +61,7 @@ def run_detect_jumps(output_model, gain_model, readnoise_model,
                                                        readnoise_model)
     new_gdq, new_pdq, number_crs, number_extended_events, stddev\
         = detect_jumps(frames_per_group, output_model.data, output_model.groupdq,
-                                    output_model.pixeldq, output_model.err,
+                                    output_model.pixeldq,
                                     gain_2d, readnoise_2d,
                                     rejection_thresh, three_grp_thresh,
                                     four_grp_thresh, max_cores,
