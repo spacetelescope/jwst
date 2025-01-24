@@ -96,38 +96,67 @@ there are other options.
 
 1.  Create a conda environment.
 
-It is good practice to maintain different environments for different versions
-of JWST and its dependencies. You will likely want to maintain one, for example,
-for the latest released version of JWST (i.e. what you get by doing `pip install jwst`),
-as well as one for development. Assuming the user has conda [installed](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html),
-here we will create a new conda environment called 'jwst_dev' where we can install the new branch of our cloned repository.
+    It is good practice to maintain different environments for different versions
+    of JWST and its dependencies. You will likely want to maintain one, for example,
+    for the latest released version of JWST (i.e. what you get by doing `pip install jwst`),
+    as well as one for development. Assuming the user has conda [installed](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html),
+    here we will create a new conda environment called 'jwst_dev' where we can install the new branch of our cloned repository.
+    
+    	>> conda create -n jwst_dev python
+    
+    
+    Doing this will create a new environment with just some basic packages
+    (i.e setuptools, pip) installed.
 
-	>> conda create -n jwst_dev python
+2. Install `jwst` in this environment
 
+    Make sure you are in your new environment:
+    
+    	>> conda activate jwst_dev
+    
+    And now in the top level of your local `jwst` repository, ensuring you're
+    on the 'my_feature' branch:
+    
+    	>> pip install -e .[docs,test]
+    
+    This will install `jwst` from this cloned source code in 'editable' mode,
+    meaning that you can import the code from this directory when within a Python
+    session. This makes it easier for development because you can have the code
+    you're editing somewhere convenient in your file system vs. with other packages
+    in 'site-packages'. If you cloned the repository on your Desktop, for example,
+    you can modify it there and Python will know that is where the source code is
+    when you're importing it within a Python session. This command will also install
+    the optional testing and documentation dependencies, including the code and
+    documentation style checkers.
+    
+	---
+    **Note:** If you use it, make sure to install iPython in your new environment
+    as well. Otherwise, it will pick up packages from the base environment instead.
 
-Doing this will create a new environment with just some basic packages
-(i.e setuptools, pip) installed.
+	---
 
-2. Installing `jwst` in this environment
+3. Set up pre-commit checks (optional)
 
-Make sure you are in your new environment:
-
-	>> conda activate jwst_dev
-
-And now in the top level of your local `jwst` repository, ensuring you're
-on the 'my_feature' branch:
-
-	>> pip install -e .
-This will install `jwst` from this cloned source code in 'editable' mode,
-meaning that you can import the code from this directory when within a Python
-session. This makes it easier for development because you can have the code
-you're editing somewhere convenient in your file system vs. with other packages
-in 'site-packages'. If you cloned the repository on your Desktop, for example,
-you can modify it there and Python will know that is where the source code is
-when you're importing it within a Python session.
-
-*Note* : If you use it, make sure to install iPython in your new environment
-as well. Otherwise, it will pick up packages from the base environment instead.
+    All of the coding style rules [described below](#code-style) can be checked
+    automatically when you make a git commit using our provided pre-commit hook for git;
+    for more information see: [Git Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks#_git_hooks),
+    [pre-commit](https://pre-commit.com/). While not required, we encourage setting up
+    and using these hooks to ensure that contributed code always meets our coding style standards.
+    Pre-commit should already be installed in your conda environment after running
+    `pip install` with the `[test]` dependencies, but if not, simply `pip install pre-commit`.
+    Once pre-commit is installed, navigate to the root directory of the jwst repository, then run
+    
+        >> pre-commit install
+    
+    This will set up the pre-commit hook in
+    `jwst/.git/hooks/`, and make it so that any modified files will be checked by the pre-commit
+    workflow every time `git commit` is run.
+    
+    ---
+    **NOTE:** The changes made by `pre-commit` will not be automatically staged,
+    so you will need to review and re-stage any files that pre-commit has changed.
+    
+    ---
 
 ### Step 4: Making code changes
 
@@ -135,19 +164,18 @@ Now that you've forked, cloned, made a new branch for your feature, and installe
 it in a new environment for development of `jwst`, you are ready to make changes
 to the code. As you make changes, make sure to `git commit -m <"some message">` frequently
 (in case you need to undo something by reverting back to a previous commit - you
-cant do this if you commit everything at once!). After you've made your desired
+cant do this if you commit everything at once!). Changes should be tested locally
+using pytest; see [Writing and Running Unit Tests](#writing-and-running-unit-tests)
+for details.
+
+After you've made your desired
 changes, and committed these changes, you will need to push them online to your
 'remote' fork of `jwst`:
 
 	>> git push origin my_feature
 
-If the changes are significant, please make an entry in `CHANGES.rst` in the top
-level `jwst` directory with a short description of the changes you've made and, once
-you open a pull request, add the corresponding PR number.
 
-
-
-### Step 4: Opening a pull request
+### Step 5: Opening a pull request
 
 Now, you can open a pull request on the main branch of the upstream `jwst` repository.
 
@@ -158,21 +186,23 @@ with your recently pushed changes. You can also open a pull request from the
 Select your fork and your 'my_feature' branch, and open a pull request against
 the 'main' branch.
 
-2. There is now a checklist of items that need to be done before your PR can be merged.
-	* The continuous integration (CI) tests must complete and pass. The CI
-	runs several different checks including running the unit tests, ensuring
-	the documentation builds, checking for code style issues (see the [PEP8](https://peps.python.org/pep-0008/) style guide),
-	and ensuring any changes are covered by unit tests. The CI runs upon opening
-	a PR, and will re-run any time you push commits to that branch.
-	* Our code style checker uses [ruff](https://docs.astral.sh/ruff/), and using
-	`ruff check` locally can be helpful to identify style issues before opening a PR.
-	* You will need to add a change log entry in changes/PRID.fragmenttype.rst
+2. Ensure the GitHub CI checks are all passing.
+    * Unit tests will be run, and unit test coverage will be checked for
+	any new code. See [Writing and Running Unit Tests](#writing-and-running-unit-tests)
+    to learn how to run and debug the unit tests if you're seeing failures.
+	* Various code style checks will be run (see [Code Style](#code-style)). The
+	pre-commit hook described above is helpful for catching and debugging these locally.
+	* You will need to add a change log entry in `changes/PRID.fragmenttype.rst`
 	if your contribution is a new feature or bug fix.
 	An entry is not required for small fixes like typos.
-	* Your PR will need to be reviewed and approved by at least two maintainers.
-	They may require changes from you before your code can be merged, in which
-	case you will need to go back and make these changes and push them (they will
-		automatically appear in the PR when they're pushed to origin/my_feature).
+
+3. Ensure all the items in the **Tasks** checklist on the PR are completed.
+Instructions for how to do this are included in the checklist itself.
+
+4. Your PR will need to be reviewed and approved by at least two maintainers.
+They may require changes from you before your code can be merged, in which
+case you will need to go back and make these changes and push them (they will
+automatically appear in the PR when they're pushed to origin/my_feature).
 
 
 # Advanced Contribution Instructions
@@ -341,5 +371,64 @@ version in `pyproject.toml` to:
 And similarly, in `stcal`, change the required `jwst` version to:
 
 	>> jwst @  git+https://github.com/<your_username>/jwst.git@<your_branch>
+
 Let the CI run and ensure it passes, comment this in your PR and make sure the reviewers
 confirm, and then change the versions back before your PR is merged (which will again cause the CI to fail, but that’s OK).
+
+## Code style
+
+We use a pre-commit CI workflow to ensure that the code and docstring style of the `jwst` repository
+remains uniform and conforms to certain standards. All of these checkers should be installed when running
+
+    >> pip install jwst[test]
+
+or similar, as described in the [Installing JWST for Development](Step-3-Installing-jwst-for-development)
+section. For instructions to install any of these individually, see their documentation linked below.
+Our pre-commit Git hook, also described in the
+[Installing JWST for Development](Step-3-Installing-jwst-for-development) section,
+is designed to help contributors run all the checks on their contributions every time they commit.
+
+The following three style checks are performed:
+
+* **PEP8-compliant code**
+
+	The code style for the `jwst` repository generally conforms to
+	[PEP8](https://peps.python.org/pep-0008/), and the code style rules are enforced
+	using [Ruff](https://docs.astral.sh/ruff/). To run these checks locally,
+	use the command
+
+        >> ruff check .
+
+    from within the `jwst` repository. Ruff will automatically pick up the appropriate configuration from
+    our `.ruff.toml` file, and perform only the checks that are turned on for our repository.
+
+* **Numpy docstring style**
+
+	The docstring style for the `jwst` repository generally conforms to the
+	[Numpy style guide](https://numpydoc.readthedocs.io/en/latest/format.html), and the docstring
+	style rules are enforced using [numpydoc-validation](https://numpydoc.readthedocs.io/en/latest/validation.html).
+	To run these checks locally, use the command
+
+        >> numpydoc lint path/to/file.py
+
+    Numpydoc only supports calls to files (or lists of files, e.g., `numpydoc lint *.py`).
+
+* **PEP-compliant type hints**
+
+    The majority of the `jwst` repository does *not* have any type hints, and type hints are *not*
+    required for contributions. If type hints are used, though, their compliance with 
+	[PEP-484](https://peps.python.org/pep-0484/) standards
+    is enforced using [mypy](https://mypy.readthedocs.io/en/stable/index.html).
+    To run these checks locally, use the command
+
+        >> mypy .
+
+    from within the `jwst` repository. Mypy will automatically pick up the appropriate configuration from
+    our `pyproject.toml` file, and perform only the checks that are turned on for our repository.
+
+---
+**Note:** At time of writing, many submodules in the repository do not yet conform to the style rules;
+however, we have made it a priority to get the whole code base up to standard in the next few months,
+and any new contributions must now follow the style rules as indicated.
+
+---
