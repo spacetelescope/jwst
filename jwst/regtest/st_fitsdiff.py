@@ -278,6 +278,7 @@ class STFITSDiff(FITSDiff):
                     else:
                         self._writeln(f"Extension HDU {idx}:")
             else:
+                self._fileobj.write("\n")
                 self._writeln(f"Extension HDU {idx} ({extname}, {extver}):")
                 if extname in self.extension_tolerances:
                     rtol = self.extension_tolerances[extname]["rtol"]
@@ -445,20 +446,29 @@ class STHDUDiff(HDUDiff):
             nans = [np.isnan(a).size, np.isnan(b).size]
             # Calculate stats
             values = np.abs(anonan - bnonan)
+            percentages = {}
+            stats = {'mean_value_in_a': np.mean(anonan),
+                     'mean_value_in_b': np.mean(bnonan)}
+            # Catch the all NaNs case
+            if values.size == 0:
+                percentages['NaN'] = 100
+                stats['no_stats_available'] = np.nan
+                return nans, percentages, stats
+            stats['max_abs_diff'] = max(values)
+            stats['min_abs_diff'] = min(values)
+            stats['mean_abs_diff'] = np.mean(values)
+            stats['std_dev_abs_diff'] = np.std(values)
             nozeros = (values != 0.0) & (bnonan != 0.0)
             relative_values = values[nozeros] / np.abs(bnonan[nozeros])
-            stats = {'mean_value_in_a': np.mean(anonan),
-                     'mean_value_in_b': np.mean(bnonan),
-                     'max_abs_diff': max(values),
-                     'min_abs_diff': min(values),
-                     'mean_abs_diff': np.mean(values),
-                     'std_dev_abs_diff': np.std(values),
-                     'max_rel_diff': max(relative_values),
-                     'min_rel_diff': min(values / np.abs(bnonan)),
-                     'mean_rel_diff': np.mean(relative_values),
-                     'std_dev_rel_diff': np.std(relative_values)}
+            # Catch an empty sequence
+            if relative_values.size == 0:
+                stats['no_rel_stats_available'] = np.nan
+            else:
+                stats['max_rel_diff'] = max(relative_values)
+                stats['min_rel_diff'] = min(values / np.abs(bnonan))
+                stats['mean_rel_diff'] = np.mean(relative_values)
+                stats['std_dev_rel_diff'] = np.std(relative_values)
             # Calculate difference percentages
-            percentages = {}
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             for threshold in thresholds:
                 percentage = get_percentage(values, threshold)
