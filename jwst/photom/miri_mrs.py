@@ -144,7 +144,7 @@ def time_correction(input, detector, ftab, mid_time):
         # Check the reference file has the time dependent coefficients
         # check that table 1 wavelength bin is an array with values
 
-    # Pull out the timecoefficients for the detector we are working on
+    # Pull out the time coefficients for the detector we are working on
     timecoeff['left']['binwave'] = table_ch[left]['binwave']
     timecoeff['left']['acoeff'] = table_ch[left]['acoeff']
     timecoeff['left']['bcoeff'] = table_ch[left]['bcoeff']
