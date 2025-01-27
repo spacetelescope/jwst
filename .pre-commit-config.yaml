@@ -27,3 +27,9 @@ repos:
     hooks:
       - id: bandit
         args: ["-r", "-ll", "-x", "jwst/*test*,jwst/**/*test*,jwst/fits_generator", "jwst"]
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.0
+    hooks:
+    - id: codespell
+      additional_dependencies:
+        - tomli

@@ -107,6 +107,7 @@ sdp = [
 test = [
     "ci-watson>=0.5.0",
     "ruff",
+    "codespell>=2.4.0",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
@@ -316,6 +317,10 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
 "jwst/ramp_fitting/tests/*" = [
     "E402", # module-level import not at top of file
 ]
+
+[tool.codespell]
+skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+ignore-words-list = "indx, delt, Shepard, tread"
 
 [tool.mypy]
 warn_return_any = true
