@@ -39,6 +39,10 @@ jobs:
       with:
         python-version: '3.12'
     - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
+  codespell:
+    uses: codespell-project/actions-codespell@v2
+    with:
+      only_warn: 1
   check:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@9f1f43251dde69da8613ea8e11144f05cdea41d5  # v1.15.0
     with:

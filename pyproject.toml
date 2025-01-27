@@ -253,6 +253,10 @@ omit = [
 [tool.setuptools_scm]
 write_to = "jwst/_version.py"
 
+[tool.codespell]
+skip = "*.fits, *.asdf"
+#ignore-words-list = "indx, delt"
+
 [tool.ruff]
 exclude = [
     "jwst/extern",
