@@ -184,7 +184,8 @@ class Main():
                 version_id=parsed.version_id,
                 finalize=not parsed.no_finalize,
                 merge=parsed.merge,
-                ignore_default=parsed.ignore_default
+                ignore_default=parsed.ignore_default,
+                DMS_enabled=parsed.DMS_enabled
             )
 
 
