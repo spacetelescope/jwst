@@ -223,7 +223,7 @@ class FringeFitter:
                        pixscale=nrm.pixel)
 
         nrm.fit_image(self.ctrd,
-                      modelin=nrm.model,
+                      model_in=nrm.model,
                       psf_offset=nrm.psf_offset,
                       dqm=self.dqslice,
                       weighted=self.weighted)

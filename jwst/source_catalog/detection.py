@@ -153,7 +153,7 @@ def convolve_data(data, kernel_fwhm, mask=None):
     """
     kernel = make_kernel(kernel_fwhm)
 
-    # All data have NaNs.  Supress warnings about them.
+    # All data have NaNs.  Suppress warnings about them.
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
         return convolve(data, kernel, mask=mask, normalize_kernel=True)

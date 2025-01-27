@@ -90,7 +90,7 @@ def test_or_subarray_with_array():
     result = or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax)
 
     # Use python built in bitwise or | to verify. Just overwrite the
-    # array since we wont be using it anymore in this test.
+    # array since we won't be using it anymore in this test.
     dq_array[ymin:ymax, xmin:xmax] = dq_array[ymin:ymax, xmin:xmax] | dq_subarray
 
     assert_array_equal(result, dq_array)

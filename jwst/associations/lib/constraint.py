@@ -126,12 +126,12 @@ class SimpleConstraintABC(abc.ABC):
 
     @property
     def id(self):
-        """Return identifyer for the constraint
+        """Return identifier for the constraint
 
         Returns
         -------
         id : str
-            The identifyer
+            The identifier
         """
         return f'{self.__class__.__name__}:{self.name}'
 
@@ -730,12 +730,12 @@ class Constraint:
 
     @property
     def id(self):
-        """Return identifyer for the constraint
+        """Return identifier for the constraint
 
         Returns
         -------
         id : str
-            The identifyer
+            The identifier
         """
         return f'{self.__class__.__name__}:{self.name}'
 

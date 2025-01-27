@@ -558,7 +558,7 @@ class Utility():
 
         Notes
         -----
-        The current definition of candidates allows strictly lexigraphical
+        The current definition of candidates allows strictly lexicographical
         sorting:
         aXXXX > cXXXX > oXXX
 

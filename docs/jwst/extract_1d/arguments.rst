@@ -122,7 +122,7 @@ Step Arguments for IFU Data
 
 ``--ifu_rscale``
    A float designating the number of PSF FWHMs to use for the extraction radius. This
-   is a MIRI MRS only paramenter. Values accepted are between 0.5 to 3.0. The default extraction
+   is a MIRI MRS only parameter. Values accepted are between 0.5 to 3.0. The default extraction
    size is set to 2 * FWHM. Values below 2 will result in a smaller
    radius, a value of 2 results in no change to radius and a value above 2 results in a larger
    extraction radius.

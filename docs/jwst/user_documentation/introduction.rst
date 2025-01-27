@@ -15,7 +15,7 @@ hosted open-source on Github, and can be run either via
 the :ref:`Python interface <run_from_python>`.
 
 The full end-to-end 'pipeline' (from raw data to high-level data products)
-is comprised of three seperate pipeline stages that are run individually
+is comprised of three separate pipeline stages that are run individually
 to produce output products at different calibration levels:
 
 	:Stage 1: Detector-level corrections and ramp fitting for individual

@@ -50,7 +50,7 @@ class Affine2d:
     coordinates. We know the analytical form of F(u,v) from the literature,
     and need to calculate G(u,v) at a grid of points in the (u,v) space, with
     two lattice vectors a and b defining the grid.  These lattice vectors have
-    components a=(au,av) and b=(bu,bv) along the u and v axes.
+    components a=(au,av) and b=(bu,bv) along the u and v axes. # codespell:ignore bu
 
     Discussion with Randall Telfer (2018.05.18)  clarified that:
 
@@ -648,7 +648,7 @@ def findslope(a, m):
     1 rad/FDpixel of phase slope => ODarray.shape[0]/(2 pi) shift
     x rad/FDpixel of phase slope => x * ODarray.shape[0]/(2 pi) ODpixels shift
 
-    Gain between rad/pix phase slope and original domin pixels is
+    Gain between rad/pix phase slope and original domain pixels is
          a.shape[0 or 1]/(2 pi)
     Multiply the measured phase slope by this gain for pixels of incoming array
          centroid shift away from array center.

@@ -2717,7 +2717,7 @@ def dcm(alpha, delta, angle):
 
     Returns
     -------
-    dcm : nd.array((3, 3))
+    dcm : np.array((3, 3))
         The 3x3 direction cosine matrix
     """
     dcm = np.array(

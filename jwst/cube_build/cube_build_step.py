@@ -31,7 +31,7 @@ class CubeBuildStep (Step):
        merges them with any user-provided values.
        2. Creates the output WCS from the input images and defines the mapping
        between all the input arrays and the output array
-       3. Passes the input data to the function to map all thei input data
+       3. Passes the input data to the function to map all their input data
        to the output array.
        4. Updates the output data model with correct meta data
 
@@ -553,7 +553,7 @@ class CubeBuildStep (Step):
         Check that is file is asdf file.
         Check the file has the correct format using an local schema file.
         The schema file, ifuoffset.schema.yaml, is located in the jwst/cube_build directory.
-        For each file in the input  assocation check that there is a corresponding
+        For each file in the input  association check that there is a corresponding
         file in the offset file.
 
        """
@@ -584,7 +584,7 @@ class CubeBuildStep (Step):
                 continue
             else:
                 af.close()
-                raise ValueError('Error in offset file. A file in the assocation is not found in offset list %s', file_check)
+                raise ValueError('Error in offset file. A file in the association is not found in offset list %s', file_check)
 
         # check that all the lists have the same length
         len_file  = len(offset_filename)

@@ -340,7 +340,7 @@ def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
     # 1rst priority: shared wavelengths with order 1 and 2.
     # 2nd priority: remaining red part of order 1
     # 3rd priority: remaining blue part of order 2
-    # So, split order 2 in 2 parts, the shared wavelenght and the bluemost part
+    # So, split order 2 in 2 parts, the shared wavelength and the bluemost part
     is_shared = grids_ord[2] >= np.min(grids_ord[1])
     # Make sure order 1 is not more in the blue than order 2
     cond = grids_ord[1] > np.min(grids_ord[2][is_shared])
@@ -938,7 +938,7 @@ def _extract_image(decontaminated_data, scierr, scimask, box_weights, bad_pix='m
     Parameters
     ----------
     decontaminated_data : array[float]
-        A single backround subtracted NIRISS SOSS detector image.
+        A single background subtracted NIRISS SOSS detector image.
     scierr : array[float]
         The uncertainties corresponding to the detector image.
     scimask : array[float]

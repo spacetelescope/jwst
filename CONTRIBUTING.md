@@ -44,13 +44,13 @@ aren't making branches directly on 'spacetelescope/jwst'.
 
 2. Now that you have remotely forked `jwst`, it needs to be downloaded
 to your machine. To create this 'local' clone, choose an area on your file system
-and use the `git clone` command to dowload your remote fork on to your machine.
+and use the `git clone` command to download your remote fork on to your machine.
 
 		>> cd directory
 		>> git clone git@github.com:<your_username>/jwst.git
 
 3. Make sure that your references to 'origin' and 'upstream' are set correctly - you will
-need this to keep everything in sync and push your changes online. While your inital
+need this to keep everything in sync and push your changes online. While your initial
 local clone will be an exact copy of your remote, which is an exact copy of the 'upstream'
 `spacetelescope/jwst`, these all must be kept in sync manually (via git fetch/pull/push).
 
@@ -58,7 +58,7 @@ local clone will be an exact copy of your remote, which is an exact copy of the 
 
 		>> git remote -v
 
-After your inital clone, you will likely be missing the reference to 'upstream'
+After your initial clone, you will likely be missing the reference to 'upstream'
 (which is just the most commonly used name in git to refer to the main project repository - you
 can call this whatever you want but the origin/upstream conventions are most commonly used) - to 
 set this, use the `add` git command:
@@ -135,7 +135,7 @@ Now that you've forked, cloned, made a new branch for your feature, and installe
 it in a new environment for development of `jwst`, you are ready to make changes
 to the code. As you make changes, make sure to `git commit -m <"some message">` frequently
 (in case you need to undo something by reverting back to a previous commit - you
-cant do this if you commit everything at once!). After you've made your desired
+can't do this if you commit everything at once!). After you've made your desired
 changes, and committed these changes, you will need to push them online to your
 'remote' fork of `jwst`:
 

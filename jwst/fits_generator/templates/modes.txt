@@ -172,7 +172,7 @@ something in the target name to indicate that they are a PSF reference image.
 The template treats PSF and science data equivalently, as two separate
 observations.  There are TBDs in the Proposal Instructions that address this:
 "Coronagraphic observations should have a reference star observation before or
-after the science observations.  Ther reference star observations are
+after the science observations.  The reference star observations are
 identical to science except for target and exposure time.  Should the template
 automatically ask for the reference star observation information (target name
 and exposure time per target acquisition and science filter)?"
