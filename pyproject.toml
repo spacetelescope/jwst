@@ -319,7 +319,7 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
 ]
 
 [tool.codespell]
-skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst, jwst/fits_generator"
+skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst, jwst/fits_generator/*"
 ignore-words-list = "indx, delt, Shepard, tread, usig"
 
 [tool.mypy]
