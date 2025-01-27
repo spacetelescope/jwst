@@ -51,9 +51,10 @@ class RawOifits:
         self.n_closure_amplitudes = int(comb(self.n_holes, 4))  # also 35
 
         self.method = method
-        if self.method not in ["mean", "median", "multi"]:
+        allowed_methods = ["mean", "median", "multi"]
+        if self.method not in allowed_methods:
             msg = (
-                'method for saving OIFITS file must be one of ["mean","median","multi"]. '
+                f"method for saving OIFITS file must be one of {allowed_methods}. "
                 "Defaulting to use mean!"
             )
             log.warning(msg)

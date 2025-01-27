@@ -164,7 +164,7 @@ def mas2rad(mas):
     rad : float
         Angle in radians
     """
-    rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
+    rad = mas * (10**-3) / (3600 * 180 / np.pi)
     return rad
 
 
