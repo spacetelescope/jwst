@@ -107,7 +107,6 @@ sdp = [
 test = [
     "ci-watson>=0.5.0",
     "ruff",
-    "codespell>=2.4.0",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
