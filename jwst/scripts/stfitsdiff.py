@@ -100,7 +100,7 @@ def main():
             stfitsdiff_default_kwargs['extension_tolerances'] = eval(args.extension_tolerances)
         except NameError:
             print('''Dictionary format error. Use no spaces and double quotes encasing the whole dictionary, e.g.
-                  --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2}}}" ''')
+                  --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2},'err':{'rtol':1e-1,'atol':1e-2}}" ''')
             exit()
 
     # Find the differences
