@@ -117,7 +117,7 @@ there are other options.
     And now in the top level of your local `jwst` repository, ensuring you're
     on the 'my_feature' branch:
     
-    	>> pip install -e .[dev]
+    	>> pip install -e .[contrib]
     
     This will install `jwst` from this cloned source code in 'editable' mode,
     meaning that you can import the code from this directory when within a Python
@@ -126,8 +126,7 @@ there are other options.
     in 'site-packages'. If you cloned the repository on your Desktop, for example,
     you can modify it there and Python will know that is where the source code is
     when you're importing it within a Python session. This command will also install
-    the optional testing and documentation dependencies, including the code and
-    documentation style checkers.
+    the optional testing and documentation dependencies, including pre-commit.
     
 	---
     **Note:** If you use it, make sure to install iPython in your new environment
@@ -135,23 +134,23 @@ there are other options.
 
 	---
 
-3. Set up pre-commit checks (optional)
+3. Set up pre-commit checks
 
     All of the coding style rules [described below](#code-style) can be checked
     automatically when you make a git commit using our provided pre-commit hook for git;
     for more information see: [Git Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks#_git_hooks),
-    [pre-commit](https://pre-commit.com/). While not required, we encourage setting up
+    [pre-commit](https://pre-commit.com/). We strongly encourage setting up
     and using these hooks to ensure that contributed code always meets our coding style standards.
     Pre-commit should already be installed in your conda environment after running
-    `pip install` with the `[dev]` dependencies, but if not, simply `pip install pre-commit`.
-    Once pre-commit is installed, navigate to the root directory of the jwst repository, then run
+    `pip install -e .[contrib]`, but if not, simply `pip install pre-commit`.
+    Navigate to the root directory of the jwst repository, then run
     
         >> pre-commit install
     
     This will set up the pre-commit hook in
     `jwst/.git/hooks/`, and make it so that any modified files will be checked by the pre-commit
     workflow every time `git commit` is run.
-    
+
     ---
     **NOTE:** The changes made by `pre-commit` will not be automatically staged,
     so you will need to review and re-stage any files that pre-commit has changed.
@@ -259,7 +258,7 @@ directory of `jwst` on your my_feature branch:
 
 	>> pip install -e ".[docs]"
 
-(Note the doc dependencies are also included when installing `jwst` with the `[dev]` tag).
+(Note the doc dependencies are also included when installing `jwst` with the `[contrib]` tag).
 Now, with the correct documentation dependencies installed, you can attempt to build
 the documentation locally. To do this, enter into the `jwst/docs` subdirectory and do:
 
@@ -302,7 +301,7 @@ for running tests.
 
 This will install the optional 'test' dependencies specified in `pyproject.toml` that
 don't install by default. (Note these test dependencies are also included when
-installing `jwst` with the `[dev]` tag).
+installing `jwst` with the `[contrib]` tag).
 The package `pytest` is one of these and is what's used
 to run the tests. `pytest` searches through all the directories in your repository
 (underneath the directory from which it was invoked command line) and looks for any
@@ -381,12 +380,10 @@ confirm, and then change the versions back before your PR is merged (which will 
 ## Code style
 
 We use a pre-commit CI workflow to ensure that the code and docstring style of the `jwst` repository
-remains uniform and conforms to certain standards. All of these checkers should be installed when running
-
-    >> pip install jwst[dev]
-
-or similar, as described in the [Installing JWST for Development](Step-3-Installing-jwst-for-development)
-section. For instructions to install any of these individually, see their documentation linked below.
+remains uniform and conforms to certain standards. We recommend checking these using `pre-commit`
+as described in the [Installing JWST for Development](Step-3-Installing-jwst-for-development)
+section. For additional information about any of these individual style checkers,
+see their documentation linked below.
 Our pre-commit Git hook, also described in the
 [Installing JWST for Development](Step-3-Installing-jwst-for-development) section,
 is designed to help contributors run all the checks on their contributions every time they commit.
@@ -397,23 +394,20 @@ The following three style checks are performed:
 
 	The code style for the `jwst` repository generally conforms to
 	[PEP8](https://peps.python.org/pep-0008/), and the code style rules are enforced
-	using [Ruff](https://docs.astral.sh/ruff/). To run these checks locally,
+	using [Ruff](https://docs.astral.sh/ruff/). To run these checks standalone,
 	use the command
 
-        >> ruff check .
+        >> pre-commit run ruff
 
-    from within the `jwst` repository. Ruff will automatically pick up the appropriate configuration from
-    our `.ruff.toml` file, and perform only the checks that are turned on for our repository. To run ruff's
-	auto-formatter, which automatically fixes simple things like single vs double quotes, whitespace, etc.,
-	use the command
+    from within the `jwst` repository. Ruff will automatically pick up the appropriate configuration from the `.ruff.toml` and `pre-commit-config.yaml` files,
+	and perform only the checks that are turned on for our repository. To run ruff's
+	auto-formatter, which automatically fixes simple things like single vs double quotes, whitespace, etc., use the command
 
-	    >> ruff format filename.py
+	    >> pre-commit run ruff-format
 	
 	---
-	**Note:** The ruff formatter does *not* respect the file ignore list provided in `.ruff.toml`, which means
-	that if you run `ruff format .` from the top-level `jwst/` folder, it will re-format the entire code base.
-	Please do not do this; it makes pull requests more challenging to review. It's recommended to apply
-	`ruff format` in its own separate commit so it can be reverted easily if needed.
+	**Note:** If you run `ruff format .` from the top-level `jwst/` folder, it will re-format the entire code base.
+	Please do not do this; it makes pull requests more challenging to review. It's recommended to apply `ruff-format` through `pre-commit`.
 
 	---
 
@@ -424,9 +418,8 @@ The following three style checks are performed:
 	style rules are enforced using [numpydoc-validation](https://numpydoc.readthedocs.io/en/latest/validation.html).
 	To run these checks locally, use the command
 
-        >> numpydoc lint path/to/file.py
+        >> pre-commit run numpydoc-validation
 
-    Numpydoc only supports calls to files (or lists of files, e.g., `numpydoc lint *.py`).
 
 * **PEP-compliant type hints**
 
@@ -434,12 +427,14 @@ The following three style checks are performed:
     required for contributions. If type hints are used, though, their compliance with 
 	[PEP-484](https://peps.python.org/pep-0484/) standards
     is enforced using [mypy](https://mypy.readthedocs.io/en/stable/index.html).
-    To run these checks locally, use the command
+    To run these checks locally, first `pip install mypy` then use the command
 
         >> mypy .
 
-    from within the `jwst` repository. Mypy will automatically pick up the appropriate configuration from
-    our `pyproject.toml` file, and perform only the checks that are turned on for our repository.
+    from within the `jwst` repository. This check is not run through pre-commit;
+	it's instead handled separately from a different CI workflow. This means that if you are
+	using type hints, you may encounter a situation where `pre-commit` passes locally but
+	the CI checks fail on a pull request.
 
 ---
 **Note:** At time of writing, many submodules in the repository do not yet conform to the style rules;
