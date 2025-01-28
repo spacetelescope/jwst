@@ -53,7 +53,7 @@ def detect_outliers(
         log.warning("Outlier detection will be skipped")
         record_step_status(input_models, "outlier_detection", False)
         return input_models
-        
+
     if resample_data:
         resamp = resample.ResampleData(
             input_models,

@@ -85,7 +85,7 @@ def test_imatch_default_run(tmp_cwd, miri_dither_ch12):
     for i  in range(n):
         assert results[i].meta.cal_step.mrs_imatch =='SKIPPED'
 
-    
+
 def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):
     """ Test if background polynomial is already determined - reset it"""
 

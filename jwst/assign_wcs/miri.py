@@ -152,7 +152,11 @@ def imaging_distortion(input_model, reference_files):
 
     # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
     # This makes it clear the bounding box is set correctly to GWCS
-    bind_bounding_box(distortion, transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox, order="F")
+    bind_bounding_box(
+        distortion,
+        transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox,
+        order="F"
+    )
 
     return distortion
 
@@ -340,13 +344,18 @@ def lrs_xytoabl(input_model, reference_files):
     # What is the effective XY as a function of subarray x,y?
     xymodel = models.Mapping((0, 1, 0, 1)) | xmodel & ymodel
     # What is the alpha as a function of slit XY?
-    alphamodel = models.Mapping([0], n_inputs=2) | models.Shift(-zero_point[0]) | models.Polynomial1D(1, c0=0, c1=pscale)
+    alphamodel = models.Mapping([0], n_inputs=2) | \
+        models.Shift(-zero_point[0]) | \
+        models.Polynomial1D(1, c0=0, c1=pscale)
     # What is the alpha,beta as a function of slit XY? (beta is always zero)
     abmodel = models.Mapping((0, 1, 0)) | alphamodel & models.Const1D(0)
 
     # Define a shift by the reference point and immediately back again
     # This doesn't do anything effectively, but it stores the reference point for later use in pathloss
-    reftransform = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | models.Shift(+zero_point[0]) & models.Shift(+zero_point[1])
+    reftransform = models.Shift(-zero_point[0]) & \
+        models.Shift(-zero_point[1]) | \
+        models.Shift(+zero_point[0]) & \
+        models.Shift(+zero_point[1])
     # Put the transforms together
     xytoab = reftransform | xymodel | abmodel
 

@@ -29,14 +29,14 @@ class NIRISS:
         """
         Initialize NIRISS class for NIRISS/AMI instrument.
 
-        Module for defining all instrument characteristics including data format, 
+        Module for defining all instrument characteristics including data format,
         wavelength info, and mask geometry.
 
         Parameters
         ----------
         filt: string
             filter name
-        
+
         nrm_model: NRMModel datamodel
             datamodel containing mask geometry information
 

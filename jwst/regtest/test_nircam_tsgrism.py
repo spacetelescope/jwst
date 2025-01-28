@@ -29,7 +29,7 @@ def run_pipelines(rtdata_module):
     return rtdata
 
 
-@pytest.fixture(scope="module", 
+@pytest.fixture(scope="module",
                 params=["jw01185015001_03104_00001-seg004_nrcalong_rate.fits",
                         "jw01185013001_04103_00001-seg003_nrcalong_rate.fits"])
 def run_pipeline_offsetSR(request, rtdata_module):

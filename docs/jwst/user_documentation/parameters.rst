@@ -63,6 +63,7 @@ individual steps, you have two options:
 To do this using the Python pipeline interface, see .. _python_output_file:. To do
 this when using the command line interface, see .. _cli_output_file:.
 
+.. _intro_override_reference_file:
 
 Override Reference File
 -----------------------
@@ -134,8 +135,3 @@ file from CRDS when running a pipeline:
 
 If there is need to re-use a set of parameters often, parameters can be stored
 in **parameter files**. See :ref:`parameter_files` for more information.
-
-Pipeline/Step Parameters
-========================
-
-

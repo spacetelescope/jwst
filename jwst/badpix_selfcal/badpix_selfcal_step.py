@@ -123,8 +123,8 @@ class BadpixSelfcalStep(Step):
             warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
             minimg = np.nanmin(np.asarray(selfcal_3d), axis=0)
         bad_indices = badpix_selfcal.badpix_selfcal(minimg, self.flagfrac_lower, self.flagfrac_upper, self.kernel_size, dispaxis)
-        
-        
+
+
         # apply the flags to the science data
         input_sci = badpix_selfcal.apply_flags(input_sci, bad_indices)
 

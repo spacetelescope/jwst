@@ -213,7 +213,7 @@ def make_tweakreg_catalog(model, snr_threshold, bkg_boxsize=400, starfinder='ira
                              coverage_mask=coverage_mask)
         with warnings.catch_warnings():
             # suppress warning about NaNs being automatically masked - this is desired
-            warnings.simplefilter('ignore', AstropyUserWarning) 
+            warnings.simplefilter('ignore', AstropyUserWarning)
             threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     except ValueError as e:
         log.warning(f"Error determining sky background: {e.args[0]}")
