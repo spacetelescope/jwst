@@ -589,7 +589,7 @@ def background_level(image, mask, background_method='median',
                 for i_size in image.shape:
                     divides_evenly = (i_size % recommended == 0)
                     background_box_size.append(int(recommended[divides_evenly][-1]))
-                log.debug(f'Using background box size {background_box_size}')
+                log.debug(f'Using box size {background_box_size}')
 
             box_division_remainder = (image.shape[0] % background_box_size[0],
                                       image.shape[1] % background_box_size[1])
