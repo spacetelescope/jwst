@@ -117,7 +117,7 @@ there are other options.
     And now in the top level of your local `jwst` repository, ensuring you're
     on the 'my_feature' branch:
     
-    	>> pip install -e .[docs,test]
+    	>> pip install -e .[dev]
     
     This will install `jwst` from this cloned source code in 'editable' mode,
     meaning that you can import the code from this directory when within a Python
@@ -143,7 +143,7 @@ there are other options.
     [pre-commit](https://pre-commit.com/). While not required, we encourage setting up
     and using these hooks to ensure that contributed code always meets our coding style standards.
     Pre-commit should already be installed in your conda environment after running
-    `pip install` with the `[test]` dependencies, but if not, simply `pip install pre-commit`.
+    `pip install` with the `[dev]` dependencies, but if not, simply `pip install pre-commit`.
     Once pre-commit is installed, navigate to the root directory of the jwst repository, then run
     
         >> pre-commit install
@@ -259,6 +259,7 @@ directory of `jwst` on your my_feature branch:
 
 	>> pip install -e ".[docs]"
 
+(Note the doc dependencies are also included when installing `jwst` with the `[dev]` tag).
 Now, with the correct documentation dependencies installed, you can attempt to build
 the documentation locally. To do this, enter into the `jwst/docs` subdirectory and do:
 
@@ -300,7 +301,9 @@ for running tests.
 	>> pip install -e ".[test]"
 
 This will install the optional 'test' dependencies specified in `pyproject.toml` that
-don't install by default. The package `pytest` is one of these and is what's used
+don't install by default. (Note these test dependencies are also included when
+installing `jwst` with the `[dev]` tag).
+The package `pytest` is one of these and is what's used
 to run the tests. `pytest` searches through all the directories in your repository
 (underneath the directory from which it was invoked command line) and looks for any
 directories called 'test' or .py files with the word 'test' in the name. Functions
@@ -380,7 +383,7 @@ confirm, and then change the versions back before your PR is merged (which will 
 We use a pre-commit CI workflow to ensure that the code and docstring style of the `jwst` repository
 remains uniform and conforms to certain standards. All of these checkers should be installed when running
 
-    >> pip install jwst[test]
+    >> pip install jwst[dev]
 
 or similar, as described in the [Installing JWST for Development](Step-3-Installing-jwst-for-development)
 section. For instructions to install any of these individually, see their documentation linked below.
