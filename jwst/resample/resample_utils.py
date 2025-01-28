@@ -137,6 +137,107 @@ def resampled_wcs_from_models(
 
     return wcs, pscale_in0, pixel_scale, pixel_scale_ratio
 
+def shape_from_bounding_box(bounding_box):
+    """ Return a numpy shape based on the provided bounding_box
+    """
+    return tuple(int(axs[1] - axs[0] + 0.5) for axs in bounding_box[::-1])
+
+from drizzle.utils import calc_pixmap
+
+def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
+    """ Return a pixel grid map from input frame to output frame.
+    """
+    return calc_pixmap(in_wcs, out_wcs, shape=shape, disable_bbox="none")
+
+    # if shape:
+    #     bb = wcs_bbox_from_shape(shape)
+    #     log.debug("Bounding box from data shape: {}".format(bb))
+    # else:
+    #     bb = in_wcs.bounding_box
+    #     log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
+
+    # grid = gwcs.wcstools.grid_from_bounding_box(bb)
+    # pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
+
+    # return pixmap
+
+
+def reproject(wcs1, wcs2):
+    """
+    Given two WCSs or transforms return a function which takes pixel
+    coordinates in the first WCS or transform and computes them in the second
+    one. It performs the forward transformation of ``wcs1`` followed by the
+    inverse of ``wcs2``.
+
+    Parameters
+    ----------
+    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
+        WCS objects that have `pixel_to_world_values` and `world_to_pixel_values`
+        methods.
+
+    Returns
+    -------
+    _reproject : func
+        Function to compute the transformations.  It takes x, y
+        positions in ``wcs1`` and returns x, y positions in ``wcs2``.
+    """
+
+    try:
+        # Here we want to use the WCS API functions so that a Sliced WCS
+        # will work as well. However, the API functions do not accept
+        # keyword arguments and `with_bounding_box=False` cannot be passsed.
+        # We delete the bounding box on a copy of the WCS - yes, inefficient.
+        forward_transform = wcs1.pixel_to_world_values
+        wcs_no_bbox = deepcopy(wcs2)
+        wcs_no_bbox.bounding_box = None
+        backward_transform = wcs_no_bbox.world_to_pixel_values
+    except AttributeError as err:
+        raise TypeError("Input should be a WCS") from err
+
+
+    def _reproject(x, y):
+        sky = forward_transform(x, y)
+        flat_sky = []
+        for axis in sky:
+            flat_sky.append(axis.flatten())
+        # Filter out RuntimeWarnings due to computed NaNs in the WCS
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            det = backward_transform(*tuple(flat_sky))
+        det_reshaped = []
+        for axis in det:
+            det_reshaped.append(axis.reshape(x.shape))
+        return tuple(det_reshaped)
+    return _reproject
+
+
+def build_driz_weight(model, weight_type=None, good_bits=None):
+    """Create a weight map for use by drizzle
+    """
+    dqmask = build_mask(model.dq, good_bits)
+
+    if weight_type == 'ivm':
+        if (model.hasattr("var_rnoise") and model.var_rnoise is not None and
+                model.var_rnoise.shape == model.data.shape):
+            with np.errstate(divide="ignore", invalid="ignore"):
+                inv_variance = model.var_rnoise**-1
+            inv_variance[~np.isfinite(inv_variance)] = 1
+        else:
+            warnings.warn("var_rnoise array not available. Setting drizzle weight map to 1",
+                          RuntimeWarning)
+            inv_variance = 1.0
+        result = inv_variance * dqmask
+    elif weight_type == 'exptime':
+        if check_for_tmeasure(model):
+            exptime = model.meta.exposure.measurement_time
+        else:
+            exptime = model.meta.exposure.exposure_time
+        result = exptime * dqmask
+    else:
+        result = np.ones(model.data.shape, dtype=model.data.dtype) * dqmask
+
+    return result.astype(np.float32)
+
 
 def build_mask(dqarr, bitvalue):
     """
