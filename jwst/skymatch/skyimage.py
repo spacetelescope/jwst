@@ -429,13 +429,13 @@ class SkyImage:
         ny, nx = self.image_shape
 
         if stepsize is None:
-            nintx = 2
+            nint_x = 2
             nint_y = 2
         else:
-            nintx = max(2, int(np.ceil((nx + 1.0) / stepsize)))
+            nint_x = max(2, int(np.ceil((nx + 1.0) / stepsize)))
             nint_y = max(2, int(np.ceil((ny + 1.0) / stepsize)))
 
-        xs = np.linspace(-0.5, nx - 0.5, nintx, dtype=float)
+        xs = np.linspace(-0.5, nx - 0.5, nint_x, dtype=float)
         ys = np.linspace(-0.5, ny - 0.5, nint_y, dtype=float)[1:-1]
         nptx = xs.size
         npty = ys.size

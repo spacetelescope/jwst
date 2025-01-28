@@ -169,10 +169,10 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
         # replace the values of flagged/masked reference pixels.
         norm_L = np.convolve(np.ones(nL.shape), kernel_l, mode='same')
         norm_L /= np.convolve(nL / 4, kernel_l, mode='same')
-        normR = np.convolve(np.ones(nR.shape), kernel_r, mode='same')
-        normR /= np.convolve(nR / 4, kernel_r, mode='same')
+        norm_R = np.convolve(np.ones(nR.shape), kernel_r, mode='same')
+        norm_R /= np.convolve(nR / 4, kernel_r, mode='same')
         template = np.convolve(L, kernel_l, mode='same') * norm_L
-        template += np.convolve(R, kernel_r, mode='same') * normR
+        template += np.convolve(R, kernel_r, mode='same') * norm_R
         data[:, chan * npix * 3 // 4:(chan + 1) * npix * 3 // 4] -= template[:, np.newaxis]
 
     log.debug('Optimized convolution kernel applied')

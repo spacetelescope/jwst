@@ -64,7 +64,7 @@ def get_correction_function(side, timecoeff, mid_time):
         exposure. The time-wavelength dependent correction is different
         for every MRS band.
     timecoeff : dictionary
-        Adictionary holding the correction factors for the time/wavelength
+        A dictionary holding the correction factors for the time/wavelength
         correction.  binwave, acoeff, bcoeff, ccoeff, x0 are the parameters
         for an MRS time-wavelength photom correction.
     mid-time : int
