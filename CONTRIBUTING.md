@@ -388,7 +388,7 @@ Our pre-commit Git hook, also described in the
 [Installing JWST for Development](Step-3-Installing-jwst-for-development) section,
 is designed to help contributors run all the checks on their contributions every time they commit.
 
-The following three style checks are performed:
+The following style checks are performed:
 
 * **PEP8-compliant code**
 
@@ -416,10 +416,17 @@ The following three style checks are performed:
 	The docstring style for the `jwst` repository generally conforms to the
 	[Numpy style guide](https://numpydoc.readthedocs.io/en/latest/format.html), and the docstring
 	style rules are enforced using [numpydoc-validation](https://numpydoc.readthedocs.io/en/latest/validation.html).
-	To run these checks locally, use the command
+	To run these checks standalone, use the command
 
         >> pre-commit run numpydoc-validation
 
+* **Spell checking**
+
+	We use [Codespell](https://github.com/codespell-project/codespell) to check for common
+	misspellings in both our codebase and documentation.
+	To run the spell checker standalone, use the command
+
+        >> pre-commit run codespell
 
 * **PEP-compliant type hints**
 
