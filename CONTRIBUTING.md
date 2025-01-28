@@ -117,7 +117,7 @@ there are other options.
     And now in the top level of your local `jwst` repository, ensuring you're
     on the 'my_feature' branch:
     
-    	>> pip install -e .[contrib]
+    	>> pip install -e ".[contrib]"
     
     This will install `jwst` from this cloned source code in 'editable' mode,
     meaning that you can import the code from this directory when within a Python
@@ -142,7 +142,7 @@ there are other options.
     [pre-commit](https://pre-commit.com/). We strongly encourage setting up
     and using these hooks to ensure that contributed code always meets our coding style standards.
     Pre-commit should already be installed in your conda environment after running
-    `pip install -e .[contrib]`, but if not, simply `pip install pre-commit`.
+    `pip install -e ".[contrib]"`, but if not, simply `pip install pre-commit`.
     Navigate to the root directory of the jwst repository, then run
     
         >> pre-commit install
