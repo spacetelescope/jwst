@@ -54,12 +54,8 @@ class BarShadowStep(Step):
                     correction_pars = None
 
                     # Get the name of the bar shadow reference file to use
-                    self.barshadow_name = self.get_reference_file(
-                        input_model, "barshadow"
-                    )
-                    self.log.info(
-                        f"Using BARSHADOW reference file {self.barshadow_name}"
-                    )
+                    self.barshadow_name = self.get_reference_file(input_model, "barshadow")
+                    self.log.info(f"Using BARSHADOW reference file {self.barshadow_name}")
 
                     # Check for a valid reference file
                     if self.barshadow_name == "N/A":
