@@ -323,7 +323,7 @@ class PixelReplacement:
 
         log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
 
-        for _i, ind in enumerate(profiles_to_replace):
+        for ind in profiles_to_replace:
             # Use sets for convenient finding of neighboring slices to use in profile creation
             adjacent_inds = set(
                 range(ind - self.pars["n_adjacent_cols"], ind + self.pars["n_adjacent_cols"] + 1)
@@ -660,7 +660,7 @@ class PixelReplacement:
 
     def profile_mse(self, scale, median, current):
         """
-        Create function to provide to optimization routine.
+        Calculate mean squared error of fitted profile.
 
         Parameters
         ----------
