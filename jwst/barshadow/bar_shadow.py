@@ -115,10 +115,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     # Correction only applies to extended/uniform sources
     correction = datamodels.SlitModel(data=np.ones(slitlet.data.shape))
     if not has_uniform_source(slitlet, source_type):
-        log.info(
-            "Bar shadow correction skipped for "
-            f"slitlet {slitlet_number} (source not uniform)"
-        )
+        log.info(f"Bar shadow correction skipped for slitlet {slitlet_number} (source not uniform)")
         return correction
 
     # No correction for zero length slitlets
@@ -151,9 +148,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     # so that the separation between the slit centers is 1,
     # i.e. slit height + interslit bar
     if slitlet.slit_yscale is None:
-        log.warning(
-            f"Slit height scale factor not found. Using default value {SLITRATIO}."
-        )
+        log.warning(f"Slit height scale factor not found. Using default value {SLITRATIO}.")
         yslit = yslit / SLITRATIO
     else:
         yslit = yslit / slitlet.slit_yscale
@@ -171,9 +166,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     wcol = (wavelength - w0) / wave_increment
 
     # Interpolate the bar shadow correction for non-Nan pixels
-    correction.data = ndimage.map_coordinates(
-        shadow, [yrow, wcol], cval=np.nan, order=1
-    )
+    correction.data = ndimage.map_coordinates(shadow, [yrow, wcol], cval=np.nan, order=1)
 
     return correction
 
@@ -398,7 +391,5 @@ def has_uniform_source(slitlet, force_type=None):
             return True
     else:
         # If there's no source type info, default to EXTENDED
-        log.info(
-            f"SRCTYPE not set for slitlet {slitlet.slitlet_id}; assuming EXTENDED."
-        )
+        log.info(f"SRCTYPE not set for slitlet {slitlet.slitlet_id}; assuming EXTENDED.")
         return True
