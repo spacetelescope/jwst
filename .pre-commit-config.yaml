@@ -26,8 +26,6 @@ repos:
     rev: v1.6.1  # Use the latest stable version
     hooks:
       - id: mypy
-        args: []
-        language_version: python3.11 # Replace with your Python version
   - repo: https://github.com/numpy/numpydoc
     rev: v1.8.0
     hooks:
