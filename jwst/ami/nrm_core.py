@@ -207,9 +207,7 @@ class FringeFitter:
         self.ctrd = self.scidata[slc]
         self.dqslice = self.dqmask[slc]
 
-        nrm.reference = (
-            self.ctrd
-        )  # self.ctrd is the cropped image centered on the brightest pixel
+        nrm.reference = self.ctrd  # self.ctrd is the cropped image centered on the brightest pixel
 
         if self.psf_offset_ff is None:
             # returned values have offsets x-y flipped:

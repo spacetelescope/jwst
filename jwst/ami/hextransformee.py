@@ -59,10 +59,7 @@ def gfunction(xi, eta, **kwargs):
         np.exp(-i * pi * (2 * etap / np.sqrt(3) + xip))
         * (
             (np.sqrt(3) * etap - 3 * xip)
-            * (
-                np.exp(i * pi * np.sqrt(3) * etap)
-                - np.exp(i * pi * (4 * etap / np.sqrt(3) + xip))
-            )
+            * (np.exp(i * pi * np.sqrt(3) * etap) - np.exp(i * pi * (4 * etap / np.sqrt(3) + xip)))
             + (np.sqrt(3) * etap + 3 * xip)
             * (np.exp(i * pi * etap / np.sqrt(3)) - np.exp(i * pi * xip))
         )

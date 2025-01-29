@@ -230,10 +230,7 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
     """
     kxprime, kyprime = affine2d.distort_f_args(kx, ky)
     return np.exp(
-        -2
-        * np.pi
-        * 1j
-        * ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)
+        -2 * np.pi * 1j * ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)
     ) * affine2d.distortphase(kx, ky)
 
 
@@ -391,8 +388,7 @@ def model_array(
         asf_pb = asf_hex(pitch, fov, oversample, d, lam, psf_offset, affine2d)
     else:
         raise KeyError(
-            "Must provide a valid hole shape. Current supported shapes are"
-            " 'circ' and 'hex'."
+            "Must provide a valid hole shape. Current supported shapes are 'circ' and 'hex'."
         )
 
     primary_beam = (asf_pb * asf_pb.conj()).real
@@ -571,9 +567,7 @@ def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
     )
 
 
-def psf(
-    detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shape="circ"
-):
+def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shape="circ"):
     """
     Calculate the PSF for the requested shape.
 
@@ -616,32 +610,21 @@ def psf(
     """
     # Now deal with primary beam shapes...
     if shape == "circ":
-        asf_fringe = asffringe(
-            detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
-        )
-        asf_2d = (
-            asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d) * asf_fringe
-        )
+        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
+        asf_2d = asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d) * asf_fringe
 
     elif shape == "circonly":
         asf_2d = asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
 
     elif shape == "hex":
-        asf_fringe = asffringe(
-            detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
-        )
-        asf_2d = (
-            asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
-            * asf_fringe
-        )
+        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
+        asf_2d = asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d) * asf_fringe
 
     elif shape == "hexonly":
         asf_2d = asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
 
     elif shape == "fringeonly":
-        asf_fringe = asffringe(
-            detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d
-        )
+        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
     else:
         raise ValueError(
             f"pupil shape {shape} not supported - choices: "

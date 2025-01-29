@@ -32,9 +32,7 @@ filthp_d = {  # half power limits
     "F356W": (3.141e-6, 4.068e-6),
     "F444W": (3.880e-6, 5.023e-6),
 }
-WL_OVERSIZEFACTOR = (
-    0.1  # increase filter wl support by this amount to 'oversize' in wl space
-)
+WL_OVERSIZEFACTOR = 0.1  # increase filter wl support by this amount to 'oversize' in wl space
 
 DIAM = 6.559348  # / Flat-to-flat distance across pupil in V3 axis
 PUPLDIAM = 6.603464  # / Full pupil file size, incl padding.
@@ -95,9 +93,7 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
         Absolute value of FT(image) in filter - the CV Vsq array
     """
     wls = create_wavelengths(filtername)
-    log.info(
-        f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron"
-    )
+    log.info(f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron")
     detimage = np.zeros((sqfov_npix, sqfov_npix), float)
     for wl in wls:
         psf = calcpsf(wl, sqfov_npix, pxsc_rad, pupil_mask)
@@ -121,9 +117,7 @@ def transform_image(image):
         Absolute value of FT(image)
     """
     ft = matrixDFT.MatrixFourierTransform()
-    ftimage = ft.perform(
-        image, image.shape[0], image.shape[0]
-    )  # fake the no-loss fft w/ dft
+    ftimage = ft.perform(image, image.shape[0], image.shape[0])  # fake the no-loss fft w/ dft
 
     return np.abs(ftimage)
 
@@ -231,10 +225,7 @@ def fourier_corr(data, pxdq, fmas):
     yh = data.shape[1] // 2
     xx, yy = np.meshgrid(
         2.0 * np.pi * np.arange(yh + 1) / data.shape[1],
-        2.0
-        * np.pi
-        * (((np.arange(data.shape[0]) + xh) % data.shape[0]) - xh)
-        / data.shape[0],
+        2.0 * np.pi * (((np.arange(data.shape[0]) + xh) % data.shape[0]) - xh) / data.shape[0],
     )
     for i in range(len(ww[0])):
         cdft = np.exp(-1j * (ww[0][i] * yy + ww[1][i] * xx))
@@ -364,9 +355,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             mfil_data = median_filter(data_cut, size=median_size)
             nois = np.sqrt(mfil_data / gain + rdns**2)
             fmas_data /= nois
-            temp = bad_pixels(
-                fmas_data, median_size=median_size, median_tres=median_tres
-            )
+            temp = bad_pixels(fmas_data, median_size=median_size, median_tres=median_tres)
 
             # Check which bad pixels are new. Also, compare the
             # analytically determined noise with the empirically measured

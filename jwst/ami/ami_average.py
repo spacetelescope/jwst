@@ -66,13 +66,9 @@ def average_lg(lg_products):
             output_model.fit_image += fit_image
             output_model.resid_image += resid_image
             output_model.closure_amp_table["coeffs"] += prod.closure_amp_table["coeffs"]
-            output_model.closure_phase_table["coeffs"] += prod.closure_phase_table[
-                "coeffs"
-            ]
+            output_model.closure_phase_table["coeffs"] += prod.closure_phase_table["coeffs"]
             output_model.fringe_amp_table["coeffs"] += prod.fringe_amp_table["coeffs"]
-            output_model.fringe_phase_table["coeffs"] += prod.fringe_phase_table[
-                "coeffs"
-            ]
+            output_model.fringe_phase_table["coeffs"] += prod.fringe_phase_table["coeffs"]
             output_model.pupil_phase_table["coeffs"] += prod.pupil_phase_table["coeffs"]
             output_model.solns_table["coeffs"] += prod.solns_table["coeffs"]
         prod.close()

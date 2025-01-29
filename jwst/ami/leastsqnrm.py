@@ -52,9 +52,7 @@ def rotatevectors(vectors, thetarad):
     c, s = (np.cos(thetarad), np.sin(thetarad))
     ctrs_rotated = []
     for vector in vectors:
-        ctrs_rotated.append(
-            [c * vector[0] - s * vector[1], s * vector[0] + c * vector[1]]
-        )
+        ctrs_rotated.append([c * vector[0] - s * vector[1], s * vector[0] + c * vector[1]])
 
     rot_vectors = np.array(ctrs_rotated)
 
@@ -251,10 +249,7 @@ def ffc(kx, ky):
         2
         * np.pi
         * ffc.pitch
-        * (
-            (kx - ffc.offx) * (ffc.ri[0] - ffc.rj[0])
-            + (ky - ffc.offy) * (ffc.ri[1] - ffc.rj[1])
-        )
+        * ((kx - ffc.offx) * (ffc.ri[0] - ffc.rj[0]) + (ky - ffc.offy) * (ffc.ri[1] - ffc.rj[1]))
         / ffc.lam
     )
     return cos_array
@@ -278,19 +273,14 @@ def ffs(kx, ky):
         2
         * np.pi
         * ffs.pitch
-        * (
-            (kx - ffs.offx) * (ffs.ri[0] - ffs.rj[0])
-            + (ky - ffs.offy) * (ffs.ri[1] - ffs.rj[1])
-        )
+        * ((kx - ffs.offx) * (ffs.ri[0] - ffs.rj[0]) + (ky - ffs.offy) * (ffs.ri[1] - ffs.rj[1]))
         / ffs.lam
     )
 
     return sin_array
 
 
-def model_array(
-    ctrs, lam, oversample, pitch, fov, d, centering="PIXELCENTERED", shape="circ"
-):
+def model_array(ctrs, lam, oversample, pitch, fov, d, centering="PIXELCENTERED", shape="circ"):
     """
     Create a model using the specified wavelength.
 
@@ -476,9 +466,7 @@ def weighted_operations(img, model, dqm=None):
     log.debug(f"{len(nanlist[0]):d} bad pixels skipped in weighted fringefitter")
 
     # A - but delete all pixels flagged by dq array
-    flatmodel_nan = model.reshape(
-        np.shape(model)[0] * np.shape(model)[1], np.shape(model)[2]
-    )
+    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
     for fringe in range(np.shape(model)[2]):
         flatmodel[:, fringe] = np.delete(flatmodel_nan[:, fringe], nanlist)
@@ -569,9 +557,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
         flatimg = flux * flatimg / flatimg.sum()
 
     # A
-    flatmodel_nan = model.reshape(
-        np.shape(model)[0] * np.shape(model)[1], np.shape(model)[2]
-    )
+    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
     log.info(f"\tflatmodel_nan {flatmodel_nan.shape:}")
     log.info(f"\tflatmodel     {flatmodel.shape:}")
@@ -716,10 +702,7 @@ def tan2visibilities(coeffs):
         delta[q] = np.arctan2(coeffs[2 * q + 2], coeffs[2 * q + 1])
         amp[q] = np.sqrt(coeffs[2 * q + 2] ** 2 + coeffs[2 * q + 1] ** 2)
 
-    log.debug(
-        f"tan2visibilities: shape coeffs:{np.shape(coeffs)} "
-        f"shape delta:{np.shape(delta)}"
-    )
+    log.debug(f"tan2visibilities: shape coeffs:{np.shape(coeffs)} shape delta:{np.shape(delta)}")
 
     # returns fringe amplitude & phase
     return amp, delta
@@ -959,10 +942,7 @@ def closure_amplitudes(amps, n=7):
                     cas[nn + ll] = (
                         arr[ii, jj + ii + 1]
                         * arr[ll + ii + jj + kk + 3, kk + jj + ii + 2]
-                        / (
-                            arr[ii, kk + ii + jj + 2]
-                            * arr[jj + ii + 1, ll + ii + jj + kk + 3]
-                        )
+                        / (arr[ii, kk + ii + jj + 2] * arr[jj + ii + 1, ll + ii + jj + kk + 3])
                     )
                 nn = nn + ll + 1
 
