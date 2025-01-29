@@ -10,7 +10,7 @@ exclude = [
     "jwst/fits_generator", # no longer used, will be removed soon
     "**/tests/test_*.py",
 ]
-line-length = 88
+line-length = 100
 
 [format]
 quote-style = "double"
@@ -128,11 +128,6 @@ ignore = [
 
 [lint.pydocstyle]
 convention = "numpy"
-
-[lint.pycodestyle]
-# Formatter autofixes to 88, but error thrown only above 100
-# This is primarily relevant for docstrings
-max-line-length = 100 
 
 [lint.flake8-annotations]
 ignore-fully-untyped = true  # Turn of annotation checking for fully untyped code
