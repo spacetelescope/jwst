@@ -22,6 +22,10 @@ repos:
       - id: ruff
         args: ["--fix"]
       - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.6.1  # Use the latest stable version
+    hooks:
+      - id: mypy
   - repo: https://github.com/numpy/numpydoc
     rev: v1.8.0
     hooks:
