@@ -21,7 +21,7 @@ jobs:
   build:
     needs: [ check ]
     if: always() && (needs.check.result == 'success' || needs.check.result == 'skipped')
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@9f1f43251dde69da8613ea8e11144f05cdea41d5  # v1.15.0
+    uses: braingram/github-actions-workflows/.github/workflows/publish.yml
     with:
       upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
       targets: |
