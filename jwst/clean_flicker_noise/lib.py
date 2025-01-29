@@ -3,6 +3,8 @@ import numpy as np
 
 class NSClean:
     """
+    Fit and remove 1/f noise in NIR detectors in frequency space.
+
     NSClean is the base class for removing residual correlated
     read noise from JWST NIRSpec images.  It is intended for use
     on Level 2a pipeline products, i.e. IRS2 corrected slope
@@ -13,10 +15,18 @@ class NSClean:
     necessary.
     """
 
-    def __init__(self, detector, mask, fc=1/(2*2048/16), kill_width=1/(2*2048/16)/4,
-                 buffer_sigma=1.5, sigrej=3.0, weights_kernel_sigma=32):
+    def __init__(
+        self,
+        detector,
+        mask,
+        fc=1 / (2 * 2048 / 16),
+        kill_width=1 / (2 * 2048 / 16) / 4,
+        buffer_sigma=1.5,
+        sigrej=3.0,
+        weights_kernel_sigma=32,
+    ):
         """
-        JWST NIRSpec background modeling and subtraction -AKA "clean" (NSClean)
+        JWST NIRSpec background modeling and subtraction -AKA "clean" (NSClean).
 
         Parameters
         ----------
@@ -59,7 +69,7 @@ class NSClean:
 
         # Transpose and flip mask to detector coordinates with the IRS2
         # zipper running along the bottom as displayed in ds9.
-        if self.detector == 'NRS1':
+        if self.detector == "NRS1":
             # NRS1 requires transpose only
             self.mask = self.mask.transpose()
         else:
@@ -83,30 +93,39 @@ class NSClean:
         # each line. Roughly approximate the local density, P, using the reciprocal of
         # convolution by a Gaussian kernel for now. For now, hard code the kernel. We
         # will optimize this later.
-        W = np.zeros((self.ny, self.nx), dtype=np.float32)  # Build the kernel here
+        _weight = np.zeros((self.ny, self.nx), dtype=np.float32)  # Build the kernel here
         _x = np.arange(self.nx)
-        _mu = self.nx//2 + 1
+        _mu = self.nx // 2 + 1
         _sigma = self.weights_kernel_sigma
-        W[self.ny//2+1] = np.exp(-(_x - _mu)**2 / _sigma**2/2) / _sigma / np.sqrt(2*np.pi)
-        FW = np.fft.rfft2(np.fft.ifftshift(W))
-        with np.errstate(divide='ignore'):
-            self.P = 1 / np.fft.irfft2(np.fft.rfft2(np.array(self.mask, dtype=np.float32)) * FW, (self.ny,self.nx))
-        self.P = np.where(self.mask, self.P, 0.) # Illuminated areas carry no weight
+        _weight[self.ny // 2 + 1] = (
+            np.exp(-((_x - _mu) ** 2) / _sigma**2 / 2) / _sigma / np.sqrt(2 * np.pi)
+        )
+        _weight_fft = np.fft.rfft2(np.fft.ifftshift(_weight))
+        with np.errstate(divide="ignore"):
+            self.p_matrix = 1 / np.fft.irfft2(
+                np.fft.rfft2(np.array(self.mask, dtype=np.float32)) * _weight_fft,
+                (self.ny, self.nx),
+            )
+        # Illuminated areas carry no weight
+        self.p_matrix = np.where(self.mask, self.p_matrix, 0.0)
 
         # Build a 1-dimensional Gaussian kernel for "buffing". Buffing is in the
-        # dispersion direction only. In detector coordinates, this is axis zero. Even though
-        # the kernel is 1-dimensional, we must still use a 2-dimensional array to
-        # represent it. I tried broadcasting a vector, but that made a kernel 2048
-        # columns wide (in detector space).
+        # dispersion direction only. In detector coordinates, this is axis zero.
+        # Even though the kernel is 1-dimensional, we must still use a 2-dimensional
+        # array to represent it. I tried broadcasting a vector, but that made a kernel
+        # 2048 columns wide (in detector space).
         _y = np.arange(self.ny)
-        _mu = self.nx//2 + 1
+        _mu = self.nx // 2 + 1
         _sigma = self.buffer_sigma  # Standard deviation of kernel
-        _gkern = np.exp(-((_y-_mu) / _sigma)**2 / 2) / _sigma / np.sqrt(2*np.pi)  # Centered kernel as a vector
+        _gkern = (
+            np.exp(-(((_y - _mu) / _sigma) ** 2) / 2) / _sigma / np.sqrt(2 * np.pi)
+        )  # Centered kernel as a vector
         gkern = np.zeros((self.ny, self.nx), dtype=np.float32)  # 2D kernel template
         gkern[:, _mu] = _gkern  # Copy in the kernel. Normalization is already correct.
         gkern = np.fft.ifftshift(gkern)  # Shift for Numpy
-        self.fgkern = np.array(np.fft.rfft2(gkern), dtype=np.complex64)  # FFT for fast convolution
 
+        # FFT for fast convolution
+        self.fgkern = np.array(np.fft.rfft2(gkern), dtype=np.complex64)
 
     def fit(self, data):
         """
@@ -121,7 +140,7 @@ class NSClean:
 
         Returns
         -------
-        Bkg : float array
+        bkg : float array
             The fitted background model.
 
         Notes
@@ -131,13 +150,12 @@ class NSClean:
         """
         model = np.zeros((self.ny, self.nx), dtype=np.float32)  # Build the model here
         for y in np.arange(self.ny)[4:-4]:
-
             # Get data and weights for this line
             d = data[y][self.mask[y]]  # unmasked (usable) data
             # The line below uses a vector to represent a diagonal weight matrix.
             # Multiplications by this vector later on may be viewed as
             # equivalent formulations to multiplication by diag(p).
-            p = self.P[y][self.mask[y]]  # Weights
+            p = self.p_matrix[y][self.mask[y]]  # Weights
 
             # If none of the pixels in this line is usable (all masked out),
             # skip and move on to the next line.
@@ -151,31 +169,38 @@ class NSClean:
             _sigma = 1.4826 * np.median(np.abs(d - _mu))  # Robust estimate of standard deviation
 
             # Fill outliers
-            d = np.where(np.logical_and(_mu - self.sigrej * _sigma <= d,
-                                        d <= _mu + self.sigrej * _sigma), d, _mu)
+            d = np.where(
+                np.logical_and(_mu - self.sigrej * _sigma <= d, d <= _mu + self.sigrej * _sigma),
+                d,
+                _mu,
+            )
 
             # Build the Fourier basis matrix for this line
-            m = np.arange(self.nx)[self.mask[y]].reshape((-1, 1))  # Must be a column vector to broadcast
-            k = np.arange(self.nvec).reshape((1,-1))  # Must be a row vector to broadcast. We can optimize
-                                                      # the code later by putting this into object instantiation
-                                                      # since it is the same for every line. For now, leave it
-                                                      # here since the cost is negligible and it may aid
-                                                      # comprehension.
+            # Must be a column vector to broadcast
+            m = np.arange(self.nx)[self.mask[y]].reshape((-1, 1))
+            # Must be a row vector to broadcast. We can optimize
+            # the code later by putting this into object instantiation
+            # since it is the same for every line. For now, leave it
+            # here since the cost is negligible and it may aid
+            # comprehension.
+            k = np.arange(self.nvec).reshape((1, -1))
 
             # Build the basis matrix
-            B = np.array(np.exp(2 * np.pi * 1J * m * k / self.nx) / m.shape[0], dtype=np.complex64)
+            basis = np.array(
+                np.exp(2 * np.pi * 1j * m * k / self.nx) / m.shape[0], dtype=np.complex64
+            )
 
             # Compute the Moore-Penrose inverse of A = P*B.
             #     $A^+ = (A^H A)^{-1} A^H$
-            A = B*p[:, np.newaxis]
-            AH = np.conjugate(A.transpose())  # Hermitian transpose of A
-            pinv_PB = np.matmul(np.linalg.inv(np.matmul(AH, A)), AH)
+            _a = basis * p[:, np.newaxis]
+            _a_h = np.conjugate(_a.transpose())  # Hermitian transpose of A
+            pinv_pb = np.matmul(np.linalg.inv(np.matmul(_a_h, _a)), _a_h)
 
             # Solve for the Fourier transform of this line's background samples.
             # The way that we have done it, this multiplies the input data by the
             # number of samples used for the fit.
-            rfft = np.zeros(self.nx//2 + 1, dtype=np.complex64)
-            rfft[:k.shape[1]] = np.matmul(pinv_PB, p*d)
+            rfft = np.zeros(self.nx // 2 + 1, dtype=np.complex64)
+            rfft[: k.shape[1]] = np.matmul(pinv_pb, p * d)
 
             # Numpy requires that the forward transform multiply
             # the data by n. Correct normalization.
@@ -183,7 +208,7 @@ class NSClean:
 
             # Apodize if necessary
             if self.kill_width > 0:
-                rfft[:self.nvec] *= self.apodizer[:self.nvec]
+                rfft[: self.nvec] *= self.apodizer[: self.nvec]
 
             # Invert the FFT to build the background model for this line
             model[y] = np.fft.irfft(rfft, self.nx)
@@ -191,9 +216,10 @@ class NSClean:
         # Done!
         return model
 
-
     def clean(self, data, buff=True):
         """
+        Clean residual noise in NIRSpec images.
+
         "Clean" NIRspec images by fitting and subtracting the
         instrumental background. This is intended to improve the
         residual correlated noise (vertical banding) that is
@@ -221,9 +247,8 @@ class NSClean:
         data : array_like
             The data, but with less striping and the background subtracted.
         """
-
         # Transform the data to detector space with the IRS2 zipper running along the bottom.
-        if self.detector == 'NRS2':
+        if self.detector == "NRS2":
             # Transpose and flip for NRS2
             data = data.transpose()[::-1]
         else:
@@ -231,17 +256,17 @@ class NSClean:
             data = data.transpose()
 
         # Fit the background model
-        Bkg = self.fit(data)  # Background model
+        bkg = self.fit(data)  # Background model
 
         # Buff, if requested
         if buff:
-            Bkg = np.fft.irfft2(np.fft.rfft2(Bkg) * self.fgkern, s=Bkg.shape)
+            bkg = np.fft.irfft2(np.fft.rfft2(bkg) * self.fgkern, s=bkg.shape)
 
         # Subtract the background model from the data
-        data -= Bkg
+        data -= bkg
 
         # Transform back to DMS space
-        if self.detector=='NRS2':
+        if self.detector == "NRS2":
             data = data[::-1].transpose()
         else:
             data = data.transpose()
@@ -252,7 +277,7 @@ class NSClean:
 
 def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
     """
-    Make a lowpass Fourier filter
+    Make a lowpass Fourier filter.
 
     Parameters
     ----------
@@ -274,7 +299,6 @@ def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
     filt : array
        Filter array
     """
-
     # Make frequencies vector
     freq = np.fft.rfftfreq(n, d=d)
 
@@ -291,7 +315,7 @@ def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
 
 def med_abs_deviation(d, median=True):
     """
-    Median absolute deviation
+    Compute the median absolute deviation.
 
     Computes the median and the median absolute deviation (MAD). For normally
     distributed data, multiply the MAD by 1.4826 to approximate standard deviation.
@@ -302,42 +326,48 @@ def med_abs_deviation(d, median=True):
     ----------
     d : ndarray
         The input data
-
     median : bool
         Return both the median and MAD
 
     Returns
     -------
-    m : float
-        median
-
+    m : float, optional
+        Median
     mad : float
-        median absolute deviation
+        Median absolute deviation
     """
     d = d[np.isfinite(d)]  # Exclude NaNs
     m = np.median(d)
     mad = np.median(np.abs(d - m))
     if median is True:
-        return(m, mad)
+        return (m, mad)
     else:
-        return(mad)
+        return mad
 
 
 class NSCleanSubarray:
     """
+    Fit and remove 1/f noise in NIR detector subarrayss in frequency space.
+
     NSCleanSubarray is the base class for removing residual correlated
     read noise from generic JWST near-IR Subarray images.  It is
     intended for use on Level 2a pipeline products, i.e. slope images.
     """
 
     # Class variables. These are the same for all instances.
-    nloh = np.int32(12)       # New line overhead in pixels
-    tpix = np.float32(10.e-6) # Pixel dwell time in seconds
+    nloh = np.int32(12)  # New line overhead in pixels
+    tpix = np.float32(10.0e-6)  # Pixel dwell time in seconds
     sigrej = np.float32(4.0)  # Standard deviation threshold for flagging
-                              #   statistical outliers.
+    #   statistical outliers.
 
-    def __init__(self, data, mask, fc=(1061, 1211, 49943, 49957),
-                 exclude_outliers=True, weights_kernel_sigma=None):
+    def __init__(
+        self,
+        data,
+        mask,
+        fc=(1061, 1211, 49943, 49957),
+        exclude_outliers=True,
+        weights_kernel_sigma=None,
+    ):
         """
         Background modeling and subtraction for generic JWST near-IR subarrays.
 
@@ -369,7 +399,8 @@ class NSCleanSubarray:
             default for subarrays results in nearly equal weighting of all background
             samples.
 
-        Notes:
+        Notes
+        -----
         1) NSCleanSubarray works in detector coordinates. Both the data and mask
            need to be transposed and flipped so that slow-scan runs from bottom
            to top as displayed in SAOImage DS9. The fast scan direction is
@@ -382,14 +413,15 @@ class NSCleanSubarray:
         self.nx = np.int32(data.shape[1])  # Number of pixels in fast scan direction
         self.fc = np.array(fc, dtype=np.float32)
         self.n = np.int32(self.ny * (self.nx + self.nloh))  # Number of ticks in clocking pattern
-        self.rfftfreq = np.array(np.fft.rfftfreq(self.n, self.tpix),
-                                 dtype=np.float32)  # Fourier frequencies in clocking pattern
+        self.rfftfreq = np.array(
+            np.fft.rfftfreq(self.n, self.tpix), dtype=np.float32
+        )  # Fourier frequencies in clocking pattern
 
         # We will weight by the inverse of the local sample density in time. We compute the local
         # sample density by convolution using a Gaussian. Define the standard deviation of the
         # Gaussian here. This is ad-hoc.
         if weights_kernel_sigma is None:
-            self.weights_kernel_sigma = 1 / ((fc[0]+fc[1]) / 2) / self.tpix / 2 / 4
+            self.weights_kernel_sigma = 1 / ((fc[0] + fc[1]) / 2) / self.tpix / 2 / 4
         else:
             self.weights_kernel_sigma = weights_kernel_sigma
 
@@ -399,26 +431,33 @@ class NSCleanSubarray:
         # The mask potentially contains statistical outliers.
         # Optionally exclude them.
         if exclude_outliers is True:
-            m, s = med_abs_deviation(self.data[self.mask])  # Compute median and median absolute deviation
+            m, s = med_abs_deviation(
+                self.data[self.mask]
+            )  # Compute median and median absolute deviation
             s *= 1.4826  # Convert MAD to std
-            vmin = m - self.sigrej*s  # Minimum value to keep
-            vmax = m + self.sigrej*s  # Maximum value to keep
+            vmin = m - self.sigrej * s  # Minimum value to keep
+            vmax = m + self.sigrej * s  # Maximum value to keep
 
             # Temporarily change NaNs to inf, so that they don't cause problems.
             self.data[np.isnan(self.data)] = np.inf
 
             # Flag statistical outliers
-            bdpx = np.array(np.where(np.logical_or(self.data < vmin, self.data > vmax),
-                                     1, 0), dtype=np.float32)
+            bdpx = np.array(
+                np.where(np.logical_or(self.data < vmin, self.data > vmax), 1, 0), dtype=np.float32
+            )
             self.data[np.isinf(self.data)] = np.nan  # Restore NaNs
 
-            bdpx[np.logical_not(self.mask)] = 0  # We don't need to worry about non-background pixels
+            bdpx[np.logical_not(self.mask)] = (
+                0  # We don't need to worry about non-background pixels
+            )
             # Also flag 4 nearest neighbors
-            bdpx = bdpx +\
-                        np.roll(bdpx, (+1,0), axis=(0,1)) +\
-                        np.roll(bdpx, (-1,0), axis=(0,1)) +\
-                        np.roll(bdpx, (0,+1), axis=(0,1)) +\
-                        np.roll(bdpx, (0,-1), axis=(0,1))
+            bdpx = (
+                bdpx
+                + np.roll(bdpx, (+1, 0), axis=(0, 1))
+                + np.roll(bdpx, (-1, 0), axis=(0, 1))
+                + np.roll(bdpx, (0, +1), axis=(0, 1))
+                + np.roll(bdpx, (0, -1), axis=(0, 1))
+            )
             # bdpx now contains the pixels to exclude from the background pixels
             # mask. Exclude them.
             self.mask[bdpx != 0] = False
@@ -431,15 +470,17 @@ class NSCleanSubarray:
         self.apodizer[self.rfftfreq < self.fc[0]] = 1.0
         # Cosine roll-off
         here = np.logical_and(self.fc[0] <= self.rfftfreq, self.rfftfreq < self.fc[1])
-        self.apodizer[here] = 0.5*(np.cos((np.pi/(self.fc[1]-self.fc[0])) *
-                                          (self.rfftfreq[here] - self.fc[0]))+1)
+        self.apodizer[here] = 0.5 * (
+            np.cos((np.pi / (self.fc[1] - self.fc[0])) * (self.rfftfreq[here] - self.fc[0])) + 1
+        )
         # Cosine roll-on
         here = np.logical_and(self.fc[2] <= self.rfftfreq, self.rfftfreq < self.fc[3])
-        self.apodizer[here] = 0.5*(np.cos((np.pi/(self.fc[3]-self.fc[2])) *
-                                          (self.rfftfreq[here] - self.fc[2]) + np.pi)+1)
+        self.apodizer[here] = 0.5 * (
+            np.cos((np.pi / (self.fc[3] - self.fc[2])) * (self.rfftfreq[here] - self.fc[2]) + np.pi)
+            + 1
+        )
         # Unity gain between f[3] and end
         self.apodizer[self.rfftfreq >= self.fc[3]] = 1.0
-
 
     def fit(self, return_fit=False, weight_fit=False):
         """
@@ -459,67 +500,75 @@ class NSCleanSubarray:
         rfft : numpy array
             The computed Fourier transform.
         """
-
         # To build the incomplete Fourier matrix, we require the index of each
         # clock tick of each valid pixel in the background samples. For consistency with
         # numpy's notation, we call this 'm' and require it to be a column vector.
-        _x = np.arange(self.nx).reshape((1,-1))
-        _y = np.arange(self.ny).reshape((-1,1))
-        m = (_y*(self.nx+self.nloh) + _x)[self.mask].reshape((-1,1))
+        _x = np.arange(self.nx).reshape((1, -1))
+        _y = np.arange(self.ny).reshape((-1, 1))
+        m = (_y * (self.nx + self.nloh) + _x)[self.mask].reshape((-1, 1))
 
         # Define which Fourier vectors to fit. For consistency with numpy, call this k.
-        k = np.arange(len(self.rfftfreq))[self.apodizer>0.].reshape((1,-1))
+        k = np.arange(len(self.rfftfreq))[self.apodizer > 0.0].reshape((1, -1))
 
         # Build the incomplete Fourier matrix
-        B = np.array(np.exp(2*np.pi*1J*m*k/self.n)/m.shape[0], dtype=np.complex64)
+        basis = np.array(np.exp(2 * np.pi * 1j * m * k / self.n) / m.shape[0], dtype=np.complex64)
 
         # Weighted NSClean fitting
         if weight_fit:
-
             # Build the weight matrix. Weight by the reciprocal of the local background
             # sample density in time. Roughly approximate the local density, P, using
             # the reciprocal of convolution by a Gaussian kernel.
-            _x = np.arange(self.n, dtype=np.float32) # x-values for building a 1-D Gaussian
-            _mu = np.float32(self.n//2+1) # Center point of Gaussian
-            _sigma = np.float32(self.weights_kernel_sigma) # Standard deviation of Gaussian
-            W = np.exp(-(_x-_mu)**2/_sigma**2/2)/_sigma/np.sqrt(2*np.pi) # Build centered Gaussian
-            FW = np.fft.rfft(np.fft.ifftshift(W)) # Forward FFT
-            _M = np.hstack((self.mask, np.zeros((self.ny,self.nloh), dtype=np.bool_))).flatten() # Add new line overhead to mask
-            with np.errstate(divide='ignore'):
-                P = 1/np.fft.irfft(np.fft.rfft(np.array(_M, dtype=np.float32)) * FW, self.n) # Compute weights
-            P = P[_M] # Keep only background samples
+            _x = np.arange(self.n, dtype=np.float32)  # x-values for building a 1-D Gaussian
+            _mu = np.float32(self.n // 2 + 1)  # Center point of Gaussian
+            _sigma = np.float32(self.weights_kernel_sigma)  # Standard deviation of Gaussian
+            _weight = (
+                np.exp(-((_x - _mu) ** 2) / _sigma**2 / 2) / _sigma / np.sqrt(2 * np.pi)
+            )  # Build centered Gaussian
+            _weight_fft = np.fft.rfft(np.fft.ifftshift(_weight))  # Forward FFT
+            _m = np.hstack(
+                (self.mask, np.zeros((self.ny, self.nloh), dtype=np.bool_))
+            ).flatten()  # Add new line overhead to mask
+            with np.errstate(divide="ignore"):
+                p_matrix = 1 / np.fft.irfft(
+                    np.fft.rfft(np.array(_m, dtype=np.float32)) * _weight_fft, self.n
+                )  # Compute weights
+            p_matrix = p_matrix[_m]  # Keep only background samples
 
             # NSClean's weighting requires the Moore-Penrose inverse of A = P*B.
             #     $A^+ = (A^H A)^{-1} A^H$
-            A = P.reshape((-1,1)) * B # P is diagonal. Hadamard product is most RAM efficient
-            AH = np.conjugate(A.transpose()) # Hermitian transpose of A
-            pinv_PB = np.matmul(np.linalg.inv(np.matmul(AH, A)), AH)
+            _a = (
+                p_matrix.reshape((-1, 1)) * basis
+            )  # P is diagonal. Hadamard product is most RAM efficient
+            _a_h = np.conjugate(_a.transpose())  # Hermitian transpose of A
+            pinv_pb = np.matmul(np.linalg.inv(np.matmul(_a_h, _a)), _a_h)
 
         else:
             # Unweighted fit
-            pinvB = np.linalg.pinv(B)
+            pinv_b = np.linalg.pinv(basis)
 
         # Solve for the (approximate) Fourier transform of the background samples.
         rfft = np.zeros(len(self.rfftfreq), dtype=np.complex64)
         if weight_fit is True:
-            rfft[self.apodizer>0.] = np.matmul(pinv_PB * P.reshape((1,-1)), self.data[self.mask])
+            rfft[self.apodizer > 0.0] = np.matmul(
+                pinv_pb * p_matrix.reshape((1, -1)), self.data[self.mask]
+            )
         else:
-            rfft[self.apodizer>0.] = np.matmul(pinvB, self.data[self.mask])
+            rfft[self.apodizer > 0.0] = np.matmul(pinv_b, self.data[self.mask])
 
         # Numpy requires that the forward transform multiply
         # the data by n. Correct normalization.
         rfft *= self.n / m.shape[0]
 
         # Invert the apodized Fourier transform to build the background model for this integration
-        self.model = np.fft.irfft(rfft*self.apodizer, self.n).reshape((self.ny,-1))[:,:self.nx]
+        self.model = np.fft.irfft(rfft * self.apodizer, self.n).reshape((self.ny, -1))[:, : self.nx]
 
         # Done
         if return_fit:
-            return(rfft)
+            return rfft
 
     def clean(self, weight_fit=True, return_model=False):
         """
-        Clean the data
+        Clean the data.
 
         Parameters
         ----------

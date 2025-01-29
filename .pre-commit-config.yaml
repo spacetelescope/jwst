@@ -45,7 +45,6 @@ repos:
             jwst/badpix_selfcal/.* |
             jwst/barshadow/.* |
             jwst/charge_migration/.* |
-            jwst/clean_flicker_noise/.* |
             jwst/combine_1d/.* |
             jwst/coron/.* |
             jwst/cube_build/.* |
