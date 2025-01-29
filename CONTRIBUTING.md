@@ -163,9 +163,12 @@ the 'main' branch.
 	runs several different checks including running the unit tests, ensuring
 	the documentation builds, checking for code style issues (see the [PEP8](https://peps.python.org/pep-0008/) style guide),
 	and ensuring any changes are covered by unit tests. The CI runs upon opening
-	a PR, and will re-run any time you push commits to that branch. 
-	* You will need to add a change log entry in CHANGES.rst if your contribution
-	is a new feature or bug fix. An entry is not required for small fixes like typos.
+	a PR, and will re-run any time you push commits to that branch.
+	* Our code style checker uses [ruff](https://docs.astral.sh/ruff/), and using
+	`ruff check` locally can be helpful to identify style issues before opening a PR.
+	* You will need to add a change log entry in changes/PRID.fragmenttype.rst
+	if your contribution is a new feature or bug fix.
+	An entry is not required for small fixes like typos.
 	* Your PR will need to be reviewed and approved by at least two maintainers.
 	They may require changes from you before your code can be merged, in which
 	case you will need to go back and make these changes and push them (they will

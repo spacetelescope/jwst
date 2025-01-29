@@ -44,7 +44,7 @@ def subtract_wfss_bkg(
         background-subtracted target data model
     """
     bkg_ref = datamodels.open(bkg_filename)
-    
+
     # get the dispersion axis
     try:
         dispaxis = input_model.meta.wcsinfo.dispersion_direction

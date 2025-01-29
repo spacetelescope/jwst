@@ -20,16 +20,26 @@ the behavior of the processing.
   via `~photutils.background.Background2D`.
   If None, the background value is set to 0.0.
 
-``--background_box_size`` (list of int, default=(32,32))
+``--background_box_size`` (list of int, default=None)
   Box size for the data grid used by `~photutils.background.Background2D`
   when `background_method` = 'model'. For best results, use a
-  box size that evenly divides the input image shape.
+  box size that evenly divides the input image shape. If None, the largest
+  value between 1 and 32 that evenly divides the image dimension is used.
 
 ``--mask_science_regions`` (boolean, default=False)
   For NIRSpec, mask regions of the image defined by WCS bounding
   boxes for slits/slices, as well as any regions known to be
   affected by failed-open MSA shutters.  For MIRI imaging, mask
   regions of the detector not used for science.
+
+``--apply_flat_field`` (boolean, default=False)
+  If set, images are flat-corrected prior to fitting background
+  and noise levels.  A full-frame flat field image
+  (reference type FLAT) is required. For modes that do not provide
+  FLAT files via CRDS, including all NIRSpec modes, a manually
+  generated override flat is required to enable this option.
+  Use the `override_flat` parameter to provide an alternate flat image
+  as needed (see :ref:`overriding reference files <intro_override_reference_file>`).
 
 ``--n_sigma`` (float, default=2.0)
   The sigma-clipping threshold to use when searching for outliers

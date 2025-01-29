@@ -160,17 +160,26 @@ If `extract_width` is also given, the start and stop values are used to define
 the center of the extraction region in the cross-dispersion direction, but the
 width of the aperture is set by the `extract_width` value.
 
-For some instruments and modes, the cross-dispersion start and stop values may be shifted
-to account for the expected location of the source.  This option
-is available for NIRSpec MOS, fixed-slit, and BOTS data, as well as MIRI LRS fixed-slit.
+For some instruments and modes, the extraction region may be adjusted
+to account for the expected location of the source with the `use_source_posn` 
+option. This option is available for NIRSpec MOS, fixed-slit, and BOTS data, 
+as well as MIRI LRS fixed-slit.
 If `use_source_posn` is set to None via the reference file or input parameters,
-it is turned on by default for all point sources in these modes, except NIRSpec BOTS.
-To turn it on for NIRSpec BOTS or extended sources, set `use_source_posn` to True.
+it is turned on by default for all point sources in these modes.
+To turn it on for extended sources, set `use_source_posn` to True.
 To turn it off for any mode, set `use_source_posn` to False.
-If source position correction is enabled, the planned location for the source is
-calculated internally, via header metadata recording the source position and the
-spectral WCS transforms, then used to offset the extraction start and stop values
-in the cross-dispersion direction.
+If source position option is enabled, the planned location for the source and its 
+trace are calculated internally via header metadata recording the source position 
+and the spectral WCS transforms.  The source location will be used to offset the 
+extraction start and stop values in the cross-dispersion direction.
+If `extract_width` is provided, the source extraction region will be centered 
+on the calculated trace with a width set by the `extract_width` value.  
+For resampled, "s2d", products this will effectively be the rectangular 
+extraction region offset in the cross-dispersion direction.  For 
+"cal" or "calints" products that have not been resampled, the extraction region 
+will be curved to follow the calculated trace.
+If no `extract_width` has been provided, the shifted extraction start and 
+stop values will be used.
 
 A more flexible way to specify the source extraction region is via the `src_coeff`
 parameter. `src_coeff` is specified as a list of lists of floating-point
@@ -383,3 +392,9 @@ the data must be given. The steps to run this correction outside the pipeline ar
   flux_cor = rf1d(flux, wave, channel=4)
 
 where `flux` is the extracted spectral data, and the data are from channel 4 for this example.
+
+Extraction for NIRISS SOSS Data
+-------------------------------
+For NIRISS SOSS data, the two spectral orders overlap slightly, so a specialized extraction
+algorithm known as ATOCA (Algorithm to Treat Order ContAmination) is used...
+Link paper 

@@ -20,13 +20,18 @@ from astropy.nddata.bitmask import (
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelLibrary
+from jwst.lib.suffix import remove_suffix
+from pathlib import Path
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 
 # LOCAL:
-from .skymatch import match
+from .skymatch import skymatch
 from .skyimage import SkyImage, SkyGroup
 from .skystatistics import SkyStats
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 __all__ = ['SkyMatchStep']
@@ -42,9 +47,10 @@ class SkyMatchStep(Step):
 
     spec = """
         # General sky matching parameters:
-        skymethod = option('local', 'global', 'match', 'global+match', default='match') # sky computation method
+        skymethod = option('local', 'global', 'match', 'global+match', 'user', default='match') # sky computation method
         match_down = boolean(default=True) # adjust sky to lowest measured value?
         subtract = boolean(default=False) # subtract computed sky from image data?
+        skylist = string(default=None) # Filename pointing to list of (imagename skyval) pairs
 
         # Image's bounding polygon parameters:
         stepsize = integer(default=None) # Max vertex separation
@@ -68,13 +74,17 @@ class SkyMatchStep(Step):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def process(self, input):
+    def process(self, input_models):
         self.log.setLevel(logging.DEBUG)
 
-        if isinstance(input, ModelLibrary):
-            library = input
+        if isinstance(input_models, ModelLibrary):
+            library = input_models
         else:
-            library = ModelLibrary(input, on_disk=not self.in_memory)
+            library = ModelLibrary(input_models, on_disk=not self.in_memory)
+
+        # Method: "user". Use user-provided sky values, and bypass skymatch() altogether.
+        if self.skymethod == 'user':
+            return self._user_sky(library)
 
         self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
 
@@ -105,7 +115,7 @@ class SkyMatchStep(Step):
                     images.append(SkyGroup(sky_images, id=group_index))
 
         # match/compute sky values:
-        match(images, skymethod=self.skymethod, match_down=self.match_down,
+        skymatch(images, skymethod=self.skymethod, match_down=self.match_down,
               subtract=self.subtract)
 
         # set sky background value in each image's meta:
@@ -216,3 +226,50 @@ class SkyMatchStep(Step):
 
         dm.meta.cal_step.skymatch = step_status
         library.shelve(dm, index)
+
+
+    def _user_sky(self, library):
+        """Handle user-provided sky values for each image.
+        """
+
+        if self.skylist is None:
+            raise ValueError('skymethod set to "user", but no sky value file provided.')
+
+        log.info(" ")
+        log.info("Setting sky background of input images to user-provided values "
+                 f"from `skylist` ({self.skylist}).")
+
+        # read the comma separated file and get just the stem of the filename
+        skylist = np.genfromtxt(
+            self.skylist,
+            dtype=[("fname", "<S128"),  ("sky", "f")],
+        )
+        skyfnames, skyvals = skylist['fname'], skylist['sky']
+        skyfnames = skyfnames.astype(str)
+        skyfnames = [remove_suffix(Path(fname).stem)[0] for fname in skyfnames]
+        skyfnames = np.array(skyfnames)
+
+        if len(skyvals) != len(library):
+            raise ValueError(f"Number of entries in skylist ({len(self.skylist)}) does not match "
+                             f"number of input images ({len(library)}).")
+
+        with library:
+            for model in library:
+                fname, _ = remove_suffix(Path(model.meta.filename).stem)
+                sky = skyvals[np.where(skyfnames == fname)]
+                if len(sky) == 0:
+                    raise ValueError(f"Image with stem '{fname}' not found in the skylist.")
+                if len(sky) > 1:
+                    raise ValueError(f"Image with stem '{fname}' found multiple times in the skylist.")
+
+                log.debug(f"Setting sky background of image '{model.meta.filename}' to {float(sky)}.")
+
+                model.meta.background.level = float(sky)
+                model.meta.background.subtracted = self.subtract
+                model.meta.background.method = self.skymethod
+                if self.subtract:
+                    model.data -= sky
+                model.meta.cal_step.skymatch = "COMPLETE"
+                library.shelve(model)
+
+        return library
