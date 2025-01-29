@@ -39,6 +39,6 @@ class AssignMTWcsStep(Step):
                 log.warning("Input data type is not supported.")
                 record_step_status(input, "assign_mtwcs", False)
                 return input
-            
+
         result = assign_moving_target_wcs(input)
         return result

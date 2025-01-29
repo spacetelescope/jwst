@@ -108,10 +108,10 @@ def select_type(fitsfile, level):
                     sca_id = int(hdulist[0].header['SCA_ID'])
                     try:
                         si = sca_to_si_mapping[sca_id]
-                    except KeyError:
+                    except KeyError: # no mapping for that sca_id
                         raise ValueError(
                             "Can not automatically determine filetype from file")
-                except:
+                except KeyError: # no sca_id keyword in header
                     raise ValueError("No SCA_ID keyword present")
         elif input_file_types.is_ncont(hdulist):
             si = 'nircam_ncont'

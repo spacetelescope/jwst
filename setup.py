@@ -1,14 +1,14 @@
-import numpy
+import numpy as np
 from setuptools import setup, Extension
 
 # Setup C module include directories
-include_dirs = [numpy.get_include()]
+include_dirs = [np.get_include()]
 
 # Setup C module macros
 define_macros = [("NUMPY", "1")]
 
 setup(
-    # importing these extension modules is tested in `.github/workflows/build.yml`; 
+    # importing these extension modules is tested in `.github/workflows/build.yml`;
     # when adding new modules here, make sure to add them to the `test_command` entry there
     ext_modules=[
         Extension(

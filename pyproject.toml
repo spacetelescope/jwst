@@ -25,7 +25,7 @@ dependencies = [
     "drizzle>=2.0.0",
     # "gwcs>=0.22.0,<0.23.0",
     "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
-    "numpy>=1.25,<2.0",
+    "numpy>=1.25",
     "opencv-python-headless>=4.6.0.66",
     "photutils>=1.5.0",
     "poppy>=1.0.2",
@@ -106,12 +106,15 @@ sdp = [
 ]
 test = [
     "ci-watson>=0.5.0",
-    "ruff",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
     "pytest-doctestplus>=0.10.0",
     "requests_mock>=1.0",
+]
+contrib = [
+    "pre-commit>=4.1.0",
+    "jwst[test, docs]",
 ]
 
 [build-system]
@@ -253,41 +256,17 @@ omit = [
 [tool.setuptools_scm]
 write_to = "jwst/_version.py"
 
-[tool.ruff]
-exclude = [
-    "jwst/extern",
-    "docs",
-    ".tox",
-    ".eggs",
-    "build",
-]
-line-length = 130
-
-lint.ignore = [
-    "E741", # ambiguous variable name (O/0, l/I, etc.)
-    "E722", # Do not use bare `except`
-    "ANN101", # Missing type annotation for self in method
-    "ANN102", # Missing type annotation for cls in classmethod
-]
-
-[tool.ruff.lint.per-file-ignores]
-"jwst/**/__init__.py" = [
-    "E402", # module-level import not at top of file
-    "F401", # unused import
-    "F403", # import with *
-    "F405", # ambiguous import from *
-]
-"jwst/fits_generator/*" = [
-    "F821", # undefined name
-]
-"jwst/fits_generator/tests/*" = [
-    "F841", # unused variable
-]
-"jwst/associations/tests*" = [
-    "F841", # unused variable
-]
-"jwst/ramp_fitting/tests/*" = [
-    "E402", # module-level import not at top of file
+[tool.numpydoc_validation]
+checks = [
+    "all",
+    "EX01", # No examples section found
+    "SA01", # See Also section not found
+    "ES01", # No extended summary found
+    "GL08", # Object does not have a docstring. Ruff catches these, and allows more granular ignores.
+    "PR01", # Parameters not documented. Already caught by ruff.
+    "PR09", # Parameter description should finish with a period
+    "RT02", # First line of return should contain only the type
+    "RT05", # Return value description should finish with a period
 ]
 
 [tool.mypy]
@@ -295,6 +274,7 @@ warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
 exclude = ["build"]
+python_version = "3.10"
 
 [[tool.mypy.overrides]]
 # don't complain about the installed c parts of this library

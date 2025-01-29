@@ -197,7 +197,7 @@ class OutlierDetectionStep(Step):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Setup output path naming if associations are involved.
-        try:   
+        try:
             if isinstance(input_models, ModelLibrary):
                 asn_id = input_models.asn["asn_id"]
             elif isinstance(input_models, ModelContainer):
@@ -220,7 +220,7 @@ class OutlierDetectionStep(Step):
             )
         self.log.info(f"Outlier Detection asn_id: {asn_id}")
         return
-    
+
     def _set_status(self, input_models, status):
         # this might be called with the input which might be a filename or path
         if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):

@@ -7,7 +7,7 @@ from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
-from jwst.background.background_sub_wfss import (subtract_wfss_bkg, 
+from jwst.background.background_sub_wfss import (subtract_wfss_bkg,
                                             _mask_from_source_cat,
                                             _sufficient_background_pixels,
                                             _ScalingFactorComputer)
@@ -163,7 +163,7 @@ def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     bkg_image = make_wfss_datamodel.copy()
     bkg_image.data = known_bkg
     bkg_image.save(tmp_cwd / Path(bkg_fname))
-    
+
     return bkg_fname
 
 
@@ -231,7 +231,7 @@ def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
 @pytest.mark.parametrize("pupil", ["GRISMC", "GRISMR"])
 def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
     """Test full run of NIRCAM WFSS background subtraction.
-    The residual structure in the background will not look as nice as in 
+    The residual structure in the background will not look as nice as in
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
     while the data is synthetic and just has a mock gradient"""
@@ -254,7 +254,7 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
 @pytest.mark.parametrize("filt", ["GR150C", "GR150R"])
 def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
     """Test full run of NIRISS WFSS background subtraction.
-    The residual structure in the background will not look as nice as in 
+    The residual structure in the background will not look as nice as in
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
     while the data is synthetic and just has a mock gradient"""
@@ -266,7 +266,7 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
                                  wfss_maxiter=3,
                                  wfss_outlier_percent=0.5,
                                  wfss_rms_stop=0,)
-    
+
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
@@ -295,12 +295,12 @@ def test_sufficient_background_pixels():
 
 
 def test_weighted_mean(make_wfss_datamodel, bkg_file):
-    
+
     sci = make_wfss_datamodel.data
     var = make_wfss_datamodel.err**2
     with datamodels.open(bkg_file) as bkg_model:
         bkg = bkg_model.data
-    
+
     # put 0.1% zero values in variance to ensure coverage of previous bug where zero-valued
     # variances in real data caused factor = 1/np.inf = 0
     rng = np.random.default_rng(seed=42)
@@ -332,7 +332,7 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
             assert np.isclose(factor, expected_factor, atol=1e-3)
             assert mask_fraction <= max_mask_fraction
             assert mask_fraction > INITIAL_NAN_FRACTION
-    
+
     # test that variance stopping criterion works
     # tune the RMS thresh to take roughly half the iterations
     # need lots of significant digits here because iterating makes little difference
