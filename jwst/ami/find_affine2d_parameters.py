@@ -27,9 +27,7 @@ def create_afflist_rot(rotdegs):
     alist = []
     for rotd in rotdegs:
         rotd_ = utils.avoidhexsingularity(rotd)
-        alist.append(
-            utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0, name=f"affrot_{rotd_:+.3f}")
-        )
+        alist.append(utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0, name=f"affrot_{rotd_:+.3f}"))
     return alist
 
 

@@ -140,9 +140,7 @@ def apply_lg_plus(
         for i_pos in range(len(nan_locations[0])):
             y_box = nan_locations[0][i_pos]
             x_box = nan_locations[1][i_pos]
-            box = meddata[
-                y_box - hbox : y_box + hbox + 1, x_box - hbox : x_box + hbox + 1
-            ]
+            box = meddata[y_box - hbox : y_box + hbox + 1, x_box - hbox : x_box + hbox + 1]
             median_fill = np.nanmedian(box)
             if np.isnan(median_fill):
                 median_fill = 0  # not ideal
@@ -183,9 +181,7 @@ def apply_lg_plus(
         run_bpfix=run_bpfix,
     )
 
-    ff_t = nrm_core.FringeFitter(
-        niriss, psf_offset_ff=psf_offset_ff, oversample=oversample
-    )
+    ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff, oversample=oversample)
 
     oifitsmodel, oifitsmodel_multi, amilgmodel = ff_t.fit_fringes_all(input_copy)
 

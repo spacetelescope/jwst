@@ -91,9 +91,7 @@ class RawOifits:
             self.pistons[i, :] = nrmslc.fringepistons  # segment pistons in radians
             self.solns[i, :] = nrmslc.soln
 
-        self.fringe_amplitudes_squared = (
-            self.fringe_amplitudes**2
-        )  # squared visibilities
+        self.fringe_amplitudes_squared = self.fringe_amplitudes**2  # squared visibilities
 
     def rotate_matrix(self, cov_mat, theta):
         """
@@ -166,9 +164,7 @@ class RawOifits:
         err_pist : array
             Standard error of the mean of averaged segment pistons
         """
-        covmats_fringes, covmats_triples, covmats_quads = self.observable_covariances(
-            averfunc
-        )
+        covmats_fringes, covmats_triples, covmats_quads = self.observable_covariances(averfunc)
 
         if self.method == "mean":
             avg_fa, _, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
@@ -176,9 +172,7 @@ class RawOifits:
             avg_sqv, _, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             avg_pist, _, err_pist = sigma_clipped_stats(self.pistons, axis=0)
         else:  # median. std_fa is just for comparing to covariance
-            _, avg_fa, std_fa = sigma_clipped_stats(
-                self.fringe_amplitudes, axis=0
-            )  # 21
+            _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21
             _, avg_fp, std_fp = sigma_clipped_stats(self.fringe_phases, axis=0)  # 21
             _, avg_sqv, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             _, avg_pist, err_pist = sigma_clipped_stats(self.pistons, axis=0)
@@ -239,12 +233,8 @@ class RawOifits:
         err_11 : array
             Standard errors of the mean of the second observable. shape e.g. (21)
         """
-        err_00 = np.sqrt(np.array([covmat[0, 0] for covmat in covmatlist])) / np.sqrt(
-            self.nslices
-        )
-        err_11 = np.sqrt(np.array([covmat[1, 1] for covmat in covmatlist])) / np.sqrt(
-            self.nslices
-        )
+        err_00 = np.sqrt(np.array([covmat[0, 0] for covmat in covmatlist])) / np.sqrt(self.nslices)
+        err_11 = np.sqrt(np.array([covmat[1, 1] for covmat in covmatlist])) / np.sqrt(self.nslices)
 
         return err_00, err_11
 

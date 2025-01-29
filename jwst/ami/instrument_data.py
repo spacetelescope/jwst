@@ -249,9 +249,7 @@ class NIRISS:
         outliers2 = np.argwhere(mediandiff > nsigma * std_im)
 
         dqvalues = bpdata[outliers]
-        log.info(
-            f"{len(dqvalues)} additional pixels >10-sig from median of stack found"
-        )
+        log.info(f"{len(dqvalues)} additional pixels >10-sig from median of stack found")
         # decompose DQ values to check if they are already flagged DNU
         count = 0
         for loc, dq_value in zip(outliers2, dqvalues, strict=False):
@@ -260,9 +258,7 @@ class NIRISS:
             for i, elem in enumerate(bitarr[::-1]):
                 if elem == str(1):
                     badval = 2**i
-                    key = next(
-                        key for key, value in dqflags.pixel.items() if value == badval
-                    )
+                    key = next(key for key, value in dqflags.pixel.items() if value == badval)
                     bad_types.append(key)
             if "DO_NOT_USE" not in bad_types:
                 bpdata[loc[0], loc[1], loc[2]] += 1
@@ -284,9 +280,7 @@ class NIRISS:
         )  # +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
-            log.info(
-                "Applying Fourier bad pixel correction to cropped data, updating DQ array"
-            )
+            log.info("Applying Fourier bad pixel correction to cropped data, updating DQ array")
             scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(
                 scidata_ctrd,
                 bpdata_ctrd,
@@ -303,9 +297,7 @@ class NIRISS:
 
         # Make a bad pixel mask, either from real DQ data or zeros if usebp=False
         if self.usebp:
-            log.info(
-                "usebp flag set to TRUE: bad pixels will be excluded from model fit"
-            )
+            log.info("usebp flag set to TRUE: bad pixels will be excluded from model fit")
             dq_dnu = bpdata_ctrd & DO_NOT_USE == DO_NOT_USE
             dq_jump = bpdata_ctrd & JUMP_DET == JUMP_DET
             dqmask_ctrd = dq_dnu | dq_jump
@@ -362,13 +354,9 @@ class NIRISS:
             if vpar == -1:
                 # rotate clockwise  <rotate coords clockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
-                log.info(
-                    f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees"
-                )
+                log.info(f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees")
             else:
                 # counterclockwise  <rotate coords counterclockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
-                log.info(
-                    f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees"
-                )
+                log.info(f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees")
             return ctrs_rot

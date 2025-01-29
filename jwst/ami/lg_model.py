@@ -194,9 +194,7 @@ class LgModel:
 
         return self.psf
 
-    def make_model(
-        self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None
-    ):
+    def make_model(self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None):
         """
         Generate the fringe model.
 
@@ -364,12 +362,12 @@ class LgModel:
         else:
             self.fittingmodel = modelin
         if self.weighted is False:
-            self.soln, self.residual, self.cond, self.linfit_result = (
-                leastsqnrm.matrix_operations(image, self.fittingmodel, dqm=dqm)
+            self.soln, self.residual, self.cond, self.linfit_result = leastsqnrm.matrix_operations(
+                image, self.fittingmodel, dqm=dqm
             )
         else:
-            self.soln, self.residual, self.cond, self.singvals = (
-                leastsqnrm.weighted_operations(image, self.fittingmodel, dqm=dqm)
+            self.soln, self.residual, self.cond, self.singvals = leastsqnrm.weighted_operations(
+                image, self.fittingmodel, dqm=dqm
             )
 
         self.rawDC = self.soln[-1]
@@ -451,9 +449,7 @@ class LgModel:
             if True in np.isnan(self.pixscl_corr):
                 raise ValueError("Correlation produced NaNs, check your work!")
 
-        self.pixscale_optimal, scal_maxy = utils.findmax(
-            mag=self.pixscales, vals=self.pixscl_corr
-        )
+        self.pixscale_optimal, scal_maxy = utils.findmax(mag=self.pixscales, vals=self.pixscl_corr)
         self.pixscale_factor = self.pixscale_optimal / self.pixel
 
         radlist = self.rotlist_rad

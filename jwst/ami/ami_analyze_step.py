@@ -90,17 +90,13 @@ class AmiAnalyzeStep(Step):
             self.log.info("User-defined bandpass provided:")
             self.log.info("\tOVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES")
             self.log.info(f"Using {bandpass.shape[0]} wavelengths for fit.")
-            self.log.info(
-                f"Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}"
-            )
+            self.log.info(f"Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}")
 
             # update attribute and return
             self.bandpass = bandpass
 
         except FileNotFoundError as e:
-            message = (
-                f"File {self.bandpass} could not be found at the specified location."
-            )
+            message = f"File {self.bandpass} could not be found at the specified location."
             raise BandpassError(message) from e
 
         except KeyError as e:
@@ -110,9 +106,7 @@ class AmiAnalyzeStep(Step):
 
         except (IndexError, ValueError) as e:
             message1 = f"Could not use bandpass from {self.bandpass}. It may have the wrong shape. "
-            message2 = (
-                "See documentation for info on creating a custom bandpass ASDF file."
-            )
+            message2 = "See documentation for info on creating a custom bandpass ASDF file."
             raise BandpassError(message1 + message2) from e
 
         else:
@@ -146,9 +140,7 @@ class AmiAnalyzeStep(Step):
             self.affine2d = affine2d
 
         except FileNotFoundError:
-            self.log.info(
-                f"File {self.affine2d} could not be found at the specified location."
-            )
+            self.log.info(f"File {self.affine2d} could not be found at the specified location.")
             self.log.info("\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****")
             affine2d = None
 
@@ -164,9 +156,7 @@ class AmiAnalyzeStep(Step):
 
         except (IndexError, TypeError, ValueError):
             message1 = f"Could not use affine2d from {self.affine2d}. "
-            message2 = (
-                "See documentation for info on creating a custom bandpass ASDF file."
-            )
+            message2 = "See documentation for info on creating a custom bandpass ASDF file."
             self.log.info(message1 + message2)
             self.log.info("\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****")
             affine2d = None
@@ -226,9 +216,7 @@ class AmiAnalyzeStep(Step):
         with datamodels.open(input_data) as input_model:
             # Get the name of the filter throughput reference file to use
             throughput_reffile = self.get_reference_file(input_model, "throughput")
-            self.log.info(
-                f"Using filter throughput reference file {throughput_reffile}"
-            )
+            self.log.info(f"Using filter throughput reference file {throughput_reffile}")
 
             # Check for a valid reference file or user-provided bandpass
             if (throughput_reffile == "N/A") & (bandpass is None):

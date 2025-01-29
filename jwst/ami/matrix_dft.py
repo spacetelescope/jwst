@@ -244,13 +244,9 @@ class MatrixFourierTransform:
         if centering == FFTRECT:  # for backwards compatibility
             centering = FFTSTYLE
         if centering not in CENTERING_CHOICES:
-            raise ValueError(
-                "'centering' must be one of [ADJUSTABLE, SYMMETRIC, FFTSTYLE]"
-            )
+            raise ValueError("'centering' must be one of [ADJUSTABLE, SYMMETRIC, FFTSTYLE]")
         self.centering = centering
-        _log.debug(
-            f"MatrixFourierTransform initialized using centering type = {centering}"
-        )
+        _log.debug(f"MatrixFourierTransform initialized using centering type = {centering}")
 
     def _validate_args(self, nlam_d, npix, offset):
         if self.centering == SYMMETRIC:

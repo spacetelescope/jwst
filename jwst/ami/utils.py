@@ -158,9 +158,7 @@ class Affine2d:
         Since this uses an offset xo yo in pixels of the affine transformation,
         these are *NOT* affected by the 'oversample' in image space.  The
         vector it is dotted with is in image space."""
-        self.phase_2vector = (
-            np.array((my * xo - sx * yo, mx * yo - sy * xo)) / self.determinant
-        )
+        self.phase_2vector = np.array((my * xo - sx * yo, mx * yo - sy * xo)) / self.determinant
 
     def forward(self, point):
         """
@@ -202,14 +200,8 @@ class Affine2d:
         trans_point = (
             np.array(
                 (
-                    self.my * point[0]
-                    - self.sx * point[1]
-                    - self.my * self.xo
-                    + self.sx * self.yo,
-                    self.mx * point[1]
-                    - self.sy * point[0]
-                    - self.mx * self.yo
-                    + self.sy * self.xo,
+                    self.my * point[0] - self.sx * point[1] - self.my * self.xo + self.sx * self.yo,
+                    self.mx * point[1] - self.sy * point[0] - self.mx * self.yo + self.sy * self.xo,
                 )
             )
             * self.determinant
@@ -383,9 +375,7 @@ def trim(m, s):
         # Go through all indices in the mask:
         # the x & y lists test for any index being an edge index - if none are
         # on the edge, remember the indices in new list
-        if (
-            m[0][ii] == 0 or m[1][ii] == 0 or m[0][ii] == s - 1 or m[1][ii] == s - 1
-        ) is False:
+        if (m[0][ii] == 0 or m[1][ii] == 0 or m[0][ii] == s - 1 or m[1][ii] == s - 1) is False:
             xl.append(m[0][ii])
             yl.append(m[1][ii])
     m_masked = (np.asarray(xl), np.asarray(yl))
@@ -444,9 +434,7 @@ def center_imagepeak(img, r="default", cntrimg=True):
     else:
         pass
 
-    cropped = img[
-        int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)
-    ]
+    cropped = img[int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)]
 
     return cropped
 
@@ -904,9 +892,7 @@ def lambdasteps(lam, frac_width, steps=4):
     steps = steps / 2.0
 
     # add some very small number to the end to include the last number.
-    lambda_array = np.arange(
-        -1 * frac * lam + lam, frac * lam + lam + 10e-10, frac * lam / steps
-    )
+    lambda_array = np.arange(-1 * frac * lam + lam, frac * lam + lam + 10e-10, frac * lam / steps)
 
     return lambda_array
 
@@ -1006,9 +992,7 @@ def rotate2dccw(vectors, thetarad):
     c, s = (np.cos(thetarad), np.sin(thetarad))
     ctrs_rotated = []
     for vector in vectors:
-        ctrs_rotated.append(
-            [c * vector[0] - s * vector[1], s * vector[0] + c * vector[1]]
-        )
+        ctrs_rotated.append([c * vector[0] - s * vector[1], s * vector[0] + c * vector[1]])
     rot_vectors = np.array(ctrs_rotated)
 
     return rot_vectors
@@ -1144,9 +1128,7 @@ def img_median_replace(img_model, box_size):
 
     # check to see if any of the pixels are bad
     if num_nan + num_dq_bad > 0:
-        log.info(
-            f"Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels"
-        )
+        log.info(f"Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels")
         bad_locations = np.where(
             np.isnan(input_data) | np.equal(input_dq, dqflags.pixel["DO_NOT_USE"])
         )
@@ -1247,9 +1229,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     effstims = []
 
     binfac = ptsin // nlambda
-    log.debug(
-        f"Binning spectrum by {binfac:d} from {ptsin:d} points to {nlambda:d} points"
-    )
+    log.debug(f"Binning spectrum by {binfac:d} from {ptsin:d} points to {nlambda:d} points")
     for wave in wavesteps:
         log.debug(
             f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
@@ -1274,9 +1254,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     wave_m = wavesteps.to_value(u.m)  # convert to meters
     effstims = effstims.to_value()  # strip units
 
-    finalsrc = np.array(
-        (effstims, wave_m)
-    ).T  # this is the order expected by InstrumentData
+    finalsrc = np.array((effstims, wave_m)).T  # this is the order expected by InstrumentData
 
     return finalsrc
 
@@ -1300,9 +1278,7 @@ def get_cw_beta(bandpass):
     """
     wt = bandpass[:, 0]
     wl = bandpass[:, 1]
-    cw = (
-        wl * wt
-    ).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
+    cw = (wl * wt).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
     area = simpson(wt, x=wl)
     ew = area / wt.max()  # equivalent width
     beta = ew / cw  # fractional bandpass
@@ -1341,9 +1317,7 @@ def handle_bandpass(bandpass, throughput_model):
 
     else:
         # Default behavior: get the filter and source spectrum
-        log.info(
-            f"Reading throughput model data for {throughput_model.meta.instrument.filter}."
-        )
+        log.info(f"Reading throughput model data for {throughput_model.meta.instrument.filter}.")
         filt_spec = get_filt_spec(throughput_model)
         log.info("Using flat spectrum model.")
         flat_spec = get_flat_spec()
@@ -1405,12 +1379,7 @@ def degrees_per_pixel(datamodel):
         Pixel scale in degrees/pixel
     """
     wcsinfo = datamodel.meta.wcsinfo._instance  # noqa: SLF001
-    if (
-        "cd1_1" in wcsinfo
-        and "cd1_2" in wcsinfo
-        and "cd2_1" in wcsinfo
-        and "cd2_2" in wcsinfo
-    ):
+    if "cd1_1" in wcsinfo and "cd1_2" in wcsinfo and "cd2_1" in wcsinfo and "cd2_2" in wcsinfo:
         cd11 = datamodel.meta.wcsinfo.cd1_1
         cd12 = datamodel.meta.wcsinfo.cd1_2
         cd21 = datamodel.meta.wcsinfo.cd2_1
@@ -1427,7 +1396,5 @@ def degrees_per_pixel(datamodel):
         log.debug("Used CDELT[12] for pixel scales")
         return datamodel.meta.wcsinfo.cdelt1, datamodel.meta.wcsinfo.cdelt2
     else:
-        log.warning(
-            "WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix"
-        )
+        log.warning("WARNING: NIRISS pixel scales not in header.  Using 65.6 mas in deg/pix")
         return 65.6 / (60.0 * 60.0 * 1000), 65.6 / (60.0 * 60.0 * 1000)
