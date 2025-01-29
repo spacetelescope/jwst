@@ -8,7 +8,6 @@ exclude =
     jwst/extern,
     docs,
     jwst/associations,
-    jwst/fits_generator,
     .tox,
     .eggs,
     build

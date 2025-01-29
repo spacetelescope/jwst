@@ -150,11 +150,6 @@ include = ["pytest_jwst*", "jwst*"]
     "*.cat",
     "*.hdr",
 ]
-"jwst.fits_generator" = [
-    "templates/*.inc",
-    "templates/*.txt",
-    "tests/okfile/*.prop",
-]
 "jwst.lib" = [
     "tests/data/*.asdf",
     "tests/data/**/*.db",
@@ -324,11 +319,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "scripts"
 name = "Scripts"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "fits_generator"
-name = "``fits_generator``"
 showcontent = true
 
 [[tool.towncrier.type]]
