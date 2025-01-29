@@ -32,7 +32,6 @@ repos:
       - id: numpydoc-validation
         exclude: |
           (?x)^(
-            jwst/assign_mtwcs/.* |
             jwst/assign_wcs/.* |
             jwst/associations/.* |
             jwst/background/.* |
