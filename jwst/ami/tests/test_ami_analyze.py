@@ -25,8 +25,7 @@ from numpy.testing import assert_allclose
 # utils module tests:
 #
 def test_utils_rebin():
-    ''' Test of rebin() and krebin() in utils module '''
-
+    """Test of rebin() and krebin() in utils module"""
     arr = np.arange(24).reshape((3, 8)) / 10.0
     rc = tuple((2, 2))
 
@@ -37,8 +36,7 @@ def test_utils_rebin():
 
 
 def test_utils_quadratic():
-    ''' Test of quadratic in utils module '''
-
+    """Test of quadratic in utils module"""
     x = np.array([0.5, 0.55, 0.55, 0.65, 0.70, 0.8, 0.85, 1.0, 1.01, 1.02, 1.03, 1.04, 1.05])
     p = np.array([-2.0, 3.0, 7.0])
 
@@ -55,8 +53,7 @@ def test_utils_quadratic():
 
 
 def test_utils_findmax():
-    ''' Test of findmax in utils module '''
-
+    """Test of findmax in utils module"""
     mag = np.arange(9) + 1.0
     delt = 1.0e-7
     mag[2] += delt
@@ -78,10 +75,9 @@ def test_utils_findmax():
 
 
 def test_utils_makeA():
-    ''' Test of makeA in utils module '''
-
+    """Test of makeA in utils module"""
     nh = 4  # number of holes
-    arr = utils.makeA(nh)
+    arr = utils.make_a(nh)
 
     true_arr = np.array(
         [
@@ -97,8 +93,7 @@ def test_utils_makeA():
 
 
 def test_utils_fringes2pistons():
-    ''' Test of fringes2pistons in utils module  '''
-
+    """Test of fringes2pistons in utils module"""
     fringephases = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1])
     nholes = 5
 
@@ -109,8 +104,7 @@ def test_utils_fringes2pistons():
 
 
 def test_utils_rcrosscorrelate():
-    ''' Test of rcrosscorrelate() in utils module '''
-
+    """Test of rcrosscorrelate() in utils module"""
     a = np.array(
         [
             [2.0, 3.0, 4.0, 5.0],
@@ -143,8 +137,7 @@ def test_utils_rcrosscorrelate():
 
 
 def test_utils_crosscorrelate():
-    ''' Test of crosscorrelate() in utils module '''
-
+    """Test of crosscorrelate() in utils module"""
     a = np.array(
         [
             [2.0, 3.0, 4.0, 5.0],
@@ -177,8 +170,7 @@ def test_utils_crosscorrelate():
 
 
 def test_utils_imgmedian():
-    '''Test of img_median_replace() in utils module'''
-
+    """Test of img_median_replace() in utils module"""
     # create input image model containing NaN's and DO_NOT_USE flags
     data = np.array(
         [
@@ -538,7 +530,6 @@ def test_leastsqnrm_closurephase():
     """Test of closurephase in leastsqnrm module.
     Calculate closure phases between each pair of holes.
     """
-
     n = 7  # number of holes
     deltap = np.array(
         [
@@ -762,13 +753,13 @@ def test_leastsqnrm_multiplyenv():
 # ---------------------------------------------------------------
 # hexee module tests:
 #
-def test_hexee_g_eeAG():
-    """Test of g_eeAG() in the hexee module.
+def test_hexee_g_eeag():
+    """Test of g_eeag() in the hexee module.
     Calculate the Fourier transform of one half of a hexagon that is
     bisected from one corner to its diametrically opposite corner.
     """
     xi, eta, kwargs = setup_hexee()
-    g = hexee.g_eeAG(xi, eta, **kwargs)
+    g = hexee.g_eeag(xi, eta, **kwargs)
 
     true_g = np.array(
         [
@@ -786,8 +777,8 @@ def test_hexee_glimit():
     Calculate the analytic limit of the Fourier transform of one half of the
     hexagon along eta=0.
     """
-    xi, eta, kwargs = setup_hexee()
-    g = hexee.glimit(xi, eta, **kwargs)
+    xi, _, kwargs = setup_hexee()
+    g = hexee.glimit(xi, **kwargs)
 
     true_g = np.array(
         [
@@ -804,8 +795,7 @@ def test_hexee_glimit():
 # analyticnrm2 module tests:
 #
 def test_analyticnrm2_psf(setup_sf):
-    ''' Test of psf() in the analyticnrm2 module '''
-
+    """Test of psf() in the analyticnrm2 module"""
     pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
     shape = "hex"
 
@@ -826,11 +816,10 @@ def test_analyticnrm2_psf(setup_sf):
 
 
 def test_analyticnrm2_asf_hex(setup_sf):
-    ''' Test of asf_hex() in the analyticnrm2 module FOR HEX '''
+    """Test of asf_hex() in the analyticnrm2 module FOR HEX"""
+    pixel, fov, oversample, _ctrs, d, lam, _phi, psf_offset, aff_obj = setup_sf
 
-    pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
-
-    asf = asf_hex(pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj)
+    asf = asf_hex(pixel, fov, oversample, d, lam, psf_offset, aff_obj)
 
     true_asf = np.array(
         [
@@ -889,8 +878,7 @@ def test_analyticnrm2_asf_hex(setup_sf):
 
 
 def test_analyticnrm2_interf(setup_sf):
-    ''' Test of interf() in the analyticnrm2 module '''
-
+    """Test of interf() in the analyticnrm2 module"""
     ASIZE = 4
     kx = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
     ky = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
@@ -954,8 +942,7 @@ def test_analyticnrm2_interf(setup_sf):
 
 
 def test_analyticnrm2_phasor():
-    ''' Test of phasor() in the analyticnrm2 module '''
-
+    """Test of phasor() in the analyticnrm2 module"""
     ASIZE = 4
     kx = np.arange(ASIZE * ASIZE).reshape((ASIZE, ASIZE))
 

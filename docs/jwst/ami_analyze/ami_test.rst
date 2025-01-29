@@ -81,7 +81,7 @@ ________________________
 
 hexee module tests:
 +++++++++++++++++++
- -  Test of g_eeAG()
+ -  Test of g_eeag()
         Calculate the Fourier transform of one half of a hexagon that is
         bisected from one corner to its diametrically opposite corner.
  -  Test of glimit()
