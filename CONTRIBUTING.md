@@ -416,6 +416,7 @@ The following style checks are performed:
 	The docstring style for the `jwst` repository generally conforms to the
 	[Numpy style guide](https://numpydoc.readthedocs.io/en/latest/format.html), and the docstring
 	style rules are enforced using [numpydoc-validation](https://numpydoc.readthedocs.io/en/latest/validation.html).
+
 	To run these checks standalone, use the command
 
         >> pre-commit run numpydoc-validation
@@ -427,6 +428,7 @@ The following style checks are performed:
 	To run the spell checker standalone, use the command
 
         >> pre-commit run codespell
+
 
 * **PEP-compliant type hints**
 
