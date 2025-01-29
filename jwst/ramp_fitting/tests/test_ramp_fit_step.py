@@ -1,9 +1,21 @@
 import pytest
+import logging
 import numpy as np
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
-from jwst.ramp_fitting.ramp_fit_step import RampFitStep
+from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
+from jwst.tests.helpers import LogWatcher
+
+@pytest.fixture
+def log_watcher(monkeypatch):
+    # Set a log watcher to check for a log message at any level
+    # in RampFitStep
+    watcher = LogWatcher('')
+    logger = logging.getLogger('stpipe')
+    for level in ['debug', 'info', 'warning', 'error']:
+        monkeypatch.setattr(logger, level, watcher)
+    return watcher
 
 DELIM = "-" * 80
 
@@ -271,6 +283,22 @@ def test_set_groups(generate_miri_reffiles, setup_inputs):
     slopes, cubemodel = RampFitStep.call(rampmodel, override_gain=gain, override_readnoise=rnmodel,
                                          firstgroup=firstgroup, lastgroup=lastgroup)
     np.testing.assert_allclose(slopes.data, firstgroup+lastgroup, rtol=1e-7)
+
+def test_warnings(log_watcher):
+    # Test user warnings
+    ngroups = 20
+    groupdqflags = dqflags.group
+    groupdq = np.zeros((1, ngroups, 1024, 1024), dtype=np.uint16)
+    firstgroup = -10
+    lastgroup = None
+    log_watcher.message = "first group < 0, reset to 0"
+    set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
+    log_watcher.assert_seen()
+    firstgroup = 3
+    lastgroup = ngroups
+    log_watcher.message = f"Last group number >= #groups ({ngroups}), reset to {ngroups-1}"
+    set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
+    log_watcher.assert_seen()
 
 def one_group_suppressed(nints, suppress, setup_inputs):
     """
