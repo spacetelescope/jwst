@@ -52,7 +52,7 @@ class Affine2d:
     coordinates. We know the analytical form of F(u,v) from the literature,
     and need to calculate G(u,v) at a grid of points in the (u,v) space, with
     two lattice vectors a and b defining the grid.  These lattice vectors have
-    components a=(au,av) and b=(bu,bv) along the u and v axes. # codespell:ignore bu
+    components a=(a_u,a_v) and b=(b_u,b_v) along the u and v axes.
 
     Discussion with Randall Telfer (2018.05.18)  clarified that:
 
