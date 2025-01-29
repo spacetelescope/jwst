@@ -108,6 +108,10 @@ def imaging(input_model, reference_files):
 
     lam = wrange[0] + (wrange[1] - wrange[0]) * .5
 
+    # Scale wavelengths to microns if msa coordinates are terminal
+    if input_model.meta.instrument.filter == 'OPAQUE':
+        lam *= 1e6
+
     lam_model = Mapping((0, 1, 1)) | Identity(2) & Const1D(lam)
 
     gwa2msa = gwa_through | rotation | dircos2unitless | col | lam_model
@@ -148,8 +152,7 @@ def imaging(input_model, reference_files):
                             (v2v3vacorr, tel2sky),
                             (world, None)]
     else:
-        # convert to microns if the pipeline ends earlier
-        gwa2msa = (gwa2msa | Identity(2) & Scale(1e6)).rename('gwa2msa')
+        # Pipeline ends with MSA coordinates
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),

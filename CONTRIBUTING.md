@@ -436,14 +436,10 @@ The following style checks are performed:
     required for contributions. If type hints are used, though, their compliance with 
 	[PEP-484](https://peps.python.org/pep-0484/) standards
     is enforced using [mypy](https://mypy.readthedocs.io/en/stable/index.html).
-    To run these checks locally, first `pip install mypy` then use the command
+    To run these checks locally, use the command
 
-        >> mypy .
+        >> pre-commit run mypy
 
-    from within the `jwst` repository. This check is not run through pre-commit;
-	it's instead handled separately from a different CI workflow. This means that if you are
-	using type hints, you may encounter a situation where `pre-commit` passes locally but
-	the CI checks fail on a pull request.
 
 ---
 **Note:** At time of writing, many submodules in the repository do not yet conform to the style rules;

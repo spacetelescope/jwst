@@ -278,6 +278,7 @@ warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
 exclude = ["build"]
+python_version = "3.10"
 
 [[tool.mypy.overrides]]
 # don't complain about the installed c parts of this library
