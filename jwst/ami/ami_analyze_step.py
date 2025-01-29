@@ -18,7 +18,7 @@ XO_COMM = 0.0
 YO_COMM = 0.0
 
 
-class BandpassError:
+class BandpassError(Exception):
     pass
 
 
