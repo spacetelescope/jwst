@@ -282,7 +282,7 @@ def apply_emicorr(output_model, emicorr_model,
             log.debug('  Working on integration: {}'.format(ninti+1))
             # Read in this integration
             data = output_model.data[ninti].copy()
-            
+
             # Remove source signal and fixed bias from each integration ramp
             # (linear is good enough for phase finding)
 
