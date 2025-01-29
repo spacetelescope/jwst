@@ -1,1 +1,0 @@
-Apply code style rules to ``pixel_replace``.
