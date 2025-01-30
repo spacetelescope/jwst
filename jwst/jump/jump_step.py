@@ -79,13 +79,13 @@ class JumpStep(Step):
     def process(self, step_input):
         """Step method to execute step computations.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         step_input : RampModel
             The ramp model input from the previous step.
 
-        Return:
-        ------
+        Returns
+        -------
         result : RampModel
             The ramp model with jump step as COMPLETE and jumps detected or
             the jump step is SKIPPED.
@@ -145,13 +145,13 @@ class JumpStep(Step):
     def _setup_jump_data(self, result):
         """Create a JumpData instance to be used by STCAL jump.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         result : RampModel
             The ramp model input from the previous step.
 
-        Return:
-        ------
+        Returns
+        -------
         jump_data : JumpData
             The data container to be used to run the STCAL detect_jumps_data.
 
