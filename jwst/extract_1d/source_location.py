@@ -453,7 +453,7 @@ def _nod_pair_from_dither(input_model, middle_wl, dispaxis):
 
 
 def _nod_pair_from_slitpos(input_model, middle_wl):
-    """Estimate a nod pair location from the source slit postion.
+    """Estimate a nod pair location from the source slit position.
 
     Expected location is at the opposite spatial position from
     the input model.  Requires 'slit_frame' transform in the WCS.
