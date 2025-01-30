@@ -35,7 +35,7 @@ class Combine1dStep(Step):
     class_alias = "combine_1d"
 
     spec = """
-    exptime_key = string(default="exposure_time")
+    exptime_key = string(default="exposure_time") # Metadata key to use for weighting
     sigma_clip = float(default=None) # Factor for clipping outliers
     """ # noqa: E501
 
