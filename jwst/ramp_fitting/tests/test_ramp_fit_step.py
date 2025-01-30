@@ -12,7 +12,7 @@ def log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
     # in RampFitStep
     watcher = LogWatcher('')
-    logger = logging.getLogger('stpipe')
+    logger = logging.getLogger('jwst.ramp_fitting.ramp_fit_step')
     for level in ['debug', 'info', 'warning', 'error']:
         monkeypatch.setattr(logger, level, watcher)
     return watcher
@@ -27,6 +27,12 @@ JUMP = test_dq_flags["JUMP_DET"]
 SAT = test_dq_flags["SATURATED"]
 
 MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
+
+GROUP_SELECTION_PARAMETERS = [
+    (-10, None, "first group < 0, reset to 0"),
+    (3, 20, "Last group number >= #groups (20), reset to 19"),
+    (10, 6, "firstgroup (10) cannot be >= lastgroup (6)")
+]
 
 
 @pytest.fixture(scope="module")
@@ -270,7 +276,7 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
 
     assert len(cube_model.int_times) == nints
 
-def test_set_groups(generate_miri_reffiles, setup_inputs):
+def test_set_groups(generate_miri_reffiles, setup_inputs, log_watcher):
     # Test results when using the firstgroup and lastgroup options
     ngroups = 20
     rampmodel, gdq, rnmodel, pixdq, err, gain = setup_inputs(ngroups=ngroups)
@@ -284,19 +290,13 @@ def test_set_groups(generate_miri_reffiles, setup_inputs):
                                          firstgroup=firstgroup, lastgroup=lastgroup)
     np.testing.assert_allclose(slopes.data, firstgroup+lastgroup, rtol=1e-7)
 
-def test_warnings(log_watcher):
+@pytest.mark.parametrize("firstgroup, lastgroup, message", GROUP_SELECTION_PARAMETERS)
+def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
     # Test user warnings
     ngroups = 20
     groupdqflags = dqflags.group
     groupdq = np.zeros((1, ngroups, 1024, 1024), dtype=np.uint16)
-    firstgroup = -10
-    lastgroup = None
-    log_watcher.message = "first group < 0, reset to 0"
-    set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
-    log_watcher.assert_seen()
-    firstgroup = 3
-    lastgroup = ngroups
-    log_watcher.message = f"Last group number >= #groups ({ngroups}), reset to {ngroups-1}"
+    log_watcher.message = message
     set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
     log_watcher.assert_seen()
 
