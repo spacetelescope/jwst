@@ -365,7 +365,7 @@ def clip_to_background(
                 data_for_stats, bins=2000, range=(center - 4.0 * sigma, center + 4.0 * sigma)
             )
         except ValueError:
-            log.error("Histogram failed; using clip center and sigma.")  # noqa: TRY400
+            log.error("Histogram failed; using clip center and sigma.")
             hist, edges = None, None
 
         param_opt = None
@@ -383,7 +383,7 @@ def clip_to_background(
             try:
                 param_opt, _ = curve_fit(gaussian, values, hist, p0=param_start, bounds=bounds)
             except RuntimeError:
-                log.error("Gaussian fit failed; using clip center and sigma.")  # noqa: TRY400
+                log.error("Gaussian fit failed; using clip center and sigma.")
                 param_opt = None
 
             if verbose:
@@ -619,7 +619,7 @@ def background_level(image, mask, background_method="median", background_box_siz
                     )
                 background = bkg.background
             except ValueError:
-                log.error("Background fit failed, using median value.")  # noqa: TRY400
+                log.error("Background fit failed, using median value.")
                 background = np.nanmedian(image[mask])
         else:
             background = np.nanmedian(image[mask])

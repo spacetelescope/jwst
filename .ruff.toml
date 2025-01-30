@@ -123,6 +123,7 @@ ignore = [
     "UP008", # use super() instead of super(class, self). no harm being explicit
     "UP015", # unnecessary open(file, "r"). no harm being explicit
     "TRY003", # prevents custom exception messages not defined in exception itself.
+    "TRY400", # enforces log.exception instead of log.error in except clause.
     "ISC001", # single line implicit string concatenation. formatter recommends ignoring this.
 ]
 
