@@ -111,7 +111,7 @@ class JumpStep(Step):
             result = input_model.copy()
             jump_data = self._setup_jump_data(result)
             new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(jump_data)
-                
+
             # Update the DQ arrays of the output model with the jump detection results
             result.groupdq = new_gdq
             result.pixeldq = new_pdq
