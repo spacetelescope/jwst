@@ -106,11 +106,6 @@ def setup_inputs():
     def _setup(ngroups=10, readnoise=10, nints=1, nrows=1024, ncols=1032,
                nframes=1, grouptime=1.0, gain=1, deltatime=1, subarray=False):
 
-        if subarray:
-            shape = (nints, ngroups, 20, 20)
-        else:
-            shape = (nints, ngroups, nrows, ncols)
-
         times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
 
         data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
@@ -883,7 +878,6 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
 
     nrows = model.data.shape[3]
     num_cores = multiprocessing.cpu_count()
-    max_cores = 'half'
     numslices = num_cores // 2
     if numslices > 1:
         yincrement = int(nrows / numslices)
