@@ -1669,7 +1669,7 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
 
     For pixels impacted by cosmic rays, neighboring pixels that are not
     already flagged as saturated will also be flagged as JUMP_DET. If a
-    neigboring pixel has been flagged as saturated, it should not also be
+    neighboring pixel has been flagged as saturated, it should not also be
     flagged as JUMP_DET.  This test checks if both of those types of
     neighboring pixels are correctly flagged, and tests more cases than
     covered by the tests test_nirspec_saturated_pix() and
