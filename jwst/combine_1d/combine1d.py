@@ -19,19 +19,38 @@ class InputSpectrumModel:
 
     Attributes
     ----------
-    wavelength
-    flux
-    flux_error
-    surf_bright
-    sb_error
-    dq
-    nelem
-    weight
-    unit_weight
-    right_ascension
-    declination
-    source_id
-    source_type
+    wavelength : ndarray
+        Input wavelength.
+    flux : ndarray
+        Input flux.
+    flux_error : ndarray
+        Input error on the flux.
+    surf_bright : ndarray
+        Input surface brightness.
+    sb_error : ndarray
+        Input error on the surface brightness.
+    dq : ndarray
+        Input DQ array.
+    nelem : int
+        Number of spectral elements.
+    weight : ndarray
+        Weight value for each spectral element.
+    unit_weight : bool
+        Flag to indicate uniform weights are used.
+    right_ascension : ndarray
+        RA value for each spectral element.
+    declination : ndarray
+        Dec value for each spectral element.
+    name : str
+        Slit name for the spectrum.
+    source_id : int
+        Source ID for the spectrum.
+    source_type : str
+        Source type for the spectrum.
+    flux_unit : str
+        Unit for the flux values.
+    sb_unit : str
+        Unit for the surface brightness values.
     """
 
     def __init__(self, ms, spec, exptime_key):
@@ -109,16 +128,26 @@ class OutputSpectrumModel:
 
     Attributes
     ----------
-    wavelength
-    flux
-    flux_error
-    surf_bright
-    sb_error
-    dq
-    weight
-    count
-    wcs
-    normalized
+    wavelength : ndarray
+        Output wavelength.
+    flux : ndarray
+        Output flux.
+    flux_error : ndarray
+        Output error on the flux.
+    surf_bright : ndarray
+        Output surface brightness.
+    sb_error : ndarray
+        Output error on the surface brightness.
+    dq : ndarray
+        Output DQ array.
+    weight : ndarray
+        Weight value for each spectral element.
+    count : ndarray
+        Input value count for each output spectral element.
+    wcs : gwcs.WCS
+        Output spectral WCS.
+    normalized : bool
+        Flag to indicate data has been combined (sums are normalized).
     """
 
     def __init__(self):
