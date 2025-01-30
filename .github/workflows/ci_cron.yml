@@ -46,7 +46,6 @@ jobs:
       cache-path: /tmp/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
       envs: |
-        - macos: py310-xdist
         - macos: py312-xdist
         - linux: py311-pyargs-xdist
         - linux: py3-pyargs-xdist
