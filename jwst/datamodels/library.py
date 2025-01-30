@@ -28,6 +28,10 @@ class ModelLibrary(AbstractModelLibrary):
         """
         return [member["exptype"] for member in self._members]
 
+    @property
+    def asn_dir(self):
+        return self._asn_dir
+
     def indices_for_exptype(self, exptype):
         """
         Determine the indices of models corresponding to ``exptype``.

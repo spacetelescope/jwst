@@ -4,12 +4,15 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec
-from .utils import (flag_crs_in_models,
-                    flag_crs_in_models_with_resampling,
-                    median_with_resampling,
-                    median_without_resampling)
+from .utils import (
+    flag_crs_in_models,
+    flag_crs_in_models_with_resampling,
+    median_with_resampling,
+    median_without_resampling,
+)
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -72,7 +75,8 @@ def detect_outliers(
             maskpt,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
-            return_error=True)
+            return_error=True,
+        )
     else:
         median_data, median_wcs, median_err = median_without_resampling(
             library,
@@ -81,7 +85,7 @@ def detect_outliers(
             good_bits,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
-            return_error=True
+            return_error=True,
         )
 
     # Perform outlier detection using statistical comparisons between
@@ -98,11 +102,8 @@ def detect_outliers(
             backg,
             median_err=median_err,
             save_blot=save_intermediate_results,
-            make_output_path=make_output_path
+            make_output_path=make_output_path,
         )
     else:
-        flag_crs_in_models(input_models,
-                           median_data,
-                           snr1,
-                           median_err=median_err)
+        flag_crs_in_models(input_models, median_data, snr1, median_err=median_err)
     return input_models

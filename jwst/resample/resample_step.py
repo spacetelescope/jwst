@@ -18,7 +18,7 @@ __all__ = ["ResampleStep"]
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
-GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleStep(Step):
@@ -31,7 +31,7 @@ class ResampleStep(Step):
         ``output_wcs.bounding_box``), ``crpix``
 
     Parameters
-    -----------
+    ----------
     input :  ~jwst.datamodels.JwstDataModel or ~jwst.associations.Association
         Single filename for either a single image or an association table.
     """
@@ -58,7 +58,6 @@ class ResampleStep(Step):
     reference_file_types: list = []
 
     def process(self, input):
-
         if isinstance(input, ModelLibrary):
             input_models = input
         elif isinstance(input, (str, dict, list)):
@@ -103,7 +102,7 @@ class ResampleStep(Step):
 
         with result:
             for model in result:
-                model.meta.cal_step.resample = 'COMPLETE'
+                model.meta.cal_step.resample = "COMPLETE"
                 self.update_fits_wcs(model)
                 util.update_s_region_imaging(model)
 
@@ -114,7 +113,7 @@ class ResampleStep(Step):
                     model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
                 else:
                     model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-                model.meta.resample.pixfrac = kwargs['pixfrac']
+                model.meta.resample.pixfrac = kwargs["pixfrac"]
                 result.shelve(model)
 
             if len(result) == 1:
@@ -157,7 +156,7 @@ class ResampleStep(Step):
         if n == 2:
             return None
         elif n == 0:
-            if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
+            if min_vals and sum(x >= y for x, y in zip(vals, min_vals, strict=False)) != 2:
                 raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
             return list(vals)
         else:
@@ -207,8 +206,7 @@ class ResampleStep(Step):
             wcs.pixel_shape = wcs.array_shape[::-1]
         elif wcs.bounding_box is not None:
             wcs.array_shape = tuple(
-                int(axs[1] + 0.5)
-                for axs in wcs.bounding_box.bounding_box(order="C")
+                int(axs[1] + 0.5) for axs in wcs.bounding_box.bounding_box(order="C")
             )
             wcs.pixel_shape = wcs.array_shape[::-1]
         else:
@@ -233,28 +231,23 @@ class ResampleStep(Step):
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders,
-            in_memory=self.in_memory
+            in_memory=self.in_memory,
         )
 
         # Custom output WCS parameters.
-        kwargs['output_shape'] = self.check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
+        kwargs["output_shape"] = self.check_list_pars(
+            self.output_shape, "output_shape", min_vals=[1, 1]
         )
-        kwargs['output_wcs'] = self.load_custom_wcs(
-            self.output_wcs,
-            kwargs['output_shape']
-        )
-        kwargs['crpix'] = self.check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self.check_list_pars(self.crval, 'crval')
-        kwargs['rotation'] = self.rotation
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+        kwargs["output_wcs"] = self.load_custom_wcs(self.output_wcs, kwargs["output_shape"])
+        kwargs["crpix"] = self.check_list_pars(self.crpix, "crpix")
+        kwargs["crval"] = self.check_list_pars(self.crval, "crval")
+        kwargs["rotation"] = self.rotation
+        kwargs["pscale"] = self.pixel_scale
+        kwargs["pscale_ratio"] = self.pixel_scale_ratio
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug('   {}={}'.format(k, v))
+            self.log.debug(f"   {k}={v}")
 
         return kwargs
 
@@ -289,8 +282,7 @@ class ResampleStep(Step):
         model.meta.wcsinfo.ctype2 = "DEC--TAN"
 
         # Remove no longer relevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
+        rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref", "v3yangle", "vparity"]
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]

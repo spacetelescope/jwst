@@ -1,6 +1,4 @@
-"""
-Module to detect sources using image segmentation.
-"""
+"""Detect sources using image segmentation."""
 
 import logging
 import warnings
@@ -20,8 +18,7 @@ log.setLevel(logging.DEBUG)
 
 class JWSTBackground:
     """
-    Class to estimate a 2D background and background RMS noise in an
-    image.
+    Estimate a 2D background and background RMS noise in an image.
 
     Parameters
     ----------
@@ -66,7 +63,7 @@ class JWSTBackground:
             A Background2D object containing the 2D background and
             background RMS noise estimates.
         """
-        sigma_clip = SigmaClip(sigma=3.)
+        sigma_clip = SigmaClip(sigma=3.0)
         bkg_estimator = MedianBackground()
         filter_size = (3, 3)
 
@@ -74,44 +71,61 @@ class JWSTBackground:
         with warnings.catch_warnings():
             warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
             try:
-                bkg = Background2D(self.data, self.box_size,
-                                   filter_size=filter_size,
-                                   coverage_mask=self.coverage_mask,
-                                   sigma_clip=sigma_clip,
-                                   bkg_estimator=bkg_estimator)
+                bkg = Background2D(
+                    self.data,
+                    self.box_size,
+                    filter_size=filter_size,
+                    coverage_mask=self.coverage_mask,
+                    sigma_clip=sigma_clip,
+                    bkg_estimator=bkg_estimator,
+                )
             except ValueError:
                 # use the entire unmasked array
-                bkg = Background2D(self.data, self.data.shape,
-                                   filter_size=filter_size,
-                                   coverage_mask=self.coverage_mask,
-                                   sigma_clip=sigma_clip,
-                                   bkg_estimator=bkg_estimator,
-                                   exclude_percentile=100.)
-                log.info('Background could not be estimated in meshes. '
-                         'Using the entire unmasked array for background '
-                         f'estimation: bkg_boxsize={self.data.shape}.')
+                bkg = Background2D(
+                    self.data,
+                    self.data.shape,
+                    filter_size=filter_size,
+                    coverage_mask=self.coverage_mask,
+                    sigma_clip=sigma_clip,
+                    bkg_estimator=bkg_estimator,
+                    exclude_percentile=100.0,
+                )
+                log.info(
+                    "Background could not be estimated in meshes. "
+                    "Using the entire unmasked array for background "
+                    f"estimation: bkg_boxsize={self.data.shape}."
+                )
 
         return bkg
 
     @lazyproperty
     def background(self):
         """
-        The 2D background image.
+        Return the 2D background image.
+
+        Returns
+        -------
+        `~numpy.ndarray`
+            The 2D background image.
         """
         return self._background2d.background
 
     @lazyproperty
     def background_rms(self):
         """
-        The 2D background RMS image.
+        Return the 2D background RMS image.
+
+        Returns
+        -------
+        `~numpy.ndarray`
+            The 2D background RMS image.
         """
         return self._background2d.background_rms
 
 
 def make_kernel(kernel_fwhm):
     """
-    Make a 2D Gaussian smoothing kernel that is used to filter the image
-    before thresholding.
+    Make a 2D Gaussian smoothing kernel used to filter the image before thresholding.
 
     Filtering the image will smooth the noise and maximize detectability
     of objects with a shape similar to the kernel.
@@ -131,7 +145,7 @@ def make_kernel(kernel_fwhm):
     """
     sigma = kernel_fwhm * gaussian_fwhm_to_sigma
     kernel = Gaussian2DKernel(sigma)
-    kernel.normalize(mode='integral')
+    kernel.normalize(mode="integral")
     return kernel
 
 
@@ -150,6 +164,11 @@ def convolve_data(data, kernel_fwhm, mask=None):
     mask : array_like, bool, optional
         A boolean mask with the same shape as ``data``, where a `True`
         value indicates the corresponding element of ``data`` is masked.
+
+    Returns
+    -------
+    `~numpy.ndarray`
+        The convolved 2D array.
     """
     kernel = make_kernel(kernel_fwhm)
 
@@ -161,8 +180,7 @@ def convolve_data(data, kernel_fwhm, mask=None):
 
 class JWSTSourceFinder:
     """
-    Class to detect sources, including deblending, using image
-    segmentation.
+    Detect sources, including deblending, using image segmentation.
 
     Parameters
     ----------
@@ -186,10 +204,12 @@ class JWSTSourceFinder:
         self.connectivity = 8
         self.nlevels = 32
         self.contrast = 0.001
-        self.mode = 'exponential'
+        self.mode = "exponential"
 
     def __call__(self, convolved_data, mask=None):
         """
+        Detect sources in the convolved data.
+
         Parameters
         ----------
         convolved_data : 2D `numpy.ndarray`
@@ -211,31 +231,36 @@ class JWSTSourceFinder:
         """
         if mask is not None:
             if mask.all():
-                log.error('There are no valid pixels in the image to detect '
-                          'sources.')
+                log.error("There are no valid pixels in the image to detect sources.")
                 return None
 
         with warnings.catch_warnings():
             # suppress NoDetectionsWarning from photutils
-            warnings.filterwarnings('ignore', category=NoDetectionsWarning)
+            warnings.filterwarnings("ignore", category=NoDetectionsWarning)
 
-            segment_img = detect_sources(convolved_data, self.threshold,
-                                         self.npixels, mask=mask,
-                                         connectivity=self.connectivity)
+            segment_img = detect_sources(
+                convolved_data,
+                self.threshold,
+                self.npixels,
+                mask=mask,
+                connectivity=self.connectivity,
+            )
             if segment_img is None:
-                log.warning('No sources were found. Source catalog will not '
-                            'be created.')
+                log.warning("No sources were found. Source catalog will not be created.")
                 return None
 
             # source deblending requires scikit-image
             if self.deblend:
-                segment_img = deblend_sources(convolved_data, segment_img,
-                                              npixels=self.npixels,
-                                              nlevels=self.nlevels,
-                                              contrast=self.contrast,
-                                              mode=self.mode,
-                                              connectivity=self.connectivity,
-                                              relabel=True)
+                segment_img = deblend_sources(
+                    convolved_data,
+                    segment_img,
+                    npixels=self.npixels,
+                    nlevels=self.nlevels,
+                    contrast=self.contrast,
+                    mode=self.mode,
+                    connectivity=self.connectivity,
+                    relabel=True,
+                )
 
-        log.info(f'Detected {segment_img.nlabels} sources')
+        log.info(f"Detected {segment_img.nlabels} sources")
         return segment_img

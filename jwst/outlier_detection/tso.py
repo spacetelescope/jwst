@@ -8,6 +8,7 @@ from .utils import flag_model_crs, nanmedian3D
 from ._fileio import save_median
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -68,7 +69,7 @@ def detect_outliers(
 
 def weight_no_resample(input_model, good_bits):
     """
-    give weights to model without resampling
+    Give weights to model without resampling
 
     Notes
     -----
@@ -90,11 +91,11 @@ def weight_no_resample(input_model, good_bits):
 
 
 def compute_rolling_median(
-        model: dm.CubeModel,  # type: ignore[name-defined]
-        weight_threshold: np.ndarray,
-        w: int=25
+    model: dm.CubeModel,  # type: ignore[name-defined]
+    weight_threshold: np.ndarray,
+    w: int = 25,
 ) -> np.ndarray:
-    '''
+    """
     Set bad and low-weight data to NaN, then compute the rolling median over the time axis.
 
     Parameters
@@ -112,13 +113,11 @@ def compute_rolling_median(
     -------
     np.ndarray
         The rolling median of the input data. Same dimensions as input.
-    '''
-
+    """
     sci = model.data
     weight = model.wht
     badmask = np.less(weight, weight_threshold)
-    log.debug("Percentage of pixels with low weight: {}".format(
-        np.sum(badmask) / weight.size * 100))
+    log.debug(f"Percentage of pixels with low weight: {np.sum(badmask) / weight.size * 100}")
 
     # Fill resampled_sci array with nan's where mask values are True
     sci[badmask] = np.nan
@@ -161,15 +160,15 @@ def moving_median_over_zeroth_axis(x: np.ndarray, w: int) -> np.ndarray:
         raise ValueError("Rolling median window size must be greater than 1.")
     shifted = np.zeros((x.shape[0] + w - 1, w, *x.shape[1:])) * np.nan
     for idx in range(w - 1):
-        shifted[idx:-w + idx + 1, idx] = x
-    shifted[idx + 1:, idx + 1] = x
+        shifted[idx : -w + idx + 1, idx] = x
+    shifted[idx + 1 :, idx + 1] = x
     medians: np.ndarray = np.median(shifted, axis=1)
     for idx in range(w - 1):
-        medians[idx] = np.median(shifted[idx, :idx + 1])
-        medians[-idx - 1] = np.median(shifted[-idx - 1, -idx - 1:])
-    medians = medians[(w - 1) // 2:-(w - 1) // 2]
+        medians[idx] = np.median(shifted[idx, : idx + 1])
+        medians[-idx - 1] = np.median(shifted[-idx - 1, -idx - 1 :])
+    medians = medians[(w - 1) // 2 : -(w - 1) // 2]
 
     # Fill in the edges with the nearest valid value
-    medians[:w // 2] = medians[w // 2]
-    medians[-w // 2:] = medians[-w // 2]
+    medians[: w // 2] = medians[w // 2]
+    medians[-w // 2 :] = medians[-w // 2]
     return medians

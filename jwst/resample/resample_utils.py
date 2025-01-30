@@ -17,12 +17,19 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-__all__ = ['decode_context']
+__all__ = ["decode_context"]
 
 
-def make_output_wcs(input_models, ref_wcs=None,
-                    pscale_ratio=None, pscale=None, rotation=None, shape=None,
-                    crpix=None, crval=None):
+def make_output_wcs(
+    input_models,
+    ref_wcs=None,
+    pscale_ratio=None,
+    pscale=None,
+    rotation=None,
+    shape=None,
+    crpix=None,
+    crval=None,
+):
     """Generate output WCS here based on footprints of all input WCS objects.
 
     Parameters
@@ -85,8 +92,7 @@ def make_output_wcs(input_models, ref_wcs=None,
         naxes = ref_wcs.output_frame.naxes
 
         if naxes != 2:
-            msg = ("Output WCS needs 2 spatial axes "
-                   f"but the supplied WCS has {naxes} axes.")
+            msg = f"Output WCS needs 2 spatial axes but the supplied WCS has {naxes} axes."
             raise RuntimeError(msg)
 
         output_wcs = util.wcs_from_sregions(
@@ -98,15 +104,14 @@ def make_output_wcs(input_models, ref_wcs=None,
             rotation=rotation,
             shape=shape,
             crpix=crpix,
-            crval=crval
+            crval=crval,
         )
         del example_model
 
     else:
         naxes = ref_wcs.output_frame.naxes
         if naxes != 2:
-            msg = ("Output WCS needs 2 spatial axes "
-                   f"but the supplied WCS has {naxes} axes.")
+            msg = f"Output WCS needs 2 spatial axes but the supplied WCS has {naxes} axes."
             raise RuntimeError(msg)
         output_wcs = deepcopy(ref_wcs)
         if shape is not None:
@@ -121,20 +126,18 @@ def make_output_wcs(input_models, ref_wcs=None,
 
 
 def shape_from_bounding_box(bounding_box):
-    """ Return a numpy shape based on the provided bounding_box
-    """
+    """Return a numpy shape based on the provided bounding_box"""
     return tuple(int(axs[1] - axs[0] + 0.5) for axs in bounding_box[::-1])
 
 
 def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
-    """ Return a pixel grid map from input frame to output frame.
-    """
+    """Return a pixel grid map from input frame to output frame."""
     if shape:
         bb = wcs_bbox_from_shape(shape)
-        log.debug("Bounding box from data shape: {}".format(bb))
+        log.debug(f"Bounding box from data shape: {bb}")
     else:
         bb = in_wcs.bounding_box
-        log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
+        log.debug(f"Bounding box from WCS: {in_wcs.bounding_box}")
 
     grid = gwcs.wcstools.grid_from_bounding_box(bb)
     pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
@@ -161,7 +164,6 @@ def reproject(wcs1, wcs2):
         Function to compute the transformations.  It takes x, y
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
-
     try:
         # Here we want to use the WCS API functions so that a Sliced WCS
         # will work as well. However, the API functions do not accept
@@ -173,7 +175,6 @@ def reproject(wcs1, wcs2):
         backward_transform = wcs_no_bbox.world_to_pixel_values
     except AttributeError as err:
         raise TypeError("Input should be a WCS") from err
-
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
@@ -188,26 +189,30 @@ def reproject(wcs1, wcs2):
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
         return tuple(det_reshaped)
+
     return _reproject
 
 
 def build_driz_weight(model, weight_type=None, good_bits=None):
-    """Create a weight map for use by drizzle
-    """
+    """Create a weight map for use by drizzle"""
     dqmask = build_mask(model.dq, good_bits)
 
-    if weight_type == 'ivm':
-        if (model.hasattr("var_rnoise") and model.var_rnoise is not None and
-                model.var_rnoise.shape == model.data.shape):
+    if weight_type == "ivm":
+        if (
+            model.hasattr("var_rnoise")
+            and model.var_rnoise is not None
+            and model.var_rnoise.shape == model.data.shape
+        ):
             with np.errstate(divide="ignore", invalid="ignore"):
                 inv_variance = model.var_rnoise**-1
             inv_variance[~np.isfinite(inv_variance)] = 1
         else:
-            warnings.warn("var_rnoise array not available. Setting drizzle weight map to 1",
-                          RuntimeWarning)
+            warnings.warn(
+                "var_rnoise array not available. Setting drizzle weight map to 1", RuntimeWarning
+            )
             inv_variance = 1.0
         result = inv_variance * dqmask
-    elif weight_type == 'exptime':
+    elif weight_type == "exptime":
         if check_for_tmeasure(model):
             exptime = model.meta.exposure.measurement_time
         else:
@@ -260,7 +265,7 @@ def is_flux_density(bunit):
 
 
 def decode_context(context, x, y):
-    """ Get 0-based indices of input images that contributed to (resampled)
+    """Get 0-based indices of input images that contributed to (resampled)
     output pixel with coordinates ``x`` and ``y``.
 
     Parameters
@@ -276,7 +281,6 @@ def decode_context(context, x, y):
 
     Returns
     -------
-
     A list of `numpy.ndarray` objects each containing indices of input images
     that have contributed to an output pixel with coordinates ``x`` and ``y``.
     The length of returned list is equal to the number of input coordinate
@@ -284,29 +288,43 @@ def decode_context(context, x, y):
 
     Examples
     --------
-
     An example context array for an output image of array shape ``(5, 6)``
     obtained by resampling 80 input images.
 
     >>> import numpy as np
     >>> from jwst.resample.resample_utils import decode_context
     >>> con = np.array(
-    ...     [[[0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 0, 36196864, 0, 0],
-    ...       [0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 537920000, 0, 0, 0]],
-    ...      [[0, 0, 0, 0, 0, 0,],
-    ...       [0, 0, 0, 67125536, 0, 0],
-    ...       [0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 163856, 0, 0, 0]],
-    ...      [[0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 0, 8203, 0, 0],
-    ...       [0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 0, 0, 0, 0],
-    ...       [0, 0, 32865, 0, 0, 0]]],
-    ...     dtype=np.int32
+    ...     [
+    ...         [
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 0, 36196864, 0, 0],
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 537920000, 0, 0, 0],
+    ...         ],
+    ...         [
+    ...             [
+    ...                 0,
+    ...                 0,
+    ...                 0,
+    ...                 0,
+    ...                 0,
+    ...                 0,
+    ...             ],
+    ...             [0, 0, 0, 67125536, 0, 0],
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 163856, 0, 0, 0],
+    ...         ],
+    ...         [
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 0, 8203, 0, 0],
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 0, 0, 0, 0],
+    ...             [0, 0, 32865, 0, 0, 0],
+    ...         ],
+    ...     ],
+    ...     dtype=np.int32,
     ... )
     >>> decode_context(con, [3, 2], [1, 4])
     [array([ 9, 12, 14, 19, 21, 25, 37, 40, 46, 58, 64, 65, 67, 77]),
@@ -325,19 +343,16 @@ def decode_context(context, x, y):
     if x.ndim != 1:
         raise ValueError("Coordinates must be scalars or 1D arrays.")
 
-    if not (np.issubdtype(x.dtype, np.integer) and
-            np.issubdtype(y.dtype, np.integer)):
-        raise ValueError('Pixel coordinates must be integer values')
+    if not (np.issubdtype(x.dtype, np.integer) and np.issubdtype(y.dtype, np.integer)):
+        raise ValueError("Pixel coordinates must be integer values")
 
     nbits = 8 * context.dtype.itemsize
     one = np.array(1, context.dtype)
     flags = np.array([one << i for i in range(nbits)])
 
     idx = []
-    for xi, yi in zip(x, y):
-        idx.append(
-            np.flatnonzero(np.bitwise_and.outer(context[:, yi, xi], flags))
-        )
+    for xi, yi in zip(x, y, strict=False):
+        idx.append(np.flatnonzero(np.bitwise_and.outer(context[:, yi, xi], flags)))
 
     return idx
 
@@ -359,10 +374,10 @@ def _resample_range(data_shape, bbox=None):
 
 
 def check_for_tmeasure(model):
-    '''
+    """
     Check if the measurement_time keyword is present in the datamodel
     for use in exptime weighting. If not, revert to using exposure_time.
-    '''
+    """
     try:
         tmeasure = model.meta.exposure.measurement_time
         if tmeasure is not None:

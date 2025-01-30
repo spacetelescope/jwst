@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-__all__ = ['SkyMatchStep']
+__all__ = ["SkyMatchStep"]
 
 
 class SkyMatchStep(Step):
@@ -83,7 +83,7 @@ class SkyMatchStep(Step):
             library = ModelLibrary(input_models, on_disk=not self.in_memory)
 
         # Method: "user". Use user-provided sky values, and bypass skymatch() altogether.
-        if self.skymethod == 'user':
+        if self.skymethod == "user":
             return self._user_sky(library)
 
         self._dqbits = interpret_bit_flags(self.dqbits, flag_name_map=pixel)
@@ -96,7 +96,7 @@ class SkyMatchStep(Step):
             nclip=self.nclip,
             lsig=self.lsigma,
             usig=self.usigma,
-            binwidth=self.binwidth
+            binwidth=self.binwidth,
         )
 
         images = []
@@ -115,38 +115,31 @@ class SkyMatchStep(Step):
                     images.append(SkyGroup(sky_images, id=group_index))
 
         # match/compute sky values:
-        skymatch(images, skymethod=self.skymethod, match_down=self.match_down,
-              subtract=self.subtract)
+        skymatch(
+            images, skymethod=self.skymethod, match_down=self.match_down, subtract=self.subtract
+        )
 
         # set sky background value in each image's meta:
         with library:
             for im in images:
                 if isinstance(im, SkyImage):
                     self._set_sky_background(
-                        im,
-                        library,
-                        "COMPLETE" if im.is_sky_valid else "SKIPPED"
+                        im, library, "COMPLETE" if im.is_sky_valid else "SKIPPED"
                     )
                 else:
                     for gim in im:
                         self._set_sky_background(
-                            gim,
-                            library,
-                            "COMPLETE" if gim.is_sky_valid else "SKIPPED"
+                            gim, library, "COMPLETE" if gim.is_sky_valid else "SKIPPED"
                         )
 
         return library
 
     def _imodel2skyim(self, image_model, index):
-
         if self._dqbits is None:
             dqmask = np.isfinite(image_model.data).astype(dtype=np.uint8)
         else:
             dqmask = bitfield_to_boolean_mask(
-                image_model.dq,
-                self._dqbits,
-                good_mask_value=1,
-                dtype=np.uint8
+                image_model.dq, self._dqbits, good_mask_value=1, dtype=np.uint8
             ) * np.isfinite(image_model.data)
 
         # see if 'skymatch' was previously run and raise an exception
@@ -154,8 +147,9 @@ class SkyMatchStep(Step):
         if image_model.meta.background.subtracted is None:
             if image_model.meta.background.level is not None:
                 # report inconsistency:
-                raise ValueError("Background level was set but the "
-                                 "'subtracted' property is undefined (None).")
+                raise ValueError(
+                    "Background level was set but the 'subtracted' property is undefined (None)."
+                )
             level = 0.0
 
         else:
@@ -166,17 +160,19 @@ class SkyMatchStep(Step):
                 # at this moment I think it is saver to quit and...
                 #
                 # report inconsistency:
-                raise ValueError("Background level was subtracted but the "
-                                 "'level' property is undefined (None).")
+                raise ValueError(
+                    "Background level was subtracted but the 'level' property is undefined (None)."
+                )
 
             if image_model.meta.background.subtracted != self.subtract:
                 # cannot run 'skymatch' step on already "skymatched" images
                 # when 'subtract' spec is inconsistent with
                 # meta.background.subtracted:
-                raise ValueError("'subtract' step's specification is "
-                                 "inconsistent with background info already "
-                                 "present in image '{:s}' meta."
-                                 .format(image_model.meta.filename))
+                raise ValueError(
+                    "'subtract' step's specification is "
+                    "inconsistent with background info already "
+                    f"present in image '{image_model.meta.filename:s}' meta."
+                )
 
         wcs = deepcopy(image_model.meta.wcs)
 
@@ -191,7 +187,7 @@ class SkyMatchStep(Step):
             skystat=self._skystat,
             stepsize=self.stepsize,
             reduce_memory_usage=False,  # this overwrote input files
-            meta={'index': index}
+            meta={"index": index},
         )
 
         if self.subtract:
@@ -213,7 +209,7 @@ class SkyMatchStep(Step):
             Status of the sky subtraction step. Must be one of the following:
             'COMPLETE', 'SKIPPED'.
         """
-        index = sky_image.meta['index']
+        index = sky_image.meta["index"]
         dm = library.borrow(index)
         sky = sky_image.sky
 
@@ -227,31 +223,32 @@ class SkyMatchStep(Step):
         dm.meta.cal_step.skymatch = step_status
         library.shelve(dm, index)
 
-
     def _user_sky(self, library):
-        """Handle user-provided sky values for each image.
-        """
-
+        """Handle user-provided sky values for each image."""
         if self.skylist is None:
             raise ValueError('skymethod set to "user", but no sky value file provided.')
 
         log.info(" ")
-        log.info("Setting sky background of input images to user-provided values "
-                 f"from `skylist` ({self.skylist}).")
+        log.info(
+            "Setting sky background of input images to user-provided values "
+            f"from `skylist` ({self.skylist})."
+        )
 
         # read the comma separated file and get just the stem of the filename
         skylist = np.genfromtxt(
             self.skylist,
-            dtype=[("fname", "<S128"),  ("sky", "f")],
+            dtype=[("fname", "<S128"), ("sky", "f")],
         )
-        skyfnames, skyvals = skylist['fname'], skylist['sky']
+        skyfnames, skyvals = skylist["fname"], skylist["sky"]
         skyfnames = skyfnames.astype(str)
         skyfnames = [remove_suffix(Path(fname).stem)[0] for fname in skyfnames]
         skyfnames = np.array(skyfnames)
 
         if len(skyvals) != len(library):
-            raise ValueError(f"Number of entries in skylist ({len(self.skylist)}) does not match "
-                             f"number of input images ({len(library)}).")
+            raise ValueError(
+                f"Number of entries in skylist ({len(self.skylist)}) does not match "
+                f"number of input images ({len(library)})."
+            )
 
         with library:
             for model in library:
@@ -260,9 +257,13 @@ class SkyMatchStep(Step):
                 if len(sky) == 0:
                     raise ValueError(f"Image with stem '{fname}' not found in the skylist.")
                 if len(sky) > 1:
-                    raise ValueError(f"Image with stem '{fname}' found multiple times in the skylist.")
+                    raise ValueError(
+                        f"Image with stem '{fname}' found multiple times in the skylist."
+                    )
 
-                log.debug(f"Setting sky background of image '{model.meta.filename}' to {float(sky)}.")
+                log.debug(
+                    f"Setting sky background of image '{model.meta.filename}' to {float(sky)}."
+                )
 
                 model.meta.background.level = float(sky)
                 model.meta.background.subtracted = self.subtract

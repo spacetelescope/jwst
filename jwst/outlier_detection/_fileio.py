@@ -1,4 +1,5 @@
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -38,7 +39,7 @@ def save_drizzled(drizzled_model, make_output_path):
 
     """
     expected_tail = "outlier_?2d.fits"
-    suffix = drizzled_model.meta.filename[-len(expected_tail):-5]
+    suffix = drizzled_model.meta.filename[-len(expected_tail) : -5]
     _save_intermediate_output(drizzled_model, suffix, make_output_path)
 
 
@@ -127,7 +128,7 @@ def _save_intermediate_output(model, suffix, make_output_path):
 
     # Add a slit name to the output path for MultiSlitModel data if not present
     if hasattr(model, "name") and model.name is not None:
-        if "_"+model.name.lower() not in input_path:
+        if "_" + model.name.lower() not in input_path:
             suffix = f"{model.name.lower()}_{suffix}"
 
     output_path = make_output_path(input_path, suffix=suffix)

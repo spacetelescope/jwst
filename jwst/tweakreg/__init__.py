@@ -1,9 +1,6 @@
-"""
-This package provides support for image alignment.
+"""Provide support for image alignment."""
 
-"""
-
-__author__ = 'Mihai Cara'
+__author__ = "Mihai Cara"
 
 from .tweakreg_step import TweakRegStep
 
