@@ -7,7 +7,6 @@ exclude = [
     ".eggs",
     "build",
     "*.ipynb",
-    "jwst/fits_generator", # no longer used, will be removed soon
     "**/tests/test_*.py",
 ]
 line-length = 100
@@ -45,7 +44,6 @@ exclude = [
     "jwst/extract_1d/**.py",
     "jwst/extract_2d/**.py",
     "jwst/firstframe/**.py",
-    "jwst/fits_generator/**.py",
     "jwst/flatfield/**.py",
     "jwst/fringe/**.py",
     "jwst/gain_scale/**.py",
