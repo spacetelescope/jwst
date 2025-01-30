@@ -10,7 +10,6 @@ from stdatamodels.jwst import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-
 subarray_clocks = {
 
     "SLITLESSPRISM": {
@@ -225,8 +224,7 @@ def apply_emicorr(output_model, emicorr_model,
         frequency = freqs_numbers[fi]
         log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
 
-        # Read image data and set up some variables
-        data = output_model.data.copy()
+        # Set up some variables
 
         # Correspondence of array order in IDL
         # sz[0] = 4 in idl
@@ -282,30 +280,32 @@ def apply_emicorr(output_model, emicorr_model,
 
         for ninti in range(nints):
             log.debug('  Working on integration: {}'.format(ninti+1))
+            # Read in this integration
+            data = output_model.data[ninti].copy()
 
             # Remove source signal and fixed bias from each integration ramp
             # (linear is good enough for phase finding)
 
             # do linear fit for source + sky
-            s0, mm0 = sloper(data[ninti, 1:ngroups-1, :, :])
+            s0, mm0 = sloper(data[1:ngroups-1, :, :])
 
             # subtract source+sky from each frame of this ramp
             for ngroupi in range(ngroups):
-                data[ninti, ngroupi, ...] = output_model.data[ninti, ngroupi, ...] - (s0 * ngroupi)
+                data[ngroupi, ...] = output_model.data[ninti, ngroupi, ...] - (s0 * ngroupi)
 
             # make a self-superbias
-            m0 = minmed(data[ninti, 1:ngroups-1, :, :])
+            m0 = minmed(data[1:ngroups-1, :, :])
 
             # subtract self-superbias from each frame of this ramp
             for ngroupi in range(ngroups):
-                data[ninti, ngroupi, ...] = data[ninti, ngroupi, ...] - m0
+                data[ngroupi, ...] = data[ngroupi, ...] - m0
 
                 # de-interleave each frame into the 4 separate output channels and
                 # average (or median) them together for S/N
-                d0 = data[ninti, ngroupi, :, 0:nx:4]
-                d1 = data[ninti, ngroupi, :, 1:nx:4]
-                d2 = data[ninti, ngroupi, :, 2:nx:4]
-                d3 = data[ninti, ngroupi, :, 3:nx:4]
+                d0 = data[ngroupi, :, 0:nx:4]
+                d1 = data[ngroupi, :, 1:nx:4]
+                d2 = data[ngroupi, :, 2:nx:4]
+                d3 = data[ngroupi, :, 3:nx:4]
                 dd = (d0 + d1 + d2 + d3)/4.
 
                 # fix a bad ref col
@@ -377,7 +377,7 @@ def apply_emicorr(output_model, emicorr_model,
         phase_temp = phaseall[0: nints_to_phase, :, :, :]
         dd_temp = dd_all[0: nints_to_phase, :, :, :]
         for nb in range(nbins):
-            u = np.where((phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb]))
+            u = (phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb])
             # calculate the sigma-clipped mean
             dmean, _, _ = scs(dd_temp[u])
             pa[nb] = dmean   # amplitude in this bin
@@ -445,12 +445,10 @@ def apply_emicorr(output_model, emicorr_model,
         log.info('Subtracting EMI noise from data')
 
         # Interleave (straight copy) into 4 amps
-        noise_x = np.arange(nx4) * 4
         for k in range(4):
-            output_model.data[..., noise_x + k] -= dd_noise
+            output_model.data[..., k::4] -= dd_noise
 
         # clean up
-        del data
         del dd_all
         del times_this_int
         del phaseall
@@ -539,20 +537,16 @@ def minmed(data, minval=False, avgval=False, maxval=False):
         Median image of a stack of images
     """
 
-    ngroups, ny, nx = np.shape(data)
-    medimg = np.zeros((ny, nx))
-    # use a mask to ignore nans for calculations
-    vec = np.ma.array(data, mask=np.isnan(data))
-    n = vec.size
+    n = data.size
     if n > 0:
         if n <= 2 or minval:
-            medimg = np.ma.min(vec, axis=0)
+            medimg = np.nanmin(data, axis=0)
         if maxval:
-            medimg = np.ma.max(vec, axis=0)
+            medimg = np.nanmax(data, axis=0)
         if not minval and not maxval and not avgval:
-            medimg = np.ma.median(vec, axis=0)
+            medimg = np.nanmedian(data, axis=0)
         if avgval:
-            medimg = np.ma.mean(vec, axis=0)
+            medimg = np.nanmean(data, axis=0)
     return medimg
 
 
