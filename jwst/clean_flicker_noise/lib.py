@@ -447,9 +447,9 @@ class NSCleanSubarray:
             )
             self.data[np.isinf(self.data)] = np.nan  # Restore NaNs
 
-            bdpx[np.logical_not(self.mask)] = (
-                0  # We don't need to worry about non-background pixels
-            )
+            # We don't need to worry about non-background pixels
+            bdpx[np.logical_not(self.mask)] = 0
+
             # Also flag 4 nearest neighbors
             bdpx = (
                 bdpx
@@ -536,10 +536,10 @@ class NSCleanSubarray:
 
             # NSClean's weighting requires the Moore-Penrose inverse of A = P*B.
             #     $A^+ = (A^H A)^{-1} A^H$
-            _a = (
-                p_matrix.reshape((-1, 1)) * basis
-            )  # P is diagonal. Hadamard product is most RAM efficient
-            _a_h = np.conjugate(_a.transpose())  # Hermitian transpose of A
+            # P is diagonal. Hadamard product is most RAM efficient
+            _a = p_matrix.reshape((-1, 1)) * basis
+            # Hermitian transpose of A
+            _a_h = np.conjugate(_a.transpose())
             pinv_pb = np.matmul(np.linalg.inv(np.matmul(_a_h, _a)), _a_h)
 
         else:
