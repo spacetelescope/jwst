@@ -53,7 +53,6 @@ repos:
             jwst/extract_1d/.* |
             jwst/extract_2d/.* |
             jwst/firstframe/.* |
-            jwst/fits_generator/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/gain_scale/.* |
