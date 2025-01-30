@@ -105,7 +105,7 @@ class LgModel:
             )  # retain ability to possibly  use other named masks, for now
         self.ctrs = mask.ctrs
         self.d = mask.hdia
-        self.D = mask.activeD
+        self.D = mask.active_D
 
         self.N = len(self.ctrs)
         self.fmt = "%10.4e"
@@ -292,7 +292,7 @@ class LgModel:
         self,
         image,
         reference=None,
-        modelin=None,
+        model_in=None,
         savepsfs=False,
         dqm=None,
         weighted=False,
@@ -317,7 +317,7 @@ class LgModel:
         reference : 2D float array
             Input reference image
 
-        modelin : 2D array
+        model_in : 2D array
             Optional model image
 
         savepsfs : bool
@@ -329,11 +329,11 @@ class LgModel:
         weighted : bool
             Use weighted operations in the least squares routine
         """
-        self.model_in = modelin
+        self.model_in = model_in
         self.weighted = weighted
         self.saveval = savepsfs
 
-        if modelin is None:  # No model provided
+        if model_in is None:  # No model provided
             # Perform a set of automatic routines
             # A Cleaned up version of your image to enable Fourier fitting for
             # centering crosscorrelation with FindCentering() and
@@ -360,7 +360,7 @@ class LgModel:
                 pixscale=self.pixel,
             )
         else:
-            self.fittingmodel = modelin
+            self.fittingmodel = model_in
         if self.weighted is False:
             self.soln, self.residual, self.cond, self.linfit_result = leastsqnrm.matrix_operations(
                 image, self.fittingmodel, dqm=dqm

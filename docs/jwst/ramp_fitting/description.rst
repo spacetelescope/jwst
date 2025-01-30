@@ -32,7 +32,7 @@ to flag occurrences of both saturation and cosmic-ray (CR) hits.
 A ramp segment is a set of contiguous groups that have no non-zero DQ values
 assigned. The one exception to this rule is the occurrence of a "JUMP_DET"
 (jump detected) flag: a group with this flag will be used as the first group of
-the next segment. Any occurences of a "DO_NOT_USE" flag will be excluded from a
+the next segment. Any occurrences of a "DO_NOT_USE" flag will be excluded from a
 segment. When a "SATURATION" flag is found, the segment is terminated at the
 preceding group and all subsequent groups are rejected.
 Any segment containing only one good group is ignored if there is any other
@@ -96,7 +96,7 @@ the frame zero array are set to zero by the preceding :ref:`saturation <saturati
 step in the pipeline. Unsaturated elements will have non-zero values in the
 frame zero array. If frame zero is *not* saturated, then it's value will be
 divided by the frame time for the exposure in order to compute a slope for the pixel
-in that integration. This is analagous to the situation in which only the first group
+in that integration. This is analogous to the situation in which only the first group
 in an integration is unsaturated and used by itself to compute a slope.
 
 Note that the computation of slopes from either a single group or the single frame

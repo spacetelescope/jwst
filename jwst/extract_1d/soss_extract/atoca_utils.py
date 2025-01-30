@@ -1039,7 +1039,7 @@ def _get_wings(fct, grid, h_len, i_a, i_b):
     # Save the new grid
     grid_new = grid[i_grid:i_b - h_len]
 
-    # Re-use dummy variable `i_grid`
+    # reuse dummy variable `i_grid`
     i_grid = len(grid_new)
 
     # Compute kernel at the left end.

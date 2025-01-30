@@ -25,7 +25,7 @@ class ResampleSpecStep(Step):
     Parameters
     ----------
     input : `~jwst.datamodels.MultiSlitModel`, `~jwst.datamodels.ModelContainer`, Association
-        A singe datamodel, a container of datamodels, or an association file
+        A single datamodel, a container of datamodels, or an association file
     """
 
     class_alias = "resample_spec"

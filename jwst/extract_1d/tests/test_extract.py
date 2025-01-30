@@ -215,7 +215,7 @@ def test_get_extract_parameters_source_posn_from_ref(
         mock_nirspec_bots, extract1d_ref_dict, extract_defaults):
     input_model = mock_nirspec_bots
 
-    # match an entry that explicity sets use_source_posn
+    # match an entry that explicitly sets use_source_posn
     params = ex.get_extract_parameters(
         extract1d_ref_dict, input_model, 'slit6', 1, input_model.meta,
         use_source_posn=None)

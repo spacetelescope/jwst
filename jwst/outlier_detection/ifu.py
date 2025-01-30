@@ -150,7 +150,7 @@ def flag_outliers(
     nx : int
         Size of input data on x axis
     ny : int
-        Since of inut data on y axis
+        Since of input data on y axis
     kern_size : tuple
         Size of the kernel to use for median filtering
     threshold_percent : float

@@ -1931,7 +1931,7 @@ def create_extraction(input_model, slit, output_model,
             # object.  If so, just apply the pre-computed correction to
             # save a ton of time.
             if apcorr_available:
-                # re-use the last aperture correction
+                # reuse the last aperture correction
                 apcorr.apply(spec.spec_table, use_tabulated=True)
             else:
                 # Attempt to tabulate the aperture correction for later use.

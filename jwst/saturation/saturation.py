@@ -38,7 +38,7 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
 
     use_readpatt : bool
@@ -113,7 +113,7 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
 
     use_readpatt : bool
@@ -275,7 +275,7 @@ def adjacency_sat(flag_temp, saturated, n_pix_grow_sat):
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
     """
     only_sat = np.bitwise_and(flag_temp, saturated).astype(np.uint8)

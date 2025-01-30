@@ -22,6 +22,13 @@ repos:
       - id: ruff
         args: ["--fix"]
       - id: ruff-format
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.0
+    hooks:
+    - id: codespell
+      args: ["--write-changes"]
+      additional_dependencies:
+        - tomli
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.6.1  # Use the latest stable version
     hooks:
@@ -32,7 +39,6 @@ repos:
       - id: numpydoc-validation
         exclude: |
           (?x)^(
-            jwst/assign_mtwcs/.* |
             jwst/assign_wcs/.* |
             jwst/associations/.* |
             jwst/background/.* |

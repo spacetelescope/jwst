@@ -44,7 +44,7 @@ def test_get_wv_map_bounds(wave_map, dispersion_axis):
         wave_flip = wave_map
     wave_top, wave_bottom = au._get_wv_map_bounds(wave_flip, dispersion_axis=dispersion_axis)
 
-    # flip the results back so we can re-use the same tests
+    # flip the results back so we can reuse the same tests
     if dispersion_axis == 0:
         wave_top = wave_top.T
         wave_bottom = wave_bottom.T

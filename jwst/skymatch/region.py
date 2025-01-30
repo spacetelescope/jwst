@@ -197,7 +197,7 @@ class Polygon(Region):
         - Initialize the Active Edge Table (AET) to be empty
         - For each scan line:
           1. Add edges from GET to AET for which ymin==y
-          2. Remove edges from AET fro which ymax==y
+          2. Remove edges from AET for which ymax==y
           3. Compute the intersection of the current scan line with all edges
              in the AET
           4. Sort on X of intersection point

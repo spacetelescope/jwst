@@ -375,7 +375,7 @@ def compare_product_membership(left, right, strict_expname=True):
     strict_expname : bool
         Compare `expname` exactly. If False, `expname` munging
         will occur. See `exposure_name` for further details.
-        Generally False for when comparing unreleated association lists.
+        Generally False for when comparing unrelated association lists.
         Generally True when comparing related associations;
         those associations generated together.
 

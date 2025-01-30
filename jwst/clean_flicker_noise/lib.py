@@ -73,7 +73,7 @@ class NSClean:
         self.rfftfreq = np.fft.rfftfreq(self.ny)
 
         # Extract other necessary information from model_parameters and build the
-        # low pass filter. This alse sets the number of Fourier vectors that
+        # low pass filter. This also sets the number of Fourier vectors that
         # we need to project out.
         self.apodizer = np.array(make_lowpass_filter(self.fc, self.kill_width, self.nx))
         self.nvec = np.sum(self.apodizer > 0)  # Project out this many frequencies
@@ -133,13 +133,13 @@ class NSClean:
         for y in np.arange(self.ny)[4:-4]:
 
             # Get data and weights for this line
-            d = data[y][self.mask[y]]  # unmasked (useable) data
+            d = data[y][self.mask[y]]  # unmasked (usable) data
             # The line below uses a vector to represent a diagonal weight matrix.
             # Multiplications by this vector later on may be viewed as
             # equivalent formulations to multiplication by diag(p).
             p = self.P[y][self.mask[y]]  # Weights
 
-            # If none of the pixels in this line is useable (all masked out),
+            # If none of the pixels in this line is usable (all masked out),
             # skip and move on to the next line.
             if len(d) == 0:
                 continue
@@ -278,7 +278,7 @@ def make_lowpass_filter(f_half_power, w_cutoff, n, d=1.0):
     # Make frequencies vector
     freq = np.fft.rfftfreq(n, d=d)
 
-    # Build a cosine wave that is approriately shifted
+    # Build a cosine wave that is appropriately shifted
     cos = (1 + np.cos(np.pi * (freq - f_half_power) / w_cutoff + np.pi / 2)) / 2
 
     # Construct low-pass filter with cosine rolloff
@@ -489,7 +489,7 @@ class NSCleanSubarray:
                 P = 1/np.fft.irfft(np.fft.rfft(np.array(_M, dtype=np.float32)) * FW, self.n) # Compute weights
             P = P[_M] # Keep only background samples
 
-            # NSClean's weighting requires the Moore-Penrose invers of A = P*B.
+            # NSClean's weighting requires the Moore-Penrose inverse of A = P*B.
             #     $A^+ = (A^H A)^{-1} A^H$
             A = P.reshape((-1,1)) * B # P is diagonal. Hadamard product is most RAM efficient
             AH = np.conjugate(A.transpose()) # Hermitian transpose of A

@@ -303,7 +303,7 @@ pre-image ID, and source stellarity.
 +------+------+-----------+-------+------------+-------------+--------------+------------+
 
 For each slitlet identified as having a source assigned to it in the shutter metadata,
-the source name, alias, RA, Dec, and stellarity are retreived from the `SOURCE_INFO`
+the source name, alias, RA, Dec, and stellarity are retrieved from the `SOURCE_INFO`
 table and stored with the ``Slit`` object created in the calibration software.
 The stellarity values are used in the :ref:`source type <srctype_step>`
 step to determine whether the source should be treated as point-like or extended.

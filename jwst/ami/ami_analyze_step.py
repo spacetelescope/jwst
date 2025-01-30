@@ -18,7 +18,7 @@ XO_COMM = 0.0
 YO_COMM = 0.0
 
 
-class BandpassError:
+class BandpassError(Exception):
     pass
 
 
@@ -124,6 +124,7 @@ class AmiAnalyzeStep(Step):
         affine2d : Affine2d object
             User-defined affine transform
         """
+        msg_defaulting = "\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****"
         try:
             with asdf.open(self.affine2d, lazy_load=False) as af:
                 affine2d = utils.Affine2d(
@@ -141,7 +142,7 @@ class AmiAnalyzeStep(Step):
 
         except FileNotFoundError:
             self.log.info(f"File {self.affine2d} could not be found at the specified location.")
-            self.log.info("\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****")
+            self.log.info(msg_defaulting)
             affine2d = None
 
         except KeyError:
@@ -151,14 +152,14 @@ class AmiAnalyzeStep(Step):
             )
             message2 = "See step documentation for info on creating a custom affine2d ASDF file."
             self.log.info(message1 + message2)
-            self.log.info("\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****")
+            self.log.info(msg_defaulting)
             affine2d = None
 
         except (IndexError, TypeError, ValueError):
             message1 = f"Could not use affine2d from {self.affine2d}. "
             message2 = "See documentation for info on creating a custom bandpass ASDF file."
             self.log.info(message1 + message2)
-            self.log.info("\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****")
+            self.log.info(msg_defaulting)
             affine2d = None
 
         else:

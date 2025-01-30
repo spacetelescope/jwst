@@ -58,7 +58,7 @@ class DataAccessor(abc.ABC):
 
 
 class NDArrayInMemoryAccessor(DataAccessor):
-    """Acessor for in-memory `numpy.ndarray` data."""
+    """Accessor for in-memory `numpy.ndarray` data."""
 
     def __init__(self, data):
         super().__init__()
@@ -433,14 +433,14 @@ class SkyImage:
         ny, nx = self.image_shape
 
         if stepsize is None:
-            nintx = 2
-            ninty = 2
+            nint_x = 2
+            nint_y = 2
         else:
-            nintx = max(2, int(np.ceil((nx + 1.0) / stepsize)))
-            ninty = max(2, int(np.ceil((ny + 1.0) / stepsize)))
+            nint_x = max(2, int(np.ceil((nx + 1.0) / stepsize)))
+            nint_y = max(2, int(np.ceil((ny + 1.0) / stepsize)))
 
-        xs = np.linspace(-0.5, nx - 0.5, nintx, dtype=float)
-        ys = np.linspace(-0.5, ny - 0.5, ninty, dtype=float)[1:-1]
+        xs = np.linspace(-0.5, nx - 0.5, nint_x, dtype=float)
+        ys = np.linspace(-0.5, ny - 0.5, nint_y, dtype=float)[1:-1]
         nptx = xs.size
         npty = ys.size
 

@@ -236,7 +236,7 @@ class FringeFitter:
 
         nrm.fit_image(
             self.ctrd,
-            modelin=nrm.model,
+            model_in=nrm.model,
             dqm=self.dqslice,
             weighted=self.weighted,
         )
