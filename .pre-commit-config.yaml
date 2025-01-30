@@ -84,7 +84,6 @@ repos:
             jwst/saturation/.* |
             jwst/scripts/.* |
             jwst/skymatch/.* |
-            jwst/source_catalog/.* |
             jwst/spectral_leak/.* |
             jwst/srctype/.* |
             jwst/stpipe/.* |

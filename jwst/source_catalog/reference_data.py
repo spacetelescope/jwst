@@ -1,6 +1,4 @@
-"""
-Module for parsing APCORR and ABVEGAOFFSET reference file data.
-"""
+"""Parse APCORR and ABVEGAOFFSET reference file data."""
 
 import logging
 
@@ -16,23 +14,7 @@ log.setLevel(logging.DEBUG)
 
 class ReferenceData:
     """
-    Class for APCORR and ABVEGAOFFSET reference file data needed by
-    `SourceCatalogStep`.
-
-    Parameters
-    ----------
-    model : `ImageModel`
-        An `ImageModel` of drizzled image.
-
-    reffile_paths : list of 2 str
-        The full path filename of the APCORR and ABVEGAOFFSET reference
-        files.
-
-    aperture_ee : tuple of 3 int
-        The aperture encircled energies to be used for aperture
-        photometry.  The values must be 3 strictly-increasing integers.
-        Valid values are defined in the APCORR reference files (20, 30,
-        40, 50, 60, 70, or 80).
+    Contains APCORR and ABVEGAOFFSET reference file data needed by `SourceCatalogStep`.
 
     Attributes
     ----------
@@ -46,8 +28,26 @@ class ReferenceData:
     """
 
     def __init__(self, model, reffile_paths, aperture_ee):
+        """
+        Initialize the ReferenceData object.
+
+        Parameters
+        ----------
+        model : `ImageModel`
+            An `ImageModel` of drizzled image.
+
+        reffile_paths : list of 2 str
+            The full path filename of the APCORR and ABVEGAOFFSET reference
+            files.
+
+        aperture_ee : tuple of 3 int
+            The aperture encircled energies to be used for aperture
+            photometry.  The values must be 3 strictly-increasing integers.
+            Valid values are defined in the APCORR reference files (20, 30,
+            40, 50, 60, 70, or 80).
+        """
         if not isinstance(model, ImageModel):
-            raise ValueError("The input model must be a ImageModel.")
+            raise TypeError(f"The input model must be a ImageModel, not {type(model)}.")
         self.model = model
 
         self.aperture_ee = self._validate_aperture_ee(aperture_ee)
@@ -73,7 +73,17 @@ class ReferenceData:
     @staticmethod
     def _validate_aperture_ee(aperture_ee):
         """
-        Validate the input ``aperture_ee``.
+        Validate the input aperture encircled energies.
+
+        Parameters
+        ----------
+        aperture_ee : tuple of 3 int
+            The aperture encircled energies.
+
+        Returns
+        -------
+        aperture_ee : np.ndarray[int]
+            The validated aperture encircled energies.
         """
         aperture_ee = np.array(aperture_ee).astype(int)
         if not np.all(aperture_ee[1:] > aperture_ee[:-1]):
@@ -87,8 +97,12 @@ class ReferenceData:
     @lazyproperty
     def _aperture_ee_table(self):
         """
-        Get the encircled energy table for the given instrument
-        configuration.
+        Get the encircled energy table for the given instrument configuration.
+
+        Returns
+        -------
+        ee_table : `astropy.table.Table`
+            The aperture encircled energy table.
         """
         if self.instrument in ("NIRCAM", "NIRISS"):
             selector = {"filter": self.filtername, "pupil": self.pupil}
@@ -114,7 +128,17 @@ class ReferenceData:
 
     def _get_ee_table_row(self, aperture_ee):
         """
-        Get the encircled energy row for the input ``aperture_ee``.
+        Get aperture encircled energy from the APCORR reference file table.
+
+        Parameters
+        ----------
+        aperture_ee : int
+            The aperture encircled energy value.
+
+        Returns
+        -------
+        row : `astropy.table.Row`
+            The encircled energy row that matches the input aperture_ee.
         """
         ee_percent = np.round(self._aperture_ee_table["eefraction"] * 100)
         row_mask = ee_percent == aperture_ee
@@ -137,8 +161,12 @@ class ReferenceData:
     @lazyproperty
     def aperture_params(self):
         """
-        A dictionary containing the aperture parameters (radii, aperture
-        corrections, and background annulus inner and outer radii).
+        Return radii, aperture corrections, and background annulus inner and outer radii.
+
+        Returns
+        -------
+        params : dict
+            A dictionary containing the aperture parameters.
         """
         if self.apcorr_filename is None:
             log.warning(
@@ -202,7 +230,10 @@ class ReferenceData:
         """
         Offset to convert from AB to Vega magnitudes.
 
-        The value represents m_AB - m_Vega.
+        Returns
+        -------
+        float
+            The offset value, m_AB - m_Vega.
         """
         if self.abvegaoffset_filename is None:
             log.warning(
@@ -228,7 +259,7 @@ class ReferenceData:
         except KeyError as badkey:
             raise KeyError(
                 f"{badkey} not found in ABVEGAOFFSET reference file {self.abvegaoffset_filename}"
-            )
+            ) from None
 
         row = offsets_table[np.logical_and.reduce(mask_idx)]
 

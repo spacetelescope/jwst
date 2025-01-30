@@ -1,6 +1,4 @@
-"""
-Module to detect sources using image segmentation.
-"""
+"""Detect sources using image segmentation."""
 
 import logging
 import warnings
@@ -20,8 +18,7 @@ log.setLevel(logging.DEBUG)
 
 class JWSTBackground:
     """
-    Class to estimate a 2D background and background RMS noise in an
-    image.
+    Estimate a 2D background and background RMS noise in an image.
 
     Parameters
     ----------
@@ -104,22 +101,31 @@ class JWSTBackground:
     @lazyproperty
     def background(self):
         """
-        The 2D background image.
+        Return the 2D background image.
+
+        Returns
+        -------
+        `~numpy.ndarray`
+            The 2D background image.
         """
         return self._background2d.background
 
     @lazyproperty
     def background_rms(self):
         """
-        The 2D background RMS image.
+        Return the 2D background RMS image.
+
+        Returns
+        -------
+        `~numpy.ndarray`
+            The 2D background RMS image.
         """
         return self._background2d.background_rms
 
 
 def make_kernel(kernel_fwhm):
     """
-    Make a 2D Gaussian smoothing kernel that is used to filter the image
-    before thresholding.
+    Make a 2D Gaussian smoothing kernel used to filter the image before thresholding.
 
     Filtering the image will smooth the noise and maximize detectability
     of objects with a shape similar to the kernel.
@@ -158,6 +164,11 @@ def convolve_data(data, kernel_fwhm, mask=None):
     mask : array_like, bool, optional
         A boolean mask with the same shape as ``data``, where a `True`
         value indicates the corresponding element of ``data`` is masked.
+
+    Returns
+    -------
+    `~numpy.ndarray`
+        The convolved 2D array.
     """
     kernel = make_kernel(kernel_fwhm)
 
@@ -169,8 +180,7 @@ def convolve_data(data, kernel_fwhm, mask=None):
 
 class JWSTSourceFinder:
     """
-    Class to detect sources, including deblending, using image
-    segmentation.
+    Detect sources, including deblending, using image segmentation.
 
     Parameters
     ----------
@@ -198,6 +208,8 @@ class JWSTSourceFinder:
 
     def __call__(self, convolved_data, mask=None):
         """
+        Detect sources in the convolved data.
+
         Parameters
         ----------
         convolved_data : 2D `numpy.ndarray`
