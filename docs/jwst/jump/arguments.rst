@@ -115,7 +115,7 @@ is defined as:
 
 **Parameter that affects both Snowball and Shower flagging**
 
-* ``--max_extended_radius``: The maxiumum extension of the jump and saturation that will be flagged for showers or snowballs
+* ``--max_extended_radius``: The maximum extension of the jump and saturation that will be flagged for showers or snowballs
 
 **Parameters that affect Sigma Clipping**
 

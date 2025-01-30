@@ -150,11 +150,6 @@ include = ["pytest_jwst*", "jwst*"]
     "*.cat",
     "*.hdr",
 ]
-"jwst.fits_generator" = [
-    "templates/*.inc",
-    "templates/*.txt",
-    "tests/okfile/*.prop",
-]
 "jwst.lib" = [
     "tests/data/*.asdf",
     "tests/data/**/*.db",
@@ -269,6 +264,10 @@ checks = [
     "RT05", # Return value description should finish with a period
 ]
 
+[tool.codespell]
+skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+ignore-words-list = "indx, delt, Shepard, tread, usig"
+
 [tool.mypy]
 warn_return_any = true
 warn_unused_configs = true
@@ -324,11 +323,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "scripts"
 name = "Scripts"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "fits_generator"
-name = "``fits_generator``"
 showcontent = true
 
 [[tool.towncrier.type]]

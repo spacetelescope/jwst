@@ -42,8 +42,8 @@ def run_pipeline(rtdata_module, request):
          3) S400A1 subarray exposure (1 slit extracted)"""
 
     rtdata = rtdata_module
-    for fle in asn_memberdict[request.param]:
-        rtdata.get_data('nirspec/fs/' + fle)
+    for filename in asn_memberdict[request.param]:
+        rtdata.get_data('nirspec/fs/' + filename)
     # Get the input exposure
     rtdata.get_data('nirspec/fs/' + request.param)
 

@@ -170,7 +170,7 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
     v2deg = v2.copy() / 3600.0   # convert to degrees
     v3deg = v3.copy() / 3600.0   # convert to degrees
 
-    v2_ref = v2_ref / 3600.0  # covert to degrees
+    v2_ref = v2_ref / 3600.0  # convert to degrees
     v3_ref = v3_ref / 3600.0  # convert to degrees
     v3_ref_rad = v3_ref * d2r
     roll_ref_rad = roll_ref * d2r

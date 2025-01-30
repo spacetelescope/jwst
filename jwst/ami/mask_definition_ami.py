@@ -29,7 +29,7 @@ class NRMDefinition:
 
         self.maskname = maskname  # there's only one mask but this is used in oifits
         self.hdia = nrm_model.flat_to_flat
-        self.activeD = nrm_model.diameter
+        self.active_D = nrm_model.diameter
         self.OD = nrm_model.pupil_circumscribed
         self.ctrs = []
 

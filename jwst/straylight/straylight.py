@@ -177,7 +177,7 @@ def correct_xartifact(input_model, modelpars):
         param = modelpars[left]
         log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
         istart, istop = 0, 516
-        # Subtract off intial guess at pedestal first
+        # Subtract off initial guess at pedestal first
         fimg = (usedata - pedestal_guess) * mask
         left_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
                                      param['LOR_SCALE'], param['GAU_FWHM'],

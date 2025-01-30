@@ -1576,7 +1576,7 @@ def oteip_to_v23(reference_files, input_model):
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    # The spatial units are currently in deg. Convertin to arcsec.
+    # The spatial units are currently in deg. Converting to arcsec.
     oteip2v23 = fore2ote_mapping | (ote & Scale(1e6))
 
     return oteip2v23

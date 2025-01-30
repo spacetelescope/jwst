@@ -165,7 +165,7 @@ def reproject(wcs1, wcs2):
     try:
         # Here we want to use the WCS API functions so that a Sliced WCS
         # will work as well. However, the API functions do not accept
-        # keyword arguments and `with_bounding_box=False` cannot be passsed.
+        # keyword arguments and `with_bounding_box=False` cannot be passed.
         # We delete the bounding box on a copy of the WCS - yes, inefficient.
         forward_transform = wcs1.pixel_to_world_values
         wcs_no_bbox = deepcopy(wcs2)

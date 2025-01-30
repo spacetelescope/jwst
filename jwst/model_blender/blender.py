@@ -13,7 +13,7 @@ class ModelBlender:
     """
     Class to "blend" metadata from several datamodels.
 
-    Tht output "blended" model will contain:
+    The output "blended" model will contain:
 
         - metadata for a combined model
         - a table with metadata of each datamodel

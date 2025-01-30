@@ -90,7 +90,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   float c2_end_max = -10000;
 
   // Loop over every point cloud member and pull out values
-  // 1. Fail withing roiw_ave of wavelength plane
+  // 1. Fail within roiw_ave of wavelength plane
   // and 
   // 2. Are for either of the 2 extreme slices
   
