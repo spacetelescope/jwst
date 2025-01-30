@@ -125,7 +125,7 @@ def build_output_files(filenames):
     Parameters
     ----------
     filenames : list of strings
-        A list of imput and output filenames
+        A list of input and output filenames
 
     returns a list of output file names
     removes output file from filenames

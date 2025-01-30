@@ -175,7 +175,7 @@ but they can be overridden if desired.
 
 As discussed in :ref:`above<configuring_pipeline_python>`, when setting a
 step-level parameter when that step is a substep of a pipeline, it must be passed
-to the `steps` argument dictionary. For exaple, to change the ``rejection_threshold``
+to the `steps` argument dictionary. For example, to change the ``rejection_threshold``
 parameter of the jump detection step when running the full Detector1Pipeline:
 
 ::
@@ -495,7 +495,7 @@ Advanced use - `pipeline.run()` vs. `pipeline.call`
 ===================================================
 
 Another option for running pipelines or steps is to use the `.run()` method
-instead of the `.call()` method. **Using .run() is not reccomended** and
+instead of the `.call()` method. **Using .run() is not recommended** and
 considered advanced use, but it is an option to users.
 
 The difference between ``.run()`` in ``.call()`` is in the retrieval and use
@@ -547,7 +547,7 @@ Since the pipeline uses multiprocessing it is critical that any code using the p
 to the guidelines described in the
 `python multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#multiprocessing-programming>`_.
 The pipeline uses the `forkserver` start method internally and it is recommended that any
-multiprocessing scripts that use the pipline use the same start. As detailed in the
+multiprocessing scripts that use the pipeline use the same start. As detailed in the
 `python documentation <https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods>`_
 this will require that code be "protected" with a ``if __name__ == '__main__':`` check as follows
 

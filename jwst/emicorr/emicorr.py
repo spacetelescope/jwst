@@ -228,7 +228,7 @@ def apply_emicorr(output_model, emicorr_model,
         # Read image data and set up some variables
         data = output_model.data.copy()
 
-        # Correspondance of array order in IDL
+        # Correspondence of array order in IDL
         # sz[0] = 4 in idl
         # sz[1] = nx
         # sz[2] = ny
@@ -355,7 +355,7 @@ def apply_emicorr(output_model, emicorr_model,
         # the waveform. This can be any number that is at least 1 less than the period in
         # pixels. If larger, some bins could end up sparsely sampled. Fewer bins results
         # in a smoother waveform but lower resolution. Can always be smoothed and/or
-        # streched to a different dimension later. By default, use period_in_pixels/2.0
+        # stretched to a different dimension later. By default, use period_in_pixels/2.0
 
         # number of bins in one phased wave (e.g. 255, 218, etc)
         if nbins_all is None:
@@ -474,7 +474,7 @@ def apply_emicorr(output_model, emicorr_model,
 
 
 def sloper(data):
-    """ Fit slopes to all pix of a ramp, using numerical recipies plane-adding
+    """ Fit slopes to all pix of a ramp, using numerical recipes plane-adding
      returning intercept image.
 
     Parameters

@@ -7,7 +7,7 @@ Internally this will call one of several subfunctions depending on the
 specified centering type. These have to do with where the (0, 0) element of
 the Fourier transform is located, i.e. where the PSF center ends up.
 - 'FFTSTYLE' centered on one pixel
-- 'SYMMETRIC' centerd on crosshairs between middle pixel
+- 'SYMMETRIC' centered on crosshairs between middle pixel
 - 'ADJUSTABLE', always centered in output array depending on
 whether it is even or odd
 'ADJUSTABLE' is the default.

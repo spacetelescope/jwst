@@ -133,7 +133,7 @@ WFSS Examples
 The extraction of sources from WFSS grism images is a multi-step process, as outlined above.
 Here we show detailed examples of how to customize the list of WFSS grism objects to be
 extracted, in order to better explain the various steps.
-First, the input file (or data model) must aleady have a WCS object assigned to it by running
+First, the input file (or data model) must already have a WCS object assigned to it by running
 the :ref:`assign_wcs <assign_wcs_step>` step. The default values
 for the wavelength range of each spectral order to be extracted are also required;
 they are stored in the ``wavelengthrange`` reference file, which can be retrieved from CRDS.

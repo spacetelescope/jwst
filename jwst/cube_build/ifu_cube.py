@@ -1513,7 +1513,7 @@ class IFUCubeData():
         dwave_all = None
         corner_coord_all = None
 
-        # initializa values to be returned to None
+        # initialize values to be returned to None
         dwave = None
         corner_coord = None
         coord1 = None
@@ -1597,7 +1597,7 @@ class IFUCubeData():
         good_data = np.where(~bad1 & ~bad2 & valid2 & valid3)
 
         num_good = len(good_data[0])
-        if num_good == 0:  # This can occcur if all the pixels on the detector are marked DO_NOT_USE.
+        if num_good == 0:  # This can occur if all the pixels on the detector are marked DO_NOT_USE.
             log.warning(f'No valid pixels found on detector {input_model.meta.filename}')
             return coord1, coord2, corner_coord, wave, dwave, flux, err, \
                 slice_no, rois_det, roiw_det, weight_det, \
@@ -2392,7 +2392,7 @@ class IFUCubeData():
             ifucube_model.meta.ifu.roi_wave = 0
             ifucube_model.meta.ifu.roi_spatial = 0
 
-            # uncorrect cdelt for degree conversion
+            # un-correct cdelt for degree conversion
             ifucube_model.meta.wcsinfo.cdelt1 *= 3600.0
             ifucube_model.meta.wcsinfo.cdelt2 *= 3600.0
 

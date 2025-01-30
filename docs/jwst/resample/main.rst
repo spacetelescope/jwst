@@ -95,7 +95,7 @@ of the FITS file. Each pixel in the context image is a bit field that encodes
 information about which input image has contributed to the corresponding
 pixel in the resampled data array. Context image uses 32 bit integers to encode
 this information and hence it can keep track of only 32 input images.
-First bit corresponds to the first input image, second bit corrsponds to the
+First bit corresponds to the first input image, second bit corresponds to the
 second input image, and so on. If the number of input images is larger than 32,
 then it is necessary to have multiple context images ("planes") to hold
 information about all input images

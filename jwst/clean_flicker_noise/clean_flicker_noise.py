@@ -725,7 +725,7 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
         mask[:, :-1] = mask[:, :-1] & (~outlier[:, 1:])
 
     # Used to determine the fitting intervals along the slow scan
-    # direction.  Pre-pend a zero so that sum_mask[i] is equal
+    # direction.  Prepend a zero so that sum_mask[i] is equal
     # to np.sum(mask[:i], axis=1).
 
     sum_mask = np.array([0] + list(np.cumsum(np.sum(mask, axis=1))))

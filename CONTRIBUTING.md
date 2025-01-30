@@ -44,13 +44,13 @@ aren't making branches directly on 'spacetelescope/jwst'.
 
 2. Now that you have remotely forked `jwst`, it needs to be downloaded
 to your machine. To create this 'local' clone, choose an area on your file system
-and use the `git clone` command to dowload your remote fork on to your machine.
+and use the `git clone` command to download your remote fork on to your machine.
 
 		>> cd directory
 		>> git clone git@github.com:<your_username>/jwst.git
 
 3. Make sure that your references to 'origin' and 'upstream' are set correctly - you will
-need this to keep everything in sync and push your changes online. While your inital
+need this to keep everything in sync and push your changes online. While your initial
 local clone will be an exact copy of your remote, which is an exact copy of the 'upstream'
 `spacetelescope/jwst`, these all must be kept in sync manually (via git fetch/pull/push).
 
@@ -58,7 +58,7 @@ local clone will be an exact copy of your remote, which is an exact copy of the 
 
 		>> git remote -v
 
-After your inital clone, you will likely be missing the reference to 'upstream'
+After your initial clone, you will likely be missing the reference to 'upstream'
 (which is just the most commonly used name in git to refer to the main project repository - you
 can call this whatever you want but the origin/upstream conventions are most commonly used) - to 
 set this, use the `add` git command:
@@ -388,7 +388,7 @@ Our pre-commit Git hook, also described in the
 [Installing JWST for Development](Step-3-Installing-jwst-for-development) section,
 is designed to help contributors run all the checks on their contributions every time they commit.
 
-The following three style checks are performed:
+The following style checks are performed:
 
 * **PEP8-compliant code**
 
@@ -416,9 +416,18 @@ The following three style checks are performed:
 	The docstring style for the `jwst` repository generally conforms to the
 	[Numpy style guide](https://numpydoc.readthedocs.io/en/latest/format.html), and the docstring
 	style rules are enforced using [numpydoc-validation](https://numpydoc.readthedocs.io/en/latest/validation.html).
-	To run these checks locally, use the command
+
+	To run these checks standalone, use the command
 
         >> pre-commit run numpydoc-validation
+
+* **Spell checking**
+
+	We use [Codespell](https://github.com/codespell-project/codespell) to check for common
+	misspellings in both our codebase and documentation.
+	To run the spell checker standalone, use the command
+
+        >> pre-commit run codespell
 
 
 * **PEP-compliant type hints**

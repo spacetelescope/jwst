@@ -264,6 +264,10 @@ checks = [
     "RT05", # Return value description should finish with a period
 ]
 
+[tool.codespell]
+skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+ignore-words-list = "indx, delt, Shepard, tread, usig"
+
 [tool.mypy]
 warn_return_any = true
 warn_unused_configs = true
