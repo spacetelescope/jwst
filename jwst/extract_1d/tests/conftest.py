@@ -38,16 +38,21 @@ def simple_wcs():
     def get_transform(*args, **kwargs):
         def return_results(*args, **kwargs):
             if len(args) == 2:
-                zeros = np.zeros(args[0].shape)
-                wave, _ = np.meshgrid(args[0], args[1])
+                try:
+                    zeros = np.zeros(args[0].shape)
+                    wave, _ = np.meshgrid(args[0], args[1])
+                except AttributeError:
+                    zeros = 0.0
+                    wave = args[0]
                 return zeros, zeros, wave
             if len(args) == 3:
                 try:
                     nx = len(args[0])
+                    pix = np.arange(nx)
+                    trace = np.ones(nx)
                 except TypeError:
-                    nx = 1
-                pix = np.arange(nx)
-                trace = np.ones(nx)
+                    pix = 0
+                    trace = 1.0
                 return pix, trace
         return return_results
 
@@ -87,13 +92,22 @@ def simple_wcs_transpose():
     def backward_transform(*args, **kwargs):
         try:
             nx = len(args[0])
+            pix = np.arange(nx)
+            trace = np.ones(nx)
         except TypeError:
-            nx = 1
-        pix = np.arange(nx)
-        trace = np.ones(nx)
+            pix = 0.0
+            trace = 1.0
         return trace, pix
 
+    # Mock a simple forward transform, for mocking a v2v3 frame
+    def get_transform(*args, **kwargs):
+        def return_results(*args, **kwargs):
+            return 1.0, 1.0, 1.0
+        return return_results
+
+    simple_wcs_function.get_transform = get_transform
     simple_wcs_function.backward_transform = backward_transform
+    simple_wcs_function.available_frames = []
 
     return simple_wcs_function
 
@@ -229,6 +243,7 @@ def mock_miri_lrs_fs(simple_wcs_transpose):
     model = dm.ImageModel()
     model.meta.instrument.name = 'MIRI'
     model.meta.instrument.detector = 'MIRIMAGE'
+    model.meta.instrument.filter = 'P750L'
     model.meta.observation.date = '2023-07-22'
     model.meta.observation.time = '06:24:45.569'
     model.meta.exposure.nints = 1
@@ -471,3 +486,72 @@ def nirspec_fs_apcorr_file(tmp_path, nirspec_fs_apcorr):
     filename = str(tmp_path / 'nirspec_fs_apcorr.fits')
     nirspec_fs_apcorr.save(filename)
     return filename
+
+
+@pytest.fixture()
+def psf_reference():
+    psf_model = dm.SpecPsfModel()
+    psf_model.data = np.ones((50, 50), dtype=float)
+    psf_model.wave = np.linspace(0, 10, 50)
+    psf_model.meta.psf.subpix = 1.0
+    psf_model.meta.psf.center_col = 25
+    psf_model.meta.psf.center_row = 25
+    yield psf_model
+    psf_model.close()
+
+
+@pytest.fixture()
+def psf_reference_file(tmp_path, psf_reference):
+    filename = str(tmp_path / 'psf_reference.fits')
+    psf_reference.save(filename)
+    return filename
+
+
+@pytest.fixture()
+def psf_reference_with_source():
+    psf_model = dm.SpecPsfModel()
+    psf_model.data = np.full((50, 50), 1e-6)
+    psf_model.data[:, 24:27] += 1.0
+
+    psf_model.wave = np.linspace(0, 10, 50)
+    psf_model.meta.psf.subpix = 1.0
+    psf_model.meta.psf.center_col = 25
+    psf_model.meta.psf.center_row = 25
+    yield psf_model
+    psf_model.close()
+
+
+@pytest.fixture()
+def psf_reference_file_with_source(tmp_path, psf_reference_with_source):
+    filename = str(tmp_path / 'psf_reference_with_source.fits')
+    psf_reference_with_source.save(filename)
+    return filename
+
+
+@pytest.fixture()
+def simple_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[20:30, :] = 1.0
+    return profile
+
+
+@pytest.fixture()
+def background_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[:10, :] = 1.0
+    profile[40:, :] = 1.0
+    return profile
+
+
+@pytest.fixture()
+def nod_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[10:20, :] = 1.0 / 10
+    return profile
+
+
+@pytest.fixture()
+def negative_nod_profile():
+    profile = np.zeros((50, 50), dtype=np.float32)
+    profile[30:40, :] = -1.0 / 10
+    return profile
