@@ -6,7 +6,7 @@ The ``combine_1d`` step has two step-specific arguments:
 ``--exptime_key``
   This is a case-insensitive string that identifies the metadata element
   (or FITS keyword) for the weight to apply to the input data.  The default
-  is "integration_time".  If the string is "effinttm" or starts with
+  is "exposure_time".  If the string is "effinttm" or starts with
   "integration", the integration time (FITS keyword EFFINTTM) is used
   as the weight.  If the string is "effexptm" or starts with "exposure",
   the exposure time (FITS keyword EFFEXPTM) is used as the weight.  If
