@@ -14,14 +14,7 @@ __all__ = ["AssignMTWcsStep"]
 
 
 class AssignMTWcsStep(Step):
-    """
-    AssignMTWcsStep: Create a gWCS object for a moving target.
-
-    Parameters
-    ----------
-    input : `~jwst.associations.Association`
-        A JWST association file.
-    """
+    """Create a gWCS object for a moving target."""
 
     class_alias = "assign_mtwcs"
 
@@ -30,15 +23,27 @@ class AssignMTWcsStep(Step):
         output_use_model = boolean(default=True)   # When saving use `DataModel.meta.filename`
     """
 
-    def process(self, input):
+    def process(self, input_lib):
+        """
+        Run the assign_mtwcs step.
 
-        if not isinstance(input, ModelLibrary):
+        Parameters
+        ----------
+        input_lib : `~jwst.datamodels.ModelLibrary`
+            A collection of data models.
+
+        Returns
+        -------
+        `~jwst.datamodels.ModelLibrary`
+            The modified data models.
+        """
+        if not isinstance(input_lib, ModelLibrary):
             try:
-                input = ModelLibrary(input)
+                input_lib = ModelLibrary(input_lib)
             except Exception:
                 log.warning("Input data type is not supported.")
-                record_step_status(input, "assign_mtwcs", False)
-                return input
+                record_step_status(input_lib, "assign_mtwcs", False)
+                return input_lib
 
-        result = assign_moving_target_wcs(input)
+        result = assign_moving_target_wcs(input_lib)
         return result
