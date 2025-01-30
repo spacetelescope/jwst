@@ -7,18 +7,24 @@ import numpy as np
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
 from jwst.resample.resample_utils import build_driz_weight
-from stcal.outlier_detection.utils import compute_weight_threshold, gwcs_blot, flag_crs, flag_resampled_crs
+from stcal.outlier_detection.utils import (
+    compute_weight_threshold,
+    gwcs_blot,
+    flag_crs,
+    flag_resampled_crs,
+)
 from stcal.outlier_detection.median import MedianComputer, nanmedian3D
 from stdatamodels.jwst import datamodels
 from . import _fileio
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
-OUTLIER = datamodels.dqflags.pixel['OUTLIER']
+DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]
+OUTLIER = datamodels.dqflags.pixel["OUTLIER"]
 
 
 def create_cube_median(cube_model, maskpt):
@@ -43,18 +49,23 @@ def create_cube_median(cube_model, maskpt):
 
     # not safe to use overwrite_input=True here because we are operating on model.data directly
     return nanmedian3D(
-        np.ma.masked_array(cube_model.data, np.less(cube_model.wht, weight_threshold), fill_value=np.nan),
-        overwrite_input=False)
+        np.ma.masked_array(
+            cube_model.data, np.less(cube_model.wht, weight_threshold), fill_value=np.nan
+        ),
+        overwrite_input=False,
+    )
 
 
-def median_without_resampling(input_models,
-                              maskpt,
-                              weight_type,
-                              good_bits,
-                              save_intermediate_results=False,
-                              make_output_path=None,
-                              buffer_size=None,
-                              return_error=False):
+def median_without_resampling(
+    input_models,
+    maskpt,
+    weight_type,
+    good_bits,
+    save_intermediate_results=False,
+    make_output_path=None,
+    buffer_size=None,
+    return_error=False,
+):
     """Compute a median image without resampling.
 
     The median is performed across input exposures, for both
@@ -113,16 +124,13 @@ def median_without_resampling(input_models,
 
     with input_models:
         for i in range(len(input_models)):
-
             drizzled_model = input_models.borrow(i)
             drizzled_data = drizzled_model.data.copy()
             if return_error:
                 drizzled_err = drizzled_model.err.copy()
             else:
                 drizzled_err = None
-            weight = build_driz_weight(drizzled_model,
-                                       weight_type=weight_type,
-                                       good_bits=good_bits)
+            weight = build_driz_weight(drizzled_model, weight_type=weight_type, good_bits=good_bits)
             if i == 0:
                 median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
                 input_shape = (ngroups,) + drizzled_data.shape
@@ -167,13 +175,15 @@ def median_without_resampling(input_models,
         return median_data, median_wcs
 
 
-def median_with_resampling(input_models,
-                           resamp,
-                           maskpt,
-                           save_intermediate_results=False,
-                           make_output_path=None,
-                           buffer_size=None,
-                           return_error=False):
+def median_with_resampling(
+    input_models,
+    resamp,
+    maskpt,
+    save_intermediate_results=False,
+    make_output_path=None,
+    buffer_size=None,
+    return_error=False,
+):
     """Compute a median image with resampling.
 
     The median is performed across resampled groups, for both imaging
@@ -231,9 +241,9 @@ def median_with_resampling(input_models,
 
     with input_models:
         for i, indices in enumerate(indices_by_group):
-
             drizzled_model = resamp.resample_group(
-                input_models, indices, compute_error=return_error)
+                input_models, indices, compute_error=return_error
+            )
 
             if save_intermediate_results:
                 # write the drizzled model to file
@@ -241,7 +251,7 @@ def median_with_resampling(input_models,
 
             if i == 0:
                 median_wcs = resamp.output_wcs
-                input_shape = (ngroups,)+drizzled_model.data.shape
+                input_shape = (ngroups,) + drizzled_model.data.shape
                 dtype = drizzled_model.data.dtype
                 computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
                 if return_error:
@@ -283,12 +293,7 @@ def median_with_resampling(input_models,
         return median_data, median_wcs
 
 
-def flag_crs_in_models(
-    input_models,
-    median_data,
-    snr1,
-    median_err=None
-):
+def flag_crs_in_models(input_models, median_data, snr1, median_err=None):
     """Flag outliers in all input models without resampling."""
     for image in input_models:
         # dq flags will be updated in-place
@@ -309,7 +314,7 @@ def flag_resampled_model_crs(
     make_output_path=None,
 ):
     """Flag outliers in a resampled model."""
-    if 'SPECTRAL' not in input_model.meta.wcs.output_frame.axes_type:
+    if "SPECTRAL" not in input_model.meta.wcs.output_frame.axes_type:
         input_pixflux_area = input_model.meta.photometry.pixelarea_steradians
         # Set array shape, needed to compute image pixel area
         input_model.meta.wcs.array_shape = input_model.shape
@@ -318,11 +323,23 @@ def flag_resampled_model_crs(
     else:
         pix_ratio = 1.0
 
-    blot = gwcs_blot(median_data, median_wcs, input_model.data.shape,
-                     input_model.meta.wcs, pix_ratio, fillval=np.nan)
+    blot = gwcs_blot(
+        median_data,
+        median_wcs,
+        input_model.data.shape,
+        input_model.meta.wcs,
+        pix_ratio,
+        fillval=np.nan,
+    )
     if median_err is not None:
-        blot_err = gwcs_blot(median_err, median_wcs, input_model.data.shape,
-                             input_model.meta.wcs, pix_ratio, fillval=np.nan)
+        blot_err = gwcs_blot(
+            median_err,
+            median_wcs,
+            input_model.data.shape,
+            input_model.meta.wcs,
+            pix_ratio,
+            fillval=np.nan,
+        )
     else:
         blot_err = None
     if save_blot:
@@ -348,8 +365,10 @@ def _flag_resampled_model_crs(
     # Get background level of science data if it has not been subtracted, so it
     # can be added into the level of the blotted data, which has been
     # background-subtracted
-    if (input_model.meta.background.subtracted is False and
-            input_model.meta.background.level is not None):
+    if (
+        input_model.meta.background.subtracted is False
+        and input_model.meta.background.level is not None
+    ):
         backg = input_model.meta.background.level
         log.debug(f"Adding background level {backg} to blotted image")
 
@@ -357,7 +376,9 @@ def _flag_resampled_model_crs(
         err_to_use = blot_err
     else:
         err_to_use = input_model.err
-    cr_mask = flag_resampled_crs(input_model.data, err_to_use, blot, snr1, snr2, scale1, scale2, backg)
+    cr_mask = flag_resampled_crs(
+        input_model.data, err_to_use, blot, snr1, snr2, scale1, scale2, backg
+    )
 
     # update the dq flags in-place
     input_model.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
@@ -383,17 +404,19 @@ def flag_crs_in_models_with_resampling(
 ):
     """Flag outliers in all input models, with resampling."""
     for image in input_models:
-        flag_resampled_model_crs(image,
-                                 median_data,
-                                 median_wcs,
-                                 snr1,
-                                 snr2,
-                                 scale1,
-                                 scale2,
-                                 backg,
-                                 median_err=median_err,
-                                 save_blot=save_blot,
-                                 make_output_path=make_output_path)
+        flag_resampled_model_crs(
+            image,
+            median_data,
+            median_wcs,
+            snr1,
+            snr2,
+            scale1,
+            scale2,
+            backg,
+            median_err=median_err,
+            save_blot=save_blot,
+            make_output_path=make_output_path,
+        )
 
 
 def flag_model_crs(image, blot, snr, median_err=None):

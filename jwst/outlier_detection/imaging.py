@@ -8,10 +8,12 @@ from jwst.datamodels import ModelLibrary
 from jwst.resample import resample
 from jwst.stpipe.utilities import record_step_status
 
-from .utils import (flag_model_crs,
-                    flag_resampled_model_crs,
-                    median_without_resampling,
-                    median_with_resampling)
+from .utils import (
+    flag_model_crs,
+    flag_resampled_model_crs,
+    median_without_resampling,
+    median_with_resampling,
+)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -65,35 +67,40 @@ def detect_outliers(
             fillval=fillval,
             good_bits=good_bits,
         )
-        median_data, median_wcs = median_with_resampling(input_models,
-                                                    resamp,
-                                                    maskpt,
-                                                    save_intermediate_results=save_intermediate_results,
-                                                    make_output_path=make_output_path,)
+        median_data, median_wcs = median_with_resampling(
+            input_models,
+            resamp,
+            maskpt,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,
+        )
     else:
-        median_data, median_wcs = median_without_resampling(input_models,
-                                                    maskpt,
-                                                    weight_type,
-                                                    good_bits,
-                                                    save_intermediate_results=save_intermediate_results,
-                                                    make_output_path=make_output_path,)
-
+        median_data, median_wcs = median_without_resampling(
+            input_models,
+            maskpt,
+            weight_type,
+            good_bits,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,
+        )
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
     with input_models:
         for image in input_models:
             if resample_data:
-                flag_resampled_model_crs(image,
-                                         median_data,
-                                         median_wcs,
-                                         snr1,
-                                         snr2,
-                                         scale1,
-                                         scale2,
-                                         backg,
-                                         save_blot=save_intermediate_results,
-                                         make_output_path=make_output_path)
+                flag_resampled_model_crs(
+                    image,
+                    median_data,
+                    median_wcs,
+                    snr1,
+                    snr2,
+                    scale1,
+                    scale2,
+                    backg,
+                    save_blot=save_intermediate_results,
+                    make_output_path=make_output_path,
+                )
             else:
                 flag_model_crs(image, median_data, snr1)
             input_models.shelve(image, modify=True)

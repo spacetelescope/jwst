@@ -5,7 +5,12 @@ import numpy as np
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import (
-    Const1D, Linear1D, Mapping, Pix2Sky_TAN, RotateNative2Celestial, Tabular1D
+    Const1D,
+    Linear1D,
+    Mapping,
+    Pix2Sky_TAN,
+    RotateNative2Celestial,
+    Tabular1D,
 )
 from astropy.modeling.fitting import LinearLSQFitter
 from astropy.stats import sigma_clip
@@ -45,9 +50,21 @@ class ResampleSpecData(ResampleData):
          a record of metadata from all input models.
     """
 
-    def __init__(self, input_models, output=None, single=False, blendheaders=False,
-                 pixfrac=1.0, kernel="square", fillval=0, wht_type="ivm",
-                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
+    def __init__(
+        self,
+        input_models,
+        output=None,
+        single=False,
+        blendheaders=False,
+        pixfrac=1.0,
+        kernel="square",
+        fillval=0,
+        wht_type="ivm",
+        good_bits=0,
+        pscale_ratio=1.0,
+        pscale=None,
+        **kwargs,
+    ):
         """
         Parameters
         ----------
@@ -62,10 +79,10 @@ class ResampleSpecData(ResampleData):
         """
         self.output_dir = None
         self.output_filename = output
-        if output is not None and '.fits' not in str(output):
+        if output is not None and ".fits" not in str(output):
             self.output_dir = output
             self.output_filename = None
-        self.intermediate_suffix = 'outlier_s2d'
+        self.intermediate_suffix = "outlier_s2d"
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -75,7 +92,7 @@ class ResampleSpecData(ResampleData):
         self.fillval = fillval
         self.weight_type = wht_type
         self.good_bits = good_bits
-        self.in_memory = kwargs.get('in_memory', True)
+        self.in_memory = kwargs.get("in_memory", True)
         self._recalc_pscale_ratio = False
 
         log.info(f"Driz parameter kernel: {self.kernel}")
@@ -83,27 +100,32 @@ class ResampleSpecData(ResampleData):
         log.info(f"Driz parameter fillval: {self.fillval}")
         log.info(f"Driz parameter weight_type: {self.weight_type}")
 
-        output_wcs = kwargs.get('output_wcs', None)
-        output_shape = kwargs.get('output_shape', None)
-        self.asn_id = kwargs.get('asn_id', None)
+        output_wcs = kwargs.get("output_wcs", None)
+        output_shape = kwargs.get("output_shape", None)
+        self.asn_id = kwargs.get("asn_id", None)
 
         # Get an average input pixel scale for parameter calculations
         disp_axis = input_models[0].meta.wcsinfo.dispersion_direction
         self.input_pixscale0 = compute_spectral_pixel_scale(
-            input_models[0].meta.wcs, disp_axis=disp_axis)
+            input_models[0].meta.wcs, disp_axis=disp_axis
+        )
         if np.isnan(self.input_pixscale0):
-            log.warning('Input pixel scale could not be determined.')
+            log.warning("Input pixel scale could not be determined.")
             if pscale is not None:
-                log.warning('Output pixel scale setting is not supported '
-                            'without an input pixel scale. Setting pscale=None.')
+                log.warning(
+                    "Output pixel scale setting is not supported "
+                    "without an input pixel scale. Setting pscale=None."
+                )
                 pscale = None
 
         nominal_area = input_models[0].meta.photometry.pixelarea_steradians
         if nominal_area is None:
-            log.warning('Nominal pixel area not set in input data.')
+            log.warning("Nominal pixel area not set in input data.")
             if pscale is not None:
-                log.warning('Output pixel scale setting is not supported '
-                            'without a nominal pixel scale. Setting pscale=None.')
+                log.warning(
+                    "Output pixel scale setting is not supported "
+                    "without a nominal pixel scale. Setting pscale=None."
+                )
                 pscale = None
 
         if output_wcs:
@@ -112,23 +134,21 @@ class ResampleSpecData(ResampleData):
             if output_wcs.pixel_area is None:
                 if nominal_area is not None:
                     # Compare input and output spatial scale to update nominal area
-                    output_pscale = compute_spectral_pixel_scale(
-                        output_wcs, disp_axis=disp_axis)
+                    output_pscale = compute_spectral_pixel_scale(output_wcs, disp_axis=disp_axis)
                     if np.isnan(output_pscale) or np.isnan(self.input_pixscale0):
-                        log.warning('Output pixel scale could not be determined.')
+                        log.warning("Output pixel scale could not be determined.")
                         output_pix_area = None
                     else:
-                        log.debug(f'Setting output pixel area from the approximate '
-                                  f'output spatial scale: {output_pscale}')
-                        output_pix_area = (output_pscale * nominal_area
-                                           / self.input_pixscale0)
+                        log.debug(
+                            f"Setting output pixel area from the approximate "
+                            f"output spatial scale: {output_pscale}"
+                        )
+                        output_pix_area = output_pscale * nominal_area / self.input_pixscale0
                 else:
-                    log.warning("Unable to compute output pixel area "
-                                "from 'output_wcs'.")
+                    log.warning("Unable to compute output pixel area from 'output_wcs'.")
                     output_pix_area = None
             else:
-                log.debug(f'Setting output pixel area from wcs.pixel_area: '
-                          f'{output_wcs.pixel_area}')
+                log.debug(f"Setting output pixel area from wcs.pixel_area: {output_wcs.pixel_area}")
                 output_pix_area = output_wcs.pixel_area
 
             # Set the pscale ratio for scaling reasons
@@ -141,16 +161,17 @@ class ResampleSpecData(ResampleData):
                 self.output_wcs.array_shape = output_shape[::-1]
         else:
             if pscale is not None and nominal_area is not None:
-                log.info(f'Specified output pixel scale: {pscale} arcsec.')
+                log.info(f"Specified output pixel scale: {pscale} arcsec.")
                 pscale /= 3600.0
 
                 # Set the pscale ratio from the input pixel scale
                 # (pscale is input / output)
                 if self.pscale_ratio != 1.0:
-                    log.warning('Ignoring input pixel_scale_ratio in favor '
-                                'of explicit pixel_scale.')
+                    log.warning(
+                        "Ignoring input pixel_scale_ratio in favor of explicit pixel_scale."
+                    )
                 self.pscale_ratio = self.input_pixscale0 / pscale
-                log.info(f'Computed output pixel scale ratio: {self.pscale_ratio:.5g}')
+                log.info(f"Computed output pixel scale ratio: {self.pscale_ratio:.5g}")
 
             # Define output WCS based on all inputs, including a reference WCS.
             # These functions internally use self.pscale_ratio to accommodate
@@ -178,13 +199,12 @@ class ResampleSpecData(ResampleData):
         log.debug(f"Output mosaic size: {self.output_array_shape}")
 
         if pscale is None:
-            log.info(f'Specified output pixel scale ratio: {self.pscale_ratio}.')
-            pscale = compute_spectral_pixel_scale(
-                self.output_wcs, disp_axis=disp_axis)
-            log.info(f'Computed output pixel scale: {3600.0 * pscale:.5g} arcsec.')
+            log.info(f"Specified output pixel scale ratio: {self.pscale_ratio}.")
+            pscale = compute_spectral_pixel_scale(self.output_wcs, disp_axis=disp_axis)
+            log.info(f"Computed output pixel scale: {3600.0 * pscale:.5g} arcsec.")
 
     def _create_output_model(self, ref_input_model=None):
-        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        """Create a new blank model and update it's meta with info from ``ref_input_model``."""
         output_model = datamodels.SlitModel(None)
 
         # update meta data and wcs
@@ -194,7 +214,7 @@ class ResampleSpecData(ResampleData):
         if self.output_pix_area is not None:
             output_model.meta.photometry.pixelarea_steradians = self.output_pix_area
             output_model.meta.photometry.pixelarea_arcsecsq = (
-                self.output_pix_area * np.rad2deg(3600)**2
+                self.output_pix_area * np.rad2deg(3600) ** 2
             )
         return output_model
 
@@ -262,14 +282,14 @@ class ResampleSpecData(ResampleData):
         refwcs = refmodel.meta.wcs
 
         # Set up the transforms that are needed
-        s2d = refwcs.get_transform('slit_frame', 'detector')
-        d2s = refwcs.get_transform('detector', 'slit_frame')
-        if 'moving_target' in refwcs.available_frames:
-            s2w = refwcs.get_transform('slit_frame', 'moving_target')
-            w2s = refwcs.get_transform('moving_target', 'slit_frame')
+        s2d = refwcs.get_transform("slit_frame", "detector")
+        d2s = refwcs.get_transform("detector", "slit_frame")
+        if "moving_target" in refwcs.available_frames:
+            s2w = refwcs.get_transform("slit_frame", "moving_target")
+            w2s = refwcs.get_transform("moving_target", "slit_frame")
         else:
-            s2w = refwcs.get_transform('slit_frame', 'world')
-            w2s = refwcs.get_transform('world', 'slit_frame')
+            s2w = refwcs.get_transform("slit_frame", "world")
+            w2s = refwcs.get_transform("world", "slit_frame")
 
         # Estimate position of the target without relying on the meta.target:
         # compute the mean spatial and wavelength coords weighted
@@ -284,8 +304,9 @@ class ResampleSpecData(ResampleData):
 
         # Reject the worst outliers in the data
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=AstropyUserWarning,
-                                    message=".*automatically clipped.*")
+            warnings.filterwarnings(
+                "ignore", category=AstropyUserWarning, message=".*automatically clipped.*"
+            )
             weights = sigma_clip(refmodel_data, masked=True, sigma=100.0)
         weights = np.ma.filled(weights, fill_value=0.0)
         if not np.all(weights == 0.0):
@@ -298,14 +319,13 @@ class ResampleSpecData(ResampleData):
         # (at the center of the slit in x)
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
         sx, sy = s2d(0, wmean_s, wmean_l)
-        log.debug(f'Fiducial RA, Dec, wavelength: '
-                  f'{targ_ra}, {targ_dec}, {wmean_l}')
-        log.debug(f'Index at fiducial center: x={sx}, y={sy}')
+        log.debug(f"Fiducial RA, Dec, wavelength: {targ_ra}, {targ_dec}, {wmean_l}")
+        log.debug(f"Index at fiducial center: x={sx}, y={sy}")
 
         # Estimate spatial sampling from the reference model
         # at the center of the array
         lam_center_idx = int(np.mean(bbox, axis=1)[0])
-        log.debug(f'Center of dispersion axis: {lam_center_idx}')
+        log.debug(f"Center of dispersion axis: {lam_center_idx}")
         grid_center = grid[0][:, lam_center_idx], grid[1][:, lam_center_idx]
         ra_ref, dec_ref, _ = np.array(refwcs(*grid_center))
 
@@ -332,7 +352,7 @@ class ResampleSpecData(ResampleData):
 
         # Check whether sampling is more along RA or along Dec
         swap_xy = abs(pix_to_xtan.slope) < abs(pix_to_ytan.slope)
-        log.debug(f'Swap xy: {swap_xy}')
+        log.debug(f"Swap xy: {swap_xy}")
 
         # Get output wavelengths from all data
         ref_lam = _find_nirspec_output_sampling_wavelengths(all_wcs)
@@ -342,7 +362,8 @@ class ResampleSpecData(ResampleData):
 
         # Find the spatial extent in x/y tangent
         min_tan_x, max_tan_x, min_tan_y, max_tan_y = self._max_spatial_extent(
-            all_wcs, undist2sky.inverse)
+            all_wcs, undist2sky.inverse
+        )
         diff_y = np.abs(max_tan_y - min_tan_y)
         diff_x = np.abs(max_tan_x - min_tan_x)
 
@@ -396,9 +417,9 @@ class ResampleSpecData(ResampleData):
         else:
             ref_lam = 3 * ref_lam
             pixel_coord = [-0.5, 0, 0.5]
-        wavelength_transform = Tabular1D(points=pixel_coord,
-                                         lookup_table=ref_lam,
-                                         bounds_error=False, fill_value=np.nan)
+        wavelength_transform = Tabular1D(
+            points=pixel_coord, lookup_table=ref_lam, bounds_error=False, fill_value=np.nan
+        )
 
         # For spatial coordinates, map detector pixels to tangent offset,
         # then to world coordinates (RA, Dec, wavelength in um).
@@ -420,8 +441,8 @@ class ResampleSpecData(ResampleData):
         # Make a 1D lookup table for all ny.
         # Allow linear extrapolation at the edges.
         slit_transform = Tabular1D(
-            points=np.arange(ny), lookup_table=slit_center,
-            bounds_error=False, fill_value=None)
+            points=np.arange(ny), lookup_table=slit_center, bounds_error=False, fill_value=None
+        )
 
         # In the transform, the first slit coordinate is always set to 0
         # to represent the "horizontal" center of the slit
@@ -442,15 +463,16 @@ class ResampleSpecData(ResampleData):
         slit2world = det2slit.inverse | pix2world
 
         # Create coordinate frames: detector, slit_frame, and world
-        det = cf.Frame2D(name='detector', axes_order=(0, 1))
-        slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1),
-                                  unit=("", ""), axes_names=('x_slit', 'y_slit'))
-        spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
-                                unit=(u.micron,), axes_names=('wavelength',))
-        slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
-        sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
-                                reference_frame=coord.ICRS())
-        world = cf.CompositeFrame([sky, spec], name='world')
+        det = cf.Frame2D(name="detector", axes_order=(0, 1))
+        slit_spatial = cf.Frame2D(
+            name="slit_spatial", axes_order=(0, 1), unit=("", ""), axes_names=("x_slit", "y_slit")
+        )
+        spec = cf.SpectralFrame(
+            name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+        )
+        slit_frame = cf.CompositeFrame([slit_spatial, spec], name="slit_frame")
+        sky = cf.CelestialFrame(name="sky", axes_order=(0, 1), reference_frame=coord.ICRS())
+        world = cf.CompositeFrame([sky, spec], name="world")
 
         pipeline = [(det, det2slit), (slit_frame, slit2world), (world, None)]
         output_wcs = WCS(pipeline)
@@ -478,7 +500,7 @@ class ResampleSpecData(ResampleData):
             dec = dec[good]
 
             xtan, ytan = transform(ra, dec)
-            for tan_all, limits in zip([xtan, ytan], [limits_x, limits_y]):
+            for tan_all, limits in zip([xtan, ytan], [limits_x, limits_y], strict=False):
                 min_tan = np.min(tan_all)
                 max_tan = np.max(tan_all)
 
@@ -507,7 +529,6 @@ class ResampleSpecData(ResampleData):
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS
         """
-
         # for each input model convert slit x,y to ra,dec,lam
         # use first input model to set spatial scale
         # use center of appended ra and dec arrays to set up
@@ -557,8 +578,7 @@ class ResampleSpecData(ResampleData):
                 all_wavelength = np.append(all_wavelength, wavelength_array)
 
                 # find the center ra and dec for this slit at central wavelength
-                lam_center_index = int((bbox[spectral_axis][1] -
-                                        bbox[spectral_axis][0]) / 2)
+                lam_center_index = int((bbox[spectral_axis][1] - bbox[spectral_axis][0]) / 2)
                 if spatial_axis == 0:
                     # MIRI LRS, the WCS x axis is spatial
                     ra_slice = ra[lam_center_index, :]
@@ -578,7 +598,9 @@ class ResampleSpecData(ResampleData):
 
                 # Filter out RuntimeWarnings due to computed NaNs in the WCS
                 with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", RuntimeWarning)  # was ignore. need to make more specific
+                    warnings.simplefilter(
+                        "ignore", RuntimeWarning
+                    )  # was ignore. need to make more specific
                 # at this center of slit find x,y tangent projection - x_tan, y_tan
                 x_tan, y_tan = undist2sky1.inverse(ra, dec)
 
@@ -634,16 +656,19 @@ class ResampleSpecData(ResampleData):
         # Check if the data is MIRI LRS FIXED Slit. If it is then
         # the wavelength array needs to be flipped so that the resampled
         # dispersion direction matches the dispersion direction on the detector.
-        if input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+        if input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
             wavelength_array = np.flip(wavelength_array, axis=None)
 
         step = 1
         stop = wavelength_array.shape[0]
         points = np.arange(0, stop, step)
-        pix_to_wavelength = Tabular1D(points=points,
-                                      lookup_table=wavelength_array,
-                                      bounds_error=False, fill_value=None,
-                                      name='pix2wavelength')
+        pix_to_wavelength = Tabular1D(
+            points=points,
+            lookup_table=wavelength_array,
+            bounds_error=False,
+            fill_value=None,
+            name="pix2wavelength",
+        )
 
         # Tabular models need an inverse explicitly defined.
         # If the wavelength array is descending instead of ascending, both
@@ -655,10 +680,13 @@ class ResampleSpecData(ResampleData):
         if not np.all(np.diff(wavelength_array) > 0):
             points = points[::-1]
             lookup_table = lookup_table[::-1]
-        pix_to_wavelength.inverse = Tabular1D(points=points,
-                                              lookup_table=lookup_table,
-                                              bounds_error=False, fill_value=None,
-                                              name='wavelength2pix')
+        pix_to_wavelength.inverse = Tabular1D(
+            points=points,
+            lookup_table=lookup_table,
+            bounds_error=False,
+            fill_value=None,
+            name="wavelength2pix",
+        )
 
         # For the input mapping, duplicate the spatial coordinate
         mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
@@ -720,15 +748,14 @@ class ResampleSpecData(ResampleData):
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
 
-        det = cf.Frame2D(name='detector', axes_order=(0, 1))
-        sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
-                                reference_frame=coord.ICRS())
-        spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
-                                unit=(u.micron,), axes_names=('wavelength',))
-        world = cf.CompositeFrame([sky, spec], name='world')
+        det = cf.Frame2D(name="detector", axes_order=(0, 1))
+        sky = cf.CelestialFrame(name="sky", axes_order=(0, 1), reference_frame=coord.ICRS())
+        spec = cf.SpectralFrame(
+            name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+        )
+        world = cf.CompositeFrame([sky, spec], name="world")
 
-        pipeline = [(det, transform),
-                    (world, None)]
+        pipeline = [(det, transform), (world, None)]
 
         output_wcs = WCS(pipeline)
 
@@ -781,8 +808,7 @@ class ResampleSpecData(ResampleData):
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
         # Find the center ra and dec for this slit at central wavelength
-        lam_center_index = int((bbox[spectral_axis][1] -
-                                bbox[spectral_axis][0]) / 2)
+        lam_center_index = int((bbox[spectral_axis][1] - bbox[spectral_axis][0]) / 2)
         x_msa_array = x_msa.T[lam_center_index]
         y_msa_array = y_msa.T[lam_center_index]
         x_msa_array = x_msa_array[~np.isnan(x_msa_array)]
@@ -801,10 +827,13 @@ class ResampleSpecData(ResampleData):
         step = 1
         stop = wavelength_array.shape[0]
         points = np.arange(0, stop, step)
-        pix_to_wavelength = Tabular1D(points=points,
-                                      lookup_table=wavelength_array,
-                                      bounds_error=False, fill_value=None,
-                                      name='pix2wavelength')
+        pix_to_wavelength = Tabular1D(
+            points=points,
+            lookup_table=wavelength_array,
+            bounds_error=False,
+            fill_value=None,
+            name="pix2wavelength",
+        )
 
         # Tabular models need an inverse explicitly defined.
         # If the wavelength array is descending instead of ascending, both
@@ -816,10 +845,13 @@ class ResampleSpecData(ResampleData):
         if not np.all(np.diff(wavelength_array) > 0):
             points = points[::-1]
             lookup_table = lookup_table[::-1]
-        pix_to_wavelength.inverse = Tabular1D(points=points,
-                                              lookup_table=lookup_table,
-                                              bounds_error=False, fill_value=None,
-                                              name='wavelength2pix')
+        pix_to_wavelength.inverse = Tabular1D(
+            points=points,
+            lookup_table=lookup_table,
+            bounds_error=False,
+            fill_value=None,
+            name="wavelength2pix",
+        )
 
         # For the input mapping, duplicate the spatial coordinate
         mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
@@ -829,14 +861,14 @@ class ResampleSpecData(ResampleData):
         # define the output wcs
         transform = mapping | pix_to_x_msa & pix_to_y_msa & pix_to_wavelength
 
-        det = cf.Frame2D(name='detector', axes_order=(0, 1))
-        sky = cf.Frame2D(name=f'resampled_{model.meta.wcs.output_frame.name}', axes_order=(0, 1))
-        spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
-                                unit=(u.micron,), axes_names=('wavelength',))
-        world = cf.CompositeFrame([sky, spec], name='world')
+        det = cf.Frame2D(name="detector", axes_order=(0, 1))
+        sky = cf.Frame2D(name=f"resampled_{model.meta.wcs.output_frame.name}", axes_order=(0, 1))
+        spec = cf.SpectralFrame(
+            name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+        )
+        world = cf.CompositeFrame([sky, spec], name="world")
 
-        pipeline = [(det, transform),
-                    (world, None)]
+        pipeline = [(det, transform), (world, None)]
 
         output_wcs = WCS(pipeline)
 

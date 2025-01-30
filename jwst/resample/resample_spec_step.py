@@ -14,7 +14,7 @@ from ..stpipe import Step
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
-GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleSpecStep(Step):
@@ -23,7 +23,7 @@ class ResampleSpecStep(Step):
     drizzle algorithm.
 
     Parameters
-    -----------
+    ----------
     input : `~jwst.datamodels.MultiSlitModel`, `~jwst.datamodels.ModelContainer`, Association
         A singe datamodel, a container of datamodels, or an association file
     """
@@ -53,8 +53,8 @@ class ResampleSpecStep(Step):
 
         #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
         if model_is_msm and len((input_new[0]).shape) == 3:
-            self.log.warning('Resample spec step will be skipped')
-            input_new.meta.cal_step.resample_spec = 'SKIPPED'
+            self.log.warning("Resample spec step will be skipped")
+            input_new.meta.cal_step.resample_spec = "SKIPPED"
 
             return input_new
 
@@ -81,7 +81,7 @@ class ResampleSpecStep(Step):
 
         # Setup drizzle-related parameters
         kwargs = self.get_drizpars()
-        kwargs['output'] = output
+        kwargs["output"] = output
         self.drizpars = kwargs
 
         # Call resampling
@@ -90,7 +90,7 @@ class ResampleSpecStep(Step):
 
         elif len(input_models[0].data.shape) != 2:
             # resample can only handle 2D images, not 3D cubes, etc
-            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+            raise RuntimeError(f"Input {input_models[0]} is not a 2D image.")
 
         else:
             # result is a SlitModel
@@ -175,23 +175,20 @@ class ResampleSpecStep(Step):
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders,
-            in_memory=self.in_memory
+            in_memory=self.in_memory,
         )
 
         # Custom output WCS parameters
-        kwargs['output_shape'] = ResampleStep.check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
+        kwargs["output_shape"] = ResampleStep.check_list_pars(
+            self.output_shape, "output_shape", min_vals=[1, 1]
         )
-        kwargs['output_wcs'] = ResampleStep.load_custom_wcs(
-            self.output_wcs, kwargs['output_shape'])
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+        kwargs["output_wcs"] = ResampleStep.load_custom_wcs(self.output_wcs, kwargs["output_shape"])
+        kwargs["pscale"] = self.pixel_scale
+        kwargs["pscale_ratio"] = self.pixel_scale_ratio
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug('   {}={}'.format(k, v))
+            self.log.debug(f"   {k}={v}")
 
         return kwargs
 
@@ -242,10 +239,23 @@ class ResampleSpecStep(Step):
         the normal update() method doesn't work with them. Updates output_model
         in-place.
         """
-        for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                     'dispersion_direction', 'shutter_state']:
+        for attr in [
+            "name",
+            "xstart",
+            "xsize",
+            "ystart",
+            "ysize",
+            "slitlet_id",
+            "source_id",
+            "source_name",
+            "source_alias",
+            "stellarity",
+            "source_type",
+            "source_xpos",
+            "source_ypos",
+            "dispersion_direction",
+            "shutter_state",
+        ]:
             try:
                 val = getattr(self.input_models[-1], attr)
             except AttributeError:
