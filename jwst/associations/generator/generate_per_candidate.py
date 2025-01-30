@@ -187,6 +187,9 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
         for i, row in enumerate(pool_cid):
             if 'background' in row['asn_candidate'] and row['bkgdtarg'] == 'f':
                 skip_rows.append(i)
+        logger.debug(f"Dropping {len(skip_rows)} exposures from pool - observation "
+                     f"candidate type does not allow association generation when a "
+                     f"background candidate is present.")
         pool_cid.remove_rows(skip_rows)
 
     pool_cid['asn_candidate'] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
