@@ -562,7 +562,7 @@ class RampFitStep(Step):
 def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
     """
     Set the groupdq flags based on the values of firstgroup, lastgroup
-    
+
     Parameters:
     -----------
 
