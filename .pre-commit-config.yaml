@@ -71,7 +71,6 @@ repos:
             jwst/jump/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
-            jwst/master_background/.* |
             jwst/model_blender/.* |
             jwst/mrs_imatch/.* |
             jwst/pathloss/.* |
