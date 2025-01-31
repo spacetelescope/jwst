@@ -36,10 +36,10 @@ the data into three-dimensional cubes.
 This step also ensures that the median count rate (in DN/s) in regions of the detector that
 see no direct light from the sky is zero for consistency with the applied flux calibration vectors.  This
 correction is necessary because the MRS darks are strongly time-variable, and significant signal can remain
-after subtraction of the reference dark in the ``dark_current'' step.
+after subtraction of the reference dark in the ``dark_current`` step.
 
 Finally, this step optionally applies a correction for residual cosmic ray showers that can produce
-blotchy straylight features across the detector.  While the ``jump'' detection step masks the cores of the largest
+blotchy straylight features across the detector.  While the ``jump`` detection step masks the cores of the largest
 such artifacts, the extended halos of showers can cover hundreds of pixels and are best corrected as
 coherent extended stray light artifacts.
 

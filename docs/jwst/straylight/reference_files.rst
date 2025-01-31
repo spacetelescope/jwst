@@ -12,4 +12,3 @@ describe the footprint of the dispersed IFU traces on the detector and are used 
 identify inter-slice pixels that do not see direct light from the sky.
 
 .. include:: ../references_general/mrsxartcorr_reffile.inc
-.. include:: ../references_general/regions_reffile.inc
