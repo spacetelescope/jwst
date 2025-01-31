@@ -1,4 +1,5 @@
 """Public common step definition for OutlierDetection processing."""
+
 from functools import partial
 
 from stdatamodels.jwst import datamodels
@@ -11,33 +12,25 @@ from jwst.lib.pipe_utils import is_tso
 from . import coron, ifu, imaging, tso, spec
 
 # Categorize all supported modes
-IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
-SLIT_SPEC_MODES = ['NRC_WFSS', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
-                   'NRS_MSASPEC', 'NIS_WFSS']
-TSO_SPEC_MODES = ['NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM',
-                  'NRS_BRIGHTOBJ']
-IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']
-TSO_IMAGE_MODES = ['NRC_TSIMAGE']  # missing MIR_IMAGE with TSOVIST=True, not really addable
-CORON_IMAGE_MODES = ['NRC_CORON', 'MIR_LYOT', 'MIR_4QPM']
+IMAGE_MODES = ["NRC_IMAGE", "MIR_IMAGE", "NRS_IMAGE", "NIS_IMAGE", "FGS_IMAGE"]
+SLIT_SPEC_MODES = ["NRC_WFSS", "MIR_LRS-FIXEDSLIT", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NIS_WFSS"]
+TSO_SPEC_MODES = ["NIS_SOSS", "MIR_LRS-SLITLESS", "NRC_TSGRISM", "NRS_BRIGHTOBJ"]
+IFU_SPEC_MODES = ["NRS_IFU", "MIR_MRS"]
+TSO_IMAGE_MODES = ["NRC_TSIMAGE"]  # missing MIR_IMAGE with TSOVIST=True, not really addable
+CORON_IMAGE_MODES = ["NRC_CORON", "MIR_LYOT", "MIR_4QPM"]
 
 __all__ = ["OutlierDetectionStep"]
 
 
 class OutlierDetectionStep(Step):
-    """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
+    """
+    Flag outlier bad pixels and cosmic rays in DQ array of each input image.
 
     Input images can be listed in an input association file or dictionary,
     or already opened with a ModelContainer or ModelLibrary.
     DQ arrays are modified in place.
     SCI, ERR, VAR_RNOISE, VAR_FLAT, and VAR_POISSON arrays are updated with
     NaN values matching the DQ flags.
-
-    Parameters
-    -----------
-    input_data : asn file, ~jwst.datamodels.ModelContainer, or ~jwst.datamodels.ModelLibrary
-        Single filename association table, datamodels.ModelContainer, or datamodels.ModelLibrary.
-        For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
-        ModelContainer is expected.
     """
 
     class_alias = "outlier_detection"
@@ -59,12 +52,26 @@ class OutlierDetectionStep(Step):
         resample_data = boolean(default=True)
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         search_output_file = boolean(default=False)
-        in_memory = boolean(default=False) # ignored if run within the pipeline; set at pipeline level instead
+        # in_memory flag ignored if run within the pipeline; set at pipeline level instead
+        in_memory = boolean(default=False)
     """
 
     def process(self, input_data):
-        """Perform outlier detection processing on input data."""
+        """
+        Perform outlier detection processing on input data.
 
+        Parameters
+        ----------
+        input_data : asn file, ~jwst.datamodels.ModelContainer, or ~jwst.datamodels.ModelLibrary
+            The input association.
+            For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
+            ModelContainer is expected.
+
+        Returns
+        -------
+        result_models : ~jwst.datamodels.ModelContainer or ~jwst.datamodels.ModelLibrary
+            The modified input data with DQ flags set for detected outliers.
+        """
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
         if mode is None:
@@ -77,7 +84,7 @@ class OutlierDetectionStep(Step):
         snr1, snr2 = [float(v) for v in self.snr.split()]
         scale1, scale2 = [float(v) for v in self.scale.split()]
 
-        if mode == 'tso':
+        if mode == "tso":
             result_models = tso.detect_outliers(
                 input_data,
                 self.save_intermediate_results,
@@ -87,7 +94,7 @@ class OutlierDetectionStep(Step):
                 snr1,
                 self.make_output_path,
             )
-        elif mode == 'coron':
+        elif mode == "coron":
             result_models = coron.detect_outliers(
                 input_data,
                 self.save_intermediate_results,
@@ -96,7 +103,7 @@ class OutlierDetectionStep(Step):
                 snr1,
                 self.make_output_path,
             )
-        elif mode == 'imaging':
+        elif mode == "imaging":
             result_models = imaging.detect_outliers(
                 input_data,
                 self.save_intermediate_results,
@@ -115,7 +122,7 @@ class OutlierDetectionStep(Step):
                 self.in_memory,
                 self.make_output_path,
             )
-        elif mode == 'spec':
+        elif mode == "spec":
             result_models = spec.detect_outliers(
                 input_data,
                 self.save_intermediate_results,
@@ -134,7 +141,7 @@ class OutlierDetectionStep(Step):
                 self.in_memory,
                 self.make_output_path,
             )
-        elif mode == 'ifu':
+        elif mode == "ifu":
             result_models = ifu.detect_outliers(
                 input_data,
                 self.save_intermediate_results,
@@ -144,8 +151,7 @@ class OutlierDetectionStep(Step):
                 self.make_output_path,
             )
         else:
-            self.log.error("Outlier detection failed for unknown/unsupported ",
-                           f"mode: {mode}")
+            self.log.error("Outlier detection failed for unknown/unsupported ", f"mode: {mode}")
             return self._set_status(input_data, False)
 
         return self._set_status(result_models, True)
@@ -172,26 +178,23 @@ class OutlierDetectionStep(Step):
             single_model = input_models
 
         if is_tso(single_model):
-            return 'tso'
+            return "tso"
 
         exptype = single_model.meta.exposure.type
         if exptype in CORON_IMAGE_MODES:
-            return 'coron'
+            return "coron"
         if exptype in IMAGE_MODES:
-            return 'imaging'
+            return "imaging"
         if exptype in SLIT_SPEC_MODES:
-            return 'spec'
+            return "spec"
         if exptype in IFU_SPEC_MODES:
-            return 'ifu'
+            return "ifu"
 
-        self.log.error(f"Outlier detection failed for unknown/unsupported "
-                       f"exposure type: {exptype}")
+        self.log.error(f"Outlier detection failed for unknown/unsupported exposure type: {exptype}")
         return None
 
     def _get_asn_id(self, input_models):
-        """Find association ID for any allowed input model type,
-        and update make_output_path such that the association ID
-        is included in intermediate and output file names."""
+        """Update make_output_path to include the association ID in the output path."""
         # handle if input_models isn't open
         if isinstance(input_models, (str, dict)):
             input_models = datamodels.open(input_models, asn_n_members=1)
@@ -208,16 +211,11 @@ class OutlierDetectionStep(Step):
             asn_id = None
 
         if asn_id is None:
-            asn_id = self.search_attr('asn_id')
+            asn_id = self.search_attr("asn_id")
         if asn_id is not None:
-            _make_output_path = self.search_attr(
-                '_make_output_path', parent_first=True
-            )
+            _make_output_path = self.search_attr("_make_output_path", parent_first=True)
 
-            self._make_output_path = partial(
-                _make_output_path,
-                asn_id=asn_id
-            )
+            self._make_output_path = partial(_make_output_path, asn_id=asn_id)
         self.log.info(f"Outlier Detection asn_id: {asn_id}")
         return
 

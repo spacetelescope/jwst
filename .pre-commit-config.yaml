@@ -73,7 +73,6 @@ repos:
             jwst/model_blender/.* |
             jwst/mrs_imatch/.* |
             jwst/msaflagopen/.* |
-            jwst/outlier_detection/.* |
             jwst/pathloss/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
