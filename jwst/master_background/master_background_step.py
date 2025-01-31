@@ -21,11 +21,11 @@ class MasterBackgroundStep(Step):
 
     Attributes
     ----------
-    median_kernel : integer, optional
+    median_kernel : int
         Optional user-supplied kernel with which to moving-median boxcar
         filter the master background spectrum.  Must be an odd integer; even integers
         will be rounded down to the nearest odd integer.
-    user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
+    user_background : None, str, or `~jwst.datamodels.MultiSpecModel`
         Optional user-supplied master background 1D spectrum, path to file
         or opened datamodel
     save_background : bool, optional
