@@ -1,1 +1,1 @@
-Update barshadow correction to scale correctly to NIRSpec MOS data in long slit mode.
+Update barshadow correction to scale correctly to NIRSpec MOS data in long slit mode. Also correct the scale factors for error propagation when the correction is inverted.
