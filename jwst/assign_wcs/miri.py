@@ -277,7 +277,6 @@ def lrs_xytoabl(input_model, reference_files):
     y0 = refmodel.wave_table.y0
     x1 = refmodel.wave_table.x1
     y2 = refmodel.wave_table.y2
-
     refmodel.close()
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.

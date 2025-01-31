@@ -814,7 +814,7 @@ def update_s_region_lrs(model, reference_files):
     """
 
     refmodel = MIRILrsModel(reference_files['specwcs'])
-
+    
     v2vert1 = refmodel.meta.v2_vert1
     v2vert2 = refmodel.meta.v2_vert2
     v2vert3 = refmodel.meta.v2_vert3
