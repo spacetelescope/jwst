@@ -18,11 +18,14 @@ The EXTRACT1D reference file is not used for Wide-Field Slitless Spectroscopy da
 the full size of the input 2D subarray or cutout for each source, or restricted to
 the region within which the world coordinate system (WCS) is defined in each cutout.
 
-For slit-like 2D input data, source and background extractions are done using
-a rectangular aperture that covers one pixel in the dispersion direction and
+For slit-like 2D input data, source and background extractions are, by default, done
+using a rectangular aperture that covers one pixel in the dispersion direction and
 uses a height in the cross-dispersion direction that is defined by parameters in
-the EXTRACT1D reference file.
-For 3D IFU data, on the other hand, the extraction options differ depending on
+the EXTRACT1D reference file.  Optionally, for point sources, a PSF-based optimal
+extraction may be performed, using a model of the spectral PSF to fit the total flux
+at each dispersion element.
+
+For 3D IFU data, the extraction options differ depending on
 whether the target is a point or extended source.  For a point
 source, the spectrum is extracted using circular aperture photometry,
 optionally including background subtraction using a circular annulus.
@@ -36,18 +39,21 @@ object and perform extraction.  For 3D NIRSpec fixed slit rateints data, the
 ``extract_1d`` step will be skipped as 3D input for the mode is not supported.
 
 
-For most spectral modes an aperture correction will be applied to the extracted
+For most spectral modes, an aperture correction will be applied to the extracted
 1D spectral data (unless otherwise selected by the user), in order to put the
 results onto an infinite aperture scale.
 This is done by creating interpolation functions based on the APCORR reference
 file data and applying the interpolated aperture correction (a multiplicative
 factor between 0 and 1) to the extracted, 1D spectral data (corrected data
 include the "flux", "surf_bright", "flux_error", "sb_error", and all flux and
-surface brightness variance columns in the output table).
+surface brightness variance columns in the output table).  For optimal extractions,
+aperture correction is not performed, since it is assumed the total flux is
+modeled by the PSF.
 
 Input
 -----
-Calibrated and potentially resampled 2D images or 3D cubes. The format should be a
+The input data are calibrated and potentially resampled 2D images or 3D cubes.
+The format should be a
 CubeModel, SlitModel, IFUCubeModel, ImageModel, MultiSlitModel, or a ModelContainer.
 For some JWST modes this is usually a resampled product, such as the "s2d" products
 for MIRI LRS fixed-slit, NIRSpec fixed-slit, and NIRSpec MOS, or the "s3d" products
@@ -55,9 +61,7 @@ for MIRI MRS and NIRSpec IFU. For other modes that are not resampled (e.g. MIRI
 LRS slitless, NIRISS SOSS, NIRSpec BOTS, and NIRCam and NIRISS WFSS), this will
 be a "cal" or "calints" product.
 For modes that have multiple slit instances (NIRSpec fixed-slit and MOS, WFSS),
-the SCI extensions should have the keyword SLTNAME to specify which slit was extracted,
-though if there is only one slit (e.g. MIRI LRS and NIRISS SOSS), the slit name can
-be taken from the EXTRACT1D reference file instead.
+the SCI extensions should have the keyword SLTNAME to specify which slit was extracted.
 
 Normally the :ref:`photom <photom_step>` step should be applied before running
 ``extract_1d``.  If ``photom`` has not been run, a warning will be logged and the
@@ -94,13 +98,13 @@ FLUX_ERROR is the error estimate for FLUX; it has the
 same units as FLUX. The error is calculated as the square root of the sum of the
 three variance arrays: Poisson, read noise (RNOISE), and flat field (FLAT).
 SURF_BRIGHT is the surface brightness in MJy / sr, except that for point
-sources observed with NIRSpec and NIRISS SOSS, SURF_BRIGHT will be set to
+sources observed with NIRSpec and NIRISS SOSS, or optimal extractions, SURF_BRIGHT will be set to
 zero, because there is no way to express the extracted results from those modes
 as a surface brightness. SB_ERROR is the error estimate for SURF_BRIGHT, calculated
 in the same fashion as FLUX_ERROR but using the SB_VAR arrays. While it's expected
 that a user will make use of the FLUX column for point-source data and the
-SURF_BRIGHT column for an extended source, both columns are populated (except for
-NIRSpec and NIRISS SOSS point sources, as mentioned above).
+SURF_BRIGHT column for an extended source, both columns are populated
+(except as mentioned above).
 
 The ``extract_1d`` step collapses the input data from 2-D to 1-D by summing
 one or more rows (or columns, depending on the dispersion direction).
@@ -134,9 +138,9 @@ otherwise.
 
 .. _extract-1d-for-slits:
 
-Extraction for 2D Slit Data
----------------------------
-The operational details of the 1D extraction depend heavily on the parameter
+Box Extraction for 2D Slit Data
+-------------------------------
+For standard box extractions, the operational details depend heavily on the parameter
 values given in the :ref:`EXTRACT1D <extract1d_reffile>` reference file.
 Here we describe their use within the ``extract_1d`` step.
 
@@ -304,6 +308,48 @@ not need to have the same number of coefficients; each of the inner lists specif
 a separate polynomial. However, the independent variable (wavelength or pixel)
 does need to be the same for all polynomials for a given slit.
 
+
+Optimal Extraction for 2D Slit Data
+-----------------------------------
+
+Optimal extraction proceeds similarly to box extraction for 2D slit data, except that
+instead of summing over an aperture defined by the reference files, a model of the point
+spread function (PSF) is fit to the data at each dispersion element.  This generally provides
+higher signal-to-noise for the output spectrum than box extractions and has the advantage
+of ignoring missing data due to bad pixels, cosmic rays, or saturation.  Optimal extraction
+also does not require a resampled spectral image as input: it can avoid the extra interpolation
+by directly fitting the spatial profile along the curved trace at each dispersion element.
+
+Optimal extraction is suited only to point sources with known source locations, for which a
+high-fidelity PSF model is available.  Currently, only the MIRI LRS fixed slit exposure type
+has a PSF model available in CRDS.
+
+When optimal extraction is selected (`extraction_type = 'optimal'`), the aperture definitions in
+the extraction reference file are ignored, and the following parameters
+are used instead:
+
+* `use_source_posn`: Source position is estimated from the input metadata and used to
+  center the PSF model.  The recommended value is True, in order to account for spatial offsets
+  within the slit; if False, or if the source position could not be estimated, the source is
+  assumed to be at the center of the slit.
+* `model_nod_pair`: If nod subtraction occurred prior to extraction, setting this option to
+  True will allow the extraction algorithm to model a single negative trace from the nod pair
+  alongside the positive trace. This can be helpful in accounting for PSF overlap between the
+  positive and negative traces.  This option is ignored if no background subtraction occurred,
+  or if the dither pattern was not a 2-point nod.
+* `optimize_psf_location`: Since source position estimates may be slightly inaccurate,
+  it may be useful to iteratively optimize the PSF location.  When this option is set to True, the
+  location of the positive and negative traces (if used) are optimized with respect to the
+  residuals of the scene modeled by the PSF at that location.  This option is
+  strongly recommended if `model_nod_pair` is True, since the negative nod location is less
+  reliably estimated than the positive trace location.
+* `subtract_background`: Unlike during box extraction, the background levels can be modeled and removed
+  during optimal extraction without explicitly setting a background region.  It is recommended to
+  set this parameter to True if background subtraction was skipped prior to extraction. Set this
+  parameter to False if a negative nod trace is present but not modeled (`model_nod_pair = False`).
+* `override_psf`: If a custom flux model is required, it is possible to provide one by overriding
+  the PSF model reference file. Set this parameter to the filename for a FITS file matching the
+  :ref:`SpecPsfModel <psf_reffile>` format.
 
 .. _extract-1d-for-ifu:
 
