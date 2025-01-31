@@ -199,6 +199,8 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.dither_position = int(slit.dither_position)
         output_model.source_ra = float(slit.source_ra)
         output_model.source_dec = float(slit.source_dec)
+        output_model.slit_xscale = float(slit.slit_xscale)
+        output_model.slit_yscale = float(slit.slit_yscale)
         # for pathloss correction
         output_model.shutter_state = slit.shutter_state
     log.info('set slit_attributes completed')

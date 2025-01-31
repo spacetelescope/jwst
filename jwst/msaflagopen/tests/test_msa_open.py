@@ -148,7 +148,7 @@ def test_create_slitlets():
                    'ycen', 'ymin', 'ymax', 'quadrant', 'source_id',
                    'shutter_state', 'source_name', 'source_alias',
                    'stellarity', 'source_xpos', 'source_ypos',
-                   'source_ra', 'source_dec')
+                   'source_ra', 'source_dec', 'slit_xscale', 'slit_yscale')
 
     for slit in result:
         # Test the returned data type and fields.
