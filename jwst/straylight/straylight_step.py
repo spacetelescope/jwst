@@ -52,7 +52,7 @@ class StraylightStep (Step):
                 modelpars.close()
 
                 # Apply the cosmic ray droplets correction if desired
-                if (self.clean_showers == True):
+                if self.clean_showers:
                     self.regions_name = self.get_reference_file(input_model, 'regions')
                     with datamodels.RegionsModel(self.regions_name) as f:
                         allregions = f.regions.copy()
