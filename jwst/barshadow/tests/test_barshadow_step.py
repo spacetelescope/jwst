@@ -160,6 +160,10 @@ def test_barshadow_correction_pars(nirspec_mos_model):
 
     # output data is the same as input, except that NaNs do not invert
     assert np.allclose(inverse_result.slits[0].data[nnan], model.slits[0].data[nnan])
+    assert np.allclose(inverse_result.slits[0].err[nnan], model.slits[0].err[nnan])
+    assert np.allclose(inverse_result.slits[0].var_rnoise[nnan], model.slits[0].var_rnoise[nnan])
+    assert np.allclose(inverse_result.slits[0].var_poisson[nnan], model.slits[0].var_poisson[nnan])
+    assert np.allclose(inverse_result.slits[0].var_flat[nnan], model.slits[0].var_flat[nnan])
 
     result.close()
     inverse_result.close()

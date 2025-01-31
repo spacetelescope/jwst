@@ -78,13 +78,18 @@ def do_correction(
         #     because they're variance, while err is standard deviation
         if not inverse:
             slitlet.data /= correction.data
+            slitlet.err /= correction.data
+            slitlet.var_poisson /= correction.data**2
+            slitlet.var_rnoise /= correction.data**2
+            if slitlet.var_flat is not None and np.size(slitlet.var_flat) > 0:
+                slitlet.var_flat /= correction.data**2
         else:
             slitlet.data *= correction.data
-        slitlet.err /= correction.data
-        slitlet.var_poisson /= correction.data**2
-        slitlet.var_rnoise /= correction.data**2
-        if slitlet.var_flat is not None and np.size(slitlet.var_flat) > 0:
-            slitlet.var_flat /= correction.data**2
+            slitlet.err *= correction.data
+            slitlet.var_poisson *= correction.data**2
+            slitlet.var_rnoise *= correction.data**2
+            if slitlet.var_flat is not None and np.size(slitlet.var_flat) > 0:
+                slitlet.var_flat *= correction.data**2
         slitlet.barshadow = correction.data
 
     return output_model, corrections
