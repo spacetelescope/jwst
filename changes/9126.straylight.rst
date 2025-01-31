@@ -1,0 +1,1 @@
+Add an additional optional step to the MIRI MRS straylight correction code to measure and remove residual cosmic ray showers using information from the inter-slice pixels.

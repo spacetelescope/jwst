@@ -14,11 +14,20 @@ class StraylightStep (Step):
 
     class_alias = "straylight"
 
-    reference_file_types = ['mrsxartcorr']
+    spec = """
+        clean_showers = boolean(default=False)  # Clean up straylight from residual cosmic ray showers
+        shower_plane = integer(default=3)  # Throughput plane for identifying inter-slice regions
+        shower_x_stddev = float(default=18) # X standard deviation for shower model
+        shower_y_stddev = float(default=5) # Y standard deviation for shower model
+        shower_low_reject = float(default=0.1) # Low percentile of pixels to reject
+        shower_high_reject = float(default=99.9) # High percentile of pixels to reject
+    """
+
+    reference_file_types = ['mrsxartcorr', 'regions']
 
     def process(self, input):
 
-        with datamodels.open(input) as input_model:
+        with (datamodels.open(input) as input_model):
 
             # check the data is an IFUImageModel (not TSO)
 
@@ -41,6 +50,14 @@ class StraylightStep (Step):
                 result = straylight.correct_xartifact(input_model, modelpars)
 
                 modelpars.close()
+
+                # Apply the cosmic ray droplets correction if desired
+                if self.clean_showers:
+                    self.regions_name = self.get_reference_file(input_model, 'regions')
+                    with datamodels.RegionsModel(self.regions_name) as f:
+                        allregions = f.regions.copy()
+                        result = straylight.clean_showers(self, result, allregions)
+
                 result.meta.cal_step.straylight = 'COMPLETE'
 
             else:

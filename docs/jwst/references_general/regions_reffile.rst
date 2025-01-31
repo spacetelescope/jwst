@@ -28,6 +28,8 @@ The IFU takes a region reference file that defines the pixels on the detector th
 IFU slice they correspond to.  The reference file is a three-dimensional array
 measuring 1032 x 1024 x 9.  Each of the nine planes within the array represents
 a two-dimensional detector image for which each pixel has a value indicating the slice to which it belongs.
+Negative values represent slice pixels that receive light from the sky but for data quality reasons
+are not mapped to the sky using the world coordinate solution.
 The nine planes each correspond to different throughput thresholds ranging from 10% - 90%; these differ slightly
 in the effective along-slice size.
 
