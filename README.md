@@ -12,7 +12,7 @@
 ![STScI Logo](docs/_static/stsci_logo.png)
 
 > [!IMPORTANT]
-> JWST requires a C compiler for dependencies and is currently limited to Python 3.10, 3.11, or 3.12.
+> JWST requires a C compiler for dependencies and is currently limited to Python 3.11, 3.12 or 3.13.
 
 > [!NOTE]
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
