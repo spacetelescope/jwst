@@ -34,16 +34,17 @@ def do_correction(input_model, wavecorr_file):
     exp_type = input_model.meta.exposure.type.upper()
     if exp_type not in wavecorr_supported_modes:
         log.info(f"Skipping wavecorr correction for EXP_TYPE {exp_type}")
+        input_model.meta.cal_step.wavecorr = "SKIPPED"
         return input_model
 
     output_model = input_model.copy()
 
     # For BRIGHTOBJ, operate on the single SlitModel
+    corrected = False
     if isinstance(input_model, datamodels.SlitModel):
         if _is_point_source(input_model):
-            apply_zero_point_correction(output_model, wavecorr_file)
+            corrected = apply_zero_point_correction(output_model, wavecorr_file)
     else:
-        corrected = False
         for slit in output_model.slits:
             if _is_point_source(slit):
                 completed = apply_zero_point_correction(slit, wavecorr_file)
@@ -57,10 +58,10 @@ def do_correction(input_model, wavecorr_file):
             else:
                 slit.meta.cal_step.wavecorr = "SKIPPED"
 
-        if corrected:
-            output_model.meta.cal_step.wavecorr = "COMPLETE"
-        else:
-            output_model.meta.cal_step.wavecorr = "SKIPPED"
+    if corrected:
+        output_model.meta.cal_step.wavecorr = "COMPLETE"
+    else:
+        output_model.meta.cal_step.wavecorr = "SKIPPED"
 
     return output_model
 
@@ -100,7 +101,7 @@ def apply_zero_point_correction(slit, reffile):
     )
 
     # wave2wavecorr should not be None for real data
-    if wave2wavecorr is None:  # pragma: no cover
+    if wave2wavecorr is None:
         completed = False
         return completed
     else:
@@ -158,7 +159,8 @@ def calculate_wavelength_correction_transform(
                 offset_model = ap.zero_point_offset.copy()
                 break
         else:
-            log.info(f"No wavelength zero-point correction found for slit {aperture_name}")
+            log.warning(f"No wavelength zero-point correction found for slit {aperture_name}")
+            return None
 
     # Set lookup table to extrapolate at bounds to recover wavelengths
     # beyond model bounds, particularly for the red and blue ends of

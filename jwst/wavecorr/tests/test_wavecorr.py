@@ -17,6 +17,33 @@ from jwst.wavecorr import WavecorrStep
 from jwst.wavecorr import wavecorr
 
 
+@pytest.fixture(scope='module')
+def nrs_fs_model():
+    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
+    im = datamodels.ImageModel(hdul)
+    im_wcs = AssignWcsStep.call(im)
+    im_ex2d = Extract2dStep.call(im_wcs)
+    yield im_ex2d
+    im_ex2d.close()
+    im_wcs.close()
+    im.close()
+    hdul.close()
+
+
+@pytest.fixture(scope='module')
+def nrs_slit_model(nrs_fs_model):
+    im_ex2d = nrs_fs_model.copy()
+
+    # make a slit model to run through correction
+    slit = datamodels.SlitModel(im_ex2d.slits[0].data)
+    slit.update(im_ex2d)
+    slit.meta.wcs = im_ex2d.slits[0].meta.wcs
+    slit.source_type = 'POINT'
+    slit.name = 'S1600A1'
+    yield slit
+    slit.close()
+
+
 def test_wavecorr():
     hdul = create_nirspec_mos_file()
     msa_meta = Path(jwst.__path__[0]) / "assign_wcs" / "tests" / "data" / "msa_configuration.fits"
@@ -302,3 +329,64 @@ def test_assign_wcs_skipped():
     hdul.close()
     im.close()
     result.close()
+
+
+def test_missing_wcs():
+    hdul = create_nirspec_fs_file(grating="G140H", filter="F100LP")
+    im = datamodels.SlitModel(hdul)
+
+    with pytest.raises(AttributeError, match="does not have a WCS"):
+        WavecorrStep.call(im)
+
+    hdul.close()
+    im.close()
+
+
+def test_invalid_exptype(nrs_fs_model):
+    im_ex2d = nrs_fs_model.copy()
+
+    # Test the skip at the do_correction level
+    im_ex2d.meta.exposure.type = 'ANY'
+    result = wavecorr.do_correction(im_ex2d, None)
+    assert result.meta.cal_step.wavecorr == "SKIPPED"
+
+
+def test_invalid_slit(nrs_slit_model):
+    slit = nrs_slit_model.copy()
+    slit.name = None
+    result = WavecorrStep.call(slit)
+    assert result.meta.cal_step.wavecorr == "SKIPPED"
+
+
+@pytest.mark.parametrize('source_type', ['POINT', 'EXTENDED'])
+def test_slitmodel(source_type, nrs_slit_model):
+    slit = nrs_slit_model.copy()
+    slit.source_type = source_type
+
+    result = WavecorrStep.call(slit)
+    if source_type == 'POINT':
+        assert result.meta.cal_step.wavecorr == "COMPLETE"
+    else:
+        assert result.meta.cal_step.wavecorr == "SKIPPED"
+
+    slit.close()
+    result.close()
+
+
+@pytest.mark.parametrize('level', ['top', 'meta', None])
+@pytest.mark.parametrize('value', ['POINT', 'EXTENDED', None])
+def test_is_point_source(level, value):
+    model = datamodels.SlitModel()
+    if level == 'top':
+        model.source_type = value
+        model.meta.target.source_type = None
+    elif level == 'meta':
+        model.source_type = None
+        model.meta.target.source_type = value
+    else:
+        model.source_type = None
+        model.meta.target.source_type = None
+    if level is not None and value == 'POINT':
+        assert wavecorr._is_point_source(model) is True
+    else:
+        assert wavecorr._is_point_source(model) is False
