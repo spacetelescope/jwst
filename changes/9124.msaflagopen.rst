@@ -1,0 +1,1 @@
+Refactor functions for maintainability. Replace hard-coded WCS reference file names with a set retrieved from the AssignWCSStep definition.
