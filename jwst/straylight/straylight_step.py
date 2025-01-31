@@ -3,7 +3,7 @@ from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
 from . import straylight
-import pdb
+
 __all__ = ["StraylightStep"]
 
 
@@ -15,12 +15,12 @@ class StraylightStep (Step):
     class_alias = "straylight"
 
     spec = """
-        mop_droplets = boolean(default=False)  # Clean up straylight droplets from cosmic ray showers
-        mop_plane = integer(default=3)  # Slice throughput plane for inter-slice identification
-        mop_x_stddev = float(default=18) # X standard deviation for droplet model
-        mop_y_stddev = float(default=5) # Y standard deviation for droplet model
-        mop_low_reject = float(default=0.1) # Low percentile of pixels to reject
-        mop_high_reject = float(default=99.9) # High percentile of pixels to reject
+        clean_showers = boolean(default=False)  # Clean up straylight from residual cosmic ray showers
+        shower_plane = integer(default=3)  # Throughput plane for identifying inter-slice regions
+        shower_x_stddev = float(default=18) # X standard deviation for shower model
+        shower_y_stddev = float(default=5) # Y standard deviation for shower model
+        shower_low_reject = float(default=0.1) # Low percentile of pixels to reject
+        shower_high_reject = float(default=99.9) # High percentile of pixels to reject
     """
 
     reference_file_types = ['mrsxartcorr', 'regions']
@@ -52,11 +52,11 @@ class StraylightStep (Step):
                 modelpars.close()
 
                 # Apply the cosmic ray droplets correction if desired
-                if (self.mop_droplets == True):
+                if (self.clean_showers == True):
                     self.regions_name = self.get_reference_file(input_model, 'regions')
                     with datamodels.RegionsModel(self.regions_name) as f:
                         allregions = f.regions.copy()
-                        result = straylight.mop_droplets(self, result, allregions)
+                        result = straylight.clean_showers(self, result, allregions)
 
                 result.meta.cal_step.straylight = 'COMPLETE'
 

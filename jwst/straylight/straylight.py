@@ -8,7 +8,7 @@
 
 import numpy as np
 import logging
-import pdb
+
 from stdatamodels.jwst.datamodels import dqflags
 from astropy.stats import sigma_clipped_stats as scs
 from astropy.convolution import convolve_fft, Gaussian2DKernel
@@ -231,9 +231,9 @@ def correct_xartifact(input_model, modelpars):
     log.info("Cross-artifact model complete.")
     return output
 
-def mop_droplets(self, input_model, allregions):
+def clean_showers(self, input_model, allregions):
     """
-    Corrects the MIRI MRS data for 'straylight' produced by residual cosmic ray showers.
+    Corrects the MIRI MRS data for straylight produced by residual cosmic ray showers.
 
     Parameters
     ----------
@@ -241,7 +241,7 @@ def mop_droplets(self, input_model, allregions):
         Science data to be corrected.
 
     allregions : FITS array
-        Holds the regions information mapping MRS pixels to slices (3-D, planes for different throughputs)
+        Holds the regions information mapping MRS pixels to slices (3-D, planes for different throughput)
 
     Returns
     -------
@@ -250,13 +250,13 @@ def mop_droplets(self, input_model, allregions):
 
     """
 
-    log.info("Applying correction for residual shower droplets.")
+    log.info("Applying correction for residual cosmic ray showers.")
 
-    plane = self.mop_plane
-    low_reject = self.mop_low_reject
-    high_reject = self.mop_high_reject
-    x_stddev = self.mop_x_stddev
-    y_stddev = self.mop_y_stddev
+    plane = self.shower_plane
+    low_reject = self.shower_low_reject
+    high_reject = self.shower_high_reject
+    x_stddev = self.shower_x_stddev
+    y_stddev = self.shower_y_stddev
 
     # Create a copy of the input data array that will be modified
     # for use in the straylight calculations
