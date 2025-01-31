@@ -39,6 +39,9 @@ log.setLevel(logging.DEBUG)
 FIXED_SLIT_NUMS = {'NONE': 0, 'S200A1': 1, 'S200A2': 2,
                    'S400A1': 3, 'S1600A1': 4, 'S200B1': 5}
 
+# Approximate fallback values for MSA slit scaling
+MSA_SLIT_SCALES = (1.35, 1.15)
+
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
            "nrs_ifu_wcs", "get_spectral_order_wrange"]
 
@@ -834,25 +837,24 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
             msa_file.close()
             raise MSAFileError(message)
 
-        # Create the output list of tuples that contain the required
-        # data for further computations
-        """
-        Convert source positions from PPS to Model coordinate frame.
-        The source x,y position in the shutter is given in the msa configuration file,
-        columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
-        The source position is in a coordinate system associated with each shutter whose
-        origin is the lower left corner of the shutter, positive x is to the right
-        and positive y is upwards.
-        """
+        # Convert source positions from PPS to Model coordinate frame.
+        # The source x,y position in the shutter is given in the msa configuration file,
+        # columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
+        # The source position is in a coordinate system associated with each shutter whose
+        # origin is the lower left corner of the shutter, positive x is to the right
+        # and positive y is upwards.
         source_xpos -= 0.5
         source_ypos -= 0.5
 
         # Create the shutter_state string
         all_shutters = _shutter_id_to_str(open_shutters, ycen)
 
-        # Get the slit scale by quadrant
-        scale_x, scale_y = slit_scales.get(quadrant, (1.0, 1.0))
+        # Get the slit scale by quadrant, or return approximate
+        # fallback values if not available
+        scale_x, scale_y = slit_scales.get(quadrant, MSA_SLIT_SCALES)
 
+        # Create the output list of tuples that contain the required
+        # data for further computations
         slit_parameters = (slitlet_id, shutter_id, dither_position, xcen, ycen, ymin, ymax,
                            quadrant, source_id, all_shutters, source_name, source_alias,
                            stellarity, source_xpos, source_ypos, source_ra, source_dec,
