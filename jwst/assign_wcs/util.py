@@ -19,7 +19,7 @@ from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
 from stcal.alignment.util import compute_s_region_keyword, compute_s_region_imaging
 
-from stdatamodels.jwst.datamodels import WavelengthrangeModel
+from stdatamodels.jwst.datamodels import WavelengthrangeModel, MIRILrsModel
 from stdatamodels.jwst.transforms.models import GrismObject
 
 from ..lib.catalog_utils import SkyObject
@@ -806,6 +806,37 @@ def update_s_region_imaging(model):
     if s_region is not None:
         model.meta.wcsinfo.s_region = s_region
 
+
+def update_s_region_lrs(model, reference_files):
+    """
+    Update the ``S_REGION`` keyword using V2,V3 of the slit corners from reference file`.
+    """
+
+    refmodel = MIRILrsModel(reference_files['specwcs'])
+
+    v2vert1 = refmodel.meta.v2_vert1
+    v2vert2 = refmodel.meta.v2_vert2
+    v2vert3 = refmodel.meta.v2_vert3
+    v2vert4 = refmodel.meta.v2_vert4
+
+    v3vert1 = refmodel.meta.v3_vert1
+    v3vert2 = refmodel.meta.v3_vert2
+    v3vert3 = refmodel.meta.v3_vert3
+    v3vert4 = refmodel.meta.v3_vert4
+
+    v2 = [v2vert1, v2vert2, v2vert3, v2vert4]
+    v3 = [v3vert1, v3vert2, v3vert3, v3vert4]
+
+    lam = None # wavelength does not matter for s region
+    s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
+    a = s[0]
+    b = s[1]
+    footprint = np.array([[a[0], b[0]],
+                          [a[1], b[1]],
+                          [a[2], b[2]],
+                          [a[3], b[3]]])
+
+    update_s_region_keyword(model, footprint)
 
 def compute_footprint_spectral(model):
     """
