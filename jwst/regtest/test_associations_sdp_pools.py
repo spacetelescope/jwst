@@ -153,6 +153,18 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': False,
     },
+    # This pair of pools test the DMS flag usage to prevent o-type asns when
+    # a background c-type candidate is attached to the science exposure.
+    'jw04225_20241213t150701_pool': {
+        'args': ['-i', 'o001', 'o002'],
+        'xfail': None,
+        'slow': False,
+    },
+    'jw04225_20241213t150701DMS_pool': {
+        'args': ['-i', 'o001', 'o002', '--DMS'],
+        'xfail': None,
+        'slow': False,
+    },
     'jw80600_20171108T041522_pool': {
         'args': [],
         'xfail': 'PR #3450',
