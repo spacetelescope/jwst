@@ -1,0 +1,1 @@
+Wrap process_slit in try/except during extract_2d.nirspec.nrs_extract2d.
