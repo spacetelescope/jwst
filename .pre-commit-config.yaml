@@ -26,7 +26,7 @@ repos:
     rev: v2.4.0
     hooks:
     - id: codespell
-      args: ["--write-changes"]
+      args: ["--write-changes", "--summary"]
       additional_dependencies:
         - tomli
   - repo: https://github.com/pre-commit/mirrors-mypy
