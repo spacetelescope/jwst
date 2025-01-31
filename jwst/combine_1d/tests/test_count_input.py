@@ -134,9 +134,7 @@ def truth_array_1b():
     of the last pixel.
     """
     # n_input_spectra
-    return np.array(
-        [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], dtype=np.int64
-    )
+    return np.array([4] * 24, dtype=np.int64)
 
 
 def truth_array_1c():
