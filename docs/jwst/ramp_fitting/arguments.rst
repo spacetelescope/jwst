@@ -16,6 +16,11 @@ The ramp fitting step has the following optional arguments that can be set by th
 * ``--int_name``: A string that can be used to override the default name
   for the per-integration product.
 
+* ``--firstgroup``, ``--lastgroup``: A pair of integers that can be used to set the first and last groups
+  to be used in the ramp fitting procedure.  These values are zero-indexed.  If the first group is set to <0,
+  or None, or the last group is set to > (#groups - 1) or None, or the first group is set to > last group,
+  the settings are ignored and the full ramp is fit.  Default values for both parameters are None.
+
 * ``--suppress_one_group``: A boolean to suppress computations for saturated ramps
   with only one good (unsaturated) sample.  The default is set to True to suppress these computations,
   which will compute all values for the ramp the same as if the entire ramp were
