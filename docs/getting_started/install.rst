@@ -38,7 +38,7 @@ shell.
 
 .. warning::
 
-    JWST requires a C compiler for dependencies and is currently limited to Python 3.10, 3.11, or 3.12.
+    JWST requires a C compiler for dependencies and is currently limited to Python 3.11, or 3.12.
 
 .. warning::
     Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.

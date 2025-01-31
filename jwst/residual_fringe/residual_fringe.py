@@ -282,7 +282,7 @@ class ResidualFringeCorrection():
                             # account for fringe 2 on broad features in channels 3 and 4
                             # need to smooth out the dichroic fringe as it breaks the feature finding method
                             if c in [3, 4]:
-                                win = 7  # smooting window hardcoded to 7 for now (based on testing)
+                                win = 7  # smoothing window hardcoded to 7 for now (based on testing)
                                 cumsum = np.cumsum(np.insert(col_data, 0, 0))
                                 sm_col_data = (cumsum[win:] - cumsum[:-win]) / float(win)
 
@@ -316,8 +316,8 @@ class ResidualFringeCorrection():
                             if weights_feat[-1] != 0 and length[-1] > 1:
                                 weights_feat[-1] = 1e-08
 
-                            # jane addded this - fit can fail in evidence function.
-                            # once we replace evidence funtion with astropy routine - we can test
+                            # jane added this - fit can fail in evidence function.
+                            # once we replace evidence function with astropy routine - we can test
                             # removing setting weights < 0.003 to zero (1e-08)
 
                             weights_feat[weights_feat <= 0.003] = 1e-08

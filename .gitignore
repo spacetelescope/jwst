@@ -13,7 +13,6 @@ coverage*
 */version.py
 docs/*/source/*.txt.rst
 docs/generated
-docs/fits_generator/source/templates.rst
 docs/jwst_git/
 docs/_build/
 docs/api/

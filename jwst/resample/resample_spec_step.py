@@ -25,7 +25,7 @@ class ResampleSpecStep(Step):
     Parameters
     -----------
     input : `~jwst.datamodels.MultiSlitModel`, `~jwst.datamodels.ModelContainer`, Association
-        A singe datamodel, a container of datamodels, or an association file
+        A single datamodel, a container of datamodels, or an association file
     """
 
     class_alias = "resample_spec"
@@ -54,7 +54,7 @@ class ResampleSpecStep(Step):
         #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
         if model_is_msm and len((input_new[0]).shape) == 3:
             self.log.warning('Resample spec step will be skipped')
-            input_new.meta.cal_step.resample_spec = 'SKIPPED'
+            input_new.meta.cal_step.resample = 'SKIPPED'
 
             return input_new
 

@@ -5,7 +5,7 @@ Description
 Stage 2 exposure-based data products to Stage 3 source-based data products.
 It is only used when there is a known source list for the exposure data,
 which is required in order to reorganize the data by source. Hence it is
-only useable for NIRSpec MOS, NIRSpec fixed-slit, NIRCam WFSS, and NIRISS
+only usable for NIRSpec MOS, NIRSpec fixed-slit, NIRCam WFSS, and NIRISS
 WFSS data. Details on the operation for each mode are given below.
 
 The tool is run near the beginning of the :ref:`calwebb_spec3 <calwebb_spec3>`

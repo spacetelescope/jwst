@@ -1519,7 +1519,7 @@ def test_nircam_spec():
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
-        # Incude the dispersion in the correction, as per JP-3238
+        # Include the dispersion in the correction, as per JP-3238
         dispaxis = get_dispersion_direction(ds.exptype, ds.grating, ds.filter, ds.pupil)
         dispersion_array = ds.get_dispersion_array(slit.wavelength, dispaxis)
         # Convert dispersion in micron/pixel to Angstrom/pixel

@@ -16,7 +16,7 @@ class FirstFrameStep(Step):
     class_alias = "firstframe"
 
     spec = """
-        bright_use_group1 = boolean(default=False) # do not flag group1 if group3 is saturated   
+        bright_use_group1 = boolean(default=False) # do not flag group1 if group3 is saturated
     """
 
     def process(self, step_input):

@@ -1,11 +1,11 @@
+import crds
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
-
-from ..stpipe import Step
-from . import extract
-from .soss_extract import soss_extract
-from .ifu import ifu_extract1d
+from jwst.stpipe import Step
+from jwst.extract_1d import extract
+from jwst.extract_1d.soss_extract import soss_extract
+from jwst.extract_1d.ifu import ifu_extract1d
 
 __all__ = ["Extract1dStep"]
 
@@ -25,15 +25,36 @@ class Extract1dStep(Step):
         Switch to select whether to apply an APERTURE correction during
         the Extract1dStep. Default is True.
 
+    extraction_type : str or None
+        If 'box', a standard extraction is performed, summing over an
+        aperture box. If 'optimal', a PSF-based extraction is performed.
+        If None, optimal extraction is attempted whenever use_source_posn is
+        True. Currently, optimal extraction is only available for MIRI LRS
+        Fixed Slit data.
+
     use_source_posn : bool or None
-        If True, the source and background extraction positions specified in
-        the extract1d reference file (or the default position, if there is no
-        reference file) will be shifted to account for the computed position
-        of the source in the data.  If None (the default), the values in the
-        reference file will be used. Aperture offset is determined by computing
-        the pixel location of the source based on its RA and Dec. It does not
-        make sense to apply aperture offsets for extended sources, so this
-        parameter can be overridden (set to False) internally by the step.
+        If True, the source and background extraction regions specified in
+        the extract1d reference file will be shifted to account for the computed
+        position of the source in the data.  If None (the default), this parameter
+        is set to True for point sources in NIRSpec and MIRI LRS fixed slit modes.
+
+    position_offset : float
+        Number of pixels to offset the source and background extraction regions
+        in the cross-dispersion direction.  This is intended to allow a manual
+        tweak to the aperture defined via reference file; the default value is 0.0.
+
+    model_nod_pair : bool
+        If True, and the extraction type is 'optimal', then a negative trace
+        from nod subtraction is modeled alongside the positive source during
+        extraction.  Even if set to True, this will be attempted only if the
+        input data has been background subtracted and the dither pattern
+        indicates that only 2 nods were used.
+
+    optimize_psf_location : bool
+        If True, and the extraction type is 'optimal', then the placement of
+        the PSF model for the source location (and negative nod, if present)
+        will be iteratively optimized. This parameter is recommended if
+        negative nods are modeled.
 
     smoothing_length : int or None
         If not None, the background regions (if any) will be smoothed
@@ -70,6 +91,10 @@ class Extract1dStep(Step):
 
     save_scene_model : bool
         If True, a model of the 2D flux as defined by the extraction aperture
+        is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
+
+    save_residual_image : bool
+        If True, the residual image (from the input minus the scene model)
         is saved to disk.  Ignored for IFU and NIRISS SOSS extractions.
 
     center_xy : int or None
@@ -161,14 +186,19 @@ class Extract1dStep(Step):
     subtract_background = boolean(default=None)  # subtract background?
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
 
+    extraction_type = option("box", "optimal", None, default="box") # Perform box or optimal extraction
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
+    position_offset = float(default=0)  # number of pixels to shift source trace in the cross-dispersion direction
+    model_nod_pair = boolean(default=True)  # For optimal extraction, model a negative nod if possible
+    optimize_psf_location = boolean(default=True)  # For optimal extraction, optimize source location
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", None, default=None)  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
     log_increment = integer(default=50)  # increment for multi-integration log messages
     save_profile = boolean(default=False)  # save spatial profile to disk
     save_scene_model = boolean(default=False)  # save flux model to disk
-    
+    save_residual_image = boolean(default=False)  # save residual image to disk
+
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
@@ -176,7 +206,7 @@ class Extract1dStep(Step):
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
-    
+
     soss_atoca = boolean(default=True)  # use ATOCA algorithm
     soss_threshold = float(default=1e-2)  # TODO: threshold could be removed from inputs. Its use is too specific now.
     soss_n_os = integer(default=2)  # minimum oversampling factor of the underlying wavelength grid used when modeling trace.
@@ -191,7 +221,8 @@ class Extract1dStep(Step):
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     """
 
-    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile', 'speckernel']
+    reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile',
+                            'speckernel', 'psf']
 
     def _get_extract_reference_files_by_mode(self, model, exp_type):
         """Get extraction reference files with special handling by exposure type."""
@@ -212,7 +243,14 @@ class Extract1dStep(Step):
         if apcorr_ref != 'N/A':
             self.log.info(f'Using APCORR file {apcorr_ref}')
 
-        return extract_ref, apcorr_ref
+        try:
+            psf_ref = self.get_reference_file(model, 'psf')
+        except crds.core.exceptions.CrdsLookupError:
+            psf_ref = 'N/A'
+        if psf_ref != 'N/A':
+            self.log.info(f'Using PSF reference file {psf_ref}')
+
+        return extract_ref, apcorr_ref, psf_ref
 
     def _extract_soss(self, model):
         """Extract NIRISS SOSS spectra."""
@@ -317,18 +355,26 @@ class Extract1dStep(Step):
         )
         return result
 
-    def _save_intermediate(self, intermediate_model, suffix):
+    def _save_intermediate(self, intermediate_model, suffix, idx):
         """Save an intermediate output file."""
         if isinstance(intermediate_model, ModelContainer):
-            # Save the profile with the slit name + suffix 'profile'
+            # Save the profile with the slit name + index + suffix 'profile'
             for model in intermediate_model:
                 slit = str(model.name).lower()
-                output_path = self.make_output_path(suffix=f'{slit}_{suffix}')
+                if idx is not None:
+                    complete_suffix = f'{slit}_{idx}_{suffix}'
+                else:
+                    complete_suffix = f'{slit}_{suffix}'
+                output_path = self.make_output_path(suffix=complete_suffix)
                 self.log.info(f"Saving {suffix} {output_path}")
                 model.save(output_path)
         else:
-            # Only one profile - just use the suffix 'profile'
-            output_path = self.make_output_path(suffix=suffix)
+            # Only one profile - just use the index and suffix 'profile'
+            if idx is not None:
+                complete_suffix = f'{idx}_{suffix}'
+            else:
+                complete_suffix = suffix
+            output_path = self.make_output_path(suffix=complete_suffix)
             self.log.info(f"Saving {suffix} {output_path}")
             intermediate_model.save(output_path)
         intermediate_model.close()
@@ -400,30 +446,37 @@ class Extract1dStep(Step):
 
         else:
             result = ModelContainer()
-            for model in input_model:
+            for i, model in enumerate(input_model):
                 # Get the reference file names
-                extract_ref, apcorr_ref = self._get_extract_reference_files_by_mode(
-                    model, exp_type)
+                extract_ref, apcorr_ref, psf_ref = \
+                    self._get_extract_reference_files_by_mode(model, exp_type)
 
                 profile = None
                 scene_model = None
+                residual = None
                 if isinstance(model, datamodels.IFUCubeModel):
                     # Call the IFU specific extraction routine
                     extracted = self._extract_ifu(model, exp_type, extract_ref, apcorr_ref)
                 else:
                     # Call the general extraction routine
-                    extracted, profile, scene_model = extract.run_extract1d(
+                    extracted, profile, scene_model, residual = extract.run_extract1d(
                         model,
                         extract_ref,
                         apcorr_ref,
+                        psf_ref,
+                        self.extraction_type,
                         self.smoothing_length,
                         self.bkg_fit,
                         self.bkg_order,
                         self.log_increment,
                         self.subtract_background,
                         self.use_source_posn,
+                        self.position_offset,
+                        self.model_nod_pair,
+                        self.optimize_psf_location,
                         self.save_profile,
-                        self.save_scene_model
+                        self.save_scene_model,
+                        self.save_residual_image,
                     )
 
                 # Set the step flag to complete in each model
@@ -432,12 +485,20 @@ class Extract1dStep(Step):
                 del extracted
 
                 # Save profile if needed
+                if len(input_model) > 1:
+                    idx = i
+                else:
+                    idx = None
                 if self.save_profile and profile is not None:
-                    self._save_intermediate(profile, 'profile')
+                    self._save_intermediate(profile, 'profile', idx)
 
                 # Save model if needed
                 if self.save_scene_model and scene_model is not None:
-                    self._save_intermediate(scene_model, 'scene_model')
+                    self._save_intermediate(scene_model, 'scene_model', idx)
+
+                # Save residual if needed
+                if self.save_residual_image and residual is not None:
+                    self._save_intermediate(residual, 'residual', idx)
 
             # If only one result, return the model instead of the container
             if len(result) == 1:

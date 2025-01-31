@@ -268,7 +268,7 @@ class Spec2Pipeline(Pipeline):
 
         # apply the "nsclean" 1/f correction to NIRSpec images
         calibrated = self.nsclean.run(calibrated)
-        
+
         # Apply nsclean to NIRSpec imprint and background members
         if not self.nsclean.skip:
             save_results = self.nsclean.save_results

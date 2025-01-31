@@ -63,10 +63,10 @@ class TweakRegStep(Step):
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         minsep_fwhm = float(default=0.0) # Minimum separation between detected objects in FWHM
         sigma_radius = float(default=1.5) # Truncation radius of the Gaussian kernel in units of sigma
-        sharplo = float(default=0.2) # The lower bound on sharpness for object detection.
-        sharphi = float(default=1.0) # The upper bound on sharpness for object detection.
-        roundlo = float(default=-1.0) # The lower bound on roundness for object detection.
-        roundhi = float(default=1.0) # The upper bound on roundness for object detection.
+        sharplo = float(default=0.5) # The lower bound on sharpness for object detection.
+        sharphi = float(default=2.0) # The upper bound on sharpness for object detection.
+        roundlo = float(default=0.0) # The lower bound on roundness for object detection.
+        roundhi = float(default=0.2) # The upper bound on roundness for object detection.
         brightest = integer(default=200) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
 
@@ -120,7 +120,7 @@ class TweakRegStep(Step):
         sip_max_inv_pix_error = float(default=0.01)  # max err for SIP fit, inverse.
         sip_inv_degree = integer(max=6, default=None)  # degree for inverse SIP fit, None to use best fit.
         sip_npoints = integer(default=12)  #  number of points for SIP
-        
+
         # stpipe general options
         output_use_model = boolean(default=True)  # When saving use `DataModel.meta.filename`
         in_memory = boolean(default=True)  # If False, preserve memory using temporary files at expense of runtime
@@ -311,7 +311,7 @@ class TweakRegStep(Step):
                 finally:
                     del ref_image
 
-        if local_align_failed and not align_to_abs_refcat: 
+        if local_align_failed and not align_to_abs_refcat:
             record_step_status(images, "tweakreg", success=False)
             return images
 

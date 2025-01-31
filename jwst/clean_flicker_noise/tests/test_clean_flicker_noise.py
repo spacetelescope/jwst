@@ -60,6 +60,31 @@ def make_small_rateints_model(shape=(3, 5, 10, 10)):
     return ratemodel
 
 
+def make_flat_model(model, shape=(10, 10), value=None):
+    # make a flat model with appropriate size and metadata
+    flat = datamodels.FlatModel()
+    if value is None:
+        flat.data = np.arange(shape[0] * shape[1], dtype=float).reshape(shape)
+    else:
+        flat.data = np.full(shape, value)
+
+    # add required metadata
+    flat.meta.description = 'test'
+    flat.meta.reftype = 'test'
+    flat.meta.author = 'test'
+    flat.meta.pedigree = 'test'
+    flat.meta.useafter = 'test'
+
+    # copy any other matching metadata
+    flat.update(model)
+
+    # make sure shape keys match input
+    flat.meta.subarray.xsize = shape[1]
+    flat.meta.subarray.ysize = shape[0]
+
+    return flat
+
+
 def make_nirspec_ifu_model(shape=(2048, 2048)):
     hdul = create_nirspec_ifu_file(grating='PRISM', filter='CLEAR',
                                    gwa_xtil=0.35986012, gwa_ytil=0.13448857,
@@ -391,6 +416,14 @@ def test_background_level(log_watcher):
     # model method with mismatched box size:
     # warns, but completes successfully
     log_watcher.message = "does not divide evenly"
+    background = cfn.background_level(
+        image, mask, background_method='model', background_box_size=(32, 32))
+    assert background.shape == shape
+    assert np.all(background == 1.0)
+    log_watcher.assert_seen()
+
+    # model method with None box size: picks the largest even divisor < 32
+    log_watcher.message = "box size [25, 25]"
     background = cfn.background_level(
         image, mask, background_method='model', background_box_size=None)
     assert background.shape == shape
@@ -846,3 +879,100 @@ def test_do_correction_save_intermediate(save_type, input_type):
         assert noise is None
 
     model.close()
+
+
+@pytest.mark.parametrize('input_type', ['rate', 'rateints', 'ramp'])
+def test_do_correction_with_flat_unity(tmp_path, input_type, log_watcher):
+    # make input data
+    shape = (3, 5, 20, 20)
+    if input_type == 'rate':
+        model = make_small_rate_model(shape)
+    elif input_type == 'rateints':
+        model = make_small_rateints_model(shape)
+    else:
+        model = make_small_ramp_model(shape)
+
+    # make a flat image matching the input data
+    flat = make_flat_model(model, shape=shape[-2:], value=1.0)
+    flat_file = str(tmp_path / 'flat.fits')
+    flat.save(flat_file)
+
+    log_watcher.message = 'Dividing by flat'
+    cleaned, _, _, _, status = cfn.do_correction(model, flat_filename=flat_file, background_method=None)
+    log_watcher.assert_seen()
+    assert status == 'COMPLETE'
+
+    # output is flat with uniform flat, background is perfectly removed
+    assert np.all(cleaned.data == 0.0)
+
+    model.close()
+    flat.close()
+
+
+@pytest.mark.parametrize('apply_flat', [True, False])
+@pytest.mark.parametrize('input_type', ['rate', 'rateints', 'ramp'])
+def test_do_correction_with_flat_structure(tmp_path, log_watcher, input_type, apply_flat):
+    # make input data
+    shape = (3, 5, 20, 20)
+    if input_type == 'rate':
+        model = make_small_rate_model(shape)
+    elif input_type == 'rateints':
+        model = make_small_rateints_model(shape)
+    else:
+        model = make_small_ramp_model(shape)
+
+    # make a flat image matching the input data
+    flat = make_flat_model(model, shape=shape[-2:])
+    if apply_flat:
+        flat_file = str(tmp_path / 'flat.fits')
+        flat.save(flat_file)
+    else:
+        flat_file = None
+
+    # multiply the data by the flat to mock real structure
+    model.data *= flat.data
+
+    log_watcher.message = 'Dividing by flat'
+    cleaned, _, _, _, status = cfn.do_correction(model, flat_filename=flat_file)
+    assert status == 'COMPLETE'
+
+    if apply_flat:
+        log_watcher.assert_seen()
+
+        # output is the same as input: flat structure is not removed
+        assert np.all(cleaned.data == model.data)
+    else:
+        log_watcher.assert_not_seen()
+
+        # output is not the same as input: flat structure is fit as background/noise
+        assert not np.all(cleaned.data == model.data)
+
+    model.close()
+    flat.close()
+
+
+def test_do_correction_with_flat_subarray(tmp_path, log_watcher):
+    # make input data
+    shape = (3, 5, 20, 20)
+    model = make_small_rate_model(shape)
+
+    # make a flat image larger than the input data
+    flat_shape = (50, 50)
+    flat = make_flat_model(model, shape=flat_shape)
+    flat_file = str(tmp_path / 'flat.fits')
+    flat.save(flat_file)
+
+    # multiply the data by the flat to mock real structure
+    model.data *= flat.data[:20, :20]
+
+    log_watcher.message = 'Extracting matching subarray'
+    cleaned, _, _, _, status = cfn.do_correction(model, flat_filename=flat_file)
+    assert status == 'COMPLETE'
+    log_watcher.assert_seen()
+
+    # output is the same as input: flat structure is not removed by the
+    # cleaning process
+    assert np.all(cleaned.data == model.data)
+
+    model.close()
+    flat.close()

@@ -1,3 +1,22 @@
+1.17.1 (2025-01-02)
+===================
+
+refpix (detector1)
+------------------
+
+- Bugfix for the new SIRS reference pixel subtraction. (`#9037
+  <https://github.com/spacetelescope/jwst/issues/9037>`_)
+
+
+tweakreg (image3)
+-----------------
+
+- Changed the default values for ``sharplo``, ``sharphi``, ``roundlo``, and
+  ``roundhi`` to the values appropriate for the current default algorith for
+  source finding in the ``tweakreg`` step. (`#9036
+  <https://github.com/spacetelescope/jwst/issues/9036>`_)
+
+
 1.17.0 (2024-12-20)
 ===================
 

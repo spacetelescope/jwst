@@ -162,17 +162,29 @@ class Main():
             from jwst.associations.generator.generate_per_pool import generate_per_pool
 
             self.associations = generate_per_pool(
-                self.pool, rule_defs=parsed.rules,
-                candidate_ids=parsed.asn_candidate_ids, all_candidates=parsed.all_candidates, discover=parsed.discover,
-                version_id=parsed.version_id, finalize=not parsed.no_finalize, merge=parsed.merge, ignore_default=parsed.ignore_default
+                self.pool,
+                rule_defs=parsed.rules,
+                candidate_ids=parsed.asn_candidate_ids,
+                all_candidates=parsed.all_candidates,
+                discover=parsed.discover,
+                version_id=parsed.version_id,
+                finalize=not parsed.no_finalize,
+                merge=parsed.merge,
+                ignore_default=parsed.ignore_default
             )
         else:
             from jwst.associations.generator.generate_per_candidate import generate_per_candidate
 
             self.associations = generate_per_candidate(
-                self.pool, rule_defs=parsed.rules,
-                candidate_ids=parsed.asn_candidate_ids, all_candidates=parsed.all_candidates, discover=parsed.discover,
-                version_id=parsed.version_id, finalize=not parsed.no_finalize, merge=parsed.merge, ignore_default=parsed.ignore_default
+                self.pool,
+                rule_defs=parsed.rules,
+                candidate_ids=parsed.asn_candidate_ids,
+                all_candidates=parsed.all_candidates,
+                discover=parsed.discover,
+                version_id=parsed.version_id,
+                finalize=not parsed.no_finalize,
+                merge=parsed.merge,
+                ignore_default=parsed.ignore_default
             )
 
 
@@ -185,7 +197,7 @@ class Main():
         ----------
         args : list, str, or None
             List of command-line arguments.
-            If a string, spaces seperate the arguments.
+            If a string, spaces separate the arguments.
             If None, `sys.argv` is used.
 
         has_pool : bool-like
@@ -198,7 +210,7 @@ class Main():
             args = args.split(' ')
 
         parser = argparse.ArgumentParser(
-            description='Generate Assocation Data Products',
+            description='Generate Association Data Products',
             usage='asn_generate pool'
         )
         if not has_pool:

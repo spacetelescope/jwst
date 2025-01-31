@@ -385,12 +385,14 @@ class RampFitStep(Step):
     class_alias = "ramp_fit"
 
     spec = """
-        algorithm = option('OLS', 'OLS_C', 'LIKELY', default='OLS_C') # 'OLS' and 'OLS_C' use the same underlying algorithm, but OLS_C is implemented in C
+        algorithm = option('OLS', 'OLS_C', 'LIKELY', default='OLS_C')
+        # 'OLS' and 'OLS_C' use the same underlying algorithm, but OLS_C is implemented in C
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
         suppress_one_group = boolean(default=True)  # Suppress saturated ramps with good 0th group
-        maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
+        maximum_cores = string(default='1')
+        # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -411,7 +413,7 @@ class RampFitStep(Step):
 
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
-              
+
             # Cork on a copy
             result = input_model.copy()
 

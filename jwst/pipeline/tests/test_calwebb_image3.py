@@ -59,7 +59,7 @@ def make_dummy_cal_file(tmp_cwd_module):
 
 @pytest.fixture(scope='module')
 def make_dummy_association(make_dummy_cal_file):
-    
+
     shutil.copy(INPUT_FILE, INPUT_FILE_2)
     os.system(f"asn_from_list -o {INPUT_ASN} --product-name {OUTPUT_PRODUCT} -r DMS_Level3_Base {INPUT_FILE} {INPUT_FILE_2}")
 
@@ -73,7 +73,7 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
     with open(LOGCFG, 'w') as f:
         f.write(LOGCFG_CONTENT)
 
-    args = ["calwebb_image3", INPUT_ASN, 
+    args = ["calwebb_image3", INPUT_ASN,
             f"--logcfg={LOGCFG}",
             "--steps.tweakreg.skip=true",
             "--steps.skymatch.skip=true",
@@ -92,7 +92,7 @@ def test_run_image3_single_file(make_dummy_cal_file):
     with open(LOGCFG, 'w') as f:
         f.write(LOGCFG_CONTENT)
 
-    args = ["calwebb_image3", INPUT_FILE, 
+    args = ["calwebb_image3", INPUT_FILE,
             f"--logcfg={LOGCFG}",
             "--steps.tweakreg.skip=true",
             "--steps.skymatch.skip=true",

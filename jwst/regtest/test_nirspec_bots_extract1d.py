@@ -20,6 +20,7 @@ def run_extract(rtdata_module, request):
     # Run the calwebb_spec2 pipeline;
     args = ["extract_1d", rtdata.input,
             f"--override_extract1d={ref_file}",
+            "--use_source_posn=False",
             "--suffix=x1dints"]
     Step.from_cmdline(args)
 

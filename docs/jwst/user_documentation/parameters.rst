@@ -12,7 +12,7 @@ a hierarchy involved - overrides set on a pipeline or step object will take prec
 over values in a parameter file. See :ref:`Parameter Precedence` for a full description of
 how a parameter gets its final value.
 
-If there is need to re-use a set of parameters often, parameters can be stored
+If there is need to reuse a set of parameters often, parameters can be stored
 in **parameter files**. See :ref:`parameter_files` for more information.
 
 To see what parameters are available for any given
@@ -63,6 +63,7 @@ individual steps, you have two options:
 To do this using the Python pipeline interface, see .. _python_output_file:. To do
 this when using the command line interface, see .. _cli_output_file:.
 
+.. _intro_override_reference_file:
 
 Override Reference File
 -----------------------
@@ -132,10 +133,5 @@ file from CRDS when running a pipeline:
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
 
-If there is need to re-use a set of parameters often, parameters can be stored
+If there is need to reuse a set of parameters often, parameters can be stored
 in **parameter files**. See :ref:`parameter_files` for more information.
-
-Pipeline/Step Parameters
-========================
-
-

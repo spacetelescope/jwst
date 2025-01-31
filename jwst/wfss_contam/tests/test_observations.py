@@ -92,7 +92,7 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_resp = np.ones(100)
     seg_wcs = segmentation_map.meta.wcs
-    0, (300, 500), 2, False, 
+    0, (300, 500), 2, False,
     xoffset = 2200
     yoffset = 1000
 
@@ -102,7 +102,7 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
                     sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
                     oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
                     yoffset=yoffset)
-    
+
     xs, ys, areas, lams_out, counts_3, ID = dispersed_pixel(
                 x0, y0, width, height, lams, flxs, order, wmin, wmax,
                 sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,

@@ -26,7 +26,7 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
     data : np.ndarray
         2D array of pixel values
     box_size : tuple
-        Size of box in pixels to use for background estimation. 
+        Size of box in pixels to use for background estimation.
         If not set, defaults to 1/5 of the image size.
     filter_size : tuple
         Size of filter to use for background estimation
@@ -51,7 +51,7 @@ def background_subtract(data, box_size=None, filter_size=(3,3), sigma=3.0, exclu
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
     bkg = Background2D(data, box_size, filter_size=filter_size,
-                   sigma_clip=sigma_clip, bkg_estimator=bkg_estimator, 
+                   sigma_clip=sigma_clip, bkg_estimator=bkg_estimator,
                    exclude_percentile=exclude_percentile)
 
     return data - bkg.background

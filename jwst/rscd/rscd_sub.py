@@ -84,12 +84,12 @@ def correction_skip_groups(output, group_skip):
     sci_ngroups = output.meta.exposure.ngroups
     sci_nints = output.meta.exposure.nints
 
-    # values defined for segmented data 
+    # values defined for segmented data
     sci_int_start = output.meta.exposure.integration_start
 
     if sci_int_start is None:
         sci_int_start = 1
-        
+
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
@@ -116,7 +116,7 @@ def correction_skip_groups(output, group_skip):
     int_start = 1
     if sci_int_start !=1: # we have segmented data
         int_start = 0
-        
+
     output.groupdq[int_start:, 0:group_skip, :, :] = \
         np.bitwise_or(output.groupdq[int_start:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
     log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")

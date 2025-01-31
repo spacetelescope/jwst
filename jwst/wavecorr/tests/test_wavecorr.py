@@ -44,15 +44,15 @@ def test_wavecorr():
     slit = im_src.slits[0]
     dispersion = wavecorr.compute_dispersion(slit.meta.wcs, x, y)
     assert_allclose(dispersion[~np.isnan(dispersion)], 1e-9, atol=1e-10)
-    
+
     # test that the wavelength is on the order of microns
     wavelength = wavecorr.compute_wavelength(slit.meta.wcs, x, y)
     assert_allclose(np.nanmean(wavelength), 2.5, atol=0.1)
-        
+
     # Check that the stored wavelengths were corrected
     abs_wave_correction = np.abs(im_src.slits[0].wavelength - im_wave.slits[0].wavelength)
     assert_allclose(np.nanmean(abs_wave_correction), 0.00046, atol=0.0001)
-    
+
     # Check that the slit wcs has been updated to provide corrected wavelengths
     corrected_wavelength = wavecorr.compute_wavelength(im_wave.slits[0].meta.wcs, x, y)
     assert_allclose(im_wave.slits[0].wavelength, corrected_wavelength)
@@ -67,7 +67,7 @@ def test_wavecorr():
         lam_uncorr, dispersion, freference, slit.source_xpos, 'MOS')
     lam_corr = wave2wavecorr(lam_uncorr)
     assert_allclose(lam_uncorr, wave2wavecorr.inverse(lam_corr))
-    
+
     # test on both sides of the shutter
     source_xpos1 = -.2
     source_xpos2 = .2
@@ -113,7 +113,7 @@ def test_skipped():
 
     outa = AssignWcsStep.call(im)
 
-    # wcs and other metadata necessary for a good (not skipped) result 
+    # wcs and other metadata necessary for a good (not skipped) result
     dither = {'x_offset': 0.0, 'y_offset': 0.0}
     outa.meta.dither = dither
     outa.meta.wcsinfo.v3yangle = 138.78
@@ -150,9 +150,9 @@ def test_skipped():
 
     # Test if the corrected wavelengths are not monotonically increasing
 
-    # This case is not expected with real data, test that no correction 
-    # transform is returned (a skip criterion) with simple case 
-    # of flipped wavelength solutions, which produces a monotonically 
+    # This case is not expected with real data, test that no correction
+    # transform is returned (a skip criterion) with simple case
+    # of flipped wavelength solutions, which produces a monotonically
     # decreasing wavelengths
     lam = np.tile(np.flip(np.arange(0.6, 5.5, 0.01)*1e-6), (22, 1))
     disp = np.tile(np.full(lam.shape[-1], -0.01)*1e-6, (22, 1))
@@ -162,12 +162,12 @@ def test_skipped():
         reference_uri_to_cache_path(ref_name, im.crds_observatory))
     source_xpos = 0.1
     aperture_name = 'S200A1'
-    
+
     transform = wavecorr.calculate_wavelength_correction_transform(
         lam, disp, reffile, source_xpos, aperture_name)
     assert transform is None
-    
-    
+
+
 def test_mos_slit_status():
     """ Test conditions that are skipped for mos slitlets."""
 
@@ -188,21 +188,21 @@ def test_mos_slit_status():
     # test the mock msa source as an extended source
     im_src.slits[0].source_type = 'EXTENDED'
     im_wave = WavecorrStep.call(im_src)
-    
+
     # check that the step is recorded as skipped,
     # since no slits were corrected
     assert im_wave.meta.cal_step.wavecorr == 'SKIPPED'
-    
+
     # check that the step is listed as skipped for extended mos sources
     assert im_wave.slits[0].meta.cal_step.wavecorr == 'SKIPPED'
-    
+
     # test the mock msa source as a point source
     im_src.slits[0].source_type = 'POINT'
     im_wave = WavecorrStep.call(im_src)
-    
+
     # check that the step is recorded as completed
     assert im_wave.meta.cal_step.wavecorr == 'COMPLETE'
-    
+
     # check that the step is listed as complete for mos point sources
     assert im_wave.slits[0].meta.cal_step.wavecorr == 'COMPLETE'
 

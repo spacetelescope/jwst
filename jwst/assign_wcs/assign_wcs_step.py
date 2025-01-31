@@ -5,7 +5,7 @@ from ..stpipe import Step
 from ..lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs
-from .util import (MSAFileError, wfss_imaging_wcs, 
+from .util import (MSAFileError, wfss_imaging_wcs,
                    wcs_bbox_from_shape, update_fits_wcsinfo)
 from .nircam import imaging as nircam_imaging
 from .niriss import imaging as niriss_imaging

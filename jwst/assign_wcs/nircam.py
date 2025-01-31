@@ -155,7 +155,11 @@ def imaging_distortion(input_model, reference_files):
 
     # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
     # This makes it clear the bounding box is set correctly to GWCS
-    bind_bounding_box(transform, transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox, order="F")
+    bind_bounding_box(
+        transform,
+        transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox,
+        order="F"
+    )
 
     return transform
 
@@ -244,7 +248,7 @@ def tsgrism(input_model, reference_files):
     # where x,y is the pixel location in the grism image
     # and x0,y0 is the source location in the "direct" image.
     # For this mode (tsgrism), it is assumed that the source is
-    # at the nominal aperture reference point, i.e., 
+    # at the nominal aperture reference point, i.e.,
     # crpix1 <--> xref_sci and crpix2 <--> yref_sci
     # offsets in X are handled in extract_2d, e.g. if an offset
     # special requirement was specified in the APT.

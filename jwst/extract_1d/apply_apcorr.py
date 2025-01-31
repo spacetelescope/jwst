@@ -154,7 +154,7 @@ class ApCorrBase(abc.ABC):
 
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
                                'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for row in spec_table:
@@ -229,8 +229,8 @@ class ApCorrPhase(ApCorrBase):
 
     def tabulate_correction(self, spec_table):
         """Tabulate the interpolated aperture correction value.
-        
-         This will save time when applying it later, especially if it is to be applied to multiple integrations.  
+
+         This will save time when applying it later, especially if it is to be applied to multiple integrations.
          Modifies self.tabulated_correction.
 
         Parameters
@@ -267,9 +267,9 @@ class ApCorrPhase(ApCorrBase):
 
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
                             'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
-        
+
         if use_tabulated:
             if self.tabulated_correction is None:
                 raise ValueError("Cannot call apply_tabulated_correction without first "
@@ -338,7 +338,7 @@ class ApCorrRadial(ApCorrBase):
 
         """
         flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
-        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat', 
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
                                'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for i, row in enumerate(spec_table):

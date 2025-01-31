@@ -76,7 +76,7 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     ifu_rscale: float
         For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
         FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
-        default extraction size is set to 2 * FWHM. Values below 2 will resuls in a smaller
+        default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
         radius, a value of 2 results in no change to radius and a value above 2 results in a larger
         extraction radius.
 

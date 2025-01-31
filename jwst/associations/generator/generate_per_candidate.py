@@ -81,7 +81,13 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
     for cid_ctype in cids_ctypes:
         time_start = timer()
         # Generate the association for the given candidate
-        associations_cid = generate_on_candidate(cid_ctype, pool, rule_defs, version_id=version_id, ignore_default=ignore_default)
+        associations_cid = generate_on_candidate(
+            cid_ctype,
+            pool,
+            rule_defs,
+            version_id=version_id,
+            ignore_default=ignore_default
+        )
 
         # Add to the list
         associations.extend(associations_cid)
@@ -168,7 +174,12 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
 
     # Create the rules with the simplified asn_candidate constraint
     asn_constraint = constrain_on_candidates([cid])
-    rules = AssociationRegistry(rule_defs, include_default=not ignore_default, global_constraints=asn_constraint, name=CANDIDATE_RULESET)
+    rules = AssociationRegistry(
+        rule_defs,
+        include_default=not ignore_default,
+        global_constraints=asn_constraint,
+        name=CANDIDATE_RULESET
+    )
 
     # Get the associations
     associations = generate(pool_cid, rules, version_id=version_id, finalize=False)

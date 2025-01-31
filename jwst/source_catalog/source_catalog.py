@@ -929,7 +929,7 @@ class JWSTSourceCatalog:
         Returns
         -------
         result : `~astropy.table.Table`
-            The formated catalog.
+            The formatted catalog.
         """
         # output formatting requested by the JPWG (2020.02.05)
         for colname in catalog.colnames:
