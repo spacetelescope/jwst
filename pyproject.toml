@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.11,<3.13"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -13,7 +13,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
@@ -273,7 +272,7 @@ warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
 exclude = ["build"]
-python_version = "3.10"
+python_version = "3.11"
 
 [[tool.mypy.overrides]]
 # don't complain about the installed c parts of this library
