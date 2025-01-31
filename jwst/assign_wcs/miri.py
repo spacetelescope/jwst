@@ -260,6 +260,7 @@ def lrs_xytoabl(input_model, reference_files):
         # Transform to slitless subarray from full array
         zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
+
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
     v2_off, v3_off = subarray_dist(zero_point[0] + 1, zero_point[1])
@@ -277,6 +278,7 @@ def lrs_xytoabl(input_model, reference_files):
     x1 = refmodel.wave_table.x1
     y2 = refmodel.wave_table.y2
 
+    refmodel.close()
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
@@ -407,6 +409,7 @@ def lrs_abltov2v3l(input_model, reference_files):
         # Transform to slitless subarray from full array
         zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
+    refmodel.close()
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
     v2_off, v3_off = subarray_dist(zero_point[0] + 1, zero_point[1])

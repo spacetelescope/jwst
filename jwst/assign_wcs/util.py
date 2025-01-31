@@ -809,7 +809,8 @@ def update_s_region_imaging(model):
 
 def update_s_region_lrs(model, reference_files):
     """
-    Update the ``S_REGION`` keyword using V2,V3 of the slit corners from reference file`.
+    Update the ``S_REGION`` keyword using V2,V3 of the slit corners from 
+    reference file`.
     """
 
     refmodel = MIRILrsModel(reference_files['specwcs'])
@@ -824,10 +825,17 @@ def update_s_region_lrs(model, reference_files):
     v3vert3 = refmodel.meta.v3_vert3
     v3vert4 = refmodel.meta.v3_vert4
 
+    refmodel.close()
     v2 = [v2vert1, v2vert2, v2vert3, v2vert4]
     v3 = [v3vert1, v3vert2, v3vert3, v3vert4]
 
-    lam = None # wavelength does not matter for s region
+    if (any(elem is None for elem in v2) or
+        any(elem is None for elem in v3)):
+        log.info("The V2,V3 coordinates of the MIRI LRS-Fixed slit contains NaN values.")
+        log.info("The s_region will not be updated")      
+    
+    lam = 7.0 # wavelength does not matter for s region assign a value in
+              # wavelength of MIRI LRS
     s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
     a = s[0]
     b = s[1]
