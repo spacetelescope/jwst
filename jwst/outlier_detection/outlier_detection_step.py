@@ -138,7 +138,6 @@ class OutlierDetectionStep(Step):
                 self.pixfrac,
                 self.kernel,
                 self.fillval,
-                self.in_memory,
                 self.make_output_path,
             )
         elif mode == "ifu":
