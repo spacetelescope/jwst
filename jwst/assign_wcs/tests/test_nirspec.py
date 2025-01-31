@@ -319,7 +319,8 @@ def test_msa_configuration_normal():
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
-                             0.13, -0.31716078999999997, -0.18092266)
+                             0.13, -0.31716078999999997, -0.18092266, 0.0, 0.0,
+                             *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -365,7 +366,7 @@ def test_msa_configuration_all_background():
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 57, '1x1', '1234_BKG57', 'BKG57',
-                             0.0, 0.0, 0.0)
+                             0.0, 0.0, 0.0, 0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -382,7 +383,8 @@ def test_msa_configuration_row_skipped():
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
-                             0.130, -0.31716078999999997, -0.18092266)
+                             0.130, -0.31716078999999997, -0.18092266,
+                             0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -398,9 +400,11 @@ def test_msa_configuration_multiple_returns():
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
-                              0.13000000000000003, -0.31716078999999997, -0.18092266)
+                              0.13000000000000003, -0.31716078999999997, -0.18092266,
+                              0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     ref_slit2 = trmodels.Slit(60, 11573, 1, 258, 32, -3.3, 4.45, 4, 2, '11x111', '95065_2', '172',
-                              0.70000000000000007, -0.31716078999999997, -0.18092266)
+                              0.70000000000000007, -0.31716078999999997, -0.18092266,
+                              0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
 
@@ -418,12 +422,14 @@ def test_msa_fs_configuration():
 
     # MSA slit: reads in as normal
     ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
-                             0.13, -0.31716078999999997, -0.18092266)
+                             0.13, -0.31716078999999997, -0.18092266,
+                             0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit)
 
     # FS primary: S200A1, shutter id 0, quadrant 5
     ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x', '95065_3', '3',
-                             1.0, -0.161, -0.229, 53.139904, -27.805002)
+                             1.0, -0.161, -0.229, 53.139904, -27.805002,
+                             *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[1], ref_slit)
 
     # The remaining fixed slits may be in the MSA file but not primary:
@@ -487,13 +493,15 @@ def test_msa_missing_source(tmp_path):
     # MSA slit: virtual source name assigned
     ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x',
                              '1234_VRT55', 'VRT55', 0.0,
-                             -0.31716078999999997, -0.18092266, 0.0, 0.0)
+                             -0.31716078999999997, -0.18092266, 0.0, 0.0,
+                             *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit)
 
     # FS primary: S200A1, virtual source name assigned
     ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x',
                              '1234_VRTS200A1', 'VRTS200A1', 0.0,
-                             -0.161, -0.229, 0.0, 0.0)
+                             -0.161, -0.229, 0.0, 0.0,
+                             *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[1], ref_slit)
 
 
@@ -525,7 +533,9 @@ def test_msa_nan_source_posn(tmp_path):
                              ymin=-0.5, ymax=0.5, quadrant=5, source_id=3, shutter_state='x',
                              source_name='95065_3', source_alias='3', stellarity=1.0,
                              source_xpos=0.0, source_ypos=-0.2290000021457672,
-                             source_ra=53.139904, source_dec=-27.805002)
+                             source_ra=53.139904, source_dec=-27.805002,
+                             slit_xscale=nirspec.MSA_SLIT_SCALES[0],
+                             slit_yscale=nirspec.MSA_SLIT_SCALES[1])
     _compare_slits(slitlet_info[1], ref_slit)
 
 
