@@ -1,6 +1,4 @@
-"""
-Submodule for performing outlier detection on coronagraphy data.
-"""
+"""Submodule for performing outlier detection on coronagraphy data."""
 
 import logging
 
@@ -31,7 +29,25 @@ def detect_outliers(
     """
     Flag outliers in coronography data.
 
-    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    Parameters
+    ----------
+    input_model : ~jwst.datamodels.CubeModel
+        The input cube model.
+    save_intermediate_results : bool
+        If True, save the median model.
+    good_bits : int
+        DQ flag bit values indicating good pixels.
+    maskpt : float
+        The percentage of the mean weight to use as a threshold for masking.
+    snr : float
+        The signal-to-noise ratio threshold for flagging outliers.
+    make_output_path : callable
+        A function that generates a path for saving intermediate results.
+
+    Returns
+    -------
+    ~jwst.datamodels.CubeModel
+        The input model with outliers flagged.
     """
     if not isinstance(input_model, datamodels.JwstDataModel):
         input_model = datamodels.open(input_model)

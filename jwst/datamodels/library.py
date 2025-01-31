@@ -28,6 +28,10 @@ class ModelLibrary(AbstractModelLibrary):
         """
         return [member["exptype"] for member in self._members]
 
+    @property
+    def on_disk(self):
+        return self._on_disk
+
     def indices_for_exptype(self, exptype):
         """
         Determine the indices of models corresponding to ``exptype``.
