@@ -52,19 +52,19 @@ class MasterBackgroundMosStep(Pipeline):
 
     sigma_clip : None or float
         Optional factor for sigma clipping outliers when combining background spectra.
-    median_kernel : integer, optional
+    median_kernel : int
         Optional user-supplied kernel with which to moving-median boxcar filter
         the master background spectrum.  Must be an odd integer; even integers will be
         rounded down to the nearest odd integer.
-    force_subtract : bool, optional
+    force_subtract : bool
         Optional user-supplied flag that overrides step logic to force subtraction of the
         master background.
         Default is False, in which case the step logic determines if the calspec2 background step
         has already been applied and, if so, the master background step is skipped.
         If set to True, the step logic is bypassed and the master background is subtracted.
-    save_background : bool, optional
+    save_background : bool
         Save computed master background.
-    user_background : None, string, or `~jwst.datamodels.CombinedSpecModel`
+    user_background : None, str, or `~jwst.datamodels.CombinedSpecModel`
         Optional user-supplied master background 1D spectrum, path to file
         or opened datamodel
 

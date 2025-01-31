@@ -133,9 +133,6 @@ def correct_nrs_ifu_bkg(input_model):
     """
     Adjust IFU background array for point source corrections.
 
-    Apply point source vs. uniform source pathloss adjustments
-    to a NIRSpec IFU 2D master background array.
-
     Parameters
     ----------
     input_model : `~jwst.datamodels.IFUImageModel`
@@ -173,9 +170,6 @@ def correct_nrs_ifu_bkg(input_model):
 def correct_nrs_fs_bkg(input_model):
     """
     Adjust FS background array for point source corrections.
-
-    Apply point source vs. uniform source corrections
-    to a NIRSpec Fixed-Slit 2D master background array.
 
     Parameters
     ----------
