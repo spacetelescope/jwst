@@ -29,7 +29,7 @@ log.setLevel(logging.DEBUG)
 NRS_FS_REGION = [922, 1116]
 
 
-def make_rate(input_model, input_dir='', return_cube=False):
+def make_rate(input_model, input_dir="", return_cube=False):
     """
     Make a rate model from a ramp model.
 
@@ -76,10 +76,11 @@ def make_rate(input_model, input_dir='', return_cube=False):
     return output_model
 
 
-def post_process_rate(input_model, input_dir='', assign_wcs=False,
-                      msaflagopen=False, flat_dq=False):
+def post_process_rate(
+    input_model, input_dir="", assign_wcs=False, msaflagopen=False, flat_dq=False
+):
     """
-    Post-process the input rate model, as needed.
+    Perform additional processing for the input rate model, as needed.
 
     Parameters
     ----------
@@ -111,7 +112,7 @@ def post_process_rate(input_model, input_dir='', assign_wcs=False,
     output_model = input_model
 
     # If needed, assign a WCS
-    if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, 'wcs'):
+    if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, "wcs"):
         log.info("Assigning a WCS for scene masking")
         step = AssignWcsStep()
         step.input_dir = input_dir
@@ -170,16 +171,14 @@ def mask_ifu_slices(input_model, mask):
 
     # Note: 30 in the line below is hardcoded in nirspec.nrs.ifu_wcs, which
     # the line below replaces.
-    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_model, np.arange(30))
+    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_model, np.arange(30))  # noqa: SLF001
 
     # Loop over the IFU slices, finding the valid region for each
     for k in range(len(tr2)):
-        ifu_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, k,
-                                                 [tr1, tr2[k], tr3[k]])
+        ifu_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, k, [tr1, tr2[k], tr3[k]])  # noqa: SLF001
 
         # Construct array indexes for pixels in this slice
-        x, y = gwcs.wcstools.grid_from_bounding_box(
-            ifu_wcs.bounding_box, step=(1, 1), center=True)
+        x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box, step=(1, 1), center=True)
 
         # Get the world coords for all pixels in this slice;
         # all we actually need are wavelengths
@@ -224,23 +223,24 @@ def mask_slits(input_model, mask):
     mask : array-like of bool
         2D output mask with additional flags for slit pixels
     """
-
     log.info("Finding slit/slitlet pixels")
 
     # Get the slit-to-msa frame transform from the WCS object
-    slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+    slit2msa = input_model.meta.wcs.get_transform("slit_frame", "msa_frame")
 
     # Loop over the slits, marking all the pixels within each bounding
     # box as False (do not use) in the mask.
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
 
     slits = [s.name for s in slit2msa.slits]
-    wcsobj, tr1, tr2, tr3, open_slits = nirspec._get_transforms(input_model, slits, return_slits=True)
+    wcsobj, tr1, tr2, tr3, open_slits = nirspec._get_transforms(  # noqa: SLF001
+        input_model, slits, return_slits=True
+    )
 
     for k in range(len(tr2)):
-        slit_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, slits[k],
-                                                  [tr1, tr2[k], tr3[k]],
-                                                  open_slits=open_slits)
+        slit_wcs = nirspec._nrs_wcs_set_input_lite(  # noqa: SLF001
+            input_model, wcsobj, slits[k], [tr1, tr2[k], tr3[k]], open_slits=open_slits
+        )
 
         xlo, xhi = _toindex(slit_wcs.bounding_box[0])
         ylo, yhi = _toindex(slit_wcs.bounding_box[1])
@@ -249,9 +249,15 @@ def mask_slits(input_model, mask):
     return mask
 
 
-def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
-                       fit_histogram=False, lower_half_only=False,
-                       verbose=False):
+def clip_to_background(
+    image,
+    mask,
+    sigma_lower=3.0,
+    sigma_upper=2.0,
+    fit_histogram=False,
+    lower_half_only=False,
+    verbose=False,
+):
     """
     Flag signal and bad pixels in the image mask.
 
@@ -318,40 +324,37 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
 
     # Initial iterative sigma clip
     with warnings.catch_warnings():
-        warnings.filterwarnings(
-            action="ignore", category=AstropyUserWarning)
-        mean, median, sigma = sigma_clipped_stats(
-            image, mask=~mask, sigma=sigma_limit)
+        warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+        mean, median, sigma = sigma_clipped_stats(image, mask=~mask, sigma=sigma_limit)
     if fit_histogram:
         center = mean
     else:
         center = median
     if verbose:
-        log.debug('From initial sigma clip:')
-        log.debug(f'    center: {center:.5g}')
-        log.debug(f'    sigma: {sigma:.5g}')
+        log.debug("From initial sigma clip:")
+        log.debug(f"    center: {center:.5g}")
+        log.debug(f"    sigma: {sigma:.5g}")
 
     # If desired, use only the lower half of the data distribution
     if lower_half_only:
         lower_half_idx = mask & (image <= center)
-        data_for_stats = np.concatenate(
-            ((image[lower_half_idx] - center),
-             (center - image[lower_half_idx]))) + center
+        data_for_stats = (
+            np.concatenate(((image[lower_half_idx] - center), (center - image[lower_half_idx])))
+            + center
+        )
 
         # Redo stats on lower half of distribution
         with warnings.catch_warnings():
-            warnings.filterwarnings(
-                action="ignore", category=AstropyUserWarning)
-            mean, median, sigma = sigma_clipped_stats(
-                data_for_stats, sigma=sigma_limit)
+            warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+            mean, median, sigma = sigma_clipped_stats(data_for_stats, sigma=sigma_limit)
         if fit_histogram:
             center = mean
         else:
             center = median
         if verbose:
-            log.debug('From lower half distribution:')
-            log.debug(f'    center: {center:.5g}')
-            log.debug(f'    sigma: {sigma:.5g}')
+            log.debug("From lower half distribution:")
+            log.debug(f"    center: {center:.5g}")
+            log.debug(f"    sigma: {sigma:.5g}")
     else:
         data_for_stats = image[mask]
 
@@ -359,15 +362,15 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
     if fit_histogram:
         try:
             hist, edges = np.histogram(
-                data_for_stats, bins=2000,
-                range=(center - 4. * sigma, center + 4. * sigma))
+                data_for_stats, bins=2000, range=(center - 4.0 * sigma, center + 4.0 * sigma)
+            )
         except ValueError:
-            log.error('Histogram failed; using clip center and sigma.')
+            log.error("Histogram failed; using clip center and sigma.")
             hist, edges = None, None
 
         param_opt = None
         if hist is not None:
-            values = (edges[1:] + edges[0:-1]) / 2.
+            values = (edges[1:] + edges[0:-1]) / 2.0
             ind = np.argmax(hist)
             mode_estimate = values[ind]
 
@@ -376,31 +379,28 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
                 return g_amp * np.exp(-0.5 * ((x - g_mean) / g_sigma) ** 2)
 
             param_start = (hist[ind], mode_estimate, sigma)
-            bounds = [(0, values[0], 0),
-                      (np.inf, values[-1], values[-1] - values[0])]
+            bounds = [(0, values[0], 0), (np.inf, values[-1], values[-1] - values[0])]
             try:
-                param_opt, _ = curve_fit(gaussian, values, hist, p0=param_start,
-                                         bounds=bounds)
+                param_opt, _ = curve_fit(gaussian, values, hist, p0=param_start, bounds=bounds)
             except RuntimeError:
-                log.error('Gaussian fit failed; using clip center and sigma.')
+                log.error("Gaussian fit failed; using clip center and sigma.")
                 param_opt = None
 
             if verbose:
-                log.debug('From histogram:')
-                log.debug(f'    mode estimate: {mode_estimate:.5g}')
-                log.debug(f'    range of values in histogram: '
-                          f'{values[0]:.5g} to {values[-1]:.5g}')
+                log.debug("From histogram:")
+                log.debug(f"    mode estimate: {mode_estimate:.5g}")
+                log.debug(f"    range of values in histogram: {values[0]:.5g} to {values[-1]:.5g}")
 
         if verbose:
-            log.debug('Gaussian fit results:')
+            log.debug("Gaussian fit results:")
         if param_opt is None:
             if verbose:
-                log.debug('    (fit failed)')
+                log.debug("    (fit failed)")
         else:
             if verbose:
-                log.debug(f'    peak: {param_opt[0]:.5g}')
-                log.debug(f'    center: {param_opt[1]:.5g}')
-                log.debug(f'    sigma: {param_opt[2]:.5g}')
+                log.debug(f"    peak: {param_opt[0]:.5g}")
+                log.debug(f"    center: {param_opt[1]:.5g}")
+                log.debug(f"    sigma: {param_opt[2]:.5g}")
             center = param_opt[1]
             sigma = param_opt[2]
 
@@ -408,8 +408,7 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
     background_lower_limit = center - sigma_lower * sigma
     background_upper_limit = center + sigma_upper * sigma
     if verbose:
-        log.debug(f'Mask limits: {background_lower_limit:.5g} '
-                  f'to {background_upper_limit:.5g}')
+        log.debug(f"Mask limits: {background_lower_limit:.5g} to {background_upper_limit:.5g}")
 
     # Clip bad values
     bad_values = image < background_lower_limit
@@ -420,8 +419,9 @@ def clip_to_background(image, mask, sigma_lower=3.0, sigma_upper=2.0,
     mask[signal] = False
 
 
-def create_mask(input_model, mask_science_regions=False,
-                n_sigma=2.0, fit_histogram=False, single_mask=False):
+def create_mask(
+    input_model, mask_science_regions=False, n_sigma=2.0, fit_histogram=False, single_mask=False
+):
     """
     Create a mask identifying background pixels.
 
@@ -466,23 +466,22 @@ def create_mask(input_model, mask_science_regions=False,
     mask = np.full(input_model.dq.shape, True)
 
     # If IFU, mask all pixels contained in the IFU slices
-    if exptype == 'nrs_ifu' and mask_science_regions:
+    if exptype == "nrs_ifu" and mask_science_regions:
         mask = mask_ifu_slices(input_model, mask)
 
     # If MOS or FS, mask all pixels affected by open slitlets
-    if (exptype in ['nrs_fixedslit', 'nrs_brightobj', 'nrs_msaspec']
-            and mask_science_regions):
+    if exptype in ["nrs_fixedslit", "nrs_brightobj", "nrs_msaspec"] and mask_science_regions:
         mask = mask_slits(input_model, mask)
 
     # If IFU or MOS, mask pixels affected by failed-open shutters
-    if mask_science_regions and exptype in ['nrs_ifu', 'nrs_msaspec']:
-        open_pix = input_model.dq & dqflags.pixel['MSA_FAILED_OPEN']
+    if mask_science_regions and exptype in ["nrs_ifu", "nrs_msaspec"]:
+        open_pix = input_model.dq & dqflags.pixel["MSA_FAILED_OPEN"]
         mask[open_pix > 0] = False
 
     # If MIRI imaging, mask the non-science regions:
     # they contain irrelevant emission
-    if mask_science_regions and exptype in ['mir_image']:
-        non_science = (input_model.dq & dqflags.pixel['DO_NOT_USE']) > 0
+    if mask_science_regions and exptype in ["mir_image"]:
+        non_science = (input_model.dq & dqflags.pixel["DO_NOT_USE"]) > 0
         mask[non_science] = False
 
     # Mask any NaN pixels or exactly zero value pixels
@@ -491,36 +490,42 @@ def create_mask(input_model, mask_science_regions=False,
 
     # If IFU or MOS, mask the fixed-slit area of the image; uses hardwired indexes
     if mask_science_regions:
-        if exptype == 'nrs_ifu':
+        if exptype == "nrs_ifu":
             log.info("Masking the fixed slit region for IFU data.")
-            mask[..., NRS_FS_REGION[0]:NRS_FS_REGION[1], :] = False
-        elif exptype == 'nrs_msaspec':
+            mask[..., NRS_FS_REGION[0] : NRS_FS_REGION[1], :] = False
+        elif exptype == "nrs_msaspec":
             # check for any slits defined in the fixed slit quadrant:
             # if there is nothing there of interest, mask the whole FS region
             try:
-                slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+                slit2msa = input_model.meta.wcs.get_transform("slit_frame", "msa_frame")
                 is_fs = [s.quadrant == 5 for s in slit2msa.slits]
             except (AttributeError, ValueError, TypeError):
-                log.warning('Slit to MSA transform not found.')
+                log.warning("Slit to MSA transform not found.")
                 is_fs = [False]
             if not any(is_fs):
                 log.info("Masking the fixed slit region for MOS data.")
-                mask[..., NRS_FS_REGION[0]:NRS_FS_REGION[1], :] = False
+                mask[..., NRS_FS_REGION[0] : NRS_FS_REGION[1], :] = False
             else:
-                log.info("Fixed slits found in MSA definition; "
-                         "not masking the fixed slit region for MOS data.")
+                log.info(
+                    "Fixed slits found in MSA definition; "
+                    "not masking the fixed slit region for MOS data."
+                )
 
     # Mask outliers and signal using sigma clipping stats.
     # For 3D data, loop over each integration separately.
     if input_model.data.ndim == 3:
         for i in range(input_model.data.shape[0]):
             clip_to_background(
-                input_model.data[i], mask[i],
-                sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True)
+                input_model.data[i],
+                mask[i],
+                sigma_upper=n_sigma,
+                fit_histogram=fit_histogram,
+                verbose=True,
+            )
     else:
         clip_to_background(
-            input_model.data, mask,
-            sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True)
+            input_model.data, mask, sigma_upper=n_sigma, fit_histogram=fit_histogram, verbose=True
+        )
 
     # Reduce the mask to a single plane if needed
     if single_mask and mask.ndim == 3:
@@ -530,8 +535,7 @@ def create_mask(input_model, mask_science_regions=False,
     return mask
 
 
-def background_level(image, mask, background_method='median',
-                     background_box_size=None):
+def background_level(image, mask, background_method="median", background_box_size=None):
     """
     Fit a low-resolution background level.
 
@@ -574,10 +578,10 @@ def background_level(image, mask, background_method='median',
         # Flag more signal in the background subtracted image,
         # with sigma set by the lower half of the distribution only
         clip_to_background(
-            image, mask, sigma_lower=sigma_limit, sigma_upper=sigma_limit,
-            lower_half_only=True)
+            image, mask, sigma_lower=sigma_limit, sigma_upper=sigma_limit, lower_half_only=True
+        )
 
-        if background_method == 'model':
+        if background_method == "model":
             sigma_clip_for_bkg = SigmaClip(sigma=sigma_limit, maxiters=5)
             bkg_estimator = MedianBackground()
 
@@ -587,28 +591,35 @@ def background_level(image, mask, background_method='median',
                 background_box_size = []
                 recommended = np.arange(1, 33)
                 for i_size in image.shape:
-                    divides_evenly = (i_size % recommended == 0)
+                    divides_evenly = i_size % recommended == 0
                     background_box_size.append(int(recommended[divides_evenly][-1]))
-                log.debug(f'Using box size {background_box_size}')
+                log.debug(f"Using box size {background_box_size}")
 
-            box_division_remainder = (image.shape[0] % background_box_size[0],
-                                      image.shape[1] % background_box_size[1])
+            box_division_remainder = (
+                image.shape[0] % background_box_size[0],
+                image.shape[1] % background_box_size[1],
+            )
             if not np.allclose(box_division_remainder, 0):
-                log.warning(f'Background box size {background_box_size} '
-                            f'does not divide evenly into the image '
-                            f'shape {image.shape}.')
+                log.warning(
+                    f"Background box size {background_box_size} "
+                    f"does not divide evenly into the image "
+                    f"shape {image.shape}."
+                )
 
             try:
                 with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        action="ignore", category=AstropyUserWarning)
+                    warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
                     bkg = Background2D(
-                        image, box_size=background_box_size, filter_size=(5, 5),
-                        mask=~mask, sigma_clip=sigma_clip_for_bkg,
-                        bkg_estimator=bkg_estimator)
+                        image,
+                        box_size=background_box_size,
+                        filter_size=(5, 5),
+                        mask=~mask,
+                        sigma_clip=sigma_clip_for_bkg,
+                        bkg_estimator=bkg_estimator,
+                    )
                 background = bkg.background
             except ValueError:
-                log.error('Background fit failed, using median value.')
+                log.error("Background fit failed, using median value.")
                 background = np.nanmedian(image[mask])
         else:
             background = np.nanmedian(image[mask])
@@ -635,7 +646,6 @@ def fft_clean_full_frame(image, mask, detector):
     cleaned_image : array-like of float
         The cleaned image.
     """
-
     # Instantiate the cleaner
     cleaner = NSClean(detector, mask)
 
@@ -649,9 +659,16 @@ def fft_clean_full_frame(image, mask, detector):
     return cleaned_image
 
 
-def fft_clean_subarray(image, mask, detector, npix_iter=512,
-                       fc=(1061, 1211, 49943, 49957),
-                       exclude_outliers=True, sigrej=4, minfrac=0.05):
+def fft_clean_subarray(
+    image,
+    mask,
+    detector,
+    npix_iter=512,
+    fc=(1061, 1211, 49943, 49957),
+    exclude_outliers=True,
+    sigrej=4,
+    minfrac=0.05,
+):
     """
     Fit and remove background noise in frequency space for a subarray image.
 
@@ -746,14 +763,15 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
     di_list = []
     models = []
     while i1 <= imax:
-
         # Want npix_iter available pixels in this section.  If
         # there are fewer than 1.5*npix_iter available pixels in
         # the rest of the image, just go to the end.
         k = 0
         for k in range(i1 + 1, imax + 2):
-            if (sum_mask[k] - sum_mask[i1] > npix_iter
-                    and sum_mask[-1] - sum_mask[i1] > 1.5 * npix_iter):
+            if (
+                sum_mask[k] - sum_mask[i1] > npix_iter
+                and sum_mask[-1] - sum_mask[i1] > 1.5 * npix_iter
+            ):
                 break
 
         di = k - i1
@@ -767,18 +785,21 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
         # over the full array to get reliable values for the mean
         # and standard deviation.
 
-        if np.mean(mask[i1:i1 + di]) > minfrac:
-            cleaner = NSCleanSubarray(image[i1:i1 + di], mask[i1:i1 + di],
-                                      fc=fc, exclude_outliers=False)
+        if np.mean(mask[i1 : i1 + di]) > minfrac:
+            cleaner = NSCleanSubarray(
+                image[i1 : i1 + di], mask[i1 : i1 + di], fc=fc, exclude_outliers=False
+            )
             try:
                 models += [cleaner.clean(return_model=True)]
             except np.linalg.LinAlgError:
                 log.warning("Error cleaning image; step will be skipped")
                 return None
         else:
-            log.warning("Insufficient reference pixels for NSClean around "
-                        "row %d; no correction will be made here." % i1)
-            models += [np.zeros(image[i1:i1 + di].shape)]
+            log.warning(
+                "Insufficient reference pixels for NSClean around "
+                f"row {i1}; no correction will be made here."
+            )
+            models += [np.zeros(image[i1 : i1 + di].shape)]
 
         # If we have reached the end of the array, we are finished.
         if k == imax + 1:
@@ -787,7 +808,7 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
         # Step forward by half an interval so that we have
         # overlapping fitting regions.
 
-        i1 += max(int(np.round(di/2)), 1)
+        i1 += max(int(np.round(di / 2)), 1)
 
     model = np.zeros(image.shape)
     tot_wgt = np.zeros(image.shape)
@@ -801,8 +822,8 @@ def fft_clean_subarray(image, mask, detector, npix_iter=512,
 
     for i in range(len(models)):
         wgt = 1.001 - np.abs(np.linspace(-1, 1, di_list[i]))[:, np.newaxis]
-        model[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt*models[i]
-        tot_wgt[i1_vals[i]:i1_vals[i] + di_list[i]] += wgt
+        model[i1_vals[i] : i1_vals[i] + di_list[i]] += wgt * models[i]
+        tot_wgt[i1_vals[i] : i1_vals[i] + di_list[i]] += wgt
 
     # don't divide by zero
     tot_wgt[model == 0] = 1
@@ -872,7 +893,7 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     # in the channel
     cstart = 0
     cstop = channel_size
-    for channel in range(n_output):
+    for _channel in range(n_output):
         if array_axis == 1:
             channel_image = masked_image[:, cstart:cstop]
         else:
@@ -909,12 +930,12 @@ def _check_input(exp_type, fit_method):
         True if the input is valid.
     """
     message = None
-    miri_allowed = ['MIR_IMAGE']
-    if exp_type.startswith('MIR') and exp_type not in miri_allowed:
+    miri_allowed = ["MIR_IMAGE"]
+    if exp_type.startswith("MIR") and exp_type not in miri_allowed:
         message = f"EXP_TYPE {exp_type} is not supported"
 
-    nsclean_allowed = ['NRS_MSASPEC', 'NRS_IFU', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']
-    if fit_method == 'fft':
+    nsclean_allowed = ["NRS_MSASPEC", "NRS_IFU", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]
+    if fit_method == "fft":
         if exp_type not in nsclean_allowed:
             message = f"Fit method 'fft' cannot be applied to exp_type {exp_type}"
 
@@ -958,8 +979,7 @@ def _make_intermediate_model(input_model, intermediate_data):
     return intermediate_model
 
 
-def _standardize_parameters(
-        exp_type, subarray, slowaxis, background_method, fit_by_channel):
+def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit_by_channel):
     """
     Standardize input parameters.
 
@@ -994,7 +1014,7 @@ def _standardize_parameters(
         by input subarray.
     """
     # Get axis to correct, by instrument
-    if exp_type.startswith('MIR'):
+    if exp_type.startswith("MIR"):
         # MIRI doesn't have 1/f-noise, but it does have a vertical flickering.
         # Set the axis for median correction to the y-axis.
         axis_to_correct = 1
@@ -1004,11 +1024,11 @@ def _standardize_parameters(
         axis_to_correct = abs(slowaxis)
 
     # Standardize background arguments
-    if str(background_method).lower() == 'none':
+    if str(background_method).lower() == "none":
         background_method = None
 
     # Check for fit_by_channel argument, and use only if data is full frame
-    if fit_by_channel and (subarray != 'FULL' or exp_type.startswith('MIR')):
+    if fit_by_channel and (subarray != "FULL" or exp_type.startswith("MIR")):
         log.warning("Fit by channel can only be used for full-frame NIR data.")
         log.warning("Setting fit_by_channel to False.")
         fit_by_channel = False
@@ -1053,7 +1073,7 @@ def _read_flat_file(input_model, flat_filename):
         return None
 
     # Open the provided flat as FlatModel
-    log.debug('Dividing by flat data prior to fitting')
+    log.debug("Dividing by flat data prior to fitting")
     flat = datamodels.FlatModel(flat_filename)
 
     # Extract subarray from reference data, if necessary
@@ -1069,7 +1089,7 @@ def _read_flat_file(input_model, flat_filename):
     # Set any zeros or non-finite values in the flat data to a smoothed local value
     bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
     if np.any(bad_data):
-        smoothed_flat = background_level(flat_data, ~bad_data, background_method='model')
+        smoothed_flat = background_level(flat_data, ~bad_data, background_method="model")
         try:
             flat_data[bad_data] = smoothed_flat[bad_data]
         except IndexError:
@@ -1080,7 +1100,8 @@ def _read_flat_file(input_model, flat_filename):
 
 
 def _make_processed_rate_image(
-        input_model, single_mask, input_dir, exp_type, mask_science_regions, flat):
+    input_model, single_mask, input_dir, exp_type, mask_science_regions, flat
+):
     """
     Make a draft rate image and postprocess if needed.
 
@@ -1113,22 +1134,24 @@ def _make_processed_rate_image(
         The processed rate image or cube.
     """
     if isinstance(input_model, datamodels.RampModel):
-        image_model = make_rate(input_model, return_cube=(not single_mask),
-                                input_dir=input_dir)
+        image_model = make_rate(input_model, return_cube=(not single_mask), input_dir=input_dir)
     else:
         # input is already a rate file
         image_model = input_model
 
     # If needed, assign a WCS to the rate file,
     # flag open MSA shutters, or retrieve flat DQ flags
-    assign_wcs = exp_type.startswith('NRS')
-    flag_open = (exp_type in ['NRS_IFU', 'NRS_MSASPEC'])
-    flat_dq = (exp_type in ['MIR_IMAGE'])
+    assign_wcs = exp_type.startswith("NRS")
+    flag_open = exp_type in ["NRS_IFU", "NRS_MSASPEC"]
+    flat_dq = exp_type in ["MIR_IMAGE"]
     if mask_science_regions:
         image_model = post_process_rate(
-            image_model, assign_wcs=assign_wcs,
-            msaflagopen=flag_open, flat_dq=flat_dq,
-            input_dir=input_dir)
+            image_model,
+            assign_wcs=assign_wcs,
+            msaflagopen=flag_open,
+            flat_dq=flat_dq,
+            input_dir=input_dir,
+        )
 
     # Divide by the flat if provided
     if flat is not None:
@@ -1141,8 +1164,8 @@ def _make_processed_rate_image(
 
 
 def _make_scene_mask(
-        user_mask, image_model, mask_science_regions,
-        n_sigma, fit_histogram, single_mask, save_mask):
+    user_mask, image_model, mask_science_regions, n_sigma, fit_histogram, single_mask, save_mask
+):
     """
     Make a scene mask from user input or rate image.
 
@@ -1156,7 +1179,7 @@ def _make_scene_mask(
         Path to user-supplied mask image.
     image_model : `~jwst.datamodel.JwstDataModel`
         A rate image or cube, processed as needed.
-    mask_science_regions: bool
+    mask_science_regions : bool
         For NIRSpec, mask regions of the image defined by WCS bounding
         boxes for slits/slices, as well as any regions known to be
         affected by failed-open MSA shutters.  For MIRI imaging, mask
@@ -1199,8 +1222,10 @@ def _make_scene_mask(
         background_mask = create_mask(
             image_model,
             mask_science_regions=mask_science_regions,
-            n_sigma=n_sigma, fit_histogram=fit_histogram,
-            single_mask=single_mask)
+            n_sigma=n_sigma,
+            fit_histogram=fit_histogram,
+            single_mask=single_mask,
+        )
 
     # Store the mask image in a model, if requested
     if save_mask:
@@ -1250,8 +1275,10 @@ def _check_data_shapes(input_model, background_mask):
         # Check for 3D mask
         if background_mask.ndim == 2:
             if nints > 1:
-                log.info("Data has multiple integrations, but mask is 2D: "
-                         "the same mask will be used for all integrations.")
+                log.info(
+                    "Data has multiple integrations, but mask is 2D: "
+                    "the same mask will be used for all integrations."
+                )
         elif background_mask.shape[0] != nints:
             log.warning("Mask does not match data shape. Step will be skipped.")
             return mismatch, ndim, nints, ngroups
@@ -1264,9 +1291,19 @@ def _check_data_shapes(input_model, background_mask):
     return False, ndim, nints, ngroups
 
 
-def _clean_one_image(image, mask, background_method, background_box_size,
-                     n_sigma, fit_method, detector, fc, axis_to_correct,
-                     fit_by_channel, flat):
+def _clean_one_image(
+    image,
+    mask,
+    background_method,
+    background_box_size,
+    n_sigma,
+    fit_method,
+    detector,
+    fc,
+    axis_to_correct,
+    fit_by_channel,
+    flat,
+):
     """
     Clean an image by fitting and removing background noise.
 
@@ -1332,24 +1369,27 @@ def _clean_one_image(image, mask, background_method, background_box_size,
         return None, None, success
 
     # Fit and remove a background level
-    if str(background_method).lower() == 'none':
+    if str(background_method).lower() == "none":
         background = 0.0
         bkg_sub = image
     else:
         background = background_level(
-            image, mask, background_method=background_method,
-            background_box_size=background_box_size)
-        log.debug(f'Background level: {np.nanmedian(background):.5g}')
+            image,
+            mask,
+            background_method=background_method,
+            background_box_size=background_box_size,
+        )
+        log.debug(f"Background level: {np.nanmedian(background):.5g}")
         bkg_sub = image - background
 
         # Flag more signal in the background subtracted image,
         # with sigma set by the lower half of the distribution only
         clip_to_background(
-            bkg_sub, mask, sigma_lower=n_sigma,
-            sigma_upper=n_sigma, lower_half_only=True)
+            bkg_sub, mask, sigma_lower=n_sigma, sigma_upper=n_sigma, lower_half_only=True
+        )
 
     # Clean the noise
-    if fit_method == 'fft':
+    if fit_method == "fft":
         if bkg_sub.shape == (2048, 2048):
             # Clean a full-frame image
             cleaned_image = fft_clean_full_frame(bkg_sub, mask, detector)
@@ -1357,8 +1397,7 @@ def _clean_one_image(image, mask, background_method, background_box_size,
             # Clean a subarray image
             cleaned_image = fft_clean_subarray(bkg_sub, mask, detector, fc=fc)
     else:
-        cleaned_image = median_clean(bkg_sub, mask, axis_to_correct,
-                                     fit_by_channel=fit_by_channel)
+        cleaned_image = median_clean(bkg_sub, mask, axis_to_correct, fit_by_channel=fit_by_channel)
     if cleaned_image is None:
         return None, None, False
 
@@ -1389,19 +1428,29 @@ def _mask_unusable(mask, dq):
     dq : array-like of int
         DQ flag array matching the mask shape.
     """
-    dnu = (dq & dqflags.group['DO_NOT_USE']) > 0
+    dnu = (dq & dqflags.group["DO_NOT_USE"]) > 0
     mask[dnu] = False
-    jump = (dq & dqflags.group['JUMP_DET']) > 0
+    jump = (dq & dqflags.group["JUMP_DET"]) > 0
     mask[jump] = False
 
 
-def do_correction(input_model, input_dir=None, fit_method='median',
-                  fit_by_channel=False, background_method='median',
-                  background_box_size=None,
-                  mask_science_regions=False, flat_filename=None,
-                  n_sigma=2.0, fit_histogram=False,
-                  single_mask=True, user_mask=None, save_mask=False,
-                  save_background=False, save_noise=False):
+def do_correction(
+    input_model,
+    input_dir=None,
+    fit_method="median",
+    fit_by_channel=False,
+    background_method="median",
+    background_box_size=None,
+    mask_science_regions=False,
+    flat_filename=None,
+    n_sigma=2.0,
+    fit_histogram=False,
+    single_mask=True,
+    user_mask=None,
+    save_mask=False,
+    save_background=False,
+    save_noise=False,
+):
     """
     Apply the 1/f noise correction.
 
@@ -1488,13 +1537,13 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         status = 'COMPLETE'.
     """
     # Track the completion status, for various failure conditions
-    status = 'SKIPPED'
+    status = "SKIPPED"
 
     detector = input_model.meta.instrument.detector.upper()
     subarray = input_model.meta.subarray.name.upper()
     exp_type = input_model.meta.exposure.type
     slowaxis = input_model.meta.subarray.slowaxis
-    log.info(f'Input exposure type is {exp_type}, detector={detector}')
+    log.info(f"Input exposure type is {exp_type}, detector={detector}")
 
     # Check for a valid input that we can work on
     if not _check_input(exp_type, fit_method):
@@ -1505,7 +1554,8 @@ def do_correction(input_model, input_dir=None, fit_method='median',
     # Get parameters needed for subsequent corrections, as appropriate
     # to the input data
     axis_to_correct, background_method, fit_by_channel, fc = _standardize_parameters(
-            exp_type, subarray, slowaxis, background_method, fit_by_channel)
+        exp_type, subarray, slowaxis, background_method, fit_by_channel
+    )
 
     # Read the flat file, if provided
     flat = _read_flat_file(input_model, flat_filename)
@@ -1513,20 +1563,20 @@ def do_correction(input_model, input_dir=None, fit_method='median',
     # Make a rate file if needed
     if user_mask is None:
         image_model = _make_processed_rate_image(
-            input_model, single_mask, input_dir, exp_type, mask_science_regions, flat)
+            input_model, single_mask, input_dir, exp_type, mask_science_regions, flat
+        )
     else:
         image_model = input_model
 
     # Make a mask model from the user input or the rate data
     background_mask, mask_model = _make_scene_mask(
-        user_mask, image_model, mask_science_regions,
-        n_sigma, fit_histogram, single_mask, save_mask)
+        user_mask, image_model, mask_science_regions, n_sigma, fit_histogram, single_mask, save_mask
+    )
 
     log.info(f"Cleaning image {input_model.meta.filename}")
 
     # Check data shapes for 2D, 3D, or 4D inputs
-    mismatch, ndim, nints, ngroups = _check_data_shapes(
-        input_model, background_mask)
+    mismatch, ndim, nints, ngroups = _check_data_shapes(input_model, background_mask)
     if mismatch:
         return output_model, None, None, None, status
 
@@ -1561,21 +1611,31 @@ def do_correction(input_model, input_dir=None, fit_method='median',
             else:
                 # Ramp data input:
                 # subtract the current group from the next one
-                image = input_model.data[i, j+1] - input_model.data[i, j]
-                dq = input_model.groupdq[i, j+1]
+                image = input_model.data[i, j + 1] - input_model.data[i, j]
+                dq = input_model.groupdq[i, j + 1]
 
                 # Mask any DNU and JUMP pixels
                 _mask_unusable(mask, dq)
 
             # Clean the image
             cleaned_image, background, success = _clean_one_image(
-                image, mask, background_method, background_box_size, n_sigma,
-                fit_method, detector, fc, axis_to_correct, fit_by_channel, flat)
+                image,
+                mask,
+                background_method,
+                background_box_size,
+                n_sigma,
+                fit_method,
+                detector,
+                fc,
+                axis_to_correct,
+                fit_by_channel,
+                flat,
+            )
 
             if not success:
                 # Cleaning failed for internal reasons - probably the
                 # mask is not a good match to the data.
-                log.error(f'Cleaning failed for integration {i + 1}, group {j + 1}')
+                log.error(f"Cleaning failed for integration {i + 1}, group {j + 1}")
 
                 # Restore input data to make sure any partial changes
                 # are thrown away
@@ -1585,8 +1645,10 @@ def do_correction(input_model, input_dir=None, fit_method='median',
             if cleaned_image is None:
                 # Cleaning did not proceed because the image is bad:
                 # leave it as is but continue correcting the rest
-                log.warning(f'No usable data in integration {i+1}, group {j+1}. '
-                            f'Skipping correction for this image.')
+                log.warning(
+                    f"No usable data in integration {i + 1}, group {j + 1}. "
+                    f"Skipping correction for this image."
+                )
                 continue
 
             # Store the cleaned image in the output model
@@ -1601,9 +1663,9 @@ def do_correction(input_model, input_dir=None, fit_method='median',
             else:
                 # Add the cleaned data diff to the previously cleaned group,
                 # rather than the noisy input group
-                output_model.data[i, j+1] = output_model.data[i, j] + cleaned_image
+                output_model.data[i, j + 1] = output_model.data[i, j] + cleaned_image
                 if save_background:
-                    background_to_save[i, j+1] = background
+                    background_to_save[i, j + 1] = background
 
     # Store the background image in a model, if requested
     if save_background:
@@ -1620,6 +1682,6 @@ def do_correction(input_model, input_dir=None, fit_method='median',
         noise_model = None
 
     # Set completion status
-    status = 'COMPLETE'
+    status = "COMPLETE"
 
     return output_model, mask_model, background_model, noise_model, status
