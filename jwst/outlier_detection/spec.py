@@ -57,7 +57,7 @@ def detect_outliers(
     scale1 : float
         Scale factor used to scale the absolute derivative of the blot model for the first pass.
     scale2 : float
-        Scal factor used to scale the absolute derivative of the blot model for the second pass.
+        Scale factor used to scale the absolute dervative of the blot model for the second pass.
     backg : float
         Scalar background level to add to the blotted image.
         Ignored if `input_model.meta.background.level` is not None but
