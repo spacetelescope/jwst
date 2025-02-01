@@ -91,11 +91,13 @@ def create_reference_files(datamodel):
     return refs
 
 
-def create_nirspec_imaging_file():
+def create_nirspec_imaging_file(filter_name='F290LP'):
     image = create_hdul()
     image[0].header['exp_type'] = 'NRS_IMAGE'
-    image[0].header['filter'] = 'F290LP'
+    image[0].header['filter'] = filter_name
     image[0].header['grating'] = 'MIRROR'
+    image[0].header['lamp'] = 'NONE'
+
     return image
 
 
@@ -161,6 +163,39 @@ def test_nirspec_imaging():
     im.meta.wcs = w
     # Test evaluating the WCS
     im.meta.wcs(1, 2)
+
+    # Test that the MSA to detector transforms can be retrieved
+    det2msa = im.meta.wcs.get_transform('detector', 'msa')
+    result = det2msa(1.0, 2.0)
+    assert len(result) == 3
+
+    msa2det = im.meta.wcs.get_transform('msa', 'detector')
+    result = msa2det(1.0, 2.0)
+    assert len(result) == 2
+
+
+def test_nirspec_imaging_opaque():
+    """Test NIRSpec Imaging mode with OPAQUE filter."""
+    f = create_nirspec_imaging_file(filter_name='OPAQUE')
+    im = datamodels.ImageModel(f)
+
+    # Test creating the WCS
+    refs = create_reference_files(im)
+    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
+    w = wcs.WCS(pipe)
+    im.meta.wcs = w
+
+    # Test evaluating the WCS
+    im.meta.wcs(1, 2)
+
+    # Test that the MSA to detector transforms can be retrieved
+    det2msa = im.meta.wcs.get_transform('detector', 'msa')
+    result = det2msa(1.0, 2.0)
+    assert len(result) == 3
+
+    msa2det = im.meta.wcs.get_transform('msa', 'detector')
+    result = msa2det(1.0, 2.0)
+    assert len(result) == 2
 
 
 def test_nirspec_ifu_against_esa(wcs_ifu_grating):

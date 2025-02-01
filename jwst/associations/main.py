@@ -197,7 +197,7 @@ class Main():
         ----------
         args : list, str, or None
             List of command-line arguments.
-            If a string, spaces seperate the arguments.
+            If a string, spaces separate the arguments.
             If None, `sys.argv` is used.
 
         has_pool : bool-like
@@ -210,7 +210,7 @@ class Main():
             args = args.split(' ')
 
         parser = argparse.ArgumentParser(
-            description='Generate Assocation Data Products',
+            description='Generate Association Data Products',
             usage='asn_generate pool'
         )
         if not has_pool:

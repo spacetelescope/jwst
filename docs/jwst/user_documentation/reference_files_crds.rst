@@ -6,7 +6,7 @@ Reference Files, Parameter Files and CRDS
 
 The JWST pipeline uses version-controlled :ref:`reference files <crds_reference_files>` and
 :ref:`parameter files <crds_parameter_files>` to supply pipeline steps with necessary data
-and set pipeline/step parameters, respectivley. These files both use the ASDF format,
+and set pipeline/step parameters, respectively. These files both use the ASDF format,
 and are managed by the Calibration References Data System (:ref:`CRDS <crds>`) system.
 
 .. _crds_reference_files:
@@ -39,7 +39,7 @@ Parameter Files
 
 Parameter files, which like reference files are encoded in ASDF and
 version-controlled by CRDS, define the 'best' set of parameters for pipeline
-steps as determined by the JWST instrument teams, based on insturment, observing
+steps as determined by the JWST instrument teams, based on instrument, observing
 model, filter, etc. They also may evolve over time as understanding of caibration
 improves.
 

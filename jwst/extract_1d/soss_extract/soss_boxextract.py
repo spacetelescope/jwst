@@ -155,7 +155,7 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     data points, leading to a factor-of-2 decrease (assuming errors are normally distributed).
     Future work should follow up on whether this remains the desired behavior.
     """
-    # Tranform to 1d arrays
+    # Transform to 1d arrays
     data_to_estim = data[pix_to_estim]
     err_valid = err[valid_pix]
     data_valid = data[valid_pix]
@@ -182,7 +182,7 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     # Get the corresponding error (that's what we want to find!)
     err_estimate = err_valid[idx_closest]
 
-    # Replace estimated values in the ouput error 2d image
+    # Replace estimated values in the output error 2d image
     err_out = err.copy()
     err_out[pix_to_estim] = err_estimate
 

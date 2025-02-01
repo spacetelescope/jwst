@@ -2,7 +2,7 @@ exclude: ".*\\.asdf$"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -17,13 +17,93 @@ repos:
       # - id: end-of-file-fixer
       # - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.5.2'
+    rev: 'v0.9.2'
     hooks:
       - id: ruff
         args: ["--fix"]
-      # - id: ruff-format
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.9
+      - id: ruff-format
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.0
     hooks:
-      - id: bandit
-        args: ["-r", "-ll", "-x", "jwst/*test*,jwst/**/*test*,jwst/fits_generator", "jwst"]
+    - id: codespell
+      args: ["--write-changes"]
+      additional_dependencies:
+        - tomli
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.6.1  # Use the latest stable version
+    hooks:
+      - id: mypy
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.8.0
+    hooks:
+      - id: numpydoc-validation
+        exclude: |
+          (?x)^(
+            jwst/assign_wcs/.* |
+            jwst/associations/.* |
+            jwst/background/.* |
+            jwst/badpix_selfcal/.* |
+            jwst/barshadow/.* |
+            jwst/charge_migration/.* |
+            jwst/combine_1d/.* |
+            jwst/coron/.* |
+            jwst/cube_build/.* |
+            jwst/cube_skymatch/.* |
+            jwst/dark_current/.* |
+            jwst/datamodels/.* |
+            jwst/dq_init/.* |
+            jwst/emicorr/.* |
+            jwst/engdblog/.* |
+            jwst/exp_to_source/.* |
+            jwst/extract_1d/.* |
+            jwst/extract_2d/.* |
+            jwst/firstframe/.* |
+            jwst/flatfield/.* |
+            jwst/fringe/.* |
+            jwst/gain_scale/.* |
+            jwst/group_scale/.* |
+            jwst/guider_cds/.* |
+            jwst/imprint/.* |
+            jwst/ipc/.* |
+            jwst/jump/.* |
+            jwst/lastframe/.* |
+            jwst/lib/.* |
+            jwst/linearity/.* |
+            jwst/master_background/.* |
+            jwst/model_blender/.* |
+            jwst/mrs_imatch/.* |
+            jwst/msaflagopen/.* |
+            jwst/outlier_detection/.* |
+            jwst/pathloss/.* |
+            jwst/persistence/.* |
+            jwst/photom/.* |
+            jwst/pipeline/.* |
+            jwst/ramp_fitting/.* |
+            jwst/refpix/.* |
+            jwst/regtest/.* |
+            jwst/resample/.* |
+            jwst/reset/.* |
+            jwst/residual_fringe/.* |
+            jwst/rscd/.* |
+            jwst/saturation/.* |
+            jwst/scripts/.* |
+            jwst/skymatch/.* |
+            jwst/source_catalog/.* |
+            jwst/spectral_leak/.* |
+            jwst/srctype/.* |
+            jwst/stpipe/.* |
+            jwst/straylight/.* |
+            jwst/superbias/.* |
+            jwst/tests/.* |
+            jwst/tso_photometry/.* |
+            jwst/tweakreg/.* |
+            jwst/wavecorr/.* |
+            jwst/wfs_combine/.* |
+            jwst/wfss_contam/.* |
+            jwst/white_light/.* |
+            jwst/conftest.py |
+            .*/tests/.* |
+            setup.py |
+            pytest_jwst/.* |
+            docs/.*
+          )$

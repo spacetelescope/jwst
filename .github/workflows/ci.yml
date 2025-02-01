@@ -45,7 +45,6 @@ jobs:
       default_python: "3.12"
       envs: |
         - linux: check-dependencies
-        - linux: check-types
   latest_crds_contexts:
     uses: ./.github/workflows/contexts.yml
   crds_context:
@@ -69,9 +68,8 @@ jobs:
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
       envs: |
-        - linux: py310-oldestdeps-xdist-cov
+        - linux: py311-oldestdeps-xdist-cov
           pytest-results-summary: true
-        - linux: py310-xdist
         - linux: py311-xdist
           pytest-results-summary: true
         - macos: py311-xdist

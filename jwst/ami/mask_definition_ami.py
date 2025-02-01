@@ -3,9 +3,11 @@ import math
 
 from .utils import rotate2dccw
 
-class NRMDefinition():
 
-    def __init__(self, nrm_model, maskname='jwst_ami', chooseholes=None):
+class NRMDefinition:
+    """Defines the geometry of the NRM mask."""
+
+    def __init__(self, nrm_model, maskname="jwst_ami", chooseholes=None):
         """
         Set attributes of NRMDefinition class.
 
@@ -14,21 +16,20 @@ class NRMDefinition():
 
         Parameters
         ----------
-        nrm_model: NRMModel
-            datamodel containing NRM reference file data
-        maskname: string
+        nrm_model : NRMModel
+            Datamodel containing NRM reference file data
+        maskname : str
             Identifier for mask geometry; default 'jwst_ami', optional
-        chooseholes: list
+        chooseholes : list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask, optional
             If None, use real seven-hole mask
         """
-
-        if maskname not in ['jwst_ami','jwst_g7s6c']:
+        if maskname not in ["jwst_ami", "jwst_g7s6c"]:
             raise ValueError("Mask name not supported")
 
-        self.maskname = maskname # there's only one mask but this is used in oifits
+        self.maskname = maskname  # there's only one mask but this is used in oifits
         self.hdia = nrm_model.flat_to_flat
-        self.activeD = nrm_model.diameter
+        self.active_D = nrm_model.diameter
         self.OD = nrm_model.pupil_circumscribed
         self.ctrs = []
 
@@ -40,36 +41,37 @@ class NRMDefinition():
 
         Parameters
         ----------
-        nrm_model: NRMModel
-            datamodel containing NRM reference file data
-        chooseholes: list
+        nrm_model : NRMModel
+            Datamodel containing NRM reference file data
+        chooseholes : list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
 
         Returns
         -------
-        f2f: float
-            flat-to-flat distance of mask holes
-        ctrs_asbuilt: array
+        f2f : float
+            Flat-to-flat distance of mask holes
+        ctrs_asbuilt : array
             Actual hole centers [meters]
         """
-
-        ctrs_asdesigned = np.array([[nrm_model.x_a1, nrm_model.y_a1],        # B4 -> B4
-                            [nrm_model.x_a2, nrm_model.y_a2],       # C5 -> C2
-                            [nrm_model.x_a3, nrm_model.y_a3],       # B3 -> B5
-                            [nrm_model.x_a4, nrm_model.y_a4],       # B6 -> B2
-                            [nrm_model.x_a5, nrm_model.y_a5],       # C6 -> C1
-                            [nrm_model.x_a6, nrm_model.y_a6],        # B2 -> B6
-                            [nrm_model.x_a7, nrm_model.y_a7]])        # C1 -> C6
-
-
+        ctrs_asdesigned = np.array(
+            [
+                [nrm_model.x_a1, nrm_model.y_a1],  # B4 -> B4
+                [nrm_model.x_a2, nrm_model.y_a2],  # C5 -> C2
+                [nrm_model.x_a3, nrm_model.y_a3],  # B3 -> B5
+                [nrm_model.x_a4, nrm_model.y_a4],  # B6 -> B2
+                [nrm_model.x_a5, nrm_model.y_a5],  # C6 -> C1
+                [nrm_model.x_a6, nrm_model.y_a6],  # B2 -> B6
+                [nrm_model.x_a7, nrm_model.y_a7],  # C1 -> C6
+            ]
+        )
 
         holedict = {}  # as_built names, C2 open, C5 closed, but as designed coordinates
         # Assemble holes by actual open segment names (as_built).  Either the full mask or the
         # subset-of-holes mask will be V2-reversed after the as_designed centers are defined
         # Debug orientations with b4,c6,[c2]
-        allholes = ('b4', 'c2', 'b5', 'b2', 'c1', 'b6', 'c6')
+        allholes = ("b4", "c2", "b5", "b2", "c1", "b6", "c6")
 
-        for hole, coords in zip(allholes,ctrs_asdesigned):
+        for hole, coords in zip(allholes, ctrs_asdesigned, strict=False):
             holedict[hole] = coords
 
         if chooseholes:  # holes B4 B5 C6 asbuilt for orientation testing
@@ -96,17 +98,15 @@ class NRMDefinition():
 
     def showmask(self):
         """
-        Calculate the diameter of the smallest centered circle (D)
-        enclosing the live mask area
+        Calculate the diameter of the smallest centered circle (D) enclosing the live mask area.
 
         Returns
         -------
-        Diameter of the smallest centered circle
-
+        float
+            Diameter of the smallest centered circle
         """
         radii = []
         for ctr in self.ctrs:
             radii.append(math.sqrt(ctr[0] * ctr[0] + ctr[1] * ctr[1]))
 
         return 2.0 * (max(radii) + 0.5 * self.hdia)
-

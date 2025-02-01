@@ -100,6 +100,8 @@ documentation on each reference file.
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`APCORR <apcorr_reffile>`                   |
 +                                                       +--------------------------------------------------+
+|                                                       | :ref:`PSF <psf_reffile>`                         |
++                                                       +--------------------------------------------------+
 |                                                       | SPECKERNEL (NIRISS SOSS ATOCA only)              |
 +                                                       +--------------------------------------------------+
 |                                                       | SPECPROFILE (NIRISS SOSS ATOCA only)             |
@@ -257,6 +259,8 @@ documentation on each reference file.
 | :ref:`PERSAT <persat_reffile>`                   | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PHOTOM <photom_reffile>`                   | :ref:`photom <photom_step>`                           |
++--------------------------------------------------+-------------------------------------------------------+
+| :ref:`PSF <psf_reffile>`                         | :ref:`extract_1d <extract_1d_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PSFMASK <psfmask_reffile>`                 | :ref:`align_refs <align_refs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+

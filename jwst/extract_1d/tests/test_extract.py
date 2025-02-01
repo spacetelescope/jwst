@@ -7,6 +7,7 @@ from astropy.modeling import polynomial
 
 from jwst.datamodels import ModelContainer
 from jwst.extract_1d import extract as ex
+from jwst.extract_1d import psf_profile as pp
 from jwst.tests.helpers import LogWatcher
 
 
@@ -54,7 +55,6 @@ def extract_defaults():
                'extraction_type': 'box',
                'independent_var': 'pixel',
                'match': 'exact match',
-               'position_correction': 0,
                'smoothing_length': 0,
                'spectral_order': 1,
                'src_coeff': None,
@@ -62,26 +62,14 @@ def extract_defaults():
                'position_offset': 0.0,
                'trace': None,
                'use_source_posn': False,
+               'model_nod_pair': False,
+               'optimize_psf_location': False,
                'xstart': 0,
                'xstop': 49,
                'ystart': 0,
-               'ystop': 49}
+               'ystop': 49,
+               'psf': 'N/A'}
     return default
-
-
-@pytest.fixture()
-def simple_profile():
-    profile = np.zeros((50, 50), dtype=np.float32)
-    profile[20:30, :] = 1.0
-    return profile
-
-
-@pytest.fixture()
-def background_profile():
-    profile = np.zeros((50, 50), dtype=np.float32)
-    profile[:10, :] = 1.0
-    profile[40:, :] = 1.0
-    return profile
 
 
 @pytest.fixture()
@@ -198,7 +186,7 @@ def test_get_extract_parameters_no_match(
 
 
 def test_get_extract_parameters_source_posn_exptype(
-        mock_nirspec_bots, extract1d_ref_dict, extract_defaults):
+        mock_nirspec_bots, extract1d_ref_dict):
     input_model = mock_nirspec_bots
     input_model.meta.exposure.type = 'NRS_LAMP'
 
@@ -212,10 +200,10 @@ def test_get_extract_parameters_source_posn_exptype(
 
 
 def test_get_extract_parameters_source_posn_from_ref(
-        mock_nirspec_bots, extract1d_ref_dict, extract_defaults):
+        mock_nirspec_bots, extract1d_ref_dict):
     input_model = mock_nirspec_bots
 
-    # match an entry that explicity sets use_source_posn
+    # match an entry that explicitly sets use_source_posn
     params = ex.get_extract_parameters(
         extract1d_ref_dict, input_model, 'slit6', 1, input_model.meta,
         use_source_posn=None)
@@ -227,8 +215,7 @@ def test_get_extract_parameters_source_posn_from_ref(
 
 @pytest.mark.parametrize('length', [3, 4, 2.8, 3.5])
 def test_get_extract_parameters_smoothing(
-        mock_nirspec_fs_one_slit, extract1d_ref_dict,
-        extract_defaults, length):
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, length):
     input_model = mock_nirspec_fs_one_slit
 
     params = ex.get_extract_parameters(
@@ -242,8 +229,7 @@ def test_get_extract_parameters_smoothing(
 
 @pytest.mark.parametrize('length', [-1, 1, 2, 1.3])
 def test_get_extract_parameters_smoothing_bad_value(
-        mock_nirspec_fs_one_slit, extract1d_ref_dict,
-        extract_defaults, length):
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, length):
     input_model = mock_nirspec_fs_one_slit
 
     params = ex.get_extract_parameters(
@@ -252,6 +238,44 @@ def test_get_extract_parameters_smoothing_bad_value(
 
     # returned value has smoothing length 0
     assert params['smoothing_length'] == 0
+
+
+@pytest.mark.parametrize('use_source', [None, True, False])
+def test_get_extract_parameters_extraction_type_none(
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, use_source, log_watcher):
+    input_model = mock_nirspec_fs_one_slit
+
+    log_watcher.message = "Using extraction type"
+    params = ex.get_extract_parameters(
+        extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
+        extraction_type=None, use_source_posn=use_source, psf_ref_name='available')
+    log_watcher.assert_seen()
+
+    # Extraction type is set to optimal if use_source_posn is True
+    if use_source is None or use_source is True:
+        assert params['use_source_posn'] is True
+        assert params['extraction_type'] == 'optimal'
+    else:
+        assert params['use_source_posn'] is False
+        assert params['extraction_type'] == 'box'
+
+
+@pytest.mark.parametrize('extraction_type', [None, 'box', 'optimal'])
+def test_get_extract_parameters_no_psf(
+        mock_nirspec_fs_one_slit, extract1d_ref_dict, extraction_type, log_watcher):
+    input_model = mock_nirspec_fs_one_slit
+
+    log_watcher.message = "Setting extraction type to 'box'"
+    params = ex.get_extract_parameters(
+        extract1d_ref_dict, input_model, 'slit1', 1, input_model.meta,
+        extraction_type=extraction_type, psf_ref_name='N/A')
+
+    # Warning message issued if extraction type was not already 'box'
+    if extraction_type != 'box':
+        log_watcher.assert_seen()
+
+    # Extraction type is always box if no psf is available
+    assert params['extraction_type'] == 'box'
 
 
 def test_log_params(extract_defaults, log_watcher):
@@ -854,138 +878,6 @@ def test_aperture_center_variable_weight_by_spec(middle, dispaxis):
         assert spec_center == middle
 
 
-@pytest.mark.parametrize('resampled', [True, False])
-@pytest.mark.parametrize('is_slit', [True, False])
-@pytest.mark.parametrize('missing_bbox', [True, False])
-def test_location_from_wcs_nirspec(
-        monkeypatch, mock_nirspec_fs_one_slit, resampled, is_slit, missing_bbox):
-    model = mock_nirspec_fs_one_slit
-
-    if not resampled:
-        # mock available frames, so it looks like unresampled cal data
-        monkeypatch.setattr(model.meta.wcs, 'available_frames', ['gwa'])
-
-    if missing_bbox:
-        # mock a missing bounding box - should have same results
-        # for the test data
-        monkeypatch.setattr(model.meta.wcs, 'bounding_box', None)
-
-    if is_slit:
-        middle, middle_wl, location, trace = ex.location_from_wcs(model, model)
-    else:
-        middle, middle_wl, location, trace = ex.location_from_wcs(model, None)
-
-    # middle pixel is center of dispersion axis
-    assert middle == int((model.data.shape[1] - 1) / 2)
-
-    # middle wavelength is the wavelength at that point, from the mock wcs
-    assert np.isclose(middle_wl, 7.74)
-
-    # location is 1.0 - from the mocked transform function
-    assert location == 1.0
-
-    # trace is the same, in an array
-    assert np.all(trace == 1.0)
-
-
-@pytest.mark.parametrize('is_slit', [True, False])
-def test_location_from_wcs_miri(monkeypatch, mock_miri_lrs_fs, is_slit):
-    model = mock_miri_lrs_fs
-
-    # monkey patch in a transform for the wcs
-    def radec2det(*args, **kwargs):
-        def return_one(*args, **kwargs):
-            return 1.0, 0.0
-        return return_one
-
-    monkeypatch.setattr(model.meta.wcs, 'backward_transform', radec2det())
-
-    # mock the trace function
-    def mock_trace(*args, **kwargs):
-        return np.full(model.data.shape[-2], 1.0)
-
-    monkeypatch.setattr(ex, '_miri_trace_from_wcs', mock_trace)
-
-    # Get the slit center from the WCS
-    if is_slit:
-        middle, middle_wl, location, trace = ex.location_from_wcs(model, model)
-    else:
-        middle, middle_wl, location, trace = ex.location_from_wcs(model, None)
-
-    # middle pixel is center of dispersion axis
-    assert middle == int((model.data.shape[0] - 1) / 2)
-
-    # middle wavelength is the wavelength at that point, from the mock wcs
-    assert np.isclose(middle_wl, 7.26)
-
-    # location is 1.0 - from the mocked transform function
-    assert location == 1.0
-
-    # trace is the same, in an array
-    assert np.all(trace == 1.0)
-
-
-def test_location_from_wcs_missing_data(mock_miri_lrs_fs, log_watcher):
-    model = mock_miri_lrs_fs
-    model.meta.wcs.backward_transform = None
-
-    # model is missing WCS information - None values are returned
-    log_watcher.message = "Dithered pointing location not found"
-    result = ex.location_from_wcs(model, None)
-    assert result == (None, None, None, None)
-    log_watcher.assert_seen()
-
-
-def test_location_from_wcs_wrong_exptype(mock_niriss_soss, log_watcher):
-    # model is not a handled exposure type
-    log_watcher.message = "Source position cannot be found for EXP_TYPE"
-    result = ex.location_from_wcs(mock_niriss_soss, None)
-    assert result == (None, None, None, None)
-    log_watcher.assert_seen()
-
-
-def test_location_from_wcs_bad_location(
-        monkeypatch, mock_nirspec_fs_one_slit, log_watcher):
-    model = mock_nirspec_fs_one_slit
-
-    # monkey patch in a transform for the wcs
-    def slit2det(*args, **kwargs):
-        def return_one(*args, **kwargs):
-            return 0.0, np.nan
-        return return_one
-
-    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
-
-    # WCS transform returns NaN for the location
-    log_watcher.message = "Source position could not be determined"
-    result = ex.location_from_wcs(model, None)
-    assert result == (None, None, None, None)
-    log_watcher.assert_seen()
-
-
-def test_location_from_wcs_location_out_of_range(
-        monkeypatch, mock_nirspec_fs_one_slit, log_watcher):
-    model = mock_nirspec_fs_one_slit
-
-    # monkey patch in a transform for the wcs
-    def slit2det(*args, **kwargs):
-        def return_one(*args, **kwargs):
-            return 0.0, 2000
-        return return_one
-
-    monkeypatch.setattr(model.meta.wcs, 'get_transform', slit2det)
-
-    # mock the trace function
-    def mock_trace(*args, **kwargs):
-        return np.full(model.data.shape[-1], 1.0)
-
-    monkeypatch.setattr(ex, '_nirspec_trace_from_wcs', mock_trace)
-
-    # WCS transform a value outside the bounding box
-    log_watcher.message = "outside the bounding box"
-    result = ex.location_from_wcs(model, None)
-    assert result == (None, None, None, None)
-    log_watcher.assert_seen()
 
 
 def test_shift_by_offset_horizontal(extract_defaults):
@@ -1055,23 +947,6 @@ def test_shift_by_offset_trace_no_update(extract_defaults):
     assert np.all(extract_params['trace'] == np.arange(10))
 
 
-def test_nirspec_trace_from_wcs(mock_nirspec_fs_one_slit):
-    model = mock_nirspec_fs_one_slit
-    trace = ex._nirspec_trace_from_wcs(model.data.shape, model.meta.wcs.bounding_box,
-                                       model.meta.wcs, 1.0, 1.0)
-    # mocked model contains some mock transforms as well - all ones are expected
-    assert np.all(trace == np.ones(model.data.shape[-1]))
-
-
-def test_miri_trace_from_wcs(mock_miri_lrs_fs):
-    model = mock_miri_lrs_fs
-    trace = ex._miri_trace_from_wcs(model.data.shape, model.meta.wcs.bounding_box,
-                                    model.meta.wcs, 1.0, 1.0)
-
-    # mocked model contains some mock transforms as well - all ones are expected
-    assert np.all(trace == np.ones(model.data.shape[-1]))
-
-
 @pytest.mark.parametrize('is_slit', [True, False])
 def test_define_aperture_nirspec(mock_nirspec_fs_one_slit, extract_defaults, is_slit):
     model = mock_nirspec_fs_one_slit
@@ -1082,7 +957,7 @@ def test_define_aperture_nirspec(mock_nirspec_fs_one_slit, extract_defaults, is_
         slit = None
     exptype = 'NRS_FIXEDSLIT'
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    ra, dec, wavelength, profile, bg_profile, limits = result
+    ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
     assert np.isclose(ra, 45.05)
     assert np.isclose(dec, 45.1)
     assert wavelength.shape == (model.data.shape[1],)
@@ -1106,7 +981,7 @@ def test_define_aperture_miri(mock_miri_lrs_fs, extract_defaults, is_slit):
         slit = None
     exptype = 'MIR_LRS-FIXEDSLIT'
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    ra, dec, wavelength, profile, bg_profile, limits = result
+    ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
     assert np.isclose(ra, 45.05)
     assert np.isclose(dec, 45.1)
     assert wavelength.shape == (model.data.shape[1],)
@@ -1130,7 +1005,7 @@ def test_define_aperture_with_bg(mock_nirspec_fs_one_slit, extract_defaults):
     extract_defaults['bkg_coeff'] = [[-0.5], [2.5]]
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    bg_profile = result[-2]
+    bg_profile = result[-3]
 
     # Bg profile has 1s in the first 3 rows
     assert bg_profile.shape == model.data.shape
@@ -1149,7 +1024,7 @@ def test_define_aperture_empty_aperture(mock_nirspec_fs_one_slit, extract_defaul
     extract_defaults['ystop'] = 3000
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    _, _, _, profile, _, limits = result
+    _, _, _, profile, _, _, limits = result
 
     assert np.all(profile == 0.0)
     assert limits == (2000, 3000, None, None)
@@ -1179,7 +1054,8 @@ def test_define_aperture_bad_wcs(monkeypatch, mock_nirspec_fs_one_slit, extract_
     assert dec is None
 
 
-def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extract_defaults):
+def test_define_aperture_use_source(
+        monkeypatch, mock_nirspec_fs_one_slit, extract_defaults):
     model = mock_nirspec_fs_one_slit
     extract_defaults['dispaxis'] = 1
     slit = None
@@ -1196,7 +1072,7 @@ def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extra
     extract_defaults['extract_width'] = 6.0
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    _, _, _, profile, _, limits = result
+    _, _, _, profile, _, _, limits = result
 
     assert np.all(profile[:7] == 0.0)
     assert np.all(profile[7:13] == 1.0)
@@ -1212,13 +1088,94 @@ def test_define_aperture_extra_offset(mock_nirspec_fs_one_slit, extract_defaults
     extract_defaults['position_offset'] = 2.0
 
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
-    _, _, _, profile, _, limits = result
+    _, _, _, profile, _, _, limits = result
     assert profile.shape == model.data.shape
 
     # Default profile is shifted 2 pixels up
     assert np.all(profile[:2] == 0.0)
     assert np.all(profile[2:] == 1.0)
     assert limits == (2, model.data.shape[0] + 1, 0, model.data.shape[1] - 1)
+
+
+def test_define_aperture_optimal(mock_miri_lrs_fs, extract_defaults, psf_reference_file):
+    model = mock_miri_lrs_fs
+    extract_defaults['dispaxis'] = 2
+    slit = None
+    exptype = 'MIR_LRS-FIXEDSLIT'
+
+    # set parameters for optimal extraction
+    extract_defaults['extraction_type'] = 'optimal'
+    extract_defaults['use_source_posn'] = True
+    extract_defaults['psf'] = psf_reference_file
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    _, _, _, profile, bg_profile, nod_profile, limits = result
+
+    assert bg_profile is None
+    assert nod_profile is None
+
+    # profile is normalized along cross-dispersion
+    assert np.allclose(np.sum(profile, axis=1), 1.0)
+
+    # trace is centered on 1.0, near the edge of the slit,
+    # and the psf data has the same size as the array (50x50),
+    # so only half the psf is included
+    npix = 26
+    assert np.all(np.sum(profile != 0, axis=1) == npix)
+
+    # psf is uniform when in range, 0 otherwise
+    assert np.allclose(profile[:, :npix], 1 / npix)
+    assert np.allclose(profile[:, npix:], 0.0)
+
+
+def test_define_aperture_optimal_with_nod(
+        monkeypatch, mock_miri_lrs_fs, extract_defaults, psf_reference_file):
+    model = mock_miri_lrs_fs
+    extract_defaults['dispaxis'] = 2
+    slit = None
+    exptype = 'MIR_LRS-FIXEDSLIT'
+
+    # mock nod subtraction
+    mock_miri_lrs_fs.meta.cal_step.back_sub = 'COMPLETE'
+    mock_miri_lrs_fs.meta.dither.primary_type = 'ALONG-SLIT-NOD'
+
+    # mock a nod position at the opposite end of the array
+    def mock_nod(*args, **kwargs):
+        return 48.0
+
+    monkeypatch.setattr(pp, 'nod_pair_location', mock_nod)
+
+    # set parameters for optimal extraction
+    extract_defaults['extraction_type'] = 'optimal'
+    extract_defaults['use_source_posn'] = True
+    extract_defaults['psf'] = psf_reference_file
+    extract_defaults['model_nod_pair'] = True
+
+    result = ex.define_aperture(model, slit, extract_defaults, exptype)
+    _, _, _, profile, bg_profile, nod_profile, limits = result
+
+    assert bg_profile is None
+    assert nod_profile is not None
+
+    # profiles are normalized along cross-dispersion,
+    # nod profile is negative
+    assert np.allclose(np.sum(profile, axis=1), 1.0)
+    assert np.allclose(np.sum(nod_profile, axis=1), -1.0)
+
+    # positive trace is centered on 1.0, negative trace on
+    # 48.0, array size is 50.
+    npix = 26
+    assert np.all(np.sum(profile != 0, axis=1) == npix)
+    assert np.all(np.sum(nod_profile != 0, axis=1) == npix)
+
+    # psf is uniform when in range, 0 otherwise
+    assert np.allclose(profile[:, :npix], 1 / npix)
+    assert np.allclose(profile[:, npix:], 0.0)
+
+    # nod profile is the same, but negative, and at the other
+    # end of the array
+    assert np.allclose(nod_profile[:, -npix:], -1 / npix)
+    assert np.allclose(nod_profile[:, :-npix], 0.0)
 
 
 def test_extract_one_slit_horizontal(mock_nirspec_fs_one_slit, extract_defaults,
@@ -1233,21 +1190,25 @@ def test_extract_one_slit_horizontal(mock_nirspec_fs_one_slit, extract_defaults,
     mock_nirspec_fs_one_slit.data[simple_profile != 0] += 1.0
 
     result = ex.extract_one_slit(mock_nirspec_fs_one_slit, -1, simple_profile,
-                                 background_profile, extract_defaults)
+                                 background_profile, None, extract_defaults)
 
-    for data in result[:-1]:
+    for data in result[:-2]:
         assert np.all(data > 0)
         assert data.shape == (mock_nirspec_fs_one_slit.data.shape[1],)
 
     # residuals from the 2D scene model should be zero - this simple case
     # is exactly modeled with a box profile
-    scene_model = result[-1]
+    scene_model = result[-2]
     assert scene_model.shape == mock_nirspec_fs_one_slit.data.shape
     assert np.allclose(np.abs(mock_nirspec_fs_one_slit.data - scene_model), 0)
 
+    residual = result[-1]
+    assert residual.shape == mock_nirspec_fs_one_slit.data.shape
+    assert np.allclose(np.abs(residual), 0)
+
     # flux should be 1.0 * npixels
     flux = result[0]
-    npixels = result[-2]
+    npixels = result[-3]
     assert np.allclose(flux, npixels)
 
     # npixels is sum of profile
@@ -1269,21 +1230,25 @@ def test_extract_one_slit_vertical(mock_miri_lrs_fs, extract_defaults,
     # set a source in the profile region
     model.data[profile != 0] += 1.0
 
-    result = ex.extract_one_slit(model, -1, profile, profile_bg, extract_defaults)
+    result = ex.extract_one_slit(model, -1, profile, profile_bg, None, extract_defaults)
 
-    for data in result[:-1]:
+    for data in result[:-2]:
         assert np.all(data > 0)
         assert data.shape == (model.data.shape[0],)
 
     # residuals from the 2D scene model should be zero - this simple case
     # is exactly modeled with a box profile
-    scene_model = result[-1]
+    scene_model = result[-2]
     assert scene_model.shape == model.data.shape
     assert np.allclose(np.abs(model.data - scene_model), 0)
 
+    residual = result[-1]
+    assert residual.shape == model.data.shape
+    assert np.allclose(np.abs(residual), 0)
+
     # flux should be 1.0 * npixels
     flux = result[0]
-    npixels = result[-2]
+    npixels = result[-3]
     assert np.allclose(flux, npixels)
 
     # npixels is sum of profile
@@ -1296,7 +1261,7 @@ def test_extract_one_slit_vertical_no_bg(mock_miri_lrs_fs, extract_defaults,
     profile = simple_profile.T
     extract_defaults['dispaxis'] = 2
 
-    result = ex.extract_one_slit(model, -1, profile, None, extract_defaults)
+    result = ex.extract_one_slit(model, -1, profile, None, None, extract_defaults)
 
     # flux and variances are nonzero
     for data in result[:4]:
@@ -1311,7 +1276,8 @@ def test_extract_one_slit_vertical_no_bg(mock_miri_lrs_fs, extract_defaults,
     # npixels is the sum of the profile
     assert np.allclose(result[8], np.sum(simple_profile, axis=0))
 
-    # scene model has 2D shape
+    # scene model and residual has 2D shape
+    assert result[-2].shape == model.data.shape
     assert result[-1].shape == model.data.shape
 
 
@@ -1321,7 +1287,7 @@ def test_extract_one_slit_multi_int(mock_nirspec_bots, extract_defaults,
     extract_defaults['dispaxis'] = 1
 
     log_watcher.message = "Extracting integration 2"
-    result = ex.extract_one_slit(model, 1, simple_profile, None, extract_defaults)
+    result = ex.extract_one_slit(model, 1, simple_profile, None, None, extract_defaults)
     log_watcher.assert_seen()
 
     # flux and variances are nonzero
@@ -1337,7 +1303,8 @@ def test_extract_one_slit_multi_int(mock_nirspec_bots, extract_defaults,
     # npixels is the sum of the profile
     assert np.allclose(result[8], np.sum(simple_profile, axis=0))
 
-    # scene model has 2D shape
+    # scene model and residual has 2D shape
+    assert result[-2].shape == model.data.shape[-2:]
     assert result[-1].shape == model.data.shape[-2:]
 
 
@@ -1354,7 +1321,7 @@ def test_extract_one_slit_missing_var(mock_nirspec_fs_one_slit, extract_defaults
     model.var_poisson = np.zeros((10, 10))
     model.var_flat = np.zeros((10, 10))
 
-    result = ex.extract_one_slit(model, -1, simple_profile, None, extract_defaults)
+    result = ex.extract_one_slit(model, -1, simple_profile, None, None, extract_defaults)
 
     # flux is nonzero
     assert np.all(result[0] > 0)
@@ -1364,6 +1331,62 @@ def test_extract_one_slit_missing_var(mock_nirspec_fs_one_slit, extract_defaults
     for data in result[1:4]:
         assert np.all(data == 0)
         assert data.shape == (model.data.shape[1],)
+
+
+def test_extract_one_slit_optimal_horizontal(
+        mock_nirspec_fs_one_slit, extract_defaults,
+        nod_profile, negative_nod_profile):
+    model = mock_nirspec_fs_one_slit
+    extract_defaults['dispaxis'] = 1
+    extract_defaults['extraction_type'] = 'optimal'
+
+    result = ex.extract_one_slit(model, -1, nod_profile, None,
+                                 negative_nod_profile, extract_defaults)
+
+    # flux and variances are nonzero
+    for data in result[:4]:
+        assert np.all(data > 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # background and variances are zero
+    for data in result[4:8]:
+        assert np.all(data == 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # npixels is the sum of the pixels in the positive profile
+    assert np.allclose(result[8], np.sum(nod_profile > 0, axis=0))
+
+    # scene model and residual has 2D shape
+    assert result[-1].shape == model.data.shape
+    assert result[-2].shape == model.data.shape
+
+
+def test_extract_one_slit_optimal_vertical(
+        mock_miri_lrs_fs, extract_defaults, nod_profile, negative_nod_profile):
+    model = mock_miri_lrs_fs
+    nod_profile = nod_profile.T
+    negative_nod_profile = negative_nod_profile.T
+    extract_defaults['dispaxis'] = 2
+    extract_defaults['extraction_type'] = 'optimal'
+
+    result = ex.extract_one_slit(model, -1, nod_profile, None, negative_nod_profile, extract_defaults)
+
+    # flux and variances are nonzero
+    for data in result[:4]:
+        assert np.all(data > 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # background and variances are zero
+    for data in result[4:8]:
+        assert np.all(data == 0)
+        assert data.shape == (model.data.shape[0],)
+
+    # npixels is the sum of the pixels in the positive profile
+    assert np.allclose(result[8], np.sum(nod_profile > 0, axis=1))
+
+    # scene model and residual has 2D shape
+    assert result[-2].shape == model.data.shape
+    assert result[-1].shape == model.data.shape
 
 
 def test_create_extraction_with_photom(create_extraction_inputs):
@@ -1529,55 +1552,92 @@ def test_create_extraction_use_trace(
     log_watcher.assert_seen()
 
 
+def test_create_extraction_optimal(
+        monkeypatch, create_extraction_inputs, psf_reference_file):
+    model = create_extraction_inputs[0]
+
+    # mock nod subtraction
+    model.meta.cal_step.back_sub = 'COMPLETE'
+    model.meta.dither.primary_type = '2-POINT-NOD'
+
+    # mock a nod position at the opposite end of the array
+    def mock_nod(*args, **kwargs):
+        return 48.0
+
+    monkeypatch.setattr(pp, 'nod_pair_location', mock_nod)
+
+    profile_model, _, _ = ex.create_extraction(
+        *create_extraction_inputs,  save_profile=True,
+        psf_ref_name=psf_reference_file, use_source_posn=True,
+        extraction_type='optimal', model_nod_pair=True)
+
+    assert profile_model is not None
+
+    # profile contains positive and negative nod, summed
+    assert np.all(profile_model.data[:10] > 0)
+    assert np.all(profile_model.data[-10:] < 0)
+
+    profile_model.close()
+
+
 def test_run_extract1d(mock_nirspec_mos):
     model = mock_nirspec_mos
-    output_model, profile_model, scene_model = ex.run_extract1d(model)
+    output_model, profile_model, scene_model, residual = ex.run_extract1d(model)
     assert isinstance(output_model, dm.MultiSpecModel)
     assert profile_model is None
     assert scene_model is None
+    assert residual is None
     output_model.close()
 
 
 def test_run_extract1d_save_models(mock_niriss_wfss_l3):
     model = mock_niriss_wfss_l3
-    output_model, profile_model, scene_model = ex.run_extract1d(
-        model, save_profile=True, save_scene_model=True)
+    output_model, profile_model, scene_model, residual = ex.run_extract1d(
+        model, save_profile=True, save_scene_model=True, save_residual_image=True)
     assert isinstance(output_model, dm.MultiSpecModel)
     assert isinstance(profile_model, ModelContainer)
     assert isinstance(scene_model, ModelContainer)
+    assert isinstance(residual, ModelContainer)
 
     assert len(profile_model) == len(model)
     assert len(scene_model) == len(model)
+    assert len(residual) == len(model)
 
     for pmodel in profile_model:
         assert isinstance(pmodel, dm.ImageModel)
     for smodel in scene_model:
         assert isinstance(smodel, dm.ImageModel)
+    for rmodel in residual:
+        assert isinstance(rmodel, dm.ImageModel)
 
     output_model.close()
     profile_model.close()
     scene_model.close()
+    residual.close()
 
 
 def test_run_extract1d_save_cube_scene(mock_nirspec_bots):
     model = mock_nirspec_bots
-    output_model, profile_model, scene_model = ex.run_extract1d(
-        model, save_profile=True, save_scene_model=True)
+    output_model, profile_model, scene_model, residual = ex.run_extract1d(
+        model, save_profile=True, save_scene_model=True, save_residual_image=True)
     assert isinstance(output_model, dm.MultiSpecModel)
     assert isinstance(profile_model, dm.ImageModel)
     assert isinstance(scene_model, dm.CubeModel)
+    assert isinstance(residual, dm.CubeModel)
 
     assert profile_model.data.shape == model.data.shape[-2:]
     assert scene_model.data.shape == model.data.shape
+    assert residual.data.shape == model.data.shape
 
     output_model.close()
     profile_model.close()
     scene_model.close()
+    residual.close()
 
 
 def test_run_extract1d_tso(mock_nirspec_bots):
     model = mock_nirspec_bots
-    output_model, _, _ = ex.run_extract1d(model)
+    output_model, _, _, _ = ex.run_extract1d(model)
 
     # time and integration keywords are populated
     for i, spec in enumerate(output_model.spec):
@@ -1597,7 +1657,7 @@ def test_run_extract1d_slitmodel_name(mock_nirspec_fs_one_slit, from_name_attr):
         model.name = None
         model.meta.instrument.fixed_slit = 'S200A1'
 
-    output_model, _, _ = ex.run_extract1d(model)
+    output_model, _, _, _ = ex.run_extract1d(model)
     assert output_model.spec[0].name == 'S200A1'
 
     output_model.close()
@@ -1612,7 +1672,7 @@ def test_run_extract1d_imagemodel_name(mock_miri_lrs_fs, from_name_attr):
     else:
         model.name = None
 
-    output_model, _, _ = ex.run_extract1d(model)
+    output_model, _, _, _ = ex.run_extract1d(model)
     if from_name_attr:
         assert output_model.spec[0].name == 'test_slit_name'
     else:
@@ -1625,11 +1685,38 @@ def test_run_extract1d_apcorr(mock_miri_lrs_fs, miri_lrs_apcorr_file, log_watche
     model.meta.target.source_type = 'POINT'
 
     log_watcher.message = 'Creating aperture correction'
-    output_model, _, _ = ex.run_extract1d(model, apcorr_ref_name=miri_lrs_apcorr_file)
+    output_model, _, _, _ = ex.run_extract1d(model, apcorr_ref_name=miri_lrs_apcorr_file)
     log_watcher.assert_seen()
 
     output_model.close()
 
+
+def test_run_extract1d_apcorr_optimal(
+        mock_miri_lrs_fs, miri_lrs_apcorr_file, psf_reference_file, log_watcher):
+    model = mock_miri_lrs_fs
+    model.meta.target.source_type = 'POINT'
+
+    # Aperture correction that is otherwise valid is nonetheless
+    # turned off for optimal extraction
+    log_watcher.message = 'Turning off aperture correction for optimal extraction'
+    output_model, _, _, _ = ex.run_extract1d(model, apcorr_ref_name=miri_lrs_apcorr_file,
+                                             psf_ref_name=psf_reference_file,
+                                             extraction_type='optimal')
+    log_watcher.assert_seen()
+
+    output_model.close()
+
+
+def test_run_extract1d_optimal_no_psf(mock_miri_lrs_fs, log_watcher):
+    model = mock_miri_lrs_fs
+    model.meta.target.source_type = 'POINT'
+
+    # Optimal extraction is turned off if there is no psf file provided
+    log_watcher.message = 'Optimal extraction is not available'
+    output_model, _, _, _ = ex.run_extract1d(model, extraction_type='optimal')
+    log_watcher.assert_seen()
+
+    output_model.close()
 
 def test_run_extract1d_invalid():
     model = dm.MultiSpecModel()
@@ -1640,7 +1727,7 @@ def test_run_extract1d_invalid():
 def test_run_extract1d_zeroth_order_slit(mock_nirspec_fs_one_slit):
     model = mock_nirspec_fs_one_slit
     model.meta.wcsinfo.spectral_order = 0
-    output_model, _, _ = ex.run_extract1d(model)
+    output_model, _, _, _ = ex.run_extract1d(model)
 
     # no spectra extracted for zeroth order
     assert len(output_model.spec) == 0
@@ -1650,7 +1737,8 @@ def test_run_extract1d_zeroth_order_slit(mock_nirspec_fs_one_slit):
 def test_run_extract1d_zeroth_order_image(mock_miri_lrs_fs):
     model = mock_miri_lrs_fs
     model.meta.wcsinfo.spectral_order = 0
-    output_model, _, _ = ex.run_extract1d(model)
+    model.meta.instrument.filter = None
+    output_model, _, _, _ = ex.run_extract1d(model)
 
     # no spectra extracted for zeroth order
     assert len(output_model.spec) == 0
@@ -1661,7 +1749,7 @@ def test_run_extract1d_zeroth_order_multispec(mock_nirspec_mos):
     model = mock_nirspec_mos
     for slit in model.slits:
         slit.meta.wcsinfo.spectral_order = 0
-    output_model, _, _ = ex.run_extract1d(model)
+    output_model, _, _, _ = ex.run_extract1d(model)
 
     # no spectra extracted for zeroth order
     assert len(output_model.spec) == 0
@@ -1672,7 +1760,7 @@ def test_run_extract1d_no_data(mock_niriss_wfss_l3):
     container = mock_niriss_wfss_l3
     for model in container:
         model.data = np.array([])
-    output_model, _, _ = ex.run_extract1d(container)
+    output_model, _, _, _ = ex.run_extract1d(container)
 
     # no spectra extracted
     assert len(output_model.spec) == 0
@@ -1684,7 +1772,7 @@ def test_run_extract1d_continue_error_slit(monkeypatch, mock_nirspec_fs_one_slit
         raise ex.ContinueError('Test error')
 
     monkeypatch.setattr(ex, 'create_extraction', raise_continue_error)
-    output_model, _, _ = ex.run_extract1d(mock_nirspec_fs_one_slit)
+    output_model, _, _, _ = ex.run_extract1d(mock_nirspec_fs_one_slit)
 
     # no spectra extracted
     assert len(output_model.spec) == 0
@@ -1696,7 +1784,7 @@ def test_run_extract1d_continue_error_image(monkeypatch, mock_miri_lrs_fs):
         raise ex.ContinueError('Test error')
 
     monkeypatch.setattr(ex, 'create_extraction', raise_continue_error)
-    output_model, _, _ = ex.run_extract1d(mock_miri_lrs_fs)
+    output_model, _, _, _ = ex.run_extract1d(mock_miri_lrs_fs)
 
     # no spectra extracted
     assert len(output_model.spec) == 0
@@ -1708,7 +1796,7 @@ def test_run_extract1d_continue_error_multislit(monkeypatch, mock_nirspec_mos):
         raise ex.ContinueError('Test error')
 
     monkeypatch.setattr(ex, 'create_extraction', raise_continue_error)
-    output_model, _, _ = ex.run_extract1d(mock_nirspec_mos)
+    output_model, _, _, _ = ex.run_extract1d(mock_nirspec_mos)
 
     # no spectra extracted
     assert len(output_model.spec) == 0

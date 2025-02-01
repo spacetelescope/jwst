@@ -179,22 +179,22 @@ def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
 
 
 def traverse_wfss_trace(pupil):
-    """Make sure that the WFSS dispersion polynomials are reversable."""
+    """Make sure that the WFSS dispersion polynomials are reversible."""
     wcsobj = create_wfss_wcs(pupil)
     detector_to_grism = wcsobj.get_transform('detector', 'grism_detector')
     grism_to_detector = wcsobj.get_transform('grism_detector', 'detector')
 
     # check the round trip, grism pixel 100,100, source at 110,110,order 1
-    xgrism, ygrism, xsource, ysource, orderin = (100, 100, 110, 110, 1)
-    x0, y0, lam, order = grism_to_detector(xgrism, ygrism, xsource, ysource, orderin)
+    xgrism, ygrism, xsource, ysource, order_in = (100, 100, 110, 110, 1)
+    x0, y0, lam, order = grism_to_detector(xgrism, ygrism, xsource, ysource, order_in)
     x, y, xdet, ydet, orderdet = detector_to_grism(x0, y0, lam, order)
 
     assert x0 == xsource
     assert y0 == ysource
-    assert order == orderin
+    assert order == order_in
     assert xdet == xsource
     assert ydet == ysource
-    assert orderdet == orderin
+    assert orderdet == order_in
 
 
 def test_traverse_wfss_grisms():
@@ -204,7 +204,7 @@ def test_traverse_wfss_grisms():
 
 
 def test_traverse_tso_grism(create_tso_wcs):
-    """Make sure that the TSO dispersion polynomials are reversable.
+    """Make sure that the TSO dispersion polynomials are reversible.
     All assert statements are in pixel space so 1/1000 px seems easily acceptable"""
     wcsobj = create_tso_wcs
     detector_to_grism = wcsobj.get_transform('direct_image', 'grism_detector')

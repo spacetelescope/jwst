@@ -11,59 +11,61 @@ import copy
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+JUMP_DET = dqflags.pixel["JUMP_DET"]
+
 
 class NIRISS:
-    def __init__(self,
-                 filt,
-                 nrm_model,
-                 chooseholes=None,
-                 affine2d=None,
-                 bandpass=None,
-                 usebp=True,
-                 firstfew=None,
-                 rotsearch_parameters=None,
-                 oversample=None,
-                 psf_offset=None,
-                 run_bpfix=True
-                 ):
+    """Module for defining NIRISS data format, wavelength info, and mask geometry."""
+
+    def __init__(
+        self,
+        filt,
+        nrm_model,
+        chooseholes=None,
+        affine2d=None,
+        bandpass=None,
+        usebp=True,
+        firstfew=None,
+        run_bpfix=True,
+    ):
         """
         Initialize NIRISS class for NIRISS/AMI instrument.
 
-        Module for defining all instrument characteristics including data format,
-        wavelength info, and mask geometry.
-
         Parameters
         ----------
-        filt: string
-            filter name
+        filt : str
+            Filter name
 
-        nrm_model: NRMModel datamodel
-            datamodel containing mask geometry information
+        nrm_model : NRMModel datamodel
+            Datamodel containing mask geometry information
 
-        chooseholes: list
+        chooseholes : list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
 
-        affine2d: Affine2d object
+        affine2d : Affine2d object
             Affine2d object
 
-        bandpass: synphot spectrum or array
-            None, synphot object or [(wt,wlen),(wt,wlen),...].  Monochromatic would be e.g. [(1.0, 4.3e-6)]
+        bandpass : synphot spectrum or array
+            None, synphot object or [(wt,wlen),(wt,wlen),...].
+            Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
-            the given bandpass, so you could simulate, for example, a 21cm psf through something called "F430M"!
+            the given bandpass, so you could simulate, for example,
+            a 21cm psf through something called "F430M"!
 
-        usebp : boolean
+        usebp : bool
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
 
-        firstfew : integer
+        firstfew : int
             If not None, process only the first few integrations
 
-        chooseholes : string
+        chooseholes : str
             If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
 
         affine2d : Affine2D object
             None or user-defined Affine2d object
 
-        run_bpfix : boolean
+        run_bpfix : bool
             Run Fourier bad pixel fix on cropped data
         """
         self.run_bpfix = run_bpfix
@@ -93,11 +95,9 @@ class NIRISS:
         self.telname = "JWST"
         self.instrument = "NIRISS"
         self.arrname = "jwst_ami"
-        self.holeshape = 'hex'
+        self.holeshape = "hex"
         self.mask = NRMDefinition(
-            self.nrm_model,
-            maskname=self.arrname,
-            chooseholes=self.chooseholes
+            self.nrm_model, maskname=self.arrname, chooseholes=self.chooseholes
         )
 
         # save affine deformation of pupil object or create a no-deformation object.
@@ -129,20 +129,15 @@ class NIRISS:
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
         """
-        Override pixel scale in header
+        Override pixel scale in header.
 
         Parameters
         ----------
-        pscalex_deg: float, degrees
-            pixel scale in x-direction
+        pscalex_deg : float, degrees
+            Pixel scale in x-direction
 
-        pscaley_deg: float, degrees
-            pixel scale in y-direction
-
-        Returns
-        -------
-        None
-
+        pscaley_deg : float, degrees
+            Pixel scale in y-direction
         """
         if pscalex_deg is not None:
             self.pscalex_deg = pscalex_deg
@@ -153,23 +148,24 @@ class NIRISS:
 
     def read_data_model(self, input_model):
         """
+        Read the NIRISS data model.
+
         Retrieve info from input data model and store in NIRISS class.
         Trim refpix and roughly center science data and dq array.
         Run Fourier bad pixel correction before returning science data.
 
         Parameters
         ----------
-        input_model: instance Data Model
+        input_model : instance Data Model
             DM object for input
 
         Returns
         -------
-        scidata_ctrd: numpy array
+        scidata_ctrd : numpy array
             Cropped, centered, optionally cleaned AMI data
-        dqmask_ctrd:
+        dqmask_ctrd :
             Cropped, centered mask of bad pixels
         """
-
         # all instrumentdata attributes will be available when oifits files written out
         scidata = copy.deepcopy(np.array(input_model.data))
         bpdata = copy.deepcopy(np.array(input_model.dq))
@@ -202,7 +198,6 @@ class NIRISS:
         self.ra_uncertainty = input_model.meta.target.ra_uncertainty
         self.dec_uncertainty = input_model.meta.target.dec_uncertainty
 
-
         datestr = input_model.meta.visit.start_time.replace(" ", "T")
         self.date = datestr  # is this the right start time?
         self.year = datestr[:4]
@@ -221,7 +216,10 @@ class NIRISS:
                     scidata = scidata[: self.firstfew, :, :]
                     bpdata = bpdata[: self.firstfew, :, :]
                 else:
-                    log.warning(f"Input firstfew={self.firstfew:d} is greater than the number of integrations")
+                    log.warning(
+                        f"Input firstfew={self.firstfew:d} is greater than "
+                        "the number of integrations"
+                    )
                     log.warning("All integrations will be analyzed")
             self.nwav = scidata.shape[0]
             [self.wls.append(self.wls[0]) for f in range(self.nwav - 1)]
@@ -251,20 +249,16 @@ class NIRISS:
         outliers2 = np.argwhere(mediandiff > nsigma * std_im)
 
         dqvalues = bpdata[outliers]
-        log.info(
-            f"{len(dqvalues)} additional pixels >10-sig from median of stack found"
-        )
+        log.info(f"{len(dqvalues)} additional pixels >10-sig from median of stack found")
         # decompose DQ values to check if they are already flagged DNU
         count = 0
-        for loc, dq_value in zip(outliers2, dqvalues):
+        for loc, dq_value in zip(outliers2, dqvalues, strict=False):
             bitarr = np.binary_repr(dq_value)
             bad_types = []
             for i, elem in enumerate(bitarr[::-1]):
                 if elem == str(1):
                     badval = 2**i
-                    key = next(
-                        key for key, value in dqflags.pixel.items() if value == badval
-                    )
+                    key = next(key for key, value in dqflags.pixel.items() if value == badval)
                     bad_types.append(key)
             if "DO_NOT_USE" not in bad_types:
                 bpdata[loc[0], loc[1], loc[2]] += 1
@@ -274,19 +268,19 @@ class NIRISS:
         # Roughly center scidata, bpdata around peak pixel position
         peakx, peaky, r = utils.min_distance_to_edge(med_im)
         scidata_ctrd = scidata[
-            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+            :, int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)
         ]
         bpdata_ctrd = bpdata[
-            :, int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)
+            :, int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)
         ]
 
         log.info(
-            "Cropping all integrations to %ix%i pixels around peak (%i,%i)"
-            % (2 * r + 1, 2 * r + 1, peakx + 4, peaky)
+            f"Cropping all integrations to {2 * r + 1:d}x{2 * r + 1:d} pixels "
+            f"around peak ({peakx + 4:d},{peaky:d})"
         )  # +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
-            log.info('Applying Fourier bad pixel correction to cropped data, updating DQ array')
+            log.info("Applying Fourier bad pixel correction to cropped data, updating DQ array")
             scidata_ctrd, bpdata_ctrd = bp_fix.fix_bad_pixels(
                 scidata_ctrd,
                 bpdata_ctrd,
@@ -303,11 +297,7 @@ class NIRISS:
 
         # Make a bad pixel mask, either from real DQ data or zeros if usebp=False
         if self.usebp:
-            log.info(
-                "usebp flag set to TRUE: bad pixels will be excluded from model fit"
-            )
-            DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
-            JUMP_DET = dqflags.pixel["JUMP_DET"]
+            log.info("usebp flag set to TRUE: bad pixels will be excluded from model fit")
             dq_dnu = bpdata_ctrd & DO_NOT_USE == DO_NOT_USE
             dq_jump = bpdata_ctrd & JUMP_DET == JUMP_DET
             dqmask_ctrd = dq_dnu | dq_jump
@@ -319,15 +309,12 @@ class NIRISS:
 
     def reset_nwav(self, nwav):
         """
-        Reset self.nwav
+        Reset self.nwav parameter.
 
         Parameters
         ----------
-        nwav: integer
-            length of axis3 for 3D input
-
-        Returns
-        -------
+        nwav : int
+            Length of axis3 for 3D input
         """
         self.nwav = nwav
 
@@ -340,16 +327,16 @@ class NIRISS:
             Counterclockwise by the ROLL_REF + V3I_YANG from north in degrees if VPARITY = 1
         Hole center coords are in the V2, V3 plane in meters.
 
-        Notes
-        -----
-            Nov. 2024 email discussion with Tony Sohn, Paul Goudfrooij confirmed V2/V3 coordinate
-            rotation back to "North up" equatorial orientation should use ROLL_REF + V3I_YANG
-            (= PA_APER).
-
         Returns
         -------
-        ctrs_rot: array
+        ctrs_rot : array
             Rotated coordinates to be put in OIFITS files.
+
+        Notes
+        -----
+        Nov. 2024 email discussion with Tony Sohn, Paul Goudfrooij confirmed V2/V3 coordinate
+        rotation back to "North up" equatorial orientation should use ROLL_REF + V3I_YANG
+        (= PA_APER).
         """
         mask_ctrs = copy.deepcopy(self.mask.ctrs)
         # rotate by an extra 90 degrees (RAC 9/21)
@@ -367,13 +354,9 @@ class NIRISS:
             if vpar == -1:
                 # rotate clockwise  <rotate coords clockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
-                log.info(
-                    f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees"
-                )
+                log.info(f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees")
             else:
                 # counterclockwise  <rotate coords counterclockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
-                log.info(
-                    f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees"
-                )
+                log.info(f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees")
             return ctrs_rot

@@ -108,6 +108,10 @@ def imaging(input_model, reference_files):
 
     lam = wrange[0] + (wrange[1] - wrange[0]) * .5
 
+    # Scale wavelengths to microns if msa coordinates are terminal
+    if input_model.meta.instrument.filter == 'OPAQUE':
+        lam *= 1e6
+
     lam_model = Mapping((0, 1, 1)) | Identity(2) & Const1D(lam)
 
     gwa2msa = gwa_through | rotation | dircos2unitless | col | lam_model
@@ -148,8 +152,7 @@ def imaging(input_model, reference_files):
                             (v2v3vacorr, tel2sky),
                             (world, None)]
     else:
-        # convert to microns if the pipeline ends earlier
-        gwa2msa = (gwa2msa | Identity(2) & Scale(1e6)).rename('gwa2msa')
+        # Pipeline ends with MSA coordinates
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
@@ -1573,7 +1576,7 @@ def oteip_to_v23(reference_files, input_model):
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    # The spatial units are currently in deg. Convertin to arcsec.
+    # The spatial units are currently in deg. Converting to arcsec.
     oteip2v23 = fore2ote_mapping | (ote & Scale(1e6))
 
     return oteip2v23
