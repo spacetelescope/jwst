@@ -173,10 +173,9 @@ def make_tweakreg_catalog(
         The background mesh box size in pixels.
     starfinder_name : str, optional
         The `photutils` star finder to use.  Options are 'dao', 'iraf', or 'segmentation'.
-            - 'dao': `photutils.detection.DAOStarFinder`
-            - 'iraf': `photutils.detection.IRAFStarFinder`
-            - 'segmentation': `photutils.segmentation.SourceFinder`
-              and `photutils.segmentation.SourceCatalog`
+        - 'dao': `photutils.detection.DAOStarFinder`
+        - 'iraf': `photutils.detection.IRAFStarFinder`
+        - 'segmentation': `photutils.segmentation.SourceFinder`
     starfinder_kwargs : dict, optional
         Additional keyword arguments to be passed to the star finder.
         for 'segmentation', these can be kwargs to `photutils.segmentation.SourceFinder`
@@ -184,9 +183,9 @@ def make_tweakreg_catalog(
         for 'dao' or 'iraf', these are kwargs to `photutils.detection.DAOStarFinder`
         or `photutils.detection.IRAFStarFinder`, respectively.
         Defaults are as stated in the docstrings of those functions unless noted here:
-            - 'dao': fwhm=2.5
-            - 'iraf': fwhm=2.5
-            - 'segmentation': npixels=10, progress_bar=False
+        - 'dao': fwhm=2.5
+        - 'iraf': fwhm=2.5
+        - 'segmentation': npixels=10, progress_bar=False
 
     Returns
     -------
