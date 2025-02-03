@@ -249,7 +249,7 @@ to supply custom catalogs.
         # Prevent circular import:
         from ..associations import AssociationNotValidError, load_asn
 
-        filepath = Path.expanduser(op.expandvars(filepath)).resolve()
+        filepath = Path(op.expandvars(filepath)).expanduser().resolve()
         try:
             with Path.open(filepath) as asn_file:
                 asn_data = load_asn(asn_file)
