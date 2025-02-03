@@ -99,7 +99,7 @@ def detect_outliers(
             "Increasing number by 1"
         )
         kern_size[0] = kern_size[0] + 1
-        log.info("New x kernel size is {kern_size[0}: ")
+        log.info(f"New x kernel size is {kern_size[0]}: ")
     if kern_size[1] % 2 == 0:
         log.info(
             "Y kernel size is given as an even number. This value must be an odd number. "
@@ -258,7 +258,7 @@ def flag_outliers(
             basepath=input_models.meta.asn_table.products[0].name,
             suffix=detector_name + "_outlier_output",
         )
-        log.info("Writing out intermediate outlier file {opt_model.meta.filename}")
+        log.info(f"Writing out intermediate outlier file {opt_model.meta.filename}")
         opt_model.save(opt_model.meta.filename)
 
     del diffarr

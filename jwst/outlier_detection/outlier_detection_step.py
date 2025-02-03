@@ -150,7 +150,7 @@ class OutlierDetectionStep(Step):
                 self.make_output_path,
             )
         else:
-            self.log.error("Outlier detection failed for unknown/unsupported ", f"mode: {mode}")
+            self.log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
             return self._set_status(input_data, False)
 
         return self._set_status(result_models, True)
