@@ -142,7 +142,7 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
 
 
 def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_default=False,
-                          DMS_enabled=False):
+                          dms_enabled=False):
     """Generate associations based on a candidate ID
 
     Parameters
@@ -165,7 +165,7 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.
 
-    DMS_enabled : bool
+    dms_enabled : bool
         Flag for DMS processing, true if command-line argument '--DMS' was used.
 
     Returns
@@ -182,7 +182,7 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
     # DMS processing excludes generation of o-type candidates for science exposures
     # with linked backgrounds, i.e. without the background member present, as it
     # would be for c-type background association candidates.
-    if DMS_enabled and 'observation' in ctype:
+    if dms_enabled and 'observation' in ctype:
         skip_rows = []
         for i, row in enumerate(pool_cid):
             if 'background' in row['asn_candidate'] and row['bkgdtarg'] == 'f':
