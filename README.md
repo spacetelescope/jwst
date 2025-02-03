@@ -12,7 +12,7 @@
 ![STScI Logo](docs/_static/stsci_logo.png)
 
 > [!IMPORTANT]
-> JWST requires a C compiler for dependencies and is currently limited to Python 3.11, 3.12 or 3.13.
+> JWST requires a C compiler for dependencies.
 
 > [!NOTE]
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
@@ -56,13 +56,13 @@ Remember that all conda operations must be done from within a bash/zsh shell.
 
 You can install the latest released version via `pip`.  From a bash/zsh shell:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
     pip install jwst
 
 You can also install a specific version:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
     pip install jwst==1.16.1
 
@@ -71,7 +71,7 @@ You can also install a specific version:
 You can install the latest development version (not as well tested) from the
 Github main branch:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 
@@ -144,7 +144,7 @@ already installed with released versions of the `jwst` package.
 
 As usual, the first two steps are to create and activate an environment:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
 
 To install your own copy of the code into that environment, you first need to
