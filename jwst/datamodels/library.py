@@ -32,6 +32,10 @@ class ModelLibrary(AbstractModelLibrary):
     def asn_dir(self):
         return self._asn_dir
 
+    @property
+    def on_disk(self):
+        return self._on_disk
+
     def indices_for_exptype(self, exptype):
         """
         Determine the indices of models corresponding to ``exptype``.
