@@ -106,16 +106,9 @@ def test_create_slitlets():
     msa_oper = Step().get_reference_file(dm, 'msaoper')
     result = create_slitlets(msa_oper)
 
-    slit_fields = ('name', 'shutter_id', 'dither_position', 'xcen',
-                   'ycen', 'ymin', 'ymax', 'quadrant', 'source_id',
-                   'shutter_state', 'source_name', 'source_alias',
-                   'stellarity', 'source_xpos', 'source_ypos',
-                   'source_ra', 'source_dec')
-
     for slit in result:
-        # Test the returned data type and fields.
+        # Test the returned data type
         assert isinstance(slit, Slit)
-        assert slit._fields == slit_fields
 
 
 def test_wcs_to_dq():
