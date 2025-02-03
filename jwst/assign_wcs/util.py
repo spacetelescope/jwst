@@ -19,7 +19,7 @@ from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
 from stcal.alignment.util import compute_s_region_keyword, compute_s_region_imaging
 
-from stdatamodels.jwst.datamodels import WavelengthrangeModel, MIRILrsModel
+from stdatamodels.jwst.datamodels import WavelengthrangeModel, MiriLRSSpecwcsModel
 from stdatamodels.jwst.transforms.models import GrismObject
 
 from ..lib.catalog_utils import SkyObject
@@ -813,7 +813,7 @@ def update_s_region_lrs(model, reference_files):
     reference file`.
     """
 
-    refmodel = MIRILrsModel(reference_files['specwcs'])
+    refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
     
     v2vert1 = refmodel.meta.v2_vert1
     v2vert2 = refmodel.meta.v2_vert2

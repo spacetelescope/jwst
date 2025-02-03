@@ -12,7 +12,7 @@ from gwcs import selector
 
 from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
                                           DistortionMRSModel, WavelengthrangeModel,
-                                          RegionsModel, SpecwcsModel, MIRILrsModel)
+                                          RegionsModel, SpecwcsModel, MiriLRSSpecwcsModel)
 from stdatamodels.jwst.transforms.models import (MIRI_AB2Slice, IdealToV2V3)
 
 from . import pointing
@@ -251,7 +251,7 @@ def lrs_xytoabl(input_model, reference_files):
     else:
         subarray_dist = distortion
 
-    refmodel = MIRILrsModel(reference_files['specwcs'])
+    refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
         zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
     elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
@@ -270,13 +270,13 @@ def lrs_xytoabl(input_model, reference_files):
     # centroid trace along the detector in pixels relative to nominal location.
     # x0,y0(ul) x1,y1 (ur) x2,y2(lr) x3,y3(ll) define corners of the box within which the distortion
     # and wavelength calibration was derived
-    xcen = refmodel.wave_table.x_center
-    ycen = refmodel.wave_table.y_center
-    wavetab = refmodel.wave_table.wavelength
-    x0 = refmodel.wave_table.x0
-    y0 = refmodel.wave_table.y0
-    x1 = refmodel.wave_table.x1
-    y2 = refmodel.wave_table.y2
+    xcen = refmodel.wavetable.x_center
+    ycen = refmodel.wavetable.y_center
+    wavetab = refmodel.wavetable.wavelength
+    x0 = refmodel.wavetable.x0
+    y0 = refmodel.wavetable.y0
+    x1 = refmodel.wavetable.x1
+    y2 = refmodel.wavetable.y2
     refmodel.close()
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
@@ -399,7 +399,7 @@ def lrs_abltov2v3l(input_model, reference_files):
     else:
         subarray_dist = distortion
 
-    refmodel = MIRILrsModel(reference_files['specwcs'])
+    refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
         zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
     elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
