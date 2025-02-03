@@ -1,6 +1,4 @@
-"""
-Submodule for performing outlier detection on imaging data.
-"""
+"""Submodule for performing outlier detection on imaging data."""
 
 import logging
 
@@ -8,10 +6,12 @@ from jwst.datamodels import ModelLibrary
 from jwst.resample import resample
 from jwst.stpipe.utilities import record_step_status
 
-from .utils import (flag_model_crs,
-                    flag_resampled_model_crs,
-                    median_without_resampling,
-                    median_with_resampling)
+from .utils import (
+    flag_model_crs,
+    flag_resampled_model_crs,
+    median_without_resampling,
+    median_with_resampling,
+)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -41,9 +41,50 @@ def detect_outliers(
     """
     Flag outliers in imaging data.
 
-    input_models is expected to be a ModelLibrary
+    Parameters
+    ----------
+    input_models : ModelLibrary
+        The library of datamodels.
+    save_intermediate_results : bool
+        If True, save intermediate results.
+    good_bits : int
+        Bit values indicating good pixels.
+    maskpt : float
+        The percentage of the mean weight to use as a threshold for masking.
+    snr1 : float
+        The signal-to-noise ratio threshold for first pass flagging, prior to smoothing.
+    snr2 : float
+        The signal-to-noise ratio threshold for secondary flagging, after smoothing.
+    scale1 : float
+        Scale factor used to scale the absolute derivative of the blot model for the first pass.
+    scale2 : float
+        Scale factor used to scale the absolute derivative of the blot model for the second pass.
+    backg : float
+        Scalar background level to add to the blotted image.
+        Ignored if `input_model.meta.background.level` is not None but
+        `input_model.meta.background.subtracted` is False.
+    resample_data : bool
+        If True, resample the data before detecting outliers.
+    weight_type : str
+        The type of weighting kernel to use when resampling.
+        Options are 'ivm' or 'exptime'.
+    pixfrac : float
+        The pixel shrinkage factor to pass to drizzle.
+    kernel : str
+        The flux distribution kernel function to use when resampling.
+    fillval : str
+        The value to use in the output for pixels with no weight or flux
+    in_memory : bool
+        If True, keep the input models in memory. Otherwise, store them on disk
+        in temporary files as they are processed to save memory at the expense of runtime.
+    make_output_path : function
+        The functools.partial instance to pass to save_blot. Must be
+        specified if save_blot is True.
 
-    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    Returns
+    -------
+    ModelContainer
+        The input models with outliers flagged.
     """
     if not isinstance(input_models, ModelLibrary):
         input_models = ModelLibrary(input_models, on_disk=not in_memory)
@@ -65,35 +106,40 @@ def detect_outliers(
             fillval=fillval,
             good_bits=good_bits,
         )
-        median_data, median_wcs = median_with_resampling(input_models,
-                                                    resamp,
-                                                    maskpt,
-                                                    save_intermediate_results=save_intermediate_results,
-                                                    make_output_path=make_output_path,)
+        median_data, median_wcs = median_with_resampling(
+            input_models,
+            resamp,
+            maskpt,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,
+        )
     else:
-        median_data, median_wcs = median_without_resampling(input_models,
-                                                    maskpt,
-                                                    weight_type,
-                                                    good_bits,
-                                                    save_intermediate_results=save_intermediate_results,
-                                                    make_output_path=make_output_path,)
-
+        median_data, median_wcs = median_without_resampling(
+            input_models,
+            maskpt,
+            weight_type,
+            good_bits,
+            save_intermediate_results=save_intermediate_results,
+            make_output_path=make_output_path,
+        )
 
     # Perform outlier detection using statistical comparisons between
     # each original input image and its blotted version of the median image
     with input_models:
         for image in input_models:
             if resample_data:
-                flag_resampled_model_crs(image,
-                                         median_data,
-                                         median_wcs,
-                                         snr1,
-                                         snr2,
-                                         scale1,
-                                         scale2,
-                                         backg,
-                                         save_blot=save_intermediate_results,
-                                         make_output_path=make_output_path)
+                flag_resampled_model_crs(
+                    image,
+                    median_data,
+                    median_wcs,
+                    snr1,
+                    snr2,
+                    scale1,
+                    scale2,
+                    backg,
+                    save_blot=save_intermediate_results,
+                    make_output_path=make_output_path,
+                )
             else:
                 flag_model_crs(image, median_data, snr1)
             input_models.shelve(image, modify=True)
