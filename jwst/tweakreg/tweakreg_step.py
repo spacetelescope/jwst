@@ -207,7 +207,9 @@ class TweakRegStep(Step):
                         if tweakreg_catalog is None or not tweakreg_catalog.strip():
                             catdict[member["expname"]] = None
                         else:
-                            catdict[member["expname"]] = Path(images.asn_dir) / tweakreg_catalog
+                            # convert back to string to allow schema to validate
+                            cat = str(Path(images.asn_dir) / tweakreg_catalog)
+                            catdict[member["expname"]] = cat
 
         if self.abs_refcat is not None and self.abs_refcat.strip():
             align_to_abs_refcat = True
@@ -542,7 +544,8 @@ def _parse_catfile(catfile):
             data_model, *catalog = sline.split()
             catalog = list(map(str.strip, catalog))
             if len(catalog) == 1:
-                catdict[data_model] = catfile_dir / catalog[0]
+                # convert back to string to allow schema to validate
+                catdict[data_model] = str(catfile_dir / catalog[0])
             elif len(catalog) == 0:
                 # set this to None so it's custom catalog is skipped
                 catdict[data_model] = None
