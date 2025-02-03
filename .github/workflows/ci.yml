@@ -40,7 +40,7 @@ jobs:
         python-version: '3.12'
     - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
   check:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@9f1f43251dde69da8613ea8e11144f05cdea41d5  # v1.15.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c0fde6f7e926df6ed7057255d29afa9c1ad5320  # v1.16.0
     with:
       default_python: "3.12"
       envs: |
@@ -56,7 +56,7 @@ jobs:
     outputs:
       context: ${{ steps.context.outputs.context }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@9f1f43251dde69da8613ea8e11144f05cdea41d5  # v1.15.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c0fde6f7e926df6ed7057255d29afa9c1ad5320  # v1.16.0
     needs: [ crds_context ]
     with:
       setenv: |
