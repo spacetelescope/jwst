@@ -205,7 +205,7 @@ def make_tweakreg_catalog(
     elif starfinder_name.lower() in ["segmentation", "sourcefinder"]:
         starfinder = _sourcefinder_wrapper
     else:
-        raise ValueError(f"Unknown starfinder type: {starfinder}")
+        raise ValueError(f"Unknown starfinder type: {starfinder_name}")
 
     # Mask the non-imaging area, e.g. reference pixels and MIRI non-science area
     coverage_mask = (
