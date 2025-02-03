@@ -60,7 +60,7 @@ exclude = [
     "jwst/mrs_imatch/**.py",
     "jwst/msaflagopen/**.py",
     #"jwst/nsclean/**.py",
-    "jwst/outlier_detection/**.py",
+    # "jwst/outlier_detection/**.py",
     "jwst/pathloss/**.py",
     "jwst/persistence/**.py",
     "jwst/photom/**.py",
@@ -119,7 +119,7 @@ select = [
 ]
 ignore = [
     "D100", # missing docstring in public module
-    "D105",
+    "D105", # missing docstring in magic method
     "E741", # ambiguous variable name (O/0, l/I, etc.)
     "UP008", # use super() instead of super(class, self). no harm being explicit
     "UP015", # unnecessary open(file, "r"). no harm being explicit
@@ -190,7 +190,7 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
 "jwst/mrs_imatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/msaflagopen/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 #"jwst/nsclean/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/outlier_detection/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+# "jwst/outlier_detection/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/pathloss/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/persistence/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/photom/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]

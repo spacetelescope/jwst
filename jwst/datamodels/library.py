@@ -45,6 +45,21 @@ class ModelLibrary(AbstractModelLibrary):
         """
         return [member["exptype"] for member in self._members]
 
+    @property
+    def on_disk(self):
+        """
+        Return the library's on_disk attribute.
+
+        If True, the library is using temporary files to store the models when not in use.
+        If False, the library is storing the models in memory.
+
+        Returns
+        -------
+        bool
+            Whether the library is on disk.
+        """
+        return self._on_disk
+
     def indices_for_exptype(self, exptype):
         """
         Determine the indices of models corresponding to ``exptype``.
