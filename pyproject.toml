@@ -99,7 +99,6 @@ docs = [
     "sphinx-astropy",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
-    "tomli; python_version <\"3.11\"",
 ]
 sdp = [
     "jplephem>=2.9",
