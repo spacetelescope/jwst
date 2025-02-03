@@ -158,14 +158,12 @@ class ResampleSpecData(ResampleData):
             # Any other customizations (crpix, crval, rotation) are ignored.
             if resample_utils.is_sky_like(input_models[0].meta.wcs.output_frame):
                 if input_models[0].meta.instrument.name != "NIRSPEC":
-                    print('**** GOT HERE')
                     self.output_wcs = self.build_interpolated_output_wcs(input_models)
                 else:
                     self.output_wcs = self.build_nirspec_output_wcs(input_models)
             else:
                 self.output_wcs = self.build_nirspec_lamp_output_wcs(input_models)
 
-            print('already called interpolated_output')
             # Use the nominal output pixel area in sr if available,
             # scaling for user-set pixel_scale ratio if needed.
             if nominal_area is not None:
@@ -745,7 +743,6 @@ class ResampleSpecData(ResampleData):
         output_wcs.pixel_shape = output_array_size
         bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
-        print('bounding box', bounding_box)
         
         return output_wcs
 

@@ -146,7 +146,7 @@ class ResampleSpecStep(Step):
             s_region_list = []
             with drizzled_library:
                 for i, model in enumerate(drizzled_library):
-                    self.update_slit_metadata(model)
+s                    self.update_slit_metadata(model)
                     s_region_list.append(model.meta.s_region)
                     update_s_region_spectral(model)
                     result.slits.append(model)
@@ -233,13 +233,12 @@ class ResampleSpecStep(Step):
             result.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
         self.update_slit_metadata(result)
-        print(' Updating the spectral region')
 
         if input_models[0].meta.exposure.type.lower() == 'mir_lrs-fixedslit':
             s_region_list = []
             for model in input_models:
                 s_region_list.append(model.meta.wcsinfo.s_region)
-            
+            # Test code for MIRI LRS - does not work as it is written
             combined_footprint = resample_utils.combine_s_regions_lrs(s_region_list)
             update_s_region_keyword(result, combined_footprint)
         else:
