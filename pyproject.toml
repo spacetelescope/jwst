@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -15,6 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "asdf>=3.3,<5",
@@ -33,7 +34,7 @@ dependencies = [
     "scikit-image>=0.20.0",
     "scipy>=1.14.1",
     "spherical-geometry>=1.2.22",
-    "stcal>=1.11.0,<1.12.0",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     "stpipe>=0.8.0,<0.9.0",
     "stsci.imagestats>=1.6.3",
@@ -97,7 +98,6 @@ docs = [
     "sphinx-astropy",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
-    "tomli; python_version <\"3.11\"",
 ]
 sdp = [
     "jplephem>=2.9",
