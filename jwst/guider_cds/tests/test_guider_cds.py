@@ -3,12 +3,12 @@ import pytest
 
 from stdatamodels.jwst import datamodels
 
-from jwst.guider_cds.guider_cds import get_dataset_info, guider_cds
+from jwst.guider_cds.guider_cds import guider_cds
 
 
 @pytest.fixture
 def make_guider_image():
-    """Generate science image"""
+    """Generate science image."""
 
     image = datamodels.GuiderRawModel()
 
@@ -23,21 +23,8 @@ def make_guider_image():
     return image
 
 
-def test_get_dataset_info(make_guider_image):
-    """Make sure information assigned to datamodel is retrieved correctly."""
-
-    model = make_guider_image
-
-    imshape, n_int, grp_time, exp_type = get_dataset_info(model)
-
-    assert imshape == (10, 10)
-    assert n_int == model.data.shape[0]
-    assert grp_time == model.meta.exposure.group_time
-    assert exp_type == model.meta.exposure.type
-
-
 def test_guider_cds_fineguide_mode(make_guider_image):
-    """Test the fine guiding mode"""
+    """Test the fine guiding mode."""
 
     model = make_guider_image
 
@@ -63,7 +50,7 @@ def test_guider_cds_fineguide_mode(make_guider_image):
 
 @pytest.mark.parametrize("exptype", ['FGS_ACQ1', 'FGS_ACQ2', 'FGS_TRACK'])
 def test_guider_cds_acq_track_modes(exptype, make_guider_image):
-    """Test acq and track exptypes"""
+    """Test acq and track exptypes."""
 
     model = make_guider_image
     model.meta.exposure.type = exptype
@@ -89,7 +76,7 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
 
 @pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
 def test_guider_cds_id_modes(exptype, make_guider_image):
-    """Test fgs id exptypes"""
+    """Test fgs id exptypes."""
 
     model = make_guider_image
     model.meta.exposure.type = exptype
@@ -117,7 +104,7 @@ def test_guider_cds_id_modes(exptype, make_guider_image):
 
 
 def test_unit_assignment(make_guider_image):
-    """Test that correct units are returned"""
+    """Test that correct units are returned."""
 
     model = make_guider_image
 
@@ -127,7 +114,7 @@ def test_unit_assignment(make_guider_image):
 
 
 def test_table_extensions(make_guider_image):
-    """Test that tables are assigned to result of pipeline"""
+    """Test that tables are assigned to result of pipeline."""
 
     model = make_guider_image
 
