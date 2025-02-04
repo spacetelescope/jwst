@@ -17,10 +17,7 @@ import sys
 import os
 from pathlib import Path
 
-if sys.version_info < (3, 11):
-     import tomli as tomllib
-else:
-     import tomllib
+import tomllib
 from packaging.version import Version
 from configparser import ConfigParser
 
