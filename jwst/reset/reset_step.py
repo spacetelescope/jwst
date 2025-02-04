@@ -15,7 +15,7 @@ class ResetStep(Step):
     class_alias = "reset"
 
     spec = """
-    """
+    """ # noqa: E501
 
     reference_file_types = ['reset']
 

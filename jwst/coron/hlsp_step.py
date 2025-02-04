@@ -19,7 +19,7 @@ class HlspStep(Step):
     spec = """
         annuli_width = integer(default=2, min=1) # Width of contrast annuli
         save_results = boolean(default=true) # Save results
-    """
+    """ # noqa: E501
 
     def process(self, target):
 

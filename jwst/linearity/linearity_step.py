@@ -15,7 +15,7 @@ class LinearityStep(Step):
     class_alias = "linearity"
 
     spec = """
-    """
+    """ # noqa: E501
 
     reference_file_types = ['linearity']
 

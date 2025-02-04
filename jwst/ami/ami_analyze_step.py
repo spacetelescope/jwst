@@ -28,20 +28,17 @@ class AmiAnalyzeStep(Step):
     class_alias = "ami_analyze"
 
     spec = """
-        oversample = integer(default=3, min=1)  # Oversampling factor
-        rotation = float(default=0.0)           # Rotation initial guess [deg]
+        oversample = integer(default=3, min=1) # Oversampling factor
+        rotation = float(default=0.0) # Rotation initial guess [deg]
         psf_offset = string(default='0.0 0.0') # PSF offset values to use to create the model array
         rotation_search = string(default='-3 3 1') # Rotation search parameters: start, stop, step
         bandpass = string(default=None) # ASDF file containing array to override filter/source
-        # If True, exclude pixels marked DO_NOT_USE from fringe fitting
-        usebp = boolean(default=True)
+        usebp = boolean(default=True) # If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew = integer(default=None) # If not None, process only the first few integrations
-        chooseholes = string(default=None)
-        # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
-        affine2d = string(default='commissioning')
-        # ASDF file containing user-defined affine parameters OR 'commssioning'
+        chooseholes = string(default=None) # If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
+        affine2d = string(default='commissioning') # ASDF file containing user-defined affine parameters OR 'commssioning'
         run_bpfix = boolean(default=True) # Run Fourier bad pixel fix on cropped data
-    """
+    """  # noqa: E501
 
     reference_file_types = ["throughput", "nrm"]
 
