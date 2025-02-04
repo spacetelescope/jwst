@@ -232,12 +232,12 @@ class STFITSDiff(_BaseDiff):
         # Check if the files contain the same extension names and find the intersection
         ext_namesa = [ext.name for ext in self.a]
         ext_namesb = [ext.name for ext in self.b]
+        ext_not_in_both = set(ext_namesa).symmetric_difference(set(ext_namesb))
+        ext_intersection = set.intersection(set(ext_namesa), set(ext_namesb))
         if self.diff_hdu_count:
-            self.diff_extnames = (ext_namesa, ext_namesb)
+            self.diff_extnames = (ext_namesa, ext_namesb, ext_intersection, ext_not_in_both)
 
         # Make sure to compare the same extensions
-        ext_intersection = set.intersection(set(ext_namesa), set(ext_namesb))
-
         for idxa, extname in enumerate(ext_namesa):
             extver = self.a[idxa].ver
             same_version = False
@@ -311,6 +311,8 @@ class STFITSDiff(_BaseDiff):
             self._writeln("Files contain different numbers of HDUs:")
             self._writeln(f" a: {self.diff_hdu_count[0]}, {self.diff_extnames[0]}")
             self._writeln(f" b: {self.diff_hdu_count[1]}, {self.diff_extnames[1]}")
+            self._writeln(f" Common HDUs: {[en for en in self.diff_extnames[2]]}")
+            self._writeln(f" Missing HDUs: {[en for en in self.diff_extnames[3]]}")
 
             if not self.diff_hdus:
                 self._fileobj.write("\n")
