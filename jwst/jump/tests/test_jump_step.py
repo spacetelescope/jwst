@@ -168,14 +168,14 @@ def add_crs(model, crs_frac):
     tot_cr = 0  # counter
     CR_MAG = 1000.  # consider making a variable ?
 
-    random.seed(0)  # to generate same CRs
+    np.random.seed(0)  # to generate same CRs
 
     # Add to the model's data, in all but the 0th group
     for ii_int in range(num_ints):  # loop over integrations
         for ii_col in range(num_cols):
             for ii_row in range(num_rows):
                 for ii_group in range(1, num_groups):
-                    cr_rand = random.random()
+                    cr_rand = np.random.random()
                     if cr_rand < crs_frac:
                         tot_cr += 1
                         model.data[ii_int, ii_group:, ii_row, ii_col] += CR_MAG
