@@ -533,7 +533,7 @@ def _parse_catfile(catfile):
 
     catdict = {}
 
-    with Path.open(catfile) as f:
+    with Path(catfile).open() as f:
         catfile_dir = Path(catfile).parent
 
         for line in f.readlines():
