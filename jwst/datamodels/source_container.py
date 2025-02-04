@@ -64,7 +64,7 @@ class SourceModelContainer(ModelContainer):
             The MultiExposureModel being wrapped, be updated with any new data in the container.
         """
         # Reapply models back to the exposures
-        for exposure, model in zip(self._multiexposure.exposures, self._models, strict=False):
+        for exposure, model in zip(self._multiexposure.exposures, self._models, strict=True):
             exposure._instance.update(model._instance)  # noqa: SLF001
 
         return self._multiexposure
