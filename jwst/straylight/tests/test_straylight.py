@@ -56,11 +56,12 @@ def test_clean_showers():
     point[614, 604] = 1
     gauss = Gaussian2DKernel(x_stddev=18, y_stddev=18)
     input_model.data = convolve_fft(point, gauss)
+    input_model.dq = np.zeros((1024,1032), dtype='>i4')
 
     class TestShower:
         pass
 
-    # Set parameter like real step, but without rejection since we have no noise
+    # Set parameters like real step, but without rejection since we have no noise
     params = TestShower()
     params.shower_plane = 0
     params.shower_low_reject = 0
