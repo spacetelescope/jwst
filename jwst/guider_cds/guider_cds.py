@@ -144,6 +144,10 @@ def get_ref_arr(model, gain_model, readnoise_model):
     readnoise_arr : ndarray, 2-D, float
         Readnoise values from the ref file
     """
+    # breakpoint()
+    if "STACK" in model.meta.exposure.type:
+        # No reference file matches stacked data shape, so find median and broadcast
+        log.debug("No ga")
     # extract subarray from gain reference file, if necessary
     if reffile_utils.ref_matches_sci(model, gain_model):
         gain_arr = gain_model.data
