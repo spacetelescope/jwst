@@ -53,7 +53,7 @@ class Spec3Pipeline(Pipeline):
     class_alias = "calwebb_spec3"
 
     spec = """
-    """
+    """ # noqa: E501
 
     # Define aliases to steps
     step_defs = {

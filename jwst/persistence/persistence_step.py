@@ -20,7 +20,7 @@ class PersistenceStep(Step):
         save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
         modify_input = boolean(default=False)
-    """
+    """ # noqa: E501
 
     reference_file_types = ["trapdensity", "trappars", "persat"]
 

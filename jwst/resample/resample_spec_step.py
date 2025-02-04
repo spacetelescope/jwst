@@ -42,7 +42,7 @@ class ResampleSpecStep(Step):
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
-    """
+    """ # noqa: E501
 
     def process(self, input):
         self.wht_type = self.weight_type
