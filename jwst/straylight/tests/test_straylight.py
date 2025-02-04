@@ -2,9 +2,10 @@
 Unit tests for straylight correction
 """
 
-from jwst.straylight.straylight import makemodel_ccode, makemodel_composite
+from jwst.straylight.straylight import makemodel_ccode, makemodel_composite, clean_showers
+from astropy.convolution import convolve_fft, Gaussian2DKernel
+from jwst import datamodels
 import numpy as np
-
 
 def test_correct_mrs_xartifact():
     """ Test Correct Straylight routine gives expected results for small region """
@@ -45,3 +46,39 @@ def test_correct_mrs_xartifact():
 
     assert np.allclose(compare, cutout_c, rtol=1e-6)
     assert np.allclose(compare, cutout_py, rtol=1e-6)
+
+def test_clean_showers():
+    """ Test cosmic ray shower cleaning routine gives expected results for mock data """
+
+    # Make a mock input image with a single blob on the detector
+    input_model = datamodels.IFUImageModel()
+    point = np.zeros((1024,1032))
+    point[614, 604] = 1
+    gauss = Gaussian2DKernel(x_stddev=18, y_stddev=18)
+    input_model.data = convolve_fft(point, gauss)
+
+    class TestShower:
+        pass
+
+    # Set parameter like real step, but without rejection since we have no noise
+    params = TestShower()
+    params.shower_plane = 0
+    params.shower_low_reject = 0
+    params.shower_high_reject = 100
+    params.shower_x_stddev = 18
+    params.shower_y_stddev = 5
+
+    # Set up a mock regions file with just one slice partially covering the blob
+    mockregions = np.zeros((1, 1024, 1032))
+    mockregions[0, :, 583:609] = 1
+
+    # Run the clean_showers routine and see if the values it reconstructed for the blob
+    # look as expected for a small box of pixels underneath the slice mask
+    result = clean_showers(params, input_model, mockregions)
+    cutout = result.data[613:617,591:596]
+    compare = np.array([[0.00018815, 0.00019507, 0.0002014 , 0.00020712, 0.00021221],
+                        [0.00018846, 0.00019539, 0.00020173, 0.00020746, 0.00021256],
+                        [0.00018815, 0.00019507, 0.0002014 , 0.00020712, 0.00021221],
+                        [0.00018722, 0.0001941 , 0.0002004 , 0.00020609, 0.00021116]])
+
+    assert np.allclose(cutout, compare, rtol=1e-6)
