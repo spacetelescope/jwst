@@ -138,6 +138,9 @@ class STFITSDiff(_BaseDiff):
                                     'err': {'rtol': 1e-1, 'atol': 1e-2},
                                     'VAR_RNOISE': {'rtol': 2, 'atol': 1},
                                     'default': {'rtol': 1e-5, 'atol': 1e-7}}
+            The key for only providing main header tolerances is 'primary'.
+            The key 'headers' can be used to provide a special tolerance for all
+            extension headers in the HDU list.
             It does not matter if the keys in the dictionary are upper or lower case.
             The key 'default' is optional, i.e. if it is not provided then the default values will
             be used, otherwise the default value will be the one in the dictionary.
@@ -146,6 +149,7 @@ class STFITSDiff(_BaseDiff):
         self.diff_dimensions = ()
         self.diff_extnames = ()
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
+        self.header_tolerances = {}
         self.extension_tolerances = {}
         if extension_tolerances is not None:
             # Make sure the given dict keys are all upper case
@@ -236,6 +240,11 @@ class STFITSDiff(_BaseDiff):
         ext_intersection = set.intersection(set(ext_namesa), set(ext_namesb))
         if self.diff_hdu_count:
             self.diff_extnames = (ext_namesa, ext_namesb, ext_intersection, ext_not_in_both)
+
+        # Set the tolerance for the headers
+        if "HEADERS" in [key.upper() for key in self.extension_tolerances]:
+            self.header_tolerances["rtol"] = self.extension_tolerances["HEADERS"]["rtol"]
+            self.header_tolerances["atol"] = self.extension_tolerances["HEADERS"]["atol"]
 
         # Make sure to compare the same extensions
         for idxa, extname in enumerate(ext_namesa):
@@ -396,6 +405,7 @@ class STHDUDiff(_BaseDiff):
         ignore_blanks=True,
         ignore_blank_cards=True,
         report_pixel_loc_diffs=False,
+        header_tolerances={}
     ):
         """
         Parameters
@@ -456,8 +466,12 @@ class STHDUDiff(_BaseDiff):
 
         report_pixel_loc_diffs : bool, optional
             Report all the pixel locations where differences are found.
+
+        header_tolerances : dict, optional
+            Dictionary with the relative and absolute tolerances for all headers.
         """
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
+        self.header_tolerances = header_tolerances
         self.nans, self.percentages, self.stats = None, None, None
         self.diff_dimensions = ()
         self.ignore_keywords = {k.upper() for k in ignore_keywords}
@@ -496,9 +510,18 @@ class STHDUDiff(_BaseDiff):
                 self.b.header.get("XTENSION"),
             )
 
+        # If specific header tolerances were given set them temporarily
+        if self.header_tolerances:
+            rtol, atol = self.rtol, self.atol
+            self.rtol, self.atol = self.header_tolerances['rtol'], self.header_tolerances['atol']
+
+        # Get the header differences
         self.diff_headers = STHeaderDiff.fromdiff(
             self, self.a.header.copy(), self.b.header.copy()
         )
+        # Reset the object tolerances
+        if self.header_tolerances:
+            self.rtol, self.atol = rtol, atol
 
         def get_quick_report(a, b):
             # Get the number of NaN in each array
