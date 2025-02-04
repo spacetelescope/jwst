@@ -13,7 +13,8 @@ logger.addHandler(logging.NullHandler())
 
 
 def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=True, discover=False,
-                           version_id=None, finalize=True, merge=False, ignore_default=False):
+                           version_id=None, finalize=True, merge=False, ignore_default=False,
+                           dms_enabled=False):
     """Generate associations in the pool according to the rules.
 
     Parameters
@@ -47,6 +48,9 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
 
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.
+
+    dms_enabled : bool
+        Flag for DMS processing, true if command-line argument '--DMS' was used.
 
     Returns
     -------
@@ -86,7 +90,8 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
             pool,
             rule_defs,
             version_id=version_id,
-            ignore_default=ignore_default
+            ignore_default=ignore_default,
+            dms_enabled=dms_enabled
         )
 
         # Add to the list
@@ -136,7 +141,8 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
     return finalized_asns
 
 
-def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_default=False):
+def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_default=False,
+                          dms_enabled=False):
     """Generate associations based on a candidate ID
 
     Parameters
@@ -159,6 +165,9 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.
 
+    dms_enabled : bool
+        Flag for DMS processing, true if command-line argument '--DMS' was used.
+
     Returns
     -------
     associations : [Association[,...]]
@@ -169,6 +178,20 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
 
     # Get the pool
     pool_cid = pool_from_candidate(pool, cid)
+
+    # DMS processing excludes generation of o-type candidates for science exposures
+    # with linked backgrounds, i.e. without the background member present, as it
+    # would be for c-type background association candidates.
+    if dms_enabled and 'observation' in ctype:
+        skip_rows = []
+        for i, row in enumerate(pool_cid):
+            if 'background' in row['asn_candidate'] and row['bkgdtarg'] == 'f':
+                skip_rows.append(i)
+        logger.debug(f"Dropping {len(skip_rows)} exposures from pool - observation "
+                     f"candidate type does not allow association generation when a "
+                     f"background candidate is present.")
+        pool_cid.remove_rows(skip_rows)
+
     pool_cid['asn_candidate'] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
     logger.info(f'Length of pool for {cid}: {len(pool_cid)}')
 
