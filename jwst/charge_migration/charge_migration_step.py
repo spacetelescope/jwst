@@ -22,7 +22,7 @@ class ChargeMigrationStep(Step):
     spec = """
         signal_threshold = float(default=25000)
         skip = boolean(default=True)
-    """
+    """ # noqa: E501
 
     def process(self, step_input):
 

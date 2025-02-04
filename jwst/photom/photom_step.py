@@ -20,7 +20,7 @@ class PhotomStep(Step):
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.
         mrs_time_correction = boolean(default=True) # Apply the MIRI MRS time dependent correction
-    """
+    """ # noqa: E501
 
     reference_file_types = ['photom', 'area']
 

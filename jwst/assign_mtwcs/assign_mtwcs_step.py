@@ -21,7 +21,7 @@ class AssignMTWcsStep(Step):
     spec = """
         suffix = string(default='assign_mtwcs')    # Default suffix for output files
         output_use_model = boolean(default=True)   # When saving use `DataModel.meta.filename`
-    """
+    """  # noqa: E501
 
     def process(self, input_lib):
         """

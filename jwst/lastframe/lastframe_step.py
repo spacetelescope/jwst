@@ -15,7 +15,7 @@ class LastFrameStep(Step):
     class_alias = "lastframe"
 
     spec = """
-    """
+    """ # noqa: E501
 
     def process(self, step_input):
 
