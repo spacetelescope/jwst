@@ -11,7 +11,7 @@ class AmiAverageStep(Step):
 
     spec = """
     skip = boolean(default=True) # Do not run this step
-    """
+    """  # noqa: E501
 
     def flatten_input(self, input_items):
         """Return generator to provide iterable simple list with no nested structure."""

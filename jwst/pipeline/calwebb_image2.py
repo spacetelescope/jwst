@@ -31,7 +31,7 @@ class Image2Pipeline(Pipeline):
 
     spec = """
         save_bsub = boolean(default=False) # Save background-subtracted science
-    """
+    """ # noqa: E501
 
     # Define alias to steps
     step_defs = {

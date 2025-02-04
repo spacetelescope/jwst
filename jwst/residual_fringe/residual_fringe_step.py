@@ -27,7 +27,7 @@ class ResidualFringeStep(Step):
         ignore_region_min = list(default = None)
         ignore_region_max = list(default = None)
         suffix = string(default = 'residual_fringe')
-    """
+    """ # noqa: E501
 
     reference_file_types = ['fringefreq', 'regions']
 

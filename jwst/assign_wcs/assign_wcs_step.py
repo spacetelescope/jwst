@@ -59,8 +59,7 @@ class AssignWcsStep(Step):
         sip_npoints = integer(default=12)  #  number of points for SIP
         slit_y_low = float(default=-.55)  # The lower edge of a slit.
         slit_y_high = float(default=.55)  # The upper edge of a slit.
-
-    """
+    """ # noqa: E501
 
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
                             'wavelengthrange', 'camera', 'collimator', 'disperser',
