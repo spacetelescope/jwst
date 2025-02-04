@@ -68,36 +68,22 @@ class TweakRegStep(Step):
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
 
         # kwargs for SourceCatalog and SourceFinder, only used if starfinder is 'segmentation'
-        # Minimum number of connected pixels
-        npixels = integer(default=10)
-        # The connectivity defining the neighborhood of a pixel
-        connectivity = option(4, 8, default=8)
-        # Number of multi-thresholding levels for deblending
-        nlevels = integer(default=32)
-        # Fraction of total source flux an object must have to be deblended
-        contrast = float(default=0.001)
-        # Multi-thresholding mode
-        multithresh_mode = option('exponential', 'linear', 'sinh', default='exponential')
-        # Width of rectangular annulus used to compute local background around each source
-        localbkg_width = integer(default=0)
-        # How to handle neighboring sources
-        apermask_method = option('correct', 'mask', 'none', default='correct')
-        # Parameters defining Kron aperture
-        kron_params = float_list(min=2, max=3, default=None)
+        npixels = integer(default=10) # Minimum number of connected pixels
+        connectivity = option(4, 8, default=8) # The connectivity defining the neighborhood of a pixel
+        nlevels = integer(default=32) # Number of multi-thresholding levels for deblending
+        contrast = float(default=0.001) # Fraction of total source flux an object must have to be deblended
+        multithresh_mode = option('exponential', 'linear', 'sinh', default='exponential') # Multi-thresholding mode
+        localbkg_width = integer(default=0) # Width of rectangular annulus used to compute local background around each source
+        apermask_method = option('correct', 'mask', 'none', default='correct') # How to handle neighboring sources
+        kron_params = float_list(min=2, max=3, default=None) # Parameters defining Kron aperture
 
         # align wcs options
-        # Align images in user specified order?
-        enforce_user_order = boolean(default=False)
-        # Expand reference catalog with new sources?
-        expand_refcat = boolean(default=False)
-        # Minimum number of objects acceptable for matching
-        minobj = integer(default=15)
-        # Fitting geometry
-        fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift')
-        # Number of clipping iterations in fit
-        nclip = integer(min=0, default=3)
-        # Clipping limit in sigma units
-        sigma = float(min=0.0, default=3.0)
+        enforce_user_order = boolean(default=False) # Align images in user specified order?
+        expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
+        minobj = integer(default=15) # Minimum number of objects acceptable for matching
+        fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift') # Fitting geometry
+        nclip = integer(min=0, default=3) # Number of clipping iterations in fit
+        sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
 
         # xyxymatch options
         searchrad = float(default=2.0) # The search radius in arcsec for a match
@@ -108,52 +94,33 @@ class TweakRegStep(Step):
         yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
 
         # Absolute catalog options
-        # Catalog file name or one of: {_SINGLE_GROUP_REFCAT_STR}, or None, or ''
-        abs_refcat = string(default='')
-        # Write out used absolute astrometric reference catalog as a separate product
-        save_abs_catalog = boolean(default=False)
+        abs_refcat = string(default='') # Catalog file name or one of: {_SINGLE_GROUP_REFCAT_STR}, or None, or ''
+        save_abs_catalog = boolean(default=False) # Write out used absolute astrometric reference catalog as a separate product
 
         # Absolute catalog align wcs options
-        # Minimum number of objects acceptable for matching when performing absolute astrometry
-        abs_minobj = integer(default=15)
+        abs_minobj = integer(default=15) # Minimum number of objects acceptable for matching when performing absolute astrometry
         abs_fitgeometry = option('shift', 'rshift', 'rscale', 'general', default='rshift')
-        # Number of clipping iterations in fit when performing absolute astrometry
-        abs_nclip = integer(min=0, default=3)
-        # Clipping limit in sigma units when performing absolute astrometry
-        abs_sigma = float(min=0.0, default=3.0)
+        abs_nclip = integer(min=0, default=3) # Number of clipping iterations in fit when performing absolute astrometry
+        abs_sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units when performing absolute astrometry
 
         # absolute catalog xyxymatch options
-        # The search radius in arcsec for a match when performing absolute astrometry
-        abs_searchrad = float(default=6.0)
-        # Use 2D histogram to find initial offset when performing absolute astrometry?
-        # We encourage setting this parameter to True.
-        # Otherwise, xoffset and yoffset will be set to zero.
-        abs_use2dhist = boolean(default=True)
-        # Minimum object separation in arcsec when performing absolute astrometry
-        abs_separation = float(default=1)
-        # Matching tolerance for xyxymatch in arcsec when performing absolute astrometry
-        abs_tolerance = float(default=0.7)
+        abs_searchrad = float(default=6.0) # The search radius in arcsec for a match when performing absolute astrometry
+        abs_use2dhist = boolean(default=True) # Use 2D histogram to find initial offset when performing absolute astrometry? We encourage setting this parameter to True. Otherwise, xoffset and yoffset will be set to zero.
+        abs_separation = float(default=1) # Minimum object separation in arcsec when performing absolute astrometry
+        abs_tolerance = float(default=0.7) # Matching tolerance for xyxymatch in arcsec when performing absolute astrometry
 
         # SIP approximation options, should match assign_wcs
-        # enables SIP approximation for imaging modes.
-        sip_approx = boolean(default=True)
-        # max err for SIP fit, forward.
-        sip_max_pix_error = float(default=0.01)
-        # degree for forward SIP fit, None to use best fit.
-        sip_degree = integer(max=6, default=None)
-        # max err for SIP fit, inverse.
-        sip_max_inv_pix_error = float(default=0.01)
-        # degree for inverse SIP fit, None to use best fit.
-        sip_inv_degree = integer(max=6, default=None)
-        #  number of points for SIP
-        sip_npoints = integer(default=12)
+        sip_approx = boolean(default=True) # enables SIP approximation for imaging modes.
+        sip_max_pix_error = float(default=0.01) # max err for SIP fit, forward.
+        sip_degree = integer(max=6, default=None) # degree for forward SIP fit, None to use best fit.
+        sip_max_inv_pix_error = float(default=0.01) # max err for SIP fit, inverse.
+        sip_inv_degree = integer(max=6, default=None) # degree for inverse SIP fit, None to use best fit.
+        sip_npoints = integer(default=12) #  number of points for SIP
 
         # stpipe general options
-        # When saving use `DataModel.meta.filename`
-        output_use_model = boolean(default=True)
-        # If False, preserve memory using temporary files at expense of runtime
-        in_memory = boolean(default=True)
-    """
+        output_use_model = boolean(default=True) # When saving use `DataModel.meta.filename`
+        in_memory = boolean(default=True) # If False, preserve memory using temporary files at expense of runtime
+    """  # noqa: E501
 
     reference_file_types: list = []
 
