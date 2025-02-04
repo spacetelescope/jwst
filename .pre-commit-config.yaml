@@ -69,7 +69,6 @@ repos:
             jwst/master_background/.* |
             jwst/model_blender/.* |
             jwst/mrs_imatch/.* |
-            jwst/msaflagopen/.* |
             jwst/pathloss/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
