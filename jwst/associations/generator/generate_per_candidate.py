@@ -14,7 +14,7 @@ logger.addHandler(logging.NullHandler())
 
 def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=True, discover=False,
                            version_id=None, finalize=True, merge=False, ignore_default=False,
-                           DMS_enabled=False):
+                           dms_enabled=False):
     """Generate associations in the pool according to the rules.
 
     Parameters
@@ -49,7 +49,7 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.
 
-    DMS_enabled : bool
+    dms_enabled : bool
         Flag for DMS processing, true if command-line argument '--DMS' was used.
 
     Returns
@@ -91,7 +91,7 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
             rule_defs,
             version_id=version_id,
             ignore_default=ignore_default,
-            DMS_enabled=DMS_enabled
+            dms_enabled=dms_enabled
         )
 
         # Add to the list
