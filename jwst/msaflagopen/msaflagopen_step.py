@@ -15,8 +15,7 @@ class MSAFlagOpenStep(Step):
     class_alias = "msa_flagging"
 
     spec = """
-
-    """
+    """  # noqa: E501
 
     reference_file_types = ["msaoper"]
 

@@ -62,7 +62,7 @@ class Spec2Pipeline(Pipeline):
         save_bsub = boolean(default=False)        # Save background-subtracted science
         fail_on_exception = boolean(default=True) # Fail if any product fails.
         save_wfss_esec = boolean(default=False)   # Save WFSS e-/sec image
-    """
+    """ # noqa: E501
 
     # Define aliases to steps
     step_defs = {

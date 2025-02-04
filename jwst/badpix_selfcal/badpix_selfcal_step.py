@@ -32,7 +32,7 @@ class BadpixSelfcalStep(Step):
     force_single = boolean(default=False)  # force single input exposure
     save_flagged_bkg = boolean(default=False)  # save flagged background exposures to file
     skip = boolean(default=True)
-    """
+    """ # noqa: E501
 
     def save_model(self, model, *args, **kwargs):
         """Override save_model to suppress index 0 when save_model is True"""

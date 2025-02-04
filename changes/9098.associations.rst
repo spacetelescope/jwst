@@ -1,0 +1,2 @@
+Prevent creation of observation candidate associations when science exposure
+is also part of background association candidate, but only when the DMS flag is enabled.

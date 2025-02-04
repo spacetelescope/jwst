@@ -219,7 +219,7 @@ class Extract1dStep(Step):
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="masking")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
-    """
+    """ # noqa: E501
 
     reference_file_types = ['extract1d', 'apcorr', 'pastasoss', 'specprofile',
                             'speckernel', 'psf']

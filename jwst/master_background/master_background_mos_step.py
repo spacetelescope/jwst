@@ -57,7 +57,7 @@ class MasterBackgroundMosStep(Pipeline):
         user_background = string(default=None)   # Path to user-supplied master background
         inverse = boolean(default=False)    # Invert the operation
         output_use_model = boolean(default=True)
-    """
+    """ # noqa: E501
 
     # Define aliases to steps
     step_defs = {
