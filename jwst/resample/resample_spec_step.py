@@ -45,7 +45,6 @@ class ResampleSpecStep(Step):
     """ # noqa: E501
 
     def process(self, input):
-        self.wht_type = self.weight_type
         input_new = datamodels.open(input)
 
         # Check if input_new is a MultiSlitModel

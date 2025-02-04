@@ -65,7 +65,7 @@ class ResampleImage(Resample):
             dimension, so the flux is confined to a quarter of the pixel area
             when the square kernel is used.
 
-        kernel: {"square", "gaussian", "point", "turbo", "lanczos2", "lanczos3"}, optional
+        kernel : {"square", "gaussian", "point", "turbo", "lanczos2", "lanczos3"}, optional
             The name of the kernel used to combine the input. The choice of
             kernel controls the distribution of flux over the kernel.
             The square kernel is the default.
@@ -74,7 +74,7 @@ class ResampleImage(Resample):
                The "gaussian" and "lanczos2/3" kernels **DO NOT**
                conserve flux.
 
-        fillval: float, None, str, optional
+        fillval : float, None, str, optional
             The value of output pixels that did not have contributions from
             input images' pixels. When ``fillval`` is either `None` or
             ``"INDEF"`` and ``out_img`` is provided, the values of ``out_img``
@@ -85,7 +85,7 @@ class ResampleImage(Resample):
             pixels with no contributions from input images will be set to this
             ``fillval`` value.
 
-        wht_type : {"exptime", "ivm"}, optional
+        weight_type : {"exptime", "ivm"}, optional
             The weighting type for adding models' data. For
             ``weight_type="ivm"`` (the default), the weighting will be
             determined per-pixel using the inverse of the read noise

@@ -5,7 +5,9 @@ import warnings
 
 import numpy as np
 from astropy import units as u
+from astropy.utils.decorators import deprecated
 import gwcs
+from drizzle.utils import decode_context as drizzle_decode_context
 
 from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
@@ -167,6 +169,8 @@ def resampled_wcs_from_models(
     return wcs, pscale_in0, pixel_scale, pixel_scale_ratio
 
 
+@deprecated(since="1.17.2", message="", name="make_output_wcs",
+            alternative="resampled_wcs_from_models")
 def make_output_wcs(input_models, ref_wcs=None,
                     pscale_ratio=None, pscale=None, rotation=None, shape=None,
                     crpix=None, crval=None):
@@ -267,28 +271,6 @@ def make_output_wcs(input_models, ref_wcs=None,
     return output_wcs
 
 
-def shape_from_bounding_box(bounding_box):
-    """ Return a numpy shape based on the provided bounding_box
-    """
-    return tuple(int(axs[1] - axs[0] + 0.5) for axs in bounding_box[::-1])
-
-
-def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
-    """ Return a pixel grid map from input frame to output frame.
-    """
-    if shape:
-        bb = wcs_bbox_from_shape(shape)
-        log.debug("Bounding box from data shape: {}".format(bb))
-    else:
-        bb = in_wcs.bounding_box
-        log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
-
-    grid = gwcs.wcstools.grid_from_bounding_box(bb)
-    pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
-
-    return pixmap
-
-
 def reproject(wcs1, wcs2):
     """
     Given two WCSs or transforms return a function which takes pixel
@@ -385,27 +367,8 @@ def is_sky_like(frame):
     return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
 
 
-def is_flux_density(bunit):
-    """
-    Differentiate between surface brightness and flux density data units.
-
-    Parameters
-    ----------
-    bunit : str or `~astropy.units.Unit`
-       Data units, e.g. 'MJy' (is flux density) or 'MJy/sr' (is not).
-
-    Returns
-    -------
-    bool
-        True if the units are equivalent to flux density units.
-    """
-    try:
-        flux_density = u.Unit(bunit).is_equivalent(u.Jy)
-    except (ValueError, TypeError):
-        flux_density = False
-    return flux_density
-
-
+@deprecated(since="1.17.2", message="", name="decode_context",
+            alternative="drizzle.utils.decode_context")
 def decode_context(context, x, y):
     """ Get 0-based indices of input images that contributed to (resampled)
     output pixel with coordinates ``x`` and ``y``.
@@ -460,45 +423,4 @@ def decode_context(context, x, y):
      array([ 9, 20, 29, 36, 47, 49, 64, 69, 70, 79])]
 
     """
-    if context.ndim != 3:
-        raise ValueError("'context' must be a 3D array.")
-
-    x = np.atleast_1d(x)
-    y = np.atleast_1d(y)
-
-    if x.size != y.size:
-        raise ValueError("Coordinate arrays must have equal length.")
-
-    if x.ndim != 1:
-        raise ValueError("Coordinates must be scalars or 1D arrays.")
-
-    if not (np.issubdtype(x.dtype, np.integer) and
-            np.issubdtype(y.dtype, np.integer)):
-        raise ValueError('Pixel coordinates must be integer values')
-
-    nbits = 8 * context.dtype.itemsize
-    one = np.array(1, context.dtype)
-    flags = np.array([one << i for i in range(nbits)])
-
-    idx = []
-    for xi, yi in zip(x, y):
-        idx.append(
-            np.flatnonzero(np.bitwise_and.outer(context[:, yi, xi], flags))
-        )
-
-    return idx
-
-
-def check_for_tmeasure(model):
-    '''
-    Check if the measurement_time keyword is present in the datamodel
-    for use in exptime weighting. If not, revert to using exposure_time.
-    '''
-    try:
-        tmeasure = model.meta.exposure.measurement_time
-        if tmeasure is not None:
-            return 1
-        else:
-            return 0
-    except AttributeError:
-        return 0
+    return drizzle_decode_context(context, x, y)

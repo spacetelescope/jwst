@@ -14,14 +14,8 @@ from jwst.resample.resample_spec import find_dispersion_axis
 from jwst.resample.resample_utils import (
     build_mask,
     build_driz_weight,
-    decode_context,
-    is_flux_density,
     reproject
 )
-
-
-DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
-GOOD = dqflags.pixel["GOOD"]
 
 
 DQ = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8])
@@ -152,32 +146,6 @@ def test_find_dispersion_axis():
     assert find_dispersion_axis(dm) == 1        # Y axis for wcs functions
 
 
-def test_decode_context():
-    con = np.array(
-        [[[0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 36196864, 0, 0],
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 537920000, 0, 0, 0]],
-         [[0, 0, 0, 0, 0, 0,],
-          [0, 0, 0, 67125536, 0, 0],
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 163856, 0, 0, 0]],
-         [[0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 8203, 0, 0],
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0],
-          [0, 0, 32865, 0, 0, 0]]],
-        dtype=np.int32
-    )
-
-    idx1, idx2 = decode_context(con, [3, 2], [1, 4])
-
-    assert sorted(idx1) == [9, 12, 14, 19, 21, 25, 37, 40, 46, 58, 64, 65, 67, 77]
-    assert sorted(idx2) == [9, 20, 29, 36, 47, 49, 64, 69, 70, 79]
-
-
 @pytest.mark.parametrize(
     "wcs1, wcs2, offset",
     [
@@ -203,11 +171,3 @@ def test_reproject(wcs1, wcs2, offset, request):
 def test_reproject_with_garbage_input():
     with pytest.raises(TypeError):
         reproject("foo", "bar")
-
-
-@pytest.mark.parametrize('unit,result',
-                         [('Jy', True), ('MJy', True),
-                          ('MJy/sr', False), ('DN/s', False),
-                          ('bad_unit', False), (None, False)])
-def test_is_flux_density(unit, result):
-    assert is_flux_density(unit) is result
