@@ -146,7 +146,7 @@ class ResampleSpecStep(Step):
             s_region_list = []
             with drizzled_library:
                 for i, model in enumerate(drizzled_library):
-s                    self.update_slit_metadata(model)
+                    self.update_slit_metadata(model)
                     s_region_list.append(model.meta.s_region)
                     update_s_region_spectral(model)
                     result.slits.append(model)
