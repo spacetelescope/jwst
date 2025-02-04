@@ -67,7 +67,7 @@ class CubeBuildStep (Step):
          suffix = string(default='s3d')
          offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
          debug_spaxel = string(default='-1 -1 -1') # Default not used
-       """
+       """ # noqa: E501
 
     reference_file_types = ['cubepar']
 

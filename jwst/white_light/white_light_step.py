@@ -20,7 +20,7 @@ class WhiteLightStep(Step):
     max_wavelength     = float(default=None)      # Default wavelength maximum for integration
     output_ext         = string(default='.ecsv')  # Output file type
     suffix             = string(default='whtlt')  # Default suffix for output files
-    """
+    """ # noqa: E501
 
     def process(self, input):
 

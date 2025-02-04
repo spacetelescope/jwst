@@ -19,7 +19,7 @@ class DarkCurrentStep(Step):
     spec = """
         dark_output = output_file(default = None) # Dark model or averaged dark subtracted
         average_dark_current = float(default=None) # The average dark current for this detector in units of e-/sec.
-    """
+    """ # noqa: E501
 
     reference_file_types = ['dark']
 

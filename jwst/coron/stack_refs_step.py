@@ -17,7 +17,7 @@ class StackRefsStep(Step):
     class_alias = "stack_refs"
 
     spec = """
-    """
+    """ # noqa: E501
 
     def process(self, input):
 
