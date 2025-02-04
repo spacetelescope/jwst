@@ -53,7 +53,8 @@ def guider_cds(model, gain_model, readnoise_model):
         new_model = datamodels.GuiderCalModel()
 
     # get gain and readnoise arrays to calculate ERR array
-    gain_arr, readnoise_arr = get_ref_arr(model, gain_model, readnoise_model)
+    gain_arr = get_ref_arr(model, gain_model)
+    readnoise_arr = get_ref_arr(model, readnoise_model)
 
     # set up output data arrays
     slope_int_cube = np.zeros((n_int,) + imshape, dtype=np.float32)
@@ -124,46 +125,47 @@ def guider_cds(model, gain_model, readnoise_model):
     return new_model
 
 
-def get_ref_arr(model, gain_model, readnoise_model):
+def get_ref_arr(model, reference_model):
     """
-    Extract gain and readnoise arrays in appropriate shape from the reference files.
+    Extract arrays in appropriate shape from the reference files.
 
     Parameters
     ----------
     model : `datamodels.GuiderRawModel`
         Input data model
-    gain_model : `datamodels.GainModel`
-        Gain for all pixels
-    readnoise_model : `datamodels.ReadnoiseModel`
-        Readnoise for all pixels
+    reference_model : `datamodels.ReferenceFileModel`
+        Reference file containing the relevant array;
+        typically either a GainModel or a ReadnoiseModel
 
     Returns
     -------
-    gain_arr : ndarray, 2-D, float
-        Gain values from the ref file
-    readnoise_arr : ndarray, 2-D, float
-        Readnoise values from the ref file
+    ref_arr : ndarray, 2-D, float
+        Values from the reference file
     """
-    # breakpoint()
-    if "STACK" in model.meta.exposure.type:
-        # No reference file matches stacked data shape, so find median and broadcast
-        log.debug("No ga")
-    # extract subarray from gain reference file, if necessary
-    if reffile_utils.ref_matches_sci(model, gain_model):
-        gain_arr = gain_model.data
+    # extract subarray from reference file, if necessary
+    if reffile_utils.ref_matches_sci(model, reference_model):
+        ref_arr = reference_model.data
     else:
-        log.info("Extracting reference file subarray to match science data")
-        ref_sub_model = reffile_utils.get_subarray_model(model, gain_model)
-        gain_arr = ref_sub_model.data
-        ref_sub_model.close()
+        try:
+            ref_sub_model = reffile_utils.get_subarray_model(model, reference_model)
+            log.info(
+                f"Extracting subarray from reference {reference_model.meta.model_type} "
+                f"to match science data."
+            )
+            ref_arr = ref_sub_model.data
+            ref_sub_model.close()
+        except ValueError as err:
+            if "STACK" in model.meta.exposure.type:
+                if model.data.shape[-2:] != reference_model.data.shape:
+                    log.debug(
+                        f"The {reference_model.meta.model_type} reference file array does not "
+                        f"match the shape of stacked FGS data;"
+                        f"applying the mean value to the data."
+                    )
+                    ref_arr = np.zeros(model.data.shape[-2:], dtype=np.float32) + np.mean(
+                        reference_model.data
+                    )
+            else:
+                raise ValueError from err
 
-    # extract subarray from readnoise reference file, if necessary
-    if reffile_utils.ref_matches_sci(model, readnoise_model):
-        readnoise_arr = readnoise_model.data
-    else:
-        log.info("Extracting readnoise reference file subarray to match science data")
-        ref_sub_model = reffile_utils.get_subarray_model(model, readnoise_model)
-        readnoise_arr = ref_sub_model.data
-        ref_sub_model.close()
-
-    return gain_arr, readnoise_arr
+    return ref_arr
