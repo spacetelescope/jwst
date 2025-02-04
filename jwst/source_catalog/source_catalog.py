@@ -146,7 +146,7 @@ class JWSTSourceCatalog:
 
         Parameters
         ----------
-        flux, flux_err : `~astropy.unit.Quantity`
+        flux, flux_err : `~astropy.unit.Quantity` (array-like of floats with units)
             The input flux and error arrays in units of Jy.
 
         Returns
@@ -600,24 +600,24 @@ class JWSTSourceCatalog:
     @lazyproperty
     def aper_bkg_flux(self):
         """
-        Return aperture local background flux (per pixel).
+        Return aperture local background fluxes (per pixel).
 
         Returns
         -------
-        `~astropy.unit.Quantity`
-            The aperture local background flux.
+        `~astropy.unit.Quantity` (array-like of floats with units)
+            The aperture local background fluxes.
         """
         return self._aper_local_background[0]
 
     @lazyproperty
     def aper_bkg_flux_err(self):
         """
-        Return aperture local background flux error (per pixel).
+        Return aperture local background flux errors (per pixel).
 
         Returns
         -------
-        `~astropy.unit.Quantity`
-            The aperture local background flux error.
+        `~astropy.unit.Quantity` (array-like of floats with units)
+            The aperture local background flux errors.
         """
         return self._aper_local_background[1]
 
@@ -1006,8 +1006,8 @@ class JWSTSourceCatalog:
 
         Returns
         -------
-        `~astropy.units.Quantity`
-            The distance in pixels to the nearest neighbor.
+        `~astropy.units.Quantity` (array-like of floats with units)
+            The distances in pixels to the nearest neighbors.
         """
         nn_dist = self._kdtree_query[0]
         if self.n_sources == 1:
