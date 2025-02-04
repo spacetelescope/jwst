@@ -96,7 +96,7 @@ class ModelLibrary(AbstractModelLibrary):
     @classmethod
     def _load_asn(cls, asn_path):
         try:
-            with Path.open(asn_path) as asn_file:
+            with Path(asn_path).open() as asn_file:
                 asn_data = load_asn(asn_file)
         except AssociationNotValidError as e:
             raise OSError("Cannot read ASN file.") from e

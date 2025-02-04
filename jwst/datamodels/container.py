@@ -251,7 +251,7 @@ to supply custom catalogs.
 
         filepath = Path(op.expandvars(filepath)).expanduser().resolve()
         try:
-            with Path.open(filepath) as asn_file:
+            with Path(filepath).open() as asn_file:
                 asn_data = load_asn(asn_file)
         except AssociationNotValidError as e:
             raise OSError("Cannot read ASN file.") from e
