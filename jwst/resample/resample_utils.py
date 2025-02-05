@@ -6,7 +6,6 @@ import warnings
 import asdf
 import numpy as np
 from astropy import units as u
-from astropy.utils.decorators import deprecated
 from drizzle.utils import decode_context as drizzle_decode_context
 
 from stdatamodels.dqflags import interpret_bit_flags
@@ -169,15 +168,21 @@ def resampled_wcs_from_models(
     return wcs, pscale_in0, pixel_scale, pixel_scale_ratio
 
 
-@deprecated(
-    since="1.17.2",
-    name="make_output_wcs",
-    alternative="resampled_wcs_from_models",
-)
+# @deprecated(
+#     since="1.17.2",
+#     name="make_output_wcs",
+#     alternative="resampled_wcs_from_models",
+# )
 def make_output_wcs(input_models, ref_wcs=None,
                     pscale_ratio=None, pscale=None, rotation=None, shape=None,
                     crpix=None, crval=None):
-    """Generate output WCS here based on footprints of all input WCS objects.
+    """
+    .. deprecated:: 1.17.2
+        :py:func:`make_output_wcs` has been deprecated and will be removed
+        in a future release. Use :py:func:`resampled_wcs_from_models` instead.
+
+
+    Generate output WCS here based on footprints of all input WCS objects.
 
     Parameters
     ----------
@@ -226,6 +231,14 @@ def make_output_wcs(input_models, ref_wcs=None,
     output_wcs : object
         WCS object, with defined domain, covering entire set of input frames
     """
+    warnings.warn(
+        "'make_output_wcs()' has been deprecated since 1.17.2 and "
+        "will be removed in a future release. "
+        "Use 'resampled_wcs_from_models()' instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     if ref_wcs is None:
         sregion_list = []
         with input_models:
@@ -274,14 +287,23 @@ def make_output_wcs(input_models, ref_wcs=None,
     return output_wcs
 
 
-@deprecated(
-    since="1.17.2",
-    name="build_driz_weight",
-    alternative="stcal.utils.build_driz_weight",
-)
 def build_driz_weight(model, weight_type=None, good_bits=None):
-    """Create a weight map for use by drizzle
     """
+    .. deprecated:: 1.17.2
+        :py:func:`build_driz_weight` has been deprecated and will be removed
+        in a future release. Use :py:func:`stcal.utils.build_driz_weight`
+        instead.
+
+
+    Create a weight map for use by drizzle
+    """
+    warnings.warn(
+        "'build_driz_weight()' has been deprecated since 1.17.2 and "
+        "will be removed in a future release. "
+        "Use 'stcal.utils.build_driz_weight()' instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     dqmask = build_mask(model.dq, good_bits)
 
     if weight_type == 'ivm':
@@ -330,13 +352,14 @@ def is_sky_like(frame):
     return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
 
 
-@deprecated(
-    since="1.17.2",
-    name="decode_context",
-    alternative="drizzle.utils.decode_context",
-)
 def decode_context(context, x, y):
-    """ Get 0-based indices of input images that contributed to (resampled)
+    """
+    .. deprecated:: 1.17.2
+        :py:func:`decode_context` has been deprecated and will be removed in a
+        future release. Use :py:func:`drizzle.utils.decode_context` instead.
+
+
+    Get 0-based indices of input images that contributed to (resampled)
     output pixel with coordinates ``x`` and ``y``.
 
     Parameters
@@ -387,6 +410,13 @@ def decode_context(context, x, y):
      array([ 9, 20, 29, 36, 47, 49, 64, 69, 70, 79])]
 
     """
+    warnings.warn(
+        "'decode_context()' has been deprecated since 1.17.2 and "
+        "will be removed in a future release. "
+        "Use 'drizzle.utils.decode_context()' instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     return drizzle_decode_context(context, x, y)
 
 
