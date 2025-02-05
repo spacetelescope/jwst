@@ -267,8 +267,7 @@ def clean_showers(self, input_model, allregions):
     regions = allregions[plane,:,:]
 
     # NaN-out the science pixels by using the slice footprint regions
-    scipix = np.where(regions != 0)
-    usedata[scipix] = np.nan
+    usedata[regions != 0] = np.nan
 
    # NaN-out pixels that should not be used for computation
    all_flags = (dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL'])
