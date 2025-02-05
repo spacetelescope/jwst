@@ -90,7 +90,6 @@ repos:
             jwst/superbias/.* |
             jwst/tests/.* |
             jwst/tso_photometry/.* |
-            jwst/tweakreg/.* |
             jwst/wavecorr/.* |
             jwst/wfs_combine/.* |
             jwst/wfss_contam/.* |
