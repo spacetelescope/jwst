@@ -270,13 +270,13 @@ def clean_showers(self, input_model, allregions):
     scipix = np.where(regions != 0)
     usedata[scipix] = np.nan
 
-    # NaN-out pixels that should not be used for computation
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['REFERENCE_PIXEL'])
-    # where are pixels set to any one of the all_flags cases
-    testflags = np.bitwise_and(mask_dq, all_flags)
-    # where are testflags ne 0 and mask == 1
-    bad_flags = np.where(testflags != 0)
-    usedata[bad_flags] = np.nan
+   # NaN-out pixels that should not be used for computation
+   all_flags = (dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL'])
+   # where are pixels set to any one of the all_flags cases
+   testflags = mask_dq & all_flags
+   # where are testflags ne 0 and mask == 1
+   bad_flags = (testflags != 0)
+   usedata[bad_flags] = np.nan
 
     # Apply a thresholding analysis and mask out any pixels that do not pass it
     lowcut = np.nanpercentile(usedata, low_reject)
