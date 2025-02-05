@@ -93,6 +93,6 @@ repos:
             jwst/wfs_combine/.* |
             jwst/wfss_contam/.* |
             jwst/white_light/.* |
-            docs/.*
-            .*/tests/.* |
+            docs/.* |
+            .*/tests/.*
           )$
