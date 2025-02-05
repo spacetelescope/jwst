@@ -23,7 +23,7 @@ class BarShadowStep(Step):
     spec = """
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.
-    """ # noqa: E501
+    """  # noqa: E501
 
     reference_file_types = ["barshadow"]
 
