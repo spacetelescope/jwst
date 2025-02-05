@@ -27,10 +27,11 @@ class StraylightStep (Step):
 
     def process(self, input):
 
-        with (datamodels.open(input) as input_model):
+        with datamodels.open(input) as input_model:
+            # Set up the output result
+            result = input_model.copy()
 
             # check the data is an IFUImageModel (not TSO)
-
             if isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel)):
                 # Check for a valid mrsxartcorr reference file
                 self.straylight_name = self.get_reference_file(input_model, 'mrsxartcorr')
@@ -38,7 +39,6 @@ class StraylightStep (Step):
                 if self.straylight_name == 'N/A':
                     self.log.warning('No MRSXARTCORR reference file found')
                     self.log.warning('Straylight step will be skipped')
-                    result = input_model.copy()
                     result.meta.cal_step.straylight = 'SKIPPED'
                     return result
 
@@ -46,8 +46,8 @@ class StraylightStep (Step):
 
                 modelpars = datamodels.MirMrsXArtCorrModel(self.straylight_name)
 
-                # Apply the correction
-                result = straylight.correct_xartifact(input_model, modelpars)
+                # Apply the cross artifact correction
+                result = straylight.correct_xartifact(result, modelpars)
 
                 modelpars.close()
 
@@ -55,8 +55,10 @@ class StraylightStep (Step):
                 if self.clean_showers:
                     self.regions_name = self.get_reference_file(input_model, 'regions')
                     with datamodels.RegionsModel(self.regions_name) as f:
-                        allregions = f.regions.copy()
-                        result = straylight.clean_showers(self, result, allregions)
+                        allregions = f.regions
+                        result = straylight.clean_showers(result, allregions, self.shower_plane,
+                                                          self.shower_x_stddev, self.shower_y_stddev,
+                                                          self.shower_low_reject, self.shower_high_reject)
 
                 result.meta.cal_step.straylight = 'COMPLETE'
 
@@ -65,7 +67,6 @@ class StraylightStep (Step):
                     self.log.warning('Straylight correction not defined for datatype %s',
                                      input_model)
                 self.log.warning('Straylight step will be skipped')
-                result = input_model.copy()
                 result.meta.cal_step.straylight = 'SKIPPED'
 
         return result

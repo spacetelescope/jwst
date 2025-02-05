@@ -100,7 +100,7 @@ def correct_xartifact(input_model, modelpars):
     nrows, ncols = input_model.data.shape
 
     # Create a copy of the input data array that will be modified
-    # for use in the straylight calculations
+    # for use in the cross artifact calculations
     usedata = input_model.data.copy()
 
     # mask is same size as image - set = 1 everywhere to start
@@ -200,27 +200,25 @@ def correct_xartifact(input_model, modelpars):
         right_model[:, :] = 0
         log.info("No parameters for right detector half, not applying Cross-Artifact correction.")
 
-    model = left_model + right_model
+    xartifact_model = left_model + right_model
     # remove the straylight correction for the reference pixels
-    model[:, 1028:1032] = 0.0
-    model[:, 0:4] = 0.0
+    xartifact_model[:, 1028:1032] = 0.0
+    xartifact_model[:, 0:4] = 0.0
 
-    # Create output as a copy of the real data prior to replacement of NaNs with zeros
-    output = input_model.copy()
-    # Subtract the model from the data
-    output.data = output.data - model
-    usedata = usedata - model
+    # Subtract the xartifact model from the original data
+    input_model.data = input_model.data - xartifact_model
+    usedata = usedata - xartifact_model
 
     # Now measure and remove the pedestal dark count rate measured between the channels
     # Embed in a try/except block to catch unusual failures
     try:
         _, themed, therms = scs(usedata[yd1:yd2, xd1:xd2])
-        pedestal = np.zeros_like(output.data) + themed
+        pedestal = np.zeros_like(input_model.data) + themed
         # remove the pedestal correction for the reference pixels
         pedestal[:, 1028:1032] = 0.0
         pedestal[:, 0:4] = 0.0
 
-        output.data = output.data - pedestal
+        input_model.data = input_model.data - pedestal
         log.info("Derived pedestal correction " + str(themed) + " DN/s")
     except Exception:
         log.info("Straylight pedestal correction failed.")
@@ -229,9 +227,10 @@ def correct_xartifact(input_model, modelpars):
     del usedata
 
     log.info("Cross-artifact model complete.")
-    return output
+    return input_model
 
-def clean_showers(self, input_model, allregions):
+def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0, shower_y_stddev=5.0,
+                  shower_low_reject=0.1, shower_high_reject=99.9):
     """
     Corrects the MIRI MRS data for straylight produced by residual cosmic ray showers.
 
@@ -240,8 +239,23 @@ def clean_showers(self, input_model, allregions):
     input_model : `~jwst.datamodels.IFUImageModel`
         Science data to be corrected.
 
-    allregions : FITS array
+    allregions : numpy array
         Holds the regions information mapping MRS pixels to slices (3-D, planes for different throughput)
+
+    shower_plane : integer
+        Throughput plane for identifying inter-slice regions
+
+    shower_x_stddev : float
+        X standard deviation for shower model
+
+    shower_y_stddev : float
+        Y standard deviation for shower model
+
+    shower_low_reject : float
+        Low percentile of pixels to reject
+
+    shower_high_reject : float
+        High percentile of pixels to reject
 
     Returns
     -------
@@ -252,44 +266,39 @@ def clean_showers(self, input_model, allregions):
 
     log.info("Applying correction for residual cosmic ray showers.")
 
-    plane = self.shower_plane
-    low_reject = self.shower_low_reject
-    high_reject = self.shower_high_reject
-    x_stddev = self.shower_x_stddev
-    y_stddev = self.shower_y_stddev
-
     # Create a copy of the input data array that will be modified
-    # for use in the straylight calculations
+    # for use in the shower calculations
     usedata = input_model.data.copy()
     mask_dq = input_model.dq
 
     # Which throughput plane of the slice map should be used?
-    regions = allregions[plane,:,:]
+    regions = allregions[shower_plane,:,:]
 
     # NaN-out the science pixels by using the slice footprint regions
     usedata[regions != 0] = np.nan
 
-   # NaN-out pixels that should not be used for computation
-   all_flags = (dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL'])
-   # where are pixels set to any one of the all_flags cases
-   testflags = mask_dq & all_flags
-   # where are testflags ne 0 and mask == 1
-   bad_flags = (testflags != 0)
-   usedata[bad_flags] = np.nan
+    # NaN-out pixels that should not be used for computation
+    all_flags = (dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL'])
+    # where are pixels set to any one of the all_flags cases
+    testflags = mask_dq & all_flags
+    # where are testflags ne 0 and mask == 1
+    bad_flags = (testflags != 0)
+    usedata[bad_flags] = np.nan
 
     # Apply a thresholding analysis and mask out any pixels that do not pass it
-    lowcut = np.nanpercentile(usedata, low_reject)
-    hicut = np.nanpercentile(usedata, high_reject)
+    lowcut = np.nanpercentile(usedata, shower_low_reject)
+    hicut = np.nanpercentile(usedata, shower_high_reject)
     badpix = (usedata < lowcut) | (usedata > hicut)
     usedata[badpix] = np.nan
 
     # Construct a 2d gaussian convolution kernel with specified parameters
-    gauss = Gaussian2DKernel(x_stddev=x_stddev, y_stddev=y_stddev)
-    model = convolve_fft(usedata, gauss)
+    gauss = Gaussian2DKernel(x_stddev=shower_x_stddev, y_stddev=shower_y_stddev)
+    shower_model = convolve_fft(usedata, gauss)
 
-    # Create output as a copy of the real data prior to filling it with NaNs
-    output = input_model.copy()
-    # Subtract the model from the data
-    output.data = output.data - model
+    # Subtract the shower model from the original data
+    input_model.data = input_model.data - shower_model
 
-    return output
+    # Delete our temporary working copy of the data
+    del usedata
+
+    return input_model

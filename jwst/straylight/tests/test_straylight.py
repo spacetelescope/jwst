@@ -58,16 +58,12 @@ def test_clean_showers():
     input_model.data = convolve_fft(point, gauss)
     input_model.dq = np.zeros((1024,1032), dtype='>i4')
 
-    class TestShower:
-        pass
-
     # Set parameters like real step, but without rejection since we have no noise
-    params = TestShower()
-    params.shower_plane = 0
-    params.shower_low_reject = 0
-    params.shower_high_reject = 100
-    params.shower_x_stddev = 18
-    params.shower_y_stddev = 5
+    shower_plane = 0
+    shower_low_reject = 0
+    shower_high_reject = 100
+    shower_x_stddev = 18
+    shower_y_stddev = 5
 
     # Set up a mock regions file with just one slice partially covering the blob
     mockregions = np.zeros((1, 1024, 1032))
@@ -75,7 +71,8 @@ def test_clean_showers():
 
     # Run the clean_showers routine and see if the values it reconstructed for the blob
     # look as expected for a small box of pixels underneath the slice mask
-    result = clean_showers(params, input_model, mockregions)
+    result = clean_showers(input_model, mockregions, shower_plane, shower_x_stddev, shower_y_stddev,
+                           shower_low_reject, shower_high_reject)
     cutout = result.data[613:617,591:596]
     compare = np.array([[0.00018815, 0.00019507, 0.0002014 , 0.00020712, 0.00021221],
                         [0.00018846, 0.00019539, 0.00020173, 0.00020746, 0.00021256],
