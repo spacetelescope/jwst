@@ -41,7 +41,6 @@ repos:
             jwst/associations/.* |
             jwst/background/.* |
             jwst/badpix_selfcal/.* |
-            jwst/barshadow/.* |
             jwst/charge_migration/.* |
             jwst/combine_1d/.* |
             jwst/coron/.* |
