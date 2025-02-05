@@ -242,19 +242,19 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     allregions : numpy array
         Holds the regions information mapping MRS pixels to slices (3-D, planes for different throughput)
 
-    shower_plane : integer
+    shower_plane : integer, optional
         Throughput plane for identifying inter-slice regions
 
-    shower_x_stddev : float
+    shower_x_stddev : float, optional
         X standard deviation for shower model
 
-    shower_y_stddev : float
+    shower_y_stddev : float, optional
         Y standard deviation for shower model
 
-    shower_low_reject : float
+    shower_low_reject : float, optional
         Low percentile of pixels to reject
 
-    shower_high_reject : float
+    shower_high_reject : float, optional
         High percentile of pixels to reject
 
     Returns
