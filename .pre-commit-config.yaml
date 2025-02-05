@@ -73,7 +73,6 @@ repos:
             jwst/pathloss/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
-            jwst/pipeline/.* |
             jwst/ramp_fitting/.* |
             jwst/refpix/.* |
             jwst/regtest/.* |
