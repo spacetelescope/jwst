@@ -17,5 +17,5 @@ def collect_pipeline_cfgs(dst="./"):
     Path(dst).mkdir(parents=True, exist_ok=True)
 
     cfg_dir = Path(find_spec("jwst").submodule_search_locations[0]) / "pipeline"
-    for cfg in Path.glob(cfg_dir / "*.cfg"):
+    for cfg in cfg_dir.glob("*.cfg"):
         shutil.copy(cfg, dst)
