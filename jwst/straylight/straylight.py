@@ -281,7 +281,7 @@ def clean_showers(self, input_model, allregions):
     # Apply a thresholding analysis and mask out any pixels that do not pass it
     lowcut = np.nanpercentile(usedata, low_reject)
     hicut = np.nanpercentile(usedata, high_reject)
-    badpix = np.where((usedata < lowcut) | (usedata > hicut))
+    badpix = (usedata < lowcut) | (usedata > hicut)
     usedata[badpix] = np.nan
 
     # Construct a 2d gaussian convolution kernel with specified parameters
