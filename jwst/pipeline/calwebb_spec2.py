@@ -241,7 +241,7 @@ class Spec2Pipeline(Pipeline):
 
             # Decide on what steps can actually be accomplished based on the
             # provided input.
-            self._step_verification(exp_type, members_by_type, multi_int)
+            self._step_verification(exp_type, science, members_by_type, multi_int)
             # Start processing the individual steps.
             # `assign_wcs` is the critical step. Without it, processing cannot proceed.
             assign_wcs_exception = None
@@ -439,7 +439,7 @@ class Spec2Pipeline(Pipeline):
 
         return calibrated
 
-    def _step_verification(self, exp_type, members_by_type, multi_int):
+    def _step_verification(self, exp_type, science, members_by_type, multi_int):
         """
         Verify whether requested steps can operate on the given exposure type.
 
@@ -454,6 +454,8 @@ class Spec2Pipeline(Pipeline):
         ----------
         exp_type : str
             The exposure type of the data.
+        science : JWSTDataModel
+            The input science data model.
         members_by_type : dict
             Dictionary of members in the association, keyed by type.
         multi_int : bool
@@ -508,9 +510,11 @@ class Spec2Pipeline(Pipeline):
         imprint = members_by_type["imprint"]
         if not self.imprint_subtract.skip:
             if len(imprint) > 0 and (
-                exp_type in ["NRS_MSASPEC", "NRS_IFU"] or is_nrs_ifu_flatlamp(input)
+                exp_type in ["NRS_MSASPEC", "NRS_IFU"] or is_nrs_ifu_flatlamp(science)
             ):
-                if len(imprint) > 1 and (exp_type in ["NRS_MSASPEC"] or is_nrs_ifu_flatlamp(input)):
+                if len(imprint) > 1 and (
+                    exp_type in ["NRS_MSASPEC"] or is_nrs_ifu_flatlamp(science)
+                ):
                     self.log.warning("Wrong number of imprint members")
                     members_by_type["imprint"] = imprint[0]
             else:
