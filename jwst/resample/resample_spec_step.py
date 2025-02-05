@@ -10,7 +10,8 @@ from jwst.lib.wcs_utils import get_wavelengths
 from . import resample_spec, ResampleStep
 from jwst.resample import resample_utils
 from ..exp_to_source import multislit_to_container
-from ..assign_wcs.util import update_s_region_spectral, update_s_region_keyword
+from ..assign_wcs.util import update_s_region_spectral, \
+    update_s_region_keyword
 from ..stpipe import Step
 
 
@@ -233,16 +234,7 @@ class ResampleSpecStep(Step):
             result.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
         self.update_slit_metadata(result)
-
-        if input_models[0].meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-            s_region_list = []
-            for model in input_models:
-                s_region_list.append(model.meta.wcsinfo.s_region)
-            # Test code for MIRI LRS - does not work as it is written
-            combined_footprint = resample_utils.combine_s_regions_lrs(s_region_list)
-            update_s_region_keyword(result, combined_footprint)
-        else:
-            update_s_region_spectral(result)
+        update_s_region_spectral(result)
 
         return result
 

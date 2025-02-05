@@ -372,53 +372,16 @@ def check_for_tmeasure(model):
     except AttributeError:
         return 0
 
-def combine_s_regions_lrs(s_region_list):
+def combine_s_regions_lrs(s_region_list,model):
 
-    # hold all the footprints of each slit in a list
-    footprint_list = []
-    for sregion in s_region_list: 
-        footprint=util._sregion_to_footprint(sregion)
-        footprint_list.append(footprint) 
-    print(footprint_list)
-
-    nf = len(footprint_list)
-    print('number of footprints', nf)
-    # footprints are 4, 2 arrays
-    # [ra min, dec min] [ra min dec max] [ra max dec max] [ra max dec min]
-    corner_ra = np.zeros(4)
-    corner_dec = np.zeros(4)
-    # initialize
-    for i in range(4):
-        corner_ra[i] = footprint_list[0][i][0]
-        corner_dec[i] = footprint_list[0][i][1]
-    #print('starting corner_ra', corner_ra)
-    #print('starting corner_dec', corner_dec)
+    # using the first datamodel find the angle between
+    # LRS slit frame and ra, dec.
     
-    for i in range(1, nf):
-        if footprint_list[i][0][0] < corner_ra[0]:
-            corner_ra[0] = footprint_list[i][0][0]
-        if footprint_list[i][0][1] < corner_dec[0]:
-            corner_dec[0] = footprint_list[i][0][1]
+    wcs = model.meta.wcs
+    s2w = wcs.get_transform('alpha_beta', 'world')
+    d2s = wcs.get_transform('detector','alpha_beta')
+    bbox = wcs.bounding_box
+    grid = wcstools.grid_from_bounding_box(bbox)
+    ra, dec, lam = np.array(wcs(*grid))
+    lam_med = np.nanmedian(lam)
 
-        if footprint_list[i][1][0] < corner_ra[1]:
-            corner_ra[1] = footprint_list[i][1][0]
-        if footprint_list[i][1][1] > corner_dec[1]:
-            corner_dec[1] = footprint_list[i][1][1]
-
-        if footprint_list[i][2][0] > corner_ra[2]:
-            corner_ra[2] = footprint_list[i][2][0]
-        if footprint_list[i][2][1] > corner_dec[2]:
-            corner_dec[2] = footprint_list[i][2][1]
-
-        if footprint_list[i][3][0] > corner_ra[3]:
-            corner_ra[3] = footprint_list[i][3][0]
-        if footprint_list[i][3][1] < corner_dec[3]:
-            corner_dec[3] = footprint_list[i][3][1]            
-
-
-    #print(corner_ra)
-    #print(corner_dec)
-
-    footprint = np.array([corner_ra, corner_dec]).T
-    print('Final footprint', footprint)
-    return footprint

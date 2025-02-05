@@ -862,7 +862,7 @@ def compute_footprint_spectral(model):
 
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)
-
+    
     # the wrapped ra values are forced to be on one side of ra-border
     # the wrapped ra are used to determine the correct  min and max ra
     ra = wrap_ra(ra)
@@ -883,10 +883,84 @@ def compute_footprint_spectral(model):
     return footprint, (lam_min, lam_max)
 
 
+def compute_footprint_spectral_lrs(model):
+    """
+    Determine spatial footprint for spectral observations using the instrument model.
+
+    Parameters
+    ----------
+    model : `~jwst.datamodels.IFUImageModel`
+        The output of assign_wcs.
+    """
+    swcs = model.meta.wcs
+    bbox = swcs.bounding_box
+    if bbox is None:
+        bbox = wcs_bbox_from_shape(model.data.shape)
+
+    print('*****', bbox)
+    xlow = bbox[0][0]
+    xhigh = bbox[0][1]
+    ylow = bbox[1][0]
+    yhigh = bbox[1][1]
+    
+    print(xlow, xhigh)
+    print(ylow, yhigh)
+
+    x = np.zeros(4)
+    y = np.zeros(4)
+    x[0] = xlow
+    y[0] = ylow
+
+    x[1] = xlow
+    y[1] = yhigh
+
+    x[2] = xhigh
+    y[2] = yhigh
+
+    x[3] = xhigh
+    y[3] = ylow
+
+    print(x,y)
+    ra, dec, lam = swcs(x,y) # this gives you ra and dec of  slit center
+
+    
+    #x, y = grid_from_bounding_box(bbox)
+    #ra, dec, lam = swcs(x, y)
+    
+    
+    # the wrapped ra values are forced to be on one side of ra-border
+    # the wrapped ra are used to determine the correct  min and max ra
+    ra = wrap_ra(ra)
+    min_ra = np.nanmin(ra)
+    max_ra = np.nanmax(ra)
+
+    # for the footprint we want the ra values to fall between 0 to 360
+    if min_ra < 0:
+        min_ra = min_ra + 360.0
+    if max_ra >= 360.0:
+        max_ra = max_ra - 360.0
+    #footprint = np.array([[min_ra, np.nanmin(dec)],
+    #                      [max_ra, np.nanmin(dec)],
+    #                      [max_ra, np.nanmax(dec)],
+    #                      [min_ra, np.nanmax(dec)]])
+
+    footprint = np.array([[ra[0], dec[0]],
+                          [ra[1], dec[1]],
+                          [ra[2], dec[2]],
+                          [ra[3], dec[3]]])
+    lam_min = np.nanmin(lam)
+    lam_max = np.nanmax(lam)
+    return footprint, (lam_min, lam_max)
+
+
 def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
-    footprint, spectral_region = compute_footprint_spectral(model)
+
+    if model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+        footprint, spectral_region = compute_footprint_spectral_lrs(model)
+    else:
+        footprint, spectral_region = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
     model.meta.wcsinfo.spectral_region = spectral_region
 
