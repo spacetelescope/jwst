@@ -32,7 +32,7 @@ class SourceCatalogStep(Step):
         ci1_star_threshold = float(default=2.0)  # CI 1 star threshold
         ci2_star_threshold = float(default=1.8)  # CI 2 star threshold
         suffix = string(default='cat')        # Default suffix for output files
-    """
+    """  # noqa: E501
 
     reference_file_types = ["apcorr", "abvegaoffset"]
 

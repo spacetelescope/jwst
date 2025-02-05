@@ -127,7 +127,7 @@ input will be in the form of a `~jwst.datamodels.Level1bModel`, which only
 contains the 4D array of detector pixel values, along with some optional
 extensions. When such a file is loaded into the pipeline, it is immediately
 converted into a `~jwst.datamodels.RampModel`, and has all additional data arrays
-for errors and Data Quality flags created and initialized to zero.
+for Data Quality flags created and initialized to zero.
 
 The input can also contain a 3D cube of NIRCam "Frame 0" data, where
 each image plane in the 3D cube is the initial frame for each integration in

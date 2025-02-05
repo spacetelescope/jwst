@@ -19,7 +19,7 @@ class SaturationStep(Step):
     spec = """
         n_pix_grow_sat = integer(default=1) # number of layers adjacent pixels to flag
         use_readpatt = boolean(default=True) # Use grouped read pattern information to assist with flagging
-    """
+    """ # noqa: E501
 
     reference_file_types = ['saturation']
 

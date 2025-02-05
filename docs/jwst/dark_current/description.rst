@@ -49,8 +49,6 @@ subtracted from the corresponding first few integrations of the science exposure
 The data in the last integration of the dark reference file is applied to all
 remaining science integrations.
 
-The ERR arrays of the science data are currently not modified by this step.
-
 The DQ flags from the dark reference file are propagated into the science
 exposure PIXELDQ array using a bitwise OR operation.
 

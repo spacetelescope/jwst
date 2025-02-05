@@ -32,7 +32,7 @@ class PixelReplaceStep(Step):
         n_adjacent_cols = integer(default=3)
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
         output_use_model = boolean(default=True) # Use input filenames in the output models
-    """
+    """  # noqa: E501
 
     def process(self, input_data):
         """
