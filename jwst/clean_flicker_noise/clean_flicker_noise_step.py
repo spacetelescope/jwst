@@ -90,7 +90,7 @@ class CleanFlickerNoiseStep(Step):
         save_background = boolean(default=False)  # Save the fit background
         save_noise = boolean(default=False)  # Save the fit noise
         skip = boolean(default=True)  # By default, skip the step
-    """
+    """  # noqa: E501
 
     reference_file_types = ["flat"]
 

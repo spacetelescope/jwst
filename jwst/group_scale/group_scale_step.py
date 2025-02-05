@@ -16,7 +16,7 @@ class GroupScaleStep(Step):
     class_alias = "group_scale"
 
     spec = """
-    """
+    """ # noqa: E501
 
     def process(self, step_input):
 

@@ -34,7 +34,7 @@ class Image3Pipeline(Pipeline):
 
     spec = """
     in_memory = boolean(default=True)  # If False, preserve memory using temporary files at the expense of runtime
-    """
+    """ # noqa: E501
 
     # Define alias to steps
     step_defs = {
