@@ -40,7 +40,6 @@ repos:
             jwst/assign_wcs/.* |
             jwst/associations/.* |
             jwst/background/.* |
-            jwst/barshadow/.* |
             jwst/charge_migration/.* |
             jwst/combine_1d/.* |
             jwst/coron/.* |
