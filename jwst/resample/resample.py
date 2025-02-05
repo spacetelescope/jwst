@@ -547,6 +547,7 @@ class ResampleImage(Resample):
         with self.input_models:
             for index in indices:
                 model = self.input_models.borrow(index)
+                model_modified = False
                 if self.output_jwst_model is None:
                     # Determine output file type from input exposure filenames
                     # Use this for defining the output filename
@@ -566,12 +567,13 @@ class ResampleImage(Resample):
                     # although the existence of this extension may not be
                     # necessary
                     model.area = model.area
+                    model_modified = True
 
                 self.add_model(model)
                 if first:
                     self.output_jwst_model.meta.bunit_data = model.meta.bunit_data
                     first = False
-                self.input_models.shelve(model, index, modify=False)
+                self.input_models.shelve(model, index, modify=model_modified)
                 del model
 
         self.finalize()

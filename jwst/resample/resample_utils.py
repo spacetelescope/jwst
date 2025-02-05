@@ -168,11 +168,6 @@ def resampled_wcs_from_models(
     return wcs, pscale_in0, pixel_scale, pixel_scale_ratio
 
 
-# @deprecated(
-#     since="1.17.2",
-#     name="make_output_wcs",
-#     alternative="resampled_wcs_from_models",
-# )
 def make_output_wcs(input_models, ref_wcs=None,
                     pscale_ratio=None, pscale=None, rotation=None, shape=None,
                     crpix=None, crval=None):
