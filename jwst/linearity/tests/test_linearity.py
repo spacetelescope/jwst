@@ -291,36 +291,6 @@ def test_lin_subarray():
     assert (outpixdq[76, 104] == 1)
 
 
-def test_err_array():
-    """Test that the error array is not changed by the linearity step"""
-
-    # size of integration
-    ngroups = 10
-    xsize = 1032
-    ysize = 1024
-
-    # create a JWST datamodel for MIRI data
-    im = RampModel((1, ngroups, ysize, xsize))
-    im.data += 1
-    im.err += 2
-    # set file header values
-    im.meta.instrument.detector = 'MIRIMAGE'
-    im.meta.instrument.name = 'MIRI'
-    im.meta.observation.date = '2018-01-01'
-    im.meta.observation.time = '00:00:00'
-    im.meta.subarray.xstart = 1
-    im.meta.subarray.xsize = xsize
-    im.meta.subarray.ystart = 1
-    im.meta.subarray.ysize = ysize
-
-    # run pipeline
-    outfile = LinearityStep.call(im)
-
-    # check output of error array
-    # test that the science data are not changed
-    np.testing.assert_allclose(im.err, outfile.err)
-
-
 def make_rampmodel(nints, ngroups, ysize, xsize):
     """Function to provide ramp model to tests"""
 

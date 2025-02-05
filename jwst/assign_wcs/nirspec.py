@@ -39,6 +39,9 @@ log.setLevel(logging.DEBUG)
 FIXED_SLIT_NUMS = {'NONE': 0, 'S200A1': 1, 'S200A2': 2,
                    'S400A1': 3, 'S1600A1': 4, 'S200B1': 5}
 
+# Approximate fallback values for MSA slit scaling
+MSA_SLIT_SCALES = (1.35, 1.15)
+
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
            "nrs_ifu_wcs", "get_spectral_order_wrange"]
 
@@ -418,7 +421,12 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
                                                        (lamp_mode == "msaspec")):
         prog_id = input_model.meta.observation.program_number.lstrip("0")
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(input_model, reference_files)
-        slits = get_open_msa_slits(prog_id, msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
+        if reference_files is not None and 'msa' in reference_files:
+            slit_scales = get_msa_slit_scales(reference_files['msa'])
+        else:
+            slit_scales = None
+        slits = get_open_msa_slits(prog_id, msa_metadata_file, msa_metadata_id,
+                                   dither_point, slit_y_range, slit_scales)
 
     # Fixed slits exposure (non-TSO)
     elif exp_type == "nrs_fixedslit":
@@ -530,8 +538,35 @@ def get_msa_metadata(input_model, reference_files):
     return msa_config, msa_metadata_id, dither_position
 
 
+def get_msa_slit_scales(msa_ref_file):
+    """
+    Get slit area scaling factors for MSA shutters.
+
+    Parameters
+    ----------
+    msa_ref_file : str
+        The name of the MSA reference file (not metadata file).
+
+    Returns
+    -------
+    scales : dict
+        Keys are integer quadrant values (one-indexed).  Values
+        are 2-tuples of float values (scale_x, scale_y).
+    """
+    msa = MSAModel(msa_ref_file)
+    scales = {}
+    for quadrant in range(1, 5):
+        msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
+
+        msa_data = msa_quadrant.data
+        scale_x = (msa_data['XC'][1] - msa_data['XC'][0]) / msa_data['SIZEX'][0]
+        scale_y = msa_data['YC'][365] / msa_data['SIZEY'][0]
+        scales[quadrant] = (scale_x, scale_y)
+    return scales
+
+
 def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
-                       slit_y_range=[-.55, .55]):
+                       slit_y_range=[-.55, .55], slit_scales=None):
     """
     Return the opened MOS slitlets.
 
@@ -595,6 +630,10 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
         message = "Problem reading MSA metafile (MSAMETFL) {0}".format(msa_file)
         log.error(message)
         raise MSAFileError(message)
+
+    # Set an empty dictionary for slit_scales if not provided
+    if slit_scales is None:
+        slit_scales = {}
 
     # Get the shutter and source info tables from the _msa.fits file.
     msa_conf = msa_file[('SHUTTER_INFO', 1)]  # EXTNAME = 'SHUTTER_INFO'
@@ -798,25 +837,28 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
             msa_file.close()
             raise MSAFileError(message)
 
-        # Create the output list of tuples that contain the required
-        # data for further computations
-        """
-        Convert source positions from PPS to Model coordinate frame.
-        The source x,y position in the shutter is given in the msa configuration file,
-        columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
-        The source position is in a coordinate system associated with each shutter whose
-        origin is the lower left corner of the shutter, positive x is to the right
-        and positive y is upwards.
-        """
+        # Convert source positions from PPS to Model coordinate frame.
+        # The source x,y position in the shutter is given in the msa configuration file,
+        # columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
+        # The source position is in a coordinate system associated with each shutter whose
+        # origin is the lower left corner of the shutter, positive x is to the right
+        # and positive y is upwards.
         source_xpos -= 0.5
         source_ypos -= 0.5
 
         # Create the shutter_state string
         all_shutters = _shutter_id_to_str(open_shutters, ycen)
 
+        # Get the slit scale by quadrant, or return approximate
+        # fallback values if not available
+        scale_x, scale_y = slit_scales.get(quadrant, MSA_SLIT_SCALES)
+
+        # Create the output list of tuples that contain the required
+        # data for further computations
         slit_parameters = (slitlet_id, shutter_id, dither_position, xcen, ycen, ymin, ymax,
                            quadrant, source_id, all_shutters, source_name, source_alias,
-                           stellarity, source_xpos, source_ypos, source_ra, source_dec)
+                           stellarity, source_xpos, source_ypos, source_ra, source_dec,
+                           scale_x, scale_y)
         log.debug(f'Appending slit: {slit_parameters}')
         slitlets.append(Slit(*slit_parameters))
 
@@ -974,9 +1016,11 @@ def slit_to_msa(open_slits, msafile):
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
+
         if any(slits_in_quadrant):
             msa_data = msa_quadrant.data
             msa_model = msa_quadrant.model
+
             for slit in slits_in_quadrant:
                 slit_id = slit.shutter_id
                 # Shutters are numbered starting from 1.

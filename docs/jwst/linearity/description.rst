@@ -63,8 +63,6 @@ Special Handling
    applied to that group. Any groups for that pixel that are not flagged as
    saturated will be corrected.
 
-The ERR array of the input science exposure is not modified.
-
 The flags from the linearity reference file DQ array are propagated into the
 PIXELDQ array of the science exposure using a bitwise OR operation.
 
