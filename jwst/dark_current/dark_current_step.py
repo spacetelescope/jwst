@@ -173,5 +173,4 @@ def dark_output_data_2_ramp_model(out_data, out_model):
         out_model.data = out_data.data
         out_model.groupdq = out_data.groupdq
         out_model.pixeldq = out_data.pixeldq
-        out_model.err = out_data.err
         return out_model
