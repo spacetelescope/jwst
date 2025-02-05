@@ -501,7 +501,8 @@ def _parse_catfile(catfile):
 
     catdict = {}
 
-    with Path(catfile).open() as f:
+    catfile = Path(catfile)
+    with catfile.open() as f:
         catfile_dir = catfile.parent
 
         for line in f.readlines():
