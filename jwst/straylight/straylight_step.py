@@ -21,7 +21,7 @@ class StraylightStep (Step):
         shower_y_stddev = float(default=5) # Y standard deviation for shower model
         shower_low_reject = float(default=0.1) # Low percentile of pixels to reject
         shower_high_reject = float(default=99.9) # High percentile of pixels to reject
-    """
+    """  # noqa: E501
 
     reference_file_types = ['mrsxartcorr', 'regions']
 
