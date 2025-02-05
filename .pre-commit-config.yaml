@@ -93,9 +93,5 @@ repos:
             jwst/wfs_combine/.* |
             jwst/wfss_contam/.* |
             jwst/white_light/.* |
-            jwst/conftest.py |
-            .*/tests/.* |
-            setup.py |
-            pytest_jwst/.* |
             docs/.*
           )$
