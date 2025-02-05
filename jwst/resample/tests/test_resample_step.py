@@ -15,7 +15,7 @@ from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
-
+from jwst.resample.resample_utils import load_custom_wcs
 
 def _set_photom_kwd(im):
     xmin = im.meta.subarray.xstart - 1
@@ -1230,7 +1230,7 @@ def test_custom_wcs_input(tmp_path, nircam_rate, wcs_attr):
     asdf.AsdfFile({"wcs": wcs}).write_to(refwcs)
 
     # load the WCS from the asdf file
-    loaded_wcs = ResampleStep.load_custom_wcs(refwcs)
+    loaded_wcs = load_custom_wcs(refwcs)
 
     # check that the loaded WCS has the correct values
     for attr in ['pixel_shape', 'array_shape']:
@@ -1260,7 +1260,7 @@ def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
 
     # check for expected values when read back in
     keys = ['pixel_area', 'pixel_shape', 'array_shape']
-    loaded_wcs = ResampleStep.load_custom_wcs(refwcs)
+    loaded_wcs = load_custom_wcs(refwcs)
     for key in keys:
         if key == override:
             assert np.allclose(getattr(loaded_wcs, key), value)
@@ -1294,11 +1294,11 @@ def test_custom_wcs_input_error(tmp_path, nircam_rate):
 
     # loading the file without shape info should produce an error
     with pytest.raises(ValueError, match="'output_shape' is required"):
-        loaded_wcs = ResampleStep.load_custom_wcs(refwcs)
+        loaded_wcs = load_custom_wcs(refwcs)
 
     # providing an output shape should succeed
     output_shape = (300, 400)
-    loaded_wcs = ResampleStep.load_custom_wcs(refwcs, output_shape=output_shape)
+    loaded_wcs = load_custom_wcs(refwcs, output_shape=output_shape)
 
     # array shape is opposite of input values (numpy convention)
     assert np.all(loaded_wcs.array_shape == output_shape[::-1])

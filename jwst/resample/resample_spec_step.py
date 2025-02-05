@@ -6,6 +6,7 @@ from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
+from jwst.resample.resample_utils import load_custom_wcs
 
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
@@ -198,7 +199,7 @@ class ResampleSpecStep(Step):
             'output_shape',
             min_vals=[1, 1]
         )
-        kwargs['output_wcs'] = ResampleStep.load_custom_wcs(
+        kwargs['output_wcs'] = load_custom_wcs(
             self.output_wcs,
             wcs_pars['output_shape']
         )

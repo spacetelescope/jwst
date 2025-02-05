@@ -13,10 +13,12 @@ from stdatamodels.jwst.datamodels import SlitModel, ImageModel, dqflags
 from jwst.resample.resample_spec import find_dispersion_axis
 from jwst.resample.resample_utils import (
     build_mask,
-    build_driz_weight,
     reproject
 )
 
+
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+GOOD = dqflags.pixel["GOOD"]
 
 DQ = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8])
 BITVALUES = 2**0 + 2**2
@@ -106,31 +108,6 @@ def test_build_mask(dq, bitvalues, expected):
     """
     result = build_mask(dq, bitvalues)
     assert_array_equal(result, expected)
-
-
-@pytest.mark.parametrize("weight_type", ["ivm", "exptime"])
-def test_build_driz_weight(weight_type):
-    """Check that correct weight map is returned of different weight types"""
-    model = ImageModel((10, 10))
-    model.dq[0] = DO_NOT_USE
-    model.meta.exposure.measurement_time = 10.0
-    model.var_rnoise += 0.1
-
-    weight_map = build_driz_weight(model, weight_type=weight_type, good_bits="GOOD")
-    assert_array_equal(weight_map[0], 0)
-    assert_array_equal(weight_map[1:], 10.0)
-    assert weight_map.dtype == np.float32
-
-
-@pytest.mark.parametrize("weight_type", ["ivm", None])
-def test_build_driz_weight_zeros(weight_type):
-    """Check that zero or not finite weight maps get set to 1"""
-    model = ImageModel((10, 10))
-    model.var_rnoise += 1
-
-    weight_map = build_driz_weight(model, weight_type=weight_type)
-
-    assert_array_equal(weight_map, 1)
 
 
 def test_find_dispersion_axis():

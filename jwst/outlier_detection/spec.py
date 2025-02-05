@@ -106,7 +106,7 @@ def detect_outliers(
             kernel=kernel,
             fillval=fillval,
             good_bits=good_bits,
-            compute_err="driz_err"
+            compute_err="driz_err",
         )
 
         median_data, median_wcs, median_err = median_with_resampling(

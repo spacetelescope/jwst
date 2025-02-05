@@ -6,7 +6,7 @@ import numpy as np
 
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
-from jwst.resample.resample_utils import build_driz_weight
+from stcal.resample.utils import build_driz_weight
 from stcal.outlier_detection.utils import (
     compute_weight_threshold,
     gwcs_blot,
@@ -121,7 +121,12 @@ def median_without_resampling(
                 drizzled_err = drizzled_model.err.copy()
             else:
                 drizzled_err = None
-            weight = build_driz_weight(drizzled_model, weight_type=weight_type, good_bits=good_bits)
+            weight = build_driz_weight(
+                drizzled_model,
+                weight_type=weight_type,
+                good_bits=good_bits,
+                flag_name_map=datamodels.dqflags.pixel,
+            )
             if i == 0:
                 median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
                 input_shape = (ngroups,) + drizzled_data.shape
@@ -208,12 +213,10 @@ def median_with_resampling(
         The median data array.
     median_wcs : gwcs.WCS
         A WCS corresponding to the median data.
-
     median_error : np.ndarray, None, optional
         A median error estimate, returned only if `return_error` is `True`.
         If ``resamp.compute_err`` is not set to "driz_err", `None` will be
         returned.
-
     """
     in_memory = not input_models.on_disk
     indices_by_group = list(input_models.group_indices.values())
@@ -234,7 +237,6 @@ def median_with_resampling(
         median_model = datamodels.ImageModel(None)
 
     for i, indices in enumerate(indices_by_group):
-
         drizzled_model = resamp.resample_group(indices)
 
         if save_intermediate_results:

@@ -3,10 +3,10 @@ import logging
 import math
 import warnings
 
+import asdf
 import numpy as np
 from astropy import units as u
 from astropy.utils.decorators import deprecated
-import gwcs
 from drizzle.utils import decode_context as drizzle_decode_context
 
 from stdatamodels.dqflags import interpret_bit_flags
@@ -18,7 +18,7 @@ from stcal.alignment.util import (
     wcs_from_sregions,
 )
 from stcal.resample import UnsupportedWCSError
-from stcal.resample.utils import compute_mean_pixel_area
+from stcal.resample.utils import compute_mean_pixel_area, get_tmeasure
 
 
 __all__ = ["decode_context", "make_output_wcs", "resampled_wcs_from_models"]
@@ -320,6 +320,8 @@ def reproject(wcs1, wcs2):
     return _reproject
 
 
+@deprecated(since="1.17.2", message="", name="build_driz_weight",
+            alternative="stcal.utils.build_driz_weight")
 def build_driz_weight(model, weight_type=None, good_bits=None):
     """Create a weight map for use by drizzle
     """
@@ -337,7 +339,8 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
             inv_variance = 1.0
         result = inv_variance * dqmask
     elif weight_type == 'exptime':
-        if check_for_tmeasure(model):
+        _, s = get_tmeasure(model)
+        if s:
             exptime = model.meta.exposure.measurement_time
         else:
             exptime = model.meta.exposure.exposure_time
@@ -424,3 +427,60 @@ def decode_context(context, x, y):
 
     """
     return drizzle_decode_context(context, x, y)
+
+
+def load_custom_wcs(asdf_wcs_file, output_shape=None):
+    """
+    Load a custom output WCS from an ASDF file.
+
+    Parameters
+    ----------
+    asdf_wcs_file : str
+        Path to an ASDF file containing a GWCS structure.
+    output_shape : tuple of int, optional
+        Array shape for the output data.  If not provided,
+        the custom WCS must specify one of: pixel_shape,
+        array_shape, or bounding_box.
+
+    Returns
+    -------
+    wcs : WCS
+        The output WCS to resample into.
+    """
+    if not asdf_wcs_file:
+        return None
+
+    with asdf.open(asdf_wcs_file) as af:
+        wcs = deepcopy(af.tree["wcs"])
+        pixel_area = af.tree.get("pixel_area", None)
+        pixel_shape = af.tree.get("pixel_shape", None)
+        array_shape = af.tree.get("array_shape", None)
+
+    if not hasattr(wcs, "pixel_area") or wcs.pixel_area is None:
+        wcs.pixel_area = pixel_area
+    if not hasattr(wcs, "pixel_shape") or wcs.pixel_shape is None:
+        wcs.pixel_shape = pixel_shape
+    if not hasattr(wcs, "array_shape") or wcs.array_shape is None:
+        wcs.array_shape = array_shape
+
+    if output_shape is not None:
+        wcs.array_shape = output_shape[::-1]
+        wcs.pixel_shape = output_shape
+    elif wcs.pixel_shape is not None:
+        wcs.array_shape = wcs.pixel_shape[::-1]
+    elif wcs.array_shape is not None:
+        wcs.pixel_shape = wcs.array_shape[::-1]
+    elif wcs.bounding_box is not None:
+        wcs.array_shape = tuple(
+            int(axs[1] + 0.5)
+            for axs in wcs.bounding_box.bounding_box(order="C")
+        )
+        wcs.pixel_shape = wcs.array_shape[::-1]
+    else:
+        raise ValueError(
+            "Step argument 'output_shape' is required when custom WCS "
+            "does not have 'array_shape', 'pixel_shape', or "
+            "'bounding_box' attributes set."
+        )
+
+    return wcs
