@@ -30,7 +30,8 @@ class ModelLibrary(AbstractModelLibrary):
 
     @property
     def asn_dir(self):
-        return self._asn_dir
+        """Return the directory from which the association was loaded."""
+        return str(self._asn_dir)
 
     @property
     def on_disk(self):

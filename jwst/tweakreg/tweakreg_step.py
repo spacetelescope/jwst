@@ -359,7 +359,7 @@ class TweakRegStep(Step):
             The aligned input data models
         """
         with images:
-            for image_model, corrector in zip(images, correctors, strict=False):
+            for image_model, corrector in zip(images, correctors, strict=True):
                 # retrieve fit status and update wcs if fit is successful:
                 if (
                     "fit_info" in corrector.meta
@@ -472,6 +472,9 @@ def _parse_catfile(catfile):
     """
     Parse catalog text file into a dictionary.
 
+    The catalog text file must contain two whitespace-delimited columns:
+        column 1: str, datamodel filename
+        column 2: str, catalog filename
     The catalog filenames will become paths relative
     to the current working directory. So for a catalog filename
     "mycat.ecsv" if the catfile is in a subdirectory "my_data"
@@ -480,9 +483,7 @@ def _parse_catfile(catfile):
     Parameters
     ----------
     catfile : str
-        Path to a text file containing the list of catalogs, with the format
-        (str, str) for each line, representing the datamodel filename and
-        catalog filename, respectively.
+        Path to a text file containing the list of catalogs.
 
     Returns
     -------
@@ -501,7 +502,7 @@ def _parse_catfile(catfile):
     catdict = {}
 
     with Path(catfile).open() as f:
-        catfile_dir = Path(catfile).parent
+        catfile_dir = catfile.parent
 
         for line in f.readlines():
             sline = line.strip()
