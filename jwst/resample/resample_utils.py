@@ -169,8 +169,11 @@ def resampled_wcs_from_models(
     return wcs, pscale_in0, pixel_scale, pixel_scale_ratio
 
 
-@deprecated(since="1.17.2", message="", name="make_output_wcs",
-            alternative="resampled_wcs_from_models")
+@deprecated(
+    since="1.17.2",
+    name="make_output_wcs",
+    alternative="resampled_wcs_from_models",
+)
 def make_output_wcs(input_models, ref_wcs=None,
                     pscale_ratio=None, pscale=None, rotation=None, shape=None,
                     crpix=None, crval=None):
@@ -271,57 +274,11 @@ def make_output_wcs(input_models, ref_wcs=None,
     return output_wcs
 
 
-def reproject(wcs1, wcs2):
-    """
-    Given two WCSs or transforms return a function which takes pixel
-    coordinates in the first WCS or transform and computes them in the second
-    one. It performs the forward transformation of ``wcs1`` followed by the
-    inverse of ``wcs2``.
-
-    Parameters
-    ----------
-    wcs1, wcs2 : `~astropy.wcs.WCS` or `~gwcs.wcs.WCS`
-        WCS objects that have `pixel_to_world_values` and `world_to_pixel_values`
-        methods.
-
-    Returns
-    -------
-    _reproject : func
-        Function to compute the transformations.  It takes x, y
-        positions in ``wcs1`` and returns x, y positions in ``wcs2``.
-    """
-
-    try:
-        # Here we want to use the WCS API functions so that a Sliced WCS
-        # will work as well. However, the API functions do not accept
-        # keyword arguments and `with_bounding_box=False` cannot be passed.
-        # We delete the bounding box on a copy of the WCS - yes, inefficient.
-        forward_transform = wcs1.pixel_to_world_values
-        wcs_no_bbox = deepcopy(wcs2)
-        wcs_no_bbox.bounding_box = None
-        backward_transform = wcs_no_bbox.world_to_pixel_values
-    except AttributeError as err:
-        raise TypeError("Input should be a WCS") from err
-
-
-    def _reproject(x, y):
-        sky = forward_transform(x, y)
-        flat_sky = []
-        for axis in sky:
-            flat_sky.append(axis.flatten())
-        # Filter out RuntimeWarnings due to computed NaNs in the WCS
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            det = backward_transform(*tuple(flat_sky))
-        det_reshaped = []
-        for axis in det:
-            det_reshaped.append(axis.reshape(x.shape))
-        return tuple(det_reshaped)
-    return _reproject
-
-
-@deprecated(since="1.17.2", message="", name="build_driz_weight",
-            alternative="stcal.utils.build_driz_weight")
+@deprecated(
+    since="1.17.2",
+    name="build_driz_weight",
+    alternative="stcal.utils.build_driz_weight",
+)
 def build_driz_weight(model, weight_type=None, good_bits=None):
     """Create a weight map for use by drizzle
     """
@@ -366,12 +323,18 @@ def build_mask(dqarr, bitvalue):
 
 
 def is_sky_like(frame):
-    # Differentiate between sky-like and cartesian frames
+    """ Checks that a frame is a sky-like frame by looking at its output units.
+    If output units are either ``deg`` or ``arcsec`` the frame is considered
+    a sky-like frame (as opposite to, e.g., a Cartesian frame.)
+    """
     return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
 
 
-@deprecated(since="1.17.2", message="", name="decode_context",
-            alternative="drizzle.utils.decode_context")
+@deprecated(
+    since="1.17.2",
+    name="decode_context",
+    alternative="drizzle.utils.decode_context",
+)
 def decode_context(context, x, y):
     """ Get 0-based indices of input images that contributed to (resampled)
     output pixel with coordinates ``x`` and ``y``.
@@ -389,7 +352,6 @@ def decode_context(context, x, y):
 
     Returns
     -------
-
     A list of `numpy.ndarray` objects each containing indices of input images
     that have contributed to an output pixel with coordinates ``x`` and ``y``.
     The length of returned list is equal to the number of input coordinate
@@ -397,7 +359,6 @@ def decode_context(context, x, y):
 
     Examples
     --------
-
     An example context array for an output image of array shape ``(5, 6)``
     obtained by resampling 80 input images.
 

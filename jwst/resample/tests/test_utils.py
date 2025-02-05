@@ -8,13 +8,10 @@ from numpy.testing import assert_allclose, assert_array_equal
 import numpy as np
 import pytest
 
-from stdatamodels.jwst.datamodels import SlitModel, ImageModel, dqflags
+from stdatamodels.jwst.datamodels import SlitModel, dqflags
 
 from jwst.resample.resample_spec import find_dispersion_axis
-from jwst.resample.resample_utils import (
-    build_mask,
-    reproject
-)
+from jwst.resample.resample_utils import build_mask
 
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -121,30 +118,3 @@ def test_find_dispersion_axis():
 
     dm.meta.wcsinfo.dispersion_direction = 2    # vertical
     assert find_dispersion_axis(dm) == 1        # Y axis for wcs functions
-
-
-@pytest.mark.parametrize(
-    "wcs1, wcs2, offset",
-    [
-        ("wcs_gwcs", "wcs_fitswcs", 0),
-        ("wcs_fitswcs", "wcs_gwcs", 0),
-        ("wcs_gwcs", "wcs_slicedwcs", 100),
-        ("wcs_slicedwcs", "wcs_gwcs", -100),
-        ("wcs_fitswcs", "wcs_slicedwcs", 100),
-        ("wcs_slicedwcs", "wcs_fitswcs", -100),
-    ]
-)
-def test_reproject(wcs1, wcs2, offset, request):
-    wcs1 = request.getfixturevalue(wcs1)
-    wcs2 = request.getfixturevalue(wcs2)
-    x = np.arange(150, 200)
-
-    f = reproject(wcs1, wcs2)
-    res = f(x, x)
-    assert_allclose(x, res[0] + offset)
-    assert_allclose(x, res[1] + offset)
-
-
-def test_reproject_with_garbage_input():
-    with pytest.raises(TypeError):
-        reproject("foo", "bar")
