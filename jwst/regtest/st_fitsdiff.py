@@ -335,7 +335,6 @@ class STFITSDiff(_BaseDiff):
 
         self._fileobj.write("\n")
         for idx, hdu_diff, extname, extver in self.diff_hdus:
-            # print out the extension heading
             if not self.extension_tolerances:
                 if idx == 0:
                     self._fileobj.write("\n")
@@ -1121,7 +1120,7 @@ class STImageDataDiff(_BaseDiff):
 
             nansa, nansb = np.isnan(self.a), np.isnan(self.b)
             a, b = self.a[~nansa], self.b[~nansb]
-            # only check the nans if the array values are the same
+            # Only check the nans if the array values are the same
             if nansa.shape != nansb.shape or a.shape != b.shape:
                 # Don't care about the actual numbers or locations, just set to something high
                 data_within_tol = False
@@ -1132,31 +1131,34 @@ class STImageDataDiff(_BaseDiff):
                 if shapea == 4:
                     for nint in range(shapea[0]):
                         for ngrp in range(shapea[1]):
-                            self.diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
+                            diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
                                     atol + rtol * np.abs(b[nint, ngrp, ...]))
-                            if self.diff_total.size != 0 and (self.diff_total != 0.0).all():
+                            self.diff_total = a[diff_total].size
+                            if self.diff_total != 0:
                                 data_within_tol = False
                                 break
                         if not data_within_tol:
                             break
                 if shapea == 3:
                     for ngrp in range(shapea[0]):
-                        self.diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (atol + rtol * np.abs(b[ngrp, ...]))
-                        if self.diff_total.size != 0 and (self.diff_total != 0.0).all():
+                        diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (atol + rtol * np.abs(b[ngrp, ...]))
+                        self.diff_total = a[diff_total].size
+                        if self.diff_total != 0:
                             data_within_tol = False
                             break
                 else:
-                    self.diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
-                    if self.diff_total.size != 0 and (self.diff_total != 0.0).all():
+                    diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
+                    self.diff_total = a[diff_total].size
+                    if self.diff_total != 0:
                         data_within_tol = False
 
             if not data_within_tol:
                 # Don't care about the actual numbers or locations, just set to something high
                 self.diff_ratio = 999.0
             else:
-                # data is the same, nothing to do
-                self.diff_total = 0
+                # Data is the same, nothing to do
                 self.diff_ratio = 0
+                self.diff_total = 0
                 return
 
     def _report(self):
