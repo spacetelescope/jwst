@@ -146,13 +146,15 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
 "**/tests/**.py" = [
     "D104", # missing docstring in public package
 ]
+"jwst/conftest.py" = [
+    "SLF", "ARG", "PTH",
+    "B003", # Assigning to os.environ does not clear the environment
+]
 "**/regtest/**.py" = [ # ignores for conftest, regtestdata, and sdp_pools_source
     "SLF", "ARG", "PTH",
-    "S101", # Use of assert
+    "A002", # builtin variable shadowing
+    "S101", # use of assert
 ]
-"jwst/conftest.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"] # Keep portions of this one
-"jwst/regtest/regtestdata.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"] # Keep portions of this one
-"jwst/regtest/sdp_pools_source.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"] # Keep portions of this one
 "jwst/associations/tests*" = [
     "F841", # unused variable
 ]
