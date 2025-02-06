@@ -87,7 +87,7 @@ class RegtestData:
         )
 
     @property
-    def input_remote(self):
+    def input_remote(self):  # numpydoc ignore=RT01
         """Return the remote input path."""
         if self._input_remote is not None:
             return os.path.join(*self._input_remote)
@@ -102,7 +102,7 @@ class RegtestData:
             self._input_remote = value
 
     @property
-    def truth_remote(self):
+    def truth_remote(self):  # numpydoc ignore=RT01
         """Return the remote truth path."""
         if self._truth_remote is not None:
             return os.path.join(*self._truth_remote)
@@ -117,7 +117,7 @@ class RegtestData:
             self._truth_remote = value
 
     @property
-    def input(self):
+    def input(self):  # numpydoc ignore=RT01
         """Return the local input path."""
         return self._input
 
@@ -129,7 +129,7 @@ class RegtestData:
             self._input = value
 
     @property
-    def truth(self):
+    def truth(self):  # numpydoc ignore=RT01
         """Return the local truth path."""
         return self._truth
 
@@ -141,7 +141,7 @@ class RegtestData:
             self._truth = value
 
     @property
-    def output(self):
+    def output(self):  # numpydoc ignore=RT01
         """Return the local output path."""
         return self._output
 
@@ -153,7 +153,7 @@ class RegtestData:
             self._output = value
 
     @property
-    def bigdata_root(self):
+    def bigdata_root(self):  # numpydoc ignore=RT01
         """Return the root of the bigdata server."""
         return self._bigdata_root
 
@@ -178,7 +178,7 @@ class RegtestData:
         Returns
         -------
         input : str
-            The local path to the input file.
+            The full local path to the input file.
         """
         if path is None:
             path = self.input_remote
@@ -191,8 +191,23 @@ class RegtestData:
 
         return self.input
 
-    def data_glob(self, path=None, glob="*", docopy=None):
-        """Get a list of files from either a local path or URL."""
+    def data_glob(self, path=None, glob="*"):
+        """
+        Get a list of files from either a local path or URL.
+
+        Parameters
+        ----------
+        path : str, optional
+            The path to the input file that will be copied.
+            glob : str, optional
+            The glob pattern to use to search for files.
+            Default: `*`
+
+        Returns
+        -------
+        file_paths : [str[, ...]]
+            Full file paths that match the glob criterion
+        """
         if path is None:
             path = self.input_remote
         else:
@@ -259,7 +274,7 @@ class RegtestData:
 
         Parameters
         ----------
-        path: str
+        path : str
             The remote path
 
         docopy : bool
@@ -269,7 +284,7 @@ class RegtestData:
             location or just to set path to source, set this to `False`.
             Default: `True`
 
-        get_members: bool
+        get_members : bool
             If an association is the input, retrieve the members.
             Otherwise, do not.
         """
@@ -301,7 +316,19 @@ class RegtestData:
 
     @classmethod
     def open(cls, filename):
-        """Open an ASDF file and return a RegtestData object."""
+        """
+        Read a RegtestData object from an ASDF file.
+
+        Parameters
+        ----------
+        filename : str
+            The path to the ASDF file
+
+        Returns
+        -------
+        `jwst.regtest.regtestdata.RegtestData`
+            The RegtestData object
+        """
         with asdf.open(filename) as af:
             return cls(**af.tree)
 
@@ -312,15 +339,15 @@ def run_step_from_dict(rtdata, **step_params):
 
     Parameters
     ----------
-    rtdata: RegtestData
+    rtdata : RegtestData
         The artifactory instance
 
-    **step_params: dict
+    **step_params : dict
         The parameters defining what step to run with what input
 
     Returns
     -------
-    rtdata: RegtestData
+    rtdata : RegtestData
         Updated `RegtestData` object with inputs set.
 
     Notes
@@ -366,18 +393,18 @@ def run_step_from_dict_mock(rtdata, source, **step_params):
 
     Parameters
     ----------
-    rtdata: RegtestData
+    rtdata : RegtestData
         The artifactory instance
 
-    step_params: dict
-        The parameters defining what step to run with what input
-
-    source: Path-like folder
+    source : Path-like folder
         The folder to copy from. All regular files are copied.
+
+    **step_params : dict
+        The parameters defining what step to run with what input
 
     Returns
     -------
-    rtdata: RegtestData
+    rtdata : RegtestData
         Updated `RegtestData` object with inputs set.
 
     Notes
@@ -414,19 +441,19 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
 
     Parameters
     ----------
-    rtdata: RegtestData
+    rtdata : RegtestData
         The artifactory object from the step run.
 
-    fitsdiff_default_kwargs: dict
+    fitsdiff_default_kwargs : dict
         The `fitsdiff` keyword arguments
 
-    output: str
+    output : str
         The suffix or full file name to check on.
 
-    truth_path: str
+    truth_path : str
         Location of the truth files.
 
-    is_suffix: bool
+    is_suffix : bool
         Interpret `output` as just a suffix on the expected output root.
         Otherwise, assume it is a full file name
     """
@@ -455,15 +482,15 @@ def text_diff(from_path, to_path):
 
     Parameters
     ----------
-    from_path: str
+    from_path : str
         File to diff from.
 
-    to_path: str
+    to_path : str
         File to diff to.  The truth.
 
     Returns
     -------
-    diffs: [str[,...]]
+    diffs : [str[,...]]
         A generator of a list of strings that are the differences.
         The output from `difflib.unified_diff`
     """
@@ -490,12 +517,12 @@ def _data_glob_local(*glob_parts):
 
     Parameters
     ----------
-    glob_parts: (path-like,[...])
+    *glob_parts : (path-like,[...])
         List of components that will be built into a single path
 
     Returns
     -------
-    file_paths: [str[, ...]]
+    file_paths : [str[, ...]]
         Full file paths that match the glob criterion
     """
     full_glob = Path().joinpath(*glob_parts)
@@ -508,16 +535,16 @@ def _data_glob_url(*url_parts, root=None):
 
     Parameters
     ----------
-    url: (str[,...])
+    *url_parts : (str[,...])
         List of components that will be used to create a URL path
 
-    root: str
+    root : str
         The root server path to the Artifactory server.
         Normally retrieved from `get_bigdata_root`.
 
     Returns
     -------
-    url_paths: [str[, ...]]
+    url_paths : [str[, ...]]
         Full URLS that match the glob criterion
     """
     # Fix root root-ed-ness

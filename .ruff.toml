@@ -150,7 +150,7 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
     "SLF", "ARG", "PTH",
     "B003", # Assigning to os.environ does not clear the environment
 ]
-"**/regtest/**.py" = [ # ignores for conftest, regtestdata, and sdp_pools_source
+"**/regtest/**.py" = [ # conftest, regtestdata, and sdp_pools_source
     "SLF", "ARG", "PTH",
     "A002", # builtin variable shadowing
     "S101", # use of assert

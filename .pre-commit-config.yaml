@@ -74,7 +74,6 @@ repos:
             jwst/pipeline/.* |
             jwst/ramp_fitting/.* |
             jwst/refpix/.* |
-            jwst/regtest/.* |
             jwst/resample/.* |
             jwst/reset/.* |
             jwst/residual_fringe/.* |
@@ -94,5 +93,6 @@ repos:
             jwst/wfss_contam/.* |
             jwst/white_light/.* |
             docs/.* |
-            .*/tests/.*
+            jwst/regtest/test_.* |
+            .*/tests/test_.*
           )$

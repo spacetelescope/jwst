@@ -148,9 +148,9 @@ def generate_artifactory_json(request, artifactory_repos):
     artifactory_repos : tuple(str, str)
         Tuple of the Artifactory inputs_root and results_root.
 
-    Writes
+    Yields
     ------
-    JSON files for Artifactory upload and OKify.
+    None
     """
     _, results_root = artifactory_repos
 
@@ -274,7 +274,23 @@ def generate_upload_schema(pattern, target, recursive=False, schema=None):
 
 
 def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
-    """Provide the RemoteResource class."""
+    """
+    Provide the RegtestData class.
+
+    Parameters
+    ----------
+    artifactory_repos : tuple(str, str)
+        Tuple of the Artifactory inputs_root and results_root.
+    envopt : str
+        The Artifactory environment, e.g, "dev".
+    request : pytest.FixtureRequest
+        The pytest fixture request object.
+
+    Returns
+    -------
+    `jwst.regtest.regtestdata.RegtestData`
+        RegtestData class instance.
+    """
     inputs_root, results_root = artifactory_repos
     return RegtestData(env=envopt, inputs_root=inputs_root, results_root=results_root)
 
@@ -328,7 +344,23 @@ def rtdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
 
 
 def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
-    """Provide the RemoteResource class."""
+    """
+    Provide the SDPPoolsSource class, a subclass of RegtestData for association pool handling.
+
+    Parameters
+    ----------
+    artifactory_repos : tuple(str, str)
+        Tuple of the Artifactory inputs_root and results_root.
+    envopt : str
+        The Artifactory environment, e.g, "dev".
+    request : pytest.FixtureRequest
+        The pytest fixture request object.
+
+    Returns
+    -------
+    `jwst.regtest.sdp_pools_source.SDPPoolsSource`
+        SDPPoolsSource class instance.
+    """
     inputs_root, results_root = artifactory_repos
     return SDPPoolsSource(env=envopt, inputs_root=inputs_root, results_root=results_root)
 
@@ -336,7 +368,7 @@ def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
 @pytest.fixture(scope="module")
 def sdpdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
     """
-    Ask Tyler to fill in here, I have no idea what this is TODO.
+    Provide access to association pools and truth files via a module-scoped fixture.
 
     Parameters
     ----------
@@ -352,7 +384,7 @@ def sdpdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
     Returns
     -------
     `jwst.regtest.sdp_pools_source.SDPPoolsSource`
-        Ask Tyler to fill in here TODO
+        RemoteResource class instance.
     """
     return _sdpdata_fixture_implementation(artifactory_repos, envopt, request)
 
@@ -379,7 +411,14 @@ def fitsdiff_default_kwargs():
 
 @pytest.fixture
 def diff_astropy_tables():
-    """Compare astropy tables with tolerances for float columns."""
+    """
+    Compare astropy tables with tolerances for float columns.
+
+    Returns
+    -------
+    function
+        Function to compare two astropy tables.
+    """
 
     def _diff_astropy_tables(result_path, truth_path, rtol=1e-5, atol=1e-7):
         __tracebackhide__ = True
@@ -461,13 +500,13 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture
-def sdp_pool(request):
+def sdp_pool(request):  # numpydoc ignore=RT01
     """Retrieve a specific SDP pool to test."""
     return request.config.getoption("--sdp-pool")
 
 
 @pytest.fixture
-def standard_pool(request):
+def standard_pool(request):  # numpydoc ignore=RT01
     """Retrieve a specific standard pool to test."""
     return request.config.getoption("--standard-pool")
 
@@ -479,14 +518,15 @@ def pytest_generate_tests(metafunc):
 
 
 def pool_path_fixture(metafunc):
-    """Define the pool_path fixture.
+    """
+    Define the pool_path fixture.
 
     This is needed to build a list during test collection for the test
     `jwst.regtest.test_associations_sdp_pools.test_against_standard`
 
     Parameters
     ----------
-    metafunc: pytest.Metafunc
+    metafunc : pytest.Metafunc
         The pytest test generation inspection object.
     """
     # If doing "big data" regressions has not been requested,
