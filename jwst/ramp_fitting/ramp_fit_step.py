@@ -160,7 +160,7 @@ def create_optional_results_model(input_model, opt_info):
         The optional RampFitOutputModel to be returned from the ramp fit step.
     """
     (slope, sigslope, var_poisson, var_rnoise, yint,
-            sigyint, pedestal, weights, crmag) = opt_info
+                sigyint, pedestal, weights, crmag) = opt_info
     opt_model = datamodels.RampFitOutputModel(
         slope=slope,
         sigslope=sigslope,
@@ -268,7 +268,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
     # Truncate var_r4 to include only existing segments
     var_r4 = var_r4[:, :max_seg, :, :]
 
-    # Zero out large variances due to reset 
+    # Zero out large variances due to reset
     var_r3[var_r3 > LARGE_VARIANCE_THRESHOLD] = 0.0
     var_r2 = 1 / (s_inv_var_r3.sum(axis=0))
     var_r2[var_r2 > LARGE_VARIANCE_THRESHOLD] = 0.0
@@ -367,7 +367,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
         warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
         warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         # overwrite where segs>1
-        den = (segs_beg_3[wh_seg_pos] ** 3.0 - segs_beg_3[wh_seg_pos])
+        den = segs_beg_3[wh_seg_pos]**3.0 - segs_beg_3[wh_seg_pos]
         den_r3[wh_seg_pos] = 1.0 / den
 
     # calculate max_seg for this integ and data section
@@ -491,20 +491,18 @@ class RampFitStep(Step):
             if self.algorithm == "OLS":
                 gdq = input_model_W.groupdq.copy()
 
-                dnu = dqflags.group["DO_NOT_USE"])
-                chg = dqflags.group["CHARGELOSS"])
-                sat = dqflags.group["SATURATED"])
+                dnu = dqflags.group["DO_NOT_USE"]
+                chg = dqflags.group["CHARGELOSS"]
+                sat = dqflags.group["SATURATED"]
                 # Locate groups where that are flagged with CHARGELOSS
-                wh_chargeloss = np.where(
-                    np.bitwise_and(gdq.astype(np.uint32), chg)
-                )
+                wh_chargeloss = np.where(np.bitwise_and(gdq.astype(np.uint32), chg))
 
                 if len(wh_chargeloss[0]) > 0:
                     # Unflag groups flagged as both CHARGELOSS and DO_NOT_USE
                     gdq[wh_chargeloss] -= dnu + chg
 
                     # Flag SATURATED groups as DO_NOT_USE for later segment determination
-                    where_sat = np.where(np.bitwise_and(gdq, sat)
+                    where_sat = np.where(np.bitwise_and(gdq, sat))
                     gdq[where_sat] = np.bitwise_or(gdq[where_sat], dnu)
 
                     # Get group_time for readnoise variance calculation
@@ -644,6 +642,4 @@ def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
         groupdq[:, :firstgroup] = np.bitwise_or(groupdq[:, :firstgroup], dnu)
 
     if lastgroup < (ngroups - 1):
-        groupdq[:, (lastgroup + 1) :] = np.bitwise_or(
-            groupdq[:, (lastgroup + 1) :], dnu
-        )
+        groupdq[:, (lastgroup + 1) :] = np.bitwise_or(groupdq[:, (lastgroup + 1) :], dnu)
