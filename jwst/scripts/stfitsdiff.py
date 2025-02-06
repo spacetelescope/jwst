@@ -72,7 +72,7 @@ def main():
                         help="""Provide a different relative and absolute tolerance for the given extensions
                              (use no spaces and double quotes encasing the whole dictionary), e.g.
                              --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2}}}"
-                             It does not matter if the keys in the dictionary are upper or lower case. 
+                             It does not matter if the keys in the dictionary are upper or lower case.
                              The key for only providing main header tolerances is 'primary'.
                              The key 'headers' can be used to provide a special tolerance for all
                              extension headers in the HDU list.
