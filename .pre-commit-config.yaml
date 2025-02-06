@@ -40,7 +40,6 @@ repos:
             jwst/assign_wcs/.* |
             jwst/associations/.* |
             jwst/background/.* |
-            jwst/badpix_selfcal/.* |
             jwst/charge_migration/.* |
             jwst/combine_1d/.* |
             jwst/coron/.* |
@@ -90,7 +89,6 @@ repos:
             jwst/superbias/.* |
             jwst/tests/.* |
             jwst/tso_photometry/.* |
-            jwst/tweakreg/.* |
             jwst/wavecorr/.* |
             jwst/wfs_combine/.* |
             jwst/wfss_contam/.* |
