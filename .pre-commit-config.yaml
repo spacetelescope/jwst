@@ -83,7 +83,6 @@ repos:
             jwst/skymatch/.* |
             jwst/spectral_leak/.* |
             jwst/srctype/.* |
-            jwst/stpipe/.* |
             jwst/straylight/.* |
             jwst/superbias/.* |
             jwst/tests/.* |
