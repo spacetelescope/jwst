@@ -50,7 +50,7 @@ class ResampleImage(Resample):
                  fillval="NAN", weight_type="ivm", good_bits=0,
                  blendheaders=True, output_wcs=None, wcs_pars=None,
                  output=None, enable_ctx=True, enable_var=True,
-                 compute_err=None, asn_id=None, in_memory=True):
+                 compute_err=None, asn_id=None):
         """
         Parameters
         ----------
@@ -255,9 +255,9 @@ class ResampleImage(Resample):
                 At this time, output error array is not equivalent to
                 error propagation results.
 
-        in_memory : bool, optional
-
         asn_id : str, None, optional
+            The association id. The id is what appears in
+            the :ref:`asn-jwst-naming`.
 
         """
         self.input_models = input_models
@@ -280,7 +280,6 @@ class ResampleImage(Resample):
                 ]
             )
 
-        self.in_memory = in_memory
         self.asn_id = asn_id
 
         # check wcs_pars has supported keywords:
@@ -538,7 +537,7 @@ class ResampleImage(Resample):
 
         """
         if self.output_jwst_model is not None:
-            self.reset_arrays(reset_output=True)
+            self.reset_arrays(reset_output=True, n_output_models=len(indices))
 
         output_model_filename = ''
 
@@ -581,8 +580,18 @@ class ResampleImage(Resample):
         self.output_jwst_model.meta.filename = output_model_filename
         return self.output_jwst_model
 
-    def resample_many_to_many(self):
+    def resample_many_to_many(self, in_memory=True):
         """Resample many inputs to many outputs where outputs have a common frame.
+
+        Parameters
+        ----------
+
+        in_memory : bool, optional
+            Indicates whether to return a `ModelLibrary` with resampled models
+            loaded in memory or whether to serialize resampled models to
+            files on disk and return a `ModelLibrary` with only the associacion
+            info. See https://stpipe.readthedocs.io/en/latest/model_library.html#on-disk-mode
+            for more details.
 
         Coadd only different detectors of the same exposure, i.e. map NRCA5 and
         NRCB5 onto the same output image, as they image different areas of the
@@ -596,7 +605,7 @@ class ResampleImage(Resample):
 
             output_model = self.resample_group(indices)
 
-            if not self.in_memory:
+            if not in_memory:
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
                 if self.output_dir is not None:
@@ -610,13 +619,13 @@ class ResampleImage(Resample):
             else:
                 output_models.append(output_model)
 
-        if self.in_memory:
+        if in_memory:
             # build ModelLibrary as a list of in-memory models
             return ModelLibrary(output_models, on_disk=False)
         else:
             # build ModelLibrary as an association from the output files
             # this saves memory if there are multiple groups
-            asn = asn_from_list(output_models, product_name='outlier_i2d')
+            asn = asn_from_list(output_models, product_name='outlier_i2d', asn_id="abcdefg")
             asn_dict = json.loads(asn.dump()[1])  # serializes the asn and converts to dict
             return ModelLibrary(asn_dict, on_disk=True)
 

@@ -13,7 +13,7 @@ from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
-from gwcs.geometry import SphericalToCartesian
+
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import compute_scale, wrap_ra
@@ -25,7 +25,6 @@ from jwst.datamodels import ModelLibrary
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-_S2C = SphericalToCartesian()
 
 __all__ = ["ResampleSpec"]
 
@@ -220,8 +219,7 @@ class ResampleSpec(ResampleImage):
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
-            asn_id=asn_id,
-            in_memory=in_memory
+            asn_id=asn_id
         )
         self.intermediate_suffix = 'outlier_s2d'
 
@@ -249,13 +247,14 @@ class ResampleSpec(ResampleImage):
                 self._spec_output_pix_area * np.rad2deg(3600)**2
             )
 
-        # delete these to reduce the number of failures in the regression tests
         # TODO: this is helpful info that should be stored in products.
-        # del model.meta.resample.pixel_scale_ratio
-        # del model.meta.resample.pixfrac
-        # del model.meta.resample.weight_type
-        # del model.meta.resample.pointings
-        # del model.meta.cal_step.resample
+        #       Not storing this at this time in order to reduce the number of
+        #       failures in the regression tests.
+        # model.meta.resample.pixel_scale_ratio
+        # model.meta.resample.pixfrac
+        # model.meta.resample.weight_type
+        # model.meta.resample.pointings
+        # model.meta.cal_step.resample
 
     def build_nirspec_output_wcs(self, input_models, refmodel=None,
                                  good_bits=None, pixel_scale_ratio=1.0):

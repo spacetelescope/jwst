@@ -670,7 +670,6 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
 
 def make_resamp(input_models):
     """All defaults are same as what is run by default by outlier detection"""
-    in_memory = not input_models._on_disk
     resamp = ResampleImage(
         input_models,
         output="",
@@ -680,7 +679,6 @@ def make_resamp(input_models):
         kernel="square",
         fillval="INDEF",
         good_bits="~DO_NOT_USE",
-        in_memory=in_memory,
         asn_id="test",
         enable_var=False,
         enable_ctx=False,

@@ -48,7 +48,7 @@ class ResampleStep(Step):
         output_wcs = string(default='')  # Custom output WCS
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
-        in_memory = boolean(default=True)  # Keep images in memory
+        in_memory = boolean(default=True)  # Keep images in memory when 'single' is False
     """ # noqa: E501
 
     reference_file_types: list = []
@@ -102,7 +102,9 @@ class ResampleStep(Step):
                 compute_err="driz_err",
                 **kwargs
             )
-            result = resamp.resample_many_to_many()
+            result = resamp.resample_many_to_many(
+                in_memory=self.in_memory
+            )
 
         else:
             resamp = resample.ResampleImage(
@@ -167,7 +169,6 @@ class ResampleStep(Step):
             weight_type=self.weight_type,
             good_bits=GOOD_BITS,
             blendheaders=self.blendheaders,
-            in_memory=self.in_memory
         )
 
         # Custom output WCS parameters.

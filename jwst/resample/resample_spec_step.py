@@ -42,7 +42,7 @@ class ResampleSpecStep(Step):
         output_wcs = string(default='')  # Custom output WCS
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
-        in_memory = boolean(default=True)  # Keep images in memory
+        in_memory = boolean(default=True)  # Keep images in memory when 'single' is False
     """ # noqa: E501
 
     def process(self, input):
@@ -146,7 +146,9 @@ class ResampleSpecStep(Step):
                     compute_err="driz_err",
                     **self.drizpars
                 )
-                drizzled_library = resamp.resample_many_to_many()
+                drizzled_library = resamp.resample_many_to_many(
+                    in_memory=self.in_memory
+                )
             else:
                 resamp = resample_spec.ResampleSpec(
                     container,
@@ -189,7 +191,6 @@ class ResampleSpecStep(Step):
             weight_type=self.weight_type,
             good_bits=GOOD_BITS,
             blendheaders=self.blendheaders,
-            in_memory=self.in_memory
         )
 
         # Custom output WCS parameters
@@ -241,7 +242,9 @@ class ResampleSpecStep(Step):
                 compute_err="driz_err",
                 **self.drizpars
             )
-            drizzled_library = resamp.resample_many_to_many()
+            drizzled_library = resamp.resample_many_to_many(
+                in_memory=self.in_memory
+            )
             with drizzled_library:
                 result = drizzled_library.borrow(0)
                 drizzled_library.shelve(result, 0, modify=False)
