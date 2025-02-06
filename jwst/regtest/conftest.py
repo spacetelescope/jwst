@@ -114,8 +114,8 @@ def pytest_collection_modifyitems(config, items):
     """
     Allow artifactory_result_path to be unique for each test.
 
-    Add the index of each item in the list of items
-    this is used below for artifactory_result_path
+    Add the index of each item in the list of items.
+    This is used below for artifactory_result_path
     to produce a unique result subdirectory for
     each test (even if that test shares a name with
     another test which is the case for parametrized tests).
