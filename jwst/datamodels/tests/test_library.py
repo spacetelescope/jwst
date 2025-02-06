@@ -82,7 +82,7 @@ def test_load_asn(example_library, example_asn_path):
     Test that __len__ returns the number of models/members loaded
     from the association (and does not require opening the library).
 
-    Test that the asn_dir and on_disk properties is are correctly.
+    Test that the asn_dir and on_disk properties are set correctly.
     """
     assert len(example_library) == _N_MODELS
 
