@@ -26,8 +26,9 @@ log.setLevel(logging.DEBUG)
 
 
 __all__ = [
-    "ResampleImage",
+    "input_jwst_model_to_dict",
     "is_imaging_wcs",
+    "ResampleImage",
 ]
 
 _SUPPORTED_CUSTOM_WCS_PARS = [
@@ -93,8 +94,8 @@ class ResampleImage(Resample):
             If the ``VAR_RNOISE`` array does not exist,
             the variance is set to 1 for all pixels (i.e., equal weighting).
             If ``weight_type="exptime"``, the weight will be set equal
-            to the measurement time (``TMEASURE``) when available and to
-            the exposure time (``EFFEXPTM``) otherwise.
+            to the measurement time when available and to
+            the exposure time otherwise.
 
         good_bits : int, str, None, optional
             An integer bit mask, `None`, a Python list of bit flags, a comma-,
@@ -345,54 +346,25 @@ class ResampleImage(Resample):
             compute_err=compute_err,
         )
 
-    def input_model_to_dict(self, model):
-        # wcs = model.meta.wcs
+    def input_model_to_dict(self, model, weight_type, enable_var, compute_err):
+        """ Converts a data model to a dictionary of keywords and values
+        expected by `stcal.resample`. Input parameters are the same as used
+        when initializing `ResampleImage`.
 
-        model_dict = {
-            # arrays:
-            "data": model.data,
-            "dq": model.dq,
+        .. note:: Subclasses can override this method to add additional fields
+          to the dictionary as needed.
 
-            # meta:
-            "filename": model.meta.filename,
-            "group_id": model.meta.group_id,
-            "s_region": model.meta.wcsinfo.s_region,
-            "wcs": model.meta.wcs,
-            "wcsinfo": model.meta.wcsinfo,
-            "bunit_data": model.meta.bunit_data,
+        Returns
+        -------
+        model_dict : dict
 
-            "exposure_time": model.meta.exposure.exposure_time,
-            "start_time": model.meta.exposure.start_time,
-            "end_time": model.meta.exposure.end_time,
-            "duration": model.meta.exposure.duration,
-            "measurement_time": model.meta.exposure.measurement_time,
-            "effective_exposure_time": model.meta.exposure.effective_exposure_time,
-            "elapsed_exposure_time": model.meta.exposure.elapsed_exposure_time,
-
-            "pixelarea_steradians": model.meta.photometry.pixelarea_steradians,
-            "pixelarea_arcsecsq": model.meta.photometry.pixelarea_arcsecsq,
-
-            "level": model.meta.background.level,  # sky level
-            "subtracted": model.meta.background.subtracted,
-
-            # spectroscopy-specific:
-            "instrument_name": model.meta.instrument.name,
-            "exposure_type": model.meta.exposure.type,
-        }
-
-        if self._enable_var:
-            model_dict["var_flat"] = model.var_flat
-            model_dict["var_rnoise"] = model.var_rnoise
-            model_dict["var_poisson"] = model.var_poisson
-
-        elif (self.weight_type is not None and
-                self.weight_type.startswith('ivm')):
-            model_dict["var_rnoise"] = model.var_rnoise
-
-        if self._compute_err == "driz_err":
-            model_dict["err"] = model.err
-
-        return model_dict
+        """
+        return input_jwst_model_to_dict(
+            model=model,
+            weight_type=weight_type,
+            enable_var=enable_var,
+            compute_err=compute_err
+        )
 
     def create_output_jwst_model(self, ref_input_model=None):
         """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
@@ -456,7 +428,14 @@ class ResampleImage(Resample):
             and values of actual models used by pipelines.
 
         """
-        super().add_model(self.input_model_to_dict(model))
+        super().add_model(
+            self.input_model_to_dict(
+                model,
+                weight_type=self.weight_type,
+                enable_var=self._enable_var,
+                compute_err=self._compute_err,
+            )
+        )
         if self.output_jwst_model is None:
             self.output_jwst_model = self.create_output_jwst_model(
                 ref_input_model=model
@@ -465,7 +444,9 @@ class ResampleImage(Resample):
             self._blender.accumulate(model)
 
     def finalize(self, free_memory=True):
-        """ Finalizes all computations and frees temporary objects.
+        """ Performs final computations from any intermediate values,
+        sets output model values, and optionally frees temporary/intermediate
+        objects.
 
         ``finalize`` calls :py:meth:`~Resample.finalize_resample_variance` and
         :py:meth:`~Resample.finalize_time_info`.
@@ -475,12 +456,12 @@ class ResampleImage(Resample):
           with ``free_memory=True`` then intermediate arrays holding variance
           weights will be lost and so continuing adding new models after
           a call to :py:meth:`~Resample.finalize` will result in incorrect
-          variance.
+          variance. In this case `finalize` will set the locked flag to `True`.
 
         """
         if self.blendheaders:
             self._blender.finalize_model(self.output_jwst_model)
-        super().finalize(free_memory=True)
+        super().finalize(free_memory=free_memory)
 
         self.update_output_model(
             self.output_jwst_model,
@@ -529,15 +510,29 @@ class ResampleImage(Resample):
 
     def resample_group(self, indices):
         """ Resample multiple input images that belong to a single
-        ``group_id`` as specified by ``indices``.
+        ``group_id`` as specified by ``indices``. If ``output_jwst_model``
+        was created by a previous call to this method, ``output_jwst_model``
+        as well as other arrays (weights, context, etc.) will be cleared.
+        Upon completion, this method calls :py:meth:`finalize` to compute
+        final values for various attributes of the resampled model
+        (e.g., exposure start and end times, etc.)
 
         Parameters
         ----------
         indices : list
+            Indices of models in ``input_models`` model library (used
+            to initialize this object) that have the same ``group_id``
+            and need to be resampled together.
+
+        Returns
+        -------
+        output_jwst_model
+            Resampled model with populated data, weights, error arrays and
+            other attributes.
 
         """
         if self.output_jwst_model is not None:
-            self.reset_arrays(reset_output=True, n_output_models=len(indices))
+            self.reset_arrays(reset_output=True, n_input_models=len(indices))
 
         output_model_filename = ''
 
@@ -684,6 +679,64 @@ class ResampleImage(Resample):
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]
+
+
+def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
+    """ Converts a data model to a dictionary of keywords and values
+    expected by `stcal.resample`. Input parameters are the same as used
+    when initializing `ResampleImage`.
+
+    Returns
+    -------
+    model_dict : dict
+
+    """
+
+    model_dict = {
+        # arrays:
+        "data": model.data,
+        "dq": model.dq,
+
+        # meta:
+        "filename": model.meta.filename,
+        "group_id": model.meta.group_id,
+        "s_region": model.meta.wcsinfo.s_region,
+        "wcs": model.meta.wcs,
+        "wcsinfo": model.meta.wcsinfo,
+        "bunit_data": model.meta.bunit_data,
+
+        "exposure_time": model.meta.exposure.exposure_time,
+        "start_time": model.meta.exposure.start_time,
+        "end_time": model.meta.exposure.end_time,
+        "duration": model.meta.exposure.duration,
+        "measurement_time": model.meta.exposure.measurement_time,
+        "effective_exposure_time": model.meta.exposure.effective_exposure_time,
+        "elapsed_exposure_time": model.meta.exposure.elapsed_exposure_time,
+
+        "pixelarea_steradians": model.meta.photometry.pixelarea_steradians,
+        "pixelarea_arcsecsq": model.meta.photometry.pixelarea_arcsecsq,
+
+        "level": model.meta.background.level,  # sky level
+        "subtracted": model.meta.background.subtracted,
+
+        # spectroscopy-specific:
+        "instrument_name": model.meta.instrument.name,
+        "exposure_type": model.meta.exposure.type,
+    }
+
+    if enable_var:
+        model_dict["var_flat"] = model.var_flat
+        model_dict["var_rnoise"] = model.var_rnoise
+        model_dict["var_poisson"] = model.var_poisson
+
+    elif (weight_type is not None and
+            weight_type.startswith('ivm')):
+        model_dict["var_rnoise"] = model.var_rnoise
+
+    if compute_err == "driz_err":
+        model_dict["err"] = model.err
+
+    return model_dict
 
 
 def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):

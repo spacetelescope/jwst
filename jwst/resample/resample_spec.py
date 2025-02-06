@@ -223,10 +223,6 @@ class ResampleSpec(ResampleImage):
         )
         self.intermediate_suffix = 'outlier_s2d'
 
-    def input_model_to_dict(self, model):
-        model_dict = super().input_model_to_dict(model)
-        return model_dict
-
     def create_output_jwst_model(self, ref_input_model=None):
         """ Create a new blank model and update its meta with info from ``ref_input_model``. """
         output_model = datamodels.SlitModel(None)
