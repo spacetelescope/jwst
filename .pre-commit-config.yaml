@@ -91,7 +91,6 @@ repos:
             jwst/tso_photometry/.* |
             jwst/wavecorr/.* |
             jwst/wfs_combine/.* |
-            jwst/wfss_contam/.* |
             jwst/white_light/.* |
             jwst/conftest.py |
             .*/tests/.* |
