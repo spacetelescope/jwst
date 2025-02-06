@@ -112,6 +112,6 @@ is then subtracted from the data.
 
 Since the inter-slice pixels never reach truly zero throughput from the sky (particularly at short wavelengths)
 this correction is most reliable in cases for which the observations contain only faint sources and
-have had a pixel-based dedicated background subtraction applied.  While the correct can be applied to brighter
+have had a pixel-based dedicated background subtraction applied.  While the correction can be applied to brighter
 sources, this may result in artifacts as the subtracted model may be dominated more by spilled source flux
 than by residual cosmic ray showers.
