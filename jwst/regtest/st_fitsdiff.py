@@ -24,6 +24,9 @@ import numpy as np
 from astropy.io.fits.diff import _BaseDiff, RawDataDiff, TableDataDiff, report_diff_keyword_attr, _get_differences
 
 
+np.seterr(divide='ignore', invalid='ignore')
+
+
 __all__ = [
     "STFITSDiff",
     "STHDUDiff",
@@ -523,8 +526,10 @@ class STHDUDiff(_BaseDiff):
             self.rtol, self.atol = rtol, atol
 
         def get_quick_report(a, b):
-            # Get the number of NaN in each array
-            nans = [np.isnan(a).size, np.isnan(b).size]
+            # Get the number of NaN in each array and other info
+            nans_zero_info = [a[np.isnan(a)].size, b[np.isnan(b)].size,
+                              a[~np.isnan(a)].size, b[~np.isnan(b)].size,
+                              a[a == 0.0].size, b[b == 0.0].size]
             # Match nans for all arrays and remove them for logical comparison
             percentages, stats = {}, {}
             shapea = a.shape
@@ -532,7 +537,7 @@ class STHDUDiff(_BaseDiff):
             if shapea != shapeb:
                 percentages['array_shapes_are_different'] = ''
                 stats['no_stats_available'] = ''
-                return nans, percentages, stats
+                return nans_zero_info, percentages, stats
             nan_idx = (np.isnan(a) | np.isnan(b))
             anonan = a[~nan_idx]
             bnonan = b[~nan_idx]
@@ -546,7 +551,7 @@ class STHDUDiff(_BaseDiff):
             if values.size == 0:
                 percentages['NaN'] = 100
                 stats['no_stats_available'] = ''
-                return nans, percentages, stats
+                return nans_zero_info, percentages, stats
             stats['max_abs_diff'] = np.max(values)
             stats['min_abs_diff'] = np.min(values)
             stats['mean_abs_diff'] = np.mean(values)
@@ -567,7 +572,7 @@ class STHDUDiff(_BaseDiff):
             for threshold in thresholds:
                 n = values[values < -threshold].size + values[values > threshold].size
                 percentages[threshold] = np.round((n / n_total) * 100, decimals=2)
-            return nans, percentages, stats
+            return nans_zero_info, percentages, stats
 
         if self.a.data is None or self.b.data is None:
             # TODO: Perhaps have some means of marking this case
@@ -638,12 +643,16 @@ class STHDUDiff(_BaseDiff):
             self._writeln(f"  b: {dimsb}")
 
         def report_data_diff():
-            self._writeln("  NaN in arrays:")
             if len(self.nans) > 0:
+                self._writeln(" NaN in arrays:")
                 self._writeln(f"  a: {self.nans[0]}")
                 self._writeln(f"  b: {self.nans[1]}")
-            else:
-                self._writeln("  a and b: 0")
+                self._writeln(" No NaN values in arrays:")
+                self._writeln(f"  a: {self.nans[2]}")
+                self._writeln(f"  b: {self.nans[3]}")
+                self._writeln(" Zeros in arrays:")
+                self._writeln(f"  a: {self.nans[4]}")
+                self._writeln(f"  b: {self.nans[5]}")
             # Calculate difference percentages
             self._writeln(" Difference of a from b:")
             for key, val in self.percentages.items():
