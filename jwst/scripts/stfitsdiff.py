@@ -69,15 +69,15 @@ def main():
 
     parser.add_argument('--extension_tolerances',
                         dest='extension_tolerances', action='store', default=None,
-                        help='''Provide a different relative and absolute tolerance for the given extensions 
+                        help="""Provide a different relative and absolute tolerance for the given extensions
                              (use no spaces and double quotes encasing the whole dictionary), e.g.
                              --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2}}}"
                              It does not matter if the keys in the dictionary are upper or lower case. 
                              The key for only providing main header tolerances is 'primary'.
-                             The key 'headers' can be used to provide a special tolerance for all 
-                             extension headers in the HDU list. 
-                             The key 'default' is optional, i.e. if it is not provided then the default 
-                             values will be used, otherwise the default value will be the one in the dictionary.''')
+                             The key 'headers' can be used to provide a special tolerance for all
+                             extension headers in the HDU list.
+                             The key 'default' is optional, i.e. if it is not provided then the default
+                             values will be used, otherwise the default value will be the one in the dictionary.""")
 
     # Get the arguments
 
