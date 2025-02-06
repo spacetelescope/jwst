@@ -135,9 +135,7 @@ class Spec2Pipeline(Pipeline):
             self.log.info("Processing product {}".format(product["name"]))
             if self.output_file is None:
                 self.output_file = product["name"]
-            try:
-                asn.filename  # noqa: B018
-            except AttributeError:
+            if not hasattr(asn, "filename"):
                 asn.filename = "singleton"
             try:
                 result = self.process_exposure_product(
@@ -233,11 +231,11 @@ class Spec2Pipeline(Pipeline):
                     self.log.info(f"Using segmentation map {science.meta.segmentation_map}")
                     science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
                     self.log.info(f"Using direct image {science.meta.direct_image}")
-                except IndexError as err:
+                except IndexError:
                     if science.meta.source_catalog is None:
                         raise IndexError(
                             "No source catalog specified in association or datamodel"
-                        ) from err
+                        ) from None
 
             # Decide on what steps can actually be accomplished based on the
             # provided input.

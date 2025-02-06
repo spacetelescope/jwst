@@ -174,7 +174,7 @@ class Coron3Pipeline(Pipeline):
                 # turn back on for next model
                 self.outlier_detection.skip = False
         else:
-            self.log.info("Outlier detection skipped for PSF's")
+            self.log.info("Outlier detection skipped for PSFs")
 
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs.run(psf_models)
