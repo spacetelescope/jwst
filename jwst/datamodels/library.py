@@ -46,6 +46,11 @@ class ModelLibrary(AbstractModelLibrary):
         return [member["exptype"] for member in self._members]
 
     @property
+    def asn_dir(self):
+        """Return the directory from which the association was loaded."""
+        return str(self._asn_dir)
+
+    @property
     def on_disk(self):
         """
         Return the library's on_disk attribute.
