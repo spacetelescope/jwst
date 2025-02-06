@@ -1,1 +1,0 @@
-Implement new STFITSDiff class based off of FITSDiff with STScI custom reporting.
