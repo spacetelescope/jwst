@@ -1,4 +1,4 @@
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 import pytest
 import numpy as np
 from gwcs import wcstools

@@ -2,7 +2,7 @@ import os
 import pytest
 import warnings
 
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
