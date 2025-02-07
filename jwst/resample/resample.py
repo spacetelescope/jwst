@@ -227,11 +227,6 @@ class ResampleImage(Resample):
         output : str, None, optional
             Filename for the output model.
 
-        accumulate : bool, optional
-            Indicates whether resampled models should be added to the
-            provided ``output_model`` data or if new arrays should be
-            created.
-
         enable_ctx : bool, optional
             Indicates whether to create a context image. If ``disable_ctx``
             is set to `True`, parameters ``out_ctx``, ``begin_ctx_id``, and
@@ -335,8 +330,6 @@ class ResampleImage(Resample):
             weight_type=weight_type,
             good_bits=good_bits,
             output_wcs=output_wcs,
-            output_model=None,
-            accumulate=False,
             enable_ctx=enable_ctx,
             enable_var=enable_var,
             compute_err=compute_err,
@@ -409,7 +402,7 @@ class ResampleImage(Resample):
         them using appropriate weighting to the corresponding
         arrays of the output model. It also updates resampled data weight,
         the context array (if ``enable_ctx`` is `True`), relevant output
-        model's values such as "n_coadds".
+        model's values.
 
         Whenever ``model`` has a unique group ID that was never processed
         before, the "pointings" value of the output model is incremented and
