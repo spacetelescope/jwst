@@ -97,26 +97,26 @@ class Observation:
             WCS object from grism image
         filter_name : str
             Filter name
-        source_id : int
-            ID of source to process. If zero, all sources processed.
-        sed_file : str
+        source_id : int, optional, default 0
+            ID of source to process. If 0, all sources processed.
+        sed_file : str, optional, default None
             Name of Spectral Energy Distribution (SED) file containing datasets matching
             the ID in the segmentation file and each consisting of a [[lambda],[flux]] array.
-        extrapolate_sed : bool
+        extrapolate_sed : bool, optional, default False
             Flag indicating whether to extrapolate wavelength range of SED
-        boundaries : tuple
+        boundaries : list, optional, default []
             Start/Stop coordinates of the FOV within the larger seed image.
-        offsets : tuple
+        offsets : list, optional, default [0,0]
             Offset values for x and y axes
-        renormalize : bool
+        renormalize : bool, optional, default True
             Flag indicating whether to renormalize SED's
-        max_cpu : int
+        max_cpu : int, optional, default 1
             Max number of cpu's to use when multiprocessing
         """
         if boundaries is None:
-            boundaries = ()
+            boundaries = []
         if offsets is None:
-            offsets = (0, 0)
+            offsets = [0, 0]
         # Load all the info for this grism mode
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
