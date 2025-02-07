@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
+def get_reference_file_subarrays(model, readnoise_model, gain_model):
     """
     Get read noise and gain reference arrays.
 
@@ -36,22 +36,15 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
     ----------
     model : data model
         Input data model, assumed to be of type RampModel.
-
     readnoise_model : instance of data Model
         Readnoise for all pixels.
-
     gain_model : instance of gain Model
         Gain for all pixels.
-
-    nframes : int
-        Number of frames averaged per group; from the NFRAMES keyword. Does
-        not contain the groupgap.
 
     Returns
     -------
     readnoise_2d : float, 2D array
         Readnoise subarray
-
     gain_2d : float, 2D array
         Gain subarray
     """
@@ -76,15 +69,14 @@ def create_image_model(input_model, image_info):
 
     Parameters
     ----------
-    input_model: RampModel
+    input_model : RampModel
         Input RampModel for which the output ImageModel is created.
-
-    image_info: tuple
+    image_info : tuple
         The ramp fitting arrays needed for the ImageModel.
 
     Returns
     -------
-    out_model: ImageModel
+    out_model : ImageModel
         The output ImageModel to be returned from the ramp fit step.
     """
     data, dq, var_poisson, var_rnoise, err = image_info
@@ -113,10 +105,8 @@ def create_integration_model(input_model, integ_info, int_times):
     ----------
     input_model : RampModel
         Input RampModel for which the output CubeModel is created.
-
-    integ_info: tuple
+    integ_info : tuple
         The ramp fitting arrays needed for the CubeModel for each integration.
-
     int_times : astropy.io.fits.fitsrec.FITS_rec or None
         Integration times.
 
@@ -151,27 +141,26 @@ def create_optional_results_model(input_model, opt_info):
 
     Parameters
     ----------
-    input_model: ~jwst.datamodels.RampModel
-
-    opt_info: tuple
+    input_model : RampModel
+        The input ramp model used to create the optional results product.
+    opt_info : tuple
         The ramp fitting arrays needed for the RampFitOutputModel.
 
     Returns
     -------
-    opt_model: RampFitOutputModel
+    opt_model : RampFitOutputModel
         The optional RampFitOutputModel to be returned from the ramp fit step.
     """
-    (slope, sigslope, var_poisson, var_rnoise, yint, sigyint, pedestal, weights, crmag) = opt_info
     opt_model = datamodels.RampFitOutputModel(
-        slope=slope,
-        sigslope=sigslope,
-        var_poisson=var_poisson,
-        var_rnoise=var_rnoise,
-        yint=yint,
-        sigyint=sigyint,
-        pedestal=pedestal,
-        weights=weights,
-        crmag=crmag,
+        slope=opt_info[0],
+        sigslope=opt_info[1],
+        var_poisson=opt_info[2],
+        var_rnoise=opt_info[3],
+        yint=opt_info[4],
+        sigyint=opt_info[5],
+        pedestal=opt_info[6],
+        weights=opt_info[7],
+        crmag=opt_info[8],
     )
 
     opt_model.meta.filename = input_model.meta.filename
@@ -190,13 +179,10 @@ def compute_rn_variances(groupdq, readnoise_2d, gain_2d, group_time):
         The group data quality array for the exposure, 4-D flag.
         For groups that have been flagged as both CHARGELOSS and
         DO_NOT_USE, both flags have been reset.
-
     readnoise_2d : ndarray
-        readnoise values for all pixels in the image, 2-D float
-
+        Readnoise values for all pixels in the image, 2-D float.
     gain_2d : ndarray
-        gain values for all pixels in the image, 2-D float
-
+        Gain values for all pixels in the image, 2-D float.
     group_time : float
         Time increment between groups, in seconds.
 
@@ -205,11 +191,9 @@ def compute_rn_variances(groupdq, readnoise_2d, gain_2d, group_time):
     var_r2 : ndarray
         Image of integration-specific values for the slope variance due to
         readnoise only, 2-D float
-
     var_r3 : ndarray
         Cube of integration-specific values for the slope variance due to
         readnoise only, 3-D float
-
     var_r4 : ndarray
         Hypercube of segment- and integration-specific values for the slope
         variance due to read noise only, 4-D float
@@ -285,30 +269,26 @@ def calc_segs(rn_sect, gdq_sect, group_time):
     Parameters
     ----------
     rn_sect : ndarray
-        readnoise values for all pixels in the data section, 2-D float
-
+        Readnoise values for all pixels in the data section, 2-D float.
     gdq_sect : ndarray
-        gain values for all pixels in the data section, 2-D float
-
+        Gain values for all pixels in the data section, 2-D float.
     group_time : float
         Time increment between groups, in seconds.
 
     Returns
     -------
     den_r3 : ndarray
-        for a given integration, the reciprocal of the denominator of the
-        segment-specific variance of the segment's slope due to read noise, 3-D float
-
+        For a given integration, the reciprocal of the denominator
+        of the segment-specific variance of the segment's slope due
+        to read noise, 3-D float.
     num_r3 : ndarray
-        numerator of the segment-specific variance of the segment's slope
-        due to read noise, 3-D float
-
+        Numerator of the segment-specific variance of the segment's slope
+        due to read noise, 3-D float.
     segs_beg_3 : ndarray
-        lengths of segments for all pixels in the given data section and
-        integration, 3-D
-
+        Lengths of segments for all pixels in the given data section and
+        integration, 3-D.
     max_seg : int
-        maximum number of segments in a ramp
+        Maximum number of segments in a ramp.
     """
     (ngroups, asize2, asize1) = gdq_sect.shape
     npix = asize1 * asize2
@@ -411,7 +391,22 @@ class RampFitStep(Step):
     reference_file_types = ["readnoise", "gain"]
 
     def process(self, step_input):
-        """Process the ramp fit step."""
+        """
+        Process the ramp fit step.
+
+        Parameters
+        ----------
+        step_input : RampModel
+            The input ramp model to fit the ramps.
+
+        Returns
+        -------
+        out_model : ImageModel
+            The output 2-D image model with the fit ramps.
+
+        int_model : CubeModel
+            The output 3-D image model with the fit ramps for each integration.
+        """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
             # Work on a copy
@@ -446,9 +441,8 @@ class RampFitStep(Step):
                     result.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
 
                 # Get gain arrays, subarrays if desired.
-                frames_per_group = result.meta.exposure.nframes
                 readnoise_2d, gain_2d = get_reference_file_subarrays(
-                    result, readnoise_model, gain_model, frames_per_group
+                    result, readnoise_model, gain_model
                 )
 
             log.info(f"Using algorithm = {self.algorithm}")
@@ -606,19 +600,14 @@ def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
     ----------
     firstgroup : int or None
         The first group to be used in the ramp fitting
-
     lastgroup : int or None
         The last group to be used in the ramp fitting
-
     ngroups : int
         The number of groups in the ramp
-
     groupdq : ndarray
         The groupdq array to be modified in place
-
     groupdqflags : dict
         The groupdq flags dict
-
     """
     dnu = groupdqflags["DO_NOT_USE"]
     if firstgroup is None:
