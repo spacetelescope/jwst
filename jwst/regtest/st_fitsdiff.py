@@ -6,6 +6,7 @@ STScI edits to astropy FitsDiff.
 import fnmatch
 import glob
 import os
+import operator
 import os.path
 import textwrap
 from collections import defaultdict
@@ -21,7 +22,7 @@ from astropy.io.fits.header import Header
 from astropy.io.fits.hdu.table import _TableLikeHDU
 
 import numpy as np
-from astropy.io.fits.diff import _BaseDiff, RawDataDiff, TableDataDiff, report_diff_keyword_attr, _get_differences
+from astropy.io.fits.diff import _BaseDiff, report_diff_keyword_attr, _get_differences, _COL_ATTRS
 
 
 np.seterr(divide='ignore', invalid='ignore')
@@ -32,8 +33,8 @@ __all__ = [
     "STHDUDiff",
     "STHeaderDiff",
     "STImageDataDiff",
-    "RawDataDiff",
-    "TableDataDiff",
+    "STRawDataDiff",
+    "STTableDataDiff",
 ]
 
 
@@ -157,9 +158,18 @@ class STFITSDiff(_BaseDiff):
         if extension_tolerances is not None:
             # Make sure the given dict keys are all upper case
             for key in extension_tolerances:
-                self.extension_tolerances[key.upper()] = extension_tolerances[key]
+                # Make sure both tolerances exist in key
+                tols = extension_tolerances[key]
+                if 'rtol' not in tols:
+                    tols['rtol'] = rtol
+                if 'atol' not in tols:
+                    tols['atol'] = atol
+                if isinstance(key, str):
+                    self.extension_tolerances[key.upper()] = tols
+                else:
+                    self.extension_tolerances[key] = tols
             # Make sure the other extensions get a default relative and absolute tolerance
-            if 'DEFAULT' not in [key.upper() for key in extension_tolerances]:
+            if 'DEFAULT' not in [key.upper() for key in extension_tolerances if isinstance(key, str)]:
                 self.extension_tolerances['DEFAULT'] = {'rtol': rtol, 'atol': atol}
 
         if isinstance(a, (str, os.PathLike)):
@@ -245,7 +255,7 @@ class STFITSDiff(_BaseDiff):
             self.diff_extnames = (ext_namesa, ext_namesb, ext_intersection, ext_not_in_both)
 
         # Set the tolerance for the headers
-        if "HEADERS" in [key.upper() for key in self.extension_tolerances]:
+        if "HEADERS" in [key for key in self.extension_tolerances]:
             self.header_tolerances["rtol"] = self.extension_tolerances["HEADERS"]["rtol"]
             self.header_tolerances["atol"] = self.extension_tolerances["HEADERS"]["atol"]
 
@@ -262,9 +272,12 @@ class STFITSDiff(_BaseDiff):
                     if extver == self.b[idxb].ver:
                         same_version = True
                         break
-                if same_version:
-                    if self.extension_tolerances:
-                        if extname in self.extension_tolerances:
+                if self.extension_tolerances:
+                    if idxa in self.extension_tolerances:
+                        if idxa in self.extension_tolerances:
+                            self.rtol = self.extension_tolerances[idxa]["rtol"]
+                            self.atol = self.extension_tolerances[idxa]["atol"]
+                        elif extname in self.extension_tolerances:
                             self.rtol = self.extension_tolerances[extname]["rtol"]
                             self.atol = self.extension_tolerances[extname]["atol"]
                         else:
@@ -351,14 +364,17 @@ class STFITSDiff(_BaseDiff):
             else:
                 self._fileobj.write("\n")
                 self._writeln(f"Extension HDU {idx} ({extname}, {extver}):")
-                if extname in self.extension_tolerances:
+                if idx in self.extension_tolerances:
+                    rtol = self.extension_tolerances[idx]["rtol"]
+                    atol = self.extension_tolerances[idx]["atol"]
+                elif extname in self.extension_tolerances:
                     rtol = self.extension_tolerances[extname]["rtol"]
                     atol = self.extension_tolerances[extname]["atol"]
                 else:
                     rtol = self.extension_tolerances["DEFAULT"]["rtol"]
                     atol = self.extension_tolerances["DEFAULT"]["atol"]
                 self._writeln(
-                    f"\n Relative tolerance: {rtol}, Absolute tolerance: {atol}"
+                    f"\n  Relative tolerance: {rtol:.1e}, Absolute tolerance: {atol:.1e}"
                 )
             hdu_diff.report(self._fileobj, indent=self._indent + 1)
 
@@ -579,7 +595,7 @@ class STHDUDiff(_BaseDiff):
             pass
         elif self.a.is_image and self.b.is_image:
             self.diff_data = STImageDataDiff.fromdiff(self, self.a.data, self.b.data)
-            if self.diff_data is not None:
+            if self.diff_data.diff_total > 0:
                 self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
@@ -587,7 +603,7 @@ class STHDUDiff(_BaseDiff):
             self.diff_data.b = None
         elif isinstance(self.a, _TableLikeHDU) and isinstance(self.b, _TableLikeHDU):
             # TODO: Replace this if/when _BaseHDU grows a .is_table property
-            self.diff_data = TableDataDiff.fromdiff(self, self.a.data, self.b.data)
+            self.diff_data = STTableDataDiff.fromdiff(self, self.a.data, self.b.data)
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
             self.diff_data.a = None
@@ -595,8 +611,8 @@ class STHDUDiff(_BaseDiff):
         elif not self.diff_extension_types:
             # Don't diff the data for unequal extension types that are not
             # recognized image or table types
-            self.diff_data = RawDataDiff.fromdiff(self, self.a.data, self.b.data)
-            if self.diff_data is not None:
+            self.diff_data = STRawDataDiff.fromdiff(self, self.a.data, self.b.data)
+            if self.diff_data.diff_total > 0:
                 self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
@@ -1215,4 +1231,451 @@ class STImageDataDiff(_BaseDiff):
             )
             self._writeln(f" Maximum relative difference: {max_relative}")
             self._writeln(f" Maximum absolute difference: {max_absolute}")
+
+
+class STRawDataDiff(STImageDataDiff):
+    """
+    `RawDataDiff` is just a special case of `ImageDataDiff` where the images
+    are one-dimensional, and the data is treated as a 1-dimensional array of
+    bytes instead of pixel values.  This is used to compare the data of two
+    non-standard extension HDUs that were not recognized as containing image or
+    table data.
+
+    `ImageDataDiff` objects have the following diff attributes:
+
+    - ``diff_dimensions``: Same as the ``diff_dimensions`` attribute of
+      `ImageDataDiff` objects. Though the "dimension" of each array is just an
+      integer representing the number of bytes in the data.
+
+    - ``diff_bytes``: Like the ``diff_pixels`` attribute of `ImageDataDiff`
+      objects, but renamed to reflect the minor semantic difference that these
+      are raw bytes and not pixel values.  Also the indices are integers
+      instead of tuples.
+
+    - ``diff_total`` and ``diff_ratio``: Same as `ImageDataDiff`.
+    """
+
+    def __init__(self, a, b, numdiffs=10, report_pixel_loc_diffs=False):
+        """
+        Parameters
+        ----------
+        a : BaseHDU
+            An HDU object.
+
+        b : BaseHDU
+            An HDU object to compare to the first HDU object.
+
+        numdiffs : int, optional
+            The number of pixel/table values to output when reporting HDU data
+            differences.  Though the count of differences is the same either
+            way, this allows controlling the number of different values that
+            are kept in memory or output.  If a negative value is given, then
+            numdiffs is treated as unlimited (default: 10).
+
+        report_pixel_loc_diffs : bool, optional
+            As for ImageDiff, this will report all the locations where
+            differences are found but instead of pixels is byte locations.
+        """
+        self.report_pixel_loc_diffs = report_pixel_loc_diffs
+        self.diff_dimensions = ()
+        self.diff_bytes = []
+
+        super().__init__(a, b, numdiffs=numdiffs)
+
+    def _diff(self):
+        super()._diff()
+        if self.diff_dimensions:
+            self.diff_dimensions = (
+                self.diff_dimensions[0][0],
+                self.diff_dimensions[1][0],
+            )
+
+        self.diff_bytes = [(x[0], y) for x, y in self.diff_pixels]
+        del self.diff_pixels
+
+    def _report(self):
+        if self.diff_dimensions:
+            self._writeln(" Data sizes differ:")
+            self._writeln(f"  a: {self.diff_dimensions[0]} bytes")
+            self._writeln(f"  b: {self.diff_dimensions[1]} bytes")
+            # For now we don't do any further comparison if the dimensions
+            # differ; though in the future it might be nice to be able to
+            # compare at least where the images intersect
+            self._writeln(" No further data comparison performed.")
+            return
+
+        if not self.diff_bytes:
+            return
+
+        if self.report_pixel_loc_diffs:
+            for index, values in self.diff_bytes:
+                self._writeln(f" Data differs at byte {index}:")
+                report_diff_values(
+                    values[0],
+                    values[1],
+                    fileobj=self._fileobj,
+                    indent_width=self._indent + 1,
+                    rtol=self.rtol,
+                    atol=self.atol,
+                )
+
+            self._writeln(" ...")
+            self._writeln(
+                f" {self.diff_total} different bytes found "
+                f"({self.diff_ratio:.2%} different)."
+            )
+
+
+class STTableDataDiff(_BaseDiff):
+    """
+    Diff two table data arrays. It doesn't matter whether the data originally
+    came from a binary or ASCII table--the data should be passed in as a
+    recarray.
+
+    `TableDataDiff` objects have the following diff attributes:
+
+    - ``diff_column_count``: If the tables being compared have different
+      numbers of columns, this contains a 2-tuple of the column count in each
+      table.  Even if the tables have different column counts, an attempt is
+      still made to compare any columns they have in common.
+
+    - ``diff_columns``: If either table contains columns unique to that table,
+      either in name or format, this contains a 2-tuple of lists. The first
+      element is a list of columns (these are full `Column` objects) that
+      appear only in table a.  The second element is a list of tables that
+      appear only in table b.  This only lists columns with different column
+      definitions, and has nothing to do with the data in those columns.
+
+    - ``diff_column_names``: This is like ``diff_columns``, but lists only the
+      names of columns unique to either table, rather than the full `Column`
+      objects.
+
+    - ``diff_column_attributes``: Lists columns that are in both tables but
+      have different secondary attributes, such as TUNIT or TDISP.  The format
+      is a list of 2-tuples: The first a tuple of the column name and the
+      attribute, the second a tuple of the different values.
+
+    - ``diff_values``: `TableDataDiff` compares the data in each table on a
+      column-by-column basis.  If any different data is found, it is added to
+      this list.  The format of this list is similar to the ``diff_pixels``
+      attribute on `ImageDataDiff` objects, though the "index" consists of a
+      (column_name, row) tuple.  For example::
+
+          [('TARGET', 0), ('NGC1001', 'NGC1002')]
+
+      shows that the tables contain different values in the 0-th row of the
+      'TARGET' column.
+
+    - ``diff_total`` and ``diff_ratio``: Same as `ImageDataDiff`.
+
+    `TableDataDiff` objects also have a ``common_columns`` attribute that lists
+    the `Column` objects for columns that are identical in both tables, and a
+    ``common_column_names`` attribute which contains a set of the names of
+    those columns.
+
+    """
+
+    def __init__(self, a, b, ignore_fields=[], numdiffs=10, rtol=0.0, atol=0.0,
+                 report_pixel_loc_diffs=False):
+        """
+        Parameters
+        ----------
+        a : BaseHDU
+            An HDU object.
+
+        b : BaseHDU
+            An HDU object to compare to the first HDU object.
+
+        ignore_fields : sequence, optional
+            The (case-insensitive) names of any table columns to ignore if any
+            table data is to be compared.
+
+        numdiffs : int, optional
+            The number of pixel/table values to output when reporting HDU data
+            differences.  Though the count of differences is the same either
+            way, this allows controlling the number of different values that
+            are kept in memory or output.  If a negative value is given, then
+            numdiffs is treated as unlimited (default: 10).
+
+        rtol : float, optional
+            The relative difference to allow when comparing two float values
+            either in header values, image arrays, or table columns
+            (default: 0.0). Values which satisfy the expression
+
+            .. math::
+
+                \\left| a - b \\right| > \\text{atol} + \\text{rtol} \\cdot \\left| b \\right|
+
+            are considered to be different.
+            The underlying function used for comparison is `numpy.allclose`.
+
+            .. versionadded:: 2.0
+
+        atol : float, optional
+            The allowed absolute difference. See also ``rtol`` parameter.
+
+            .. versionadded:: 2.0
+
+        report_pixel_loc_diffs : bool, optional
+            As for ImageDiff, this will report all the locations where
+            differences are found but instead of pixels is column locations.
+
+        """
+
+        self.report_pixel_loc_diffs = report_pixel_loc_diffs
+        self.ignore_fields = set(ignore_fields)
+        self.numdiffs = numdiffs
+        self.rtol = rtol
+        self.atol = atol
+
+        self.common_columns = []
+        self.common_column_names = set()
+
+        # self.diff_columns contains columns with different column definitions,
+        # but not different column data. Column data is only compared in
+        # columns that have the same definitions
+        self.diff_rows = ()
+        self.diff_column_count = ()
+        self.diff_columns = ()
+
+        # If two columns have the same name+format, but other attributes are
+        # different (such as TUNIT or such) they are listed here
+        self.diff_column_attributes = []
+
+        # Like self.diff_columns, but just contains a list of the column names
+        # unique to each table, and in the order they appear in the tables
+        self.diff_column_names = ()
+        self.diff_values = []
+        self.total_diff_per_col = {}
+
+        self.diff_ratio = 0
+        self.diff_total = 0
+
+        super().__init__(a, b)
+
+    def _diff(self):
+        # Much of the code for comparing columns is similar to the code for
+        # comparing headers--consider refactoring
+        colsa = self.a.columns
+        colsb = self.b.columns
+
+        if len(colsa) != len(colsb):
+            self.diff_column_count = (len(colsa), len(colsb))
+
+        # Even if the number of columns are unequal, we still do comparison of
+        # any common columns
+        colsa = {c.name.lower(): c for c in colsa}
+        colsb = {c.name.lower(): c for c in colsb}
+
+        if "*" in self.ignore_fields:
+            # If all columns are to be ignored, ignore any further differences
+            # between the columns
+            return
+
+        # Keep the user's original ignore_fields list for reporting purposes,
+        # but internally use a case-insensitive version
+        ignore_fields = {f.lower() for f in self.ignore_fields}
+
+        # It might be nice if there were a cleaner way to do this, but for now
+        # it'll do
+        for fieldname in ignore_fields:
+            fieldname = fieldname.lower()
+            if fieldname in colsa:
+                del colsa[fieldname]
+            if fieldname in colsb:
+                del colsb[fieldname]
+
+        colsa_set = set(colsa.values())
+        colsb_set = set(colsb.values())
+        self.common_columns = sorted(
+            colsa_set.intersection(colsb_set), key=operator.attrgetter("name")
+        )
+
+        self.common_column_names = {col.name.lower() for col in self.common_columns}
+
+        left_only_columns = {
+            col.name.lower(): col for col in colsa_set.difference(colsb_set)
+        }
+        right_only_columns = {
+            col.name.lower(): col for col in colsb_set.difference(colsa_set)
+        }
+
+        if left_only_columns or right_only_columns:
+            self.diff_columns = (left_only_columns, right_only_columns)
+            self.diff_column_names = ([], [])
+
+        if left_only_columns:
+            for col in self.a.columns:
+                if col.name.lower() in left_only_columns:
+                    self.diff_column_names[0].append(col.name)
+
+        if right_only_columns:
+            for col in self.b.columns:
+                if col.name.lower() in right_only_columns:
+                    self.diff_column_names[1].append(col.name)
+
+        # If the tables have a different number of rows, we don't compare the
+        # columns right now.
+        # TODO: It might be nice to optionally compare the first n rows where n
+        # is the minimum of the row counts between the two tables.
+        if len(self.a) != len(self.b):
+            self.diff_rows = (len(self.a), len(self.b))
+            return
+
+        # If the tables contain no rows there's no data to compare, so we're
+        # done at this point. (See ticket #178)
+        if len(self.a) == len(self.b) == 0:
+            return
+
+        # Like in the old fitsdiff, compare tables on a column by column basis
+        # The difficulty here is that, while FITS column names are meant to be
+        # case-insensitive, Astropy still allows, for the sake of flexibility,
+        # two columns with the same name but different case.  When columns are
+        # accessed in FITS tables, a case-sensitive is tried first, and failing
+        # that a case-insensitive match is made.
+        # It's conceivable that the same column could appear in both tables
+        # being compared, but with different case.
+        # Though it *may* lead to inconsistencies in these rare cases, this
+        # just assumes that there are no duplicated column names in either
+        # table, and that the column names can be treated case-insensitively.
+        for col in self.common_columns:
+            name_lower = col.name.lower()
+            if name_lower in ignore_fields:
+                continue
+
+            cola = colsa[name_lower]
+            colb = colsb[name_lower]
+
+            for attr, _ in _COL_ATTRS:
+                vala = getattr(cola, attr, None)
+                valb = getattr(colb, attr, None)
+                if diff_values(vala, valb):
+                    self.diff_column_attributes.append(
+                        ((col.name.upper(), attr), (vala, valb))
+                    )
+
+            arra = self.a[col.name]
+            arrb = self.b[col.name]
+
+            if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
+                arrb.dtype, np.floating
+            ):
+                diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
+            elif "P" in col.format or "Q" in col.format:
+                diffs = (
+                    [
+                        idx
+                        for idx in range(len(arra))
+                        if not np.allclose(
+                            arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol
+                        )
+                    ],
+                )
+            else:
+                diffs = np.where(arra != arrb)
+
+            self.diff_total += len(set(diffs[0]))
+
+            # Find the total differences per column
+            if not self.report_pixel_loc_diffs:
+                if len(set(diffs[0])) > 0:
+                    if col.name not in self.total_diff_per_col:
+                        self.total_diff_per_col[col.name] = len(set(diffs[0]))
+                    else:
+                        self.total_diff_per_col[col.name] += len(set(diffs[0]))
+
+            if self.numdiffs >= 0:
+                if len(self.diff_values) >= self.numdiffs:
+                    # Don't save any more diff values
+                    continue
+
+                # Add no more diff'd values than this
+                max_diffs = self.numdiffs - len(self.diff_values)
+            else:
+                max_diffs = len(diffs[0])
+
+            last_seen_idx = None
+            for idx in islice(diffs[0], 0, max_diffs):
+                if idx == last_seen_idx:
+                    # Skip duplicate indices, which my occur when the column
+                    # data contains multi-dimensional values; we're only
+                    # interested in storing row-by-row differences
+                    continue
+                last_seen_idx = idx
+                self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
+
+        total_values = len(self.a) * len(self.a.dtype.fields)
+        self.diff_ratio = float(self.diff_total) / float(total_values)
+
+    def _report(self):
+        if self.diff_column_count:
+            self._writeln(" Tables have different number of columns:")
+            self._writeln(f"  a: {self.diff_column_count[0]}")
+            self._writeln(f"  b: {self.diff_column_count[1]}")
+
+        if self.diff_column_names:
+            # Show columns with names unique to either table
+            for name in self.diff_column_names[0]:
+                format = self.diff_columns[0][name.lower()].format
+                self._writeln(f" Extra column {name} of format {format} in a")
+            for name in self.diff_column_names[1]:
+                format = self.diff_columns[1][name.lower()].format
+                self._writeln(f" Extra column {name} of format {format} in b")
+
+        col_attrs = dict(_COL_ATTRS)
+        # Now go through each table again and show columns with common
+        # names but other property differences...
+        for col_attr, vals in self.diff_column_attributes:
+            name, attr = col_attr
+            self._writeln(f" Column {name} has different {col_attrs[attr]}:")
+            report_diff_values(
+                vals[0],
+                vals[1],
+                fileobj=self._fileobj,
+                indent_width=self._indent + 1,
+                rtol=self.rtol,
+                atol=self.atol,
+            )
+
+        if self.diff_rows:
+            self._writeln(" Table rows differ:")
+            self._writeln(f"  a: {self.diff_rows[0]}")
+            self._writeln(f"  b: {self.diff_rows[1]}")
+            self._writeln(" No further data comparison performed.")
+            return
+
+        if not self.diff_values:
+            return
+
+        if self.report_pixel_loc_diffs:
+            # Finally, let's go through and report column data differences:
+            for indx, values in self.diff_values:
+                self._writeln(" Column {} data differs in row {}:".format(*indx))
+                report_diff_values(
+                    values[0],
+                    values[1],
+                    fileobj=self._fileobj,
+                    indent_width=self._indent + 1,
+                    rtol=self.rtol,
+                    atol=self.atol,
+                )
+
+            if self.diff_values and self.numdiffs < self.diff_total:
+                self._writeln(
+                    f" ...{self.diff_total - self.numdiffs} additional difference(s) found."
+                )
+
+            if self.diff_total > self.numdiffs:
+                self._writeln(" ...")
+
+        else:
+            for colname in self.total_diff_per_col:
+                self._writeln(" Column {} data differs on {} values".format(colname,
+                                                                            self.total_diff_per_col[colname]))
+
+        self._writeln(
+            f" {self.diff_total} different table data element(s) found "
+            f"({self.diff_ratio:.2%} different)."
+        )
+
 
