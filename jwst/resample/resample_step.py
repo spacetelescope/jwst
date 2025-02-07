@@ -48,7 +48,7 @@ class ResampleStep(Step):
         output_wcs = string(default='')  # Custom output WCS
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
-        in_memory = boolean(default=True)  # Keep images in memory when 'single' is False
+        in_memory = boolean(default=True)  # Keep images in memory
     """ # noqa: E501
 
     reference_file_types: list = []
