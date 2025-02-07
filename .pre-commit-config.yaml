@@ -50,7 +50,6 @@ repos:
             jwst/emicorr/.* |
             jwst/engdblog/.* |
             jwst/exp_to_source/.* |
-            jwst/extract_1d/.* |
             jwst/extract_2d/.* |
             jwst/firstframe/.* |
             jwst/flatfield/.* |
