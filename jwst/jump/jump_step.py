@@ -62,7 +62,8 @@ class JumpStep(Step):
     class_alias = "jump"
 
     def process(self, step_input):
-        """Step method to execute step computations.
+        """
+        Step method to execute step computations.
 
         Parameters
         ----------
@@ -74,7 +75,6 @@ class JumpStep(Step):
         result : RampModel
             The ramp model with jump step as COMPLETE and jumps detected or
             the jump step is SKIPPED.
-
         """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
@@ -130,7 +130,8 @@ class JumpStep(Step):
         return result
 
     def _setup_jump_data(self, result):
-        """Create a JumpData instance to be used by STCAL jump.
+        """
+        Create a JumpData instance to be used by STCAL jump.
 
         Parameters
         ----------
@@ -141,7 +142,6 @@ class JumpStep(Step):
         -------
         jump_data : JumpData
             The data container to be used to run the STCAL detect_jumps_data.
-
         """
         # Get the gain and readnoise reference files
         gain_filename = self.get_reference_file(result, "gain")
