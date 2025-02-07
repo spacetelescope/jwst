@@ -283,10 +283,10 @@ class STFITSDiff(_BaseDiff):
                         else:
                             self.rtol = self.extension_tolerances["DEFAULT"]["rtol"]
                             self.atol = self.extension_tolerances["DEFAULT"]["atol"]
-                    hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
+                hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
 
-                    if not hdu_diff.identical:
-                        self.diff_hdus.append((idxa, hdu_diff, extname, extver))
+                if not hdu_diff.identical:
+                    self.diff_hdus.append((idxa, hdu_diff, extname, extver))
 
     def _report(self):
         wrapper = textwrap.TextWrapper(initial_indent="  ", subsequent_indent="  ")
@@ -588,6 +588,11 @@ class STHDUDiff(_BaseDiff):
             for threshold in thresholds:
                 n = values[values > threshold].size
                 percentages[threshold] = np.round((n / n_total) * 100, decimals=2)
+            if relative_values.size > 0:
+                # Differences are too large values. Calculating percentages on relative numbers.
+                for threshold in thresholds:
+                    n = relative_values[relative_values > threshold].size
+                    percentages[str(threshold)+'_rel'] = np.round((n / n_total) * 100, decimals=2)
             return nans_zero_info, percentages, stats
 
         if self.a.data is None or self.b.data is None:
@@ -672,7 +677,7 @@ class STHDUDiff(_BaseDiff):
             # Calculate difference percentages
             self._writeln(" Difference of a from b:")
             for key, val in self.percentages.items():
-                self._writeln(f"  {key:>6} ..... {val:<5}%")
+                self._writeln(f"  {key:>10} ..... {val:<5}%")
             self._writeln(" Stats:")
             for key, val in self.stats.items():
                 self._writeln(f"  {key} = {val}")
