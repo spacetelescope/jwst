@@ -13,10 +13,7 @@ __all__ = ["ChargeMigrationStep"]
 
 
 class ChargeMigrationStep(Step):
-    """
-    This Step sets the CHARGELOSS flag for groups exhibiting significant
-    charge migration.
-    """
+    """Set the CHARGELOSS flag for groups exhibiting significant charge migration."""
 
     class_alias = "charge_migration"
 
@@ -26,6 +23,19 @@ class ChargeMigrationStep(Step):
     """  # noqa: E501
 
     def process(self, step_input):
+        """
+        Detect jumps based on signal threshold.
+
+        Parameters
+        ----------
+        step_input : RampModel
+            The ramp model on which to detect jumps.
+
+        Returns
+        -------
+        result : RampModel
+            The flagged ramp model.
+        """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
             if input_model.data.shape[1] < 3:  # skip step if only 1 or 2 groups/integration
