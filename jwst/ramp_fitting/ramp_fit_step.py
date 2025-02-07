@@ -325,7 +325,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
     # For a segment, the variance due to readnoise noise
     # = 12 * readnoise**2 /(nreads_seg**3. - nreads_seg)/(tgroup **2.)
-    num_r3 = 12.0 * (rn_sect / group_time)**2.0  # always >0
+    num_r3 = 12.0 * (rn_sect / group_time) ** 2.0  # always >0
 
     # Reshape for every group, every pixel in section
     num_r3 = np.dstack([num_r3] * ngroups)
@@ -392,7 +392,7 @@ class RampFitStep(Step):
 
     def process(self, step_input):
         """
-        Process the ramp fit step.
+        Fit ramps using ramp fitting algorithm.
 
         Parameters
         ----------
