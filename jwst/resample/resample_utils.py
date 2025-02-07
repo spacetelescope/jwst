@@ -422,51 +422,67 @@ def load_custom_wcs(asdf_wcs_file, output_shape=None):
     Parameters
     ----------
     asdf_wcs_file : str
-        Path to an ASDF file containing a GWCS structure.
+        Path to an ASDF file containing a GWCS structure. The WCS object
+        must be under the ``"wcs"`` key. Additional keys recognized by
+        :py:func:`load_custom_wcs` are: ``"pixel_area"``, ``"pixel_scale"``,
+        ``"pixel_shape"``, and ``"array_shape"``. The latter two are used only
+        when the WCS object does not have the corresponding attributes set.
+
+        Pixel scale and pixel area should be provided in units of ``arcsec``
+        and ``arcsec**2``.
+
     output_shape : tuple of int, optional
         Array shape for the output data.  If not provided,
-        the custom WCS must specify one of: pixel_shape,
-        array_shape, or bounding_box.
+        the custom WCS must specify one of (in order of priority):
+        ``array_shape``, ``pixel_shape``, or ``bounding_box``.
 
     Returns
     -------
-    wcs : WCS
-        The output WCS to resample into.
+    wcs_dict : dict
+        A dictionary with three key/value pairs:
+        ``"wcs"``, ``"pixel_scale"``, and ``"pixel_area"``.
+        ``"pixel_scale"``, and ``"pixel_area"`` may be `None` if not stored in
+        the ASDF file. If ``"pixel_area"`` is provided but ``"pixel_scale"``
+        is not then pixel scale will be computed from pixel area assuming
+        square pixels: ``pixel_scale = sqrt(pixel_area)``.
+
     """
     if not asdf_wcs_file:
         return None
 
     with asdf.open(asdf_wcs_file) as af:
         wcs = deepcopy(af.tree["wcs"])
-        pixel_area = af.tree.get("pixel_area", None)
-        pixel_shape = af.tree.get("pixel_shape", None)
-        array_shape = af.tree.get("array_shape", None)
+        user_pixel_area = af.tree.get("pixel_area", None)
+        user_pixel_scale = af.tree.get("pixel_scale", None)
+        if user_pixel_scale is None and user_pixel_area is not None:
+            user_pixel_scale = np.sqrt(user_pixel_area)
 
-    if not hasattr(wcs, "pixel_area") or wcs.pixel_area is None:
-        wcs.pixel_area = pixel_area
-    if not hasattr(wcs, "pixel_shape") or wcs.pixel_shape is None:
-        wcs.pixel_shape = pixel_shape
-    if not hasattr(wcs, "array_shape") or wcs.array_shape is None:
-        wcs.array_shape = array_shape
+        user_pixel_shape = af.tree.get("pixel_shape", None)
+        user_array_shape = af.tree.get(
+            "array_shape",
+            None if user_pixel_shape is None else user_pixel_shape[::-1]
+        )
 
     if output_shape is not None:
         wcs.array_shape = output_shape[::-1]
-        wcs.pixel_shape = output_shape
-    elif wcs.pixel_shape is not None:
-        wcs.array_shape = wcs.pixel_shape[::-1]
-    elif wcs.array_shape is not None:
-        wcs.pixel_shape = wcs.array_shape[::-1]
-    elif wcs.bounding_box is not None:
-        wcs.array_shape = tuple(
-            int(axs[1] + 0.5)
-            for axs in wcs.bounding_box.bounding_box(order="C")
-        )
-        wcs.pixel_shape = wcs.array_shape[::-1]
-    else:
-        raise ValueError(
-            "Step argument 'output_shape' is required when custom WCS "
-            "does not have 'array_shape', 'pixel_shape', or "
-            "'bounding_box' attributes set."
-        )
+    elif wcs.array_shape is None:
+        if user_array_shape is not None:
+            wcs.array_shape = user_array_shape
+        elif getattr(wcs, "bounding_box", None) is not None:
+            wcs.array_shape = tuple(
+                int(axs[1] + 0.5)
+                for axs in wcs.bounding_box.bounding_box(order="C")
+            )
+        else:
+            raise ValueError(
+                "Step argument 'output_shape' is required when custom WCS "
+                "does not have 'array_shape', 'pixel_shape', or "
+                "'bounding_box' attributes set."
+            )
 
-    return wcs
+    wcs_dict = {
+        "wcs": wcs,
+        "pixel_area": user_pixel_area,
+        "pixel_scale": user_pixel_scale,
+    }
+    return wcs_dict

@@ -159,8 +159,8 @@ class ResampleImage(Resample):
             Indicates whether to blend metadata from all input models and
             store the combined result to the output model.
 
-        output_wcs : dict, WCS object, None, optional
-            Specifies output WCS either directly as a WCS or a dictionary
+        output_wcs : dict, None, optional
+            Specifies output WCS as a dictionary
             with keys ``'wcs'`` (WCS object) and ``'pixel_scale'``
             (pixel scale in arcseconds). ``'pixel_scale'``, when provided,
             will be used for computation of drizzle scaling factor. When it is
@@ -321,11 +321,7 @@ class ResampleImage(Resample):
                 log.warning(
                     "Ignoring 'wcs_pars' since 'output_wcs' is not None."
                 )
-            if isinstance(output_wcs, dict):
-                w = output_wcs["wcs"]
-            else:
-                w = output_wcs
-            if w.array_shape is None:
+            if output_wcs["wcs"].array_shape is None:
                 raise ValueError(
                     "Custom WCS objects must have the 'array_shape' "
                     "attribute set (defined)."

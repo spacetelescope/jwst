@@ -73,6 +73,7 @@ class ResampleSpec(ResampleImage):
             }
             output_wcs = output_wcs["wcs"]
             pixel_scale = output_wcs_dict.get("pixel_scale")
+            pixel_area = output_wcs_dict.get("pixel_area")
             pixel_scale_ratio = output_wcs_dict.get("pixel_scale_ratio", 1.0)
             shape = output_wcs.array_shape
         else:
@@ -105,7 +106,7 @@ class ResampleSpec(ResampleImage):
         if nominal_area is None:
             log.warning('Nominal pixel area not set in input data.')
             log.warning(
-                "Output pixel scale setting is not supported without an "
+                "Setting output pixel scale is not supported without an "
                 "input pixel scale. Setting pixel_scale=None."
             )
             pixel_scale = None
@@ -132,8 +133,7 @@ class ResampleSpec(ResampleImage):
                                            / input_pixscale0)
 
             else:
-                log.debug(f'Setting output pixel area from wcs.pixel_area: '
-                          f'{output_wcs.pixel_area}')
+                log.debug(f'Using output pixel area: {pixel_area}')
                 output_pix_area = pixel_area
 
             # Set the pixel scale ratio for scaling reasons

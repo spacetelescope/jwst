@@ -1227,19 +1227,24 @@ def test_custom_wcs_input(tmp_path, nircam_rate, wcs_attr):
 
     # write the WCS to an asdf file
     refwcs = str(tmp_path / 'test_wcs.asdf')
-    asdf.AsdfFile({"wcs": wcs}).write_to(refwcs)
+    asdf.AsdfFile({"wcs": wcs, "pixel_area": 7919}).write_to(refwcs)
 
     # load the WCS from the asdf file
     loaded_wcs = load_custom_wcs(refwcs)
+    assert loaded_wcs["pixel_area"] == 7919
 
     # check that the loaded WCS has the correct values
     for attr in ['pixel_shape', 'array_shape']:
-        assert np.allclose(getattr(loaded_wcs, attr), wcs_dict[attr])
+        assert np.allclose(getattr(loaded_wcs["wcs"], attr), wcs_dict[attr])
 
 
-@pytest.mark.parametrize('override,value',
-                         [('pixel_area', 1e-13), ('pixel_shape', (300, 400)),
-                          ('array_shape', (400, 300))])
+@pytest.mark.parametrize(
+    'override,value',
+    [
+        ('pixel_shape', (300, 400)),
+        ('array_shape', (400, 300))
+    ]
+)
 def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
     # make a valid WCS
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
@@ -1252,15 +1257,15 @@ def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
 
     expected_array_shape = im.data.shape
     expected_pixel_shape = im.data.shape[::-1]
-    expected_pixel_area = None
 
     # write the WCS to an asdf file with a top-level override
     refwcs = str(tmp_path / 'test_wcs.asdf')
     asdf.AsdfFile({"wcs": wcs, override: value}).write_to(refwcs)
 
     # check for expected values when read back in
-    keys = ['pixel_area', 'pixel_shape', 'array_shape']
-    loaded_wcs = load_custom_wcs(refwcs)
+    keys = ['pixel_shape', 'array_shape']
+    loaded_wcs = load_custom_wcs(refwcs)["wcs"]
+
     for key in keys:
         if key == override:
             assert np.allclose(getattr(loaded_wcs, key), value)
@@ -1274,8 +1279,6 @@ def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
                 assert np.allclose(getattr(loaded_wcs, key), value[::-1])
             else:
                 assert np.allclose(getattr(loaded_wcs, key), expected_array_shape)
-        elif key == 'pixel_area':
-            assert getattr(loaded_wcs, key) == expected_pixel_area
 
 
 def test_custom_wcs_input_error(tmp_path, nircam_rate):
@@ -1294,11 +1297,11 @@ def test_custom_wcs_input_error(tmp_path, nircam_rate):
 
     # loading the file without shape info should produce an error
     with pytest.raises(ValueError, match="'output_shape' is required"):
-        loaded_wcs = load_custom_wcs(refwcs)
+        loaded_wcs = load_custom_wcs(refwcs)["wcs"]
 
     # providing an output shape should succeed
     output_shape = (300, 400)
-    loaded_wcs = load_custom_wcs(refwcs, output_shape=output_shape)
+    loaded_wcs = load_custom_wcs(refwcs, output_shape=output_shape)["wcs"]
 
     # array shape is opposite of input values (numpy convention)
     assert np.all(loaded_wcs.array_shape == output_shape[::-1])
