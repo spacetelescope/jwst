@@ -46,6 +46,7 @@ __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
     'AsnMixin_Lv2Nod',
+    'AsnMixin_Lv2Imprint',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'AsnMixin_Lv2WFSS',
@@ -965,6 +966,56 @@ class AsnMixin_Lv2Image:
         self.data['asn_type'] = 'image2'
 
 
+class AsnMixin_Lv2Imprint:
+    """Level 2 imprint association handling."""
+
+    def prune_imprints(self):
+        # Only one product for Lv2 associations
+        members = self['products'][0]['members']
+
+        # Check for science and imprint members
+        science = []
+        imprint_sci = []
+        imprint_bkg = []
+        science_is_background = False
+        for member in members:
+            if member['exptype'] == 'science':
+                science.append(member)
+                if member.item['bkgdtarg'] == 't':
+                    science_is_background = True
+            elif member['exptype'] == 'imprint':
+                # Store imprints by background status
+                if member.item['bkgdtarg'] == 't':
+                    imprint_bkg.append(member)
+                else:
+                    imprint_sci.append(member)
+
+        # Only check the imprints that match the "science" members
+        if science_is_background:
+            imprints_to_check = imprint_bkg
+        else:
+            imprints_to_check = imprint_sci
+
+        # If 1 or more science and more imprints than science,
+        # discard any imprints that don't match the science dither index
+        if 1 <= len(science) < len(imprints_to_check):
+            imprint_to_keep = set()
+            for science_exp in science:
+                for imprint_exp in imprints_to_check:
+                    if imprint_exp.item['dithptin'] == science_exp.item['dithptin']:
+                        imprint_to_keep.add(imprint_exp['expname'])
+            for imprint_exp in imprints_to_check:
+                if imprint_exp['expname'] not in imprint_to_keep:
+                    members.remove(imprint_exp)
+        return [self]
+
+    def finalize(self):
+        if self.is_valid:
+            return self.prune_imprints()
+        else:
+            return None
+
+
 class AsnMixin_Lv2Nod:
     """Associations that need to create nodding associations
 
@@ -1201,7 +1252,7 @@ class AsnMixin_Lv2Special:
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
+    """Level 2 Spectral association base."""
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
