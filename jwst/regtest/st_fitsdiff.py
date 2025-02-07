@@ -557,7 +557,7 @@ class STHDUDiff(_BaseDiff):
             nan_idx = (np.isnan(a) | np.isnan(b))
             anonan = a[~nan_idx]
             bnonan = b[~nan_idx]
-            values = anonan - bnonan
+            values = np.abs(anonan - bnonan)
             if (values == 0.0).all():
                 return None, None, None
             # Calculate stats
@@ -586,7 +586,7 @@ class STHDUDiff(_BaseDiff):
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             n_total = values.size
             for threshold in thresholds:
-                n = values[values < -threshold].size + values[values > threshold].size
+                n = values[values > threshold].size
                 percentages[threshold] = np.round((n / n_total) * 100, decimals=2)
             return nans_zero_info, percentages, stats
 
