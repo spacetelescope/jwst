@@ -55,11 +55,11 @@ class JumpStep(Step):
         minimum_groups = integer(default=3) # The minimum number of groups to perform jump detection using sigma clipping
         minimum_sigclip_groups = integer(default=100) # The minimum number of groups to switch to sigma clipping
         only_use_ints = boolean(default=True) # In sigclip only compare the same group across ints, if False compare all groups
-    """ # noqa: E501
+    """  # noqa: E501
 
-    reference_file_types = ['gain', 'readnoise']
+    reference_file_types = ["gain", "readnoise"]
 
-    class_alias = 'jump'
+    class_alias = "jump"
 
     def process(self, step_input):
         """Step method to execute step computations.
@@ -83,19 +83,21 @@ class JumpStep(Step):
             # Check for an input model with NGROUPS<=2
             nints, ngroups, nrows, ncols = input_model.data.shape
             if ngroups <= 2:
-                self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
-                self.log.warning('Jump step will be skipped')
-                input_model.meta.cal_step.jump = 'SKIPPED'
+                self.log.warning("Cannot apply jump detection when NGROUPS<=2;")
+                self.log.warning("Jump step will be skipped")
+                input_model.meta.cal_step.jump = "SKIPPED"
                 return input_model
 
-            self.log.info('CR rejection threshold = %g sigma', self.rejection_threshold)
-            if self.maximum_cores != 'none':
-                self.log.info('Maximum cores to use = %s', self.maximum_cores)
+            self.log.info("CR rejection threshold = %g sigma", self.rejection_threshold)
+            if self.maximum_cores != "none":
+                self.log.info("Maximum cores to use = %s", self.maximum_cores)
 
             # Detect jumps using a copy of the input data model.
             result = input_model.copy()
             jump_data = self._setup_jump_data(result)
-            new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(jump_data)
+            new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(
+                jump_data
+            )
 
             # Update the DQ arrays of the output model with the jump detection results
             result.groupdq = new_gdq
@@ -114,16 +116,16 @@ class JumpStep(Step):
                 total_time = result.meta.exposure.group_time * total_groups
                 total_pixels = nrows * ncols
 
-                crs =  1000 * number_crs / (total_time * total_pixels)
+                crs = 1000 * number_crs / (total_time * total_pixels)
                 result.meta.exposure.primary_cosmic_rays = crs
 
-                events =  1e6 * number_extended_events / (total_time * total_pixels)
+                events = 1e6 * number_extended_events / (total_time * total_pixels)
                 result.meta.exposure.extended_emission_events = events
 
             tstop = time.time()
-            self.log.info('The execution time in seconds: %f', tstop - tstart)
+            self.log.info("The execution time in seconds: %f", tstop - tstart)
 
-            result.meta.cal_step.jump = 'COMPLETE'
+            result.meta.cal_step.jump = "COMPLETE"
 
         return result
 
@@ -142,32 +144,39 @@ class JumpStep(Step):
 
         """
         # Get the gain and readnoise reference files
-        gain_filename = self.get_reference_file(result, 'gain')
-        self.log.info('Using GAIN reference file: %s', gain_filename)
-        readnoise_filename = self.get_reference_file(result,'readnoise')
-        self.log.info('Using READNOISE reference file: %s', readnoise_filename)
+        gain_filename = self.get_reference_file(result, "gain")
+        self.log.info("Using GAIN reference file: %s", gain_filename)
+        readnoise_filename = self.get_reference_file(result, "readnoise")
+        self.log.info("Using READNOISE reference file: %s", readnoise_filename)
 
-        with datamodels.ReadnoiseModel(readnoise_filename) as rnoise_m, \
-                datamodels.GainModel(gain_filename) as gain_m:
+        with (
+            datamodels.ReadnoiseModel(readnoise_filename) as rnoise_m,
+            datamodels.GainModel(gain_filename) as gain_m,
+        ):
             # Get 2D gain and read noise values from their respective models
             if reffile_utils.ref_matches_sci(result, gain_m):
                 gain_2d = gain_m.data
             else:
-                self.log.info('Extracting gain subarray to match science data')
+                self.log.info("Extracting gain subarray to match science data")
                 gain_2d = reffile_utils.get_subarray_data(result, gain_m)
 
             if reffile_utils.ref_matches_sci(result, rnoise_m):
                 rnoise_2d = rnoise_m.data
             else:
-                self.log.info('Extracting readnoise subarray to match science data')
+                self.log.info("Extracting readnoise subarray to match science data")
                 rnoise_2d = reffile_utils.get_subarray_data(result, rnoise_m)
 
         # Instantiate a JumpData class and populate it based on the input RampModel.
         jump_data = JumpData(result, gain_2d, rnoise_2d, dqflags.pixel)
 
         jump_data.set_detection_settings(
-            self.rejection_threshold, self.three_group_rejection_threshold, self.four_group_rejection_threshold,
-            self.max_jump_to_flag_neighbors, self.min_jump_to_flag_neighbors, self.flag_4_neighbors)
+            self.rejection_threshold,
+            self.three_group_rejection_threshold,
+            self.four_group_rejection_threshold,
+            self.max_jump_to_flag_neighbors,
+            self.min_jump_to_flag_neighbors,
+            self.flag_4_neighbors,
+        )
 
         # determine the number of groups that correspond to the after_jump times
         # needed because the group time is not passed to detect_jumps_data
@@ -176,22 +185,39 @@ class JumpStep(Step):
         after_jump_flag_n2 = int(self.after_jump_flag_time2 // gtime)
 
         jump_data.set_after_jump(
-            self.after_jump_flag_dn1, after_jump_flag_n1,
-            self.after_jump_flag_dn2, after_jump_flag_n2)
+            self.after_jump_flag_dn1,
+            after_jump_flag_n1,
+            self.after_jump_flag_dn2,
+            after_jump_flag_n2,
+        )
 
         sat_expand = self.sat_expand * 2
         jump_data.set_snowball_info(
-            self.expand_large_events, self.min_jump_area, self.min_sat_area, self.expand_factor,
-            self.sat_required_snowball, self.min_sat_radius_extend, sat_expand, self.edge_size)
+            self.expand_large_events,
+            self.min_jump_area,
+            self.min_sat_area,
+            self.expand_factor,
+            self.sat_required_snowball,
+            self.min_sat_radius_extend,
+            sat_expand,
+            self.edge_size,
+        )
 
         max_extended_radius = self.max_extended_radius * 2
         jump_data.set_shower_info(
-            self.find_showers, self.extend_snr_threshold, self.extend_min_area, self.extend_inner_radius,
-            self.extend_outer_radius, self.extend_ellipse_expand_ratio, self.min_diffs_single_pass,
-            max_extended_radius)
+            self.find_showers,
+            self.extend_snr_threshold,
+            self.extend_min_area,
+            self.extend_inner_radius,
+            self.extend_outer_radius,
+            self.extend_ellipse_expand_ratio,
+            self.min_diffs_single_pass,
+            max_extended_radius,
+        )
 
         jump_data.set_sigma_clipping_info(
-            self.minimum_groups, self.minimum_sigclip_groups, self.only_use_ints)
+            self.minimum_groups, self.minimum_sigclip_groups, self.only_use_ints
+        )
 
         jump_data.max_cores = self.maximum_cores
         jump_data.grps_masked_after_shower = int(self.time_masked_after_shower // gtime)
