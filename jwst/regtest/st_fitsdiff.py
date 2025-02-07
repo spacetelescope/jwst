@@ -557,7 +557,7 @@ class STHDUDiff(_BaseDiff):
             nan_idx = (np.isnan(a) | np.isnan(b))
             anonan = a[~nan_idx]
             bnonan = b[~nan_idx]
-            values = np.abs(anonan - bnonan)
+            values = anonan - bnonan
             if (values == 0.0).all():
                 return None, None, None
             # Calculate stats
