@@ -38,7 +38,7 @@ def charge_migration(output_model, signal_threshold):
     data = output_model.data
     gdq = output_model.groupdq
 
-    log.info('Using signal_threshold: %.2f', signal_threshold)
+    log.info("Using signal_threshold: %.2f", signal_threshold)
 
     gdq_new = flag_pixels(data, gdq, signal_threshold)
 
@@ -81,18 +81,18 @@ def flag_pixels(data, gdq, signal_threshold):
 
         # North
         if row > 0:
-            new_gdq[integ, group:, row-1, col] |= CHLO_DNU
+            new_gdq[integ, group:, row - 1, col] |= CHLO_DNU
 
         # South
-        if row < (n_rows-1):
-            new_gdq[integ, group:, row+1, col] |= CHLO_DNU
+        if row < (n_rows - 1):
+            new_gdq[integ, group:, row + 1, col] |= CHLO_DNU
 
         # East
-        if col < (n_cols-1):
-            new_gdq[integ, group:, row, col+1] |= CHLO_DNU
+        if col < (n_cols - 1):
+            new_gdq[integ, group:, row, col + 1] |= CHLO_DNU
 
         # West
         if col > 0:
-            new_gdq[integ, group:, row, col-1] |= CHLO_DNU
+            new_gdq[integ, group:, row, col - 1] |= CHLO_DNU
 
     return new_gdq
