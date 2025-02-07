@@ -21,6 +21,7 @@ def dispersed_pixel(
     sens_resp,
     seg_wcs,
     grism_wcs,
+    source_id,
     naxis,
     oversample_factor=2,
     extrapolate_sed=False,
@@ -62,6 +63,10 @@ def dispersed_pixel(
         The WCS object of the segmentation map.
     grism_wcs : WCS object
         The WCS object of the grism image.
+    source_id : int
+        The source ID of the source being processed. Returned in the output unmodified;
+        used only for bookkeeping. TODO this is not implemented properly right now and
+        should probably just be removed.
     naxis : tuple
         Dimensions (shape) of grism image into which pixels are dispersed.
     oversample_factor : int
@@ -174,4 +179,4 @@ def dispersed_pixel(
         counts = flux(lams) * areas / (sens * oversample_factor)
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
-    return xs, ys, areas, lams, counts
+    return xs, ys, areas, lams, counts, source_id

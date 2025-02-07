@@ -335,7 +335,7 @@ class Observation:
                 self.sens_resp,
                 self.seg_wcs,
                 self.grism_wcs,
-                0,
+                i,  # TODO: this is not the source_id as the docstring to dispersed_pixel says
                 self.dims[::-1],
                 2,
                 self.extrapolate_sed,
