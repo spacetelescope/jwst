@@ -26,6 +26,8 @@ log.setLevel(logging.DEBUG)
 
 def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
     """
+    Get read noise and gain reference arrays.
+
     Get readnoise array for calculation of variance of noiseless ramps, and
     the gain array in case optimal weighting is to be done. The returned
     readnoise has been multiplied by the gain.
@@ -33,25 +35,25 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
     Parameters
     ----------
     model : data model
-        input data model, assumed to be of type RampModel
+        Input data model, assumed to be of type RampModel.
 
     readnoise_model : instance of data Model
-        readnoise for all pixels
+        Readnoise for all pixels.
 
     gain_model : instance of gain Model
-        gain for all pixels
+        Gain for all pixels.
 
     nframes : int
-        number of frames averaged per group; from the NFRAMES keyword. Does
+        Number of frames averaged per group; from the NFRAMES keyword. Does
         not contain the groupgap.
 
     Returns
     -------
     readnoise_2d : float, 2D array
-        readnoise subarray
+        Readnoise subarray
 
     gain_2d : float, 2D array
-        gain subarray
+        Gain subarray
     """
     if reffile_utils.ref_matches_sci(model, gain_model):
         gain_2d = gain_model.data
@@ -70,18 +72,18 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
 
 def create_image_model(input_model, image_info):
     """
-    Creates an ImageModel from the computed arrays from ramp_fit.
+    Create an ImageModel from the computed arrays from ramp_fit.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     input_model: RampModel
         Input RampModel for which the output ImageModel is created.
 
     image_info: tuple
         The ramp fitting arrays needed for the ImageModel.
 
-    Return
-    ---------
+    Returns
+    -------
     out_model: ImageModel
         The output ImageModel to be returned from the ramp fit step.
     """
@@ -105,10 +107,10 @@ def create_image_model(input_model, image_info):
 
 def create_integration_model(input_model, integ_info, int_times):
     """
-    Creates an ImageModel from the computed arrays from ramp_fit.
+    Create an ImageModel from the computed arrays from ramp_fit.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     input_model : RampModel
         Input RampModel for which the output CubeModel is created.
 
@@ -118,8 +120,8 @@ def create_integration_model(input_model, integ_info, int_times):
     int_times : astropy.io.fits.fitsrec.FITS_rec or None
         Integration times.
 
-    Return
-    ---------
+    Returns
+    -------
     int_model : CubeModel
         The output CubeModel to be returned from the ramp fit step.
     """
@@ -145,22 +147,21 @@ def create_integration_model(input_model, integ_info, int_times):
 
 def create_optional_results_model(input_model, opt_info):
     """
-    Creates an ImageModel from the computed arrays from ramp_fit.
+    Create an ImageModel from the computed arrays from ramp_fit.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     input_model: ~jwst.datamodels.RampModel
 
     opt_info: tuple
         The ramp fitting arrays needed for the RampFitOutputModel.
 
-    Return
-    ---------
+    Returns
+    -------
     opt_model: RampFitOutputModel
         The optional RampFitOutputModel to be returned from the ramp fit step.
     """
-    (slope, sigslope, var_poisson, var_rnoise, yint,
-                sigyint, pedestal, weights, crmag) = opt_info
+    (slope, sigslope, var_poisson, var_rnoise, yint, sigyint, pedestal, weights, crmag) = opt_info
     opt_model = datamodels.RampFitOutputModel(
         slope=slope,
         sigslope=sigslope,
@@ -179,7 +180,7 @@ def create_optional_results_model(input_model, opt_info):
     return opt_model
 
 
-def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
+def compute_rn_variances(groupdq, readnoise_2d, gain_2d, group_time):
     """
     Compute the variances due to the readnoise for all integrations.
 
@@ -279,8 +280,7 @@ def compute_RN_variances(groupdq, readnoise_2d, gain_2d, group_time):
 
 def calc_segs(rn_sect, gdq_sect, group_time):
     """
-    Calculate several quantities needed for the readnoise variance, in the
-    data section.
+    Calculate quantities needed for the readnoise variance.
 
     Parameters
     ----------
@@ -367,7 +367,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
         warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
         warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         # overwrite where segs>1
-        den = segs_beg_3[wh_seg_pos]**3.0 - segs_beg_3[wh_seg_pos]
+        den = segs_beg_3[wh_seg_pos] ** 3.0 - segs_beg_3[wh_seg_pos]
         den_r3[wh_seg_pos] = 1.0 / den
 
     # calculate max_seg for this integ and data section
@@ -378,8 +378,9 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
 class RampFitStep(Step):
     """
-    This step fits a straight line to the value of counts vs. time to
-    determine the mean count rate for each pixel.
+    Step fits a straight line to the value of counts vs. time.
+
+    The ramp fitting step determines the mean count rate for each pixel.
     """
 
     class_alias = "ramp_fit"
@@ -410,6 +411,7 @@ class RampFitStep(Step):
     reference_file_types = ["readnoise", "gain"]
 
     def process(self, step_input):
+        """Process the ramp fit step."""
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
             # Work on a copy
@@ -469,7 +471,7 @@ class RampFitStep(Step):
 
             # Before the ramp_fit() call, copy the input model ("_W" for weighting)
             # for later reconstruction of the fitting array tuples.
-            input_model_W = result.copy()
+            input_model_w = result.copy()
 
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
@@ -489,7 +491,7 @@ class RampFitStep(Step):
 
             # Create a gdq to modify if there are charge_migrated groups
             if self.algorithm == "OLS":
-                gdq = input_model_W.groupdq.copy()
+                gdq = input_model_w.groupdq.copy()
 
                 dnu = dqflags.group["DO_NOT_USE"]
                 chg = dqflags.group["CHARGELOSS"]
@@ -509,7 +511,7 @@ class RampFitStep(Step):
                     group_time = result.meta.exposure.group_time
 
                     # Using the modified GROUPDQ array, create new readnoise variance arrays
-                    image_var_RN, integ_var_RN, opt_var_RN = compute_RN_variances(
+                    image_var_rn, integ_var_rn, opt_var_rn = compute_rn_variances(
                         gdq, readnoise_2d, gain_2d, group_time
                     )
 
@@ -518,9 +520,9 @@ class RampFitStep(Step):
                     # tuples.
                     image_info_new, integ_info_new = None, None
                     ch_int, ch_grp, ch_row, ch_col = wh_chargeloss
-                    if image_info is not None and image_var_RN is not None:
+                    if image_info is not None and image_var_rn is not None:
                         rnoise = image_info[3]
-                        rnoise[ch_row, ch_col] = image_var_RN[ch_row, ch_col]
+                        rnoise[ch_row, ch_col] = image_var_rn[ch_row, ch_col]
                         image_info_new = (
                             image_info[0],
                             image_info[1],
@@ -529,9 +531,9 @@ class RampFitStep(Step):
                             image_info[4],
                         )
 
-                    if integ_info is not None and integ_var_RN is not None:
+                    if integ_info is not None and integ_var_rn is not None:
                         rnoise = integ_info[3]
-                        rnoise[ch_int, ch_row, ch_col] = integ_var_RN[ch_int, ch_row, ch_col]
+                        rnoise[ch_int, ch_row, ch_col] = integ_var_rn[ch_int, ch_row, ch_col]
                         integ_info_new = (
                             integ_info[0],
                             integ_info[1],
@@ -544,12 +546,12 @@ class RampFitStep(Step):
                     integ_info = integ_info_new
 
                     opt_info_new = None
-                    if opt_info is not None and opt_var_RN is not None:
+                    if opt_info is not None and opt_var_rn is not None:
                         opt_info_new = (
                             opt_info[0],
                             opt_info[1],
                             opt_info[2],
-                            opt_var_RN,
+                            opt_var_rn,
                             opt_info[4],
                             opt_info[5],
                             opt_info[6],
@@ -598,7 +600,7 @@ class RampFitStep(Step):
 
 def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
     """
-    Set the groupdq flags based on the values of firstgroup, lastgroup
+    Set the groupdq flags based on the values of firstgroup, lastgroup.
 
     Parameters
     ----------
