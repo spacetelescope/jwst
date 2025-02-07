@@ -27,7 +27,7 @@ def run_wfss_contam(rtdata_module):
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
-#@pytest.mark.skip(reason='Test too slow until stdatamodels PR#165 merged')
+@pytest.mark.skip(reason='Test too slow until stdatamodels PR#165 merged')
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
