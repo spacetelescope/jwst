@@ -393,7 +393,7 @@ class ResampleImage(Resample):
         model.meta.exposure.end_time = info_dict["end_time"]
         model.meta.exposure.duration = info_dict["duration"]
         model.meta.exposure.measurement_time = info_dict["measurement_time"]
-        model.meta.exposure.effective_exposure_time = info_dict["effective_exposure_time"]
+        model.meta.exposure.effective_exposure_time = info_dict["exposure_time"]
         model.meta.exposure.elapsed_exposure_time = info_dict["elapsed_exposure_time"]
 
     def add_model(self, model):
@@ -441,16 +441,16 @@ class ResampleImage(Resample):
         :py:meth:`~Resample.finalize_time_info`.
 
         .. warning::
-          If ``enable_var=True`` and :py:meth:`~Resample.finalize` is called
-          with ``free_memory=True`` then intermediate arrays holding variance
+          If ``enable_var=True`` then intermediate arrays holding variance
           weights will be lost and so continuing adding new models after
           a call to :py:meth:`~Resample.finalize` will result in incorrect
-          variance. In this case `finalize` will set the locked flag to `True`.
+          variance. In this case `finalize` will set the finalized flag to
+          `True`.
 
         """
         if self.blendheaders:
             self._blender.finalize_model(self.output_jwst_model)
-        super().finalize(free_memory=free_memory)
+        super().finalize()
 
         self.update_output_model(
             self.output_jwst_model,
@@ -464,29 +464,22 @@ class ResampleImage(Resample):
 
         self.output_jwst_model.meta.cal_step.resample = 'COMPLETE'
 
-    def reset_arrays(self, reset_output=True, n_input_models=None):
+    def reset_arrays(self, n_input_models=None):
         """ Initialize/reset `Drizzle` objects, `ModelBlender`, output model
         and arrays, and time counters. Output WCS and shape are not modified
         from `Resample` object initialization. This method needs to be called
-        before calling :py:meth:`add_model` for the first time if
+        before calling :py:meth:`add_model` for the first time after
         :py:meth:`finalize` was previously called.
 
         Parameters
         ----------
-        reset_output : bool, optional
-            When `True` a new output model will be created. Otherwise new
-            models will be resampled and added to existing output data arrays.
-
         n_input_models : int, None, optional
             Number of input models expected to be resampled. When provided,
             this is used to estimate memory requirements and optimize memory
             allocation for the context array.
 
         """
-        super().reset_arrays(
-            reset_output=reset_output,
-            n_input_models=n_input_models
-        )
+        super().reset_arrays(n_input_models=n_input_models)
         if self.blendheaders:
             self._blender = ModelBlender(
                 blend_ignore_attrs=[
@@ -521,7 +514,7 @@ class ResampleImage(Resample):
 
         """
         if self.output_jwst_model is not None:
-            self.reset_arrays(reset_output=True, n_input_models=len(indices))
+            self.reset_arrays(n_input_models=len(indices))
 
         output_model_filename = ''
 
@@ -689,7 +682,6 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
         # meta:
         "filename": model.meta.filename,
         "group_id": model.meta.group_id,
-        "s_region": model.meta.wcsinfo.s_region,
         "wcs": model.meta.wcs,
         "wcsinfo": model.meta.wcsinfo,
         "bunit_data": model.meta.bunit_data,
@@ -699,7 +691,6 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
         "end_time": model.meta.exposure.end_time,
         "duration": model.meta.exposure.duration,
         "measurement_time": model.meta.exposure.measurement_time,
-        "effective_exposure_time": model.meta.exposure.effective_exposure_time,
         "elapsed_exposure_time": model.meta.exposure.elapsed_exposure_time,
 
         "pixelarea_steradians": model.meta.photometry.pixelarea_steradians,
