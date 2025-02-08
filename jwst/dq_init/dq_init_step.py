@@ -22,8 +22,8 @@ class DQInitStep(Step):
     class_alias = "dq_init"
 
     spec = """
-    """ # noqa: E501
-    reference_file_types = ['mask']
+    """  # noqa: E501
+    reference_file_types = ["mask"]
 
     def process(self, step_input):
         """Perform the dq_init calibration step
@@ -38,7 +38,6 @@ class DQInitStep(Step):
         output_model : JWST datamodel
             result JWST datamodel
         """
-
         # Try to open the input as a regular RampModel
         try:
             input_model = datamodels.RampModel(step_input)
@@ -62,14 +61,14 @@ class DQInitStep(Step):
             raise
 
         # Retrieve the mask reference file name
-        self.mask_filename = self.get_reference_file(input_model, 'mask')
-        self.log.info('Using MASK reference file %s', self.mask_filename)
+        self.mask_filename = self.get_reference_file(input_model, "mask")
+        self.log.info("Using MASK reference file %s", self.mask_filename)
 
         # Check for a valid reference file
-        if self.mask_filename == 'N/A':
-            self.log.warning('No MASK reference file found')
-            self.log.warning('DQ initialization step will be skipped')
-            input_model.meta.cal_step.dq_init = 'SKIPPED'
+        if self.mask_filename == "N/A":
+            self.log.warning("No MASK reference file found")
+            self.log.warning("DQ initialization step will be skipped")
+            input_model.meta.cal_step.dq_init = "SKIPPED"
             return input_model
 
         # Work on a copy
