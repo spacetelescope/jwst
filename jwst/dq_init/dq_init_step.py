@@ -9,8 +9,8 @@ __all__ = ["DQInitStep"]
 
 
 class DQInitStep(Step):
-    """Initialize the Data Quality extension from the
-    mask reference file.
+    """
+    Initialize the Data Quality extension from the mask reference file.
 
     The dq_init step initializes the pixeldq attribute of the
     input datamodel using the MASK reference file.  For some
@@ -26,17 +26,18 @@ class DQInitStep(Step):
     reference_file_types = ["mask"]
 
     def process(self, step_input):
-        """Perform the dq_init calibration step
+        """
+        Perform the dq_init calibration step.
 
         Parameters
         ----------
-        input : JWST datamodel
-            input jwst datamodel
+        step_input : JWST datamodel
+            Input jwst datamodel.
 
         Returns
         -------
         output_model : JWST datamodel
-            result JWST datamodel
+            Result JWST datamodel.
         """
         # Try to open the input as a regular RampModel
         try:

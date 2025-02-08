@@ -16,13 +16,13 @@ guider_list = ["FGS_ID-IMAGE", "FGS_ID-STACK", "FGS_ACQ1", "FGS_ACQ2", "FGS_TRAC
 
 
 def correct_model(input_model, mask_model):
-    """Perform the dq_init step on a JWST datamodel
+    """
+    Perform the dq_init step on a JWST datamodel.
 
     Parameters
     ----------
     input_model : input JWST datamodel
         The jwst datamodel to be corrected
-
     mask_model : mask datamodel
         The mask model to use in the correction
 
@@ -37,13 +37,13 @@ def correct_model(input_model, mask_model):
 
 
 def do_dqinit(output_model, mask_model):
-    """Perform the dq_init step on a JWST datamodel
+    """
+    Perform the dq_init step on a JWST datamodel.
 
     Parameters
     ----------
     output_model : input JWST datamodel
         The jwst datamodel to be corrected
-
     mask_model : mask datamodel
         The mask model to use in the correction
 
@@ -83,7 +83,10 @@ def do_dqinit(output_model, mask_model):
 
 
 def check_dimensions(input_model):
-    """Check that the input model pixeldq attribute has the same dimensions as
+    """
+    Check that the input model pixeldq dimensions.
+
+    The pixeldq attribute should have the same dimensions as
     the image plane of the input model science data
     If it has dimensions (0,0), create an array of zeros with the same shape
     as the image plane of the input model. For the FGS modes, the
@@ -92,11 +95,12 @@ def check_dimensions(input_model):
     Parameters
     ----------
     input_model : JWST datamodel
-        input datamodel
+        Input datamodel.
 
     Returns
     -------
-    None
+    None : None
+        Nothing is returned from this function.
     """
     input_shape = input_model.data.shape
 
@@ -108,7 +112,7 @@ def check_dimensions(input_model):
             if input_model.dq.shape == (0, 0):
                 input_model.dq = np.zeros(input_shape[-2:]).astype("uint32")
             else:
-                log.error("DQ array has the wrong shape: (%d, %d)" % input_model.dq.shape)
+                log.error(f"DQ array has the wrong shape: {input_model.dq.shape}")
 
     else:  # RampModel
         if input_model.pixeldq.shape != input_shape[-2:]:
@@ -118,14 +122,12 @@ def check_dimensions(input_model):
             if input_model.pixeldq.shape == (0, 0):
                 input_model.pixeldq = np.zeros(input_shape[-2:]).astype("uint32")
             else:
-                log.error("Pixeldq array has the wrong shape: (%d, %d)" % input_model.pixeldq.shape)
+                log.error(f"Pixeldq array has the wrong shape: {input_model.pixeldq.shape}")
 
         # Perform the same check for the input model groupdq array
         if input_model.groupdq.shape != input_shape:
             if input_model.groupdq.shape == (0, 0, 0, 0):
                 input_model.groupdq = np.zeros(input_shape).astype("uint8")
             else:
-                log.error(
-                    "Groupdq array has wrong shape: (%d, %d, %d, %d)" % input_model.groupdq.shape
-                )
+                log.error(f"Groupdq array has wrong shape: {input_model.groupdq.shape}")
     return
