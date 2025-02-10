@@ -84,7 +84,7 @@ def do_dqinit(output_model, mask_model):
 
 def check_dimensions(input_model):
     """
-    Check that the input model pixeldq dimensions.
+    Check the input model pixeldq dimensions.
 
     The pixeldq attribute should have the same dimensions as
     the image plane of the input model science data
@@ -96,11 +96,6 @@ def check_dimensions(input_model):
     ----------
     input_model : JWST datamodel
         Input datamodel.
-
-    Returns
-    -------
-    None : None
-        Nothing is returned from this function.
     """
     input_shape = input_model.data.shape
 
