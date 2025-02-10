@@ -8,6 +8,8 @@ __all__ = ["GroupScaleStep"]
 
 class GroupScaleStep(Step):
     """
+    Rescale group data to account for on-board frame averaging.
+
     GroupScaleStep: Rescales group data to account for on-board
     frame averaging that did not use FRMDIVSR = NFRAMES.
     All groups in the exposure are rescaled by FRMDIVSR/NFRAMES.
@@ -19,6 +21,19 @@ class GroupScaleStep(Step):
     """  # noqa: E501
 
     def process(self, step_input):
+        """
+        Perform group scale step.
+
+        Parameters
+        ----------
+        step_input : datamodel
+            Input data model on which to perform group scale step.
+
+        Returns
+        -------
+        result : datamodel
+            Output data model on which the group scale step has been performed.
+        """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
             # Try to get values of NFRAMES and FRMDIVSR to see

@@ -11,8 +11,8 @@ log.setLevel(logging.DEBUG)
 
 def do_correction(model):
     """
-    Short Summary
-    -------------
+    Rescale all groups in an exposure by FRMDIVSR/NFRAMES.
+
     Rescales all groups in an exposure by FRMDIVSR/NFRAMES, to
     account for incorrect scaling when on-board frame averaging
     is done using a value of NFRAMES that is not a power of 2.
@@ -22,8 +22,8 @@ def do_correction(model):
 
     Parameters
     ----------
-    model: data model object
-        science data to be corrected. Model is modified in place.
+    model : data model object
+        Science data to be corrected. Model is modified in place.
     """
     # Get the meta data values that we need
     nframes = model.meta.exposure.nframes
