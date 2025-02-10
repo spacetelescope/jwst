@@ -16,7 +16,8 @@ class Extract2dStep(Step):
     class_alias = "extract_2d"
 
     spec = """
-        slit_name = string(default=None)
+        slit_names = int_list(default=None)   # slits to be extracted
+        source_ids = int_list(default=None)     # source ids to be extracted
         extract_orders = int_list(default=None)  # list of orders to extract
         grism_objects = list(default=None)  # list of grism objects to use
         tsgrism_extract_height =  integer(default=None)  # extraction height in pixels, TSGRISM mode
@@ -34,7 +35,8 @@ class Extract2dStep(Step):
             reference_file_names[reftype] = reffile if reffile else ""
 
         with datamodels.open(input_model) as dm:
-            output_model = extract_2d.extract2d(dm, self.slit_name,
+            output_model = extract_2d.extract2d(dm, self.slit_names,
+                                                self.source_ids,
                                                 reference_files=reference_file_names,
                                                 grism_objects=self.grism_objects,
                                                 tsgrism_extract_height=self.tsgrism_extract_height,

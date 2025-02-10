@@ -297,9 +297,15 @@ Step Arguments
 The ``extract_2d`` step has various optional arguments that apply to certain observation
 modes. For NIRSpec observations there is one applicable argument:
 
-``--slit_name``
-  name [string value] of a specific slit region to extract. The default value of None
+``--slit_names``
+  names [comma-separated list of integers] of specific slit regions to extract. The default value of None
   will cause all known slits for the instrument mode to be extracted.
+
+``--source_ids``
+  source_ids [comma-separated list of integers] of specific slit regions to extract.  The default value
+  None will cause all known slits for the instrument to be extracted.
+
+``slit_names`` and ``source_ids`` can be used at the same time, duplicates will be filtered out.
 
 There are several arguments available for Wide-Field Slitless Spectroscopy (WFSS) and
 Time-Series (TSO) grism spectroscopy:
