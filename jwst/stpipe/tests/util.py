@@ -1,34 +1,47 @@
-"""
-Contains a number of testing utilities.
-"""
+"""Testing utilities for steps and pipelines."""
 
 import contextlib
 import logging
-import os
+from pathlib import Path
 import re
 
 
 class ListHandler(logging.Handler):
+    """Put log messages into a list for testing."""
+
     def __init__(self):
         self.records = []
         logging.Handler.__init__(self)
 
     def emit(self, record):
+        """
+        Emit a record.
+
+        Parameters
+        ----------
+        record : LogRecord
+            The record to append to the records list.
+        """
         self.records.append(record)
 
 
 @contextlib.contextmanager
 def capture_log():
     """
-    Captures all LogRecords to a list, and returns the list::
+    Capture all LogRecords to a list, and return the list.
 
        with capture_log() as log:
            # ...do something...
 
-       # log is a list of all the captured LogRecords
+    log is a list of all the captured LogRecords
+
+    Yields
+    ------
+    list
+        List of LogRecord objects
     """
     handler = ListHandler()
-    log = logging.getLogger('stpipe')
+    log = logging.getLogger("stpipe")
     log.addHandler(handler)
     yield handler.records
     log.removeHandler(handler)
@@ -36,21 +49,30 @@ def capture_log():
 
 def pattern_to_re(pattern):
     """
-    Converts a pattern containing embedded regular expressions inside
-    {{ }} to a Python regular expression.
+    Convert a pattern containing embedded regex inside {{ }} to a Python regular expression.
+
+    Parameters
+    ----------
+    pattern : str
+        A pattern that may contain embedded regular expressions inside of {{ }}.
+
+    Returns
+    -------
+    str
+        A regular expression that matches the pattern.
     """
     regex = []
     while pattern:
-        verbatim, sep, pattern = pattern.partition('{{')
+        verbatim, sep, pattern = pattern.partition("{{")
         regex.append(re.escape(verbatim))
-        exp, sep, pattern = pattern.partition('}}')
+        exp, sep, pattern = pattern.partition("}}")
         regex.append(exp)
-    return '^{0}$'.format(''.join(regex))
+    return "^{}$".format("".join(regex))
 
 
 def match_log(log, expected):
     """
-    Matches a log to an expected log.
+    Match a log to an expected log.
 
     Parameters
     ----------
@@ -66,28 +88,33 @@ def match_log(log, expected):
     ------
     ValueError : when one of the entries doesn't match
     """
-    for a, b in zip(log, expected):
+    for a, b in zip(log, expected, strict=False):
         msg = a
         regex = pattern_to_re(b)
         match = re.match(regex, msg)
         if not match:
-            with open("correct.txt", 'w') as fd:
-                fd.write('[\n')
+            with Path("correct.txt").open("w") as fd:
+                fd.write("[\n")
                 for a in log:
-                    fd.write('    {0!r},\n'.format(a))
-                fd.write(']\n')
+                    fd.write(f"    {a!r},\n")
+                fd.write("]\n")
 
-            raise ValueError((
-                "Logs do not match."
-                "\nExpected:"
-                "\n   '{0}'"
-                "\nGot:"
-                "\n   '{1}'\n".format(
-                    b, msg
-                )))
+            raise ValueError(f"Logs do not match.\nExpected:\n   '{b}'\nGot:\n   '{msg}'\n")
 
 
 def t_path(partial_path):
-    """Construction the full path for test files"""
-    test_dir = os.path.dirname(__file__)
-    return os.path.join(test_dir, partial_path)
+    """
+    Construct the full path for test files.
+
+    Parameters
+    ----------
+    partial_path : str
+        The partial path to the file.
+
+    Returns
+    -------
+    str
+        The full path to the file.
+    """
+    test_dir = Path(__file__).parent
+    return str(test_dir / partial_path)

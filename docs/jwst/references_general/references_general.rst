@@ -169,6 +169,8 @@ documentation on each reference file.
 |                                                       | :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`straylight <straylight_step>`                   | :ref:`MRSXARTCORR <mrsxartcorr_reffile>`         |
++                                                       +--------------------------------------------------+
+|                                                       | :ref:`REGIONS <regions_reffile>`                 |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`spectral_leak <spectral_leak_step>`             | :ref:`MRSPTCORR <mrsptcorr_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -273,6 +275,8 @@ documentation on each reference file.
 | :ref:`REGIONS <regions_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`residual_fringe <residual_fringe_step>`         |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`straylight <straylight_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`RESET <reset_reffile>`                     | :ref:`reset <reset_step>`                             |
 +--------------------------------------------------+-------------------------------------------------------+
