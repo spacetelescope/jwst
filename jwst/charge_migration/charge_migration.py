@@ -50,8 +50,8 @@ def flag_pixels(data, gdq, signal_threshold):
     """
     Flag each group in each ramp that exceeds signal_threshold.
 
-    Each group in each ramp exceeding the signal threshold as CHARGELOSS and
-    DO_NOT_USE, skipping groups already flagged as DO_NOT_USE.
+    Each group in each ramp exceeding the signal threshold is flagged as
+    CHARGELOSS and DO_NOT_USE, skipping groups already flagged as DO_NOT_USE.
 
     Parameters
     ----------
