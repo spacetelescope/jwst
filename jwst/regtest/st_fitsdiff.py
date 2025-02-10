@@ -283,10 +283,11 @@ class STFITSDiff(_BaseDiff):
                         else:
                             self.rtol = self.extension_tolerances["DEFAULT"]["rtol"]
                             self.atol = self.extension_tolerances["DEFAULT"]["atol"]
-                hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
+                if same_version:
+                    hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
 
-                if not hdu_diff.identical:
-                    self.diff_hdus.append((idxa, hdu_diff, extname, extver))
+                    if not hdu_diff.identical:
+                        self.diff_hdus.append((idxa, hdu_diff, extname, extver))
 
     def _report(self):
         wrapper = textwrap.TextWrapper(initial_indent="  ", subsequent_indent="  ")
