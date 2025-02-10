@@ -585,9 +585,13 @@ class STHDUDiff(_BaseDiff):
             # Calculate difference percentages
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             n_total = values.size
+            percent_list = []
             for threshold in thresholds:
                 n = values[values > threshold].size
                 percentages[threshold] = np.round((n / n_total) * 100, decimals=2)
+                percent_list.append(percentages[threshold])
+            if (percent_list == percentages[threshold]).all():
+                percentages['abdiffs_too_large'] = 1
             if relative_values.size > 0:
                 # Differences are too large values. Calculating percentages on relative numbers.
                 for threshold in thresholds:
@@ -677,7 +681,10 @@ class STHDUDiff(_BaseDiff):
             # Calculate difference percentages
             self._writeln(" Difference of a from b:")
             for key, val in self.percentages.items():
-                self._writeln(f"  {key:>10} ..... {val:<5}%")
+                if key == 'abdiffs_too_large':
+                    self._writeln("  * Absolute number differences are too large.")
+                else:
+                    self._writeln(f"  {key:>10} ..... {val:<5}%")
             self._writeln(" Stats:")
             for key, val in self.stats.items():
                 self._writeln(f"  {key} = {val}")
