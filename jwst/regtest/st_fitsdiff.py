@@ -585,18 +585,26 @@ class STHDUDiff(_BaseDiff):
             # Calculate difference percentages
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             n_total = values.size
-            percent_list = []
+            percent_abs_list = []
             for threshold in thresholds:
-                n = values[values > threshold].size
-                percentages[threshold] = np.round((n / n_total) * 100, decimals=2)
-                percent_list.append(percentages[threshold])
-            if (percent_list == percentages[threshold]).all():
-                percentages['abdiffs_too_large'] = 1
+                n = values[values > threshold + self.atol].size
+                percent_abs = np.round((n / n_total) * 100, decimals=2)
+                percent_abs_list.append(percent_abs)
+            if (percent_abs_list == percent_abs).all():
+                percentages['abdiffs_too_large'] = percent_abs
+            else:
+                # Only include the percentage for 0.0
+                percentages['0.0_abs'] = percent_abs
             if relative_values.size > 0:
+                percent_rel_list = []
                 # Differences are too large values. Calculating percentages on relative numbers.
                 for threshold in thresholds:
-                    n = relative_values[relative_values > threshold].size
-                    percentages[str(threshold)+'_rel'] = np.round((n / n_total) * 100, decimals=2)
+                    n = relative_values[relative_values > threshold + self.rtol].size
+                    percent_rel = np.round((n / n_total) * 100, decimals=2)
+                    percentages[str(threshold) + '_rel'] = percent_rel
+                    percent_rel_list.append(percent_rel)
+                if (percent_rel_list == percent_rel).all():
+                    percentages['reldiffs_too_large'] = percent_rel
             return nans_zero_info, percentages, stats
 
         if self.a.data is None or self.b.data is None:
@@ -680,10 +688,15 @@ class STHDUDiff(_BaseDiff):
                 self._writeln(f"  b: {self.nans[5]}")
             # Calculate difference percentages
             self._writeln(" Difference of a from b:")
-            for key, val in self.percentages.items():
-                if key == 'abdiffs_too_large':
-                    self._writeln("  * Absolute number differences are too large.")
-                else:
+            if 'abdiffs_too_large' in self.percentages:
+                self._writeln("  * Absolute number differences are too large.")
+                self._writeln(f"  {'0.0_abs':>10} ..... {self.percentages['abdiffs_too_large']:<5}%")
+                del self.percentages['abdiffs_too_large']
+            if 'reldiffs_too_large' in self.percentages:
+                self._writeln("  * Relative number differences are too large.")
+                self._writeln(f"  {'0.0_rel':>10} ..... {self.percentages['reldiffs_too_large']:<5}%")
+            else:
+                for key, val in self.percentages.items():
                     self._writeln(f"  {key:>10} ..... {val:<5}%")
             self._writeln(" Stats:")
             for key, val in self.stats.items():
