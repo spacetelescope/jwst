@@ -29,7 +29,7 @@ def run_guider_pipelines(rtdata_module, request):
 
     return rtdata
 
-
+@pytest.mark.xfail(reason="CRDS-917 needed to create valid readnoise references")
 @pytest.mark.bigdata
 @pytest.mark.parametrize('suffix', GUIDER_SUFFIXES, ids=GUIDER_SUFFIXES)
 def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
