@@ -7,6 +7,8 @@ __all__ = ["GainScaleStep"]
 
 class GainScaleStep(Step):
     """
+    Rescale all integrations in an exposure by gain_factor.
+
     GainScaleStep: Rescales countrate data to account for use of a
     non-standard gain value. All integrations are multiplied by the
     factor GAINFACT.
@@ -19,6 +21,19 @@ class GainScaleStep(Step):
     reference_file_types = ["gain"]
 
     def process(self, step_input):
+        """
+        Perform gain scale step.
+
+        Parameters
+        ----------
+        step_input : datamodel
+            Input datamodel on which to perform gain scale step.
+
+        Returns
+        -------
+        result : datamodel
+            Output datamodel on which the gain scale step has been performed.
+        """
         # Open the input data model
         with datamodels.open(step_input) as input_model:
             # Is the gain_factor already populated in the input model?

@@ -7,8 +7,8 @@ log.setLevel(logging.DEBUG)
 
 def do_correction(output_model, gain_factor):
     """
-    Short Summary
-    -------------
+    Rescale all integrations in an exposure by gain_factor.
+
     Rescales all integrations in an exposure by gain_factor, to
     account for non-standard detector gain settings. The SCI,
     ERR, and variance arrays are rescaled.
@@ -16,13 +16,14 @@ def do_correction(output_model, gain_factor):
     Parameters
     ----------
     output_model : `~jwst.datamodels.JwstDataModel`
-        Input datamodel to be corrected
+        Input datamodel to be corrected.
+    gain_factor : float
+        Scale gain factor.
 
     Returns
     -------
     output_model : `~jwst.datamodels.JwstDataModel`
-        Output datamodel with rescaled data
-
+        Output datamodel with rescaled data.
     """
     # Apply the gain factor to the SCI and ERR arrays
     log.info(f"Rescaling by {gain_factor}")
