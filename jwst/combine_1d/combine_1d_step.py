@@ -37,7 +37,7 @@ class Combine1dStep(Step):
     spec = """
     exptime_key = string(default="exposure_time") # Metadata key to use for weighting
     sigma_clip = float(default=None) # Factor for clipping outliers
-    """ # noqa: E501
+    """  # noqa: E501
 
     def process(self, input_data):
         """
