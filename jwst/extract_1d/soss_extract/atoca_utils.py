@@ -832,13 +832,7 @@ def throughput_soss(wavelength, throughput):
 
 
 class WebbKernel:
-    """
-    The JWST kernel.
-
-    Kernel representing the wavelength-dependent throughput of the instrument
-    in the along-dispersion direction.
-    Has dimensions (wavelength, oversampled pixels).
-    """
+    """The JWST kernel."""
 
     def __init__(self, wave_kernels, kernels, wave_trace, n_pix):
         """
