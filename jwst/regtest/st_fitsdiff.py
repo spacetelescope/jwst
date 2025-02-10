@@ -272,20 +272,19 @@ class STFITSDiff(_BaseDiff):
                     if extver == self.b[idxb].ver:
                         same_version = True
                         break
-                if self.extension_tolerances:
-                    if idxa in self.extension_tolerances:
-                        if idxa in self.extension_tolerances:
-                            self.rtol = self.extension_tolerances[idxa]["rtol"]
-                            self.atol = self.extension_tolerances[idxa]["atol"]
-                        elif extname in self.extension_tolerances:
-                            self.rtol = self.extension_tolerances[extname]["rtol"]
-                            self.atol = self.extension_tolerances[extname]["atol"]
-                        else:
-                            self.rtol = self.extension_tolerances["DEFAULT"]["rtol"]
-                            self.atol = self.extension_tolerances["DEFAULT"]["atol"]
                 if same_version:
+                    if self.extension_tolerances:
+                        if idxa in self.extension_tolerances:
+                            if idxa in self.extension_tolerances:
+                                self.rtol = self.extension_tolerances[idxa]["rtol"]
+                                self.atol = self.extension_tolerances[idxa]["atol"]
+                            elif extname in self.extension_tolerances:
+                                self.rtol = self.extension_tolerances[extname]["rtol"]
+                                self.atol = self.extension_tolerances[extname]["atol"]
+                            else:
+                                self.rtol = self.extension_tolerances["DEFAULT"]["rtol"]
+                                self.atol = self.extension_tolerances["DEFAULT"]["atol"]
                     hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
-
                     if not hdu_diff.identical:
                         self.diff_hdus.append((idxa, hdu_diff, extname, extver))
 
