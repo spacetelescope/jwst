@@ -523,16 +523,22 @@ class ResampleSpecData(ResampleData):
         all_dec_slit = []
         xstop = 0
 
+        #all_wcs = [m.meta.wcs for m in input_models]
+
+
+        print('********in build interpolated output')
         for im, model in enumerate(input_models):
             wcs = model.meta.wcs
             bbox = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bbox)
             ra, dec, lam = np.array(wcs(*grid))
+            print('shape of ra and dec', ra.shape, dec.shape, lam.shape)
             # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
             # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
             spectral_axis = find_dispersion_axis(model)
             spatial_axis = spectral_axis ^ 1
 
+            print('spectral_axis', spectral_axis, spatial_axis)
             # Compute the wavelength array, trimming NaNs from the ends
             # In many cases, a whole slice is NaNs, so ignore those warnings
             with warnings.catch_warnings():
@@ -556,10 +562,14 @@ class ResampleSpecData(ResampleData):
             # the spatial scale of the output wcs
             if im == 0:
                 all_wavelength = np.append(all_wavelength, wavelength_array)
-
+                print("* bbox ", bbox)
+                print(spectral_axis)
+                print(bbox[0][1], bbox[0][0])
+                print(bbox[1][0], bbox[1][1])
                 # find the center ra and dec for this slit at central wavelength
                 lam_center_index = int((bbox[spectral_axis][1] -
                                         bbox[spectral_axis][0]) / 2)
+                print('lam center index',lam_center_index)
                 if spatial_axis == 0:
                     # MIRI LRS, the WCS x axis is spatial
                     ra_slice = ra[lam_center_index, :]
@@ -572,6 +582,9 @@ class ResampleSpecData(ResampleData):
                 ra_center_pt = np.nanmean(wrap_ra(ra_slice))
                 dec_center_pt = np.nanmean(dec_slice)
 
+                print('**** ra_center_pt',ra_center_pt)
+                print('**** dec_center_pt',dec_center_pt)
+
                 # convert ra and dec to tangent projection
                 tan = Pix2Sky_TAN()
                 native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
@@ -582,7 +595,8 @@ class ResampleSpecData(ResampleData):
                     warnings.simplefilter("ignore", RuntimeWarning)  # was ignore. need to make more specific
                 # at this center of slit find x,y tangent projection - x_tan, y_tan
                 x_tan, y_tan = undist2sky1.inverse(ra, dec)
-
+                print('ra and dec shape', ra.shape, dec.shape)
+                print('x_tan', x_tan.shape)
                 # pull out data from center
                 if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
                     x_tan_array = x_tan.T[lam_center_index]
@@ -593,7 +607,8 @@ class ResampleSpecData(ResampleData):
 
                 x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
                 y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
-
+                print(x_tan_array.shape)
+                print(y_tan_array.shape)
                 # estimate the spatial sampling
                 fitter = LinearLSQFitter()
                 fit_model = Linear1D()
@@ -605,6 +620,8 @@ class ResampleSpecData(ResampleData):
                 pix_to_xtan = fitter(fit_model, x_idx, x_tan_array)
                 pix_to_ytan = fitter(fit_model, y_idx, y_tan_array)
 
+                print('ystop y_idx', ystop, y_idx)
+                print('xstop y_idx', xstop, x_idx)
             # append all ra and dec values to use later to find min and max
             # ra and dec
             ra_use = ra[~np.isnan(ra)].flatten()
@@ -675,6 +692,7 @@ class ResampleSpecData(ResampleData):
             # Account for vertical or horizontal dispersion on detector
             mapping.inverse = Mapping((2, 1) if spatial_axis else (1, 2))
 
+        print('** swap_xy', swap_xy)
         # The final transform
         # redefine the ra, dec center tangent point to include all data
 
@@ -689,6 +707,9 @@ class ResampleSpecData(ResampleData):
         dec_max = np.amax(all_dec)
         dec_center_final = (dec_max + dec_min) / 2.0
 
+        print('ra',ra_min, ra_max)
+        print('dec',dec_min, dec_max)
+        print(ra_center_final, dec_center_final)
         tan = Pix2Sky_TAN()
         if len(input_models) == 1:  # single model use ra_center_pt to be consistent
             # with how resample was done before
@@ -697,6 +718,35 @@ class ResampleSpecData(ResampleData):
 
         native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
         undist2sky = tan | native2celestial
+
+        # && try this
+        # at this center of slit find x,y tangent projection - x_tan, y_tan
+        x_tan, y_tan = undist2sky1.inverse(all_ra, all_dec)
+        print('x_tan', x_tan.shape)
+        # pull out data from center
+        if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
+            x_tan_array = x_tan.T[lam_center_index]
+            y_tan_array = y_tan.T[lam_center_index]
+        else:
+            x_tan_array = x_tan[lam_center_index]
+            y_tan_array = y_tan[lam_center_index]
+
+        x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
+        y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
+        print(x_tan_array.shape)
+        print(y_tan_array.shape)
+        # estimate the spatial sampling
+        fitter = LinearLSQFitter()
+        fit_model = Linear1D()
+
+        xstop = x_tan_array.shape[0] * self.pscale_ratio
+        x_idx = np.linspace(0, xstop, x_tan_array.shape[0], endpoint=False)
+        ystop = y_tan_array.shape[0] * self.pscale_ratio
+        y_idx = np.linspace(0, ystop, y_tan_array.shape[0], endpoint=False)
+        pix_to_xtan = fitter(fit_model, x_idx, x_tan_array)
+        pix_to_ytan = fitter(fit_model, y_idx, y_tan_array)
+
+
         # find the spatial size of the output - same in x,y
         if swap_xy:
             _, x_tan_all = undist2sky.inverse(all_ra, all_dec)
@@ -708,10 +758,55 @@ class ResampleSpecData(ResampleData):
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
         x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_tan_slope)))
-        if swap_xy:
-            pix_to_ytan.intercept = -0.5 * (x_size - 1) * pix_to_ytan.slope
-        else:
-            pix_to_xtan.intercept = -0.5 * (x_size - 1) * pix_to_xtan.slope
+        print('pix_to_xtan', pix_to_ytan.intercept, pix_to_xtan.intercept)
+        print('x min max', x_min, x_max, x_size)
+
+        #if swap_xy:
+        #    pix_to_ytan.intercept = -0.5 * (x_size - 1) * pix_to_ytan.slope
+        #    pix_to_ytan.intercept = -0.5 * (44 - 1) * pix_to_ytan.slope
+        #else:
+        # pix_to_xtan.intercept = -0.5 * (x_size - 1) * pix_to_xtan.slope
+
+
+        print('pix_to_xtan', pix_to_ytan.intercept, pix_to_xtan.intercept)
+
+        ## pulled from nirspec code
+        #min_tan_x, max_tan_x, min_tan_y, max_tan_y = self._max_spatial_extent(
+        #    all_wcs, undist2sky.inverse)
+        #diff_y = np.abs(max_tan_y - min_tan_y)
+        #diff_x = np.abs(max_tan_x - min_tan_x)
+        #print('*** diff x y ', diff_x, diff_y)
+        #pix_to_tan_slope_y = np.abs(pix_to_ytan.slope)
+        #slope_sign_y = np.sign(pix_to_ytan.slope)
+        #pix_to_tan_slope_x = np.abs(pix_to_xtan.slope)
+        #slope_sign_x = np.sign(pix_to_xtan.slope)
+        #print(pix_to_tan_slope_y, slope_sign_y)
+        #print(pix_to_tan_slope_x, slope_sign_x)
+
+        #if swap_xy:
+        #    ny = int(np.ceil(diff_y / pix_to_tan_slope_y)) + 1
+        #else:
+        #    ny = int(np.ceil(diff_x / pix_to_tan_slope_x)) + 1
+        #print('** ny ***', ny)
+        #offset_y  = ny/2 * pix_to_tan_slope_y - diff_y/2
+        #offset_x  = ny/2 * pix_to_tan_slope_x - diff_x/2
+
+        #if slope_sign_y > 0:
+        #    zero_value_y = min_tan_y
+        #if swap_xy:
+        #    zero_value_y = max_tan_y
+
+        #if slope_sign_x > 0:
+        #    zero_value_x = min_tan_x
+        #else:
+        #    zero_value_x = max_tan_x
+        #zero_value_y = 0
+        #zero_value_x = 0
+        #print('*****', zero_value_y, zero_value_x)
+
+        #pix_to_ytan.intercept = zero_value_y - slope_sign_y * offset_y
+        #pix_to_xtan.intercept = zero_value_x - slope_sign_x * offset_x
+        ##
 
         # single model: use size of x_tan_array
         # to be consistent with method before
@@ -743,7 +838,7 @@ class ResampleSpecData(ResampleData):
         output_wcs.pixel_shape = output_array_size
         bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
-        
+
         return output_wcs
 
     def build_nirspec_lamp_output_wcs(self, input_models):
