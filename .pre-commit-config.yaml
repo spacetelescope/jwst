@@ -41,7 +41,6 @@ repos:
             jwst/associations/.* |
             jwst/background/.* |
             jwst/charge_migration/.* |
-            jwst/combine_1d/.* |
             jwst/coron/.* |
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
@@ -70,7 +69,6 @@ repos:
             jwst/jump/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
-            jwst/master_background/.* |
             jwst/model_blender/.* |
             jwst/mrs_imatch/.* |
             jwst/pathloss/.* |
