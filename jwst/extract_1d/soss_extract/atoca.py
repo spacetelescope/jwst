@@ -144,8 +144,8 @@ class ExtractionEngine:
         self.n_orders = len(self.orders)
         if self.n_orders != len(self.wave_map):
             msg = (
-                "The number of orders specified ({}) and the number of "
-                "wavelength maps provided ({}) do not match."
+                f"The number of orders specified ({self.n_orders}) and the number of "
+                f"wavelength maps provided ({len(self.wave_map)}) do not match."
             )
             log.critical(msg.format(self.n_orders, len(self.wave_map)))
             raise ValueError(msg.format(self.n_orders, len(self.wave_map)))
@@ -162,7 +162,7 @@ class ExtractionEngine:
         if np.any(good_pixels_in_order < min_good_pixels):
             msg = (
                 f"At least one order has less than {min_good_pixels} valid pixels. "
-                "(mask_trace_profile and mask_wave have insufficient overlap"
+                "(mask_trace_profile and mask_wave have insufficient overlap)"
             )
             raise MaskOverlapError(msg)
 
@@ -427,7 +427,7 @@ class ExtractionEngine:
 
     def grid_from_map(self, i_order=0):
         """
-        Return the wavelength grid and the columnsfor a given order index.
+        Return the wavelength grid and the columns for a given order index.
 
         Parameters
         ----------

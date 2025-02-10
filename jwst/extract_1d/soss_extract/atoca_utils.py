@@ -832,7 +832,13 @@ def throughput_soss(wavelength, throughput):
 
 
 class WebbKernel:
-    """The JWST kernel."""
+    """
+    The JWST kernel.
+
+    Kernel representing the wavelength-dependent throughput of the instrument
+    in the along-dispersion direction.
+    Has dimensions (wavelength, oversampled pixels).
+    """
 
     def __init__(self, wave_kernels, kernels, wave_trace, n_pix):
         """
@@ -1000,7 +1006,7 @@ class WebbKernel:
 
 def _constant_kernel_to_2d(c, grid_range):
     """
-    Build a 2d kernel array with a constant 1D kernel as input.
+    Build a 2D kernel array with a constant 1D kernel as input.
 
     Parameters
     ----------
@@ -1683,7 +1689,8 @@ class TikhoTests(dict):
             loss = LOSS_FUNCTIONS[loss]
         except KeyError:
             msg = (
-                f"loss={loss} not a valid key.Must be one of {[LOSS_FUNCTIONS.keys()]} or callable."
+                f"loss={loss} not a valid key. "
+                f"Must be one of {[LOSS_FUNCTIONS.keys()]} or callable."
             )
             raise KeyError(msg) from None
 
