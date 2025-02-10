@@ -25,24 +25,23 @@ def do_correction(model):
     model: data model object
         science data to be corrected. Model is modified in place.
     """
-
     # Get the meta data values that we need
     nframes = model.meta.exposure.nframes
     frame_divisor = model.meta.exposure.frame_divisor
     if nframes is None or frame_divisor is None:
-        log.warning('Necessary meta data not found')
-        log.warning('Step will be skipped')
-        model.meta.cal_step.group_scale = 'SKIPPED'
+        log.warning("Necessary meta data not found")
+        log.warning("Step will be skipped")
+        model.meta.cal_step.group_scale = "SKIPPED"
         return
 
-    log.info('NFRAMES={}, FRMDIVSR={}'.format(nframes, frame_divisor))
-    log.info('Rescaling all groups by {}/{}'.format(frame_divisor, nframes))
+    log.info(f"NFRAMES={nframes}, FRMDIVSR={frame_divisor}")
+    log.info(f"Rescaling all groups by {frame_divisor}/{nframes}")
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes
     if not isinstance(type(model.data), float):
         model.data = (model.data).astype(float)
     model.data *= scale
-    model.meta.cal_step.group_scale = 'COMPLETE'
+    model.meta.cal_step.group_scale = "COMPLETE"
 
     return

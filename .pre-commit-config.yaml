@@ -57,7 +57,6 @@ repos:
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/gain_scale/.* |
-            jwst/group_scale/.* |
             jwst/guider_cds/.* |
             jwst/imprint/.* |
             jwst/ipc/.* |
