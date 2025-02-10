@@ -7,9 +7,9 @@ log.setLevel(logging.DEBUG)
 
 def get_box_weights(centroid, n_pix, shape, cols):
     """
-    Return the weights of a box aperture given the centroid and the width of
-    the box in pixels. All pixels will have the same weights except at the ends
-    of the box aperture.
+    Return the weights of a box aperture given the centroid and the width of the box in pixels.
+
+    All pixels will have the same weights except at the ends of the box aperture.
 
     Parameters
     ----------
@@ -34,18 +34,18 @@ def get_box_weights(centroid, n_pix, shape, cols):
     rows = np.indices((nrows, len(cols)))[0]
 
     # Pixels that are entirely inside the box are set to one.
-    cond = (rows <= (centroid - 0.5 + n_pix / 2))
-    cond &= ((centroid + 0.5 - n_pix / 2) <= rows)
+    cond = rows <= (centroid - 0.5 + n_pix / 2)
+    cond &= (centroid + 0.5 - n_pix / 2) <= rows
     weights = cond.astype(float)
 
     # Fractional weights at the upper bound.
     cond = (centroid - 0.5 + n_pix / 2) < rows
-    cond &= (rows < (centroid + 0.5 + n_pix / 2))
+    cond &= rows < (centroid + 0.5 + n_pix / 2)
     weights[cond] = (centroid + n_pix / 2 - (rows - 0.5))[cond]
 
     # Fractional weights at the lower bound.
-    cond = (rows < (centroid + 0.5 - n_pix / 2))
-    cond &= ((centroid - 0.5 - n_pix / 2) < rows)
+    cond = rows < (centroid + 0.5 - n_pix / 2)
+    cond &= (centroid - 0.5 - n_pix / 2) < rows
     weights[cond] = (rows + 0.5 - (centroid - n_pix / 2))[cond]
 
     # Return with the specified shape with zeros where the box is not defined.
@@ -89,16 +89,16 @@ def box_extract(scidata, scierr, scimask, box_weights):
     box_weights = box_weights[:, cols].copy()
 
     # Check that all invalid values in the extraction region are masked.
-    extract_region = (box_weights > 0)
+    extract_region = box_weights > 0
     condition = extract_region & ~mask
 
     if not np.isfinite(data[condition]).all():
-        message = 'scidata contains un-masked invalid values.'
+        message = "scidata contains un-masked invalid values."
         log.critical(message)
         raise ValueError(message)
 
     if not np.isfinite(error[condition]).all():
-        message = 'scierr contains un-masked invalid values.'
+        message = "scierr contains un-masked invalid values."
         log.critical(message)
         raise ValueError(message)
 
@@ -108,7 +108,7 @@ def box_extract(scidata, scierr, scimask, box_weights):
     error = np.where(extract_region, error, np.nan)
 
     # Set the weights of masked pixels to zero.
-    box_weights[mask] = 0.
+    box_weights[mask] = 0.0
 
     # Extract total flux (sum over columns).
     flux = np.nansum(box_weights * data, axis=0)
@@ -127,9 +127,9 @@ def box_extract(scidata, scierr, scimask, box_weights):
 
 def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     """
-    Function to estimate pixel error empirically using the corresponding error
-    of the nearest pixel value (`data`). Intended to be used in a box extraction
-    when the bad pixels are modeled.
+    Estimate pixel error empirically using error on nearby pixel values in (`data`).
+
+    Intended to be used in a box extraction when the bad pixels are modeled.
 
     Parameters
     ----------
@@ -145,7 +145,7 @@ def estim_error_nearest_data(err, data, pix_to_estim, valid_pix):
     Returns
     -------
     err_filled : 2d array[float]
-        same as `err`, but the pixels to be estimated are filled with the estimated values.
+        Same as `err`, but the pixels to be estimated are filled with the estimated values.
 
     Notes
     -----

@@ -7,7 +7,8 @@ log.setLevel(logging.DEBUG)
 
 
 def soss_background(scidata, scimask, bkg_mask):
-    """Compute a columnwise background for a SOSS observation.
+    """
+    Compute a columnwise background for a SOSS observation.
 
     Parameters
     ----------
@@ -26,12 +27,11 @@ def soss_background(scidata, scimask, bkg_mask):
     col_bkg : array[float]
         Column-wise background values
     """
-
     # Check the validity of the input.
     data_shape = scidata.shape
 
     if (scimask.shape != data_shape) or (bkg_mask.shape != data_shape):
-        msg = 'scidata, scimask, and bkg_mask must all have the same shape.'
+        msg = "scidata, scimask, and bkg_mask must all have the same shape."
         log.critical(msg)
         raise ValueError(msg)
 
@@ -40,12 +40,12 @@ def soss_background(scidata, scimask, bkg_mask):
     scidata_masked = np.ma.array(scidata, mask=mask)
 
     # Mask additional pixels using sigma-clipping.
-    sigclip = SigmaClip(sigma=3, maxiters=None, cenfunc='mean')
+    sigclip = SigmaClip(sigma=3, maxiters=None, cenfunc="mean")
     scidata_clipped = sigclip(scidata_masked, axis=0)
 
     # Compute the mean for each column and record the number of pixels used.
     col_bkg = scidata_clipped.mean(axis=0)
-    col_bkg = np.where(np.all(scidata_clipped.mask, axis=0), 0., col_bkg)
+    col_bkg = np.where(np.all(scidata_clipped.mask, axis=0), 0.0, col_bkg)
 
     # Background subtract the science data.
     scidata_bkg = scidata - col_bkg
@@ -54,8 +54,10 @@ def soss_background(scidata, scimask, bkg_mask):
 
 
 def make_background_mask(deepstack, width):
-    """Build a mask of the pixels considered to contain the majority of the
-    flux, and should therefore not be used to compute the background.
+    """
+    Build mask of pixels containing most of the flux.
+
+    These pixels should not be used to compute the background.
 
     Parameters
     ----------
@@ -72,7 +74,6 @@ def make_background_mask(deepstack, width):
         Pixel mask in the trace based on the deepstack or
         non-finite in the image.
     """
-
     # Get the dimensions of the input image.
     nrows, _ = np.shape(deepstack)
 
@@ -82,8 +83,7 @@ def make_background_mask(deepstack, width):
     elif nrows in [256, 2048]:  # SUBSTRIP256, FULL
         quantile = 100 * (1 - 2 * width / nrows)  # Mask 2 orders worth of pixels.
     else:
-        msg = (f'Unexpected image dimensions, expected nrows = 96, 256 or 2048, '
-               f'got nrows = {nrows}.')
+        msg = f"Unexpected image dimensions, expected nrows = 96, 256 or 2048, got nrows = {nrows}."
         log.critical(msg)
         raise ValueError(msg)
 
@@ -91,5 +91,5 @@ def make_background_mask(deepstack, width):
     threshold = np.nanpercentile(deepstack, quantile)
 
     # Mask pixels above the threshold value.
-    with np.errstate(invalid='ignore'):
+    with np.errstate(invalid="ignore"):
         return (deepstack > threshold) | ~np.isfinite(deepstack)
