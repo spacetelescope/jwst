@@ -119,7 +119,7 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
     new_wcs : `~gwcs.WCS`
         The WCS for the moving target observation.
     """
-    pipeline = wcs._pipeline[:-1]  # noqa: SLF001
+    pipeline = wcs.pipeline[:-1]
 
     mt = deepcopy(wcs.output_frame)
     mt.name = "moving_target"
