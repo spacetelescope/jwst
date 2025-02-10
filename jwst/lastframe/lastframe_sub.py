@@ -12,7 +12,7 @@ log.setLevel(logging.DEBUG)
 
 def do_correction(output):
     """
-    MIRI correction to set data quality flag of final group to DO_NOT_USE.
+    Set data quality flag of the final group in an integration to DO_NOT_USE.
 
     This correction only works on MIRI data. If the number of groups
     is greater than 2, then GROUP dq flag of final group is set to
