@@ -60,7 +60,6 @@ repos:
             jwst/extract_1d/spec_wcs.py |
             jwst/extract_1d/tests/conftest.py |
             jwst/extract_2d/.* |
-            jwst/firstframe/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/gain_scale/.* |
