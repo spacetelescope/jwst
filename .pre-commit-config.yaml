@@ -61,7 +61,6 @@ repos:
             jwst/imprint/.* |
             jwst/ipc/.* |
             jwst/jump/.* |
-            jwst/lastframe/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
             jwst/master_background/.* |
