@@ -37,7 +37,6 @@ exclude = [
     "jwst/exp_to_source/**.py",
     "jwst/extract_1d/{apply_apcorr.py,extract1d.py,ifu.py,spec_wcs.py,extract.py,extract_1d_step.py,psf_profile.py,source_location.py,tests/conftest.py}",
     "jwst/extract_2d/**.py",
-    "jwst/firstframe/**.py",
     "jwst/flatfield/**.py",
     "jwst/fringe/**.py",
     "jwst/gain_scale/**.py",
@@ -152,7 +151,6 @@ ignore-fully-untyped = true  # Turn of annotation checking for fully untyped cod
 "jwst/exp_to_source/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/extract_1d/{apply_apcorr.py,extract1d.py,ifu.py,spec_wcs.py,extract.py,extract_1d_step.py,psf_profile.py,source_location.py,tests/conftest.py}" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/extract_2d/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/firstframe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/flatfield/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/fringe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/gain_scale/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
