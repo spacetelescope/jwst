@@ -481,7 +481,9 @@ def create_mask(
     # If MIRI imaging, mask the non-science regions:
     # they contain irrelevant emission
     if mask_science_regions and exptype in ["mir_image"]:
-        non_science = (input_model.dq & (dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["NON_SCIENCE"])) > 0
+        non_science = (
+            input_model.dq & (dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["NON_SCIENCE"])
+        ) > 0
         mask[non_science] = False
 
     # Mask any NaN pixels or exactly zero value pixels
