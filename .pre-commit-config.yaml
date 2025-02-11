@@ -40,12 +40,10 @@ repos:
             jwst/assign_wcs/.* |
             jwst/associations/.* |
             jwst/background/.* |
-            jwst/charge_migration/.* |
             jwst/coron/.* |
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
-            jwst/dq_init/.* |
             jwst/emicorr/.* |
             jwst/engdblog/.* |
             jwst/exp_to_source/.* |
@@ -62,20 +60,17 @@ repos:
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/gain_scale/.* |
-            jwst/group_scale/.* |
             jwst/guider_cds/.* |
             jwst/imprint/.* |
             jwst/ipc/.* |
-            jwst/jump/.* |
+            jwst/lastframe/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
-            jwst/model_blender/.* |
             jwst/mrs_imatch/.* |
             jwst/pathloss/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
             jwst/pipeline/.* |
-            jwst/ramp_fitting/.* |
             jwst/refpix/.* |
             jwst/regtest/.* |
             jwst/resample/.* |

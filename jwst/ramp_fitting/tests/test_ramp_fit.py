@@ -6,7 +6,7 @@ from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
-from jwst.ramp_fitting.ramp_fit_step import compute_RN_variances
+from jwst.ramp_fitting.ramp_fit_step import compute_rn_variances
 
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -73,7 +73,7 @@ def test_readnoise_variance():
     gdq_4d[:, 1:, 0, 2] = SATURATED + DO_NOT_USE + CHARGELOSS
     gdq_4d[:, 0:, 1, 0] = JUMP_DET
 
-    var_r2, var_r3, var_r4 = compute_RN_variances(gdq_4d, readnoise_2d, gain_2d, group_time)
+    var_r2, var_r3, var_r4 = compute_rn_variances(gdq_4d, readnoise_2d, gain_2d, group_time)
 
     # Compare the exposure level RN variances
     true_var_r2 = np.array(
