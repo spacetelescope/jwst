@@ -26,9 +26,9 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     ----------
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         Input data model.
-    slit_names : list of ints
+    slit_names : list of strings
         Slit names.
-    source_ids : list of ints
+    source_ids : list of strings
         Source ids.
     """
     exp_type = input_model.meta.exposure.type.upper()
@@ -47,8 +47,8 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     # This is a kludge but will work for now.
     # This model keeps open_slits as an attribute.
     open_slits = slit2msa.slits[:]
-    open_slit_names = [x.name for x in open_slits]
-    open_slit_source_ids = [x.source_id for x in open_slits]
+    open_slit_names = [str(x.name) for x in open_slits]
+    open_slit_source_ids = [str(x.source_id) for x in open_slits]
     selected_open_slits = []
     if slit_names is not None:
         matched_slits = []
@@ -58,7 +58,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             else:
                 log.warn(f"Slit {this_slit} is not in the list of open slits.")
         for sub in open_slits:
-            if sub.name in matched_slits:
+            if str(sub.name) in matched_slits:
                 selected_open_slits.append(sub)
     if source_ids is not None:
         matched_sources = []
@@ -68,7 +68,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             else:
                 log.warn(f"Source id {this_id} is not in the list of open slits.")
         for sub in open_slits:
-            if sub.source_id in matched_sources:
+            if str(sub.source_id) in matched_sources:
                 if sub not in selected_open_slits:
                     selected_open_slits.append(sub)
                 else:
