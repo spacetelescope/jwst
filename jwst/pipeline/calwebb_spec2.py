@@ -322,7 +322,13 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.imprint_subtract.run(calibrated, members_by_type["imprint"])
 
         # for each background image subtract an associated leak cal
+        save_results = self.imprint_subtract.save_results
         for i, bkg_file in enumerate(members_by_type["background"]):
+            if save_results:
+                if isinstance(bkg_file, datamodels.JwstDataModel):
+                    self.imprint_subtract.output_file = bkg_file.meta.filename
+                else:
+                    self.imprint_subtract.output_file = Path(bkg_file).name
             bkg_imprint_sub = self.imprint_subtract.run(bkg_file, members_by_type["imprint"])
             members_by_type["background"][i] = bkg_imprint_sub
 
