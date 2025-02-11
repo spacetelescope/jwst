@@ -41,7 +41,6 @@ repos:
             jwst/associations/.* |
             jwst/background/.* |
             jwst/charge_migration/.* |
-            jwst/combine_1d/.* |
             jwst/coron/.* |
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
@@ -60,7 +59,6 @@ repos:
             jwst/extract_1d/spec_wcs.py |
             jwst/extract_1d/tests/conftest.py |
             jwst/extract_2d/.* |
-            jwst/firstframe/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/gain_scale/.* |
@@ -70,8 +68,6 @@ repos:
             jwst/jump/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
-            jwst/master_background/.* |
-            jwst/model_blender/.* |
             jwst/mrs_imatch/.* |
             jwst/pathloss/.* |
             jwst/persistence/.* |
