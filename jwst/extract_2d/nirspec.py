@@ -47,39 +47,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     # This is a kludge but will work for now.
     # This model keeps open_slits as an attribute.
     open_slits = slit2msa.slits[:]
-    open_slit_names = [str(x.name) for x in open_slits]
-    open_slit_source_ids = [str(x.source_id) for x in open_slits]
-    selected_open_slits = []
-    if slit_names is not None:
-        matched_slits = []
-        for this_slit in slit_names:
-            if this_slit in open_slit_names:
-                matched_slits.append(this_slit)
-            else:
-                log.warn(f"Slit {this_slit} is not in the list of open slits.")
-        for sub in open_slits:
-            if str(sub.name) in matched_slits:
-                selected_open_slits.append(sub)
-    if source_ids is not None:
-        matched_sources = []
-        for this_id in source_ids:
-            if this_id in open_slit_source_ids:
-                matched_sources.append(this_id)
-            else:
-                log.warn(f"Source id {this_id} is not in the list of open slits.")
-        for sub in open_slits:
-            if str(sub.source_id) in matched_sources:
-                if sub not in selected_open_slits:
-                    selected_open_slits.append(sub)
-                else:
-                    log.info(f"Source_id {sub.source_id} already selected (name {sub.name})")
-    if len(selected_open_slits) > 0:
-        log.info("Slits selected:")
-        for this_slit in selected_open_slits:
-            log.info(f"Name: {this_slit.name}, source_id: {this_slit.source_id}")
-        open_slits = selected_open_slits
-    else:
-        log.info("All slits selected")
+    open_slits = select_slits(open_slits, slit_names, source_ids)
     # NIRSpec BRIGHTOBJ (S1600A1 TSO) mode
     if exp_type == 'NRS_BRIGHTOBJ':
         # the output model is a single SlitModel
@@ -141,6 +109,56 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
         output_model.slits.extend(slits)
 
     return output_model
+
+def select_slits(open_slits, slit_names, source_ids):
+    """
+    Select the slits to process given the full set of open slits and the
+    slit_names and source_ids lists
+
+    Parameters
+    ----------
+
+    open_slits : list
+        list of open slits
+    slit_names : list
+        list of slit names to process
+    source_ids : list
+        list of source ids to process
+    """
+    open_slit_names = [str(x.name) for x in open_slits]
+    open_slit_source_ids = [str(x.source_id) for x in open_slits]
+    selected_open_slits = []
+    if slit_names is not None:
+        matched_slits = []
+        for this_slit in slit_names:
+            if this_slit in open_slit_names:
+                matched_slits.append(this_slit)
+            else:
+                log.warn(f"Slit {this_slit} is not in the list of open slits.")
+        for sub in open_slits:
+            if str(sub.name) in matched_slits:
+                selected_open_slits.append(sub)
+    if source_ids is not None:
+        matched_sources = []
+        for this_id in source_ids:
+            if this_id in open_slit_source_ids:
+                matched_sources.append(this_id)
+            else:
+                log.warn(f"Source id {this_id} is not in the list of open slits.")
+        for sub in open_slits:
+            if str(sub.source_id) in matched_sources:
+                if sub not in selected_open_slits:
+                    selected_open_slits.append(sub)
+                else:
+                    log.info(f"Source_id {sub.source_id} already selected (name {sub.name})")
+    if len(selected_open_slits) > 0:
+        log.info("Slits selected:")
+        for this_slit in selected_open_slits:
+            log.info(f"Name: {this_slit.name}, source_id: {this_slit.source_id}")
+        return selected_open_slits
+    else:
+        log.info("All slits selected")
+        return open_slits
 
 
 def process_slit(input_model, slit, exp_type):
