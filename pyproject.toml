@@ -40,7 +40,7 @@ dependencies = [
     "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
     "tweakwcs>=0.8.8",
-    "asdf-astropy>=0.5.0",
+    "asdf-astropy>=0.6.0",
     "wiimatch>=0.2.1",
     "packaging>20.0",
     "importlib-metadata>=4.11.4",
