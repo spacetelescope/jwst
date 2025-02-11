@@ -15,6 +15,8 @@ from astropy.nddata.bitmask import (
     interpret_bit_flags,
 )
 
+from stcal.skymatch import SkyStats
+
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelContainer
@@ -22,7 +24,6 @@ from jwst.datamodels import ModelContainer
 # LOCAL:
 from .skymatch import match
 from .skycube import SkyCube
-from ..skymatch.skystatistics import SkyStats
 
 __all__ = ['CubeSkyMatchStep']
 
