@@ -357,16 +357,7 @@ def calc_segs(rn_sect, gdq_sect, group_time):
 
 
 class RampFitStep(Step):
-    """
-    Fits a line determining the value of mean rate counts vs. time, using least squares.
-
-    The ramp fitting step determines the mean count rate for each pixel using
-    ordinary least squares.  The two OLS selections are:
-    1. OLS_C - the default C implementation of ramp fitting using OLS.
-    2. OLS - the old python implementation of ramp fitting using OLS (not
-       recommended for use).
-    3. LIKELY - a likelihood implementation of GLS based on group differences.
-    """
+    """Fit line to determine the value of mean rate counts vs. time."""
 
     class_alias = "ramp_fit"
 
