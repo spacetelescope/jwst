@@ -4,6 +4,8 @@ from copy import deepcopy
 
 import asdf
 
+from stdatamodels.jwst import datamodels as dm
+from stdatamodels import filetype
 from jwst.datamodels import ModelLibrary, ImageModel  # type: ignore[attr-defined]
 from jwst.lib.pipe_utils import match_nans_and_flags
 
@@ -59,6 +61,10 @@ class ResampleStep(Step):
 
     def process(self, input):
 
+        if isinstance(input, str):
+            ext = filetype.check(input)
+            if ext in ("fits", "asdf"):
+                input = dm.open(input)
         if isinstance(input, ModelLibrary):
             input_models = input
         elif isinstance(input, (str, dict, list)):
