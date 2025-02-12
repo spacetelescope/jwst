@@ -978,9 +978,11 @@ class AsnMixin_Lv2Imprint:
         imprint_sci = []
         imprint_bkg = []
         science_is_background = False
+        science_targets = set()
         for member in members:
             if member['exptype'] == 'science':
                 science.append(member)
+                science_targets.add(str(member.item['targetid']))
                 if member.item['bkgdtarg'] == 't':
                     science_is_background = True
             elif member['exptype'] == 'imprint':
@@ -996,6 +998,20 @@ class AsnMixin_Lv2Imprint:
         else:
             imprints_to_check = imprint_sci
 
+        # If there are multiple targets in the imprints to check,
+        # and if one of them matches the science data, keep only that one
+        imprints_matching_target = []
+        imprints_not_matching_target = []
+        for imprint_exp in imprints_to_check:
+            if str(imprint_exp.item['targetid']) in science_targets:
+                imprints_matching_target.append(imprint_exp)
+            else:
+                imprints_not_matching_target.append(imprint_exp)
+        if len(imprints_matching_target) > 0:
+            imprints_to_check = imprints_matching_target
+            for imprint_exp in imprints_not_matching_target:
+                members.remove(imprint_exp)
+
         # If 1 or more science and more imprints than science,
         # discard any imprints that don't match the science dither index
         if 1 <= len(science) < len(imprints_to_check):
@@ -1004,9 +1020,12 @@ class AsnMixin_Lv2Imprint:
                 for imprint_exp in imprints_to_check:
                     if imprint_exp.item['dithptin'] == science_exp.item['dithptin']:
                         imprint_to_keep.add(imprint_exp['expname'])
-            for imprint_exp in imprints_to_check:
-                if imprint_exp['expname'] not in imprint_to_keep:
-                    members.remove(imprint_exp)
+
+            # if there were any matching imprints, remove the extras
+            if len(imprint_to_keep) > 0:
+                for imprint_exp in imprints_to_check:
+                    if imprint_exp['expname'] not in imprint_to_keep:
+                        members.remove(imprint_exp)
         return [self]
 
     def finalize(self):

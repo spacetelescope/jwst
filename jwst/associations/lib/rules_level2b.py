@@ -335,7 +335,6 @@ class Asn_Lv2Spec(
                                 name='mostilno',
                                 sources=['mostilno']
                             ),
-                            Constraint_Target(),
                         ],
                         reduce=Constraint.all
                     ),
