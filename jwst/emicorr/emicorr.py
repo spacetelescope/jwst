@@ -8,7 +8,10 @@ import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
 import matplotlib.pyplot as plt
-plt.style.use('/Users/tbrandt/tim.mplstyle')
+try:
+    plt.style.use('/Users/tbrandt/tim.mplstyle')
+except:
+    pass
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
