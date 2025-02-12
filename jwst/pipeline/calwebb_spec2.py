@@ -579,7 +579,9 @@ class Spec2Pipeline(Pipeline):
         """
         Calibrate WFSS & Grism data.
 
-        Apply flat_field before extract_2d, and perform WFSS-specific steps.
+        This pipeline differs from other spectrscopic modes because
+        flat_field is applied before extract_2d, and WFSS-specific steps
+        are performed.
 
         Parameters
         ----------
