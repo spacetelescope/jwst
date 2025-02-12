@@ -303,7 +303,7 @@ modes. For NIRSpec observations there is one applicable argument:
 
 ``--source_ids``
   source_ids [comma-separated list of integers] of specific slit regions to extract.  The default value
-  None will cause all known slits for the instrument to be extracted.
+  of None will cause all known slits for the instrument to be extracted.
 
 ``slit_names`` and ``source_ids`` can be used at the same time, duplicates will be filtered out.
 
