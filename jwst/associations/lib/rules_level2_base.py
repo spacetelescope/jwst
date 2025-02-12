@@ -967,9 +967,33 @@ class AsnMixin_Lv2Image:
 
 
 class AsnMixin_Lv2Imprint:
-    """Level 2 imprint association handling."""
+    """Level 2 association handling for matching imprint images."""
 
     def prune_imprints(self):
+        """
+        Prune extra imprint exposures from the association members.
+
+        First, check for imprints that match the background flag
+        for the "science" member.  Any included imprints that do
+        not match the background flag are left in the association
+        without further checks.
+
+        Among these imprints, check to see if any have target IDs that
+        match the science member. If not, use all imprints for further
+        matches.  If so, use only the matching ones for further checks;
+        remove the non-matching imprints.
+
+        If there are more imprints than science members remaining, and
+        if any of the remaining imprints match the science dither position
+        index, discard any imprints that do not match the dither position.
+
+        Returns
+        -------
+        list of associations
+            The input association with members modified as needed.
+            For this mode, the input association is also the output
+            association, so the return value is always `[self]`.
+        """
         # Only one product for Lv2 associations
         members = self['products'][0]['members']
 
@@ -1029,6 +1053,21 @@ class AsnMixin_Lv2Imprint:
         return [self]
 
     def finalize(self):
+        """
+        Finalize the association.
+
+        For some spectrographic modes, imprint images are taken alongside
+        the science data, the background data, or both.  If there are
+        extra imprints in the association, we should keep only the best
+        matches to the science data.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+        """
         if self.is_valid:
             return self.prune_imprints()
         else:
