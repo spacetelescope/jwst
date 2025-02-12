@@ -19,9 +19,5 @@ SkyMatch
    :maxdepth: 1
 
    skymatch_step
-   skymatch
-   skyimage
-   skystatistics
-   region
 
 .. automodapi:: jwst.skymatch
