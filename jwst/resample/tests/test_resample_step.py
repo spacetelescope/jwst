@@ -411,6 +411,25 @@ def test_miri_wcs_roundtrip(miri_cal):
     im.close()
 
 
+def test_single_image_file_input(nircam_rate, tmp_cwd):
+    """Ensure step can be run on a single image file."""
+    # Create a temporary file with the input data
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.meta.filename = 'test_input.fits'
+    im.save('test_input.fits')
+
+    # Run the step on the file
+    result_from_memory = ResampleStep.call(im)
+    result_from_file = ResampleStep.call('test_input.fits')
+
+    # Check that the output is as expected
+    assert np.allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+
+    result_from_file.close()
+    result_from_memory.close()
+    im.close()
+
+
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
