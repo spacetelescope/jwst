@@ -6,7 +6,7 @@ import numpy as np
 
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample import compute_image_pixel_area
-from jwst.resample.resample_utils import build_driz_weight
+from stcal.resample.utils import build_driz_weight
 from stcal.outlier_detection.utils import (
     compute_weight_threshold,
     gwcs_blot,
@@ -121,7 +121,12 @@ def median_without_resampling(
                 drizzled_err = drizzled_model.err.copy()
             else:
                 drizzled_err = None
-            weight = build_driz_weight(drizzled_model, weight_type=weight_type, good_bits=good_bits)
+            weight = build_driz_weight(
+                drizzled_model,
+                weight_type=weight_type,
+                good_bits=good_bits,
+                flag_name_map=datamodels.dqflags.pixel,
+            )
             if i == 0:
                 median_wcs = copy.deepcopy(drizzled_model.meta.wcs)
                 input_shape = (ngroups,) + drizzled_data.shape
@@ -185,7 +190,7 @@ def median_with_resampling(
     ----------
     input_models : ModelLibrary
         The input datamodels.
-    resamp : resample.resample.ResampleData object
+    resamp : resample.resample.ResampleImage object
         The controlling object for the resampling process.
     maskpt : float
         The weight threshold for masking out low weight pixels.
@@ -208,63 +213,67 @@ def median_with_resampling(
         The median data array.
     median_wcs : gwcs.WCS
         A WCS corresponding to the median data.
-    median_error : np.ndarray, optional
-        A median error estimate, returned only if `return_error` is True.
+    median_error : np.ndarray, None, optional
+        A median error estimate, returned only if `return_error` is `True`.
+        If ``resamp.compute_err`` is not set to "driz_err", `None` will be
+        returned.
     """
-    if not resamp.single:
-        raise ValueError("median_with_resampling should only be used for resample_many_to_many")
-
     in_memory = not input_models.on_disk
     indices_by_group = list(input_models.group_indices.values())
     ngroups = len(indices_by_group)
+    median_err = None
+
+    eval_med_err = False
+    if return_error and resamp.compute_err == "driz_err":
+        eval_med_err = True
+        log.warning(
+            "Returning median_error has been disabled since input "
+            "'resamp' object does not have 'compute_err' attribute set to "
+            "'driz_err'."
+        )
 
     if save_intermediate_results:
         # create an empty image model for the median data
         median_model = datamodels.ImageModel(None)
 
-    with input_models:
-        for i, indices in enumerate(indices_by_group):
-            drizzled_model = resamp.resample_group(
-                input_models, indices, compute_error=return_error
-            )
+    for i, indices in enumerate(indices_by_group):
+        drizzled_model = resamp.resample_group(indices)
 
+        if save_intermediate_results:
+            # write the drizzled model to file
+            _fileio.save_drizzled(drizzled_model, make_output_path)
+
+        if i == 0:
+            median_wcs = resamp.output_wcs
+            input_shape = (ngroups,) + drizzled_model.data.shape
+            dtype = drizzled_model.data.dtype
+            computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+            if eval_med_err:
+                err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
+            else:
+                err_computer = None
             if save_intermediate_results:
-                # write the drizzled model to file
-                _fileio.save_drizzled(drizzled_model, make_output_path)
+                # update median model's meta with meta from the first model:
+                median_model.update(drizzled_model)
+                median_model.meta.wcs = median_wcs
 
-            if i == 0:
-                median_wcs = resamp.output_wcs
-                input_shape = (ngroups,) + drizzled_model.data.shape
-                dtype = drizzled_model.data.dtype
-                computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
-                if return_error:
-                    err_computer = MedianComputer(input_shape, in_memory, buffer_size, dtype)
-                else:
-                    err_computer = None
-                if save_intermediate_results:
-                    # update median model's meta with meta from the first model:
-                    median_model.update(drizzled_model)
-                    median_model.meta.wcs = median_wcs
-
-            weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
-            drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
-            computer.append(drizzled_model.data, i)
-            if return_error:
-                drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
-                err_computer.append(drizzled_model.err, i)
-            del drizzled_model
+        weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
+        drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
+        computer.append(drizzled_model.data, i)
+        if eval_med_err:
+            drizzled_model.err[drizzled_model.wht < weight_threshold] = np.nan
+            err_computer.append(drizzled_model.err, i)
+        del drizzled_model
 
     # Perform median combination on set of drizzled mosaics
     median_data = computer.evaluate()
-    if return_error:
+    if eval_med_err:
         median_err = err_computer.evaluate()
-    else:
-        median_err = None
 
     if save_intermediate_results:
         # Save median model to fits
         median_model.data = median_data
-        if return_error:
+        if eval_med_err:
             median_model.err = median_err
         # drizzled model already contains asn_id
         make_output_path = partial(make_output_path, asn_id=None)
