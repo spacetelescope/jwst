@@ -6,9 +6,8 @@ import warnings
 import asdf
 import numpy as np
 from astropy import units as u
-from drizzle.utils import decode_context as drizzle_decode_context
+from drizzle.utils import decode_context as _drizzle_decode_context
 
-from stdatamodels.dqflags import interpret_bit_flags
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from stcal.alignment.util import (
@@ -17,10 +16,19 @@ from stcal.alignment.util import (
     wcs_from_sregions,
 )
 from stcal.resample import UnsupportedWCSError
-from stcal.resample.utils import compute_mean_pixel_area, get_tmeasure
+from stcal.resample.utils import compute_mean_pixel_area
+from stcal.resample.utils import (
+    build_driz_weight as _stcal_build_driz_weight,
+    build_mask as _stcal_build_mask,
+)
 
 
-__all__ = ["decode_context", "make_output_wcs", "resampled_wcs_from_models"]
+__all__ = [
+    "build_mask",
+    "decode_context",
+    "make_output_wcs",
+    "resampled_wcs_from_models"
+]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -299,30 +307,11 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
         DeprecationWarning,
         stacklevel=2
     )
-    dqmask = build_mask(model.dq, good_bits)
-
-    if weight_type == 'ivm':
-        if (model.hasattr("var_rnoise") and model.var_rnoise is not None and
-                model.var_rnoise.shape == model.data.shape):
-            with np.errstate(divide="ignore", invalid="ignore"):
-                inv_variance = model.var_rnoise**-1
-            inv_variance[~np.isfinite(inv_variance)] = 1
-        else:
-            warnings.warn("var_rnoise array not available. Setting drizzle weight map to 1",
-                          RuntimeWarning)
-            inv_variance = 1.0
-        result = inv_variance * dqmask
-    elif weight_type == 'exptime':
-        _, s = get_tmeasure(model)
-        if s:
-            exptime = model.meta.exposure.measurement_time
-        else:
-            exptime = model.meta.exposure.exposure_time
-        result = exptime * dqmask
-    else:
-        result = np.ones(model.data.shape, dtype=model.data.dtype) * dqmask
-
-    return result.astype(np.float32)
+    return _stcal_build_driz_weight(
+        model=model,
+        weight_type=weight_type,
+        good_bits=good_bits
+    )
 
 
 def build_mask(dqarr, bitvalue):
@@ -330,13 +319,11 @@ def build_mask(dqarr, bitvalue):
 
     In the returned bit mask, 1 is good, 0 is bad
     """
-    bitvalue = interpret_bit_flags(bitvalue, mnemonic_map=pixel)
-
-    if bitvalue is None:
-        return np.ones(dqarr.shape, dtype=np.uint8)
-
-    bitvalue = np.array(bitvalue).astype(dqarr.dtype)
-    return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
+    return _stcal_build_mask(
+        dqarr=dqarr,
+        good_bits=bitvalue,
+        flag_name_map=pixel
+    )
 
 
 def is_sky_like(frame):
@@ -412,7 +399,7 @@ def decode_context(context, x, y):
         DeprecationWarning,
         stacklevel=2
     )
-    return drizzle_decode_context(context, x, y)
+    return _drizzle_decode_context(context, x, y)
 
 
 def load_custom_wcs(asdf_wcs_file, output_shape=None):

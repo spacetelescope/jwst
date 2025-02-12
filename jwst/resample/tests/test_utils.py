@@ -11,7 +11,6 @@ import pytest
 from stdatamodels.jwst.datamodels import SlitModel, dqflags
 
 from jwst.resample.resample_spec import find_dispersion_axis
-from jwst.resample.resample_utils import build_mask
 
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
@@ -76,35 +75,6 @@ def wcs_slicedwcs(wcs_gwcs):
     slices = (slice(xmin, xmax), slice(xmin, xmax))
     sliced_wcs = fitswcs.wcsapi.SlicedLowLevelWCS(wcs_gwcs, slices)
     return sliced_wcs
-
-
-@pytest.mark.parametrize(
-    'dq, bitvalues, expected', [
-        (DQ, 0, np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
-        (DQ, BITVALUES, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, BITVALUES_STR, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, BITVALUES_INV_STR, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, JWST_NAMES, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, JWST_NAMES_INV, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, None, np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
-    ]
-)
-def test_build_mask(dq, bitvalues, expected):
-    """Test logic of mask building
-
-    Parameters
-    ----------
-    dq: numpy.array
-        The input data quality array
-
-    bitvalues: int or str
-        The bitvalues to match against
-
-    expected: numpy.array
-        Expected mask array
-    """
-    result = build_mask(dq, bitvalues)
-    assert_array_equal(result, expected)
 
 
 def test_find_dispersion_axis():

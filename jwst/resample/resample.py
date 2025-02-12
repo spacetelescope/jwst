@@ -691,7 +691,6 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
         "end_time": model.meta.exposure.end_time,
         "duration": model.meta.exposure.duration,
         "measurement_time": model.meta.exposure.measurement_time,
-        "elapsed_exposure_time": model.meta.exposure.elapsed_exposure_time,
 
         "pixelarea_steradians": model.meta.photometry.pixelarea_steradians,
         "pixelarea_arcsecsq": model.meta.photometry.pixelarea_arcsecsq,

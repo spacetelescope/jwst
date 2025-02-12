@@ -820,7 +820,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
-    with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
+    with pytest.warns(RuntimeWarning, match="'var_rnoise' array not available"):
         result = ResampleStep.call(c, blendheaders=False)
 
     # no valid variance - output error and variance are all NaN

@@ -106,6 +106,8 @@ def detect_outliers(
             kernel=kernel,
             fillval=fillval,
             good_bits=good_bits,
+            enable_ctx=False,
+            enable_var=False,
             compute_err="driz_err",
         )
 
