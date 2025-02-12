@@ -59,7 +59,6 @@ repos:
             jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
-            jwst/group_scale/.* |
             jwst/guider_cds/.* |
             jwst/imprint/.* |
             jwst/ipc/.* |
