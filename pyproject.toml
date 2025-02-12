@@ -22,7 +22,7 @@ dependencies = [
     "astropy>=6.1",
     "BayesicFitting>=3.0.1",
     "crds>=12.0.3",
-    "drizzle>=2.0.0",
+    "drizzle>=2.0.1",
     # "gwcs>=0.22.0,<0.23.0",
     "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
     "numpy>=1.25",
