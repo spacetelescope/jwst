@@ -328,7 +328,7 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
 
 
 static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
-  PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo;
+  PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo; // codespell:ignore erro
   PyObject  *cdelt3o;
   PyObject *xi1o, *eta1o, *xi2o, *eta2o, *xi3o, *eta3o, *xi4o, *eta4o, *x_deto, *y_deto;
   PyObject *dwaveo;
@@ -359,7 +359,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
   if (!PyArg_ParseTuple(args, "iiiiiiOOOOOOOOOOOOOOOOOOOdddiOOl:cube_wrapper_driz",
 			&instrument, &flag_dq_plane, &start_region, &end_region, &overlap_partial, &overlap_full,
-			&xco, &yco, &zco, &coord1o, &coord2o, &waveo,  &fluxo, &erro, &slicenoo,
+			&xco, &yco, &zco, &coord1o, &coord2o, &waveo,  &fluxo, &erro, &slicenoo, // codespell:ignore erro
 			&xi1o, &eta1o, &xi2o, &eta2o, &xi3o, &eta3o, &xi4o, &eta4o,
 			&dwaveo,
 			&cdelt3o, &cdelt1, &cdelt2, &cdelt3_mean, &linear,
@@ -387,7 +387,7 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
       (!(flux = ensure_array(fluxo, &free_flux))) ||
       (!(x_det = ensure_array(x_deto, &free_x_det))) ||
       (!(y_det = ensure_array(y_deto, &free_y_det))) ||
-      (!(err = ensure_array(erro, &free_err))) ||
+      (!(err = ensure_array(erro, &free_err))) || // codespell:ignore erro
       (!(sliceno = ensure_array(slicenoo, &free_sliceno))) ||
       (!(xi1 = ensure_array(xi1o, &free_xi1))) ||
       (!(eta1 = ensure_array(eta1o, &free_eta1))) ||

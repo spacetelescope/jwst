@@ -23,7 +23,7 @@ class WfsCombineStep(Step):
         blur_size = integer(default=10)
         n_size = integer(default=2)
         suffix = string(default="wfscmb")
-    """
+    """ # noqa: E501
 
     def make_output_path(self, basepath, *args, **kwargs):
         # bypass all stpipe filename formatting

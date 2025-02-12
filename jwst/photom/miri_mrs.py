@@ -64,7 +64,7 @@ def get_correction_function(side, timecoeff, mid_time):
         exposure. The time-wavelength dependent correction is different
         for every MRS band.
     timecoeff : dictionary
-        A dictionay holding the correction factors for the time/wavelength
+        A dictionary holding the correction factors for the time/wavelength
         correction.  binwave, acoeff, bcoeff, ccoeff, x0 are the parameters
         for an MRS time-wavelength photom correction.
     mid-time : int
@@ -124,7 +124,7 @@ def time_correction(input, detector, ftab, mid_time):
     table_ch['ch4'] = ftab.timecoeff_ch4
 
     # Each MIRI MRS exposure has 2 channels
-    # We want to correct the channels seperately
+    # We want to correct the channels separately
     # If we have MIRIFUSHORT data then channel 1 is on the left
     # and channel 2 is on the right. If we have MIRIFULONG  data
     # then channel 4 is on the left and channel 3 is on right.
@@ -144,7 +144,7 @@ def time_correction(input, detector, ftab, mid_time):
         # Check the reference file has the time dependent coefficients
         # check that table 1 wavelength bin is an array with values
 
-    # Pull out the time coefficents for the detector we are working on
+    # Pull out the time coefficients for the detector we are working on
     timecoeff['left']['binwave'] = table_ch[left]['binwave']
     timecoeff['left']['acoeff'] = table_ch[left]['acoeff']
     timecoeff['left']['bcoeff'] = table_ch[left]['bcoeff']

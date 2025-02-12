@@ -18,7 +18,7 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     rtdata.get_data(f"niriss/imaging/{stem}_nis_cal.fits")
     model = datamodels.ImageModel(rtdata.input)
     catalog = tweakreg_catalog.make_tweakreg_catalog(
-        model, 2.5, 10.0, starfinder=starfinder, starfinder_kwargs={
+        model, 2.5, 10.0, starfinder_name=starfinder, starfinder_kwargs={
             'brightest': None,
             'sharphi': 3.0,
             'minsep_fwhm': 2.5,

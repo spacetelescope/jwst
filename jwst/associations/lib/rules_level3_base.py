@@ -424,7 +424,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     def __repr__(self):
         try:
             file_name, json_repr = self.ioregistry['json'].dump(self)
-        except:
+        except Exception:
             return str(self.__class__)
         return json_repr
 

@@ -60,7 +60,7 @@ def test_miri_mrs_badpix_selfcal(run_pipeline_selfcal, fitsdiff_default_kwargs):
 
 
 @pytest.mark.parametrize("basename", (
-    [f"{OUTSTEM_BKG}_badpix_selfcal.fits",] + 
+    [f"{OUTSTEM_BKG}_badpix_selfcal.fits",] +
     [f"{OUTSTEM_BKG}_badpix_selfcal_bkg_{idx}.fits" for idx in range(4)]))
 @pytest.mark.bigdata
 def test_miri_mrs_badpix_selfcal_bkg(basename, run_pipeline_background, fitsdiff_default_kwargs):

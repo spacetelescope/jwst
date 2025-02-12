@@ -46,7 +46,7 @@ class Detector1Pipeline(Pipeline):
 
     spec = """
         save_calibrated_ramp = boolean(default=False)
-    """
+    """ # noqa: E501
 
     # Define aliases to steps
     step_defs = {'group_scale': group_scale_step.GroupScaleStep,

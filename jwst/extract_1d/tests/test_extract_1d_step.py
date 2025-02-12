@@ -68,6 +68,22 @@ def test_extract_nirspec_bots(mock_nirspec_bots, simple_wcs):
     result.close()
 
 
+def test_extract_miri_lrs_fs(mock_miri_lrs_fs, simple_wcs_transpose):
+    result = Extract1dStep.call(mock_miri_lrs_fs)
+    assert result.meta.cal_step.extract_1d == 'COMPLETE'
+    assert result.spec[0].name == 'MIR_LRS-FIXEDSLIT'
+
+    # output wavelength is the same as input
+    _, _, expected_wave = simple_wcs_transpose(np.arange(50), np.arange(50))
+    assert np.allclose(result.spec[0].spec_table['WAVELENGTH'], expected_wave)
+
+    # output flux and errors are non-zero, exact values will depend
+    # on extraction parameters
+    assert np.all(result.spec[0].spec_table['FLUX'] > 0)
+    assert np.all(result.spec[0].spec_table['FLUX_ERROR'] > 0)
+    result.close()
+
+
 @pytest.mark.parametrize('ifu_set_srctype', [None, 'EXTENDED'])
 def test_extract_miri_ifu(mock_miri_ifu, simple_wcs_ifu, ifu_set_srctype):
     # Source type defaults to extended, results should be the
@@ -188,23 +204,48 @@ def test_save_output_single(tmp_path, mock_nirspec_fs_one_slit):
     mock_nirspec_fs_one_slit.meta.filename = 'test_s2d.fits'
     result = Extract1dStep.call(mock_nirspec_fs_one_slit,
                                 save_results=True, save_profile=True,
-                                save_scene_model=True, output_dir=str(tmp_path),
-                                suffix='x1d')
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path), suffix='x1d')
 
     output_path = str(tmp_path / 'test_x1d.fits')
 
     assert os.path.isfile(output_path)
     assert os.path.isfile(output_path.replace('x1d', 'profile'))
     assert os.path.isfile(output_path.replace('x1d', 'scene_model'))
+    assert os.path.isfile(output_path.replace('x1d', 'residual'))
 
     result.close()
+
+
+def test_save_output_multiple(tmp_path, mock_nirspec_fs_one_slit):
+    input_container = ModelContainer([mock_nirspec_fs_one_slit.copy(),
+                                      mock_nirspec_fs_one_slit.copy()])
+
+    result = Extract1dStep.call(input_container,
+                                save_results=True, save_profile=True,
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path),
+                                suffix='x1d', output_file='test')
+
+    output_paths = [str(tmp_path / 'test_0_x1d.fits'),
+                    str(tmp_path / 'test_1_x1d.fits')]
+
+    for output_path in output_paths:
+        assert os.path.isfile(output_path)
+        assert os.path.isfile(output_path.replace('x1d', 'profile'))
+        assert os.path.isfile(output_path.replace('x1d', 'scene_model'))
+        assert os.path.isfile(output_path.replace('x1d', 'residual'))
+
+    result.close()
+    input_container.close()
 
 
 def test_save_output_multislit(tmp_path, mock_nirspec_mos):
     mock_nirspec_mos.meta.filename = 'test_s2d.fits'
     result = Extract1dStep.call(mock_nirspec_mos,
                                 save_results=True, save_profile=True,
-                                save_scene_model=True, output_dir=str(tmp_path),
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path),
                                 suffix='x1d')
 
     output_path = str(tmp_path / 'test_x1d.fits')
@@ -215,5 +256,29 @@ def test_save_output_multislit(tmp_path, mock_nirspec_mos):
     for slit in mock_nirspec_mos.slits:
         assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_profile'))
         assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_scene_model'))
+        assert os.path.isfile(output_path.replace('x1d', f'{slit.name}_residual'))
 
     result.close()
+
+
+def test_save_output_multiple_multislit(tmp_path, mock_nirspec_mos):
+    input_container = ModelContainer([mock_nirspec_mos.copy(),
+                                      mock_nirspec_mos.copy()])
+    result = Extract1dStep.call(input_container,
+                                save_results=True, save_profile=True,
+                                save_scene_model=True, save_residual_image=True,
+                                output_dir=str(tmp_path),
+                                suffix='x1d', output_file='test')
+
+    for i in range(2):
+        output_path = str(tmp_path / f'test_{i}_x1d.fits')
+        assert os.path.isfile(output_path)
+
+        # intermediate files for multislit data contain the slit name
+        for slit in mock_nirspec_mos.slits:
+            assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_profile.fits'))
+            assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_scene_model.fits'))
+            assert os.path.isfile(str(tmp_path / f'test_{slit.name}_{i}_residual.fits'))
+
+    result.close()
+    input_container.close()

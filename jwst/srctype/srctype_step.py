@@ -21,7 +21,7 @@ class SourceTypeStep(Step):
 
     spec = """
         source_type = option('POINT','EXTENDED', default=None)  # user-supplied source type
-    """
+    """ # noqa: E501
 
     def process(self, input):
 

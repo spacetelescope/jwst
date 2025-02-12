@@ -4,8 +4,9 @@ The ramp fitting step has the following optional arguments that can be set by th
 
 * ``--algorithm``: A string to select the desired algorithm.  The available
   values are "OLS" to select the python implementation of the Ordinary
-  Least Squares algorithm and  "OLS_C" to select the C extension
-  implementation of OLS.  The algorithm defaults to "OLS_C".
+  Least Squares algorithm, "OLS_C" to select the C extension
+  implementation of OLS, and "LIKELY" to select a prototype maximum-likelihood based
+  approach.  The algorithm defaults to "OLS_C".
 
 * ``--save_opt``: A True/False value that specifies whether to write
   the optional output product. Default is False.
@@ -15,6 +16,11 @@ The ramp fitting step has the following optional arguments that can be set by th
 
 * ``--int_name``: A string that can be used to override the default name
   for the per-integration product.
+
+* ``--firstgroup``, ``--lastgroup``: A pair of integers that can be used to set the first and last groups
+  to be used in the ramp fitting procedure.  These values are zero-indexed.  If the first group is set to <0,
+  or None, or the last group is set to > (#groups - 1) or None, or the first group is set to > last group,
+  the settings are ignored and the full ramp is fit.  Default values for both parameters are None.
 
 * ``--suppress_one_group``: A boolean to suppress computations for saturated ramps
   with only one good (unsaturated) sample.  The default is set to True to suppress these computations,

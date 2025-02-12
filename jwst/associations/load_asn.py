@@ -30,7 +30,7 @@ def load_asn(
 
     first : bool
         A serialization potentially matches many rules.
-        Only return the first succesful load.
+        Only return the first successful load.
 
     registry : AssociationRegistry or None
         The `AssociationRegistry` to use.

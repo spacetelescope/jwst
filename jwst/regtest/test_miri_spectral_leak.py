@@ -16,7 +16,7 @@ def test_miri_spectral_leak(output, rtdata, fitsdiff_default_kwargs):
     Step.from_cmdline(args)
 
     # The spectral_leak correction is part of calwebb_spec3. The top program, calwebb_spec3.py,
-    # controls writing the file names according to the assocation rules.
+    # controls writing the file names according to the association rules.
     # For this test we just want to isolate the spectral_leak correction and run the extracted spectrum
     # through the spectral_leak correction. This step does not have the smarts to know how to write
     # the data. The filenames are written as:

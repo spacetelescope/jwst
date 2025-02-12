@@ -9,7 +9,7 @@ series observations.
 Normal imaging data benefit from combining all integrations into a
 single image. TSO data's value, however, comes from looking for variations from one
 integration to the next.  The outlier detection algorithm, therefore, gets run with 
-a few variations to accomodate the nature of these 3D data.
+a few variations to accommodate the nature of these 3D data.
 A :py:class:`~jwst.datamodels.CubeModel` object serves as the basic format for all
 processing performed by this step. This routine performs the following operations:
 

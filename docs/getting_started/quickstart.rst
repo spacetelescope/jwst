@@ -31,9 +31,9 @@ To create a conda environment specifically for the latest stable release of
 
 ::
 
-	conda create --name jwst_latest python=3.11
+	conda create --name jwst_latest python=3.12
 
-This will create a new, (nearly) empty Python 3.11 environment in which you can
+This will create a new, (nearly) empty Python 3.12 environment in which you can
 install the `jwst` package.
 
 **2. Install jwst from PyPi**

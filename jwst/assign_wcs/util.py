@@ -1154,7 +1154,7 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
     crpix : list of float, None, optional
         Coordinates (1-based) of the reference point for the new FITS WCS.
         When not provided, i.e., when set to `None` (default) the reference
-        pixel already specified in ``wcsinfo`` will be re-used. If
+        pixel already specified in ``wcsinfo`` will be reused. If
         ``wcsinfo`` does not contain ``crpix`` information, then the
         reference pixel will be chosen near the center of the bounding box
         for axes corresponding to the celestial frame.

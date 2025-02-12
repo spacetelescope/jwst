@@ -124,7 +124,7 @@ class EngdbABC(abc.ABC):
         Raises
         ------
         requests.exceptions.HTTPError
-            Either a bad URL or non-existant mnemonic.
+            Either a bad URL or non-existent mnemonic.
         """
         pass
 

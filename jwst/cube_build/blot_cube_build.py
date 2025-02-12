@@ -200,7 +200,7 @@ class CubeBlot():
             # ______________________________________________________________________________
             # blot_wrapper is a c extension that finds:
             # the overlapping median cube spaxels with the detector pixels
-            # A median spaxel that falls withing the ROI of the center of the
+            # A median spaxel that falls within the ROI of the center of the
             # detector pixel  is flagged as an overlapping pixel.
 
             xsize2 = xcenter.shape[0]

@@ -15,7 +15,7 @@ class ImprintStep(Step):
     class_alias = "imprint"
 
     spec = """
-    """
+    """ # noqa: E501
 
     def process(self, input, imprint):
 

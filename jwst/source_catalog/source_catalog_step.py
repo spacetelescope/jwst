@@ -1,8 +1,6 @@
-"""
-Module for the source catalog step.
-"""
+"""Module for the source catalog step."""
 
-import os
+from pathlib import Path
 
 from crds.core.exceptions import CrdsLookupError
 import numpy as np
@@ -18,14 +16,7 @@ __all__ = ["SourceCatalogStep"]
 
 
 class SourceCatalogStep(Step):
-    """
-    Create a final catalog of source photometry and morphologies.
-
-    Parameters
-    -----------
-    input : str or `ImageModel`
-        A FITS filename or an `ImageModel` of a drizzled image.
-    """
+    """Create a final catalog of source photometry and morphologies."""
 
     class_alias = "source_catalog"
 
@@ -41,19 +32,18 @@ class SourceCatalogStep(Step):
         ci1_star_threshold = float(default=2.0)  # CI 1 star threshold
         ci2_star_threshold = float(default=1.8)  # CI 2 star threshold
         suffix = string(default='cat')        # Default suffix for output files
-    """
+    """  # noqa: E501
 
-    reference_file_types = ['apcorr', 'abvegaoffset']
+    reference_file_types = ["apcorr", "abvegaoffset"]
 
     def _get_reffile_paths(self, model):
         filepaths = []
         for reffile_type in self.reference_file_types:
             try:
                 filepath = self.get_reference_file(model, reffile_type)
-                self.log.info(f'Using {reffile_type.upper()} reference file: '
-                              f'{filepath}')
+                self.log.info(f"Using {reffile_type.upper()} reference file: {filepath}")
             except CrdsLookupError as err:
-                msg = f'{err} Source catalog will not be created.'
+                msg = f"{err} Source catalog will not be created."
                 self.log.warning(msg)
                 return None
 
@@ -61,60 +51,71 @@ class SourceCatalogStep(Step):
         return filepaths
 
     def process(self, input_model):
+        """
+        Create the catalog from the input datamodel.
+
+        Parameters
+        ----------
+        input_model : str or `ImageModel`
+            A FITS filename or an `ImageModel` of a drizzled image.
+
+        Returns
+        -------
+        catalog : `astropy.table.Table` or None
+            The source catalog, or None if no sources were found.
+        """
         with datamodels.open(input_model) as model:
             reffile_paths = self._get_reffile_paths(model)
-            aperture_ee = (self.aperture_ee1, self.aperture_ee2,
-                           self.aperture_ee3)
+            aperture_ee = (self.aperture_ee1, self.aperture_ee2, self.aperture_ee3)
 
             try:
-                refdata = ReferenceData(model, reffile_paths,
-                                        aperture_ee)
+                refdata = ReferenceData(model, reffile_paths, aperture_ee)
                 aperture_params = refdata.aperture_params
                 abvega_offset = refdata.abvega_offset
             except RuntimeError as err:
-                msg = f'{err} Source catalog will not be created.'
+                msg = f"{err} Source catalog will not be created."
                 self.log.warning(msg)
                 return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
-            bkg = JWSTBackground(model.data, box_size=self.bkg_boxsize,
-                                 coverage_mask=coverage_mask)
+            bkg = JWSTBackground(model.data, box_size=self.bkg_boxsize, coverage_mask=coverage_mask)
             model.data -= bkg.background
 
             threshold = self.snr_threshold * bkg.background_rms
-            finder = JWSTSourceFinder(threshold, self.npixels,
-                                      deblend=self.deblend)
+            finder = JWSTSourceFinder(threshold, self.npixels, deblend=self.deblend)
 
-            convolved_data = convolve_data(model.data, self.kernel_fwhm,
-                                           mask=coverage_mask)
+            convolved_data = convolve_data(model.data, self.kernel_fwhm, mask=coverage_mask)
             segment_img = finder(convolved_data, mask=coverage_mask)
             if segment_img is None:
                 return None
 
-            ci_star_thresholds = (self.ci1_star_threshold,
-                                  self.ci2_star_threshold)
-            catobj = JWSTSourceCatalog(model, segment_img, convolved_data,
-                                       self.kernel_fwhm, aperture_params,
-                                       abvega_offset, ci_star_thresholds)
+            ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
+            catobj = JWSTSourceCatalog(
+                model,
+                segment_img,
+                convolved_data,
+                self.kernel_fwhm,
+                aperture_params,
+                abvega_offset,
+                ci_star_thresholds,
+            )
             catalog = catobj.catalog
 
             # add back background to data so input model is unchanged
             model.data += bkg.background
 
             if self.save_results:
-                cat_filepath = self.make_output_path(ext='.ecsv')
-                catalog.write(cat_filepath, format='ascii.ecsv',
-                              overwrite=True)
-                model.meta.source_catalog = os.path.basename(cat_filepath)
-                self.log.info(f'Wrote source catalog: {cat_filepath}')
+                cat_filepath = self.make_output_path(ext=".ecsv")
+                catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
+                model.meta.source_catalog = Path(cat_filepath).name
+                self.log.info(f"Wrote source catalog: {cat_filepath}")
 
                 segm_model = datamodels.SegmentationMapModel(segment_img.data)
                 segm_model.update(model, only="PRIMARY")
                 segm_model.meta.wcs = model.meta.wcs
                 segm_model.meta.wcsinfo = model.meta.wcsinfo
-                self.save_model(segm_model, suffix='segm')
+                self.save_model(segm_model, suffix="segm")
                 model.meta.segmentation_map = segm_model.meta.filename
-                self.log.info('Wrote segmentation map: '
-                              f'{segm_model.meta.filename}')
+                self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
 
         return catalog

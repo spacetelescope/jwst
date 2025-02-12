@@ -12,7 +12,7 @@ and are created by association rules. However, as will be described,
 the association rules are Python classes which inherit from the
 ``Association`` class.
 
-Associations created from these rule classes, refered to as just
+Associations created from these rule classes, referred to as just
 ``rules``, have the type of the class they are created from and have all
 the methods and attributes of those classes. Such instances are used
 to populate the created associations with new members and check the

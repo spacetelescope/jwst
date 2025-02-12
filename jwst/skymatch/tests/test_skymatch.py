@@ -626,14 +626,14 @@ def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
             skymethod='user',
             skylist=skyfile
         )
-    
+
     # skylist file does not contain all filenames
     skyfile = "skylist_missing.txt"
     fnames_wrong = ["two.fits"] + fnames[1:]
     with open(skyfile, "w") as f:
         for fname, lev in zip(fnames_wrong, levels):
             f.write(f"{fname} {lev}\n")
-    
+
     with pytest.raises(ValueError):
         SkyMatchStep.call(
             container,

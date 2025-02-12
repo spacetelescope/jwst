@@ -312,10 +312,14 @@ def imaging_distortion(input_model, reference_files):
                 distortion = Shift(col_offset) & Shift(row_offset) | distortion
         else:
             log.debug("No match in fitleroffset file.")
-    
+
     # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
     # This makes it clear the bounding box is set correctly to GWCS
-    bind_bounding_box(distortion, transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox, order="F")
+    bind_bounding_box(
+        distortion,
+        transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox,
+        order="F"
+    )
 
     return distortion
 

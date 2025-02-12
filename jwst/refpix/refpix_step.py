@@ -29,7 +29,7 @@ class RefPixStep(Step):
         sigreject = float(default=4.0) # Number of sigmas to reject as outliers
         gaussmooth = float(default=1.0) # Width of Gaussian smoothing kernel to use as a low-pass filter
         halfwidth = integer(default=30) # Half-width of convolution kernel to build
-    """
+    """ # noqa: E501
 
     reference_file_types = ['refpix']
 

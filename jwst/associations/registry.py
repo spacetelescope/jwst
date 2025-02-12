@@ -222,7 +222,7 @@ class AssociationRegistry(dict):
 
         first : bool
             A serialization potentially matches many rules.
-            Only return the first succesful load.
+            Only return the first successful load.
 
         kwargs : dict
             Other arguments to pass to the `load` method

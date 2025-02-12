@@ -221,9 +221,9 @@ def test_miri():
 def test_firstframe_bright_use_group1():
     """
     Test if the firstframe code when bright_use_group1 is set to True.
-    
-    The groupdq flag for group 1 should not be set to DO_NOT_USE for the pixels that saturate 
-    the 3rd group.  Otherwise, all other pixels should have their group1 groupdq 
+
+    The groupdq flag for group 1 should not be set to DO_NOT_USE for the pixels that saturate
+    the 3rd group.  Otherwise, all other pixels should have their group1 groupdq
     flags set to DO_NOT_USE.
     """
 
@@ -254,7 +254,7 @@ def test_firstframe_bright_use_group1():
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
-    
+
     expected_diff = np.full((ysize, xsize), dqflags.group['DO_NOT_USE'], dtype=int)
     expected_diff[0:100, :] = 0
     expected_diff[200:300, :] = 0

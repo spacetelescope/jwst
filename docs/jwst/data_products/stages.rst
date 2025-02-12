@@ -51,7 +51,7 @@ Throughout this document, we will use the "Stage" terminology to refer to data p
 Stage 0, 1, and 2 products are always files containing the data from a single exposure and a
 single detector. A NIRCam exposure that uses all 10 detectors will therefore result in 10 separate
 FITS files for each of the Stage 0, 1, and 2 products. Because these stages contain the data for a single
-exposure, they are refered to as "exposure-based" products and use an "exposure-based" file naming
+exposure, they are referred to as "exposure-based" products and use an "exposure-based" file naming
 syntax. Stage 3 products, on the other hand, are constructed from the combined data of
 multiple exposures for a given source or target. They are referred to as "source-based" products
 and use a "source-based" file naming syntax. Observing modes that include multiple defined sources

@@ -60,7 +60,7 @@ class FlatFieldStep(Step):
         save_interpolated_flat = boolean(default=False) # Save interpolated NRS flat
         user_supplied_flat = string(default=None)  # User-supplied flat
         inverse = boolean(default=False)  # Invert the operation
-    """
+    """ # noqa: E501
 
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
 

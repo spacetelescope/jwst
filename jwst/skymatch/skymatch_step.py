@@ -238,7 +238,7 @@ class SkyMatchStep(Step):
         log.info(" ")
         log.info("Setting sky background of input images to user-provided values "
                  f"from `skylist` ({self.skylist}).")
-        
+
         # read the comma separated file and get just the stem of the filename
         skylist = np.genfromtxt(
             self.skylist,
@@ -261,7 +261,7 @@ class SkyMatchStep(Step):
                     raise ValueError(f"Image with stem '{fname}' not found in the skylist.")
                 if len(sky) > 1:
                     raise ValueError(f"Image with stem '{fname}' found multiple times in the skylist.")
-                
+
                 log.debug(f"Setting sky background of image '{model.meta.filename}' to {float(sky)}.")
 
                 model.meta.background.level = float(sky)

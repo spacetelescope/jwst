@@ -102,7 +102,7 @@ class Ami3Pipeline(Pipeline):
 
         # Normalize all target results by matching psf results
         # assuming one ref star exposure per targ exposure
-        if (len(psf_files) > 0) & (len(targ_files) > 0): 
+        if (len(psf_files) > 0) & (len(targ_files) > 0):
             for (targ, psf) in zip(targ_lg,psf_lg):
                 result = self.ami_normalize.run(targ, psf)
                 # Save the result

@@ -24,7 +24,7 @@ class EmiCorrStep(Step):
         skip = boolean(default=True)  # Skip the step
         onthefly_corr_freq = float_list(default=None)  # Frequencies to use for correction
         use_n_cycles = integer(default=3)  # Use N cycles to calculate the phase, to use all integrations set to None
-    """
+    """ # noqa: E501
 
     reference_file_types = ['emicorr']
 

@@ -45,7 +45,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     # resulting wavelength values
     shape = model.data.shape
     grid = np.indices(shape[-2:], dtype=np.float64)
-    
+
     # If we've been asked to use the uncorrected wavelengths we need to
     # recalculate them from the wcs by skipping the transformation between
     # the slit frame and the wavelength corrected slit frame.  If the wavecorr_frame

@@ -20,7 +20,7 @@ properties:
     items:
       type: number
   decoffset:
-    descrition: list of dec offsets
+    description: list of dec offsets
     type: array
     items:
       type: number

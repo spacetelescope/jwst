@@ -23,7 +23,7 @@ def offset_file(tmp_path_factory):
 
     filename = tmp_path_factory.mktemp('offset')
     filename = filename / 'offset.asdf'
-    
+
     testfile = ['test1.fits', 'test2.fits']
     raoffset = [0.0, 0.1]
     decoffset = [0.0, 0.15]
@@ -45,7 +45,7 @@ def offset_file_arcmin(tmp_path_factory):
 
     filename = tmp_path_factory.mktemp('offset')
     filename = filename / 'offset_arcmin.asdf'
-    
+
     testfile = ['test1.fits', 'test2.fits']
     raoffset = [0.0, 0.1]
     decoffset = [0.0, 0.15]
@@ -56,7 +56,7 @@ def offset_file_arcmin(tmp_path_factory):
         "decoffset": decoffset
     }
     af = asdf.AsdfFile(tree)
-    af.write_to(filename) 
+    af.write_to(filename)
     return filename
 
 @pytest.fixture(scope='function')
@@ -85,7 +85,8 @@ def miri_ifushort_short_2files():
         'v3_ref': -318.9992,
         'v3yangle': 0.0,
         'vparity': -1,
-        's_region': 'POLYGON ICRS  339.813915797 39.049575409 339.816080118 39.049575409 339.816080118 39.051260090 339.813915797 39.051260090',
+        's_region': 'POLYGON ICRS  339.813915797 39.049575409 339.816080118 39.049575409 '+\
+            '339.816080118 39.051260090 339.813915797 39.051260090',
         'spectral_region':  ([4.889451133245338, 8.781164838427532])
     }
 
@@ -95,7 +96,7 @@ def miri_ifushort_short_2files():
         'band': 'SHORT',
         'name': 'MIRI'
     }
-    
+
     input_model1 = datamodels.IFUImageModel()
     input_model1.meta.exposure.type = 'MIR_MRS'
     input_model1.meta.wcsinfo._instance.update(wcsinfo)
@@ -129,7 +130,7 @@ def miri_ifushort_short_2files():
         refs[reftype] = step.get_reference_file(input_model2, reftype)
     pipe = assign_wcs.miri.create_pipeline(input_model2, refs)
     input_model2.meta.wcs = WCS(pipe)
-    
+
     input_models.append(input_model1)
     input_models.append(input_model2)
     return input_models
@@ -141,20 +142,20 @@ def test_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
     # first test that it is a valid asdf file and has what is needed
     step = CubeBuildStep()
     step.input_models = miri_ifushort_short_2files
-    
+
     step.offset_file = offset_file
     offsets = step.check_offset_file()
     assert isinstance(offsets, dict)
 
-    
+
 def test2_offset_file_config(tmp_cwd, miri_ifushort_short_2files, offset_file):
     """ Test validation of the offset configuration"""
 
     # Test changing one of the filenames so it is not in the list given
-    # in the offset_file 
+    # in the offset_file
     step = CubeBuildStep()
     step.input_models = miri_ifushort_short_2files
-    
+
     miri_ifushort_short_2files[0].meta.filename = 'test3.fits'
     step.offset_file = offset_file
 
@@ -168,7 +169,7 @@ def test_offset_file_units(tmp_cwd, miri_ifushort_short_2files, offset_file_arcm
     # test is the if the user set the units to arcmins
     step = CubeBuildStep()
     step.input_models = miri_ifushort_short_2files
-    
+
     step.offset_file = offset_file_arcmin
     with pytest.raises(Exception):
         step.check_offset_file()
@@ -221,7 +222,7 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     assert num_cubes == 1
     assert cube_pars['1']['par1'] == ['1','2']
     assert cube_pars['1']['par2'] == ['short','short']
-    
+
     wave_min = 4.88
     wave_max = 8.78
 
@@ -252,7 +253,7 @@ def test_read_offset_file(miri_ifushort_short_2files, offset_file):
     output_name_base = 'TEMP'
 
     instrument_info = instrument_defaults.InstrumentInfo()
-        
+
     thiscube = ifu_cube.IFUCubeData(
         pipeline,
         miri_ifushort_short_2files,

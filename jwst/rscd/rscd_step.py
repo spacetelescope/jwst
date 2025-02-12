@@ -19,8 +19,8 @@ class RscdStep(Step):
 
     # allow switching between baseline and enhanced algorithms
     spec = """
-         type = option('baseline','enhanced',default = 'baseline') # Type of correction
-       """
+        type = option('baseline','enhanced',default = 'baseline') # Type of correction
+        """ # noqa: E501
 
     #  TBD - only do this for the 2nd+ integrations
     #  do nothing for single integration exposures

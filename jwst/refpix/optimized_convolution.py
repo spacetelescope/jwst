@@ -167,12 +167,12 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
 
         # Compute normalizations so that we don't have to directly
         # replace the values of flagged/masked reference pixels.
-        normL = np.convolve(np.ones(nL.shape), kernel_l, mode='same')
-        normL /= np.convolve(nL / 4, kernel_l, mode='same')
-        normR = np.convolve(np.ones(nR.shape), kernel_r, mode='same')
-        normR /= np.convolve(nR / 4, kernel_r, mode='same')
-        template = np.convolve(L, kernel_l, mode='same') * normL
-        template += np.convolve(R, kernel_r, mode='same') * normR
+        norm_L = np.convolve(np.ones(nL.shape), kernel_l, mode='same')
+        norm_L /= np.convolve(nL / 4, kernel_l, mode='same')
+        norm_R = np.convolve(np.ones(nR.shape), kernel_r, mode='same')
+        norm_R /= np.convolve(nR / 4, kernel_r, mode='same')
+        template = np.convolve(L, kernel_l, mode='same') * norm_L
+        template += np.convolve(R, kernel_r, mode='same') * norm_R
         data[:, chan * npix * 3 // 4:(chan + 1) * npix * 3 // 4] -= template[:, np.newaxis]
 
     log.debug('Optimized convolution kernel applied')

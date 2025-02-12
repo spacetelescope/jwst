@@ -38,7 +38,7 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
 
     source_folder : str or None
        Folder where the members originate from.
-       If None, the folder of the association is presumed. 
+       If None, the folder of the association is presumed.
 
     shellcmd : str
         The shell command to use to do the copying of the

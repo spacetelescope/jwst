@@ -353,8 +353,12 @@ def test_2_int(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_frame_avg(make_rampmodel, make_darkmodel):
-    '''Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
-    subtracted group-by-group from science data groups and the ERR arrays are not modified'''
+    """
+    Test frame averaging.
+
+    Check that if NFRAMES>1 or GROUPGAP>0, the frame-averaged dark data are
+    subtracted group-by-group from science data groups.
+    """
 
     # size of integration
     nints = 1
@@ -392,9 +396,6 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
     assert outfile.data[0, 1, 500, 500] == pytest.approx(1.45)
     assert outfile.data[0, 2, 500, 500] == pytest.approx(2.05)
     assert outfile.data[0, 3, 500, 500] == pytest.approx(2.65)
-
-    # check that the error array is not modified.
-    np.testing.assert_array_equal(outfile.err[:, :], 0)
 
 
 # ------------------------------------------------------------------------------

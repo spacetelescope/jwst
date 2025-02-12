@@ -13,7 +13,7 @@ _DISCOVERED_ID_START = 3001
 
 
 class ACID():
-    """Association Candidate Identifer
+    """Association Candidate Identifier
 
     Parameters
     ----------

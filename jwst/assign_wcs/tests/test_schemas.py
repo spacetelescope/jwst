@@ -2,7 +2,6 @@ import inspect
 import sys
 import warnings
 
-from asdf.exceptions import AsdfDeprecationWarning
 from astropy.modeling import models
 from astropy import units as u
 import pytest
@@ -56,14 +55,6 @@ def test_distortion_schema(distortion_model, tmp_path):
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        # filter out the ignore_version_mismatch deprecation as it's
-        # unrelated to this test and will make the deprecation easier
-        # see https://github.com/spacetelescope/stdatamodels/pull/313
-        warnings.filterwarnings(
-            "ignore",
-            message="ignore_version_mismatch is deprecated and has done nothing since asdf 3.0.0",
-            category=AsdfDeprecationWarning,
-        )
         with DistortionModel(path) as dist1:
             assert dist1.meta.instrument.p_pupil == dist.meta.instrument.p_pupil
             assert dist1.meta.instrument.pupil == dist.meta.instrument.pupil

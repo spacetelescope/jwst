@@ -1,6 +1,5 @@
-#
-#  Top level module for WFSS contamination correction.
-#
+"""Top-level module for WFSS contamination correction."""
+
 import logging
 import multiprocessing
 import numpy as np
@@ -16,7 +15,7 @@ log.setLevel(logging.DEBUG)
 
 def contam_corr(input_model, waverange, photom, max_cores):
     """
-    The main WFSS contamination correction function
+    Correct contamination in WFSS spectral cutouts.
 
     Parameters
     ----------
@@ -26,7 +25,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
         Wavelength range reference file model
     photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
         Photom (flux cal) reference file model
-    max_cores : string
+    max_cores : str
         Number of cores to use for multiprocessing. If set to 'none'
         (the default), then no multiprocessing will be done. The other
         allowable values are 'quarter', 'half', and 'all', which indicate
@@ -41,18 +40,17 @@ def contam_corr(input_model, waverange, photom, max_cores):
         Full-frame simulated image of the grism exposure
     contam_model : `~jwst.datamodels.MultiSlitModel`
         Contamination estimate images for each source slit
-
     """
     # Determine number of cpu's to use for multi-processing
-    if max_cores == 'none':
+    if max_cores == "none":
         ncpus = 1
     else:
         num_cores = multiprocessing.cpu_count()
-        if max_cores == 'quarter':
+        if max_cores == "quarter":
             ncpus = num_cores // 4 or 1
-        elif max_cores == 'half':
+        elif max_cores == "half":
             ncpus = num_cores // 2 or 1
-        elif max_cores == 'all':
+        elif max_cores == "all":
             ncpus = num_cores
         else:
             ncpus = 1
@@ -93,7 +91,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # the opposite. It has gratings in the FILTER wheel and filters in the
     # PUPIL wheel. So when processing NIRISS grism exposures the name of
     # filter needs to come from the PUPIL keyword value.
-    if input_model.meta.instrument.name == 'NIRISS':
+    if input_model.meta.instrument.name == "NIRISS":
         filter_name = pupil_kwd
     else:
         filter_name = filter_kwd
@@ -108,20 +106,27 @@ def contam_corr(input_model, waverange, photom, max_cores):
         wmin[order] = wavelength_range[order][0]
         wmax[order] = wavelength_range[order][1]
         # Load the sensitivity (inverse flux cal) data for this mode and order
-        sens_waves[order], sens_response[order] = get_photom_data(photom, filter_kwd, pupil_kwd, order)
+        sens_waves[order], sens_response[order] = get_photom_data(
+            photom, filter_kwd, pupil_kwd, order
+        )
     log.debug(f"wmin={wmin}, wmax={wmax}")
 
     # Initialize the simulated image object
     simul_all = None
-    obs = Observation(image_names, seg_model, grism_wcs, filter_name,
-                      boundaries=[0, 2047, 0, 2047], offsets=[xoffset, yoffset], max_cpu=ncpus)
+    obs = Observation(
+        image_names,
+        seg_model,
+        grism_wcs,
+        filter_name,
+        boundaries=[0, 2047, 0, 2047],
+        offsets=[xoffset, yoffset],
+        max_cpu=ncpus,
+    )
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
-
         log.info(f"Creating full simulated grism image for order {order}")
-        obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order],
-                         sens_response[order])
+        obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order], sens_response[order])
 
         # Accumulate result for this order into the combined image
         if simul_all is None:
@@ -139,15 +144,15 @@ def contam_corr(input_model, waverange, photom, max_cores):
     contam_model.update(input_model)
     slits = []
     for slit in output_model.slits:
-
         # Create simulated spectrum for this source only
         sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
-        chunk = np.where(obs.IDs == sid)[0][0]  # find chunk for this source
+        chunk = np.where(obs.source_ids == sid)[0][0]  # find chunk for this source
 
         obs.simulated_image = np.zeros(obs.dims)
-        obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
-                           sens_waves[order], sens_response[order])
+        obs.disperse_chunk(
+            chunk, order, wmin[order], wmax[order], sens_waves[order], sens_response[order]
+        )
         this_source = obs.simulated_image
 
         # Contamination estimate is full simulated image minus this source
@@ -157,7 +162,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
         # of the source slit
         x1 = slit.xstart - 1
         y1 = slit.ystart - 1
-        cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
+        cutout = contam[y1 : y1 + slit.ysize, x1 : x1 + slit.xsize]
         new_slit = datamodels.SlitModel(data=cutout)
         copy_slit_info(slit, new_slit)
         slits.append(new_slit)
@@ -169,14 +174,14 @@ def contam_corr(input_model, waverange, photom, max_cores):
     contam_model.slits.extend(slits)
 
     # Set the step status to COMPLETE
-    output_model.meta.cal_step.wfss_contam = 'COMPLETE'
+    output_model.meta.cal_step.wfss_contam = "COMPLETE"
 
     return output_model, simul_model, contam_model
 
 
 def copy_slit_info(input_slit, output_slit):
-
-    """Copy meta info from one slit to another.
+    """
+    Copy meta info from one slit to another.
 
     Parameters
     ----------
@@ -185,7 +190,6 @@ def copy_slit_info(input_slit, output_slit):
 
     output_slit : SlitModel
         Output slit model to which slit-specific info will be copied
-
     """
     output_slit.name = input_slit.name
     output_slit.xstart = input_slit.xstart

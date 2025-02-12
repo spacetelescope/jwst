@@ -194,7 +194,7 @@ class EngdbDirect(EngdbABC):
         Raises
         ------
         requests.exceptions.HTTPError
-            Either a bad URL or non-existant mnemonic.
+            Either a bad URL or non-existent mnemonic.
         """
         records = self._get_records(
             mnemonic=mnemonic,
@@ -270,7 +270,7 @@ class EngdbDirect(EngdbABC):
         Raises
         ------
         requests.exceptions.HTTPError
-            Either a bad URL or non-existant mnemonic.
+            Either a bad URL or non-existent mnemonic.
 
         Notes
         -----

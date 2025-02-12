@@ -21,7 +21,7 @@ def sort_by_candidate(asns):
 
     Notes
     -----
-    The current definition of candidates allows strictly lexigraphical
+    The current definition of candidates allows strictly alphabetical
     sorting:
     aXXXX > cXXXX > oXXX
 

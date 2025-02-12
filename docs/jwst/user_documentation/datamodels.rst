@@ -37,5 +37,5 @@ created internally when the pipeline/step is run.
 
 By default, when running in Python, the corrected data will be returned in-memory
 as a ``DataModel`` instead of being written as an output file.
-See :ref:`controlling output file behavior`<python_outputs>` for instrucions on
+See :ref:`controlling output file behavior`<python_outputs>` for instructions on
 how to write the returned ``DataModel`` to an output file.

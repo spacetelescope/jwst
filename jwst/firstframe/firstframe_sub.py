@@ -12,26 +12,25 @@ log.setLevel(logging.DEBUG)
 
 def do_correction(output, bright_use_group1=False):
     """
-    Short Summary
-    -------------
-    The sole correction is to add the DO_NOT_USE flat to the GROUP data
-    quality flags for the first group, if the number of groups is greater
-    than 3.
+    Set data quality of the first group in an integration to DO_NOT_USE.
+
+    This correction only works on MIRI data. If the number of groups is > 3,
+    then the GROUP data quality flag of the first group is set to
+    DO_NOT_USE.
 
     Parameters
     ----------
-    output: data model object
-        science data to be corrected
-    bright_use_group1: boolean
-        do not flag group1 for bright pixels = group 3 saturated
+    output : DataModel
+        Science data to be corrected
+    bright_use_group1 : bool
+        If True, setting first group data quality flag to DO_NOT_USE will not be
+        done for pixels that have the saturation flag set for group 3.
 
     Returns
     -------
-    output: data model object
-        firstframe-corrected science data
-
+    output : DataModel
+        Firstframe-corrected science data
     """
-
     # Save some data params for easy use later
     sci_ngroups = output.data.shape[1]
 
@@ -49,7 +48,7 @@ def do_correction(output, bright_use_group1=False):
             )
             output.groupdq[:, 0, :, :] = tvals
             log.info(
-                f"FirstFrame Sub: bright_first_frame set, #{np.sum(svals)} bright pixels group1 not set to DO_NOT_USE"
+                f"Number of bright pixels with first group not set to DO_NOT_USE, #{np.sum(svals)}"
             )
         else:
             output.groupdq[:, 0, :, :] = np.bitwise_or(

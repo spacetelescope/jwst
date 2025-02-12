@@ -257,7 +257,7 @@ def test_pixel_replace_container_names(tmp_cwd, input_model_function):
     input_model2, _ = input_model_function()
     input_model2.meta.filename = 'jwst_nirspec_2_cal.fits'
     cfiles = [input_model, input_model2]
-    container = ModelContainer(cfiles) 
+    container = ModelContainer(cfiles)
 
     expected_name = ['jwst_nirspec_1_pixelreplacestep.fits',
                      'jwst_nirspec_2_pixelreplacestep.fits']

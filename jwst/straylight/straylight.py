@@ -11,6 +11,7 @@ import logging
 
 from stdatamodels.jwst.datamodels import dqflags
 from astropy.stats import sigma_clipped_stats as scs
+from astropy.convolution import convolve_fft, Gaussian2DKernel
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
@@ -99,7 +100,7 @@ def correct_xartifact(input_model, modelpars):
     nrows, ncols = input_model.data.shape
 
     # Create a copy of the input data array that will be modified
-    # for use in the straylight calculations
+    # for use in the cross artifact calculations
     usedata = input_model.data.copy()
 
     # mask is same size as image - set = 1 everywhere to start
@@ -177,7 +178,7 @@ def correct_xartifact(input_model, modelpars):
         param = modelpars[left]
         log.info("Found parameters for left detector half, applying Cross-Artifact correction.")
         istart, istop = 0, 516
-        # Subtract off intial guess at pedestal first
+        # Subtract off initial guess at pedestal first
         fimg = (usedata - pedestal_guess) * mask
         left_model = makemodel_ccode(fimg, xvec, istart, istop, param['LOR_FWHM'],
                                      param['LOR_SCALE'], param['GAU_FWHM'],
@@ -199,27 +200,25 @@ def correct_xartifact(input_model, modelpars):
         right_model[:, :] = 0
         log.info("No parameters for right detector half, not applying Cross-Artifact correction.")
 
-    model = left_model + right_model
+    xartifact_model = left_model + right_model
     # remove the straylight correction for the reference pixels
-    model[:, 1028:1032] = 0.0
-    model[:, 0:4] = 0.0
+    xartifact_model[:, 1028:1032] = 0.0
+    xartifact_model[:, 0:4] = 0.0
 
-    # Create output as a copy of the real data prior to replacement of NaNs with zeros
-    output = input_model.copy()
-    # Subtract the model from the data
-    output.data = output.data - model
-    usedata = usedata - model
+    # Subtract the xartifact model from the original data
+    input_model.data = input_model.data - xartifact_model
+    usedata = usedata - xartifact_model
 
     # Now measure and remove the pedestal dark count rate measured between the channels
     # Embed in a try/except block to catch unusual failures
     try:
         _, themed, therms = scs(usedata[yd1:yd2, xd1:xd2])
-        pedestal = np.zeros_like(output.data) + themed
+        pedestal = np.zeros_like(input_model.data) + themed
         # remove the pedestal correction for the reference pixels
         pedestal[:, 1028:1032] = 0.0
         pedestal[:, 0:4] = 0.0
 
-        output.data = output.data - pedestal
+        input_model.data = input_model.data - pedestal
         log.info("Derived pedestal correction " + str(themed) + " DN/s")
     except Exception:
         log.info("Straylight pedestal correction failed.")
@@ -228,4 +227,78 @@ def correct_xartifact(input_model, modelpars):
     del usedata
 
     log.info("Cross-artifact model complete.")
-    return output
+    return input_model
+
+def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0, shower_y_stddev=5.0,
+                  shower_low_reject=0.1, shower_high_reject=99.9):
+    """
+    Corrects the MIRI MRS data for straylight produced by residual cosmic ray showers.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.IFUImageModel`
+        Science data to be corrected.
+
+    allregions : numpy array
+        Holds the regions information mapping MRS pixels to slices (3-D, planes for different throughput)
+
+    shower_plane : integer, optional
+        Throughput plane for identifying inter-slice regions
+
+    shower_x_stddev : float, optional
+        X standard deviation for shower model
+
+    shower_y_stddev : float, optional
+        Y standard deviation for shower model
+
+    shower_low_reject : float, optional
+        Low percentile of pixels to reject
+
+    shower_high_reject : float, optional
+        High percentile of pixels to reject
+
+    Returns
+    -------
+    output : `~jwst.datamodels.IFUImageModel`
+        Straylight-subtracted science data.
+
+    """
+
+    log.info("Applying correction for residual cosmic ray showers.")
+
+    # Create a copy of the input data array that will be modified
+    # for use in the shower calculations
+    usedata = input_model.data.copy()
+    mask_dq = input_model.dq
+
+    # Which throughput plane of the slice map should be used?
+    regions = allregions[shower_plane,:,:]
+
+    # NaN-out the science pixels by using the slice footprint regions
+    usedata[regions != 0] = np.nan
+
+    # NaN-out pixels that should not be used for computation
+    all_flags = (dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL'])
+    # where are pixels set to any one of the all_flags cases
+    testflags = mask_dq & all_flags
+    # where are testflags ne 0 and mask == 1
+    bad_flags = (testflags != 0)
+    usedata[bad_flags] = np.nan
+
+    # Apply a thresholding analysis and mask out any pixels that do not pass it
+    lowcut = np.nanpercentile(usedata, shower_low_reject)
+    hicut = np.nanpercentile(usedata, shower_high_reject)
+    badpix = (usedata < lowcut) | (usedata > hicut)
+    usedata[badpix] = np.nan
+
+    # Construct a 2d gaussian convolution kernel with specified parameters
+    gauss = Gaussian2DKernel(x_stddev=shower_x_stddev, y_stddev=shower_y_stddev)
+    shower_model = convolve_fft(usedata, gauss)
+
+    # Subtract the shower model from the original data
+    input_model.data = input_model.data - shower_model
+
+    # Delete our temporary working copy of the data
+    del usedata
+
+    return input_model

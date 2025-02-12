@@ -339,7 +339,7 @@ The ``tweakreg`` step has the following optional arguments:
   .. note::
       Mathematically, alignment of images observed in different tangent planes
       requires ``fitgeometry='general'`` in order to fit source catalogs
-      in the different images even if mis-alignment is caused only by a shift
+      in the different images even if misalignment is caused only by a shift
       or rotation in the tangent plane of one of the images.
 
       However, under certain circumstances, such as small alignment errors or

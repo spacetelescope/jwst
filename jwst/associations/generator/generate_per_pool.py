@@ -65,7 +65,7 @@ def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=T
     documentation for a full description.
     """
     logger.info('Generating based on the per-pool algorithm')
-    
+
     # Setup the rule registry
     global_constraints = None
     if discover or all_candidates:
