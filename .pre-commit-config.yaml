@@ -86,7 +86,6 @@ repos:
             jwst/superbias/.* |
             jwst/tests/.* |
             jwst/tso_photometry/.* |
-            jwst/wavecorr/.* |
             jwst/wfs_combine/.* |
             jwst/white_light/.* |
             jwst/conftest.py |
