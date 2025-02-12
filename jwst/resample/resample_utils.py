@@ -371,3 +371,17 @@ def check_for_tmeasure(model):
             return 0
     except AttributeError:
         return 0
+
+def combine_s_regions_lrs(s_region_list,model):
+
+    # using the first datamodel find the angle between
+    # LRS slit frame and ra, dec.
+    
+    wcs = model.meta.wcs
+    s2w = wcs.get_transform('alpha_beta', 'world')
+    d2s = wcs.get_transform('detector','alpha_beta')
+    bbox = wcs.bounding_box
+    grid = wcstools.grid_from_bounding_box(bbox)
+    ra, dec, lam = np.array(wcs(*grid))
+    lam_med = np.nanmedian(lam)
+

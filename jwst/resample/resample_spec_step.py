@@ -8,8 +8,10 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
 
 from . import resample_spec, ResampleStep
+from jwst.resample import resample_utils
 from ..exp_to_source import multislit_to_container
-from ..assign_wcs.util import update_s_region_spectral
+from ..assign_wcs.util import update_s_region_spectral, \
+    update_s_region_keyword
 from ..stpipe import Step
 
 
@@ -142,9 +144,11 @@ class ResampleSpecStep(Step):
 
             library = ModelLibrary(container, on_disk=False)
             drizzled_library = resamp.do_drizzle(library)
+            s_region_list = []
             with drizzled_library:
                 for i, model in enumerate(drizzled_library):
                     self.update_slit_metadata(model)
+                    s_region_list.append(model.meta.s_region)
                     update_s_region_spectral(model)
                     result.slits.append(model)
                     drizzled_library.shelve(model, i, modify=False)
