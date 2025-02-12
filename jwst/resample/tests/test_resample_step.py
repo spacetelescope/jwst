@@ -6,6 +6,7 @@ import numpy as np
 import asdf
 
 from stdatamodels.jwst.datamodels import ImageModel
+from stcal.resample.utils import compute_mean_pixel_area
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
@@ -13,9 +14,8 @@ from jwst.assign_wcs.util import compute_fiducial, compute_scale
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
-from jwst.resample.resample import compute_image_pixel_area
-from jwst.resample.resample_spec import ResampleSpecData, compute_spectral_pixel_scale
-
+from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
+from jwst.resample.resample_utils import load_custom_wcs
 
 def _set_photom_kwd(im):
     xmin = im.meta.subarray.xstart - 1
@@ -29,7 +29,11 @@ def _set_photom_kwd(im):
         bb = ((xmin - 0.5, xmax - 0.5), (ymin - 0.5, ymax - 0.5))
         im.meta.wcs.bounding_box = bb
 
-    mean_pixel_area = compute_image_pixel_area(im.meta.wcs)
+    mean_pixel_area = compute_mean_pixel_area(
+        im.meta.wcs,
+        shape=im.data.shape,
+    )
+
     if mean_pixel_area:
         im.meta.photometry.pixelarea_steradians = mean_pixel_area
         im.meta.photometry.pixelarea_arcsecsq = (
@@ -650,7 +654,7 @@ def test_weight_type(nircam_rate, tmp_cwd):
     result2 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
 
     assert_allclose(result2.data[100:105, 100:105], 6.667, rtol=1e-2)
-    expectation_value = 407.
+    expectation_value = 407.0
     assert_allclose(result2.wht[100:105, 100:105], expectation_value, rtol=1e-2)
 
     # remove measurement time to force use of exposure time
@@ -700,7 +704,7 @@ def test_sip_coeffs_do_not_propagate(nircam_rate):
 def test_build_interpolated_output_wcs(miri_rate_pair):
     im1, im2 = miri_rate_pair
 
-    driz = ResampleSpecData(ModelContainer([im1, im2]))
+    driz = ResampleSpec(ModelContainer([im1, im2]))
     output_wcs = driz.build_interpolated_output_wcs([im1, im2])
 
     # Make sure that all RA, Dec values in the input image have a location in
@@ -720,7 +724,7 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
 def test_build_nirspec_output_wcs(nirspec_cal_pair):
     im1, im2 = nirspec_cal_pair
     containers = multislit_to_container([im1, im2])
-    driz = ResampleSpecData(containers['1'])
+    driz = ResampleSpec(containers['1'])
     output_wcs = driz.build_nirspec_output_wcs(containers['1'])
 
     # Make sure that all slit values in the input images have a
@@ -746,11 +750,11 @@ def test_build_nirspec_output_wcs(nirspec_cal_pair):
 
     # Make a WCS for each input individually
     containers = multislit_to_container([im1])
-    driz = ResampleSpecData(containers['1'])
+    driz = ResampleSpec(containers['1'])
     compare_wcs_1 = driz.build_nirspec_output_wcs(containers['1'])
 
     containers = multislit_to_container([im2])
-    driz = ResampleSpecData(containers['1'])
+    driz = ResampleSpec(containers['1'])
     compare_wcs_2 = driz.build_nirspec_output_wcs(containers['1'])
 
     # The output shape should be the larger of the two
@@ -816,7 +820,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
-    with pytest.warns(RuntimeWarning, match="var_rnoise array not available"):
+    with pytest.warns(RuntimeWarning, match="'var_rnoise' array not available"):
         result = ResampleStep.call(c, blendheaders=False)
 
     # no valid variance - output error and variance are all NaN
@@ -926,8 +930,10 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
-    iscale = np.sqrt(im.meta.photometry.pixelarea_steradians
-                     / compute_image_pixel_area(im.meta.wcs))
+    iscale = np.sqrt(
+        im.meta.photometry.pixelarea_steradians
+        / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
+    )
     input_mean = np.nanmean(im.data)
     output_mean_1 = np.nanmean(data1)
     output_mean_2 = np.nanmean(data2)
@@ -983,8 +989,10 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
-    iscale = np.sqrt(im.meta.photometry.pixelarea_steradians
-                     / compute_image_pixel_area(im.meta.wcs))
+    iscale = np.sqrt(
+        im.meta.photometry.pixelarea_steradians
+        / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
+    )
     input_mean = np.nanmean(im.data)
     output_mean_1 = np.nanmean(data1)
     output_mean_2 = np.nanmean(data2)
@@ -1219,19 +1227,24 @@ def test_custom_wcs_input(tmp_path, nircam_rate, wcs_attr):
 
     # write the WCS to an asdf file
     refwcs = str(tmp_path / 'test_wcs.asdf')
-    asdf.AsdfFile({"wcs": wcs}).write_to(refwcs)
+    asdf.AsdfFile({"wcs": wcs, "pixel_area": 7919}).write_to(refwcs)
 
     # load the WCS from the asdf file
-    loaded_wcs = ResampleStep.load_custom_wcs(refwcs)
+    loaded_wcs = load_custom_wcs(refwcs)
+    assert loaded_wcs["pixel_area"] == 7919
 
     # check that the loaded WCS has the correct values
     for attr in ['pixel_shape', 'array_shape']:
-        assert np.allclose(getattr(loaded_wcs, attr), wcs_dict[attr])
+        assert np.allclose(getattr(loaded_wcs["wcs"], attr), wcs_dict[attr])
 
 
-@pytest.mark.parametrize('override,value',
-                         [('pixel_area', 1e-13), ('pixel_shape', (300, 400)),
-                          ('array_shape', (400, 300))])
+@pytest.mark.parametrize(
+    'override,value',
+    [
+        ('pixel_shape', (300, 400)),
+        ('array_shape', (400, 300))
+    ]
+)
 def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
     # make a valid WCS
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
@@ -1244,15 +1257,15 @@ def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
 
     expected_array_shape = im.data.shape
     expected_pixel_shape = im.data.shape[::-1]
-    expected_pixel_area = None
 
     # write the WCS to an asdf file with a top-level override
     refwcs = str(tmp_path / 'test_wcs.asdf')
     asdf.AsdfFile({"wcs": wcs, override: value}).write_to(refwcs)
 
     # check for expected values when read back in
-    keys = ['pixel_area', 'pixel_shape', 'array_shape']
-    loaded_wcs = ResampleStep.load_custom_wcs(refwcs)
+    keys = ['pixel_shape', 'array_shape']
+    loaded_wcs = load_custom_wcs(refwcs)["wcs"]
+
     for key in keys:
         if key == override:
             assert np.allclose(getattr(loaded_wcs, key), value)
@@ -1266,8 +1279,6 @@ def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
                 assert np.allclose(getattr(loaded_wcs, key), value[::-1])
             else:
                 assert np.allclose(getattr(loaded_wcs, key), expected_array_shape)
-        elif key == 'pixel_area':
-            assert getattr(loaded_wcs, key) == expected_pixel_area
 
 
 def test_custom_wcs_input_error(tmp_path, nircam_rate):
@@ -1286,11 +1297,11 @@ def test_custom_wcs_input_error(tmp_path, nircam_rate):
 
     # loading the file without shape info should produce an error
     with pytest.raises(ValueError, match="'output_shape' is required"):
-        loaded_wcs = ResampleStep.load_custom_wcs(refwcs)
+        loaded_wcs = load_custom_wcs(refwcs)["wcs"]
 
     # providing an output shape should succeed
     output_shape = (300, 400)
-    loaded_wcs = ResampleStep.load_custom_wcs(refwcs, output_shape=output_shape)
+    loaded_wcs = load_custom_wcs(refwcs, output_shape=output_shape)["wcs"]
 
     # array shape is opposite of input values (numpy convention)
     assert np.all(loaded_wcs.array_shape == output_shape[::-1])

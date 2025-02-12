@@ -7,13 +7,29 @@ from ..lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
 
 
-def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
-                    oversample_factor=2, extrapolate_sed=False, xoffset=0,
-                    yoffset=0):
+def dispersed_pixel(
+    x0,
+    y0,
+    width,
+    height,
+    lams,
+    flxs,
+    order,
+    wmin,
+    wmax,
+    sens_waves,
+    sens_resp,
+    seg_wcs,
+    grism_wcs,
+    source_id,
+    naxis,
+    oversample_factor=2,
+    extrapolate_sed=False,
+    xoffset=0,
+    yoffset=0,
+):
     """
-    This function take a list of pixels and disperses them using the information contained
-    in the grism image WCS object and returns a list of dispersed pixels and fluxes.
+    Transform pixels from direct image to dispersed frame using the grism image WCS object.
 
     Parameters
     ----------
@@ -47,22 +63,24 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         The WCS object of the segmentation map.
     grism_wcs : WCS object
         The WCS object of the grism image.
-    ID : int
-        The ID of the object to which the pixel belongs.
+    source_id : int
+        The source ID of the source being processed. Returned in the output unmodified;
+        used only for bookkeeping. TODO this is not implemented properly right now and
+        should probably just be removed.
     naxis : tuple
         Dimensions (shape) of grism image into which pixels are dispersed.
     oversample_factor : int
         The amount of oversampling required above that of the input spectra or natural dispersion,
         whichever is smaller. Default=2.
     extrapolate_sed : bool
-        Whether to allow for the SED of the object to be extrapolated when it does not fully cover the
-        needed wavelength range. Default if False.
+        Whether to allow for the SED of the object to be extrapolated when
+        it does not fully cover the needed wavelength range. Default if False.
     xoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to
-        full frame)
+        Pixel offset to apply when computing the dispersion (accounts for offset
+        from source cutout to full frame)
     yoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for offset from source cutout to
-        full frame)
+        Pixel offset to apply when computing the dispersion (accounts for offset
+        from source cutout to full frame)
 
     Returns
     -------
@@ -71,18 +89,16 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     ys : array
         1D array of dispersed pixel y-coordinates
     areas : array
-        1D array of the areas of the incident pixel that when dispersed falls on each dispersed pixel
+        1D array of the areas of the incident pixel that,
+        when dispersed, falls on each dispersed pixel
     lams : array
         1D array of the wavelengths of each dispersed pixel
     counts : array
         1D array of counts for each dispersed pixel
-    ID : int
-        The source ID. Returned for bookkeeping convenience.
     """
-
     # Setup the transforms we need from the input WCS objects
-    sky_to_imgxy = grism_wcs.get_transform('world', 'detector')
-    imgxy_to_grismxy = grism_wcs.get_transform('detector', 'grism_detector')
+    sky_to_imgxy = grism_wcs.get_transform("world", "detector")
+    imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
     # Setup function for retrieving flux values at each dispersed wavelength
     if len(lams) > 1:
@@ -90,13 +106,13 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         # we have the option to extrapolate the fluxes outside the
         # wavelength range of the direct images
         if extrapolate_sed is False:
-            flux = interp1d(lams, flxs, fill_value=0., bounds_error=False)
+            flux = interp1d(lams, flxs, fill_value=0.0, bounds_error=False)
         else:
             flux = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
     else:
         # If we only have flux from one lambda, just use that
         # single flux value at all wavelengths
-        def flux(x):
+        def flux(_x):
             return flxs[0]
 
     # Get x/y positions in the grism image corresponding to wmin and wmax:
@@ -144,12 +160,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
 
     # Compute arrays of dispersed pixel locations and areas
     padding = 1
-    xs, ys, areas, index = get_clipped_pixels(
-        x0s, y0s,
-        padding,
-        naxis[0], naxis[1],
-        width, height
-    )
+    xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     lams = np.take(lambdas, index)
 
     # If results give no dispersed pixels, return null result
@@ -166,6 +177,6 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
         counts = flux(lams) * areas / (sens * oversample_factor)
-    counts[no_cal] = 0.  # set to zero where no flux cal info available
+    counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
-    return xs, ys, areas, lams, counts, ID
+    return xs, ys, areas, lams, counts, source_id

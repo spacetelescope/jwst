@@ -185,30 +185,33 @@ def test_extrapolate_bad_inputs():
 
 
 def test_grid_from_map(wave_map, trace_profile):
-    """Covers expected behavior of grid_from_map, including coverage of a previous bug
-    where bad wavelengths were not being ignored properly"""
+    """
+    Covers expected behavior of grid_from_map_with_extrapolation,
+    including coverage of a previous bug
+    where bad wavelengths were not being ignored properly.
+    """
 
     wave_map = wave_map[0].copy()
     wavelengths = wave_map[0][::-1]
     trace_profile = trace_profile[0].copy()
-    wave_grid = au.grid_from_map(wave_map, trace_profile, wave_range=None)
+    wave_grid = au.grid_from_map_with_extrapolation(wave_map, trace_profile, wave_range=None)
 
     assert np.allclose(wave_grid, wavelengths)
 
     # test custom wave_range
     wave_range = [wavelengths[2], wavelengths[-2]+0.01]
-    wave_grid = au.grid_from_map(wave_map, trace_profile, wave_range=wave_range)
+    wave_grid = au.grid_from_map_with_extrapolation(wave_map, trace_profile, wave_range=wave_range)
     assert np.allclose(wave_grid, wavelengths[2:-1])
 
     # test custom wave_range with extrapolation
     wave_range = [wavelengths[2], wavelengths[-1]+1]
-    wave_grid = au.grid_from_map(wave_map, trace_profile, wave_range=wave_range)
+    wave_grid = au.grid_from_map_with_extrapolation(wave_map, trace_profile, wave_range=wave_range)
     assert len(wave_grid) > len(wavelengths[2:])
     n_inside = wavelengths[2:].size
     assert np.allclose(wave_grid[:n_inside], wavelengths[2:])
 
     with pytest.raises(ValueError):
-        au.grid_from_map(wave_map, trace_profile, wave_range=[0.1,0.2])
+        au.grid_from_map_with_extrapolation(wave_map, trace_profile, wave_range=[0.1,0.2])
 
 
 def xsinx(x):
@@ -321,7 +324,7 @@ def test_throughput_soss():
 
     wavelengths = np.linspace(2,5,10)
     throughputs = np.ones_like(wavelengths)
-    interpolator = au.ThroughputSOSS(wavelengths, throughputs)
+    interpolator = au.throughput_soss(wavelengths, throughputs)
 
     # test that it returns 1 for all wavelengths inside range
     interp = interpolator(wavelengths)
@@ -336,7 +339,7 @@ def test_throughput_soss():
 
     # test ValueError raise for shape mismatch
     with pytest.raises(ValueError):
-        au.ThroughputSOSS(wavelengths, throughputs[:-1])
+        au.throughput_soss(wavelengths, throughputs[:-1])
 
 
 def test_webb_kernel(webb_kernels, wave_map):
