@@ -1002,10 +1002,8 @@ class EMIfitter:
         self.St = np.sum(self.grouptimes)
         self.Delta = self.ngroups*self.Stt - self.St**2
 
-        self.all_Sy = [np.sum(self.all_y[i], axis=1)
-                       for i in range(self.nints)]
-        self.all_Sty = [np.sum(self.all_y[i]*self.grouptimes, axis=1)
-                        for i in range(self.nints)]
+        self.all_Sy = np.sum(self.all_y, axis=2)
+        self.all_Sty = np.sum(self.all_y*self.grouptimes, axis=2)
 
         self.phaselist = phaselist
         self.phases_template = phases_template
@@ -1021,7 +1019,13 @@ class EMIfitter:
 
         # Waveform for each pixel when the first one is at dphaseval.
         for dphaseval in phaselist:
-            z = self.phasefunc((self.phases_template + dphaseval)%1)
+
+            # The transposes help ensure that similar phases are evaluated
+            # consecutively, which significantly improves runtime when
+            # there is a very large number of groups.
+
+            z = self.phasefunc((self.phases_template.T + dphaseval)%1).T
+
             self.zlist += [z]
             self.Stzlist += [np.sum(self.grouptimes*z, axis=1)]
             self.Szlist += [np.sum(z, axis=1)]
