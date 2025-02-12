@@ -1,0 +1,1 @@
+Fix a bug in ``resampled_wcs_from_models``.
