@@ -104,7 +104,7 @@ class ImprintStep(Step):
             # Update the step status and close the imprint model
             result.meta.cal_step.imprint = "COMPLETE"
         else:
-            self.log.warning(f"No matching imprint image was found for {input}")
+            self.log.warning(f"No matching imprint image found for {input_model.meta.filename}")
             self.log.warning("Step will be skipped")
             result.meta.cal_step.imprint = "SKIPPED"
 
