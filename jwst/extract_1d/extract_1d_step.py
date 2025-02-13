@@ -113,8 +113,7 @@ class Extract1dStep(Step):
 
     ifu_rfcorr : bool
         Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is False.
-
+        for MIRI MRS IFU spectra.  Default is True.
     ifu_set_srctype : str
         For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
 
@@ -202,7 +201,7 @@ class Extract1dStep(Step):
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
-    ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
+    ifu_rfcorr = boolean(default=True) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
