@@ -15,8 +15,9 @@ or JWST data models.
 
 In the event that multiple imprint images are provided, the step uses the
 meta data of the target and imprint exposures to find the imprint exposure
-that matches the observation number (keyword "OBSERVTN") and dither pattern
-position number (keyword "PATT_NUM") of the target exposure. The matching
+that matches the observation number (keyword "OBSERVTN"), dither pattern
+position number (keyword "PATT_NUM"), and background target flag
+(keyword "BKGDTARG") of the input exposure. The matching
 imprint image is then subtracted from the target image. If no matching imprint
 image is found, the step will be skipped, returning the input target image
 unaltered.

@@ -60,9 +60,7 @@ repos:
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/guider_cds/.* |
-            jwst/imprint/.* |
             jwst/ipc/.* |
-            jwst/lastframe/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
             jwst/mrs_imatch/.* |
