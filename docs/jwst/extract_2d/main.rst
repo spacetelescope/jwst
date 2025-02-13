@@ -298,11 +298,11 @@ The ``extract_2d`` step has various optional arguments that apply to certain obs
 modes. For NIRSpec observations there is one applicable argument:
 
 ``--slit_names``
-  names [comma-separated list of integers] of specific slit regions to extract. The default value of None
+  names [comma-separated list containing integers or strings] of specific slits to extract. The default value of None
   will cause all known slits for the instrument mode to be extracted.
 
 ``--source_ids``
-  source_ids [comma-separated list of integers] of specific slit regions to extract.  The default value
+  source_ids [comma-separated list containing integers or strings] of specific slits to extract.  The default value
   of None will cause all known slits for the instrument to be extracted.
 
 ``slit_names`` and ``source_ids`` can be used at the same time, duplicates will be filtered out.

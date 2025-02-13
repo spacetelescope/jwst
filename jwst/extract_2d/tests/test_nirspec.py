@@ -268,3 +268,7 @@ def test_select_slits(nirspec_slit_list):
     # Select slit with a non-integer name
     non_integer = select_slits(slit_list, ['S200A1'], None)
     assert non_integer[0] == Slit(name='S200A1', source_id='2222')
+    # Select slits with mix of integer and string names
+    with_integer = select_slits(slit_list, [2, '5'], None)
+    assert Slit(name='2', source_id='2000') in with_integer
+    assert Slit(name='5', source_id='5000') in with_integer

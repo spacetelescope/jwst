@@ -26,9 +26,9 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     ----------
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         Input data model.
-    slit_names : list of strings
+    slit_names : list containing strings or ints
         Slit names.
-    source_ids : list of strings
+    source_ids : list containing strings or ints
         Source ids.
     """
     exp_type = input_model.meta.exposure.type.upper()
@@ -130,7 +130,7 @@ def select_slits(open_slits, slit_names, source_ids):
     selected_open_slits = []
     if slit_names is not None:
         matched_slits = []
-        for this_slit in slit_names:
+        for this_slit in [str(x) for x in slit_names]:
             if this_slit in open_slit_names:
                 matched_slits.append(this_slit)
             else:
@@ -140,7 +140,7 @@ def select_slits(open_slits, slit_names, source_ids):
                 selected_open_slits.append(sub)
     if source_ids is not None:
         matched_sources = []
-        for this_id in source_ids:
+        for this_id in [str(x) for x in source_ids]:
             if this_id in open_slit_source_ids:
                 matched_sources.append(this_id)
             else:

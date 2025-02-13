@@ -28,9 +28,9 @@ def extract2d(input_model,
     ----------
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         Input data model.
-    slit_names : list of strings
+    slit_names : list containing strings or ints
         Slit names to be processed.
-    source_ids : list of strings
+    source_ids : list containing strings or ints
         Source ids to be processed.
     reference_files : dict
         Reference files.
