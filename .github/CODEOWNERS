@@ -9,3 +9,75 @@
 /changes/** @spacetelescope/jwst-pipeline-developers  # changelogs
 /docs/** @spacetelescope/jwst-pipeline-developers  # docs
 /jwst/regtest/** @spacetelescope/jwst-pipeline-developers  # regtest code
+
+# individual step maintainers
+# /jwst/ami/					
+/jwst/assign_mtwcs/			@nden				@mcara
+/jwst/assign_wcs/			@nden				@mcara
+/jwst/associations/			@stscieisenhamer	 
+/jwst/background/			@tapastro	 		
+/jwst/barshadow/			@stscirij			@nden
+/jwst/charge_migration/		@kmacdonald-stsci	 
+/jwst/combine_1d/			@stscirij			@tapastro
+# /jwst/coron/				
+/jwst/cube_build/			@jemorrison	 		
+/jwst/cube_skymatch/		@mcara				@jemorrison
+/jwst/dark_current/			@kmacdonald-stsci	@WilliamJamieson
+/jwst/datamodels/			@braingram			@tapastro
+/jwst/dq_init/				@stscirij			@kmacdonald-stsci
+/jwst/emicorr/				@penaguerrero	 	
+/jwst/engblog/				@stscieisenhamer	 
+/jwst/exp_to_source/		@stscieisenhamer	 
+/jwst/extract_1d/			@tapastro			@jemorrison
+/jwst/extract_2d/			@nden				@tapastro
+/jwst/firstframe/			@jemorrison	 		
+/jwst/fits_generator/		@stscirij	 		
+/jwst/flatfield/			@jemorrison			@stscirij
+/jwst/fringe/				@jemorrison	 		
+/jwst/gain_scale/			@kmacdonald-stsci	 
+/jwst/group_scale/			@kmacdonald-stsci	 
+/jwst/guider_cds/			@kmacdonald-stsci	 
+# /jwst/imprint/				
+/jwst/ipc/					@stscirij	 		
+/jwst/jump/					@kmacdonald-stsci	@WilliamJamieson
+/jwst/lastframe/			@jemorrison	 		
+/jwst/lib/					@stscieisenhamer	@nden
+/jwst/linearity/			@kmacdonald-stsci	@WilliamJamieson
+/jwst/master_background/	@jemorrison	 		
+/jwst/model_blender/		@sgoldman	 		
+/jwst/mrs_imatch/			@mcara				@jemorrison
+/jwst/msaflagopen/			@stscirij			@nden
+/jwst/nsclean/				@penaguerrero	 	
+/jwst/outlier_detection/	@sgoldman			@mcara
+/jwst/outlie/outlier-ifu	@jemorrison	 		
+/jwst/pathloss/				@stscirij			@nden
+/jwst/persistence/			@stscirij	 		
+/jwst/photom/				@tapastro	 		
+/jwst/pipeline/				@tapastro	 		
+/jwst/pixel_replace/		@tapastro	 		
+/jwst/ramp_fitting/			@kmacdonald-stsci	@WilliamJamieson
+/jwst/refpix/				@WilliamJamieson	@stscirij
+/jwst/regtest/				@jhunk				@zburnett
+/jwst/resample/				@mcara				@sgoldman,@nden
+/jwst/reset/				@jemorrison	 		
+/jwst/residual_fringe/		@jemorrison			@WilliamJamieson
+/jwst/rscd/			 		@jemorrison	 		
+/jwst/saturation/			@kmacdonald-stsci	 
+/jwst/skymatch/				@mcara				@sgoldman
+/jwst/source_catalog/		@larrybradley		@sgoldman
+/jwst/set_bary_helio/		@perrygreenfield	@stscieisenhamer
+/jwst/set_tel_point/		@perrygreenfield	@stscieisenhamer
+/jwst/spectral_leak/		@jemorrison	 		
+/jwst/srctype/				@tapastro			@nden
+/jwst/stpipe/				@WilliamJamieson	@tapastro
+/jwst/straylight/			@jemorrison	 		
+/jwst/superbias/			@kmacdonald-stsci	 
+/jwst/timeconversion/		@stscieisenhamer	 
+/jwst/transforms/			@nden	 			
+/jwst/tso_photometry/		@larrybradley	 	
+/jwst/tweakreg/				@mcara				@sgoldman
+/jwst/wavecorr/				@nden				@WilliamJamieson
+/jwst/wfs_combine/			@nden				
+# /jwst/wfss_contam/			
+/jwst/whitelight/			@penaguerrero		
+/jwst/wiimatch/				@mcara				
