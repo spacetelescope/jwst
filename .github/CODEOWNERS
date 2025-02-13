@@ -44,11 +44,11 @@
 /jwst/lib/					@stscieisenhamer	@nden
 /jwst/linearity/			@kmacdonald-stsci	@WilliamJamieson
 /jwst/master_background/	@jemorrison	 		
-/jwst/model_blender/		@sgoldman	 		
+/jwst/model_blender/		@s-goldman	 		
 /jwst/mrs_imatch/			@mcara				@jemorrison
 /jwst/msaflagopen/			@stscirij			@nden
 /jwst/nsclean/				@penaguerrero	 	
-/jwst/outlier_detection/	@sgoldman			@mcara
+/jwst/outlier_detection/	@s-goldman			@mcara
 /jwst/outlie/outlier-ifu	@jemorrison	 		
 /jwst/pathloss/				@stscirij			@nden
 /jwst/persistence/			@stscirij	 		
@@ -57,14 +57,14 @@
 /jwst/pixel_replace/		@tapastro	 		
 /jwst/ramp_fitting/			@kmacdonald-stsci	@WilliamJamieson
 /jwst/refpix/				@WilliamJamieson	@stscirij
-/jwst/regtest/				@jhunk				@zburnett
-/jwst/resample/				@mcara				@sgoldman,@nden
+/jwst/regtest/				@jhunkeler			@zacharyburnett
+/jwst/resample/				@mcara				@s-goldman			@nden
 /jwst/reset/				@jemorrison	 		
 /jwst/residual_fringe/		@jemorrison			@WilliamJamieson
 /jwst/rscd/			 		@jemorrison	 		
 /jwst/saturation/			@kmacdonald-stsci	 
-/jwst/skymatch/				@mcara				@sgoldman
-/jwst/source_catalog/		@larrybradley		@sgoldman
+/jwst/skymatch/				@mcara				@s-goldman
+/jwst/source_catalog/		@larrybradley		@s-goldman
 /jwst/set_bary_helio/		@perrygreenfield	@stscieisenhamer
 /jwst/set_tel_point/		@perrygreenfield	@stscieisenhamer
 /jwst/spectral_leak/		@jemorrison	 		
@@ -75,7 +75,7 @@
 /jwst/timeconversion/		@stscieisenhamer	 
 /jwst/transforms/			@nden	 			
 /jwst/tso_photometry/		@larrybradley	 	
-/jwst/tweakreg/				@mcara				@sgoldman
+/jwst/tweakreg/				@mcara				@s-goldman
 /jwst/wavecorr/				@nden				@WilliamJamieson
 /jwst/wfs_combine/			@nden				
 # /jwst/wfss_contam/			
