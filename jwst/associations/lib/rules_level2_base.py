@@ -1028,7 +1028,13 @@ class AsnMixin_Lv2Imprint:
         imprints_matching_target = []
         imprints_not_matching_target = []
         for imprint_exp in imprints_to_check:
-            if str(imprint_exp.item['targetid']) in science_targets:
+            try:
+                target = imprint_exp.item['targetid']
+            except KeyError:
+                # Imprint does not match target if it is missing a target ID
+                imprints_not_matching_target.append(imprint_exp)
+                continue
+            if str(target) in science_targets:
                 imprints_matching_target.append(imprint_exp)
             else:
                 imprints_not_matching_target.append(imprint_exp)
@@ -1042,7 +1048,11 @@ class AsnMixin_Lv2Imprint:
         if 1 <= len(science) < len(imprints_to_check):
             imprint_to_keep = set()
             for science_exp in science:
+                if 'dithptin' not in science_exp.item:
+                    continue
                 for imprint_exp in imprints_to_check:
+                    if 'dithptin' not in imprint_exp.item:
+                        continue
                     if imprint_exp.item['dithptin'] == science_exp.item['dithptin']:
                         imprint_to_keep.add(imprint_exp['expname'])
 
