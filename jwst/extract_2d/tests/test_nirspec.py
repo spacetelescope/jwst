@@ -3,9 +3,11 @@ import pytest
 from astropy.io import fits
 from astropy.table import Table
 from stdatamodels.jwst.datamodels import ImageModel, CubeModel, MultiSlitModel, SlitModel
+from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d.extract_2d_step import Extract2dStep
+from jwst.extract_2d.nirspec import select_slits
 
 
 # WCS keywords, borrowed from NIRCam grism tests
@@ -120,6 +122,19 @@ def create_msa_hdul():
 
     return hdul
 
+def create_list_of_slits():
+    """
+    Each slit is a stdatamodels.jwst.transforms.model.Slit instance.
+    The only attributes that are used by select_slits() are
+    name and source_id
+    """
+    slit_list = []
+    name_list = ['1', '2', '3', '4', '5', '6', 'S200A1']
+    source_id_list = ['1000', '2000', '3000', '4000', '5000', '6000', '2222']
+    for name, source_id in zip(name_list, source_id_list):
+        new_slit = Slit(name=name, source_id=source_id)
+        slit_list.append(new_slit)
+    return slit_list
 
 @pytest.fixture
 def nirspec_msa_rate(tmp_path):
@@ -159,6 +174,9 @@ def nirspec_msa_metfl(tmp_path):
     hdul.close()
     return filename
 
+@pytest.fixture
+def nirspec_slit_list():
+    return create_list_of_slits()
 
 def test_extract_2d_nirspec_msa_fs(nirspec_msa_rate, nirspec_msa_metfl):
     model = ImageModel(nirspec_msa_rate)
@@ -228,3 +246,25 @@ def test_extract_2d_nirspec_bots(nirspec_bots_rateints):
 
     model.close()
     result.close()
+
+def test_select_slits(nirspec_slit_list):
+    slit_list = nirspec_slit_list
+    # Choose all slits
+    all_slits = select_slits(slit_list, None, None)
+    assert all_slits == slit_list
+    # Just slit with name=='3'
+    single_name = select_slits(slit_list, ['3'], None)
+    assert single_name[0].name == '3'
+    assert single_name[0].source_id == '3000'
+    # Just slit with source_id == '3000'
+    single_id = select_slits(slit_list, None, ['2000'])
+    assert single_id[0].name == '2'
+    assert single_id[0].source_id == '2000'
+    # Slits with name == '4' and source_id == '4000' are duplicates
+    duplicates = select_slits(slit_list, ['1', '4'], ['2000', '4000'])
+    assert Slit(name='1', source_id='1000') in duplicates
+    assert Slit(name='2', source_id='2000') in duplicates
+    assert Slit(name='4', source_id='4000') in duplicates
+    # Select slit with a non-integer name
+    non_integer = select_slits(slit_list, ['S200A1'], None)
+    assert non_integer[0] == Slit(name='S200A1', source_id='2222')
