@@ -986,13 +986,6 @@ class AsnMixin_Lv2Imprint:
         If there are more imprints than science members remaining, and
         if any of the remaining imprints match the science dither position
         index, discard any imprints that do not match the dither position.
-
-        Returns
-        -------
-        list of associations
-            The input association with members modified as needed.
-            For this mode, the input association is also the output
-            association, so the return value is always `[self]`.
         """
         # Only one product for Lv2 associations
         members = self['products'][0]['members']
@@ -1004,14 +997,22 @@ class AsnMixin_Lv2Imprint:
         science_is_background = False
         science_targets = set()
         for member in members:
+            try:
+                target = member.item['targetid']
+                bkgdtarg = member.item['bkgdtarg']
+            except KeyError:
+                # ignore any members with missing data -
+                # no pruning will happen in this case
+                continue
+
             if member['exptype'] == 'science':
                 science.append(member)
-                science_targets.add(str(member.item['targetid']))
-                if member.item['bkgdtarg'] == 't':
+                science_targets.add(str(target))
+                if bkgdtarg == 't':
                     science_is_background = True
             elif member['exptype'] == 'imprint':
                 # Store imprints by background status
-                if member.item['bkgdtarg'] == 't':
+                if bkgdtarg == 't':
                     imprint_bkg.append(member)
                 else:
                     imprint_sci.append(member)
@@ -1050,7 +1051,6 @@ class AsnMixin_Lv2Imprint:
                 for imprint_exp in imprints_to_check:
                     if imprint_exp['expname'] not in imprint_to_keep:
                         members.remove(imprint_exp)
-        return [self]
 
     def finalize(self):
         """
@@ -1069,9 +1069,8 @@ class AsnMixin_Lv2Imprint:
             `None` if a complete association cannot be produced.
         """
         if self.is_valid:
-            return self.prune_imprints()
-        else:
-            return None
+            self.prune_imprints()
+        return super().finalize()
 
 
 class AsnMixin_Lv2Nod:
