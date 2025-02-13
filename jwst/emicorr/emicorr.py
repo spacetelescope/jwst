@@ -964,7 +964,7 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
 
     This routine has the math from the writeup in it; see that for the
     definitions and derivations.
-    
+
     Parameters
     ----------
     emifitter : EMIfitter class
