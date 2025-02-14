@@ -3,6 +3,7 @@
 #
 
 import numpy as np
+from scipy import interpolate
 import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
@@ -184,11 +185,32 @@ def apply_emicorr(output_model, emicorr_model,
         log.info('Using reference file to get subarray case.')
         subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model, subarray, readpatt, detector)
         reference_wave_list = []
+
+        log.info('With configuration: Subarray={}, Read_pattern={}, Detector={}'.format(subarray, readpatt, detector))
+        log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
+        log.info('   {}'.format(freqs2correct))
+
         if freqs2correct is not None:
             for fnme in freqs2correct:
                 freq, ref_wave = get_frequency_info(emicorr_model, fnme)
                 freqs_numbers.append(freq)
                 reference_wave_list.append(ref_wave)
+
+                if readpatt.upper() == 'FASTR1' or readpatt.upper() == 'SLOWR1':
+                    _frameclocks = frameclocks
+                else:
+                    _frameclocks = 0
+
+                period_in_pixels = (1./freq) / 10.0e-6
+
+                # New routine gets called here.
+                d = emicorr_refwave(output_model.data, output_model.pixeldq,
+                                    np.array(ref_wave),
+                                    nsamples, rowclocks, _frameclocks,
+                                    period_in_pixels)
+                output_model.data[:] = d
+
+            return output_model
     else:
         # if we got here, the user requested to do correction with on-the-fly reference file
         subname = subarray
@@ -702,3 +724,408 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
     log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
+
+
+
+def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
+                    period_in_pixels, fit_ints_separately=False,
+                    nphases_opt=500):
+
+    """
+    Derive the best amplitude and phase for the EMI waveform, subtract it off.
+
+    This routine works by choosing pixels with modest scatter among
+    the reads, and then finding the amplitude and phase of a supplied
+    reference waveform that, when subtracted, makes these pixels'
+    ramps as straight as possible. The straightness of the ramps is
+    measured by chi squared after fitting lines to each one.
+
+    Parameters
+    ----------
+    data : numpy array
+        4D data to correct, shape (nints, ngroups, nrows, ncols).
+        Modified in-place.
+
+    pdq : numpy array
+        2D pixeldq array, shape (nrows, ncols)
+
+    refwave : numpy array
+        reference waveform, 1D array
+
+    nsamples : int
+        number of samples of each pixel in each group:
+        1 for fast, 9 for slow
+
+    rowclocks : int
+        extra pixel times in each row before reading out the following row
+
+    frameclocks : int
+        pixel clock cycles in a reset frame
+
+    period_in_pixels : float
+        period in pixel clock times of the waveform given by refwave
+
+    fit_ints_separately : bool, default False
+        fit the integrations separately? If True, fit amplitude and phase
+        for refwave independently for each integration.  If False, fit
+        for a single amplitude and phase across all integrations.
+
+    nphases_opt : int, default 500
+        Number of phases to sample chi squared as a function of phase
+
+    Returns
+    -------
+    data : ndarray
+        The input 4D data array with the model waveform phased, scaled,
+        and subtracted.
+
+    """
+
+    nints, ngroups, ny, nx = data.shape
+
+    # divide ncols by the four output channels (which are read simultaneously)
+    nx4 = nx // 4
+
+    # non-roi rowclocks between subarray frames (this will be 0 for fullframe)
+    extra_rowclocks = (1024. - ny) * (4 + 3.)
+
+    frametime = ny*rowclocks + extra_rowclocks
+
+    # Times of the individual reads in pixel clock times
+    t0_arr = np.zeros((ny, nx4))
+    for i in range(ny):
+        t0_arr[i] = i * rowclocks + np.arange(nx4) * nsamples
+
+    phase = (t0_arr / period_in_pixels) % 1
+
+    # Phase gap between groups
+    dphase = (frametime / period_in_pixels) % 1
+
+    # Phase gap between integrations
+    dphase_frame = dphase * ngroups + frameclocks / period_in_pixels
+
+    # Time-like index for group number
+    grouptimes = np.arange(ngroups)
+
+    # Phase(model) for interpolation.  Wrap the phases to avoid
+    # extrapolation, and use a cubic spline.
+
+    refwave_extended = np.array([refwave[-1]] + list(refwave) + [refwave[0]])
+    phase_extended = (np.arange(len(refwave) + 2) - 0.5)/len(refwave)
+    phasefunc = interpolate.interp1d(phase_extended, refwave_extended, kind='cubic')
+
+    phases_template = (phase_extended[1:-1, np.newaxis] + grouptimes * dphase) % 1
+    nphases = phases_template.shape[0]
+
+    # These arrays hold the sum of the values of good pixels at a
+    # given phase and the total number of good pixels at a given
+    # phase, respectively.  The phase refers to the first group; other
+    # groups will have the appropriate phase delay added.
+
+    all_y = np.zeros((nints, nphases, ngroups))
+    all_N = np.zeros((nints, nphases))
+
+    # "Good" pixel here has no more than twice the median standard
+    # deviation among group differences and is not flagged in the pdq
+    # array.  This should discard most bad and high-flux pixels.
+
+    pixel_std = np.std(data, axis=1)
+    pixel_ok = (pixel_std < 2 * np.median(pixel_std)) & (pdq == 0)
+
+    for j in range(ny):
+        for k in range(nx4):
+
+            # Bad reference column?  I am not sure whether this is needed,
+            # but I think so. I carried it from the current routine.
+
+            if k == 1 or k == 2:
+                continue
+
+            # Choose the index corresponding to our phase.
+            # phases_template has the midpoints of the intervals,
+            # so rounding down here is appropriate.
+
+            indx = int(phase[j, k] * nphases)
+
+            # All four output channels.
+            for l in range(4):
+                pixok = pixel_ok[:, j, k * 4 + l]
+                all_y[:, indx] += data[:, :, j, k * 4 + l]*pixok[:, np.newaxis]
+                all_N[:, indx] += pixok
+
+    # We'll compute chi2 at nphases_opt evenly spaced phases.
+    phaselist = np.arange(nphases_opt) * 1. / nphases_opt
+
+    # Class that computes and holds all of the intermediate
+    # information needed for the fits.
+
+    emifitter = EMIfitter(all_y, all_N, phasefunc,
+                          phases_template, phaselist, dphase_frame)
+
+    # The case where each integration gets its own phase and amplitude
+    if fit_ints_separately:
+
+        amplitudes_to_correct = []
+        phases_to_correct = []
+        for i in range(nints):
+
+            # Compute chi squared at all phase offsets, then find the
+            # phase offset that gives the best answer, then get the
+            # corresponding amplitude.
+
+            chisq, _ = calc_chisq_amplitudes(emifitter, ints=[i])
+            best_phase = get_best_phase(phaselist, chisq)
+            phases_to_correct += [best_phase + i * dphase_frame]
+
+            _, c = calc_chisq_amplitudes(emifitter, phases=[best_phase], ints=[i])
+            amplitudes_to_correct += c
+
+    # One phase and amplitude fit to all integrations
+    else:
+
+        chisq, _ = calc_chisq_amplitudes(emifitter)
+        best_phase = get_best_phase(phaselist, chisq)
+        _, c = calc_chisq_amplitudes(emifitter, phases=[best_phase])
+
+        # Phases appropriate for each integration
+        phases_to_correct = (best_phase + np.arange(nints) * dphase_frame) % 1
+
+        # Output from calc_chisq_amplitudes here is a one-element list.
+        # Repeat it for each integration.
+
+        amplitudes_to_correct = c * nints
+
+    for i in range(nints):
+        for j in range(ngroups):
+
+            # Place the reference waveform at the appropriate phase,
+            # scale, and subtract from each output channel.
+
+            phased_emi = phasefunc((phase + dphase * j + phases_to_correct[i]) % 1)
+
+            for k in range(4):
+                data[i, j, :, k::4] -= amplitudes_to_correct[i] * phased_emi
+
+    return data
+
+
+def get_best_phase(phases, chisq):
+    """
+    Fit a parabola to get the phase corresponding to the best chi squared.
+
+    Parameters
+    ----------
+    phases : ndarray
+        1D array of phases. Assumed to be periodic: phases[0] comes
+        after phases[-1]
+
+    chisq : ndarray
+        1D array of chi squared values.
+
+    Returns
+    -------
+    bestphase : float
+        phase where chisq is minimized, computed by fitting a parabola
+        to the three points centered on the input phase with the
+        lowest chisq.
+
+    """
+
+    ibest = np.argmin(chisq)
+
+    # If ibest is zero, ibest_m1 will give the final element.
+    ibest_m1 = ibest - 1
+    ibest_p1 = ibest + 1
+
+    # If ibest is the last element, we have to explicitly wrap.
+    if ibest_p1 > len(chisq) - 1:
+        ibest_p1 = 0
+
+    # Calculate the vertex of the parabola.
+    chisq_opt = [chisq[ibest_m1], chisq[ibest], chisq[ibest_p1]]
+    x = [phases[ibest_m1], phases[ibest], phases[ibest_p1]]
+
+    # Just in case all of these chi squared values are equal
+    # (in which case fitting a parabola would give a=0)
+    if np.std(chisq_opt) == 0:
+        log.info('Chi squared values as a function of phase offset are '
+                 'unexpectedly equal in EMIcorr')
+        return phases[ibest]
+
+    a, b, _ = np.polyfit(x, chisq_opt, 2)
+    bestphase = -b / (2 * a)
+
+    return bestphase
+
+
+def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
+    """
+    Compute chi2 and amplitude of EMI waveform at phase(s)
+
+    This routine has the math from the writeup in it; see that for the
+    definitions and derivations.
+
+    Parameters
+    ----------
+    emifitter : EMIfitter class
+        Convenience class containing all of the parameters and intermediate
+        arrays needed to compute the best amplitude and the corresponding
+        chi squared value at one or more input phases.
+
+    ints : list of ints or None, default None
+        Integration(s) to combine for computing amplitude and chi
+        squared. If None, use all integrations.
+
+    phases : list of floats or None, default None
+        Phase(s) at which to compute the amplitude and best chi squared.
+        If None, use all phases in emifitter.phaselist.
+
+    Returns
+    -------
+    chisq : list of floats
+        best chi squared value for each phase used. Will be the same
+        length as phases (or emifitter.phaselist, if phases is None).
+
+    amplitudes : list of floats
+        best-fit ampltiudes for each phase used. Will be the same
+        length as phases (or emifitter.phaselist, if phases is None).
+
+    """
+
+    E = emifitter  # Alias to simplify subsequent references
+
+    # By default, compute a single phase and amplitudes over all
+    # integrations.
+
+    if ints is None:
+        ints = np.arange(E.nints)
+
+    # By default, calculate chi squared and the best-fit amplitude
+    # for every phase in the input EMIfitter's phaselist.
+
+    if phases is None:
+        phases = E.phaselist
+
+    chisq = []
+    amplitudes = []
+
+    # Compute the best chi squared and the best amplitude at every
+    # requested phase using the math in the writeup.
+
+    for phase in phases:
+        A = 0
+        B = 0
+
+        for i in ints:
+
+            y = E.all_y[i]
+            N = E.all_N[i]
+            Sy = E.all_Sy[i]
+            Sty = E.all_Sty[i]
+
+            # Phase difference between the start of this integration
+            # and the start of the first integration
+
+            phase_diff = E.dphase_frame*i
+
+            # Choose the closest phase in emifitter's phaselist
+
+            k = np.argmin(np.abs((E.phaselist - phase - phase_diff)%1))
+
+            z = E.zlist[k]
+            Stz = E.Stzlist[k]
+            Sz = E.Szlist[k]
+            Szz = E.Szzlist[k]
+            Syz = np.sum(z * y, axis=1)
+
+            A += np.sum(N / E.Delta*(-E.Stt * Sz**2 + 2 * E.St * Sz * Stz
+                                     - E.ngroups * Stz**2 + Szz * E.Delta))
+            B += (2 / E.Delta)*np.sum(E.Stt * Sz * Sy - E.St * Stz * Sy
+                                      - E.St * Sz * Sty + E.ngroups * Stz * Sty)
+            B -= 2 * np.sum(Syz)
+
+        c = -B / (2 * A)
+        chisq += [A * c**2 + B * c]
+        amplitudes += [c]
+
+    return chisq, amplitudes
+
+
+
+class EMIfitter:
+    """
+    Convenience class to facilitate chi2, amplitude calculation.
+
+    """
+    def __init__(self, all_y, all_N, phasefunc, phases_template,
+                 phaselist, dphase_frame):
+        """
+        Compute and store quantities needed for chi2, amplitude calculation.
+
+        Some of the math from the writeup goes in here.
+
+        Parameters
+        ----------
+        all_y : ndarray
+            3D array of phased, summed y values,
+            shape (nints, nphases, ngroups)
+
+        all_N : ndarray
+            2D array of the number of pixels used for the calculation
+            shape (nints, nphases): number of values summed to create
+            all_y at each group
+
+        phasefunc : interp1d function
+            Spline function to compute the waveform as a function of
+            input phase (input phase should be between 0 and 1).
+
+        phases_template : ndarray
+            2D array of phases corresponding to all_y[0]
+
+        phaselist : ndarray
+            1D array of phases at which to pre-compute quantities
+            needed for chi squared, amplitude calculation.  Typically
+            uniformly spaced between 0 and 1.
+
+        dphase_frame : float
+            Phase difference between successive integrations
+
+        """
+
+        self.all_y = all_y
+        self.all_N = all_N
+
+        self.nints, self.nphases, self.ngroups = all_y.shape
+
+        self.grouptimes = np.arange(self.ngroups)
+        self.Stt = np.sum(self.grouptimes**2)
+        self.St = np.sum(self.grouptimes)
+        self.Delta = self.ngroups * self.Stt - self.St**2
+
+        self.all_Sy = np.sum(self.all_y, axis=2)
+        self.all_Sty = np.sum(self.all_y * self.grouptimes, axis=2)
+
+        self.phaselist = phaselist
+        self.phases_template = phases_template
+
+        self.phasefunc = phasefunc
+        self.dphase_frame = dphase_frame
+
+        self.zlist = []
+        self.Szlist = []
+        self.Stzlist = []
+        self.Szzlist = []
+
+        # Waveform for each pixel when the first one is at dphaseval.
+        for dphaseval in phaselist:
+
+            # The transposes help ensure that similar phases are evaluated
+            # consecutively, which significantly improves runtime when
+            # there is a very large number of groups.
+
+            z = self.phasefunc((self.phases_template.T + dphaseval) % 1).T
+
+            self.zlist += [z]
+            self.Stzlist += [np.sum(self.grouptimes * z, axis=1)]
+            self.Szlist += [np.sum(z, axis=1)]
+            self.Szzlist += [np.sum(z**2, axis=1)]
