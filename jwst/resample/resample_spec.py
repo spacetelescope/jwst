@@ -16,7 +16,7 @@ from gwcs import coordinate_frames as cf
 
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.util import compute_scale, wrap_ra
+from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape, wrap_ra
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
 from jwst.datamodels import ModelLibrary
@@ -512,8 +512,7 @@ class ResampleSpec(ResampleImage):
 
         # Compute bounding box and output array shape.
         data_size = (ny, n_lam)
-        bounding_box = resample_utils.wcs_bbox_from_shape(data_size)
-        output_wcs.bounding_box = bounding_box
+        output_wcs.bounding_box = wcs_bbox_from_shape(data_size)
         output_wcs.array_shape = data_size
 
         return output_wcs
@@ -795,7 +794,7 @@ class ResampleSpec(ResampleImage):
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
-        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
+        bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
@@ -904,7 +903,7 @@ class ResampleSpec(ResampleImage):
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
-        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
+        bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
