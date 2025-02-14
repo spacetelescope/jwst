@@ -35,7 +35,7 @@ dependencies = [
     "scipy>=1.14.1",
     "spherical-geometry>=1.2.22",
     #"stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
-    "stdatamodels @ stdatamodels-2.2.1.dev20+gf85885d",
+    "stdatamodels @ git+https://github.com/jemorrison/stdatamodels.git@MIRI_LRS_Specwcs",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stpipe>=0.8.0,<0.9.0",
     "stsci.imagestats>=1.6.3",
