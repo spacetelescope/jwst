@@ -17,6 +17,8 @@ from astropy.nddata.bitmask import (
     interpret_bit_flags,
 )
 
+from stcal.skymatch import skymatch, SkyImage, SkyGroup, SkyStats
+
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelLibrary
@@ -24,11 +26,6 @@ from jwst.lib.suffix import remove_suffix
 from pathlib import Path
 
 from jwst.stpipe import Step
-
-# LOCAL:
-from .skymatch import skymatch
-from .skyimage import SkyImage, SkyGroup
-from .skystatistics import SkyStats
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -112,7 +109,7 @@ class SkyMatchStep(Step):
                 if len(sky_images) == 1:
                     images.extend(sky_images)
                 else:
-                    images.append(SkyGroup(sky_images, id=group_index))
+                    images.append(SkyGroup(sky_images, sky_id=group_index))
 
         # match/compute sky values:
         skymatch(images, skymethod=self.skymethod, match_down=self.match_down,
@@ -187,7 +184,7 @@ class SkyMatchStep(Step):
             pix_area=1.0,  # TODO: pixel area
             convf=1.0,  # TODO: conv. factor to brightness
             mask=dqmask,
-            id=image_model.meta.filename,
+            sky_id=image_model.meta.filename,
             skystat=self._skystat,
             stepsize=self.stepsize,
             reduce_memory_usage=False,  # this overwrote input files
