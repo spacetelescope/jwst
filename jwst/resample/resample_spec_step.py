@@ -265,8 +265,10 @@ class ResampleSpecStep(Step):
         else:
             result.meta.resample.pixel_scale_ratio = resamp.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac
+
         self.update_slit_metadata(result)
-        update_s_region_spectral(result)
+        if result.meta.exposure.type.lower() != 'mir_lrs-fixedslit':
+            update_s_region_spectral(result)
 
         return result
 
