@@ -7,7 +7,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 from jwst.extract_1d import Extract1dStep
-
+from stcal.alignment import util
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
@@ -87,3 +87,12 @@ def test_miri_lrs_slit_wcs(run_pipeline, rtdata_module, fitsdiff_default_kwargs)
         xtruth, ytruth = im_truth.meta.wcs.backward_transform(ratruth, dectruth, lamtruth)
         assert_allclose(xtest, xtruth)
         assert_allclose(ytest, ytruth)
+
+        # Test the s_region. S_region is formed by footprint which contains
+        # floats rather than a string. Test footprint
+        sregion = im.meta.wcsinfo.s_region
+        sregion_test = im_truth.meta.wcsinfo.s_region
+        footprint=util._sregion_to_footprint(sregion)
+        footprint_test = util._sregion_to_footprint(sregion_test)
+        assert_allclose(footprint, footprint_test)
+

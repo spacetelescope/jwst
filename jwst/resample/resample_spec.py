@@ -10,17 +10,20 @@ from astropy.modeling.models import (
 )
 from astropy.modeling.fitting import LinearLSQFitter
 from astropy.stats import sigma_clip
+from astropy.coordinates import SkyCoord
+
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
 
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape, wrap_ra
+from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape,\
+    wrap_ra
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
 from jwst.datamodels import ModelLibrary
-
+from stcal.alignment.util import compute_s_region_keyword
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -66,6 +69,7 @@ class ResampleSpec(ResampleImage):
         pixel_scale = None
         pixel_area = None
         pixel_scale_ratio = 1.0
+        s_region = None
 
         if isinstance(output_wcs, dict):
             output_wcs_dict = {
@@ -163,7 +167,7 @@ class ResampleSpec(ResampleImage):
             # Any other customizations (crpix, crval, rotation) are ignored.
             if resample_utils.is_sky_like(input_models[0].meta.wcs.output_frame):
                 if input_models[0].meta.instrument.name != "NIRSPEC":
-                    output_wcs = self.build_interpolated_output_wcs(
+                    output_wcs, s_region = self.build_interpolated_output_wcs(
                         input_models,
                         pixel_scale_ratio=pixel_scale_ratio
                     )
@@ -189,6 +193,7 @@ class ResampleSpec(ResampleImage):
                 output_pix_area = None
 
         self._spec_output_pix_area = output_pix_area
+        self._s_region = s_region
 
         if pixel_scale is None:
             log.info(f'Specified output pixel scale ratio: {pixel_scale_ratio}.')
@@ -202,6 +207,7 @@ class ResampleSpec(ResampleImage):
         output_wcs_dict["wcs"] = output_wcs
         output_wcs_dict["pixel_scale"] = pixel_scale
         output_wcs_dict["pixel_scale_ratio"] = pixel_scale_ratio
+
 
         library = ModelLibrary(input_models, on_disk=False)
 
@@ -242,7 +248,9 @@ class ResampleSpec(ResampleImage):
             model.meta.photometry.pixelarea_arcsecsq = (
                 self._spec_output_pix_area * np.rad2deg(3600)**2
             )
-
+        if self._s_region is not None:
+            model.meta.wcsinfo.s_region = self._s_region
+            log.info(f'Updating S_REGION: {self._s_region}.')
         # TODO: this is helpful info that should be stored in products.
         #       Not storing this at this time in order to reduce the number of
         #       failures in the regression tests.
@@ -576,13 +584,18 @@ class ResampleSpec(ResampleImage):
         all_dec_slit = []
         xstop = 0
 
+        sregion_list = []
+        all_wcs = [m.meta.wcs for m in input_models]
         for im, model in enumerate(input_models):
             wcs = model.meta.wcs
             bbox = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bbox)
             ra, dec, lam = np.array(wcs(*grid))
-            # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
-            # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
+
+            sregion_list.append(model.meta.wcsinfo.s_region)
+
+            # Handle vertical (MIRI).  The following 2 variables are
+            # 0 or 1, i.e. zero-indexed in x,y WCS order
             spectral_axis = find_dispersion_axis(model)
             spatial_axis = spectral_axis ^ 1
 
@@ -599,7 +612,7 @@ class ResampleSpec(ResampleImage):
             # sampling.
 
             # Steps to do this for first input model:
-            # 1. find the middle of the spectrum in wavelength
+            # 1. Find the middle of the spectrum in wavelength
             # 2. Pull out the ra and dec at the center of the slit.
             # 3. Find the mean ra,dec and the center of the slit this will
             #    represent the tangent point
@@ -614,7 +627,7 @@ class ResampleSpec(ResampleImage):
                 lam_center_index = int((bbox[spectral_axis][1] -
                                         bbox[spectral_axis][0]) / 2)
                 if spatial_axis == 0:
-                    # MIRI LRS, the WCS x axis is spatial
+                    # MIRI LRS spectral = 1, the spatial axis = 0
                     ra_slice = ra[lam_center_index, :]
                     dec_slice = dec[lam_center_index, :]
                 else:
@@ -637,10 +650,10 @@ class ResampleSpec(ResampleImage):
                 x_tan, y_tan = undist2sky1.inverse(ra, dec)
 
                 # pull out data from center
-                if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
+                if spectral_axis == 0:
                     x_tan_array = x_tan.T[lam_center_index]
                     y_tan_array = y_tan.T[lam_center_index]
-                else:
+                else: # MIRI LRS Spectral Axis = 1, the WCS x axis is spatial
                     x_tan_array = x_tan[lam_center_index]
                     y_tan_array = y_tan[lam_center_index]
 
@@ -750,26 +763,31 @@ class ResampleSpec(ResampleImage):
 
         native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
         undist2sky = tan | native2celestial
-        # find the spatial size of the output - same in x,y
-        if swap_xy:
-            _, x_tan_all = undist2sky.inverse(all_ra, all_dec)
-            pix_to_tan_slope = pix_to_ytan.slope
-        else:
-            x_tan_all, _ = undist2sky.inverse(all_ra, all_dec)
-            pix_to_tan_slope = pix_to_xtan.slope
 
-        x_min = np.amin(x_tan_all)
-        x_max = np.amax(x_tan_all)
-        x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_tan_slope)))
+        ## Use all the wcs
+        min_tan_x, max_tan_x, min_tan_y, max_tan_y = self._max_spatial_extent(
+            all_wcs, undist2sky.inverse)
+        diff_y = np.abs(max_tan_y - min_tan_y)
+        diff_x = np.abs(max_tan_x - min_tan_x)
+        pix_to_tan_slope_y = np.abs(pix_to_ytan.slope)
+        slope_sign_y = np.sign(pix_to_ytan.slope)
+        pix_to_tan_slope_x = np.abs(pix_to_xtan.slope)
+        slope_sign_x = np.sign(pix_to_xtan.slope)
+
         if swap_xy:
-            pix_to_ytan.intercept = -0.5 * (x_size - 1) * pix_to_ytan.slope
+            ny = int(np.ceil(diff_y / pix_to_tan_slope_y)) + 1
         else:
-            pix_to_xtan.intercept = -0.5 * (x_size - 1) * pix_to_xtan.slope
+            ny = int(np.ceil(diff_x / pix_to_tan_slope_x)) + 1
+
+        offset_y  = (ny)/2 * pix_to_tan_slope_y
+        offset_x  = (ny)/2 * pix_to_tan_slope_x
+        pix_to_ytan.intercept =  - slope_sign_y * offset_y
+        pix_to_xtan.intercept =  - slope_sign_x * offset_x
 
         # single model: use size of x_tan_array
         # to be consistent with method before
         if len(input_models) == 1:
-            x_size = int(np.ceil(xstop))
+            ny = int(np.ceil(xstop))
 
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
@@ -789,7 +807,7 @@ class ResampleSpec(ResampleImage):
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array)))
-        output_array_size[spatial_axis] = x_size
+        output_array_size[spatial_axis] = ny
 
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
@@ -797,7 +815,8 @@ class ResampleSpec(ResampleImage):
         bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
-        return output_wcs
+        s_region = find_miri_lrs_sregion(sregion_list,output_wcs)
+        return output_wcs, s_region
 
     def build_nirspec_lamp_output_wcs(self, input_models, pixel_scale_ratio):
         """
@@ -1011,3 +1030,85 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
 
     pixel_scale = compute_scale(wcs, fiducial, disp_axis=disp_axis)
     return float(pixel_scale)
+
+def find_miri_lrs_sregion(sregion_list,wcs):
+    """ Find s region for MIRI LRS resampled data.
+
+    Parameters
+    ----------
+    sregion_list : list
+        List of s_regions.
+    wcs : gwcs.WCS
+        Spatial/spectral WCS.
+
+    Returns
+    -------
+    sregion : string
+        S_region for the resample data.
+    """
+    # use the first sregion to set the width of the slit
+
+    spatial_box = sregion_list[0]
+    s = spatial_box.split(' ')
+    a1 = float(s[3])
+    b1 = float(s[4])
+    a2 = float(s[5])
+    b2 = float(s[6])
+    a3 = float(s[7])
+    b3 = float(s[8])
+    a4 = float(s[9])
+    b4 = float(s[10])
+
+    # convert each corner to SkyCoord
+    coord1 = SkyCoord(a1, b1, unit='deg')
+    coord2 = SkyCoord(a2, b2, unit='deg')
+    coord3 = SkyCoord(a3, b3, unit='deg')
+    coord4 = SkyCoord(a4, b4, unit='deg')
+
+    # Find the distance between the corners
+    # corners are counter clockwize from 1,2,3,4
+    sep1 = coord1.separation(coord2)
+    sep2 = coord2.separation(coord3)
+    sep3 = coord3.separation(coord4)
+    sep4 = coord4.separation(coord1)
+
+    # use the separation values so we can find the min value later
+    sep = [sep1.value, sep2.value, sep3.value, sep4.value]
+
+    # the minimum separation is the slit width
+    min_sep = np.min(sep)
+    min_sep = min_sep* u.deg # set the units to degrees
+
+    log.info(f'Estimated MIRI LRS slit width: {min_sep*3600} arcsec.')
+    # now use the combined WCS to map all pixels to the slit center
+    bbox = wcs.bounding_box
+    grid = wcstools.grid_from_bounding_box(bbox)
+    ra, dec, _ = np.array(wcs(*grid))
+    ra = ra.flatten()
+    dec = dec.flatten()
+    # ra and dec are the values along the output resampled slit center
+    # using the first point and last point find the position angle
+    star1 = SkyCoord(ra[0]*u.deg, dec[0]*u.deg, frame='icrs')
+    star2 = SkyCoord(ra[-1]*u.deg, dec[-1]*u.deg, frame='icrs')
+    position_angle = star1.position_angle(star2).to(u.deg)
+
+    # 90 degrees to the position angle of the slit will define s_region
+    pos_angle = position_angle - 90.0*u.deg
+
+    star_c1 = star1.directional_offset_by(pos_angle, min_sep/2)
+    star_c2 = star1.directional_offset_by(pos_angle, -min_sep/2)
+    star_c3 = star2.directional_offset_by(pos_angle, min_sep/2)
+    star_c4 = star2.directional_offset_by(pos_angle, -min_sep/2)
+
+    # set  these values to footprint
+    # ra,dec corners are in counter-clockwise direction
+    footprint = [star_c1.ra.value, star_c1.dec.value,
+                 star_c3.ra.value, star_c3.dec.value,
+                 star_c4.ra.value, star_c4.dec.value,
+                 star_c2.ra.value, star_c2.dec.value]
+    footprint = np.array(footprint)
+    s_region = compute_s_region_keyword(footprint)
+    return s_region
+
+
+
