@@ -784,11 +784,6 @@ class ResampleSpec(ResampleImage):
         pix_to_ytan.intercept =  - slope_sign_y * offset_y
         pix_to_xtan.intercept =  - slope_sign_x * offset_x
 
-        # single model: use size of x_tan_array
-        # to be consistent with method before
-        if len(input_models) == 1:
-            ny = int(np.ceil(xstop))
-
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
 
