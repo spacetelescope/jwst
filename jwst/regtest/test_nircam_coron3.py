@@ -15,7 +15,7 @@ def run_pipeline(rtdata_module):
     args = ["calwebb_coron3", rtdata.input]
     with warnings.catch_warnings():
         # warning is explicitly raised by the pipeline
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="var_rnoise array not available")
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="'var_rnoise' array not available")
         Step.from_cmdline(args)
 
     return rtdata

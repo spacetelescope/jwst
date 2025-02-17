@@ -1,14 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Main classes for the ATOCA (Darveau-Bernier 2021, in prep).
+
 ATOCA: Algorithm to Treat Order ContAmination (English)
        Algorithme de Traitement d’Ordres ContAmines (French)
 
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
-
 
 # General imports.
 import numpy as np
@@ -24,6 +21,7 @@ log.setLevel(logging.DEBUG)
 
 
 class MaskOverlapError(Exception):
+    """Exception to raise if there are too few valid pixels in a spectral order."""
 
     def __init__(self, message):
         self.message = message
@@ -38,7 +36,7 @@ class ExtractionEngine:
     of the detector, including a mapping between the detector pixels and the wavelength
     for each spectral order, the throughput and convolution kernel, and known detector
     bad pixels. This does not require any real data.
-    When called, it ingests data and associated errors, than
+    When called, it ingests data and associated errors, then
     generates an output 1-D spectrum that explains the pixel brightnesses in the data
     within the constraints of the model.
 
@@ -50,28 +48,40 @@ class ExtractionEngine:
 
     This version models the pixels of the detector using an oversampled trapezoidal integration.
     """
-    # The desired data-type for computations. 'float64' is recommended.
-    dtype = 'float64'
 
-    def __init__(self, wave_map, trace_profile, throughput, kernels,
-                 wave_grid, mask_trace_profile,
-                 global_mask=None,
-                 orders=[1,2], threshold=1e-3):
+    # The desired data-type for computations. 'float64' is recommended.
+    dtype = "float64"
+
+    def __init__(
+        self,
+        wave_map,
+        trace_profile,
+        throughput,
+        kernels,
+        wave_grid,
+        mask_trace_profile,
+        global_mask=None,
+        orders=None,
+        threshold=1e-3,
+    ):
         """
+        Initialize the ExtractionEngine with a detector model.
+
         Parameters
         ----------
-        wave_map : (N_ord, N, M) list or array of 2-D arrays
+        wave_map : list or array of 2-D arrays
             A list or array of the central wavelength position for each
-            order on the detector.
+            order on the detector. Has shape (N_ord, N, M).
             It has to have the same (N, M) as `data`.
-        trace_profile : (N_ord, N, M) list or array of 2-D arrays
+        trace_profile : list or array of 2-D arrays
             A list or array of the spatial profile for each order
+            Has shape (N_ord, N, M).
             on the detector. It has to have the same (N, M) as `data`.
-        throughput : (N_ord [, N_k]) list of array or callable
+        throughput : list of array or callable
             A list of functions or array of the throughput at each order.
             If callable, the functions depend on the wavelength.
-            If array, projected on `wave_grid`.
-        kernels : callable, sparse matrix, or None.
+            If array, projected on `wave_grid`. Has shape (N_ord [, N_k]).
+        kernels : callable, sparse matrix, or None
             Convolution kernel to be applied on spectrum (f_k) for each orders.
             Can be a callable with the form f(x, x0) where x0 is
             the position of the center of the kernel. In this case, it must
@@ -83,14 +93,16 @@ class ExtractionEngine:
             be used directly. N_ker is the length of the effective kernel
             and N_k_c is the length of the spectrum (f_k) convolved.
             If None, the kernel is set to 1, i.e., do not do any convolution.
-        wave_grid : (N_k) array_like, required.
-            The grid on which f(lambda) will be projected.
-        mask_trace_profile : (N_ord, N, M) list or array of 2-D arrays[bool], required.
+        wave_grid : array_like, required
+            The grid on which f(lambda) will be projected, shape (N_k).
+        mask_trace_profile : List or array of 2-D arrays[bool], required
             A list or array of the pixel that need to be used for extraction,
-            for each order on the detector. It has to have the same (N_ord, N, M) as `trace_profile`.
-        global_mask : (N, M) array_like boolean, optional
+            for each order on the detector.
+            It has to have the same shape (N_ord, N, M) as `trace_profile`.
+        global_mask : array[bool], optional
             Boolean Mask of the detector pixels to mask for every extraction, e.g. bad pixels.
             Should not be related to a specific order (if so, use `mask_trace_profile` instead).
+            Has shape (N, M).
         orders : list, optional
             List of orders considered. Default is orders = [1, 2]
         threshold : float, optional:
@@ -99,7 +111,8 @@ class ExtractionEngine:
             If it is not properly modeled (not covered by the wavelength grid),
             it will be masked. Default is 1e-3.
         """
-
+        if orders is None:
+            orders = [1, 2]
         # Set the attributes and ensure everything has correct dtype
         self.wave_map = np.array(wave_map).astype(self.dtype)
         self.trace_profile = np.array(trace_profile).astype(self.dtype)
@@ -110,7 +123,9 @@ class ExtractionEngine:
         # Set wave_grid. Ensure it is sorted and strictly increasing.
         is_sorted = (np.diff(wave_grid) > 0).all()
         if not is_sorted:
-            log.warning('`wave_grid` is not strictly increasing. It will be sorted and made unique.')
+            log.warning(
+                "`wave_grid` is not strictly increasing. It will be sorted and made unique."
+            )
             wave_grid = np.unique(wave_grid)
         self.wave_grid = wave_grid.astype(self.dtype).copy()
         self.n_wavepoints = len(wave_grid)
@@ -128,8 +143,10 @@ class ExtractionEngine:
         self.orders = orders
         self.n_orders = len(self.orders)
         if self.n_orders != len(self.wave_map):
-            msg = ("The number of orders specified ({}) and the number of "
-                   "wavelength maps provided ({}) do not match.")
+            msg = (
+                f"The number of orders specified ({self.n_orders}) and the number of "
+                f"wavelength maps provided ({len(self.wave_map)}) do not match."
+            )
             log.critical(msg.format(self.n_orders, len(self.wave_map)))
             raise ValueError(msg.format(self.n_orders, len(self.wave_map)))
 
@@ -143,8 +160,10 @@ class ExtractionEngine:
         good_pixels_in_order = np.sum(np.sum(~self.mask_ord, axis=-1), axis=-1)
         min_good_pixels = 25  # hard-code to qualitatively reasonable value
         if np.any(good_pixels_in_order < min_good_pixels):
-            msg = (f'At least one order has less than {min_good_pixels} valid pixels. '
-                   '(mask_trace_profile and mask_wave have insufficient overlap')
+            msg = (
+                f"At least one order has less than {min_good_pixels} valid pixels. "
+                "(mask_trace_profile and mask_wave have insufficient overlap)"
+            )
             raise MaskOverlapError(msg)
 
         # Update i_bounds based on masked wavelengths
@@ -169,13 +188,13 @@ class ExtractionEngine:
         self.tikho_mat = None
         self.w_t_wave_c = None
 
-
     def get_attributes(self, *args, i_order=None):
-        """Return list of attributes
+        """
+        Return list of attributes.
 
         Parameters
         ----------
-        args : str or list[str]
+        *args : str or list[str]
             All attributes to return.
         i_order : None or int, optional
             Index of order to extract. If specified, it will
@@ -184,9 +203,9 @@ class ExtractionEngine:
 
         Returns
         -------
-        getattr(arg) for arg in args, with i_order indexing if provided
+        list
+            Result of [getattr(arg) for arg in args], with i_order indexing if provided
         """
-
         if i_order is None:
             out = [getattr(self, arg) for arg in args]
         else:
@@ -197,9 +216,9 @@ class ExtractionEngine:
 
         return out
 
-
     def update_throughput(self, throughput):
-        """Update internal throughput values
+        """
+        Update internal throughput values.
 
         Parameters
         ----------
@@ -209,14 +228,13 @@ class ExtractionEngine:
         """
         throughput_new = []
         for throughput_n in throughput:  # Loop over orders.
-
             if callable(throughput_n):
                 throughput_n = throughput_n(self.wave_grid)
 
-            msg = 'Throughputs must be given as callable or arrays matching the extraction grid.'
+            msg = "Throughputs must be given as callable or arrays matching the extraction grid."
             if not isinstance(throughput_n, np.ndarray):
                 log.critical(msg)
-                raise ValueError(msg)
+                raise TypeError(msg)
             if throughput_n.shape != self.wave_grid.shape:
                 log.critical(msg)
                 raise ValueError(msg)
@@ -225,23 +243,27 @@ class ExtractionEngine:
 
         self.throughput = np.array(throughput_new, dtype=self.dtype)
 
-
     def _create_kernels(self, kernels):
-        """Make sparse matrix from input kernels
+        """
+        Make sparse matrix from input kernels.
 
         Parameters
         ----------
         kernels : callable, sparse matrix, or None
             Convolution kernel to be applied on the spectrum (f_k) for each order.
             If None, kernel is set to 1, i.e., do not do any convolution.
-        """
 
+        Returns
+        -------
+        kernels_new : list
+            List of sparse matrices for each order.
+        """
         # Take thresh to be the kernels min_value attribute.
         # It is a way to make sure that the full kernel is used.
         c_kwargs = []
         for ker in kernels:
             try:
-                kwargs_ker = {'thresh': ker.min_value}
+                kwargs_ker = {"thresh": ker.min_value}
             except AttributeError:
                 # take the get_c_matrix defaults
                 kwargs_ker = {}
@@ -253,17 +275,18 @@ class ExtractionEngine:
             if kernel_n is None:
                 kernel_n = np.array([1.0])
             if not issparse(kernel_n):
-                kernel_n = atoca_utils.get_c_matrix(kernel_n, self.wave_grid,
-                                                    i_bounds=self.i_bounds[i_order],
-                                                    **c_kwargs[i_order])
+                kernel_n = atoca_utils.get_c_matrix(
+                    kernel_n, self.wave_grid, i_bounds=self.i_bounds[i_order], **c_kwargs[i_order]
+                )
 
             kernels_new.append(kernel_n)
 
         return kernels_new
 
-
     def _get_masks(self, global_mask):
-        """Compute a general mask on the detector and for each order.
+        """
+        Compute a general mask on the detector and for each order.
+
         Depends on the trace profile and the wavelength grid.
 
         Parameters
@@ -278,9 +301,8 @@ class ExtractionEngine:
         mask_ord : array[bool]
             Mask applied to each order
         """
-
         # Get needed attributes
-        args = ('threshold', 'n_orders', 'mask_trace_profile', 'trace_profile')
+        args = ("threshold", "n_orders", "mask_trace_profile", "trace_profile")
         threshold, n_orders, mask_trace_profile, trace_profile = self.get_attributes(*args)
 
         # Mask pixels not covered by the wavelength grid.
@@ -302,25 +324,22 @@ class ExtractionEngine:
         # order, but the wavelength range does not cover this part
         # of the spectrum. Thus, it cannot be treated correctly.
         is_contaminated = np.array([tr_profile_ord > threshold for tr_profile_ord in trace_profile])
-        general_mask |= (np.any(mask_wave, axis=0)
-                         & np.all(is_contaminated, axis=0))
+        general_mask |= np.any(mask_wave, axis=0) & np.all(is_contaminated, axis=0)
 
         # Apply this new general mask to each order.
-        mask_ord = (mask_wave | general_mask[None, :, :])
+        mask_ord = mask_wave | general_mask[None, :, :]
 
         return general_mask, mask_ord
 
-
     def _get_i_bnds(self):
-        """Define wavelength boundaries for each order using the order's mask
-        and the wavelength map.
+        """
+        Define wavelength boundaries for each order using the order's mask and wavelength map.
 
         Returns
         -------
         list[float]
             Wavelength boundaries for each order
         """
-
         # Figure out boundary wavelengths
         wave_bounds = []
         for i in range(self.n_orders):
@@ -329,8 +348,7 @@ class ExtractionEngine:
 
         # Determine the boundary position on the wavelength grid.
         i_bnds_new = []
-        for bounds, i_bnds in zip(wave_bounds, self.i_bounds):
-
+        for bounds, i_bnds in zip(wave_bounds, self.i_bounds, strict=True):
             a = np.min(np.where(self.wave_grid >= bounds[0])[0])
             b = np.max(np.where(self.wave_grid <= bounds[1])[0]) + 1
 
@@ -341,20 +359,27 @@ class ExtractionEngine:
 
         return i_bnds_new
 
-
     def wave_grid_c(self, i_order):
-        """Return wave_grid for a given order constrained according to the i_bounds
-        of that order.
         """
+        Return wave_grid for a given order constrained according to the i_bounds of that order.
 
+        Parameters
+        ----------
+        i_order : int
+            Order to select the wave_grid for.
+
+        Returns
+        -------
+        array[float]
+            Wave_grid for the given order.
+        """
         index = slice(*self.i_bounds[i_order])
 
         return self.wave_grid[index]
 
-
     def compute_weights(self):
         """
-        Compute integration weights
+        Compute integration weights.
 
         The weights depend on the integration method used to solve
         the integral of the flux over a pixel and are encoded
@@ -365,11 +390,9 @@ class ExtractionEngine:
         weights, weights_k_idx : list
             Lists of weights and corresponding grid indices
         """
-
         # Init lists
         weights, weights_k_idx = [], []
         for i_order in range(self.n_orders):
-
             # Compute weights
             weights_n, k_idx_n = self.get_w(i_order)
 
@@ -384,31 +407,51 @@ class ExtractionEngine:
         return weights, weights_k_idx
 
     def _set_w_t_wave_c(self, i_order, product):
-        """Save the matrix product of the weights (w), the throughput (t),
-        the wavelength (lam) and the convolution matrix for faster computation.
         """
+        Save intermediate matrix product for faster repeated computations.
 
+        Saves the matrix product of the weights (w), the throughput (t),
+        the wavelength (lam) and the convolution matrix.
+
+        Parameters
+        ----------
+        i_order : int
+            Order index to save the product for.
+        product : sparse matrix
+            The matrix product to save.
+        """
         if self.w_t_wave_c is None:
             self.w_t_wave_c = [[] for _ in range(self.n_orders)]
 
         self.w_t_wave_c[i_order] = product.copy()
 
-
     def grid_from_map(self, i_order=0):
-        """Return the wavelength grid and the columns associated
-        to a given order index (i_order)
         """
+        Return the wavelength grid and the columns for a given order index.
 
-        attrs = ['wave_map', 'trace_profile']
+        Parameters
+        ----------
+        i_order : int, optional
+            Order index to get the wavelength grid for. Default is 0.
+
+        Returns
+        -------
+        wave_grid : array[float]
+            Wavelength grid for the given order index.
+        icol : array[float]
+            Column indices for the wavelength grid.
+        """
+        attrs = ["wave_map", "trace_profile"]
         wave_map, trace_profile = self.get_attributes(*attrs, i_order=i_order)
 
-        wave_grid, icol = atoca_utils._grid_from_map(wave_map, trace_profile)
+        wave_grid, icol = atoca_utils.grid_from_map(wave_map, trace_profile)
         wave_grid = wave_grid.astype(self.dtype)
         return wave_grid, icol
 
-
     def get_pixel_mapping(self, i_order, error=None, quick=False):
         """
+        Calculate the pixel mapping.
+
         Compute the matrix `b_n = (P/sig).w.T.lambda.c_n` ,
         where `P` is the spatial profile matrix (diag),
         `w` is the integrations weights matrix,
@@ -418,22 +461,22 @@ class ExtractionEngine:
         The model of the detector at order n (`model_n`) is given by the system:
         model_n = b_n.c_n.f ,
         where f is the incoming flux projected on the wavelength grid.
-        This methods updates the `b_n_list` attribute.
+        This method updates the `b_n_list` attribute.
 
         Parameters
         ----------
-        i_order: integer
+        i_order : int
             Label of the order (depending on the initiation of the object).
-        error: (N, M) array_like or None, optional.
-            Estimate of the error on each pixel. Same shape as `data`.
+        error : array_like or None, optional
+            Estimate of the error on each pixel. Same shape (N, M) as `data`.
             If None, the error is set to 1, which means the method will return
             b_n instead of b_n/sigma. Default is None.
-        quick: bool, optional
+        quick : bool, optional
             If True, only perform one matrix multiplication
             instead of the whole system: (P/sig).(w.T.lambda.c_n)
 
         Returns
-        ------
+        -------
         array[float]
             Sparse matrix of b_n coefficients
         """
@@ -448,12 +491,14 @@ class ExtractionEngine:
             error = np.ones(self.data_shape)
 
         # Get needed attributes ...
-        attrs = ['wave_grid', 'mask']
+        attrs = ["wave_grid", "mask"]
         wave_grid, mask = self.get_attributes(*attrs)
 
         # ... order dependent attributes
-        attrs = ['trace_profile', 'throughput', 'kernels', 'weights', 'i_bounds']
-        trace_profile_n, throughput_n, kernel_n, weights_n, i_bnds = self.get_attributes(*attrs, i_order=i_order)
+        attrs = ["trace_profile", "throughput", "kernels", "weights", "i_bounds"]
+        trace_profile_n, throughput_n, kernel_n, weights_n, i_bnds = self.get_attributes(
+            *attrs, i_order=i_order
+        )
 
         # Keep only valid pixels (P and sig are still 2-D)
         # And apply directly 1/sig here (quicker)
@@ -489,13 +534,9 @@ class ExtractionEngine:
 
         return pixel_mapping
 
-
     def build_sys(self, data, error):
         """
         Build linear system arising from the logL maximisation.
-        TIPS: To be quicker, only specify the psf (`p_list`) in kwargs.
-              There will be only one matrix multiplication:
-              (P/sig).(w.T.lambda.c_n).
 
         Parameters
         ----------
@@ -505,10 +546,10 @@ class ExtractionEngine:
             Estimate of the error on each pixel.
 
         Returns
-        ------
-        A and b from Ax = b being the system to solve.
+        -------
+        scipy.sparse.csr_matrix, array[float]
+            A, b from Ax = b being the system to solve.
         """
-
         # Get the detector model
         b_matrix, data = self.get_detector_model(data, error)
 
@@ -519,26 +560,24 @@ class ExtractionEngine:
 
         return matrix, result.toarray().squeeze()
 
-
     def get_detector_model(self, data, error):
         """
-        Get the linear model of the detector pixel, B.dot(flux) = pixels
+        Get the linear model of the detector pixel, B.dot(flux) = pixels.
 
         Parameters
         ----------
-        data : (N, M) array_like
-            A 2-D array of real values representing the detector image.
-        error: (N, M) array_like
-            Estimate of the error on each pixel.
+        data : array_like
+            A 2-D array of real values representing the detector image, shape (N, M).
+        error : array_like
+            Estimate of the error on each pixel, shape (N, M).
 
         Returns
-        ------
+        -------
         B, pix_array : array[float]
             From the linear equation B.dot(flux) = pix_array
         """
-
         # Check if `w_t_wave_c` is pre-computed
-        quick = (self.w_t_wave_c is not None)
+        quick = self.w_t_wave_c is not None
 
         # Build matrix B
         # Initiate with empty matrix
@@ -547,7 +586,6 @@ class ExtractionEngine:
 
         # Sum over orders
         for i_order in range(self.n_orders):
-
             # Get sparse pixel mapping matrix.
             b_matrix += self.get_pixel_mapping(i_order, error, quick=quick)
 
@@ -557,29 +595,26 @@ class ExtractionEngine:
 
         return b_matrix, csr_matrix(data)
 
-
     @property
-    def tikho_mat(self):
-        """
-        Return the Tikhonov matrix.
-        """
+    def tikho_mat(self):  # numpydoc ignore=RT01
+        """Return the Tikhonov matrix, computing it if needed."""
         if self._tikho_mat is not None:
             return self._tikho_mat
 
         self._tikho_mat = atoca_utils.finite_first_d(self.wave_grid)
         return self._tikho_mat
 
-
     @tikho_mat.setter
     def tikho_mat(self, t_mat):
         self._tikho_mat = t_mat
 
-
     def estimate_tikho_factors(self, flux_estimate):
         """
-        Estimate an initial guess of the Tikhonov factor. The output factor will
-        be used to find the best Tikhonov factor. The flux_estimate is used to generate
-        a factor_guess. The user should construct a grid with this output in log space,
+        Estimate an initial guess of the Tikhonov factor.
+
+        The output factor will be used to find the best Tikhonov factor.
+        The flux_estimate is used to generate a factor_guess.
+        The user should construct a grid with this output in log space,
         e.g. np.logspace(np.log10(flux_estimate)-4, np.log10(flux_estimate)+4, 9).
 
         Parameters
@@ -594,7 +629,7 @@ class ExtractionEngine:
             Estimated Tikhonov factor.
         """
         # Get some values from the object
-        mask, wave_grid = self.get_attributes('mask', 'wave_grid')
+        mask, wave_grid = self.get_attributes("mask", "wave_grid")
 
         # Find the number of valid pixels
         n_pixels = (~mask).sum()
@@ -609,10 +644,9 @@ class ExtractionEngine:
         # Estimate of the factor
         factor_guess = (n_pixels / reg_estimate) ** 0.5
 
-        log.info(f'First guess of tikhonov factor: {factor_guess}')
+        log.info(f"First guess of tikhonov factor: {factor_guess}")
 
         return factor_guess
-
 
     def get_tikho_tests(self, factors, data, error):
         """
@@ -628,11 +662,10 @@ class ExtractionEngine:
             Estimate of the error on each pixel. Same shape as `data`.
 
         Returns
-        ------
+        -------
         tests : dict
-            dictionary of the test results
+            Dictionary of the test results
         """
-
         # Build the system to solve
         b_matrix, pix_array = self.get_detector_model(data, error)
 
@@ -646,11 +679,11 @@ class ExtractionEngine:
 
         return tests
 
-
     def best_tikho_factor(self, tests, fit_mode):
         """
         Compute the best scale factor for Tikhonov regularization.
-        It is determined by taking the factor giving the lowest reduced chi2 on
+
+        The scale factor is determined by taking the factor giving the lowest reduced chi2 on
         the detector, the highest curvature of the l-curve or when the improvement
         on the chi2 (so the derivative of the chi2, 'd_chi2') reaches a certain threshold.
 
@@ -659,7 +692,7 @@ class ExtractionEngine:
         tests : dictionary
             Results of Tikhonov extraction tests for different factors.
             Must have the keys "factors" and "-logl".
-        fit_mode : string
+        fit_mode : str
             Which mode is used to find the best Tikhonov factor. Options are
             'all', 'curvature', 'chi2', 'd_chi2'. If 'all' is chosen, the best of the
             three other options will be selected.
@@ -670,9 +703,9 @@ class ExtractionEngine:
             The best Tikhonov factor.
         """
         # Modes to be tested
-        if fit_mode == 'all':
+        if fit_mode == "all":
             # Test all modes
-            list_mode = ['curvature', 'chi2', 'd_chi2']
+            list_mode = ["curvature", "chi2", "d_chi2"]
         else:
             # Single mode
             list_mode = [fit_mode]
@@ -683,21 +716,21 @@ class ExtractionEngine:
             best_fac = tests.best_factor(mode=mode)
             results[mode] = best_fac
 
-        if fit_mode == 'all':
+        if fit_mode == "all":
             # Choose the best factor.
             # In a well-behaved case, the results should be ordered as 'chi2', 'd_chi2', 'curvature'
             # and 'd_chi2' will be the best criterion determine the best factor.
             # 'chi2' usually overfits the solution and 'curvature' may oversmooth the solution
-            if results['curvature'] <= results['chi2'] or results['d_chi2'] <= results['chi2']:
+            if results["curvature"] <= results["chi2"] or results["d_chi2"] <= results["chi2"]:
                 # In this case, 'chi2' is likely to not overfit the solution, so must be favored
-                best_mode = 'chi2'
-            elif results['curvature'] < results['d_chi2']:
+                best_mode = "chi2"
+            elif results["curvature"] < results["d_chi2"]:
                 # Take the smaller factor between 'd_chi2' and 'curvature'
-                best_mode = 'curvature'
-            elif results['d_chi2'] <= results['curvature']:
-                best_mode = 'd_chi2'
+                best_mode = "curvature"
+            elif results["d_chi2"] <= results["curvature"]:
+                best_mode = "d_chi2"
             else:
-                msg = 'Logic error in comparing methods for best Tikhonov factor.'
+                msg = "Logic error in comparing methods for best Tikhonov factor."
                 log.critical(msg)
                 raise ValueError(msg)
         else:
@@ -705,10 +738,9 @@ class ExtractionEngine:
 
         # Get the factor of the chosen mode
         best_fac = results[best_mode]
-        log.debug(f'Mode chosen to find regularization factor is {best_mode}')
+        log.debug(f"Mode chosen to find regularization factor is {best_mode}")
 
         return best_fac
-
 
     def rebuild(self, spectrum, fill_value=0.0):
         """
@@ -717,7 +749,7 @@ class ExtractionEngine:
         Parameters
         ----------
         spectrum : callable or array-like
-            flux as a function of wavelength if callable
+            Flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
         fill_value : float or np.nan, optional
             Pixel value where the detector is masked. Default is 0.0.
@@ -737,7 +769,6 @@ class ExtractionEngine:
         # Evaluate the detector model.
         model = np.zeros(self.data_shape)
         for i_order in i_orders:
-
             # Compute the pixel mapping matrix (b_n) for the current order.
             pixel_mapping = self.get_pixel_mapping(i_order, error=None)
 
@@ -748,9 +779,9 @@ class ExtractionEngine:
         model[self.mask] = fill_value
         return model
 
-
     def compute_likelihood(self, spectrum, data, error):
-        """Return the log likelihood associated with a particular spectrum.
+        """
+        Return the log likelihood associated with a particular spectrum.
 
         Parameters
         ----------
@@ -772,17 +803,27 @@ class ExtractionEngine:
         model = self.rebuild(spectrum)
 
         # Compute the log-likelihood for the spectrum.
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             logl = (model - data) / error
-        return -np.nansum((logl[~self.mask])**2)
-
+        return -np.nansum((logl[~self.mask]) ** 2)
 
     @staticmethod
     def _solve(matrix, result):
-        """Simply pass `matrix` and `result`
-        to `scipy.spsolve` and apply index.
         """
+        Solve the linear system using `scipy.spsolve`.
 
+        Parameters
+        ----------
+        matrix : (N, M) array_like
+            A 2-D array of real values representing the detector image.
+        result : (N, M) array_like
+            The right-hand side of the linear system.
+
+        Returns
+        -------
+        array[float]
+            Solution of the linear system
+        """
         # Get valid indices
         idx = np.nonzero(result)[0]
 
@@ -798,8 +839,25 @@ class ExtractionEngine:
 
     @staticmethod
     def _solve_tikho(matrix, result, t_mat, **kwargs):
-        """Solve system using Tikhonov regularization"""
+        """
+        Solve system using Tikhonov regularization.
 
+        Parameters
+        ----------
+        matrix : (N, M) array_like
+            A 2-D array of real values representing the detector image.
+        result : (N, M) array_like
+            The right-hand side of the linear system.
+        t_mat : (N, M) array_like
+            The Tikhonov matrix.
+        **kwargs : dict
+            Keyword arguments to pass to the solver.
+
+        Returns
+        -------
+        array[float]
+            Solution of the linear system
+        """
         # Note that the indexing is applied inside the function
         tikho = atoca_utils.Tikhonov(matrix, result, t_mat)
 
@@ -833,11 +891,13 @@ class ExtractionEngine:
         tikhonov : bool, optional
             Whether to use Tikhonov extraction
             Default is False.
-        factor : the Tikhonov factor to use if tikhonov is True
+        factor : float, optional
+            The Tikhonov factor to use if tikhonov is True
 
         Returns
-        -----
-        spectrum (f_k): solution of the linear system
+        -------
+        spectrum (f_k) : array[float]
+            Solution of the linear system
         """
         # Solve with the specified solver.
         if tikhonov:
@@ -861,11 +921,9 @@ class ExtractionEngine:
 
         return spectrum
 
-
     def _get_lo_hi(self, grid, wave_p, wave_m, mask):
         """
-        Find the lowest (lo) and highest (hi) index
-        of wave_grid for each pixels and orders.
+        Find the lowest (lo) and highest (hi) index of wave_grid for each pixels and orders.
 
         Parameters
         ----------
@@ -881,11 +939,10 @@ class ExtractionEngine:
         lo, hi : array[float]
             Arrays of indices for lowest and highest values.
         """
-
-        log.debug('Computing lowest and highest indices of wave_grid.')
+        log.debug("Computing lowest and highest indices of wave_grid.")
 
         # Find lower (lo) index in the pixel
-        lo = np.searchsorted(grid, wave_m, side='right') - 1
+        lo = np.searchsorted(grid, wave_m, side="right") - 1
 
         # Find higher (hi) index in the pixel
         hi = np.searchsorted(grid, wave_p) - 1
@@ -895,33 +952,31 @@ class ExtractionEngine:
 
         return lo, hi
 
-
     def get_mask_wave(self, i_order):
-        """Generate mask bounded by limits of wavelength grid
+        """
+        Generate mask bounded by limits of wavelength grid.
 
         Parameters
         ----------
         i_order : int
-            Order to select the wave_map on which a mask
-            will be generated
+            Order to select the wave_map on which a mask will be generated
 
         Returns
         -------
         array[bool]
-            A mask with True where wave_map is outside the bounds
-            of wave_grid
+            A mask with True where wave_map is outside the bounds of wave_grid
         """
-
-        attrs = ['wave_p', 'wave_m', 'i_bounds']
+        attrs = ["wave_p", "wave_m", "i_bounds"]
         wave_p, wave_m, i_bnds = self.get_attributes(*attrs, i_order=i_order)
         wave_min = self.wave_grid[i_bnds[0]]
         wave_max = self.wave_grid[i_bnds[1] - 1]
 
         return (wave_m < wave_min) | (wave_p > wave_max)
 
-
     def get_w(self, i_order):
-        """Compute integration weights 'k' for each grid point and pixel 'i'.
+        """
+        Compute integration weights 'k' for each grid point and pixel 'i'.
+
         These depend on the type of interpolation used, i.e. the order `n`.
 
         Parameters
@@ -930,7 +985,7 @@ class ExtractionEngine:
             Order to set the value of n in output arrays.
 
         Returns
-        ------
+        -------
         w_n : array
             2D array of weights at this specific order `n`. The shape is given by:
             (number of pixels, max number of wavelengths covered by a pixel)
@@ -938,15 +993,14 @@ class ExtractionEngine:
             2D array of the wavelength grid indices corresponding to the weights.
             Same shape as w_n
         """
-
-        log.debug('Computing weights and k.')
+        log.debug("Computing weights and k.")
 
         # get order dependent attributes
-        attrs = ['wave_p', 'wave_m', 'mask_ord', 'i_bounds']
+        attrs = ["wave_p", "wave_m", "mask_ord", "i_bounds"]
         wave_p, wave_m, mask_ord, i_bnds = self.get_attributes(*attrs, i_order=i_order)
 
         # Use the convolved grid (depends on the order)
-        wave_grid = self.wave_grid[i_bnds[0]:i_bnds[1]]
+        wave_grid = self.wave_grid[i_bnds[0] : i_bnds[1]]
         # Compute the wavelength coverage of the grid
         d_grid = np.diff(wave_grid)
 
@@ -971,7 +1025,7 @@ class ExtractionEngine:
         # >>> lo_dgrid[lo_dgrid==len(d_grid)] = len(d_grid) - 1
         # >>> cond = (grid[lo]-wave_m)/d_grid[lo_dgrid] <= 1.0e-8
         # But let's stick with the exactly equal
-        cond = (wave_grid[lo] == wave_m)
+        cond = wave_grid[lo] == wave_m
 
         # special case (no need for lo_i - 1)
         k_first[cond & ~ma] = lo[cond & ~ma]
@@ -984,7 +1038,7 @@ class ExtractionEngine:
         # above (~=), the code could look like
         # >>> cond = (wave_p-grid[hi])/d_grid[hi-1] <= 1.0e-8
         # But let's stick with the exactly equal
-        cond = (wave_p == wave_grid[hi])
+        cond = wave_p == wave_grid[hi]
 
         # special case (no need for hi_i - 1)
         k_last[cond & ~ma] = hi[cond & ~ma]
@@ -1015,8 +1069,7 @@ class ExtractionEngine:
         # Case 1, n_k == 2
         case = (n_k == 2) & ~ma
         if case.any():
-
-            log.debug('n_k = 2 in get_w().')
+            log.debug("n_k = 2 in get_w().")
 
             # if k_i[0] != lo_i
             cond = case & (k_n[:, 0] != lo)
@@ -1027,15 +1080,14 @@ class ExtractionEngine:
             w_n[cond, 0] += wave_grid[k_n[cond, 1]] - wave_p[cond]
 
             # Finally
-            part1 = (wave_p[case] - wave_m[case])
+            part1 = wave_p[case] - wave_m[case]
             part2 = d_grid[k_n[case, 0]]
             w_n[case, :] *= (part1 / part2)[:, None]
 
         # Case 2, n_k >= 3
         case = (n_k >= 3) & ~ma
         if case.any():
-
-            log.debug('n_k = 3 in get_w().')
+            log.debug("n_k = 3 in get_w().")
             n_ki = n_k[case]
             w_n[case, 1] = wave_grid[k_n[case, 1]] - wave_m[case]
             w_n[case, n_ki - 2] += wave_p[case] - wave_grid[k_n[case, n_ki - 2]]
@@ -1045,8 +1097,8 @@ class ExtractionEngine:
             nume1 = wave_grid[k_n[cond, 1]] - wave_m[cond]
             nume2 = wave_m[cond] - wave_grid[k_n[cond, 0]]
             deno = d_grid[k_n[cond, 0]]
-            w_n[cond, 0] *= (nume1 / deno)
-            w_n[cond, 1] += (nume1 * nume2 / deno)
+            w_n[cond, 0] *= nume1 / deno
+            w_n[cond, 1] += nume1 * nume2 / deno
 
             # if k_i[-1] != hi_i
             cond = case & (k_n[i, n_k - 1] != hi)
@@ -1054,30 +1106,28 @@ class ExtractionEngine:
             nume1 = wave_p[cond] - wave_grid[k_n[cond, n_ki - 2]]
             nume2 = wave_grid[k_n[cond, n_ki - 1]] - wave_p[cond]
             deno = d_grid[k_n[cond, n_ki - 2]]
-            w_n[cond, n_ki - 1] *= (nume1 / deno)
-            w_n[cond, n_ki - 2] += (nume1 * nume2 / deno)
+            w_n[cond, n_ki - 1] *= nume1 / deno
+            w_n[cond, n_ki - 2] += nume1 * nume2 / deno
 
         # Case 3, n_k >= 4
         case = (n_k >= 4) & ~ma
         if case.any():
-            log.debug('n_k = 4 in get_w().')
+            log.debug("n_k = 4 in get_w().")
             n_ki = n_k[case]
             w_n[case, 1] += wave_grid[k_n[case, 2]] - wave_grid[k_n[case, 1]]
-            w_n[case, n_ki - 2] += (wave_grid[k_n[case, n_ki - 2]]
-                                    - wave_grid[k_n[case, n_ki - 3]])
+            w_n[case, n_ki - 2] += wave_grid[k_n[case, n_ki - 2]] - wave_grid[k_n[case, n_ki - 3]]
 
         # Case 4, n_k > 4
         case = (n_k > 4) & ~ma
         if case.any():
-            log.debug('n_k > 4 in get_w().')
+            log.debug("n_k > 4 in get_w().")
             i_k = np.indices(k_n.shape)[-1]
             cond = case[:, None] & (2 <= i_k) & (i_k < n_k[:, None] - 2)
             ind1, ind2 = np.where(cond)
-            w_n[ind1, ind2] = (d_grid[k_n[ind1, ind2] - 1]
-                               + d_grid[k_n[ind1, ind2]])
+            w_n[ind1, ind2] = d_grid[k_n[ind1, ind2] - 1] + d_grid[k_n[ind1, ind2]]
 
         # Finally, divide w_n by 2
-        w_n /= 2.
+        w_n /= 2.0
 
         # Make sure invalid values are masked
         w_n[k_n < 0] = np.nan

@@ -210,7 +210,7 @@ def test_update_throughput(engine, throughput):
     # test fail on callable that doesn't return correct array shape
     def new_thru_f(wl):
         return 1.0
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         engine.update_throughput([new_thru_f, new_thru_f])
 
 
